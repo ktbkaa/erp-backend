@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — Depo modülü
+
+- `depolar.varsayilan` kolonu
+- Depo eklerken iş yeri varlık kontrolü
+- İş yerindeki ilk depo otomatik Ana Depo
+- `GET /depolar/:id`
+
 ## 0.2.0 — Altyapı (A1)
 
 - `.env` ile veritabanı yapılandırması

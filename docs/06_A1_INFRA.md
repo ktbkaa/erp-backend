@@ -33,3 +33,24 @@
 4. `npm run migrate`
 5. `npm start`
 6. Tarayıcı veya Thunder Client: `http://localhost:3000/health`
+
+## Depo kullanımı (v0.2.1)
+
+1. `GET /is-yerleri` → `id` değerini not et
+2. `POST /depolar` ile Ana Depo oluştur:
+
+```json
+{
+  "is_yeri_id": 1,
+  "depo_kodu": "ANA",
+  "depo_adi": "Ana Depo",
+  "varsayilan": true
+}
+```
+
+3. `GET /depolar` ile kontrol et
+
+Kurallar:
+- Depo bir iş yerine bağlıdır
+- İş yerindeki ilk depo otomatik varsayılan olur
+- `varsayilan: true` gönderilirse aynı iş yerindeki diğer depoların varsayılan işareti kalkar
