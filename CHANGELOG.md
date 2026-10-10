@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 — Kod sistemi + cari detay
+
+- Ortak kod üretici: harf + 5 rakam (`M00001`, `H00001`, `T00001`…)
+- `kod_serileri` tablosu
+- Cari kart detay alanları (vergi, yetkili, adres, vade…)
+- Satınalma siparişi yalnızca tedarikçiye
+
 ## 0.3.1 — Tek ürün ağacı + sıralı operasyonlar
 
 - Mamul ürün ağacı çok seviyeli (YM altında hammaddeler)

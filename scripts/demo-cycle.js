@@ -1,25 +1,17 @@
 /**
- * Uçtan uca ERP demo döngüsü (tek mamul ürün ağacı + sıralı operasyonlar).
- *
- * Ürün ağacı (tek kök — MM-001):
- *   MM-001
- *   ├─ YM-001
- *   │  ├─ HM-001
- *   │  └─ HM-002
- *   └─ YM-002
- *      ├─ HM-003
- *      └─ HM-004
- *
- * Rota operasyonları:
- *   OP10 YM1 montaj (HM1+HM2) → YM depo → sonraki OP20
- *   OP20 YM2 montaj (HM3+HM4) → YM depo → sonraki OP30
- *   OP30 Mamul montaj (YM1+YM2) → Mamul depo
+ * Uçtan uca ERP demo döngüsü.
+ * Kod sistemi: 1 harf + 5 rakam (H00001, Y00001, U00001, T00001, M00001, D00001...)
  */
 require('dotenv').config();
 const { Pool } = require('pg');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { stokHareketOlustur, depoBakiyeListesi } = require('../src/services/stokHareketService');
+const {
+    sonrakiKod,
+    stokSeriKodundanTip,
+    cariSeriKodundanTur,
+} = require('../src/utils/kodUretici');
 
 function requiredEnv(name) {
     const v = process.env[name];
@@ -27,44 +19,96 @@ function requiredEnv(name) {
     return v;
 }
 
-async function upsertStok(client, row) {
-    const mevcut = await client.query('SELECT id FROM stoklar WHERE stok_kodu = $1', [row.stok_kodu]);
+async function ensureStok(client, row) {
+    const mevcut = await client.query('SELECT id, stok_kodu FROM stoklar WHERE stok_adi = $1', [row.stok_adi]);
     if (mevcut.rows[0]) {
         await client.query(
-            `UPDATE stoklar SET stok_adi=$2, birim=$3, satis_fiyati=$4, stok_tipi=$5, tedarik_tipi=$6 WHERE id=$1`,
-            [mevcut.rows[0].id, row.stok_adi, row.birim, row.satis_fiyati, row.stok_tipi, row.tedarik_tipi]
+            `UPDATE stoklar SET birim=$2, satis_fiyati=$3, stok_tipi=$4, tedarik_tipi=$5 WHERE id=$1`,
+            [mevcut.rows[0].id, row.birim, row.satis_fiyati, row.stok_tipi, row.tedarik_tipi]
         );
-        return mevcut.rows[0].id;
+        return { id: mevcut.rows[0].id, stok_kodu: mevcut.rows[0].stok_kodu };
     }
+    const kod = await sonrakiKod(client, stokSeriKodundanTip(row.stok_tipi));
     const ins = await client.query(
         `INSERT INTO stoklar (stok_kodu, stok_adi, birim, satis_fiyati, stok_tipi, tedarik_tipi)
-         VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-        [row.stok_kodu, row.stok_adi, row.birim, row.satis_fiyati, row.stok_tipi, row.tedarik_tipi]
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, stok_kodu`,
+        [kod, row.stok_adi, row.birim, row.satis_fiyati, row.stok_tipi, row.tedarik_tipi]
     );
-    return ins.rows[0].id;
+    return ins.rows[0];
 }
 
-async function ensureDepo(client, isYeriId, kod, adi, varsayilan = false) {
-    const m = await client.query(
-        'SELECT id FROM depolar WHERE is_yeri_id=$1 AND depo_kodu=$2',
-        [isYeriId, kod]
+async function ensureCari(client, row) {
+    const mevcut = await client.query('SELECT id, cari_kodu FROM cariler WHERE cari_adi = $1', [row.cari_adi]);
+    if (mevcut.rows[0]) {
+        await client.query(
+            `UPDATE cariler SET
+                cari_turu=$2, telefon=$3, email=$4, vergi_no=$5, vergi_dairesi=$6,
+                yetkili_adi=$7, yetkili_telefon=$8, adres=$9, il=$10, ilce=$11,
+                odeme_vadesi_gun=$12, aktif=TRUE, is_yeri_id=$13
+             WHERE id=$1`,
+            [
+                mevcut.rows[0].id, row.cari_turu, row.telefon, row.email, row.vergi_no, row.vergi_dairesi,
+                row.yetkili_adi, row.yetkili_telefon, row.adres, row.il, row.ilce,
+                row.odeme_vadesi_gun ?? 30, row.is_yeri_id,
+            ]
+        );
+        return { id: mevcut.rows[0].id, cari_kodu: mevcut.rows[0].cari_kodu };
+    }
+    const kod = await sonrakiKod(client, cariSeriKodundanTur(row.cari_turu));
+    const ins = await client.query(
+        `INSERT INTO cariler (
+            cari_kodu, cari_adi, cari_turu, telefon, email, vergi_no, vergi_dairesi,
+            yetkili_adi, yetkili_telefon, adres, il, ilce, ulke, para_birimi,
+            odeme_vadesi_gun, aktif, is_yeri_id, notlar
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'Türkiye','TRY',$13,TRUE,$14,$15)
+         RETURNING id, cari_kodu`,
+        [
+            kod, row.cari_adi, row.cari_turu, row.telefon, row.email, row.vergi_no, row.vergi_dairesi,
+            row.yetkili_adi, row.yetkili_telefon, row.adres, row.il, row.ilce,
+            row.odeme_vadesi_gun ?? 30, row.is_yeri_id, row.notlar || null,
+        ]
     );
-    if (m.rows[0]) return m.rows[0].id;
+    return ins.rows[0];
+}
+
+async function ensureDepo(client, isYeriId, adi, varsayilan = false) {
+    const m = await client.query(
+        'SELECT id, depo_kodu FROM depolar WHERE is_yeri_id=$1 AND depo_adi=$2',
+        [isYeriId, adi]
+    );
+    if (m.rows[0]) return m.rows[0];
+
+    // Eski kısa kodlar (ANA / YM / MM)
+    let eskiKodlar = [];
+    if (adi.includes('Ana')) eskiKodlar = ['ANA'];
+    else if (adi.includes('Yarı')) eskiKodlar = ['YM'];
+    else if (adi.includes('Mamul')) eskiKodlar = ['MM'];
+    if (eskiKodlar.length) {
+        const eski = await client.query(
+            'SELECT id, depo_kodu FROM depolar WHERE is_yeri_id=$1 AND depo_kodu = ANY($2::text[])',
+            [isYeriId, eskiKodlar]
+        );
+        if (eski.rows[0]) {
+            await client.query('UPDATE depolar SET depo_adi=$2 WHERE id=$1', [eski.rows[0].id, adi]);
+            return eski.rows[0];
+        }
+    }
+
     if (varsayilan) {
         await client.query('UPDATE depolar SET varsayilan=FALSE WHERE is_yeri_id=$1', [isYeriId]);
     }
+    const kod = await sonrakiKod(client, 'DEPO');
     const ins = await client.query(
         `INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, varsayilan)
-         VALUES ($1,$2,$3,$4) RETURNING id`,
+         VALUES ($1,$2,$3,$4) RETURNING id, depo_kodu`,
         [isYeriId, kod, adi, varsayilan]
     );
-    return ins.rows[0].id;
+    return ins.rows[0];
 }
 
 async function ensureMamulBom(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4) {
-    const mevcut = await client.query(`SELECT id FROM urun_agaclari WHERE agac_kodu='BOM-MM1'`);
+    const mevcut = await client.query(`SELECT id FROM urun_agaclari WHERE mamul_stok_id=$1`, [mmId]);
     if (mevcut.rows[0]) {
-        // Eski düz ağaçları temizleyip yeniden kur
         await client.query('DELETE FROM urun_agaci_satirlari WHERE urun_agaci_id=$1', [mevcut.rows[0].id]);
         const bomId = mevcut.rows[0].id;
 
@@ -94,7 +138,7 @@ async function ensureMamulBom(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4) {
 
     const ins = await client.query(
         `INSERT INTO urun_agaclari (mamul_stok_id, agac_kodu, agac_adi, miktar)
-         VALUES ($1,'BOM-MM1','Demo Cihaz Ürün Ağacı',1) RETURNING id`,
+         VALUES ($1,'UA-MAMUL','Demo Cihaz Ürün Ağacı',1) RETURNING id`,
         [mmId]
     );
     const bomId = ins.rows[0].id;
@@ -124,12 +168,11 @@ async function ensureMamulBom(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4) {
 }
 
 async function ensureMamulRota(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4, merkezId) {
-    // Eski demo rotalarını temizle / mamul rotasını yeniden kur
-    await client.query(`DELETE FROM rotalar WHERE rota_kodu IN ('ROT-YM1','ROT-YM2','ROT-MM1')`);
+    await client.query(`DELETE FROM rotalar WHERE stok_id=$1 OR rota_kodu IN ('ROT-YM1','ROT-YM2','ROT-MM1')`, [mmId]);
 
     const ins = await client.query(
         `INSERT INTO rotalar (stok_id, rota_kodu, rota_adi)
-         VALUES ($1,'ROT-MM1','Demo Cihaz Üretim Rotası') RETURNING id`,
+         VALUES ($1,'ROT-MAMUL','Demo Cihaz Üretim Rotası') RETURNING id`,
         [mmId]
     );
     const rotaId = ins.rows[0].id;
@@ -295,26 +338,56 @@ async function main() {
         }
         const isYeriId = isYeri.rows[0].id;
 
-        const anaDepoId = await ensureDepo(client, isYeriId, 'ANA', 'Ana Depo (Hammadde)', true);
-        const ymDepoId = await ensureDepo(client, isYeriId, 'YM', 'Yarı Mamul Depo', false);
-        const mmDepoId = await ensureDepo(client, isYeriId, 'MM', 'Mamul Depo', false);
+        const anaDepo = await ensureDepo(client, isYeriId, 'Ana Depo (Hammadde)', true);
+        const ymDepo = await ensureDepo(client, isYeriId, 'Yarı Mamul Depo', false);
+        const mmDepo = await ensureDepo(client, isYeriId, 'Mamul Depo', false);
+        const anaDepoId = anaDepo.id;
+        const ymDepoId = ymDepo.id;
+        const mmDepoId = mmDepo.id;
 
-        let cari = await client.query(`SELECT id FROM cariler WHERE cari_kodu='TDR-001'`);
-        if (!cari.rows[0]) {
-            cari = await client.query(
-                `INSERT INTO cariler (cari_kodu, cari_adi, cari_turu, telefon)
-                 VALUES ('TDR-001','Demo Tedarikçi A.Ş.','Tedarikci','05550000000') RETURNING id`
-            );
-        }
-        const cariId = cari.rows[0].id;
+        const tedarikci = await ensureCari(client, {
+            cari_adi: 'Demo Tedarikçi A.Ş.',
+            cari_turu: 'Tedarikci',
+            telefon: '02121234567',
+            email: 'satinalma@demotedarikci.com',
+            vergi_no: '1234567890',
+            vergi_dairesi: 'Kadıköy',
+            yetkili_adi: 'Ayşe Tedarik',
+            yetkili_telefon: '05321112233',
+            adres: 'Sanayi Cad. No:10',
+            il: 'İstanbul',
+            ilce: 'Pendik',
+            odeme_vadesi_gun: 30,
+            is_yeri_id: isYeriId,
+            notlar: 'Ana hammadde tedarikçisi',
+        });
+        const musteri = await ensureCari(client, {
+            cari_adi: 'Demo Müşteri Ltd.',
+            cari_turu: 'Musteri',
+            telefon: '02129876543',
+            email: 'siparis@demomusteri.com',
+            vergi_no: '0987654321',
+            vergi_dairesi: 'Beşiktaş',
+            yetkili_adi: 'Mehmet Alıcı',
+            yetkili_telefon: '05329876543',
+            adres: 'Bağdat Cad. No:5',
+            il: 'İstanbul',
+            ilce: 'Kadıköy',
+            odeme_vadesi_gun: 45,
+            is_yeri_id: isYeriId,
+            notlar: 'Satış siparişleri bu cariye açılır',
+        });
+        const cariId = tedarikci.id;
 
-        const hm1 = await upsertStok(client, { stok_kodu: 'HM-001', stok_adi: 'Hammadde 1 - Çelik Sac', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const hm2 = await upsertStok(client, { stok_kodu: 'HM-002', stok_adi: 'Hammadde 2 - Vida Seti', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const hm3 = await upsertStok(client, { stok_kodu: 'HM-003', stok_adi: 'Hammadde 3 - Plastik Gövde', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const hm4 = await upsertStok(client, { stok_kodu: 'HM-004', stok_adi: 'Hammadde 4 - Elektronik Kart', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const ym1 = await upsertStok(client, { stok_kodu: 'YM-001', stok_adi: 'Yarı Mamul 1 - Gövde Montajı', birim: 'AD', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
-        const ym2 = await upsertStok(client, { stok_kodu: 'YM-002', stok_adi: 'Yarı Mamul 2 - Elektronik Montaj', birim: 'AD', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
-        const mm1 = await upsertStok(client, { stok_kodu: 'MM-001', stok_adi: 'Mamul - Demo Cihaz', birim: 'AD', satis_fiyati: 1500, stok_tipi: 'Mamul', tedarik_tipi: 'Uretim' });
+        const hm1r = await ensureStok(client, { stok_adi: 'Hammadde 1 - Çelik Sac', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const hm2r = await ensureStok(client, { stok_adi: 'Hammadde 2 - Vida Seti', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const hm3r = await ensureStok(client, { stok_adi: 'Hammadde 3 - Plastik Gövde', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const hm4r = await ensureStok(client, { stok_adi: 'Hammadde 4 - Elektronik Kart', birim: 'AD', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const ym1r = await ensureStok(client, { stok_adi: 'Yarı Mamul 1 - Gövde Montajı', birim: 'AD', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
+        const ym2r = await ensureStok(client, { stok_adi: 'Yarı Mamul 2 - Elektronik Montaj', birim: 'AD', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
+        const mm1r = await ensureStok(client, { stok_adi: 'Mamul - Demo Cihaz', birim: 'AD', satis_fiyati: 1500, stok_tipi: 'Mamul', tedarik_tipi: 'Uretim' });
+        const hm1 = hm1r.id, hm2 = hm2r.id, hm3 = hm3r.id, hm4 = hm4r.id;
+        const ym1 = ym1r.id, ym2 = ym2r.id, mm1 = mm1r.id;
 
         const bomId = await ensureMamulBom(client, mm1, ym1, ym2, hm1, hm2, hm3, hm4);
 
@@ -465,15 +538,27 @@ async function main() {
         }
         await client.query(`UPDATE uretim_emirleri SET durum='Kapali' WHERE id=$1`, [emir.id]);
 
-        return { talepNo, sasNo, mkNo, emirNo, adimKodlari, bomId, rotaId };
+        return {
+            talepNo, sasNo, mkNo, emirNo, adimKodlari, bomId, rotaId,
+            kodlar: {
+                tedarikci: tedarikci.cari_kodu,
+                musteri: musteri.cari_kodu,
+                stoklar: [hm1r, hm2r, hm3r, hm4r, ym1r, ym2r, mm1r].map((s) => s.stok_kodu),
+                depolar: [anaDepo.depo_kodu, ymDepo.depo_kodu, mmDepo.depo_kodu],
+            },
+        };
     });
 
     const bakiyeler = await depoBakiyeListesi(pool);
+    console.log('\n--- Kod sistemi ---');
+    console.log('Tedarikçi:', ozet.kodlar.tedarikci, '| Müşteri:', ozet.kodlar.musteri);
+    console.log('Stoklar  :', ozet.kodlar.stoklar.join(', '));
+    console.log('Depolar  :', ozet.kodlar.depolar.join(', '));
     console.log('\n--- Döngü özeti ---');
-    console.log('Ürün ağacı      : BOM-MM1 (tek çok seviyeli ağaç)');
-    console.log('Rota            : ROT-MM1 →', ozet.adimKodlari.join(' → '));
+    console.log('Ürün ağacı      : tek mamul ağacı (UA-MAMUL)');
+    console.log('Rota            :', ozet.adimKodlari.join(' → '));
     console.log('Satınalma talebi:', ozet.talepNo);
-    console.log('Satınalma sipariş:', ozet.sasNo);
+    console.log('Satınalma sipariş:', ozet.sasNo, '(tedarikçiye)');
     console.log('Mal kabul       :', ozet.mkNo);
     console.log('İş emri         :', ozet.emirNo);
     console.log('\n--- Depo bakiyeleri ---');

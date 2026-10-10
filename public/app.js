@@ -41,9 +41,10 @@ function renderTreeNodes(nodes, depth = 0) {
 
 async function loadAll() {
   const [
-    stoklar, bom, merkezler, rotalar,
+    cariler, stoklar, bom, merkezler, rotalar,
     talepler, sas, mk, emirler, bakiyeler, depolar,
   ] = await Promise.all([
+    api('/cariler'),
     api('/stoklar'),
     api('/urun-agaclari'),
     api('/is-merkezleri'),
@@ -57,13 +58,25 @@ async function loadAll() {
   ]);
 
   $('#ozetCards').innerHTML = [
+    ['Cari', cariler.length],
     ['Stok', stoklar.length],
     ['Ürün Ağacı', bom.length],
-    ['Rota', rotalar.length],
     ['Talep', talepler.length],
     ['SAS', sas.length],
     ['İş Emri', emirler.length],
   ].map(([l, n]) => `<div class="card"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+
+  table($('#tblCariler'), ['Kod', 'Ad', 'Tür', 'Yetkili', 'Telefon', 'Vergi No', 'İl', 'Vade'],
+    cariler.map((c) => [
+      `<span class="mono">${c.cari_kodu}</span>`,
+      c.cari_adi,
+      `<span class="badge">${c.cari_turu}</span>`,
+      c.yetkili_adi || '-',
+      c.telefon || '-',
+      c.vergi_no || '-',
+      c.il || '-',
+      c.odeme_vadesi_gun ?? '-',
+    ]));
 
   table($('#tblStoklar'), ['Kod', 'Ad', 'Tip', 'Tedarik', 'Birim', 'Fiyat'],
     stoklar.map((s) => [

@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { cariTedarikciMi } = require('../src/utils/kodUretici');
 
 async function siparisGetir(id) {
     const s = await pool.query(`
@@ -63,8 +64,17 @@ router.post('/talep-donustur', async (req, res) => {
             );
             if (satirlar.rows.length === 0) throw new Error('Talep satırı yok.');
 
-            const cari = await client.query('SELECT id FROM cariler WHERE id = $1', [cari_id]);
+            const cari = await client.query(
+                'SELECT id, cari_kodu, cari_adi, cari_turu, aktif FROM cariler WHERE id = $1',
+                [cari_id]
+            );
             if (!cari.rows[0]) throw new Error('Cari bulunamadı.');
+            if (cari.rows[0].aktif === false) throw new Error('Cari pasif; satınalma yapılamaz.');
+            if (!cariTedarikciMi(cari.rows[0].cari_turu)) {
+                throw new Error(
+                    `Satınalma siparişi yalnızca tedarikçiye açılır. Seçilen cari (${cari.rows[0].cari_kodu}) türü: ${cari.rows[0].cari_turu}`
+                );
+            }
 
             const no = await sonrakiBelgeNo(client, 'SATINALMA_SIPARIS');
             let toplam = 0;

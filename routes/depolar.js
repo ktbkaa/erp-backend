@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { sonrakiKod } = require('../src/utils/kodUretici');
 
 // Tüm depoları listele (firma + iş yeri bilgisiyle)
 router.get('/', async (req, res) => {
@@ -48,9 +49,9 @@ router.post('/', async (req, res) => {
     try {
         const { is_yeri_id, depo_kodu, depo_adi, aktif, varsayilan } = req.body;
 
-        if (!is_yeri_id || !depo_kodu || !depo_adi) {
+        if (!is_yeri_id || !depo_adi) {
             return res.status(400).json({
-                hata: 'is_yeri_id, depo_kodu ve depo_adi zorunludur.',
+                hata: 'is_yeri_id ve depo_adi zorunludur. depo_kodu boşsa otomatik üretilir (D00001).',
             });
         }
 
@@ -83,13 +84,15 @@ router.post('/', async (req, res) => {
                 );
             }
 
+            const kod = depo_kodu || (await sonrakiKod(client, 'DEPO'));
+
             const sonuc = await client.query(
                 `
                 INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, aktif, varsayilan)
                 VALUES ($1, $2, $3, COALESCE($4, TRUE), $5)
                 RETURNING *;
                 `,
-                [is_yeri_id, depo_kodu, depo_adi, aktif, varsayilanOlacak]
+                [is_yeri_id, kod, depo_adi, aktif, varsayilanOlacak]
             );
             return sonuc.rows[0];
         });

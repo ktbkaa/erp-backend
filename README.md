@@ -2,15 +2,12 @@
 
 Gerçek işletme süreçlerine uygun, adım adım büyüyen ERP çekirdeği.
 
-## Bu sürüm (v0.3 — Satınalma + Üretim döngüsü)
+## Bu sürüm (v0.3.2)
 
-- Ürün ağacı, rota, iş merkezi
-- Satınalma talebi → sipariş → mal kabul → Ana Depo
-- Üretim emri / girişi → Yarı Mamul Depo → Mamul Depo
-- Operasyon konsolu: `http://localhost:3000/`
-- Tek komut demo: `npm run demo:cycle`
-
-Detay: `docs/07_DEMO_CYCLE.md`
+- Kod sistemi: `M00001`, `H00001`, `T00001`… (`docs/08_KOD_SISTEMI.md`)
+- Detaylı cari kart (müşteri / tedarikçi)
+- Ürün ağacı + rota operasyonları + satınalma/üretim döngüsü
+- Konsol: `http://localhost:3000/` · Demo: `npm run demo:cycle`
 
 ## Hızlı başlangıç (Windows / VS Code)
 
