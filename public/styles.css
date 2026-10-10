@@ -79,6 +79,26 @@ h1 {
   border: 1px solid var(--line);
 }
 
+.status {
+  position: relative;
+  margin: 0 2rem 0.8rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  line-height: 1.5;
+}
+.status.ok {
+  border-color: #9dceb3;
+  background: #eef8f1;
+}
+.status.error {
+  border-color: #e2b4a0;
+  background: #fff1ea;
+  color: #6a2d12;
+}
+.status ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+
 .tabs {
   position: relative;
   display: flex;

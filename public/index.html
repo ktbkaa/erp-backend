@@ -23,6 +23,8 @@
     </div>
   </header>
 
+  <div id="statusBox" class="status" hidden></div>
+
   <nav class="tabs" id="tabs">
     <button data-tab="ozet" class="active">Özet</button>
     <button data-tab="cariler">Cariler</button>
@@ -48,8 +50,15 @@
       </ol>
     </section>
 
+    <section id="cariler" class="panel">
+      <h2>Cari Kartları</h2>
+      <p class="hint">Müşteri = satış · Tedarikçi = satınalma · Kod: M00001 / T00001</p>
+      <div class="table-wrap"><table id="tblCariler"></table></div>
+    </section>
+
     <section id="stoklar" class="panel">
       <h2>Stok Kartları</h2>
+      <p class="hint">Kod: H00001 hammadde · Y00001 yarı mamul · U00001 mamul</p>
       <div class="table-wrap"><table id="tblStoklar"></table></div>
     </section>
 
