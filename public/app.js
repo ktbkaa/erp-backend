@@ -25,7 +25,7 @@ async function safeApi(path) {
 function table(el, headers, rows, emptyHint) {
   if (!el) return;
   if (!rows.length) {
-    el.innerHTML = `<tr><td colspan="${headers.length}">${emptyHint || 'Kayıt yok. Terminalde <code>npm run demo:cycle</code> çalıştır, sonra Yenile.’}</td></tr>`;
+    el.innerHTML = `<tr><td colspan="${headers.length}">${emptyHint || "Kayıt yok. Terminalde <code>npm run demo:cycle</code> çalıştır, sonra Yenile."}</td></tr>`;
     return;
   }
   el.innerHTML = `
