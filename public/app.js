@@ -2,13 +2,30 @@ const $ = (sel) => document.querySelector(sel);
 
 async function api(path) {
   const res = await fetch(path);
-  if (!res.ok) throw new Error(`${path} → ${res.status}`);
-  return res.json();
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (_) { /* ham metin */ }
+  if (!res.ok) {
+    const msg = (data && (data.hata || data.detay)) || text || res.statusText;
+    throw new Error(`${path} → ${res.status}: ${msg}`);
+  }
+  return data;
 }
 
-function table(el, headers, rows) {
+async function safeApi(path) {
+  try {
+    const data = await api(path);
+    return { ok: true, data: Array.isArray(data) ? data : (data || []), error: null };
+  } catch (err) {
+    console.error(err);
+    return { ok: false, data: [], error: err.message };
+  }
+}
+
+function table(el, headers, rows, emptyHint) {
+  if (!el) return;
   if (!rows.length) {
-    el.innerHTML = `<tr><td colspan="${headers.length}">Kayıt yok. <code>npm run demo:cycle</code> çalıştır.</td></tr>`;
+    el.innerHTML = `<tr><td colspan="${headers.length}">${emptyHint || 'Kayıt yok. Terminalde <code>npm run demo:cycle</code> çalıştır, sonra Yenile.’}</td></tr>`;
     return;
   }
   el.innerHTML = `
@@ -19,10 +36,11 @@ function table(el, headers, rows) {
   `;
 }
 
-function blockList(el, itemsHtml) {
+function blockList(el, itemsHtml, emptyHint) {
+  if (!el) return;
   el.innerHTML = itemsHtml.length
     ? itemsHtml.join('')
-    : `<div class="block">Kayıt yok. <code>npm run demo:cycle</code> çalıştır.</div>`;
+    : `<div class="block">${emptyHint || 'Kayıt yok. <code>npm run demo:cycle</code> çalıştır.'}</div>`;
 }
 
 function renderTreeNodes(nodes, depth = 0) {
@@ -39,23 +57,83 @@ function renderTreeNodes(nodes, depth = 0) {
   `).join('');
 }
 
+function setStatus(html, isError) {
+  const box = $('#statusBox');
+  if (!box) return;
+  box.className = isError ? 'status error' : 'status ok';
+  box.innerHTML = html;
+  box.hidden = false;
+}
+
 async function loadAll() {
-  const [
+  setStatus('Veriler yükleniyor…', false);
+
+  const health = await safeApi('/health');
+  if (!health.ok || !health.data || health.data.durum !== 'ok') {
+    setStatus(
+      `<strong>Sunucu/DB bağlantısı yok.</strong><br>
+       1) Terminalde <code>npm start</code> çalışıyor mu?<br>
+       2) <a href="/health" target="_blank">/health</a> açılınca <code>durum: ok</code> görmelisin.<br>
+       Hata: ${health.error || JSON.stringify(health.data)}`,
+      true
+    );
+  }
+
+  const endpoints = [
+    ['cariler', '/cariler'],
+    ['stoklar', '/stoklar'],
+    ['bom', '/urun-agaclari'],
+    ['merkezler', '/is-merkezleri'],
+    ['rotalar', '/rotalar'],
+    ['talepler', '/satin-alma-talepleri'],
+    ['sas', '/satin-alma-siparisleri'],
+    ['mk', '/mal-kabuller'],
+    ['emirler', '/uretim-emirleri'],
+    ['bakiyeler', '/stok-bakiyeleri'],
+    ['depolar', '/depolar'],
+  ];
+
+  const results = {};
+  const errors = [];
+  await Promise.all(endpoints.map(async ([key, path]) => {
+    const r = await safeApi(path);
+    results[key] = r.data;
+    if (!r.ok) errors.push(r.error);
+  }));
+
+  const {
     cariler, stoklar, bom, merkezler, rotalar,
     talepler, sas, mk, emirler, bakiyeler, depolar,
-  ] = await Promise.all([
-    api('/cariler'),
-    api('/stoklar'),
-    api('/urun-agaclari'),
-    api('/is-merkezleri'),
-    api('/rotalar'),
-    api('/satin-alma-talepleri'),
-    api('/satin-alma-siparisleri'),
-    api('/mal-kabuller'),
-    api('/uretim-emirleri'),
-    api('/stok-bakiyeleri'),
-    api('/depolar'),
-  ]);
+  } = results;
+
+  const total =
+    (cariler?.length || 0) + (stoklar?.length || 0) + (bom?.length || 0) +
+    (talepler?.length || 0) + (emirler?.length || 0);
+
+  if (errors.length) {
+    setStatus(
+      `<strong>Bazı API’ler hata verdi (ekranlar bu yüzden boş kalabilir).</strong>
+       <ul>${errors.map((e) => `<li><code>${e}</code></li>`).join('')}</ul>
+       Çoğu zaman çözüm: terminalde sırayla<br>
+       <code>npm run migrate</code> → <code>npm run demo:cycle</code> → sunucuyu durdurup <code>npm start</code><br>
+       Sonra bu sayfada <strong>Ctrl+F5</strong> (sert yenile).`,
+      true
+    );
+  } else if (total === 0) {
+    setStatus(
+      `<strong>Veritabanında demo veri yok — ekranlar bu yüzden boş.</strong><br>
+       Terminalde (sunucu kapalıyken veya ayrı terminalde):<br>
+       <code>npm run migrate</code><br>
+       <code>npm run demo:cycle</code><br>
+       Sonra <code>npm start</code> ve bu sayfada <strong>Yenile</strong>.`,
+      true
+    );
+  } else {
+    setStatus(
+      `Bağlantı tamam. Kayıtlar yüklendi (stok: ${stoklar.length}, cari: ${cariler.length}, iş emri: ${emirler.length}).`,
+      false
+    );
+  }
 
   $('#ozetCards').innerHTML = [
     ['Cari', cariler.length],
@@ -209,9 +287,7 @@ document.querySelectorAll('.tabs button').forEach((btn) => {
 });
 
 $('#btnRefresh').addEventListener('click', () => {
-  loadAll().catch((e) => alert(e.message));
+  loadAll();
 });
 
-loadAll().catch((e) => {
-  $('#ozetCards').innerHTML = `<div class="block">API hatası: ${e.message}. Sunucu çalışıyor mu?</div>`;
-});
+loadAll();
