@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — Satınalma + üretim döngüsü
+
+- Ürün ağacı, rota, iş merkezi
+- Satınalma talebi → sipariş → mal kabul (stok hareketi)
+- Üretim emri + üretim girişi (tüketim + mamul giriş hareketleri)
+- Depo bakiyesi API
+- `npm run demo:cycle` uçtan uca senaryo
+- Operasyon konsolu UI (`http://localhost:3000/`)
+
 ## 0.2.1 — Depo modülü
 
 - `depolar.varsayilan` kolonu

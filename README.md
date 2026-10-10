@@ -2,14 +2,15 @@
 
 Gerçek işletme süreçlerine uygun, adım adım büyüyen ERP çekirdeği.
 
-## Bu sürüm (v0.2 — Altyapı)
+## Bu sürüm (v0.3 — Satınalma + Üretim döngüsü)
 
-- Güvenli DB bağlantısı (`.env` + Pool)
-- Migration ile şema yönetimi
-- Depo, ölçü birimi, stok hareket iskeleti, belge numarası
-- Mevcut modüller korundu ve transaction’lar düzeltildi
+- Ürün ağacı, rota, iş merkezi
+- Satınalma talebi → sipariş → mal kabul → Ana Depo
+- Üretim emri / girişi → Yarı Mamul Depo → Mamul Depo
+- Operasyon konsolu: `http://localhost:3000/`
+- Tek komut demo: `npm run demo:cycle`
 
-Detay: `docs/06_A1_INFRA.md`
+Detay: `docs/07_DEMO_CYCLE.md`
 
 ## Hızlı başlangıç (Windows / VS Code)
 
@@ -43,14 +44,20 @@ npm run migrate
 
 Bu komut tablolarını **silmez**; eksik tabloları/kolonları ekler.
 
-### 4) Sunucuyu çalıştır
+### 4) Demo döngüsünü bir kez çalıştır
+
+```bash
+npm run demo:cycle
+```
+
+### 5) Sunucuyu çalıştır
 
 ```bash
 npm start
 ```
 
-Kontrol: tarayıcıda `http://localhost:3000/health`  
-`{"durum":"ok", ...}` görmelisin.
+- Health: `http://localhost:3000/health`
+- Konsol: `http://localhost:3000/`
 
 ## API özeti
 

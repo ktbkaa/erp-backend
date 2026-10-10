@@ -1,11 +1,12 @@
 {
   "name": "erp-backend",
-  "version": "0.2.0",
-  "description": "ERP çekirdek backend - altyapı ve temel tanımlar",
+  "version": "0.3.0",
+  "description": "ERP çekirdek — satınalma ve üretim döngüsü",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "migrate": "node db/migrate.js",
+    "demo:cycle": "node scripts/demo-cycle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
