@@ -25,6 +25,20 @@ function blockList(el, itemsHtml) {
     : `<div class="block">Kayıt yok. <code>npm run demo:cycle</code> çalıştır.</div>`;
 }
 
+function renderTreeNodes(nodes, depth = 0) {
+  return (nodes || []).map((n) => `
+    <div class="tree-node" style="margin-left:${depth * 1.2}rem">
+      <div class="tree-line">
+        <span class="mono">${n.stok_kodu}</span>
+        <span>${n.stok_adi}</span>
+        <span class="badge">${n.stok_tipi}</span>
+        <span class="mono">x ${n.miktar}</span>
+      </div>
+      ${renderTreeNodes(n.alt_satirlar, depth + 1)}
+    </div>
+  `).join('');
+}
+
 async function loadAll() {
   const [
     stoklar, bom, merkezler, rotalar,
@@ -45,11 +59,10 @@ async function loadAll() {
   $('#ozetCards').innerHTML = [
     ['Stok', stoklar.length],
     ['Ürün Ağacı', bom.length],
+    ['Rota', rotalar.length],
     ['Talep', talepler.length],
     ['SAS', sas.length],
-    ['Mal Kabul', mk.length],
     ['İş Emri', emirler.length],
-    ['Depo', depolar.length],
   ].map(([l, n]) => `<div class="card"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
 
   table($('#tblStoklar'), ['Kod', 'Ad', 'Tip', 'Tedarik', 'Birim', 'Fiyat'],
@@ -66,20 +79,16 @@ async function loadAll() {
     <div class="block">
       <header>
         <span>${a.agac_kodu} · ${a.agac_adi}</span>
-        <span class="badge">${a.stok_kodu} (${a.stok_tipi})</span>
+        <span class="badge">Kök: ${a.stok_kodu}</span>
       </header>
-      <table>
-        <thead><tr><th>Bileşen</th><th>Ad</th><th>Miktar</th><th>Tip</th></tr></thead>
-        <tbody>
-          ${(a.satirlar || []).map((s) => `
-            <tr>
-              <td class="mono">${s.stok_kodu}</td>
-              <td>${s.stok_adi}</td>
-              <td>${s.miktar}</td>
-              <td>${s.stok_tipi}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
+      <div class="tree-root">
+        <div class="tree-line root">
+          <strong class="mono">${a.stok_kodu}</strong>
+          <span>${a.stok_adi}</span>
+          <span class="badge">${a.stok_tipi}</span>
+        </div>
+        ${renderTreeNodes(a.agac || [])}
+      </div>
     </div>`));
 
   table($('#tblMerkez'), ['Kod', 'Ad', 'İş Yeri'],
@@ -92,8 +101,20 @@ async function loadAll() {
         <span class="badge">${r.stok_kodu}</span>
       </header>
       ${(r.operasyonlar || []).map((o) => `
-        <div>${o.sira_no}. ${o.operasyon_kodu} — ${o.operasyon_adi}
-          <span class="badge">${o.merkez_kodu || '-'}</span>
+        <div class="op">
+          <div class="op-head">
+            <strong class="mono">${o.operasyon_kodu}</strong>
+            <span>${o.operasyon_adi}</span>
+            <span class="badge">çıktı: ${o.cikti_stok_kodu || '-'}</span>
+          </div>
+          <div class="muted">Kullanılan:
+            ${(o.bilesenler || []).map((b) => `${b.stok_kodu} x${b.miktar}`).join(', ') || '-'}
+          </div>
+          <div class="muted">Sonraki:
+            ${o.sonraki_operasyon
+              ? `${o.sonraki_operasyon.operasyon_kodu} — ${o.sonraki_operasyon.operasyon_adi}`
+              : 'Yok (son adım)'}
+          </div>
         </div>`).join('')}
     </div>`));
 
@@ -124,8 +145,26 @@ async function loadAll() {
         <span class="badge">${e.durum}</span>
       </header>
       <div>${e.stok_kodu} · plan ${e.planlanan_miktar} / üretilen ${e.uretilen_miktar}</div>
-      <div>Tüketim depo: ${e.hammadde_depo_kodu || '-'} → Giriş depo: ${e.mamul_depo_kodu || '-'}</div>
-      <div>Ağaç: ${e.agac_kodu || '-'} · Rota: ${e.rota_kodu || '-'}</div>
+      <div class="muted">Depolar: HM ${e.hammadde_depo_kodu || '-'} · YM ${e.yari_mamul_depo_kodu || '-'} · MM ${e.mamul_depo_kodu || '-'}</div>
+      <h4>Operasyon sırası</h4>
+      ${(e.operasyonlar || []).map((o) => `
+        <div class="op ${o.durum === 'Hazir' ? 'op-active' : ''}">
+          <div class="op-head">
+            <strong class="mono">${o.sira_no}. ${o.operasyon_kodu}</strong>
+            <span>${o.operasyon_adi}</span>
+            <span class="badge">${o.durum}</span>
+          </div>
+          <div>Üretim miktarı: <span class="mono">${o.uretilen_miktar} / ${o.planlanan_miktar}</span></div>
+          <div>Çıktı ürün: <span class="mono">${o.cikti_stok_kodu || '-'}</span></div>
+          <div>Kullanılan:
+            ${(o.bilesenler || []).map((b) => `${b.stok_kodu} (${b.planlanan_miktar})`).join(', ') || '-'}
+          </div>
+          <div>Sonraki operasyon:
+            ${o.sonraki_operasyon
+              ? `${o.sonraki_operasyon.operasyon_kodu} — ${o.sonraki_operasyon.operasyon_adi}`
+              : 'Yok'}
+          </div>
+        </div>`).join('') || '<div class="muted">Operasyon yok</div>'}
     </div>`));
 
   table($('#tblBakiye'), ['Depo', 'Stok', 'Ad', 'Tip', 'Bakiye'],

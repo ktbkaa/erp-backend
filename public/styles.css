@@ -207,3 +207,38 @@ footer {
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.tree-root { margin-top: 0.5rem; }
+.tree-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  padding: 0.35rem 0;
+}
+.tree-line.root { font-size: 1.05rem; margin-bottom: 0.25rem; }
+.tree-node {
+  border-left: 2px solid #cfc5b4;
+  padding-left: 0.7rem;
+  margin-top: 0.15rem;
+}
+.op {
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  padding: 0.7rem;
+  margin: 0.45rem 0;
+  background: #fffdf8;
+}
+.op-active {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.op-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+.muted { color: var(--muted); font-size: 0.92rem; }
+h4 { margin: 0.8rem 0 0.3rem; font-family: var(--font-display); }

@@ -1,17 +1,29 @@
-# Demo Döngüsü — Satınalma + Üretim
+# Demo Döngüsü — Tek ürün ağacı + operasyon sırası
 
-## Senaryo
+## Ürün ağacı (tek kök)
 
 ```text
-HM-001 + HM-002  →  YM-001  →  Yarı Mamul Depo
-HM-003 + HM-004  →  YM-002  →  Yarı Mamul Depo
-YM-001 + YM-002  →  MM-001  →  Mamul Depo
+MM-001 Mamul - Demo Cihaz
+├─ YM-001 Yarı Mamul 1
+│  ├─ HM-001
+│  └─ HM-002
+└─ YM-002 Yarı Mamul 2
+   ├─ HM-003
+   └─ HM-004
 ```
 
-Satınalma ile 4 hammadde **Ana Depo**’ya girer.
+Üç ayrı ağaç yoktur. Mamulün ağacı tüm hiyerarşiyi taşır.
 
-> Not: Mamul, hammadde deposuna değil **Mamul Depo (MM)**’ye alınır.  
-> Bu, ERP stok ayrımı için doğrudur.
+## Rota / iş emri operasyonları
+
+| Sıra | Kod | İş | Kullanılan | Çıktı | Sonraki |
+|------|-----|-----|------------|-------|---------|
+| 10 | OP10 | YM1 montaj | HM1, HM2 | YM-001 → YM depo | OP20 |
+| 20 | OP20 | YM2 montaj | HM3, HM4 | YM-002 → YM depo | OP30 |
+| 30 | OP30 | Mamul montaj | YM1, YM2 | MM-001 → Mamul depo | — |
+
+İş emri açılınca bu operasyonlar kopyalanır. İlki `Hazir`, diğerleri `Bekliyor`.  
+Bir operasyon bitince sonraki `Hazir` olur.
 
 ## Çalıştırma
 
@@ -22,27 +34,4 @@ npm run demo:cycle
 npm start
 ```
 
-Tarayıcı: `http://localhost:3000/`
-
-## Beklenen bakiyeler (özet)
-
-| Depo | Stok | Bakiye |
-|------|------|--------|
-| ANA | HM-001..004 | her biri 5 (10 alım − 5 tüketim) |
-| YM | YM-001, YM-002 | 0 (üretilip mamule tüketildi) veya senaryoya göre |
-| MM | MM-001 | 5 |
-
-Demo: her HM’den 10 alınır, YM’ler için 5’er tüketilir → ANA’da 5 kalan;  
-YM’ler 5’er üretilip mamule 5’er tüketilir → YM depo 0; Mamul Depo’da MM-001 = 5.
-
-## API
-
-- `GET/POST /urun-agaclari`
-- `GET/POST /is-merkezleri`
-- `GET/POST /rotalar`
-- `GET/POST /satin-alma-talepleri`
-- `POST /satin-alma-siparisleri/talep-donustur`
-- `GET/POST /mal-kabuller`
-- `GET/POST /uretim-emirleri`
-- `POST /uretim-emirleri/:id/uretim-giris`
-- `GET /stok-bakiyeleri`
+UI: `http://localhost:3000/`

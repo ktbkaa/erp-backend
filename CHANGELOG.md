@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 — Tek ürün ağacı + sıralı operasyonlar
+
+- Mamul ürün ağacı çok seviyeli (YM altında hammaddeler)
+- Rota: OP10 → OP20 → OP30, bileşen + sonraki operasyon
+- İş emri operasyon adımları (Hazir/Bekliyor/Tamamlandi)
+- Demo ve UI buna göre güncellendi
+
 ## 0.3.0 — Satınalma + üretim döngüsü
 
 - Ürün ağacı, rota, iş merkezi
