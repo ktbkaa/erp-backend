@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@microsoft/postgres-mcp", "run"]
+    }
+  }
+}

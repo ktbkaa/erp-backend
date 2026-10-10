@@ -36,9 +36,21 @@ Henüz yok: depo, stok hareket motoru, üretim, satın alma/satış belge zincir
 - Auth (sonraki aşama): JWT + bcrypt
 - Detay: `docs/05_TECHNOLOGY.md`
 
+## PostgreSQL MCP (Cursor + VS Code)
+
+Yerel PostgreSQL’e AI erişimi için config dosyaları eklendi:
+
+- `.cursor/mcp.json` — Cursor
+- `.vscode/mcp.json` — VS Code
+- `.mcp.json` — taşınabilir format
+
+Kurulum adımları: `docs/MCP_SETUP.md`
+
 ## Sonraki adım
 
-Kullanıcı onayıyla **geliştirme ortamını standartlaştırma** (Node, PostgreSQL, env, migration iskeleti) ve ardından v0.1 altyapı.
+1. Yerel MCP’yi bağla (`docs/MCP_SETUP.md`)
+2. Canlı şema envanterini al
+3. Onayla **geliştirme ortamını standartlaştır** (env, Pool, migration) → v0.1
 
 ## Güvenlik uyarısı
 
