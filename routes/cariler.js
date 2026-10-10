@@ -1,75 +1,76 @@
 const express = require('express');
 const router = express.Router();
-const dbClient = require('../db');
+const pool = require('../db');
+const { withTransaction } = require('../src/utils/withTransaction');
 
-// Carileri ve adres/yetkili detaylarını listeleyen rota
 router.get('/', async (req, res) => {
     try {
-        const carilerRes = await dbClient.query('SELECT * FROM cariler ORDER BY id DESC');
+        const carilerRes = await pool.query('SELECT * FROM cariler ORDER BY id DESC');
         const cariler = [];
-        for (let cari of carilerRes.rows) {
-            const detaylarRes = await dbClient.query('SELECT * FROM cari_detaylari WHERE cari_id = $1', [cari.id]);
+        for (const cari of carilerRes.rows) {
+            const detaylarRes = await pool.query(
+                'SELECT * FROM cari_detaylari WHERE cari_id = $1',
+                [cari.id]
+            );
             cariler.push({
                 ...cari,
-                cari_detaylari: detaylarRes.rows
+                cari_detaylari: detaylarRes.rows,
             });
         }
         res.json(cariler);
     } catch (err) {
         console.error('Cari listeleme hatası:', err);
-        res.status(500).send('Cariler çekilirken bir pürüz çıktı.');
+        res.status(500).json({ hata: 'Cariler çekilirken bir pürüz çıktı.' });
     }
 });
 
-// Master-Detail Yeni Cari Ekleme Rota (Transaction Güvenceli)
 router.post('/', async (req, res) => {
-    const client = await dbClient.connect();
     try {
-        await client.query('BEGIN');
-
         const { cari_kodu, cari_adi, cari_turu, telefon, cari_detaylari } = req.body;
-
-        // 1. Master (Cari Kartı) Kaydı
-        const cariSorgu = `
-            INSERT INTO cariler (cari_kodu, cari_adi, cari_turu, telefon) 
-            VALUES ($1, $2, $3, $4) 
-            RETURNING *;
-        `;
-        const cariSonuc = await client.query(cariSorgu, [cari_kodu, cari_adi, cari_turu, telefon]);
-        const yeniCari = cariSonuc.rows[0];
-
-        // 2. Detail (Adres ve Yetkili Bilgileri) Kayıtları
-        const eklenenDetaylar = [];
-        if (cari_detaylari && cari_detaylari.length > 0) {
-            for (const d of cari_detaylari) {
-                const detaySorgu = `
-                    INSERT INTO cari_detaylari (cari_id, adres, fatura_adresi, yetkili_adi, yetkili_telefon)
-                    VALUES ($1, $2, $3, $4, $5)
-                    RETURNING *;
-                `;
-                const detaySonuc = await client.query(detaySorgu, [
-                    yeniCari.id, 
-                    d.adres, 
-                    d.fatura_adresi, 
-                    d.yetkili_adi, 
-                    d.yetkili_telefon
-                ]);
-                eklenenDetaylar.push(detaySonuc.rows[0]);
-            }
+        if (!cari_kodu || !cari_adi) {
+            return res.status(400).json({ hata: 'cari_kodu ve cari_adi zorunludur.' });
         }
 
-        await client.query('COMMIT');
-        res.status(201).json({
-            cari: yeniCari,
-            cari_detaylari: eklenenDetaylar
+        const sonuc = await withTransaction(pool, async (client) => {
+            const cariSonuc = await client.query(
+                `
+                INSERT INTO cariler (cari_kodu, cari_adi, cari_turu, telefon)
+                VALUES ($1, $2, $3, $4)
+                RETURNING *;
+                `,
+                [cari_kodu, cari_adi, cari_turu || null, telefon || null]
+            );
+            const yeniCari = cariSonuc.rows[0];
+
+            const eklenenDetaylar = [];
+            if (Array.isArray(cari_detaylari)) {
+                for (const d of cari_detaylari) {
+                    const detaySonuc = await client.query(
+                        `
+                        INSERT INTO cari_detaylari
+                            (cari_id, adres, fatura_adresi, yetkili_adi, yetkili_telefon)
+                        VALUES ($1, $2, $3, $4, $5)
+                        RETURNING *;
+                        `,
+                        [
+                            yeniCari.id,
+                            d.adres || null,
+                            d.fatura_adresi || null,
+                            d.yetkili_adi || null,
+                            d.yetkili_telefon || null,
+                        ]
+                    );
+                    eklenenDetaylar.push(detaySonuc.rows[0]);
+                }
+            }
+
+            return { cari: yeniCari, cari_detaylari: eklenenDetaylar };
         });
 
+        res.status(201).json(sonuc);
     } catch (err) {
-        await client.query('ROLLBACK');
         console.error('Cari kayıt hatası:', err);
-        res.status(500).send('Cari eklenirken bir pürüz çıktı.');
-    } finally {
-        client.release();
+        res.status(500).json({ hata: 'Cari eklenirken bir pürüz çıktı.', detay: err.message });
     }
 });
 

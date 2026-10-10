@@ -1,16 +1,23 @@
 {
   "name": "erp-backend",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.2.0",
+  "description": "ERP çekirdek backend - altyapı ve temel tanımlar",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "migrate": "node db/migrate.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "erp",
+    "postgresql",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "pg": "^8.23.0"
   }
