@@ -180,7 +180,17 @@ async function ensureMamulBom(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4) {
 }
 
 async function ensureMamulRota(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4, merkezId) {
-    await client.query(`DELETE FROM rotalar WHERE stok_id=$1 OR rota_kodu IN ('ROT-YM1','ROT-YM2','ROT-MM1')`, [mmId]);
+    const mevcut = await client.query(
+        `SELECT id FROM rotalar WHERE rota_kodu = 'ROT-MAMUL' OR stok_id = $1 ORDER BY id LIMIT 1`,
+        [mmId]
+    );
+    if (mevcut.rows[0]) {
+        await client.query(
+            `UPDATE rotalar SET stok_id=$2, rota_adi='Demo Cihaz Üretim Rotası' WHERE id=$1`,
+            [mevcut.rows[0].id, mmId]
+        );
+        return mevcut.rows[0].id;
+    }
 
     const ins = await client.query(
         `INSERT INTO rotalar (stok_id, rota_kodu, rota_adi)
