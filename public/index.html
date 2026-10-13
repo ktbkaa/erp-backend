@@ -3,116 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ERP Çekirdek — Operasyon Konsolu</title>
+  <title>KTB ERP</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="bg-grid"></div>
-  <header class="top">
-    <div>
-      <p class="brand">ATÖLYE ERP</p>
-      <h1>Operasyon Konsolu</h1>
-      <p class="sub">Ürün ağacı → Satınalma → Mal kabul → Üretim → Depo bakiyesi</p>
-    </div>
-    <div class="top-actions">
-      <button id="btnRefresh" class="btn ghost">Yenile</button>
-      <a class="btn" href="/health" target="_blank">Health</a>
-    </div>
-  </header>
-
-  <div id="statusBox" class="status" hidden></div>
-
-  <nav class="tabs" id="tabs">
-    <button data-tab="ozet" class="active">Özet</button>
-    <button data-tab="cariler">Cariler</button>
-    <button data-tab="stoklar">Stoklar</button>
-    <button data-tab="bom">Ürün Ağacı</button>
-    <button data-tab="rota">Rota / İş Merkezi</button>
-    <button data-tab="satinalma">Satınalma</button>
-    <button data-tab="uretim">Üretim</button>
-    <button data-tab="bakiye">Depo Bakiye</button>
-  </nav>
-
-  <main>
-    <section id="ozet" class="panel active">
-      <h2>Döngü durumu</h2>
-      <p class="hint">Tam senaryoyu terminalde bir kez çalıştır: <code>npm run demo:cycle</code></p>
-      <div class="cards" id="ozetCards"></div>
-      <ol class="flow">
-        <li>Tek mamul ürün ağacı: MM ← YM1/YM2 ← 4 hammadde</li>
-        <li>Tek rota: OP10 → OP20 → OP30 (sırayla)</li>
-        <li>Satınalma talebi → sipariş → Ana Depo mal kabul</li>
-        <li>Tek iş emri: operasyonlar sırayla açılır/tamamlanır</li>
-        <li>YM depo → Mamul depo bakiyeleri</li>
-      </ol>
-    </section>
-
-    <section id="cariler" class="panel">
-      <h2>Cari Kartları</h2>
-      <p class="hint">Müşteri = satış · Tedarikçi = satınalma · Kod: M00001 / T00001</p>
-      <div class="table-wrap"><table id="tblCariler"></table></div>
-    </section>
-
-    <section id="stoklar" class="panel">
-      <h2>Stok Kartları</h2>
-      <p class="hint">Kod: H00001 hammadde · Y00001 yarı mamul · U00001 mamul</p>
-      <div class="table-wrap"><table id="tblStoklar"></table></div>
-    </section>
-
-    <section id="bom" class="panel">
-      <h2>Ürün Ağaçları</h2>
-      <div id="bomList" class="stack"></div>
-    </section>
-
-    <section id="rota" class="panel">
-      <h2>İş Merkezleri & Rotalar</h2>
-      <div class="split">
-        <div>
-          <h3>İş Merkezleri</h3>
-          <div class="table-wrap"><table id="tblMerkez"></table></div>
-        </div>
-        <div>
-          <h3>Rotalar</h3>
-          <div id="rotaList" class="stack"></div>
-        </div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand" id="btnHome" title="Ana sayfa">
+        <span class="brand-mark">KTB</span>
+        <span class="brand-name">KTB ERP</span>
       </div>
-    </section>
-
-    <section id="satinalma" class="panel">
-      <h2>Satınalma</h2>
-      <div class="split">
-        <div>
-          <h3>Talepler</h3>
-          <div id="talepList" class="stack"></div>
-        </div>
-        <div>
-          <h3>Siparişler</h3>
-          <div id="sasList" class="stack"></div>
-        </div>
+      <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
+      <div class="sidebar-foot">
+        <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
       </div>
-      <h3>Mal Kabuller</h3>
-      <div id="mkList" class="stack"></div>
-    </section>
+    </aside>
 
-    <section id="uretim" class="panel">
-      <h2>Üretim Emirleri</h2>
-      <div id="ueList" class="stack"></div>
-    </section>
+    <div class="workspace">
+      <header class="workspace-bar" id="workspaceBar">
+        <div class="bar-left">
+          <button type="button" class="icon-btn" id="btnMenu" aria-label="Menüyü aç/kapat">☰</button>
+          <h1 class="screen-title" id="screenTitle">Ana Sayfa</h1>
+        </div>
+        <div class="bar-right" id="homeSearchWrap">
+          <label class="search-label" for="screenSearch">Ekran ara</label>
+          <input
+            id="screenSearch"
+            class="screen-search"
+            type="search"
+            placeholder="Ekran adı yazın (en az 3 harf)…"
+            autocomplete="off"
+          />
+          <div id="searchResults" class="search-results" hidden></div>
+        </div>
+      </header>
 
-    <section id="bakiye" class="panel">
-      <h2>Depo Bakiyeleri</h2>
-      <div class="table-wrap"><table id="tblBakiye"></table></div>
-      <h3>Depolar</h3>
-      <div class="table-wrap"><table id="tblDepo"></table></div>
-    </section>
-  </main>
+      <main class="workspace-main">
+        <section id="viewHome" class="view home-view">
+          <p class="home-lead">Soldaki menüden modül ekranına gidin veya üstten ekran adı arayın.</p>
+          <div id="homeHints" class="home-hints"></div>
+        </section>
 
-  <footer>
-    <span>Belgeler birbirine bağlıdır · Stok yalnızca hareketle değişir</span>
-  </footer>
+        <section id="viewScreen" class="view screen-view" hidden>
+          <div class="filter-pane" id="filterPane">
+            <div class="filter-pane-head">
+              <h2>Filtre</h2>
+              <div class="filter-actions">
+                <button type="button" class="btn ghost" id="btnClearFilter">Temizle</button>
+                <button type="button" class="btn" id="btnApplyFilter">Uygula</button>
+              </div>
+            </div>
+            <div class="filter-grid" id="filterGrid"></div>
+          </div>
+          <div class="list-pane" id="listPane">
+            <div class="list-pane-head">
+              <h2>Liste</h2>
+              <span class="list-meta" id="listMeta"></span>
+            </div>
+            <div class="table-scroll">
+              <table id="dataTable">
+                <thead id="dataHead"></thead>
+                <tbody id="dataBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
   <script src="/app.js"></script>
 </body>
 </html>

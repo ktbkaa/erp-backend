@@ -14,7 +14,47 @@ router.get('/', async (req, res) => {
             where = 'WHERE stok_tipi = $1';
         }
         const stoklarRes = await pool.query(
-            `SELECT * FROM stoklar ${where} ORDER BY id DESC`,
+            `
+            SELECT
+                s.*,
+                (
+                    SELECT f.firma_kodu
+                    FROM stok_is_yeri siy
+                    JOIN is_yerleri i ON i.id = siy.is_yeri_id
+                    JOIN firmalar f ON f.id = i.firma_id
+                    WHERE siy.stok_id = s.id AND siy.aktif = TRUE
+                    ORDER BY siy.id
+                    LIMIT 1
+                ) AS firma_kodu,
+                (
+                    SELECT f.firma_adi
+                    FROM stok_is_yeri siy
+                    JOIN is_yerleri i ON i.id = siy.is_yeri_id
+                    JOIN firmalar f ON f.id = i.firma_id
+                    WHERE siy.stok_id = s.id AND siy.aktif = TRUE
+                    ORDER BY siy.id
+                    LIMIT 1
+                ) AS firma_adi,
+                (
+                    SELECT i.is_yeri_kodu
+                    FROM stok_is_yeri siy
+                    JOIN is_yerleri i ON i.id = siy.is_yeri_id
+                    WHERE siy.stok_id = s.id AND siy.aktif = TRUE
+                    ORDER BY siy.id
+                    LIMIT 1
+                ) AS is_yeri_kodu,
+                (
+                    SELECT i.is_yeri_adi
+                    FROM stok_is_yeri siy
+                    JOIN is_yerleri i ON i.id = siy.is_yeri_id
+                    WHERE siy.stok_id = s.id AND siy.aktif = TRUE
+                    ORDER BY siy.id
+                    LIMIT 1
+                ) AS is_yeri_adi
+            FROM stoklar s
+            ${where}
+            ORDER BY s.id DESC
+            `,
             params
         );
         const stoklar = [];
