@@ -504,8 +504,22 @@ async function ayirKod(seriKodu) {
   return data.kod;
 }
 
+function showView(name) {
+  const home = $('#viewHome');
+  const screen = $('#viewScreen');
+  const form = $('#viewForm');
+  home.classList.toggle('is-visible', name === 'home');
+  screen.classList.toggle('is-visible', name === 'screen');
+  form.classList.toggle('is-visible', name === 'form');
+  home.hidden = name !== 'home';
+  screen.hidden = name !== 'screen';
+  form.hidden = name !== 'form';
+}
+
 function renderSidebar() {
-  $('#sidebarNav').innerHTML = MODULES.map((mod) => `
+  const nav = $('#sidebarNav');
+  if (!nav) return;
+  nav.innerHTML = MODULES.map((mod) => `
     <div class="mod-group">
       <div class="mod-title">${mod.title}</div>
       ${mod.screens.map((s) => `
@@ -526,9 +540,7 @@ function showHome() {
   if (location.hash && location.hash !== '#') {
     history.pushState({ screenId: null }, '', location.pathname);
   }
-  $('#viewHome').hidden = false;
-  $('#viewScreen').hidden = true;
-  $('#viewForm').hidden = true;
+  showView('home');
   $('#homeSearchWrap').hidden = false;
   $('#screenTitle').textContent = 'Ana Sayfa';
   $('#screenSearch').value = '';
@@ -621,29 +633,40 @@ function updateActionButtons(screen) {
 }
 
 async function openScreen(id) {
-  const screen = findScreen(id);
-  if (!screen) return;
-  state.screenId = id;
-  state.selectedId = null;
-  state.formMode = null;
-  state.filterState = {};
-  screen.filters.forEach((f) => { state.filterState[f.key] = { op: 'esit', a: '', b: '' }; });
-  if (location.hash !== `#${id}`) history.pushState({ screenId: id }, '', `#${id}`);
-
-  $('#viewHome').hidden = true;
-  $('#viewForm').hidden = true;
-  $('#viewScreen').hidden = false;
-  $('#homeSearchWrap').hidden = true;
-  $('#screenTitle').textContent = screen.title;
-  $('#searchResults').hidden = true;
-  renderSidebar();
-  renderFilterPane(screen);
-  $('#listMeta').textContent = 'Yükleniyor…';
-  if (window.matchMedia('(max-width: 900px)').matches) {
-    $('#sidebar').classList.remove('open');
-  }
-
   try {
+    const screen = findScreen(id);
+    if (!screen) {
+      toast(`Ekran bulunamadı: ${id || '?'}`);
+      return;
+    }
+
+    state.screenId = id;
+    state.selectedId = null;
+    state.formMode = null;
+    state.filterState = {};
+    (screen.filters || []).forEach((f) => {
+      state.filterState[f.key] = { op: 'esit', a: '', b: '' };
+    });
+
+    if (location.hash !== `#${id}`) {
+      history.pushState({ screenId: id }, '', `#${id}`);
+    }
+
+    showView('screen');
+    $('#homeSearchWrap').hidden = true;
+    $('#screenTitle').textContent = screen.title;
+    $('#searchResults').hidden = true;
+    $('#listMeta').textContent = 'Yükleniyor…';
+    $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
+
+    // Tıklama bitmeden menüyü yeniden çizme (bazı tarayıcılarda click iptal olabiliyor)
+    requestAnimationFrame(() => renderSidebar());
+    renderFilterPane(screen);
+
+    if (window.matchMedia('(max-width: 900px)').matches) {
+      $('#sidebar').classList.remove('open');
+    }
+
     const data = await api(screen.endpoint);
     if (state.screenId !== id) return;
     let rows = Array.isArray(data) ? data : [];
@@ -654,10 +677,14 @@ async function openScreen(id) {
     state.filtered = applyFilters(state.rows, screen);
     renderList(screen);
   } catch (err) {
-    if (state.screenId !== id) return;
+    console.error(err);
+    toast(err.message || 'Ekran açılamadı');
+    const screen = findScreen(id);
+    if (!screen || state.screenId !== id) return;
     state.rows = [];
     state.filtered = [];
-    $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${screen.columns.length}">${err.message}</td></tr>`;
+    showView('screen');
+    $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">${err.message}</td></tr>`;
     $('#listMeta').textContent = 'Hata';
     updateActionButtons(screen);
   }
@@ -802,9 +829,7 @@ async function openForm(mode) {
   }
 
   state.formRecord = record;
-  $('#viewScreen').hidden = true;
-  $('#viewHome').hidden = true;
-  $('#viewForm').hidden = false;
+  showView('form');
   $('#homeSearchWrap').hidden = true;
   $('#screenTitle').textContent = `${screen.title} · ${MODE_LABELS[mode]}`;
   renderForm(screen);
@@ -894,11 +919,26 @@ function runSearch(q) {
 }
 
 function bindEvents() {
+  const nav = $('#sidebarNav');
+  if (nav && !nav.dataset.bound) {
+    nav.dataset.bound = '1';
+    nav.addEventListener('click', (e) => {
+      const screenBtn = e.target.closest('[data-screen]');
+      if (!screenBtn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const id = screenBtn.getAttribute('data-screen');
+      openScreen(id);
+    });
+  }
+
   document.addEventListener('click', (e) => {
     const screenBtn = e.target.closest('[data-screen]');
     if (screenBtn) {
+      // sidebar kendi handler'ında; arama sonuçları burada
+      if (screenBtn.closest('#sidebarNav')) return;
       e.preventDefault();
-      openScreen(screenBtn.dataset.screen);
+      openScreen(screenBtn.getAttribute('data-screen'));
       return;
     }
 
@@ -931,7 +971,11 @@ function bindEvents() {
     if (wrap && !wrap.contains(e.target)) $('#searchResults').hidden = true;
   });
 
-  $('#btnHome').addEventListener('click', showHome);
+  $('#btnHome').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showHome();
+  });
 
   $('#btnMenu').addEventListener('click', () => {
     const shell = $('#appShell');
