@@ -505,26 +505,23 @@ async function ayirKod(seriKodu) {
 }
 
 function showView(name) {
-  const views = {
-    home: { el: $('#viewHome'), display: 'grid' },
-    screen: { el: $('#viewScreen'), display: 'grid' },
-    form: { el: $('#viewForm'), display: 'flex' },
-  };
+  const home = $('#viewHome');
+  const screen = $('#viewScreen');
+  const form = $('#viewForm');
+  if (!home || !screen || !form) {
+    console.error('KTB ERP: view element missing', { home: !!home, screen: !!screen, form: !!form });
+    return;
+  }
 
-  Object.entries(views).forEach(([key, { el, display }]) => {
-    if (!el) return;
-    const on = key === name;
-    el.classList.toggle('is-visible', on);
-    if (on) {
-      el.removeAttribute('hidden');
-      el.style.display = display;
-      el.style.visibility = 'visible';
-      el.style.opacity = '1';
-    } else {
-      el.setAttribute('hidden', '');
-      el.style.display = 'none';
-    }
-  });
+  // Sadece native hidden — CSS class savaşları yok
+  home.hidden = name !== 'home';
+  screen.hidden = name !== 'screen';
+  form.hidden = name !== 'form';
+
+  // Inline stil yedek (eski CSS cache’ine karşı)
+  home.style.display = name === 'home' ? 'grid' : 'none';
+  screen.style.display = name === 'screen' ? 'grid' : 'none';
+  form.style.display = name === 'form' ? 'flex' : 'none';
 }
 
 function renderSidebar() {
@@ -666,9 +663,18 @@ async function openScreen(id) {
     showView('screen');
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
+    const banner = $('#screenBanner');
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261013c`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
+
+    // Zorunlu: ana alan gerçekten görünür mü?
+    const screenEl = $('#viewScreen');
+    if (screenEl && (screenEl.hidden || getComputedStyle(screenEl).display === 'none')) {
+      screenEl.hidden = false;
+      screenEl.style.cssText = 'display:grid !important;visibility:visible !important;opacity:1 !important;';
+    }
 
     // Tıklama bitmeden menüyü yeniden çizme (bazı tarayıcılarda click iptal olabiliyor)
     requestAnimationFrame(() => renderSidebar());
