@@ -517,7 +517,7 @@ tr.selected td { background: var(--accent-soft); }
   .sidebar.open { transform: none; }
   .workspace-bar { flex-wrap: wrap; }
   .bar-right { max-width: none; width: 100%; }
-  .screen-view {
+  .screen-view.is-visible {
     grid-template-rows: auto minmax(180px, 32vh) 1fr;
     height: auto;
     min-height: calc(100vh - 4.25rem);
