@@ -108,4 +108,66 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    try {
+        const { depo_adi, aktif, varsayilan, is_yeri_id } = req.body;
+        if (!depo_adi) return res.status(400).json({ hata: 'depo_adi zorunludur.' });
+
+        const row = await withTransaction(pool, async (client) => {
+            const mevcut = await client.query('SELECT * FROM depolar WHERE id = $1', [req.params.id]);
+            if (!mevcut.rows[0]) throw Object.assign(new Error('Depo bulunamadı.'), { status: 404 });
+
+            const isYeriId = is_yeri_id || mevcut.rows[0].is_yeri_id;
+            const anaDepoMu = varsayilan === true || varsayilan === 'true';
+            if (anaDepoMu) {
+                await client.query('UPDATE depolar SET varsayilan = FALSE WHERE is_yeri_id = $1', [isYeriId]);
+            }
+
+            const sonuc = await client.query(
+                `
+                UPDATE depolar SET
+                    is_yeri_id = $2,
+                    depo_adi = $3,
+                    aktif = COALESCE($4, aktif),
+                    varsayilan = COALESCE($5, varsayilan)
+                WHERE id = $1
+                RETURNING *
+                `,
+                [
+                    req.params.id,
+                    isYeriId,
+                    depo_adi,
+                    typeof aktif === 'boolean' ? aktif : null,
+                    typeof varsayilan === 'boolean' ? varsayilan : null,
+                ]
+            );
+            return sonuc.rows[0];
+        });
+
+        const full = await pool.query(
+            `
+            SELECT d.*, i.is_yeri_kodu, i.is_yeri_adi, f.firma_kodu, f.firma_adi
+            FROM depolar d
+            JOIN is_yerleri i ON d.is_yeri_id = i.id
+            JOIN firmalar f ON i.firma_id = f.id
+            WHERE d.id = $1
+            `,
+            [row.id]
+        );
+        res.json(full.rows[0]);
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const sonuc = await pool.query(`DELETE FROM depolar WHERE id = $1 RETURNING id`, [req.params.id]);
+        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Depo bulunamadı.' });
+        res.json({ silindi: true, id: Number(req.params.id) });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 module.exports = router;

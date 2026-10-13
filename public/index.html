@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="app-shell">
+  <div class="app-shell" id="appShell">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand" id="btnHome" title="Ana sayfa">
         <span class="brand-mark">KTB</span>
@@ -25,7 +25,7 @@
     <div class="workspace">
       <header class="workspace-bar" id="workspaceBar">
         <div class="bar-left">
-          <button type="button" class="icon-btn" id="btnMenu" aria-label="Menüyü aç/kapat">☰</button>
+          <button type="button" class="icon-btn" id="btnMenu" aria-label="Menüyü aç/kapat" title="Menüyü kapat/aç">☰</button>
           <h1 class="screen-title" id="screenTitle">Ana Sayfa</h1>
         </div>
         <div class="bar-right" id="homeSearchWrap">
@@ -43,11 +43,18 @@
 
       <main class="workspace-main">
         <section id="viewHome" class="view home-view">
-          <p class="home-lead">Soldaki menüden modül ekranına gidin veya üstten ekran adı arayın.</p>
-          <div id="homeHints" class="home-hints"></div>
+          <div class="ktb-emboss" aria-hidden="true">KTB</div>
         </section>
 
         <section id="viewScreen" class="view screen-view" hidden>
+          <div class="action-bar" id="actionBar">
+            <button type="button" class="btn action" data-action="yeni">Yeni</button>
+            <button type="button" class="btn action ghost" data-action="incele">İncele</button>
+            <button type="button" class="btn action ghost" data-action="duzelt">Düzelt</button>
+            <button type="button" class="btn action ghost" data-action="kopyala">Kopyala</button>
+            <button type="button" class="btn action danger" data-action="sil">Sil</button>
+          </div>
+
           <div class="filter-pane" id="filterPane">
             <div class="filter-pane-head">
               <h2>Filtre</h2>
@@ -58,6 +65,7 @@
             </div>
             <div class="filter-grid" id="filterGrid"></div>
           </div>
+
           <div class="list-pane" id="listPane">
             <div class="list-pane-head">
               <h2>Liste</h2>
@@ -68,6 +76,37 @@
                 <thead id="dataHead"></thead>
                 <tbody id="dataBody"></tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="viewForm" class="view form-view" hidden>
+          <div class="form-topbar">
+            <div>
+              <span class="mode-badge" id="formModeBadge">Yeni</span>
+              <strong id="formScreenLabel"></strong>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn ghost" id="btnFormCancel">Listeye dön</button>
+              <button type="button" class="btn" id="btnFormSave">Kaydet</button>
+            </div>
+          </div>
+          <div class="form-split">
+            <div class="master-pane">
+              <h2>Master</h2>
+              <div class="master-grid" id="masterGrid"></div>
+            </div>
+            <div class="detail-pane">
+              <div class="detail-head">
+                <h2>Detay</h2>
+                <button type="button" class="btn ghost small" id="btnAddDetail">Satır ekle</button>
+              </div>
+              <div class="table-scroll detail-scroll">
+                <table id="detailTable">
+                  <thead id="detailHead"></thead>
+                  <tbody id="detailBody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>

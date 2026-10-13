@@ -120,10 +120,85 @@ router.post('/', async (req, res) => {
                 }
             }
 
-            return { stok: yeniStok, stok_detaylari: eklenenDetaylar };
+            return { ...yeniStok, stok_detaylari: eklenenDetaylar };
         });
 
         res.status(201).json(sonuc);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.get('/:id', async (req, res) => {
+    try {
+        const stokRes = await pool.query(`SELECT * FROM stoklar WHERE id = $1`, [req.params.id]);
+        if (!stokRes.rows[0]) return res.status(404).json({ hata: 'Stok bulunamadı.' });
+        const detaylarRes = await pool.query(
+            'SELECT * FROM stok_detaylari WHERE stok_id = $1 ORDER BY id',
+            [req.params.id]
+        );
+        res.json({ ...stokRes.rows[0], stok_detaylari: detaylarRes.rows });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.put('/:id', async (req, res) => {
+    try {
+        const {
+            stok_adi,
+            birim,
+            satis_fiyati,
+            stok_tipi,
+            tedarik_tipi,
+            stok_detaylari,
+        } = req.body;
+        if (!stok_adi) return res.status(400).json({ hata: 'stok_adi zorunludur.' });
+
+        const sonuc = await withTransaction(pool, async (client) => {
+            const upd = await client.query(
+                `
+                UPDATE stoklar SET
+                    stok_adi = $2,
+                    birim = COALESCE($3, birim),
+                    satis_fiyati = COALESCE($4, satis_fiyati),
+                    stok_tipi = COALESCE($5, stok_tipi),
+                    tedarik_tipi = COALESCE($6, tedarik_tipi)
+                WHERE id = $1
+                RETURNING *
+                `,
+                [req.params.id, stok_adi, birim || null, satis_fiyati ?? null, stok_tipi || null, tedarik_tipi || null]
+            );
+            if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });
+
+            if (Array.isArray(stok_detaylari)) {
+                await client.query('DELETE FROM stok_detaylari WHERE stok_id = $1', [req.params.id]);
+                for (const d of stok_detaylari) {
+                    await client.query(
+                        `INSERT INTO stok_detaylari (stok_id, boyut, agirlik) VALUES ($1, $2, $3)`,
+                        [req.params.id, d.boyut || null, d.agirlik || null]
+                    );
+                }
+            }
+
+            const detaylar = await client.query(
+                'SELECT * FROM stok_detaylari WHERE stok_id = $1 ORDER BY id',
+                [req.params.id]
+            );
+            return { ...upd.rows[0], stok_detaylari: detaylar.rows };
+        });
+
+        res.json(sonuc);
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const sonuc = await pool.query(`DELETE FROM stoklar WHERE id = $1 RETURNING id`, [req.params.id]);
+        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Stok bulunamadı.' });
+        res.json({ silindi: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

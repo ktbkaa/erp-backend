@@ -183,4 +183,119 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    try {
+        const {
+            cari_adi,
+            cari_turu,
+            telefon,
+            email,
+            vergi_no,
+            vergi_dairesi,
+            yetkili_adi,
+            yetkili_telefon,
+            adres,
+            fatura_adresi,
+            il,
+            ilce,
+            ulke,
+            posta_kodu,
+            para_birimi,
+            odeme_vadesi_gun,
+            aktif,
+            notlar,
+            is_yeri_id,
+            cari_detaylari,
+        } = req.body;
+
+        if (!cari_adi) return res.status(400).json({ hata: 'cari_adi zorunludur.' });
+
+        await withTransaction(pool, async (client) => {
+            const upd = await client.query(
+                `
+                UPDATE cariler SET
+                    cari_adi = $2,
+                    cari_turu = COALESCE($3, cari_turu),
+                    telefon = $4,
+                    email = $5,
+                    vergi_no = $6,
+                    vergi_dairesi = $7,
+                    yetkili_adi = $8,
+                    yetkili_telefon = $9,
+                    adres = $10,
+                    fatura_adresi = $11,
+                    il = $12,
+                    ilce = $13,
+                    ulke = COALESCE($14, ulke),
+                    posta_kodu = $15,
+                    para_birimi = COALESCE($16, para_birimi),
+                    odeme_vadesi_gun = COALESCE($17, odeme_vadesi_gun),
+                    aktif = COALESCE($18, aktif),
+                    notlar = $19,
+                    is_yeri_id = $20
+                WHERE id = $1
+                RETURNING id
+                `,
+                [
+                    req.params.id,
+                    cari_adi,
+                    cari_turu || null,
+                    telefon || null,
+                    email || null,
+                    vergi_no || null,
+                    vergi_dairesi || null,
+                    yetkili_adi || null,
+                    yetkili_telefon || null,
+                    adres || null,
+                    fatura_adresi || null,
+                    il || null,
+                    ilce || null,
+                    ulke || null,
+                    posta_kodu || null,
+                    para_birimi || null,
+                    odeme_vadesi_gun ?? null,
+                    typeof aktif === 'boolean' ? aktif : null,
+                    notlar || null,
+                    is_yeri_id || null,
+                ]
+            );
+            if (!upd.rows[0]) throw Object.assign(new Error('Cari bulunamadı.'), { status: 404 });
+
+            if (Array.isArray(cari_detaylari)) {
+                await client.query('DELETE FROM cari_detaylari WHERE cari_id = $1', [req.params.id]);
+                for (const d of cari_detaylari) {
+                    await client.query(
+                        `
+                        INSERT INTO cari_detaylari
+                            (cari_id, adres, fatura_adresi, yetkili_adi, yetkili_telefon)
+                        VALUES ($1,$2,$3,$4,$5)
+                        `,
+                        [
+                            req.params.id,
+                            d.adres || null,
+                            d.fatura_adresi || null,
+                            d.yetkili_adi || null,
+                            d.yetkili_telefon || null,
+                        ]
+                    );
+                }
+            }
+        });
+
+        res.json(await cariGetir(req.params.id));
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const sonuc = await pool.query(`DELETE FROM cariler WHERE id = $1 RETURNING id`, [req.params.id]);
+        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Cari bulunamadı.' });
+        res.json({ silindi: true, id: Number(req.params.id) });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 module.exports = router;

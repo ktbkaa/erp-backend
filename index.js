@@ -43,6 +43,7 @@ app.use('/satin-alma-talepleri', require('./routes/satin_alma_talepleri'));
 app.use('/satin-alma-siparisleri', require('./routes/satin_alma_siparisleri'));
 app.use('/mal-kabuller', require('./routes/mal_kabuller'));
 app.use('/uretim-emirleri', require('./routes/uretim_emirleri'));
+app.use('/kod-serileri', require('./routes/kod_serileri'));
 
 app.listen(port, () => {
     console.log(`Sistem http://localhost:${port} adresinde çalışıyor.`);
