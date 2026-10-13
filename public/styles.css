@@ -140,11 +140,10 @@ body {
   gap: 1rem;
   padding: 0.85rem 1.25rem;
   min-height: 4.25rem;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(8px);
+  background: #fff;
   border-bottom: 1px solid var(--line);
   position: relative;
-  z-index: 5;
+  z-index: 6;
 }
 .bar-left, .bar-right {
   display: flex;
@@ -232,14 +231,13 @@ body {
 }
 
 .view {
-  display: none !important;
+  display: none;
   height: 100%;
 }
-.view.is-visible { display: block !important; }
-.home-view.is-visible {
+#viewHome.is-visible {
   position: relative;
   min-height: calc(100vh - 4.25rem);
-  display: grid !important;
+  display: grid;
   place-items: center;
   overflow: hidden;
 }
@@ -261,11 +259,12 @@ body {
   pointer-events: none;
 }
 
-.screen-view.is-visible {
-  display: grid !important;
+#viewScreen.is-visible {
+  display: grid;
   grid-template-rows: auto minmax(140px, 28vh) 1fr;
   height: calc(100vh - 4.25rem);
   min-height: 0;
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .action-bar {
@@ -402,11 +401,12 @@ tr.selected td { background: var(--accent-soft); }
 .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .empty-row td { color: var(--muted); text-align: center; padding: 2rem 1rem; }
 
-.form-view.is-visible {
-  display: flex !important;
+#viewForm.is-visible {
+  display: flex;
   flex-direction: column;
   height: calc(100vh - 4.25rem);
   min-height: 0;
+  background: rgba(255, 255, 255, 0.55);
 }
 .form-topbar {
   display: flex;
@@ -517,7 +517,7 @@ tr.selected td { background: var(--accent-soft); }
   .sidebar.open { transform: none; }
   .workspace-bar { flex-wrap: wrap; }
   .bar-right { max-width: none; width: 100%; }
-  .screen-view.is-visible {
+  #viewScreen.is-visible {
     grid-template-rows: auto minmax(180px, 32vh) 1fr;
     height: auto;
     min-height: calc(100vh - 4.25rem);

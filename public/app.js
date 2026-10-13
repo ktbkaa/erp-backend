@@ -505,15 +505,26 @@ async function ayirKod(seriKodu) {
 }
 
 function showView(name) {
-  const home = $('#viewHome');
-  const screen = $('#viewScreen');
-  const form = $('#viewForm');
-  home.classList.toggle('is-visible', name === 'home');
-  screen.classList.toggle('is-visible', name === 'screen');
-  form.classList.toggle('is-visible', name === 'form');
-  home.hidden = name !== 'home';
-  screen.hidden = name !== 'screen';
-  form.hidden = name !== 'form';
+  const views = {
+    home: { el: $('#viewHome'), display: 'grid' },
+    screen: { el: $('#viewScreen'), display: 'grid' },
+    form: { el: $('#viewForm'), display: 'flex' },
+  };
+
+  Object.entries(views).forEach(([key, { el, display }]) => {
+    if (!el) return;
+    const on = key === name;
+    el.classList.toggle('is-visible', on);
+    if (on) {
+      el.removeAttribute('hidden');
+      el.style.display = display;
+      el.style.visibility = 'visible';
+      el.style.opacity = '1';
+    } else {
+      el.setAttribute('hidden', '');
+      el.style.display = 'none';
+    }
+  });
 }
 
 function renderSidebar() {
