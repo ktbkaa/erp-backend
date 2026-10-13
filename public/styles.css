@@ -143,6 +143,7 @@ body {
   min-width: 0;
 }
 .bar-right { flex: 1; justify-content: flex-end; max-width: 34rem; position: relative; }
+#homeSearchWrap[hidden] { display: none !important; }
 
 .icon-btn {
   display: none;
