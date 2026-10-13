@@ -152,4 +152,24 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.get('/:id', async (req, res) => {
+    try {
+        const row = await kabulGetir(req.params.id);
+        if (!row) return res.status(404).json({ hata: 'Mal kabul bulunamadı.' });
+        res.json(row);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const sonuc = await pool.query(`DELETE FROM mal_kabuller WHERE id=$1 RETURNING id`, [req.params.id]);
+        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Mal kabul bulunamadı.' });
+        res.json({ silindi: true, id: Number(req.params.id) });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 module.exports = router;

@@ -398,8 +398,70 @@ const MODULES = [
   },
 ];
 
+function normalizeScreen(raw, moduleId, moduleTitle) {
+  const s = { ...raw, moduleId, moduleTitle };
+  s.readOnly = s.id === 'depo-bakiye';
+  s.crud = !s.readOnly;
+
+  if (!s.masterFields || !s.masterFields.length) {
+    s.masterFields = (s.columns || []).map((c) => ({
+      key: c.key,
+      label: c.label,
+      code: /(kod|_no$|seri_kodu|emir_no|talep_no|siparis_no|kabul_no)/i.test(c.key),
+      name: /(_adi$|aciklama)/i.test(c.key),
+    }));
+  }
+  if (!s.codeField) {
+    s.codeField = (s.masterFields.find((f) => f.code) || s.masterFields[0] || {}).key;
+  }
+  if (!s.nameField) {
+    s.nameField = (s.masterFields.find((f) => f.name) || s.masterFields[1] || s.masterFields[0] || {}).key;
+  }
+  if (!Array.isArray(s.detailFields)) s.detailFields = [];
+
+  // Belge satırları için varsayılan detay
+  if (!s.detailFields.length && /satin-alma-talepleri|satin-alma-siparisleri|mal-kabuller|urun-agaci|rotalar|uretim-emirleri/.test(s.id)) {
+    if (s.id === 'urun-agaci') {
+      s.detailKey = s.detailKey || 'satirlar';
+      s.detailFields = [
+        { key: 'bilesen_stok_id', label: 'Bileşen stok ID', type: 'number' },
+        { key: 'miktar', label: 'Miktar', type: 'number' },
+        { key: 'birim', label: 'Birim' },
+      ];
+    } else if (s.id === 'rotalar') {
+      s.detailKey = s.detailKey || 'operasyonlar';
+      s.detailFields = [
+        { key: 'operasyon_kodu', label: 'Operasyon kodu' },
+        { key: 'operasyon_adi', label: 'Operasyon adı' },
+        { key: 'sure_dk', label: 'Süre (dk)', type: 'number' },
+      ];
+    } else if (s.id === 'uretim-emirleri') {
+      s.detailKey = s.detailKey || 'operasyonlar';
+      s.detailFields = [
+        { key: 'operasyon_kodu', label: 'Operasyon kodu' },
+        { key: 'operasyon_adi', label: 'Operasyon adı' },
+        { key: 'durum', label: 'Durum' },
+      ];
+    } else {
+      s.detailKey = s.detailKey || 'satirlar';
+      s.detailFields = [
+        { key: 'stok_id', label: 'Stok ID', type: 'number' },
+        { key: 'miktar', label: 'Miktar', type: 'number' },
+        { key: 'birim', label: 'Birim' },
+      ];
+    }
+  }
+
+  if (s.detailSlots == null) {
+    if (!s.detailFields.length) s.detailSlots = 0;
+    else if (s.detailKey === 'stok_detaylari' || s.detailKey === 'cari_detaylari') s.detailSlots = 1;
+    else s.detailSlots = 3;
+  }
+  return s;
+}
+
 const ALL_SCREENS = MODULES.flatMap((m) =>
-  m.screens.map((s) => ({ ...s, moduleId: m.id, moduleTitle: m.title }))
+  m.screens.map((s) => normalizeScreen(s, m.id, m.title))
 );
 
 const MODE_LABELS = {
@@ -418,6 +480,8 @@ const state = {
   formMode: null,
   formRecord: null,
   detailRows: [],
+  openTabs: [],
+  formContext: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -524,6 +588,42 @@ function showView(name) {
   form.style.display = name === 'form' ? 'flex' : 'none';
 }
 
+
+function renderTabBar() {
+  const bar = $('#tabBar');
+  if (!bar) return;
+  if (!state.openTabs.length) {
+    bar.innerHTML = '';
+    return;
+  }
+  bar.innerHTML = state.openTabs.map((t) => `
+    <button type="button" class="tab-item${t.id === state.screenId && !state.formMode ? ' active' : ''}${t.id === state.screenId && state.formMode ? ' active' : ''}" data-tab="${t.id}">
+      <span>${t.title}</span>
+      <span class="tab-close" data-tab-close="${t.id}" title="Kapat">×</span>
+    </button>
+  `).join('');
+}
+
+function addOpenTab(screen) {
+  if (!screen) return;
+  if (!state.openTabs.some((t) => t.id === screen.id)) {
+    state.openTabs.push({ id: screen.id, title: screen.title });
+  }
+  renderTabBar();
+}
+
+function closeOpenTab(id) {
+  state.openTabs = state.openTabs.filter((t) => t.id !== id);
+  if (state.screenId === id) {
+    state.formMode = null;
+    const next = state.openTabs[state.openTabs.length - 1];
+    if (next) openScreen(next.id);
+    else showHome();
+  } else {
+    renderTabBar();
+  }
+}
+
 function renderSidebar() {
   const nav = $('#sidebarNav');
   if (!nav) return;
@@ -545,6 +645,7 @@ function showHome() {
   state.filtered = [];
   state.selectedId = null;
   state.formMode = null;
+  state.formRecord = null;
   if (location.hash && location.hash !== '#') {
     history.pushState({ screenId: null }, '', location.pathname);
   }
@@ -554,6 +655,7 @@ function showHome() {
   $('#screenSearch').value = '';
   $('#searchResults').hidden = true;
   renderSidebar();
+  renderTabBar();
 }
 
 function readFilterState(screen) {
@@ -628,10 +730,9 @@ function renderList(screen) {
 
 function updateActionButtons(screen) {
   const hasSel = Boolean(state.selectedId);
-  const crud = Boolean(screen.crud);
   document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
     const act = btn.dataset.action;
-    if (!crud) {
+    if (screen.readOnly) {
       btn.disabled = act !== 'incele' || !hasSel;
       return;
     }
@@ -660,11 +761,12 @@ async function openScreen(id) {
       history.pushState({ screenId: id }, '', `#${id}`);
     }
 
+    addOpenTab(screen);
     showView('screen');
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261013c`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261013d`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -693,6 +795,7 @@ async function openScreen(id) {
     state.rows = rows;
     state.filtered = applyFilters(state.rows, screen);
     renderList(screen);
+    renderTabBar();
   } catch (err) {
     console.error(err);
     toast(err.message || 'Ekran açılamadı');
@@ -726,13 +829,47 @@ function fieldControl(field, value) {
   return `<input type="text" data-master="${field.key}" value="${String(v).replace(/"/g, '&quot;')}" ${dis} />`;
 }
 
+function detailFieldControl(field, value, idx) {
+  const forceDisabled = state.formMode === 'incele';
+  const dis = forceDisabled ? 'disabled' : '';
+  const v = value ?? '';
+  const name = `data-detail="${field.key}" data-didx="${idx}"`;
+  if (field.type === 'checkbox') {
+    return `<input type="checkbox" ${name} ${v ? 'checked' : ''} ${dis} />`;
+  }
+  if (field.type === 'select') {
+    return `<select ${name} ${dis}>
+      ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o}</option>`).join('')}
+    </select>`;
+  }
+  if (field.type === 'number') {
+    return `<input type="number" ${name} value="${v}" ${dis} />`;
+  }
+  return `<input type="text" ${name} value="${String(v).replace(/"/g, '&quot;')}" ${dis} />`;
+}
+
+function ensureDetailSlots(screen, rows) {
+  const slots = screen.detailSlots || 0;
+  const fields = screen.detailFields || [];
+  const out = [];
+  for (let i = 0; i < slots; i += 1) {
+    const src = rows[i] || {};
+    const row = {};
+    fields.forEach((f) => {
+      if (f.type === 'checkbox') row[f.key] = Boolean(src[f.key]);
+      else row[f.key] = src[f.key] ?? '';
+    });
+    out.push(row);
+  }
+  return out;
+}
+
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
   $('#formModeBadge').textContent = MODE_LABELS[state.formMode] || state.formMode;
   $('#formScreenLabel').textContent = screen.title;
   $('#btnFormSave').hidden = readonly;
-  $('#btnAddDetail').hidden = readonly || !screen.detailFields?.length;
 
   $('#masterGrid').innerHTML = (screen.masterFields || []).map((f) => `
     <div class="field">
@@ -741,25 +878,29 @@ function renderForm(screen) {
     </div>
   `).join('');
 
+  const grid = $('#detailGrid');
   const dFields = screen.detailFields || [];
-  if (!dFields.length) {
-    $('#detailHead').innerHTML = '';
-    $('#detailBody').innerHTML = `<tr class="empty-row"><td>Bu ekranda detay satırı yok.</td></tr>`;
-  } else {
-    $('#detailHead').innerHTML = `<tr>${dFields.map((f) => `<th>${f.label}</th>`).join('')}<th></th></tr>`;
-    if (!state.detailRows.length) {
-      $('#detailBody').innerHTML = `<tr class="empty-row"><td colspan="${dFields.length + 1}">Detay satırı yok. Satır ekle ile ekleyin.</td></tr>`;
-    } else {
-      $('#detailBody').innerHTML = state.detailRows.map((row, idx) => `
-        <tr data-didx="${idx}">
-          ${dFields.map((f) => `
-            <td><input data-detail="${f.key}" data-didx="${idx}" value="${row[f.key] ?? ''}" ${readonly ? 'disabled' : ''} /></td>
-          `).join('')}
-          <td>${readonly ? '' : `<button type="button" class="btn ghost small" data-del-detail="${idx}">Sil</button>`}</td>
-        </tr>
-      `).join('');
-    }
+  const slots = screen.detailSlots || 0;
+  if (!grid) return;
+  if (!dFields.length || !slots) {
+    grid.innerHTML = `<div class="detail-empty">Bu ekranda ek detay alanı yok.</div>`;
+    return;
   }
+
+  state.detailRows = ensureDetailSlots(screen, state.detailRows || []);
+  grid.innerHTML = state.detailRows.map((row, idx) => `
+    <div class="detail-slot">
+      <div class="detail-slot-title">Detay ${idx + 1}</div>
+      <div class="detail-slot-fields">
+        ${dFields.map((f) => `
+          <div class="field">
+            <label>${f.label}</label>
+            ${detailFieldControl(f, row[f.key], idx)}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
 }
 
 function readMasterFromForm(screen) {
@@ -775,26 +916,35 @@ function readMasterFromForm(screen) {
 }
 
 function readDetailsFromForm(screen) {
-  if (!screen.detailFields?.length) return [];
-  return state.detailRows.map((_, idx) => {
+  if (!screen.detailFields?.length || !screen.detailSlots) return [];
+  const rows = [];
+  for (let idx = 0; idx < screen.detailSlots; idx += 1) {
     const row = {};
+    let any = false;
     screen.detailFields.forEach((f) => {
       const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"]`);
-      row[f.key] = el ? el.value : '';
+      if (!el) return;
+      if (f.type === 'checkbox') {
+        row[f.key] = el.checked;
+        if (el.checked) any = true;
+      } else if (f.type === 'number') {
+        row[f.key] = el.value === '' ? null : Number(el.value);
+        if (el.value !== '') any = true;
+      } else {
+        row[f.key] = el.value;
+        if (String(el.value).trim()) any = true;
+      }
     });
-    return row;
-  });
+    if (any) rows.push(row);
+  }
+  return rows;
 }
 
 async function openForm(mode) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
-  if (!screen.crud && mode !== 'incele') {
-    toast('Bu ekranda henüz kart formu yok.');
-    return;
-  }
-  if (!screen.crud && mode === 'incele') {
-    toast('Bu ekran şimdilik yalnızca listelenir.');
+  if (screen.readOnly && mode !== 'incele') {
+    toast('Bu ekran yalnızca incelenebilir.');
     return;
   }
 
@@ -808,6 +958,14 @@ async function openForm(mode) {
   state.formMode = mode;
   let record = {};
 
+  async function loadRecord(id) {
+    try {
+      return await api(`${screen.endpoint}/${id}`);
+    } catch (_) {
+      return { ...row };
+    }
+  }
+
   if (mode === 'yeni') {
     record = {};
     (screen.masterFields || []).forEach((f) => {
@@ -817,28 +975,29 @@ async function openForm(mode) {
     });
     const seri = resolveNumeratorSeri(screen, record);
     if (seri) {
-      record[screen.codeField] = await ayirKod(seri);
+      try { record[screen.codeField] = await ayirKod(seri); }
+      catch (err) { toast(err.message); }
     }
-    state.detailRows = [];
+    state.detailRows = ensureDetailSlots(screen, []);
   } else if (mode === 'kopyala') {
-    const full = await api(`${screen.endpoint}/${row.id}`);
+    const full = await loadRecord(row.id);
     record = { ...full };
     delete record.id;
-    record[screen.nameField] = '';
+    if (screen.nameField) record[screen.nameField] = '';
     const seri = resolveNumeratorSeri(screen, record);
-    record[screen.codeField] = await ayirKod(seri);
-    state.detailRows = Array.isArray(full[screen.detailKey])
-      ? full[screen.detailKey].map(({ id, ...rest }) => ({ ...rest }))
-      : [];
+    if (seri) {
+      try { record[screen.codeField] = await ayirKod(seri); }
+      catch (err) { toast(err.message); }
+    }
+    const rawDetails = Array.isArray(full[screen.detailKey]) ? full[screen.detailKey] : [];
+    state.detailRows = ensureDetailSlots(screen, rawDetails.map(({ id, ...rest }) => rest));
   } else {
-    const full = await api(`${screen.endpoint}/${row.id}`);
+    const full = await loadRecord(row.id);
     record = { ...full };
-    state.detailRows = Array.isArray(full[screen.detailKey])
-      ? full[screen.detailKey].map((d) => ({ ...d }))
-      : [];
+    const rawDetails = Array.isArray(full[screen.detailKey]) ? full[screen.detailKey] : [];
+    state.detailRows = ensureDetailSlots(screen, rawDetails.map((d) => ({ ...d })));
   }
 
-  // Numaratör tanımı: yeni/kopyala için ayrı POST yapısı
   if (screen.id === 'numarator-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
     record.son_numara = 0;
     record.aktif = true;
@@ -846,10 +1005,12 @@ async function openForm(mode) {
   }
 
   state.formRecord = record;
+  addOpenTab(screen);
   showView('form');
   $('#homeSearchWrap').hidden = true;
   $('#screenTitle').textContent = `${screen.title} · ${MODE_LABELS[mode]}`;
   renderForm(screen);
+  renderTabBar();
 }
 
 async function saveForm() {
@@ -881,6 +1042,7 @@ async function saveForm() {
       await api(screen.endpoint, { method: 'POST', body: JSON.stringify(master) });
     }
     toast('Kaydedildi.');
+    state.formMode = null;
     await openScreen(screen.id);
   } catch (err) {
     toast(err.message);
@@ -890,7 +1052,7 @@ async function saveForm() {
 async function deleteSelected() {
   const screen = findScreen(state.screenId);
   const row = selectedRow();
-  if (!screen?.crud || !row) {
+  if (!screen || screen.readOnly || !row) {
     toast('Silmek için satır seçin.');
     return;
   }
@@ -975,12 +1137,18 @@ function bindEvents() {
       return;
     }
 
-    const delDetail = e.target.closest('[data-del-detail]');
-    if (delDetail) {
-      const idx = Number(delDetail.dataset.delDetail);
-      state.detailRows = readDetailsFromForm(findScreen(state.screenId));
-      state.detailRows.splice(idx, 1);
-      renderForm(findScreen(state.screenId));
+    const tabClose = e.target.closest('[data-tab-close]');
+    if (tabClose) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeOpenTab(tabClose.getAttribute('data-tab-close'));
+      return;
+    }
+
+    const tabBtn = e.target.closest('[data-tab]');
+    if (tabBtn) {
+      e.preventDefault();
+      openScreen(tabBtn.getAttribute('data-tab'));
       return;
     }
 
@@ -1025,23 +1193,13 @@ function bindEvents() {
   });
 
   $('#btnFormCancel').addEventListener('click', () => {
+    state.formMode = null;
     const id = state.screenId;
     openScreen(id);
   });
 
   $('#btnFormSave').addEventListener('click', () => {
     saveForm();
-  });
-
-  $('#btnAddDetail').addEventListener('click', () => {
-    const screen = findScreen(state.screenId);
-    if (!screen?.detailFields?.length) return;
-    state.detailRows = readDetailsFromForm(screen);
-    const blank = {};
-    screen.detailFields.forEach((f) => { blank[f.key] = ''; });
-    state.detailRows.push(blank);
-    state.formRecord = readMasterFromForm(screen);
-    renderForm(screen);
   });
 
   const search = $('#screenSearch');

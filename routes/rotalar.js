@@ -149,4 +149,29 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    try {
+        const { rota_adi } = req.body;
+        if (!rota_adi) return res.status(400).json({ hata: 'rota_adi zorunlu.' });
+        const upd = await pool.query(
+            `UPDATE rotalar SET rota_adi=$2 WHERE id=$1 RETURNING id`,
+            [req.params.id, rota_adi]
+        );
+        if (!upd.rows[0]) return res.status(404).json({ hata: 'Rota bulunamadı.' });
+        res.json(await rotaGetir(upd.rows[0].id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const sonuc = await pool.query(`DELETE FROM rotalar WHERE id=$1 RETURNING id`, [req.params.id]);
+        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Rota bulunamadı.' });
+        res.json({ silindi: true, id: Number(req.params.id) });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 module.exports = router;

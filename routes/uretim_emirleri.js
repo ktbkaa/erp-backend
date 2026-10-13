@@ -547,4 +547,34 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
     return { tamamlanan: sonuc, emir: await emirGetir(emirId) };
 }
 
+router.put('/:id', async (req, res) => {
+    try {
+        const { planlanan_miktar, durum } = req.body;
+        const upd = await pool.query(
+            `
+            UPDATE uretim_emirleri SET
+                planlanan_miktar = COALESCE($2, planlanan_miktar),
+                durum = COALESCE($3, durum)
+            WHERE id = $1
+            RETURNING id
+            `,
+            [req.params.id, planlanan_miktar ?? null, durum || null]
+        );
+        if (!upd.rows[0]) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        res.json(await emirGetir(upd.rows[0].id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const sonuc = await pool.query(`DELETE FROM uretim_emirleri WHERE id=$1 RETURNING id`, [req.params.id]);
+        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        res.json({ silindi: true, id: Number(req.params.id) });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 module.exports = router;

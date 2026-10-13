@@ -145,4 +145,29 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    try {
+        const { agac_adi, miktar } = req.body;
+        if (!agac_adi) return res.status(400).json({ hata: 'agac_adi zorunlu.' });
+        const upd = await pool.query(
+            `UPDATE urun_agaclari SET agac_adi=$2, miktar=COALESCE($3, miktar) WHERE id=$1 RETURNING id`,
+            [req.params.id, agac_adi, miktar ?? null]
+        );
+        if (!upd.rows[0]) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
+        res.json(await agacGetir(upd.rows[0].id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const sonuc = await pool.query(`DELETE FROM urun_agaclari WHERE id=$1 RETURNING id`, [req.params.id]);
+        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
+        res.json({ silindi: true, id: Number(req.params.id) });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 module.exports = router;
