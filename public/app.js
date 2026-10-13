@@ -336,10 +336,6 @@ function renderSidebar() {
       `).join('')}
     </div>
   `).join('');
-
-  nav.querySelectorAll('[data-screen]').forEach((btn) => {
-    btn.addEventListener('click', () => openScreen(btn.dataset.screen));
-  });
 }
 
 function renderHomeHints() {
@@ -351,9 +347,6 @@ function renderHomeHints() {
       <span class="mod">${s.moduleTitle}</span>
     </button>
   `).join('');
-  box.querySelectorAll('[data-screen]').forEach((btn) => {
-    btn.addEventListener('click', () => openScreen(btn.dataset.screen));
-  });
 }
 
 function showHome() {
@@ -361,6 +354,10 @@ function showHome() {
   state.rows = [];
   state.filtered = [];
   state.filterState = {};
+
+  if (location.hash && location.hash !== '#') {
+    history.pushState({ screenId: null }, '', location.pathname);
+  }
 
   $('#viewHome').hidden = false;
   $('#viewScreen').hidden = true;
@@ -458,6 +455,10 @@ async function openScreen(id) {
     state.filterState[f.key] = { op: 'esit', a: '', b: '' };
   });
 
+  if (location.hash !== `#${id}`) {
+    history.pushState({ screenId: id }, '', `#${id}`);
+  }
+
   $('#viewHome').hidden = true;
   $('#viewScreen').hidden = false;
   $('#homeSearchWrap').hidden = true;
@@ -471,10 +472,13 @@ async function openScreen(id) {
 
   try {
     const data = await api(screen.endpoint);
+    // Ekran değiştiyse eski yanıtı yazma
+    if (state.screenId !== id) return;
     state.rows = Array.isArray(data) ? data : [];
     state.filtered = applyFilters(state.rows, screen);
     renderList(screen);
   } catch (err) {
+    if (state.screenId !== id) return;
     state.rows = [];
     state.filtered = [];
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${screen.columns.length}">${err.message}</td></tr>`;
@@ -516,6 +520,19 @@ function runSearch(q) {
 }
 
 function bindEvents() {
+  document.addEventListener('click', (e) => {
+    const screenBtn = e.target.closest('[data-screen]');
+    if (screenBtn) {
+      e.preventDefault();
+      openScreen(screenBtn.dataset.screen);
+      return;
+    }
+    const wrap = $('#homeSearchWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      $('#searchResults').hidden = true;
+    }
+  });
+
   $('#btnHome').addEventListener('click', showHome);
   $('#btnMenu').addEventListener('click', () => {
     $('#sidebar').classList.toggle('open');
@@ -549,15 +566,20 @@ function bindEvents() {
     }
   });
 
-  document.addEventListener('click', (e) => {
-    const wrap = $('#homeSearchWrap');
-    if (wrap && !wrap.contains(e.target)) {
-      $('#searchResults').hidden = true;
-    }
+  window.addEventListener('popstate', () => {
+    const id = (location.hash || '').replace(/^#/, '');
+    if (id && findScreen(id)) openScreen(id);
+    else showHome();
   });
 }
 
-renderSidebar();
-renderHomeHints();
-bindEvents();
-showHome();
+function bootFromHash() {
+  const id = (location.hash || '').replace(/^#/, '');
+  renderSidebar();
+  renderHomeHints();
+  bindEvents();
+  if (id && findScreen(id)) openScreen(id);
+  else showHome();
+}
+
+bootFromHash();
