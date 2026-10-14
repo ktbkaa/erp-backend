@@ -8,6 +8,9 @@ Her geliştirme turunun sonunda bu dosya güncellenir.
 - **UI build işareti:** sol menü altında `UI build …` (doğru kod yüklü mü diye bakılır)
 - **Cari/Stok eşleştirme:** `docs/10_CARI_STOK_ESLESTIRME.md`
 
+### Modül: Sabit Tanımlar
+Tanım ekranları burada toplanır: **Numaratör Tanımı**, **Ölçü Birimleri**, **Kategori Tanımı**.
+
 ---
 
 ## 1) Genel kabuk (shell)
@@ -80,13 +83,14 @@ Listeden (gerekirse) satır seçilir, sonra:
 - **Alt ~%80 — Detay:** detay alanları  
 - “Satır ekle” yoktur; detay blokları önceden açıktır. Boş bloklar kayda yazılmaz.
 
-**Cari Kartları ve Stok Kartı** (sekmeli kart):
+**Tüm kart formları:**
 
-- Solda sekme listesi, sağda aktif sekme içeriği.
-- **Sarı alanlar** = lookup (firma, iş yeri, ölçü birimi); serbest metin değildir.
+- Form içinde **boydan sabit sol sekme menüsü** + sağ içerik.
+- **Master / Detay** ayrımı: ana kimlik alanları master’da, diğerleri detayda (veya ilgili sekmede).
+- **Sarı alanlar** = lookup (firma, iş yeri, ölçü birimi, kategori); serbest metin değildir.
 - **Kırmızı çizgili etiket** = zorunlu alan (UI + API).
-- Alt kayıtlar (banka, sevk, dil, birim tanımları) grid slotlarıyla saklanır.
-- Kapsamı netleşmeyen sekmeler (e-Uyum, Kategoriler, MRP…) stub olarak görünür; sahte CRUD yoktur.
+- **Yeni / İncele / Düzelt / Kopyala** her biri alt barda **ayrı sekme** olarak açılır.
+- Kapsamı netleşmeyen sekmeler stub’dır; sahte CRUD yoktur.
 
 ### 2.4 Numaratör
 
@@ -101,13 +105,25 @@ Detay: `docs/08_KOD_SISTEMI.md`
 
 ## 3) Modül ve ekran kataloğu
 
-### 3.1 Sistem
+### 3.1 Sabit Tanımlar
 
 #### Numaratör Tanımı
 - **Amaç:** Kod serilerini tanımlamak / izlemek  
 - **API:** `/kod-serileri`  
-- **Master alanlar:** seri kodu, önek, açıklama, ekran kodu/adı, son numara, aktif  
+- **Master:** seri kodu, önek, açıklama  
+- **Detay:** ekran kodu/adı, son numara, aktif  
 - **Fonksiyonlar:** Yeni, İncele, Düzelt, Kopyala (seri silinmez; pasife alınır)
+
+#### Ölçü Birimleri
+- **API:** `/olcu-birimleri`  
+- **Master:** birim kodu, birim adı
+
+#### Kategori Tanımı
+- **Amaç:** Stok kartı kategori lookup kaynağı (ABC / Marka / TeminSekli)  
+- **API:** `/kategoriler`  
+- **Kod serisi:** `KATEGORI` (`KT00001`…)  
+- **Master:** kod, ad, tip  
+- **Detay:** açıklama, aktif
 
 ---
 
@@ -144,11 +160,12 @@ Detay: `docs/08_KOD_SISTEMI.md`
 - **Kod serisi:** tip’e göre `HAMMADDE` / `YARIMAMUL` / `MAMUL` / `TICARI`  
 - **Filtre:** firma, iş yeri, stok kodu, stok adı  
 - **Zorunlu:** stok kodu, stok adı, stok tipi  
-- **Sekmeler (aktif):** Stok Kart, Ölçü Bilgileri, Birim Tanımları, Stok Detay  
-- **Sekmeler (stub):** Barkod, Kategoriler, Alternatif, Dil, MRP…  
-- **Lookup:** ölçü birimleri (`/olcu-birimleri`)  
+- **Stok Kart:** master alanlar + detayda ülke menşei / temin şekli  
+- **Kategoriler:** ABC, marka, temin şekli → `Kategori Tanımı` lookup (sarı)  
+- **Diğer sekmeler:** Ölçü Bilgileri, Birim Tanımları, Stok Detay; stub: Barkod, Dil, MRP  
+- **Kaldırıldı:** Alternatif Stok  
 - **Alt kayıt:** `birim_tanimlari`, `stok_detaylari`  
-- **Not:** Bakiye karttan elle değişmez; hareketlerden gelir  
+- **Not:** Bakiye karttan elle değişmez  
 - **Fonksiyonlar:** tam CRUD
 
 #### Depo Bakiye
@@ -167,12 +184,13 @@ Detay: `docs/08_KOD_SISTEMI.md`
 - **Kod serisi:** türe göre `MUSTERI` / `TEDARIKCI` / `CARI_HERIKISI`  
 - **İş kuralı:** satınalma → tedarikçi; satış → müşteri  
 - **Filtre:** iş yeri, cari kodu/adı, tür  
-- **Zorunlu:** cari kodu, cari adı, cari tipi  
-- **Sekmeler (aktif):** Cari Kart, Banka Bilgisi, Sevk Adresleri, Genel Bilgiler, Dil Tanımları  
-- **Sekmeler (stub):** e-Uyum, Kategoriler, Ek Alanlar  
+- **Zorunlu:** cari kodu, cari adı, müşteri tipi  
+- **Cari Kart master:** kod, ad, açıklama, müşteri tipi, VKN, adres 1  
+- **Cari Kart detay:** iletişim, adres devamı, firma/iş yeri, vade…  
+- **Diğer sekmeler:** Banka, Sevk, Genel, Dil; stub: Kategoriler, Ek Alanlar  
+- **Kaldırıldı:** e-Uyum  
 - **Lookup:** firma, iş yeri  
-- **Alt kayıt:** `banka_bilgileri`, `sevk_adresleri`, `dil_tanimlari` (+ geri uyum `cari_detaylari`)  
-- **Not:** VKN dış servis / harita eylemleri yok (simüle edilmez)  
+- **Alt kayıt:** `banka_bilgileri`, `sevk_adresleri`, `dil_tanimlari`  
 - **Fonksiyonlar:** tam CRUD
 
 ---
@@ -292,4 +310,4 @@ Her çalışma turunun sonunda:
 
 ---
 
-*Son güncelleme: Cari/Stok sekmeli kart entegrasyonu (alan genişletme, banka/sevk/dil/birim alt kayıtları, lookup, zorunlu alan doğrulama); stub sekmeler sahte CRUD olmadan.*
+*Son güncelleme: Sabit Tanımlar + Kategori Tanımı; master/detay ayrımı; form sol menü tüm ekranlarda; Yeni/İncele/Düzelt/Kopyala ayrı alt sekme; e-Uyum ve Alternatif Stok kaldırıldı.*

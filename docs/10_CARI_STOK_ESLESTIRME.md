@@ -39,6 +39,16 @@ Uyarlama: KTB ERP mevcut mimarisi (`cursor/erp-crud-forms-4f63` temeli)
 4. Zorunlu: cari kod/ad/tür, stok kod/ad (UI + API)
 5. Doküman güncellemesi (`09` + bu dosya)
 
+## İkinci tur (UI düzeni)
+
+1. **Sabit Tanımlar** modülü: Numaratör, Ölçü Birimleri, Kategori Tanımı
+2. Stok **Kategoriler**: ABC / Marka / Temin şekli → kategori lookup (sarı)
+3. Stok Kart detay: ülke menşei + temin şekli
+4. Cari master: kod, ad, açıklama, tip, VKN, adres 1 — kalanı detay
+5. e-Uyum ve Alternatif Stok kaldırıldı
+6. Tüm formlarda boydan sabit sol iç menü + master/detay
+7. Yeni/İncele/Düzelt/Kopyala ayrı alt sekme
+
 ## Onay gerektiren / ertelelenen
 
 - e-Fatura / e-Uyum entegrasyonu

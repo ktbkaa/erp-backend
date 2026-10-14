@@ -377,12 +377,24 @@ tr.selected td { background: var(--accent-soft); }
   display: grid;
   grid-template-rows: 20% 80%;
 }
+.form-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: calc(100vh - 4.25rem - 2.4rem);
+}
 .form-tabs-layout {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 200px 1fr;
+  display: grid !important;
+  grid-template-columns: 210px 1fr;
   border-top: 1px solid var(--line);
+}
+.form-tabs-layout[hidden] {
+  display: none !important;
+}
+.form-split[hidden] {
+  display: none !important;
 }
 .form-tab-nav {
   border-right: 1px solid var(--line);
@@ -392,6 +404,30 @@ tr.selected td { background: var(--accent-soft); }
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+}
+.md-split {
+  display: grid;
+  grid-template-rows: minmax(140px, 28%) 1fr;
+  gap: 0.75rem;
+  min-height: 420px;
+}
+.md-master, .md-detail {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  padding: 0.75rem 0.85rem;
+  background: #fff;
+}
+.md-master h3, .md-detail h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
 }
 .form-tab-btn {
   text-align: left;

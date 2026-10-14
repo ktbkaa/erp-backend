@@ -6,8 +6,8 @@ const OPERATORS = [
 
 const MODULES = [
   {
-    id: 'sistem',
-    title: 'Sistem',
+    id: 'sabit-tanimlar',
+    title: 'Sabit Tanımlar',
     screens: [
       {
         id: 'numarator-tanimi',
@@ -31,16 +31,72 @@ const MODULES = [
           { key: 'aktif', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'seri_kodu', label: 'Seri kodu', code: true, editableOnNew: true },
+          { key: 'seri_kodu', label: 'Seri kodu', code: true, editableOnNew: true, required: true },
           { key: 'onek', label: 'Önek' },
-          { key: 'aciklama', label: 'Açıklama', name: true },
+          { key: 'aciklama', label: 'Açıklama', name: true, required: true },
+        ],
+        detailFields: [
           { key: 'ekran_kodu', label: 'Ekran kodu' },
           { key: 'ekran_adi', label: 'Ekran adı' },
           { key: 'son_numara', label: 'Son numara', type: 'number' },
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'olcu-birimleri',
+        title: 'Ölçü Birimleri',
+        endpoint: '/olcu-birimleri',
+        crud: true,
+        codeField: 'birim_kodu',
+        nameField: 'birim_adi',
+        numeratorSeri: null,
+        filters: [
+          { key: 'birim_kodu', label: 'Birim kodu' },
+          { key: 'birim_adi', label: 'Birim adı' },
+        ],
+        columns: [
+          { key: 'birim_kodu', label: 'Kod', mono: true },
+          { key: 'birim_adi', label: 'Ad' },
+        ],
+        masterFields: [
+          { key: 'birim_kodu', label: 'Birim kodu', code: true, editableOnNew: true, required: true },
+          { key: 'birim_adi', label: 'Birim adı', name: true, required: true },
+        ],
         detailFields: [],
         detailKey: null,
+      },
+      {
+        id: 'kategori-tanimi',
+        title: 'Kategori Tanımı',
+        endpoint: '/kategoriler',
+        crud: true,
+        codeField: 'kategori_kodu',
+        nameField: 'kategori_adi',
+        numeratorSeri: 'KATEGORI',
+        filters: [
+          { key: 'kategori_kodu', label: 'Kategori kodu' },
+          { key: 'kategori_adi', label: 'Kategori adı' },
+          { key: 'kategori_tipi', label: 'Tip' },
+        ],
+        columns: [
+          { key: 'kategori_kodu', label: 'Kod', mono: true },
+          { key: 'kategori_adi', label: 'Ad' },
+          { key: 'kategori_tipi', label: 'Tip' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'kategori_kodu', label: 'Kategori kodu', code: true, required: true },
+          { key: 'kategori_adi', label: 'Kategori adı', name: true, required: true },
+          { key: 'kategori_tipi', label: 'Kategori tipi', type: 'select', options: ['ABC', 'Marka', 'TeminSekli'], required: true },
+        ],
+        detailFields: [
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
       },
     ],
   },
@@ -65,8 +121,8 @@ const MODULES = [
           { key: 'firma_adi', label: 'Ad' },
         ],
         masterFields: [
-          { key: 'firma_kodu', label: 'Firma kodu', code: true },
-          { key: 'firma_adi', label: 'Firma adı', name: true },
+          { key: 'firma_kodu', label: 'Firma kodu', code: true, required: true },
+          { key: 'firma_adi', label: 'Firma adı', name: true, required: true },
         ],
         detailFields: [],
         detailKey: null,
@@ -91,13 +147,15 @@ const MODULES = [
           { key: 'adres', label: 'Adres' },
         ],
         masterFields: [
-          { key: 'is_yeri_kodu', label: 'İş yeri kodu', code: true },
-          { key: 'is_yeri_adi', label: 'İş yeri adı', name: true },
-          { key: 'firma_id', label: 'Firma ID', type: 'number' },
+          { key: 'is_yeri_kodu', label: 'İş yeri kodu', code: true, required: true },
+          { key: 'is_yeri_adi', label: 'İş yeri adı', name: true, required: true },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+        ],
+        detailFields: [
           { key: 'adres', label: 'Adres' },
         ],
-        detailFields: [],
         detailKey: null,
+        detailAsFields: true,
       },
       {
         id: 'depolar',
@@ -121,14 +179,16 @@ const MODULES = [
           { key: 'varsayilan', label: 'Varsayılan' },
         ],
         masterFields: [
-          { key: 'depo_kodu', label: 'Depo kodu', code: true },
-          { key: 'depo_adi', label: 'Depo adı', name: true },
-          { key: 'is_yeri_id', label: 'İş yeri ID', type: 'number' },
+          { key: 'depo_kodu', label: 'Depo kodu', code: true, required: true },
+          { key: 'depo_adi', label: 'Depo adı', name: true, required: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+        ],
+        detailFields: [
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
           { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
         ],
-        detailFields: [],
         detailKey: null,
+        detailAsFields: true,
       },
     ],
   },
@@ -136,7 +196,7 @@ const MODULES = [
     id: 'stok',
     title: 'Stok',
     screens: [
-            {
+      {
         id: 'stok-karti',
         title: 'Stok Kartı',
         endpoint: '/stoklar',
@@ -170,15 +230,9 @@ const MODULES = [
         masterFields: [
           { key: 'stok_kodu', label: 'Stok kodu', code: true, required: true },
           { key: 'stok_adi', label: 'Stok adı', name: true, required: true },
-          { key: 'stok_adi_2', label: 'Stok adı 2' },
           { key: 'aciklama', label: 'Açıklama' },
-          { key: 'uzun_stok_kodu', label: 'Uzun stok kodu' },
           { key: 'stok_tipi', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true },
-          { key: 'tedarik_tipi', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'] },
-          { key: 'stok_takip_birimi', label: 'Stok takip birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
-          { key: 'satis_fiyati', label: 'Satış fiyatı', type: 'number' },
-          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
         detailFields: [
           { key: 'boyut', label: 'Boyut' },
@@ -187,8 +241,8 @@ const MODULES = [
         detailKey: 'stok_detaylari',
         formTabs: [
           {
-            id: 'ana', label: 'Stok Kart', kind: 'fields',
-            fields: [
+            id: 'ana', label: 'Stok Kart', kind: 'master-detail',
+            masterFields: [
               { key: 'stok_kodu', label: 'Stok kodu', code: true, required: true },
               { key: 'stok_adi', label: 'Stok adı', name: true, required: true },
               { key: 'stok_adi_2', label: 'Stok adı 2' },
@@ -201,11 +255,14 @@ const MODULES = [
               { key: 'satis_fiyati', label: 'Satış fiyatı', type: 'number' },
               { key: 'aktif', label: 'Aktif', type: 'checkbox' },
             ],
+            detailFields: [
+              { key: 'ulke_mensei', label: 'Ülke menşei' },
+              { key: 'temin_sekli', label: 'Temin şekli', type: 'lookup', lookup: 'kategoriler-temin', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
+            ],
           },
           {
             id: 'olcu', label: 'Ölçü Bilgileri', kind: 'fields',
             fields: [
-              { key: 'abc_kodu', label: 'ABC kodu', type: 'select', options: ['', 'A', 'B', 'C'] },
               { key: 'hacim', label: 'Hacim', type: 'number' },
               { key: 'hacim_birimi', label: 'Hacim birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
               { key: 'yogunluk', label: 'Yoğunluk', type: 'number' },
@@ -219,10 +276,7 @@ const MODULES = [
               { key: 'barkod', label: 'Barkod' },
               { key: 'emniyet_stok', label: 'Emniyet stok', type: 'number' },
               { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
-              { key: 'ulke_mensei', label: 'Ülke menşei' },
               { key: 'raf_omru_gun', label: 'Raf ömrü (gün)', type: 'number' },
-              { key: 'marka', label: 'Marka' },
-              { key: 'temin_sekli', label: 'Temin şekli' },
               { key: 'miktar_hassasiyeti', label: 'Miktar hassasiyeti', type: 'number' },
             ],
           },
@@ -233,23 +287,25 @@ const MODULES = [
               { key: 'katsayi', label: 'Katsayı', type: 'number' },
               { key: 'cevrilecek_birim', label: 'Çevrilecek birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
               { key: 'barkod', label: 'Barkod' },
-              { key: 'kutu_en_mm', label: 'Kutu en', type: 'number' },
-              { key: 'kutu_boy_mm', label: 'Kutu boy', type: 'number' },
-              { key: 'kutu_yukseklik_mm', label: 'Kutu yükseklik', type: 'number' },
-              { key: 'hacim', label: 'Hacim', type: 'number' },
-              { key: 'agirlik', label: 'Ağırlık', type: 'number' },
               { key: 'takip_birimi_mi', label: 'Takip birimi', type: 'checkbox' },
             ],
           },
-          { id: 'detay', label: 'Stok Detay', kind: 'grid', key: 'stok_detaylari', slots: 1,
+          {
+            id: 'detay', label: 'Stok Detay', kind: 'grid', key: 'stok_detaylari', slots: 1,
             fields: [
               { key: 'boyut', label: 'Boyut' },
               { key: 'agirlik', label: 'Ağırlık', type: 'number' },
             ],
           },
-          { id: 'barkod-tab', label: 'Barkod', kind: 'stub', note: 'Barkod alt modeli henüz tanımlanmadı; sahte CRUD yok.' },
-          { id: 'kategori', label: 'Kategoriler', kind: 'stub', note: 'Kategori ana verisi ve kuralları netleşince eklenecek.' },
-          { id: 'alternatif', label: 'Alternatif Stok', kind: 'stub', note: 'Alternatif stok ilişkisi kapsamı netleşecek.' },
+          {
+            id: 'kategori', label: 'Kategoriler', kind: 'fields',
+            fields: [
+              { key: 'abc_kodu', label: 'ABC kodu', type: 'lookup', lookup: 'kategoriler-abc', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
+              { key: 'marka', label: 'Marka', type: 'lookup', lookup: 'kategoriler-marka', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
+              { key: 'temin_sekli', label: 'Temin şekli', type: 'lookup', lookup: 'kategoriler-temin', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
+            ],
+          },
+          { id: 'barkod-tab', label: 'Barkod', kind: 'stub', note: 'Barkod alt modeli henüz tanımlanmadı.' },
           { id: 'dil-stok', label: 'Dil Tanımları', kind: 'stub', note: 'Stok dil tanımları tablosu henüz yok.' },
           { id: 'mrp', label: 'MRP', kind: 'stub', note: 'MRP parametreleri üretim planlama fazında ele alınacak.' },
         ],
@@ -279,7 +335,7 @@ const MODULES = [
     id: 'cari',
     title: 'Cari',
     screens: [
-            {
+      {
         id: 'cari-kartlari',
         title: 'Cari Kartları',
         endpoint: '/cariler',
@@ -309,14 +365,10 @@ const MODULES = [
         masterFields: [
           { key: 'cari_kodu', label: 'Cari kodu', code: true, required: true },
           { key: 'cari_adi', label: 'Cari adı', name: true, required: true },
-          { key: 'cari_turu', label: 'Tür', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true },
-          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
-          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
-          { key: 'telefon', label: 'Telefon' },
-          { key: 'email', label: 'E-posta' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'cari_turu', label: 'Müşteri tipi', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true },
           { key: 'vergi_no', label: 'VKN / TCKN' },
-          { key: 'vergi_dairesi', label: 'Vergi dairesi' },
-          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+          { key: 'fatura_adres1', label: 'Adres 1' },
         ],
         detailFields: [
           { key: 'adres', label: 'Adres' },
@@ -327,24 +379,26 @@ const MODULES = [
         detailKey: 'cari_detaylari',
         formTabs: [
           {
-            id: 'ana', label: 'Cari Kart', kind: 'fields',
-            fields: [
+            id: 'ana', label: 'Cari Kart', kind: 'master-detail',
+            masterFields: [
               { key: 'cari_kodu', label: 'Cari kodu', code: true, required: true },
               { key: 'cari_adi', label: 'Cari adı', name: true, required: true },
-              { key: 'cari_adi_2', label: 'Cari adı 2' },
               { key: 'aciklama', label: 'Açıklama' },
-              { key: 'cari_turu', label: 'Cari tipi', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true },
+              { key: 'cari_turu', label: 'Müşteri tipi', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true },
+              { key: 'vergi_no', label: 'VKN / TCKN' },
+              { key: 'fatura_adres1', label: 'Adres 1' },
+            ],
+            detailFields: [
+              { key: 'cari_adi_2', label: 'Cari adı 2' },
               { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
               { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
               { key: 'vergi_dairesi', label: 'Vergi dairesi' },
-              { key: 'vergi_no', label: 'VKN / TCKN' },
               { key: 'pasaport_no', label: 'Pasaport no' },
               { key: 'ulke', label: 'Ülke' },
               { key: 'ad', label: 'Ad' },
               { key: 'soyad', label: 'Soyad' },
-              { key: 'fatura_adres1', label: 'Fatura adres 1' },
-              { key: 'fatura_adres2', label: 'Fatura adres 2' },
-              { key: 'fatura_adres3', label: 'Fatura adres 3' },
+              { key: 'fatura_adres2', label: 'Adres 2' },
+              { key: 'fatura_adres3', label: 'Adres 3' },
               { key: 'il', label: 'İl' },
               { key: 'ilce', label: 'İlçe' },
               { key: 'posta_kodu', label: 'Posta kodu' },
@@ -417,8 +471,7 @@ const MODULES = [
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
             ],
           },
-          { id: 'euyum', label: 'e-Uyum', kind: 'stub', note: 'e-Fatura/e-Uyum entegrasyonu yok; dış servis simüle edilmeyecek.' },
-          { id: 'kategori', label: 'Kategoriler', kind: 'stub', note: 'Kategori ana verisi tanımlanınca eklenecek.' },
+          { id: 'kategori', label: 'Kategoriler', kind: 'stub', note: 'Cari kategori modeli henüz yok.' },
           { id: 'ekalan', label: 'Ek Alanlar', kind: 'stub', note: 'Esnek ek alan altyapısı henüz yok.' },
         ],
       },
@@ -432,8 +485,10 @@ const MODULES = [
         id: 'urun-agaci',
         title: 'Ürün Ağacı',
         endpoint: '/urun-agaclari',
-        crud: false,
+        crud: true,
         numeratorSeri: 'URUN_AGACI',
+        codeField: 'agac_kodu',
+        nameField: 'agac_adi',
         filters: [
           { key: 'agac_kodu', label: 'Ağaç kodu' },
           { key: 'agac_adi', label: 'Ağaç adı' },
@@ -447,13 +502,26 @@ const MODULES = [
           { key: 'stok_adi', label: 'Kök adı' },
           { key: 'stok_tipi', label: 'Tip' },
         ],
+        masterFields: [
+          { key: 'agac_kodu', label: 'Kod', code: true },
+          { key: 'agac_adi', label: 'Ad', name: true },
+          { key: 'stok_id', label: 'Kök stok ID', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'bilesen_stok_id', label: 'Bileşen stok ID', type: 'number' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim' },
+        ],
+        detailKey: 'satirlar',
       },
       {
         id: 'is-merkezleri',
         title: 'İş Merkezleri',
         endpoint: '/is-merkezleri',
-        crud: false,
+        crud: true,
         numeratorSeri: 'IS_MERKEZI',
+        codeField: 'merkez_kodu',
+        nameField: 'merkez_adi',
         filters: [
           { key: 'merkez_kodu', label: 'Merkez kodu' },
           { key: 'merkez_adi', label: 'Merkez adı' },
@@ -464,13 +532,21 @@ const MODULES = [
           { key: 'merkez_adi', label: 'Ad' },
           { key: 'is_yeri_adi', label: 'İş yeri' },
         ],
+        masterFields: [
+          { key: 'merkez_kodu', label: 'Kod', code: true },
+          { key: 'merkez_adi', label: 'Ad', name: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+        ],
+        detailFields: [],
       },
       {
         id: 'rotalar',
         title: 'Rotalar',
         endpoint: '/rotalar',
-        crud: false,
+        crud: true,
         numeratorSeri: 'ROTA',
+        codeField: 'rota_kodu',
+        nameField: 'rota_adi',
         filters: [
           { key: 'rota_kodu', label: 'Rota kodu' },
           { key: 'rota_adi', label: 'Rota adı' },
@@ -481,13 +557,26 @@ const MODULES = [
           { key: 'rota_adi', label: 'Ad' },
           { key: 'stok_kodu', label: 'Stok', mono: true },
         ],
+        masterFields: [
+          { key: 'rota_kodu', label: 'Kod', code: true },
+          { key: 'rota_adi', label: 'Ad', name: true },
+          { key: 'stok_id', label: 'Stok ID', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'operasyon_kodu', label: 'Operasyon kodu' },
+          { key: 'operasyon_adi', label: 'Operasyon adı' },
+          { key: 'sira_no', label: 'Sıra', type: 'number' },
+        ],
+        detailKey: 'operasyonlar',
       },
       {
         id: 'uretim-emirleri',
         title: 'Üretim Emirleri',
         endpoint: '/uretim-emirleri',
-        crud: false,
+        crud: true,
         numeratorSeri: 'URETIM_EMRI',
+        codeField: 'emir_no',
+        nameField: 'stok_kodu',
         filters: [
           { key: 'emir_no', label: 'Emir no' },
           { key: 'stok_kodu', label: 'Stok kodu' },
@@ -500,6 +589,17 @@ const MODULES = [
           { key: 'uretilen_miktar', label: 'Üretilen' },
           { key: 'durum', label: 'Durum' },
         ],
+        masterFields: [
+          { key: 'emir_no', label: 'Emir no', code: true },
+          { key: 'stok_id', label: 'Stok ID', type: 'number' },
+          { key: 'planlanan_miktar', label: 'Planlanan miktar', type: 'number' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        detailFields: [
+          { key: 'bilesen_stok_id', label: 'Bileşen stok ID', type: 'number' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+        ],
+        detailKey: 'bilesenler',
       },
     ],
   },
@@ -511,8 +611,10 @@ const MODULES = [
         id: 'satin-alma-talepleri',
         title: 'Satınalma Talepleri',
         endpoint: '/satin-alma-talepleri',
-        crud: false,
+        crud: true,
         numeratorSeri: 'SATINALMA_TALEP',
+        codeField: 'talep_no',
+        nameField: 'aciklama',
         filters: [
           { key: 'talep_no', label: 'Talep no' },
           { key: 'durum', label: 'Durum' },
@@ -522,13 +624,26 @@ const MODULES = [
           { key: 'durum', label: 'Durum' },
           { key: 'aciklama', label: 'Açıklama' },
         ],
+        masterFields: [
+          { key: 'talep_no', label: 'Talep no', code: true },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+          { key: 'durum', label: 'Durum' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok ID', type: 'number' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim' },
+        ],
+        detailKey: 'satirlar',
       },
       {
         id: 'satin-alma-siparisleri',
         title: 'Satınalma Siparişleri',
         endpoint: '/satin-alma-siparisleri',
-        crud: false,
+        crud: true,
         numeratorSeri: 'SATINALMA_SIPARIS',
+        codeField: 'siparis_no',
+        nameField: 'cari_adi',
         filters: [
           { key: 'siparis_no', label: 'Sipariş no' },
           { key: 'cari_adi', label: 'Cari' },
@@ -540,13 +655,26 @@ const MODULES = [
           { key: 'talep_no', label: 'Talep', mono: true },
           { key: 'durum', label: 'Durum' },
         ],
+        masterFields: [
+          { key: 'siparis_no', label: 'Sipariş no', code: true },
+          { key: 'cari_id', label: 'Cari ID', type: 'number' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok ID', type: 'number' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim' },
+        ],
+        detailKey: 'satirlar',
       },
       {
         id: 'mal-kabuller',
         title: 'Mal Kabuller',
         endpoint: '/mal-kabuller',
-        crud: false,
+        crud: true,
         numeratorSeri: 'MAL_KABUL',
+        codeField: 'kabul_no',
+        nameField: 'siparis_no',
         filters: [
           { key: 'kabul_no', label: 'Kabul no' },
           { key: 'siparis_no', label: 'Sipariş no' },
@@ -557,10 +685,21 @@ const MODULES = [
           { key: 'siparis_no', label: 'Sipariş', mono: true },
           { key: 'depo_kodu', label: 'Depo', mono: true },
         ],
+        masterFields: [
+          { key: 'kabul_no', label: 'Kabul no', code: true },
+          { key: 'siparis_id', label: 'Sipariş ID', type: 'number' },
+          { key: 'depo_id', label: 'Depo ID', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok ID', type: 'number' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+        ],
+        detailKey: 'satirlar',
       },
     ],
   },
 ];
+
 
 function normalizeScreen(raw, moduleId, moduleTitle) {
   const s = { ...raw, moduleId, moduleTitle };
@@ -621,6 +760,35 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     else if (s.detailKey === 'stok_detaylari' || s.detailKey === 'cari_detaylari') s.detailSlots = 1;
     else s.detailSlots = 3;
   }
+
+  // Tum formlar sol ic menu + master/detay duzeni kullanir
+  if (!Array.isArray(s.formTabs) || !s.formTabs.length) {
+    if (s.detailAsFields && s.detailFields.length) {
+      s.formTabs = [{
+        id: 'kart',
+        label: s.title,
+        kind: 'master-detail',
+        masterFields: s.masterFields,
+        detailFields: s.detailFields,
+      }];
+    } else if (s.detailFields.length && s.detailSlots) {
+      s.formTabs = [
+        { id: 'master', label: 'Master', kind: 'fields', fields: s.masterFields },
+        {
+          id: 'detay',
+          label: 'Detay',
+          kind: 'grid',
+          key: s.detailKey || '_detail',
+          slots: s.detailSlots,
+          fields: s.detailFields,
+        },
+      ];
+    } else {
+      s.formTabs = [
+        { id: 'master', label: 'Master', kind: 'fields', fields: s.masterFields },
+      ];
+    }
+  }
   return s;
 }
 
@@ -645,9 +813,11 @@ const state = {
   formRecord: null,
   detailRows: [],
   openTabs: [],
+  activeTabKey: null,
   formContext: null,
   formActiveTab: null,
   lookupCache: {},
+  formSeq: 0,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -763,31 +933,30 @@ function renderTabBar() {
     return;
   }
   bar.innerHTML = state.openTabs.map((t) => `
-    <button type="button" class="tab-item${t.id === state.screenId && !state.formMode ? ' active' : ''}${t.id === state.screenId && state.formMode ? ' active' : ''}" data-tab="${t.id}">
+    <button type="button" class="tab-item${t.key === state.activeTabKey ? ' active' : ''}" data-tab-key="${t.key}">
       <span>${t.title}</span>
-      <span class="tab-close" data-tab-close="${t.id}" title="Kapat">×</span>
+      <span class="tab-close" data-tab-close-key="${t.key}" title="Kapat">×</span>
     </button>
   `).join('');
 }
 
 function addOpenTab(screen) {
-  if (!screen) return;
-  if (!state.openTabs.some((t) => t.id === screen.id)) {
-    state.openTabs.push({ id: screen.id, title: screen.title });
-  }
-  renderTabBar();
+  addListTab(screen);
 }
 
-function closeOpenTab(id) {
-  state.openTabs = state.openTabs.filter((t) => t.id !== id);
-  if (state.screenId === id) {
+function closeOpenTab(tabKey) {
+  const closing = state.openTabs.find((t) => t.key === tabKey);
+  state.openTabs = state.openTabs.filter((t) => t.key !== tabKey);
+  if (state.activeTabKey === tabKey) {
     state.formMode = null;
+    state.formRecord = null;
     const next = state.openTabs[state.openTabs.length - 1];
-    if (next) openScreen(next.id);
+    if (next) activateTab(next.key);
     else showHome();
   } else {
     renderTabBar();
   }
+  void closing;
 }
 
 function renderSidebar() {
@@ -907,7 +1076,7 @@ function updateActionButtons(screen) {
   });
 }
 
-async function openScreen(id) {
+async function openScreen(id, opts = {}) {
   try {
     const screen = findScreen(id);
     if (!screen) {
@@ -927,12 +1096,16 @@ async function openScreen(id) {
       history.pushState({ screenId: id }, '', `#${id}`);
     }
 
-    addOpenTab(screen);
+    if (!opts.skipTab) addListTab(screen);
+    else {
+      state.activeTabKey = `list:${screen.id}`;
+      renderTabBar();
+    }
     showView('screen');
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014a`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014b`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -980,6 +1153,9 @@ const LOOKUP_ENDPOINTS = {
   'olcu-birimleri': '/olcu-birimleri',
   firmalar: '/firmalar',
   'is-yerleri': '/is-yerleri',
+  'kategoriler-abc': '/kategoriler?tip=ABC&aktif=true',
+  'kategoriler-marka': '/kategoriler?tip=Marka&aktif=true',
+  'kategoriler-temin': '/kategoriler?tip=TeminSekli&aktif=true',
 };
 
 async function ensureLookups(screen) {
@@ -991,7 +1167,11 @@ async function ensureLookups(screen) {
   };
   collect(screen.masterFields);
   collect(screen.detailFields);
-  (screen.formTabs || []).forEach((tab) => collect(tab.fields));
+  (screen.formTabs || []).forEach((tab) => {
+    collect(tab.fields);
+    collect(tab.masterFields);
+    collect(tab.detailFields);
+  });
   for (const key of needed) {
     if (state.lookupCache[key]) continue;
     const ep = LOOKUP_ENDPOINTS[key];
@@ -1092,88 +1272,101 @@ function fieldShell(f, controlHtml) {
   return `<div class="${cls.join(' ')}"><label>${f.label}</label>${controlHtml}</div>`;
 }
 
+function renderMasterDetailPanel(tab, rec) {
+  const mFields = tab.masterFields || [];
+  const dFields = tab.detailFields || [];
+  return `
+    <div class="md-split">
+      <div class="md-master">
+        <h3>Master</h3>
+        <div class="form-tab-fields">
+          ${mFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
+        </div>
+      </div>
+      <div class="md-detail">
+        <h3>Detay</h3>
+        <div class="form-tab-fields">
+          ${dFields.length
+            ? dFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')
+            : '<div class="detail-empty">Detay alanı yok.</div>'}
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
   $('#formModeBadge').textContent = MODE_LABELS[state.formMode] || state.formMode;
-  $('#formScreenLabel').textContent = screen.title;
+  $('#formScreenLabel').textContent = `${screen.title} · ${MODE_LABELS[state.formMode] || ''}`;
   $('#btnFormSave').hidden = readonly;
 
   const tabsLayout = $('#formTabsLayout');
   const classic = $('#formSplitClassic');
-  const hasTabs = Array.isArray(screen.formTabs) && screen.formTabs.length;
+  if (classic) {
+    classic.hidden = true;
+    classic.style.display = 'none';
+  }
+  if (tabsLayout) {
+    tabsLayout.hidden = false;
+    tabsLayout.style.display = 'grid';
+  }
 
-  if (hasTabs) {
-    if (classic) classic.hidden = true;
-    if (tabsLayout) tabsLayout.hidden = false;
-    if (!state.formActiveTab) state.formActiveTab = screen.formTabs[0].id;
-    const nav = $('#formTabNav');
-    const body = $('#formTabBody');
-    nav.innerHTML = screen.formTabs.map((tab) => `
-      <button type="button" class="form-tab-btn ${tab.kind === 'stub' ? 'stub' : ''} ${state.formActiveTab === tab.id ? 'active' : ''}"
-        data-form-tab="${tab.id}">${tab.label}</button>
-    `).join('');
+  const tabs = screen.formTabs || [];
+  if (!state.formActiveTab || !tabs.some((t) => t.id === state.formActiveTab)) {
+    state.formActiveTab = tabs[0]?.id || null;
+  }
 
-    body.innerHTML = screen.formTabs.map((tab) => {
-      const active = state.formActiveTab === tab.id;
-      if (tab.kind === 'stub') {
-        return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${active ? '' : 'hidden'}>
-          <h2>${tab.label}</h2>
-          <div class="stub-panel">${tab.note || 'Bu sekmenin kapsamı henüz netleştirilmedi.'}</div>
-        </div>`;
-      }
-      if (tab.kind === 'grid') {
-        const rows = ensureGridSlots(tab, Array.isArray(rec[tab.key]) ? rec[tab.key] : []);
-        rec[tab.key] = rows;
-        return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${active ? '' : 'hidden'}>
-          <h2>${tab.label}</h2>
-          <div class="detail-grid">
-            ${rows.map((row, idx) => `
-              <div class="detail-slot">
-                <div class="detail-slot-title">${tab.label} ${idx + 1}</div>
-                <div class="detail-slot-fields">
-                  ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, tab.key))).join('')}
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>`;
-      }
-      // fields
-      return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${active ? '' : 'hidden'}>
+  const nav = $('#formTabNav');
+  const body = $('#formTabBody');
+  if (!nav || !body) return;
+
+  nav.innerHTML = tabs.map((tab) => `
+    <button type="button" class="form-tab-btn ${tab.kind === 'stub' ? 'stub' : ''} ${state.formActiveTab === tab.id ? 'active' : ''}"
+      data-form-tab="${tab.id}">${tab.label}</button>
+  `).join('');
+
+  body.innerHTML = tabs.map((tab) => {
+    const active = state.formActiveTab === tab.id;
+    const hide = active ? '' : 'hidden';
+    if (tab.kind === 'stub') {
+      return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
         <h2>${tab.label}</h2>
-        <div class="form-tab-fields">
-          ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
+        <div class="stub-panel">${tab.note || 'Bu sekmenin kapsamı henüz netleştirilmedi.'}</div>
+      </div>`;
+    }
+    if (tab.kind === 'master-detail') {
+      return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
+        <h2>${tab.label}</h2>
+        ${renderMasterDetailPanel(tab, rec)}
+      </div>`;
+    }
+    if (tab.kind === 'grid') {
+      const rows = ensureGridSlots(tab, Array.isArray(rec[tab.key]) ? rec[tab.key] : []);
+      rec[tab.key] = rows;
+      return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
+        <h2>${tab.label}</h2>
+        <div class="detail-grid">
+          ${rows.map((row, idx) => `
+            <div class="detail-slot">
+              <div class="detail-slot-title">${tab.label} ${idx + 1}</div>
+              <div class="detail-slot-fields">
+                ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, tab.key))).join('')}
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>`;
-    }).join('');
-    state.formRecord = rec;
-    return;
-  }
-
-  if (tabsLayout) tabsLayout.hidden = true;
-  if (classic) classic.hidden = false;
-
-  $('#masterGrid').innerHTML = (screen.masterFields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('');
-
-  const grid = $('#detailGrid');
-  const dFields = screen.detailFields || [];
-  const slots = screen.detailSlots || 0;
-  if (!grid) return;
-  if (!dFields.length || !slots) {
-    grid.innerHTML = `<div class="detail-empty">Bu ekranda ek detay alanı yok.</div>`;
-    return;
-  }
-
-  state.detailRows = ensureDetailSlots(screen, state.detailRows || []);
-  grid.innerHTML = state.detailRows.map((row, idx) => `
-    <div class="detail-slot">
-      <div class="detail-slot-title">Detay ${idx + 1}</div>
-      <div class="detail-slot-fields">
-        ${dFields.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx))).join('')}
+    }
+    return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
+      <h2>${tab.label}</h2>
+      <div class="form-tab-fields">
+        ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+
+  state.formRecord = rec;
 }
 
 function readFieldValue(el, field) {
@@ -1186,40 +1379,26 @@ function readFieldValue(el, field) {
   return el.value;
 }
 
+function collectTabFields(screen) {
+  const fields = [];
+  (screen.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'fields') fields.push(...(tab.fields || []));
+    if (tab.kind === 'master-detail') {
+      fields.push(...(tab.masterFields || []));
+      fields.push(...(tab.detailFields || []));
+    }
+  });
+  return fields;
+}
+
 function readMasterFromForm(screen) {
   const out = { ...(state.formRecord || {}) };
-  const fields = [];
-  if (screen.formTabs?.length) {
-    screen.formTabs.forEach((tab) => {
-      if (tab.kind === 'fields') fields.push(...(tab.fields || []));
-    });
-  } else {
-    fields.push(...(screen.masterFields || []));
-  }
-  fields.forEach((f) => {
+  collectTabFields(screen).forEach((f) => {
     const el = document.querySelector(`[data-master="${f.key}"]`);
     if (!el) return;
     out[f.key] = readFieldValue(el, f);
   });
   return out;
-}
-
-function readDetailsFromForm(screen) {
-  if (!screen.detailFields?.length || !screen.detailSlots) return [];
-  const rows = [];
-  for (let idx = 0; idx < screen.detailSlots; idx += 1) {
-    const row = {};
-    let any = false;
-    screen.detailFields.forEach((f) => {
-      const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"]:not([data-grid])`);
-      if (!el) return;
-      row[f.key] = readFieldValue(el, f);
-      if (f.type === 'checkbox') { if (el.checked) any = true; }
-      else if (el.value !== '') any = true;
-    });
-    if (any) rows.push(row);
-  }
-  return rows;
 }
 
 function readGridFromForm(tab) {
@@ -1248,23 +1427,107 @@ function readTabbedPayload(screen) {
 }
 
 function validateRequired(screen, payload) {
-  const fields = [];
-  if (screen.formTabs?.length) {
-    screen.formTabs.forEach((tab) => {
-      if (tab.kind === 'fields') fields.push(...(tab.fields || []));
-    });
-  } else {
-    fields.push(...(screen.masterFields || []));
-  }
-  for (const f of fields) {
+  for (const f of collectTabFields(screen)) {
     if (!f.required) continue;
     if (f.code && state.formMode === 'duzelt') continue;
     const v = payload[f.key];
-    if (v === undefined || v === null || (typeof v === 'string' && !v.trim())) {
+    if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
       return `${f.label} zorunlu.`;
     }
   }
   return null;
+}
+
+function snapshotFormSession() {
+  const screen = findScreen(state.screenId);
+  if (!screen || !state.formMode) return null;
+  const payload = screen.formTabs?.length
+    ? readTabbedPayload(screen)
+    : { ...(state.formRecord || {}) };
+  return {
+    screenId: state.screenId,
+    formMode: state.formMode,
+    formRecord: payload,
+    formActiveTab: state.formActiveTab,
+    selectedId: state.selectedId,
+  };
+}
+
+function persistActiveFormTab() {
+  if (!state.activeTabKey || !String(state.activeTabKey).startsWith('form:')) return;
+  const snap = snapshotFormSession();
+  if (!snap) return;
+  const tab = state.openTabs.find((t) => t.key === state.activeTabKey);
+  if (tab) {
+    tab.formMode = snap.formMode;
+    tab.formRecord = snap.formRecord;
+    tab.formActiveTab = snap.formActiveTab;
+    tab.screenId = snap.screenId;
+  }
+}
+
+function addListTab(screen) {
+  if (!screen) return;
+  const key = `list:${screen.id}`;
+  if (!state.openTabs.some((t) => t.key === key)) {
+    state.openTabs.push({ key, kind: 'list', id: screen.id, title: screen.title });
+  }
+  state.activeTabKey = key;
+  renderTabBar();
+}
+
+function addFormTab(screen, mode, record) {
+  state.formSeq += 1;
+  const code = record?.[screen.codeField] || '';
+  const key = `form:${screen.id}:${mode}:${state.formSeq}`;
+  const title = `${screen.title} · ${MODE_LABELS[mode]}${code ? ` · ${code}` : ''}`;
+  state.openTabs.push({
+    key,
+    kind: 'form',
+    id: screen.id,
+    screenId: screen.id,
+    title,
+    formMode: mode,
+    formRecord: record,
+    formActiveTab: screen.formTabs?.[0]?.id || null,
+  });
+  state.activeTabKey = key;
+  renderTabBar();
+  return key;
+}
+
+async function activateTab(tabKey) {
+  const tab = state.openTabs.find((t) => t.key === tabKey);
+  if (!tab) return;
+
+  // mevcut formu kaydet
+  if (state.activeTabKey && String(state.activeTabKey).startsWith('form:')) {
+    persistActiveFormTab();
+  }
+
+  state.activeTabKey = tabKey;
+
+  if (tab.kind === 'list') {
+    state.formMode = null;
+    state.formRecord = null;
+    await openScreen(tab.id, { skipTab: true });
+    return;
+  }
+
+  // form sekmesi
+  const screen = findScreen(tab.screenId || tab.id);
+  if (!screen) return;
+  state.screenId = screen.id;
+  state.formMode = tab.formMode;
+  state.formRecord = { ...(tab.formRecord || {}) };
+  state.formActiveTab = tab.formActiveTab || screen.formTabs?.[0]?.id || null;
+  await ensureLookups(screen);
+  showView('form');
+  $('#homeSearchWrap').hidden = true;
+  $('#screenTitle').textContent = tab.title;
+  renderForm(screen);
+  renderSidebar();
+  renderTabBar();
 }
 
 async function openForm(mode) {
@@ -1282,6 +1545,9 @@ async function openForm(mode) {
     return;
   }
 
+  // liste sekmesini koru
+  addListTab(screen);
+
   state.formMode = mode;
   state.formActiveTab = screen.formTabs?.[0]?.id || null;
   let record = {};
@@ -1297,13 +1563,7 @@ async function openForm(mode) {
   await ensureLookups(screen);
 
   const seedFields = () => {
-    const all = [];
-    if (screen.formTabs?.length) {
-      screen.formTabs.forEach((t) => { if (t.kind === 'fields') all.push(...(t.fields || [])); });
-    } else {
-      all.push(...(screen.masterFields || []));
-    }
-    all.forEach((f) => {
+    collectTabFields(screen).forEach((f) => {
       if (f.type === 'checkbox') record[f.key] = true;
       else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
       else if (record[f.key] === undefined) record[f.key] = '';
@@ -1318,7 +1578,6 @@ async function openForm(mode) {
       try { record[screen.codeField] = await ayirKod(seri); }
       catch (err) { toast(err.message); }
     }
-    state.detailRows = ensureDetailSlots(screen, []);
     (screen.formTabs || []).forEach((tab) => {
       if (tab.kind === 'grid') record[tab.key] = ensureGridSlots(tab, []);
     });
@@ -1332,8 +1591,6 @@ async function openForm(mode) {
       try { record[screen.codeField] = await ayirKod(seri); }
       catch (err) { toast(err.message); }
     }
-    const rawDetails = Array.isArray(full[screen.detailKey]) ? full[screen.detailKey] : [];
-    state.detailRows = ensureDetailSlots(screen, rawDetails.map(({ id, ...rest }) => rest));
     (screen.formTabs || []).forEach((tab) => {
       if (tab.kind === 'grid') {
         const raw = Array.isArray(full[tab.key]) ? full[tab.key] : [];
@@ -1343,8 +1600,6 @@ async function openForm(mode) {
   } else {
     const full = await loadRecord(row.id);
     record = { ...full };
-    const rawDetails = Array.isArray(full[screen.detailKey]) ? full[screen.detailKey] : [];
-    state.detailRows = ensureDetailSlots(screen, rawDetails.map((d) => ({ ...d })));
     (screen.formTabs || []).forEach((tab) => {
       if (tab.kind === 'grid') {
         const raw = Array.isArray(full[tab.key]) ? full[tab.key] : [];
@@ -1360,7 +1615,7 @@ async function openForm(mode) {
   }
 
   state.formRecord = record;
-  addOpenTab(screen);
+  addFormTab(screen, mode, record);
   showView('form');
   $('#homeSearchWrap').hidden = true;
   $('#screenTitle').textContent = `${screen.title} · ${MODE_LABELS[mode]}`;
@@ -1372,15 +1627,7 @@ async function saveForm() {
   const screen = findScreen(state.screenId);
   if (!screen || state.formMode === 'incele') return;
 
-  const master = screen.formTabs?.length
-    ? readTabbedPayload(screen)
-    : (() => {
-        const m = readMasterFromForm(screen);
-        const details = readDetailsFromForm(screen);
-        if (screen.detailKey) m[screen.detailKey] = details;
-        return m;
-      })();
-
+  const master = readTabbedPayload(screen);
   const reqErr = validateRequired(screen, master);
   if (reqErr) {
     toast(reqErr);
@@ -1397,13 +1644,23 @@ async function saveForm() {
       } else {
         await api('/kod-serileri', { method: 'POST', body: JSON.stringify(master) });
       }
+    } else if (screen.id === 'olcu-birimleri') {
+      if (state.formMode === 'duzelt') {
+        toast('Ölçü birimi güncelleme bu sürümde kapalı; yeni kayıt ekleyin.');
+        return;
+      }
+      await api('/olcu-birimleri', { method: 'POST', body: JSON.stringify(master) });
     } else if (state.formMode === 'duzelt') {
       await api(`${screen.endpoint}/${master.id}`, { method: 'PUT', body: JSON.stringify(master) });
     } else {
       await api(screen.endpoint, { method: 'POST', body: JSON.stringify(master) });
     }
     toast('Kaydedildi.');
+    // form sekmesini kapat, listeye don
+    const formKey = state.activeTabKey;
     state.formMode = null;
+    state.formRecord = null;
+    state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
     await openScreen(screen.id);
   } catch (err) {
     toast(err.message);
@@ -1498,18 +1755,18 @@ function bindEvents() {
       return;
     }
 
-    const tabClose = e.target.closest('[data-tab-close]');
+    const tabClose = e.target.closest('[data-tab-close-key]');
     if (tabClose) {
       e.preventDefault();
       e.stopPropagation();
-      closeOpenTab(tabClose.getAttribute('data-tab-close'));
+      closeOpenTab(tabClose.getAttribute('data-tab-close-key'));
       return;
     }
 
-    const tabBtn = e.target.closest('[data-tab]');
+    const tabBtn = e.target.closest('[data-tab-key]');
     if (tabBtn) {
       e.preventDefault();
-      openScreen(tabBtn.getAttribute('data-tab'));
+      activateTab(tabBtn.getAttribute('data-tab-key')).catch((err) => toast(err.message));
       return;
     }
 
@@ -1554,9 +1811,15 @@ function bindEvents() {
   });
 
   $('#btnFormCancel').addEventListener('click', () => {
+    const formKey = state.activeTabKey;
+    const screenId = state.screenId;
     state.formMode = null;
-    const id = state.screenId;
-    openScreen(id);
+    state.formRecord = null;
+    if (formKey && String(formKey).startsWith('form:')) {
+      state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+    }
+    if (screenId) openScreen(screenId);
+    else showHome();
   });
 
   $('#btnFormSave').addEventListener('click', () => {

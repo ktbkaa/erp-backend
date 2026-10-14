@@ -56,6 +56,7 @@ app.use('/satin-alma-siparisleri', require('./routes/satin_alma_siparisleri'));
 app.use('/mal-kabuller', require('./routes/mal_kabuller'));
 app.use('/uretim-emirleri', require('./routes/uretim_emirleri'));
 app.use('/kod-serileri', require('./routes/kod_serileri'));
+app.use('/kategoriler', require('./routes/kategoriler'));
 
 app.listen(port, () => {
     console.log(`Sistem http://localhost:${port} adresinde çalışıyor.`);
