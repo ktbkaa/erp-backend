@@ -591,16 +591,30 @@ const MODULES = [
         masterFields: [
           { key: 'agac_kodu', label: 'Kod', code: true, required: true },
           { key: 'agac_adi', label: 'Ad', name: true, required: true },
-          { key: 'mamul_stok_id', label: 'Kök stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
           { key: 'miktar', label: 'Miktar', type: 'number' },
         ],
-        detailFields: [
-          { key: 'bilesen_stok_id', label: 'Bileşen stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
-          { key: 'miktar', label: 'Miktar', type: 'number' },
-          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+        detailFields: [],
+        detailKey: null,
+        formTabs: [
+          {
+            id: 'baslik', label: 'Ağaç Başlık', kind: 'fields',
+            fields: [
+              { key: 'agac_kodu', label: 'Kod', code: true, required: true },
+              { key: 'agac_adi', label: 'Ad', name: true, required: true },
+              { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+              { key: 'miktar', label: 'Miktar', type: 'number' },
+            ],
+          },
+          {
+            id: 'agac-tree', label: 'Ürün Ağacı', kind: 'bom-tree', key: 'satirlar',
+            fields: [
+              { key: 'bilesen_stok_id', label: 'Bileşen stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+              { key: 'miktar', label: 'Miktar', type: 'number', required: true },
+              { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+            ],
+          },
         ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
       },
       {
         id: 'is-merkezleri',
@@ -650,17 +664,35 @@ const MODULES = [
           { key: 'rota_adi', label: 'Ad', name: true, required: true },
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
         ],
-        detailFields: [
-          { key: 'sira_no', label: 'Sıra', type: 'number' },
-          { key: 'operasyon_kodu', label: 'Operasyon kodu' },
-          { key: 'operasyon_adi', label: 'Operasyon adı' },
-          { key: 'is_merkezi_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'merkez_adi', codeKey: 'merkez_kodu' },
-          { key: 'sure_dk', label: 'Süre (dk)', type: 'number' },
-          { key: 'cikti_stok_id', label: 'Çıktı stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
-          { key: 'sonraki_sira_no', label: 'Sonraki sıra', type: 'number' },
+        detailFields: [],
+        detailKey: null,
+        formTabs: [
+          {
+            id: 'baslik', label: 'Rota Başlık', kind: 'fields',
+            fields: [
+              { key: 'rota_kodu', label: 'Kod', code: true, required: true },
+              { key: 'rota_adi', label: 'Ad', name: true, required: true },
+              { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+            ],
+          },
+          {
+            id: 'op-flow', label: 'Operasyon Akışı', kind: 'rota-flow', key: 'operasyonlar',
+            fields: [
+              { key: 'sira_no', label: 'Sıra', type: 'number', required: true },
+              { key: 'operasyon_kodu', label: 'Operasyon kodu', required: true },
+              { key: 'operasyon_adi', label: 'Operasyon adı', required: true },
+              { key: 'is_merkezi_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'merkez_adi', codeKey: 'merkez_kodu' },
+              { key: 'sure_dk', label: 'Süre (dk)', type: 'number' },
+              { key: 'cikti_stok_id', label: 'Çıktı stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+              { key: 'sonraki_sira_no', label: 'Sonraki sıra', type: 'number' },
+            ],
+            componentFields: [
+              { key: 'stok_id', label: 'Bileşen stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+              { key: 'miktar', label: 'Miktar', type: 'number' },
+              { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+            ],
+          },
         ],
-        detailKey: 'operasyonlar',
-        detailSlots: 5,
       },
       {
         id: 'uretim-emirleri',
@@ -1023,6 +1055,11 @@ const state = {
   formActiveTab: null,
   lookupCache: {},
   formSeq: 0,
+  gridSel: { key: null, idx: null },
+  treeSel: null,
+  treeExpanded: {},
+  flowSel: null,
+  flowCompSel: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -1314,7 +1351,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014f`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014g`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -1392,6 +1429,8 @@ async function ensureLookups(screen) {
     collect(tab.fields);
     collect(tab.masterFields);
     collect(tab.detailFields);
+    collect(tab.componentFields);
+    if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') needed.add('stoklar');
   });
   for (const key of needed) {
     if (state.lookupCache[key]) continue;
@@ -1454,36 +1493,149 @@ function detailFieldControl(field, value, idx, gridKey = null) {
   return fieldControl(field, value, 'data-detail', extra);
 }
 
-function ensureDetailSlots(screen, rows) {
-  const slots = screen.detailSlots || 0;
-  const fields = screen.detailFields || [];
-  const out = [];
-  for (let i = 0; i < slots; i += 1) {
-    const src = rows[i] || {};
-    const row = {};
+function emptyRowFromFields(fields) {
+  const row = {};
+  (fields || []).forEach((f) => {
+    if (f.type === 'checkbox') row[f.key] = false;
+    else row[f.key] = '';
+  });
+  return row;
+}
+
+/** Boş placeholder satır üretmez — yalnızca gerçek satırlar */
+function normalizeGridRows(tab, rows) {
+  const fields = tab.fields || [];
+  return (Array.isArray(rows) ? rows : []).map((src) => {
+    const row = emptyRowFromFields(fields);
     fields.forEach((f) => {
-      if (f.type === 'checkbox') row[f.key] = Boolean(src[f.key]);
-      else row[f.key] = src[f.key] ?? '';
+      if (f.type === 'checkbox') row[f.key] = Boolean(src?.[f.key]);
+      else if (src?.[f.key] !== undefined && src?.[f.key] !== null) row[f.key] = src[f.key];
     });
-    out.push(row);
-  }
-  return out;
+    // nested children for rota etc.
+    if (Array.isArray(src?.bilesenler)) row.bilesenler = src.bilesenler.map((b) => ({ ...b }));
+    if (Array.isArray(src?.alt_satirlar)) row.alt_satirlar = src.alt_satirlar;
+    Object.keys(src || {}).forEach((k) => {
+      if (row[k] === undefined && !['id'].includes(k)) row[k] = src[k];
+    });
+    return row;
+  });
 }
 
 function ensureGridSlots(tab, rows) {
-  const slots = tab.slots || 0;
-  const fields = tab.fields || [];
-  const out = [];
-  for (let i = 0; i < slots; i += 1) {
-    const src = rows[i] || {};
-    const row = {};
-    fields.forEach((f) => {
-      if (f.type === 'checkbox') row[f.key] = Boolean(src[f.key]);
-      else row[f.key] = src[f.key] ?? '';
-    });
-    out.push(row);
+  return normalizeGridRows(tab, rows);
+}
+
+function lookupDisplay(field, value) {
+  if (value === undefined || value === null || value === '') return '—';
+  const rows = state.lookupCache[field.lookup] || [];
+  const vk = field.valueKey || 'id';
+  const hit = rows.find((r) => String(r[vk]) === String(value));
+  if (!hit) return String(value);
+  const ck = field.codeKey;
+  const lk = field.labelKey || 'adi';
+  return ck ? `${hit[ck] || ''} — ${hit[lk] || ''}` : `${hit[lk] || hit[vk]}`;
+}
+
+function stokLookupById(id) {
+  const rows = state.lookupCache.stoklar || [];
+  return rows.find((r) => String(r.id) === String(id)) || null;
+}
+
+function tipBadge(tip) {
+  const t = tip || '';
+  const cls = /mamul/i.test(t) && !/yarı|yari/i.test(t) ? 'tip-mamul'
+    : /yarı|yari/i.test(t) ? 'tip-ym'
+      : /ham/i.test(t) ? 'tip-hm' : 'tip-other';
+  return `<span class="tip-badge ${cls}">${t || '—'}</span>`;
+}
+
+function gridRowSummary(tab, row) {
+  const parts = (tab.fields || []).slice(0, 3).map((f) => {
+    if (f.type === 'lookup') return lookupDisplay(f, row[f.key]);
+    if (f.type === 'checkbox') return row[f.key] ? f.label : null;
+    const v = row[f.key];
+    return v === '' || v == null ? null : String(v);
+  }).filter(Boolean);
+  return parts.join(' · ') || '(boş satır)';
+}
+
+function buildBomTreeFromFlat(satirlar) {
+  const list = Array.isArray(satirlar) ? satirlar.map((s) => ({
+    ...s,
+    alt_satirlar: [],
+  })) : [];
+  const byId = new Map();
+  list.forEach((s) => { if (s.id != null) byId.set(s.id, s); });
+  const roots = [];
+  list.forEach((s) => {
+    if (s.ust_satir_id && byId.has(s.ust_satir_id)) {
+      byId.get(s.ust_satir_id).alt_satirlar.push(s);
+    } else {
+      roots.push(s);
+    }
+  });
+  // API nested agac already has alt_satirlar
+  if (!list.length && Array.isArray(satirlar)) return [];
+  return roots.length ? roots : list.map((s) => ({ ...s, alt_satirlar: s.alt_satirlar || [] }));
+}
+
+function ensureBomTree(rec) {
+  if (Array.isArray(rec.agac) && rec.agac.length) {
+    rec.satirlar = rec.agac.map((n) => ({ ...n }));
+  } else if (Array.isArray(rec.satirlar)) {
+    const hasNest = rec.satirlar.some((s) => Array.isArray(s.alt_satirlar) && s.alt_satirlar.length);
+    const hasUst = rec.satirlar.some((s) => s.ust_satir_id);
+    if (!hasNest && hasUst) rec.satirlar = buildBomTreeFromFlat(rec.satirlar);
+    else {
+      rec.satirlar = rec.satirlar.map((s) => ({
+        ...s,
+        alt_satirlar: Array.isArray(s.alt_satirlar) ? s.alt_satirlar : [],
+      }));
+    }
+  } else {
+    rec.satirlar = [];
   }
-  return out;
+  return rec.satirlar;
+}
+
+function getBomNode(nodes, path) {
+  if (!path && path !== 0) return null;
+  const parts = String(path).split('.').map(Number);
+  let cur = nodes;
+  let node = null;
+  for (const p of parts) {
+    node = cur?.[p];
+    if (!node) return null;
+    cur = node.alt_satirlar || [];
+  }
+  return node;
+}
+
+function setBomNodeChildren(nodes, path, children) {
+  const node = getBomNode(nodes, path);
+  if (node) node.alt_satirlar = children;
+}
+
+function removeBomNode(nodes, path) {
+  const parts = String(path).split('.').map(Number);
+  if (parts.length === 1) {
+    nodes.splice(parts[0], 1);
+    return nodes;
+  }
+  const parentPath = parts.slice(0, -1).join('.');
+  const parent = getBomNode(nodes, parentPath);
+  if (parent?.alt_satirlar) parent.alt_satirlar.splice(parts[parts.length - 1], 1);
+  return nodes;
+}
+
+function flattenBomForSave(nodes) {
+  return (nodes || []).map((n) => ({
+    bilesen_stok_id: n.bilesen_stok_id || n.stok_id,
+    miktar: n.miktar,
+    birim: n.birim || null,
+    sira_no: n.sira_no,
+    alt_satirlar: flattenBomForSave(n.alt_satirlar || []),
+  })).filter((n) => n.bilesen_stok_id && n.miktar != null && n.miktar !== '');
 }
 
 function fieldShell(f, controlHtml) {
@@ -1515,6 +1667,199 @@ function renderMasterDetailPanel(tab, rec) {
           </div>
         </div>
       </section>
+    </div>`;
+}
+
+function renderGridToolbar(tabKey, { canEdit }) {
+  if (!canEdit) {
+    return `<div class="inline-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın</span></div>`;
+  }
+  return `<div class="inline-toolbar" data-grid-toolbar="${tabKey}">
+    <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}">Yeni</button>
+    <button type="button" class="btn action ghost" data-grid-act="duzelt" data-grid-key="${tabKey}">Düzelt</button>
+    <button type="button" class="btn action danger" data-grid-act="sil" data-grid-key="${tabKey}">Sil</button>
+    <span class="toolbar-hint">Önce satır seçin; Yeni boş satır ekler</span>
+  </div>`;
+}
+
+function renderDynamicGrid(tab, rec) {
+  const key = tab.key;
+  const rows = normalizeGridRows(tab, Array.isArray(rec[key]) ? rec[key] : []);
+  rec[key] = rows;
+  const canEdit = state.formMode !== 'incele';
+  const selIdx = state.gridSel.key === key ? state.gridSel.idx : null;
+
+  if (!rows.length) {
+    return `
+      ${renderGridToolbar(key, { canEdit })}
+      <div class="detail-empty">Henüz satır yok. ${canEdit ? 'Yeni ile ekleyin.' : ''}</div>`;
+  }
+
+  return `
+    ${renderGridToolbar(key, { canEdit })}
+    <div class="detail-grid detail-grid--dynamic" data-grid-list="${key}">
+      ${rows.map((row, idx) => {
+        const selected = selIdx === idx;
+        const editing = canEdit && selected;
+        return `
+          <div class="detail-slot ${selected ? 'selected' : ''}" data-grid-row="${key}" data-grid-idx="${idx}">
+            <div class="detail-slot-head">
+              <button type="button" class="detail-slot-pick" data-grid-pick="${key}" data-grid-idx="${idx}">
+                <span class="detail-slot-title">${idx + 1}. satır</span>
+                <span class="detail-slot-summary">${gridRowSummary(tab, row)}</span>
+              </button>
+            </div>
+            ${editing || (!canEdit && selected) ? `
+              <div class="detail-slot-fields">
+                ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, key))).join('')}
+              </div>` : ''}
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderBomNode(node, path, depth) {
+  const stok = stokLookupById(node.bilesen_stok_id);
+  const kod = node.stok_kodu || stok?.stok_kodu || '';
+  const adi = node.stok_adi || stok?.stok_adi || '';
+  const tip = node.stok_tipi || stok?.stok_tipi || '';
+  const kids = node.alt_satirlar || [];
+  const forceOpen = state.treeExpanded[path] === true
+    || (state.treeSel != null && String(state.treeSel).startsWith(`${path}.`));
+  const selected = String(state.treeSel) === path;
+  return `
+    <div class="bom-node-wrap" style="--depth:${depth}">
+      <button type="button" class="bom-node ${selected ? 'selected' : ''}" data-bom-path="${path}">
+        <span class="bom-toggle" data-bom-toggle="${path}">${kids.length ? (forceOpen ? '▾' : '▸') : '·'}</span>
+        ${tipBadge(tip)}
+        <span class="bom-code mono">${kod || '—'}</span>
+        <span class="bom-name">${adi || 'Bileşen seçin'}</span>
+        <span class="bom-qty">${node.miktar ?? ''} ${node.birim || ''}</span>
+        ${kids.length ? `<span class="bom-child-count">${kids.length} alt</span>` : ''}
+      </button>
+      ${forceOpen && kids.length ? `
+        <div class="bom-children">
+          ${kids.map((ch, i) => renderBomNode(ch, `${path}.${i}`, depth + 1)).join('')}
+        </div>` : ''}
+    </div>`;
+}
+
+function renderBomTree(tab, rec) {
+  const nodes = ensureBomTree(rec);
+  const canEdit = state.formMode !== 'incele';
+  const mamul = stokLookupById(rec.mamul_stok_id);
+  const selected = state.treeSel != null ? getBomNode(nodes, state.treeSel) : null;
+
+  return `
+    <div class="bom-layout">
+      <div class="bom-tree-pane">
+        <div class="inline-toolbar">
+          ${canEdit ? `
+            <button type="button" class="btn action" data-bom-act="yeni-kok">Yeni (kök altına)</button>
+            <button type="button" class="btn action ghost" data-bom-act="yeni-alt">Yeni alt bileşen</button>
+            <button type="button" class="btn action danger" data-bom-act="sil">Sil</button>
+          ` : '<span class="toolbar-hint">Düğüme tıklayın — alt bileşenler açılır</span>'}
+        </div>
+        <div class="bom-tree" data-bom-tree>
+          <div class="bom-root">
+            ${tipBadge(mamul?.stok_tipi || 'Mamul')}
+            <span class="bom-code mono">${mamul?.stok_kodu || rec.stok_kodu || '—'}</span>
+            <span class="bom-name">${mamul?.stok_adi || rec.stok_adi || rec.agac_adi || 'Mamul seçin (Başlık sekmesi)'}</span>
+          </div>
+          ${nodes.length
+            ? nodes.map((n, i) => renderBomNode(n, String(i), 0)).join('')
+            : '<div class="detail-empty">Ağaç boş. Mamul altına bileşen ekleyin (yarı mamul / hammadde).</div>'}
+        </div>
+      </div>
+      <div class="bom-editor-pane">
+        <div class="section-label">${selected ? 'Seçili bileşen' : 'Bileşen detayı'}</div>
+        ${selected ? `
+          <div class="form-tab-fields" data-bom-editor>
+            ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, selected[f.key], 'data-bom-field'))).join('')}
+          </div>
+          <p class="toolbar-hint">Tıklanan düğümün alt bileşenleri ağaçta açılır. Yarı mamule alt hammadde eklemek için düğümü seçip «Yeni alt bileşen» kullanın.</p>
+        ` : '<div class="detail-empty">Soldan bir bileşen seçin.</div>'}
+      </div>
+    </div>`;
+}
+
+function renderRotaFlow(tab, rec) {
+  const ops = normalizeGridRows(
+    { fields: tab.fields },
+    Array.isArray(rec.operasyonlar) ? rec.operasyonlar : []
+  ).map((op) => ({
+    ...op,
+    bilesenler: Array.isArray(op.bilesenler) ? op.bilesenler : [],
+  }));
+  ops.sort((a, b) => Number(a.sira_no || 0) - Number(b.sira_no || 0));
+  rec.operasyonlar = ops;
+  const canEdit = state.formMode !== 'incele';
+  const sel = state.flowSel;
+  const selected = sel != null ? ops[sel] : null;
+
+  const bySira = new Map(ops.map((o) => [Number(o.sira_no), o]));
+
+  return `
+    <div class="rota-layout">
+      <div class="rota-flow-pane">
+        <div class="inline-toolbar">
+          ${canEdit ? `
+            <button type="button" class="btn action" data-flow-act="yeni-op">Yeni operasyon</button>
+            <button type="button" class="btn action danger" data-flow-act="sil-op">Sil</button>
+          ` : '<span class="toolbar-hint">Operasyona tıklayın — önce/sonra ve bileşenler</span>'}
+        </div>
+        <div class="rota-flow">
+          ${ops.length ? ops.map((op, idx) => {
+            const prev = ops.filter((x) => Number(x.sira_no) < Number(op.sira_no)).pop();
+            const next = op.sonraki_sira_no != null
+              ? bySira.get(Number(op.sonraki_sira_no))
+              : ops.find((x) => Number(x.sira_no) > Number(op.sira_no));
+            const open = sel === idx;
+            return `
+              <button type="button" class="rota-op-card ${open ? 'selected' : ''}" data-flow-idx="${idx}">
+                <div class="rota-op-seq">Sıra ${op.sira_no || '—'}</div>
+                <div class="rota-op-title"><span class="mono">${op.operasyon_kodu || '—'}</span> ${op.operasyon_adi || ''}</div>
+                <div class="rota-op-meta">
+                  <span>← Önce: ${prev ? `${prev.operasyon_kodu} ${prev.operasyon_adi || ''}` : '— (ilk)'}</span>
+                  <span>Sonra: ${next ? `${next.operasyon_kodu || ''} ${next.operasyon_adi || ''}` : '— (son)'} →</span>
+                </div>
+                <div class="rota-op-comp-count">${(op.bilesenler || []).length} bileşen</div>
+              </button>
+              ${idx < ops.length - 1 ? '<div class="rota-arrow">↓</div>' : ''}`;
+          }).join('') : '<div class="detail-empty">Operasyon yok. Yeni operasyon ekleyin.</div>'}
+        </div>
+      </div>
+      <div class="rota-editor-pane">
+        ${selected ? `
+          <div class="section-label">Operasyon</div>
+          <div class="form-tab-fields" data-flow-editor>
+            ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, selected[f.key], 'data-flow-field'))).join('')}
+          </div>
+          <div class="section-label" style="margin-top:1rem">Bu operasyonun bileşenleri</div>
+          <div class="inline-toolbar">
+            ${canEdit ? `
+              <button type="button" class="btn action" data-flow-act="yeni-comp">Yeni bileşen</button>
+              <button type="button" class="btn action danger" data-flow-act="sil-comp">Sil bileşen</button>
+            ` : ''}
+          </div>
+          <div class="detail-grid detail-grid--dynamic">
+            ${(selected.bilesenler || []).length ? selected.bilesenler.map((b, ci) => {
+              const st = stokLookupById(b.stok_id);
+              const picked = state.flowCompSel === ci;
+              return `
+                <div class="detail-slot ${picked ? 'selected' : ''}" data-flow-comp="${ci}">
+                  <button type="button" class="detail-slot-pick" data-flow-comp-pick="${ci}">
+                    <span class="detail-slot-summary">${st ? `${st.stok_kodu} — ${st.stok_adi}` : (b.stok_id || '—')} · ${b.miktar ?? ''} ${b.birim || ''}</span>
+                  </button>
+                  ${picked && canEdit ? `
+                    <div class="detail-slot-fields">
+                      ${(tab.componentFields || []).map((f) => fieldShell(f, fieldControl(f, b[f.key], 'data-flow-comp-field'))).join('')}
+                    </div>` : ''}
+                </div>`;
+            }).join('') : '<div class="detail-empty">Bu operasyonda bileşen yok.</div>'}
+          </div>
+        ` : '<div class="detail-empty">Soldan bir operasyon seçin — önceki/sonraki adım ve bileşenler burada.</div>'}
+      </div>
     </div>`;
 }
 
@@ -1564,22 +1909,21 @@ function renderForm(screen) {
       </div>`;
     }
     if (tab.kind === 'grid') {
-      const rows = ensureGridSlots(tab, Array.isArray(rec[tab.key]) ? rec[tab.key] : []);
-      rec[tab.key] = rows;
       return `<div class="form-tab-panel form-tab-panel--scroll" data-tab-panel="${tab.id}" ${hide}>
-        <div class="detail-grid">
-          ${rows.map((row, idx) => `
-            <div class="detail-slot">
-              <div class="detail-slot-title">${idx + 1}. satır</div>
-              <div class="detail-slot-fields">
-                ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, tab.key))).join('')}
-              </div>
-            </div>
-          `).join('')}
-        </div>
+        ${renderDynamicGrid(tab, rec)}
       </div>`;
     }
-    const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart';
+    if (tab.kind === 'bom-tree') {
+      return `<div class="form-tab-panel form-tab-panel--scroll" data-tab-panel="${tab.id}" ${hide}>
+        ${renderBomTree(tab, rec)}
+      </div>`;
+    }
+    if (tab.kind === 'rota-flow') {
+      return `<div class="form-tab-panel form-tab-panel--scroll" data-tab-panel="${tab.id}" ${hide}>
+        ${renderRotaFlow(tab, rec)}
+      </div>`;
+    }
+    const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart' || tab.id === 'baslik';
     return `<div class="form-tab-panel ${masterLike ? 'form-tab-panel--fixed' : 'form-tab-panel--scroll'}" data-tab-panel="${tab.id}" ${hide}>
       <div class="form-tab-fields">
         ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
@@ -1594,7 +1938,7 @@ function readFieldValue(el, field) {
   if (!el) return undefined;
   if (field.type === 'checkbox') return el.checked;
   if (field.type === 'number') return el.value === '' ? null : Number(el.value);
-  if (field.type === 'lookup' && (field.valueKey === 'id' || field.lookup === 'firmalar' || field.lookup === 'is-yerleri')) {
+  if (field.type === 'lookup' && (field.valueKey === 'id' || /_id$/.test(field.key))) {
     return el.value === '' ? null : (Number.isNaN(Number(el.value)) ? el.value : Number(el.value));
   }
   return el.value;
@@ -1622,27 +1966,106 @@ function readMasterFromForm(screen) {
   return out;
 }
 
+function syncGridRowFromDom(tab, idx, baseRow = {}) {
+  const row = { ...baseRow };
+  let any = false;
+  (tab.fields || []).forEach((f) => {
+    const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"][data-grid="${tab.key}"]`);
+    if (!el) return;
+    row[f.key] = readFieldValue(el, f);
+    if (f.type === 'checkbox') { if (el.checked) any = true; }
+    else if (el.value !== '') any = true;
+  });
+  return { row, any };
+}
+
 function readGridFromForm(tab) {
+  const existing = Array.isArray(state.formRecord?.[tab.key]) ? state.formRecord[tab.key] : [];
+  const count = Math.max(
+    existing.length,
+    document.querySelectorAll(`[data-grid-row="${tab.key}"]`).length
+  );
   const rows = [];
-  for (let idx = 0; idx < (tab.slots || 0); idx += 1) {
-    const row = {};
-    let any = false;
-    (tab.fields || []).forEach((f) => {
-      const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"][data-grid="${tab.key}"]`);
-      if (!el) return;
-      row[f.key] = readFieldValue(el, f);
-      if (f.type === 'checkbox') { if (el.checked) any = true; }
-      else if (el.value !== '') any = true;
+  for (let idx = 0; idx < count; idx += 1) {
+    const { row, any } = syncGridRowFromDom(tab, idx, existing[idx] || {});
+    const hasContent = any || Object.keys(row).some((k) => {
+      if (k === 'bilesenler' || k === 'alt_satirlar') return false;
+      const v = row[k];
+      return v !== '' && v != null && v !== false;
     });
-    if (any) rows.push(row);
+    if (hasContent) {
+      if (Array.isArray(existing[idx]?.bilesenler)) row.bilesenler = existing[idx].bilesenler;
+      rows.push(row);
+    }
   }
   return rows;
+}
+
+function persistBomEditor(rec, tab) {
+  if (state.treeSel == null) return;
+  const nodes = ensureBomTree(rec);
+  const node = getBomNode(nodes, state.treeSel);
+  if (!node) return;
+  (tab.fields || []).forEach((f) => {
+    const el = document.querySelector(`[data-bom-field="${f.key}"]`);
+    if (!el) return;
+    node[f.key] = readFieldValue(el, f);
+    // enrich display fields from lookup
+    if (f.key === 'bilesen_stok_id') {
+      const st = stokLookupById(node.bilesen_stok_id);
+      if (st) {
+        node.stok_kodu = st.stok_kodu;
+        node.stok_adi = st.stok_adi;
+        node.stok_tipi = st.stok_tipi;
+      }
+    }
+  });
+  if (!Array.isArray(node.alt_satirlar)) node.alt_satirlar = [];
+}
+
+function persistFlowEditor(rec, tab) {
+  const ops = Array.isArray(rec.operasyonlar) ? rec.operasyonlar : [];
+  if (state.flowSel == null || !ops[state.flowSel]) return;
+  const op = ops[state.flowSel];
+  (tab.fields || []).forEach((f) => {
+    const el = document.querySelector(`[data-flow-field="${f.key}"]`);
+    if (!el) return;
+    op[f.key] = readFieldValue(el, f);
+  });
+  if (state.flowCompSel != null && op.bilesenler?.[state.flowCompSel]) {
+    const b = op.bilesenler[state.flowCompSel];
+    (tab.componentFields || []).forEach((f) => {
+      const el = document.querySelector(`[data-flow-comp-field="${f.key}"]`);
+      if (!el) return;
+      b[f.key] = readFieldValue(el, f);
+    });
+  }
+  // auto-link sonraki_sira_no if empty: next op in list
+  ops.sort((a, b) => Number(a.sira_no || 0) - Number(b.sira_no || 0));
+  for (let i = 0; i < ops.length; i += 1) {
+    if (ops[i].sonraki_sira_no == null || ops[i].sonraki_sira_no === '') {
+      ops[i].sonraki_sira_no = ops[i + 1] ? Number(ops[i + 1].sira_no) : null;
+    }
+  }
+  rec.operasyonlar = ops;
 }
 
 function readTabbedPayload(screen) {
   const out = readMasterFromForm(screen);
   (screen.formTabs || []).forEach((tab) => {
     if (tab.kind === 'grid') out[tab.key] = readGridFromForm(tab);
+    if (tab.kind === 'bom-tree') {
+      persistBomEditor(out, tab);
+      out.satirlar = ensureBomTree(out);
+      out.agac = out.satirlar;
+    }
+    if (tab.kind === 'rota-flow') {
+      persistFlowEditor(out, tab);
+      out.operasyonlar = (out.operasyonlar || []).map((op) => ({
+        ...op,
+        bilesenler: (op.bilesenler || []).filter((b) => b.stok_id && b.miktar != null && b.miktar !== ''),
+      }));
+    }
   });
   return out;
 }
@@ -1779,6 +2202,11 @@ async function openForm(mode) {
 
   state.formMode = mode;
   state.formActiveTab = screen.formTabs?.[0]?.id || null;
+  state.gridSel = { key: null, idx: null };
+  state.treeSel = null;
+  state.treeExpanded = {};
+  state.flowSel = null;
+  state.flowCompSel = null;
   let record = {};
 
   async function loadRecord(id) {
@@ -1799,6 +2227,29 @@ async function openForm(mode) {
     });
   };
 
+  function initSpecialTabs(src) {
+    (screen.formTabs || []).forEach((tab) => {
+      if (tab.kind === 'grid') {
+        const raw = Array.isArray(src[tab.key]) ? src[tab.key] : [];
+        record[tab.key] = normalizeGridRows(tab, raw.map(({ id, ...rest }) => rest));
+      }
+      if (tab.kind === 'bom-tree') {
+        record.satirlar = Array.isArray(src.agac) && src.agac.length
+          ? src.agac
+          : (Array.isArray(src.satirlar) ? src.satirlar : []);
+        ensureBomTree(record);
+      }
+      if (tab.kind === 'rota-flow') {
+        record.operasyonlar = Array.isArray(src.operasyonlar)
+          ? src.operasyonlar.map((op) => ({
+            ...op,
+            bilesenler: Array.isArray(op.bilesenler) ? op.bilesenler.map(({ id, ...b }) => b) : [],
+          }))
+          : [];
+      }
+    });
+  }
+
   if (mode === 'yeni') {
     record = {};
     seedFields();
@@ -1807,9 +2258,7 @@ async function openForm(mode) {
       try { record[screen.codeField] = await ayirKod(seri); }
       catch (err) { toast(err.message); }
     }
-    (screen.formTabs || []).forEach((tab) => {
-      if (tab.kind === 'grid') record[tab.key] = ensureGridSlots(tab, []);
-    });
+    initSpecialTabs({});
   } else if (mode === 'kopyala') {
     const full = await loadRecord(row.id);
     record = { ...full };
@@ -1820,21 +2269,11 @@ async function openForm(mode) {
       try { record[screen.codeField] = await ayirKod(seri); }
       catch (err) { toast(err.message); }
     }
-    (screen.formTabs || []).forEach((tab) => {
-      if (tab.kind === 'grid') {
-        const raw = Array.isArray(full[tab.key]) ? full[tab.key] : [];
-        record[tab.key] = ensureGridSlots(tab, raw.map(({ id, ...rest }) => rest));
-      }
-    });
+    initSpecialTabs(full);
   } else {
     const full = await loadRecord(row.id);
     record = { ...full };
-    (screen.formTabs || []).forEach((tab) => {
-      if (tab.kind === 'grid') {
-        const raw = Array.isArray(full[tab.key]) ? full[tab.key] : [];
-        record[tab.key] = ensureGridSlots(tab, raw.map((d) => ({ ...d })));
-      }
-    });
+    initSpecialTabs(full);
   }
 
   if (screen.id === 'numarator-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
@@ -1861,6 +2300,22 @@ async function saveForm() {
   if (reqErr) {
     toast(reqErr);
     return;
+  }
+
+  // Ürün ağacı: kayıt için iç içe alt_satirlar formatı
+  if (screen.id === 'urun-agaci') {
+    master.satirlar = flattenBomForSave(ensureBomTree(master));
+    if (!master.satirlar.length) {
+      toast('Ağaca en az bir bileşen ekleyin.');
+      return;
+    }
+  }
+  if (screen.id === 'rotalar') {
+    master.operasyonlar = (master.operasyonlar || []).filter((o) => o.operasyon_kodu || o.operasyon_adi);
+    if (!master.operasyonlar.length) {
+      toast('En az bir operasyon ekleyin.');
+      return;
+    }
   }
 
   try {
@@ -2055,9 +2510,198 @@ function bindEvents() {
   });
 
   document.addEventListener('click', (e) => {
+    const screen = findScreen(state.screenId);
+
+    // --- Detay grid: seç / Yeni / Düzelt / Sil ---
+    const gridAct = e.target.closest('[data-grid-act]');
+    if (gridAct && screen) {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = gridAct.getAttribute('data-grid-key');
+      const act = gridAct.getAttribute('data-grid-act');
+      const tab = (screen.formTabs || []).find((t) => t.kind === 'grid' && t.key === key);
+      if (!tab) return;
+      // Master alanları koru; grid satırlarını boş diye silme
+      const masterSnap = readMasterFromForm(screen);
+      state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
+      let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
+      if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
+        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
+        rows[state.gridSel.idx] = row;
+      }
+      if (act === 'yeni') {
+        rows.push(emptyRowFromFields(tab.fields));
+        state.formRecord[key] = rows;
+        state.gridSel = { key, idx: rows.length - 1 };
+      } else if (act === 'duzelt') {
+        if (state.gridSel.key !== key || state.gridSel.idx == null) {
+          toast('Düzeltmek için önce bir satır seçin.');
+          return;
+        }
+        state.formRecord[key] = rows;
+      } else if (act === 'sil') {
+        if (state.gridSel.key !== key || state.gridSel.idx == null) {
+          toast('Silmek için önce bir satır seçin.');
+          return;
+        }
+        rows.splice(state.gridSel.idx, 1);
+        state.formRecord[key] = rows;
+        state.gridSel = { key: null, idx: null };
+      }
+      renderForm(screen);
+      return;
+    }
+    const gridPick = e.target.closest('[data-grid-pick]');
+    if (gridPick && screen) {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = gridPick.getAttribute('data-grid-pick');
+      const tab = (screen.formTabs || []).find((t) => t.kind === 'grid' && t.key === key);
+      const masterSnap = readMasterFromForm(screen);
+      state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
+      if (tab && state.gridSel.key === key && state.gridSel.idx != null) {
+        const rows = Array.isArray(state.formRecord[key]) ? [...state.formRecord[key]] : [];
+        if (rows[state.gridSel.idx]) {
+          const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
+          rows[state.gridSel.idx] = row;
+          state.formRecord[key] = rows;
+        }
+      }
+      state.gridSel = {
+        key,
+        idx: Number(gridPick.getAttribute('data-grid-idx')),
+      };
+      renderForm(screen);
+      return;
+    }
+
+    // --- BOM ağaç ---
+    const bomAct = e.target.closest('[data-bom-act]');
+    if (bomAct && screen) {
+      e.preventDefault();
+      const act = bomAct.getAttribute('data-bom-act');
+      const tab = (screen.formTabs || []).find((t) => t.kind === 'bom-tree');
+      if (!tab) return;
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+      const nodes = ensureBomTree(state.formRecord);
+      const blank = { ...emptyRowFromFields(tab.fields), alt_satirlar: [] };
+      if (act === 'yeni-kok') {
+        nodes.push(blank);
+        state.treeSel = String(nodes.length - 1);
+        state.treeExpanded[state.treeSel] = true;
+      } else if (act === 'yeni-alt') {
+        if (state.treeSel == null) {
+          toast('Alt bileşen için önce üst düğümü (ör. yarı mamul) seçin.');
+          return;
+        }
+        const parent = getBomNode(nodes, state.treeSel);
+        if (!parent) return;
+        if (!Array.isArray(parent.alt_satirlar)) parent.alt_satirlar = [];
+        parent.alt_satirlar.push(blank);
+        state.treeExpanded[state.treeSel] = true;
+        state.treeSel = `${state.treeSel}.${parent.alt_satirlar.length - 1}`;
+      } else if (act === 'sil') {
+        if (state.treeSel == null) {
+          toast('Silmek için düğüm seçin.');
+          return;
+        }
+        removeBomNode(nodes, state.treeSel);
+        state.treeSel = null;
+      }
+      state.formRecord.satirlar = nodes;
+      renderForm(screen);
+      return;
+    }
+    const bomToggle = e.target.closest('[data-bom-toggle]');
+    if (bomToggle && screen) {
+      e.preventDefault();
+      e.stopPropagation();
+      const path = bomToggle.getAttribute('data-bom-toggle');
+      state.treeExpanded[path] = !state.treeExpanded[path];
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+      renderForm(screen);
+      return;
+    }
+    const bomNode = e.target.closest('[data-bom-path]');
+    if (bomNode && screen) {
+      e.preventDefault();
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+      const path = bomNode.getAttribute('data-bom-path');
+      state.treeSel = path;
+      state.treeExpanded[path] = true;
+      renderForm(screen);
+      return;
+    }
+
+    // --- Rota akışı ---
+    const flowAct = e.target.closest('[data-flow-act]');
+    if (flowAct && screen) {
+      e.preventDefault();
+      const act = flowAct.getAttribute('data-flow-act');
+      const tab = (screen.formTabs || []).find((t) => t.kind === 'rota-flow');
+      if (!tab) return;
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+      const ops = Array.isArray(state.formRecord.operasyonlar) ? [...state.formRecord.operasyonlar] : [];
+      if (act === 'yeni-op') {
+        const nextSira = ops.reduce((m, o) => Math.max(m, Number(o.sira_no) || 0), 0) + 10;
+        ops.push({
+          ...emptyRowFromFields(tab.fields),
+          sira_no: nextSira,
+          operasyon_kodu: `OP${nextSira}`,
+          bilesenler: [],
+        });
+        // önceki son ops'un sonraki_sira_no bağla
+        if (ops.length >= 2) {
+          ops[ops.length - 2].sonraki_sira_no = nextSira;
+        }
+        state.formRecord.operasyonlar = ops;
+        state.flowSel = ops.length - 1;
+        state.flowCompSel = null;
+      } else if (act === 'sil-op') {
+        if (state.flowSel == null) { toast('Operasyon seçin.'); return; }
+        ops.splice(state.flowSel, 1);
+        state.formRecord.operasyonlar = ops;
+        state.flowSel = null;
+        state.flowCompSel = null;
+      } else if (act === 'yeni-comp') {
+        if (state.flowSel == null) { toast('Önce operasyon seçin.'); return; }
+        const op = ops[state.flowSel];
+        if (!op.bilesenler) op.bilesenler = [];
+        op.bilesenler.push(emptyRowFromFields(tab.componentFields));
+        state.flowCompSel = op.bilesenler.length - 1;
+        state.formRecord.operasyonlar = ops;
+      } else if (act === 'sil-comp') {
+        if (state.flowSel == null || state.flowCompSel == null) {
+          toast('Bileşen seçin.');
+          return;
+        }
+        ops[state.flowSel].bilesenler.splice(state.flowCompSel, 1);
+        state.flowCompSel = null;
+        state.formRecord.operasyonlar = ops;
+      }
+      renderForm(screen);
+      return;
+    }
+    const flowIdx = e.target.closest('[data-flow-idx]');
+    if (flowIdx && screen && !e.target.closest('[data-flow-act]')) {
+      e.preventDefault();
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+      state.flowSel = Number(flowIdx.getAttribute('data-flow-idx'));
+      state.flowCompSel = null;
+      renderForm(screen);
+      return;
+    }
+    const flowCompPick = e.target.closest('[data-flow-comp-pick]');
+    if (flowCompPick && screen) {
+      e.preventDefault();
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+      state.flowCompSel = Number(flowCompPick.getAttribute('data-flow-comp-pick'));
+      renderForm(screen);
+      return;
+    }
+
     const tabBtn = e.target.closest('[data-form-tab]');
     if (!tabBtn) return;
-    const screen = findScreen(state.screenId);
     if (!screen?.formTabs) return;
     // preserve current values into formRecord before switching
     if (screen.formTabs.length) {
