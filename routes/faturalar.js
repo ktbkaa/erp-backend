@@ -70,7 +70,9 @@ router.post('/', async (req, res) => {
         }
 
         const id = await withTransaction(pool, async (client) => {
-            const no = fatura_no || (await sonrakiBelgeNo(client, 'FATURA'));
+            const tur = fatura_turu || 'Satis';
+            const seri = tur === 'Alis' ? 'ALIS_FATURA' : 'FATURA';
+            const no = fatura_no || (await sonrakiBelgeNo(client, seri));
 
             let toplam_tutar = 0;
             for (const k of kalemler) {
@@ -83,7 +85,7 @@ router.post('/', async (req, res) => {
                 VALUES ($1, $2, $3, $4)
                 RETURNING id;
                 `,
-                [no, cari_id, fatura_turu || 'Satis', toplam_tutar]
+                [no, cari_id, tur, toplam_tutar]
             );
             const faturaId = faturaSonuc.rows[0].id;
 

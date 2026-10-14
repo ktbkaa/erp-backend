@@ -99,6 +99,129 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * PRDT13 — satış siparişinden iş emri
+ * Body: siparis_id, stok_id (kalem), urun_agaci_id, rota_id,
+ *       hammadde_depo_id, mamul_depo_id, yari_mamul_depo_id?, planlanan_miktar?
+ */
+router.post('/satis-siparisinden', async (req, res) => {
+    try {
+        const {
+            siparis_id,
+            stok_id,
+            urun_agaci_id,
+            rota_id,
+            is_yeri_id,
+            hammadde_depo_id,
+            yari_mamul_depo_id,
+            mamul_depo_id,
+            planlanan_miktar,
+        } = req.body;
+        if (!siparis_id || !stok_id || !urun_agaci_id || !rota_id || !hammadde_depo_id || !mamul_depo_id) {
+            return res.status(400).json({
+                hata: 'siparis_id, stok_id, urun_agaci_id, rota_id, hammadde_depo_id, mamul_depo_id zorunlu.',
+            });
+        }
+
+        const siparis = await pool.query(
+            `SELECT s.*,
+                    (SELECT COALESCE(SUM(sd.miktar),0) FROM siparis_detaylari sd
+                     WHERE sd.siparis_id=s.id AND sd.stok_id=$2) AS kalem_miktar
+             FROM siparisler s WHERE s.id=$1`,
+            [siparis_id, stok_id]
+        );
+        if (!siparis.rows[0]) return res.status(404).json({ hata: 'Satış siparişi bulunamadı.' });
+        const miktar = planlanan_miktar || Number(siparis.rows[0].kalem_miktar);
+        if (!miktar || miktar <= 0) {
+            return res.status(400).json({ hata: 'Sipariş kaleminde miktar yok; planlanan_miktar verin.' });
+        }
+
+        const id = await withTransaction(pool, async (client) => {
+            const agac = await client.query(
+                'SELECT * FROM urun_agaclari WHERE id=$1 AND mamul_stok_id=$2',
+                [urun_agaci_id, stok_id]
+            );
+            if (!agac.rows[0]) throw new Error('Ürün ağacı mamul stok ile eşleşmiyor.');
+
+            const rotaOps = await client.query(
+                'SELECT * FROM rota_operasyonlari WHERE rota_id=$1 ORDER BY sira_no',
+                [rota_id]
+            );
+            if (rotaOps.rows.length === 0) throw new Error('Rotada operasyon yok.');
+
+            const no = await sonrakiBelgeNo(client, 'URETIM_EMRI');
+            const emir = await client.query(
+                `
+                INSERT INTO uretim_emirleri
+                    (emir_no, stok_id, urun_agaci_id, rota_id, is_yeri_id,
+                     hammadde_depo_id, yari_mamul_depo_id, mamul_depo_id,
+                     planlanan_miktar, durum, siparis_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'OnayBekliyor',$10)
+                RETURNING id
+                `,
+                [
+                    no,
+                    stok_id,
+                    urun_agaci_id,
+                    rota_id,
+                    is_yeri_id || null,
+                    hammadde_depo_id,
+                    yari_mamul_depo_id || null,
+                    mamul_depo_id,
+                    miktar,
+                    siparis_id,
+                ]
+            );
+            const emirId = emir.rows[0].id;
+            const carpan = Number(miktar) / Number(agac.rows[0].miktar || 1);
+            let ilk = true;
+            for (const op of rotaOps.rows) {
+                const opIns = await client.query(
+                    `
+                    INSERT INTO uretim_emri_operasyonlari
+                        (emir_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id,
+                         cikti_stok_id, sonraki_sira_no, planlanan_miktar, durum)
+                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                    RETURNING id
+                    `,
+                    [
+                        emirId,
+                        op.sira_no,
+                        op.operasyon_kodu,
+                        op.operasyon_adi,
+                        op.is_merkezi_id,
+                        op.cikti_stok_id,
+                        op.sonraki_sira_no,
+                        miktar,
+                        ilk ? 'Hazir' : 'Bekliyor',
+                    ]
+                );
+                ilk = false;
+                const bilesenler = await client.query(
+                    'SELECT * FROM rota_operasyon_bilesenleri WHERE operasyon_id=$1',
+                    [op.id]
+                );
+                for (const b of bilesenler.rows) {
+                    await client.query(
+                        `
+                        INSERT INTO uretim_emri_operasyon_bilesenleri
+                            (operasyon_id, stok_id, planlanan_miktar, birim)
+                        VALUES ($1,$2,$3,$4)
+                        `,
+                        [opIns.rows[0].id, b.stok_id, Number(b.miktar) * carpan, b.birim]
+                    );
+                }
+            }
+            return emirId;
+        });
+
+        res.status(201).json(await emirGetir(id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+
+/**
  * Mamul için tek iş emri: rota operasyonları sırayla kopyalanır.
  * Body: stok_id, urun_agaci_id, rota_id, is_yeri_id,
  *       hammadde_depo_id, yari_mamul_depo_id, mamul_depo_id, planlanan_miktar
@@ -549,18 +672,46 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { planlanan_miktar, durum } = req.body;
+        const { planlanan_miktar, durum, siparis_id } = req.body;
+        const allowed = ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'];
+        if (durum && !allowed.includes(durum)) {
+            return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
+        }
         const upd = await pool.query(
             `
             UPDATE uretim_emirleri SET
                 planlanan_miktar = COALESCE($2, planlanan_miktar),
-                durum = COALESCE($3, durum)
+                durum = COALESCE($3, durum),
+                siparis_id = COALESCE($4, siparis_id)
             WHERE id = $1
             RETURNING id
             `,
-            [req.params.id, planlanan_miktar ?? null, durum || null]
+            [req.params.id, planlanan_miktar ?? null, durum || null, siparis_id || null]
         );
         if (!upd.rows[0]) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        res.json(await emirGetir(upd.rows[0].id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+/** PRDT02 / PRDT03 — iş emri onay */
+router.post('/:id/onayla', async (req, res) => {
+    try {
+        const upd = await pool.query(
+            `
+            UPDATE uretim_emirleri
+            SET durum = 'Acik'
+            WHERE id = $1 AND durum IN ('Taslak', 'OnayBekliyor')
+            RETURNING id
+            `,
+            [req.params.id]
+        );
+        if (!upd.rows[0]) {
+            return res.status(400).json({
+                hata: 'Emir onaylanamadı (bulunamadı veya durum Taslak/OnayBekliyor değil).',
+            });
+        }
         res.json(await emirGetir(upd.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });

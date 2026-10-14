@@ -130,6 +130,108 @@ const MODULES = [
       },
     ],
   },
+
+  {
+    id: 'sistem',
+    title: 'Sistem',
+    screens: [
+      {
+        id: 'kullanicilar',
+        title: 'Kullanıcılar',
+        endpoint: '/kullanicilar',
+        crud: true,
+        codeField: 'kullanici_kodu',
+        nameField: 'ad',
+        numeratorSeri: 'KULLANICI',
+        filters: [
+          { key: 'kullanici_kodu', label: 'Kullanıcı kodu' },
+          { key: 'ad', label: 'Ad' },
+          { key: 'rol', label: 'Rol' },
+        ],
+        columns: [
+          { key: 'kullanici_kodu', label: 'Kod', mono: true },
+          { key: 'ad', label: 'Ad' },
+          { key: 'soyad', label: 'Soyad' },
+          { key: 'rol', label: 'Rol' },
+          { key: 'grup_kodu', label: 'Grup', mono: true },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'kullanici_kodu', label: 'Kullanıcı kodu', code: true, required: true },
+          { key: 'ad', label: 'Ad', name: true, required: true },
+          { key: 'soyad', label: 'Soyad', required: true },
+          { key: 'rol', label: 'Rol', type: 'select', options: ['Personel', 'Yonetici', 'Satinalma', 'Uretim', 'Finans'] },
+        ],
+        detailFields: [
+          { key: 'eposta', label: 'E-posta' },
+          { key: 'telefon', label: 'Telefon' },
+          { key: 'grup_kodu', label: 'Grup kodu' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'kullanici-gruplari',
+        title: 'Kullanıcı Grupları',
+        endpoint: '/kullanici-gruplari',
+        crud: true,
+        codeField: 'grup_kodu',
+        nameField: 'grup_adi',
+        numeratorSeri: 'KULLANICI_GRUP',
+        filters: [
+          { key: 'grup_kodu', label: 'Grup kodu' },
+          { key: 'grup_adi', label: 'Grup adı' },
+        ],
+        columns: [
+          { key: 'grup_kodu', label: 'Kod', mono: true },
+          { key: 'grup_adi', label: 'Ad' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'grup_kodu', label: 'Grup kodu', code: true, required: true },
+          { key: 'grup_adi', label: 'Grup adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'sistem-parametreleri',
+        title: 'Sistem Parametreleri',
+        endpoint: '/sistem-parametreleri',
+        crud: true,
+        codeField: 'parametre_kodu',
+        nameField: 'parametre_adi',
+        numeratorSeri: null,
+        filters: [
+          { key: 'parametre_kodu', label: 'Parametre' },
+          { key: 'modul', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'parametre_kodu', label: 'Kod', mono: true },
+          { key: 'parametre_adi', label: 'Ad' },
+          { key: 'deger', label: 'Değer' },
+          { key: 'modul', label: 'Modül' },
+        ],
+        masterFields: [
+          { key: 'parametre_kodu', label: 'Parametre kodu', code: true, editableOnNew: true, required: true },
+          { key: 'parametre_adi', label: 'Parametre adı', name: true, required: true },
+          { key: 'deger', label: 'Değer' },
+        ],
+        detailFields: [
+          { key: 'modul', label: 'Modül' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+    ],
+  },
   {
     id: 'ana-veri',
     title: 'Ana Veri',
@@ -617,6 +719,85 @@ const MODULES = [
         ],
       },
       {
+        id: 'bom-seviye-listesi',
+        title: 'Ürün Ağacı Seviye Listesi',
+        endpoint: '/bom/seviye-listesi',
+        crud: false,
+        codeField: 'liste_kodu',
+        nameField: 'aciklama',
+        filters: [
+          { key: 'agac_kodu', label: 'Ağaç kodu' },
+          { key: 'stok_kodu', label: 'Stok kodu' },
+          { key: 'mamul_kodu', label: 'Mamul' },
+        ],
+        columns: [
+          { key: 'agac_kodu', label: 'Ağaç', mono: true },
+          { key: 'seviye', label: 'Seviye' },
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'miktar', label: 'Miktar' },
+          { key: 'yol', label: 'Yol' },
+        ],
+      },
+      {
+        id: 'bom-malzeme-degisikligi',
+        title: 'Malzeme Değişikliği',
+        endpoint: '/bom/malzeme-degisikligi',
+        crud: true,
+        codeField: 'islem_kodu',
+        nameField: 'aciklama',
+        numeratorSeri: null,
+        filters: [
+          { key: 'islem_kodu', label: 'İşlem' },
+          { key: 'eski_stok_kodu', label: 'Eski stok' },
+        ],
+        columns: [
+          { key: 'islem_kodu', label: 'İşlem', mono: true },
+          { key: 'eski_stok_kodu', label: 'Eski', mono: true },
+          { key: 'yeni_stok_kodu', label: 'Yeni', mono: true },
+          { key: 'guncellenen_satir', label: 'Satır' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'eski_stok_id', label: 'Eski stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'yeni_stok_id', label: 'Yeni stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'agac_id', label: 'Ağaç (opsiyonel)', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'agac_adi', codeKey: 'agac_kodu' },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+      },
+      {
+        id: 'sinif-tanimi',
+        title: 'Sınıf Tanımı',
+        endpoint: '/stok-siniflari',
+        crud: true,
+        codeField: 'sinif_kodu',
+        nameField: 'sinif_adi',
+        numeratorSeri: 'STOK_SINIF',
+        filters: [
+          { key: 'sinif_kodu', label: 'Sınıf kodu' },
+          { key: 'sinif_adi', label: 'Sınıf adı' },
+        ],
+        columns: [
+          { key: 'sinif_kodu', label: 'Kod', mono: true },
+          { key: 'sinif_adi', label: 'Ad' },
+          { key: 'ust_sinif_kodu', label: 'Üst', mono: true },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'sinif_kodu', label: 'Sınıf kodu', code: true, required: true },
+          { key: 'sinif_adi', label: 'Sınıf adı', name: true, required: true },
+          { key: 'ust_sinif_kodu', label: 'Üst sınıf kodu' },
+        ],
+        detailFields: [
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
         id: 'is-merkezleri',
         title: 'İş Merkezleri',
         endpoint: '/is-merkezleri',
@@ -719,10 +900,11 @@ const MODULES = [
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
           { key: 'urun_agaci_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'agac_adi', codeKey: 'agac_kodu', required: true },
           { key: 'rota_id', label: 'Rota', type: 'lookup', lookup: 'rotalar', valueKey: 'id', labelKey: 'rota_adi', codeKey: 'rota_kodu', required: true },
+          { key: 'siparis_id', label: 'Satış siparişi', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no', codeKey: 'siparis_no' },
           { key: 'planlanan_miktar', label: 'Planlanan miktar', type: 'number', required: true },
           { key: 'hammadde_depo_id', label: 'Hammadde depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
           { key: 'mamul_depo_id', label: 'Mamul depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
-          { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Uretimde', 'Kapali', 'Iptal'] },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'] },
         ],
         detailFields: [
           { key: 'sira_no', label: 'Sıra', type: 'number' },
@@ -766,6 +948,138 @@ const MODULES = [
     id: 'satinalma',
     title: 'Satınalma',
     screens: [
+      {
+        id: 'satin-alma-teklif-istekleri',
+        title: 'Satınalma Teklif İstekleri',
+        endpoint: '/satin-alma-teklif-istekleri',
+        crud: true,
+        numeratorSeri: 'SATINALMA_TEKLIF_ISTEK',
+        codeField: 'istek_no',
+        nameField: 'aciklama',
+        filters: [
+          { key: 'istek_no', label: 'İstek no' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'istek_no', label: 'İstek', mono: true },
+          { key: 'durum', label: 'Durum' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'istek_no', label: 'İstek no', code: true },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'TeklifeDonustu', 'Iptal', 'Kapali'] },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'satin-alma-teklifleri',
+        title: 'Satınalma Teklifleri',
+        endpoint: '/satin-alma-teklifleri',
+        crud: true,
+        numeratorSeri: 'SATINALMA_TEKLIF',
+        codeField: 'teklif_no',
+        nameField: 'cari_adi',
+        filters: [
+          { key: 'teklif_no', label: 'Teklif no' },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'teklif_no', label: 'Teklif', mono: true },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'teklif_no', label: 'Teklif no', code: true },
+          { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'Iptal', 'Kapali'] },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'satin-alma-anlasmalari',
+        title: 'Satınalma Anlaşmaları',
+        endpoint: '/satin-alma-anlasmalari',
+        crud: true,
+        numeratorSeri: 'SATINALMA_ANLASMA',
+        codeField: 'anlasma_no',
+        nameField: 'cari_adi',
+        filters: [
+          { key: 'anlasma_no', label: 'Anlaşma no' },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'anlasma_no', label: 'Anlaşma', mono: true },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'anlasma_no', label: 'Anlaşma no', code: true },
+          { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'baslangic_tarihi', label: 'Başlangıç', type: 'date' },
+          { key: 'bitis_tarihi', label: 'Bitiş', type: 'date' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kapali', 'Iptal'] },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'alis-faturalari',
+        title: 'Alış Faturaları',
+        endpoint: '/faturalar?fatura_turu=Alis',
+        crud: true,
+        numeratorSeri: 'ALIS_FATURA',
+        codeField: 'fatura_no',
+        nameField: 'cari_adi',
+        filters: [
+          { key: 'fatura_no', label: 'Fatura no' },
+          { key: 'cari_adi', label: 'Cari' },
+        ],
+        columns: [
+          { key: 'fatura_no', label: 'Fatura', mono: true },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'fatura_turu', label: 'Tür' },
+          { key: 'toplam_tutar', label: 'Tutar' },
+        ],
+        masterFields: [
+          { key: 'fatura_no', label: 'Fatura no', code: true },
+          { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'fatura_turu', label: 'Fatura türü', type: 'select', options: ['Alis', 'AlisIade'], required: true },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+        ],
+        detailKey: 'kalemler',
+        detailSlots: 5,
+        defaults: { fatura_turu: 'Alis' },
+      },
       {
         id: 'satin-alma-talepleri',
         title: 'Satınalma Talepleri',
@@ -935,6 +1249,100 @@ const MODULES = [
       },
     ],
   },
+  {
+    id: 'finans',
+    title: 'Finans',
+    screens: [
+      {
+        id: 'hesap-plani',
+        title: 'Hesap Planı',
+        endpoint: '/muhasebe-hesaplari',
+        crud: true,
+        codeField: 'hesap_kodu',
+        nameField: 'hesap_adi',
+        numeratorSeri: null,
+        filters: [
+          { key: 'hesap_kodu', label: 'Hesap kodu' },
+          { key: 'hesap_adi', label: 'Hesap adı' },
+          { key: 'hesap_tipi', label: 'Tip' },
+        ],
+        columns: [
+          { key: 'hesap_kodu', label: 'Kod', mono: true },
+          { key: 'hesap_adi', label: 'Ad' },
+          { key: 'hesap_tipi', label: 'Tip' },
+          { key: 'ust_hesap_kodu', label: 'Üst', mono: true },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'hesap_kodu', label: 'Hesap kodu', code: true, editableOnNew: true, required: true },
+          { key: 'hesap_adi', label: 'Hesap adı', name: true, required: true },
+          { key: 'hesap_tipi', label: 'Hesap tipi', type: 'select', options: ['Ana', 'Ust', 'Dogrudan'], required: true },
+        ],
+        detailFields: [
+          { key: 'ust_hesap_kodu', label: 'Üst hesap kodu' },
+          { key: 'para_birimi', label: 'Para birimi' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+          { key: 'silinecek', label: 'Silinecek', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'muhasebe-belgeleri',
+        title: 'Muhasebe Belgeleri',
+        endpoint: '/muhasebe-belgeleri',
+        crud: true,
+        codeField: 'belge_no',
+        nameField: 'aciklama',
+        numeratorSeri: 'MUHASEBE_BELGE',
+        filters: [
+          { key: 'belge_no', label: 'Belge no' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'belge_tarihi', label: 'Tarih' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'toplam_borc', label: 'Borç' },
+          { key: 'toplam_alacak', label: 'Alacak' },
+        ],
+        masterFields: [
+          { key: 'belge_no', label: 'Belge no', code: true },
+          { key: 'belge_tarihi', label: 'Belge tarihi', type: 'date' },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal'] },
+        ],
+        detailFields: [
+          { key: 'hesap_id', label: 'Hesap', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'hesap_adi', codeKey: 'hesap_kodu' },
+          { key: 'borc', label: 'Borç', type: 'number' },
+          { key: 'alacak', label: 'Alacak', type: 'number' },
+          { key: 'aciklama', label: 'Kalem açıklama' },
+        ],
+        detailKey: 'kalemler',
+        detailSlots: 6,
+      },
+      {
+        id: 'mizan',
+        title: 'Mizan',
+        endpoint: '/mizan',
+        crud: false,
+        codeField: 'hesap_kodu',
+        nameField: 'hesap_adi',
+        filters: [
+          { key: 'hesap_kodu', label: 'Hesap kodu' },
+          { key: 'hesap_adi', label: 'Hesap adı' },
+        ],
+        columns: [
+          { key: 'hesap_kodu', label: 'Hesap', mono: true },
+          { key: 'hesap_adi', label: 'Ad' },
+          { key: 'borc', label: 'Borç' },
+          { key: 'alacak', label: 'Alacak' },
+          { key: 'bakiye', label: 'Bakiye' },
+        ],
+      },
+    ],
+  },
+
 ];
 
 
@@ -1076,6 +1484,12 @@ function toast(msg) {
   el.hidden = false;
   clearTimeout(toast._t);
   toast._t = setTimeout(() => { el.hidden = true; }, 2800);
+}
+
+function screenApiBase(endpoint) {
+  if (!endpoint) return endpoint;
+  const q = endpoint.indexOf('?');
+  return q >= 0 ? endpoint.slice(0, q) : endpoint;
 }
 
 async function api(path, options = {}) {
@@ -1351,7 +1765,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014g`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261015a`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -1414,6 +1828,8 @@ const LOOKUP_ENDPOINTS = {
   'kategoriler-temin': '/kategoriler?tip=TeminSekli&aktif=true',
   'kategoriler-sektor': '/kategoriler?tip=Sektor&aktif=true',
   'kategoriler-bolge': '/kategoriler?tip=Bolge&aktif=true',
+  'muhasebe-hesaplari': '/muhasebe-hesaplari',
+  siparisler: '/siparisler',
 };
 
 async function ensureLookups(screen) {
@@ -2211,7 +2627,7 @@ async function openForm(mode) {
 
   async function loadRecord(id) {
     try {
-      return await api(`${screen.endpoint}/${id}`);
+      return await api(`${screenApiBase(screen.endpoint)}/${id}`);
     } catch (_) {
       return { ...row };
     }
@@ -2251,7 +2667,7 @@ async function openForm(mode) {
   }
 
   if (mode === 'yeni') {
-    record = {};
+    record = { ...(screen.defaults || {}) };
     seedFields();
     const seri = resolveNumeratorSeri(screen, record);
     if (seri) {
@@ -2329,9 +2745,9 @@ async function saveForm() {
         await api('/kod-serileri', { method: 'POST', body: JSON.stringify(master) });
       }
     } else if (state.formMode === 'duzelt') {
-      await api(`${screen.endpoint}/${master.id}`, { method: 'PUT', body: JSON.stringify(master) });
+      await api(`${screenApiBase(screen.endpoint)}/${master.id}`, { method: 'PUT', body: JSON.stringify(master) });
     } else {
-      await api(screen.endpoint, { method: 'POST', body: JSON.stringify(master) });
+      await api(screenApiBase(screen.endpoint), { method: 'POST', body: JSON.stringify(master) });
     }
     toast('Kaydedildi.');
     // form sekmesini kapat, listeye don
@@ -2358,7 +2774,7 @@ async function deleteSelected() {
   }
   if (!confirm(`${row[screen.codeField] || row.id} silinsin mi?`)) return;
   try {
-    await api(`${screen.endpoint}/${row.id}`, { method: 'DELETE' });
+    await api(`${screenApiBase(screen.endpoint)}/${row.id}`, { method: 'DELETE' });
     toast('Silindi.');
     state.selectedId = null;
     await openScreen(screen.id);
