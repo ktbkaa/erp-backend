@@ -1314,7 +1314,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014d`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014f`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -1975,6 +1975,9 @@ function bindEvents() {
       state.selectedId = row.dataset.id;
       const screen = findScreen(state.screenId);
       if (screen) renderList(screen);
+      if (e.detail >= 2) {
+        openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
+      }
       return;
     }
 
