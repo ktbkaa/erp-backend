@@ -151,16 +151,69 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { rota_adi } = req.body;
+        const { rota_adi, stok_id, operasyonlar } = req.body;
         if (!rota_adi) return res.status(400).json({ hata: 'rota_adi zorunlu.' });
-        const upd = await pool.query(
-            `UPDATE rotalar SET rota_adi=$2 WHERE id=$1 RETURNING id`,
-            [req.params.id, rota_adi]
-        );
-        if (!upd.rows[0]) return res.status(404).json({ hata: 'Rota bulunamadı.' });
-        res.json(await rotaGetir(upd.rows[0].id));
+
+        const kayitId = await withTransaction(pool, async (client) => {
+            const mevcut = await client.query('SELECT id FROM rotalar WHERE id=$1 FOR UPDATE', [req.params.id]);
+            if (!mevcut.rows[0]) {
+                const err = new Error('Rota bulunamadı.');
+                err.status = 404;
+                throw err;
+            }
+            await client.query(
+                `UPDATE rotalar SET rota_adi=$2, stok_id=COALESCE($3, stok_id) WHERE id=$1`,
+                [req.params.id, rota_adi, stok_id || null]
+            );
+            if (Array.isArray(operasyonlar)) {
+                const eskiOps = await client.query(
+                    'SELECT id FROM rota_operasyonlari WHERE rota_id=$1',
+                    [req.params.id]
+                );
+                for (const op of eskiOps.rows) {
+                    await client.query('DELETE FROM rota_operasyon_bilesenleri WHERE operasyon_id=$1', [op.id]);
+                }
+                await client.query('DELETE FROM rota_operasyonlari WHERE rota_id=$1', [req.params.id]);
+
+                for (const op of operasyonlar) {
+                    if (!op.operasyon_kodu && !op.operasyon_adi) continue;
+                    const opIns = await client.query(
+                        `
+                        INSERT INTO rota_operasyonlari
+                            (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id,
+                             sure_dk, cikti_stok_id, sonraki_sira_no)
+                        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                        RETURNING id
+                        `,
+                        [
+                            req.params.id,
+                            op.sira_no || 10,
+                            op.operasyon_kodu || null,
+                            op.operasyon_adi || null,
+                            op.is_merkezi_id || null,
+                            op.sure_dk || 0,
+                            op.cikti_stok_id || null,
+                            op.sonraki_sira_no || null,
+                        ]
+                    );
+                    for (const b of op.bilesenler || []) {
+                        if (!b.stok_id) continue;
+                        await client.query(
+                            `
+                            INSERT INTO rota_operasyon_bilesenleri (operasyon_id, stok_id, miktar, birim)
+                            VALUES ($1,$2,$3,$4)
+                            `,
+                            [opIns.rows[0].id, b.stok_id, b.miktar || 0, b.birim || null]
+                        );
+                    }
+                }
+            }
+            return Number(req.params.id);
+        });
+
+        res.json(await rotaGetir(kayitId));
     } catch (err) {
-        res.status(500).json({ hata: err.message });
+        res.status(err.status || 500).json({ hata: err.message });
     }
 });
 

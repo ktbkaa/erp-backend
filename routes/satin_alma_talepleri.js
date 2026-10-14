@@ -72,18 +72,64 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { aciklama, durum } = req.body;
+        const { aciklama, durum, is_yeri_id, satirlar } = req.body;
+        const allowed = ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'];
+        if (durum && !allowed.includes(durum)) {
+            return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
+        }
+
+        const id = await withTransaction(pool, async (client) => {
+            const mevcut = await client.query(
+                'SELECT id FROM satin_alma_talepleri WHERE id=$1 FOR UPDATE',
+                [req.params.id]
+            );
+            if (!mevcut.rows[0]) {
+                const err = new Error('Talep bulunamadı.');
+                err.status = 404;
+                throw err;
+            }
+            await client.query(
+                `
+                UPDATE satin_alma_talepleri SET
+                    aciklama = COALESCE($2, aciklama),
+                    durum = COALESCE($3, durum),
+                    is_yeri_id = COALESCE($4, is_yeri_id)
+                WHERE id = $1
+                `,
+                [req.params.id, aciklama ?? null, durum || null, is_yeri_id || null]
+            );
+            if (Array.isArray(satirlar)) {
+                await client.query('DELETE FROM satin_alma_talep_satirlari WHERE talep_id=$1', [req.params.id]);
+                for (const s of satirlar) {
+                    if (!s.stok_id || s.miktar == null) continue;
+                    const stok = await client.query('SELECT id, birim FROM stoklar WHERE id=$1', [s.stok_id]);
+                    if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.stok_id}`);
+                    await client.query(
+                        `INSERT INTO satin_alma_talep_satirlari (talep_id, stok_id, miktar, birim)
+                         VALUES ($1,$2,$3,$4)`,
+                        [req.params.id, s.stok_id, s.miktar, s.birim || stok.rows[0].birim]
+                    );
+                }
+            }
+            return Number(req.params.id);
+        });
+
+        res.json(await talepGetir(id));
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+/** Onay kısayolu */
+router.post('/:id/onayla', async (req, res) => {
+    try {
         const upd = await pool.query(
-            `
-            UPDATE satin_alma_talepleri SET
-                aciklama = COALESCE($2, aciklama),
-                durum = COALESCE($3, durum)
-            WHERE id = $1
-            RETURNING id
-            `,
-            [req.params.id, aciklama ?? null, durum || null]
+            `UPDATE satin_alma_talepleri SET durum='Onayli' WHERE id=$1 AND durum='Acik' RETURNING id`,
+            [req.params.id]
         );
-        if (!upd.rows[0]) return res.status(404).json({ hata: 'Talep bulunamadı.' });
+        if (!upd.rows[0]) {
+            return res.status(400).json({ hata: 'Talep onaylanamadı (bulunamadı veya durum Acik değil).' });
+        }
         res.json(await talepGetir(upd.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });

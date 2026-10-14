@@ -45,6 +45,63 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+/** Doğrudan satınalma siparişi (UI Yeni) */
+router.post('/', async (req, res) => {
+    try {
+        const { cari_id, is_yeri_id, talep_id, durum, satirlar } = req.body;
+        if (!cari_id) return res.status(400).json({ hata: 'cari_id zorunlu.' });
+        if (!Array.isArray(satirlar) || satirlar.length === 0) {
+            return res.status(400).json({ hata: 'satirlar zorunlu.' });
+        }
+
+        const id = await withTransaction(pool, async (client) => {
+            const cari = await client.query(
+                'SELECT id, cari_kodu, cari_adi, cari_turu, aktif FROM cariler WHERE id = $1',
+                [cari_id]
+            );
+            if (!cari.rows[0]) throw new Error('Cari bulunamadı.');
+            if (cari.rows[0].aktif === false) throw new Error('Cari pasif; satınalma yapılamaz.');
+            if (!cariTedarikciMi(cari.rows[0].cari_turu)) {
+                throw new Error(
+                    `Satınalma siparişi yalnızca tedarikçiye açılır. Seçilen cari (${cari.rows[0].cari_kodu}) türü: ${cari.rows[0].cari_turu}`
+                );
+            }
+
+            const no = await sonrakiBelgeNo(client, 'SATINALMA_SIPARIS');
+            let toplam = 0;
+            const siparis = await client.query(
+                `INSERT INTO satin_alma_siparisleri
+                    (siparis_no, cari_id, is_yeri_id, talep_id, durum, toplam_tutar)
+                 VALUES ($1,$2,$3,$4,COALESCE($5,'Taslak'),0) RETURNING id`,
+                [no, cari_id, is_yeri_id || null, talep_id || null, durum || 'Taslak']
+            );
+            const siparisId = siparis.rows[0].id;
+            for (const s of satirlar) {
+                if (!s.stok_id || s.miktar == null) continue;
+                const stok = await client.query('SELECT id, birim FROM stoklar WHERE id=$1', [s.stok_id]);
+                if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.stok_id}`);
+                const fiyat = Number(s.birim_fiyat || 0);
+                toplam += Number(s.miktar) * fiyat;
+                await client.query(
+                    `INSERT INTO satin_alma_siparis_satirlari
+                        (siparis_id, stok_id, miktar, birim_fiyat, birim)
+                     VALUES ($1,$2,$3,$4,$5)`,
+                    [siparisId, s.stok_id, s.miktar, fiyat, s.birim || stok.rows[0].birim]
+                );
+            }
+            await client.query(
+                'UPDATE satin_alma_siparisleri SET toplam_tutar = $1 WHERE id = $2',
+                [toplam, siparisId]
+            );
+            return siparisId;
+        });
+
+        res.status(201).json(await siparisGetir(id));
+    } catch (err) {
+        res.status(400).json({ hata: err.message });
+    }
+});
+
 /** Talepten satınalma siparişi oluştur */
 router.post('/talep-donustur', async (req, res) => {
     try {
@@ -120,11 +177,30 @@ router.post('/talep-donustur', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { durum } = req.body;
+        const allowed = ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'];
+        if (durum && !allowed.includes(durum)) {
+            return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
+        }
         const upd = await pool.query(
             `UPDATE satin_alma_siparisleri SET durum = COALESCE($2, durum) WHERE id=$1 RETURNING id`,
             [req.params.id, durum || null]
         );
         if (!upd.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+        res.json(await siparisGetir(upd.rows[0].id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.post('/:id/onayla', async (req, res) => {
+    try {
+        const upd = await pool.query(
+            `UPDATE satin_alma_siparisleri SET durum='Onayli' WHERE id=$1 AND durum='Taslak' RETURNING id`,
+            [req.params.id]
+        );
+        if (!upd.rows[0]) {
+            return res.status(400).json({ hata: 'Sipariş onaylanamadı (bulunamadı veya durum Taslak değil).' });
+        }
         res.json(await siparisGetir(upd.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });

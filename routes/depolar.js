@@ -47,7 +47,7 @@ router.get('/:id', async (req, res) => {
 // Yeni depo
 router.post('/', async (req, res) => {
     try {
-        const { is_yeri_id, depo_kodu, depo_adi, aktif, varsayilan } = req.body;
+        const { is_yeri_id, depo_kodu, depo_adi, aktif, varsayilan, raf_kodu, konum_kodu } = req.body;
 
         if (!is_yeri_id || !depo_adi) {
             return res.status(400).json({
@@ -88,11 +88,14 @@ router.post('/', async (req, res) => {
 
             const sonuc = await client.query(
                 `
-                INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, aktif, varsayilan)
-                VALUES ($1, $2, $3, COALESCE($4, TRUE), $5)
+                INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, aktif, varsayilan, raf_kodu, konum_kodu)
+                VALUES ($1, $2, $3, COALESCE($4, TRUE), $5, $6, $7)
                 RETURNING *;
                 `,
-                [is_yeri_id, kod, depo_adi, aktif, varsayilanOlacak]
+                [
+                    is_yeri_id, kod, depo_adi, aktif, varsayilanOlacak,
+                    raf_kodu || null, konum_kodu || null,
+                ]
             );
             return sonuc.rows[0];
         });
@@ -110,7 +113,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { depo_adi, aktif, varsayilan, is_yeri_id } = req.body;
+        const { depo_adi, aktif, varsayilan, is_yeri_id, raf_kodu, konum_kodu } = req.body;
         if (!depo_adi) return res.status(400).json({ hata: 'depo_adi zorunludur.' });
 
         const row = await withTransaction(pool, async (client) => {
@@ -129,7 +132,9 @@ router.put('/:id', async (req, res) => {
                     is_yeri_id = $2,
                     depo_adi = $3,
                     aktif = COALESCE($4, aktif),
-                    varsayilan = COALESCE($5, varsayilan)
+                    varsayilan = COALESCE($5, varsayilan),
+                    raf_kodu = COALESCE($6, raf_kodu),
+                    konum_kodu = COALESCE($7, konum_kodu)
                 WHERE id = $1
                 RETURNING *
                 `,
@@ -139,6 +144,8 @@ router.put('/:id', async (req, res) => {
                     depo_adi,
                     typeof aktif === 'boolean' ? aktif : null,
                     typeof varsayilan === 'boolean' ? varsayilan : null,
+                    raf_kodu !== undefined ? (raf_kodu || null) : null,
+                    konum_kodu !== undefined ? (konum_kodu || null) : null,
                 ]
             );
             return sonuc.rows[0];

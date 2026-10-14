@@ -147,16 +147,65 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { agac_adi, miktar } = req.body;
+        const { agac_adi, miktar, satirlar, mamul_stok_id } = req.body;
         if (!agac_adi) return res.status(400).json({ hata: 'agac_adi zorunlu.' });
-        const upd = await pool.query(
-            `UPDATE urun_agaclari SET agac_adi=$2, miktar=COALESCE($3, miktar) WHERE id=$1 RETURNING id`,
-            [req.params.id, agac_adi, miktar ?? null]
-        );
-        if (!upd.rows[0]) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
-        res.json(await agacGetir(upd.rows[0].id));
+
+        async function satirEkle(client, urunAgaciId, satir, ustSatirId, siraNo) {
+            const ins = await client.query(
+                `
+                INSERT INTO urun_agaci_satirlari
+                    (urun_agaci_id, bilesen_stok_id, miktar, birim, sira_no, ust_satir_id)
+                VALUES ($1,$2,$3,$4,$5,$6)
+                RETURNING id
+                `,
+                [
+                    urunAgaciId,
+                    satir.bilesen_stok_id,
+                    satir.miktar,
+                    satir.birim || null,
+                    satir.sira_no || siraNo,
+                    ustSatirId,
+                ]
+            );
+            const sid = ins.rows[0].id;
+            let altSira = 10;
+            for (const alt of satir.alt_satirlar || []) {
+                await satirEkle(client, urunAgaciId, alt, sid, altSira);
+                altSira += 10;
+            }
+            return sid;
+        }
+
+        const kayitId = await withTransaction(pool, async (client) => {
+            const mevcut = await client.query('SELECT id FROM urun_agaclari WHERE id=$1 FOR UPDATE', [req.params.id]);
+            if (!mevcut.rows[0]) {
+                const err = new Error('Ürün ağacı bulunamadı.');
+                err.status = 404;
+                throw err;
+            }
+            await client.query(
+                `UPDATE urun_agaclari SET
+                    agac_adi=$2,
+                    miktar=COALESCE($3, miktar),
+                    mamul_stok_id=COALESCE($4, mamul_stok_id)
+                 WHERE id=$1`,
+                [req.params.id, agac_adi, miktar ?? null, mamul_stok_id || null]
+            );
+            if (Array.isArray(satirlar)) {
+                await client.query('DELETE FROM urun_agaci_satirlari WHERE urun_agaci_id=$1', [req.params.id]);
+                let sira = 10;
+                for (const s of satirlar) {
+                    if (!s.bilesen_stok_id || s.miktar == null) continue;
+                    await satirEkle(client, Number(req.params.id), s, null, sira);
+                    sira += 10;
+                }
+            }
+            return Number(req.params.id);
+        });
+
+        res.json(await agacGetir(kayitId));
     } catch (err) {
-        res.status(500).json({ hata: err.message });
+        res.status(err.status || 500).json({ hata: err.message });
     }
 });
 

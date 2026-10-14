@@ -57,6 +57,8 @@ app.use('/mal-kabuller', require('./routes/mal_kabuller'));
 app.use('/uretim-emirleri', require('./routes/uretim_emirleri'));
 app.use('/kod-serileri', require('./routes/kod_serileri'));
 app.use('/kategoriler', require('./routes/kategoriler'));
+app.use('/ulkeler', require('./routes/ulkeler'));
+app.use('/uretim-girisleri', require('./routes/uretim_girisleri'));
 
 app.listen(port, () => {
     console.log(`Sistem http://localhost:${port} adresinde çalışıyor.`);

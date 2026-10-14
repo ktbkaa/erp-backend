@@ -74,11 +74,18 @@ async function cariGetir(id) {
         [id]
     );
     if (!c.rows[0]) return null;
-    const [detaylar, bankalar, sevkler, diller] = await Promise.all([
+    const [detaylar, bankalar, sevkler, diller, firmaParams] = await Promise.all([
         pool.query('SELECT * FROM cari_detaylari WHERE cari_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM cari_banka_bilgileri WHERE cari_id = $1 ORDER BY sira_no, id', [id]),
         pool.query('SELECT * FROM cari_sevk_adresleri WHERE cari_id = $1 ORDER BY sira_no, id', [id]),
         pool.query('SELECT * FROM cari_dil_tanimlari WHERE cari_id = $1 ORDER BY id', [id]),
+        pool.query(
+            `SELECT p.*, f.firma_kodu, f.firma_adi
+             FROM cari_firma_parametreleri p
+             JOIN firmalar f ON f.id = p.firma_id
+             WHERE p.cari_id = $1 ORDER BY p.id`,
+            [id]
+        ),
     ]);
     return {
         ...c.rows[0],
@@ -88,6 +95,7 @@ async function cariGetir(id) {
         banka_bilgileri: bankalar.rows,
         sevk_adresleri: sevkler.rows,
         dil_tanimlari: diller.rows,
+        firma_parametreleri: firmaParams.rows,
     };
 }
 
@@ -194,6 +202,37 @@ async function saveChildren(client, cariId, body) {
                 ];
             }
         );
+    }
+
+    if (Array.isArray(body.firma_parametreleri)) {
+        await client.query('DELETE FROM cari_firma_parametreleri WHERE cari_id = $1', [cariId]);
+        for (const d of body.firma_parametreleri) {
+            const firmaId = await assertLookup(client, 'firmalar', d.firma_id, 'firma_id');
+            if (!firmaId) continue;
+            await client.query(
+                `INSERT INTO cari_firma_parametreleri (
+                    cari_id, firma_id, muhasebe_hesap_kodu, para_birimi, cari_tipi,
+                    risk_grup_kodu, nakit_akisa_dahil, kur_degerlemeye_dahil
+                 ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,TRUE),COALESCE($8,FALSE))
+                 ON CONFLICT (cari_id, firma_id) DO UPDATE SET
+                    muhasebe_hesap_kodu = EXCLUDED.muhasebe_hesap_kodu,
+                    para_birimi = EXCLUDED.para_birimi,
+                    cari_tipi = EXCLUDED.cari_tipi,
+                    risk_grup_kodu = EXCLUDED.risk_grup_kodu,
+                    nakit_akisa_dahil = EXCLUDED.nakit_akisa_dahil,
+                    kur_degerlemeye_dahil = EXCLUDED.kur_degerlemeye_dahil`,
+                [
+                    cariId,
+                    firmaId,
+                    trimOrNull(d.muhasebe_hesap_kodu),
+                    trimOrNull(d.para_birimi) || 'TRY',
+                    trimOrNull(d.cari_tipi),
+                    trimOrNull(d.risk_grup_kodu),
+                    typeof d.nakit_akisa_dahil === 'boolean' ? d.nakit_akisa_dahil : true,
+                    Boolean(d.kur_degerlemeye_dahil),
+                ]
+            );
+        }
     }
 }
 

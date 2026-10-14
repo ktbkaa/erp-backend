@@ -87,14 +87,26 @@ async function stokGetir(id) {
         [id]
     );
     if (!stokRes.rows[0]) return null;
-    const [detaylar, birimler] = await Promise.all([
+    const [detaylar, birimler, isyerleri, barkodlar, diller] = await Promise.all([
         pool.query('SELECT * FROM stok_detaylari WHERE stok_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM stok_birim_tanimlari WHERE stok_id = $1 ORDER BY sira_no, id', [id]),
+        pool.query(
+            `SELECT siy.*, i.is_yeri_kodu, i.is_yeri_adi
+             FROM stok_is_yeri siy
+             JOIN is_yerleri i ON i.id = siy.is_yeri_id
+             WHERE siy.stok_id = $1 ORDER BY siy.id`,
+            [id]
+        ),
+        pool.query('SELECT * FROM stok_barkodlari WHERE stok_id = $1 ORDER BY id', [id]),
+        pool.query('SELECT * FROM stok_dil_tanimlari WHERE stok_id = $1 ORDER BY id', [id]),
     ]);
     return {
         ...stokRes.rows[0],
         stok_detaylari: detaylar.rows,
         birim_tanimlari: birimler.rows,
+        is_yeri_baglari: isyerleri.rows,
+        barkodlar: barkodlar.rows,
+        dil_tanimlari: diller.rows,
     };
 }
 
@@ -138,6 +150,58 @@ async function saveChildren(client, stokId, body) {
                     stokId, sira, birim, katsayi, cevr, trimOrNull(d.barkod),
                     d.kutu_en_mm ?? null, d.kutu_boy_mm ?? null, d.kutu_yukseklik_mm ?? null,
                     d.hacim ?? null, d.agirlik ?? null, Boolean(d.takip_birimi_mi),
+                ]
+            );
+        }
+    }
+
+    if (Array.isArray(body.is_yeri_baglari)) {
+        await client.query('DELETE FROM stok_is_yeri WHERE stok_id = $1', [stokId]);
+        for (const d of body.is_yeri_baglari) {
+            const iy = Number(d.is_yeri_id);
+            if (!Number.isFinite(iy)) continue;
+            const chk = await client.query('SELECT id FROM is_yerleri WHERE id = $1', [iy]);
+            if (!chk.rows[0]) {
+                const err = new Error(`İş yeri bulunamadı (${iy}).`);
+                err.status = 400;
+                throw err;
+            }
+            await client.query(
+                `INSERT INTO stok_is_yeri (stok_id, is_yeri_id, aktif)
+                 VALUES ($1,$2,COALESCE($3,TRUE))
+                 ON CONFLICT (stok_id, is_yeri_id) DO UPDATE SET aktif = EXCLUDED.aktif`,
+                [stokId, iy, typeof d.aktif === 'boolean' ? d.aktif : true]
+            );
+        }
+    }
+
+    if (Array.isArray(body.barkodlar)) {
+        await client.query('DELETE FROM stok_barkodlari WHERE stok_id = $1', [stokId]);
+        for (const d of body.barkodlar) {
+            if (!nonempty(d.barkod)) continue;
+            await client.query(
+                `INSERT INTO stok_barkodlari (stok_id, barkod, birim_kodu, varsayilan)
+                 VALUES ($1,$2,$3,COALESCE($4,FALSE))`,
+                [stokId, trimOrNull(d.barkod), trimOrNull(d.birim_kodu), Boolean(d.varsayilan)]
+            );
+        }
+    }
+
+    if (Array.isArray(body.dil_tanimlari)) {
+        await client.query('DELETE FROM stok_dil_tanimlari WHERE stok_id = $1', [stokId]);
+        for (const d of body.dil_tanimlari) {
+            if (!nonempty(d.dil_kodu)) continue;
+            await client.query(
+                `INSERT INTO stok_dil_tanimlari
+                    (stok_id, dil_kodu, dil_adi, stok_adi, aciklama, varsayilan)
+                 VALUES ($1,$2,$3,$4,$5,COALESCE($6,FALSE))`,
+                [
+                    stokId,
+                    trimOrNull(d.dil_kodu),
+                    trimOrNull(d.dil_adi),
+                    trimOrNull(d.stok_adi),
+                    trimOrNull(d.aciklama),
+                    Boolean(d.varsayilan),
                 ]
             );
         }
