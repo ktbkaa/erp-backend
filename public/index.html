@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>KTB ERP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css?v=20261014g" />
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand" id="btnHome" title="Ana sayfa">
+        <span class="brand-mark">KTB</span>
+        <span class="brand-name">KTB ERP</span>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
+      <div class="sidebar-foot">
+        <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
+        <span class="build-tag" id="buildTag">UI build 20261014g</span>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="workspace-bar" id="workspaceBar">
+        <div class="bar-left">
+          <button type="button" class="icon-btn" id="btnMenu" aria-label="Menüyü aç/kapat" title="Menüyü kapat/aç">☰</button>
+          <h1 class="screen-title" id="screenTitle">Ana Sayfa</h1>
+        </div>
+        <div class="bar-right" id="homeSearchWrap">
+          <label class="search-label" for="screenSearch">Ekran ara</label>
+          <input
+            id="screenSearch"
+            class="screen-search"
+            type="search"
+            placeholder="Ekran adı yazın (en az 3 harf)…"
+            autocomplete="off"
+          />
+          <div id="searchResults" class="search-results" hidden></div>
+        </div>
+      </header>
+
+      <nav class="doc-tabs" id="tabBar" aria-label="Açık sekmeler"></nav>
+
+      <main class="workspace-main">
+        <section id="viewHome" class="view home-view">
+          <div class="ktb-emboss" aria-hidden="true">KTB</div>
+        </section>
+
+        <section id="viewScreen" class="view screen-view" hidden>
+          <div class="screen-banner" id="screenBanner">Ekran</div>
+          <div class="action-bar" id="actionBar">
+            <button type="button" class="btn action" data-action="yeni">Yeni</button>
+            <button type="button" class="btn action ghost" data-action="incele">İncele</button>
+            <button type="button" class="btn action ghost" data-action="duzelt">Düzelt</button>
+            <button type="button" class="btn action ghost" data-action="kopyala">Kopyala</button>
+            <button type="button" class="btn action danger" data-action="sil">Sil</button>
+          </div>
+
+          <div class="filter-pane" id="filterPane">
+            <div class="filter-pane-head">
+              <h2>Filtre</h2>
+              <div class="filter-actions">
+                <button type="button" class="btn ghost" id="btnClearFilter">Temizle</button>
+                <button type="button" class="btn" id="btnApplyFilter">Uygula</button>
+              </div>
+            </div>
+            <div class="filter-grid" id="filterGrid"></div>
+          </div>
+
+          <div class="list-pane" id="listPane">
+            <div class="list-pane-head">
+              <h2>Liste</h2>
+              <span class="list-meta" id="listMeta"></span>
+            </div>
+            <div class="table-scroll">
+              <table id="dataTable">
+                <thead id="dataHead"></thead>
+                <tbody id="dataBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="viewForm" class="view form-view" hidden>
+          <div class="form-topbar">
+            <div>
+              <span class="mode-badge" id="formModeBadge">Yeni</span>
+              <strong id="formScreenLabel"></strong>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn ghost" id="btnFormCancel" title="Liste sekmesine geç">Liste sekmesi</button>
+              <button type="button" class="btn" id="btnFormSave">Kaydet</button>
+            </div>
+          </div>
+          <div class="form-tabs-layout" id="formTabsLayout" hidden>
+            <nav class="form-tab-nav" id="formTabNav" aria-label="Kart sekmeleri"></nav>
+            <div class="form-tab-body" id="formTabBody"></div>
+          </div>
+          <div class="form-split" id="formSplitClassic">
+            <div class="master-pane">
+              <h2>Master</h2>
+              <div class="master-grid" id="masterGrid"></div>
+            </div>
+            <div class="detail-pane">
+              <h2>Detay alanları</h2>
+              <div class="detail-grid" id="detailGrid"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="/app.js?v=20261014g"></script>
+</body>
+</html>
