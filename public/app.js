@@ -136,7 +136,7 @@ const MODULES = [
     id: 'stok',
     title: 'Stok',
     screens: [
-      {
+            {
         id: 'stok-karti',
         title: 'Stok Kartı',
         endpoint: '/stoklar',
@@ -168,18 +168,91 @@ const MODULES = [
           { key: 'satis_fiyati', label: 'Fiyat' },
         ],
         masterFields: [
-          { key: 'stok_kodu', label: 'Stok kodu', code: true },
-          { key: 'stok_adi', label: 'Stok adı', name: true },
-          { key: 'stok_tipi', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'] },
+          { key: 'stok_kodu', label: 'Stok kodu', code: true, required: true },
+          { key: 'stok_adi', label: 'Stok adı', name: true, required: true },
+          { key: 'stok_adi_2', label: 'Stok adı 2' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'uzun_stok_kodu', label: 'Uzun stok kodu' },
+          { key: 'stok_tipi', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true },
           { key: 'tedarik_tipi', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'] },
-          { key: 'birim', label: 'Birim' },
+          { key: 'stok_takip_birimi', label: 'Stok takip birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
           { key: 'satis_fiyati', label: 'Satış fiyatı', type: 'number' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
         detailFields: [
           { key: 'boyut', label: 'Boyut' },
           { key: 'agirlik', label: 'Ağırlık', type: 'number' },
         ],
         detailKey: 'stok_detaylari',
+        formTabs: [
+          {
+            id: 'ana', label: 'Stok Kart', kind: 'fields',
+            fields: [
+              { key: 'stok_kodu', label: 'Stok kodu', code: true, required: true },
+              { key: 'stok_adi', label: 'Stok adı', name: true, required: true },
+              { key: 'stok_adi_2', label: 'Stok adı 2' },
+              { key: 'aciklama', label: 'Açıklama' },
+              { key: 'uzun_stok_kodu', label: 'Uzun stok kodu' },
+              { key: 'stok_tipi', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true },
+              { key: 'tedarik_tipi', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'] },
+              { key: 'stok_takip_birimi', label: 'Stok takip birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'satis_fiyati', label: 'Satış fiyatı', type: 'number' },
+              { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+            ],
+          },
+          {
+            id: 'olcu', label: 'Ölçü Bilgileri', kind: 'fields',
+            fields: [
+              { key: 'abc_kodu', label: 'ABC kodu', type: 'select', options: ['', 'A', 'B', 'C'] },
+              { key: 'hacim', label: 'Hacim', type: 'number' },
+              { key: 'hacim_birimi', label: 'Hacim birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'yogunluk', label: 'Yoğunluk', type: 'number' },
+              { key: 'yogunluk_birimi', label: 'Yoğunluk birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'agirlik_birimi', label: 'Ağırlık birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'koli_brut_agirlik', label: 'Koli brüt ağırlık', type: 'number' },
+              { key: 'kutu_brut_agirlik', label: 'Kutu brüt ağırlık', type: 'number' },
+              { key: 'kutu_en_mm', label: 'Kutu en (mm)', type: 'number' },
+              { key: 'kutu_boy_mm', label: 'Kutu boy (mm)', type: 'number' },
+              { key: 'kutu_yukseklik_mm', label: 'Kutu yükseklik (mm)', type: 'number' },
+              { key: 'barkod', label: 'Barkod' },
+              { key: 'emniyet_stok', label: 'Emniyet stok', type: 'number' },
+              { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
+              { key: 'ulke_mensei', label: 'Ülke menşei' },
+              { key: 'raf_omru_gun', label: 'Raf ömrü (gün)', type: 'number' },
+              { key: 'marka', label: 'Marka' },
+              { key: 'temin_sekli', label: 'Temin şekli' },
+              { key: 'miktar_hassasiyeti', label: 'Miktar hassasiyeti', type: 'number' },
+            ],
+          },
+          {
+            id: 'birim', label: 'Birim Tanımları', kind: 'grid', key: 'birim_tanimlari', slots: 3,
+            fields: [
+              { key: 'birim_kodu', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'katsayi', label: 'Katsayı', type: 'number' },
+              { key: 'cevrilecek_birim', label: 'Çevrilecek birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'barkod', label: 'Barkod' },
+              { key: 'kutu_en_mm', label: 'Kutu en', type: 'number' },
+              { key: 'kutu_boy_mm', label: 'Kutu boy', type: 'number' },
+              { key: 'kutu_yukseklik_mm', label: 'Kutu yükseklik', type: 'number' },
+              { key: 'hacim', label: 'Hacim', type: 'number' },
+              { key: 'agirlik', label: 'Ağırlık', type: 'number' },
+              { key: 'takip_birimi_mi', label: 'Takip birimi', type: 'checkbox' },
+            ],
+          },
+          { id: 'detay', label: 'Stok Detay', kind: 'grid', key: 'stok_detaylari', slots: 1,
+            fields: [
+              { key: 'boyut', label: 'Boyut' },
+              { key: 'agirlik', label: 'Ağırlık', type: 'number' },
+            ],
+          },
+          { id: 'barkod-tab', label: 'Barkod', kind: 'stub', note: 'Barkod alt modeli henüz tanımlanmadı; sahte CRUD yok.' },
+          { id: 'kategori', label: 'Kategoriler', kind: 'stub', note: 'Kategori ana verisi ve kuralları netleşince eklenecek.' },
+          { id: 'alternatif', label: 'Alternatif Stok', kind: 'stub', note: 'Alternatif stok ilişkisi kapsamı netleşecek.' },
+          { id: 'dil-stok', label: 'Dil Tanımları', kind: 'stub', note: 'Stok dil tanımları tablosu henüz yok.' },
+          { id: 'mrp', label: 'MRP', kind: 'stub', note: 'MRP parametreleri üretim planlama fazında ele alınacak.' },
+        ],
       },
       {
         id: 'depo-bakiye',
@@ -206,7 +279,7 @@ const MODULES = [
     id: 'cari',
     title: 'Cari',
     screens: [
-      {
+            {
         id: 'cari-kartlari',
         title: 'Cari Kartları',
         endpoint: '/cariler',
@@ -234,20 +307,15 @@ const MODULES = [
           { key: 'il', label: 'İl' },
         ],
         masterFields: [
-          { key: 'cari_kodu', label: 'Cari kodu', code: true },
-          { key: 'cari_adi', label: 'Cari adı', name: true },
-          { key: 'cari_turu', label: 'Tür', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'] },
-          { key: 'is_yeri_id', label: 'İş yeri ID', type: 'number' },
+          { key: 'cari_kodu', label: 'Cari kodu', code: true, required: true },
+          { key: 'cari_adi', label: 'Cari adı', name: true, required: true },
+          { key: 'cari_turu', label: 'Tür', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
           { key: 'telefon', label: 'Telefon' },
           { key: 'email', label: 'E-posta' },
-          { key: 'vergi_no', label: 'Vergi no' },
+          { key: 'vergi_no', label: 'VKN / TCKN' },
           { key: 'vergi_dairesi', label: 'Vergi dairesi' },
-          { key: 'yetkili_adi', label: 'Yetkili' },
-          { key: 'yetkili_telefon', label: 'Yetkili tel' },
-          { key: 'il', label: 'İl' },
-          { key: 'ilce', label: 'İlçe' },
-          { key: 'adres', label: 'Adres' },
-          { key: 'odeme_vadesi_gun', label: 'Vade (gün)', type: 'number' },
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
         detailFields: [
@@ -257,6 +325,102 @@ const MODULES = [
           { key: 'yetkili_telefon', label: 'Yetkili tel' },
         ],
         detailKey: 'cari_detaylari',
+        formTabs: [
+          {
+            id: 'ana', label: 'Cari Kart', kind: 'fields',
+            fields: [
+              { key: 'cari_kodu', label: 'Cari kodu', code: true, required: true },
+              { key: 'cari_adi', label: 'Cari adı', name: true, required: true },
+              { key: 'cari_adi_2', label: 'Cari adı 2' },
+              { key: 'aciklama', label: 'Açıklama' },
+              { key: 'cari_turu', label: 'Cari tipi', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true },
+              { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+              { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+              { key: 'vergi_dairesi', label: 'Vergi dairesi' },
+              { key: 'vergi_no', label: 'VKN / TCKN' },
+              { key: 'pasaport_no', label: 'Pasaport no' },
+              { key: 'ulke', label: 'Ülke' },
+              { key: 'ad', label: 'Ad' },
+              { key: 'soyad', label: 'Soyad' },
+              { key: 'fatura_adres1', label: 'Fatura adres 1' },
+              { key: 'fatura_adres2', label: 'Fatura adres 2' },
+              { key: 'fatura_adres3', label: 'Fatura adres 3' },
+              { key: 'il', label: 'İl' },
+              { key: 'ilce', label: 'İlçe' },
+              { key: 'posta_kodu', label: 'Posta kodu' },
+              { key: 'enlem', label: 'Enlem', type: 'number' },
+              { key: 'boylam', label: 'Boylam', type: 'number' },
+              { key: 'telefon', label: 'Telefon 1' },
+              { key: 'telefon2', label: 'Telefon 2' },
+              { key: 'cep_tel', label: 'Cep tel' },
+              { key: 'email', label: 'E-posta' },
+              { key: 'website', label: 'Website' },
+              { key: 'fax', label: 'Fax' },
+              { key: 'yetkili_adi', label: 'Yetkili' },
+              { key: 'yetkili_telefon', label: 'Yetkili tel' },
+              { key: 'para_birimi', label: 'Para birimi' },
+              { key: 'odeme_vadesi_gun', label: 'Vade (gün)', type: 'number' },
+              { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+              { key: 'notlar', label: 'Notlar' },
+            ],
+          },
+          {
+            id: 'banka', label: 'Banka Bilgisi', kind: 'grid', key: 'banka_bilgileri', slots: 3,
+            fields: [
+              { key: 'iban', label: 'IBAN' },
+              { key: 'banka_kodu', label: 'Banka kodu' },
+              { key: 'banka_adi', label: 'Banka adı' },
+              { key: 'swift_no', label: 'SWIFT' },
+              { key: 'para_birimi', label: 'Para birimi' },
+              { key: 'sube_kodu', label: 'Şube kodu' },
+              { key: 'sube_adi', label: 'Şube adı' },
+              { key: 'hesap_no', label: 'Hesap no' },
+              { key: 'muhabir_hesap_no', label: 'Muhabir hesap' },
+              { key: 'aciklama', label: 'Açıklama' },
+              { key: 'pasif', label: 'Pasif', type: 'checkbox' },
+            ],
+          },
+          {
+            id: 'sevk', label: 'Sevk Adresleri', kind: 'grid', key: 'sevk_adresleri', slots: 3,
+            fields: [
+              { key: 'adres_adi', label: 'Adres adı' },
+              { key: 'adres1', label: 'Adres 1' },
+              { key: 'adres2', label: 'Adres 2' },
+              { key: 'adres3', label: 'Adres 3' },
+              { key: 'ulke', label: 'Ülke' },
+              { key: 'il', label: 'İl' },
+              { key: 'ilce', label: 'İlçe' },
+              { key: 'posta_kodu', label: 'Posta kodu' },
+              { key: 'telefon', label: 'Telefon' },
+              { key: 'yetkili_adi', label: 'Yetkili' },
+              { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
+              { key: 'pasif', label: 'Pasif', type: 'checkbox' },
+            ],
+          },
+          {
+            id: 'genel', label: 'Genel Bilgiler', kind: 'fields',
+            fields: [
+              { key: 'kurulus_tarihi', label: 'Kuruluş tarihi', type: 'date' },
+              { key: 'sektor_kodu', label: 'Sektör kodu' },
+              { key: 'bolge_kodu', label: 'Bölge kodu' },
+              { key: 'nace_kodu', label: 'NACE kodu' },
+              { key: 'sermaye', label: 'Sermaye', type: 'number' },
+            ],
+          },
+          {
+            id: 'dil', label: 'Dil Tanımları', kind: 'grid', key: 'dil_tanimlari', slots: 2,
+            fields: [
+              { key: 'dil_kodu', label: 'Dil kodu' },
+              { key: 'dil_adi', label: 'Dil adı' },
+              { key: 'cari_adi', label: 'Cari adı' },
+              { key: 'aciklama', label: 'Açıklama' },
+              { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
+            ],
+          },
+          { id: 'euyum', label: 'e-Uyum', kind: 'stub', note: 'e-Fatura/e-Uyum entegrasyonu yok; dış servis simüle edilmeyecek.' },
+          { id: 'kategori', label: 'Kategoriler', kind: 'stub', note: 'Kategori ana verisi tanımlanınca eklenecek.' },
+          { id: 'ekalan', label: 'Ek Alanlar', kind: 'stub', note: 'Esnek ek alan altyapısı henüz yok.' },
+        ],
       },
     ],
   },
@@ -482,6 +646,8 @@ const state = {
   detailRows: [],
   openTabs: [],
   formContext: null,
+  formActiveTab: null,
+  lookupCache: {},
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -766,7 +932,7 @@ async function openScreen(id) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261013d`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014a`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -810,42 +976,81 @@ async function openScreen(id) {
   }
 }
 
-function fieldControl(field, value) {
+const LOOKUP_ENDPOINTS = {
+  'olcu-birimleri': '/olcu-birimleri',
+  firmalar: '/firmalar',
+  'is-yerleri': '/is-yerleri',
+};
+
+async function ensureLookups(screen) {
+  const needed = new Set();
+  const collect = (fields) => {
+    (fields || []).forEach((f) => {
+      if (f.type === 'lookup' && f.lookup) needed.add(f.lookup);
+    });
+  };
+  collect(screen.masterFields);
+  collect(screen.detailFields);
+  (screen.formTabs || []).forEach((tab) => collect(tab.fields));
+  for (const key of needed) {
+    if (state.lookupCache[key]) continue;
+    const ep = LOOKUP_ENDPOINTS[key];
+    if (!ep) continue;
+    try {
+      state.lookupCache[key] = await api(ep);
+    } catch (_) {
+      state.lookupCache[key] = [];
+    }
+  }
+}
+
+function escAttr(v) {
+  return String(v ?? '').replace(/"/g, '&quot;');
+}
+
+function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
   const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
   const forceDisabled = state.formMode === 'incele' || codeLocked;
   const dis = forceDisabled ? 'disabled' : '';
   const v = value ?? '';
-  if (field.type === 'checkbox') {
-    return `<input type="checkbox" data-master="${field.key}" ${v ? 'checked' : ''} ${dis} />`;
-  }
-  if (field.type === 'select') {
-    return `<select data-master="${field.key}" ${dis}>
-      ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o}</option>`).join('')}
-    </select>`;
-  }
-  if (field.type === 'number') {
-    return `<input type="number" data-master="${field.key}" value="${v}" ${dis} />`;
-  }
-  return `<input type="text" data-master="${field.key}" value="${String(v).replace(/"/g, '&quot;')}" ${dis} />`;
-}
-
-function detailFieldControl(field, value, idx) {
-  const forceDisabled = state.formMode === 'incele';
-  const dis = forceDisabled ? 'disabled' : '';
-  const v = value ?? '';
-  const name = `data-detail="${field.key}" data-didx="${idx}"`;
+  const name = `${attrName}="${field.key}" ${extraAttrs}`.trim();
   if (field.type === 'checkbox') {
     return `<input type="checkbox" ${name} ${v ? 'checked' : ''} ${dis} />`;
   }
   if (field.type === 'select') {
     return `<select ${name} ${dis}>
-      ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o}</option>`).join('')}
+      ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
     </select>`;
   }
-  if (field.type === 'number') {
-    return `<input type="number" ${name} value="${v}" ${dis} />`;
+  if (field.type === 'lookup') {
+    const rows = state.lookupCache[field.lookup] || [];
+    const vk = field.valueKey || 'id';
+    const lk = field.labelKey || 'adi';
+    const ck = field.codeKey;
+    const opts = [`<option value="">— seçin —</option>`].concat(
+      rows.map((r) => {
+        const val = r[vk];
+        const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
+        return `<option value="${escAttr(val)}" ${String(v) === String(val) ? 'selected' : ''}>${label}</option>`;
+      })
+    );
+    return `<select class="lookup-select" ${name} ${dis}>${opts.join('')}</select>`;
   }
-  return `<input type="text" ${name} value="${String(v).replace(/"/g, '&quot;')}" ${dis} />`;
+  if (field.type === 'number') {
+    return `<input type="number" ${name} value="${escAttr(v)}" ${dis} />`;
+  }
+  if (field.type === 'date') {
+    const dv = v ? String(v).slice(0, 10) : '';
+    return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} />`;
+  }
+  return `<input type="text" ${name} value="${escAttr(v)}" ${dis} />`;
+}
+
+function detailFieldControl(field, value, idx, gridKey = null) {
+  const extra = gridKey
+    ? `data-didx="${idx}" data-grid="${gridKey}"`
+    : `data-didx="${idx}"`;
+  return fieldControl(field, value, 'data-detail', extra);
 }
 
 function ensureDetailSlots(screen, rows) {
@@ -864,6 +1069,29 @@ function ensureDetailSlots(screen, rows) {
   return out;
 }
 
+function ensureGridSlots(tab, rows) {
+  const slots = tab.slots || 0;
+  const fields = tab.fields || [];
+  const out = [];
+  for (let i = 0; i < slots; i += 1) {
+    const src = rows[i] || {};
+    const row = {};
+    fields.forEach((f) => {
+      if (f.type === 'checkbox') row[f.key] = Boolean(src[f.key]);
+      else row[f.key] = src[f.key] ?? '';
+    });
+    out.push(row);
+  }
+  return out;
+}
+
+function fieldShell(f, controlHtml) {
+  const cls = ['field'];
+  if (f.required) cls.push('required');
+  if (f.type === 'lookup') cls.push('lookup');
+  return `<div class="${cls.join(' ')}"><label>${f.label}</label>${controlHtml}</div>`;
+}
+
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
@@ -871,12 +1099,62 @@ function renderForm(screen) {
   $('#formScreenLabel').textContent = screen.title;
   $('#btnFormSave').hidden = readonly;
 
-  $('#masterGrid').innerHTML = (screen.masterFields || []).map((f) => `
-    <div class="field">
-      <label>${f.label}</label>
-      ${fieldControl(f, rec[f.key])}
-    </div>
-  `).join('');
+  const tabsLayout = $('#formTabsLayout');
+  const classic = $('#formSplitClassic');
+  const hasTabs = Array.isArray(screen.formTabs) && screen.formTabs.length;
+
+  if (hasTabs) {
+    if (classic) classic.hidden = true;
+    if (tabsLayout) tabsLayout.hidden = false;
+    if (!state.formActiveTab) state.formActiveTab = screen.formTabs[0].id;
+    const nav = $('#formTabNav');
+    const body = $('#formTabBody');
+    nav.innerHTML = screen.formTabs.map((tab) => `
+      <button type="button" class="form-tab-btn ${tab.kind === 'stub' ? 'stub' : ''} ${state.formActiveTab === tab.id ? 'active' : ''}"
+        data-form-tab="${tab.id}">${tab.label}</button>
+    `).join('');
+
+    body.innerHTML = screen.formTabs.map((tab) => {
+      const active = state.formActiveTab === tab.id;
+      if (tab.kind === 'stub') {
+        return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${active ? '' : 'hidden'}>
+          <h2>${tab.label}</h2>
+          <div class="stub-panel">${tab.note || 'Bu sekmenin kapsamı henüz netleştirilmedi.'}</div>
+        </div>`;
+      }
+      if (tab.kind === 'grid') {
+        const rows = ensureGridSlots(tab, Array.isArray(rec[tab.key]) ? rec[tab.key] : []);
+        rec[tab.key] = rows;
+        return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${active ? '' : 'hidden'}>
+          <h2>${tab.label}</h2>
+          <div class="detail-grid">
+            ${rows.map((row, idx) => `
+              <div class="detail-slot">
+                <div class="detail-slot-title">${tab.label} ${idx + 1}</div>
+                <div class="detail-slot-fields">
+                  ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, tab.key))).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      // fields
+      return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${active ? '' : 'hidden'}>
+        <h2>${tab.label}</h2>
+        <div class="form-tab-fields">
+          ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    state.formRecord = rec;
+    return;
+  }
+
+  if (tabsLayout) tabsLayout.hidden = true;
+  if (classic) classic.hidden = false;
+
+  $('#masterGrid').innerHTML = (screen.masterFields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('');
 
   const grid = $('#detailGrid');
   const dFields = screen.detailFields || [];
@@ -892,25 +1170,36 @@ function renderForm(screen) {
     <div class="detail-slot">
       <div class="detail-slot-title">Detay ${idx + 1}</div>
       <div class="detail-slot-fields">
-        ${dFields.map((f) => `
-          <div class="field">
-            <label>${f.label}</label>
-            ${detailFieldControl(f, row[f.key], idx)}
-          </div>
-        `).join('')}
+        ${dFields.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx))).join('')}
       </div>
     </div>
   `).join('');
 }
 
+function readFieldValue(el, field) {
+  if (!el) return undefined;
+  if (field.type === 'checkbox') return el.checked;
+  if (field.type === 'number') return el.value === '' ? null : Number(el.value);
+  if (field.type === 'lookup' && (field.valueKey === 'id' || field.lookup === 'firmalar' || field.lookup === 'is-yerleri')) {
+    return el.value === '' ? null : (Number.isNaN(Number(el.value)) ? el.value : Number(el.value));
+  }
+  return el.value;
+}
+
 function readMasterFromForm(screen) {
   const out = { ...(state.formRecord || {}) };
-  (screen.masterFields || []).forEach((f) => {
+  const fields = [];
+  if (screen.formTabs?.length) {
+    screen.formTabs.forEach((tab) => {
+      if (tab.kind === 'fields') fields.push(...(tab.fields || []));
+    });
+  } else {
+    fields.push(...(screen.masterFields || []));
+  }
+  fields.forEach((f) => {
     const el = document.querySelector(`[data-master="${f.key}"]`);
     if (!el) return;
-    if (f.type === 'checkbox') out[f.key] = el.checked;
-    else if (f.type === 'number') out[f.key] = el.value === '' ? null : Number(el.value);
-    else out[f.key] = el.value;
+    out[f.key] = readFieldValue(el, f);
   });
   return out;
 }
@@ -922,22 +1211,60 @@ function readDetailsFromForm(screen) {
     const row = {};
     let any = false;
     screen.detailFields.forEach((f) => {
-      const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"]`);
+      const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"]:not([data-grid])`);
       if (!el) return;
-      if (f.type === 'checkbox') {
-        row[f.key] = el.checked;
-        if (el.checked) any = true;
-      } else if (f.type === 'number') {
-        row[f.key] = el.value === '' ? null : Number(el.value);
-        if (el.value !== '') any = true;
-      } else {
-        row[f.key] = el.value;
-        if (String(el.value).trim()) any = true;
-      }
+      row[f.key] = readFieldValue(el, f);
+      if (f.type === 'checkbox') { if (el.checked) any = true; }
+      else if (el.value !== '') any = true;
     });
     if (any) rows.push(row);
   }
   return rows;
+}
+
+function readGridFromForm(tab) {
+  const rows = [];
+  for (let idx = 0; idx < (tab.slots || 0); idx += 1) {
+    const row = {};
+    let any = false;
+    (tab.fields || []).forEach((f) => {
+      const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"][data-grid="${tab.key}"]`);
+      if (!el) return;
+      row[f.key] = readFieldValue(el, f);
+      if (f.type === 'checkbox') { if (el.checked) any = true; }
+      else if (el.value !== '') any = true;
+    });
+    if (any) rows.push(row);
+  }
+  return rows;
+}
+
+function readTabbedPayload(screen) {
+  const out = readMasterFromForm(screen);
+  (screen.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'grid') out[tab.key] = readGridFromForm(tab);
+  });
+  return out;
+}
+
+function validateRequired(screen, payload) {
+  const fields = [];
+  if (screen.formTabs?.length) {
+    screen.formTabs.forEach((tab) => {
+      if (tab.kind === 'fields') fields.push(...(tab.fields || []));
+    });
+  } else {
+    fields.push(...(screen.masterFields || []));
+  }
+  for (const f of fields) {
+    if (!f.required) continue;
+    if (f.code && state.formMode === 'duzelt') continue;
+    const v = payload[f.key];
+    if (v === undefined || v === null || (typeof v === 'string' && !v.trim())) {
+      return `${f.label} zorunlu.`;
+    }
+  }
+  return null;
 }
 
 async function openForm(mode) {
@@ -956,6 +1283,7 @@ async function openForm(mode) {
   }
 
   state.formMode = mode;
+  state.formActiveTab = screen.formTabs?.[0]?.id || null;
   let record = {};
 
   async function loadRecord(id) {
@@ -966,19 +1294,34 @@ async function openForm(mode) {
     }
   }
 
-  if (mode === 'yeni') {
-    record = {};
-    (screen.masterFields || []).forEach((f) => {
+  await ensureLookups(screen);
+
+  const seedFields = () => {
+    const all = [];
+    if (screen.formTabs?.length) {
+      screen.formTabs.forEach((t) => { if (t.kind === 'fields') all.push(...(t.fields || [])); });
+    } else {
+      all.push(...(screen.masterFields || []));
+    }
+    all.forEach((f) => {
       if (f.type === 'checkbox') record[f.key] = true;
       else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
-      else record[f.key] = '';
+      else if (record[f.key] === undefined) record[f.key] = '';
     });
+  };
+
+  if (mode === 'yeni') {
+    record = {};
+    seedFields();
     const seri = resolveNumeratorSeri(screen, record);
     if (seri) {
       try { record[screen.codeField] = await ayirKod(seri); }
       catch (err) { toast(err.message); }
     }
     state.detailRows = ensureDetailSlots(screen, []);
+    (screen.formTabs || []).forEach((tab) => {
+      if (tab.kind === 'grid') record[tab.key] = ensureGridSlots(tab, []);
+    });
   } else if (mode === 'kopyala') {
     const full = await loadRecord(row.id);
     record = { ...full };
@@ -991,11 +1334,23 @@ async function openForm(mode) {
     }
     const rawDetails = Array.isArray(full[screen.detailKey]) ? full[screen.detailKey] : [];
     state.detailRows = ensureDetailSlots(screen, rawDetails.map(({ id, ...rest }) => rest));
+    (screen.formTabs || []).forEach((tab) => {
+      if (tab.kind === 'grid') {
+        const raw = Array.isArray(full[tab.key]) ? full[tab.key] : [];
+        record[tab.key] = ensureGridSlots(tab, raw.map(({ id, ...rest }) => rest));
+      }
+    });
   } else {
     const full = await loadRecord(row.id);
     record = { ...full };
     const rawDetails = Array.isArray(full[screen.detailKey]) ? full[screen.detailKey] : [];
     state.detailRows = ensureDetailSlots(screen, rawDetails.map((d) => ({ ...d })));
+    (screen.formTabs || []).forEach((tab) => {
+      if (tab.kind === 'grid') {
+        const raw = Array.isArray(full[tab.key]) ? full[tab.key] : [];
+        record[tab.key] = ensureGridSlots(tab, raw.map((d) => ({ ...d })));
+      }
+    });
   }
 
   if (screen.id === 'numarator-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
@@ -1017,12 +1372,18 @@ async function saveForm() {
   const screen = findScreen(state.screenId);
   if (!screen || state.formMode === 'incele') return;
 
-  const master = readMasterFromForm(screen);
-  const details = readDetailsFromForm(screen);
-  if (screen.detailKey) master[screen.detailKey] = details;
+  const master = screen.formTabs?.length
+    ? readTabbedPayload(screen)
+    : (() => {
+        const m = readMasterFromForm(screen);
+        const details = readDetailsFromForm(screen);
+        if (screen.detailKey) m[screen.detailKey] = details;
+        return m;
+      })();
 
-  if (screen.nameField && !master[screen.nameField]) {
-    toast(`${screen.nameField} zorunlu.`);
+  const reqErr = validateRequired(screen, master);
+  if (reqErr) {
+    toast(reqErr);
     return;
   }
 
@@ -1200,6 +1561,19 @@ function bindEvents() {
 
   $('#btnFormSave').addEventListener('click', () => {
     saveForm();
+  });
+
+  document.addEventListener('click', (e) => {
+    const tabBtn = e.target.closest('[data-form-tab]');
+    if (!tabBtn) return;
+    const screen = findScreen(state.screenId);
+    if (!screen?.formTabs) return;
+    // preserve current values into formRecord before switching
+    if (screen.formTabs.length) {
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+    }
+    state.formActiveTab = tabBtn.getAttribute('data-form-tab');
+    renderForm(screen);
   });
 
   const search = $('#screenSearch');

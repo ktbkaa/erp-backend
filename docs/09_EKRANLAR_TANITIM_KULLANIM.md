@@ -4,8 +4,9 @@ Bu doküman, şu ana kadar yapılan arayüz ve fonksiyon çalışmalarının öz
 Her geliştirme turunun sonunda bu dosya güncellenir.
 
 - **Uygulama adresi:** `http://localhost:3000/`
-- **Dal (güncel UI):** `cursor/erp-crud-forms-4f63`
+- **Dal (güncel UI):** `cursor/erp-cari-stok-kart-4f63`
 - **UI build işareti:** sol menü altında `UI build …` (doğru kod yüklü mü diye bakılır)
+- **Cari/Stok eşleştirme:** `docs/10_CARI_STOK_ESLESTIRME.md`
 
 ---
 
@@ -73,13 +74,19 @@ Listeden (gerekirse) satır seçilir, sonra:
 
 ### 2.3 Kart formu düzeni
 
-Aksiyonla açılan kart:
+**Klasik kartlar** (firma, depo, belgeler…):
 
 - **Üst ~%20 — Master:** ana kart alanları  
 - **Alt ~%80 — Detay:** detay alanları  
+- “Satır ekle” yoktur; detay blokları önceden açıktır. Boş bloklar kayda yazılmaz.
 
-Detayda “Satır ekle” yoktur. Alanlar (etiket + veri girişi) ekranda hazır açık durur.  
-Belge tipi ekranlarda birden fazla detay bloğu (Detay 1 / 2 / 3) önceden açık gelir; boş bırakılan bloklar kayda yazılmaz.
+**Cari Kartları ve Stok Kartı** (sekmeli kart):
+
+- Solda sekme listesi, sağda aktif sekme içeriği.
+- **Sarı alanlar** = lookup (firma, iş yeri, ölçü birimi); serbest metin değildir.
+- **Kırmızı çizgili etiket** = zorunlu alan (UI + API).
+- Alt kayıtlar (banka, sevk, dil, birim tanımları) grid slotlarıyla saklanır.
+- Kapsamı netleşmeyen sekmeler (e-Uyum, Kategoriler, MRP…) stub olarak görünür; sahte CRUD yoktur.
 
 ### 2.4 Numaratör
 
@@ -136,8 +143,12 @@ Detay: `docs/08_KOD_SISTEMI.md`
 - **API:** `/stoklar`  
 - **Kod serisi:** tip’e göre `HAMMADDE` / `YARIMAMUL` / `MAMUL` / `TICARI`  
 - **Filtre:** firma, iş yeri, stok kodu, stok adı  
-- **Master:** kod, ad, tip, tedarik tipi, birim, satış fiyatı  
-- **Detay (açık alanlar):** boyut, ağırlık  
+- **Zorunlu:** stok kodu, stok adı, stok tipi  
+- **Sekmeler (aktif):** Stok Kart, Ölçü Bilgileri, Birim Tanımları, Stok Detay  
+- **Sekmeler (stub):** Barkod, Kategoriler, Alternatif, Dil, MRP…  
+- **Lookup:** ölçü birimleri (`/olcu-birimleri`)  
+- **Alt kayıt:** `birim_tanimlari`, `stok_detaylari`  
+- **Not:** Bakiye karttan elle değişmez; hareketlerden gelir  
 - **Fonksiyonlar:** tam CRUD
 
 #### Depo Bakiye
@@ -156,8 +167,12 @@ Detay: `docs/08_KOD_SISTEMI.md`
 - **Kod serisi:** türe göre `MUSTERI` / `TEDARIKCI` / `CARI_HERIKISI`  
 - **İş kuralı:** satınalma → tedarikçi; satış → müşteri  
 - **Filtre:** iş yeri, cari kodu/adı, tür  
-- **Master:** kod, ad, tür, iletişim, vergi, adres, vade, aktif…  
-- **Detay (açık alanlar):** adres, fatura adresi, yetkili, yetkili tel  
+- **Zorunlu:** cari kodu, cari adı, cari tipi  
+- **Sekmeler (aktif):** Cari Kart, Banka Bilgisi, Sevk Adresleri, Genel Bilgiler, Dil Tanımları  
+- **Sekmeler (stub):** e-Uyum, Kategoriler, Ek Alanlar  
+- **Lookup:** firma, iş yeri  
+- **Alt kayıt:** `banka_bilgileri`, `sevk_adresleri`, `dil_tanimlari` (+ geri uyum `cari_detaylari`)  
+- **Not:** VKN dış servis / harita eylemleri yok (simüle edilmez)  
 - **Fonksiyonlar:** tam CRUD
 
 ---
@@ -277,4 +292,4 @@ Her çalışma turunun sonunda:
 
 ---
 
-*Son güncelleme: UI kabuğu, filtreli listeler, kart CRUD, sabit detay alanları, alt sekme çubuğu, numaratör–ekran bağları.*
+*Son güncelleme: Cari/Stok sekmeli kart entegrasyonu (alan genişletme, banka/sevk/dil/birim alt kayıtları, lookup, zorunlu alan doğrulama); stub sekmeler sahte CRUD olmadan.*
