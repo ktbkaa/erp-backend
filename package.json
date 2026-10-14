@@ -7,7 +7,8 @@
     "start": "node index.js",
     "migrate": "node db/migrate.js",
     "demo:cycle": "node scripts/demo-cycle.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "demo:ornek-dongu": "node scripts/ornek-dongu-cn-tr-de.js"
   },
   "keywords": [
     "erp",
