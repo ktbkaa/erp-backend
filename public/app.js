@@ -1105,7 +1105,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014b`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014c`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -1269,7 +1269,8 @@ function fieldShell(f, controlHtml) {
   const cls = ['field'];
   if (f.required) cls.push('required');
   if (f.type === 'lookup') cls.push('lookup');
-  return `<div class="${cls.join(' ')}"><label>${f.label}</label>${controlHtml}</div>`;
+  const req = f.required ? '<span class="req" title="Zorunlu">*</span>' : '';
+  return `<div class="${cls.join(' ')}"><label>${f.label}${req}</label>${controlHtml}</div>`;
 }
 
 function renderMasterDetailPanel(tab, rec) {
@@ -1277,20 +1278,22 @@ function renderMasterDetailPanel(tab, rec) {
   const dFields = tab.detailFields || [];
   return `
     <div class="md-split">
-      <div class="md-master">
-        <h3>Master</h3>
+      <section class="md-master" aria-label="Master alanlar">
+        <div class="section-label">Master</div>
         <div class="form-tab-fields">
           ${mFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
         </div>
-      </div>
-      <div class="md-detail">
-        <h3>Detay</h3>
-        <div class="form-tab-fields">
-          ${dFields.length
-            ? dFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')
-            : '<div class="detail-empty">Detay alanı yok.</div>'}
+      </section>
+      <section class="md-detail" aria-label="Detay alanlar">
+        <div class="section-label">Detay</div>
+        <div class="md-detail-scroll">
+          <div class="form-tab-fields">
+            ${dFields.length
+              ? dFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')
+              : '<div class="detail-empty">Bu bölümde ek alan yok.</div>'}
+          </div>
         </div>
-      </div>
+      </section>
     </div>`;
 }
 
@@ -1331,25 +1334,22 @@ function renderForm(screen) {
     const hide = active ? '' : 'hidden';
     if (tab.kind === 'stub') {
       return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
-        <h2>${tab.label}</h2>
-        <div class="stub-panel">${tab.note || 'Bu sekmenin kapsamı henüz netleştirilmedi.'}</div>
+        <div class="stub-panel">${tab.note || 'Bu bölüm henüz hazır değil.'}</div>
       </div>`;
     }
     if (tab.kind === 'master-detail') {
-      return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
-        <h2>${tab.label}</h2>
+      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
         ${renderMasterDetailPanel(tab, rec)}
       </div>`;
     }
     if (tab.kind === 'grid') {
       const rows = ensureGridSlots(tab, Array.isArray(rec[tab.key]) ? rec[tab.key] : []);
       rec[tab.key] = rows;
-      return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
-        <h2>${tab.label}</h2>
+      return `<div class="form-tab-panel form-tab-panel--scroll" data-tab-panel="${tab.id}" ${hide}>
         <div class="detail-grid">
           ${rows.map((row, idx) => `
             <div class="detail-slot">
-              <div class="detail-slot-title">${tab.label} ${idx + 1}</div>
+              <div class="detail-slot-title">${idx + 1}. satır</div>
               <div class="detail-slot-fields">
                 ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, tab.key))).join('')}
               </div>
@@ -1358,8 +1358,8 @@ function renderForm(screen) {
         </div>
       </div>`;
     }
-    return `<div class="form-tab-panel" data-tab-panel="${tab.id}" ${hide}>
-      <h2>${tab.label}</h2>
+    const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart';
+    return `<div class="form-tab-panel ${masterLike ? 'form-tab-panel--fixed' : 'form-tab-panel--scroll'}" data-tab-panel="${tab.id}" ${hide}>
       <div class="form-tab-fields">
         ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
       </div>

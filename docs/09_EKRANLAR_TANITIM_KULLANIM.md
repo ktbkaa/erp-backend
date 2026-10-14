@@ -7,6 +7,7 @@ Her geliştirme turunun sonunda bu dosya güncellenir.
 - **Dal (güncel UI):** `cursor/erp-cari-stok-kart-4f63`
 - **UI build işareti:** sol menü altında `UI build …` (doğru kod yüklü mü diye bakılır)
 - **Cari/Stok eşleştirme:** `docs/10_CARI_STOK_ESLESTIRME.md`
+- **UX standardı:** `docs/11_UX_DONT_MAKE_ME_THINK.md` (Don’t Make Me Think)
 
 ### Modül: Sabit Tanımlar
 Tanım ekranları burada toplanır: **Numaratör Tanımı**, **Ölçü Birimleri**, **Kategori Tanımı**.
@@ -86,11 +87,12 @@ Listeden (gerekirse) satır seçilir, sonra:
 **Tüm kart formları:**
 
 - Form içinde **boydan sabit sol sekme menüsü** + sağ içerik.
+- **Master sabit:** master alanlar yerinde kilitli; kaydırma yalnızca detayda.
 - **Master / Detay** ayrımı: ana kimlik alanları master’da, diğerleri detayda (veya ilgili sekmede).
-- **Sarı alanlar** = lookup (firma, iş yeri, ölçü birimi, kategori); serbest metin değildir.
-- **Kırmızı çizgili etiket** = zorunlu alan (UI + API).
+- **Sarı alanlar** = lookup; **\*** = zorunlu.
 - **Yeni / İncele / Düzelt / Kopyala** her biri alt barda **ayrı sekme** olarak açılır.
-- Kapsamı netleşmeyen sekmeler stub’dır; sahte CRUD yoktur.
+- Kapsamı netleşmeyen sekmeler kısa stub; sahte CRUD yoktur.
+- Metinler kısa ve tarama dostu (Don’t Make Me Think).
 
 ### 2.4 Numaratör
 
@@ -310,4 +312,4 @@ Her çalışma turunun sonunda:
 
 ---
 
-*Son güncelleme: Sabit Tanımlar + Kategori Tanımı; master/detay ayrımı; form sol menü tüm ekranlarda; Yeni/İncele/Düzelt/Kopyala ayrı alt sekme; e-Uyum ve Alternatif Stok kaldırıldı.*
+*Son güncelleme: Master alanlar sabit (scroll yok); Don’t Make Me Think UX sadeleştirmesi (`docs/11`); UI build 20261014c.*
