@@ -9,7 +9,7 @@ Yeni ekran ve formlarda varsayılan standart budur.
 2. **Tarama için tasarla, okuma için değil.** Sayfa bir afiş gibi: net başlık, birincil eylem, ikincil gürültü yok.
 3. **Gereksiz kelimeyi sil.** “Listeye dön” yerine “Liste”; stub metinler tek kısa cümle.
 4. **Görsel hiyerarşi.** Nerede olduğum (ekran adı + mod), ne yapabileceğim (Kaydet / Liste) hemen görünsün.
-5. **Alışkanlıklara uy.** Sol menü = modüller, alt bar = açık sekmeler, formda sol iç menü = kart bölümleri.
+5. **Alışkanlıklara uy.** Sol menü = modüller, üst bar = açık belge sekmeleri (liste + formlar yan yana), formda sol iç menü = kart bölümleri.
 6. **Seçimi kolaylaştır.** Zorunlu alan `*`; lookup sarı (seçim alanı); disable alanlar gri.
 7. **Gürültüyü azalt.** Filtre kutularında gereksiz kart çerçevesi yok; ALL CAPS etiket yok.
 8. **Master sabit.** Master alanlar ekranda sabit kalır; kaydırma yalnızca detay / liste gövdesinde olur.

@@ -110,7 +110,83 @@ body {
 }
 
 .workspace { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; background: #f3f6f8; }
-.workspace-main { flex: 1; min-height: 0; position: relative; padding-bottom: 0; }
+.workspace-main { flex: 1; min-height: 0; position: relative; padding-bottom: 0; overflow: hidden; }
+
+/* Üst belge sekmeleri — liste + Yeni/İncele/Düzelt/Kopyala yan yana */
+.doc-tabs {
+  display: flex;
+  gap: 0.25rem;
+  align-items: flex-end;
+  min-height: 0;
+  padding: 0.35rem 0.55rem 0;
+  background: #e7eef3;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  flex: 0 0 auto;
+}
+.doc-tabs:empty { display: none; }
+.doc-tabs .tab-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  background: #dfe7ee;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.45rem 0.7rem 0.5rem;
+  border-radius: 0.4rem 0.4rem 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 16rem;
+}
+.doc-tabs .tab-item .tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.doc-tabs .tab-item.tab-form {
+  background: #fff8e8;
+  border-color: #e0c86a;
+}
+.doc-tabs .tab-item.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 -2px 0 var(--accent) inset;
+  z-index: 1;
+}
+.doc-tabs .tab-item .tab-kind {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: rgba(12, 124, 105, 0.15);
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.doc-tabs .tab-item.tab-form .tab-kind {
+  background: #fff1c2;
+  color: #8a6a00;
+}
+.doc-tabs .tab-item .tab-close {
+  display: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(26, 35, 48, 0.12);
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  flex: 0 0 auto;
+}
+.doc-tabs .tab-item:hover .tab-close,
+.doc-tabs .tab-item.active .tab-close { display: inline-grid; place-items: center; }
+.doc-tabs .tab-close:hover { background: #9f2d2d; color: #fff; }
 .workspace-bar {
   display: flex;
   align-items: center;
@@ -214,7 +290,7 @@ body {
 .screen-view {
   display: grid;
   grid-template-rows: auto auto minmax(140px, 28vh) 1fr;
-  height: calc(100vh - 4.25rem - 2.6rem);
+  height: 100%;
   min-height: 0;
   background: #f7fafb;
 }
@@ -350,7 +426,7 @@ tr.selected td { background: var(--accent-soft); }
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: calc(100vh - 4.25rem - 2.4rem);
+  height: 100%;
   background: #fff;
 }
 .form-topbar {
@@ -552,52 +628,7 @@ tr.selected td { background: var(--accent-soft); }
   padding: 1rem 0;
 }
 
-.tab-bar {
-  display: flex;
-  gap: 0.35rem;
-  align-items: center;
-  min-height: 2.6rem;
-  padding: 0.35rem 0.6rem;
-  background: #132033;
-  border-top: 1px solid rgba(255,255,255,0.08);
-  overflow-x: auto;
-}
-.tab-bar:empty { display: none; }
-.tab-item {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: #e8eef5;
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.4rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.tab-item.active {
-  background: rgba(12, 124, 105, 0.45);
-  border-color: rgba(12, 124, 105, 0.8);
-}
-.tab-item .tab-close {
-  display: none;
-  width: 1.05rem;
-  height: 1.05rem;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  font-size: 0.75rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 0;
-}
-.tab-item:hover .tab-close { display: inline-grid; place-items: center; }
-.tab-close:hover { background: #9f2d2d; }
+/* eski alt bar stilleri — doc-tabs kullanılıyor */
 
 .toast {
   position: fixed;

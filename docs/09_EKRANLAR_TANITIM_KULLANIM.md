@@ -38,12 +38,12 @@ Bir ekran açıldığında sağ alanda:
 3. **Filtre alanı** (üst ~%30)
 4. **Liste alanı** (alt ~%70)
 
-### 1.4 Alt sekme çubuğu
+### 1.4 Üst belge sekmeleri
 
-- Açılan ekranlar alt barda listelenir.
-- Sekmeye tıklayınca ekranlar arası geçiş yapılır.
-- Sekmenin üzerine gelince görünen **×** ile ekran sekmelerden kaldırılır.
-- Son sekme kapanırsa ana sayfaya dönülür.
+- Açılan listeler ve kartlar **üstte yan yana sekmeler** olarak durur.
+- **Yeni / İncele / Düzelt / Kopyala** her biri ayrı form sekmesi açar; liste sekmesi yerinde kalır.
+- Sekmeye tıklayınca geçiş yapılır; **×** ile o sekme kapanır.
+- Formdaki **Liste sekmesi** düğmesi formu kapatmaz, liste sekmesine döner.
 
 ---
 
@@ -90,7 +90,7 @@ Listeden (gerekirse) satır seçilir, sonra:
 - **Master sabit:** master alanlar yerinde kilitli; kaydırma yalnızca detayda.
 - **Master / Detay** ayrımı: ana kimlik alanları master’da, diğerleri detayda (veya ilgili sekmede).
 - **Sarı alanlar** = lookup; **\*** = zorunlu.
-- **Yeni / İncele / Düzelt / Kopyala** her biri alt barda **ayrı sekme** olarak açılır.
+- **Yeni / İncele / Düzelt / Kopyala** üstte **ayrı belge sekmesi** olarak açılır (liste sekmesi kalır).
 - Kapsamı netleşmeyen sekmeler kısa stub; sahte CRUD yoktur.
 - Metinler kısa ve tarama dostu (Don’t Make Me Think).
 
@@ -312,4 +312,4 @@ Her çalışma turunun sonunda:
 
 ---
 
-*Son güncelleme: Master alanlar sabit (scroll yok); Don’t Make Me Think UX sadeleştirmesi (`docs/11`); UI build 20261014c.*
+*Son güncelleme: Yeni/İncele/Düzelt/Kopyala üstte yan belge sekmesi; liste sekmesi kalır; UI build 20261014d.*

@@ -932,12 +932,16 @@ function renderTabBar() {
     bar.innerHTML = '';
     return;
   }
-  bar.innerHTML = state.openTabs.map((t) => `
-    <button type="button" class="tab-item${t.key === state.activeTabKey ? ' active' : ''}" data-tab-key="${t.key}">
-      <span>${t.title}</span>
-      <span class="tab-close" data-tab-close-key="${t.key}" title="Kapat">×</span>
-    </button>
-  `).join('');
+  bar.innerHTML = state.openTabs.map((t) => {
+    const isForm = t.kind === 'form';
+    const kind = isForm ? (MODE_LABELS[t.formMode] || 'Form') : 'Liste';
+    return `
+    <button type="button" class="tab-item ${isForm ? 'tab-form' : 'tab-list'}${t.key === state.activeTabKey ? ' active' : ''}" data-tab-key="${t.key}" title="${t.title}">
+      <span class="tab-kind">${kind}</span>
+      <span class="tab-title">${t.title}</span>
+      <span class="tab-close" data-tab-close-key="${t.key}" title="Sekmeyi kapat">×</span>
+    </button>`;
+  }).join('');
 }
 
 function addOpenTab(screen) {
@@ -1105,7 +1109,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014c`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261014d`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -1466,21 +1470,29 @@ function persistActiveFormTab() {
   }
 }
 
-function addListTab(screen) {
+function addListTab(screen, { activate = true } = {}) {
   if (!screen) return;
   const key = `list:${screen.id}`;
   if (!state.openTabs.some((t) => t.key === key)) {
-    state.openTabs.push({ key, kind: 'list', id: screen.id, title: screen.title });
+    state.openTabs.push({
+      key,
+      kind: 'list',
+      id: screen.id,
+      title: screen.title,
+    });
   }
-  state.activeTabKey = key;
+  if (activate) state.activeTabKey = key;
   renderTabBar();
+  return key;
 }
 
 function addFormTab(screen, mode, record) {
   state.formSeq += 1;
   const code = record?.[screen.codeField] || '';
   const key = `form:${screen.id}:${mode}:${state.formSeq}`;
-  const title = `${screen.title} · ${MODE_LABELS[mode]}${code ? ` · ${code}` : ''}`;
+  const title = code
+    ? `${screen.title} · ${code}`
+    : `${screen.title}`;
   state.openTabs.push({
     key,
     kind: 'form',
@@ -1545,8 +1557,8 @@ async function openForm(mode) {
     return;
   }
 
-  // liste sekmesini koru
-  addListTab(screen);
+  // Liste sekmesi yerinde kalsın; form yan (yeni) sekme olarak açılsın
+  addListTab(screen, { activate: false });
 
   state.formMode = mode;
   state.formActiveTab = screen.formTabs?.[0]?.id || null;
@@ -1811,15 +1823,17 @@ function bindEvents() {
   });
 
   $('#btnFormCancel').addEventListener('click', () => {
-    const formKey = state.activeTabKey;
+    // Form sekmesini kapatma — liste sekmesine geç (yan sekmeler durur)
+    persistActiveFormTab();
     const screenId = state.screenId;
-    state.formMode = null;
-    state.formRecord = null;
-    if (formKey && String(formKey).startsWith('form:')) {
-      state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+    const listKey = screenId ? `list:${screenId}` : null;
+    if (listKey && state.openTabs.some((t) => t.key === listKey)) {
+      activateTab(listKey).catch((err) => toast(err.message));
+    } else if (screenId) {
+      openScreen(screenId);
+    } else {
+      showHome();
     }
-    if (screenId) openScreen(screenId);
-    else showHome();
   });
 
   $('#btnFormSave').addEventListener('click', () => {
