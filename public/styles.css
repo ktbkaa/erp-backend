@@ -309,13 +309,13 @@ body {
   font-size: clamp(7rem, 22vw, 14rem);
   letter-spacing: 0.12em;
   color: transparent;
-  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(210,220,228,0.35));
+  background: linear-gradient(180deg, rgba(180, 188, 196, 0.55), rgba(150, 160, 170, 0.28));
   -webkit-background-clip: text;
   background-clip: text;
   text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.75),
-    0 -1px 0 rgba(26, 35, 48, 0.08);
-  opacity: 0.42;
+    0 1px 0 rgba(255, 255, 255, 0.35),
+    0 -1px 0 rgba(26, 35, 48, 0.06);
+  opacity: 0.32;
   user-select: none;
   pointer-events: none;
 }
