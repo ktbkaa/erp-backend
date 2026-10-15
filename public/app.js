@@ -2215,6 +2215,18 @@ function closeOpenTab(tabKey) {
   void closing;
 }
 
+const MOD_ICONS = {
+  'sabit-tanimlar': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  sistem: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg>',
+  'ana-veri': '<svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h12"/></svg>',
+  stok: '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>',
+  cari: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
+  uretim: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg>',
+  satinalma: '<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
+  satis: '<svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  finans: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+};
+
 function renderSidebar() {
   const nav = $('#sidebarNav');
   if (!nav) return;
@@ -2225,11 +2237,13 @@ function renderSidebar() {
 
   nav.innerHTML = MODULES.map((mod) => {
     const open = Boolean(state.sidebarOpen[mod.id]);
+    const icon = MOD_ICONS[mod.id] || MOD_ICONS['ana-veri'];
     return `
     <div class="mod-group ${open ? 'open' : 'collapsed'}" data-mod="${mod.id}">
       <button type="button" class="mod-title" data-mod-toggle="${mod.id}" aria-expanded="${open}">
-        <span class="mod-chevron" aria-hidden="true">${open ? '▾' : '▸'}</span>
+        <span class="mod-icon" aria-hidden="true">${icon}</span>
         <span class="mod-title-text">${mod.title}</span>
+        <span class="mod-chevron" aria-hidden="true">▾</span>
       </button>
       <div class="mod-items" ${open ? '' : 'hidden'}>
         ${mod.screens.map((s) => `
