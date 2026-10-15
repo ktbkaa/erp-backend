@@ -458,6 +458,12 @@ tr.selected td { background: var(--accent-soft); }
   grid-template-columns: 200px 1fr;
   border-top: 1px solid var(--line);
 }
+.form-tabs-layout--single {
+  grid-template-columns: 1fr !important;
+}
+.form-tabs-layout--single .form-tab-nav[hidden] {
+  display: none !important;
+}
 .form-tabs-layout[hidden],
 .form-split[hidden] {
   display: none !important;
@@ -525,9 +531,14 @@ tr.selected td { background: var(--accent-soft); }
   flex-direction: column;
   height: 100%;
 }
+.md-split--grid .md-master {
+  /* Başlık sabit yükseklik; kalemler kalan alanı alır */
+  max-height: none;
+}
 .md-master {
   flex: 0 0 auto;
-  overflow: hidden;
+  overflow: auto;
+  max-height: 42%;
   padding: 0.85rem 1.1rem 0.7rem;
   border-bottom: 1px solid var(--line);
   background: #fbfcfd;

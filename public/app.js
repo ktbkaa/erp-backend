@@ -1422,12 +1422,16 @@ const MODULES = [
           { key: 'aciklama', label: 'Açıklama' },
           { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
         ],
-        detailKey: null,
-        detailAsFields: true,
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        detailAsFields: false,
+        // Tek ekran: başlık+sevk üstte, kalemler altta
         formTabs: [
           {
-            id: 'baslik', label: 'İrsaliye Başlık', kind: 'fields',
-            fields: [
+            id: 'kart',
+            label: 'İrsaliye',
+            kind: 'master-grid',
+            masterFields: [
               { key: 'irsaliye_no', label: 'İrsaliye no', code: true },
               { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
               { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
@@ -1441,11 +1445,6 @@ const MODULES = [
               { key: 'sevk_tarihi', label: 'Sevk tarihi', type: 'date' },
               { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'] },
               { key: 'ettn', label: 'ETTN' },
-            ],
-          },
-          {
-            id: 'sevk', label: 'Sevk / Taşıyıcı', kind: 'fields',
-            fields: [
               { key: 'sevk_adresi', label: 'Sevk adresi' },
               { key: 'sevk_il', label: 'İl', required: true },
               { key: 'sevk_ilce', label: 'İlçe', required: true },
@@ -1458,17 +1457,18 @@ const MODULES = [
               { key: 'sofor_tckn', label: 'Şoför TCKN' },
               { key: 'tasiyici_unvan', label: 'Taşıyıcı ünvan' },
               { key: 'tasiyici_vkn', label: 'Taşıyıcı VKN' },
-              { key: 'aciklama', label: 'Açıklama (sipariş notu)' },
+              { key: 'aciklama', label: 'Açıklama' },
               { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
             ],
-          },
-          {
-            id: 'kalemler', label: 'Kalemler', kind: 'grid', key: 'satirlar',
-            fields: [
-              { key: 'stok_id', label: 'Malzeme', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
-              { key: 'miktar', label: 'Miktar', type: 'number' },
-              { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
-            ],
+            grid: {
+              key: 'satirlar',
+              slots: 5,
+              fields: [
+                { key: 'stok_id', label: 'Malzeme', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+                { key: 'miktar', label: 'Miktar', type: 'number' },
+                { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              ],
+            },
           },
         ],
       },
@@ -1677,7 +1677,7 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     else s.detailSlots = 3;
   }
 
-  // Tum formlar sol ic menu + master/detay duzeni kullanir
+  // Tek ekran: master üstte, detay altta (ayrı Master/Detay sekmeleri yok)
   if (!Array.isArray(s.formTabs) || !s.formTabs.length) {
     if (s.detailAsFields && s.detailFields.length) {
       s.formTabs = [{
@@ -1688,21 +1688,24 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
         detailFields: s.detailFields,
       }];
     } else if (s.detailFields.length && s.detailSlots) {
-      s.formTabs = [
-        { id: 'master', label: 'Master', kind: 'fields', fields: s.masterFields },
-        {
-          id: 'detay',
-          label: 'Detay',
-          kind: 'grid',
+      s.formTabs = [{
+        id: 'kart',
+        label: s.title,
+        kind: 'master-grid',
+        masterFields: s.masterFields,
+        grid: {
           key: s.detailKey || '_detail',
           slots: s.detailSlots,
           fields: s.detailFields,
         },
-      ];
+      }];
     } else {
-      s.formTabs = [
-        { id: 'master', label: 'Master', kind: 'fields', fields: s.masterFields },
-      ];
+      s.formTabs = [{
+        id: 'kart',
+        label: s.title,
+        kind: 'fields',
+        fields: s.masterFields,
+      }];
     }
   }
   return s;
@@ -2270,6 +2273,7 @@ async function ensureLookups(screen) {
     collect(tab.fields);
     collect(tab.masterFields);
     collect(tab.detailFields);
+    collect(tab.grid?.fields);
     collect(tab.componentFields);
     if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') needed.add('stoklar');
   });
@@ -2492,20 +2496,46 @@ function renderMasterDetailPanel(tab, rec) {
   const dFields = tab.detailFields || [];
   return `
     <div class="md-split">
-      <section class="md-master" aria-label="Master alanlar">
-        <div class="section-label">Master</div>
+      <section class="md-master" aria-label="Başlık alanları">
+        <div class="section-label">Başlık</div>
         <div class="form-tab-fields">
           ${mFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
         </div>
       </section>
-      <section class="md-detail" aria-label="Detay alanlar">
-        <div class="section-label">Detay</div>
+      <section class="md-detail" aria-label="Ek alanlar">
+        <div class="section-label">Ek bilgiler</div>
         <div class="md-detail-scroll">
           <div class="form-tab-fields">
             ${dFields.length
               ? dFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')
               : '<div class="detail-empty">Bu bölümde ek alan yok.</div>'}
           </div>
+        </div>
+      </section>
+    </div>`;
+}
+
+/** Master alanlar üstte + kalem grid altta — tek ekran */
+function renderMasterGridPanel(tab, rec) {
+  const mFields = tab.masterFields || [];
+  const gridTab = {
+    kind: 'grid',
+    key: tab.grid?.key || tab.key || '_detail',
+    slots: tab.grid?.slots,
+    fields: tab.grid?.fields || tab.detailFields || [],
+  };
+  return `
+    <div class="md-split md-split--grid">
+      <section class="md-master" aria-label="Başlık alanları">
+        <div class="section-label">Başlık</div>
+        <div class="form-tab-fields">
+          ${mFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
+        </div>
+      </section>
+      <section class="md-detail" aria-label="Kalemler">
+        <div class="section-label">Kalemler</div>
+        <div class="md-detail-scroll">
+          ${renderDynamicGrid(gridTab, rec)}
         </div>
       </section>
     </div>`;
@@ -2766,15 +2796,15 @@ function renderForm(screen) {
   // Belge zinciri şeridi (irsaliye)
   renderZincirStrip(screen, rec);
 
-  const tabsLayout = $('#formTabsLayout');
+  const tabsLayoutEl = $('#formTabsLayout');
   const classic = $('#formSplitClassic');
   if (classic) {
     classic.hidden = true;
     classic.style.display = 'none';
   }
-  if (tabsLayout) {
-    tabsLayout.hidden = false;
-    tabsLayout.style.display = 'grid';
+  if (tabsLayoutEl) {
+    tabsLayoutEl.hidden = false;
+    tabsLayoutEl.style.display = 'grid';
   }
 
   const tabs = screen.formTabs || [];
@@ -2786,7 +2816,11 @@ function renderForm(screen) {
   const body = $('#formTabBody');
   if (!nav || !body) return;
 
-  nav.innerHTML = tabs.map((tab) => `
+  // Tek sekme / tek kart: sol menüyü gizle, tam genişlik
+  const singlePane = tabs.length <= 1;
+  if (tabsLayoutEl) tabsLayoutEl.classList.toggle('form-tabs-layout--single', singlePane);
+  nav.hidden = singlePane;
+  nav.innerHTML = singlePane ? '' : tabs.map((tab) => `
     <button type="button" class="form-tab-btn ${tab.kind === 'stub' ? 'stub' : ''} ${state.formActiveTab === tab.id ? 'active' : ''}"
       data-form-tab="${tab.id}">${tab.label}</button>
   `).join('');
@@ -2802,6 +2836,11 @@ function renderForm(screen) {
     if (tab.kind === 'master-detail') {
       return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
         ${renderMasterDetailPanel(tab, rec)}
+      </div>`;
+    }
+    if (tab.kind === 'master-grid') {
+      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMasterGridPanel(tab, rec)}
       </div>`;
     }
     if (tab.kind === 'grid') {
@@ -2840,13 +2879,28 @@ function readFieldValue(el, field) {
   return el.value;
 }
 
+function resolveGridTab(screen, key) {
+  for (const t of screen.formTabs || []) {
+    if (t.kind === 'grid' && t.key === key) return t;
+    if (t.kind === 'master-grid' && (t.grid?.key || t.key) === key) {
+      return {
+        kind: 'grid',
+        key: t.grid?.key || t.key || '_detail',
+        slots: t.grid?.slots,
+        fields: t.grid?.fields || t.detailFields || [],
+      };
+    }
+  }
+  return null;
+}
+
 function collectTabFields(screen) {
   const fields = [];
   (screen.formTabs || []).forEach((tab) => {
     if (tab.kind === 'fields') fields.push(...(tab.fields || []));
-    if (tab.kind === 'master-detail') {
+    if (tab.kind === 'master-detail' || tab.kind === 'master-grid') {
       fields.push(...(tab.masterFields || []));
-      fields.push(...(tab.detailFields || []));
+      if (tab.kind === 'master-detail') fields.push(...(tab.detailFields || []));
     }
   });
   return fields;
@@ -2950,6 +3004,14 @@ function readTabbedPayload(screen) {
   const out = readMasterFromForm(screen);
   (screen.formTabs || []).forEach((tab) => {
     if (tab.kind === 'grid') out[tab.key] = readGridFromForm(tab);
+    if (tab.kind === 'master-grid') {
+      const g = {
+        kind: 'grid',
+        key: tab.grid?.key || tab.key || '_detail',
+        fields: tab.grid?.fields || tab.detailFields || [],
+      };
+      out[g.key] = readGridFromForm(g);
+    }
     if (tab.kind === 'bom-tree') {
       persistBomEditor(out, tab);
       out.satirlar = ensureBomTree(out);
@@ -3128,6 +3190,17 @@ async function openForm(mode) {
       if (tab.kind === 'grid') {
         const raw = Array.isArray(src[tab.key]) ? src[tab.key] : [];
         record[tab.key] = normalizeGridRows(tab, raw.map(({ id, ...rest }) => rest));
+      }
+      if (tab.kind === 'master-grid') {
+        const gkey = tab.grid?.key || tab.key || '_detail';
+        const gtab = {
+          kind: 'grid',
+          key: gkey,
+          fields: tab.grid?.fields || tab.detailFields || [],
+          slots: tab.grid?.slots,
+        };
+        const raw = Array.isArray(src[gkey]) ? src[gkey] : [];
+        record[gkey] = normalizeGridRows(gtab, raw.map(({ id, ...rest }) => rest));
       }
       if (tab.kind === 'bom-tree') {
         record.satirlar = Array.isArray(src.agac) && src.agac.length
@@ -3474,7 +3547,7 @@ function bindEvents() {
       e.stopPropagation();
       const key = gridAct.getAttribute('data-grid-key');
       const act = gridAct.getAttribute('data-grid-act');
-      const tab = (screen.formTabs || []).find((t) => t.kind === 'grid' && t.key === key);
+      const tab = resolveGridTab(screen, key);
       if (!tab) return;
       // Master alanları koru; grid satırlarını boş diye silme
       const masterSnap = readMasterFromForm(screen);
@@ -3511,7 +3584,7 @@ function bindEvents() {
       e.preventDefault();
       e.stopPropagation();
       const key = gridPick.getAttribute('data-grid-pick');
-      const tab = (screen.formTabs || []).find((t) => t.kind === 'grid' && t.key === key);
+      const tab = resolveGridTab(screen, key);
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       if (tab && state.gridSel.key === key && state.gridSel.idx != null) {
