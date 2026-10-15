@@ -62,7 +62,7 @@ Satınalma;PUR;Mal kabul / depo girişi;Mal Kabuller;Yapildi;API + stok hareket 
 Satınalma;PUR;Teklif / anlaşma / ihale / fason;Teklif İstekleri / Teklifler / Anlaşmalar;Yapildi;PURT01-03 1. dalga eklendi;-
 Satınalma;VER;Alış fatura kontrol;Alış Faturaları;Yapildi;fatura_turu=Alis ekranı;Alış VER yok
 Satış;SAL;Satış siparişi;Satış Siparişleri;Yapildi;Menü ekranı + /siparisler CRUD;-
-Satış;SAL;Sevk / irsaliye;-;Yapilmadi;Dokümanda ilk sürüm hedefliydi;UI/API zinciri yok
+Satış;SAL;Sevk / irsaliye;İrsaliyeler;Yapildi;e-İrsaliye alanları + stok çıkış onayı;GİB gönderim Faz 2
 Satış;SAL;Satış faturası;Satış Faturaları;Yapildi;Menü ekranı + /faturalar CRUD;-
 Satış;SAL;Rezervasyon;-;Yapilmadi;-;-
 Lojistik;TRO;Depolar arası transfer emri;-;Yapilmadi;Dokümanda sonra;-
@@ -89,3 +89,6 @@ Satınalma;PUR;Satınalma anlaşması (PURT03);Satınalma Anlaşmaları;Yapildi;
 Finans;FIN;Hesap planı (FINT01);Hesap Planı;Yapildi;Ana/Ust/Dogrudan;-
 Finans;FIN;Muhasebe belgesi (FINT06);Muhasebe Belgeleri;Yapildi;Çift taraflı + onay;-
 Finans;FIN;Mizan (FINT62);Mizan;Yapildi;Onaylı belgelerden;-
+Satış;SAL;Satış teklifi;Satış Teklifleri;Yapildi;Teklif→sipariş dönüşümü;-
+Satış;SAL;Sevk emri;Sevk Emirleri;Yapildi;Sipariş→sevk;-
+Ortak/BAS;BAS;Hareket kodları;Hareket Kodları;Yapildi;Sol menü belge tipi + kod tanımı;-

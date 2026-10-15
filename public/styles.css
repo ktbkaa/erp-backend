@@ -789,3 +789,57 @@ tr.selected td { background: var(--accent-soft); }
     border-bottom: 1px solid var(--line);
   }
 }
+
+
+/* Liste + sol kategori (hareket kodları) */
+.list-work {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 0;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+.list-work .list-pane {
+  min-width: 0;
+}
+.list-work:not(:has(.list-side-nav:not([hidden]))) {
+  grid-template-columns: 1fr;
+}
+.list-side-nav {
+  border-right: 1px solid var(--border, #d8dde6);
+  background: linear-gradient(180deg, #f7f9fc, #eef2f7);
+  padding: 0.6rem 0.4rem;
+  overflow: auto;
+}
+.list-side-nav button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+  color: #1f2a37;
+}
+.list-side-nav button:hover { background: rgba(30, 64, 120, 0.08); }
+.list-side-nav button.active {
+  background: #1e3a5f;
+  color: #fff;
+  font-weight: 600;
+}
+@media (max-width: 900px) {
+  .list-work { grid-template-columns: 1fr; }
+  .list-side-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border, #d8dde6);
+  }
+  .list-side-nav button { width: auto; }
+}

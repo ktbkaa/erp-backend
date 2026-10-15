@@ -282,6 +282,70 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+/** Satış siparişi → Sevk emri */
+router.post('/:id/sevk-emri-olustur', async (req, res) => {
+    try {
+        const siparis = await siparisGetir(req.params.id);
+        if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+        if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.durum)) {
+            return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.durum}` });
+        }
+        const { depo_id } = req.body;
+        if (!depo_id) return res.status(400).json({ hata: 'depo_id zorunlu.' });
+
+        const { sevkGetir } = require('./sevk_emirleri');
+        const id = await withTransaction(pool, async (client) => {
+            const sn = sonrakiBelgeNo;
+            const no = await sn(client, 'SEVK_EMRI');
+            let hk = null;
+            const d = await client.query(
+                `SELECT id FROM hareket_kodlari WHERE belge_tipi='SevkEmri' AND aktif ORDER BY id LIMIT 1`
+            );
+            hk = d.rows[0]?.id || null;
+            const cari = await client.query(
+                `SELECT * FROM cariler WHERE id=$1`,
+                [siparis.cari_id]
+            );
+            const c = cari.rows[0] || {};
+            const baslik = await client.query(
+                `
+                INSERT INTO sevk_emirleri
+                    (sevk_no, siparis_id, cari_id, depo_id, sevk_tarihi, sevk_adresi,
+                     sevk_il, sevk_ilce, sevk_ulke, sevk_posta_kodu, durum, hareket_kodu_id, aciklama)
+                VALUES ($1,$2,$3,$4,CURRENT_DATE,$5,$6,$7,COALESCE($8,'Türkiye'),$9,
+                        COALESCE($10,'Onayli'),$11,$12)
+                RETURNING id
+                `,
+                [
+                    no, siparis.id, siparis.cari_id, depo_id,
+                    req.body.sevk_adresi || siparis.sevk_adresi || c.fatura_adres1 || c.adres,
+                    req.body.sevk_il || c.il, req.body.sevk_ilce || c.ilce,
+                    req.body.sevk_ulke || c.ulke, req.body.sevk_posta_kodu || c.posta_kodu,
+                    req.body.durum || 'Onayli', hk, req.body.aciklama || `Sipariş ${siparis.siparis_no}`,
+                ]
+            );
+            const sid = baslik.rows[0].id;
+            let sira = 1;
+            for (const k of siparis.kalemler || []) {
+                if (!k.stok_id) continue;
+                await client.query(
+                    `
+                    INSERT INTO sevk_emri_satirlari
+                        (sevk_id, sira_no, stok_id, siparis_detay_id, miktar, birim)
+                    VALUES ($1,$2,$3,$4,$5,$6)
+                    `,
+                    [sid, sira++, k.stok_id, k.id, k.miktar, k.stok_birimi || k.birim || null]
+                );
+            }
+            return sid;
+        });
+        const { sevkGetir } = sevkRouter;
+        res.status(201).json(await sevkGetir(id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM siparisler WHERE id=$1 RETURNING id', [req.params.id]);

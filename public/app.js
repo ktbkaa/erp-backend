@@ -128,6 +128,66 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
+
+      {
+        id: 'hareket-kodlari',
+        title: 'Hareket Kodları',
+        endpoint: '/hareket-kodlari',
+        crud: true,
+        codeField: 'hareket_kodu',
+        nameField: 'hareket_adi',
+        numeratorSeri: 'HAREKET_KOD',
+        listCategories: [
+          { id: 'SatisTeklif', label: 'Satış Teklifi' },
+          { id: 'SatisSiparis', label: 'Satış Siparişi' },
+          { id: 'SevkEmri', label: 'Sevk Emri' },
+          { id: 'SatisIrsaliye', label: 'Satış İrsaliyesi' },
+          { id: 'SatisFatura', label: 'Satış Faturası' },
+          { id: 'SatinAlmaTalep', label: 'Satınalma Talebi' },
+          { id: 'SatinAlmaSiparis', label: 'Satınalma Siparişi' },
+          { id: 'MalKabul', label: 'Mal Kabul' },
+          { id: 'AlisFatura', label: 'Alış Faturası' },
+          { id: 'UretimEmri', label: 'Üretim Emri' },
+          { id: 'UretimGiris', label: 'Üretim Girişi' },
+          { id: 'UretimTuketim', label: 'Üretim Tüketim' },
+          { id: 'Transfer', label: 'Transfer' },
+          { id: 'Sayim', label: 'Sayım' },
+          { id: 'Fire', label: 'Fire / Sarf' },
+          { id: 'Duzeltme', label: 'Stok Düzeltme' },
+        ],
+        categoryKey: 'belge_tipi',
+        filters: [
+          { key: 'hareket_kodu', label: 'Hareket kodu' },
+          { key: 'hareket_adi', label: 'Hareket adı' },
+          { key: 'belge_tipi', label: 'Belge tipi' },
+        ],
+        columns: [
+          { key: 'hareket_kodu', label: 'Kod', mono: true },
+          { key: 'hareket_adi', label: 'Ad' },
+          { key: 'belge_tipi', label: 'Belge tipi' },
+          { key: 'yon', label: 'Yön' },
+          { key: 'stok_etkisi', label: 'Stok' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'hareket_kodu', label: 'Hareket kodu', code: true, required: true },
+          { key: 'hareket_adi', label: 'Hareket adı', name: true, required: true },
+          { key: 'belge_tipi', label: 'Belge tipi', type: 'select', options: ['SatisTeklif','SatisSiparis','SevkEmri','SatisIrsaliye','SatisFatura','SatinAlmaTalep','SatinAlmaSiparis','MalKabul','AlisFatura','UretimEmri','UretimGiris','UretimTuketim','Transfer','Sayim','Fire','Duzeltme'], required: true },
+          { key: 'yon', label: 'Yön', type: 'select', options: ['Giris','Cikis','Transfer','Bilgi'], required: true },
+        ],
+        detailFields: [
+          { key: 'stok_etkisi', label: 'Stok etkisi', type: 'checkbox' },
+          { key: 'cari_zorunlu', label: 'Cari zorunlu', type: 'checkbox' },
+          { key: 'depo_zorunlu', label: 'Depo zorunlu', type: 'checkbox' },
+          { key: 'eksi_bakiye_izin', label: 'Eksi bakiye izin', type: 'checkbox' },
+          { key: 'muhasebe_hesap_kodu', label: 'Muhasebe hesap kodu' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+
     ],
   },
 
@@ -1181,6 +1241,47 @@ const MODULES = [
     title: 'Satış',
     screens: [
       {
+        id: 'satis-teklifleri',
+        title: 'Satış Teklifleri',
+        endpoint: '/satis-teklifleri',
+        crud: true,
+        numeratorSeri: 'SATIS_TEKLIF',
+        codeField: 'teklif_no',
+        nameField: 'cari_adi',
+        convertAction: { label: 'Siparişe Dönüştür', path: '/satis-teklifleri/{id}/siparise-donustur' },
+        filters: [
+          { key: 'teklif_no', label: 'Teklif no' },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'teklif_no', label: 'Teklif', mono: true },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'teklif_tarihi', label: 'Tarih' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'toplam_tutar', label: 'Tutar' },
+        ],
+        masterFields: [
+          { key: 'teklif_no', label: 'Teklif no', code: true },
+          { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'teklif_tarihi', label: 'Teklif tarihi', type: 'date' },
+          { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date' },
+          { key: 'para_birimi', label: 'PB' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'] },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-teklif', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'iskonto_oran', label: 'İskonto %', type: 'number' },
+          { key: 'kdv_oran', label: 'KDV %', type: 'number' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
         id: 'satis-siparisleri',
         title: 'Satış Siparişleri',
         endpoint: '/siparisler',
@@ -1188,6 +1289,7 @@ const MODULES = [
         numeratorSeri: 'SATIS_SIPARIS',
         codeField: 'siparis_no',
         nameField: 'cari_adi',
+        convertAction: { label: 'Sevk Emri Oluştur', path: '/siparisler/{id}/sevk-emri-olustur', needs: ['depo_id'] },
         filters: [
           { key: 'siparis_no', label: 'Sipariş no' },
           { key: 'cari_adi', label: 'Cari' },
@@ -1206,6 +1308,8 @@ const MODULES = [
           { key: 'siparis_turu', label: 'Sipariş türü', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true },
           { key: 'siparis_tarihi', label: 'Tarih', type: 'date' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'] },
+          { key: 'sevk_adresi', label: 'Sevk adresi' },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
         ],
         detailFields: [
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
@@ -1216,9 +1320,151 @@ const MODULES = [
         detailSlots: 5,
       },
       {
+        id: 'sevk-emirleri',
+        title: 'Sevk Emirleri',
+        endpoint: '/sevk-emirleri',
+        crud: true,
+        numeratorSeri: 'SEVK_EMRI',
+        codeField: 'sevk_no',
+        nameField: 'cari_adi',
+        convertAction: { label: 'İrsaliye Oluştur', path: '/irsaliyeler/sevk-emrinden', bodyKey: 'sevk_emri_id' },
+        filters: [
+          { key: 'sevk_no', label: 'Sevk no' },
+          { key: 'siparis_no', label: 'Sipariş' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'sevk_no', label: 'Sevk', mono: true },
+          { key: 'siparis_no', label: 'Sipariş', mono: true },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'depo_kodu', label: 'Depo', mono: true },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'sevk_no', label: 'Sevk no', code: true },
+          { key: 'siparis_id', label: 'Satış siparişi', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no', required: true },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'sevk_tarihi', label: 'Sevk tarihi', type: 'date' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'IrsaliyeDonustu', 'Iptal', 'Kapali'] },
+          { key: 'sevk_adresi', label: 'Sevk adresi' },
+          { key: 'sevk_il', label: 'İl' },
+          { key: 'sevk_ilce', label: 'İlçe' },
+          { key: 'sevk_ulke', label: 'Ülke' },
+          { key: 'sevk_posta_kodu', label: 'Posta kodu' },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-sevk', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'irsaliyeler',
+        title: 'İrsaliyeler',
+        endpoint: '/irsaliyeler',
+        crud: true,
+        numeratorSeri: 'IRSALIYE',
+        codeField: 'irsaliye_no',
+        nameField: 'cari_adi',
+        convertAction: { label: 'Fatura Oluştur', path: '/irsaliyeler/{id}/fatura-olustur' },
+        approveAction: { label: 'Onayla (Stok Çıkış)', path: '/irsaliyeler/{id}/onayla' },
+        filters: [
+          { key: 'irsaliye_no', label: 'İrsaliye no' },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'irsaliye_no', label: 'İrsaliye', mono: true },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'senaryo', label: 'Senaryo' },
+          { key: 'irsaliye_tipi', label: 'Tip' },
+          { key: 'sevk_tarihi', label: 'Sevk tarihi' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'irsaliye_no', label: 'İrsaliye no', code: true },
+          { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'siparis_id', label: 'Sipariş', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no' },
+          { key: 'sevk_emri_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'sevk_no' },
+          { key: 'senaryo', label: 'Senaryo', type: 'select', options: ['TEMELIRSALIYE'] },
+          { key: 'irsaliye_tipi', label: 'İrsaliye tipi', type: 'select', options: ['SEVK'] },
+          { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
+          { key: 'sevk_tarihi', label: 'Sevk tarihi', type: 'date' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'] },
+        ],
+        detailFields: [
+          { key: 'sevk_adresi', label: 'Sevk adresi' },
+          { key: 'sevk_il', label: 'İl', required: true },
+          { key: 'sevk_ilce', label: 'İlçe', required: true },
+          { key: 'sevk_ulke', label: 'Ülke', required: true },
+          { key: 'sevk_posta_kodu', label: 'Posta kodu', required: true },
+          { key: 'arac_plaka', label: 'Araç plaka' },
+          { key: 'dorse_plaka', label: 'Dorse plaka' },
+          { key: 'sofor_adi', label: 'Şoför adı' },
+          { key: 'sofor_soyadi', label: 'Şoför soyadı' },
+          { key: 'sofor_tckn', label: 'Şoför TCKN' },
+          { key: 'tasiyici_unvan', label: 'Taşıyıcı ünvan' },
+          { key: 'tasiyici_vkn', label: 'Taşıyıcı VKN' },
+          { key: 'ettn', label: 'ETTN' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        formTabs: [
+          {
+            id: 'baslik', label: 'İrsaliye Başlık', kind: 'fields',
+            fields: [
+              { key: 'irsaliye_no', label: 'İrsaliye no', code: true },
+              { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+              { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+              { key: 'siparis_id', label: 'Sipariş', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no' },
+              { key: 'sevk_emri_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'sevk_no' },
+              { key: 'senaryo', label: 'Senaryo', type: 'select', options: ['TEMELIRSALIYE'] },
+              { key: 'irsaliye_tipi', label: 'Tip', type: 'select', options: ['SEVK'] },
+              { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
+              { key: 'sevk_tarihi', label: 'Sevk tarihi', type: 'date' },
+              { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'] },
+              { key: 'ettn', label: 'ETTN' },
+            ],
+          },
+          {
+            id: 'sevk', label: 'Sevk / Taşıyıcı', kind: 'fields',
+            fields: [
+              { key: 'sevk_adresi', label: 'Sevk adresi' },
+              { key: 'sevk_il', label: 'İl', required: true },
+              { key: 'sevk_ilce', label: 'İlçe', required: true },
+              { key: 'sevk_ulke', label: 'Ülke', required: true },
+              { key: 'sevk_posta_kodu', label: 'Posta kodu', required: true },
+              { key: 'arac_plaka', label: 'Araç plaka' },
+              { key: 'dorse_plaka', label: 'Dorse plaka' },
+              { key: 'sofor_adi', label: 'Şoför adı' },
+              { key: 'sofor_soyadi', label: 'Şoför soyadı' },
+              { key: 'sofor_tckn', label: 'Şoför TCKN' },
+              { key: 'tasiyici_unvan', label: 'Taşıyıcı ünvan' },
+              { key: 'tasiyici_vkn', label: 'Taşıyıcı VKN' },
+              { key: 'aciklama', label: 'Açıklama (sipariş notu)' },
+              { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+            ],
+          },
+          {
+            id: 'kalemler', label: 'Kalemler', kind: 'grid', key: 'satirlar',
+            fields: [
+              { key: 'stok_id', label: 'Malzeme', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+              { key: 'miktar', label: 'Miktar', type: 'number' },
+              { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+            ],
+          },
+        ],
+      },
+      {
         id: 'satis-faturalari',
         title: 'Satış Faturaları',
-        endpoint: '/faturalar',
+        endpoint: '/faturalar?fatura_turu=Satis',
         crud: true,
         numeratorSeri: 'FATURA',
         codeField: 'fatura_no',
@@ -1231,21 +1477,35 @@ const MODULES = [
         columns: [
           { key: 'fatura_no', label: 'Fatura', mono: true },
           { key: 'cari_adi', label: 'Cari' },
-          { key: 'fatura_turu', label: 'Tür' },
-          { key: 'toplam_tutar', label: 'Tutar' },
+          { key: 'senaryo', label: 'Senaryo' },
+          { key: 'fatura_tipi', label: 'Tip' },
+          { key: 'odenecek_tutar', label: 'Ödenecek' },
+          { key: 'durum', label: 'Durum' },
         ],
         masterFields: [
           { key: 'fatura_no', label: 'Fatura no', code: true },
           { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
           { key: 'fatura_turu', label: 'Fatura türü', type: 'select', options: ['Satis', 'Iade'], required: true },
+          { key: 'senaryo', label: 'Senaryo', type: 'select', options: ['TICARIFATURA', 'TEMELFATURA'] },
+          { key: 'fatura_tipi', label: 'Fatura tipi', type: 'select', options: ['SATIS', 'IADE'] },
+          { key: 'fatura_tarihi', label: 'Fatura tarihi', type: 'date' },
+          { key: 'irsaliye_id', label: 'İrsaliye', type: 'lookup', lookup: 'irsaliyeler', valueKey: 'id', labelKey: 'irsaliye_no' },
+          { key: 'siparis_id', label: 'Sipariş', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no' },
+          { key: 'para_birimi', label: 'PB' },
+          { key: 'odeme_vadesi_gun', label: 'Vade (gün)', type: 'number' },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-fatura', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
         ],
         detailFields: [
-          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'stok_id', label: 'Ürün', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
           { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
           { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'iskonto_oran', label: 'İskonto %', type: 'number' },
+          { key: 'kdv_oran', label: 'KDV %', type: 'number' },
         ],
         detailKey: 'kalemler',
         detailSlots: 5,
+        defaults: { fatura_turu: 'Satis', senaryo: 'TICARIFATURA', fatura_tipi: 'SATIS', para_birimi: 'TRY' },
       },
     ],
   },
@@ -1706,9 +1966,36 @@ function cellHtml(col, row) {
   return col.mono ? `<span class="mono">${val}</span>` : String(val);
 }
 
+function renderListSideNav(screen) {
+  const nav = $('#listSideNav');
+  if (!nav) return;
+  const cats = screen.listCategories || [];
+  if (!cats.length) {
+    nav.hidden = true;
+    nav.innerHTML = '';
+    return;
+  }
+  nav.hidden = false;
+  const active = state.listCategory || cats[0].id;
+  state.listCategory = active;
+  nav.innerHTML = cats.map((c) => `
+    <button type="button" data-list-cat="${c.id}" class="${c.id === active ? 'active' : ''}">${c.label}</button>
+  `).join('');
+}
+
+function rowsForList(screen) {
+  let rows = state.rows || [];
+  if (screen.listCategories?.length && screen.categoryKey && state.listCategory) {
+    rows = rows.filter((r) => String(r[screen.categoryKey]) === String(state.listCategory));
+  }
+  return applyFilters(rows, screen);
+}
+
 function renderList(screen) {
   const head = $('#dataHead');
   const body = $('#dataBody');
+  renderListSideNav(screen);
+  state.filtered = rowsForList(screen);
   head.innerHTML = `<tr>${screen.columns.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
   if (!state.filtered.length) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${screen.columns.length}">Kayıt yok.</td></tr>`;
@@ -1719,7 +2006,10 @@ function renderList(screen) {
       </tr>
     `).join('');
   }
-  $('#listMeta').textContent = `${state.filtered.length} / ${state.rows.length} kayıt`;
+  const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
+    ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
+    : (state.rows || []).length;
+  $('#listMeta').textContent = `${state.filtered.length} / ${baseCount} kayıt`;
   updateActionButtons(screen);
 }
 
@@ -1747,6 +2037,7 @@ async function openScreen(id, opts = {}) {
     state.screenId = id;
     state.selectedId = null;
     state.formMode = null;
+    state.listCategory = screen.listCategories?.[0]?.id || null;
     state.filterState = {};
     (screen.filters || []).forEach((f) => {
       state.filterState[f.key] = { op: 'esit', a: '', b: '' };
@@ -1765,7 +2056,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261015a`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261015b`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
@@ -1792,7 +2083,6 @@ async function openScreen(id, opts = {}) {
       rows = rows.map((r) => ({ ...r, id: r.seri_kodu }));
     }
     state.rows = rows;
-    state.filtered = applyFilters(state.rows, screen);
     renderList(screen);
     renderTabBar();
   } catch (err) {
@@ -1830,7 +2120,16 @@ const LOOKUP_ENDPOINTS = {
   'kategoriler-bolge': '/kategoriler?tip=Bolge&aktif=true',
   'muhasebe-hesaplari': '/muhasebe-hesaplari',
   siparisler: '/siparisler',
+  'sevk-emirleri': '/sevk-emirleri',
+  irsaliyeler: '/irsaliyeler',
+  'hareket-kodlari': '/hareket-kodlari?aktif=true',
+  'hareket-kodlari-teklif': '/hareket-kodlari?belge_tipi=SatisTeklif&aktif=true',
+  'hareket-kodlari-siparis': '/hareket-kodlari?belge_tipi=SatisSiparis&aktif=true',
+  'hareket-kodlari-sevk': '/hareket-kodlari?belge_tipi=SevkEmri&aktif=true',
+  'hareket-kodlari-irsaliye': '/hareket-kodlari?belge_tipi=SatisIrsaliye&aktif=true',
+  'hareket-kodlari-fatura': '/hareket-kodlari?belge_tipi=SatisFatura&aktif=true',
 };
+
 
 async function ensureLookups(screen) {
   const needed = new Set();
@@ -2285,6 +2584,21 @@ function renderForm(screen) {
   $('#formModeBadge').textContent = MODE_LABELS[state.formMode] || state.formMode;
   $('#formScreenLabel').textContent = `${screen.title} · ${MODE_LABELS[state.formMode] || ''}`;
   $('#btnFormSave').hidden = readonly;
+  const conv = $('#btnFormConvert');
+  if (conv) {
+    const act = screen.convertAction || screen.approveAction;
+    const show = Boolean(act && rec.id && state.formMode !== 'yeni');
+    conv.hidden = !show;
+    if (show) {
+      const label = (state.formMode === 'incele' && screen.approveAction && rec.durum === 'Taslak')
+        ? screen.approveAction.label
+        : (screen.convertAction?.label || act.label);
+      conv.textContent = label;
+      conv.dataset.convertKind = (screen.approveAction && rec.durum === 'Taslak' && state.formMode !== 'yeni')
+        ? 'approve'
+        : 'convert';
+    }
+  }
 
   const tabsLayout = $('#formTabsLayout');
   const classic = $('#formSplitClassic');
@@ -2668,6 +2982,9 @@ async function openForm(mode) {
 
   if (mode === 'yeni') {
     record = { ...(screen.defaults || {}) };
+    if (screen.categoryKey && state.listCategory) {
+      record[screen.categoryKey] = state.listCategory;
+    }
     seedFields();
     const seri = resolveNumeratorSeri(screen, record);
     if (seri) {
@@ -2925,8 +3242,61 @@ function bindEvents() {
     saveForm();
   });
 
+  const btnConvert = $('#btnFormConvert');
+  if (btnConvert) {
+    btnConvert.addEventListener('click', async () => {
+      const screen = findScreen(state.screenId);
+      const rec = state.formRecord;
+      if (!screen || !rec?.id) return;
+      const kind = btnConvert.dataset.convertKind || 'convert';
+      const act = kind === 'approve' ? screen.approveAction : screen.convertAction;
+      if (!act) return;
+      try {
+        let path = act.path.replace('{id}', rec.id);
+        let body = {};
+        if (act.bodyKey) body[act.bodyKey] = rec.id;
+        if (act.needs?.includes('depo_id')) {
+          const depoId = prompt('Sevk için depo id girin (veya depo listesinden id):');
+          if (!depoId) return;
+          body.depo_id = Number(depoId);
+        }
+        // İrsaliye oluştururken taşıyıcı alanları iste
+        if (path.includes('/irsaliyeler/sevk-emrinden')) {
+          body.arac_plaka = prompt('Araç plaka (örn. 34FM6270):', rec.arac_plaka || '') || null;
+          body.sofor_adi = prompt('Şoför adı:', '') || null;
+          body.sofor_soyadi = prompt('Şoför soyadı:', '') || null;
+          body.sofor_tckn = prompt('Şoför TCKN:', '') || null;
+          body.tasiyici_unvan = prompt('Taşıyıcı ünvan (şoför yoksa):', '') || null;
+          body.tasiyici_vkn = prompt('Taşıyıcı VKN:', '') || null;
+        }
+        const sonuc = await api(path, { method: 'POST', body: JSON.stringify(body) });
+        toast(act.label + ' tamam.');
+        if (sonuc?.siparis_id) openScreen('satis-siparisleri');
+        else if (sonuc?.sevk_no) openScreen('sevk-emirleri');
+        else if (sonuc?.irsaliye_no || sonuc?.ettn) openScreen('irsaliyeler');
+        else if (sonuc?.fatura?.id) openScreen('satis-faturalari');
+        else if (kind === 'approve') {
+          state.formRecord = sonuc;
+          renderForm(screen);
+        } else openScreen(screen.id);
+      } catch (err) {
+        toast(err.message || 'Dönüşüm başarısız');
+      }
+    });
+  }
+
   document.addEventListener('click', (e) => {
     const screen = findScreen(state.screenId);
+
+    const listCat = e.target.closest('[data-list-cat]');
+    if (listCat && screen?.listCategories) {
+      e.preventDefault();
+      state.listCategory = listCat.getAttribute('data-list-cat');
+      state.selectedId = null;
+      // Yeni kayıtta belge tipini önceden seçili kategoriye bağla
+      renderList(screen);
+      return;
+    }
 
     // --- Detay grid: seç / Yeni / Düzelt / Sil ---
     const gridAct = e.target.closest('[data-grid-act]');
