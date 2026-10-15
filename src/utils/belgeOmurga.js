@@ -31,6 +31,9 @@ const HAREKET_BELGE_TIPI = Object.freeze({
     [BELGE_TIPI.URETIM_GIRIS]: 'UretimGiris',
     [BELGE_TIPI.TRANSFER]: 'Transfer',
     [BELGE_TIPI.SAYIM]: 'Sayim',
+    [BELGE_TIPI.STOK_HAREKET]: 'StokGiris',
+    STOK_GIRIS: 'StokGiris',
+    STOK_CIKIS: 'StokCikis',
 });
 
 async function hareketKoduBul(client, belgeTipiKod, verilenId = null) {

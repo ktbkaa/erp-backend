@@ -6,6 +6,7 @@ const BELGE_TIPLERI = [
     'SatisTeklif', 'SatisSiparis', 'SevkEmri', 'SatisIrsaliye', 'SatisFatura',
     'SatinAlmaTalep', 'SatinAlmaSiparis', 'MalKabul', 'AlisFatura',
     'UretimEmri', 'UretimGiris', 'UretimTuketim', 'Transfer', 'Sayim', 'Fire', 'Duzeltme',
+    'StokGiris', 'StokCikis',
 ];
 
 router.get('/belge-tipleri', (req, res) => {
@@ -35,7 +36,7 @@ router.get('/belge-tipleri', (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const { belge_tipi, aktif } = req.query;
+        const { belge_tipi, aktif, stok_etkisi, grup } = req.query;
         const where = [];
         const params = [];
         if (belge_tipi) {
@@ -43,6 +44,10 @@ router.get('/', async (req, res) => {
             where.push(`belge_tipi = $${params.length}`);
         }
         if (aktif === 'true') where.push('aktif = TRUE');
+        if (stok_etkisi === 'true') where.push('stok_etkisi = TRUE');
+        if (grup === 'inv') {
+            where.push(`belge_tipi IN ('StokGiris','StokCikis','Transfer','Sayim','Fire','Duzeltme')`);
+        }
         const sql = `
             SELECT * FROM hareket_kodlari
             ${where.length ? `WHERE ${where.join(' AND ')}` : ''}

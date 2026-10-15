@@ -550,20 +550,39 @@ const MODULES = [
         id: 'stok-hareketleri',
         title: 'Stok Hareketleri',
         endpoint: '/stok-hareketleri',
-        crud: false,
+        crud: true,
+        numeratorSeri: 'STOK_HAREKET',
+        codeField: 'hareket_no',
+        nameField: 'hareket_tipi',
         filters: [
           { key: 'hareket_no', label: 'Hareket no' },
           { key: 'hareket_tipi', label: 'Tip' },
           { key: 'depo_kodu', label: 'Depo' },
+          { key: 'hareket_kodu', label: 'Hareket kodu' },
         ],
         columns: [
           { key: 'hareket_no', label: 'Hareket', mono: true },
+          { key: 'hareket_kodu', label: 'Kod', mono: true },
           { key: 'hareket_tipi', label: 'Tip' },
           { key: 'depo_kodu', label: 'Depo', mono: true },
-          { key: 'belge_tipi', label: 'Belge tipi' },
-          { key: 'belge_id', label: 'Belge id' },
+          { key: 'hedef_depo_kodu', label: 'Hedef depo', mono: true },
           { key: 'hareket_tarihi', label: 'Tarih' },
         ],
+        masterFields: [
+          { key: 'hareket_no', label: 'Hareket no', code: true },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-stok', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu', required: true },
+          { key: 'depo_id', label: 'Depo (kaynak)', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'hedef_depo_id', label: 'Hedef depo (transfer)', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
+          { key: 'hareket_tarihi', label: 'Tarih', type: 'date' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
       },
     ],
   },
@@ -1248,7 +1267,11 @@ const MODULES = [
         numeratorSeri: 'SATIS_TEKLIF',
         codeField: 'teklif_no',
         nameField: 'cari_adi',
-        convertAction: { label: 'Siparişe Dönüştür', path: '/satis-teklifleri/{id}/siparise-donustur' },
+        convertAction: {
+          label: 'Siparişe Dönüştür',
+          path: '/satis-teklifleri/{id}/siparise-donustur',
+          nested: { screenId: 'satis-siparisleri', link: 'teklif-siparis' },
+        },
         filters: [
           { key: 'teklif_no', label: 'Teklif no' },
           { key: 'cari_adi', label: 'Cari' },
@@ -1289,7 +1312,13 @@ const MODULES = [
         numeratorSeri: 'SATIS_SIPARIS',
         codeField: 'siparis_no',
         nameField: 'cari_adi',
-        convertAction: { label: 'Sevk Emri Oluştur', path: '/siparisler/{id}/sevk-emri-olustur', needs: ['depo_id'], dialog: 'depo' },
+        convertAction: {
+          label: 'Sevk Emri Oluştur',
+          path: '/siparisler/{id}/sevk-emri-olustur',
+          needs: ['depo_id'],
+          dialog: 'depo',
+          nested: { screenId: 'sevk-emirleri', link: 'siparis-sevk' },
+        },
         filters: [
           { key: 'siparis_no', label: 'Sipariş no' },
           { key: 'cari_adi', label: 'Cari' },
@@ -1332,7 +1361,13 @@ const MODULES = [
         numeratorSeri: 'SEVK_EMRI',
         codeField: 'sevk_no',
         nameField: 'cari_adi',
-        convertAction: { label: 'İrsaliye Oluştur', path: '/irsaliyeler/sevk-emrinden', bodyKey: 'sevk_emri_id', dialog: 'irsaliye' },
+        convertAction: {
+          label: 'İrsaliye Oluştur',
+          path: '/irsaliyeler/sevk-emrinden',
+          bodyKey: 'sevk_emri_id',
+          dialog: 'irsaliye',
+          nested: { screenId: 'irsaliyeler', link: 'sevk-irsaliye' },
+        },
         filters: [
           { key: 'sevk_no', label: 'Sevk no' },
           { key: 'siparis_no', label: 'Sipariş' },
@@ -1376,7 +1411,11 @@ const MODULES = [
         numeratorSeri: 'IRSALIYE',
         codeField: 'irsaliye_no',
         nameField: 'cari_adi',
-        convertAction: { label: 'Fatura Oluştur', path: '/irsaliyeler/{id}/fatura-olustur' },
+        convertAction: {
+          label: 'Fatura Oluştur',
+          path: '/irsaliyeler/{id}/fatura-olustur',
+          nested: { screenId: 'satis-faturalari', link: 'irsaliye-fatura' },
+        },
         approveAction: { label: 'Onayla (Stok Çıkış)', path: '/irsaliyeler/{id}/onayla', dialog: 'onay-depo' },
         filters: [
           { key: 'irsaliye_no', label: 'İrsaliye no' },
@@ -1619,8 +1658,8 @@ const MODULES = [
 
 function normalizeScreen(raw, moduleId, moduleTitle) {
   const s = { ...raw, moduleId, moduleTitle };
-  s.readOnly = s.id === 'depo-bakiye' || s.id === 'stok-hareketleri' || s.crud === false;
-  s.crud = !s.readOnly;
+  s.readOnly = s.id === 'depo-bakiye' || s.crud === false;
+  s.crud = s.readOnly ? false : (s.crud !== false);
 
   if (!s.masterFields || !s.masterFields.length) {
     s.masterFields = (s.columns || []).map((c) => ({
@@ -1742,7 +1781,175 @@ const state = {
   treeExpanded: {},
   flowSel: null,
   flowCompSel: null,
+  sidebarOpen: {},
+  nestedLink: null, // { fromScreenId, fromId, convertPath, bodyKey, extra }
 };
+
+/** Bağlı ekran ön doldurma haritası */
+function buildLinkedPrefill(link, sourceRec, extra = {}) {
+  if (link === 'teklif-siparis') {
+    return {
+      cari_id: sourceRec.cari_id,
+      siparis_turu: 'SatisSiparis',
+      durum: 'Onayli',
+      para_birimi: sourceRec.para_birimi || 'TRY',
+      teklif_id: sourceRec.id,
+      kaynak_belge_tipi: 'SATIS_TEKLIF',
+      kaynak_belge_id: sourceRec.id,
+      aciklama: `Teklif ${sourceRec.teklif_no || sourceRec.id}`,
+      kalemler: (sourceRec.satirlar || sourceRec.kalemler || []).map((s, i) => ({
+        sira_no: s.sira_no || i + 1,
+        stok_id: s.stok_id,
+        miktar: s.miktar,
+        birim_fiyat: s.birim_fiyat,
+        stok_birimi: s.birim,
+        iskonto_oran: s.iskonto_oran,
+        kdv_oran: s.kdv_oran,
+      })),
+    };
+  }
+  if (link === 'siparis-sevk') {
+    return {
+      siparis_id: sourceRec.id,
+      cari_id: sourceRec.cari_id,
+      depo_id: extra.depo_id || null,
+      sevk_adresi: sourceRec.sevk_adresi || '',
+      durum: 'Onayli',
+      kaynak_belge_tipi: 'SATIS_SIPARIS',
+      kaynak_belge_id: sourceRec.id,
+      aciklama: `Sipariş ${sourceRec.siparis_no || sourceRec.id}`,
+      satirlar: (sourceRec.kalemler || sourceRec.satirlar || [])
+        .filter((k) => k.stok_id && Number(k.kalan_sevk_miktar ?? k.miktar) > 0)
+        .map((k, i) => ({
+          sira_no: i + 1,
+          stok_id: k.stok_id,
+          siparis_detay_id: k.id,
+          miktar: Number(k.kalan_sevk_miktar ?? k.miktar),
+          birim: k.stok_birimi || k.birim || null,
+        })),
+    };
+  }
+  if (link === 'sevk-irsaliye') {
+    return {
+      cari_id: sourceRec.cari_id,
+      depo_id: extra.depo_id || sourceRec.depo_id,
+      siparis_id: sourceRec.siparis_id,
+      sevk_emri_id: sourceRec.id,
+      sevk_adresi: sourceRec.sevk_adresi,
+      sevk_il: sourceRec.sevk_il,
+      sevk_ilce: sourceRec.sevk_ilce,
+      sevk_ulke: sourceRec.sevk_ulke || 'Türkiye',
+      sevk_posta_kodu: sourceRec.sevk_posta_kodu,
+      arac_plaka: extra.arac_plaka || null,
+      sofor_adi: extra.sofor_adi || null,
+      sofor_soyadi: extra.sofor_soyadi || null,
+      sofor_tckn: extra.sofor_tckn || null,
+      tasiyici_unvan: extra.tasiyici_unvan || null,
+      tasiyici_vkn: extra.tasiyici_vkn || null,
+      durum: 'Taslak',
+      kaynak_belge_tipi: 'SEVK_EMRI',
+      kaynak_belge_id: sourceRec.id,
+      aciklama: `Sevk ${sourceRec.sevk_no || sourceRec.id}`,
+      satirlar: (sourceRec.satirlar || []).map((s, i) => ({
+        sira_no: s.sira_no || i + 1,
+        stok_id: s.stok_id,
+        miktar: s.miktar,
+        birim: s.birim,
+        sevk_emri_satir_id: s.id,
+        siparis_detay_id: s.siparis_detay_id,
+      })),
+    };
+  }
+  if (link === 'irsaliye-fatura') {
+    return {
+      cari_id: sourceRec.cari_id,
+      fatura_turu: 'Satis',
+      senaryo: 'TICARIFATURA',
+      fatura_tipi: 'SATIS',
+      para_birimi: 'TRY',
+      irsaliye_id: sourceRec.id,
+      siparis_id: sourceRec.siparis_id,
+      sevk_adresi: sourceRec.sevk_adresi,
+      durum: 'Taslak',
+      kaynak_belge_tipi: 'IRSALIYE',
+      kaynak_belge_id: sourceRec.id,
+      aciklama: `İrsaliye ${sourceRec.irsaliye_no || sourceRec.id}`,
+      kalemler: (sourceRec.satirlar || []).map((s, i) => ({
+        sira_no: s.sira_no || i + 1,
+        stok_id: s.stok_id,
+        miktar: s.miktar,
+        birim: s.birim,
+        birim_fiyat: 0,
+        kdv_oran: 20,
+        irsaliye_satir_id: s.id,
+        siparis_detay_id: s.siparis_detay_id,
+      })),
+    };
+  }
+  return { ...extra };
+}
+
+async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, extra = {} }) {
+  const target = findScreen(targetScreenId);
+  if (!target) {
+    toast('Hedef ekran bulunamadı.');
+    return;
+  }
+  const prefill = buildLinkedPrefill(link, sourceRec, extra);
+  persistActiveFormTab();
+
+  state.nestedLink = {
+    fromScreenId: state.screenId,
+    fromId: sourceRec.id,
+    link,
+    convertPath: convertAct.path,
+    bodyKey: convertAct.bodyKey || null,
+    extra,
+  };
+
+  // Hedef ekranı "Yeni" gibi aç, prefill bas
+  state.screenId = target.id;
+  state.formMode = 'yeni';
+  state.formActiveTab = target.formTabs?.[0]?.id || null;
+  state.gridSel = { key: null, idx: null };
+  await ensureLookups(target);
+
+  let record = { ...(target.defaults || {}), ...prefill };
+  collectTabFields(target).forEach((f) => {
+    if (record[f.key] !== undefined) return;
+    if (f.type === 'checkbox') record[f.key] = true;
+    else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
+    else record[f.key] = '';
+  });
+  const seri = resolveNumeratorSeri(target, record);
+  if (seri && target.codeField) {
+    try { record[target.codeField] = await ayirKod(seri); }
+    catch (err) { toast(err.message); }
+  }
+  // grid satırlarını normalize et
+  (target.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'master-grid') {
+      const gkey = tab.grid?.key || '_detail';
+      const gtab = { key: gkey, fields: tab.grid?.fields || [] };
+      const raw = Array.isArray(record[gkey]) ? record[gkey] : [];
+      record[gkey] = normalizeGridRows(gtab, raw);
+    }
+    if (tab.kind === 'grid') {
+      const raw = Array.isArray(record[tab.key]) ? record[tab.key] : [];
+      record[tab.key] = normalizeGridRows(tab, raw);
+    }
+  });
+
+  state.formRecord = record;
+  addFormTab(target, 'yeni', record);
+  showView('form');
+  $('#homeSearchWrap').hidden = true;
+  $('#screenTitle').textContent = `${target.title} · Yeni (bağlı)`;
+  renderForm(target);
+  renderSidebar();
+  renderTabBar();
+  playNestedEnterAnimation();
+}
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -2011,16 +2218,28 @@ function closeOpenTab(tabKey) {
 function renderSidebar() {
   const nav = $('#sidebarNav');
   if (!nav) return;
-  nav.innerHTML = MODULES.map((mod) => `
-    <div class="mod-group">
-      <div class="mod-title">${mod.title}</div>
-      ${mod.screens.map((s) => `
-        <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
-          ${s.title}
-        </button>
-      `).join('')}
-    </div>
-  `).join('');
+  if (!state.sidebarOpen) state.sidebarOpen = {};
+  // Aktif ekranın modülü açık kalsın
+  const activeMod = findScreen(state.screenId)?.moduleId;
+  if (activeMod) state.sidebarOpen[activeMod] = true;
+
+  nav.innerHTML = MODULES.map((mod) => {
+    const open = Boolean(state.sidebarOpen[mod.id]);
+    return `
+    <div class="mod-group ${open ? 'open' : 'collapsed'}" data-mod="${mod.id}">
+      <button type="button" class="mod-title" data-mod-toggle="${mod.id}" aria-expanded="${open}">
+        <span class="mod-chevron" aria-hidden="true">${open ? '▾' : '▸'}</span>
+        <span class="mod-title-text">${mod.title}</span>
+      </button>
+      <div class="mod-items" ${open ? '' : 'hidden'}>
+        ${mod.screens.map((s) => `
+          <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
+            ${s.title}
+          </button>
+        `).join('')}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function showHome() {
@@ -2257,6 +2476,7 @@ const LOOKUP_ENDPOINTS = {
   'hareket-kodlari-sevk': '/hareket-kodlari?belge_tipi=SevkEmri&aktif=true',
   'hareket-kodlari-irsaliye': '/hareket-kodlari?belge_tipi=SatisIrsaliye&aktif=true',
   'hareket-kodlari-fatura': '/hareket-kodlari?belge_tipi=SatisFatura&aktif=true',
+  'hareket-kodlari-stok': '/hareket-kodlari?aktif=true&grup=inv',
 };
 
 
@@ -3157,6 +3377,7 @@ async function openForm(mode) {
 
   // Liste sekmesi yerinde kalsın; form yan (yeni) sekme olarak açılsın
   addListTab(screen, { activate: false });
+  state.nestedLink = null;
 
   state.formMode = mode;
   state.formActiveTab = screen.formTabs?.[0]?.id || null;
@@ -3263,6 +3484,17 @@ async function openForm(mode) {
   renderTabBar();
 }
 
+function playNestedEnterAnimation() {
+  const view = $('#viewForm');
+  if (!view) return;
+  view.classList.remove('nested-enter');
+  // reflow
+  void view.offsetWidth;
+  view.classList.add('nested-enter');
+  clearTimeout(playNestedEnterAnimation._t);
+  playNestedEnterAnimation._t = setTimeout(() => view.classList.remove('nested-enter'), 420);
+}
+
 async function saveForm() {
   const screen = findScreen(state.screenId);
   if (!screen || state.formMode === 'incele') return;
@@ -3272,6 +3504,39 @@ async function saveForm() {
   if (reqErr) {
     toast(reqErr);
     return;
+  }
+
+  // Bağlı ekrandan kayıt → kaynak dönüşüm API'si
+  if (state.nestedLink?.convertPath && state.formMode === 'yeni') {
+    const nl = state.nestedLink;
+    try {
+      const path = nl.convertPath.replace('{id}', nl.fromId);
+      const body = { ...(nl.extra || {}), ...master };
+      if (nl.bodyKey) body[nl.bodyKey] = nl.fromId;
+      // sevk: kalem miktarları
+      if (nl.link === 'siparis-sevk' && Array.isArray(master.satirlar)) {
+        body.miktarlar = {};
+        master.satirlar.forEach((s) => {
+          if (s.siparis_detay_id) body.miktarlar[s.siparis_detay_id] = s.miktar;
+        });
+      }
+      const sonuc = await api(path, { method: 'POST', body: JSON.stringify(body) });
+      toast('Bağlı belge oluşturuldu.');
+      state.nestedLink = null;
+      const formKey = state.activeTabKey;
+      state.formMode = null;
+      state.formRecord = null;
+      state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+      if (sonuc?.siparis_id) await openScreen('satis-siparisleri');
+      else if (sonuc?.sevk_no || (sonuc?.id && screen.id === 'sevk-emirleri')) await openScreen('sevk-emirleri');
+      else if (sonuc?.irsaliye_no || sonuc?.ettn) await openScreen('irsaliyeler');
+      else if (sonuc?.fatura?.id) await openScreen('satis-faturalari');
+      else await openScreen(screen.id);
+      return;
+    } catch (err) {
+      toast(err.message || 'Bağlı kayıt başarısız');
+      return;
+    }
   }
 
   // Ürün ağacı: kayıt için iç içe alt_satirlar formatı
@@ -3370,6 +3635,16 @@ function bindEvents() {
   if (nav && !nav.dataset.bound) {
     nav.dataset.bound = '1';
     nav.addEventListener('click', (e) => {
+      const toggle = e.target.closest('[data-mod-toggle]');
+      if (toggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        const modId = toggle.getAttribute('data-mod-toggle');
+        state.sidebarOpen = state.sidebarOpen || {};
+        state.sidebarOpen[modId] = !state.sidebarOpen[modId];
+        renderSidebar();
+        return;
+      }
       const screenBtn = e.target.closest('[data-screen]');
       if (!screenBtn) return;
       e.preventDefault();
@@ -3493,6 +3768,19 @@ function bindEvents() {
       try {
         const bodyExtra = await openConvertDialog(act, rec, kind);
         if (bodyExtra === null) return;
+
+        // Bağlı ekran: iç içe yeni form (onay API'si hariç)
+        if (kind !== 'approve' && act.nested?.screenId && act.nested?.link) {
+          await openLinkedForm({
+            targetScreenId: act.nested.screenId,
+            link: act.nested.link,
+            sourceRec: rec,
+            convertAct: act,
+            extra: bodyExtra || {},
+          });
+          return;
+        }
+
         let path = act.path.replace('{id}', rec.id);
         let body = { ...bodyExtra };
         if (act.bodyKey) body[act.bodyKey] = rec.id;
@@ -3501,14 +3789,14 @@ function bindEvents() {
         if (sonuc?.stok_uyari?.length) {
           toast('Uyarı: bazı kalemlerde depo bakiyesi yetersiz olabilir.');
         }
-        if (sonuc?.siparis_id) openScreen('satis-siparisleri');
+        if (kind === 'approve') {
+          state.formRecord = sonuc;
+          renderForm(screen);
+        } else if (sonuc?.siparis_id) openScreen('satis-siparisleri');
         else if (sonuc?.sevk_no) openScreen('sevk-emirleri');
         else if (sonuc?.irsaliye_no || sonuc?.ettn) openScreen('irsaliyeler');
         else if (sonuc?.fatura?.id) openScreen('satis-faturalari');
-        else if (kind === 'approve') {
-          state.formRecord = sonuc;
-          renderForm(screen);
-        } else openScreen(screen.id);
+        else openScreen(screen.id);
       } catch (err) {
         const msg = err.message || 'Dönüşüm başarısız';
         toast(msg);
