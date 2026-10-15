@@ -1,0 +1,72 @@
+01	NBwrkBhp24M	PUR 10011 : PURT04 - Manuel Satınalma İsteği Oluşturma	110
+02	GcDmPxhKr8g	PUR 10012 : PURT04 - Satınalma İsteği Silme	111
+03	8T6MFC1E1Ho	PUR 10013 : PURT04 - Satınalma İsteği Düzenleme	132
+04	eigX7zKjcpA	PUR 10014 : PURT04 - Satınalma İsteği Listeleme	132
+05	v4cDqL7HRHE	PUR 10015 : PURT04 - Satınalma İsteğinden Satınalma İsteği Oluşturma	147
+06	i3OpghffHDI	PUR 10022 : PURT04 - Satınalma İsteklerinde Toplu Değişiklik	163
+07	g46H4RQGSCE	PUR 10028 : PURT01 - Satınalma Teklif İsteği Oluştulması (Manuel)	103
+08	HCbaWpvytLY	PUR 10029 : PURT01 - Satınalma Teklif İsteği Oluştulması (Toplu)	118
+09	EkncwGyfru0	PUR 10030 : PURT01 - Satınalma Teklif İsteği Oluşturulması (Çoklu)	97
+10	jaA2WlWUHHY	PUR 10031 : PURT01 - Satınalma Teklif İsteği Silme	68
+11	1FvNS02kdVs	PUR 10032 : PURT01 - Satınalma Teklif İsteği Düzenleme	68
+12	jkNwZjFnck4	PUR 10033 : PURT01 - Satınalma Teklif İsteği Listeleme	56
+13	uAw8f7DY2rI	PUR 10059 : PURT02 - Satınalma Teklifi Oluşturulması (Manuel)	83
+14	aY1Q0uSpTMA	PUR 10060 : PURT02 - Satınalma Teklifi Oluşturulması (Teklif İsteğinden)	87
+15	sW5EqAmoPEc	PUR 10061 : PURT02 - Satınalma Teklifi Silme	61
+16	N3lcUSQ8yco	PUR 10062 : PURT02 - Satınalma Teklifi Düzenleme	83
+17	k_CwCWoCxrY	PUR 10063 : PURT02 - Satınalma Teklifi Listeleme	57
+18	0YcrJm_XbXY	PUR 10064 : PURT02 - Satınalma Teklifinden Satınalma Teklifi Oluşturma	83
+19	rgqGSR9lXnQ	PUR 10070 : PURT02 - Toplu Satınalma Teklifi Oluşturma	113
+20	GLpJ8SbFp1s	PUR 10099 : PURT03 - Satınalma Anlaşması Oluşturulması (Manuel)	156
+21	h_zxbP73XJ4	PUR 10100 : PURT03 - Satınalma Anlaşması Oluşturulması (Satınalma İsteklerinden)	142
+22	4GuheK0KLzk	PUR 10101 : PURT03 - Satınalma Anlaşması Silme	121
+23	WxvjXIdC18k	PUR 10102 : PURT03 - Satınalma Anlaşması Düzenleme	112
+24	xOdZVxqs-oY	PUR 10103 : PURT03 - Satınalma Anlaşması Listeleme	139
+25	j3yPBe-rw3o	PUR 10104 : PURT03 - Satınalma Anlaşmasından Satınalma Anlaşması Oluşturma	119
+26	JUpUv1zwlIQ	PUR 10110 : PURT03 - Değer Anlaşması Süreci	136
+27	1_u7HTbDGdA	PUR 10120 : PURT03 - Miktar Anlaşması Süreci	129
+28	N-iyizGfGHo	PUR 10183 : PURT03 - Merkezi Satınalma Anlaşması Oluşturma	173
+29	f6xgUNi5T_E	PUR 10184 : PURT03 - Merkezi Satınalma Anlaşması Üzerinden Satınalma Siparişi Oluşturma	112
+30	GcCj4aauh90	PUR 10210 : PURT05 - Paylaştırmalı Satınalma Siparişi Oluşturma	149
+31	am3LTqVMKlM	PUR 10219 : PURT05 - Satınalma Siparişi Oluşturma (Manuel)	112
+32	NOOfJoKLYEQ	PUR 10220 : PURT05 - Satınalma Siparişi Oluşturma (İsteklerden)	91
+33	K_QmTF5cZcc	PUR 10221 : PURT05 - Satınalma Siparişi Silme	58
+34	SusDs1gQscU	PUR 10222 : PURT05 - Satınalma Siparişi Düzenleme	69
+35	A8C830MkK8o	PUR 10223 : PURT05 - Satınalma Siparişi Listeleme	46
+36	uqzjj4GF1xs	PUR 10224 : PURT05 - Satınalma Siparişinden Satınalma Siparişi Oluşturma	103
+37	Na-pi0OMbLI	PUR 10350 : VERT01 - Faturaların Toplu Muhasebeleştirilmesi	89
+38	OBfuMCtVUV0	PUR 10360 : VERT01 - Fatura Muhasebeleştirme Prosesi	77
+39	QkXGUVjp2hk	PUR 10410 : VERT01 - Satınalma Faturası Oluşturma	166
+40	U0unjhyz0CE	PUR 10411 : VERT01 - Satınalma Faturası Silme	59
+41	SFXuJVLvXPI	PUR 10412 : VERT01 - Satınalma Faturası Düzenleme	68
+42	DG0S8wobrRs	PUR 10413 : VERT01 - Satınalma Faturası Listeleme	55
+43	Kh0ZGI7gKj8	PUR 10420 : VERT01 - Fark Faturası Prosesi	118
+44	zoG8uio2zIQ	PUR 10430 : VERT01 - Miktar İade Faturası Prosesi	96
+45	LiOYI5IzgmY	PUR 10440 : VERT01 - Tutar İade Faturası Prosesi	82
+46	nKfTuXpCodE	PUR 10450 : VERT01 - Masraf Faturaları Prosesi	168
+47	RcE7_ulAu-M	PUR 10455 : VERT01 - Manuel Fatura Süreci	94
+48	p6I4VRkGF_w	PUR 10460 : VERT01 - Satınalma Faturalarında Kur Farkı Konsepti	98
+49	Tf7uQu8Gx_E	PUR 10520 : PURT09 - Anlaşma & Teklif Bilgilerini Güncelleme	211
+50	JSYkAuEwl2k	PUR 10530 : PURT12 - Satınalma İsteği Başlatma	132
+51	K_Nmh4yL-8I	PUR 10550 : PURT33 - Malzemelere Göre Sipariş Durum Raporu (Rapor)	87
+52	LMYwMmVeQic	PUR 10560 : PURT40 - Malzemenin Alındığı Tedarikçiler (Rapor)	103
+53	Mu8bJVpR-wY	PUR 10570 : PURT41 - Tedarikçi Raporları (Rapor)	85
+54	acZCScK3_wo	PUR 10580 : PURT42 - Teslim Tarihine Göre Malzemeler Raporu (Rapor)	83
+55	SFj6WY1__S0	PUR 10590 : PURT43 - Belli Bir Gün İçinde Teslim Edilecek Malzemeler Raporu (Rapor)	114
+56	uKzOeeSbqt8	PUR 10600 : PURT44 - Envanter Girişi Olmayan Satınalma Siparişlerinin Onay Süreci	62
+57	D0Xu3oLThp4	PUR 10630 : PURT61 - Satınalma Bilgileri	86
+58	Yl5GeQZiV8w	PUR 10650 : VERT02 - İthalat Masraf Raporu (Satınalma Belgelerinden)	73
+59	2F_FQvvym8s	PUR 10660 : VERT04 - Fiyat Karşılaştırma Raporu (Rapor)	106
+60	cuiiuhKa07c	PUR 10670 : VERT06 - Faturaların Fiyat Farkları Denetimi ve Farklar İçin Fatura Oluşturma	233
+61	L9QVUMP-Trg	PUR 10690 : VERT11 - Satınalma İstatistiği (Rapor)	157
+62	oWWkoTz25Io	PUR 10710 : PURT10 - Fiyat Karşılaştırma Konsepti	104
+63	E20amo0mFus	PUR 10730 : PURT30 - Satınalma İsteği ve Satınalma Siparişine Göre Satınalma Gelişim Raporu	206
+64	Z4drQ-nhfWo	PUR 10760 : PURT05 - Termin Anlaşması	125
+65	-0iA9YGtCYk	PUR 10772 : PURT02 - İhale Yanıtı Oluşturma	159
+66	zUpfKdXO7LI	PUR 10780 : PURT03 - Malzeme Bağımsız Tutar Anlaşması Süreci	104
+67	o4p5HGBGmNQ	PUR 10781 : PURT31 - Malzeme Bağımsız Anlaşmalar Raporu	148
+68	gFYrtxTDENI	PUR 10790 : VERT01 - Genel Masraf Faturaları Süreci	200
+69	CCI6QHML6ik	PUR 10310 : PURT11 - Nakliye Konsepti	76
+70	f0QbC2bflKg	PUR 10773 : PURT34 - İhale Mukayese Raporu	182
+71	_ggBdUAit5w	PUR - 10771 : PURT01 - Satınalma İhalesi Oluşturma	285
+72	eSux0rOSyLw	PUR 10540 : PURT32 - Faturası Kapanmamış Sipariş Kalemleri	70

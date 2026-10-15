@@ -1,0 +1,41 @@
+kod;kategori;madde;skor;durum
+P01;Tablo mantığı;Belge referans omurgası (DOCTYPE + REFDOC);25;YAPILDI
+P02;Tablo mantığı;Hareket kodu zorunlu bağ;25;YAPILDI
+P04;Süreç;İrsaliye onayı depo doğrulama;25;YAPILDI
+P39;Düzeltme;İrsaliye→fatura durum kilidi;25;YAPILDI
+P03;Süreç;Satış rezervasyonu;20;YAPILMADI
+P32;Geliştirme;Açık miktar takibi;20;YAPILDI (iskelet)
+P09;Süreç;Sayım / stok düzeltme;20;YAPILMADI
+P12;Süreç;Üretim: satış siparişinden emir UI;20;YAPILMADI
+P31;Geliştirme;Dönüştür UX iyileştirme;20;YAPILDI
+P37;Düzeltme;Fatura liste filtresi tutarlılığı;20;YAPILMADI
+P38;Düzeltme;Negatif stok parametresi;20;YAPILDI
+P40;Süreç;Satınalma: teklif→sipariş dönüşüm;20;YAPILMADI
+P08;Süreç;Depolar arası transfer (TRO);16;YAPILMADI
+P11;Süreç;ATP basit kontrol;16;YAPILMADI (sevkte uyarı iskeleti var)
+P13;Süreç;Mal kabul → alış fatura bağ;16;YAPILMADI
+P14;Tablo mantığı;Firma/şirket çoklu yapı;16;YAPILMADI
+P18;e-Dönüşüm;PDF/QR irsaliye-fatura çıktısı;16;YAPILMADI
+P27;Süreç;İade süreçleri;16;YAPILMADI
+P05;Süreç;VER 3-yönlü fatura kontrol;15;YAPILMADI
+P06;Süreç;MRP iskeleti (v1);15;YAPILMADI
+P16;Finans;Belge→muhasebe entegrasyonu;15;YAPILMADI
+P15;Tablo mantığı;Destek tablosu genişletme;15;KISMİ (belge_tipleri)
+P07;Tablo mantığı;Stok türleri / durumlar;12;YAPILMADI
+P17;Finans;Cari borç/alacak ekstre;12;YAPILMADI
+P20;SYS;JWT + menü/depo yetkisi;12;YAPILMADI
+P28;Süreç;Fiyat listesi / iskonto koşulu;12;YAPILMADI
+P21;SYS;Audit / alan tarihçesi;12;YAPILMADI
+P29;Süreç;Ödeme koşulları / vade;12;YAPILMADI
+P33;Rapor;Operasyonel kokpit;12;YAPILMADI
+P25;Stok;Parti / seri takibi;9;YAPILMADI
+P26;Stok;WMS raf/konum hareketi;9;YAPILMADI
+P22;Üretim;Fiili maliyet (PRC/CAL sade);8;YAPILMADI
+P34;Unutulan;E-posta / bildirim;8;YAPILMADI
+P23;Üretim;Kapasite / çizelgeleme (CAP);6;YAPILMADI
+P24;BOM;Varyant / konfigüratör;6;YAPILMADI
+P30;Kalite;QLT kontrol noktası;6;YAPILMADI
+P35;Unutulan;Çoklu dil etiketleri UI;6;YAPILMADI
+P36;Unutulan;Alternatif stok / ikame;6;YAPILMADI
+P10;Geliştirme;Tek belge kalem motoru;4;YAPILMADI (bilinçli erteleme)
+P19;e-Dönüşüm;GİB entegrasyonu;3;YAPILMADI
