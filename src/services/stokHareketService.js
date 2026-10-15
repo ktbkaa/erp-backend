@@ -1,8 +1,11 @@
 const { sonrakiBelgeNo } = require('../utils/belgeNo');
+const { stokNegatifIzinliMi, onerilenDepolar } = require('../utils/belgeOmurga');
 
 /**
  * Merkezi stok hareket oluşturucu.
  * miktar her zaman pozitif; yön +1 giriş / -1 çıkış.
+ * hareketKoduId verilirse stok_hareketleri.hareket_kodu_id yazılır;
+ * eksi bakiye: hareket.eksi_bakiye_izin VEYA STOK_NEGATIF=Evet.
  */
 async function stokHareketOlustur(client, {
     hareketTipi,
@@ -11,6 +14,7 @@ async function stokHareketOlustur(client, {
     belgeTipi = null,
     belgeId = null,
     aciklama = null,
+    hareketKoduId = null,
     satirlar,
 }) {
     if (!depoId) throw new Error('Stok hareketi için depo_id zorunludur.');
@@ -18,16 +22,29 @@ async function stokHareketOlustur(client, {
         throw new Error('Stok hareketi için en az bir satır gerekli.');
     }
 
+    let hareketKodu = null;
+    if (hareketKoduId) {
+        const hk = await client.query(
+            `SELECT * FROM hareket_kodlari WHERE id=$1`,
+            [hareketKoduId]
+        );
+        hareketKodu = hk.rows[0] || null;
+        if (!hareketKodu) throw new Error(`Hareket kodu bulunamadı: id=${hareketKoduId}`);
+    }
+
+    const paramNegatif = await stokNegatifIzinliMi(client);
+    const eksiIzin = Boolean(hareketKodu?.eksi_bakiye_izin) || paramNegatif;
+
     const hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
 
     const hareketRes = await client.query(
         `
         INSERT INTO stok_hareketleri
-            (hareket_no, hareket_tipi, is_yeri_id, depo_id, belge_tipi, belge_id, aciklama)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+            (hareket_no, hareket_tipi, is_yeri_id, depo_id, belge_tipi, belge_id, aciklama, hareket_kodu_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *;
         `,
-        [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, aciklama]
+        [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, aciklama, hareketKoduId || null]
     );
     const hareket = hareketRes.rows[0];
 
@@ -39,13 +56,25 @@ async function stokHareketOlustur(client, {
         if (Number(s.miktar) <= 0) throw new Error('Hareket miktarı 0 dan büyük olmalı.');
         if (![1, -1].includes(Number(s.yon))) throw new Error('yon sadece 1 veya -1 olabilir.');
 
-        // Çıkışta yeterli bakiye var mı?
-        if (Number(s.yon) === -1) {
+        if (Number(s.yon) === -1 && !eksiIzin) {
             const bakiye = await depoStokBakiye(client, depoId, s.stok_id);
             if (bakiye + 1e-9 < Number(s.miktar)) {
-                throw new Error(
-                    `Yetersiz stok. Depo=${depoId}, stok_id=${s.stok_id}, bakiye=${bakiye}, istenen=${s.miktar}`
+                const oneriler = await onerilenDepolar(client, s.stok_id, Number(s.miktar), depoId);
+                const oneriMetin = oneriler.length
+                    ? ` Önerilen depolar: ${oneriler.map((o) => `${o.depo_kodu}(${o.bakiye})`).join(', ')}`
+                    : ' Başka depoda yeterli bakiye yok.';
+                const err = new Error(
+                    `Yetersiz stok. Depo=${depoId}, stok_id=${s.stok_id}, bakiye=${bakiye}, istenen=${s.miktar}.${oneriMetin}`
                 );
+                err.code = 'YETERSIZ_STOK';
+                err.detay = {
+                    depo_id: depoId,
+                    stok_id: s.stok_id,
+                    bakiye,
+                    istenen: Number(s.miktar),
+                    onerilen_depolar: oneriler,
+                };
+                throw err;
             }
         }
 

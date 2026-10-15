@@ -183,9 +183,10 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-/** Teklif → Satış Siparişi */
+/** Teklif → Satış Siparişi (P01 kaynak_belge + satır ref) */
 router.post('/:id/siparise-donustur', async (req, res) => {
     try {
+        const { BELGE_TIPI, hareketKoduBul } = require('../src/utils/belgeOmurga');
         const teklif = await teklifGetir(req.params.id);
         if (!teklif) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         if (!['Onayli', 'Taslak'].includes(teklif.durum)) {
@@ -194,59 +195,40 @@ router.post('/:id/siparise-donustur', async (req, res) => {
 
         const siparisId = await withTransaction(pool, async (client) => {
             const no = await sonrakiBelgeNo(client, 'SATIS_SIPARIS');
-            let hk = null;
-            const d = await client.query(
-                `SELECT id FROM hareket_kodlari WHERE belge_tipi='SatisSiparis' AND aktif ORDER BY id LIMIT 1`
-            );
-            hk = d.rows[0]?.id || null;
+            const hk = await hareketKoduBul(client, BELGE_TIPI.SATIS_SIPARIS);
 
-            const hasStokId = await client.query(
-                `SELECT 1 FROM information_schema.columns
-                 WHERE table_name='siparis_detaylari' AND column_name='stok_id'`
-            );
             const sip = await client.query(
                 `
                 INSERT INTO siparisler
                     (siparis_no, cari_id, cari_kodu, cari_adi, siparis_tarihi, siparis_turu,
-                     toplam_tutar, durum, teklif_id, hareket_kodu_id, para_birimi, aciklama)
-                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9)
+                     toplam_tutar, durum, teklif_id, hareket_kodu_id, para_birimi, aciklama,
+                     kaynak_belge_tipi, kaynak_belge_id)
+                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9,$10,$11)
                 RETURNING id
                 `,
                 [
                     no, teklif.cari_id, teklif.cari_kodu, teklif.cari_adi, teklif.toplam_tutar,
-                    teklif.id, hk, teklif.para_birimi || 'TRY',
+                    teklif.id, hk?.id || null, teklif.para_birimi || 'TRY',
                     `Teklif ${teklif.teklif_no} dönüşümü`,
+                    BELGE_TIPI.SATIS_TEKLIF, teklif.id,
                 ]
             );
             const sid = sip.rows[0].id;
             for (const s of teklif.satirlar) {
-                if (hasStokId.rows[0]) {
-                    await client.query(
-                        `
-                        INSERT INTO siparis_detaylari
-                            (siparis_id, stok_id, stok_kodu, stok_adi, stok_birimi, miktar, birim_fiyat, toplam_tutar,
-                             iskonto_oran, iskonto_tutari, kdv_oran, kdv_tutari, sira_no)
-                        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-                        `,
-                        [
-                            sid, s.stok_id, s.stok_kodu, s.stok_adi, s.birim, s.miktar, s.birim_fiyat,
-                            Number(s.mal_hizmet_tutari) + Number(s.kdv_tutari),
-                            s.iskonto_oran, s.iskonto_tutari, s.kdv_oran, s.kdv_tutari, s.sira_no,
-                        ]
-                    );
-                } else {
-                    await client.query(
-                        `
-                        INSERT INTO siparis_detaylari
-                            (siparis_id, stok_kodu, stok_adi, stok_birimi, miktar, birim_fiyat, toplam_tutar)
-                        VALUES ($1,$2,$3,$4,$5,$6,$7)
-                        `,
-                        [
-                            sid, s.stok_kodu, s.stok_adi, s.birim, s.miktar, s.birim_fiyat,
-                            Number(s.mal_hizmet_tutari) + Number(s.kdv_tutari),
-                        ]
-                    );
-                }
+                await client.query(
+                    `
+                    INSERT INTO siparis_detaylari
+                        (siparis_id, stok_id, stok_kodu, stok_adi, stok_birimi, miktar, birim_fiyat, toplam_tutar,
+                         iskonto_oran, iskonto_tutari, kdv_oran, kdv_tutari, sira_no, teklif_satir_id)
+                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+                    `,
+                    [
+                        sid, s.stok_id, s.stok_kodu, s.stok_adi, s.birim, s.miktar, s.birim_fiyat,
+                        Number(s.mal_hizmet_tutari) + Number(s.kdv_tutari),
+                        s.iskonto_oran, s.iskonto_tutari, s.kdv_oran, s.kdv_tutari, s.sira_no,
+                        s.id,
+                    ]
+                );
             }
             await client.query(
                 `UPDATE satis_teklifleri SET durum='SipariseDonustu' WHERE id=$1`,

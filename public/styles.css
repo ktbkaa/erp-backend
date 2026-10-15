@@ -843,3 +843,98 @@ tr.selected td { background: var(--accent-soft); }
   }
   .list-side-nav button { width: auto; }
 }
+
+/* Dönüşüm / onay diyaloğu (P04 / P31) */
+.cvt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(19, 32, 51, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 80;
+  padding: 1rem;
+}
+.cvt-overlay[hidden] { display: none !important; }
+.cvt-dialog {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 48px rgba(19, 32, 51, 0.22);
+  overflow: hidden;
+}
+.cvt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #f7fbfa, #fff);
+}
+.cvt-head h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.05rem;
+}
+.cvt-body {
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+.cvt-body label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.cvt-body select,
+.cvt-body input {
+  font: inherit;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fff;
+}
+.cvt-warn {
+  margin: 0 1rem 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: #fff4e8;
+  border: 1px solid #f0c48a;
+  color: #7a3e00;
+  font-size: 0.86rem;
+  white-space: pre-wrap;
+}
+.cvt-warn[hidden] { display: none !important; }
+.cvt-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--line);
+}
+.zincir-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.65rem;
+  background: #f3f7f6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+.zincir-strip span {
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.zincir-strip span.aktif {
+  background: var(--accent-soft);
+  border-color: #9fd4c7;
+  color: #0a5c4f;
+  font-weight: 600;
+}

@@ -17,7 +17,10 @@ async function siparisGetir(id) {
     if (!s.rows[0]) return null;
     const kalemler = await pool.query(
         `
-        SELECT sd.*, st.stok_kodu AS stok_kodu_ref, st.stok_adi AS stok_adi_ref
+        SELECT sd.*, st.stok_kodu AS stok_kodu_ref, st.stok_adi AS stok_adi_ref,
+               GREATEST(0, COALESCE(sd.miktar,0) - COALESCE(sd.sevk_edilen_miktar,0)) AS kalan_sevk_miktar,
+               GREATEST(0, COALESCE(sd.miktar,0) - COALESCE(sd.irsaliye_edilen_miktar,0)) AS kalan_irsaliye_miktar,
+               GREATEST(0, COALESCE(sd.miktar,0) - COALESCE(sd.fatura_edilen_miktar,0)) AS kalan_fatura_miktar
         FROM siparis_detaylari sd
         LEFT JOIN stoklar st ON st.id = sd.stok_id
         WHERE sd.siparis_id = $1
@@ -282,38 +285,56 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-/** Satış siparişi → Sevk emri */
+/** Satış siparişi → Sevk emri (P01 ref + P04 depo + P32 açık miktar) */
 router.post('/:id/sevk-emri-olustur', async (req, res) => {
     try {
+        const { BELGE_TIPI, hareketKoduBul, kalanMiktar, onerilenDepolar } = require('../src/utils/belgeOmurga');
+        const { depoStokBakiye } = require('../src/services/stokHareketService');
         const siparis = await siparisGetir(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.durum)) {
             return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.durum}` });
         }
-        const { depo_id } = req.body;
+        const depo_id = Number(req.body.depo_id);
         if (!depo_id) return res.status(400).json({ hata: 'depo_id zorunlu.' });
+
+        // Depo bakiyesi ön uyarısı (sevk stok düşmez ama kullanıcıyı bilgilendir)
+        const uyariSatirlar = [];
+        for (const k of siparis.kalemler || []) {
+            if (!k.stok_id) continue;
+            const kalan = kalanMiktar(k);
+            if (kalan <= 0) continue;
+            const bakiye = await depoStokBakiye(pool, depo_id, k.stok_id);
+            if (bakiye + 1e-9 < kalan) {
+                uyariSatirlar.push({
+                    stok_id: k.stok_id,
+                    stok_kodu: k.stok_kodu || k.stok_kodu_ref,
+                    kalan,
+                    bakiye,
+                    onerilen_depolar: await onerilenDepolar(pool, k.stok_id, kalan, depo_id),
+                });
+            }
+        }
+        if (uyariSatirlar.length && req.body.stok_uyari_yoksay !== true) {
+            // Sevk emri stok düşürmez; yine de net uyarı + öneri dön (zorla devam için flag)
+            // Varsayılan: oluşturmaya izin ver ama yanıtta uyari taşı — UI gösterecek.
+            // Kritik stok yoksa bile devam.
+        }
 
         const { sevkGetir } = require('./sevk_emirleri');
         const id = await withTransaction(pool, async (client) => {
-            const sn = sonrakiBelgeNo;
-            const no = await sn(client, 'SEVK_EMRI');
-            let hk = null;
-            const d = await client.query(
-                `SELECT id FROM hareket_kodlari WHERE belge_tipi='SevkEmri' AND aktif ORDER BY id LIMIT 1`
-            );
-            hk = d.rows[0]?.id || null;
-            const cari = await client.query(
-                `SELECT * FROM cariler WHERE id=$1`,
-                [siparis.cari_id]
-            );
+            const no = await sonrakiBelgeNo(client, 'SEVK_EMRI');
+            const hk = await hareketKoduBul(client, BELGE_TIPI.SEVK_EMRI);
+            const cari = await client.query(`SELECT * FROM cariler WHERE id=$1`, [siparis.cari_id]);
             const c = cari.rows[0] || {};
             const baslik = await client.query(
                 `
                 INSERT INTO sevk_emirleri
                     (sevk_no, siparis_id, cari_id, depo_id, sevk_tarihi, sevk_adresi,
-                     sevk_il, sevk_ilce, sevk_ulke, sevk_posta_kodu, durum, hareket_kodu_id, aciklama)
+                     sevk_il, sevk_ilce, sevk_ulke, sevk_posta_kodu, durum, hareket_kodu_id, aciklama,
+                     kaynak_belge_tipi, kaynak_belge_id)
                 VALUES ($1,$2,$3,$4,CURRENT_DATE,$5,$6,$7,COALESCE($8,'Türkiye'),$9,
-                        COALESCE($10,'Onayli'),$11,$12)
+                        COALESCE($10,'Onayli'),$11,$12,$13,$14)
                 RETURNING id
                 `,
                 [
@@ -321,25 +342,66 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                     req.body.sevk_adresi || siparis.sevk_adresi || c.fatura_adres1 || c.adres,
                     req.body.sevk_il || c.il, req.body.sevk_ilce || c.ilce,
                     req.body.sevk_ulke || c.ulke, req.body.sevk_posta_kodu || c.posta_kodu,
-                    req.body.durum || 'Onayli', hk, req.body.aciklama || `Sipariş ${siparis.siparis_no}`,
+                    req.body.durum || 'Onayli', hk?.id || null,
+                    req.body.aciklama || `Sipariş ${siparis.siparis_no}`,
+                    BELGE_TIPI.SATIS_SIPARIS, siparis.id,
                 ]
             );
             const sid = baslik.rows[0].id;
             let sira = 1;
+            let sevkEdilenVar = false;
             for (const k of siparis.kalemler || []) {
                 if (!k.stok_id) continue;
+                const kalan = kalanMiktar(k);
+                if (kalan <= 0) continue;
+                const miktar = req.body.miktarlar?.[k.id] != null
+                    ? Number(req.body.miktarlar[k.id])
+                    : kalan;
+                if (miktar <= 0) continue;
+                if (miktar > kalan + 1e-9) {
+                    throw new Error(`Satır ${k.id}: sevk miktarı açık miktarı aşıyor (açık=${kalan}).`);
+                }
                 await client.query(
                     `
                     INSERT INTO sevk_emri_satirlari
-                        (sevk_id, sira_no, stok_id, siparis_detay_id, miktar, birim)
-                    VALUES ($1,$2,$3,$4,$5,$6)
+                        (sevk_id, sira_no, stok_id, siparis_detay_id, miktar, birim,
+                         kaynak_belge_tipi, kaynak_belge_id, kaynak_belge_satir_id)
+                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
                     `,
-                    [sid, sira++, k.stok_id, k.id, k.miktar, k.stok_birimi || k.birim || null]
+                    [
+                        sid, sira++, k.stok_id, k.id, miktar, k.stok_birimi || k.birim || null,
+                        BELGE_TIPI.SATIS_SIPARIS, siparis.id, k.id,
+                    ]
                 );
+                await client.query(
+                    `UPDATE siparis_detaylari
+                     SET sevk_edilen_miktar = COALESCE(sevk_edilen_miktar,0) + $2
+                     WHERE id=$1`,
+                    [k.id, miktar]
+                );
+                sevkEdilenVar = true;
             }
+            if (!sevkEdilenVar) throw new Error('Sevk edilecek açık miktar yok.');
+
+            // Sipariş durumu: kısmi / kapalı (sevk bazlı)
+            const guncel = await client.query(
+                `SELECT miktar, sevk_edilen_miktar FROM siparis_detaylari WHERE siparis_id=$1`,
+                [siparis.id]
+            );
+            const hepsi = guncel.rows.every(
+                (r) => Number(r.sevk_edilen_miktar) + 1e-9 >= Number(r.miktar)
+            );
+            await client.query(
+                `UPDATE siparisler SET durum=$2 WHERE id=$1`,
+                [siparis.id, hepsi ? 'Kapali' : 'Kismi']
+            );
             return sid;
         });
-        res.status(201).json(await sevkGetir(id));
+        const sevk = await sevkGetir(id);
+        res.status(201).json({
+            ...sevk,
+            stok_uyari: uyariSatirlar.length ? uyariSatirlar : undefined,
+        });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

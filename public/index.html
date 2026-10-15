@@ -8,10 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261015b" />
+  <link rel="stylesheet" href="/styles.css?v=20261015c" />
 </head>
 <body>
   <div class="app-shell" id="appShell">
+
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand" id="btnHome" title="Ana sayfa">
         <span class="brand-mark">KTB</span>
@@ -20,7 +21,7 @@
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot">
         <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
-        <span class="build-tag" id="buildTag">UI build 20261015b</span>
+        <span class="build-tag" id="buildTag">UI build 20261015c</span>
       </div>
     </aside>
 
@@ -119,6 +120,22 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261015b"></script>
+  <div id="convertDialog" class="cvt-overlay" hidden>
+    <div class="cvt-dialog" role="dialog" aria-modal="true" aria-labelledby="cvtTitle">
+      <header class="cvt-head">
+        <h2 id="cvtTitle">Dönüşüm</h2>
+        <button type="button" class="icon-btn" id="cvtClose" aria-label="Kapat">×</button>
+      </header>
+      <div class="cvt-body" id="cvtBody"></div>
+      <div class="cvt-warn" id="cvtWarn" hidden></div>
+      <footer class="cvt-foot">
+        <button type="button" class="btn ghost" id="cvtCancel">Vazgeç</button>
+        <button type="button" class="btn" id="cvtOk">Devam</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="/app.js?v=20261015c"></script>
 </body>
 </html>
+

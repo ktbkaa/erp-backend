@@ -55,6 +55,7 @@ app.use('/satis-teklifleri', require('./routes/satis_teklifleri'));
 app.use('/sevk-emirleri', require('./routes/sevk_emirleri'));
 app.use('/irsaliyeler', require('./routes/irsaliyeler'));
 app.use('/hareket-kodlari', require('./routes/hareket_kodlari'));
+app.use('/belge-tipleri', require('./routes/belge_tipleri'));
 app.use('/urun-agaclari', require('./routes/urun_agaclari'));
 app.use('/bom', require('./routes/bom_araclari'));
 app.use('/stok-siniflari', require('./routes/stok_siniflari'));

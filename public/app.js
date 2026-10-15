@@ -1289,7 +1289,7 @@ const MODULES = [
         numeratorSeri: 'SATIS_SIPARIS',
         codeField: 'siparis_no',
         nameField: 'cari_adi',
-        convertAction: { label: 'Sevk Emri Oluştur', path: '/siparisler/{id}/sevk-emri-olustur', needs: ['depo_id'] },
+        convertAction: { label: 'Sevk Emri Oluştur', path: '/siparisler/{id}/sevk-emri-olustur', needs: ['depo_id'], dialog: 'depo' },
         filters: [
           { key: 'siparis_no', label: 'Sipariş no' },
           { key: 'cari_adi', label: 'Cari' },
@@ -1301,6 +1301,7 @@ const MODULES = [
           { key: 'siparis_turu', label: 'Tür' },
           { key: 'durum', label: 'Durum' },
           { key: 'toplam_tutar', label: 'Tutar' },
+          { key: 'kaynak_belge_tipi', label: 'Kaynak tip' },
         ],
         masterFields: [
           { key: 'siparis_no', label: 'Sipariş no', code: true },
@@ -1310,11 +1311,15 @@ const MODULES = [
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'] },
           { key: 'sevk_adresi', label: 'Sevk adresi' },
           { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+          { key: 'kaynak_belge_tipi', label: 'Kaynak belge tipi' },
+          { key: 'kaynak_belge_id', label: 'Kaynak belge id', type: 'number' },
         ],
         detailFields: [
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
           { key: 'miktar', label: 'Miktar', type: 'number' },
           { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'sevk_edilen_miktar', label: 'Sevk edilen', type: 'number' },
+          { key: 'kalan_sevk_miktar', label: 'Kalan sevk', type: 'number' },
         ],
         detailKey: 'kalemler',
         detailSlots: 5,
@@ -1327,7 +1332,7 @@ const MODULES = [
         numeratorSeri: 'SEVK_EMRI',
         codeField: 'sevk_no',
         nameField: 'cari_adi',
-        convertAction: { label: 'İrsaliye Oluştur', path: '/irsaliyeler/sevk-emrinden', bodyKey: 'sevk_emri_id' },
+        convertAction: { label: 'İrsaliye Oluştur', path: '/irsaliyeler/sevk-emrinden', bodyKey: 'sevk_emri_id', dialog: 'irsaliye' },
         filters: [
           { key: 'sevk_no', label: 'Sevk no' },
           { key: 'siparis_no', label: 'Sipariş' },
@@ -1352,6 +1357,8 @@ const MODULES = [
           { key: 'sevk_ulke', label: 'Ülke' },
           { key: 'sevk_posta_kodu', label: 'Posta kodu' },
           { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-sevk', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+          { key: 'kaynak_belge_tipi', label: 'Kaynak belge tipi' },
+          { key: 'kaynak_belge_id', label: 'Kaynak belge id', type: 'number' },
         ],
         detailFields: [
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
@@ -1370,7 +1377,7 @@ const MODULES = [
         codeField: 'irsaliye_no',
         nameField: 'cari_adi',
         convertAction: { label: 'Fatura Oluştur', path: '/irsaliyeler/{id}/fatura-olustur' },
-        approveAction: { label: 'Onayla (Stok Çıkış)', path: '/irsaliyeler/{id}/onayla' },
+        approveAction: { label: 'Onayla (Stok Çıkış)', path: '/irsaliyeler/{id}/onayla', dialog: 'onay-depo' },
         filters: [
           { key: 'irsaliye_no', label: 'İrsaliye no' },
           { key: 'cari_adi', label: 'Cari' },
@@ -1379,8 +1386,8 @@ const MODULES = [
         columns: [
           { key: 'irsaliye_no', label: 'İrsaliye', mono: true },
           { key: 'cari_adi', label: 'Cari' },
-          { key: 'senaryo', label: 'Senaryo' },
-          { key: 'irsaliye_tipi', label: 'Tip' },
+          { key: 'depo_kodu', label: 'Depo', mono: true },
+          { key: 'kaynak_belge_tipi', label: 'Kaynak' },
           { key: 'sevk_tarihi', label: 'Sevk tarihi' },
           { key: 'durum', label: 'Durum' },
         ],
@@ -1390,6 +1397,8 @@ const MODULES = [
           { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
           { key: 'siparis_id', label: 'Sipariş', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no' },
           { key: 'sevk_emri_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'sevk_no' },
+          { key: 'kaynak_belge_tipi', label: 'Kaynak belge tipi' },
+          { key: 'kaynak_belge_id', label: 'Kaynak belge id', type: 'number' },
           { key: 'senaryo', label: 'Senaryo', type: 'select', options: ['TEMELIRSALIYE'] },
           { key: 'irsaliye_tipi', label: 'İrsaliye tipi', type: 'select', options: ['SEVK'] },
           { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
@@ -1424,6 +1433,8 @@ const MODULES = [
               { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
               { key: 'siparis_id', label: 'Sipariş', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no' },
               { key: 'sevk_emri_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'sevk_no' },
+              { key: 'kaynak_belge_tipi', label: 'Kaynak belge tipi' },
+              { key: 'kaynak_belge_id', label: 'Kaynak belge id', type: 'number' },
               { key: 'senaryo', label: 'Senaryo', type: 'select', options: ['TEMELIRSALIYE'] },
               { key: 'irsaliye_tipi', label: 'Tip', type: 'select', options: ['SEVK'] },
               { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
@@ -1762,9 +1773,124 @@ async function api(path, options = {}) {
   try { data = text ? JSON.parse(text) : null; } catch (_) { /* ignore */ }
   if (!res.ok) {
     const msg = (data && (data.hata || data.detay)) || text || res.statusText;
-    throw new Error(msg);
+    const err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    err.payload = data;
+    err.status = res.status;
+    throw err;
   }
   return data;
+}
+
+/** Dönüşüm / onay diyaloğu (P04 depo seçimi, P31 prompt kaldır) */
+let _cvtResolve = null;
+
+function showConvertWarn(text) {
+  const w = $('#cvtWarn');
+  if (!w) return;
+  w.hidden = !text;
+  w.textContent = text || '';
+}
+
+function closeConvertDialog(value) {
+  const overlay = $('#convertDialog');
+  if (overlay) overlay.hidden = true;
+  showConvertWarn('');
+  if (_cvtResolve) {
+    const r = _cvtResolve;
+    _cvtResolve = null;
+    r(value);
+  }
+}
+
+async function openConvertDialog(act, rec, kind) {
+  const dialog = act.dialog;
+  if (!dialog) return {};
+
+  const overlay = $('#convertDialog');
+  const body = $('#cvtBody');
+  const title = $('#cvtTitle');
+  const okBtn = $('#cvtOk');
+  if (!overlay || !body || !title) return {};
+
+  title.textContent = act.label || 'Dönüşüm';
+  showConvertWarn('');
+
+  const depolar = await api('/depolar').catch(() => []);
+  const depoOpts = (depolar || []).map((d) =>
+    `<option value="${d.id}" ${Number(d.id) === Number(rec.depo_id) ? 'selected' : ''}>${d.depo_kodu} — ${d.depo_adi}</option>`
+  ).join('');
+
+  if (dialog === 'depo') {
+    body.innerHTML = `
+      <p>Sevk emri için çıkış deposunu seçin. Açık sipariş miktarları kullanılır.</p>
+      <label>Depo
+        <select id="cvtDepo">${depoOpts || '<option value="">Depo yok</option>'}</select>
+      </label>`;
+  } else if (dialog === 'irsaliye') {
+    body.innerHTML = `
+      <p>Sevk emrinden irsaliye. Depo ve taşıyıcı bilgilerini girin.</p>
+      <label>Depo
+        <select id="cvtDepo">${depoOpts || '<option value="">Depo yok</option>'}</select>
+      </label>
+      <label>Araç plaka <input id="cvtPlaka" value="${rec.arac_plaka || ''}" /></label>
+      <label>Şoför adı <input id="cvtSoforAdi" value="${rec.sofor_adi || ''}" /></label>
+      <label>Şoför soyadı <input id="cvtSoforSoyadi" value="${rec.sofor_soyadi || ''}" /></label>
+      <label>Şoför TCKN <input id="cvtSoforTckn" value="${rec.sofor_tckn || ''}" /></label>
+      <label>Taşıyıcı ünvan <input id="cvtTasiyici" value="${rec.tasiyici_unvan || ''}" /></label>
+      <label>Taşıyıcı VKN <input id="cvtTasiyiciVkn" value="${rec.tasiyici_vkn || ''}" /></label>`;
+  } else if (dialog === 'onay-depo') {
+    body.innerHTML = `
+      <p>İrsaliye onayı stok çıkışı yapar. Depo bakiyesini doğrulayın.</p>
+      <label>Depo
+        <select id="cvtDepo">${depoOpts || '<option value="">Depo yok</option>'}</select>
+      </label>
+      <button type="button" class="btn ghost" id="cvtCheckDepo">Bakiyeyi kontrol et</button>`;
+  } else {
+    return {};
+  }
+
+  overlay.hidden = false;
+
+  const checkBtn = $('#cvtCheckDepo');
+  if (checkBtn) {
+    checkBtn.onclick = async () => {
+      const depoId = Number($('#cvtDepo')?.value || rec.depo_id);
+      try {
+        const k = await api(`/irsaliyeler/${rec.id}/depo-kontrol?depo_id=${depoId}`);
+        if (k.uygun) showConvertWarn('Depo bakiyesi yeterli.');
+        else {
+          const det = (k.satirlar || []).filter((s) => !s.yeterli).map((s) => {
+            const onr = (s.onerilen_depolar || []).map((o) => `${o.depo_kodu}(${o.bakiye})`).join(', ') || '—';
+            return `${s.stok_kodu}: bakiye ${s.bakiye} / gereken ${s.miktar} → ${onr}`;
+          }).join('\n');
+          showConvertWarn(det || 'Yetersiz stok.');
+        }
+      } catch (e) {
+        showConvertWarn(e.message);
+      }
+    };
+  }
+
+  return new Promise((resolve) => {
+    _cvtResolve = resolve;
+    okBtn.onclick = () => {
+      const depoId = Number($('#cvtDepo')?.value || 0);
+      if ((dialog === 'depo' || dialog === 'irsaliye' || dialog === 'onay-depo') && !depoId) {
+        showConvertWarn('Depo seçimi zorunlu.');
+        return;
+      }
+      const payload = { depo_id: depoId };
+      if (dialog === 'irsaliye') {
+        payload.arac_plaka = $('#cvtPlaka')?.value || null;
+        payload.sofor_adi = $('#cvtSoforAdi')?.value || null;
+        payload.sofor_soyadi = $('#cvtSoforSoyadi')?.value || null;
+        payload.sofor_tckn = $('#cvtSoforTckn')?.value || null;
+        payload.tasiyici_unvan = $('#cvtTasiyici')?.value || null;
+        payload.tasiyici_vkn = $('#cvtTasiyiciVkn')?.value || null;
+      }
+      closeConvertDialog(payload);
+    };
+  });
 }
 
 function norm(v) {
@@ -2578,6 +2704,34 @@ function renderRotaFlow(tab, rec) {
     </div>`;
 }
 
+function renderZincirStrip(screen, rec) {
+  let strip = $('#zincirStrip');
+  if (!strip) {
+    strip = document.createElement('div');
+    strip.id = 'zincirStrip';
+    strip.className = 'zincir-strip';
+    const top = document.querySelector('.form-topbar');
+    if (top && top.parentNode) top.parentNode.insertBefore(strip, top.nextSibling);
+  }
+  if (screen.id !== 'irsaliyeler' || !rec?.id) {
+    strip.hidden = true;
+    strip.innerHTML = '';
+    return;
+  }
+  strip.hidden = false;
+  strip.innerHTML = '<span>Zincir yükleniyor…</span>';
+  api(`/irsaliyeler/${rec.id}/zincir`).then((z) => {
+    const adimlar = z.adimlar || [];
+    strip.innerHTML = adimlar.map((a) => {
+      const aktif = a.tip === 'IRSALIYE' && Number(a.id) === Number(rec.id);
+      return `<span class="${aktif ? 'aktif' : ''}">${a.tip}: ${a.no || a.id} (${a.durum || '—'})</span>`;
+    }).join('') || '<span>Zincir yok</span>';
+  }).catch(() => {
+    strip.innerHTML = '';
+    strip.hidden = true;
+  });
+}
+
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
@@ -2587,18 +2741,30 @@ function renderForm(screen) {
   const conv = $('#btnFormConvert');
   if (conv) {
     const act = screen.convertAction || screen.approveAction;
-    const show = Boolean(act && rec.id && state.formMode !== 'yeni');
+    // P39: Taslak irsaliyede fatura dönüşümü gösterme — önce onay
+    let show = Boolean(act && rec.id && state.formMode !== 'yeni');
+    if (screen.id === 'irsaliyeler' && rec.durum === 'Taslak') {
+      show = Boolean(screen.approveAction);
+    }
+    if (screen.id === 'irsaliyeler' && rec.durum === 'Onayli') {
+      show = Boolean(screen.convertAction);
+    }
+    if (screen.id === 'irsaliyeler' && rec.durum === 'FaturayaDonustu') {
+      show = false;
+    }
     conv.hidden = !show;
     if (show) {
-      const label = (state.formMode === 'incele' && screen.approveAction && rec.durum === 'Taslak')
+      const label = (screen.approveAction && rec.durum === 'Taslak')
         ? screen.approveAction.label
         : (screen.convertAction?.label || act.label);
       conv.textContent = label;
-      conv.dataset.convertKind = (screen.approveAction && rec.durum === 'Taslak' && state.formMode !== 'yeni')
+      conv.dataset.convertKind = (screen.approveAction && rec.durum === 'Taslak')
         ? 'approve'
         : 'convert';
     }
   }
+  // Belge zinciri şeridi (irsaliye)
+  renderZincirStrip(screen, rec);
 
   const tabsLayout = $('#formTabsLayout');
   const classic = $('#formSplitClassic');
@@ -3252,25 +3418,16 @@ function bindEvents() {
       const act = kind === 'approve' ? screen.approveAction : screen.convertAction;
       if (!act) return;
       try {
+        const bodyExtra = await openConvertDialog(act, rec, kind);
+        if (bodyExtra === null) return;
         let path = act.path.replace('{id}', rec.id);
-        let body = {};
+        let body = { ...bodyExtra };
         if (act.bodyKey) body[act.bodyKey] = rec.id;
-        if (act.needs?.includes('depo_id')) {
-          const depoId = prompt('Sevk için depo id girin (veya depo listesinden id):');
-          if (!depoId) return;
-          body.depo_id = Number(depoId);
-        }
-        // İrsaliye oluştururken taşıyıcı alanları iste
-        if (path.includes('/irsaliyeler/sevk-emrinden')) {
-          body.arac_plaka = prompt('Araç plaka (örn. 34FM6270):', rec.arac_plaka || '') || null;
-          body.sofor_adi = prompt('Şoför adı:', '') || null;
-          body.sofor_soyadi = prompt('Şoför soyadı:', '') || null;
-          body.sofor_tckn = prompt('Şoför TCKN:', '') || null;
-          body.tasiyici_unvan = prompt('Taşıyıcı ünvan (şoför yoksa):', '') || null;
-          body.tasiyici_vkn = prompt('Taşıyıcı VKN:', '') || null;
-        }
         const sonuc = await api(path, { method: 'POST', body: JSON.stringify(body) });
         toast(act.label + ' tamam.');
+        if (sonuc?.stok_uyari?.length) {
+          toast('Uyarı: bazı kalemlerde depo bakiyesi yetersiz olabilir.');
+        }
         if (sonuc?.siparis_id) openScreen('satis-siparisleri');
         else if (sonuc?.sevk_no) openScreen('sevk-emirleri');
         else if (sonuc?.irsaliye_no || sonuc?.ettn) openScreen('irsaliyeler');
@@ -3280,10 +3437,22 @@ function bindEvents() {
           renderForm(screen);
         } else openScreen(screen.id);
       } catch (err) {
-        toast(err.message || 'Dönüşüm başarısız');
+        const msg = err.message || 'Dönüşüm başarısız';
+        toast(msg);
+        if (err.payload?.depo_kontrol) {
+          const satirlar = err.payload.depo_kontrol.satirlar || [];
+          const det = satirlar.filter((s) => !s.yeterli).map((s) => {
+            const onr = (s.onerilen_depolar || []).map((o) => o.depo_kodu).join(',') || '—';
+            return `${s.stok_kodu || s.stok_id}: bakiye ${s.bakiye} / ${s.miktar} → öneri ${onr}`;
+          }).join('\n');
+          if (det) showConvertWarn(det);
+        }
       }
     });
   }
+
+  $('#cvtClose')?.addEventListener('click', () => closeConvertDialog(null));
+  $('#cvtCancel')?.addEventListener('click', () => closeConvertDialog(null));
 
   document.addEventListener('click', (e) => {
     const screen = findScreen(state.screenId);

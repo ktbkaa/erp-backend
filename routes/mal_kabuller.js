@@ -103,12 +103,15 @@ router.post('/', async (req, res) => {
                 islenen.push({ siparis_satir_id: satir.id, stok_id: satir.stok_id, miktar });
             }
 
+            const { hareketKoduBul, BELGE_TIPI } = require('../src/utils/belgeOmurga');
+            const hk = await hareketKoduBul(client, BELGE_TIPI.MAL_KABUL);
             const hareket = await stokHareketOlustur(client, {
                 hareketTipi: 'SATINALMA_GIRIS',
                 isYeriId: siparis.rows[0].is_yeri_id,
                 depoId: depo_id,
                 belgeTipi: 'MAL_KABUL',
                 aciklama: `SAS ${siparis.rows[0].siparis_no} mal kabul`,
+                hareketKoduId: hk?.id || null,
                 satirlar: hareketSatirlari,
             });
 
