@@ -339,7 +339,6 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
             }
             return sid;
         });
-        const { sevkGetir } = sevkRouter;
         res.status(201).json(await sevkGetir(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
