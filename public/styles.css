@@ -150,12 +150,63 @@ body {
   flex-direction: column;
   padding: 0 0.35rem 0.55rem 0.55rem;
   animation: modOpen 0.2s ease;
+  gap: 0.15rem;
 }
 .mod-items[hidden] { display: none !important; }
 @keyframes modOpen {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: none; }
 }
+.mod-section {
+  display: flex;
+  flex-direction: column;
+  margin: 0.1rem 0 0.15rem;
+}
+.mod-section--flat {
+  gap: 0.05rem;
+}
+.mod-section-title {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0 0.1rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a96a3;
+  padding: 0.35rem 0.45rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  text-align: left;
+}
+.mod-section-title:hover {
+  background: #f3f6f8;
+  color: #5a6572;
+}
+.mod-section.open > .mod-section-title {
+  color: #6a7685;
+}
+.mod-section-chevron {
+  font-size: 0.65rem;
+  color: #b5bec8;
+  transition: transform 0.18s ease;
+}
+.mod-section.open .mod-section-chevron {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+.mod-section-items {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0.15rem;
+}
+.mod-section-items[hidden] { display: none !important; }
 .mod-item {
   width: 100%;
   text-align: left;
@@ -172,6 +223,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  min-width: 0;
 }
 .mod-item::before {
   content: "– –";
@@ -207,12 +259,12 @@ body {
 .workspace { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; background: #f3f6f8; }
 .workspace-main { flex: 1; min-height: 0; position: relative; padding-bottom: 0; overflow: hidden; }
 
-/* Üst belge sekmeleri — liste + Yeni/İncele/Düzelt/Kopyala yan yana */
+/* Üst belge sekmeleri — sabit boyut, hizalı X, sağ tık menüsü */
 .doc-tabs {
   display: flex;
   gap: 0.25rem;
   align-items: flex-end;
-  min-height: 0;
+  min-height: 2.55rem;
   padding: 0.35rem 0.55rem 0;
   background: #e7eef3;
   border-bottom: 1px solid var(--line);
@@ -221,26 +273,52 @@ body {
 }
 .doc-tabs:empty { display: none; }
 .doc-tabs .tab-item {
+  --tab-w: 13.5rem;
   position: relative;
-  display: inline-flex;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr) 1.15rem;
   align-items: center;
-  gap: 0.4rem;
+  column-gap: 0.35rem;
+  flex: 0 0 var(--tab-w);
+  width: var(--tab-w);
+  min-width: var(--tab-w);
+  max-width: var(--tab-w);
+  height: 2.15rem;
   border: 1px solid var(--line);
   border-bottom: 0;
   background: #dfe7ee;
   color: var(--ink);
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  padding: 0.45rem 0.7rem 0.5rem;
+  padding: 0 0.45rem;
   border-radius: 0.4rem 0.4rem 0 0;
   cursor: pointer;
   white-space: nowrap;
-  max-width: 16rem;
+  text-align: left;
 }
-.doc-tabs .tab-item .tab-title {
+.doc-tabs .tab-item .tab-kind {
+  justify-self: start;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0.12rem 0.3rem;
+  border-radius: 0.25rem;
+  background: rgba(12, 124, 105, 0.15);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.doc-tabs .tab-item .tab-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 .doc-tabs .tab-item.tab-form {
   background: #fff8e8;
@@ -252,36 +330,68 @@ body {
   box-shadow: 0 -2px 0 var(--accent) inset;
   z-index: 1;
 }
-.doc-tabs .tab-item .tab-kind {
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 0.1rem 0.35rem;
-  border-radius: 0.25rem;
-  background: rgba(12, 124, 105, 0.15);
-  color: var(--accent);
-  text-transform: uppercase;
-}
 .doc-tabs .tab-item.tab-form .tab-kind {
   background: #fff1c2;
   color: #8a6a00;
 }
 .doc-tabs .tab-item .tab-close {
-  display: none;
-  width: 1.05rem;
-  height: 1.05rem;
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
   border: none;
   border-radius: 999px;
-  background: rgba(26, 35, 48, 0.12);
-  color: var(--ink);
-  font-size: 0.75rem;
+  background: rgba(26, 35, 48, 0.1);
+  color: #5a6572;
+  font-size: 0.85rem;
   line-height: 1;
   cursor: pointer;
   padding: 0;
-  flex: 0 0 auto;
+  justify-self: end;
+  flex: none;
 }
 .doc-tabs .tab-item:hover .tab-close,
-.doc-tabs .tab-item.active .tab-close { display: inline-grid; place-items: center; }
+.doc-tabs .tab-item.active .tab-close {
+  background: rgba(26, 35, 48, 0.14);
+}
 .doc-tabs .tab-close:hover { background: #9f2d2d; color: #fff; }
+
+.tab-ctx-menu {
+  position: fixed;
+  z-index: 1200;
+  min-width: 11.5rem;
+  padding: 0.3rem;
+  margin: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  box-shadow: 0 8px 24px rgba(26, 35, 48, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.tab-ctx-menu[hidden] { display: none !important; }
+.tab-ctx-menu button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+.tab-ctx-menu button:hover {
+  background: var(--sidebar-active);
+  color: var(--accent);
+}
+.tab-ctx-menu button.danger:hover {
+  background: #fde8e8;
+  color: #9f2d2d;
+}
 .workspace-bar {
   display: flex;
   align-items: center;

@@ -8,6 +8,7 @@ const MODULES = [
   {
     id: 'sabit-tanimlar',
     title: 'Sabit Tanımlar',
+    // Genel tanımlar — alt başlık yok (tek liste)
     screens: [
       {
         id: 'numarator-tanimi',
@@ -194,6 +195,10 @@ const MODULES = [
   {
     id: 'sistem',
     title: 'Sistem',
+    sections: [
+      { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar', 'kullanici-gruplari'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri'] },
+    ],
     screens: [
       {
         id: 'kullanicilar',
@@ -295,6 +300,9 @@ const MODULES = [
   {
     id: 'ana-veri',
     title: 'Ana Veri',
+    sections: [
+      { id: 'organizasyon', title: 'Organizasyon', screenIds: ['firmalar', 'is-yerleri', 'depolar'] },
+    ],
     screens: [
       {
         id: 'firmalar',
@@ -389,6 +397,10 @@ const MODULES = [
   {
     id: 'stok',
     title: 'Stok',
+    sections: [
+      { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
+      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri'] },
+    ],
     screens: [
       {
         id: 'stok-karti',
@@ -589,6 +601,9 @@ const MODULES = [
   {
     id: 'cari',
     title: 'Cari',
+    sections: [
+      { id: 'kartlar', title: 'Kartlar', screenIds: ['cari-kartlari'] },
+    ],
     screens: [
       {
         id: 'cari-kartlari',
@@ -747,6 +762,12 @@ const MODULES = [
   {
     id: 'uretim',
     title: 'Üretim',
+    sections: [
+      { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-seviye-listesi', 'bom-malzeme-degisikligi'] },
+      { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri'] },
+      { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'rotalar', 'uretim-emri-tipleri'] },
+    ],
     screens: [
       {
         id: 'urun-agaci',
@@ -1190,6 +1211,12 @@ const MODULES = [
   {
     id: 'satinalma',
     title: 'Satınalma',
+    sections: [
+      { id: 'teklif', title: 'Teklif', screenIds: ['satin-alma-teklif-istekleri', 'satin-alma-teklifleri', 'satin-alma-anlasmalari'] },
+      { id: 'siparis', title: 'Sipariş', screenIds: ['satin-alma-talepleri', 'satin-alma-siparisleri'] },
+      { id: 'mal-kabul', title: 'Mal Kabul', screenIds: ['mal-kabuller'] },
+      { id: 'faturalar', title: 'Faturalar', screenIds: ['alis-faturalari'] },
+    ],
     screens: [
       {
         id: 'satin-alma-teklif-istekleri',
@@ -1422,6 +1449,11 @@ const MODULES = [
   {
     id: 'crm',
     title: 'CRM',
+    sections: [
+      { id: 'pipeline', title: 'Pipeline', screenIds: ['crm-adaylar', 'crm-kontaklar', 'crm-firsatlar'] },
+      { id: 'faaliyet', title: 'Faaliyet', screenIds: ['crm-faaliyet-planlari', 'crm-faaliyetler', 'crm-gorevler'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['crm-firsat-asamalari', 'crm-faaliyet-tipleri'] },
+    ],
     screens: [
       {
         id: 'crm-firsat-asamalari',
@@ -1767,6 +1799,11 @@ const MODULES = [
   {
     id: 'satis',
     title: 'Satış',
+    sections: [
+      { id: 'siparis', title: 'Sipariş', screenIds: ['satis-teklifleri', 'satis-siparisleri'] },
+      { id: 'sevk', title: 'Sevk', screenIds: ['sevk-emirleri', 'irsaliyeler'] },
+      { id: 'faturalar', title: 'Faturalar', screenIds: ['satis-faturalari'] },
+    ],
     screens: [
       {
         id: 'satis-teklifleri',
@@ -2074,6 +2111,11 @@ const MODULES = [
   {
     id: 'finans',
     title: 'Finans',
+    sections: [
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['hesap-plani'] },
+      { id: 'belgeler', title: 'Belgeler', screenIds: ['muhasebe-belgeleri'] },
+      { id: 'raporlar', title: 'Raporlar', screenIds: ['mizan'] },
+    ],
     screens: [
       {
         id: 'hesap-plani',
@@ -2167,6 +2209,28 @@ const MODULES = [
 
 ];
 
+/** Modül menü bölümleri — sections yoksa düz liste (Sabit Tanımlar). */
+function moduleMenuSections(mod) {
+  const byId = Object.fromEntries((mod.screens || []).map((s) => [s.id, s]));
+  if (Array.isArray(mod.sections) && mod.sections.length) {
+    const used = new Set();
+    const sections = mod.sections.map((sec) => {
+      const screens = (sec.screenIds || [])
+        .map((id) => {
+          used.add(id);
+          return byId[id];
+        })
+        .filter(Boolean);
+      return { id: sec.id || sec.title, title: sec.title, screens };
+    }).filter((sec) => sec.screens.length);
+    const leftovers = (mod.screens || []).filter((s) => !used.has(s.id));
+    if (leftovers.length) {
+      sections.push({ id: '_diger', title: 'Diğer', screens: leftovers });
+    }
+    return sections;
+  }
+  return [{ id: '_all', title: null, screens: mod.screens || [] }];
+}
 
 function normalizeScreen(raw, moduleId, moduleTitle) {
   const s = { ...raw, moduleId, moduleTitle };
@@ -2294,6 +2358,8 @@ const state = {
   flowSel: null,
   flowCompSel: null,
   sidebarOpen: {},
+  sidebarSectionOpen: {},
+  tabCtxKey: null,
   nestedLink: null, // { fromScreenId, fromId, convertPath, bodyKey, extra }
 };
 
@@ -2744,18 +2810,95 @@ function renderTabBar() {
   if (!bar) return;
   if (!state.openTabs.length) {
     bar.innerHTML = '';
+    hideTabContextMenu();
     return;
   }
   bar.innerHTML = state.openTabs.map((t) => {
     const isForm = t.kind === 'form';
     const kind = isForm ? (MODE_LABELS[t.formMode] || 'Form') : 'Liste';
+    const active = t.key === state.activeTabKey ? ' active' : '';
     return `
-    <button type="button" class="tab-item ${isForm ? 'tab-form' : 'tab-list'}${t.key === state.activeTabKey ? ' active' : ''}" data-tab-key="${t.key}" title="${t.title}">
+    <button type="button" class="tab-item ${isForm ? 'tab-form' : 'tab-list'}${active}" data-tab-key="${t.key}" title="${escapeAttr(t.title)}" aria-current="${t.key === state.activeTabKey ? 'page' : 'false'}">
       <span class="tab-kind">${kind}</span>
-      <span class="tab-title">${t.title}</span>
-      <span class="tab-close" data-tab-close-key="${t.key}" title="Sekmeyi kapat">×</span>
+      <span class="tab-title">${escapeHtml(t.title)}</span>
+      <span class="tab-close" data-tab-close-key="${t.key}" title="Sekmeyi kapat" aria-label="Sekmeyi kapat">×</span>
     </button>`;
   }).join('');
+}
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeAttr(str) {
+  return escapeHtml(str).replace(/'/g, '&#39;');
+}
+
+function hideTabContextMenu() {
+  const menu = $('#tabCtxMenu');
+  if (menu) menu.hidden = true;
+  state.tabCtxKey = null;
+}
+
+function showTabContextMenu(tabKey, clientX, clientY) {
+  const menu = $('#tabCtxMenu');
+  if (!menu || !state.openTabs.some((t) => t.key === tabKey)) return;
+  state.tabCtxKey = tabKey;
+  menu.hidden = false;
+  const pad = 6;
+  const mw = menu.offsetWidth || 180;
+  const mh = menu.offsetHeight || 120;
+  let left = clientX;
+  let top = clientY;
+  if (left + mw > window.innerWidth - pad) left = Math.max(pad, window.innerWidth - mw - pad);
+  if (top + mh > window.innerHeight - pad) top = Math.max(pad, window.innerHeight - mh - pad);
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+}
+
+function closeAllTabs() {
+  hideTabContextMenu();
+  state.openTabs = [];
+  state.activeTabKey = null;
+  state.formMode = null;
+  state.formRecord = null;
+  showHome();
+}
+
+async function refreshTab(tabKey) {
+  const tab = state.openTabs.find((t) => t.key === tabKey);
+  if (!tab) return;
+  if (state.activeTabKey !== tabKey) {
+    await activateTab(tabKey);
+  }
+  if (tab.kind === 'list') {
+    await openScreen(tab.id, { skipTab: true });
+    return;
+  }
+  const screen = findScreen(tab.screenId || tab.id);
+  if (!screen) return;
+  const recId = tab.formRecord?.id;
+  if (recId && tab.formMode !== 'yeni') {
+    try {
+      const fresh = await api(`${screenApiBase(screen.endpoint)}/${recId}`);
+      tab.formRecord = fresh;
+      state.formRecord = { ...fresh };
+    } catch (err) {
+      toast(err.message || 'Yenileme başarısız');
+      return;
+    }
+  }
+  state.formMode = tab.formMode;
+  state.formActiveTab = tab.formActiveTab || screen.formTabs?.[0]?.id || null;
+  await ensureLookups(screen);
+  showView('form');
+  $('#screenTitle').textContent = tab.title;
+  renderForm(screen);
+  renderTabBar();
 }
 
 function addOpenTab(screen) {
@@ -2790,30 +2933,72 @@ const MOD_ICONS = {
   finans: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
 };
 
+function ensureSidebarPath(screen) {
+  if (!screen?.moduleId) return;
+  state.sidebarOpen = state.sidebarOpen || {};
+  state.sidebarSectionOpen = state.sidebarSectionOpen || {};
+  state.sidebarOpen[screen.moduleId] = true;
+  const mod = MODULES.find((m) => m.id === screen.moduleId);
+  if (!mod) return;
+  for (const sec of moduleMenuSections(mod)) {
+    if (sec.title == null) continue;
+    if (sec.screens.some((s) => s.id === screen.id)) {
+      state.sidebarSectionOpen[`${mod.id}:${sec.id}`] = true;
+    }
+  }
+}
+
 function renderSidebar() {
   const nav = $('#sidebarNav');
   if (!nav) return;
   if (!state.sidebarOpen) state.sidebarOpen = {};
-  // Aktif ekranın modülü açık kalsın
-  const activeMod = findScreen(state.screenId)?.moduleId;
+  if (!state.sidebarSectionOpen) state.sidebarSectionOpen = {};
+  // Aktif ekranın modülü açık kalsın (alt başlık kullanıcı tercihine saygı)
+  const activeScreen = findScreen(state.screenId);
+  const activeMod = activeScreen?.moduleId;
   if (activeMod) state.sidebarOpen[activeMod] = true;
 
   nav.innerHTML = MODULES.map((mod) => {
     const open = Boolean(state.sidebarOpen[mod.id]);
     const icon = MOD_ICONS[mod.id] || MOD_ICONS['ana-veri'];
+    const sections = moduleMenuSections(mod);
+    const itemsHtml = sections.map((sec) => {
+      const secKey = `${mod.id}:${sec.id}`;
+      if (sec.title == null) {
+        const screensHtml = sec.screens.map((s) => `
+          <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
+            ${escapeHtml(s.title)}
+          </button>`).join('');
+        return `<div class="mod-section mod-section--flat">${screensHtml}</div>`;
+      }
+      if (state.sidebarSectionOpen[secKey] === undefined) {
+        state.sidebarSectionOpen[secKey] = true;
+      }
+      const isOpen = Boolean(state.sidebarSectionOpen[secKey]);
+      const screensHtml = sec.screens.map((s) => `
+          <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
+            ${escapeHtml(s.title)}
+          </button>`).join('');
+      return `
+        <div class="mod-section ${isOpen ? 'open' : 'collapsed'}" data-section-key="${secKey}">
+          <button type="button" class="mod-section-title" data-section-toggle="${secKey}" aria-expanded="${isOpen}">
+            <span class="mod-section-label">${escapeHtml(sec.title)}</span>
+            <span class="mod-section-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="mod-section-items" ${isOpen ? '' : 'hidden'}>
+            ${screensHtml}
+          </div>
+        </div>`;
+    }).join('');
     return `
     <div class="mod-group ${open ? 'open' : 'collapsed'}" data-mod="${mod.id}">
       <button type="button" class="mod-title" data-mod-toggle="${mod.id}" aria-expanded="${open}">
         <span class="mod-icon" aria-hidden="true">${icon}</span>
-        <span class="mod-title-text">${mod.title}</span>
+        <span class="mod-title-text">${escapeHtml(mod.title)}</span>
         <span class="mod-chevron" aria-hidden="true">▾</span>
       </button>
       <div class="mod-items" ${open ? '' : 'hidden'}>
-        ${mod.screens.map((s) => `
-          <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
-            ${s.title}
-          </button>
-        `).join('')}
+        ${itemsHtml}
       </div>
     </div>`;
   }).join('');
@@ -2967,6 +3152,7 @@ async function openScreen(id, opts = {}) {
     (screen.filters || []).forEach((f) => {
       state.filterState[f.key] = { op: 'esit', a: '', b: '' };
     });
+    ensureSidebarPath(screen);
 
     if (location.hash !== `#${id}`) {
       history.pushState({ screenId: id }, '', `#${id}`);
@@ -2981,7 +3167,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016d`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016e`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -3968,6 +4154,7 @@ async function activateTab(tabKey) {
   state.formMode = tab.formMode;
   state.formRecord = { ...(tab.formRecord || {}) };
   state.formActiveTab = tab.formActiveTab || screen.formTabs?.[0]?.id || null;
+  ensureSidebarPath(screen);
   await ensureLookups(screen);
   showView('form');
   $('#homeSearchWrap').hidden = true;
@@ -4329,6 +4516,16 @@ function bindEvents() {
         renderSidebar();
         return;
       }
+      const secToggle = e.target.closest('[data-section-toggle]');
+      if (secToggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        const secKey = secToggle.getAttribute('data-section-toggle');
+        state.sidebarSectionOpen = state.sidebarSectionOpen || {};
+        state.sidebarSectionOpen[secKey] = !state.sidebarSectionOpen[secKey];
+        renderSidebar();
+        return;
+      }
       const screenBtn = e.target.closest('[data-screen]');
       if (!screenBtn) return;
       e.preventDefault();
@@ -4337,6 +4534,43 @@ function bindEvents() {
       openScreen(id);
     });
   }
+
+  const tabBar = $('#tabBar');
+  if (tabBar && !tabBar.dataset.bound) {
+    tabBar.dataset.bound = '1';
+    tabBar.addEventListener('contextmenu', (e) => {
+      const tabBtn = e.target.closest('[data-tab-key]');
+      if (!tabBtn || !tabBar.contains(tabBtn)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      showTabContextMenu(tabBtn.getAttribute('data-tab-key'), e.clientX, e.clientY);
+    });
+  }
+
+  const tabCtx = $('#tabCtxMenu');
+  if (tabCtx && !tabCtx.dataset.bound) {
+    tabCtx.dataset.bound = '1';
+    tabCtx.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-tab-ctx]');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const action = btn.getAttribute('data-tab-ctx');
+      const key = state.tabCtxKey;
+      hideTabContextMenu();
+      if (!key && action !== 'close-all') return;
+      if (action === 'close') closeOpenTab(key);
+      else if (action === 'refresh') refreshTab(key).catch((err) => toast(err.message));
+      else if (action === 'close-all') closeAllTabs();
+    });
+  }
+
+  // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır (contextmenu sonrası click menüyü düşürmesin)
+  document.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest('#tabCtxMenu')) return;
+    hideTabContextMenu();
+  }, true);
 
   document.addEventListener('click', (e) => {
     const screenBtn = e.target.closest('[data-screen]');
@@ -4371,6 +4605,7 @@ function bindEvents() {
     if (tabClose) {
       e.preventDefault();
       e.stopPropagation();
+      hideTabContextMenu();
       closeOpenTab(tabClose.getAttribute('data-tab-close-key'));
       return;
     }
@@ -4384,6 +4619,10 @@ function bindEvents() {
 
     const wrap = $('#homeSearchWrap');
     if (wrap && !wrap.contains(e.target)) $('#searchResults').hidden = true;
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hideTabContextMenu();
   });
 
   $('#btnHome').addEventListener('click', (e) => {
