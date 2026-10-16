@@ -17,7 +17,8 @@ async function parametreAl(clientOrPool, kod, varsayilan = null) {
 async function kullaniciGetir(clientOrPool, kullaniciKodu) {
     if (!kullaniciKodu) return null;
     const r = await clientOrPool.query(
-        `SELECT k.*, g.satinalma_onay, g.satinalma_talep, g.kalite_kontrol, g.grup_adi
+        `SELECT k.*, g.satinalma_onay, g.satinalma_talep, g.kalite_kontrol, g.grup_adi,
+                g.modul_yetkileri, g.depo_yetkileri
          FROM kisiler k
          LEFT JOIN kullanici_gruplari g ON g.grup_kodu = k.grup_kodu AND g.aktif = TRUE
          WHERE k.kullanici_kodu = $1`,

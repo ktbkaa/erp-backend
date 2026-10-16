@@ -11,6 +11,8 @@ const {
     hareketKoduBul,
     onerilenDepolar,
 } = require('../src/utils/belgeOmurga');
+const { rezervasyonTuket } = require('../src/services/rezervasyonService');
+const { belgeHtml } = require('../src/services/belgePdfService');
 
 async function irsaliyeGetir(id) {
     const i = await pool.query(
@@ -390,7 +392,7 @@ router.post('/:id/onayla', async (req, res) => {
                 })),
             });
 
-            // Açık miktar: sipariş satırlarında irsaliye_edilen artır
+            // Açık miktar: sipariş satırlarında irsaliye_edilen artır + rezervasyon tüket
             for (const s of ir.satirlar) {
                 if (s.siparis_detay_id) {
                     await client.query(
@@ -399,6 +401,10 @@ router.post('/:id/onayla', async (req, res) => {
                          WHERE id=$1`,
                         [s.siparis_detay_id, s.miktar]
                     );
+                    await rezervasyonTuket(client, {
+                        siparisDetayId: s.siparis_detay_id,
+                        miktar: s.miktar,
+                    });
                 }
             }
 
@@ -618,6 +624,117 @@ router.post('/:id/fatura-olustur', async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ hata: err.message });
+    }
+});
+
+/** GET /irsaliyeler/:id/yazdir — HTML+QR yazdırma (SAL-010) */
+router.get('/:id/yazdir', async (req, res) => {
+    try {
+        const ir = await irsaliyeGetir(req.params.id);
+        if (!ir) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
+        const html = belgeHtml({
+            baslik: 'Satış İrsaliyesi',
+            belgeNo: ir.irsaliye_no,
+            tarih: ir.irsaliye_tarihi || ir.kayit_tarihi,
+            cari: ir,
+            satirlar: ir.satirlar || ir.kalemler || [],
+            ekstra: { ettn: ir.ettn, aciklama: ir.aciklama },
+        });
+        res.type('html').send(html);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+router.get('/:id/pdf', (req, res) => res.redirect(302, `/irsaliyeler/${req.params.id}/yazdir`));
+
+/** POST /irsaliyeler/:id/iade — satış iade irsaliyesi (ters stok girişi) */
+router.post('/:id/iade', async (req, res) => {
+    try {
+        const kaynak = await irsaliyeGetir(req.params.id);
+        if (!kaynak) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
+        if (kaynak.durum !== 'Onayli' && kaynak.durum !== 'FaturayaDonustu') {
+            return res.status(400).json({ hata: 'Yalnızca onaylı irsaliyeden iade oluşturulur.' });
+        }
+        const depoId = Number(req.body.depo_id || kaynak.depo_id);
+        const id = await withTransaction(pool, async (client) => {
+            const no = await sonrakiBelgeNo(client, 'IRSALIYE').catch(() => `SIA-${Date.now()}`);
+            const baslik = await client.query(
+                `
+                INSERT INTO irsaliyeler
+                  (irsaliye_no, cari_id, depo_id, siparis_id, durum, aciklama,
+                   kaynak_belge_tipi, kaynak_belge_id, irsaliye_tarihi)
+                VALUES ($1,$2,$3,$4,'Taslak',$5,'SATIS_IADE',$6,CURRENT_DATE)
+                RETURNING id
+                `,
+                [
+                    no, kaynak.cari_id, depoId, kaynak.siparis_id,
+                    `İade ← ${kaynak.irsaliye_no}`, kaynak.id,
+                ]
+            ).catch(async (err) => {
+                // minimal kolon seti
+                if (String(err.message).includes('column')) {
+                    return client.query(
+                        `INSERT INTO irsaliyeler (irsaliye_no, cari_id, depo_id, durum, aciklama)
+                         VALUES ($1,$2,$3,'Taslak',$4) RETURNING id`,
+                        [no, kaynak.cari_id, depoId, `İade ← ${kaynak.irsaliye_no}`]
+                    );
+                }
+                throw err;
+            });
+            const iadeId = baslik.rows[0].id;
+            let sira = 1;
+            for (const s of kaynak.satirlar || []) {
+                const miktar = req.body.miktarlar?.[s.id] != null
+                    ? Number(req.body.miktarlar[s.id])
+                    : Number(s.miktar);
+                if (miktar <= 0) continue;
+                await client.query(
+                    `
+                    INSERT INTO irsaliye_satirlari
+                      (irsaliye_id, sira_no, stok_id, miktar, birim, siparis_detay_id)
+                    VALUES ($1,$2,$3,$4,$5,$6)
+                    `,
+                    [iadeId, sira++, s.stok_id, miktar, s.birim || null, s.siparis_detay_id || null]
+                ).catch(async () => {
+                    await client.query(
+                        `INSERT INTO irsaliye_satirlari (irsaliye_id, stok_id, miktar, birim)
+                         VALUES ($1,$2,$3,$4)`,
+                        [iadeId, s.stok_id, miktar, s.birim || null]
+                    );
+                });
+            }
+            // Stok girişi (iade)
+            const satirlar = await client.query(
+                `SELECT * FROM irsaliye_satirlari WHERE irsaliye_id=$1`,
+                [iadeId]
+            );
+            if (satirlar.rows.length) {
+                const hareket = await stokHareketOlustur(client, {
+                    hareketTipi: 'IADE_GIRIS',
+                    depoId,
+                    belgeTipi: 'SATIS_IADE',
+                    belgeId: iadeId,
+                    aciklama: `Satış iade ${no}`,
+                    depoZorunluAtla: true,
+                    satirlar: satirlar.rows.map((s) => ({
+                        stok_id: s.stok_id,
+                        miktar: s.miktar,
+                        yon: 1,
+                        birim: s.birim,
+                    })),
+                });
+                await client.query(
+                    `UPDATE irsaliyeler SET durum='Onayli', stok_hareket_id=$2 WHERE id=$1`,
+                    [iadeId, hareket.hareket.id]
+                ).catch(() =>
+                    client.query(`UPDATE irsaliyeler SET durum='Onayli' WHERE id=$1`, [iadeId])
+                );
+            }
+            return iadeId;
+        });
+        res.status(201).json(await irsaliyeGetir(id));
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message, kod: err.code, detay: err.detay });
     }
 });
 

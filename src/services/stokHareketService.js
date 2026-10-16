@@ -135,6 +135,19 @@ async function stokHareketOlustur(client, {
             ]
         );
         eklenen.push(satirRes.rows[0]);
+
+        // Ortalama maliyet (INV-011) — girişte birim_maliyet verilirse
+        if (Number(s.yon) === 1 && s.birim_maliyet != null) {
+            try {
+                const { maliyetGuncelleGiris } = require('./maliyetService');
+                await maliyetGuncelleGiris(client, {
+                    stokId: s.stok_id,
+                    miktar: s.miktar,
+                    birimMaliyet: s.birim_maliyet,
+                    hareketId: hareket.id,
+                });
+            } catch (_) { /* maliyet tablosu yoksa sessiz */ }
+        }
     }
 
     return { hareket, satirlar: eklenen };

@@ -3,6 +3,10 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { faturaEslestir } = require('../src/services/faturaEslestirmeService');
+const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
+const { belgeHtml } = require('../src/services/belgePdfService');
+const { reqKullaniciKodu } = require('../src/utils/yetki');
 
 const EBELGE_ALANLAR = [
   'senaryo', 'fatura_tipi', 'ozellestirme_no', 'ettn',
@@ -231,6 +235,135 @@ router.put('/:id', async (req, res, next) => {
       return Number(req.params.id);
     });
     res.json(await faturaGetir(id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** POST /faturalar/:id/eslestir — 3-way match (PUR-007) */
+router.post('/:id/eslestir', async (req, res, next) => {
+  try {
+    const row = await withTransaction(pool, (client) => faturaEslestir(client, Number(req.params.id)));
+    res.status(201).json(row);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** POST /faturalar/:id/eslestirme-onay */
+router.post('/:id/eslestirme-onay', async (req, res, next) => {
+  try {
+    const r = await pool.query(
+      `UPDATE fatura_eslestirme SET sonuc='Uyumlu', aciklama=COALESCE(aciklama,'') || ' [Manuel onay]'
+       WHERE fatura_id=$1
+       RETURNING *`,
+      [req.params.id]
+    );
+    if (!r.rows[0]) {
+      const created = await withTransaction(pool, (client) => faturaEslestir(client, Number(req.params.id)));
+      await pool.query(`UPDATE fatura_eslestirme SET sonuc='Uyumlu' WHERE id=$1`, [created.id]);
+      return res.json({ ...created, sonuc: 'Uyumlu' });
+    }
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** POST /faturalar/:id/muhasebelestir — belge→fiş + cari (FIN-004/005) */
+router.post('/:id/muhasebelestir', async (req, res, next) => {
+  try {
+    const sonuc = await withTransaction(pool, (client) =>
+      faturadanMuhasebe(client, Number(req.params.id), {
+        kullaniciKodu: reqKullaniciKodu(req),
+      })
+    );
+    // Durumu Onayli yap
+    await pool.query(
+      `UPDATE faturalar SET durum='Onayli' WHERE id=$1 AND COALESCE(durum,'') <> 'Onayli'`,
+      [req.params.id]
+    ).catch(() => {});
+    res.status(201).json({ ...sonuc, fatura: await faturaGetir(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** GET yazdır / pdf */
+router.get('/:id/yazdir', async (req, res, next) => {
+  try {
+    const f = await faturaGetir(req.params.id);
+    if (!f) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    const html = belgeHtml({
+      baslik: String(f.fatura_turu || '').toLowerCase().includes('alis') ? 'Alış Faturası' : 'Satış Faturası',
+      belgeNo: f.fatura_no,
+      tarih: f.fatura_tarihi || f.kayit_tarihi,
+      cari: f,
+      satirlar: f.kalemler || [],
+      toplamlar: {
+        mal_hizmet_toplam: f.mal_hizmet_toplam,
+        toplam_kdv: f.toplam_kdv,
+        odenecek_tutar: f.odenecek_tutar,
+        toplam_tutar: f.toplam_tutar,
+      },
+      ekstra: { ettn: f.ettn, aciklama: f.aciklama },
+    });
+    res.type('html').send(html);
+  } catch (err) {
+    next(err);
+  }
+});
+router.get('/:id/pdf', (req, res) => res.redirect(302, `/faturalar/${req.params.id}/yazdir`));
+
+/** POST /faturalar/:id/iade — iade faturası (ters tutar) */
+router.post('/:id/iade', async (req, res, next) => {
+  try {
+    const kaynak = await faturaGetir(req.params.id);
+    if (!kaynak) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    const id = await withTransaction(pool, async (client) => {
+      const alis = String(kaynak.fatura_turu || '').toLowerCase().includes('alis');
+      const tur = alis ? 'AlisIade' : 'SatisIade';
+      const seri = alis ? 'ALIS_FATURA' : 'FATURA';
+      const no = await sonrakiBelgeNo(client, seri);
+      const r = await client.query(
+        `
+        INSERT INTO faturalar
+          (fatura_no, cari_id, fatura_turu, toplam_tutar, mal_hizmet_toplam, toplam_kdv, odenecek_tutar,
+           durum, kaynak_belge_tipi, kaynak_belge_id, aciklama)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8,$9,$10)
+        RETURNING id
+        `,
+        [
+          no, kaynak.cari_id, tur,
+          -Math.abs(Number(kaynak.toplam_tutar || 0)),
+          -Math.abs(Number(kaynak.mal_hizmet_toplam || kaynak.toplam_tutar || 0)),
+          -Math.abs(Number(kaynak.toplam_kdv || 0)),
+          -Math.abs(Number(kaynak.odenecek_tutar || kaynak.toplam_tutar || 0)),
+          alis ? 'ALIS_IADE' : 'SATIS_IADE',
+          kaynak.id,
+          `İade ← ${kaynak.fatura_no}`,
+        ]
+      );
+      const iadeId = r.rows[0].id;
+      for (const k of kaynak.kalemler || []) {
+        const miktar = Number(k.miktar);
+        const birim = Number(k.birim_fiyat);
+        const satir = miktar * birim;
+        await client.query(
+          `
+          INSERT INTO fatura_detaylari
+            (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar, birim, kdv_oran, kdv_tutari, mal_hizmet_tutari)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          `,
+          [
+            iadeId, k.stok_id, miktar, birim, -Math.abs(satir), k.birim || null,
+            k.kdv_oran, -Math.abs(Number(k.kdv_tutari || 0)), -Math.abs(satir),
+          ]
+        );
+      }
+      return iadeId;
+    });
+    res.status(201).json(await faturaGetir(id));
   } catch (err) {
     next(err);
   }

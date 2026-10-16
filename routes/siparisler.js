@@ -3,10 +3,14 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { depoBakiyeListesi } = require('../src/services/stokHareketService');
 const { parametreAl } = require('../src/utils/yetki');
+const {
+  kullanilabilirNet,
+  siparisRezerveEt,
+  rezervasyonIptalSiparis,
+} = require('../src/services/rezervasyonService');
 
-/** ATP: kullanılabilir stok vs sipariş kalemleri (REQ-SAL-008) */
+/** ATP: kullanılabilir stok (fiziksel − rezerv) vs sipariş kalemleri (REQ-SAL-008 / INV-004) */
 async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
   let zorunlu = sert;
   if (zorunlu == null) {
@@ -18,20 +22,16 @@ async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null }
     const stokId = k.stok_id;
     const miktar = Number(k.miktar || 0);
     if (!stokId || miktar <= 0) continue;
-    const bakiyeler = await depoBakiyeListesi(clientOrPool, {
-      stokId,
-      stokStatu: 'Kullanilabilir',
-      depoId: depoId || null,
-    });
-    const toplam = bakiyeler.reduce((s, b) => s + Number(b.bakiye), 0);
-    if (toplam + 1e-9 < miktar) {
-      const msg = {
+    const net = await kullanilabilirNet(clientOrPool, stokId, depoId || null);
+    if (net.kullanilabilir + 1e-9 < miktar) {
+      uyari.push({
         stok_id: stokId,
         stok_kodu: k.stok_kodu,
         istenen: miktar,
-        kullanilabilir: toplam,
-      };
-      uyari.push(msg);
+        bakiye: net.bakiye,
+        rezerve: net.rezerve,
+        kullanilabilir: net.kullanilabilir,
+      });
     }
   }
   if (uyari.length && zorunlu) {
@@ -336,6 +336,33 @@ router.put('/:id', async (req, res) => {
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
+});
+
+/** POST /siparisler/:id/rezerve — stok rezervasyonu (INV-004) */
+router.post('/:id/rezerve', async (req, res) => {
+  try {
+    const olusan = await withTransaction(pool, async (client) => {
+      return siparisRezerveEt(client, Number(req.params.id), {
+        depoId: req.body.depo_id ? Number(req.body.depo_id) : null,
+      });
+    });
+    const siparis = await siparisGetir(req.params.id);
+    res.status(201).json({ rezervasyonlar: olusan, siparis });
+  } catch (err) {
+    res.status(err.status || 500).json({ hata: err.message, detay: err.detay });
+  }
+});
+
+/** POST /siparisler/:id/rezervasyon-iptal */
+router.post('/:id/rezervasyon-iptal', async (req, res) => {
+  try {
+    await withTransaction(pool, async (client) => {
+      await rezervasyonIptalSiparis(client, Number(req.params.id));
+    });
+    res.json(await siparisGetir(req.params.id));
+  } catch (err) {
+    res.status(err.status || 500).json({ hata: err.message });
+  }
 });
 
 /** Satış siparişi → Sevk emri (P01 ref + P04 depo + P32 açık miktar) */

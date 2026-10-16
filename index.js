@@ -3,6 +3,9 @@ const path = require('path');
 const express = require('express');
 const app = express();
 const port = Number(process.env.PORT || 3000);
+const pool = require('./db');
+const { authOptional, authRequired } = require('./src/middleware/authJwt');
+const { auditMiddleware } = require('./src/services/auditService');
 
 app.use(express.json());
 app.use((req, res, next) => {
@@ -23,6 +26,11 @@ app.use(express.static(path.join(__dirname, 'public'), {
     lastModified: false,
     cacheControl: false,
 }));
+
+// JWT / header kimlik + audit (health ve static hariç API)
+app.use(authOptional);
+app.use(authRequired);
+app.use(auditMiddleware(pool));
 
 app.get('/health', async (req, res) => {
     const pool = require('./db');
@@ -99,6 +107,19 @@ app.use('/muhasebe-belgeleri', require('./routes/muhasebe_belgeleri'));
 app.use('/mizan', require('./routes/mizan'));
 app.use('/auth', require('./routes/auth'));
 app.use('/kk-uygunsuzluklar', require('./routes/kk_uygunsuzluklar'));
+app.use('/tahsilat-odemeler', require('./routes/tahsilat_odemeler'));
+app.use('/cari-hareketleri', require('./routes/cari_hareketleri'));
+app.use('/fiyat-listeleri', require('./routes/fiyat_listeleri'));
+app.use('/kokpit', require('./routes/kokpit'));
+app.use('/audit-log', require('./routes/audit_log'));
+app.use('/stok-rezervasyonlari', require('./routes/stok_rezervasyonlari'));
+app.use('/stok-serileri', require('./routes/stok_serileri'));
+app.use('/kk-capa', require('./routes/kk_capa'));
+app.use('/stok-ikame', require('./routes/stok_ikame'));
+app.use('/crm-ajanda', require('./routes/crm_ajanda'));
+app.use('/hesap-belirleme-kurallari', require('./routes/hesap_belirleme_kurallari'));
+app.use('/fatura-kontrolleri', require('./routes/fatura_kontrolleri'));
+app.use('/tedarikci-degerlendirme', require('./routes/tedarikci_degerlendirme'));
 
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 app.use(notFoundHandler);
