@@ -68,6 +68,8 @@ app.use('/satin-alma-anlasmalari', require('./routes/satin_alma_anlasmalari'));
 app.use('/satin-alma-siparisleri', require('./routes/satin_alma_siparisleri'));
 app.use('/mal-kabuller', require('./routes/mal_kabuller'));
 app.use('/uretim-emirleri', require('./routes/uretim_emirleri'));
+app.use('/uretim-emri-tipleri', require('./routes/uretim_emri_tipleri'));
+app.use('/stok-depo', require('./routes/stok_depo'));
 app.use('/kod-serileri', require('./routes/kod_serileri'));
 app.use('/kategoriler', require('./routes/kategoriler'));
 app.use('/ulkeler', require('./routes/ulkeler'));

@@ -98,15 +98,38 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', async (req, res) => {
     try {
-        const { stok_id, rota_kodu, rota_adi, operasyonlar } = req.body;
+        const {
+            stok_id,
+            rota_kodu,
+            rota_adi,
+            operasyonlar,
+            sablon,
+            varsayilan,
+            gecerlilik_baslangic,
+            gecerlilik_bitis,
+        } = req.body;
         if (!stok_id || !rota_kodu || !rota_adi || !Array.isArray(operasyonlar) || operasyonlar.length === 0) {
             return res.status(400).json({ hata: 'stok_id, rota_kodu, rota_adi ve operasyonlar zorunlu.' });
         }
 
         const id = await withTransaction(pool, async (client) => {
             const baslik = await client.query(
-                `INSERT INTO rotalar (stok_id, rota_kodu, rota_adi) VALUES ($1,$2,$3) RETURNING id`,
-                [stok_id, rota_kodu, rota_adi]
+                `
+                INSERT INTO rotalar
+                    (stok_id, rota_kodu, rota_adi, sablon, varsayilan,
+                     gecerlilik_baslangic, gecerlilik_bitis)
+                VALUES ($1,$2,$3,COALESCE($4,FALSE),COALESCE($5,FALSE),$6,$7)
+                RETURNING id
+                `,
+                [
+                    stok_id,
+                    rota_kodu,
+                    rota_adi,
+                    sablon,
+                    varsayilan,
+                    gecerlilik_baslangic || null,
+                    gecerlilik_bitis || null,
+                ]
             );
             const rotaId = baslik.rows[0].id;
 
@@ -151,7 +174,15 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { rota_adi, stok_id, operasyonlar } = req.body;
+        const {
+            rota_adi,
+            stok_id,
+            operasyonlar,
+            sablon,
+            varsayilan,
+            gecerlilik_baslangic,
+            gecerlilik_bitis,
+        } = req.body;
         if (!rota_adi) return res.status(400).json({ hata: 'rota_adi zorunlu.' });
 
         const kayitId = await withTransaction(pool, async (client) => {
@@ -162,8 +193,25 @@ router.put('/:id', async (req, res) => {
                 throw err;
             }
             await client.query(
-                `UPDATE rotalar SET rota_adi=$2, stok_id=COALESCE($3, stok_id) WHERE id=$1`,
-                [req.params.id, rota_adi, stok_id || null]
+                `
+                UPDATE rotalar SET
+                    rota_adi=$2,
+                    stok_id=COALESCE($3, stok_id),
+                    sablon=COALESCE($4, sablon),
+                    varsayilan=COALESCE($5, varsayilan),
+                    gecerlilik_baslangic=COALESCE($6, gecerlilik_baslangic),
+                    gecerlilik_bitis=COALESCE($7, gecerlilik_bitis)
+                WHERE id=$1
+                `,
+                [
+                    req.params.id,
+                    rota_adi,
+                    stok_id || null,
+                    sablon,
+                    varsayilan,
+                    gecerlilik_baslangic || null,
+                    gecerlilik_bitis || null,
+                ]
             );
             if (Array.isArray(operasyonlar)) {
                 const eskiOps = await client.query(

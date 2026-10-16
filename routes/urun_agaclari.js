@@ -88,7 +88,17 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', async (req, res) => {
     try {
-        const { mamul_stok_id, agac_kodu, agac_adi, miktar, satirlar } = req.body;
+        const {
+            mamul_stok_id,
+            agac_kodu,
+            agac_adi,
+            miktar,
+            satirlar,
+            gecerlilik_baslangic,
+            gecerlilik_bitis,
+            min_miktar,
+            max_miktar,
+        } = req.body;
         if (!mamul_stok_id || !agac_kodu || !agac_adi || !Array.isArray(satirlar) || satirlar.length === 0) {
             return res.status(400).json({
                 hata: 'mamul_stok_id, agac_kodu, agac_adi ve satirlar zorunlu.',
@@ -124,11 +134,22 @@ router.post('/', async (req, res) => {
         const kayitId = await withTransaction(pool, async (client) => {
             const baslik = await client.query(
                 `
-                INSERT INTO urun_agaclari (mamul_stok_id, agac_kodu, agac_adi, miktar)
-                VALUES ($1,$2,$3,COALESCE($4,1))
+                INSERT INTO urun_agaclari
+                    (mamul_stok_id, agac_kodu, agac_adi, miktar,
+                     gecerlilik_baslangic, gecerlilik_bitis, min_miktar, max_miktar)
+                VALUES ($1,$2,$3,COALESCE($4,1),$5,$6,$7,$8)
                 RETURNING id
                 `,
-                [mamul_stok_id, agac_kodu, agac_adi, miktar]
+                [
+                    mamul_stok_id,
+                    agac_kodu,
+                    agac_adi,
+                    miktar,
+                    gecerlilik_baslangic || null,
+                    gecerlilik_bitis || null,
+                    min_miktar ?? 0,
+                    max_miktar ?? 999999999,
+                ]
             );
             const uaId = baslik.rows[0].id;
             let sira = 10;
@@ -147,7 +168,16 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { agac_adi, miktar, satirlar, mamul_stok_id } = req.body;
+        const {
+            agac_adi,
+            miktar,
+            satirlar,
+            mamul_stok_id,
+            gecerlilik_baslangic,
+            gecerlilik_bitis,
+            min_miktar,
+            max_miktar,
+        } = req.body;
         if (!agac_adi) return res.status(400).json({ hata: 'agac_adi zorunlu.' });
 
         async function satirEkle(client, urunAgaciId, satir, ustSatirId, siraNo) {
@@ -187,9 +217,22 @@ router.put('/:id', async (req, res) => {
                 `UPDATE urun_agaclari SET
                     agac_adi=$2,
                     miktar=COALESCE($3, miktar),
-                    mamul_stok_id=COALESCE($4, mamul_stok_id)
+                    mamul_stok_id=COALESCE($4, mamul_stok_id),
+                    gecerlilik_baslangic=COALESCE($5, gecerlilik_baslangic),
+                    gecerlilik_bitis=COALESCE($6, gecerlilik_bitis),
+                    min_miktar=COALESCE($7, min_miktar),
+                    max_miktar=COALESCE($8, max_miktar)
                  WHERE id=$1`,
-                [req.params.id, agac_adi, miktar ?? null, mamul_stok_id || null]
+                [
+                    req.params.id,
+                    agac_adi,
+                    miktar ?? null,
+                    mamul_stok_id || null,
+                    gecerlilik_baslangic || null,
+                    gecerlilik_bitis || null,
+                    min_miktar ?? null,
+                    max_miktar ?? null,
+                ]
             );
             if (Array.isArray(satirlar)) {
                 await client.query('DELETE FROM urun_agaci_satirlari WHERE urun_agaci_id=$1', [req.params.id]);
