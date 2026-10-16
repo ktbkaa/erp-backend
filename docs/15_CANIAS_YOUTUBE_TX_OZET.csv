@@ -1,0 +1,92 @@
+tx_kodu;modul;video_sayisi;ktb_ekran_hedef;durum;aksiyon;ornek_baslik
+FINT02;FIN;26;Portföy çek/senet;Yapilmadi;Faz 3;FIN 10020 : FINT02 - Portföye yeni Çek, Senet veya Akreditif Mektubu girişi
+PRDT01;PRD;21;İş emri oluştur/güncelle;Yapildi;Onay akışı güçlendir;PRD 10021 : PRDT01 - İş Emrinin Güncellenmesi
+FINT39;FIN;17;Kredi kayıtları;Yapilmadi;Faz 3;FIN 11230 : FINT39 - Eşit taksit tutarlı bir kredi kaydı oluşturmak
+PRDT02;PRD;17;İş emri onay ve düzeltme;Yapildi;Onayla;PRD 10200 : PRDT02 - Normal İş Emrinde Onay ve Düzeltme
+VERT01;PUR;13;Alış fatura / muhasebeleştirme;Yapildi;Alış Faturaları;PUR 10350 : VERT01 - Faturaların Toplu Muhasebeleştirilmesi
+PRDT03;PRD;11;Kolay iş emri onayı;Yapildi;Onayla;PRD 10370 : PRDT03 - Kolay İş Emri Onayı
+PURT03;PUR;11;Satınalma anlaşması;Yapildi;Anlaşmalar;PUR 10099 : PURT03 - Satınalma Anlaşması Oluşturulması (Manuel)
+BAST20;PRD_BAS;9;Konfigüratör şablonu;Yapilmadi;Faz 2;PRD,BAS 10160 : BAST20 - Konfigüratör Şablonu
+;FIN;8;Tanımsız;Yapilmadi;İncele;FIN 10092 : Muhasebe belgesindeki tüm çek/senet bilgilerinin toplu halde gösterilmesi
+PURT02;PUR;8;Satınalma teklifi;Yapildi;Teklifler;PUR 10059 : PURT02 - Satınalma Teklifi Oluşturulması (Manuel)
+PURT05;PUR;8;Satınalma siparişi;Yapildi;Paylaştırmalı sipariş Faz 2;PUR 10210 : PURT05 - Paylaştırmalı Satınalma Siparişi Oluşturma
+PURT01;PUR;7;Satınalma teklif isteği;Yapildi;Teklif İstekleri;PUR 10028 : PURT01 - Satınalma Teklif İsteği Oluştulması (Manuel)
+SYST03;SYS;7;Kullanıcılar;Yapildi;Kullanıcılar ekranı;SYS 10130 : SYST03 - Yeni bir sistem kullanıcısı oluşturma
+FINT34;FIN;6;MT940 banka entegrasyon;Yapilmadi;Faz 3;FIN 10530 : FINT34 - Swift MT940 ile Banka hesap hareketlerinin muhasebeye entegrasyonu
+FINT93;FIN;6;Damga vergisi;Yapilmadi;Faz 3;FIN 10921 : FINT93 - Damga vergisi beyannamesinin oluşturulması
+HOMEPAGE;BAS;6;Anasayfa / tema / şifre;Kismi;İnce ayar;BAS 11000 : HOMEPAGE - CaniasERP Sisteminde Kullanıcı Şifresi Değiştirme
+PRDT42;PRD;6;Birleşik operasyonlar;Yapilmadi;Faz 2;PRD 10730 : PRDT42 - Birleşik Operasyonlar
+PURT04;PUR;6;Satınalma isteği/talebi;Yapildi;-;PUR 10011 : PURT04 - Manuel Satınalma İsteği Oluşturma
+BAST01;FIN;5;Tekdüzen hesap kontrol;Yapilmadi;Faz 2;FIN 11440 : BAST01 - Tekdüzen hesap ve hesap no eşitliği kontrolü
+BOMT01;BOM;5;Ürün ağacı CRUD;Yapildi;İnce ayar;BOM 10022 : BOMT01 - Ürün Ağacı Güncelleme
+FINT01;FIN;5;Hesap planı;Yapildi;Hesap Planı;FIN 10011 : FINT01 - Muhasebe hesap planına yeni bir Ana Hesap (Kebir Hesabı) eklemek
+FINT62;FIN;5;Mizan;Yapildi;Mizan;FIN 10481 : FINT62 - Mizan raporu almak
+BAST18;PRD_BAS;4;Varyant anahtarı;Yapilmadi;Faz 2;PRD,BAS 10120 : BAST18 - Varyant Anahtarı Oluşturma
+FINT06;FIN;4;Muhasebe belgesi onay;Yapildi;Muhasebe Belgeleri;FIN 10180 : FINT06 - Muhasebe belgesini sırasız onay kaldırma süreci
+SYST00;SYS;4;Uygulama kayıtları;Yapilmadi;Faz 2;SYS 10010 : SYST00 - Yeni bir uygulama oluşturmak
+SYST04;SYS;4;Numara aralıkları;Yapildi;-;SYS 10200 : SYST04 - Tarih Formatlı Bir Numara Aralığı Oluşturma
+SYST35;SYS;4;SYST35 kayıt;Yapilmadi;Faz 3;SYS 10610 : SYST35 - Yeni Bir SYST35 Kaydı Oluşturmak
+BAST05;PRD_BAS;3;Sınıf tanımı;Yapildi;Sınıf Tanımı;PRD,BAS 10010 : BAST05 - Sınıf Oluşturma
+BOMT08;BOM;3;Toplu komponent ekle/çıkar;Yapilmadi;Faz 2;BOM 10120 : BOMT08 - Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Arama
+FINT41;FIN;3;DBS;Yapilmadi;Faz 3;FIN 11880 : FINT41 - DBS - Satış Faturalarının DBS ye Yüklenmesi ve Dosya Oluşturma
+PRDT40;PRD;3;Fason operasyon;Yapilmadi;Faz 2;PRD 10680 : PRDT40 - Fason Operasyon Yönetimi
+SYST01;SYS;3;Sistem blokeleri;Yapilmadi;Faz 2;SYS 10050 : SYST01 - Sistem blokelerini listeleme ve silme
+SYST07;SYS;3;Kullanıcı hak setleri;Yapilmadi;Faz 2 JWT;SYS 10311 : SYST07 - Kullanıcı Hak Setlerinde Domain ve Fonksiyon Kısıtlarının Tanımlanması
+SYST08;SYS;3;Menü tanımı;Yapilmadi;Faz 2;SYS 10320 : SYST08 - Yeni Menü Oluşturma
+FINT20;FIN;2;Dönem sonu kapama;Yapilmadi;Faz 2;FIN 10220 : FINT20 - Mali dönem sonu Kapama Kaydı belgesi oluşturmak
+FINT27;FIN;2;Tekrarlanan ödemeler;Yapilmadi;Faz 3;FIN 10200 : FINT27 - Tekrarlanan ödemelerin listelenmesi ( Belge)
+FINT42;FIN;2;Uyarı mektupları;Yapilmadi;Faz 3;FIN 10290 : FINT42 - Uyarı mektuplarının oluşturulması
+FINT48;FIN;2;Alternatif ödeme planı;Yapilmadi;Faz 3;FIN 10340 : FINT48 - Alternatif ödeme planının oluşturulması
+INVT13;PRD;2;Fason ürün girişi;Yapilmadi;Faz 2;PRD 10710 : INVT13 - Tedarikçiden Gelen Fason Ürünün Girişi
+PRDT05;PRD;2;Onay no ile hızlı onay;Yapilmadi;Faz 2;PRD 10470 : PRDT05 - Onay Numarasıyla Hızlı Onay ve Düzeltme
+SYST12;SYS;2;Destek tabloları;Yapildi;-;SYS 10440 : SYST12 - Destek Tablosu Tanımlama Ve Kullanımı
+BAST03;BOM;1;Varyant transferi;Yapilmadi;Faz 2;BOM 10030 : BAST03 - Ürünlerden Komponentlere Varyant Transferi
+BOMT03;BOM;1;Malzeme değişikliği;Yapildi;Malzeme Değişikliği;BOM 10095 : BOMT03 - Malzeme Değişikliği
+BOMT05;BOM;1;Ürün ağacı seviye listesi;Yapildi;Seviye Listesi;BOM 10100 : BOMT05 - Ürün Ağacı Seviye Listesi
+BOMT11;BOM;1;Üretim şablonu;Yapilmadi;Faz 2;BOM 10160 : BOMT11 - Üretim Şablonu
+FINT13;FIN;1;Yevmiye/kebir;Yapilmadi;Faz 2;FIN 10240 : FINT13-Yevmiye kalemlerinin numaralandırılması ve yevmiye-kebir defterleri oluşturulması
+FINT16;FIN;1;Vade farkı / adat;Yapilmadi;Faz 3;FIN 10410 : FINT16 - Vade farkı ve adat ekstreleri raporu
+FINT23;FIN;1;B-Formlar;Yapilmadi;Faz 3;FIN 10300 : FINT23 - B-Formlar raporu
+FINT40;FIN;1;Yatırım / vadeli mevduat;Yapilmadi;Faz 3;FIN 11093 : FINT40 - Yatırım Yönetimi - Vadeli Banka Mevduatı Muhasebeleştirme ve Ayarlar
+FINT50;FIN;1;Nakit akış;Yapilmadi;Faz 2;FIN 10360 : FINT50 - Nakit Akış
+FINT51;FIN;1;Nakit akış detay;Yapilmadi;Faz 2;FIN 10370 : FINT51 - Nakit Akış FINT51-FINT01
+FINT80;FIN;1;Masraf yönetimi;Yapilmadi;Faz 3;FIN 11102 : FINT80 - Masraf Yönetimi - Masraf Onaylama Yetkisi Verme ve Onaylama
+FINTZ1;FIN;1;Finans kokpit;Yapilmadi;Faz 3;FIN 11450 : FINTZ1 - Finans Kokpit (Detaylı)
+PRDT06;PRD;1;Plan → iş emri;Yapilmadi;Faz 2;PRD 10490 : PRDT06 - Üretim Planlarını İş Emrine Dönüştürme
+PRDT10;PRD;1;İş emri ağı;Yapilmadi;Faz 2;PRD 10550 : PRDT10 - İş Emri Ağı
+PRDT13;PRD;1;Satış siparişinden iş emri;Yapildi;siparis_id;PRD 10580 : PRDT13 - Satış Siparişinden İş Emri Oluşturma
+PRDT43;PRD;1;Birleşik kolay onay;Yapilmadi;Faz 2;PRD 10744 : PRDT43 - Birleşik Operasyonlarda Kolay Onay
+PURT09;PUR;1;Anlaşma/teklif güncelle;Yapildi;-;PUR 10520 : PURT09 - Anlaşma & Teklif Bilgilerini Güncelleme
+PURT10;PUR;1;Fiyat karşılaştırma;Yapilmadi;Faz 2;PUR 10710 : PURT10 - Fiyat Karşılaştırma Konsepti
+PURT11;PUR;1;Nakliye konsepti;Yapilmadi;Faz 2;PUR 10310 : PURT11 - Nakliye Konsepti
+PURT12;PUR;1;Satınalma isteği başlatma;Yapildi;-;PUR 10530 : PURT12 - Satınalma İsteği Başlatma
+PURT30;PUR;1;Gelişim raporu;Yapilmadi;Faz 2;PUR 10730 : PURT30 - Satınalma İsteği ve Satınalma Siparişine Göre Satınalma Gelişim Raporu
+PURT31;PUR;1;Malzeme bağımsız anlaşma raporu;Yapilmadi;Faz 2;PUR 10781 : PURT31 - Malzeme Bağımsız Anlaşmalar Raporu
+PURT32;PUR;1;Faturası kapanmamış sipariş;Yapilmadi;Faz 2;PUR 10540 : PURT32 - Faturası Kapanmamış Sipariş Kalemleri
+PURT33;PUR;1;Malzemeye göre sipariş durumu;Yapilmadi;Faz 2;PUR 10550 : PURT33 - Malzemelere Göre Sipariş Durum Raporu (Rapor)
+PURT34;PUR;1;İhale mukayese;Yapilmadi;Faz 2;PUR 10773 : PURT34 - İhale Mukayese Raporu
+PURT40;PUR;1;Malzemenin tedarikçileri;Yapilmadi;Faz 2;PUR 10560 : PURT40 - Malzemenin Alındığı Tedarikçiler (Rapor)
+PURT41;PUR;1;Tedarikçi raporları;Yapilmadi;Faz 2;PUR 10570 : PURT41 - Tedarikçi Raporları (Rapor)
+PURT42;PUR;1;Teslim tarihine göre malzemeler;Yapilmadi;Faz 2;PUR 10580 : PURT42 - Teslim Tarihine Göre Malzemeler Raporu (Rapor)
+PURT43;PUR;1;Gün içi teslim malzemeler;Yapilmadi;Faz 2;PUR 10590 : PURT43 - Belli Bir Gün İçinde Teslim Edilecek Malzemeler Raporu (Rapor)
+PURT44;PUR;1;Envantersiz sipariş onay;Yapilmadi;Faz 2;PUR 10600 : PURT44 - Envanter Girişi Olmayan Satınalma Siparişlerinin Onay Süreci
+PURT61;PUR;1;Satınalma bilgileri;Yapilmadi;Faz 2;PUR 10630 : PURT61 - Satınalma Bilgileri
+SYST02;SYS;1;Sistem mesajları;Yapilmadi;Faz 2;SYS 10090 : SYST02 - Sistem Mesajları Uygulamasının Kullanımı
+SYST06;SYS;1;Sistem parametreleri;Yapildi;Sistem Parametreleri;SYS 10310 : SYST06 - Canias Sistem Parametrelerinin Tanımlanması
+SYST09;SYS;1;Şirket takvimi;Yapilmadi;Faz 2;SYS 10350 : SYST09 - Şirket Takviminin Kullanılması
+SYST10;SYS;1;Hatırlatıcı bildirimler;Yapilmadi;Faz 2;SYS 10400 : SYST10 - Hatırlatıcı Bildirimlerinin Tetiklenmesi
+SYST11;SYS;1;Kullanıcı logları;Yapilmadi;Faz 2;SYS 10420 : SYST11 - Sistem Kullanıcı Loglarının Listelenmesi
+SYST14;SYS;1;DB log konfig;Yapilmadi;Faz 3;SYS 10490 : SYST14 - Veritabanı Logu İçin Konfigürasyon Tanımlama
+SYST15;SYS;1;DB log listesi;Yapilmadi;Faz 3;SYS 10500 : SYST15 - Veritabanı Loglarının Listelenmesi
+SYST20;SYS;1;Nokta vuruşlu yazıcı;Yapilmadi;Kapsam dışı;SYS 10510 : SYST20 - Nokta Vuruşlu Yazıcı Ayarı Tanımlama
+SYST21;SYS;1;Yazıcı ayarı;Yapilmadi;Kapsam dışı;SYS 10520 : SYST21 - Yazıcı Ayarı Tanımlama
+SYST24;SYS;1;Alan tarihçe konfig;Yapilmadi;Faz 3;SYS 10540 : SYST24 - Alan Tarihçe Konfigürasyonu
+SYST25;SYS;1;Alan tarihçe;Yapilmadi;Faz 3;SYS 10550 : SYST25 - Alan Tarihçe (Günlükleri) Takibi
+SYST30;SYS;1;Toplu işlem yönetimi;Yapilmadi;Faz 3;SYS 10750 : SYST30 - Toplu İşlem Yönetimi
+SYST36;SYS;1;Süreç dokümanları;Yapilmadi;Faz 3;SYS 10700 : SYST36 - Süreç Dokümanlarının Sistem İçerisine Eklenmesi
+SYST40;SYS;1;Kullanıcı grupları;Yapildi;Kullanıcı Grupları;SYS 10560 : SYST40 - Sistem Kullanıcı Grubu Tanımlama
+SYST50;SYS;1;Eklentiler;Yapilmadi;Kapsam dışı;SYS 10570 : SYST50 - Canias Eklentileri Tanımlama
+VERT02;PUR;1;İthalat masraf raporu;Yapilmadi;Faz 2;PUR 10650 : VERT02 - İthalat Masraf Raporu (Satınalma Belgelerinden)
+VERT04;PUR;1;Fiyat karşılaştırma raporu;Yapilmadi;Faz 2;PUR 10660 : VERT04 - Fiyat Karşılaştırma Raporu (Rapor)
+VERT06;PUR;1;Fiyat farkı denetimi;Yapilmadi;Faz 2;PUR 10670 : VERT06 - Faturaların Fiyat Farkları Denetimi ve Farklar İçin Fatura Oluşturma
+VERT11;PUR;1;Satınalma istatistiği;Yapilmadi;Faz 2;PUR 10690 : VERT11 - Satınalma İstatistiği (Rapor)
