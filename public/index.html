@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261016e" />
+  <link rel="stylesheet" href="/styles.css?v=20261016f" />
 </head>
 <body>
   <div class="app-shell" id="appShell">
@@ -21,7 +21,7 @@
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot">
         <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
-        <span class="build-tag" id="buildTag">UI build 20261016e</span>
+        <span class="build-tag" id="buildTag">UI build 20261016f</span>
       </div>
     </aside>
 
@@ -140,7 +140,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261016e"></script>
+  <script src="/app.js?v=20261016f"></script>
   <script>
     // Bağlantı kontrolü — Failed to fetch kök nedenini hemen göster
     (async function () {
@@ -149,10 +149,10 @@
         const r = await fetch('/health', { cache: 'no-store' });
         const j = await r.json();
         if (tag) tag.textContent = r.ok && j.durum === 'ok'
-          ? 'UI build 20261016e · API bağlı'
-          : 'UI build 20261016e · API hata';
+          ? 'UI build 20261016f · API bağlı'
+          : 'UI build 20261016f · API hata';
       } catch (e) {
-        if (tag) tag.textContent = 'UI build 20261016e · API YOK';
+        if (tag) tag.textContent = 'UI build 20261016f · API YOK';
         console.error('Health başarısız — sayfayı http://localhost:3000 ile açın', e);
       }
     })();

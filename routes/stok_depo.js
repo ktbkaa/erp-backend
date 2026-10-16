@@ -69,20 +69,22 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { stok_id, depo_id, is_yeri_id, aktif } = req.body;
+        const { stok_id, depo_id, is_yeri_id, aktif, varsayilan_giris, varsayilan_cikis } = req.body;
         if (!stok_id || !depo_id) {
             return res.status(400).json({ hata: 'stok_id ve depo_id zorunlu.' });
         }
         const sonuc = await pool.query(
             `
-            INSERT INTO stok_depo (stok_id, depo_id, is_yeri_id, aktif)
-            VALUES ($1,$2,$3,COALESCE($4,TRUE))
+            INSERT INTO stok_depo (stok_id, depo_id, is_yeri_id, aktif, varsayilan_giris, varsayilan_cikis)
+            VALUES ($1,$2,$3,COALESCE($4,TRUE),COALESCE($5,FALSE),COALESCE($6,FALSE))
             ON CONFLICT (stok_id, depo_id) DO UPDATE SET
                 is_yeri_id = COALESCE(EXCLUDED.is_yeri_id, stok_depo.is_yeri_id),
-                aktif = COALESCE(EXCLUDED.aktif, stok_depo.aktif)
+                aktif = COALESCE(EXCLUDED.aktif, stok_depo.aktif),
+                varsayilan_giris = COALESCE(EXCLUDED.varsayilan_giris, stok_depo.varsayilan_giris),
+                varsayilan_cikis = COALESCE(EXCLUDED.varsayilan_cikis, stok_depo.varsayilan_cikis)
             RETURNING id
             `,
-            [stok_id, depo_id, is_yeri_id || null, aktif]
+            [stok_id, depo_id, is_yeri_id || null, aktif, varsayilan_giris, varsayilan_cikis]
         );
         res.status(201).json(await bagGetir(sonuc.rows[0].id));
     } catch (err) {
@@ -92,18 +94,20 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { stok_id, depo_id, is_yeri_id, aktif } = req.body;
+        const { stok_id, depo_id, is_yeri_id, aktif, varsayilan_giris, varsayilan_cikis } = req.body;
         const sonuc = await pool.query(
             `
             UPDATE stok_depo SET
                 stok_id = COALESCE($2, stok_id),
                 depo_id = COALESCE($3, depo_id),
                 is_yeri_id = COALESCE($4, is_yeri_id),
-                aktif = COALESCE($5, aktif)
+                aktif = COALESCE($5, aktif),
+                varsayilan_giris = COALESCE($6, varsayilan_giris),
+                varsayilan_cikis = COALESCE($7, varsayilan_cikis)
             WHERE id = $1
             RETURNING id
             `,
-            [req.params.id, stok_id || null, depo_id || null, is_yeri_id ?? null, aktif]
+            [req.params.id, stok_id || null, depo_id || null, is_yeri_id ?? null, aktif, varsayilan_giris, varsayilan_cikis]
         );
         if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Stok-depo bağı bulunamadı.' });
         res.json(await bagGetir(sonuc.rows[0].id));

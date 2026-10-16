@@ -271,14 +271,16 @@ router.post('/', async (req, res) => {
                     abc_kodu, hacim, yogunluk, hacim_birimi, yogunluk_birimi, agirlik_birimi,
                     koli_brut_agirlik, kutu_brut_agirlik, kutu_en_mm, kutu_boy_mm, kutu_yukseklik_mm,
                     barkod, emniyet_stok, maksimum_stok, ulke_mensei, raf_omru_gun,
-                    marka, temin_sekli, miktar_hassasiyeti
+                    marka, temin_sekli, miktar_hassasiyeti,
+                    parti_politika, kalite_kontrol_gerekli, varsayilan_giris_depo_id, varsayilan_cikis_depo_id
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,COALESCE($10,'Satinalma'),COALESCE($11,TRUE),
                     $12,$13,$14,$15,$16,$17,
                     $18,$19,$20,$21,$22,
                     $23,$24,$25,$26,$27,
-                    $28,$29,COALESCE($30,3)
+                    $28,$29,COALESCE($30,3),
+                    COALESCE($31,'Takipsiz'),COALESCE($32,FALSE),$33,$34
                 )
                 RETURNING id
                 `,
@@ -293,6 +295,10 @@ router.post('/', async (req, res) => {
                     trimOrNull(m.barkod), m.emniyet_stok ?? null, m.maksimum_stok ?? null,
                     trimOrNull(m.ulke_mensei), m.raf_omru_gun ?? null,
                     trimOrNull(m.marka), trimOrNull(m.temin_sekli), m.miktar_hassasiyeti ?? 3,
+                    trimOrNull(m.parti_politika) || 'Takipsiz',
+                    typeof m.kalite_kontrol_gerekli === 'boolean' ? m.kalite_kontrol_gerekli : false,
+                    m.varsayilan_giris_depo_id || null,
+                    m.varsayilan_cikis_depo_id || null,
                 ]
             );
             const stokId = stokSonuc.rows[0].id;
@@ -371,7 +377,11 @@ router.put('/:id', async (req, res) => {
                     raf_omru_gun = $27,
                     marka = $28,
                     temin_sekli = $29,
-                    miktar_hassasiyeti = COALESCE($30, miktar_hassasiyeti)
+                    miktar_hassasiyeti = COALESCE($30, miktar_hassasiyeti),
+                    parti_politika = COALESCE($31, parti_politika),
+                    kalite_kontrol_gerekli = COALESCE($32, kalite_kontrol_gerekli),
+                    varsayilan_giris_depo_id = COALESCE($33, varsayilan_giris_depo_id),
+                    varsayilan_cikis_depo_id = COALESCE($34, varsayilan_cikis_depo_id)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -406,6 +416,10 @@ router.put('/:id', async (req, res) => {
                     trimOrNull(m.marka),
                     trimOrNull(m.temin_sekli),
                     m.miktar_hassasiyeti ?? null,
+                    trimOrNull(m.parti_politika),
+                    typeof m.kalite_kontrol_gerekli === 'boolean' ? m.kalite_kontrol_gerekli : null,
+                    m.varsayilan_giris_depo_id ?? null,
+                    m.varsayilan_cikis_depo_id ?? null,
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });

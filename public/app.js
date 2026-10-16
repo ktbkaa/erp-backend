@@ -1,4 +1,5 @@
 const OPERATORS = [
+  { id: 'icerir', label: 'İçerir' },
   { id: 'esit', label: 'Eşit' },
   { id: 'esit_degil', label: 'Eşit değil' },
   { id: 'arasinda', label: 'Arasında' },
@@ -198,6 +199,7 @@ const MODULES = [
     sections: [
       { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar', 'kullanici-gruplari'] },
       { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri'] },
+      { id: 'iletisim', title: 'İletişim', screenIds: ['eposta-gonderimleri'] },
     ],
     screens: [
       {
@@ -251,6 +253,8 @@ const MODULES = [
         columns: [
           { key: 'grup_kodu', label: 'Kod', mono: true },
           { key: 'grup_adi', label: 'Ad' },
+          { key: 'satinalma_onay', label: 'SA onay' },
+          { key: 'kalite_kontrol', label: 'Kalite' },
           { key: 'aktif', label: 'Aktif' },
         ],
         masterFields: [
@@ -259,6 +263,9 @@ const MODULES = [
         ],
         detailFields: [
           { key: 'aciklama', label: 'Açıklama' },
+          { key: 'satinalma_talep', label: 'SA talep oluşturabilir', type: 'checkbox' },
+          { key: 'satinalma_onay', label: 'SA onay yetkisi', type: 'checkbox' },
+          { key: 'kalite_kontrol', label: 'Kalite kontrol yetkisi', type: 'checkbox' },
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
         detailKey: null,
@@ -294,7 +301,31 @@ const MODULES = [
         ],
         detailKey: null,
         detailAsFields: true,
+      },,
+
+      {
+        id: 'eposta-gonderimleri',
+        title: 'E-posta Gönderimleri',
+        endpoint: '/eposta-gonderimleri',
+        crud: false,
+        readOnly: true,
+        filters: [
+          { key: 'durum', label: 'Durum' },
+          { key: 'alici', label: 'Alıcı' },
+          { key: 'kaynak_tipi', label: 'Kaynak' },
+        ],
+        columns: [
+          { key: 'id', label: 'ID', mono: true },
+          { key: 'kaynak_tipi', label: 'Kaynak' },
+          { key: 'alici', label: 'Alıcı' },
+          { key: 'konu', label: 'Konu' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'deneme_sayisi', label: 'Deneme' },
+          { key: 'gonderim_tarihi', label: 'Gönderim' },
+          { key: 'son_hata', label: 'Hata' },
+        ],
       },
+
     ],
   },
   {
@@ -399,7 +430,8 @@ const MODULES = [
     title: 'Stok',
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
-      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri'] },
+      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'stok-partileri'] },
+      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-hesap'] },
     ],
     screens: [
       {
@@ -484,6 +516,10 @@ const MODULES = [
               { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
               { key: 'raf_omru_gun', label: 'Raf ömrü (gün)', type: 'number' },
               { key: 'miktar_hassasiyeti', label: 'Miktar hassasiyeti', type: 'number' },
+              { key: 'parti_politika', label: 'Parti politikası', type: 'select', options: ['Takipsiz', 'IstegeBagli', 'Zorunlu'] },
+              { key: 'kalite_kontrol_gerekli', label: 'Kalite kontrol gerekli', type: 'checkbox' },
+              { key: 'varsayilan_giris_depo_id', label: 'Varsayılan giriş depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
+              { key: 'varsayilan_cikis_depo_id', label: 'Varsayılan çıkış depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
             ],
           },
           {
@@ -536,7 +572,15 @@ const MODULES = [
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
             ],
           },
-          { id: 'mrp', label: 'MRP', kind: 'stub', note: 'MRP parametreleri üretim planlama fazında ele alınacak.' },
+          {
+            id: 'mrp',
+            label: 'MRP',
+            kind: 'fields',
+            fields: [
+              { key: 'emniyet_stok', label: 'Emniyet stok (MRP)', type: 'number' },
+              { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
+            ],
+          },
         ],
       },
       {
@@ -549,13 +593,18 @@ const MODULES = [
           { key: 'stok_kodu', label: 'Stok kodu' },
           { key: 'stok_adi', label: 'Stok adı' },
           { key: 'stok_tipi', label: 'Stok tipi' },
+          { key: 'stok_statu', label: 'Stok statü' },
+          { key: 'parti_no', label: 'Parti no' },
         ],
         columns: [
           { key: 'depo_kodu', label: 'Depo', mono: true },
           { key: 'stok_kodu', label: 'Stok', mono: true },
           { key: 'stok_adi', label: 'Ad' },
           { key: 'stok_tipi', label: 'Tip' },
+          { key: 'stok_statu', label: 'Statü' },
+          { key: 'parti_no', label: 'Parti', mono: true },
           { key: 'bakiye', label: 'Bakiye', mono: true },
+          { key: 'emniyet_stok', label: 'Emniyet' },
         ],
       },
       {
@@ -595,7 +644,62 @@ const MODULES = [
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
+      },,
+
+      {
+        id: 'stok-partileri',
+        title: 'Stok Partileri',
+        endpoint: '/stok-partileri',
+        crud: true,
+        numeratorSeri: 'PARTI',
+        codeField: 'parti_no',
+        nameField: 'stok_adi',
+        filters: [
+          { key: 'parti_no', label: 'Parti no' },
+          { key: 'stok_kodu', label: 'Stok kodu' },
+        ],
+        columns: [
+          { key: 'parti_no', label: 'Parti', mono: true },
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'parti_politika', label: 'Politika' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'parti_no', label: 'Parti no', code: true },
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'uretim_tarihi', label: 'Üretim tarihi', type: 'date' },
+          { key: 'son_kullanma_tarihi', label: 'SKT', type: 'date' },
+        ],
+        detailFields: [
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
       },
+      {
+        id: 'mrp-hesap',
+        title: 'MRP Hesap',
+        endpoint: '/mrp',
+        crud: false,
+        readOnly: true,
+        filters: [
+          { key: 'stok_kodu', label: 'Stok kodu' },
+          { key: 'oneri', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'emniyet_stok', label: 'Emniyet' },
+          { key: 'kullanilabilir_stok', label: 'Kullanılabilir' },
+          { key: 'acik_uretim_ihtiyaci', label: 'UE ihtiyaç' },
+          { key: 'acik_satinalma', label: 'Açık SA' },
+          { key: 'net_ihtiyac', label: 'Net ihtiyaç' },
+          { key: 'oneri', label: 'Öneri' },
+        ],
+      },
+
     ],
   },
   {
@@ -1174,6 +1278,8 @@ const MODULES = [
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
         ],
         detailFields: [
+          { key: 'varsayilan_giris', label: 'Varsayılan giriş', type: 'checkbox' },
+          { key: 'varsayilan_cikis', label: 'Varsayılan çıkış', type: 'checkbox' },
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
         detailKey: null,
@@ -1358,6 +1464,7 @@ const MODULES = [
         numeratorSeri: 'SATINALMA_TALEP',
         codeField: 'talep_no',
         nameField: 'aciklama',
+        approveAction: { label: 'Onayla + E-posta', path: '/satin-alma-talepleri/{id}/onayla' },
         filters: [
           { key: 'talep_no', label: 'Talep no' },
           { key: 'durum', label: 'Durum' },
@@ -1371,6 +1478,7 @@ const MODULES = [
           { key: 'talep_no', label: 'Talep no', code: true },
           { key: 'aciklama', label: 'Açıklama', name: true },
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'tedarikci_cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'] },
         ],
         detailFields: [
@@ -2108,6 +2216,184 @@ const MODULES = [
       },
     ],
   },
+
+  {
+    id: 'kalite',
+    title: 'Kalite',
+    sections: [
+      { id: 'emirler', title: 'Emirler', screenIds: ['kk-emirleri-gkk', 'kk-emirleri-ckk'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['kk-kontrol-planlari', 'kk-stok-planlari', 'kk-ret-nedenleri'] },
+    ],
+    screens: [
+      {
+        id: 'kk-emirleri-gkk',
+        title: 'GKK Emirleri',
+        endpoint: '/kk-emirleri?yon=GKK',
+        crud: false,
+        codeField: 'emir_no',
+        nameField: 'stok_adi',
+        approveAction: { label: 'Onayla', path: '/kk-emirleri/{id}/onayla' },
+        filters: [
+          { key: 'emir_no', label: 'Emir no' },
+          { key: 'stok_kodu', label: 'Stok' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'emir_no', label: 'Emir', mono: true },
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'parti_no', label: 'Parti', mono: true },
+          { key: 'miktar', label: 'Miktar' },
+          { key: 'uygun_miktar', label: 'Uygun' },
+          { key: 'uygunsuz_miktar', label: 'Uygunsuz' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'depo_kodu', label: 'Depo', mono: true },
+        ],
+        masterFields: [
+          { key: 'emir_no', label: 'Emir no', code: true },
+          { key: 'stok_kodu', label: 'Stok kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'uygun_miktar', label: 'Uygun miktar', type: 'number' },
+          { key: 'uygunsuz_miktar', label: 'Uygunsuz miktar', type: 'number' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'kk-emirleri-ckk',
+        title: 'ÇKK Emirleri',
+        endpoint: '/kk-emirleri?yon=CKK',
+        crud: false,
+        codeField: 'emir_no',
+        nameField: 'stok_adi',
+        approveAction: { label: 'Onayla', path: '/kk-emirleri/{id}/onayla' },
+        filters: [
+          { key: 'emir_no', label: 'Emir no' },
+          { key: 'stok_kodu', label: 'Stok' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'emir_no', label: 'Emir', mono: true },
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'parti_no', label: 'Parti', mono: true },
+          { key: 'miktar', label: 'Miktar' },
+          { key: 'uygun_miktar', label: 'Uygun' },
+          { key: 'uygunsuz_miktar', label: 'Uygunsuz' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'depo_kodu', label: 'Depo', mono: true },
+        ],
+        masterFields: [
+          { key: 'emir_no', label: 'Emir no', code: true },
+          { key: 'stok_kodu', label: 'Stok kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'uygun_miktar', label: 'Uygun miktar', type: 'number' },
+          { key: 'uygunsuz_miktar', label: 'Uygunsuz miktar', type: 'number' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'kk-kontrol-planlari',
+        title: 'KK Kontrol Planları',
+        endpoint: '/kk-kontrol-planlari',
+        crud: true,
+        numeratorSeri: 'KK_PLAN',
+        codeField: 'plan_kodu',
+        nameField: 'plan_adi',
+        filters: [
+          { key: 'plan_kodu', label: 'Plan kodu' },
+          { key: 'plan_adi', label: 'Plan adı' },
+          { key: 'yon', label: 'Yön' },
+        ],
+        columns: [
+          { key: 'plan_kodu', label: 'Kod', mono: true },
+          { key: 'plan_adi', label: 'Ad' },
+          { key: 'yon', label: 'Yön' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'plan_kodu', label: 'Plan kodu', code: true, required: true },
+          { key: 'plan_adi', label: 'Plan adı', name: true, required: true },
+          { key: 'yon', label: 'Yön', type: 'select', options: ['GKK', 'CKK', 'HerIkisi'], required: true },
+        ],
+        detailFields: [
+          { key: 'kriter_kodu', label: 'Kriter kodu' },
+          { key: 'kriter_adi', label: 'Kriter adı' },
+          { key: 'olcum_tipi', label: 'Ölçüm tipi', type: 'select', options: ['Sayisal', 'Metin', 'EvetHayir'] },
+          { key: 'min_deger', label: 'Min', type: 'number' },
+          { key: 'max_deger', label: 'Max', type: 'number' },
+          { key: 'birim', label: 'Birim' },
+          { key: 'zorunlu', label: 'Zorunlu', type: 'checkbox' },
+        ],
+        detailKey: 'kriterler',
+        detailSlots: 5,
+      },
+      {
+        id: 'kk-stok-planlari',
+        title: 'KK Stok Plan Bağları',
+        endpoint: '/kk-stok-planlari',
+        crud: true,
+        codeField: 'id',
+        nameField: 'stok_kodu',
+        filters: [
+          { key: 'stok_kodu', label: 'Stok' },
+          { key: 'yon', label: 'Yön' },
+        ],
+        columns: [
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'yon', label: 'Yön' },
+          { key: 'plan_kodu', label: 'Plan', mono: true },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'plan_id', label: 'Plan', type: 'lookup', lookup: 'kk-kontrol-planlari', valueKey: 'id', labelKey: 'plan_adi', codeKey: 'plan_kodu', required: true },
+          { key: 'yon', label: 'Yön', type: 'select', options: ['GKK', 'CKK'], required: true },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'kk-ret-nedenleri',
+        title: 'KK Ret Nedenleri',
+        endpoint: '/kk-ret-nedenleri',
+        crud: true,
+        codeField: 'neden_kodu',
+        nameField: 'neden_adi',
+        filters: [
+          { key: 'neden_kodu', label: 'Kod' },
+          { key: 'neden_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'neden_kodu', label: 'Kod', mono: true },
+          { key: 'neden_adi', label: 'Ad' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'neden_kodu', label: 'Neden kodu', code: true, required: true },
+          { key: 'neden_adi', label: 'Neden adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+    ],
+  },
   {
     id: 'finans',
     title: 'Finans',
@@ -2574,8 +2860,13 @@ function screenApiBase(endpoint) {
 async function api(path, options = {}) {
   let res;
   try {
+    const kullaniciKodu = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_kullanici_kodu')) || '';
     res = await fetch(path, {
-      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(kullaniciKodu ? { 'X-Kullanici-Kodu': kullaniciKodu } : {}),
+        ...(options.headers || {}),
+      },
       ...options,
     });
   } catch (netErr) {
@@ -2741,6 +3032,8 @@ function compareValues(cell, op, a, b) {
   const cellN = norm(cell);
   const aN = norm(a);
   const bN = norm(b);
+  // Varsayılan: LIKE '%değer%' (büyük/küçük harf TR locale ile)
+  if (op === 'icerir' || !op) return !aN || cellN.includes(aN);
   if (op === 'esit') return !aN || cellN === aN;
   if (op === 'esit_degil') return !aN || cellN !== aN;
   if (op === 'arasinda') {
@@ -2754,7 +3047,7 @@ function compareValues(cell, op, a, b) {
 
 function applyFilters(rows, screen) {
   const active = screen.filters
-    .map((f) => ({ def: f, st: state.filterState[f.key] || { op: 'esit', a: '', b: '' } }))
+    .map((f) => ({ def: f, st: state.filterState[f.key] || { op: 'icerir', a: '', b: '' } }))
     .filter(({ st }) => (st.op === 'arasinda' ? Boolean(norm(st.a) || norm(st.b)) : Boolean(norm(st.a))));
   if (!active.length) return rows.slice();
   return rows.filter((row) =>
@@ -2930,6 +3223,7 @@ const MOD_ICONS = {
   crm: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   satinalma: '<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
   satis: '<svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  kalite: '<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
   finans: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
 };
 
@@ -3050,7 +3344,7 @@ function syncBetweenInputs(screen) {
 function renderFilterPane(screen) {
   const grid = $('#filterGrid');
   grid.innerHTML = screen.filters.map((f) => {
-    const st = state.filterState[f.key] || { op: 'esit', a: '', b: '' };
+    const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
     return `
       <div class="filter-field">
         <label>${f.label}</label>
@@ -3150,7 +3444,7 @@ async function openScreen(id, opts = {}) {
     state.listCategory = screen.listCategories?.[0]?.id || null;
     state.filterState = {};
     (screen.filters || []).forEach((f) => {
-      state.filterState[f.key] = { op: 'esit', a: '', b: '' };
+      state.filterState[f.key] = { op: 'icerir', a: '', b: '' };
     });
     ensureSidebarPath(screen);
 
@@ -3167,7 +3461,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016e`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016f`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -3802,12 +4096,21 @@ function renderForm(screen) {
     if (screen.id === 'crm-faaliyet-planlari') {
       show = Boolean(screen.convertAction && ['Planlandi', 'Devam'].includes(rec.durum));
     }
+    if (screen.id === 'satin-alma-talepleri') {
+      show = Boolean(screen.approveAction && rec.durum === 'Acik');
+    }
+    if (screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk') {
+      show = Boolean(screen.approveAction && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.durum));
+    }
     conv.hidden = !show;
     if (show) {
       const preferApprove = (screen.approveAction && (
         (screen.id === 'irsaliyeler' && rec.durum === 'Taslak')
         || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.durum))
         || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.durum))
+        || (screen.id === 'satin-alma-talepleri' && rec.durum === 'Acik')
+        || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
+            && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.durum))
       ));
       const label = preferApprove
         ? screen.approveAction.label
@@ -4654,7 +4957,7 @@ function bindEvents() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     state.filterState = {};
-    screen.filters.forEach((f) => { state.filterState[f.key] = { op: 'esit', a: '', b: '' }; });
+    screen.filters.forEach((f) => { state.filterState[f.key] = { op: 'icerir', a: '', b: '' }; });
     renderFilterPane(screen);
     state.filtered = state.rows.slice();
     state.selectedId = null;
