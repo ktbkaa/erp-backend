@@ -197,7 +197,7 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
     const opts = (depoIdOrOpts && typeof depoIdOrOpts === 'object')
         ? depoIdOrOpts
         : { depoId: depoIdOrOpts };
-    const { depoId = null, stokStatu = null, stokId = null } = opts;
+    const { depoId = null, stokStatu = null, stokId = null, firmaId = null } = opts;
     const params = [];
     const where = [];
     if (depoId) {
@@ -211,6 +211,10 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
     if (stokStatu) {
         params.push(stokStatu);
         where.push(`COALESCE(s.stok_statu,'Kullanilabilir') = $${params.length}`);
+    }
+    if (firmaId) {
+        params.push(firmaId);
+        where.push(`(st.firma_id = $${params.length} OR h.firma_id = $${params.length})`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 

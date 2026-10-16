@@ -3,17 +3,29 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 // Tüm depoları listele (firma + iş yeri bilgisiyle)
 router.get('/', async (req, res) => {
     try {
-        let sonuc = await pool.query(`
+        const firmaId = firmaIdFromReq(req);
+        const params = [];
+        let firmaWhere = '';
+        if (firmaId) {
+            params.push(firmaId);
+            firmaWhere = `WHERE i.firma_id = $${params.length}`;
+        }
+        let sonuc = await pool.query(
+            `
             SELECT d.*, i.is_yeri_kodu, i.is_yeri_adi, f.firma_kodu, f.firma_adi
             FROM depolar d
             JOIN is_yerleri i ON d.is_yeri_id = i.id
             JOIN firmalar f ON i.firma_id = f.id
+            ${firmaWhere}
             ORDER BY d.is_yeri_id ASC, d.varsayilan DESC, d.id ASC
-        `);
+            `,
+            params
+        );
         // ?yetkili=1 → kullanıcı depo yetkisi filtresi (PLT-008)
         if (String(req.query.yetkili || '') === '1' && req.user) {
             const { parseJsonArr } = require('../src/middleware/authJwt');

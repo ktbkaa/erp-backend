@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { assertYetki, reqKullaniciKodu } = require('../src/utils/yetki');
@@ -20,7 +21,15 @@ async function talepGetir(id) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await pool.query('SELECT id FROM satin_alma_talepleri ORDER BY id DESC');
+        const params = [];
+        let sql = 'SELECT id FROM satin_alma_talepleri';
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            sql += ` WHERE firma_id = $${params.length}`;
+        }
+        sql += ' ORDER BY id DESC';
+        const liste = await pool.query(sql, params);
         const sonuc = [];
         for (const r of liste.rows) sonuc.push(await talepGetir(r.id));
         res.json(sonuc);
@@ -33,6 +42,10 @@ router.get('/:id', async (req, res) => {
     try {
         const talep = await talepGetir(req.params.id);
         if (!talep) return res.status(404).json({ hata: 'Talep bulunamadı.' });
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId && talep.firma_id != null && Number(talep.firma_id) !== Number(firmaId)) {
+            return res.status(404).json({ hata: 'Talep bulunamadı.' });
+        }
         res.json(talep);
     } catch (err) {
         res.status(500).json({ hata: err.message });

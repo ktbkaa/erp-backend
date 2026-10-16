@@ -3211,6 +3211,8 @@ const state = {
   tabCtxKey: null,
   nestedLink: null, // { fromScreenId, fromId, convertPath, bodyKey, extra }
   session: null,
+  firmalar: [],
+  activeFirmaId: null,
 };
 
 /** Bağlı ekran ön doldurma haritası */
@@ -3425,19 +3427,28 @@ function screenApiBase(endpoint) {
   return q >= 0 ? endpoint.slice(0, q) : endpoint;
 }
 
+function getActiveFirmaId() {
+  if (state.activeFirmaId) return state.activeFirmaId;
+  const stored = Number(localStorage.getItem('ktb_firma_id') || 0);
+  return stored > 0 ? stored : null;
+}
+
 async function api(path, options = {}) {
   let res;
   try {
     const kullaniciKodu = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_kullanici_kodu')) || '';
     const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_access_token')) || '';
+    const firmaId = getActiveFirmaId();
+    const { headers: optHeaders, ...restOpts } = options;
     res = await fetch(path, {
+      ...restOpts,
       headers: {
         'Content-Type': 'application/json',
         ...(kullaniciKodu ? { 'X-Kullanici-Kodu': kullaniciKodu } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        ...(options.headers || {}),
+        ...(firmaId ? { 'X-Firma-Id': String(firmaId) } : {}),
+        ...(optHeaders || {}),
       },
-      ...options,
     });
   } catch (netErr) {
     const origin = typeof location !== 'undefined' ? location.origin : '';
@@ -3924,11 +3935,83 @@ function showHome() {
   }
   showView('home');
   $('#homeSearchWrap').hidden = false;
-  $('#screenTitle').textContent = 'Ana Sayfa';
+  const title = $('#screenTitle');
+  if (title) {
+    title.hidden = true;
+    title.textContent = '';
+  }
   $('#screenSearch').value = '';
   $('#searchResults').hidden = true;
   renderSidebar();
   renderTabBar();
+}
+
+function renderFirmaPicker() {
+  const nameEl = $('#firmaPickerName');
+  const menu = $('#firmaPickerMenu');
+  if (!nameEl || !menu) return;
+  const aktif = state.firmalar.find((f) => Number(f.id) === Number(state.activeFirmaId));
+  nameEl.textContent = aktif ? aktif.firma_adi : (state.firmalar[0]?.firma_adi || 'Firma seçin');
+  menu.innerHTML = state.firmalar.map((f) => `
+    <li role="option">
+      <button type="button" class="firma-picker-item ${Number(f.id) === Number(state.activeFirmaId) ? 'active' : ''}"
+        data-firma-id="${f.id}">
+        <span class="firma-kod">${f.firma_kodu || ''}</span>
+        <span class="firma-adi">${f.firma_adi || ''}</span>
+      </button>
+    </li>`).join('');
+}
+
+function closeFirmaPicker() {
+  const menu = $('#firmaPickerMenu');
+  const btn = $('#firmaPickerBtn');
+  if (menu) menu.hidden = true;
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+async function setActiveFirma(firmaId, { reload = true } = {}) {
+  const id = Number(firmaId);
+  if (!id || Number(state.activeFirmaId) === id) {
+    closeFirmaPicker();
+    return;
+  }
+  state.activeFirmaId = id;
+  localStorage.setItem('ktb_firma_id', String(id));
+  state.lookupCache = {};
+  // Açık form sekmelerini kapat — yanlış firmada işlem riski
+  state.openTabs = state.openTabs.filter((t) => t.kind === 'list');
+  state.activeTabKey = state.openTabs[0]?.key || null;
+  state.formMode = null;
+  state.formRecord = null;
+  closeFirmaPicker();
+  renderFirmaPicker();
+  renderTabBar();
+  if (!reload) return;
+  if (state.screenId) {
+    const screen = findScreen(state.screenId);
+    if (screen) await openScreen(screen.id);
+    else showHome();
+  } else {
+    showHome();
+  }
+  toast(`Aktif firma: ${state.firmalar.find((f) => Number(f.id) === id)?.firma_adi || id}`);
+}
+
+async function loadFirmalar() {
+  try {
+    // Firma listesi izolasyonsuz — seçim için tüm demo firmalar
+    const rows = await api('/firmalar', { headers: { 'X-Firma-Id': '' } }).catch(() => api('/firmalar'));
+    state.firmalar = Array.isArray(rows) ? rows : [];
+  } catch (_) {
+    state.firmalar = [];
+  }
+  const stored = Number(localStorage.getItem('ktb_firma_id') || 0);
+  const prefer = state.firmalar.find((f) => Number(f.id) === stored)
+    || state.firmalar.find((f) => f.firma_kodu === 'ELEK')
+    || state.firmalar[0];
+  state.activeFirmaId = prefer ? Number(prefer.id) : null;
+  if (state.activeFirmaId) localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
+  renderFirmaPicker();
 }
 
 function readFilterState(screen) {
@@ -4106,7 +4189,10 @@ async function openScreen(id, opts = {}) {
     }
     showView('screen');
     $('#homeSearchWrap').hidden = true;
-    $('#screenTitle').textContent = screen.title;
+    {
+      const title = $('#screenTitle');
+      if (title) { title.hidden = false; title.textContent = screen.title; }
+    }
     const banner = $('#screenBanner');
     if (banner) banner.textContent = `${screen.title} açık · UI build 20261016j`;
     $('#searchResults').hidden = true;
@@ -5689,6 +5775,27 @@ function bindEvents() {
     showHome();
   });
 
+  $('#firmaPickerBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const menu = $('#firmaPickerMenu');
+    const btn = $('#firmaPickerBtn');
+    if (!menu || !btn) return;
+    const open = menu.hidden;
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  $('#firmaPickerMenu')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-firma-id]');
+    if (!btn) return;
+    e.preventDefault();
+    setActiveFirma(btn.getAttribute('data-firma-id'));
+  });
+  document.addEventListener('click', (e) => {
+    const picker = $('#firmaPicker');
+    if (picker && !picker.contains(e.target)) closeFirmaPicker();
+  });
+
   $('#btnMenu').addEventListener('click', () => {
     const shell = $('#appShell');
     const sidebar = $('#sidebar');
@@ -6116,13 +6223,16 @@ async function restoreSession() {
 }
 
 function bootFromHash() {
-  restoreSession().finally(() => {
-    renderSidebar();
-    bindEvents();
-    const id = (location.hash || '').replace(/^#/, '');
-    if (id && findScreen(id)) openScreen(id);
-    else showHome();
-  });
+  restoreSession()
+    .then(() => loadFirmalar())
+    .catch(() => loadFirmalar())
+    .finally(() => {
+      renderSidebar();
+      bindEvents();
+      const id = (location.hash || '').replace(/^#/, '');
+      if (id && findScreen(id)) openScreen(id);
+      else showHome();
+    });
 }
 
 bootFromHash();

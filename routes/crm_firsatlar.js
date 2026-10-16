@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
@@ -126,6 +127,11 @@ router.get('/', async (req, res) => {
         if (aday_id) {
             params.push(Number(aday_id));
             where.push(`f.aday_id = $${params.length}`);
+        }
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`f.firma_id = $${params.length}`);
         }
         const liste = await pool.query(
             `

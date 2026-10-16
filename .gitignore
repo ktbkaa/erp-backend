@@ -10,3 +10,6 @@ erp.db
 !.vscode/mcp.json
 .cursor/*
 !.cursor/mcp.json
+
+# Local DB backups from demo cleanup
+backups/

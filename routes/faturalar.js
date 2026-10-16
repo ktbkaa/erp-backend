@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { faturaEslestir } = require('../src/services/faturaEslestirmeService');
@@ -71,6 +72,11 @@ router.get('/', async (req, res, next) => {
     if (durum) {
       params.push(durum);
       where.push(`f.durum = $${params.length}`);
+    }
+    const firmaId = firmaIdFromReq(req);
+    if (firmaId) {
+      params.push(firmaId);
+      where.push(`f.firma_id = $${params.length}`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     // N+1 giderimi: tek sorguda başlık + satır sayısı

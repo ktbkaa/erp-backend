@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { depoBakiyeListesi } = require('../src/services/stokHareketService');
 
 router.get('/', async (req, res) => {
@@ -9,6 +10,7 @@ router.get('/', async (req, res) => {
             depoId: req.query.depo_id ? Number(req.query.depo_id) : null,
             stokId: req.query.stok_id ? Number(req.query.stok_id) : null,
             stokStatu: req.query.stok_statu || null,
+            firmaId: firmaIdFromReq(req),
         });
         // Rezerve / kullanılabilir kolonları (INV-004)
         const enriched = [];

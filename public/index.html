@@ -29,7 +29,14 @@
       <header class="workspace-bar" id="workspaceBar">
         <div class="bar-left">
           <button type="button" class="icon-btn" id="btnMenu" aria-label="Menüyü aç/kapat" title="Menüyü kapat/aç">☰</button>
-          <h1 class="screen-title" id="screenTitle">Ana Sayfa</h1>
+          <div class="firma-picker" id="firmaPicker">
+            <button type="button" class="firma-picker-btn" id="firmaPickerBtn" aria-haspopup="listbox" aria-expanded="false" title="Aktif firma">
+              <span class="firma-picker-name" id="firmaPickerName">Firma seçin</span>
+              <span class="firma-picker-caret" aria-hidden="true">▾</span>
+            </button>
+            <ul class="firma-picker-menu" id="firmaPickerMenu" role="listbox" hidden></ul>
+          </div>
+          <h1 class="screen-title" id="screenTitle" hidden>Ekran</h1>
         </div>
         <div class="bar-right" id="homeSearchWrap">
           <label class="search-label" for="screenSearch">Ekran ara</label>

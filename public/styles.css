@@ -420,9 +420,95 @@ body {
 .screen-title {
   margin: 0;
   font-family: var(--display);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 28rem;
+}
+.screen-title[hidden] { display: none !important; }
+
+/* Firma seçici — kenarlıksız, kompakt */
+.firma-picker {
+  position: relative;
+  min-width: 0;
+}
+.firma-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: min(28rem, 52vw);
+  border: 0;
+  background: transparent;
+  padding: 0.25rem 0.15rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.firma-picker-btn:hover .firma-picker-name {
+  color: var(--accent, #1f7a6b);
+}
+.firma-picker-name {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.firma-picker-caret {
+  color: var(--muted);
+  font-size: 0.75rem;
+  flex: 0 0 auto;
+}
+.firma-picker-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  min-width: 16rem;
+  max-width: min(28rem, 90vw);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  box-shadow: 0 8px 24px rgba(15, 40, 55, 0.12);
+}
+.firma-picker-menu[hidden] { display: none !important; }
+.firma-picker-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.firma-picker-item:hover { background: #f0f5f4; }
+.firma-picker-item.active {
+  background: #e7f3f0;
+  font-weight: 600;
+}
+.firma-picker-item .firma-kod {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.firma-picker-item .firma-adi {
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.1rem;
 }
 
 .screen-search {

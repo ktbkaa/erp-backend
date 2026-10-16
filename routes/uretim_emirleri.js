@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { stokHareketOlustur } = require('../src/services/stokHareketService');
@@ -252,7 +253,7 @@ async function emirGetir(id) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await pool.query('SELECT id FROM uretim_emirleri ORDER BY id DESC');
+        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM uretim_emirleri'; if (firmaId) { params.push(firmaId); sql += ' WHERE firma_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
         const sonuc = [];
         for (const r of liste.rows) sonuc.push(await emirGetir(r.id));
         res.json(sonuc);

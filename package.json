@@ -7,6 +7,8 @@
     "start": "node index.js",
     "migrate": "node db/migrate.js",
     "demo:cycle": "node scripts/demo-cycle.js",
+    "demo:cleanup": "node scripts/demo-cleanup.js",
+    "demo:4-firma": "node scripts/demo-4-firma.js",
     "test": "node --test tests/**/*.test.js",
     "demo:ornek-dongu": "node scripts/ornek-dongu-cn-tr-de.js"
   },

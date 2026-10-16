@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
 
 async function merkezGetir(id) {
     const sonuc = await pool.query(
         `
-        SELECT m.*, i.is_yeri_kodu, i.is_yeri_adi
+        SELECT m.*, i.is_yeri_kodu, i.is_yeri_adi, i.firma_id
         FROM is_merkezleri m
         JOIN is_yerleri i ON i.id = m.is_yeri_id
         WHERE m.id = $1
@@ -19,12 +20,20 @@ async function merkezGetir(id) {
 
 router.get('/', async (req, res) => {
     try {
+        const params = [];
+        let firmaSql = '';
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            firmaSql = ` WHERE i.firma_id = $${params.length}`;
+        }
         const sonuc = await pool.query(`
-            SELECT m.*, i.is_yeri_kodu, i.is_yeri_adi
+            SELECT m.*, i.is_yeri_kodu, i.is_yeri_adi, i.firma_id
             FROM is_merkezleri m
             JOIN is_yerleri i ON i.id = m.is_yeri_id
+            ${firmaSql}
             ORDER BY m.id
-        `);
+        `, params);
         res.json(sonuc.rows);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -35,6 +44,10 @@ router.get('/:id', async (req, res) => {
     try {
         const row = await merkezGetir(req.params.id);
         if (!row) return res.status(404).json({ hata: 'İş merkezi bulunamadı.' });
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId && Number(row.firma_id) !== Number(firmaId)) {
+            return res.status(404).json({ hata: 'İş merkezi bulunamadı.' });
+        }
         res.json(row);
     } catch (err) {
         res.status(500).json({ hata: err.message });

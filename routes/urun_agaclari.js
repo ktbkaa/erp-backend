@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 
 function satirAgaciKur(duzSatirlar) {
@@ -53,14 +54,23 @@ router.get('/', async (req, res) => {
     try {
         // Varsayılan: mamul ağaçlarını göster (tek kök ürün ağacı bakışı)
         const onlyMamul = req.query.tip !== 'hepsi';
+        const firmaId = firmaIdFromReq(req);
+        const params = [];
+        const where = [];
+        if (onlyMamul) where.push(`s.stok_tipi = 'Mamul'`);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`ua.firma_id = $${params.length}`);
+        }
         const liste = await pool.query(
             `
             SELECT ua.id
             FROM urun_agaclari ua
             JOIN stoklar s ON s.id = ua.mamul_stok_id
-            ${onlyMamul ? `WHERE s.stok_tipi = 'Mamul'` : ''}
+            ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
             ORDER BY ua.id DESC
-            `
+            `,
+            params
         );
         const sonuc = [];
         for (const a of liste.rows) sonuc.push(await agacGetir(a.id));
