@@ -4,6 +4,7 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { stokHareketOlustur } = require('../src/services/stokHareketService');
+const { kkEmriOlustur, ckkDepoCozumle, depoBulKodVeyaRol } = require('../src/services/kaliteService');
 
 async function tipCozumle(client, emirTipiId, siparisId) {
     if (emirTipiId) {
@@ -641,14 +642,23 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 tuketimHareketId = h.hareket.id;
             }
 
-            // Çıktı stoğu ilgili depoya
+            // Çıktı stoğu ilgili depoya (KK gerekliyse ÇKK + Kalitede)
             let mamulHareketId = null;
             if (op.cikti_stok_id) {
                 const cikti = await client.query(
-                    'SELECT id, birim, stok_tipi FROM stoklar WHERE id=$1',
+                    'SELECT id, birim, stok_tipi, kalite_kontrol_gerekli FROM stoklar WHERE id=$1',
                     [op.cikti_stok_id]
                 );
-                const ciktiDepo = ciktiDepoSec(emir, cikti.rows[0].stok_tipi);
+                const kkGerekli = Boolean(cikti.rows[0].kalite_kontrol_gerekli);
+                let ciktiDepo = ciktiDepoSec(emir, cikti.rows[0].stok_tipi);
+                let hedefMamul = null;
+                if (kkGerekli) {
+                    const ckk = await ckkDepoCozumle(client);
+                    if (!ckk) throw new Error('ÇKK deposu tanımlı değil (CKK_DEPO_KODU / depo_rolu=CKK).');
+                    ciktiDepo = ckk.id;
+                    const mam = await depoBulKodVeyaRol(client, { kodParam: 'MAMUL_DEPO_KODU', rol: 'Mamul' });
+                    hedefMamul = mam?.id || null;
+                }
                 const h = await stokHareketOlustur(client, {
                     hareketTipi: 'URETIM_GIRIS',
                     isYeriId: emir.is_yeri_id,
@@ -661,9 +671,24 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                         miktar,
                         yon: 1,
                         birim: cikti.rows[0].birim,
+                        stok_statu: kkGerekli ? 'Kalitede' : 'Kullanilabilir',
                     }],
                 });
                 mamulHareketId = h.hareket.id;
+                if (kkGerekli) {
+                    await kkEmriOlustur(client, {
+                        yon: 'CKK',
+                        stokId: op.cikti_stok_id,
+                        partiId: h.satirlar[0]?.parti_id || null,
+                        depoId: ciktiDepo,
+                        hedefDepoId: hedefMamul,
+                        miktar,
+                        kaynakTipi: 'URETIM_EMRI',
+                        kaynakId: emirId,
+                        stokHareketId: mamulHareketId,
+                        aciklama: `${emir.emir_no} ÇKK`,
+                    });
+                }
             }
 
             const yeniUretilen = Number(op.uretilen_miktar) + miktar;

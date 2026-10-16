@@ -23,16 +23,18 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { grup_kodu, grup_adi, aciklama, aktif } = req.body;
+        const { grup_kodu, grup_adi, aciklama, aktif, satinalma_onay, satinalma_talep, kalite_kontrol } = req.body;
         if (!grup_kodu || !grup_adi) {
             return res.status(400).json({ hata: 'grup_kodu ve grup_adi zorunlu.' });
         }
         const sonuc = await pool.query(
             `
-            INSERT INTO kullanici_gruplari (grup_kodu, grup_adi, aciklama, aktif)
-            VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *
+            INSERT INTO kullanici_gruplari
+                (grup_kodu, grup_adi, aciklama, aktif, satinalma_onay, satinalma_talep, kalite_kontrol)
+            VALUES ($1,$2,$3,COALESCE($4,TRUE),COALESCE($5,FALSE),COALESCE($6,TRUE),COALESCE($7,FALSE))
+            RETURNING *
             `,
-            [grup_kodu, grup_adi, aciklama || null, aktif]
+            [grup_kodu, grup_adi, aciklama || null, aktif, satinalma_onay, satinalma_talep, kalite_kontrol]
         );
         res.status(201).json(sonuc.rows[0]);
     } catch (err) {
@@ -42,16 +44,19 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { grup_adi, aciklama, aktif } = req.body;
+        const { grup_adi, aciklama, aktif, satinalma_onay, satinalma_talep, kalite_kontrol } = req.body;
         const sonuc = await pool.query(
             `
             UPDATE kullanici_gruplari SET
                 grup_adi = COALESCE($2, grup_adi),
                 aciklama = COALESCE($3, aciklama),
-                aktif = COALESCE($4, aktif)
+                aktif = COALESCE($4, aktif),
+                satinalma_onay = COALESCE($5, satinalma_onay),
+                satinalma_talep = COALESCE($6, satinalma_talep),
+                kalite_kontrol = COALESCE($7, kalite_kontrol)
             WHERE id=$1 RETURNING *
             `,
-            [req.params.id, grup_adi, aciklama, aktif]
+            [req.params.id, grup_adi, aciklama, aktif, satinalma_onay, satinalma_talep, kalite_kontrol]
         );
         if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Grup bulunamadı.' });
         res.json(sonuc.rows[0]);

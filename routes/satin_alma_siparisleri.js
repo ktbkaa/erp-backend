@@ -113,7 +113,9 @@ router.post('/talep-donustur', async (req, res) => {
         const id = await withTransaction(pool, async (client) => {
             const talep = await client.query('SELECT * FROM satin_alma_talepleri WHERE id = $1 FOR UPDATE', [talep_id]);
             if (!talep.rows[0]) throw new Error('Talep bulunamadı.');
-            if (talep.rows[0].durum !== 'Acik') throw new Error(`Talep dönüştürülemez. Durum: ${talep.rows[0].durum}`);
+            if (!['Acik', 'Onayli'].includes(talep.rows[0].durum)) {
+                throw new Error(`Talep dönüştürülemez. Durum: ${talep.rows[0].durum}`);
+            }
 
             const satirlar = await client.query(
                 'SELECT * FROM satin_alma_talep_satirlari WHERE talep_id = $1 ORDER BY id',
