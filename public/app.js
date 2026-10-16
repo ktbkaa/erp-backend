@@ -301,7 +301,7 @@ const MODULES = [
         ],
         detailKey: null,
         detailAsFields: true,
-      },,
+      },
 
       {
         id: 'eposta-gonderimleri',
@@ -644,8 +644,7 @@ const MODULES = [
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
-      },,
-
+      },
       {
         id: 'stok-partileri',
         title: 'Stok Partileri',
@@ -2497,25 +2496,26 @@ const MODULES = [
 
 /** Modül menü bölümleri — sections yoksa düz liste (Sabit Tanımlar). */
 function moduleMenuSections(mod) {
-  const byId = Object.fromEntries((mod.screens || []).map((s) => [s.id, s]));
+  const screens = (mod.screens || []).filter((s) => s && s.id);
+  const byId = Object.fromEntries(screens.map((s) => [s.id, s]));
   if (Array.isArray(mod.sections) && mod.sections.length) {
     const used = new Set();
     const sections = mod.sections.map((sec) => {
-      const screens = (sec.screenIds || [])
+      const secScreens = (sec.screenIds || [])
         .map((id) => {
           used.add(id);
           return byId[id];
         })
         .filter(Boolean);
-      return { id: sec.id || sec.title, title: sec.title, screens };
+      return { id: sec.id || sec.title, title: sec.title, screens: secScreens };
     }).filter((sec) => sec.screens.length);
-    const leftovers = (mod.screens || []).filter((s) => !used.has(s.id));
+    const leftovers = screens.filter((s) => !used.has(s.id));
     if (leftovers.length) {
       sections.push({ id: '_diger', title: 'Diğer', screens: leftovers });
     }
     return sections;
   }
-  return [{ id: '_all', title: null, screens: mod.screens || [] }];
+  return [{ id: '_all', title: null, screens }];
 }
 
 function normalizeScreen(raw, moduleId, moduleTitle) {
@@ -3461,7 +3461,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016f`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016g`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
