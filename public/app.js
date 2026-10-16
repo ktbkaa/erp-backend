@@ -2506,10 +2506,22 @@ function screenApiBase(endpoint) {
 }
 
 async function api(path, options = {}) {
-  const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
+  let res;
+  try {
+    res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      ...options,
+    });
+  } catch (netErr) {
+    const origin = typeof location !== 'undefined' ? location.origin : '';
+    const err = new Error(
+      `API'ye ulaşılamadı (${path}). Sayfayı http://localhost:3000 üzerinden açın; sunucu kapalıysa yeniden başlatın.`
+    );
+    err.cause = netErr;
+    err.status = 0;
+    err.origin = origin;
+    throw err;
+  }
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) { /* ignore */ }
@@ -2969,10 +2981,15 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016b`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016d`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
-    $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">Yükleniyor…</td></tr>`;
+    {
+      const cols = screen.columns || [];
+      const head = $('#dataHead');
+      if (head) head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
+      $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${cols.length || 1}">Yükleniyor…</td></tr>`;
+    }
 
     // Zorunlu: ana alan gerçekten görünür mü?
     const screenEl = $('#viewScreen');
@@ -3006,7 +3023,11 @@ async function openScreen(id, opts = {}) {
     state.rows = [];
     state.filtered = [];
     showView('screen');
-    $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${(screen.columns || []).length}">${err.message}</td></tr>`;
+    const cols = screen.columns || [];
+    const head = $('#dataHead');
+    if (head) head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
+    const msg = String(err.message || 'Ekran açılamadı').replace(/</g, '&lt;');
+    $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${cols.length || 1}">${msg}</td></tr>`;
     $('#listMeta').textContent = 'Hata';
     updateActionButtons(screen);
   }

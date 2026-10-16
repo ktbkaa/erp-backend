@@ -6,6 +6,11 @@ const port = Number(process.env.PORT || 3000);
 
 app.use(express.json());
 app.use((req, res, next) => {
+    // Önizleme / farklı origin (Cursor Ports) için CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
     if (req.path === '/' || req.path.endsWith('.html') || req.path.endsWith('.js') || req.path.endsWith('.css')) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
@@ -86,7 +91,9 @@ app.use('/muhasebe-hesaplari', require('./routes/muhasebe_hesaplari'));
 app.use('/muhasebe-belgeleri', require('./routes/muhasebe_belgeleri'));
 app.use('/mizan', require('./routes/mizan'));
 
-app.listen(port, () => {
-    console.log(`Sistem http://localhost:${port} adresinde çalışıyor.`);
+// IPv6 + IPv4 (Chrome localhost → ::1; yalnız 0.0.0.0 dinlenirse Failed to fetch)
+const server = require('http').createServer(app);
+server.listen({ port, host: '::', ipv6Only: false }, () => {
+    console.log(`Sistem http://localhost:${port} (IPv4+IPv6) adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
 });
