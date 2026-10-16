@@ -124,11 +124,15 @@ async function stokHareketOlustur(client, {
         const satirRes = await client.query(
             `
             INSERT INTO stok_hareket_satirlari
-                (hareket_id, stok_id, miktar, yon, birim, parti_id, stok_statu)
-            VALUES ($1,$2,$3,$4,$5,$6,$7)
+                (hareket_id, stok_id, miktar, yon, birim, parti_id, stok_statu, raf_kodu, konum_kodu)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             RETURNING *;
             `,
-            [hareket.id, s.stok_id, s.miktar, s.yon, s.birim || null, partiId, Number(s.yon) === -1 ? cikisStatu : statu]
+            [
+                hareket.id, s.stok_id, s.miktar, s.yon, s.birim || null, partiId,
+                Number(s.yon) === -1 ? cikisStatu : statu,
+                s.raf_kodu || null, s.konum_kodu || null,
+            ]
         );
         eklenen.push(satirRes.rows[0]);
     }

@@ -4,171 +4,246 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 
-async function faturaGetir(id) {
-    const f = await pool.query(
-        `
-        SELECT f.*, c.cari_kodu, c.cari_adi
-        FROM faturalar f
-        JOIN cariler c ON f.cari_id = c.id
-        WHERE f.id = $1
-        `,
-        [id]
-    );
-    if (!f.rows[0]) return null;
-    const kalemler = await pool.query(
-        `
-        SELECT fd.*, s.stok_kodu, s.stok_adi
-        FROM fatura_detaylari fd
-        JOIN stoklar s ON fd.stok_id = s.id
-        WHERE fd.fatura_id = $1
-        ORDER BY fd.id
-        `,
-        [id]
-    );
-    return { ...f.rows[0], kalemler: kalemler.rows, satirlar: kalemler.rows };
+const EBELGE_ALANLAR = [
+  'senaryo', 'fatura_tipi', 'ozellestirme_no', 'ettn',
+  'odeme_vadesi_gun', 'odeme_kosulu', 'para_birimi', 'kur',
+  'sevk_adresi', 'aciklama', 'fatura_tarihi',
+  'mal_hizmet_toplam', 'toplam_iskonto', 'toplam_kdv', 'odenecek_tutar',
+  'hareket_kodu_id', 'siparis_id', 'irsaliye_id', 'mal_kabul_id',
+  'kaynak_belge_tipi', 'kaynak_belge_id', 'durum', 'kdv_oran_varsayilan',
+];
+
+async function faturaGetir(id, clientOrPool = pool) {
+  const f = await clientOrPool.query(
+    `
+    SELECT f.*, c.cari_kodu, c.cari_adi
+    FROM faturalar f
+    JOIN cariler c ON f.cari_id = c.id
+    WHERE f.id = $1
+    `,
+    [id]
+  );
+  if (!f.rows[0]) return null;
+  const kalemler = await clientOrPool.query(
+    `
+    SELECT fd.*, s.stok_kodu, s.stok_adi
+    FROM fatura_detaylari fd
+    JOIN stoklar s ON fd.stok_id = s.id
+    WHERE fd.fatura_id = $1
+    ORDER BY fd.id
+    `,
+    [id]
+  );
+  return { ...f.rows[0], kalemler: kalemler.rows, satirlar: kalemler.rows };
 }
 
-router.get('/', async (req, res) => {
-    try {
-        const { fatura_turu } = req.query;
-        let sql = 'SELECT id FROM faturalar';
-        const params = [];
-        if (fatura_turu) {
-            params.push(fatura_turu);
-            sql += ` WHERE fatura_turu = $1`;
+function ebelgeParams(body) {
+  const out = {};
+  for (const k of EBELGE_ALANLAR) {
+    if (body[k] !== undefined) out[k] = body[k];
+  }
+  return out;
+}
+
+router.get('/', async (req, res, next) => {
+  try {
+    const { fatura_turu, cari_id, durum } = req.query;
+    const where = [];
+    const params = [];
+    if (fatura_turu) {
+      params.push(fatura_turu);
+      where.push(`f.fatura_turu = $${params.length}`);
+    }
+    if (cari_id) {
+      params.push(Number(cari_id));
+      where.push(`f.cari_id = $${params.length}`);
+    }
+    if (durum) {
+      params.push(durum);
+      where.push(`f.durum = $${params.length}`);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    // N+1 giderimi: tek sorguda başlık + satır sayısı
+    const liste = await pool.query(
+      `
+      SELECT f.*, c.cari_kodu, c.cari_adi,
+             (SELECT COUNT(*)::int FROM fatura_detaylari fd WHERE fd.fatura_id = f.id) AS kalem_sayisi
+      FROM faturalar f
+      JOIN cariler c ON f.cari_id = c.id
+      ${whereSql}
+      ORDER BY f.id DESC
+      `,
+      params
+    );
+    // Detayları ihtiyaç halinde tek tek değil; liste için satırlar opsiyonel
+    const withLines = String(req.query.detay || '').toLowerCase() === '1'
+      || String(req.query.detay || '').toLowerCase() === 'true';
+    if (!withLines) {
+      return res.json(liste.rows.map((r) => ({ ...r, kalemler: [], satirlar: [] })));
+    }
+    const faturalar = [];
+    for (const r of liste.rows) faturalar.push(await faturaGetir(r.id));
+    res.json(faturalar);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:id', async (req, res, next) => {
+  try {
+    const fatura = await faturaGetir(req.params.id);
+    if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    res.json(fatura);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/', async (req, res, next) => {
+  try {
+    const { fatura_no, cari_id, fatura_turu } = req.body;
+    const kalemler = req.body.kalemler || req.body.satirlar;
+    if (!cari_id) return res.status(400).json({ hata: 'cari_id zorunludur.' });
+    if (!Array.isArray(kalemler) || kalemler.length === 0) {
+      return res.status(400).json({ hata: 'En az bir fatura kalemi gerekli.' });
+    }
+    const ekstra = ebelgeParams(req.body);
+
+    const id = await withTransaction(pool, async (client) => {
+      const tur = fatura_turu || ekstra.fatura_tipi || 'Satis';
+      const seri = String(tur).toLowerCase().includes('alis') ? 'ALIS_FATURA' : 'FATURA';
+      const no = fatura_no || (await sonrakiBelgeNo(client, seri));
+
+      let toplam_tutar = 0;
+      let toplam_kdv = 0;
+      for (const k of kalemler) {
+        const satir = Number(k.miktar) * Number(k.birim_fiyat);
+        const kdvOran = Number(k.kdv_oran ?? ekstra.kdv_oran_varsayilan ?? 20);
+        toplam_tutar += satir;
+        toplam_kdv += satir * (kdvOran / 100);
+      }
+
+      const cols = ['fatura_no', 'cari_id', 'fatura_turu', 'toplam_tutar', 'mal_hizmet_toplam', 'toplam_kdv', 'odenecek_tutar'];
+      const vals = [no, cari_id, tur, toplam_tutar, toplam_tutar, toplam_kdv, toplam_tutar + toplam_kdv];
+      for (const [k, v] of Object.entries(ekstra)) {
+        if (['mal_hizmet_toplam', 'toplam_kdv', 'odenecek_tutar'].includes(k)) continue;
+        cols.push(k);
+        vals.push(v);
+      }
+      const ph = vals.map((_, i) => `$${i + 1}`).join(',');
+      const faturaSonuc = await client.query(
+        `INSERT INTO faturalar (${cols.join(',')}) VALUES (${ph}) RETURNING id`,
+        vals
+      );
+      const faturaId = faturaSonuc.rows[0].id;
+
+      for (const k of kalemler) {
+        if (!k.stok_id || k.miktar == null || k.birim_fiyat == null) {
+          throw Object.assign(new Error('Her kalemde stok_id, miktar ve birim_fiyat zorunludur.'), { status: 400 });
         }
-        sql += ' ORDER BY id DESC';
-        const liste = await pool.query(sql, params);
-        const faturalar = [];
-        for (const r of liste.rows) faturalar.push(await faturaGetir(r.id));
-        res.json(faturalar);
-    } catch (err) {
-        console.error('Fatura listeleme hatası:', err);
-        res.status(500).json({ hata: 'Faturalar çekilirken bir pürüz çıktı.' });
-    }
+        const satirToplam = Number(k.miktar) * Number(k.birim_fiyat);
+        const kdvOran = Number(k.kdv_oran ?? ekstra.kdv_oran_varsayilan ?? 20);
+        const kdvTutari = satirToplam * (kdvOran / 100);
+        await client.query(
+          `
+          INSERT INTO fatura_detaylari
+            (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar, birim, kdv_oran, kdv_tutari, mal_hizmet_tutari)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+          `,
+          [faturaId, k.stok_id, k.miktar, k.birim_fiyat, satirToplam, k.birim || null, kdvOran, kdvTutari, satirToplam]
+        );
+      }
+      return faturaId;
+    });
+
+    res.status(201).json(await faturaGetir(id));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.get('/:id', async (req, res) => {
-    try {
-        const fatura = await faturaGetir(req.params.id);
-        if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
-        res.json(fatura);
-    } catch (err) {
-        res.status(500).json({ hata: err.message });
-    }
-});
+router.put('/:id', async (req, res, next) => {
+  try {
+    const { fatura_turu, cari_id } = req.body;
+    const kalemler = req.body.kalemler || req.body.satirlar;
+    const ekstra = ebelgeParams(req.body);
 
-router.post('/', async (req, res) => {
-    try {
-        const { fatura_no, cari_id, fatura_turu } = req.body;
-        const kalemler = req.body.kalemler || req.body.satirlar;
-        if (!cari_id) {
-            return res.status(400).json({ hata: 'cari_id zorunludur.' });
+    const id = await withTransaction(pool, async (client) => {
+      const mevcut = await client.query('SELECT id FROM faturalar WHERE id=$1 FOR UPDATE', [req.params.id]);
+      if (!mevcut.rows[0]) {
+        throw Object.assign(new Error('Fatura bulunamadı.'), { status: 404 });
+      }
+
+      const sets = [];
+      const params = [req.params.id];
+      if (fatura_turu !== undefined) {
+        params.push(fatura_turu);
+        sets.push(`fatura_turu = $${params.length}`);
+      }
+      if (cari_id !== undefined) {
+        params.push(cari_id);
+        sets.push(`cari_id = $${params.length}`);
+      }
+      for (const [k, v] of Object.entries(ekstra)) {
+        params.push(v);
+        sets.push(`${k} = $${params.length}`);
+      }
+
+      if (Array.isArray(kalemler)) {
+        let toplam = 0;
+        let toplam_kdv = 0;
+        for (const k of kalemler) {
+          const satir = Number(k.miktar) * Number(k.birim_fiyat);
+          const kdvOran = Number(k.kdv_oran ?? ekstra.kdv_oran_varsayilan ?? 20);
+          toplam += satir;
+          toplam_kdv += satir * (kdvOran / 100);
         }
-        if (!Array.isArray(kalemler) || kalemler.length === 0) {
-            return res.status(400).json({ hata: 'En az bir fatura kalemi gerekli.' });
+        params.push(toplam);
+        sets.push(`toplam_tutar = $${params.length}`);
+        params.push(toplam);
+        sets.push(`mal_hizmet_toplam = $${params.length}`);
+        params.push(toplam_kdv);
+        sets.push(`toplam_kdv = $${params.length}`);
+        params.push(toplam + toplam_kdv);
+        sets.push(`odenecek_tutar = $${params.length}`);
+
+        if (sets.length) {
+          await client.query(`UPDATE faturalar SET ${sets.join(', ')} WHERE id = $1`, params);
         }
-
-        const id = await withTransaction(pool, async (client) => {
-            const tur = fatura_turu || 'Satis';
-            const seri = tur === 'Alis' ? 'ALIS_FATURA' : 'FATURA';
-            const no = fatura_no || (await sonrakiBelgeNo(client, seri));
-
-            let toplam_tutar = 0;
-            for (const k of kalemler) {
-                toplam_tutar += Number(k.miktar) * Number(k.birim_fiyat);
-            }
-
-            const faturaSonuc = await client.query(
-                `
-                INSERT INTO faturalar (fatura_no, cari_id, fatura_turu, toplam_tutar)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id;
-                `,
-                [no, cari_id, tur, toplam_tutar]
-            );
-            const faturaId = faturaSonuc.rows[0].id;
-
-            for (const k of kalemler) {
-                if (!k.stok_id || k.miktar == null || k.birim_fiyat == null) {
-                    throw new Error('Her kalemde stok_id, miktar ve birim_fiyat zorunludur.');
-                }
-                const satirToplam = Number(k.miktar) * Number(k.birim_fiyat);
-                await client.query(
-                    `
-                    INSERT INTO fatura_detaylari
-                        (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar)
-                    VALUES ($1, $2, $3, $4, $5)
-                    `,
-                    [faturaId, k.stok_id, k.miktar, k.birim_fiyat, satirToplam]
-                );
-            }
-            return faturaId;
-        });
-
-        res.status(201).json(await faturaGetir(id));
-    } catch (err) {
-        console.error('Fatura kayıt hatası:', err);
-        res.status(500).json({ hata: 'Fatura kesilirken bir pürüz çıktı.', detay: err.message });
-    }
+        await client.query('DELETE FROM fatura_detaylari WHERE fatura_id=$1', [req.params.id]);
+        for (const k of kalemler) {
+          if (!k.stok_id || k.miktar == null || k.birim_fiyat == null) continue;
+          const satirToplam = Number(k.miktar) * Number(k.birim_fiyat);
+          const kdvOran = Number(k.kdv_oran ?? 20);
+          await client.query(
+            `INSERT INTO fatura_detaylari
+              (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar, birim, kdv_oran, kdv_tutari, mal_hizmet_tutari)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+            [
+              req.params.id, k.stok_id, k.miktar, k.birim_fiyat, satirToplam,
+              k.birim || null, kdvOran, satirToplam * (kdvOran / 100), satirToplam,
+            ]
+          );
+        }
+      } else if (sets.length) {
+        await client.query(`UPDATE faturalar SET ${sets.join(', ')} WHERE id = $1`, params);
+      }
+      return Number(req.params.id);
+    });
+    res.json(await faturaGetir(id));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.put('/:id', async (req, res) => {
-    try {
-        const { fatura_turu, cari_id } = req.body;
-        const kalemler = req.body.kalemler || req.body.satirlar;
-        const id = await withTransaction(pool, async (client) => {
-            const mevcut = await client.query('SELECT id FROM faturalar WHERE id=$1 FOR UPDATE', [req.params.id]);
-            if (!mevcut.rows[0]) {
-                const err = new Error('Fatura bulunamadı.');
-                err.status = 404;
-                throw err;
-            }
-            if (Array.isArray(kalemler)) {
-                let toplam = 0;
-                for (const k of kalemler) toplam += Number(k.miktar) * Number(k.birim_fiyat);
-                await client.query(
-                    `UPDATE faturalar SET
-                        fatura_turu = COALESCE($2, fatura_turu),
-                        cari_id = COALESCE($3, cari_id),
-                        toplam_tutar = $4
-                     WHERE id = $1`,
-                    [req.params.id, fatura_turu || null, cari_id || null, toplam]
-                );
-                await client.query('DELETE FROM fatura_detaylari WHERE fatura_id=$1', [req.params.id]);
-                for (const k of kalemler) {
-                    if (!k.stok_id || k.miktar == null || k.birim_fiyat == null) continue;
-                    await client.query(
-                        `INSERT INTO fatura_detaylari (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar)
-                         VALUES ($1,$2,$3,$4,$5)`,
-                        [req.params.id, k.stok_id, k.miktar, k.birim_fiyat, Number(k.miktar) * Number(k.birim_fiyat)]
-                    );
-                }
-            } else {
-                await client.query(
-                    `UPDATE faturalar SET
-                        fatura_turu = COALESCE($2, fatura_turu),
-                        cari_id = COALESCE($3, cari_id)
-                     WHERE id = $1`,
-                    [req.params.id, fatura_turu || null, cari_id || null]
-                );
-            }
-            return Number(req.params.id);
-        });
-        res.json(await faturaGetir(id));
-    } catch (err) {
-        res.status(err.status || 500).json({ hata: err.message });
-    }
-});
-
-router.delete('/:id', async (req, res) => {
-    try {
-        const r = await pool.query('DELETE FROM faturalar WHERE id=$1 RETURNING id', [req.params.id]);
-        if (!r.rows[0]) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
-    } catch (err) {
-        res.status(500).json({ hata: err.message });
-    }
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const r = await pool.query('DELETE FROM faturalar WHERE id=$1 RETURNING id', [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    res.json({ silindi: true, id: Number(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

@@ -147,6 +147,9 @@ router.post('/', async (req, res) => {
                     stok_id: s.stok_id,
                     miktar: Number(s.miktar),
                     birim: s.birim || null,
+                    raf_kodu: s.raf_kodu || body.raf_kodu || null,
+                    konum_kodu: s.konum_kodu || body.konum_kodu || null,
+                    parti_id: s.parti_id || null,
                 };
             });
 

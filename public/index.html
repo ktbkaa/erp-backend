@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261016g" />
+  <link rel="stylesheet" href="/styles.css?v=20261016j" />
 </head>
 <body>
   <div class="app-shell" id="appShell">
@@ -21,7 +21,7 @@
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot">
         <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
-        <span class="build-tag" id="buildTag">UI build 20261016g</span>
+        <span class="build-tag" id="buildTag">UI build 20261016j</span>
       </div>
     </aside>
 
@@ -64,6 +64,8 @@
             <button type="button" class="btn action ghost" data-action="duzelt">Düzelt</button>
             <button type="button" class="btn action ghost" data-action="kopyala">Kopyala</button>
             <button type="button" class="btn action danger" data-action="sil">Sil</button>
+            <button type="button" class="btn action ghost" data-action="export-csv" title="Filtrelenmiş listeyi CSV indir">CSV</button>
+            <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
           </div>
 
           <div class="filter-pane" id="filterPane">
@@ -103,6 +105,7 @@
             <div class="form-actions">
               <button type="button" class="btn ghost" id="btnFormCancel" title="Liste sekmesine geç">Liste sekmesi</button>
               <button type="button" class="btn action ghost" id="btnFormConvert" hidden>Dönüştür</button>
+              <button type="button" class="btn action ghost" id="btnFormSecondary" hidden>İkinci işlem</button>
               <button type="button" class="btn" id="btnFormSave">Kaydet</button>
             </div>
           </div>

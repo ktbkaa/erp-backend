@@ -3,6 +3,47 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { depoBakiyeListesi } = require('../src/services/stokHareketService');
+const { parametreAl } = require('../src/utils/yetki');
+
+/** ATP: kullanılabilir stok vs sipariş kalemleri (REQ-SAL-008) */
+async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
+  let zorunlu = sert;
+  if (zorunlu == null) {
+    const v = await parametreAl(clientOrPool, 'ATP_SERT', 'Hayir');
+    zorunlu = String(v).toLowerCase() === 'evet';
+  }
+  const uyari = [];
+  for (const k of kalemler) {
+    const stokId = k.stok_id;
+    const miktar = Number(k.miktar || 0);
+    if (!stokId || miktar <= 0) continue;
+    const bakiyeler = await depoBakiyeListesi(clientOrPool, {
+      stokId,
+      stokStatu: 'Kullanilabilir',
+      depoId: depoId || null,
+    });
+    const toplam = bakiyeler.reduce((s, b) => s + Number(b.bakiye), 0);
+    if (toplam + 1e-9 < miktar) {
+      const msg = {
+        stok_id: stokId,
+        stok_kodu: k.stok_kodu,
+        istenen: miktar,
+        kullanilabilir: toplam,
+      };
+      uyari.push(msg);
+    }
+  }
+  if (uyari.length && zorunlu) {
+    const err = new Error(
+      `ATP: yetersiz stok — ${uyari.map((u) => `${u.stok_kodu || u.stok_id}:${u.kullanilabilir}/${u.istenen}`).join(', ')}`
+    );
+    err.status = 409;
+    err.detay = uyari;
+    throw err;
+  }
+  return uyari;
+}
 
 async function siparisGetir(id) {
     const s = await pool.query(
@@ -154,13 +195,19 @@ router.post('/', async (req, res) => {
                     ? 'SATINALMA_SIPARIS'
                     : 'SATIS_SIPARIS';
 
+            // ATP yalnızca satış siparişlerinde
+            let atpUyari = [];
+            if (belgeTipi === 'SATIS_SIPARIS') {
+                atpUyari = await atpKontrol(client, islenmis, { depoId: req.body.depo_id || null });
+            }
+
             const no = siparis_no || (await sonrakiBelgeNo(client, belgeTipi));
 
             const siparisSonuc = await client.query(
                 `
                 INSERT INTO siparisler
-                    (siparis_no, cari_id, cari_kodu, cari_adi, siparis_tarihi, siparis_turu, toplam_tutar, durum)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'Taslak'))
+                    (siparis_no, cari_id, cari_kodu, cari_adi, siparis_tarihi, siparis_turu, toplam_tutar, durum, odeme_kosulu, firma_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'Taslak'), $9, $10)
                 RETURNING id;
                 `,
                 [
@@ -172,8 +219,12 @@ router.post('/', async (req, res) => {
                     siparis_turu,
                     toplam,
                     durum || null,
+                    req.body.odeme_kosulu || null,
+                    req.body.firma_id || null,
                 ]
             );
+            // atpUyari response'a eklemek için client üzerine koy
+            client._atpUyari = atpUyari;
             const siparisId = siparisSonuc.rows[0].id;
 
             for (const ik of islenmis) {
@@ -195,15 +246,17 @@ router.post('/', async (req, res) => {
                     ]
                 );
             }
-            return siparisId;
+            return { siparisId, atpUyari };
         });
 
-        res.status(201).json(await siparisGetir(id));
+        const row = await siparisGetir(id.siparisId);
+        res.status(201).json({ ...row, atp_uyari: id.atpUyari || [] });
     } catch (err) {
         console.error('Sipariş kayıt hatası:', err);
-        const status = String(err.message || '').includes('bulunamadı') ? 400 : 500;
+        const status = err.status || (String(err.message || '').includes('bulunamadı') ? 400 : 500);
         res.status(status).json({
             hata: err.message || 'Sipariş kaydedilirken bir pürüz çıktı.',
+            detay: err.detay,
         });
     }
 });

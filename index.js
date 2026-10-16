@@ -9,7 +9,7 @@ app.use((req, res, next) => {
     // Önizleme / farklı origin (Cursor Ports) için CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Kullanici-Kodu');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     if (req.path === '/' || req.path.endsWith('.html') || req.path.endsWith('.js') || req.path.endsWith('.css')) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -97,6 +97,12 @@ app.use('/uretim-girisleri', require('./routes/uretim_girisleri'));
 app.use('/muhasebe-hesaplari', require('./routes/muhasebe_hesaplari'));
 app.use('/muhasebe-belgeleri', require('./routes/muhasebe_belgeleri'));
 app.use('/mizan', require('./routes/mizan'));
+app.use('/auth', require('./routes/auth'));
+app.use('/kk-uygunsuzluklar', require('./routes/kk_uygunsuzluklar'));
+
+const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // IPv6 + IPv4 (Chrome localhost → ::1; yalnız 0.0.0.0 dinlenirse Failed to fetch)
 const server = require('http').createServer(app);

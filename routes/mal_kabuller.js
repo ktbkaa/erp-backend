@@ -269,4 +269,93 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+/**
+ * Mal kabul → Alış faturası (REQ-PUR-006 / REQ-FIN-001 / P13)
+ * POST /mal-kabuller/:id/fatura-olustur
+ */
+router.post('/:id/fatura-olustur', async (req, res, next) => {
+    try {
+        const kabulId = Number(req.params.id);
+        const faturaId = await withTransaction(pool, async (client) => {
+            const kLock = await client.query(
+                `SELECT * FROM mal_kabuller WHERE id = $1 FOR UPDATE`,
+                [kabulId]
+            );
+            if (!kLock.rows[0]) throw Object.assign(new Error('Mal kabul bulunamadı.'), { status: 404 });
+            const k = await client.query(
+                `SELECT mk.*, sas.cari_id, sas.id AS siparis_id, sas.siparis_no
+                 FROM mal_kabuller mk
+                 JOIN satin_alma_siparisleri sas ON sas.id = mk.siparis_id
+                 WHERE mk.id = $1`,
+                [kabulId]
+            );
+            const mevcut = await client.query(
+                `SELECT id FROM faturalar WHERE mal_kabul_id = $1 LIMIT 1`,
+                [kabulId]
+            );
+            if (mevcut.rows[0]) {
+                throw Object.assign(new Error(`Bu mal kabul zaten faturalandı (fatura id=${mevcut.rows[0].id}).`), { status: 409 });
+            }
+            const satirlar = await client.query(
+                `SELECT mks.*, COALESCE(ss.birim_fiyat, 0) AS birim_fiyat, ss.birim
+                 FROM mal_kabul_satirlari mks
+                 LEFT JOIN satin_alma_siparis_satirlari ss ON ss.id = mks.siparis_satir_id
+                 WHERE mks.kabul_id = $1 ORDER BY mks.id`,
+                [kabulId]
+            );
+            if (!satirlar.rows.length) throw Object.assign(new Error('Mal kabul satırı yok.'), { status: 400 });
+
+            const no = await sonrakiBelgeNo(client, 'ALIS_FATURA');
+            let toplam = 0;
+            let toplamKdv = 0;
+            const kdvOran = Number(req.body.kdv_oran ?? 20);
+            for (const s of satirlar.rows) {
+                const satir = Number(s.miktar) * Number(s.birim_fiyat || 0);
+                toplam += satir;
+                toplamKdv += satir * (kdvOran / 100);
+            }
+            const f = await client.query(
+                `INSERT INTO faturalar (
+                    fatura_no, cari_id, fatura_turu, toplam_tutar,
+                    mal_hizmet_toplam, toplam_kdv, odenecek_tutar,
+                    mal_kabul_id, siparis_id, kaynak_belge_tipi, kaynak_belge_id,
+                    durum, odeme_kosulu, para_birimi, kur
+                 ) VALUES ($1,$2,'Alis',$3,$3,$4,$5,$6,$7,'MAL_KABUL',$6,'Taslak',$8,'TRY',1)
+                 RETURNING id`,
+                [
+                    no, k.rows[0].cari_id, toplam, toplamKdv, toplam + toplamKdv,
+                    kabulId, k.rows[0].siparis_id, req.body.odeme_kosulu || null,
+                ]
+            );
+            const id = f.rows[0].id;
+            for (const s of satirlar.rows) {
+                const satir = Number(s.miktar) * Number(s.birim_fiyat || 0);
+                await client.query(
+                    `INSERT INTO fatura_detaylari
+                      (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar, birim, kdv_oran, kdv_tutari, mal_hizmet_tutari)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+                    [
+                        id, s.stok_id, s.miktar, s.birim_fiyat || 0, satir,
+                        s.birim || null, kdvOran, satir * (kdvOran / 100), satir,
+                    ]
+                );
+            }
+            return id;
+        });
+        const fatura = await pool.query(
+            `SELECT f.*, c.cari_kodu, c.cari_adi FROM faturalar f
+             JOIN cariler c ON c.id = f.cari_id WHERE f.id = $1`,
+            [faturaId]
+        );
+        const kalemler = await pool.query(
+            `SELECT fd.*, s.stok_kodu, s.stok_adi FROM fatura_detaylari fd
+             JOIN stoklar s ON s.id = fd.stok_id WHERE fd.fatura_id = $1 ORDER BY fd.id`,
+            [faturaId]
+        );
+        res.status(201).json({ ...fatura.rows[0], kalemler: kalemler.rows, satirlar: kalemler.rows });
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;
