@@ -8,10 +8,14 @@ const { satirHesapla, belgelerToplam } = require('../src/utils/kalemHesap');
 async function teklifGetir(id) {
     const t = await pool.query(
         `
-        SELECT t.*, c.cari_kodu, c.cari_adi, hk.hareket_kodu, hk.hareket_adi
+        SELECT t.*, c.cari_kodu, c.cari_adi, hk.hareket_kodu, hk.hareket_adi,
+               f.firsat_kodu, f.firsat_adi,
+               a.aday_kodu, a.aday_adi
         FROM satis_teklifleri t
         JOIN cariler c ON c.id = t.cari_id
         LEFT JOIN hareket_kodlari hk ON hk.id = t.hareket_kodu_id
+        LEFT JOIN crm_firsatlar f ON f.id = t.firsat_id
+        LEFT JOIN crm_adaylar a ON a.id = t.aday_id
         WHERE t.id = $1
         `,
         [id]
@@ -67,7 +71,10 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { cari_id, teklif_tarihi, gecerlilik_tarihi, para_birimi, aciklama, hareket_kodu_id, durum } = req.body;
+        const {
+            cari_id, teklif_tarihi, gecerlilik_tarihi, para_birimi, aciklama,
+            hareket_kodu_id, durum, firsat_id, aday_id, kaynak_belge_tipi, kaynak_belge_id,
+        } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         if (!cari_id) return res.status(400).json({ hata: 'cari_id zorunlu.' });
         if (!Array.isArray(raw) || !raw.length) return res.status(400).json({ hata: 'satirlar zorunlu.' });
@@ -87,14 +94,18 @@ router.post('/', async (req, res) => {
                 `
                 INSERT INTO satis_teklifleri
                     (teklif_no, cari_id, teklif_tarihi, gecerlilik_tarihi, para_birimi,
-                     durum, hareket_kodu_id, aciklama, toplam_tutar)
+                     durum, hareket_kodu_id, aciklama, toplam_tutar,
+                     firsat_id, aday_id, kaynak_belge_tipi, kaynak_belge_id)
                 VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,COALESCE($5,'TRY'),
-                        COALESCE($6,'Taslak'),$7,$8,$9)
+                        COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13)
                 RETURNING id
                 `,
                 [
                     no, cari_id, teklif_tarihi || null, gecerlilik_tarihi || null, para_birimi,
                     durum || 'Taslak', hk, aciklama || null, top.toplam_tutar,
+                    firsat_id || null, aday_id || null,
+                    kaynak_belge_tipi || (firsat_id ? 'CRM_FIRSAT' : null),
+                    kaynak_belge_id || firsat_id || null,
                 ]
             );
             const tid = baslik.rows[0].id;
@@ -122,7 +133,10 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { cari_id, teklif_tarihi, gecerlilik_tarihi, para_birimi, aciklama, hareket_kodu_id, durum } = req.body;
+        const {
+            cari_id, teklif_tarihi, gecerlilik_tarihi, para_birimi, aciklama,
+            hareket_kodu_id, durum, firsat_id, aday_id,
+        } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'];
         if (durum && !allowed.includes(durum)) return res.status(400).json({ hata: 'Geçersiz durum.' });
@@ -150,12 +164,15 @@ router.put('/:id', async (req, res) => {
                     durum = COALESCE($6, durum),
                     hareket_kodu_id = COALESCE($7, hareket_kodu_id),
                     aciklama = COALESCE($8, aciklama),
-                    toplam_tutar = COALESCE($9, toplam_tutar)
+                    toplam_tutar = COALESCE($9, toplam_tutar),
+                    firsat_id = COALESCE($10, firsat_id),
+                    aday_id = COALESCE($11, aday_id)
                 WHERE id=$1
                 `,
                 [
                     req.params.id, cari_id || null, teklif_tarihi || null, gecerlilik_tarihi || null,
                     para_birimi || null, durum || null, hareket_kodu_id || null, aciklama ?? null, toplam,
+                    firsat_id || null, aday_id || null,
                 ]
             );
             if (satirlar) {
