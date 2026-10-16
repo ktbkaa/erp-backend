@@ -7,6 +7,12 @@ const { faturaEslestir } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 const { belgeHtml } = require('../src/services/belgePdfService');
 const { reqKullaniciKodu } = require('../src/utils/yetki');
+const {
+  pickFields,
+  appendInsert,
+  FATURA_BASLIK,
+  FATURA_SATIR,
+} = require('../src/utils/belgeAlanlari');
 
 const EBELGE_ALANLAR = [
   'senaryo', 'fatura_tipi', 'ozellestirme_no', 'ettn',
@@ -127,20 +133,20 @@ router.post('/', async (req, res, next) => {
         toplam_kdv += satir * (kdvOran / 100);
       }
 
-      const cols = ['fatura_no', 'cari_id', 'fatura_turu', 'toplam_tutar', 'mal_hizmet_toplam', 'toplam_kdv', 'odenecek_tutar'];
-      const vals = [no, cari_id, tur, toplam_tutar, toplam_tutar, toplam_kdv, toplam_tutar + toplam_kdv];
-      for (const [k, v] of Object.entries(ekstra)) {
-        if (['mal_hizmet_toplam', 'toplam_kdv', 'odenecek_tutar'].includes(k)) continue;
-        cols.push(k);
-        vals.push(v);
-      }
-      const ph = vals.map((_, i) => `$${i + 1}`).join(',');
+      const extras = pickFields({ ...req.body, ...ekstra }, FATURA_BASLIK);
+      if (extras.kalan_tutar == null) extras.kalan_tutar = toplam_tutar + toplam_kdv;
+      const baslik = appendInsert(
+        ['fatura_no', 'cari_id', 'fatura_turu', 'toplam_tutar', 'mal_hizmet_toplam', 'toplam_kdv', 'odenecek_tutar'],
+        [no, cari_id, tur, toplam_tutar, toplam_tutar, toplam_kdv, toplam_tutar + toplam_kdv],
+        extras
+      );
       const faturaSonuc = await client.query(
-        `INSERT INTO faturalar (${cols.join(',')}) VALUES (${ph}) RETURNING id`,
-        vals
+        `INSERT INTO faturalar (${baslik.cols.join(',')}) VALUES (${baslik.placeholders}) RETURNING id`,
+        baslik.vals
       );
       const faturaId = faturaSonuc.rows[0].id;
 
+      let sira = 1;
       for (const k of kalemler) {
         if (!k.stok_id || k.miktar == null || k.birim_fiyat == null) {
           throw Object.assign(new Error('Her kalemde stok_id, miktar ve birim_fiyat zorunludur.'), { status: 400 });
@@ -148,13 +154,22 @@ router.post('/', async (req, res, next) => {
         const satirToplam = Number(k.miktar) * Number(k.birim_fiyat);
         const kdvOran = Number(k.kdv_oran ?? ekstra.kdv_oran_varsayilan ?? 20);
         const kdvTutari = satirToplam * (kdvOran / 100);
+        const satirEx = pickFields(k, FATURA_SATIR);
+        if (satirEx.tutar_ht == null) satirEx.tutar_ht = satirToplam;
+        if (satirEx.tutar_ttc == null) satirEx.tutar_ttc = satirToplam + kdvTutari;
+        if (satirEx.net_birim_fiyat == null) satirEx.net_birim_fiyat = k.birim_fiyat;
+        if (satirEx.sira_no == null) satirEx.sira_no = sira++;
+        if (satirEx.kdv_oran == null) satirEx.kdv_oran = kdvOran;
+        if (satirEx.kdv_tutari == null) satirEx.kdv_tutari = kdvTutari;
+        if (satirEx.birim == null) satirEx.birim = k.birim || null;
+        const sat = appendInsert(
+          ['fatura_id', 'stok_id', 'miktar', 'birim_fiyat', 'toplam_tutar', 'mal_hizmet_tutari'],
+          [faturaId, k.stok_id, k.miktar, k.birim_fiyat, satirToplam, satirToplam],
+          satirEx
+        );
         await client.query(
-          `
-          INSERT INTO fatura_detaylari
-            (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar, birim, kdv_oran, kdv_tutari, mal_hizmet_tutari)
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-          `,
-          [faturaId, k.stok_id, k.miktar, k.birim_fiyat, satirToplam, k.birim || null, kdvOran, kdvTutari, satirToplam]
+          `INSERT INTO fatura_detaylari (${sat.cols.join(',')}) VALUES (${sat.placeholders})`,
+          sat.vals
         );
       }
       return faturaId;
