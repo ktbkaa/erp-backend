@@ -3363,8 +3363,14 @@ function renderFilterPane(screen) {
   });
 }
 
-function cellHtml(col, row) {
-  let val = row[col.key];
+/** Tüm listelerde ilk sütun: satır ID (ekran kolonlarında yoksa eklenir). */
+function listColumns(screen) {
+  const cols = (screen.columns || []).filter((c) => c.key !== 'id');
+  return [{ key: 'id', label: 'ID', mono: true }, ...cols];
+}
+
+function cellHtml(col, row, index = 0) {
+  let val = col.key === 'id' ? rowKey(row, index) : row[col.key];
   if (typeof val === 'boolean') val = val ? 'Evet' : 'Hayır';
   if (val === null || val === undefined || val === '') val = '—';
   return col.mono ? `<span class="mono">${val}</span>` : String(val);
@@ -3415,18 +3421,19 @@ function ensureRowIds(rows) {
 function renderList(screen) {
   const head = $('#dataHead');
   const body = $('#dataBody');
+  const cols = listColumns(screen);
   renderListSideNav(screen);
   state.filtered = rowsForList(screen);
-  head.innerHTML = `<tr>${screen.columns.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
+  head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
   if (!state.filtered.length) {
-    body.innerHTML = `<tr class="empty-row"><td colspan="${screen.columns.length}">Kayıt yok.</td></tr>`;
+    body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
     body.innerHTML = state.filtered.map((row, index) => {
       const key = rowKey(row, index);
       const selected = state.selectedId != null && String(key) === String(state.selectedId);
       return `
       <tr data-id="${escapeAttr(key)}" class="${selected ? 'selected' : ''}">
-        ${screen.columns.map((c) => `<td>${cellHtml(c, row)}</td>`).join('')}
+        ${cols.map((c) => `<td>${cellHtml(c, row, index)}</td>`).join('')}
       </tr>`;
     }).join('');
   }
@@ -3481,11 +3488,11 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016h`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016i`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
-      const cols = screen.columns || [];
+      const cols = listColumns(screen);
       const head = $('#dataHead');
       if (head) head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
       $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${cols.length || 1}">Yükleniyor…</td></tr>`;
@@ -3523,7 +3530,7 @@ async function openScreen(id, opts = {}) {
     state.rows = [];
     state.filtered = [];
     showView('screen');
-    const cols = screen.columns || [];
+    const cols = listColumns(screen);
     const head = $('#dataHead');
     if (head) head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
     const msg = String(err.message || 'Ekran açılamadı').replace(/</g, '&lt;');
