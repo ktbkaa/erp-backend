@@ -227,7 +227,16 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
         `,
         params
     );
-    return res.rows;
+    // Liste seçimi için benzersiz satır anahtarı (id yoksa tüm satırlar selected olurdu)
+    return res.rows.map((r) => ({
+        ...r,
+        id: [
+            r.depo_id,
+            r.stok_id,
+            r.stok_statu || 'Kullanilabilir',
+            r.parti_id || 0,
+        ].join(':'),
+    }));
 }
 
 /**

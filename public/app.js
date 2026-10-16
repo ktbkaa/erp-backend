@@ -3060,7 +3060,7 @@ function findScreen(id) {
 }
 
 function selectedRow() {
-  return state.filtered.find((r) => String(r.id) === String(state.selectedId)) || null;
+  return state.filtered.find((r, i) => String(rowKey(r, i)) === String(state.selectedId)) || null;
 }
 
 function resolveNumeratorSeri(screen, record = {}) {
@@ -3395,6 +3395,23 @@ function rowsForList(screen) {
   return applyFilters(rows, screen);
 }
 
+/** Liste satır anahtarı — id yoksa bileşik anahtar (depo bakiye vb. tüm satır seçimini önler). */
+function rowKey(row, index = 0) {
+  if (row == null) return `row:${index}`;
+  if (row.id !== undefined && row.id !== null && row.id !== '') return String(row.id);
+  if (row.seri_kodu) return String(row.seri_kodu);
+  const parts = [row.depo_id, row.stok_id, row.stok_statu, row.parti_id, row.stok_kodu, index];
+  const key = parts.filter((p) => p !== undefined && p !== null && p !== '').join(':');
+  return key || `row:${index}`;
+}
+
+function ensureRowIds(rows) {
+  return (rows || []).map((row, index) => {
+    if (row && row.id !== undefined && row.id !== null && row.id !== '') return row;
+    return { ...row, id: rowKey(row, index) };
+  });
+}
+
 function renderList(screen) {
   const head = $('#dataHead');
   const body = $('#dataBody');
@@ -3404,11 +3421,14 @@ function renderList(screen) {
   if (!state.filtered.length) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${screen.columns.length}">Kayıt yok.</td></tr>`;
   } else {
-    body.innerHTML = state.filtered.map((row) => `
-      <tr data-id="${row.id}" class="${String(row.id) === String(state.selectedId) ? 'selected' : ''}">
+    body.innerHTML = state.filtered.map((row, index) => {
+      const key = rowKey(row, index);
+      const selected = state.selectedId != null && String(key) === String(state.selectedId);
+      return `
+      <tr data-id="${escapeAttr(key)}" class="${selected ? 'selected' : ''}">
         ${screen.columns.map((c) => `<td>${cellHtml(c, row)}</td>`).join('')}
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   }
   const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
     ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
@@ -3461,7 +3481,7 @@ async function openScreen(id, opts = {}) {
     $('#homeSearchWrap').hidden = true;
     $('#screenTitle').textContent = screen.title;
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016g`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016h`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -3492,7 +3512,7 @@ async function openScreen(id, opts = {}) {
     if (screen.id === 'numarator-tanimi') {
       rows = rows.map((r) => ({ ...r, id: r.seri_kodu }));
     }
-    state.rows = rows;
+    state.rows = ensureRowIds(rows);
     renderList(screen);
     renderTabBar();
   } catch (err) {

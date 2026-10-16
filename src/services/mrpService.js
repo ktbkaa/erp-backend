@@ -89,6 +89,7 @@ async function mrpHesapla(pool, { isYeriId = null, stokId = null } = {}) {
         const brut = ihtiyac + emniyet;
         const net = Math.max(0, brut - eldekı - siparis - uretim);
         return {
+            id: s.id,
             stok_id: s.id,
             stok_kodu: s.stok_kodu,
             stok_adi: s.stok_adi,
