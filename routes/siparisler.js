@@ -9,6 +9,12 @@ const {
   siparisRezerveEt,
   rezervasyonIptalSiparis,
 } = require('../src/services/rezervasyonService');
+const {
+  pickFields,
+  appendInsert,
+  SIPARIS_BASLIK,
+  SIPARIS_SATIR,
+} = require('../src/utils/belgeAlanlari');
 
 /** ATP: kullanılabilir stok (fiziksel − rezerv) vs sipariş kalemleri (REQ-SAL-008 / INV-004) */
 async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
@@ -202,48 +208,37 @@ router.post('/', async (req, res) => {
             }
 
             const no = siparis_no || (await sonrakiBelgeNo(client, belgeTipi));
-
-            const siparisSonuc = await client.query(
-                `
-                INSERT INTO siparisler
-                    (siparis_no, cari_id, cari_kodu, cari_adi, siparis_tarihi, siparis_turu, toplam_tutar, durum, odeme_kosulu, firma_id)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'Taslak'), $9, $10)
-                RETURNING id;
-                `,
-                [
-                    no,
-                    cari.id,
-                    cari.cari_kodu,
-                    cari.cari_adi,
-                    siparis_tarihi || new Date(),
-                    siparis_turu,
-                    toplam,
-                    durum || null,
-                    req.body.odeme_kosulu || null,
-                    req.body.firma_id || null,
-                ]
+            const extras = pickFields(req.body, SIPARIS_BASLIK);
+            if (extras.ara_toplam == null) extras.ara_toplam = toplam;
+            if (extras.genel_toplam == null) extras.genel_toplam = toplam;
+            const baslik = appendInsert(
+                ['siparis_no', 'cari_id', 'cari_kodu', 'cari_adi', 'siparis_tarihi', 'siparis_turu', 'toplam_tutar', 'durum'],
+                [no, cari.id, cari.cari_kodu, cari.cari_adi, siparis_tarihi || new Date(), siparis_turu, toplam, durum || 'Taslak'],
+                extras
             );
-            // atpUyari response'a eklemek için client üzerine koy
+            const siparisSonuc = await client.query(
+                `INSERT INTO siparisler (${baslik.cols.join(',')}) VALUES (${baslik.placeholders}) RETURNING id`,
+                baslik.vals
+            );
             client._atpUyari = atpUyari;
             const siparisId = siparisSonuc.rows[0].id;
 
-            for (const ik of islenmis) {
+            const bodySatirlar = req.body.kalemler || req.body.satirlar || [];
+            for (let i = 0; i < islenmis.length; i++) {
+                const ik = islenmis[i];
+                const raw = bodySatirlar[i] || {};
+                const satirEx = pickFields(raw, SIPARIS_SATIR);
+                if (satirEx.tutar_ht == null) satirEx.tutar_ht = ik.toplam_tutar;
+                if (satirEx.net_birim_fiyat == null) satirEx.net_birim_fiyat = ik.birim_fiyat;
+                if (satirEx.sira_no == null) satirEx.sira_no = i + 1;
+                const sat = appendInsert(
+                    ['siparis_id', 'stok_id', 'stok_kodu', 'stok_adi', 'stok_birimi', 'miktar', 'birim_fiyat', 'toplam_tutar'],
+                    [siparisId, ik.stok_id, ik.stok_kodu, ik.stok_adi, ik.stok_birimi, ik.miktar, ik.birim_fiyat, ik.toplam_tutar],
+                    satirEx
+                );
                 await client.query(
-                    `
-                    INSERT INTO siparis_detaylari
-                        (siparis_id, stok_id, stok_kodu, stok_adi, stok_birimi, miktar, birim_fiyat, toplam_tutar)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                    `,
-                    [
-                        siparisId,
-                        ik.stok_id,
-                        ik.stok_kodu,
-                        ik.stok_adi,
-                        ik.stok_birimi,
-                        ik.miktar,
-                        ik.birim_fiyat,
-                        ik.toplam_tutar,
-                    ]
+                    `INSERT INTO siparis_detaylari (${sat.cols.join(',')}) VALUES (${sat.placeholders})`,
+                    sat.vals
                 );
             }
             return { siparisId, atpUyari };
