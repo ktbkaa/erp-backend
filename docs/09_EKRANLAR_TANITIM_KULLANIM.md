@@ -4,10 +4,20 @@ Bu doküman, şu ana kadar yapılan arayüz ve fonksiyon çalışmalarının öz
 Her geliştirme turunun sonunda bu dosya güncellenir.
 
 - **Uygulama adresi:** `http://localhost:3000/`
-- **Dal (güncel UI):** `cursor/erp-cari-stok-kart-4f63`
-- **UI build işareti:** sol menü altında `UI build …` (doğru kod yüklü mü diye bakılır)
+- **Dal (güncel UI):** `cursor/erp-kismi-eksik-tamamlama-4f63`
+- **UI build işareti:** sol menü altında `UI build 20261016j`
 - **Cari/Stok eşleştirme:** `docs/10_CARI_STOK_ESLESTIRME.md`
 - **UX standardı:** `docs/11_UX_DONT_MAKE_ME_THINK.md` (Don’t Make Me Think)
+- **Yedekleme:** `docs/21_YEDEKLEME_GERI_YUKLEME.md`
+- **FK / teknik notlar:** `docs/22_FK_POLITIKASI_VE_TEKNIK_NOTLAR.md`
+
+### 2026-10-16 güncelleme (kısmi/eksik kapatma)
+- Liste **CSV** dışa aktarma; MRP’den **SA Talep**; SA teklif→sipariş; mal kabul→alış fatura
+- Stok hareketlerinde Transfer/Sayım/Fire yan menü + raf/konum satır alanları
+- GKK/ÇKK onay/red form aksiyonları; KK Uygunsuzluklar ekranı
+- CRM fırsat **Kapat** ikincil buton; satış siparişinden **İş Emri Ekranı**
+- Auth: `/auth/login` + `localStorage.ktb_kullanici_kodu`; grup `modul_yetkileri` menü filtresi
+- Fatura e-belge / ödeme koşulu / KDV alanları PUT+POST
 
 ### Modül: Sabit Tanımlar
 Tanım ekranları burada toplanır: **Numaratör Tanımı**, **Ölçü Birimleri**, **Kategori Tanımı**.
