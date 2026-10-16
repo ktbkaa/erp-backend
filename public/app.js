@@ -2512,10 +2512,10 @@ const MODULES = [
               { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'] },
               { key: 'ettn', label: 'ETTN' },
               { key: 'sevk_adresi', label: 'Sevk adresi' },
-              { key: 'sevk_il', label: 'İl', required: true },
-              { key: 'sevk_ilce', label: 'İlçe', required: true },
-              { key: 'sevk_ulke', label: 'Ülke', required: true },
-              { key: 'sevk_posta_kodu', label: 'Posta kodu', required: true },
+              { key: 'sevk_il', label: 'İl' },
+              { key: 'sevk_ilce', label: 'İlçe' },
+              { key: 'sevk_ulke', label: 'Ülke' },
+              { key: 'sevk_posta_kodu', label: 'Posta kodu' },
               { key: 'arac_plaka', label: 'Araç plaka' },
               { key: 'dorse_plaka', label: 'Dorse plaka' },
               { key: 'sofor_adi', label: 'Şoför adı' },
@@ -4195,13 +4195,14 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
   const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
   const forceDisabled = state.formMode === 'incele' || codeLocked;
   const dis = forceDisabled ? 'disabled' : '';
+  const req = field.required ? 'aria-required="true"' : '';
   const v = value ?? '';
   const name = `${attrName}="${field.key}" ${extraAttrs}`.trim();
   if (field.type === 'checkbox') {
-    return `<input type="checkbox" ${name} ${v ? 'checked' : ''} ${dis} />`;
+    return `<input type="checkbox" ${name} ${v ? 'checked' : ''} ${dis} ${req} />`;
   }
   if (field.type === 'select') {
-    return `<select ${name} ${dis}>
+    return `<select ${name} ${dis} ${req}>
       ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
     </select>`;
   }
@@ -4217,16 +4218,16 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
         return `<option value="${escAttr(val)}" ${String(v) === String(val) ? 'selected' : ''}>${label}</option>`;
       })
     );
-    return `<select class="lookup-select" ${name} ${dis}>${opts.join('')}</select>`;
+    return `<select class="lookup-select" ${name} ${dis} ${req}>${opts.join('')}</select>`;
   }
   if (field.type === 'number') {
-    return `<input type="number" ${name} value="${escAttr(v)}" ${dis} />`;
+    return `<input type="number" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
   }
   if (field.type === 'date') {
     const dv = v ? String(v).slice(0, 10) : '';
-    return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} />`;
+    return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
   }
-  return `<input type="text" ${name} value="${escAttr(v)}" ${dis} />`;
+  return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
 }
 
 function detailFieldControl(field, value, idx, gridKey = null) {
@@ -4381,31 +4382,69 @@ function flattenBomForSave(nodes) {
   })).filter((n) => n.bilesen_stok_id && n.miktar != null && n.miktar !== '');
 }
 
+/** Başlıkta tutulacak alan sayısı — fazlası “Ek bilgiler”e iner (UX: master sabit/sade). */
+const MASTER_PRIMARY_MAX = 8;
+
+function masterFieldScore(f) {
+  let s = 0;
+  if (f.code) s += 100;
+  if (f.name) s += 90;
+  if (f.required) s += 70;
+  if (f.key === 'durum') s += 65;
+  if (f.type === 'date' || /tarih/i.test(f.key || '')) s += 55;
+  if (f.type === 'lookup') s += 45;
+  if (f.type === 'select') s += 35;
+  if (/_no$|_kodu$|_adi$/.test(f.key || '')) s += 20;
+  return s;
+}
+
+/** Kalabalık master listesini birincil + ek alanlara böler; sıra korunur. */
+function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
+  const list = Array.isArray(fields) ? fields : [];
+  if (list.length <= maxPrimary) return { primary: list, extras: [] };
+  const ranked = list
+    .map((f, i) => ({ f, i, s: masterFieldScore(f) }))
+    .sort((a, b) => b.s - a.s || a.i - b.i);
+  const keep = new Set(ranked.slice(0, maxPrimary).map((x) => x.i));
+  return {
+    primary: list.filter((_, i) => keep.has(i)),
+    extras: list.filter((_, i) => !keep.has(i)),
+  };
+}
+
+function renderFieldGrid(fields, rec, attrName = 'data-master') {
+  return (fields || [])
+    .map((f) => fieldShell(f, fieldControl(f, rec[f.key], attrName)))
+    .join('');
+}
+
 function fieldShell(f, controlHtml) {
   const cls = ['field'];
   if (f.required) cls.push('required');
   if (f.type === 'lookup') cls.push('lookup');
-  const req = f.required ? '<span class="req" title="Zorunlu">*</span>' : '';
-  return `<div class="${cls.join(' ')}"><label>${f.label}${req}</label>${controlHtml}</div>`;
+  if (f.code) cls.push('field--code');
+  if (f.name) cls.push('field--name');
+  // Asterisk yok — zorunluluk .required sınıfı + input aria-required ile
+  return `<div class="${cls.join(' ')}"><label>${f.label}</label>${controlHtml}</div>`;
 }
 
 function renderMasterDetailPanel(tab, rec) {
-  const mFields = tab.masterFields || [];
-  const dFields = tab.detailFields || [];
+  const { primary, extras } = partitionMasterFields(tab.masterFields || []);
+  const dFields = [...extras, ...(tab.detailFields || [])];
   return `
     <div class="md-split">
       <section class="md-master" aria-label="Başlık alanları">
         <div class="section-label">Başlık</div>
-        <div class="form-tab-fields">
-          ${mFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
+        <div class="form-tab-fields form-tab-fields--master">
+          ${renderFieldGrid(primary, rec)}
         </div>
       </section>
       <section class="md-detail" aria-label="Ek alanlar">
         <div class="section-label">Ek bilgiler</div>
         <div class="md-detail-scroll">
-          <div class="form-tab-fields">
+          <div class="form-tab-fields form-tab-fields--detail">
             ${dFields.length
-              ? dFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')
+              ? renderFieldGrid(dFields, rec)
               : '<div class="detail-empty">Bu bölümde ek alan yok.</div>'}
           </div>
         </div>
@@ -4415,7 +4454,7 @@ function renderMasterDetailPanel(tab, rec) {
 
 /** Master alanlar üstte + kalem grid altta — tek ekran */
 function renderMasterGridPanel(tab, rec) {
-  const mFields = tab.masterFields || [];
+  const { primary, extras } = partitionMasterFields(tab.masterFields || []);
   const gridTab = {
     kind: 'grid',
     key: tab.grid?.key || tab.key || '_detail',
@@ -4426,10 +4465,19 @@ function renderMasterGridPanel(tab, rec) {
     <div class="md-split md-split--grid">
       <section class="md-master" aria-label="Başlık alanları">
         <div class="section-label">Başlık</div>
-        <div class="form-tab-fields">
-          ${mFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
+        <div class="form-tab-fields form-tab-fields--master">
+          ${renderFieldGrid(primary, rec)}
         </div>
       </section>
+      ${extras.length ? `
+      <section class="md-extras" aria-label="Ek başlık alanları">
+        <div class="section-label">Ek bilgiler</div>
+        <div class="md-extras-scroll">
+          <div class="form-tab-fields form-tab-fields--detail">
+            ${renderFieldGrid(extras, rec)}
+          </div>
+        </div>
+      </section>` : ''}
       <section class="md-detail" aria-label="Kalemler">
         <div class="section-label">Kalemler</div>
         <div class="md-detail-scroll">
@@ -4812,9 +4860,26 @@ function renderForm(screen) {
       </div>`;
     }
     const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart' || tab.id === 'baslik';
+    const { primary, extras } = partitionMasterFields(tab.fields || []);
+    if (masterLike && extras.length) {
+      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
+        <div class="md-split">
+          <section class="md-master" aria-label="Başlık alanları">
+            <div class="section-label">Başlık</div>
+            <div class="form-tab-fields form-tab-fields--master">${renderFieldGrid(primary, rec)}</div>
+          </section>
+          <section class="md-detail" aria-label="Ek alanlar">
+            <div class="section-label">Ek bilgiler</div>
+            <div class="md-detail-scroll">
+              <div class="form-tab-fields form-tab-fields--detail">${renderFieldGrid(extras, rec)}</div>
+            </div>
+          </section>
+        </div>
+      </div>`;
+    }
     return `<div class="form-tab-panel ${masterLike ? 'form-tab-panel--fixed' : 'form-tab-panel--scroll'}" data-tab-panel="${tab.id}" ${hide}>
-      <div class="form-tab-fields">
-        ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, rec[f.key]))).join('')}
+      <div class="form-tab-fields ${masterLike ? 'form-tab-fields--master' : 'form-tab-fields--detail'}">
+        ${renderFieldGrid(tab.fields || [], rec)}
       </div>
     </div>`;
   }).join('');
