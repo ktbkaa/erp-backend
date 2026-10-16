@@ -744,20 +744,20 @@ tr.selected td { background: var(--accent-soft); }
 .md-master {
   flex: 0 0 auto;
   overflow: hidden;
-  padding: 0.65rem 1rem 0.55rem;
+  padding: 0.85rem 1.25rem 0.75rem;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #f7fafb 0%, #f3f6f8 100%);
+  background: #f8fafb;
 }
 .md-extras {
   flex: 0 1 auto;
-  max-height: 28%;
+  max-height: 32%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0.45rem 1rem 0.5rem;
+  padding: 0.65rem 1.25rem 0.7rem;
   border-bottom: 1px solid var(--line);
-  background: #fafbfc;
+  background: #fcfdfd;
 }
 .md-extras-scroll {
   flex: 1 1 auto;
@@ -770,7 +770,7 @@ tr.selected td { background: var(--accent-soft); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0.55rem 1rem 0.75rem;
+  padding: 0.75rem 1.25rem 1rem;
   background: #fff;
 }
 .md-detail-scroll {
@@ -779,66 +779,99 @@ tr.selected td { background: var(--accent-soft); }
   overflow: auto;
 }
 .section-label {
-  margin: 0 0 0.4rem;
-  font-size: 0.7rem;
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--muted);
 }
+/* İsim | kutu — 2 sütun, düzenli aralık */
 .form-tab-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.45rem 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 0.65rem;
+  align-items: start;
 }
 .form-tab-fields--master {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.4rem 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 0.7rem;
 }
 .form-tab-fields--detail {
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 0.4rem 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 0.62rem;
 }
 .field {
   display: grid;
-  gap: 0.18rem;
+  grid-template-columns: minmax(6.5rem, 8.5rem) minmax(0, 1fr);
+  gap: 0.55rem 0.75rem;
+  align-items: center;
   min-width: 0;
 }
 .field label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--muted);
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* Zorunlu: kırmızı * yok — ince sol vurgu */
-.field.required label {
+  font-size: 0.82rem;
+  font-weight: 500;
   color: var(--ink);
+  line-height: 1.25;
+  text-align: right;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  padding-right: 0.15rem;
+}
+/* Zorunlu: * yok; etiket biraz daha belirgin */
+.field.required label {
+  font-weight: 600;
 }
 .field.required input,
 .field.required select,
 .field.required textarea {
-  border-left: 2px solid var(--accent, #1f7a6b);
+  border-color: #c5d0d6;
 }
 .field.field--code,
 .field.field--name {
   grid-column: span 1;
 }
-.field .req { display: none; } /* eski * işaretleri bastır */
+.field .req { display: none; }
 .field.lookup input,
 .field.lookup select {
-  background: #fff8d6;
-  border-color: #e0c86a;
+  background: #fffbeb;
+  border-color: #e8d9a0;
 }
 .field input,
 .field select,
 .field textarea {
-  padding: 0.38rem 0.45rem;
+  padding: 0.4rem 0.55rem;
   font-size: 0.9rem;
+  min-height: 2rem;
+  border-radius: 0.3rem;
+}
+.field input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  min-height: 0;
+  justify-self: start;
+  margin: 0;
+  accent-color: var(--accent, #1f7a6b);
 }
 .field input:disabled, .field select:disabled { background: #eef2f5; color: #4a5560; }
+@media (max-width: 900px) {
+  .form-tab-fields,
+  .form-tab-fields--master,
+  .form-tab-fields--detail {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    row-gap: 0.5rem;
+  }
+  .field {
+    grid-template-columns: minmax(5.5rem, 7rem) minmax(0, 1fr);
+    gap: 0.4rem 0.55rem;
+  }
+  .field label { font-size: 0.78rem; }
+}
 .stub-panel {
   color: var(--muted);
   max-width: 32rem;
@@ -902,11 +935,15 @@ tr.selected td { background: var(--accent-soft); }
 .detail-slot-summary { font-size: 0.88rem; color: var(--ink); }
 .detail-slot-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.4rem 0.5rem;
-  padding: 0.3rem 0 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+  row-gap: 0.45rem;
+  padding: 0.45rem 0 0.35rem;
   border-top: 1px dashed var(--line);
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
+}
+@media (max-width: 900px) {
+  .detail-slot-fields { grid-template-columns: 1fr; }
 }
 .detail-empty {
   color: var(--muted);

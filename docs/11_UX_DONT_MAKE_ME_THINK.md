@@ -25,6 +25,7 @@ Yeni ekran ve formlarda varsayılan standart budur.
 
 - Master paneli kaydırılmaz; birincil alan sayısı bilinçli tutulur (kod, ad, cari/stok, tarih, durum…).
 - Fazla başlık alanı otomatik “Ek bilgiler” şeridine veya detay bölmesine iner; satır kalemleri ayrı kalır.
+- Alan satırı: **etiket sağa hizalı | kutu** yan yana; form gövdesi 2 sütun, düzenli satır aralığı (göz yormayan ERP kart düzeni).
 
 ## Kontrol listesi (yeni iş öncesi)
 
