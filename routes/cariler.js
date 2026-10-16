@@ -279,6 +279,35 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+/** GET /cariler/:id/ekstre — cari borç/alacak ekstresi (FIN-005) */
+router.get('/:id/ekstre', async (req, res) => {
+    try {
+        const { cariEkstre } = require('../src/services/cariHareketService');
+        const cari = await cariGetir(req.params.id);
+        if (!cari) return res.status(404).json({ hata: 'Cari bulunamadı.' });
+        const ekstre = await cariEkstre(pool, Number(req.params.id), {
+            baslangic: req.query.baslangic || null,
+            bitis: req.query.bitis || null,
+        });
+        res.json({ cari: { id: cari.id, cari_kodu: cari.cari_kodu, cari_adi: cari.cari_adi }, ...ekstre });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+/** GET /cariler/:id/skor — tedarikçi değerlendirme (PUR-008) */
+router.get('/:id/skor', async (req, res) => {
+    try {
+        const r = await pool.query(
+            `SELECT * FROM tedarikci_degerlendirme WHERE cari_id=$1 ORDER BY id DESC`,
+            [req.params.id]
+        );
+        res.json(r.rows);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 router.post('/', async (req, res) => {
     try {
         const { hatalar, cari_adi, cari_turu, cari_kodu } = validateCreate(req.body);

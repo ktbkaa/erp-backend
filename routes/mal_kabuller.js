@@ -358,4 +358,43 @@ router.post('/:id/fatura-olustur', async (req, res, next) => {
     }
 });
 
+/**
+ * POST /mal-kabuller/:id/iade — alış iade (stok çıkışı)
+ */
+router.post('/:id/iade', async (req, res, next) => {
+    try {
+        const { stokHareketOlustur } = require('../src/services/stokHareketService');
+        const kabulId = Number(req.params.id);
+        const sonuc = await withTransaction(pool, async (client) => {
+            const k = await client.query(`SELECT * FROM mal_kabuller WHERE id=$1`, [kabulId]);
+            if (!k.rows[0]) throw Object.assign(new Error('Mal kabul bulunamadı.'), { status: 404 });
+            const satirlar = await client.query(
+                `SELECT * FROM mal_kabul_satirlari WHERE kabul_id=$1`,
+                [kabulId]
+            );
+            if (!satirlar.rows.length) throw Object.assign(new Error('Satır yok.'), { status: 400 });
+            const depoId = Number(req.body.depo_id || k.rows[0].depo_id);
+            const hareket = await stokHareketOlustur(client, {
+                hareketTipi: 'IADE_CIKIS',
+                depoId,
+                belgeTipi: 'ALIS_IADE',
+                belgeId: kabulId,
+                aciklama: `Alış iade ← MK ${k.rows[0].kabul_no}`,
+                depoZorunluAtla: true,
+                satirlar: satirlar.rows.map((s) => ({
+                    stok_id: s.stok_id,
+                    miktar: req.body.miktarlar?.[s.id] != null
+                        ? Number(req.body.miktarlar[s.id])
+                        : Number(s.miktar),
+                    yon: -1,
+                })).filter((s) => s.miktar > 0),
+            });
+            return { mal_kabul_id: kabulId, stok_hareket_id: hareket.hareket.id, hareket_no: hareket.hareket.hareket_no };
+        });
+        res.status(201).json(sonuc);
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;

@@ -7,13 +7,34 @@ const { sonrakiKod } = require('../src/utils/kodUretici');
 // Tüm depoları listele (firma + iş yeri bilgisiyle)
 router.get('/', async (req, res) => {
     try {
-        const sonuc = await pool.query(`
+        let sonuc = await pool.query(`
             SELECT d.*, i.is_yeri_kodu, i.is_yeri_adi, f.firma_kodu, f.firma_adi
             FROM depolar d
             JOIN is_yerleri i ON d.is_yeri_id = i.id
             JOIN firmalar f ON i.firma_id = f.id
             ORDER BY d.is_yeri_id ASC, d.varsayilan DESC, d.id ASC
         `);
+        // ?yetkili=1 → kullanıcı depo yetkisi filtresi (PLT-008)
+        if (String(req.query.yetkili || '') === '1' && req.user) {
+            const { parseJsonArr } = require('../src/middleware/authJwt');
+            const list = parseJsonArr(req.user.depo_yetkileri, ['*']);
+            if (!list.includes('*')) {
+                sonuc = {
+                    rows: sonuc.rows.filter(
+                        (d) => list.includes(String(d.id)) || list.includes(d.depo_kodu)
+                    ),
+                };
+            } else {
+                const kd = await pool.query(
+                    `SELECT depo_id FROM kullanici_depo WHERE kisi_id=$1`,
+                    [req.user.id]
+                ).catch(() => ({ rows: [] }));
+                if (kd.rows.length) {
+                    const ids = new Set(kd.rows.map((r) => r.depo_id));
+                    sonuc = { rows: sonuc.rows.filter((d) => ids.has(d.id)) };
+                }
+            }
+        }
         res.json(sonuc.rows);
     } catch (err) {
         console.error('Depo listeleme hatası:', err);
