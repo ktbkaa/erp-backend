@@ -4728,7 +4728,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017j`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017k`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -5550,11 +5550,9 @@ function renderMasterDetailPanel(tab, rec) {
   const { primary, extras } = partitionMasterFields(tab.masterFields || []);
   const dFields = [...extras, ...(tab.detailFields || [])];
   const screen = findScreen(state.screenId);
-  const ekstra = screen?.kullaniciYetkiPaneli
-    ? `${renderKullaniciProfilBlok(rec)}${renderFirmaYetkiPane(rec)}${renderYetkiGrid(rec)}`
-    : '';
-  return `
-    <div class="md-split${screen?.kullaniciYetkiPaneli ? ' md-split--natural' : ''}">
+  const isUserCard = Boolean(screen?.kullaniciYetkiPaneli);
+  const head = `
+    <div class="md-split${isUserCard ? ' md-split--natural' : ''}">
       <section class="md-master" aria-label="Başlık alanları">
         <div class="section-label">Başlık</div>
         <div class="form-tab-fields form-tab-fields--master">
@@ -5571,8 +5569,16 @@ function renderMasterDetailPanel(tab, rec) {
           </div>
         </div>
       </section>
-    </div>
-    ${ekstra}`;
+    </div>`;
+  if (!isUserCard) return head;
+  // Yetki / firma / profil — başlığın hemen altında, boş flex alanı olmadan
+  return `
+    <div class="kullanici-form-stack">
+      ${head}
+      ${renderKullaniciProfilBlok(rec)}
+      ${renderFirmaYetkiPane(rec)}
+      ${renderYetkiGrid(rec)}
+    </div>`;
 }
 
 /** Master alanlar üstte + kalem grid altta — tek ekran */
