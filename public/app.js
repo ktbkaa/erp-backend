@@ -4226,7 +4226,12 @@ function filterValueControl(f, st) {
         // Kompakt etiket: kod öncelikli, uzun ad title'da
         const code = ck ? (r[ck] || '') : '';
         const name = r[lk] || '';
-        const label = code || name || String(val);
+        // Kod + kısa ad; çok uzunsa kod yeter
+        let label = code || name || String(val);
+        if (code && name) {
+          const short = name.length > 28 ? `${name.slice(0, 26)}…` : name;
+          label = `${code} — ${short}`;
+        }
         const title = code && name ? `${code} — ${name}` : (name || code || String(val));
         return `<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`;
       })
@@ -4429,7 +4434,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017c`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017e`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
