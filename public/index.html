@@ -115,6 +115,8 @@
             <button type="button" class="btn action danger" data-action="sil">Sil</button>
             <button type="button" class="btn action ghost" data-action="export-csv" title="Filtrelenmiş listeyi CSV indir">CSV</button>
             <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
+            <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
+            <button type="button" class="btn action" data-action="mrp-calistir" id="btnMrpCalistir" hidden title="MRP çalıştır ve sonuçları kaydet">MRP Çalıştır</button>
           </div>
 
           <div class="filter-pane" id="filterPane">
@@ -192,7 +194,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261017t"></script>
+  <script src="/app.js?v=20261017u"></script>
   <script>
     // Bağlantı kontrolü — Failed to fetch kök nedenini hemen göster
     (async function () {

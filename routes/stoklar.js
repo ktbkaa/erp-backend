@@ -448,7 +448,10 @@ router.put('/:id', async (req, res) => {
                     kalite_kontrol_gerekli = COALESCE($32, kalite_kontrol_gerekli),
                     varsayilan_giris_depo_id = COALESCE($33, varsayilan_giris_depo_id),
                     varsayilan_cikis_depo_id = COALESCE($34, varsayilan_cikis_depo_id),
-                    firma_id = COALESCE($35, firma_id)
+                    firma_id = COALESCE($35, firma_id),
+                    temin_suresi_gun = COALESCE($36, temin_suresi_gun),
+                    yeniden_siparis_seviyesi = COALESCE($37, yeniden_siparis_seviyesi),
+                    sabit_siparis_miktari = COALESCE($38, sabit_siparis_miktari)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -488,6 +491,9 @@ router.put('/:id', async (req, res) => {
                     m.varsayilan_giris_depo_id ?? null,
                     m.varsayilan_cikis_depo_id ?? null,
                     Number(m.firma_id) || firmaIdFromReq(req) || null,
+                    m.temin_suresi_gun ?? null,
+                    m.yeniden_siparis_seviyesi ?? null,
+                    m.sabit_siparis_miktari ?? null,
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });

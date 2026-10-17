@@ -559,7 +559,7 @@ const MODULES = [
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
       { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
-      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-hesap'] },
+      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
     ],
     screens: [
       {
@@ -731,7 +731,10 @@ const MODULES = [
             label: 'MRP',
             kind: 'fields',
             fields: [
-              { key: 'emniyet_stok', label: 'Emniyet stok (MRP)', type: 'number' },
+              { key: 'emniyet_stok', label: 'Emniyet stok', type: 'number' },
+              { key: 'yeniden_siparis_seviyesi', label: 'Yeniden sipariş seviyesi', type: 'number' },
+              { key: 'sabit_siparis_miktari', label: 'Sabit sipariş miktarı', type: 'number' },
+              { key: 'temin_suresi_gun', label: 'Temin süresi (gün)', type: 'number' },
               { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
             ],
           },
@@ -849,12 +852,75 @@ const MODULES = [
         detailAsFields: true,
       },
       {
+        id: 'mrp-bagimsiz-ihtiyac',
+        title: 'MRP Bağımsız İhtiyaç',
+        endpoint: '/mrp/bagimsiz-ihtiyaclar',
+        crud: true,
+        codeField: 'ihtiyac_no',
+        nameField: 'stok_adi',
+        numeratorSeri: 'MRP_BI',
+        filters: [
+          { key: 'ihtiyac_no', label: 'No' },
+          { key: 'stok_kodu', label: 'Stok' },
+          { key: 'kaynak', label: 'Kaynak' },
+        ],
+        columns: [
+          { key: 'ihtiyac_no', label: 'No', mono: true },
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'miktar', label: 'Miktar' },
+          { key: 'ihtiyac_tarihi', label: 'İhtiyaç tar.' },
+          { key: 'kaynak', label: 'Kaynak' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'ihtiyac_no', label: 'İhtiyaç no', code: true, required: true },
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'miktar', label: 'Miktar', type: 'number', required: true },
+          { key: 'ihtiyac_tarihi', label: 'İhtiyaç tarihi', type: 'date', required: true },
+          { key: 'kaynak', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+        ],
+        detailFields: [
+          { key: 'birim', label: 'Birim' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'mrp-calisma',
+        title: 'MRP Çalıştır',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        mrpCalistirAction: true,
+        filters: [
+          { key: 'calisma_no', label: 'Çalışma no' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'calisma_no', label: 'No', mono: true },
+          { key: 'durum', label: 'Durum' },
+          { key: 'baslangic_ts', label: 'Başlangıç' },
+          { key: 'bitis_ts', label: 'Bitiş' },
+          { key: 'satir_sayisi', label: 'Satır' },
+          { key: 'net_pozitif', label: 'Net>0' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        nested: { screenId: 'mrp-sonuclar', link: 'mrp-sonuc' },
+      },
+      {
         id: 'mrp-hesap',
-        title: 'MRP Hesap',
+        title: 'MRP Anlık Hesap',
         endpoint: '/mrp',
         crud: false,
         readOnly: true,
         mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpCalistirAction: true,
         filters: [
           { key: 'stok_kodu', label: 'Stok kodu' },
           { key: 'oneri', label: 'Öneri' },
@@ -862,12 +928,42 @@ const MODULES = [
         columns: [
           { key: 'stok_kodu', label: 'Stok', mono: true },
           { key: 'stok_adi', label: 'Ad' },
+          { key: 'bagimsiz_ihtiyac', label: 'Bağımsız' },
+          { key: 'bagimli_ihtiyac', label: 'Bağımlı' },
           { key: 'emniyet_stok', label: 'Emniyet' },
-          { key: 'kullanilabilir_stok', label: 'Kullanılabilir' },
-          { key: 'acik_uretim_ihtiyaci', label: 'UE ihtiyaç' },
+          { key: 'kullanilabilir_stok', label: 'Eldeki' },
           { key: 'acik_satinalma', label: 'Açık SA' },
-          { key: 'net_ihtiyac', label: 'Net ihtiyaç' },
+          { key: 'planlanan_uretim', label: 'Açık UE' },
+          { key: 'net_ihtiyac', label: 'Net' },
+          { key: 'onerilen_miktar', label: 'Öneri miktar' },
           { key: 'oneri', label: 'Öneri' },
+          { key: 'planlanan_baslangic', label: 'Plan baş.' },
+        ],
+      },
+      {
+        id: 'mrp-sonuclar',
+        title: 'MRP Sonuçları',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpSonucMode: true,
+        filters: [
+          { key: 'stok_kodu', label: 'Stok' },
+          { key: 'oneri', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'bagimsiz_ihtiyac', label: 'Bağımsız' },
+          { key: 'bagimli_ihtiyac', label: 'Bağımlı' },
+          { key: 'kullanilabilir_stok', label: 'Eldeki' },
+          { key: 'net_ihtiyac', label: 'Net' },
+          { key: 'onerilen_miktar', label: 'Öneri miktar' },
+          { key: 'oneri', label: 'Öneri' },
+          { key: 'donusturuldu', label: 'Dönüştü' },
+          { key: 'donusum_belge_no', label: 'Belge' },
         ],
       },
       {
@@ -3706,6 +3802,7 @@ const state = {
   sidebarSectionOpen: {},
   tabCtxKey: null,
   nestedLink: null, // { fromScreenId, fromId, convertPath, bodyKey, extra }
+  mrpCalismaId: null,
   session: null,
   firmalar: [],
   activeFirmaId: null,
@@ -5068,7 +5165,7 @@ function ekranYetkisi(screenId, action = null) {
   const row = list.find((y) => y.ekran_id === screenId && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
-  if (action === 'export-csv' || action === 'mrp-talep') {
+  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir') {
     return Boolean(row.incele || row.duzelt || row.yeni);
   }
   return Boolean(row[action]);
@@ -5092,10 +5189,20 @@ function updateActionButtons(screen) {
     else if (act === 'mrp-talep') {
       btn.hidden = !screen.mrpTalepAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-talep');
+    } else if (act === 'mrp-uretim') {
+      btn.hidden = !screen.mrpUretimAction;
+      btn.disabled = !ekranYetkisi(screen.id, 'mrp-uretim');
+    } else if (act === 'mrp-calistir') {
+      btn.hidden = !screen.mrpCalistirAction;
+      btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
     } else btn.disabled = !hasSel || !ekranYetkisi(screen.id, act);
   });
   const mrpBtn = $('#btnMrpTalep');
   if (mrpBtn) mrpBtn.hidden = !screen.mrpTalepAction;
+  const mrpUe = $('#btnMrpUretim');
+  if (mrpUe) mrpUe.hidden = !screen.mrpUretimAction;
+  const mrpRun = $('#btnMrpCalistir');
+  if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
 }
 
 async function openScreen(id, opts = {}) {
@@ -5163,7 +5270,22 @@ async function openScreen(id, opts = {}) {
       $('#sidebar').classList.remove('open');
     }
 
-    const data = await api(screen.endpoint);
+    let data;
+    if (screen.mrpSonucMode) {
+      // Son seçilen veya en son MRP çalışmasının sonuçları
+      let calismaId = state.mrpCalismaId;
+      if (!calismaId) {
+        const calismalar = await api('/mrp/calismalar');
+        calismaId = Array.isArray(calismalar) && calismalar[0] ? calismalar[0].id : null;
+        state.mrpCalismaId = calismaId;
+      }
+      data = calismaId ? await api(`/mrp/calismalar/${calismaId}/sonuclar`) : [];
+      if (banner && calismaId) {
+        banner.textContent = `${screen.title} · çalışma #${calismaId} · UI build 20261017u`;
+      }
+    } else {
+      data = await api(screen.endpoint);
+    }
     if (state.screenId !== id) return;
     let rows = Array.isArray(data) ? data : [];
     if (screen.id === 'numarator-tanimi') {
@@ -7517,7 +7639,15 @@ function bindEvents() {
       if (act === 'sil') deleteSelected();
       else if (act === 'export-csv') exportListCsv();
       else if (act === 'mrp-talep') mrpTalepOlustur().catch((err) => toast(err.message));
-      else openForm(act).catch((err) => toast(err.message));
+      else if (act === 'mrp-uretim') mrpUretimOlustur().catch((err) => toast(err.message));
+      else if (act === 'mrp-calistir') mrpCalistirKaydet().catch((err) => toast(err.message));
+      else if (act === 'incele' && state.screenId === 'mrp-calisma') {
+        const sel = selectedRow();
+        if (sel?.id) {
+          state.mrpCalismaId = sel.id;
+          openScreen('mrp-sonuclar');
+        } else toast('Önce bir MRP çalışması seçin.');
+      } else openForm(act).catch((err) => toast(err.message));
       return;
     }
 
@@ -7527,7 +7657,12 @@ function bindEvents() {
       const screen = findScreen(state.screenId);
       if (screen) renderList(screen);
       if (e.detail >= 2) {
-        openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
+        if (screen?.id === 'mrp-calisma') {
+          state.mrpCalismaId = Number(row.dataset.id) || row.dataset.id;
+          openScreen('mrp-sonuclar');
+        } else {
+          openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
+        }
       }
       return;
     }
@@ -7689,13 +7824,41 @@ function bindEvents() {
   }
 
   async function mrpTalepOlustur() {
+    const screen = findScreen(state.screenId);
     const sel = selectedRow();
-    const body = sel?.stok_id
-      ? { stok_idler: [sel.stok_id] }
-      : {};
+    const body = {};
+    if (sel?.stok_id) body.stok_idler = [sel.stok_id];
+    if (screen?.mrpSonucMode && state.mrpCalismaId) body.calisma_id = state.mrpCalismaId;
+    if (getActiveFirmaId()) body.firma_id = getActiveFirmaId();
+    if (state.activeIsYeriId) body.is_yeri_id = state.activeIsYeriId;
     const sonuc = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
     toast(`SA talep oluştu: ${sonuc.talep_no || sonuc.id}`);
     openScreen('satin-alma-talepleri');
+  }
+
+  async function mrpUretimOlustur() {
+    const screen = findScreen(state.screenId);
+    const sel = selectedRow();
+    const body = {};
+    if (sel?.stok_id) body.stok_idler = [sel.stok_id];
+    if (screen?.mrpSonucMode && state.mrpCalismaId) body.calisma_id = state.mrpCalismaId;
+    if (getActiveFirmaId()) body.firma_id = getActiveFirmaId();
+    if (state.activeIsYeriId) body.is_yeri_id = state.activeIsYeriId;
+    const sonuc = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
+    toast(`${sonuc.olusan || 0} üretim emri oluştu`);
+    openScreen('uretim-emirleri');
+  }
+
+  async function mrpCalistirKaydet() {
+    const body = {
+      aciklama: 'UI MRP çalışması',
+      firma_id: getActiveFirmaId() || null,
+      is_yeri_id: state.activeIsYeriId || null,
+    };
+    const sonuc = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
+    state.mrpCalismaId = sonuc.calisma?.id || null;
+    toast(`MRP tamam: ${sonuc.calisma?.calisma_no || ''} · net>0: ${sonuc.calisma?.net_pozitif ?? '?'}`);
+    openScreen('mrp-sonuclar');
   }
 
   const btnSecondary = $('#btnFormSecondary');
