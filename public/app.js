@@ -4288,7 +4288,7 @@ async function submitLoginForm(e) {
   if (e) e.preventDefault();
   closeUserChipMenu();
   const kullanici_adi = ($('#loginUser')?.value || '').trim();
-  const sifre = $('#loginPass')?.value || '';
+  const sifre = ($('#loginPass')?.value || '').trim();
   const btn = $('#loginSubmit');
   if (!kullanici_adi) {
     setLoginError('Kullanıcı adı gerekli.');
@@ -4801,7 +4801,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017n`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017o`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -6174,6 +6174,7 @@ function renderForm(screen) {
 
   state.formRecord = rec;
   bindNumeratorFieldListener(screen);
+  bindPasswordFieldPersist();
   if (screen.kullaniciYetkiPaneli) {
     bindYetkiGridEvents();
     bindFirmaYetkiEvents();
@@ -6227,9 +6228,33 @@ function readMasterFromForm(screen) {
   collectTabFields(screen).forEach((f) => {
     const el = document.querySelector(`[data-master="${f.key}"]`);
     if (!el) return;
+    // Şifre alanı render'da her zaman value="" basılır; boş DOM, formRecord'daki
+    // (veya input sırasında saklanan) değeri silmesin — aksi halde kayıt şifresiz gider.
+    if (f.type === 'password') {
+      const v = String(el.value || '').trim();
+      if (v) out[f.key] = v;
+      else if (!out[f.key]) delete out[f.key];
+      return;
+    }
     out[f.key] = readFieldValue(el, f);
   });
   return out;
+}
+
+/** Şifre yazıldıkça formRecord'a yaz — yeniden çizimde input temizlense bile kayıtta kalsın. */
+function bindPasswordFieldPersist() {
+  document.querySelectorAll('input[type="password"][data-master]').forEach((el) => {
+    if (el.dataset.pwBound) return;
+    el.dataset.pwBound = '1';
+    const key = el.getAttribute('data-master');
+    if (!key) return;
+    el.addEventListener('input', () => {
+      if (!state.formRecord) state.formRecord = {};
+      const v = String(el.value || '').trim();
+      if (v) state.formRecord[key] = v;
+      else delete state.formRecord[key];
+    });
+  });
 }
 
 function syncGridRowFromDom(tab, idx, baseRow = {}) {
@@ -6653,7 +6678,12 @@ async function saveForm() {
   if (screen.id === 'kullanicilar') {
     const adi = String(master.kullanici_adi || '').trim();
     if (adi && !master.kullanici_kodu) master.kullanici_kodu = adi;
-    if (!master.sifre) delete master.sifre;
+    // DOM boş olsa bile input sırasında saklanan şifreyi kullan
+    const sifreDom = String(document.querySelector('[data-master="sifre"]')?.value || '').trim();
+    const sifreMem = String(master.sifre || state.formRecord?.sifre || '').trim();
+    const sifre = sifreDom || sifreMem;
+    if (sifre) master.sifre = sifre;
+    else delete master.sifre;
     delete master.parola_var;
     delete master.parola_hash;
     delete master.refresh_token_hash;
