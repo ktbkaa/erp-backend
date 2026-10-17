@@ -1,32 +1,18 @@
 const express = require('express');
-const crypto = require('crypto');
 const router = express.Router();
 const pool = require('../db');
 const { signAccess, signRefresh, verifyToken, hashToken } = require('../src/utils/jwt');
 const { parametreAl } = require('../src/utils/yetki');
 const { parseJsonArr } = require('../src/middleware/authJwt');
-
-function hashParola(parola, salt = crypto.randomBytes(16).toString('hex')) {
-  const hash = crypto.scryptSync(String(parola), salt, 64).toString('hex');
-  return `${salt}:${hash}`;
-}
-
-function dogrulaParola(parola, stored) {
-  if (!stored || !stored.includes(':')) return false;
-  const [salt, hash] = stored.split(':');
-  const check = crypto.scryptSync(String(parola), salt, 64).toString('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(check, 'hex'));
-  } catch {
-    return false;
-  }
-}
+const { hashParola, dogrulaParola } = require('../src/utils/parola');
 
 function kullaniciPayload(u) {
   return {
     kullanici_kodu: u.kullanici_kodu,
+    kullanici_adi: u.kullanici_adi || u.kullanici_kodu,
     ad: u.ad,
     soyad: u.soyad,
+    rol: u.rol,
     grup_kodu: u.grup_kodu,
     grup_adi: u.grup_adi,
     satinalma_onay: u.satinalma_onay,
@@ -38,12 +24,13 @@ function kullaniciPayload(u) {
 }
 
 async function kullaniciYukle(kod) {
+  if (!kod) return null;
   const r = await pool.query(
     `SELECT k.*, g.satinalma_onay, g.satinalma_talep, g.kalite_kontrol,
             g.modul_yetkileri, g.depo_yetkileri, g.grup_adi
      FROM kisiler k
      LEFT JOIN kullanici_gruplari g ON g.grup_kodu = k.grup_kodu AND g.aktif = TRUE
-     WHERE k.kullanici_kodu = $1`,
+     WHERE k.kullanici_kodu = $1 OR k.kullanici_adi = $1`,
     [kod]
   );
   return r.rows[0] || null;
@@ -52,8 +39,12 @@ async function kullaniciYukle(kod) {
 /** POST /auth/login */
 router.post('/login', async (req, res, next) => {
   try {
-    const { kullanici_kodu, parola } = req.body || {};
-    if (!kullanici_kodu) return res.status(400).json({ hata: 'kullanici_kodu zorunlu.' });
+    const body = req.body || {};
+    const kullanici_kodu = body.kullanici_kodu || body.kullanici_adi || body.username;
+    const parola = body.parola || body.sifre || body.password;
+    if (!kullanici_kodu) {
+      return res.status(400).json({ hata: 'kullanici_adi (veya kullanici_kodu) zorunlu.' });
+    }
     const u = await kullaniciYukle(kullanici_kodu);
     if (!u || u.aktif === false) return res.status(401).json({ hata: 'Kullanıcı bulunamadı veya pasif.' });
 

@@ -208,36 +208,50 @@ const MODULES = [
         title: 'Kullanıcılar',
         endpoint: '/kullanicilar',
         crud: true,
-        codeField: 'kullanici_kodu',
+        codeField: 'kullanici_adi',
         nameField: 'ad',
-        numeratorSeri: 'KULLANICI',
+        numeratorSeri: null,
         filters: [
-          { key: 'kullanici_kodu', label: 'Kullanıcı kodu' },
+          { key: 'kullanici_adi', label: 'Kullanıcı adı' },
           { key: 'ad', label: 'Ad' },
           { key: 'rol', label: 'Rol' },
+          { key: 'grup_kodu', label: 'Grup' },
         ],
         columns: [
-          { key: 'kullanici_kodu', label: 'Kod', mono: true },
+          { key: 'kullanici_adi', label: 'Kullanıcı adı', mono: true },
           { key: 'ad', label: 'Ad' },
           { key: 'soyad', label: 'Soyad' },
           { key: 'rol', label: 'Rol' },
           { key: 'grup_kodu', label: 'Grup', mono: true },
+          { key: 'parola_var', label: 'Şifre' },
           { key: 'aktif', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'kullanici_kodu', label: 'Kullanıcı kodu', code: true, required: true },
+          { key: 'kullanici_adi', label: 'Kullanıcı adı', required: true },
+          { key: 'sifre', label: 'Şifre', type: 'password', requiredOnNew: true },
           { key: 'ad', label: 'Ad', name: true, required: true },
           { key: 'soyad', label: 'Soyad', required: true },
-          { key: 'rol', label: 'Rol', type: 'select', options: ['Personel', 'Yonetici', 'Satinalma', 'Uretim', 'Finans'] },
+          { key: 'rol', label: 'Rol', type: 'select', options: ['Yonetici', 'Personel', 'Satinalma', 'Uretim', 'Finans'] },
+          {
+            key: 'grup_kodu',
+            label: 'Grup',
+            type: 'lookup',
+            lookup: 'kullanici-gruplari',
+            valueKey: 'grup_kodu',
+            labelKey: 'grup_adi',
+            codeKey: 'grup_kodu',
+            required: true,
+          },
         ],
         detailFields: [
           { key: 'eposta', label: 'E-posta' },
           { key: 'telefon', label: 'Telefon' },
-          { key: 'grup_kodu', label: 'Grup kodu' },
+          { key: 'kullanici_kodu', label: 'Kullanıcı kodu (opsiyonel)' },
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
         detailKey: null,
         detailAsFields: true,
+        defaults: { rol: 'Yonetici', grup_kodu: 'ADMIN', aktif: true },
       },
       {
         id: 'kullanici-gruplari',
@@ -4418,6 +4432,8 @@ function cellHtml(col, row, index = 0) {
   // Aktif kolonu Pasif olarak gösterilir: tik/Evet = pasif (aktif=false)
   if (col.key === 'aktif' && typeof val === 'boolean') {
     val = val ? 'Hayır' : 'Evet';
+  } else if (col.key === 'parola_var') {
+    val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
   }
@@ -4548,7 +4564,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017g`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017h`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -4617,6 +4633,7 @@ const LOOKUP_ENDPOINTS = {
   'crm-faaliyet-tipleri': '/crm-faaliyet-tipleri?aktif=true',
   'crm-kontaklar': '/crm-kontaklar?aktif=true',
   kisiler: '/kisiler',
+  'kullanici-gruplari': '/kullanici-gruplari',
   'satin-alma-siparisleri': '/satin-alma-siparisleri',
   'urun-agaclari': '/urun-agaclari?tip=hepsi',
   rotalar: '/rotalar?tip=hepsi',
@@ -4721,6 +4738,15 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
     // key=aktif alanı "Pasif" olarak gösterilir: tikli = pasif (aktif false)
     const checked = field.key === 'aktif' ? !v : !!v;
     return `<input type="checkbox" ${name} ${checked ? 'checked' : ''} ${dis} ${req} />`;
+  }
+  if (field.type === 'password') {
+    const needNew = field.requiredOnNew && state.formMode === 'yeni';
+    const ph = state.formMode === 'duzelt' || state.formMode === 'incele'
+      ? 'Boş bırakırsanız şifre değişmez'
+      : 'Giriş şifresi';
+    const reqPw = needNew ? 'aria-required="true"' : req;
+    // Mevcut hash asla forma basılmaz — yaz-only
+    return `<input type="password" ${name} value="" autocomplete="new-password" placeholder="${escAttr(ph)}" ${dis} ${reqPw} />`;
   }
   if (field.type === 'select') {
     return `<select ${name} ${dis} ${req}>
@@ -4949,8 +4975,9 @@ function renderFieldGrid(fields, rec, attrName = 'data-master') {
 
 function fieldShell(f, controlHtml) {
   const cls = ['field'];
-  if (f.required) cls.push('required');
+  if (f.required || (f.requiredOnNew && state.formMode === 'yeni')) cls.push('required');
   if (f.type === 'lookup') cls.push('lookup');
+  if (f.type === 'password') cls.push('field--password');
   if (f.code) cls.push('field--code');
   if (f.name) cls.push('field--name');
   // Asterisk yok — zorunluluk .required sınıfı + input aria-required ile
@@ -5592,8 +5619,11 @@ function readTabbedPayload(screen) {
 
 function validateRequired(screen, payload) {
   for (const f of collectTabFields(screen)) {
-    if (!f.required) continue;
+    const need = f.required || (f.requiredOnNew && state.formMode === 'yeni');
+    if (!need) continue;
     if (f.code && state.formMode === 'duzelt') continue;
+    // Şifre: düzeltmede boş = değiştirme
+    if (f.type === 'password' && state.formMode === 'duzelt') continue;
     const v = payload[f.key];
     if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
       return `${f.label} zorunlu.`;
@@ -5887,6 +5917,17 @@ async function saveForm() {
   if (!screen || state.formMode === 'incele') return;
 
   const master = readTabbedPayload(screen);
+
+  // Kullanıcı kartı: giriş adı + şifre
+  if (screen.id === 'kullanicilar') {
+    const adi = String(master.kullanici_adi || '').trim();
+    if (adi && !master.kullanici_kodu) master.kullanici_kodu = adi;
+    if (!master.sifre) delete master.sifre;
+    delete master.parola_var;
+    delete master.parola_hash;
+    delete master.refresh_token_hash;
+  }
+
   const reqErr = validateRequired(screen, master);
   if (reqErr) {
     toast(reqErr);
