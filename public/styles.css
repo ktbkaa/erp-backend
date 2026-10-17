@@ -1559,6 +1559,15 @@ tr.selected td { background: var(--accent-soft); }
   gap: 1rem;
   min-height: 280px;
 }
+.bom-editor-pane .bom-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.85rem 0 0.5rem;
+}
+.bom-editor-pane .bom-editor-actions .btn.action {
+  min-width: 9rem;
+}
 .bom-tree-pane, .rota-flow-pane {
   border-right: 1px solid var(--line);
   padding-right: 0.75rem;

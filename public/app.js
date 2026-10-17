@@ -5799,8 +5799,17 @@ function lookupDisplay(field, value) {
 }
 
 function stokLookupById(id) {
-  const rows = state.lookupCache.stoklar || [];
-  return rows.find((r) => String(r.id) === String(id)) || null;
+  if (id == null || id === '') return null;
+  const pools = [
+    state.lookupCache.stoklar,
+    state.lookupCache['stoklar-mamul'],
+  ];
+  for (const rows of pools) {
+    if (!Array.isArray(rows)) continue;
+    const hit = rows.find((r) => String(r.id) === String(id));
+    if (hit) return hit;
+  }
+  return null;
 }
 
 function tipBadge(tip) {
@@ -6691,6 +6700,7 @@ function renderBomTree(tab, rec) {
   const canEdit = state.formMode !== 'incele';
   const mamul = stokLookupById(rec.mamul_stok_id);
   const selected = state.treeSel != null ? getBomNode(nodes, state.treeSel) : null;
+  const selStok = selected ? stokLookupById(selected.bilesen_stok_id) : null;
 
   return `
     <div class="bom-layout">
@@ -6710,7 +6720,7 @@ function renderBomTree(tab, rec) {
           </div>
           ${nodes.length
             ? nodes.map((n, i) => renderBomNode(n, String(i), 0)).join('')
-            : '<div class="detail-empty">Ağaç boş. Mamul altına bileşen ekleyin (yarı mamul / hammadde).</div>'}
+            : '<div class="detail-empty">Ağaç boş. «Yeni (kök altına)» ile yarı mamul veya hammadde ekleyin.</div>'}
         </div>
       </div>
       <div class="bom-editor-pane">
@@ -6719,8 +6729,24 @@ function renderBomTree(tab, rec) {
           <div class="form-tab-fields" data-bom-editor>
             ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, selected[f.key], 'data-bom-field'))).join('')}
           </div>
-          <p class="toolbar-hint">Tıklanan düğümün alt bileşenleri ağaçta açılır. Yarı mamule alt hammadde eklemek için düğümü seçip «Yeni alt bileşen» kullanın.</p>
-        ` : '<div class="detail-empty">Soldan bir bileşen seçin.</div>'}
+          ${canEdit ? `
+            <div class="bom-editor-actions">
+              <button type="button" class="btn action" data-bom-act="uygula">Bileşeni kaydet</button>
+              <button type="button" class="btn action ghost" data-bom-act="uygula-ve-yeni">Kaydet + yeni</button>
+            </div>
+          ` : ''}
+          <p class="toolbar-hint">
+            Stok, miktar ve birimi seçip <strong>Bileşeni kaydet</strong> ile sola yazın.
+            ${selStok && /yarı|yari/i.test(selStok.stok_tipi || '')
+    ? ' Bu bir yarı mamul — alt hammadde için soldan seçip «Yeni alt bileşen» kullanın.'
+    : ' Yarı mamule alt hammadde eklemek için düğümü seçip «Yeni alt bileşen» kullanın.'}
+          </p>
+        ` : `
+          <div class="detail-empty">
+            ${canEdit
+    ? 'Önce «Yeni (kök altına)» ile satır ekleyin, sonra burada stok seçip <strong>Bileşeni kaydet</strong> deyin.'
+    : 'Soldan bir bileşen seçin.'}
+          </div>`}
       </div>
     </div>`;
 }
@@ -7199,10 +7225,36 @@ function bindCascadeLookups(_screen) {
   else document.documentElement.dataset.cascadeBound = '1';
   root.addEventListener('change', (e) => {
     const el = e.target;
-    if (!(el instanceof HTMLSelectElement)) return;
-    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
+    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement)) return;
     const scr = findScreen(state.screenId);
     if (!scr || state.formMode == null) return;
+
+    // BOM sağ panel: stok seçince birim doldur
+    if (el.hasAttribute('data-bom-field')) {
+      const key = el.getAttribute('data-bom-field');
+      if (key === 'bilesen_stok_id') {
+        const st = stokLookupById(el.value);
+        const birimEl = document.querySelector('[data-bom-field="birim"]');
+        if (st && birimEl && !birimEl.disabled) {
+          const birim = st.birim || st.stok_takip_birimi || '';
+          if (birim) {
+            birimEl.value = birim;
+            // select options may not include value — ensure option exists
+            if (birimEl.tagName === 'SELECT' && ![...birimEl.options].some((o) => o.value === birim)) {
+              const opt = document.createElement('option');
+              opt.value = birim;
+              opt.textContent = birim;
+              birimEl.appendChild(opt);
+              birimEl.value = birim;
+            }
+          }
+        }
+      }
+      return;
+    }
+
+    if (!(el instanceof HTMLSelectElement)) return;
+    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
     const key = el.getAttribute('data-master');
     if (key && state.formRecord) state.formRecord[key] = el.value;
     refreshDependentLookups(scr, el);
@@ -7245,25 +7297,82 @@ function readGridFromForm(tab) {
 }
 
 function persistBomEditor(rec, tab) {
-  if (state.treeSel == null) return;
+  if (state.treeSel == null) return null;
   const nodes = ensureBomTree(rec);
   const node = getBomNode(nodes, state.treeSel);
-  if (!node) return;
+  if (!node) return null;
   (tab.fields || []).forEach((f) => {
     const el = document.querySelector(`[data-bom-field="${f.key}"]`);
     if (!el) return;
     node[f.key] = readFieldValue(el, f);
-    // enrich display fields from lookup
-    if (f.key === 'bilesen_stok_id') {
-      const st = stokLookupById(node.bilesen_stok_id);
-      if (st) {
-        node.stok_kodu = st.stok_kodu;
-        node.stok_adi = st.stok_adi;
-        node.stok_tipi = st.stok_tipi;
-      }
-    }
   });
+  const st = stokLookupById(node.bilesen_stok_id);
+  if (st) {
+    node.stok_kodu = st.stok_kodu;
+    node.stok_adi = st.stok_adi;
+    node.stok_tipi = st.stok_tipi;
+    if (!node.birim) node.birim = st.birim || st.stok_takip_birimi || null;
+  }
   if (!Array.isArray(node.alt_satirlar)) node.alt_satirlar = [];
+  return node;
+}
+
+/** Sağ panel → ağaç: bileşen stok + miktar zorunlu */
+function applyBomEditorSelection(screen, { addAnother = false } = {}) {
+  const tab = (screen.formTabs || []).find((t) => t.kind === 'bom-tree');
+  if (!tab) return false;
+  if (state.treeSel == null) {
+    toast('Önce soldan bir satır seçin veya «Yeni (kök altına)» ekleyin.');
+    return false;
+  }
+  state.formRecord = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const node = persistBomEditor(state.formRecord, tab);
+  const nodes = ensureBomTree(state.formRecord);
+  if (!node) {
+    toast('Bileşen satırı bulunamadı.');
+    return false;
+  }
+  const stokId = node.bilesen_stok_id;
+  const miktar = Number(node.miktar);
+  if (!stokId) {
+    toast('Bileşen stok seçin.');
+    return false;
+  }
+  if (!Number.isFinite(miktar) || miktar <= 0) {
+    toast('Miktar 0’dan büyük olmalı.');
+    return false;
+  }
+  const st = stokLookupById(stokId);
+  if (st) {
+    node.stok_kodu = st.stok_kodu;
+    node.stok_adi = st.stok_adi;
+    node.stok_tipi = st.stok_tipi;
+    if (!node.birim) node.birim = st.birim || null;
+  }
+  state.formRecord.satirlar = nodes;
+  state.formRecord.agac = nodes;
+  state.treeExpanded[state.treeSel] = true;
+
+  if (addAnother) {
+    // Aynı seviyeye yeni boş satır
+    const parts = String(state.treeSel).split('.');
+    if (parts.length === 1) {
+      nodes.push({ ...emptyRowFromFields(tab.fields), miktar: 1, alt_satirlar: [] });
+      state.treeSel = String(nodes.length - 1);
+    } else {
+      const parentPath = parts.slice(0, -1).join('.');
+      const parent = getBomNode(nodes, parentPath);
+      if (!parent.alt_satirlar) parent.alt_satirlar = [];
+      parent.alt_satirlar.push({ ...emptyRowFromFields(tab.fields), miktar: 1, alt_satirlar: [] });
+      state.treeSel = `${parentPath}.${parent.alt_satirlar.length - 1}`;
+      state.treeExpanded[parentPath] = true;
+    }
+    toast(`${st?.stok_kodu || 'Bileşen'} ağaca eklendi — yeni satır hazır.`);
+  } else {
+    toast(`${st?.stok_kodu || 'Bileşen'} ağaca kaydedildi.`);
+  }
+  renderForm(screen);
+  return true;
 }
 
 function persistFlowEditor(rec, tab) {
@@ -8321,9 +8430,13 @@ function bindEvents() {
       const act = bomAct.getAttribute('data-bom-act');
       const tab = (screen.formTabs || []).find((t) => t.kind === 'bom-tree');
       if (!tab) return;
+      if (act === 'uygula' || act === 'uygula-ve-yeni') {
+        applyBomEditorSelection(screen, { addAnother: act === 'uygula-ve-yeni' });
+        return;
+      }
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const nodes = ensureBomTree(state.formRecord);
-      const blank = { ...emptyRowFromFields(tab.fields), alt_satirlar: [] };
+      const blank = { ...emptyRowFromFields(tab.fields), miktar: 1, alt_satirlar: [] };
       if (act === 'yeni-kok') {
         nodes.push(blank);
         state.treeSel = String(nodes.length - 1);
@@ -8333,8 +8446,14 @@ function bindEvents() {
           toast('Alt bileşen için önce üst düğümü (ör. yarı mamul) seçin.');
           return;
         }
+        // Seçili satırdaki sağ panel değişikliklerini kaybetme
+        persistBomEditor(state.formRecord, tab);
         const parent = getBomNode(nodes, state.treeSel);
         if (!parent) return;
+        if (!parent.bilesen_stok_id) {
+          toast('Önce bu satıra bileşen stok seçip «Bileşeni kaydet» deyin.');
+          return;
+        }
         if (!Array.isArray(parent.alt_satirlar)) parent.alt_satirlar = [];
         parent.alt_satirlar.push(blank);
         state.treeExpanded[state.treeSel] = true;
