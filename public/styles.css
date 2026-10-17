@@ -1076,11 +1076,11 @@ body {
   position: sticky;
   top: 0;
   background: #f1f5f8 !important;
-  font-size: 0.72rem !important;
+  font-size: 0.75rem !important;
   font-weight: 600;
   color: var(--muted);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   z-index: 1;
   padding: 0.4rem 0.55rem !important;
 }
@@ -1173,11 +1173,11 @@ tr.selected td { background: var(--accent-soft); }
 .form-tab-nav {
   border-right: 1px solid var(--line);
   overflow: auto;
-  padding: 0.5rem 0.35rem;
-  background: #f4f7f9;
+  padding: 0.45rem 0.3rem;
+  background: #f5f8fa;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
   align-self: stretch;
   height: 100%;
   min-height: 0;
@@ -1186,13 +1186,14 @@ tr.selected td { background: var(--accent-soft); }
   text-align: left;
   border: 0;
   background: transparent;
-  padding: 0.5rem 0.65rem;
-  border-radius: 0.35rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: 0.3rem;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 500;
-  color: var(--ink);
+  color: #3a4553;
   cursor: pointer;
+  line-height: 1.25;
 }
 .form-tab-btn:hover { background: rgba(15, 40, 55, 0.06); }
 .form-tab-btn.active {
@@ -1275,18 +1276,18 @@ tr.selected td { background: var(--accent-soft); }
 .md-master {
   flex: 0 0 auto;
   overflow: hidden;
-  padding: 0.85rem 1.25rem 0.75rem;
+  padding: 0.7rem 1.1rem 0.6rem;
   border-bottom: 1px solid var(--line);
-  background: #f8fafb;
+  background: #f7fafb;
 }
 .md-extras {
   flex: 0 1 auto;
-  max-height: 32%;
+  max-height: 28%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0.65rem 1.25rem 0.7rem;
+  padding: 0.55rem 1.1rem 0.55rem;
   border-bottom: 1px solid var(--line);
   background: #fcfdfd;
 }
@@ -1301,7 +1302,7 @@ tr.selected td { background: var(--accent-soft); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0.75rem 1.25rem 1rem;
+  padding: 0.65rem 1.1rem 0.85rem;
   background: #fff;
 }
 .md-detail-scroll {
@@ -1309,49 +1310,72 @@ tr.selected td { background: var(--accent-soft); }
   min-height: 0;
   overflow: auto;
 }
+/* Krug: ALL CAPS yok — sessiz bölüm başlığı */
 .section-label {
-  margin: 0 0 0.65rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  margin: 0 0 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--muted);
 }
-/* İsim | kutu — 2 sütun, düzenli aralık */
+/* Alan grupları: kart değil, ince ayırıcı + tarama başlığı */
+.field-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.field-group {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.field-group + .field-group {
+  padding-top: 0.7rem;
+  border-top: 1px solid #e8eef2;
+}
+.field-group-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #4a5a68;
+}
+/* İsim | kutu — 2 sütun, sıkı düzenli aralık */
 .form-tab-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 0.65rem;
+  column-gap: 1.35rem;
+  row-gap: 0.48rem;
   align-items: start;
 }
 .form-tab-fields--master {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 0.7rem;
+  column-gap: 1.35rem;
+  row-gap: 0.5rem;
 }
 .form-tab-fields--detail {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 0.62rem;
+  column-gap: 1.35rem;
+  row-gap: 0.45rem;
 }
 .field {
   display: grid;
-  grid-template-columns: minmax(6.5rem, 8.5rem) minmax(0, 1fr);
-  gap: 0.55rem 0.75rem;
+  grid-template-columns: minmax(5.8rem, 7.6rem) minmax(0, 1fr);
+  gap: 0.35rem 0.55rem;
   align-items: center;
   min-width: 0;
 }
 .field label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: var(--ink);
-  line-height: 1.25;
+  color: #3a4553;
+  line-height: 1.2;
   text-align: right;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
-  padding-right: 0.15rem;
+  padding-right: 0.1rem;
 }
 /* Zorunlu: * yok; etiket biraz daha belirgin */
 .field.required label {
@@ -1489,24 +1513,29 @@ tr.selected td { background: var(--accent-soft); }
   padding: 0.3rem 0.1rem;
 }
 .detail-slot-title {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 650;
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .detail-slot-summary { font-size: 0.88rem; color: var(--ink); }
 .detail-slot-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 1.5rem;
-  row-gap: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
   padding: 0.45rem 0 0.35rem;
-  border-top: 1px dashed var(--line);
+  border-top: 1px solid #e8eef2;
   margin-top: 0.25rem;
 }
+.detail-slot-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  row-gap: 0.4rem;
+}
 @media (max-width: 900px) {
-  .detail-slot-fields { grid-template-columns: 1fr; }
+  .detail-slot-fields-grid { grid-template-columns: 1fr; }
 }
 .detail-empty {
   color: var(--muted);

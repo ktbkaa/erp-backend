@@ -5566,11 +5566,97 @@ function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
   };
 }
 
-function renderFieldGrid(fields, rec, attrName = 'data-master') {
+/** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / adres / …). */
+const FIELD_GROUP_DEFS = [
+  { id: 'kimlik', title: 'Kimlik', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|kod|adi|aciklama|turu|tipi|vergi_no|pasaport|uzun_stok|tedarik_tipi|stok_tipi|musteri_tipi|ad$|soyad$|unvan)/i },
+  { id: 'organizasyon', title: 'Organizasyon', re: /^(firma_id|is_yeri_id|depo_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|asama_|sorumlu_|takip_eden)/i },
+  { id: 'adres', title: 'Adres', re: /^(ulke|il$|ilce|sehir|posta_|adres|fatura_adres|sevk_|enlem|boylam)/i },
+  { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|email|website|fax|yetkili)/i },
+  { id: 'finans', title: 'Finans', re: /^(para_birimi|kur$|odeme_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|genel_toplam|iskonto|kdv_|birim_fiyat|beklenen_gelir|muhasebe_)/i },
+  { id: 'olcu', title: 'Ölçü / birim', re: /^(birim|miktar|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu)/i },
+  { id: 'durum', title: 'Durum', re: /^(durum|aktif|pasif|notlar|not_|oncelik|gecerlilik|kaynak)/i },
+];
+const FIELD_GROUP_ORDER = FIELD_GROUP_DEFS.map((g) => g.id).concat(['diger']);
+
+function inferFieldGroup(f) {
+  if (f?.group && typeof f.group === 'object') return f.group;
+  if (typeof f?.group === 'string') {
+    const hit = FIELD_GROUP_DEFS.find((g) => g.id === f.group);
+    return hit || { id: f.group, title: f.groupLabel || f.group };
+  }
+  const k = f?.key || '';
+  for (const g of FIELD_GROUP_DEFS) {
+    if (g.re.test(k)) return { id: g.id, title: g.title };
+  }
+  return { id: 'diger', title: 'Diğer' };
+}
+
+function clusterFieldsByGroup(fields) {
+  const buckets = new Map();
+  (fields || []).forEach((f) => {
+    const g = inferFieldGroup(f);
+    if (!buckets.has(g.id)) buckets.set(g.id, { id: g.id, title: g.title, fields: [] });
+    buckets.get(g.id).fields.push(f);
+  });
+  return FIELD_GROUP_ORDER
+    .filter((id) => buckets.has(id))
+    .map((id) => buckets.get(id))
+    .concat([...buckets.values()].filter((b) => !FIELD_GROUP_ORDER.includes(b.id)));
+}
+
+function renderFieldGrid(fields, rec, attrName = 'data-master', opts = {}) {
   const ctx = rec || {};
-  return (fields || [])
-    .map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx)))
-    .join('');
+  const list = fields || [];
+  const renderFlat = (arr, gridCls) => `
+    <div class="form-tab-fields ${gridCls}">
+      ${arr.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx))).join('')}
+    </div>`;
+
+  const gridCls = opts.gridClass
+    || (attrName === 'data-master' ? 'form-tab-fields--master' : 'form-tab-fields--detail');
+
+  // Başlık (primary) düz kalır — tarama için grup yok
+  if (!opts.grouped || list.length < 4) {
+    return list.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx))).join('');
+  }
+
+  const clusters = clusterFieldsByGroup(list);
+  if (clusters.length <= 1) {
+    return list.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx))).join('');
+  }
+
+  return clusters.map((c) => `
+    <div class="field-group" data-group="${escAttr(c.id)}">
+      <div class="field-group-title">${c.title}</div>
+      ${renderFlat(c.fields, gridCls)}
+    </div>`).join('');
+}
+
+function renderDetailFieldGrid(fields, rec, attrName = 'data-master') {
+  return renderFieldGrid(fields, rec, attrName, { grouped: true });
+}
+
+/** Grid satırı düzenlerken alanları gruplu göster */
+function renderGroupedDetailControls(fields, row, idx, gridKey) {
+  const list = fields || [];
+  if (list.length < 5) {
+    return `<div class="form-tab-fields form-tab-fields--detail detail-slot-fields-grid">${
+      list.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, gridKey, row))).join('')
+    }</div>`;
+  }
+  const clusters = clusterFieldsByGroup(list);
+  if (clusters.length <= 1) {
+    return `<div class="form-tab-fields form-tab-fields--detail detail-slot-fields-grid">${
+      list.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, gridKey, row))).join('')
+    }</div>`;
+  }
+  return clusters.map((c) => `
+    <div class="field-group" data-group="${escAttr(c.id)}">
+      <div class="field-group-title">${c.title}</div>
+      <div class="form-tab-fields form-tab-fields--detail detail-slot-fields-grid">
+        ${c.fields.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, gridKey, row))).join('')}
+      </div>
+    </div>`).join('');
 }
 
 function fieldShell(f, controlHtml) {
@@ -6077,11 +6163,9 @@ function renderMasterDetailPanel(tab, rec) {
       <section class="md-detail" aria-label="Ek alanlar">
         <div class="section-label">Ek bilgiler</div>
         <div class="md-detail-scroll">
-          <div class="form-tab-fields form-tab-fields--detail">
-            ${dFields.length
-              ? renderFieldGrid(dFields, rec)
-              : '<div class="detail-empty">Bu bölümde ek alan yok.</div>'}
-          </div>
+          ${dFields.length
+            ? `<div class="field-groups">${renderDetailFieldGrid(dFields, rec)}</div>`
+            : '<div class="detail-empty">Bu bölümde ek alan yok.</div>'}
         </div>
       </section>
     </div>`;
@@ -6117,9 +6201,7 @@ function renderMasterGridPanel(tab, rec) {
       <section class="md-extras" aria-label="Ek başlık alanları">
         <div class="section-label">Ek bilgiler</div>
         <div class="md-extras-scroll">
-          <div class="form-tab-fields form-tab-fields--detail">
-            ${renderFieldGrid(extras, rec)}
-          </div>
+          <div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>
         </div>
       </section>` : ''}
       <section class="md-detail" aria-label="Kalemler">
@@ -6171,8 +6253,8 @@ function renderDynamicGrid(tab, rec) {
               </button>
             </div>
             ${editing || (!canEdit && selected) ? `
-              <div class="detail-slot-fields">
-                ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, key, row))).join('')}
+              <div class="detail-slot-fields field-groups">
+                ${renderGroupedDetailControls(tab.fields || [], row, idx, key)}
               </div>` : ''}
           </div>`;
       }).join('')}
@@ -6526,16 +6608,21 @@ function renderForm(screen) {
           <section class="md-detail" aria-label="Ek alanlar">
             <div class="section-label">Ek bilgiler</div>
             <div class="md-detail-scroll">
-              <div class="form-tab-fields form-tab-fields--detail">${renderFieldGrid(extras, rec)}</div>
+              <div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>
             </div>
           </section>
         </div>
       </div>`;
     }
+    // Çok alanlı sekmeler: gruplu tarama; az alanlı: düz grid
+    const tabFields = tab.fields || [];
+    const useGroups = !masterLike && tabFields.length >= 4;
     return `<div class="form-tab-panel ${masterLike ? 'form-tab-panel--fixed' : 'form-tab-panel--scroll'}" data-tab-panel="${tab.id}" ${hide}>
-      <div class="form-tab-fields ${masterLike ? 'form-tab-fields--master' : 'form-tab-fields--detail'}">
-        ${renderFieldGrid(tab.fields || [], rec)}
-      </div>
+      ${useGroups
+        ? `<div class="field-groups">${renderDetailFieldGrid(tabFields, rec)}</div>`
+        : `<div class="form-tab-fields ${masterLike ? 'form-tab-fields--master' : 'form-tab-fields--detail'}">
+            ${renderFieldGrid(tabFields, rec)}
+          </div>`}
     </div>`;
   }).join('');
 
