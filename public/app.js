@@ -520,6 +520,31 @@ const MODULES = [
           {
             id: 'ana', label: 'Stok Kart', kind: 'master-detail',
             masterFields: [
+              // Firma / iş yeri — zorunlu (sorunlu) alanlar; master’da en üstte
+              {
+                key: 'firma_id',
+                label: 'Firma',
+                type: 'lookup',
+                lookup: 'firmalar',
+                valueKey: 'id',
+                labelKey: 'firma_adi',
+                codeKey: 'firma_kodu',
+                required: true,
+                lead: true,
+                critical: true,
+              },
+              {
+                key: 'is_yeri_id',
+                label: 'İş yeri',
+                type: 'lookup',
+                lookup: 'is-yerleri',
+                valueKey: 'id',
+                labelKey: 'is_yeri_adi',
+                codeKey: 'is_yeri_kodu',
+                required: true,
+                lead: true,
+                critical: true,
+              },
               { key: 'stok_tipi', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true, lead: true },
               { key: 'stok_kodu', label: 'Stok kodu', code: true, required: true },
               { key: 'stok_adi', label: 'Stok adı', name: true, required: true },
@@ -572,7 +597,8 @@ const MODULES = [
             ],
           },
           {
-            id: 'isyeri-bag', label: 'İş Yeri Bağları', kind: 'grid', key: 'is_yeri_baglari', slots: 3,
+            // Ek iş yerleri (asıl bağ master’daki İş yeri alanından gelir)
+            id: 'isyeri-bag', label: 'Ek İş Yerleri', kind: 'grid', key: 'is_yeri_baglari', slots: 2,
             fields: [
               { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
               { key: 'aktif', label: 'Aktif', type: 'checkbox' },
@@ -4815,7 +4841,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017p`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017q`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -5186,6 +5212,7 @@ const MASTER_PRIMARY_MAX = 8;
 function masterFieldScore(f) {
   let s = 0;
   if (f.lead) s += 1000; // numaratör sürücü / önce seçilecek alan
+  if (f.critical) s += 900; // sorunlu / olmazsa olmaz — master’da kalsın
   if (f.code) s += 100;
   if (f.name) s += 90;
   if (f.required) s += 70;
@@ -5195,6 +5222,32 @@ function masterFieldScore(f) {
   if (f.type === 'select') s += 35;
   if (/_no$|_kodu$|_adi$/.test(f.key || '')) s += 20;
   return s;
+}
+
+/** Stok kartı: master firma/iş yeri ↔ is_yeri_baglari senkronu */
+function hydrateStokFirmaIsYeri(rec) {
+  if (!rec) return;
+  const bags = Array.isArray(rec.is_yeri_baglari) ? rec.is_yeri_baglari : [];
+  if (!rec.is_yeri_id && bags.length) {
+    const first = bags.find((b) => b.is_yeri_id) || bags[0];
+    if (first?.is_yeri_id) rec.is_yeri_id = Number(first.is_yeri_id);
+  }
+  if (!rec.firma_id && getActiveFirmaId()) {
+    rec.firma_id = getActiveFirmaId();
+  }
+}
+
+function syncStokFirmaIsYeriForSave(master) {
+  const firmaId = Number(master.firma_id) || getActiveFirmaId() || null;
+  const iyId = Number(master.is_yeri_id) || null;
+  if (firmaId) master.firma_id = firmaId;
+  if (iyId) {
+    master.is_yeri_id = iyId;
+    const bags = Array.isArray(master.is_yeri_baglari) ? [...master.is_yeri_baglari] : [];
+    const has = bags.some((b) => Number(b.is_yeri_id) === iyId);
+    if (!has) bags.unshift({ is_yeri_id: iyId, aktif: true });
+    master.is_yeri_baglari = bags;
+  }
 }
 
 /** Kalabalık master listesini birincil + ek alanlara böler; lead alanlar başta. */
@@ -5227,12 +5280,16 @@ function renderFieldGrid(fields, rec, attrName = 'data-master') {
 function fieldShell(f, controlHtml) {
   const cls = ['field'];
   if (f.required || (f.requiredOnNew && state.formMode === 'yeni')) cls.push('required');
+  if (f.critical) cls.push('field--critical');
   if (f.type === 'lookup') cls.push('lookup');
   if (f.type === 'password') cls.push('field--password');
   if (f.code) cls.push('field--code');
   if (f.name) cls.push('field--name');
-  // Asterisk yok — zorunluluk .required sınıfı + input aria-required ile
-  return `<div class="${cls.join(' ')}"><label>${f.label}</label>${controlHtml}</div>`;
+  // Asterisk yok — zorunluluk .required / .field--critical + aria-required
+  const hint = f.critical
+    ? '<span class="field-critical-hint">zorunlu</span>'
+    : '';
+  return `<div class="${cls.join(' ')}"><label>${f.label}${hint}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -6662,6 +6719,10 @@ async function openForm(mode) {
     if (mode === 'yeni') record.seri_kodu = '';
   }
 
+  if (screen.id === 'stok-karti') {
+    hydrateStokFirmaIsYeri(record);
+  }
+
   state.formRecord = record;
   addFormTab(screen, mode, record);
   showView('form');
@@ -6687,6 +6748,11 @@ async function saveForm() {
   if (!screen || state.formMode === 'incele') return;
 
   const master = readTabbedPayload(screen);
+
+  // Stok kartı: master’daki firma / iş yeri zorunlu bağ
+  if (screen.id === 'stok-karti') {
+    syncStokFirmaIsYeriForSave(master);
+  }
 
   // Kullanıcı kartı: giriş adı + şifre + yetki + profil
   if (screen.id === 'kullanicilar') {

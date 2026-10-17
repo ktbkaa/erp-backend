@@ -101,11 +101,18 @@ async function stokGetir(id) {
         pool.query('SELECT * FROM stok_barkodlari WHERE stok_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM stok_dil_tanimlari WHERE stok_id = $1 ORDER BY id', [id]),
     ]);
+    const row = stokRes.rows[0];
+    const bags = isyerleri.rows;
     return {
-        ...stokRes.rows[0],
+        ...row,
+        // Form master alanı: ilk aktif iş yeri bağından
+        is_yeri_id: row.is_yeri_id
+          || (bags.find((b) => b.aktif !== false)?.is_yeri_id)
+          || bags[0]?.is_yeri_id
+          || null,
         stok_detaylari: detaylar.rows,
         birim_tanimlari: birimler.rows,
-        is_yeri_baglari: isyerleri.rows,
+        is_yeri_baglari: bags,
         barkodlar: barkodlar.rows,
         dil_tanimlari: diller.rows,
     };
@@ -259,8 +266,30 @@ router.post('/', async (req, res) => {
         }
         const tip = trimOrNull(req.body.stok_tipi) || 'Ticari';
         const m = req.body;
-        // Üst bardaki aktif firma — yoksa listede görünmez (çok firma izolasyonu)
+        // Master’daki firma / iş yeri — olmazsa olmaz
         const firmaId = Number(m.firma_id) || firmaIdFromReq(req) || null;
+        const isYeriId = Number(m.is_yeri_id)
+          || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.is_yeri_id))
+          || null;
+        if (!firmaId) {
+            return res.status(400).json({
+                hata: 'Firma zorunludur.',
+                hatalar: [{ alan: 'firma_id', hata: 'Firma zorunludur.' }],
+            });
+        }
+        if (!isYeriId) {
+            return res.status(400).json({
+                hata: 'İş yeri zorunludur.',
+                hatalar: [{ alan: 'is_yeri_id', hata: 'İş yeri zorunludur.' }],
+            });
+        }
+        // Master iş yeri → stok_is_yeri bağları
+        if (!Array.isArray(m.is_yeri_baglari) || !m.is_yeri_baglari.some((b) => Number(b.is_yeri_id) === isYeriId)) {
+            m.is_yeri_baglari = [
+                { is_yeri_id: isYeriId, aktif: true },
+                ...((Array.isArray(m.is_yeri_baglari) ? m.is_yeri_baglari : [])),
+            ];
+        }
 
         const sonucId = await withTransaction(pool, async (client) => {
             const kod = trimOrNull(m.stok_kodu) || (await sonrakiKod(client, stokSeriKodundanTip(tip)));
@@ -350,6 +379,29 @@ router.put('/:id', async (req, res) => {
                 hata: "ABC kodu 'A', 'B' veya 'C' olmalı.",
                 hatalar: [{ alan: 'abc_kodu', hata: "ABC kodu 'A', 'B' veya 'C' olmalı." }],
             });
+        }
+        const isYeriId = Number(m.is_yeri_id)
+          || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.is_yeri_id))
+          || null;
+        if (m.firma_id !== undefined && m.firma_id !== null && m.firma_id !== '' && !Number(m.firma_id) && !firmaIdFromReq(req)) {
+            return res.status(400).json({
+                hata: 'Firma zorunludur.',
+                hatalar: [{ alan: 'firma_id', hata: 'Firma zorunludur.' }],
+            });
+        }
+        if (m.is_yeri_id !== undefined || Array.isArray(m.is_yeri_baglari)) {
+            if (!isYeriId) {
+                return res.status(400).json({
+                    hata: 'İş yeri zorunludur.',
+                    hatalar: [{ alan: 'is_yeri_id', hata: 'İş yeri zorunludur.' }],
+                });
+            }
+            if (!Array.isArray(m.is_yeri_baglari) || !m.is_yeri_baglari.some((b) => Number(b.is_yeri_id) === isYeriId)) {
+                m.is_yeri_baglari = [
+                    { is_yeri_id: isYeriId, aktif: true },
+                    ...((Array.isArray(m.is_yeri_baglari) ? m.is_yeri_baglari : [])),
+                ];
+            }
         }
 
         await withTransaction(pool, async (client) => {
