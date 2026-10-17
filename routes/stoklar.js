@@ -259,6 +259,8 @@ router.post('/', async (req, res) => {
         }
         const tip = trimOrNull(req.body.stok_tipi) || 'Ticari';
         const m = req.body;
+        // Üst bardaki aktif firma — yoksa listede görünmez (çok firma izolasyonu)
+        const firmaId = Number(m.firma_id) || firmaIdFromReq(req) || null;
 
         const sonucId = await withTransaction(pool, async (client) => {
             const kod = trimOrNull(m.stok_kodu) || (await sonrakiKod(client, stokSeriKodundanTip(tip)));
@@ -281,7 +283,8 @@ router.post('/', async (req, res) => {
                     koli_brut_agirlik, kutu_brut_agirlik, kutu_en_mm, kutu_boy_mm, kutu_yukseklik_mm,
                     barkod, emniyet_stok, maksimum_stok, ulke_mensei, raf_omru_gun,
                     marka, temin_sekli, miktar_hassasiyeti,
-                    parti_politika, kalite_kontrol_gerekli, varsayilan_giris_depo_id, varsayilan_cikis_depo_id
+                    parti_politika, kalite_kontrol_gerekli, varsayilan_giris_depo_id, varsayilan_cikis_depo_id,
+                    firma_id
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,COALESCE($10,'Satinalma'),COALESCE($11,TRUE),
@@ -289,7 +292,8 @@ router.post('/', async (req, res) => {
                     $18,$19,$20,$21,$22,
                     $23,$24,$25,$26,$27,
                     $28,$29,COALESCE($30,3),
-                    COALESCE($31,'Takipsiz'),COALESCE($32,FALSE),$33,$34
+                    COALESCE($31,'Takipsiz'),COALESCE($32,FALSE),$33,$34,
+                    $35
                 )
                 RETURNING id
                 `,
@@ -308,6 +312,7 @@ router.post('/', async (req, res) => {
                     typeof m.kalite_kontrol_gerekli === 'boolean' ? m.kalite_kontrol_gerekli : false,
                     m.varsayilan_giris_depo_id || null,
                     m.varsayilan_cikis_depo_id || null,
+                    firmaId,
                 ]
             );
             const stokId = stokSonuc.rows[0].id;
@@ -390,7 +395,8 @@ router.put('/:id', async (req, res) => {
                     parti_politika = COALESCE($31, parti_politika),
                     kalite_kontrol_gerekli = COALESCE($32, kalite_kontrol_gerekli),
                     varsayilan_giris_depo_id = COALESCE($33, varsayilan_giris_depo_id),
-                    varsayilan_cikis_depo_id = COALESCE($34, varsayilan_cikis_depo_id)
+                    varsayilan_cikis_depo_id = COALESCE($34, varsayilan_cikis_depo_id),
+                    firma_id = COALESCE($35, firma_id)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -429,6 +435,7 @@ router.put('/:id', async (req, res) => {
                     typeof m.kalite_kontrol_gerekli === 'boolean' ? m.kalite_kontrol_gerekli : null,
                     m.varsayilan_giris_depo_id ?? null,
                     m.varsayilan_cikis_depo_id ?? null,
+                    Number(m.firma_id) || firmaIdFromReq(req) || null,
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });
