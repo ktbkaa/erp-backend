@@ -43,7 +43,137 @@ function nest(rows, parentId = null, seviye = 1, path = []) {
     return out;
 }
 
-/** BOMT05 — ürün ağacı seviye listesi */
+/**
+ * BOM patlatma — mamul miktarına göre çok seviyeli ağacı düz listeye açar (MRP görünümü).
+ * Query: agac_id | mamul_stok_id | agac_kodu, miktar (varsayılan 1)
+ */
+router.get('/patlatma', async (req, res) => {
+    try {
+        const miktarBaz = Math.max(0, Number(req.query.miktar) || 1);
+        const { agac_id, mamul_stok_id, agac_kodu } = req.query;
+
+        let agacSql = `
+            SELECT ua.*, s.stok_kodu AS mamul_kodu, s.stok_adi AS mamul_adi, s.stok_tipi AS mamul_tipi
+            FROM urun_agaclari ua
+            JOIN stoklar s ON s.id = ua.mamul_stok_id
+            WHERE ua.aktif IS DISTINCT FROM FALSE`;
+        const params = [];
+        if (agac_id) {
+            params.push(agac_id);
+            agacSql += ` AND ua.id = $${params.length}`;
+        } else if (mamul_stok_id) {
+            params.push(mamul_stok_id);
+            agacSql += ` AND ua.mamul_stok_id = $${params.length}`;
+        } else if (agac_kodu) {
+            params.push(String(agac_kodu).trim());
+            agacSql += ` AND UPPER(ua.agac_kodu) = UPPER($${params.length})`;
+        }
+        // Filtre yoksa tüm aktif ağaçlar patlatılır (miktar ile)
+        agacSql += ' ORDER BY ua.agac_kodu, ua.id';
+        const agaclar = await pool.query(agacSql, params);
+        if (!agaclar.rows.length) {
+            return res.json([]);
+        }
+
+        function explode(rows, parentId, seviye, path, parentQty, agac) {
+            const out = [];
+            const children = rows.filter((r) => {
+                const p = r.ust_satir_id == null ? null : Number(r.ust_satir_id);
+                return p === parentId;
+            });
+            children.forEach((c, idx) => {
+                const birimMiktar = Number(c.miktar) || 0;
+                const toplam = birimMiktar * parentQty;
+                const nodePath = [...path, c.stok_kodu];
+                const line = {
+                    seviye,
+                    sira: idx + 1,
+                    agac_id: agac.id,
+                    agac_kodu: agac.agac_kodu,
+                    agac_adi: agac.agac_adi,
+                    mamul_kodu: agac.mamul_kodu,
+                    mamul_adi: agac.mamul_adi,
+                    satir_id: c.id,
+                    stok_id: c.bilesen_stok_id,
+                    stok_kodu: c.stok_kodu,
+                    stok_adi: c.stok_adi,
+                    stok_tipi: c.stok_tipi,
+                    birim_miktar: birimMiktar,
+                    miktar: toplam,
+                    birim: c.birim,
+                    yol: nodePath.join(' > '),
+                    liste_kodu: `${agac.agac_kodu}-L${seviye}-${c.id}`,
+                    aciklama: `${nodePath.join(' › ')} × ${toplam}`,
+                };
+                out.push(line);
+                out.push(...explode(rows, Number(c.id), seviye + 1, nodePath, toplam, agac));
+            });
+            return out;
+        }
+
+        const sonuc = [];
+        for (const a of agaclar.rows) {
+            const satirlar = await agacSatirlari(a.id);
+            const bazAgac = Number(a.miktar) || 1;
+            const kokCarpan = miktarBaz / bazAgac;
+            // Kök mamul satırı (seviye 0) — sorgulanan miktar
+            sonuc.push({
+                seviye: 0,
+                sira: 0,
+                agac_id: a.id,
+                agac_kodu: a.agac_kodu,
+                agac_adi: a.agac_adi,
+                mamul_kodu: a.mamul_kodu,
+                mamul_adi: a.mamul_adi,
+                satir_id: null,
+                stok_id: a.mamul_stok_id,
+                stok_kodu: a.mamul_kodu,
+                stok_adi: a.mamul_adi,
+                stok_tipi: a.mamul_tipi || 'Mamul',
+                birim_miktar: bazAgac,
+                miktar: miktarBaz,
+                birim: null,
+                yol: a.mamul_kodu,
+                liste_kodu: `${a.agac_kodu}-KOK`,
+                aciklama: `Mamul ${a.mamul_kodu} × ${miktarBaz}`,
+            });
+            const hasParent = satirlar.some((r) => r.ust_satir_id != null);
+            if (hasParent) {
+                sonuc.push(...explode(satirlar, null, 1, [a.mamul_kodu], kokCarpan, a));
+            } else {
+                satirlar.forEach((c, idx) => {
+                    const birimMiktar = Number(c.miktar) || 0;
+                    const toplam = birimMiktar * kokCarpan;
+                    sonuc.push({
+                        seviye: 1,
+                        sira: idx + 1,
+                        agac_id: a.id,
+                        agac_kodu: a.agac_kodu,
+                        agac_adi: a.agac_adi,
+                        mamul_kodu: a.mamul_kodu,
+                        mamul_adi: a.mamul_adi,
+                        satir_id: c.id,
+                        stok_id: c.bilesen_stok_id,
+                        stok_kodu: c.stok_kodu,
+                        stok_adi: c.stok_adi,
+                        stok_tipi: c.stok_tipi,
+                        birim_miktar: birimMiktar,
+                        miktar: toplam,
+                        birim: c.birim,
+                        yol: `${a.mamul_kodu} > ${c.stok_kodu}`,
+                        liste_kodu: `${a.agac_kodu}-L1-${c.id}`,
+                        aciklama: `${a.mamul_kodu} › ${c.stok_kodu} × ${toplam}`,
+                    });
+                });
+            }
+        }
+        res.json(sonuc);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+/** BOMT05 — ürün ağacı seviye listesi (tüm ağaçların düz seviye dökümü; where-used / seviye raporu) */
 router.get('/seviye-listesi', async (req, res) => {
     try {
         const { agac_id } = req.query;

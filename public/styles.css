@@ -1071,6 +1071,8 @@ body {
   max-width: 14rem;
   overflow: hidden;
   text-overflow: ellipsis;
+  user-select: text;
+  -webkit-user-select: text;
 }
 #dataTable th {
   position: sticky;
@@ -1435,6 +1437,16 @@ tr.selected td { background: var(--accent-soft); }
   font-size: 0.9rem;
   min-height: 2rem;
   border-radius: 0.3rem;
+  user-select: text;
+  -webkit-user-select: text;
+}
+/* Liste / form metni kopyalanabilir olsun */
+.form-view,
+.form-tab-body,
+.list-pane,
+.screen-banner {
+  user-select: text;
+  -webkit-user-select: text;
 }
 .field input[type="checkbox"] {
   width: 1.05rem;
