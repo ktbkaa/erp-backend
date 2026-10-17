@@ -58,6 +58,18 @@ async function loadYetkiler(client, kisiId) {
   }));
 }
 
+async function loadFirmaYetkileri(client, kisiId) {
+  const r = await client.query(
+    `SELECT f.id AS firma_id, f.firma_kodu, f.firma_adi
+     FROM kullanici_firma_yetkileri k
+     JOIN firmalar f ON f.id = k.firma_id
+     WHERE k.kisi_id=$1
+     ORDER BY f.firma_kodu`,
+    [kisiId]
+  );
+  return r.rows;
+}
+
 async function saveYetkiler(client, kisiId, yetkiler) {
   await client.query(`DELETE FROM kullanici_ekran_yetkileri WHERE kisi_id=$1`, [kisiId]);
   if (!Array.isArray(yetkiler)) return;
@@ -77,10 +89,27 @@ async function saveYetkiler(client, kisiId, yetkiler) {
   }
 }
 
+async function saveFirmaYetkileri(client, kisiId, firmalar) {
+  await client.query(`DELETE FROM kullanici_firma_yetkileri WHERE kisi_id=$1`, [kisiId]);
+  if (!Array.isArray(firmalar)) return;
+  const seen = new Set();
+  for (const raw of firmalar) {
+    const id = Number(raw?.firma_id ?? raw?.id ?? raw);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    await client.query(
+      `INSERT INTO kullanici_firma_yetkileri (kisi_id, firma_id)
+       VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+      [kisiId, id]
+    );
+  }
+}
+
 async function hydrateUser(row) {
   if (!row) return null;
   const out = sanitizeRow(row);
   out.yetkiler = await loadYetkiler(pool, row.id);
+  out.firma_yetkileri = await loadFirmaYetkileri(pool, row.id);
   return out;
 }
 
@@ -137,7 +166,7 @@ router.post('/', async (req, res) => {
     const {
       ad, soyad, eposta, telefon, rol, unvan,
       kullanici_kodu, kullanici_adi, aktif, grup_kodu,
-      sifre, parola, password, profil_resmi, yetkiler,
+      sifre, parola, password, profil_resmi, yetkiler, firma_yetkileri, firmalar,
     } = req.body;
     if (!ad || !soyad) {
       return res.status(400).json({ hata: 'ad ve soyad zorunludur.' });
@@ -152,6 +181,7 @@ router.post('/', async (req, res) => {
     const plain = sifre || parola || password || null;
     const hash = plain ? hashParola(plain) : null;
     const avatar = profil_resmi === undefined ? null : clipProfilResmi(profil_resmi);
+    const firmaList = firma_yetkileri !== undefined ? firma_yetkileri : firmalar;
 
     await client.query('BEGIN');
     const sonuc = await client.query(
@@ -171,10 +201,9 @@ router.post('/', async (req, res) => {
     );
     const row = sonuc.rows[0];
     await saveYetkiler(client, row.id, yetkiler);
+    await saveFirmaYetkileri(client, row.id, firmaList);
     await client.query('COMMIT');
-    const out = sanitizeRow(row);
-    out.yetkiler = await loadYetkiler(pool, row.id);
-    res.status(201).json(out);
+    res.status(201).json(await hydrateUser(row));
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     console.error('Kişi kayıt hatası:', err);
@@ -194,7 +223,7 @@ router.put('/:id', async (req, res) => {
     const {
       ad, soyad, eposta, telefon, rol, unvan,
       kullanici_kodu, kullanici_adi, aktif, grup_kodu,
-      sifre, parola, password, profil_resmi, yetkiler,
+      sifre, parola, password, profil_resmi, yetkiler, firma_yetkileri, firmalar,
     } = req.body;
 
     const loginAdi = kullanici_adi !== undefined ? cleanLoginName(kullanici_adi) : undefined;
@@ -205,6 +234,7 @@ router.put('/:id', async (req, res) => {
     const avatarVal = !touchAvatar
       ? null
       : (profil_resmi === null || profil_resmi === '' ? null : clipProfilResmi(profil_resmi));
+    const firmaList = firma_yetkileri !== undefined ? firma_yetkileri : firmalar;
 
     await client.query('BEGIN');
     const sonuc = await client.query(
@@ -238,10 +268,11 @@ router.put('/:id', async (req, res) => {
     if (yetkiler !== undefined) {
       await saveYetkiler(client, Number(req.params.id), yetkiler);
     }
+    if (firmaList !== undefined) {
+      await saveFirmaYetkileri(client, Number(req.params.id), firmaList);
+    }
     await client.query('COMMIT');
-    const out = sanitizeRow(sonuc.rows[0]);
-    out.yetkiler = await loadYetkiler(pool, Number(req.params.id));
-    res.json(out);
+    res.json(await hydrateUser(sonuc.rows[0]));
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     if (err.status) return res.status(err.status).json({ hata: err.message });

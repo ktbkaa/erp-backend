@@ -4257,20 +4257,35 @@ async function promptLogin() {
   }
 }
 
+function allowedFirmalar() {
+  const all = Array.isArray(state.firmalar) ? state.firmalar : [];
+  const fy = state.session?.firma_yetkileri;
+  if (!Array.isArray(fy) || !fy.length) return all;
+  const ids = new Set(fy.map((f) => Number(f.firma_id ?? f.id)).filter(Boolean));
+  const filtered = all.filter((f) => ids.has(Number(f.id)));
+  return filtered.length ? filtered : all;
+}
+
 function renderFirmaPicker() {
   const nameEl = $('#firmaPickerName');
   const menu = $('#firmaPickerMenu');
   const labelEl = $('#firmaProfileLabel');
   if (labelEl) labelEl.textContent = 'Firma profil alanı';
   if (!nameEl || !menu) return;
-  const aktif = state.firmalar.find((f) => Number(f.id) === Number(state.activeFirmaId));
+  const list = allowedFirmalar();
+  // Oturum firma kısıtı varsa aktif firmayı listeye çek
+  if (list.length && !list.some((f) => Number(f.id) === Number(state.activeFirmaId))) {
+    state.activeFirmaId = Number(list[0].id);
+    localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
+  }
+  const aktif = list.find((f) => Number(f.id) === Number(state.activeFirmaId)) || list[0];
   const yer = state.isYerleri.find((y) => Number(y.id) === Number(state.activeIsYeriId));
   nameEl.textContent = aktif
     ? (yer && state.isYerleri.length > 1
       ? `${aktif.firma_adi} · ${yer.is_yeri_kodu || yer.is_yeri_adi}`
       : aktif.firma_adi)
-    : (state.firmalar[0]?.firma_adi || 'Firma seçin');
-  menu.innerHTML = state.firmalar.map((f) => `
+    : 'Firma seçin';
+  menu.innerHTML = list.map((f) => `
     <li role="option">
       <button type="button" class="firma-picker-item ${Number(f.id) === Number(state.activeFirmaId) ? 'active' : ''}"
         data-firma-id="${f.id}">
@@ -4713,7 +4728,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017i`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017j`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -5196,6 +5211,54 @@ function renderKullaniciProfilBlok(rec) {
     </section>`;
 }
 
+function renderFirmaYetkiPane(rec) {
+  const readonly = state.formMode === 'incele';
+  const dis = readonly ? 'disabled' : '';
+  const selected = new Set(
+    (rec.firma_yetkileri || []).map((f) => Number(f.firma_id ?? f.id)).filter(Boolean)
+  );
+  const firmalar = Array.isArray(state.firmalar) ? state.firmalar : [];
+  const rows = firmalar.length
+    ? firmalar.map((f) => `
+      <tr data-firma-yetki="${escAttr(f.id)}">
+        <td class="yetki-erisim">
+          <input type="checkbox" data-firma-check="1" ${selected.has(Number(f.id)) ? 'checked' : ''} ${dis} />
+        </td>
+        <td class="yetki-ekran mono">${escapeHtml(f.firma_kodu || '')}</td>
+        <td>${escapeHtml(f.firma_adi || '')}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" class="detail-empty">Firma listesi yok.</td></tr>';
+
+  return `
+    <section class="firma-yetki-pane" aria-label="Firma profil yetkisi">
+      <div class="yetki-pane-head">
+        <div class="section-label">Firma profil yetkisi</div>
+        <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <button type="button" class="btn ghost" id="firmaYetkiSelectAll">Hepsi</button>
+          <button type="button" class="btn ghost" id="firmaYetkiClearAll">Temizle</button>
+        </div>
+      </div>
+      <p class="hint yetki-hint">Kullanıcının işlem yapabileceği firmaları satırdan işaretleyin. Hiçbiri seçilmezse kısıt uygulanmaz (tüm firmalar).</p>
+      <div class="firma-yetki-scroll">
+        <table class="yetki-table" id="firmaYetkiTable">
+          <thead>
+            <tr>
+              <th class="yetki-erisim">
+                <label class="yetki-th-hepsi" title="Tüm firmalar">
+                  <input type="checkbox" data-firma-head="hepsi" ${dis} />
+                  <span>Hepsi</span>
+                </label>
+              </th>
+              <th class="yetki-ekran">Kod</th>
+              <th>Firma adı</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
 function renderYetkiGrid(rec) {
   const map = yetkiMapFromRecord(rec);
   const readonly = state.formMode === 'incele';
@@ -5235,15 +5298,34 @@ function renderYetkiGrid(rec) {
           <button type="button" class="btn ghost" id="yetkiClearAll">Temizle</button>
         </div>
       </div>
-      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. Yalnızca İncele işaretliyse kullanıcı o ekranda sadece inceleyebilir.</p>
+      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. Başlıktaki Hepsi ile sütunu toplu işaretleyin. Yalnızca İncele işaretliyse kullanıcı o ekranda sadece inceleyebilir.</p>
       <div class="yetki-scroll">
         <table class="yetki-table" id="yetkiTable">
           <thead>
             <tr>
-              <th class="yetki-erisim">Erişim</th>
+              <th class="yetki-erisim">
+                <div class="yetki-th">Erişim</div>
+                <label class="yetki-th-hepsi" title="Tüm erişimleri seç">
+                  <input type="checkbox" data-yetki-head="erisim" ${dis} />
+                  <span>Hepsi</span>
+                </label>
+              </th>
               <th class="yetki-ekran">Ekran</th>
-              ${YETKI_ACTIONS.map((a) => `<th class="yetki-act">${a.label}</th>`).join('')}
-              <th class="yetki-act">Hepsi</th>
+              ${YETKI_ACTIONS.map((a) => `
+                <th class="yetki-act">
+                  <div class="yetki-th">${a.label}</div>
+                  <label class="yetki-th-hepsi" title="Tüm satırlarda ${a.label}">
+                    <input type="checkbox" data-yetki-head="${a.id}" ${dis} />
+                    <span>Hepsi</span>
+                  </label>
+                </th>`).join('')}
+              <th class="yetki-act">
+                <div class="yetki-th">Hepsi</div>
+                <label class="yetki-th-hepsi" title="Tüm aksiyonları seç">
+                  <input type="checkbox" data-yetki-head="hepsi" ${dis} />
+                  <span>Hepsi</span>
+                </label>
+              </th>
             </tr>
           </thead>
           <tbody>${body}</tbody>
@@ -5267,6 +5349,16 @@ function readYetkiGridFromDom() {
   return rows;
 }
 
+function readFirmaYetkiFromDom() {
+  const out = [];
+  document.querySelectorAll('#firmaYetkiTable tbody tr[data-firma-yetki]').forEach((tr) => {
+    if (!tr.querySelector('[data-firma-check]')?.checked) return;
+    const id = Number(tr.getAttribute('data-firma-yetki'));
+    if (id) out.push({ firma_id: id });
+  });
+  return out;
+}
+
 function bindYetkiGridEvents() {
   const table = $('#yetkiTable');
   if (!table || state.formMode === 'incele') return;
@@ -5286,7 +5378,58 @@ function bindYetkiGridEvents() {
     if (hepsi) hepsi.checked = acts.every((el) => el?.checked);
   };
 
+  const syncHeadChecks = () => {
+    const rows = [...table.querySelectorAll('tr[data-yetki-ekran]')];
+    const setHead = (key, pred) => {
+      const el = table.querySelector(`[data-yetki-head="${key}"]`);
+      if (!el) return;
+      el.checked = rows.length > 0 && rows.every(pred);
+      el.indeterminate = false;
+    };
+    setHead('erisim', (tr) => tr.querySelector('[data-yetki="erisim"]')?.checked);
+    YETKI_ACTIONS.forEach((a) => {
+      setHead(a.id, (tr) => tr.querySelector(`[data-yetki="${a.id}"]`)?.checked);
+    });
+    setHead('hepsi', (tr) => tr.querySelector('[data-yetki="hepsi"]')?.checked);
+  };
+
   table.addEventListener('change', (e) => {
+    const head = e.target.closest('input[data-yetki-head]');
+    if (head) {
+      const kind = head.getAttribute('data-yetki-head');
+      const on = head.checked;
+      table.querySelectorAll('tr[data-yetki-ekran]').forEach((tr) => {
+        if (kind === 'erisim') {
+          const erisim = tr.querySelector('[data-yetki="erisim"]');
+          if (erisim) erisim.checked = on;
+          if (on) {
+            const incele = tr.querySelector('[data-yetki="incele"]');
+            if (incele) incele.checked = true;
+          }
+          syncRow(tr);
+          return;
+        }
+        if (kind === 'hepsi') {
+          const erisim = tr.querySelector('[data-yetki="erisim"]');
+          if (erisim && on) erisim.checked = true;
+          YETKI_ACTIONS.forEach((a) => {
+            const el = tr.querySelector(`[data-yetki="${a.id}"]`);
+            if (el) el.checked = on;
+          });
+          syncRow(tr);
+          return;
+        }
+        // tek aksiyon sütunu (yeni/incele/…)
+        const erisim = tr.querySelector('[data-yetki="erisim"]');
+        if (on && erisim) erisim.checked = true;
+        const el = tr.querySelector(`[data-yetki="${kind}"]`);
+        if (el) el.checked = on;
+        syncRow(tr);
+      });
+      syncHeadChecks();
+      return;
+    }
+
     const inp = e.target.closest('input[data-yetki]');
     if (!inp) return;
     const tr = inp.closest('tr[data-yetki-ekran]');
@@ -5300,6 +5443,7 @@ function bindYetkiGridEvents() {
         }
       }
       syncRow(tr);
+      syncHeadChecks();
       return;
     }
     if (kind === 'hepsi') {
@@ -5308,9 +5452,11 @@ function bindYetkiGridEvents() {
         if (el) el.checked = inp.checked;
       });
       syncRow(tr);
+      syncHeadChecks();
       return;
     }
     syncRow(tr);
+    syncHeadChecks();
   });
 
   $('#yetkiSelectAll')?.addEventListener('click', () => {
@@ -5323,6 +5469,7 @@ function bindYetkiGridEvents() {
       });
       syncRow(tr);
     });
+    syncHeadChecks();
   });
   $('#yetkiClearAll')?.addEventListener('click', () => {
     table.querySelectorAll('tr[data-yetki-ekran]').forEach((tr) => {
@@ -5330,7 +5477,39 @@ function bindYetkiGridEvents() {
       if (erisim) erisim.checked = false;
       syncRow(tr);
     });
+    syncHeadChecks();
   });
+  syncHeadChecks();
+}
+
+function bindFirmaYetkiEvents() {
+  const table = $('#firmaYetkiTable');
+  if (!table || state.formMode === 'incele') return;
+
+  const syncHead = () => {
+    const head = table.querySelector('[data-firma-head="hepsi"]');
+    if (!head) return;
+    const boxes = [...table.querySelectorAll('[data-firma-check]')];
+    head.checked = boxes.length > 0 && boxes.every((b) => b.checked);
+  };
+
+  table.addEventListener('change', (e) => {
+    const head = e.target.closest('[data-firma-head="hepsi"]');
+    if (head) {
+      table.querySelectorAll('[data-firma-check]').forEach((b) => { b.checked = head.checked; });
+      return;
+    }
+    if (e.target.closest('[data-firma-check]')) syncHead();
+  });
+  $('#firmaYetkiSelectAll')?.addEventListener('click', () => {
+    table.querySelectorAll('[data-firma-check]').forEach((b) => { b.checked = true; });
+    syncHead();
+  });
+  $('#firmaYetkiClearAll')?.addEventListener('click', () => {
+    table.querySelectorAll('[data-firma-check]').forEach((b) => { b.checked = false; });
+    syncHead();
+  });
+  syncHead();
 }
 
 function bindAvatarEvents() {
@@ -5372,10 +5551,10 @@ function renderMasterDetailPanel(tab, rec) {
   const dFields = [...extras, ...(tab.detailFields || [])];
   const screen = findScreen(state.screenId);
   const ekstra = screen?.kullaniciYetkiPaneli
-    ? `${renderKullaniciProfilBlok(rec)}${renderYetkiGrid(rec)}`
+    ? `${renderKullaniciProfilBlok(rec)}${renderFirmaYetkiPane(rec)}${renderYetkiGrid(rec)}`
     : '';
   return `
-    <div class="md-split">
+    <div class="md-split${screen?.kullaniciYetkiPaneli ? ' md-split--natural' : ''}">
       <section class="md-master" aria-label="Başlık alanları">
         <div class="section-label">Başlık</div>
         <div class="form-tab-fields form-tab-fields--master">
@@ -5789,7 +5968,8 @@ function renderForm(screen) {
       </div>`;
     }
     if (tab.kind === 'master-detail') {
-      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
+      const scrollCls = screen.kullaniciYetkiPaneli ? ' form-tab-panel--scrollable' : '';
+      return `<div class="form-tab-panel form-tab-panel--md${scrollCls}" data-tab-panel="${tab.id}" ${hide}>
         ${renderMasterDetailPanel(tab, rec)}
       </div>`;
     }
@@ -5842,6 +6022,7 @@ function renderForm(screen) {
   bindNumeratorFieldListener(screen);
   if (screen.kullaniciYetkiPaneli) {
     bindYetkiGridEvents();
+    bindFirmaYetkiEvents();
     bindAvatarEvents();
   }
 }
@@ -6324,6 +6505,7 @@ async function saveForm() {
     delete master.refresh_token_hash;
     delete master.profil_var;
     master.yetkiler = readYetkiGridFromDom();
+    master.firma_yetkileri = readFirmaYetkiFromDom();
     if (state.formRecord && Object.prototype.hasOwnProperty.call(state.formRecord, 'profil_resmi')) {
       master.profil_resmi = state.formRecord.profil_resmi;
     }

@@ -506,10 +506,47 @@ body {
 
 /* Kullanıcı formu: profil + yetki paneli */
 .user-avatar-pane,
+.firma-yetki-pane,
 .yetki-pane {
   margin-top: 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid #eef2f5;
+}
+.firma-yetki-scroll {
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: #fff;
+}
+.yetki-th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+.yetki-th-hepsi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent, #1f7a6b);
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.yetki-th-hepsi input {
+  width: 0.9rem;
+  height: 0.9rem;
+  cursor: pointer;
+}
+.yetki-table thead th {
+  vertical-align: bottom;
 }
 .user-avatar-row {
   display: flex;
@@ -560,11 +597,15 @@ body {
 }
 .yetki-pane-actions { display: flex; gap: 0.35rem; }
 .yetki-scroll {
-  max-height: min(42vh, 28rem);
-  overflow: auto;
+  /* Sayfa kaydığı için sabit max-height yok; tablo doğal uzar */
+  max-height: none;
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: 0.45rem;
   background: #fff;
+}
+.form-tab-panel--scrollable .yetki-scroll {
+  max-height: none;
 }
 .yetki-table {
   width: 100%;
@@ -587,6 +628,13 @@ body {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  padding-top: 0.45rem;
+  padding-bottom: 0.4rem;
+}
+.form-tab-panel--scrollable .yetki-table thead th {
+  /* Sayfa kayarken başlık panelle birlikte gider */
+  position: sticky;
+  top: 0;
 }
 .yetki-mod-row td {
   background: #f0f5f4;
@@ -1169,6 +1217,24 @@ tr.selected td { background: var(--accent-soft); }
 .form-tab-panel--md {
   overflow: hidden;
   padding: 0;
+}
+/* Kullanıcı kartı: uzun yetki/firma panelleri için tüm sayfa kayar */
+.form-tab-panel--md.form-tab-panel--scrollable {
+  overflow: auto;
+  padding: 0.85rem 1.1rem 1.5rem;
+  display: block;
+}
+.form-tab-body:has(.form-tab-panel--scrollable) {
+  overflow: hidden;
+}
+.md-split--natural {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 0;
+}
+.md-split--natural .md-detail-scroll {
+  max-height: none;
+  overflow: visible;
 }
 
 .md-split {

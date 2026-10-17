@@ -16,8 +16,24 @@ async function loadEkranYetkileri(kisiId) {
   return r.rows;
 }
 
+async function loadFirmaYetkileri(kisiId) {
+  if (!kisiId) return [];
+  const r = await pool.query(
+    `SELECT f.id AS firma_id, f.firma_kodu, f.firma_adi
+     FROM kullanici_firma_yetkileri k
+     JOIN firmalar f ON f.id = k.firma_id
+     WHERE k.kisi_id=$1
+     ORDER BY f.firma_kodu`,
+    [kisiId]
+  );
+  return r.rows;
+}
+
 async function kullaniciPayload(u) {
-  const yetkiler = await loadEkranYetkileri(u.id);
+  const [yetkiler, firma_yetkileri] = await Promise.all([
+    loadEkranYetkileri(u.id),
+    loadFirmaYetkileri(u.id),
+  ]);
   return {
     id: u.id,
     kullanici_kodu: u.kullanici_kodu,
@@ -35,6 +51,7 @@ async function kullaniciPayload(u) {
     modul_yetkileri: parseJsonArr(u.modul_yetkileri, ['*']),
     depo_yetkileri: parseJsonArr(u.depo_yetkileri, ['*']),
     yetkiler,
+    firma_yetkileri,
   };
 }
 
