@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
 
@@ -13,6 +14,11 @@ router.get('/', async (req, res) => {
             where.push(`p.stok_id = $${params.length}`);
         }
         if (req.query.aktif === 'true') where.push('p.aktif = TRUE');
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`(p.firma_id = $${params.length} OR s.firma_id = $${params.length})`);
+        }
         const sql = `
             SELECT p.*, s.stok_kodu, s.stok_adi, s.parti_politika
             FROM stok_partileri p
@@ -31,13 +37,18 @@ router.get('/:id', async (req, res) => {
     try {
         const r = await pool.query(
             `
-            SELECT p.*, s.stok_kodu, s.stok_adi
+            SELECT p.*, s.stok_kodu, s.stok_adi, s.firma_id AS stok_firma_id
             FROM stok_partileri p JOIN stoklar s ON s.id = p.stok_id
             WHERE p.id=$1
             `,
             [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Parti bulunamadı.' });
+        const firmaId = firmaIdFromReq(req);
+        const rowFirma = r.rows[0].firma_id ?? r.rows[0].stok_firma_id;
+        if (firmaId && rowFirma != null && Number(rowFirma) !== Number(firmaId)) {
+            return res.status(404).json({ hata: 'Parti bulunamadı.' });
+        }
         const hareketler = await pool.query(
             `
             SELECT h.hareket_no, h.hareket_tipi, h.hareket_tarihi, h.depo_id, d.depo_kodu,

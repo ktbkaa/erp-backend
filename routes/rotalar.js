@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 
 async function rotaGetir(id) {
@@ -62,14 +63,23 @@ async function rotaGetir(id) {
 router.get('/', async (req, res) => {
     try {
         const onlyMamul = req.query.tip !== 'hepsi';
+        const firmaId = firmaIdFromReq(req);
+        const params = [];
+        const where = [];
+        if (onlyMamul) where.push(`s.stok_tipi = 'Mamul'`);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`r.firma_id = $${params.length}`);
+        }
         const liste = await pool.query(
             `
             SELECT r.id
             FROM rotalar r
             JOIN stoklar s ON s.id = r.stok_id
-            ${onlyMamul ? `WHERE s.stok_tipi = 'Mamul'` : ''}
+            ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
             ORDER BY r.id DESC
-            `
+            `,
+            params
         );
         const sonuc = [];
         for (const r of liste.rows) sonuc.push(await rotaGetir(r.id));

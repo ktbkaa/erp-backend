@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { assertYetki, reqKullaniciKodu } = require('../src/utils/yetki');
 const { emirGetir, emirKaydet, emirOnayla } = require('../src/services/kaliteService');
@@ -20,6 +21,11 @@ router.get('/', async (req, res) => {
         if (req.query.stok_id) {
             params.push(Number(req.query.stok_id));
             where.push(`e.stok_id = $${params.length}`);
+        }
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`e.firma_id = $${params.length}`);
         }
         const ids = await pool.query(
             `

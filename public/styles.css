@@ -420,9 +420,111 @@ body {
 .screen-title {
   margin: 0;
   font-family: var(--display);
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 28rem;
+}
+.screen-title[hidden] { display: none !important; }
+
+/* Firma profil alanı — kenarlıksız, kompakt */
+.firma-picker {
+  position: relative;
+  min-width: 0;
+}
+.firma-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  min-width: 0;
+}
+.firma-profile-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.1;
+  padding-left: 0.15rem;
+}
+.firma-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: min(28rem, 52vw);
+  border: 0;
+  background: transparent;
+  padding: 0.15rem 0.15rem 0.2rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.firma-picker-btn:hover .firma-picker-name {
+  color: var(--accent, #1f7a6b);
+}
+.firma-picker-name {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.firma-picker-caret {
+  color: var(--muted);
+  font-size: 0.75rem;
+  flex: 0 0 auto;
+}
+.firma-picker-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  min-width: 16rem;
+  max-width: min(28rem, 90vw);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  box-shadow: 0 8px 24px rgba(15, 40, 55, 0.12);
+}
+.firma-picker-menu[hidden] { display: none !important; }
+.firma-picker-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.firma-picker-item:hover { background: #f0f5f4; }
+.firma-picker-item.active {
+  background: #e7f3f0;
+  font-weight: 600;
+}
+.firma-picker-item .firma-kod {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.firma-picker-item .firma-adi {
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.1rem;
 }
 
 .screen-search {
@@ -494,7 +596,8 @@ body {
 
 .screen-view {
   display: grid;
-  grid-template-rows: auto auto minmax(140px, 28vh) 1fr;
+  /* banner | aksiyon | filtre(içerik kadar) | liste(kalan) — filtre aşağı şişmez */
+  grid-template-rows: auto auto auto 1fr;
   height: 100%;
   min-height: 0;
   background: #f7fafb;
@@ -543,9 +646,10 @@ body {
 .filter-pane {
   border-bottom: 1px solid var(--line);
   background: #fff;
-  padding: 0.85rem 1.1rem;
-  overflow: auto;
+  padding: 0.5rem 1rem 0.55rem;
+  overflow: visible;
   min-height: 0;
+  flex: 0 0 auto;
 }
 .filter-pane-head, .list-pane-head, .detail-head, .form-topbar {
   display: flex;
@@ -553,31 +657,103 @@ body {
   justify-content: space-between;
   gap: 0.75rem;
 }
-.filter-pane-head { margin-bottom: 0.7rem; }
+.filter-pane-head { margin-bottom: 0.4rem; }
 .filter-pane-head h2, .list-pane-head h2, .master-pane h2, .detail-pane h2 {
   margin: 0;
   font-family: var(--display);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
 }
-.filter-actions, .form-actions { display: flex; gap: 0.45rem; }
+.filter-actions, .form-actions { display: flex; gap: 0.35rem; }
+.filter-actions .btn { padding: 0.32rem 0.7rem; font-size: 0.82rem; }
+
+/*
+  Tek yatay bant — aşağı şişmez.
+  Sol: Firma / İş yeri / Aktif (tek satır kontroller)
+  Sağ: kod, ad, cari… yan yana
+*/
 .filter-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.7rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 1rem;
+  align-items: center;
 }
+.filter-col {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  min-width: 0;
+}
+.filter-col--scope {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding-right: 1rem;
+  border-right: 1px solid #e2e8ee;
+  min-width: 17.5rem;
+  max-width: 20rem;
+}
+.filter-col--scope .filter-field--isyeri {
+  margin-bottom: 0.15rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #eef2f5;
+}
+.filter-col--main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+}
+.filter-col-empty { display: none; }
+
+/* Tek satır: etiket | op | değer — yüksek form yok */
 .filter-field {
   display: grid;
-  gap: 0.3rem;
-  padding: 0.15rem 0;
+  grid-template-columns: 3.6rem minmax(0, 1fr);
+  gap: 0.3rem 0.4rem;
+  align-items: center;
+  padding: 0;
   background: transparent;
   border: 0;
+  min-width: 0;
 }
 .filter-field label {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
+  line-height: 1.15;
+  white-space: nowrap;
 }
-.filter-field select, .filter-field input,
+.filter-controls {
+  display: grid;
+  grid-template-columns: 3.05rem minmax(0, 1fr);
+  gap: 0.22rem;
+  min-width: 0;
+}
+.filter-field .filter-op {
+  font-size: 0.62rem;
+  padding: 0.15rem 0.08rem;
+  min-width: 0;
+  height: 1.7rem;
+  line-height: 1.1;
+}
+.filter-field select, .filter-field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  padding: 0.28rem 0.45rem;
+  font: inherit;
+  font-size: 0.82rem;
+  background: #fff;
+  min-width: 0;
+  height: 1.7rem;
+}
+.filter-field .filter-op option {
+  font-size: 0.75rem;
+}
 .field input, .field select, .field textarea,
 .detail-scroll input {
   width: 100%;
@@ -587,25 +763,79 @@ body {
   font: inherit;
   background: #fff;
 }
-.filter-values { display: grid; gap: 0.35rem; }
+.filter-values {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
 .filter-values.split { grid-template-columns: 1fr 1fr; }
+.filter-values select,
+.filter-values input { width: 100%; }
+
+@media (max-width: 900px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+  .filter-col--scope {
+    max-width: none;
+    padding-right: 0;
+    border-right: 0;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid #e2e8ee;
+  }
+}
 
 .list-pane {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0.85rem 1.1rem 1.1rem;
+  padding: 0.6rem 1rem 0.85rem;
   background: #fff;
 }
-.list-meta { color: var(--muted); font-size: 0.85rem; }
+.list-pane-head { margin-bottom: 0.4rem; }
+.list-meta { color: var(--muted); font-size: 0.8rem; }
 .table-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
   border: 1px solid var(--line);
-  border-radius: 0.55rem;
+  border-radius: 0.4rem;
   background: #fff;
 }
+#dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  line-height: 1.25;
+}
+#dataTable th,
+#dataTable td {
+  text-align: left;
+  padding: 0.35rem 0.55rem !important;
+  border-bottom: 1px solid #e8eef2 !important;
+  vertical-align: middle !important;
+  white-space: nowrap;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#dataTable th {
+  position: sticky;
+  top: 0;
+  background: #f1f5f8 !important;
+  font-size: 0.72rem !important;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  z-index: 1;
+  padding: 0.4rem 0.55rem !important;
+}
+#dataTable tbody tr { height: 1.95rem; }
+#dataTable tbody tr:nth-child(even) td { background: #fafcfd; }
+#dataTable tr:hover td { background: #f3f9f7 !important; }
+#dataTable tr.selected td { background: var(--accent-soft) !important; }
 table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 th, td {
   text-align: left;
@@ -624,8 +854,23 @@ th {
 }
 tr:hover td { background: #f7fbfa; }
 tr.selected td { background: var(--accent-soft); }
-.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; }
-.empty-row td { color: var(--muted); text-align: center; padding: 2rem 1rem; }
+.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; font-size: 0.92em; }
+#dataTable .mono { font-size: 0.8rem; }
+.empty-row td { color: var(--muted); text-align: center; padding: 1.25rem 1rem !important; white-space: normal !important; }
+
+.action-bar {
+  padding: 0.5rem 1rem 0.4rem !important;
+  gap: 0.35rem !important;
+}
+.action-bar .btn.action {
+  min-width: 4.6rem;
+  padding: 0.36rem 0.7rem !important;
+  font-size: 0.84rem !important;
+}
+.screen-banner {
+  padding: 0.35rem 1rem !important;
+  font-size: 0.8rem !important;
+}
 
 .form-view {
   display: flex;

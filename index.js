@@ -6,13 +6,14 @@ const port = Number(process.env.PORT || 3000);
 const pool = require('./db');
 const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
+const { firmaContext } = require('./src/middleware/firmaContext');
 
 app.use(express.json());
 app.use((req, res, next) => {
     // Önizleme / farklı origin (Cursor Ports) için CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Kullanici-Kodu');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Kullanici-Kodu, X-Firma-Id');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     if (req.path === '/' || req.path.endsWith('.html') || req.path.endsWith('.js') || req.path.endsWith('.css')) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -27,9 +28,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
     cacheControl: false,
 }));
 
-// JWT / header kimlik + audit (health ve static hariç API)
+// JWT / header kimlik + firma bağlamı + audit (health ve static hariç API)
 app.use(authOptional);
 app.use(authRequired);
+app.use(firmaContext);
 app.use(auditMiddleware(pool));
 
 app.get('/health', async (req, res) => {

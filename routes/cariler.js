@@ -245,7 +245,9 @@ function syncFatura(m) {
 router.get('/', async (req, res) => {
     try {
         const { tur, aktif } = req.query;
+        const { firmaIdFromReq, andCariFirma } = require('../src/utils/firmaScope');
         const where = [];
+        const params = [];
 
         if (tur === 'Musteri') where.push(`cari_turu IN ('Musteri', 'HerIkisi')`);
         else if (tur === 'Tedarikci') where.push(`cari_turu IN ('Tedarikci', 'HerIkisi')`);
@@ -256,11 +258,17 @@ router.get('/', async (req, res) => {
         if (aktif === 'true') where.push('aktif = TRUE');
         if (aktif === 'false') where.push('aktif = FALSE');
 
-        const liste = await pool.query(`
+        const firmaClause = andCariFirma('cariler', firmaIdFromReq(req), params);
+        if (firmaClause) where.push(firmaClause.replace(/^\s*AND\s+/i, ''));
+
+        const liste = await pool.query(
+            `
             SELECT id FROM cariler
             ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
             ORDER BY id DESC
-        `);
+            `,
+            params
+        );
         const sonuc = [];
         for (const r of liste.rows) sonuc.push(await cariGetir(r.id));
         res.json(sonuc);
@@ -271,6 +279,12 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
+        const { firmaIdFromReq, assertFirmaKayit } = require('../src/utils/firmaScope');
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            const ok = await assertFirmaKayit(pool, 'cariler', req.params.id, firmaId);
+            if (!ok) return res.status(404).json({ hata: 'Cari bulunamadı.' });
+        }
         const cari = await cariGetir(req.params.id);
         if (!cari) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         res.json(cari);

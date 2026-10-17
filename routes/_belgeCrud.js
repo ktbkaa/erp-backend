@@ -5,6 +5,7 @@ const express = require('express');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 function createBelgeRouter(cfg) {
     const router = express.Router();
@@ -43,7 +44,15 @@ function createBelgeRouter(cfg) {
 
     router.get('/', async (req, res) => {
         try {
-            const liste = await pool.query(`SELECT id FROM ${table} ORDER BY id DESC`);
+            const params = [];
+            let sql = `SELECT id FROM ${table}`;
+            const firmaId = firmaIdFromReq(req);
+            if (firmaId) {
+                params.push(firmaId);
+                sql += ` WHERE firma_id = $${params.length}`;
+            }
+            sql += ' ORDER BY id DESC';
+            const liste = await pool.query(sql, params);
             const sonuc = [];
             for (const r of liste.rows) sonuc.push(await getir(r.id));
             res.json(sonuc);
@@ -89,6 +98,9 @@ function createBelgeRouter(cfg) {
                     } else if (defaults[f] !== undefined) {
                         cols.push(f);
                         vals.push(defaults[f]);
+                    } else if (f === 'firma_id' && firmaIdFromReq(req)) {
+                        cols.push(f);
+                        vals.push(firmaIdFromReq(req));
                     }
                 }
                 const ph = cols.map((_, i) => `$${i + 1}`).join(',');

@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod, stokSeriKodundanTip } = require('../src/utils/kodUretici');
+const { firmaIdFromReq, andStokFirma, assertFirmaKayit } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -212,13 +213,16 @@ router.get('/', async (req, res) => {
     try {
         const { tip } = req.query;
         const params = [];
-        let where = '';
+        const where = [];
         if (tip) {
             params.push(tip);
-            where = 'WHERE stok_tipi = $1';
+            where.push(`stok_tipi = $${params.length}`);
         }
+        const firmaId = firmaIdFromReq(req);
+        const firmaClause = andStokFirma('stoklar', firmaId, params);
+        if (firmaClause) where.push(firmaClause.replace(/^\s*AND\s+/i, ''));
         const ids = await pool.query(
-            `SELECT id FROM stoklar ${where} ORDER BY id DESC`,
+            `SELECT id FROM stoklar ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC`,
             params
         );
         const stoklar = [];
@@ -231,6 +235,11 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            const ok = await assertFirmaKayit(pool, 'stoklar', req.params.id, firmaId);
+            if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
+        }
         const stok = await stokGetir(req.params.id);
         if (!stok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         res.json(stok);

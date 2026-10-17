@@ -10,5 +10,5 @@ module.exports = createBelgeRouter({
     allowedDurum: ['Acik', 'Onayli', 'TeklifeDonustu', 'Iptal', 'Kapali'],
     requireCari: false,
     linePrice: false,
-    extraFields: ['is_yeri_id', 'durum'],
+    extraFields: ['is_yeri_id', 'firma_id', 'durum'],
 });

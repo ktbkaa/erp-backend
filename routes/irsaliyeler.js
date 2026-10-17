@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { stokHareketOlustur, depoStokBakiye } = require('../src/services/stokHareketService');
@@ -85,7 +86,12 @@ async function depoKontrolEt(client, depoId, satirlar) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await pool.query('SELECT id FROM irsaliyeler ORDER BY id DESC');
+        const firmaId = firmaIdFromReq(req);
+        const params = [];
+        let sql = 'SELECT id FROM irsaliyeler';
+        if (firmaId) { params.push(firmaId); sql += ` WHERE firma_id = $${params.length}`; }
+        sql += ' ORDER BY id DESC';
+        const liste = await pool.query(sql, params);
         const sonuc = [];
         for (const r of liste.rows) sonuc.push(await irsaliyeGetir(r.id));
         res.json(sonuc);

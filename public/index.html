@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261016j" />
+  <link rel="stylesheet" href="/styles.css?v=20261017g" />
 </head>
 <body>
   <div class="app-shell" id="appShell">
@@ -21,7 +21,7 @@
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot">
         <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
-        <span class="build-tag" id="buildTag">UI build 20261016j</span>
+        <span class="build-tag" id="buildTag">UI build 20261017g</span>
       </div>
     </aside>
 
@@ -29,7 +29,17 @@
       <header class="workspace-bar" id="workspaceBar">
         <div class="bar-left">
           <button type="button" class="icon-btn" id="btnMenu" aria-label="Menüyü aç/kapat" title="Menüyü kapat/aç">☰</button>
-          <h1 class="screen-title" id="screenTitle">Ana Sayfa</h1>
+          <div class="firma-picker" id="firmaPicker" title="Firma profil alanı">
+            <div class="firma-profile">
+              <span class="firma-profile-label" id="firmaProfileLabel">Firma profil alanı</span>
+              <button type="button" class="firma-picker-btn" id="firmaPickerBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Firma profil alanı">
+                <span class="firma-picker-name" id="firmaPickerName">Firma seçin</span>
+                <span class="firma-picker-caret" aria-hidden="true">▾</span>
+              </button>
+            </div>
+            <ul class="firma-picker-menu" id="firmaPickerMenu" role="listbox" hidden></ul>
+          </div>
+          <h1 class="screen-title" id="screenTitle" hidden>Ekran</h1>
         </div>
         <div class="bar-right" id="homeSearchWrap">
           <label class="search-label" for="screenSearch">Ekran ara</label>
@@ -143,7 +153,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261016g"></script>
+  <script src="/app.js?v=20261017g"></script>
   <script>
     // Bağlantı kontrolü — Failed to fetch kök nedenini hemen göster
     (async function () {
@@ -152,10 +162,10 @@
         const r = await fetch('/health', { cache: 'no-store' });
         const j = await r.json();
         if (tag) tag.textContent = r.ok && j.durum === 'ok'
-          ? 'UI build 20261016g · API bağlı'
-          : 'UI build 20261016g · API hata';
+          ? 'UI build 20261017g · API bağlı'
+          : 'UI build 20261017g · API hata';
       } catch (e) {
-        if (tag) tag.textContent = 'UI build 20261016g · API YOK';
+        if (tag) tag.textContent = 'UI build 20261017g · API YOK';
         console.error('Health başarısız — sayfayı http://localhost:3000 ile açın', e);
       }
     })();

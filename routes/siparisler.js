@@ -16,6 +16,7 @@ const {
   SIPARIS_SATIR,
 } = require('../src/utils/belgeAlanlari');
 
+const { firmaIdFromReq, andFirma, andFirmaViaIsYeri, andStokFirma, andCariFirma } = require('../src/utils/firmaScope');
 /** ATP: kullanılabilir stok (fiziksel − rezerv) vs sipariş kalemleri (REQ-SAL-008 / INV-004) */
 async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
   let zorunlu = sert;
@@ -89,7 +90,12 @@ router.get('/', async (req, res) => {
         }
         if (durum) {
             params.push(durum);
-            where.push(`durum = $${params.length}`);
+            where.push(`durum = ${params.length}`);
+        }
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+          params.push(firmaId);
+          where.push(`firma_id = $${params.length}`);
         }
         // Varsayılan: satış siparişleri (satınalma ayrı ekranda)
         if (!siparis_turu && req.query.kapsam !== 'hepsi') {

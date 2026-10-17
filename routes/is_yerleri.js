@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
 
@@ -23,7 +24,8 @@ router.get('/', async (req, res) => {
             SELECT i.*, f.firma_adi, f.firma_kodu
             FROM is_yerleri i
             JOIN firmalar f ON i.firma_id = f.id
-            ORDER BY i.id DESC
+            ${(() => { const fid = firmaIdFromReq(req); return fid ? 'WHERE i.firma_id = ' + Number(fid) : ''; })()}
+        ORDER BY i.id DESC
         `);
         res.json(sonuc.rows);
     } catch (err) {
