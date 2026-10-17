@@ -5568,7 +5568,7 @@ function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / adres / …). */
 const FIELD_GROUP_DEFS = [
-  { id: 'kimlik', title: 'Kimlik', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|kod|adi|aciklama|turu|tipi|vergi_no|pasaport|uzun_stok|tedarik_tipi|stok_tipi|musteri_tipi|ad$|soyad$|unvan)/i },
+  { id: 'kimlik', title: 'Kimlik', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|kod|adi|aciklama|turu|tipi|vergi_|pasaport|uzun_stok|tedarik_tipi|stok_tipi|musteri_tipi|ad$|soyad$|unvan)/i },
   { id: 'organizasyon', title: 'Organizasyon', re: /^(firma_id|is_yeri_id|depo_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|asama_|sorumlu_|takip_eden)/i },
   { id: 'adres', title: 'Adres', re: /^(ulke|il$|ilce|sehir|posta_|adres|fatura_adres|sevk_|enlem|boylam)/i },
   { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|email|website|fax|yetkili)/i },
