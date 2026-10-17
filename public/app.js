@@ -1548,6 +1548,10 @@ const MODULES = [
         numeratorSeri: 'SATINALMA_TEKLIF',
         codeField: 'teklif_no',
         nameField: 'cari_adi',
+        approveAction: {
+          label: 'Teklifi Onayla',
+          path: '/satin-alma-teklifleri/{id}/onayla',
+        },
         convertAction: {
           label: 'Siparişe Dönüştür',
           path: '/satin-alma-teklifleri/{id}/siparise-donustur',
@@ -1564,6 +1568,9 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'teklif_no', label: 'Teklif no', code: true },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'istek_id', label: 'Teklif isteği', type: 'number' },
           { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
           { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'] },
@@ -3171,6 +3178,71 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
       }];
     }
   }
+
+  // Aktif checkbox → Pasif (DB aktif kalır; tik = pasif)
+  const remapAktifToPasif = (fields) => {
+    (fields || []).forEach((f) => {
+      if (f && f.key === 'aktif' && f.type === 'checkbox' && f.label === 'Aktif') {
+        f.label = 'Pasif';
+      }
+    });
+  };
+  remapAktifToPasif(s.masterFields);
+  remapAktifToPasif(s.detailFields);
+  (s.formTabs || []).forEach((tab) => {
+    remapAktifToPasif(tab.fields);
+    remapAktifToPasif(tab.masterFields);
+    remapAktifToPasif(tab.detailFields);
+    remapAktifToPasif(tab.grid?.fields);
+  });
+  (s.columns || []).forEach((c) => {
+    if (c.key === 'aktif' && c.label === 'Aktif') c.label = 'Pasif';
+  });
+
+  // Tüm listelere firma / iş yeri (+ varsa aktif) filtreleri
+  if (!Array.isArray(s.filters)) s.filters = [];
+  const firmaLookup = {
+    key: 'firma_id',
+    label: 'Firma',
+    type: 'lookup',
+    lookup: 'firmalar',
+    valueKey: 'id',
+    labelKey: 'firma_adi',
+    codeKey: 'firma_kodu',
+  };
+  const isYeriLookup = {
+    key: 'is_yeri_id',
+    label: 'İş yeri',
+    type: 'lookup',
+    lookup: 'is-yerleri',
+    valueKey: 'id',
+    labelKey: 'is_yeri_adi',
+    codeKey: 'is_yeri_kodu',
+  };
+  const upgradeOrInject = (keys, def) => {
+    if (s.scopeFirma === false && def.key === 'firma_id') return;
+    if (s.scopeIsYeri === false && def.key === 'is_yeri_id') return;
+    const idx = s.filters.findIndex((f) => keys.includes(f.key));
+    if (idx >= 0) {
+      s.filters[idx] = { ...def, label: s.filters[idx].label || def.label };
+    } else {
+      s.filters.unshift({ ...def });
+    }
+  };
+  upgradeOrInject(['firma_id', 'firma_kodu', 'firma_adi'], firmaLookup);
+  upgradeOrInject(['is_yeri_id', 'is_yeri_kodu', 'is_yeri_adi'], isYeriLookup);
+
+  const hasFilter = (key) => s.filters.some((f) => f.key === key);
+  const usesAktif = (
+    (s.columns || []).some((c) => c.key === 'aktif')
+    || (s.masterFields || []).some((f) => f.key === 'aktif')
+    || (s.formTabs || []).some((t) =>
+      [...(t.fields || []), ...(t.masterFields || [])].some((f) => f.key === 'aktif'))
+  );
+  if (usesAktif && !hasFilter('aktif')) {
+    s.filters.unshift({ key: 'aktif', label: 'Aktif', type: 'bool' });
+  }
+
   return s;
 }
 
@@ -3213,6 +3285,8 @@ const state = {
   session: null,
   firmalar: [],
   activeFirmaId: null,
+  activeIsYeriId: null,
+  isYerleri: [],
 };
 
 /** Bağlı ekran ön doldurma haritası */
@@ -3367,8 +3441,10 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
   let record = { ...(target.defaults || {}), ...prefill };
   collectTabFields(target).forEach((f) => {
     if (record[f.key] !== undefined) return;
-    if (f.type === 'checkbox') record[f.key] = true;
+    if (f.type === 'checkbox') record[f.key] = f.key === 'pasif' ? false : true;
     else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
+    else if (f.key === 'firma_id' && getActiveFirmaId()) record[f.key] = getActiveFirmaId();
+    else if (f.key === 'is_yeri_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
     else record[f.key] = '';
   });
   const seri = resolveNumeratorSeri(target, record);
@@ -3609,7 +3685,31 @@ function norm(v) {
   return String(v).trim().toLocaleLowerCase('tr');
 }
 
-function compareValues(cell, op, a, b) {
+function resolveFilterCell(row, def, screen) {
+  if (!def) return row?.[def?.key];
+  if (def.key === 'firma_id') {
+    if (row.firma_id != null && row.firma_id !== '') return row.firma_id;
+    if (screen?.id === 'firmalar') return row.id;
+    if (row.firma_kodu && state.firmalar?.length) {
+      const f = state.firmalar.find((x) => x.firma_kodu === row.firma_kodu);
+      if (f) return f.id;
+    }
+    return null;
+  }
+  if (def.key === 'is_yeri_id') {
+    if (row.is_yeri_id != null && row.is_yeri_id !== '') return row.is_yeri_id;
+    if (screen?.id === 'is-yerleri') return row.id;
+    return null;
+  }
+  return row[def.key];
+}
+
+function compareValues(cell, op, a, b, def) {
+  // Ortak tanımlarda firma/iş yeri yoksa filtreyi geç
+  if ((def?.key === 'firma_id' || def?.key === 'is_yeri_id')
+    && (cell === null || cell === undefined || cell === '')) {
+    return true;
+  }
   const cellN = norm(cell);
   const aN = norm(a);
   const bN = norm(b);
@@ -3632,7 +3732,8 @@ function applyFilters(rows, screen) {
     .filter(({ st }) => (st.op === 'arasinda' ? Boolean(norm(st.a) || norm(st.b)) : Boolean(norm(st.a))));
   if (!active.length) return rows.slice();
   return rows.filter((row) =>
-    active.every(({ def, st }) => compareValues(row[def.key], st.op, st.a, st.b))
+    active.every(({ def, st }) =>
+      compareValues(resolveFilterCell(row, def, screen), st.op, st.a, st.b, def))
   );
 }
 
@@ -3949,9 +4050,16 @@ function showHome() {
 function renderFirmaPicker() {
   const nameEl = $('#firmaPickerName');
   const menu = $('#firmaPickerMenu');
+  const labelEl = $('#firmaProfileLabel');
+  if (labelEl) labelEl.textContent = 'Firma profil alanı';
   if (!nameEl || !menu) return;
   const aktif = state.firmalar.find((f) => Number(f.id) === Number(state.activeFirmaId));
-  nameEl.textContent = aktif ? aktif.firma_adi : (state.firmalar[0]?.firma_adi || 'Firma seçin');
+  const yer = state.isYerleri.find((y) => Number(y.id) === Number(state.activeIsYeriId));
+  nameEl.textContent = aktif
+    ? (yer && state.isYerleri.length > 1
+      ? `${aktif.firma_adi} · ${yer.is_yeri_kodu || yer.is_yeri_adi}`
+      : aktif.firma_adi)
+    : (state.firmalar[0]?.firma_adi || 'Firma seçin');
   menu.innerHTML = state.firmalar.map((f) => `
     <li role="option">
       <button type="button" class="firma-picker-item ${Number(f.id) === Number(state.activeFirmaId) ? 'active' : ''}"
@@ -3960,6 +4068,46 @@ function renderFirmaPicker() {
         <span class="firma-adi">${f.firma_adi || ''}</span>
       </button>
     </li>`).join('');
+}
+
+async function loadIsYerleriForActiveFirma() {
+  const firmaId = getActiveFirmaId();
+  try {
+    const rows = await api('/is-yerleri');
+    state.isYerleri = Array.isArray(rows) ? rows : [];
+  } catch (_) {
+    state.isYerleri = [];
+  }
+  if (!firmaId) {
+    state.activeIsYeriId = null;
+    return state.isYerleri;
+  }
+  // Tek iş yeri varsa otomatik seç
+  if (state.isYerleri.length === 1) {
+    state.activeIsYeriId = Number(state.isYerleri[0].id);
+  } else if (state.activeIsYeriId
+    && !state.isYerleri.some((y) => Number(y.id) === Number(state.activeIsYeriId))) {
+    state.activeIsYeriId = null;
+  }
+  return state.isYerleri;
+}
+
+function buildDefaultFilterState(screen) {
+  const fs = {};
+  (screen.filters || []).forEach((f) => {
+    if (f.key === 'aktif' || f.type === 'bool') {
+      fs[f.key] = { op: 'esit', a: 'evet', b: '' };
+    } else if (f.key === 'firma_id' && getActiveFirmaId()) {
+      fs[f.key] = { op: 'esit', a: String(getActiveFirmaId()), b: '' };
+    } else if (f.key === 'is_yeri_id' && state.activeIsYeriId) {
+      fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
+    } else if (f.type === 'lookup') {
+      fs[f.key] = { op: 'esit', a: '', b: '' };
+    } else {
+      fs[f.key] = { op: 'icerir', a: '', b: '' };
+    }
+  });
+  return fs;
 }
 
 function closeFirmaPicker() {
@@ -3978,6 +4126,8 @@ async function setActiveFirma(firmaId, { reload = true } = {}) {
   state.activeFirmaId = id;
   localStorage.setItem('ktb_firma_id', String(id));
   state.lookupCache = {};
+  state.activeIsYeriId = null;
+  await loadIsYerleriForActiveFirma();
   // Açık form sekmelerini kapat — yanlış firmada işlem riski
   state.openTabs = state.openTabs.filter((t) => t.kind === 'list');
   state.activeTabKey = state.openTabs[0]?.key || null;
@@ -3994,7 +4144,7 @@ async function setActiveFirma(firmaId, { reload = true } = {}) {
   } else {
     showHome();
   }
-  toast(`Aktif firma: ${state.firmalar.find((f) => Number(f.id) === id)?.firma_adi || id}`);
+  toast(`Firma profili: ${state.firmalar.find((f) => Number(f.id) === id)?.firma_adi || id}`);
 }
 
 async function loadFirmalar() {
@@ -4011,6 +4161,7 @@ async function loadFirmalar() {
     || state.firmalar[0];
   state.activeFirmaId = prefer ? Number(prefer.id) : null;
   if (state.activeFirmaId) localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
+  await loadIsYerleriForActiveFirma();
   renderFirmaPicker();
 }
 
@@ -4038,6 +4189,43 @@ function syncBetweenInputs(screen) {
   });
 }
 
+function filterValueControl(f, st) {
+  if (f.type === 'lookup') {
+    let rows = state.lookupCache[f.lookup];
+    if (!Array.isArray(rows) || !rows.length) {
+      if (f.lookup === 'firmalar') rows = state.firmalar;
+      else if (f.lookup === 'is-yerleri') rows = state.isYerleri;
+    }
+    rows = Array.isArray(rows) ? rows : [];
+    const vk = f.valueKey || 'id';
+    const lk = f.labelKey || 'adi';
+    const ck = f.codeKey;
+    const opts = [`<option value="">— tümü —</option>`].concat(
+      rows.map((r) => {
+        const val = r[vk];
+        const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
+        return `<option value="${escAttr(val)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`;
+      })
+    );
+    return `<select data-filter-a="${f.key}">${opts.join('')}</select>
+      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+  }
+  if (f.type === 'bool' || f.key === 'aktif') {
+    const opts = [
+      { v: 'evet', l: 'Evet' },
+      { v: 'hayir', l: 'Hayır' },
+    ];
+    return `<select data-filter-a="${f.key}">
+      <option value="">—</option>
+      ${opts.map((o) => `<option value="${o.v}" ${norm(st.a) === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}
+    </select>
+      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+  }
+  return `
+    <input type="text" data-filter-a="${f.key}" value="${escAttr(st.a || '')}" placeholder="Değer" />
+    <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="Bitiş" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
+}
+
 function renderFilterPane(screen) {
   const grid = $('#filterGrid');
   grid.innerHTML = screen.filters.map((f) => {
@@ -4049,8 +4237,7 @@ function renderFilterPane(screen) {
           ${OPERATORS.map((o) => `<option value="${o.id}" ${st.op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
         </select>
         <div class="filter-values${st.op === 'arasinda' ? ' split' : ''}" data-filter-values="${f.key}">
-          <input type="text" data-filter-a="${f.key}" value="${st.a || ''}" placeholder="Değer" />
-          <input type="text" data-filter-b="${f.key}" value="${st.b || ''}" placeholder="Bitiş" ${st.op === 'arasinda' ? '' : 'hidden'} />
+          ${filterValueControl(f, st)}
         </div>
       </div>
     `;
@@ -4068,7 +4255,12 @@ function listColumns(screen) {
 
 function cellHtml(col, row, index = 0) {
   let val = col.key === 'id' ? rowKey(row, index) : row[col.key];
-  if (typeof val === 'boolean') val = val ? 'Evet' : 'Hayır';
+  // Aktif kolonu Pasif olarak gösterilir: tik/Evet = pasif (aktif=false)
+  if (col.key === 'aktif' && typeof val === 'boolean') {
+    val = val ? 'Hayır' : 'Evet';
+  } else if (typeof val === 'boolean') {
+    val = val ? 'Evet' : 'Hayır';
+  }
   if (val === null || val === undefined || val === '') val = '—';
   return col.mono ? `<span class="mono">${val}</span>` : String(val);
 }
@@ -4172,10 +4364,12 @@ async function openScreen(id, opts = {}) {
     state.selectedId = null;
     state.formMode = null;
     state.listCategory = screen.listCategories?.[0]?.id || null;
-    state.filterState = {};
-    (screen.filters || []).forEach((f) => {
-      state.filterState[f.key] = { op: 'icerir', a: '', b: '' };
-    });
+    if (!state.isYerleri.length && getActiveFirmaId()) {
+      await loadIsYerleriForActiveFirma();
+    }
+    // Filtre lookup'larını yükle (firma / iş yeri seçicileri)
+    await ensureFilterLookups(screen);
+    state.filterState = buildDefaultFilterState(screen);
     ensureSidebarPath(screen);
 
     if (location.hash !== `#${id}`) {
@@ -4194,7 +4388,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261016j`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017a`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -4287,6 +4481,31 @@ const LOOKUP_ENDPOINTS = {
 };
 
 
+async function ensureFilterLookups(screen) {
+  const needed = new Set();
+  (screen.filters || []).forEach((f) => {
+    if (f.type === 'lookup' && f.lookup) needed.add(f.lookup);
+  });
+  for (const key of needed) {
+    if (key === 'firmalar' && state.firmalar?.length) {
+      state.lookupCache.firmalar = state.firmalar;
+      continue;
+    }
+    if (key === 'is-yerleri' && state.isYerleri?.length) {
+      state.lookupCache['is-yerleri'] = state.isYerleri;
+      continue;
+    }
+    if (state.lookupCache[key]) continue;
+    const ep = LOOKUP_ENDPOINTS[key];
+    if (!ep) continue;
+    try {
+      state.lookupCache[key] = await api(ep);
+    } catch (_) {
+      state.lookupCache[key] = [];
+    }
+  }
+}
+
 async function ensureLookups(screen) {
   const needed = new Set();
   const collect = (fields) => {
@@ -4296,6 +4515,9 @@ async function ensureLookups(screen) {
   };
   collect(screen.masterFields);
   collect(screen.detailFields);
+  (screen.filters || []).forEach((f) => {
+    if (f.type === 'lookup' && f.lookup) needed.add(f.lookup);
+  });
   (screen.formTabs || []).forEach((tab) => {
     collect(tab.fields);
     collect(tab.masterFields);
@@ -4305,6 +4527,14 @@ async function ensureLookups(screen) {
     if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') needed.add('stoklar');
   });
   for (const key of needed) {
+    if (key === 'firmalar' && state.firmalar?.length) {
+      state.lookupCache.firmalar = state.firmalar;
+      continue;
+    }
+    if (key === 'is-yerleri' && state.isYerleri?.length) {
+      state.lookupCache['is-yerleri'] = state.isYerleri;
+      continue;
+    }
     if (state.lookupCache[key]) continue;
     const ep = LOOKUP_ENDPOINTS[key];
     if (!ep) continue;
@@ -4328,7 +4558,9 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
   const v = value ?? '';
   const name = `${attrName}="${field.key}" ${extraAttrs}`.trim();
   if (field.type === 'checkbox') {
-    return `<input type="checkbox" ${name} ${v ? 'checked' : ''} ${dis} ${req} />`;
+    // key=aktif alanı "Pasif" olarak gösterilir: tikli = pasif (aktif false)
+    const checked = field.key === 'aktif' ? !v : !!v;
+    return `<input type="checkbox" ${name} ${checked ? 'checked' : ''} ${dis} ${req} />`;
   }
   if (field.type === 'select') {
     return `<select ${name} ${dis} ${req}>
@@ -4911,6 +5143,15 @@ function renderForm(screen) {
     if (screen.id === 'satin-alma-talepleri') {
       show = Boolean(screen.approveAction && rec.durum === 'Acik');
     }
+    if (screen.id === 'satin-alma-teklifleri') {
+      if (rec.durum === 'Taslak') {
+        show = Boolean(screen.approveAction);
+      } else if (rec.durum === 'Onayli') {
+        show = Boolean(screen.convertAction);
+      } else {
+        show = false;
+      }
+    }
     if (screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk') {
       show = Boolean(screen.approveAction && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.durum));
     }
@@ -4921,6 +5162,7 @@ function renderForm(screen) {
         || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.durum))
         || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.durum))
         || (screen.id === 'satin-alma-talepleri' && rec.durum === 'Acik')
+        || (screen.id === 'satin-alma-teklifleri' && rec.durum === 'Taslak')
         || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
             && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.durum))
       ));
@@ -5027,7 +5269,11 @@ function renderForm(screen) {
 
 function readFieldValue(el, field) {
   if (!el) return undefined;
-  if (field.type === 'checkbox') return el.checked;
+  if (field.type === 'checkbox') {
+    // Pasif tikli → aktif=false
+    if (field.key === 'aktif') return !el.checked;
+    return el.checked;
+  }
   if (field.type === 'number') return el.value === '' ? null : Number(el.value);
   if (field.type === 'lookup' && (field.valueKey === 'id' || /_id$/.test(field.key))) {
     return el.value === '' ? null : (Number.isNaN(Number(el.value)) ? el.value : Number(el.value));
@@ -5350,8 +5596,12 @@ async function openForm(mode) {
 
   const seedFields = () => {
     collectTabFields(screen).forEach((f) => {
-      if (f.type === 'checkbox') record[f.key] = true;
-      else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
+      if (f.type === 'checkbox') {
+        // aktif varsayılan true → Pasif kutusu boş
+        record[f.key] = f.key === 'pasif' ? false : true;
+      } else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
+      else if (f.key === 'firma_id' && getActiveFirmaId()) record[f.key] = getActiveFirmaId();
+      else if (f.key === 'is_yeri_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
       else if (record[f.key] === undefined) record[f.key] = '';
     });
   };

@@ -283,12 +283,12 @@ async function seedFirm(client, def) {
     });
   }
 
-  // SA talep + sipariş + mal kabul (özet)
+  // SA: talep → teklif isteği → teklif (onaylı) → sipariş → mal kabul
   const talepNo = await sonrakiKod(client, 'SATINALMA_TALEP').catch(() => `${def.kod}-TAL-1`);
   const talep = (await client.query(
     `INSERT INTO satin_alma_talepleri (talep_no, durum, is_yeri_id, firma_id, aciklama)
      VALUES ($1,'Onayli',$2,$3,$4) RETURNING *`,
-    [talepNo, isYeri.id, firma.id, `${def.kod} hammadde talebi`]
+    [talepNo, isYeri.id, firma.id, `${def.kod} hammadde talebi (MRP/talep)`]
   )).rows[0];
 
   const h0 = ctx.stoklar.hammaddeler[0];
@@ -298,12 +298,45 @@ async function seedFirm(client, def) {
     [talep.id, h0.id, 50, h0.birim]
   );
 
+  const istekNo = await sonrakiKod(client, 'SATINALMA_TEKLIF_ISTEK').catch(() => `${def.kod}-TI-1`);
+  const istek = (await client.query(
+    `INSERT INTO satin_alma_teklif_istekleri (istek_no, is_yeri_id, firma_id, durum, aciklama)
+     VALUES ($1,$2,$3,'TeklifeDonustu',$4) RETURNING *`,
+    [istekNo, isYeri.id, firma.id, `${def.kod} teklif isteği — ${h0.stok_adi}`]
+  )).rows[0];
+  await client.query(
+    `INSERT INTO satin_alma_teklif_istek_satirlari (istek_id, stok_id, miktar, birim)
+     VALUES ($1,$2,50,$3)`,
+    [istek.id, h0.id, h0.birim]
+  );
+
+  const teklifNo = await sonrakiKod(client, 'SATINALMA_TEKLIF').catch(() => `${def.kod}-TK-1`);
+  const teklif = (await client.query(
+    `INSERT INTO satin_alma_teklifleri (
+       teklif_no, cari_id, istek_id, is_yeri_id, firma_id, durum, gecerlilik_tarihi, aciklama
+     ) VALUES ($1,$2,$3,$4,$5,'Onayli',CURRENT_DATE + 30,$6) RETURNING *`,
+    [
+      teklifNo,
+      ctx.cariler.tedarikciler[0].id,
+      istek.id,
+      isYeri.id,
+      firma.id,
+      `${def.kod} tedarikçi teklifi — onaylı`,
+    ]
+  )).rows[0];
+  await client.query(
+    `INSERT INTO satin_alma_teklif_satirlari (teklif_id, stok_id, miktar, birim_fiyat, birim)
+     VALUES ($1,$2,50,$3,$4)`,
+    [teklif.id, h0.id, h0.satis_fiyati || 10, h0.birim]
+  );
+
   const saNo = await sonrakiKod(client, 'SATINALMA_SIPARIS').catch(() => `${def.kod}-SA-1`);
   const sa = (await client.query(
     `INSERT INTO satin_alma_siparisleri (
-       siparis_no, cari_id, depo_id, durum, firma_id, is_yeri_id, siparis_tarihi
-     ) VALUES ($1,$2,$3,'Onayli',$4,$5,CURRENT_DATE) RETURNING *`,
-    [saNo, ctx.cariler.tedarikciler[0].id, depolar.HAMMADDE.id, firma.id, isYeri.id]
+       siparis_no, cari_id, depo_id, durum, firma_id, is_yeri_id, siparis_tarihi,
+       talep_id, teklif_id, kaynak_belge_tipi, kaynak_belge_id
+     ) VALUES ($1,$2,$3,'Onayli',$4,$5,CURRENT_DATE,$6,$7,'SATINALMA_TEKLIF',$7) RETURNING *`,
+    [saNo, ctx.cariler.tedarikciler[0].id, depolar.HAMMADDE.id, firma.id, isYeri.id, talep.id, teklif.id]
   )).rows[0];
   const saSatir = (await client.query(
     `INSERT INTO satin_alma_siparis_satirlari (siparis_id, stok_id, miktar, birim_fiyat, birim)

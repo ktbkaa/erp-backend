@@ -14,12 +14,47 @@ const router = createBelgeRouter({
   allowedDurum: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'],
   requireCari: true,
   linePrice: true,
-  extraFields: ['istek_id', 'gecerlilik_tarihi', 'durum'],
+  extraFields: ['istek_id', 'gecerlilik_tarihi', 'durum', 'firma_id', 'is_yeri_id'],
+});
+
+/**
+ * Teklif onay — yalnızca Onaylı tekliften sipariş açılır
+ * POST /satin-alma-teklifleri/:id/onayla
+ */
+router.post('/:id/onayla', async (req, res, next) => {
+  try {
+    const teklifId = Number(req.params.id);
+    const r = await pool.query(
+      `UPDATE satin_alma_teklifleri SET durum = 'Onayli'
+       WHERE id = $1 AND durum IN ('Taslak','Acik')
+       RETURNING id`,
+      [teklifId]
+    );
+    if (!r.rows[0]) {
+      const cur = await pool.query(`SELECT durum FROM satin_alma_teklifleri WHERE id = $1`, [teklifId]);
+      if (!cur.rows[0]) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
+      return res.status(409).json({ hata: `Teklif onaylanamaz. Durum: ${cur.rows[0].durum}` });
+    }
+    const row = await pool.query(
+      `SELECT t.*, c.cari_kodu, c.cari_adi FROM satin_alma_teklifleri t
+       JOIN cariler c ON c.id = t.cari_id WHERE t.id = $1`,
+      [teklifId]
+    );
+    const satirlar = await pool.query(
+      `SELECT ls.*, s.stok_kodu, s.stok_adi FROM satin_alma_teklif_satirlari ls
+       JOIN stoklar s ON s.id = ls.stok_id WHERE ls.teklif_id = $1 ORDER BY ls.id`,
+      [teklifId]
+    );
+    res.json({ ...row.rows[0], satirlar: satirlar.rows });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**
  * Teklif → Satınalma siparişi (REQ-PUR-004 / P40)
  * POST /satin-alma-teklifleri/:id/siparise-donustur
+ * Önkoşul: durum = Onayli
  */
 router.post('/:id/siparise-donustur', async (req, res, next) => {
   try {
@@ -30,8 +65,11 @@ router.post('/:id/siparise-donustur', async (req, res, next) => {
         [teklifId]
       );
       if (!t.rows[0]) throw Object.assign(new Error('Teklif bulunamadı.'), { status: 404 });
-      if (!['Onayli', 'Taslak'].includes(t.rows[0].durum)) {
-        throw Object.assign(new Error(`Teklif dönüştürülemez. Durum: ${t.rows[0].durum}`), { status: 409 });
+      if (t.rows[0].durum !== 'Onayli') {
+        throw Object.assign(
+          new Error(`Yalnızca onaylı teklif siparişe dönüştürülür. Durum: ${t.rows[0].durum}`),
+          { status: 409 }
+        );
       }
       const satirlar = await client.query(
         `SELECT * FROM satin_alma_teklif_satirlari WHERE teklif_id = $1 ORDER BY id`,
@@ -43,12 +81,14 @@ router.post('/:id/siparise-donustur', async (req, res, next) => {
       let toplam = 0;
       const sip = await client.query(
         `INSERT INTO satin_alma_siparisleri
-          (siparis_no, cari_id, is_yeri_id, teklif_id, durum, toplam_tutar, odeme_kosulu)
-         VALUES ($1,$2,$3,$4,'Onayli',0,$5) RETURNING id`,
+          (siparis_no, cari_id, is_yeri_id, firma_id, teklif_id, durum, toplam_tutar, odeme_kosulu,
+           kaynak_belge_tipi, kaynak_belge_id)
+         VALUES ($1,$2,$3,$4,$5,'Onayli',0,$6,'SATINALMA_TEKLIF',$5) RETURNING id`,
         [
           no,
           t.rows[0].cari_id,
           t.rows[0].is_yeri_id || null,
+          t.rows[0].firma_id || null,
           teklifId,
           req.body.odeme_kosulu || null,
         ]

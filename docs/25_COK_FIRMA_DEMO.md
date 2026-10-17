@@ -14,7 +14,12 @@
 | META | Oto Kapı Metal Sanayi A.Ş. | Metal / Otomotiv |
 | GIDA | Anadolu Süt ve Süt Ürünleri A.Ş. | Gıda |
 
-Her firmada: iş yeri, 5 depo, 2 tedarikçi + 2 müşteri, hammaddeler + mamul, BOM, iş merkezi, rota, SA talep→sipariş→mal kabul, stok girişleri, üretim emri, CRM fırsat, satış siparişi→sevk→irsaliye→fatura, KK emri; GIDA/META’da parti.
+Her firmada: iş yeri, 5 depo, 2 tedarikçi + 2 müşteri, hammaddeler + mamul, BOM, iş merkezi, rota,
+SA talep → teklif isteği → **teklif (onaylı)** → sipariş (`teklif_id`) → mal kabul,
+stok girişleri, üretim emri, CRM fırsat, satış siparişi→sevk→irsaliye→fatura, KK emri; GIDA/META’da parti.
+
+UI: üst bar **Firma profil alanı**; listelerde firma/iş yeri filtreleri profil seçimine göre dolar.
+Aktif alanları formda **Pasif** checkbox’ı olarak gösterilir (tik = pasif); filtre varsayılanı `Aktif = Eşit / Evet`.
 
 ## İzolasyon
 - Header: `X-Firma-Id` (`src/middleware/firmaContext.js` + `src/utils/firmaScope.js`)

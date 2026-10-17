@@ -430,10 +430,26 @@ body {
 }
 .screen-title[hidden] { display: none !important; }
 
-/* Firma seçici — kenarlıksız, kompakt */
+/* Firma profil alanı — kenarlıksız, kompakt */
 .firma-picker {
   position: relative;
   min-width: 0;
+}
+.firma-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  min-width: 0;
+}
+.firma-profile-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.1;
+  padding-left: 0.15rem;
 }
 .firma-picker-btn {
   display: inline-flex;
@@ -442,7 +458,7 @@ body {
   max-width: min(28rem, 52vw);
   border: 0;
   background: transparent;
-  padding: 0.25rem 0.15rem;
+  padding: 0.15rem 0.15rem 0.2rem;
   cursor: pointer;
   font: inherit;
   color: var(--ink);
