@@ -4216,6 +4216,54 @@ function openUserChipMenu(x, y) {
   menu.style.top = 'calc(100% + 0.35rem)';
 }
 
+function setLoginError(msg) {
+  const el = $('#loginError');
+  if (!el) return;
+  if (!msg) {
+    el.hidden = true;
+    el.textContent = '';
+    return;
+  }
+  el.hidden = false;
+  el.textContent = msg;
+}
+
+function showLoginView() {
+  const login = $('#viewLogin');
+  const shell = $('#appShell');
+  if (shell) shell.hidden = true;
+  if (login) login.hidden = false;
+  document.body.classList.add('is-login');
+  closeUserChipMenu();
+  setLoginError('');
+  const user = $('#loginUser');
+  const pass = $('#loginPass');
+  if (pass) pass.value = '';
+  // Odak: varsa kullanıcı adı doluysa şifre, değilse kullanıcı adı
+  requestAnimationFrame(() => {
+    if (user && !user.value) user.focus();
+    else if (pass) pass.focus();
+  });
+}
+
+function enterApp() {
+  const login = $('#viewLogin');
+  const shell = $('#appShell');
+  if (login) login.hidden = true;
+  if (shell) shell.hidden = false;
+  document.body.classList.remove('is-login');
+  renderUserChip();
+  renderSidebar();
+  renderFirmaPicker();
+}
+
+function applySession(ses, kullanici_adi) {
+  state.session = ses;
+  localStorage.setItem('ktb_kullanici_kodu', ses.kullanici_kodu || kullanici_adi || '');
+  if (ses.access_token) localStorage.setItem('ktb_access_token', ses.access_token);
+  if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
+}
+
 async function logoutUser() {
   try {
     const refresh = localStorage.getItem('ktb_refresh_token');
@@ -4232,29 +4280,50 @@ async function logoutUser() {
   closeUserChipMenu();
   renderUserChip();
   renderSidebar();
+  showLoginView();
   toast('Oturum kapatıldı.');
 }
 
-async function promptLogin() {
+async function submitLoginForm(e) {
+  if (e) e.preventDefault();
   closeUserChipMenu();
-  const kullanici_adi = window.prompt('Kullanıcı adı:');
-  if (!kullanici_adi) return;
-  const sifre = window.prompt('Şifre:') || '';
+  const kullanici_adi = ($('#loginUser')?.value || '').trim();
+  const sifre = $('#loginPass')?.value || '';
+  const btn = $('#loginSubmit');
+  if (!kullanici_adi) {
+    setLoginError('Kullanıcı adı gerekli.');
+    $('#loginUser')?.focus();
+    return;
+  }
+  if (!sifre) {
+    setLoginError('Şifre gerekli.');
+    $('#loginPass')?.focus();
+    return;
+  }
+  setLoginError('');
+  if (btn) btn.disabled = true;
   try {
     const ses = await api('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ kullanici_adi, sifre }),
     });
-    state.session = ses;
-    localStorage.setItem('ktb_kullanici_kodu', ses.kullanici_kodu || kullanici_adi);
-    if (ses.access_token) localStorage.setItem('ktb_access_token', ses.access_token);
-    if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
-    renderUserChip();
-    renderSidebar();
+    applySession(ses, kullanici_adi);
+    enterApp();
+    await loadFirmalar().catch(() => {});
+    renderFirmaPicker();
+    showHome();
     toast(`Hoş geldiniz, ${ses.kullanici_adi || ses.ad || ''}`);
   } catch (err) {
-    toast(err.message || 'Giriş başarısız');
+    setLoginError(err.message || 'Giriş başarısız');
+    $('#loginPass')?.focus();
+  } finally {
+    if (btn) btn.disabled = false;
   }
+}
+
+/** Eski prompt tabanlı giriş — menüden çağrılırsa giriş ekranına yönlendir. */
+function promptLogin() {
+  showLoginView();
 }
 
 function allowedFirmalar() {
@@ -4690,6 +4759,10 @@ function updateActionButtons(screen) {
 
 async function openScreen(id, opts = {}) {
   try {
+    if (!state.session) {
+      showLoginView();
+      return;
+    }
     const screen = findScreen(id);
     if (!screen) {
       toast(`Ekran bulunamadı: ${id || '?'}`);
@@ -4728,7 +4801,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017m`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017n`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -6942,8 +7015,14 @@ function bindEvents() {
     e.preventDefault();
     const act = btn.getAttribute('data-user-action');
     if (act === 'logout') logoutUser();
-    else if (act === 'login') promptLogin();
+    else if (act === 'login') showLoginView();
   });
+
+  const loginForm = $('#loginForm');
+  if (loginForm && !loginForm.dataset.bound) {
+    loginForm.dataset.bound = '1';
+    loginForm.addEventListener('submit', submitLoginForm);
+  }
 
   $('#btnMenu').addEventListener('click', () => {
     const shell = $('#appShell');
@@ -7350,39 +7429,56 @@ function bindEvents() {
 async function restoreSession() {
   try {
     const kod = localStorage.getItem('ktb_kullanici_kodu');
-    if (!kod) return;
     const token = localStorage.getItem('ktb_access_token');
+    if (!kod && !token) return false;
     if (token) {
       try {
         state.session = await api('/auth/me');
-        return;
-      } catch (_) { /* token süresi dolmuş — login dene */ }
+        return Boolean(state.session);
+      } catch (_) { /* token süresi dolmuş */ }
     }
-    const ses = await api('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ kullanici_kodu: kod }),
-    });
-    state.session = ses;
-    if (ses.access_token) localStorage.setItem('ktb_access_token', ses.access_token);
-    if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
+    // Parolasız kullanıcılar için kod ile yenileme (parola_hash yoksa API kabul eder)
+    if (kod) {
+      try {
+        const ses = await api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ kullanici_kodu: kod }),
+        });
+        applySession(ses, kod);
+        return true;
+      } catch (_) { /* parola zorunluysa giriş ekranı */ }
+    }
+    localStorage.removeItem('ktb_access_token');
+    localStorage.removeItem('ktb_refresh_token');
+    // Kullanıcı adını formda hatırla
+    if (kod && $('#loginUser') && !$('#loginUser').value) {
+      $('#loginUser').value = kod;
+    }
+    return false;
   } catch (_) {
-    /* parola zorunluysa sessiz geç */
+    return false;
   } finally {
     renderUserChip();
   }
 }
 
 function bootFromHash() {
+  bindEvents();
   restoreSession()
-    .then(() => loadFirmalar())
-    .catch(() => loadFirmalar())
-    .finally(() => {
-      renderUserChip();
-      renderSidebar();
-      bindEvents();
+    .then(async (ok) => {
+      if (!ok) {
+        showLoginView();
+        return;
+      }
+      enterApp();
+      await loadFirmalar().catch(() => {});
+      renderFirmaPicker();
       const id = (location.hash || '').replace(/^#/, '');
       if (id && findScreen(id)) openScreen(id);
       else showHome();
+    })
+    .catch(() => {
+      showLoginView();
     });
 }
 
