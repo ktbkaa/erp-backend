@@ -1534,7 +1534,7 @@ const MODULES = [
         masterFields: [
           { key: 'agac_kodu', label: 'Kod', code: true, required: true },
           { key: 'agac_adi', label: 'Ad', name: true, required: true },
-          { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar-mamul', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
           { key: 'miktar', label: 'Miktar', type: 'number' },
           { key: 'gecerlilik_baslangic', label: 'Geçerlilik baş.', type: 'date' },
           { key: 'gecerlilik_bitis', label: 'Geçerlilik bitiş', type: 'date' },
@@ -1549,7 +1549,7 @@ const MODULES = [
             fields: [
               { key: 'agac_kodu', label: 'Kod', code: true, required: true },
               { key: 'agac_adi', label: 'Ad', name: true, required: true },
-              { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+              { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar-mamul', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
               { key: 'miktar', label: 'Miktar', type: 'number' },
               { key: 'gecerlilik_baslangic', label: 'Geçerlilik baş.', type: 'date' },
               { key: 'gecerlilik_bitis', label: 'Geçerlilik bitiş', type: 'date' },
@@ -5563,7 +5563,8 @@ const LOOKUP_ENDPOINTS = {
   firmalar: '/firmalar',
   'is-yerleri': '/is-yerleri',
   depolar: '/depolar',
-  stoklar: '/stoklar',
+  stoklar: '/stoklar?aktif=true',
+  'stoklar-mamul': '/stoklar?aktif=true&tip=Mamul,YariMamul',
   ulkeler: '/ulkeler?aktif=true',
   'para-birimleri': '/para-birimleri?aktif=true',
   sehirler: '/sehirler?aktif=true',
@@ -5633,6 +5634,28 @@ async function ensureFilterLookups(screen) {
   }
 }
 
+/** Yeni kart sonrası eski liste kalmasın — her form açılışında yenilenir */
+const LOOKUP_ALWAYS_REFRESH = new Set([
+  'stoklar',
+  'stoklar-mamul',
+  'cariler-musteri',
+  'cariler-tedarikci',
+  'urun-agaclari',
+  'rotalar',
+  'depolar',
+  'is-yerleri',
+]);
+
+function invalidateLookups(...keys) {
+  if (!keys.length) {
+    state.lookupCache = {};
+    return;
+  }
+  keys.forEach((k) => {
+    delete state.lookupCache[k];
+  });
+}
+
 async function ensureLookups(screen) {
   const needed = new Set();
   const collect = (fields) => {
@@ -5651,18 +5674,21 @@ async function ensureLookups(screen) {
     collect(tab.detailFields);
     collect(tab.grid?.fields);
     collect(tab.componentFields);
-    if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') needed.add('stoklar');
+    if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') {
+      needed.add('stoklar');
+      needed.add('stoklar-mamul');
+    }
   });
   for (const key of needed) {
     if (key === 'firmalar' && state.firmalar?.length) {
       state.lookupCache.firmalar = state.firmalar;
       continue;
     }
-    if (key === 'is-yerleri' && state.isYerleri?.length) {
+    if (key === 'is-yerleri' && state.isYerleri?.length && !LOOKUP_ALWAYS_REFRESH.has(key)) {
       state.lookupCache['is-yerleri'] = state.isYerleri;
       continue;
     }
-    if (state.lookupCache[key]) continue;
+    if (state.lookupCache[key] && !LOOKUP_ALWAYS_REFRESH.has(key)) continue;
     const ep = LOOKUP_ENDPOINTS[key];
     if (!ep) continue;
     try {
@@ -7719,6 +7745,10 @@ async function saveForm() {
         }
       }
       const sonuc = await api(postUrl, { method: 'POST', body: JSON.stringify(body) });
+      // Stok/cari kaydı sonrası ürün ağacı vb. lookup'lar eski kalmasın
+      if (screen.id === 'stok-karti') invalidateLookups('stoklar', 'stoklar-mamul');
+      if (screen.id === 'cari-kartlari') invalidateLookups('cariler-musteri', 'cariler-tedarikci');
+      if (screen.id === 'urun-agaci') invalidateLookups('urun-agaclari');
       if (screen.id === 'toplu-is-emri' && sonuc?.olusturulan_sayisi) {
         toast(`${sonuc.olusturulan_sayisi} iş emri oluşturuldu${sonuc.hata_sayisi ? ` (${sonuc.hata_sayisi} hata)` : ''}.`);
       } else if (screen.id === 'siparis-is-emri' && sonuc?.emir_no) {
@@ -7738,6 +7768,7 @@ async function saveForm() {
       return;
     }
     toast('Kaydedildi.');
+    if (screen.id === 'stok-karti') invalidateLookups('stoklar', 'stoklar-mamul');
     // form sekmesini kapat, listeye don
     const formKey = state.activeTabKey;
     state.formMode = null;

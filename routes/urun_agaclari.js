@@ -57,10 +57,11 @@ router.get('/', async (req, res) => {
         const firmaId = firmaIdFromReq(req);
         const params = [];
         const where = [];
-        if (onlyMamul) where.push(`s.stok_tipi = 'Mamul'`);
+        if (onlyMamul) where.push(`s.stok_tipi IN ('Mamul', 'YariMamul')`);
         if (firmaId) {
             params.push(firmaId);
-            where.push(`ua.firma_id = $${params.length}`);
+            // Ağaç firma_id veya mamul stok firması (eski kayıtlarda firma_id boş olabilirdi)
+            where.push(`(ua.firma_id = $${params.length} OR s.firma_id = $${params.length})`);
         }
         const liste = await pool.query(
             `
@@ -142,12 +143,21 @@ router.post('/', async (req, res) => {
         }
 
         const kayitId = await withTransaction(pool, async (client) => {
+            // firma_id: istek / mamul stok kartı (liste filtreleri için zorunlu)
+            let firmaId = firmaIdFromReq(req) || Number(req.body.firma_id) || null;
+            if (!firmaId) {
+                const st = await client.query(
+                    'SELECT firma_id FROM stoklar WHERE id=$1',
+                    [mamul_stok_id]
+                );
+                firmaId = st.rows[0]?.firma_id || null;
+            }
             const baslik = await client.query(
                 `
                 INSERT INTO urun_agaclari
                     (mamul_stok_id, agac_kodu, agac_adi, miktar,
-                     gecerlilik_baslangic, gecerlilik_bitis, min_miktar, max_miktar)
-                VALUES ($1,$2,$3,COALESCE($4,1),$5,$6,$7,$8)
+                     gecerlilik_baslangic, gecerlilik_bitis, min_miktar, max_miktar, firma_id)
+                VALUES ($1,$2,$3,COALESCE($4,1),$5,$6,$7,$8,$9)
                 RETURNING id
                 `,
                 [
@@ -159,6 +169,7 @@ router.post('/', async (req, res) => {
                     gecerlilik_bitis || null,
                     min_miktar ?? 0,
                     max_miktar ?? 999999999,
+                    firmaId,
                 ]
             );
             const uaId = baslik.rows[0].id;
