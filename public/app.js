@@ -2006,7 +2006,7 @@ const MODULES = [
           { key: 'firsat_kodu', label: 'Kod' },
           { key: 'firsat_adi', label: 'Ad' },
           { key: 'asama_adi', label: 'Aşama' },
-          { key: 'durum', label: 'Durum' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Kazanildi', 'Kaybedildi', 'Iptal'] },
         ],
         columns: [
           { key: 'firsat_kodu', label: 'Kod', mono: true },
@@ -2033,6 +2033,7 @@ const MODULES = [
           { key: 'hedef_kapatma_tarihi', label: 'Hedef kapanış', type: 'date' },
           { key: 'ulke', label: 'Ülke' },
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Kazanildi', 'Kaybedildi', 'Iptal'] },
           { key: 'aciklama', label: 'Açıklama' },
         ],
         detailFields: [
@@ -3243,7 +3244,91 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     s.filters.unshift({ key: 'aktif', label: 'Aktif', type: 'bool' });
   }
 
+  // Filtreleri form alanlarından zenginleştir (select/lookup → açılır liste)
+  enrichFiltersFromForm(s);
+
   return s;
+}
+
+/** Ekrandaki tüm form alanlarını topla */
+function collectScreenFormFields(screen) {
+  const out = [];
+  const push = (arr) => { (arr || []).forEach((f) => { if (f?.key) out.push(f); }); };
+  push(screen.masterFields);
+  push(screen.detailFields);
+  (screen.formTabs || []).forEach((tab) => {
+    push(tab.fields);
+    push(tab.masterFields);
+    push(tab.detailFields);
+    push(tab.grid?.fields);
+  });
+  return out;
+}
+
+/**
+ * Filtrede bilinen seçenekleri açılır liste yap:
+ * - formda select ise options kopyala
+ * - formda lookup ise filtreyi lookup yap
+ * - asama_adi / tip_adi gibi görünen adlar → ilgili lookup
+ */
+function enrichFiltersFromForm(screen) {
+  const fields = collectScreenFormFields(screen);
+  const byKey = Object.fromEntries(fields.map((f) => [f.key, f]));
+
+  (screen.filters || []).forEach((f) => {
+    if (!f || f.type === 'lookup' || f.type === 'bool' || f.type === 'date') return;
+    if (Array.isArray(f.options) && f.options.length) {
+      f.type = f.type || 'select';
+      return;
+    }
+
+    // Doğrudan aynı key
+    const src = byKey[f.key];
+    if (src?.type === 'select' && src.options?.length) {
+      f.type = 'select';
+      f.options = [...src.options];
+      return;
+    }
+    if (src?.type === 'lookup' && src.lookup) {
+      f.type = 'lookup';
+      f.lookup = src.lookup;
+      f.valueKey = src.valueKey || 'id';
+      f.labelKey = src.labelKey || 'adi';
+      f.codeKey = src.codeKey;
+      return;
+    }
+
+    // asama_adi ← asama_id lookup (değer olarak ad ile filtrele)
+    if (f.key === 'asama_adi' && byKey.asama_id?.lookup) {
+      const L = byKey.asama_id;
+      f.type = 'lookup';
+      f.lookup = L.lookup;
+      f.valueKey = L.labelKey || 'asama_adi';
+      f.labelKey = L.labelKey || 'asama_adi';
+      f.codeKey = L.codeKey || 'asama_kodu';
+      return;
+    }
+    // faaliyet_tipi_adi ← faaliyet_tipi_id
+    if ((f.key === 'faaliyet_tipi_adi' || f.key === 'tip_adi') && byKey.faaliyet_tipi_id?.lookup) {
+      const L = byKey.faaliyet_tipi_id;
+      f.type = 'lookup';
+      f.lookup = L.lookup;
+      f.valueKey = L.labelKey || 'tip_adi';
+      f.labelKey = L.labelKey || 'tip_adi';
+      f.codeKey = L.codeKey || 'tip_kodu';
+      return;
+    }
+    // *_adi görünen ad + *_id lookup
+    const idKey = f.key.replace(/_adi$/, '_id');
+    if (idKey !== f.key && byKey[idKey]?.type === 'lookup') {
+      const L = byKey[idKey];
+      f.type = 'lookup';
+      f.lookup = L.lookup;
+      f.valueKey = L.labelKey || 'adi';
+      f.labelKey = L.labelKey || 'adi';
+      f.codeKey = L.codeKey;
+    }
+  });
 }
 
 const ALL_SCREENS = MODULES.flatMap((m) =>
@@ -4101,7 +4186,8 @@ function buildDefaultFilterState(screen) {
       fs[f.key] = { op: 'esit', a: String(getActiveFirmaId()), b: '' };
     } else if (f.key === 'is_yeri_id' && state.activeIsYeriId) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
-    } else if (f.type === 'lookup') {
+    } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
+      // Açılır listeler: varsayılan eşit, değer boş (= tümü)
       fs[f.key] = { op: 'esit', a: '', b: '' };
     } else {
       fs[f.key] = { op: 'icerir', a: '', b: '' };
@@ -4217,26 +4303,43 @@ function filterValueControl(f, st) {
       else if (f.lookup === 'is-yerleri') rows = state.isYerleri;
     }
     rows = Array.isArray(rows) ? rows : [];
+    // Aynı görünen ad tekrarlanmasın (asama_adi ile filtrelerken)
     const vk = f.valueKey || 'id';
     const lk = f.labelKey || 'adi';
     const ck = f.codeKey;
-    const opts = [`<option value="">—</option>`].concat(
-      rows.map((r) => {
-        const val = r[vk];
-        // Kompakt etiket: kod öncelikli, uzun ad title'da
-        const code = ck ? (r[ck] || '') : '';
-        const name = r[lk] || '';
-        // Kod + kısa ad; çok uzunsa kod yeter
-        let label = code || name || String(val);
-        if (code && name) {
-          const short = name.length > 28 ? `${name.slice(0, 26)}…` : name;
-          label = `${code} — ${short}`;
-        }
-        const title = code && name ? `${code} — ${name}` : (name || code || String(val));
-        return `<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`;
-      })
-    );
+    const seen = new Set();
+    const opts = [`<option value="">— seçin —</option>`];
+    rows.forEach((r) => {
+      const val = r[vk];
+      if (val == null || val === '') return;
+      const sig = String(val);
+      if (seen.has(sig)) return;
+      seen.add(sig);
+      const code = ck ? (r[ck] || '') : '';
+      const name = r[lk] || '';
+      let label = code || name || String(val);
+      if (code && name && String(val) !== code) {
+        const short = name.length > 28 ? `${name.slice(0, 26)}…` : name;
+        label = `${code} — ${short}`;
+      } else if (!code && name) {
+        label = name;
+      }
+      const title = code && name ? `${code} — ${name}` : (name || code || String(val));
+      opts.push(`<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`);
+    });
     return `<select data-filter-a="${f.key}">${opts.join('')}</select>
+      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+  }
+  if (f.type === 'select' || (Array.isArray(f.options) && f.options.length)) {
+    const opts = f.options || [];
+    return `<select data-filter-a="${f.key}">
+      <option value="">— seçin —</option>
+      ${opts.map((o) => {
+        const v = typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o;
+        const l = typeof o === 'object' ? (o.label ?? o.adi ?? o.l ?? v) : o;
+        return `<option value="${escAttr(v)}" ${String(st.a) === String(v) ? 'selected' : ''}>${l}</option>`;
+      }).join('')}
+    </select>
       <input type="text" data-filter-b="${f.key}" value="" hidden />`;
   }
   if (f.type === 'bool' || f.key === 'aktif') {
@@ -4261,18 +4364,29 @@ function filterValueControl(f, st) {
     <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="…" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
 }
 
+function filterOperatorsFor(f) {
+  // Açılır liste / bool: yazma yok → eşit / eşit değil yeterli
+  if (f.type === 'lookup' || f.type === 'select' || f.type === 'bool'
+      || f.key === 'aktif' || (Array.isArray(f.options) && f.options.length)) {
+    return OPERATORS.filter((o) => o.id === 'esit' || o.id === 'esit_degil');
+  }
+  return OPERATORS;
+}
+
 function renderFilterField(f) {
   const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
   const bucket = filterBucket(f);
+  const ops = filterOperatorsFor(f);
+  const op = ops.some((o) => o.id === st.op) ? st.op : (ops[0]?.id || 'esit');
   return `
     <div class="filter-field filter-field--${bucket}" data-filter-key="${f.key}">
       <label>${f.label}</label>
       <div class="filter-controls">
         <select class="filter-op" data-filter-op="${f.key}" title="Operatör">
-          ${OPERATORS.map((o) => `<option value="${o.id}" ${st.op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
+          ${ops.map((o) => `<option value="${o.id}" ${op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
         </select>
-        <div class="filter-values${st.op === 'arasinda' ? ' split' : ''}" data-filter-values="${f.key}">
-          ${filterValueControl(f, st)}
+        <div class="filter-values${op === 'arasinda' ? ' split' : ''}" data-filter-values="${f.key}">
+          ${filterValueControl(f, { ...st, op })}
         </div>
       </div>
     </div>`;
@@ -4434,7 +4548,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017f`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017g`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -6114,10 +6228,9 @@ function bindEvents() {
   $('#btnClearFilter').addEventListener('click', () => {
     const screen = findScreen(state.screenId);
     if (!screen) return;
-    state.filterState = {};
-    screen.filters.forEach((f) => { state.filterState[f.key] = { op: 'icerir', a: '', b: '' }; });
+    state.filterState = buildDefaultFilterState(screen);
     renderFilterPane(screen);
-    state.filtered = state.rows.slice();
+    state.filtered = applyFilters(state.rows, screen);
     state.selectedId = null;
     renderList(screen);
   });
