@@ -5851,22 +5851,30 @@ function buildBomTreeFromFlat(satirlar) {
 }
 
 function ensureBomTree(rec) {
-  if (Array.isArray(rec.agac) && rec.agac.length) {
-    rec.satirlar = rec.agac.map((n) => ({ ...n }));
-  } else if (Array.isArray(rec.satirlar)) {
+  // satırlar düzenleme kaynağıdır. agac ile aynı referansa zorlamak
+  // (agac.map → satirlar) kayıtları silip «eklendi» toast’una rağmen boş ağaç bırakıyordu.
+  let nodes;
+  if (Array.isArray(rec.satirlar)) {
     const hasNest = rec.satirlar.some((s) => Array.isArray(s.alt_satirlar) && s.alt_satirlar.length);
     const hasUst = rec.satirlar.some((s) => s.ust_satir_id);
-    if (!hasNest && hasUst) rec.satirlar = buildBomTreeFromFlat(rec.satirlar);
+    if (!hasNest && hasUst) nodes = buildBomTreeFromFlat(rec.satirlar);
     else {
-      rec.satirlar = rec.satirlar.map((s) => ({
+      nodes = rec.satirlar.map((s) => ({
         ...s,
         alt_satirlar: Array.isArray(s.alt_satirlar) ? s.alt_satirlar : [],
       }));
     }
+  } else if (Array.isArray(rec.agac) && rec.agac.length) {
+    nodes = rec.agac.map((n) => ({
+      ...n,
+      alt_satirlar: Array.isArray(n.alt_satirlar) ? n.alt_satirlar : [],
+    }));
   } else {
-    rec.satirlar = [];
+    nodes = [];
   }
-  return rec.satirlar;
+  rec.satirlar = nodes;
+  rec.agac = nodes;
+  return nodes;
 }
 
 function getBomNode(nodes, path) {
@@ -7229,27 +7237,8 @@ function bindCascadeLookups(_screen) {
     const scr = findScreen(state.screenId);
     if (!scr || state.formMode == null) return;
 
-    // BOM sağ panel: stok seçince birim doldur
+    // BOM sağ panel alanları — birim/miktar otomatik doldurulmaz (kullanıcı girer)
     if (el.hasAttribute('data-bom-field')) {
-      const key = el.getAttribute('data-bom-field');
-      if (key === 'bilesen_stok_id') {
-        const st = stokLookupById(el.value);
-        const birimEl = document.querySelector('[data-bom-field="birim"]');
-        if (st && birimEl && !birimEl.disabled) {
-          const birim = st.birim || st.stok_takip_birimi || '';
-          if (birim) {
-            birimEl.value = birim;
-            // select options may not include value — ensure option exists
-            if (birimEl.tagName === 'SELECT' && ![...birimEl.options].some((o) => o.value === birim)) {
-              const opt = document.createElement('option');
-              opt.value = birim;
-              opt.textContent = birim;
-              birimEl.appendChild(opt);
-              birimEl.value = birim;
-            }
-          }
-        }
-      }
       return;
     }
 
@@ -7311,7 +7300,6 @@ function persistBomEditor(rec, tab) {
     node.stok_kodu = st.stok_kodu;
     node.stok_adi = st.stok_adi;
     node.stok_tipi = st.stok_tipi;
-    if (!node.birim) node.birim = st.birim || st.stok_takip_birimi || null;
   }
   if (!Array.isArray(node.alt_satirlar)) node.alt_satirlar = [];
   return node;
@@ -7325,13 +7313,18 @@ function applyBomEditorSelection(screen, { addAnother = false } = {}) {
     toast('Önce soldan bir satır seçin veya «Yeni (kök altına)» ekleyin.');
     return false;
   }
-  state.formRecord = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+  // agac eski kopyayı ezmesin — satırları tek kaynak yap
+  if (Array.isArray(state.formRecord.satirlar)) {
+    state.formRecord.agac = state.formRecord.satirlar;
+  }
   const node = persistBomEditor(state.formRecord, tab);
-  const nodes = ensureBomTree(state.formRecord);
   if (!node) {
     toast('Bileşen satırı bulunamadı.');
     return false;
   }
+  const nodes = state.formRecord.satirlar;
   const stokId = node.bilesen_stok_id;
   const miktar = Number(node.miktar);
   if (!stokId) {
@@ -7347,23 +7340,24 @@ function applyBomEditorSelection(screen, { addAnother = false } = {}) {
     node.stok_kodu = st.stok_kodu;
     node.stok_adi = st.stok_adi;
     node.stok_tipi = st.stok_tipi;
-    if (!node.birim) node.birim = st.birim || null;
+    // birim kullanıcı boş bıraktıysa doldurma — bilinçli boş kalabilir
   }
   state.formRecord.satirlar = nodes;
   state.formRecord.agac = nodes;
   state.treeExpanded[state.treeSel] = true;
+  persistActiveFormTab();
 
   if (addAnother) {
-    // Aynı seviyeye yeni boş satır
+    const blank = { ...emptyRowFromFields(tab.fields), miktar: '', birim: '', alt_satirlar: [] };
     const parts = String(state.treeSel).split('.');
     if (parts.length === 1) {
-      nodes.push({ ...emptyRowFromFields(tab.fields), miktar: 1, alt_satirlar: [] });
+      nodes.push(blank);
       state.treeSel = String(nodes.length - 1);
     } else {
       const parentPath = parts.slice(0, -1).join('.');
       const parent = getBomNode(nodes, parentPath);
       if (!parent.alt_satirlar) parent.alt_satirlar = [];
-      parent.alt_satirlar.push({ ...emptyRowFromFields(tab.fields), miktar: 1, alt_satirlar: [] });
+      parent.alt_satirlar.push(blank);
       state.treeSel = `${parentPath}.${parent.alt_satirlar.length - 1}`;
       state.treeExpanded[parentPath] = true;
     }
@@ -8436,7 +8430,7 @@ function bindEvents() {
       }
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const nodes = ensureBomTree(state.formRecord);
-      const blank = { ...emptyRowFromFields(tab.fields), miktar: 1, alt_satirlar: [] };
+      const blank = { ...emptyRowFromFields(tab.fields), miktar: '', birim: '', alt_satirlar: [] };
       if (act === 'yeni-kok') {
         nodes.push(blank);
         state.treeSel = String(nodes.length - 1);
@@ -8467,6 +8461,8 @@ function bindEvents() {
         state.treeSel = null;
       }
       state.formRecord.satirlar = nodes;
+      state.formRecord.agac = nodes;
+      persistActiveFormTab();
       renderForm(screen);
       return;
     }
