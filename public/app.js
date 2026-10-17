@@ -3427,6 +3427,8 @@ const TANIM_LOOKUP_BY_KEY = {
     valueKey: 'sehir_adi',
     labelKey: 'sehir_adi',
     codeKey: 'sehir_kodu',
+    dependsOn: 'ulke',
+    filterKey: 'ulke_kodu',
   },
   sehir: {
     type: 'lookup',
@@ -3434,6 +3436,8 @@ const TANIM_LOOKUP_BY_KEY = {
     valueKey: 'sehir_adi',
     labelKey: 'sehir_adi',
     codeKey: 'sehir_kodu',
+    dependsOn: 'ulke',
+    filterKey: 'ulke_kodu',
   },
   sevk_il: {
     type: 'lookup',
@@ -3441,6 +3445,8 @@ const TANIM_LOOKUP_BY_KEY = {
     valueKey: 'sehir_adi',
     labelKey: 'sehir_adi',
     codeKey: 'sehir_kodu',
+    dependsOn: 'sevk_ulke',
+    filterKey: 'ulke_kodu',
   },
   ilce: {
     type: 'lookup',
@@ -3448,6 +3454,11 @@ const TANIM_LOOKUP_BY_KEY = {
     valueKey: 'ilce_adi',
     labelKey: 'ilce_adi',
     codeKey: 'ilce_kodu',
+    dependsOn: 'il',
+    filterKey: 'sehir_kodu',
+    parentResolveLookup: 'sehirler',
+    parentResolveBy: 'sehir_adi',
+    parentResolveTo: 'sehir_kodu',
   },
   sevk_ilce: {
     type: 'lookup',
@@ -3455,6 +3466,11 @@ const TANIM_LOOKUP_BY_KEY = {
     valueKey: 'ilce_adi',
     labelKey: 'ilce_adi',
     codeKey: 'ilce_kodu',
+    dependsOn: 'sevk_il',
+    filterKey: 'sehir_kodu',
+    parentResolveLookup: 'sehirler',
+    parentResolveBy: 'sehir_adi',
+    parentResolveTo: 'sehir_kodu',
   },
 };
 
@@ -3476,7 +3492,76 @@ function applyTanimLookup(field) {
     valueKey: def.valueKey,
     labelKey: def.labelKey,
     codeKey: def.codeKey,
+    dependsOn: def.dependsOn,
+    filterKey: def.filterKey,
+    parentResolveLookup: def.parentResolveLookup,
+    parentResolveBy: def.parentResolveBy,
+    parentResolveTo: def.parentResolveTo,
   };
+}
+
+/** Ülke adı/kodu → ulke_kodu; şehir adı/kodu → sehir_kodu */
+function resolveCascadeParentValue(field, parentRaw) {
+  if (parentRaw === undefined || parentRaw === null || parentRaw === '') return null;
+  const raw = String(parentRaw).trim();
+  if (!raw) return null;
+
+  if (field.parentResolveLookup) {
+    const rows = state.lookupCache[field.parentResolveLookup] || [];
+    const by = field.parentResolveBy;
+    const to = field.parentResolveTo;
+    const hit = rows.find((r) =>
+      String(r[by]) === raw
+      || String(r[to]) === raw
+      || (r.sehir_kodu && String(r.sehir_kodu) === raw)
+      || (r.sehir_adi && String(r.sehir_adi) === raw));
+    return hit ? hit[to] : null;
+  }
+
+  // ülke: kod veya ad
+  if (field.filterKey === 'ulke_kodu') {
+    const ulkeler = state.lookupCache.ulkeler || [];
+    const hit = ulkeler.find((u) =>
+      String(u.ulke_kodu) === raw || String(u.ulke_adi) === raw);
+    return hit ? hit.ulke_kodu : raw;
+  }
+  return raw;
+}
+
+function lookupRowsForField(field, ctx = {}) {
+  const all = state.lookupCache[field.lookup] || [];
+  if (!field.dependsOn || !field.filterKey) return all;
+  const parentRaw = ctx[field.dependsOn];
+  const parentVal = resolveCascadeParentValue(field, parentRaw);
+  if (!parentVal) return [];
+  return all.filter((r) => String(r[field.filterKey]) === String(parentVal));
+}
+
+function lookupOptionSelected(field, row, value) {
+  const vk = field.valueKey || 'id';
+  const lk = field.labelKey || 'adi';
+  const ck = field.codeKey;
+  const v = value ?? '';
+  return String(v) === String(row[vk])
+    || (lk && String(v) === String(row[lk]))
+    || (ck && String(v) === String(row[ck]));
+}
+
+function buildLookupOptionsHtml(field, value, rows) {
+  const vk = field.valueKey || 'id';
+  const lk = field.labelKey || 'adi';
+  const ck = field.codeKey;
+  const emptyLabel = field.dependsOn && !(value || rows.length)
+    ? '— önce üst alanı seçin —'
+    : '— seçin —';
+  const opts = [`<option value="">${emptyLabel}</option>`].concat(
+    rows.map((r) => {
+      const val = r[vk];
+      const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
+      return `<option value="${escAttr(val)}" ${lookupOptionSelected(field, r, value) ? 'selected' : ''}>${label}</option>`;
+    })
+  );
+  return opts.join('');
 }
 
 function upgradeTanimLookups(screen) {
@@ -5210,7 +5295,7 @@ function escAttr(v) {
   return String(v ?? '').replace(/"/g, '&quot;');
 }
 
-function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
+function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', ctx = null) {
   const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
   const forceDisabled = state.formMode === 'incele' || codeLocked;
   const dis = forceDisabled ? 'disabled' : '';
@@ -5237,22 +5322,10 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
     </select>`;
   }
   if (field.type === 'lookup') {
-    const rows = state.lookupCache[field.lookup] || [];
-    const vk = field.valueKey || 'id';
-    const lk = field.labelKey || 'adi';
-    const ck = field.codeKey;
-    const opts = [`<option value="">— seçin —</option>`].concat(
-      rows.map((r) => {
-        const val = r[vk];
-        const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
-        // Eski serbest metin kayıtları: kod veya ad ile eşleşsin
-        const selected = String(v) === String(val)
-          || (lk && String(v) === String(r[lk]))
-          || (ck && String(v) === String(r[ck]));
-        return `<option value="${escAttr(val)}" ${selected ? 'selected' : ''}>${label}</option>`;
-      })
-    );
-    return `<select class="lookup-select" ${name} ${dis} ${req}>${opts.join('')}</select>`;
+    const scope = ctx || state.formRecord || {};
+    const rows = lookupRowsForField(field, scope);
+    const dep = field.dependsOn ? ` data-depends-on="${escAttr(field.dependsOn)}"` : '';
+    return `<select class="lookup-select" ${name} ${dis} ${req}${dep}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
   }
   if (field.type === 'number') {
     return `<input type="number" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
@@ -5264,11 +5337,11 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
   return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
 }
 
-function detailFieldControl(field, value, idx, gridKey = null) {
+function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
   const extra = gridKey
     ? `data-didx="${idx}" data-grid="${gridKey}"`
     : `data-didx="${idx}"`;
-  return fieldControl(field, value, 'data-detail', extra);
+  return fieldControl(field, value, 'data-detail', extra, rowCtx || {});
 }
 
 function emptyRowFromFields(fields) {
@@ -5485,8 +5558,9 @@ function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
 }
 
 function renderFieldGrid(fields, rec, attrName = 'data-master') {
+  const ctx = rec || {};
   return (fields || [])
-    .map((f) => fieldShell(f, fieldControl(f, rec[f.key], attrName)))
+    .map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx)))
     .join('');
 }
 
@@ -6089,7 +6163,7 @@ function renderDynamicGrid(tab, rec) {
             </div>
             ${editing || (!canEdit && selected) ? `
               <div class="detail-slot-fields">
-                ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, key))).join('')}
+                ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, key, row))).join('')}
               </div>` : ''}
           </div>`;
       }).join('')}
@@ -6459,6 +6533,7 @@ function renderForm(screen) {
   state.formRecord = rec;
   bindNumeratorFieldListener(screen);
   bindPasswordFieldPersist();
+  bindCascadeLookups(screen);
   if (screen.kullaniciYetkiPaneli) {
     bindYetkiGridEvents();
     bindFirmaYetkiEvents();
@@ -6538,6 +6613,104 @@ function bindPasswordFieldPersist() {
       if (v) state.formRecord[key] = v;
       else delete state.formRecord[key];
     });
+  });
+}
+
+/** Ekrandaki tüm lookup alan tanımlarını topla (master + grid) */
+function collectLookupFieldDefs(screen) {
+  const out = [];
+  const push = (arr) => { (arr || []).forEach((f) => { if (f?.type === 'lookup' && f.key) out.push(f); }); };
+  push(screen.masterFields);
+  push(screen.detailFields);
+  (screen.formTabs || []).forEach((tab) => {
+    push(tab.fields);
+    push(tab.masterFields);
+    push(tab.detailFields);
+    push(tab.grid?.fields);
+  });
+  return out;
+}
+
+function findFieldDefByKey(screen, key) {
+  return collectLookupFieldDefs(screen).find((f) => f.key === key)
+    || (TANIM_LOOKUP_BY_KEY[key] ? applyTanimLookup({ key, label: key }) : null);
+}
+
+function cascadeScopeContext(el) {
+  const didx = el.getAttribute('data-didx');
+  const grid = el.getAttribute('data-grid');
+  if (didx != null && grid) {
+    const ctx = {};
+    document.querySelectorAll(`[data-detail][data-didx="${didx}"][data-grid="${grid}"]`).forEach((sib) => {
+      const k = sib.getAttribute('data-detail');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    return { ctx, didx, grid, isDetail: true };
+  }
+  const ctx = { ...(state.formRecord || {}) };
+  document.querySelectorAll('[data-master]').forEach((sib) => {
+    const k = sib.getAttribute('data-master');
+    if (!k) return;
+    ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+  });
+  return { ctx, isDetail: false };
+}
+
+function refreshLookupSelect(el, field, ctx) {
+  if (!el || !field) return;
+  const rows = lookupRowsForField(field, ctx);
+  const prev = el.value;
+  el.innerHTML = buildLookupOptionsHtml(field, prev, rows);
+  // Önceki değer filtrelenmiş listede yoksa temizle
+  const stillValid = rows.some((r) => lookupOptionSelected(field, r, el.value));
+  if (!stillValid) el.value = '';
+}
+
+/** Ülke/il değişince bağımlı il/ilçe listelerini yenile */
+function refreshDependentLookups(screen, changedEl) {
+  const changedKey = changedEl.getAttribute('data-master')
+    || changedEl.getAttribute('data-detail');
+  if (!changedKey) return;
+  const { ctx, didx, grid, isDetail } = cascadeScopeContext(changedEl);
+  const defs = collectLookupFieldDefs(screen);
+  const dependents = defs.filter((f) => f.dependsOn === changedKey);
+  if (!dependents.length) return;
+
+  dependents.forEach((dep) => {
+    let el;
+    if (isDetail) {
+      el = document.querySelector(
+        `select[data-detail="${dep.key}"][data-didx="${didx}"][data-grid="${grid}"]`
+      );
+    } else {
+      el = document.querySelector(`select[data-master="${dep.key}"]`);
+    }
+    if (!el) return;
+    ctx[changedKey] = changedEl.value;
+    refreshLookupSelect(el, dep, ctx);
+    ctx[dep.key] = el.value;
+    // Zincir: ülke→il→ilçe
+    refreshDependentLookups(screen, el);
+  });
+}
+
+function bindCascadeLookups(_screen) {
+  const root = document.getElementById('viewForm') || document;
+  if (root.dataset?.cascadeBound === '1' || document.documentElement.dataset.cascadeBound === '1') {
+    return;
+  }
+  if (root.dataset) root.dataset.cascadeBound = '1';
+  else document.documentElement.dataset.cascadeBound = '1';
+  root.addEventListener('change', (e) => {
+    const el = e.target;
+    if (!(el instanceof HTMLSelectElement)) return;
+    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
+    const scr = findScreen(state.screenId);
+    if (!scr || state.formMode == null) return;
+    const key = el.getAttribute('data-master');
+    if (key && state.formRecord) state.formRecord[key] = el.value;
+    refreshDependentLookups(scr, el);
   });
 }
 
