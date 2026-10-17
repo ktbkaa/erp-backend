@@ -1600,6 +1600,12 @@ tr.selected td { background: var(--accent-soft); }
 }
 .bom-node:hover { background: #f0f5f3; }
 .bom-node.selected { background: #dff3ee; outline: 1px solid #1f7a6b; }
+.bom-node.bom-node-empty {
+  border: 1px dashed #b7c9c3;
+  background: #f7faf9;
+  color: var(--muted);
+}
+.bom-node.bom-node-empty .bom-name { font-style: italic; }
 .bom-toggle { width: 1.1rem; color: var(--muted); font-size: 0.85rem; }
 .bom-code { font-weight: 700; }
 .bom-name { color: var(--ink); }
@@ -1631,6 +1637,24 @@ tr.selected td { background: var(--accent-soft); }
 }
 .rota-op-card:hover { border-color: #9bb5ad; }
 .rota-op-card.selected { border-color: #1f7a6b; background: #f4fbf9; }
+.rota-op-card.rota-op-empty {
+  border-style: dashed;
+  color: var(--muted);
+  background: #f7faf9;
+}
+.rota-editor-pane .rota-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.85rem 0 0.5rem;
+}
+.rota-editor-pane .rota-editor-actions .btn.action {
+  min-width: 9rem;
+}
+.detail-slot.detail-slot-empty .detail-slot-summary {
+  font-style: italic;
+  color: var(--muted);
+}
 .rota-op-seq { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
 .rota-op-title { font-weight: 600; margin: 0.2rem 0; }
 .rota-op-meta {

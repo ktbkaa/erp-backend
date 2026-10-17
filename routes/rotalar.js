@@ -7,9 +7,12 @@ const { withTransaction } = require('../src/utils/withTransaction');
 async function rotaGetir(id) {
     const baslik = await pool.query(
         `
-        SELECT r.*, s.stok_kodu, s.stok_adi, s.stok_tipi
+        SELECT r.*,
+               s.stok_kodu, s.stok_adi, s.stok_tipi,
+               ua.agac_kodu, ua.agac_adi
         FROM rotalar r
         JOIN stoklar s ON s.id = r.stok_id
+        LEFT JOIN urun_agaclari ua ON ua.id = r.urun_agaci_id
         WHERE r.id = $1
         `,
         [id]
@@ -110,6 +113,7 @@ router.post('/', async (req, res) => {
     try {
         const {
             stok_id,
+            urun_agaci_id,
             rota_kodu,
             rota_adi,
             operasyonlar,
@@ -123,22 +127,29 @@ router.post('/', async (req, res) => {
         }
 
         const id = await withTransaction(pool, async (client) => {
+            let firmaId = firmaIdFromReq(req) || Number(req.body.firma_id) || null;
+            if (!firmaId) {
+                const st = await client.query('SELECT firma_id FROM stoklar WHERE id=$1', [stok_id]);
+                firmaId = st.rows[0]?.firma_id || null;
+            }
             const baslik = await client.query(
                 `
                 INSERT INTO rotalar
-                    (stok_id, rota_kodu, rota_adi, sablon, varsayilan,
-                     gecerlilik_baslangic, gecerlilik_bitis)
-                VALUES ($1,$2,$3,COALESCE($4,FALSE),COALESCE($5,FALSE),$6,$7)
+                    (stok_id, urun_agaci_id, rota_kodu, rota_adi, sablon, varsayilan,
+                     gecerlilik_baslangic, gecerlilik_bitis, firma_id)
+                VALUES ($1,$2,$3,$4,COALESCE($5,FALSE),COALESCE($6,FALSE),$7,$8,$9)
                 RETURNING id
                 `,
                 [
                     stok_id,
+                    urun_agaci_id || null,
                     rota_kodu,
                     rota_adi,
                     sablon,
                     varsayilan,
                     gecerlilik_baslangic || null,
                     gecerlilik_bitis || null,
+                    firmaId,
                 ]
             );
             const rotaId = baslik.rows[0].id;
@@ -187,6 +198,7 @@ router.put('/:id', async (req, res) => {
         const {
             rota_adi,
             stok_id,
+            urun_agaci_id,
             operasyonlar,
             sablon,
             varsayilan,
@@ -202,21 +214,25 @@ router.put('/:id', async (req, res) => {
                 err.status = 404;
                 throw err;
             }
+            const agacGuncelle = Object.prototype.hasOwnProperty.call(req.body, 'urun_agaci_id');
             await client.query(
                 `
                 UPDATE rotalar SET
                     rota_adi=$2,
                     stok_id=COALESCE($3, stok_id),
-                    sablon=COALESCE($4, sablon),
-                    varsayilan=COALESCE($5, varsayilan),
-                    gecerlilik_baslangic=COALESCE($6, gecerlilik_baslangic),
-                    gecerlilik_bitis=COALESCE($7, gecerlilik_bitis)
+                    urun_agaci_id=CASE WHEN $4::boolean THEN $5 ELSE urun_agaci_id END,
+                    sablon=COALESCE($6, sablon),
+                    varsayilan=COALESCE($7, varsayilan),
+                    gecerlilik_baslangic=COALESCE($8, gecerlilik_baslangic),
+                    gecerlilik_bitis=COALESCE($9, gecerlilik_bitis)
                 WHERE id=$1
                 `,
                 [
                     req.params.id,
                     rota_adi,
                     stok_id || null,
+                    agacGuncelle,
+                    urun_agaci_id || null,
                     sablon,
                     varsayilan,
                     gecerlilik_baslangic || null,
