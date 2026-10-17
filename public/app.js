@@ -4259,9 +4259,26 @@ function enterApp() {
 
 function applySession(ses, kullanici_adi) {
   state.session = ses;
-  localStorage.setItem('ktb_kullanici_kodu', ses.kullanici_kodu || kullanici_adi || '');
+  const kod = ses.kullanici_kodu || kullanici_adi || '';
+  if (kod) localStorage.setItem('ktb_kullanici_kodu', kod);
   if (ses.access_token) localStorage.setItem('ktb_access_token', ses.access_token);
   if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
+  // Bu cihazda oturum açıldı — boot’ta giriş ekranı zorlanmaz
+  localStorage.setItem('ktb_cihaz_oturum', '1');
+}
+
+function softSessionFromStorage() {
+  const kod = localStorage.getItem('ktb_kullanici_kodu');
+  if (!kod) return false;
+  if (!state.session) {
+    state.session = {
+      kullanici_kodu: kod,
+      kullanici_adi: kod,
+      ad: kod,
+      unvan: 'Yerel oturum',
+    };
+  }
+  return true;
 }
 
 async function logoutUser() {
@@ -4276,6 +4293,7 @@ async function logoutUser() {
   localStorage.removeItem('ktb_access_token');
   localStorage.removeItem('ktb_refresh_token');
   localStorage.removeItem('ktb_kullanici_kodu');
+  localStorage.removeItem('ktb_cihaz_oturum');
   state.session = null;
   closeUserChipMenu();
   renderUserChip();
@@ -4759,10 +4777,6 @@ function updateActionButtons(screen) {
 
 async function openScreen(id, opts = {}) {
   try {
-    if (!state.session) {
-      showLoginView();
-      return;
-    }
     const screen = findScreen(id);
     if (!screen) {
       toast(`Ekran bulunamadı: ${id || '?'}`);
@@ -4801,7 +4815,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017o`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017p`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -7456,18 +7470,46 @@ function bindEvents() {
   });
 }
 
+async function tryRefreshAccessToken() {
+  const refresh = localStorage.getItem('ktb_refresh_token');
+  if (!refresh) return false;
+  try {
+    const data = await api('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+    if (data?.access_token) {
+      localStorage.setItem('ktb_access_token', data.access_token);
+      return true;
+    }
+  } catch (_) { /* ignore */ }
+  return false;
+}
+
 async function restoreSession() {
   try {
     const kod = localStorage.getItem('ktb_kullanici_kodu');
     const token = localStorage.getItem('ktb_access_token');
-    if (!kod && !token) return false;
+    const cihaz = localStorage.getItem('ktb_cihaz_oturum') === '1';
+    if (!kod && !token && !cihaz) return false;
+
     if (token) {
       try {
         state.session = await api('/auth/me');
+        localStorage.setItem('ktb_cihaz_oturum', '1');
         return Boolean(state.session);
-      } catch (_) { /* token süresi dolmuş */ }
+      } catch (_) { /* access süresi dolmuş */ }
     }
-    // Parolasız kullanıcılar için kod ile yenileme (parola_hash yoksa API kabul eder)
+
+    if (await tryRefreshAccessToken()) {
+      try {
+        state.session = await api('/auth/me');
+        localStorage.setItem('ktb_cihaz_oturum', '1');
+        return Boolean(state.session);
+      } catch (_) { /* ignore */ }
+    }
+
+    // Parolasız kullanıcılar için kod ile yenileme
     if (kod) {
       try {
         const ses = await api('/auth/login', {
@@ -7476,40 +7518,40 @@ async function restoreSession() {
         });
         applySession(ses, kod);
         return true;
-      } catch (_) { /* parola zorunluysa giriş ekranı */ }
+      } catch (_) { /* parola zorunlu — yine de bu cihaz oturumunu koru */ }
     }
-    localStorage.removeItem('ktb_access_token');
-    localStorage.removeItem('ktb_refresh_token');
-    // Kullanıcı adını formda hatırla
-    if (kod && $('#loginUser') && !$('#loginUser').value) {
-      $('#loginUser').value = kod;
+
+    // Bu cihazdan daha önce giriş yapıldıysa token olmasa da uygulamayı aç
+    if (kod || cihaz) {
+      softSessionFromStorage();
+      if (kod && $('#loginUser') && !$('#loginUser').value) {
+        $('#loginUser').value = kod;
+      }
+      return true;
     }
     return false;
   } catch (_) {
-    return false;
+    return softSessionFromStorage();
   } finally {
     renderUserChip();
   }
 }
 
+/** Uygulamayı aç; giriş ekranı yalnızca çıkış / «Giriş yap» ile manuel açılır. */
+async function bootIntoApp() {
+  enterApp();
+  await loadFirmalar().catch(() => {});
+  renderFirmaPicker();
+  const id = (location.hash || '').replace(/^#/, '');
+  if (id && findScreen(id)) openScreen(id);
+  else showHome();
+}
+
 function bootFromHash() {
   bindEvents();
   restoreSession()
-    .then(async (ok) => {
-      if (!ok) {
-        showLoginView();
-        return;
-      }
-      enterApp();
-      await loadFirmalar().catch(() => {});
-      renderFirmaPicker();
-      const id = (location.hash || '').replace(/^#/, '');
-      if (id && findScreen(id)) openScreen(id);
-      else showHome();
-    })
-    .catch(() => {
-      showLoginView();
-    });
+    .then(() => bootIntoApp())
+    .catch(() => bootIntoApp());
 }
 
 bootFromHash();
