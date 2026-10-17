@@ -106,7 +106,7 @@ router.post('/', async (req, res) => {
                      bulma_yontemi, oncelik, telefon, cep_tel, email, website, fax,
                      adres, il, ilce, ulke, posta_kodu, sektor_kodu, notlar, aktif)
                 VALUES ($1,$2,COALESCE($3,'Yeni'),$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
-                        $14,$15,$16,COALESCE($17,'Türkiye'),$18,$19,$20,COALESCE($21,TRUE))
+                        $14,$15,$16,COALESCE($17,'TR'),$18,$19,$20,COALESCE($21,TRUE))
                 RETURNING id
                 `,
                 [
@@ -193,7 +193,7 @@ router.post('/:id/cariye-donustur', async (req, res) => {
                 INSERT INTO cariler
                     (cari_kodu, cari_adi, cari_turu, telefon, email, adres, il, ilce, ulke,
                      posta_kodu, website, fax, cep_tel, aktif, notlar)
-                VALUES ($1,$2,'Musteri',$3,$4,$5,$6,$7,COALESCE($8,'Türkiye'),$9,$10,$11,$12,TRUE,$13)
+                VALUES ($1,$2,'Musteri',$3,$4,$5,$6,$7,COALESCE($8,'TR'),$9,$10,$11,$12,TRUE,$13)
                 RETURNING id, cari_kodu, cari_adi
                 `,
                 [

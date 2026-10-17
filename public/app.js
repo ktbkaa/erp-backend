@@ -130,6 +130,95 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
+      {
+        id: 'para-birimi-tanimi',
+        title: 'Para Birimi Tanımı',
+        endpoint: '/para-birimleri',
+        crud: true,
+        codeField: 'pb_kodu',
+        nameField: 'pb_adi',
+        numeratorSeri: 'PARA_BIRIM',
+        filters: [
+          { key: 'pb_kodu', label: 'PB kodu' },
+          { key: 'pb_adi', label: 'PB adı' },
+        ],
+        columns: [
+          { key: 'pb_kodu', label: 'Kod', mono: true },
+          { key: 'pb_adi', label: 'Ad' },
+          { key: 'sembol', label: 'Sembol' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'pb_kodu', label: 'Para birimi kodu', code: true, editableOnNew: true, required: true },
+          { key: 'pb_adi', label: 'Para birimi adı', name: true, required: true },
+          { key: 'sembol', label: 'Sembol' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'sehir-tanimi',
+        title: 'Şehir / İl Tanımı',
+        endpoint: '/sehirler',
+        crud: true,
+        codeField: 'sehir_kodu',
+        nameField: 'sehir_adi',
+        numeratorSeri: 'SEHIR',
+        filters: [
+          { key: 'sehir_kodu', label: 'Şehir kodu' },
+          { key: 'sehir_adi', label: 'Şehir adı' },
+          { key: 'ulke_kodu', label: 'Ülke' },
+        ],
+        columns: [
+          { key: 'sehir_kodu', label: 'Kod', mono: true },
+          { key: 'sehir_adi', label: 'Ad' },
+          { key: 'ulke_kodu', label: 'Ülke' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'sehir_kodu', label: 'Şehir kodu', code: true, editableOnNew: true, required: true },
+          { key: 'sehir_adi', label: 'Şehir adı', name: true, required: true },
+          { key: 'ulke_kodu', label: 'Ülke', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_kodu', labelKey: 'ulke_adi' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'ilce-tanimi',
+        title: 'İlçe Tanımı',
+        endpoint: '/ilceler',
+        crud: true,
+        codeField: 'ilce_kodu',
+        nameField: 'ilce_adi',
+        numeratorSeri: 'ILCE',
+        filters: [
+          { key: 'ilce_kodu', label: 'İlçe kodu' },
+          { key: 'ilce_adi', label: 'İlçe adı' },
+          { key: 'sehir_kodu', label: 'Şehir' },
+        ],
+        columns: [
+          { key: 'ilce_kodu', label: 'Kod', mono: true },
+          { key: 'ilce_adi', label: 'Ad' },
+          { key: 'sehir_kodu', label: 'Şehir' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'ilce_kodu', label: 'İlçe kodu', code: true, editableOnNew: true, required: true },
+          { key: 'ilce_adi', label: 'İlçe adı', name: true, required: true },
+          { key: 'sehir_kodu', label: 'Şehir', type: 'lookup', lookup: 'sehirler', valueKey: 'sehir_kodu', labelKey: 'sehir_adi' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
 
       {
         id: 'hareket-kodlari',
@@ -2086,7 +2175,7 @@ const MODULES = [
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
-        defaults: { musteri_tipi: 'Musteri', para_birimi: 'TRY', ulke: 'Türkiye' },
+        defaults: { musteri_tipi: 'Musteri', para_birimi: 'TRY', ulke: 'TR' },
       },
       {
         id: 'crm-faaliyet-planlari',
@@ -3286,10 +3375,124 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     s.filters.unshift({ key: 'aktif', label: 'Aktif', type: 'bool' });
   }
 
+  // Serbest metin tanım alanlarını Sabit Tanımlar lookup'ına çevir (tüm ekranlar)
+  upgradeTanimLookups(s);
+
   // Filtreleri form alanlarından zenginleştir (select/lookup → açılır liste)
   enrichFiltersFromForm(s);
 
   return s;
+}
+
+/** Para birimi / ülke / il / ilçe → tanım ekranı lookup */
+const TANIM_LOOKUP_BY_KEY = {
+  para_birimi: {
+    type: 'lookup',
+    lookup: 'para-birimleri',
+    valueKey: 'pb_kodu',
+    labelKey: 'pb_adi',
+    codeKey: 'pb_kodu',
+  },
+  ulke: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  sevk_ulke: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  ulke_mensei: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  ulke_kodu: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  il: {
+    type: 'lookup',
+    lookup: 'sehirler',
+    valueKey: 'sehir_adi',
+    labelKey: 'sehir_adi',
+    codeKey: 'sehir_kodu',
+  },
+  sehir: {
+    type: 'lookup',
+    lookup: 'sehirler',
+    valueKey: 'sehir_adi',
+    labelKey: 'sehir_adi',
+    codeKey: 'sehir_kodu',
+  },
+  sevk_il: {
+    type: 'lookup',
+    lookup: 'sehirler',
+    valueKey: 'sehir_adi',
+    labelKey: 'sehir_adi',
+    codeKey: 'sehir_kodu',
+  },
+  ilce: {
+    type: 'lookup',
+    lookup: 'ilceler',
+    valueKey: 'ilce_adi',
+    labelKey: 'ilce_adi',
+    codeKey: 'ilce_kodu',
+  },
+  sevk_ilce: {
+    type: 'lookup',
+    lookup: 'ilceler',
+    valueKey: 'ilce_adi',
+    labelKey: 'ilce_adi',
+    codeKey: 'ilce_kodu',
+  },
+};
+
+function applyTanimLookup(field) {
+  if (!field || !field.key) return field;
+  const def = TANIM_LOOKUP_BY_KEY[field.key];
+  if (!def) return field;
+  // select/checkbox/number/date veya zaten doğru lookup ise dokunma (label/required koru)
+  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'password') {
+    return field;
+  }
+  if (field.type === 'select' && Array.isArray(field.options) && field.options.length) {
+    return field;
+  }
+  return {
+    ...field,
+    type: 'lookup',
+    lookup: def.lookup,
+    valueKey: def.valueKey,
+    labelKey: def.labelKey,
+    codeKey: def.codeKey,
+  };
+}
+
+function upgradeTanimLookups(screen) {
+  const mapFields = (arr) => {
+    if (!Array.isArray(arr)) return;
+    for (let i = 0; i < arr.length; i += 1) arr[i] = applyTanimLookup(arr[i]);
+  };
+  mapFields(screen.masterFields);
+  mapFields(screen.detailFields);
+  mapFields(screen.filters);
+  (screen.formTabs || []).forEach((tab) => {
+    mapFields(tab.fields);
+    mapFields(tab.masterFields);
+    mapFields(tab.detailFields);
+    mapFields(tab.grid?.fields);
+  });
 }
 
 /** Ekrandaki tüm form alanlarını topla */
@@ -3469,7 +3672,7 @@ function buildLinkedPrefill(link, sourceRec, extra = {}) {
       sevk_adresi: sourceRec.sevk_adresi,
       sevk_il: sourceRec.sevk_il,
       sevk_ilce: sourceRec.sevk_ilce,
-      sevk_ulke: sourceRec.sevk_ulke || 'Türkiye',
+      sevk_ulke: sourceRec.sevk_ulke || 'TR',
       sevk_posta_kodu: sourceRec.sevk_posta_kodu,
       arac_plaka: extra.arac_plaka || null,
       sofor_adi: extra.sofor_adi || null,
@@ -4900,6 +5103,9 @@ const LOOKUP_ENDPOINTS = {
   depolar: '/depolar',
   stoklar: '/stoklar',
   ulkeler: '/ulkeler?aktif=true',
+  'para-birimleri': '/para-birimleri?aktif=true',
+  sehirler: '/sehirler?aktif=true',
+  ilceler: '/ilceler?aktif=true',
   'is-merkezleri': '/is-merkezleri',
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?aktif=true',
@@ -5039,7 +5245,11 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
       rows.map((r) => {
         const val = r[vk];
         const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
-        return `<option value="${escAttr(val)}" ${String(v) === String(val) ? 'selected' : ''}>${label}</option>`;
+        // Eski serbest metin kayıtları: kod veya ad ile eşleşsin
+        const selected = String(v) === String(val)
+          || (lk && String(v) === String(r[lk]))
+          || (ck && String(v) === String(r[ck]));
+        return `<option value="${escAttr(val)}" ${selected ? 'selected' : ''}>${label}</option>`;
       })
     );
     return `<select class="lookup-select" ${name} ${dis} ${req}>${opts.join('')}</select>`;
@@ -5097,10 +5307,13 @@ function lookupDisplay(field, value) {
   if (value === undefined || value === null || value === '') return '—';
   const rows = state.lookupCache[field.lookup] || [];
   const vk = field.valueKey || 'id';
-  const hit = rows.find((r) => String(r[vk]) === String(value));
-  if (!hit) return String(value);
-  const ck = field.codeKey;
   const lk = field.labelKey || 'adi';
+  const ck = field.codeKey;
+  const hit = rows.find((r) =>
+    String(r[vk]) === String(value)
+    || (lk && String(r[lk]) === String(value))
+    || (ck && String(r[ck]) === String(value)));
+  if (!hit) return String(value);
   return ck ? `${hit[ck] || ''} — ${hit[lk] || ''}` : `${hit[lk] || hit[vk]}`;
 }
 

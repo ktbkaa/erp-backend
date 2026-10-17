@@ -370,7 +370,7 @@ router.post('/', async (req, res) => {
                     trimOrNull(m.yetkili_adi), trimOrNull(m.yetkili_telefon),
                     trimOrNull(m.adres), trimOrNull(m.fatura_adresi),
                     trimOrNull(m.fatura_adres1), trimOrNull(m.fatura_adres2), trimOrNull(m.fatura_adres3),
-                    trimOrNull(m.il), trimOrNull(m.ilce), trimOrNull(m.ulke) || 'Türkiye',
+                    trimOrNull(m.il), trimOrNull(m.ilce), trimOrNull(m.ulke) || 'TR',
                     trimOrNull(m.posta_kodu), m.enlem ?? null, m.boylam ?? null,
                     trimOrNull(m.para_birimi) || 'TRY', m.odeme_vadesi_gun ?? 0,
                     typeof m.aktif === 'boolean' ? m.aktif : true,

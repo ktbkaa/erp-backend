@@ -189,7 +189,7 @@ router.post('/', async (req, res) => {
                      olusturan_id, takip_eden_id, beklenen_gelir, para_birimi, degerlendirme,
                      hedef_kapatma_tarihi, ulke, is_yeri_id, aciklama, durum)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),COALESCE($11,'TRY'),$12,
-                        $13,COALESCE($14,'Türkiye'),$15,$16,'Acik')
+                        $13,COALESCE($14,'TR'),$15,$16,'Acik')
                 RETURNING id
                 `,
                 [
