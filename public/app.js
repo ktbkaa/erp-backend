@@ -5615,14 +5615,14 @@ function renderFieldGrid(fields, rec, attrName = 'data-master', opts = {}) {
   const gridCls = opts.gridClass
     || (attrName === 'data-master' ? 'form-tab-fields--master' : 'form-tab-fields--detail');
 
-  // Başlık (primary) düz kalır — tarama için grup yok
-  if (!opts.grouped || list.length < 4) {
+  // Başlık (primary) düz kalır — tarama için grup yok (çağıran zaten grid sarıyor)
+  if (!opts.grouped) {
     return list.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx))).join('');
   }
 
   const clusters = clusterFieldsByGroup(list);
-  if (clusters.length <= 1) {
-    return list.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx))).join('');
+  if (list.length < 4 || clusters.length <= 1) {
+    return renderFlat(list, gridCls);
   }
 
   return clusters.map((c) => `
