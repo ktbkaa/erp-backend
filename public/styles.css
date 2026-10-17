@@ -596,7 +596,8 @@ body {
 
 .screen-view {
   display: grid;
-  grid-template-rows: auto auto minmax(140px, 28vh) 1fr;
+  /* banner | aksiyon | filtre(içerik kadar) | liste(kalan) — filtre aşağı şişmez */
+  grid-template-rows: auto auto auto 1fr;
   height: 100%;
   min-height: 0;
   background: #f7fafb;
@@ -644,10 +645,11 @@ body {
 
 .filter-pane {
   border-bottom: 1px solid var(--line);
-  background: #fbfcfd;
-  padding: 0.7rem 1.1rem 0.85rem;
-  overflow: auto;
+  background: #fff;
+  padding: 0.5rem 1rem 0.55rem;
+  overflow: visible;
   min-height: 0;
+  flex: 0 0 auto;
 }
 .filter-pane-head, .list-pane-head, .detail-head, .form-topbar {
   display: flex;
@@ -655,88 +657,97 @@ body {
   justify-content: space-between;
   gap: 0.75rem;
 }
-.filter-pane-head { margin-bottom: 0.55rem; }
+.filter-pane-head { margin-bottom: 0.4rem; }
 .filter-pane-head h2, .list-pane-head h2, .master-pane h2, .detail-pane h2 {
   margin: 0;
   font-family: var(--display);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--ink);
 }
-.filter-actions, .form-actions { display: flex; gap: 0.4rem; }
-.filter-actions .btn { padding: 0.38rem 0.8rem; font-size: 0.84rem; }
+.filter-actions, .form-actions { display: flex; gap: 0.35rem; }
+.filter-actions .btn { padding: 0.32rem 0.7rem; font-size: 0.82rem; }
 
 /*
-  Çizime uygun oran:
-  Sol (~34%): Firma → İş yeri → boşluk → Tarih → Aktif
-  Sağ (~66%): kod / ad / belge / cari — aynı dikey ritim, alanı doldurur
+  Tek yatay bant — aşağı şişmez.
+  Sol: Firma / İş yeri / Aktif (tek satır kontroller)
+  Sağ: kod, ad, cari… yan yana
 */
 .filter-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 34%) minmax(0, 1fr);
-  gap: 0 1.5rem;
-  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 1rem;
+  align-items: center;
 }
 .filter-col {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
   min-width: 0;
 }
 .filter-col--scope {
-  padding: 0.1rem 1.35rem 0.1rem 0;
-  border-right: 1px solid #d5dee6;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding-right: 1rem;
+  border-right: 1px solid #e2e8ee;
+  min-width: 17.5rem;
+  max-width: 20rem;
 }
 .filter-col--scope .filter-field--isyeri {
   margin-bottom: 0.15rem;
-  padding-bottom: 0.65rem;
-  border-bottom: 1px solid #e6edf2;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #eef2f5;
 }
 .filter-col--main {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem 1.25rem;
-  align-content: start;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.4rem 0.75rem;
+  align-items: center;
 }
 .filter-col-empty { display: none; }
 
-/* Etiket üstte; op + değer altta — okunaklı yükseklik */
+/* Tek satır: etiket | op | değer — yüksek form yok */
 .filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  display: grid;
+  grid-template-columns: 3.6rem minmax(0, 1fr);
+  gap: 0.3rem 0.4rem;
+  align-items: center;
   padding: 0;
   background: transparent;
   border: 0;
   min-width: 0;
 }
 .filter-field label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted);
-  line-height: 1.2;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 .filter-controls {
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr);
-  gap: 0.45rem;
+  grid-template-columns: 5.4rem minmax(0, 1fr);
+  gap: 0.3rem;
   min-width: 0;
 }
 .filter-field .filter-op {
-  font-size: 0.84rem;
-  padding: 0.42rem 0.5rem;
+  font-size: 0.78rem;
+  padding: 0.28rem 0.3rem;
   min-width: 0;
 }
 .filter-field select, .filter-field input {
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 0.4rem;
-  padding: 0.42rem 0.6rem;
+  border-radius: 0.35rem;
+  padding: 0.28rem 0.45rem;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   background: #fff;
   min-width: 0;
-  height: 2.25rem;
+  height: 1.85rem;
 }
 .field input, .field select, .field textarea,
 .detail-scroll input {
@@ -749,66 +760,58 @@ body {
 }
 .filter-values {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.25rem;
   min-width: 0;
 }
 .filter-values.split { grid-template-columns: 1fr 1fr; }
 .filter-values select,
 .filter-values input { width: 100%; }
 
-@media (max-width: 960px) {
+@media (max-width: 900px) {
   .filter-grid {
     grid-template-columns: 1fr;
-    min-height: 0;
-    gap: 0.85rem;
+    gap: 0.55rem;
   }
   .filter-col--scope {
+    max-width: none;
     padding-right: 0;
     border-right: 0;
-    padding-bottom: 0.75rem;
+    padding-bottom: 0.45rem;
     border-bottom: 1px solid #e2e8ee;
   }
-  .filter-col--main {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Sağda tek alan varsa tam genişlik kullan */
-.filter-col--main:has(.filter-field:only-child) {
-  grid-template-columns: 1fr;
 }
 
 .list-pane {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0.7rem 1.1rem 1rem;
+  padding: 0.6rem 1rem 0.85rem;
   background: #fff;
 }
-.list-pane-head { margin-bottom: 0.45rem; }
-.list-meta { color: var(--muted); font-size: 0.82rem; }
+.list-pane-head { margin-bottom: 0.4rem; }
+.list-meta { color: var(--muted); font-size: 0.8rem; }
 .table-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
   border: 1px solid var(--line);
-  border-radius: 0.45rem;
+  border-radius: 0.4rem;
   background: #fff;
 }
 #dataTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.86rem;
-  line-height: 1.3;
+  font-size: 0.84rem;
+  line-height: 1.25;
 }
 #dataTable th,
 #dataTable td {
   text-align: left;
-  padding: 0.42rem 0.65rem !important;
+  padding: 0.35rem 0.55rem !important;
   border-bottom: 1px solid #e8eef2 !important;
   vertical-align: middle !important;
   white-space: nowrap;
-  max-width: 16rem;
+  max-width: 14rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -816,15 +819,15 @@ body {
   position: sticky;
   top: 0;
   background: #f1f5f8 !important;
-  font-size: 0.74rem !important;
+  font-size: 0.72rem !important;
   font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   z-index: 1;
-  padding: 0.48rem 0.65rem !important;
+  padding: 0.4rem 0.55rem !important;
 }
-#dataTable tbody tr { height: 2.15rem; }
+#dataTable tbody tr { height: 1.95rem; }
 #dataTable tbody tr:nth-child(even) td { background: #fafcfd; }
 #dataTable tr:hover td { background: #f3f9f7 !important; }
 #dataTable tr.selected td { background: var(--accent-soft) !important; }
@@ -847,21 +850,21 @@ th {
 tr:hover td { background: #f7fbfa; }
 tr.selected td { background: var(--accent-soft); }
 .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; font-size: 0.92em; }
-#dataTable .mono { font-size: 0.84rem; }
-.empty-row td { color: var(--muted); text-align: center; padding: 1.5rem 1rem !important; white-space: normal !important; }
+#dataTable .mono { font-size: 0.8rem; }
+.empty-row td { color: var(--muted); text-align: center; padding: 1.25rem 1rem !important; white-space: normal !important; }
 
 .action-bar {
-  padding: 0.55rem 1.1rem 0.45rem !important;
+  padding: 0.5rem 1rem 0.4rem !important;
   gap: 0.35rem !important;
 }
 .action-bar .btn.action {
-  min-width: 4.8rem;
-  padding: 0.4rem 0.75rem !important;
-  font-size: 0.86rem !important;
+  min-width: 4.6rem;
+  padding: 0.36rem 0.7rem !important;
+  font-size: 0.84rem !important;
 }
 .screen-banner {
-  padding: 0.4rem 1.1rem !important;
-  font-size: 0.84rem !important;
+  padding: 0.35rem 1rem !important;
+  font-size: 0.8rem !important;
 }
 
 .form-view {
