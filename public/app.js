@@ -4728,7 +4728,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017k`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017m`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -5171,9 +5171,28 @@ function allScreensCatalog() {
   return out;
 }
 
+function isAdminLikeUser(rec) {
+  if (!rec) return false;
+  if (rec.grup_kodu === 'ADMIN') return true;
+  return String(rec.rol || '').toLowerCase() === 'yonetici';
+}
+
+/**
+ * ADMIN / Yönetici + boş yetki listesi = tüm ekranlar (gelecekte eklenenler dahil).
+ * Formda görsel olarak hepsi işaretli gösterilir.
+ */
 function yetkiMapFromRecord(rec) {
   const map = {};
-  (rec?.yetkiler || []).forEach((y) => {
+  const list = rec?.yetkiler || [];
+  if (!list.length && isAdminLikeUser(rec)) {
+    allScreensCatalog().forEach((s) => {
+      map[s.id] = {
+        erisim: true, yeni: true, incele: true, duzelt: true, kopyala: true, sil: true,
+      };
+    });
+    return map;
+  }
+  list.forEach((y) => {
     if (!y?.ekran_id) return;
     map[y.ekran_id] = {
       erisim: y.erisim !== false,
@@ -5185,6 +5204,57 @@ function yetkiMapFromRecord(rec) {
     };
   });
   return map;
+}
+
+/** Tam yetkili kaydı küçük tut: tüm ekranlar doluysa boş dizi (= wildcard). */
+function compressYetkilerForSave(master) {
+  const all = allScreensCatalog();
+  const y = Array.isArray(master.yetkiler) ? master.yetkiler : [];
+  if (!isAdminLikeUser(master)) return;
+  const full = all.length > 0 && all.every((s) => {
+    const r = y.find((x) => x.ekran_id === s.id);
+    return r && r.yeni && r.incele && r.duzelt && r.kopyala && r.sil;
+  });
+  if (full || y.length === 0) {
+    // Boş = tüm mevcut + ileride eklenecek ekranlara tam yetki
+    master.yetkiler = [];
+  }
+  const firms = Array.isArray(state.firmalar) ? state.firmalar : [];
+  const fy = Array.isArray(master.firma_yetkileri) ? master.firma_yetkileri : [];
+  if (!firms.length || fy.length === 0 || fy.length >= firms.length) {
+    master.firma_yetkileri = [];
+  }
+}
+
+function resizeImageToDataUrl(file, maxSide = 256, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let { width, height } = img;
+        const scale = Math.min(1, maxSide / Math.max(width, height));
+        width = Math.max(1, Math.round(width * scale));
+        height = Math.max(1, Math.round(height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const data = canvas.toDataURL('image/jpeg', quality);
+        URL.revokeObjectURL(url);
+        resolve(data);
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Resim okunamadı'));
+    };
+    img.src = url;
+  });
 }
 
 function renderKullaniciProfilBlok(rec) {
@@ -5205,7 +5275,7 @@ function renderKullaniciProfilBlok(rec) {
             <input type="file" id="userAvatarFile" accept="image/*" hidden ${readonly ? 'disabled' : ''} />
           </label>
           <button type="button" class="btn ghost" id="userAvatarClear" ${readonly || !src ? 'hidden' : ''}>Kaldır</button>
-          <p class="hint">Kare JPG/PNG, en fazla ~300KB.</p>
+          <p class="hint">JPG/PNG; kayıtta otomatik küçültülür. ADMIN’de boş yetki = tüm ekranlar (yeniler dahil).</p>
         </div>
       </div>
     </section>`;
@@ -5214,10 +5284,14 @@ function renderKullaniciProfilBlok(rec) {
 function renderFirmaYetkiPane(rec) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
-  const selected = new Set(
-    (rec.firma_yetkileri || []).map((f) => Number(f.firma_id ?? f.id)).filter(Boolean)
-  );
   const firmalar = Array.isArray(state.firmalar) ? state.firmalar : [];
+  const rawSel = (rec.firma_yetkileri || []).map((f) => Number(f.firma_id ?? f.id)).filter(Boolean);
+  // ADMIN + boş liste = tüm firmalar (kısıt yok) — formda hepsi işaretli
+  const selected = new Set(
+    (!rawSel.length && isAdminLikeUser(rec))
+      ? firmalar.map((f) => Number(f.id))
+      : rawSel
+  );
   const rows = firmalar.length
     ? firmalar.map((f) => `
       <tr data-firma-yetki="${escAttr(f.id)}">
@@ -5238,7 +5312,7 @@ function renderFirmaYetkiPane(rec) {
           <button type="button" class="btn ghost" id="firmaYetkiClearAll">Temizle</button>
         </div>
       </div>
-      <p class="hint yetki-hint">Kullanıcının işlem yapabileceği firmaları satırdan işaretleyin. Hiçbiri seçilmezse kısıt uygulanmaz (tüm firmalar).</p>
+      <p class="hint yetki-hint">Kullanıcının işlem yapabileceği firmaları satırdan işaretleyin. ADMIN’de hepsi / boş kayıt = tüm firmalar (kısıt yok).</p>
       <div class="firma-yetki-scroll">
         <table class="yetki-table" id="firmaYetkiTable">
           <thead>
@@ -5298,7 +5372,7 @@ function renderYetkiGrid(rec) {
           <button type="button" class="btn ghost" id="yetkiClearAll">Temizle</button>
         </div>
       </div>
-      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. Başlıktaki Hepsi ile sütunu toplu işaretleyin. Yalnızca İncele işaretliyse kullanıcı o ekranda sadece inceleyebilir.</p>
+      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. ADMIN / Yönetici için tümü işaretli kaydedilirse yetki listesi boş tutulur — yeni eklenen ekranlar da otomatik açılır. Yalnızca İncele işaretliyse o ekranda sadece incele kullanılabilir.</p>
       <div class="yetki-scroll">
         <table class="yetki-table" id="yetkiTable">
           <thead>
@@ -5516,24 +5590,25 @@ function bindAvatarEvents() {
   const file = $('#userAvatarFile');
   const clearBtn = $('#userAvatarClear');
   if (file) {
-    file.addEventListener('change', () => {
+    file.addEventListener('change', async () => {
       const f = file.files?.[0];
       if (!f) return;
-      if (f.size > 350000) {
-        toast('Resim çok büyük (max ~350KB).');
+      if (f.size > 5_000_000) {
+        toast('Resim çok büyük (max 5MB; otomatik küçültülür).');
         file.value = '';
         return;
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const data = String(reader.result || '');
+      try {
+        const data = await resizeImageToDataUrl(f, 256, 0.72);
         if (!state.formRecord) state.formRecord = {};
         state.formRecord.profil_resmi = data;
         const preview = $('#userAvatarPreview');
         if (preview) preview.innerHTML = `<img src="${escAttr(data)}" alt="Profil" />`;
         if (clearBtn) clearBtn.hidden = false;
-      };
-      reader.readAsDataURL(f);
+      } catch (err) {
+        toast(err.message || 'Resim işlenemedi');
+        file.value = '';
+      }
     });
   }
   clearBtn?.addEventListener('click', () => {
@@ -6512,6 +6587,7 @@ async function saveForm() {
     delete master.profil_var;
     master.yetkiler = readYetkiGridFromDom();
     master.firma_yetkileri = readFirmaYetkiFromDom();
+    compressYetkilerForSave(master);
     if (state.formRecord && Object.prototype.hasOwnProperty.call(state.formRecord, 'profil_resmi')) {
       master.profil_resmi = state.formRecord.profil_resmi;
     }

@@ -8,7 +8,9 @@ const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
 const { firmaContext } = require('./src/middleware/firmaContext');
 
-app.use(express.json());
+// Profil resmi (base64) + yetki JSON için varsayılan 100kb yetmez
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use((req, res, next) => {
     // Önizleme / farklı origin (Cursor Ports) için CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
