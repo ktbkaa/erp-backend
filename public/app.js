@@ -231,6 +231,7 @@ const MODULES = [
           { key: 'sifre', label: 'Şifre', type: 'password', requiredOnNew: true },
           { key: 'ad', label: 'Ad', name: true, required: true },
           { key: 'soyad', label: 'Soyad', required: true },
+          { key: 'unvan', label: 'Ünvan' },
           { key: 'rol', label: 'Rol', type: 'select', options: ['Yonetici', 'Personel', 'Satinalma', 'Uretim', 'Finans'] },
           {
             key: 'grup_kodu',
@@ -251,7 +252,8 @@ const MODULES = [
         ],
         detailKey: null,
         detailAsFields: true,
-        defaults: { rol: 'Yonetici', grup_kodu: 'ADMIN', aktif: true },
+        defaults: { rol: 'Yonetici', grup_kodu: 'ADMIN', aktif: true, yetkiler: [] },
+        kullaniciYetkiPaneli: true,
       },
       {
         id: 'kullanici-gruplari',
@@ -4062,9 +4064,22 @@ function ensureSidebarPath(screen) {
 }
 
 function modulYetkiliMi(modId) {
-  const mods = state.session?.modul_yetkileri;
+  const s = state.session;
+  if (!s) return true;
+  const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
+  if (list.length) {
+    // Ekran yetkisi tanımlıysa modülde en az bir ekran erişimi olmalı
+    const mod = MODULES.find((m) => m.id === modId);
+    if (!mod) return false;
+    return (mod.screens || []).some((sc) => ekranYetkisi(sc.id));
+  }
+  const mods = s.modul_yetkileri;
   if (!mods || !mods.length || mods.includes('*')) return true;
   return mods.includes(modId);
+}
+
+function ekranMenuGorunurMu(screenId) {
+  return ekranYetkisi(screenId);
 }
 
 function renderSidebar() {
@@ -4084,7 +4099,9 @@ function renderSidebar() {
     const itemsHtml = sections.map((sec) => {
       const secKey = `${mod.id}:${sec.id}`;
       if (sec.title == null) {
-        const screensHtml = sec.screens.map((s) => `
+        const visible = sec.screens.filter((s) => ekranMenuGorunurMu(s.id));
+        if (!visible.length) return '';
+        const screensHtml = visible.map((s) => `
           <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
             ${escapeHtml(s.title)}
           </button>`).join('');
@@ -4094,7 +4111,9 @@ function renderSidebar() {
         state.sidebarSectionOpen[secKey] = true;
       }
       const isOpen = Boolean(state.sidebarSectionOpen[secKey]);
-      const screensHtml = sec.screens.map((s) => `
+      const visible = sec.screens.filter((s) => ekranMenuGorunurMu(s.id));
+      if (!visible.length) return '';
+      const screensHtml = visible.map((s) => `
           <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
             ${escapeHtml(s.title)}
           </button>`).join('');
@@ -4144,6 +4163,98 @@ function showHome() {
   $('#searchResults').hidden = true;
   renderSidebar();
   renderTabBar();
+}
+
+function renderUserChip() {
+  const chip = $('#userChip');
+  const nameEl = $('#userChipName');
+  const titleEl = $('#userChipTitle');
+  const avatarEl = $('#userChipAvatar');
+  const menu = $('#userChipMenu');
+  if (!chip || !nameEl || !titleEl || !avatarEl) return;
+  const s = state.session;
+  if (!s) {
+    nameEl.textContent = 'Oturum yok';
+    titleEl.textContent = 'Sağ tık → Giriş';
+    avatarEl.innerHTML = '<span class="user-avatar-initials">?</span>';
+    avatarEl.classList.remove('has-img');
+  } else {
+    const ad = [s.ad, s.soyad].filter(Boolean).join(' ') || s.kullanici_adi || s.kullanici_kodu || 'Kullanıcı';
+    nameEl.textContent = s.kullanici_adi || s.kullanici_kodu || ad;
+    titleEl.textContent = s.unvan || s.rol || s.grup_adi || '';
+    if (s.profil_resmi) {
+      avatarEl.innerHTML = `<img src="${escAttr(s.profil_resmi)}" alt="" />`;
+      avatarEl.classList.add('has-img');
+    } else {
+      const initials = (s.ad?.[0] || s.kullanici_adi?.[0] || '?').toUpperCase();
+      avatarEl.innerHTML = `<span class="user-avatar-initials">${escapeHtml(initials)}</span>`;
+      avatarEl.classList.remove('has-img');
+    }
+  }
+  if (menu) {
+    const loginBtn = menu.querySelector('[data-user-action="login"]');
+    const logoutBtn = menu.querySelector('[data-user-action="logout"]');
+    if (loginBtn) loginBtn.hidden = Boolean(s);
+    if (logoutBtn) logoutBtn.hidden = !s;
+  }
+}
+
+function closeUserChipMenu() {
+  const menu = $('#userChipMenu');
+  if (menu) menu.hidden = true;
+}
+
+function openUserChipMenu(x, y) {
+  const menu = $('#userChipMenu');
+  const area = $('#userProfileArea');
+  if (!menu || !area) return;
+  renderUserChip();
+  menu.hidden = false;
+  const rect = area.getBoundingClientRect();
+  const left = Math.min(Math.max(8, (x ?? rect.left) - rect.left), Math.max(8, rect.width - 160));
+  menu.style.left = `${left}px`;
+  menu.style.top = 'calc(100% + 0.35rem)';
+}
+
+async function logoutUser() {
+  try {
+    const refresh = localStorage.getItem('ktb_refresh_token');
+    const kod = localStorage.getItem('ktb_kullanici_kodu');
+    await api('/auth/logout', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refresh, kullanici_kodu: kod }),
+    }).catch(() => {});
+  } catch (_) { /* ignore */ }
+  localStorage.removeItem('ktb_access_token');
+  localStorage.removeItem('ktb_refresh_token');
+  localStorage.removeItem('ktb_kullanici_kodu');
+  state.session = null;
+  closeUserChipMenu();
+  renderUserChip();
+  renderSidebar();
+  toast('Oturum kapatıldı.');
+}
+
+async function promptLogin() {
+  closeUserChipMenu();
+  const kullanici_adi = window.prompt('Kullanıcı adı:');
+  if (!kullanici_adi) return;
+  const sifre = window.prompt('Şifre:') || '';
+  try {
+    const ses = await api('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ kullanici_adi, sifre }),
+    });
+    state.session = ses;
+    localStorage.setItem('ktb_kullanici_kodu', ses.kullanici_kodu || kullanici_adi);
+    if (ses.access_token) localStorage.setItem('ktb_access_token', ses.access_token);
+    if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
+    renderUserChip();
+    renderSidebar();
+    toast(`Hoş geldiniz, ${ses.kullanici_adi || ses.ad || ''}`);
+  } catch (err) {
+    toast(err.message || 'Giriş başarısız');
+  }
 }
 
 function renderFirmaPicker() {
@@ -4509,6 +4620,35 @@ function renderList(screen) {
   updateActionButtons(screen);
 }
 
+function isSessionTamYetkili() {
+  const s = state.session;
+  if (!s) return true; // oturum yoksa eski davranış (açık demo)
+  if (s.grup_kodu === 'ADMIN') return true;
+  if (String(s.rol || '').toLowerCase() === 'yonetici') return true;
+  const mods = s.modul_yetkileri;
+  if (Array.isArray(mods) && mods.includes('*') && !(s.yetkiler || []).length) return true;
+  return false;
+}
+
+/** Ekran erişim / aksiyon yetkisi. yetkiler boşsa ADMIN/modül* → tam; aksi halde satır şart. */
+function ekranYetkisi(screenId, action = null) {
+  const s = state.session;
+  if (!s) return true;
+  const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
+  if (!list.length) {
+    if (isSessionTamYetkili()) return true;
+    const mods = s.modul_yetkileri;
+    return Array.isArray(mods) && mods.includes('*');
+  }
+  const row = list.find((y) => y.ekran_id === screenId && y.erisim !== false);
+  if (!row) return false;
+  if (!action) return true;
+  if (action === 'export-csv' || action === 'mrp-talep') {
+    return Boolean(row.incele || row.duzelt || row.yeni);
+  }
+  return Boolean(row[action]);
+}
+
 function updateActionButtons(screen) {
   const hasSel = Boolean(state.selectedId);
   document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
@@ -4517,12 +4657,17 @@ function updateActionButtons(screen) {
       btn.disabled = act !== 'incele' || !hasSel;
       return;
     }
-    if (act === 'yeni') btn.disabled = false;
-    else if (act === 'export-csv') btn.disabled = false;
+    const allowed = ekranYetkisi(screen.id, act === 'export-csv' || act === 'mrp-talep' ? act : act);
+    if (!allowed && ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
+      btn.disabled = true;
+      return;
+    }
+    if (act === 'yeni') btn.disabled = !ekranYetkisi(screen.id, 'yeni');
+    else if (act === 'export-csv') btn.disabled = !ekranYetkisi(screen.id, 'export-csv');
     else if (act === 'mrp-talep') {
       btn.hidden = !screen.mrpTalepAction;
-      btn.disabled = false;
-    } else btn.disabled = !hasSel;
+      btn.disabled = !ekranYetkisi(screen.id, 'mrp-talep');
+    } else btn.disabled = !hasSel || !ekranYetkisi(screen.id, act);
   });
   const mrpBtn = $('#btnMrpTalep');
   if (mrpBtn) mrpBtn.hidden = !screen.mrpTalepAction;
@@ -4533,6 +4678,10 @@ async function openScreen(id, opts = {}) {
     const screen = findScreen(id);
     if (!screen) {
       toast(`Ekran bulunamadı: ${id || '?'}`);
+      return;
+    }
+    if (!ekranYetkisi(screen.id)) {
+      toast('Bu ekrana erişim yetkiniz yok.');
       return;
     }
 
@@ -4564,7 +4713,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017h`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017i`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -4984,9 +5133,247 @@ function fieldShell(f, controlHtml) {
   return `<div class="${cls.join(' ')}"><label>${f.label}</label>${controlHtml}</div>`;
 }
 
+const YETKI_ACTIONS = [
+  { id: 'yeni', label: 'Yeni' },
+  { id: 'incele', label: 'İncele' },
+  { id: 'duzelt', label: 'Düzelt' },
+  { id: 'kopyala', label: 'Kopyala' },
+  { id: 'sil', label: 'Sil' },
+];
+
+function allScreensCatalog() {
+  const out = [];
+  MODULES.forEach((mod) => {
+    (mod.screens || []).forEach((s) => {
+      out.push({
+        id: s.id,
+        title: s.title,
+        moduleId: mod.id,
+        moduleTitle: mod.title,
+      });
+    });
+  });
+  return out;
+}
+
+function yetkiMapFromRecord(rec) {
+  const map = {};
+  (rec?.yetkiler || []).forEach((y) => {
+    if (!y?.ekran_id) return;
+    map[y.ekran_id] = {
+      erisim: y.erisim !== false,
+      yeni: Boolean(y.yeni),
+      incele: Boolean(y.incele),
+      duzelt: Boolean(y.duzelt),
+      kopyala: Boolean(y.kopyala),
+      sil: Boolean(y.sil),
+    };
+  });
+  return map;
+}
+
+function renderKullaniciProfilBlok(rec) {
+  const src = rec.profil_resmi || '';
+  const readonly = state.formMode === 'incele';
+  return `
+    <section class="user-avatar-pane" aria-label="Profil resmi">
+      <div class="section-label">Profil resmi</div>
+      <div class="user-avatar-row">
+        <div class="user-avatar-preview" id="userAvatarPreview">
+          ${src
+            ? `<img src="${escAttr(src)}" alt="Profil" />`
+            : '<span class="user-avatar-placeholder">Resim yok</span>'}
+        </div>
+        <div class="user-avatar-actions">
+          <label class="btn ghost user-avatar-pick"${readonly ? ' hidden' : ''}>
+            Resim seç
+            <input type="file" id="userAvatarFile" accept="image/*" hidden ${readonly ? 'disabled' : ''} />
+          </label>
+          <button type="button" class="btn ghost" id="userAvatarClear" ${readonly || !src ? 'hidden' : ''}>Kaldır</button>
+          <p class="hint">Kare JPG/PNG, en fazla ~300KB.</p>
+        </div>
+      </div>
+    </section>`;
+}
+
+function renderYetkiGrid(rec) {
+  const map = yetkiMapFromRecord(rec);
+  const readonly = state.formMode === 'incele';
+  const dis = readonly ? 'disabled' : '';
+  const rows = allScreensCatalog();
+  let lastMod = null;
+  const body = rows.map((s) => {
+    const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
+    const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
+    let modRow = '';
+    if (s.moduleTitle !== lastMod) {
+      lastMod = s.moduleTitle;
+      modRow = `<tr class="yetki-mod-row"><td colspan="8">${escapeHtml(s.moduleTitle)}</td></tr>`;
+    }
+    return `${modRow}
+      <tr data-yetki-ekran="${escAttr(s.id)}">
+        <td class="yetki-erisim">
+          <input type="checkbox" data-yetki="erisim" ${y.erisim ? 'checked' : ''} ${dis} title="Ekran erişimi" />
+        </td>
+        <td class="yetki-ekran">${escapeHtml(s.title)}</td>
+        ${YETKI_ACTIONS.map((a) => `
+          <td class="yetki-act">
+            <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="${a.label}" />
+          </td>`).join('')}
+        <td class="yetki-act">
+          <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="Hepsi" />
+        </td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <section class="yetki-pane" aria-label="Ekran yetkileri">
+      <div class="yetki-pane-head">
+        <div class="section-label">Yetkiler</div>
+        <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <button type="button" class="btn ghost" id="yetkiSelectAll">Tüm ekranlar</button>
+          <button type="button" class="btn ghost" id="yetkiClearAll">Temizle</button>
+        </div>
+      </div>
+      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. Yalnızca İncele işaretliyse kullanıcı o ekranda sadece inceleyebilir.</p>
+      <div class="yetki-scroll">
+        <table class="yetki-table" id="yetkiTable">
+          <thead>
+            <tr>
+              <th class="yetki-erisim">Erişim</th>
+              <th class="yetki-ekran">Ekran</th>
+              ${YETKI_ACTIONS.map((a) => `<th class="yetki-act">${a.label}</th>`).join('')}
+              <th class="yetki-act">Hepsi</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
+function readYetkiGridFromDom() {
+  const rows = [];
+  document.querySelectorAll('#yetkiTable tbody tr[data-yetki-ekran]').forEach((tr) => {
+    const erisim = tr.querySelector('[data-yetki="erisim"]')?.checked;
+    if (!erisim) return;
+    const y = { ekran_id: tr.getAttribute('data-yetki-ekran'), erisim: true };
+    YETKI_ACTIONS.forEach((a) => {
+      y[a.id] = Boolean(tr.querySelector(`[data-yetki="${a.id}"]`)?.checked);
+    });
+    y.hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
+    rows.push(y);
+  });
+  return rows;
+}
+
+function bindYetkiGridEvents() {
+  const table = $('#yetkiTable');
+  if (!table || state.formMode === 'incele') return;
+
+  const syncRow = (tr) => {
+    const erisim = tr.querySelector('[data-yetki="erisim"]');
+    const acts = YETKI_ACTIONS.map((a) => tr.querySelector(`[data-yetki="${a.id}"]`));
+    const hepsi = tr.querySelector('[data-yetki="hepsi"]');
+    const on = Boolean(erisim?.checked);
+    acts.forEach((el) => { if (el) el.disabled = !on; });
+    if (hepsi) hepsi.disabled = !on;
+    if (!on) {
+      acts.forEach((el) => { if (el) el.checked = false; });
+      if (hepsi) hepsi.checked = false;
+      return;
+    }
+    if (hepsi) hepsi.checked = acts.every((el) => el?.checked);
+  };
+
+  table.addEventListener('change', (e) => {
+    const inp = e.target.closest('input[data-yetki]');
+    if (!inp) return;
+    const tr = inp.closest('tr[data-yetki-ekran]');
+    if (!tr) return;
+    const kind = inp.getAttribute('data-yetki');
+    if (kind === 'erisim') {
+      if (inp.checked) {
+        const incele = tr.querySelector('[data-yetki="incele"]');
+        if (incele && !YETKI_ACTIONS.some((a) => tr.querySelector(`[data-yetki="${a.id}"]`)?.checked)) {
+          incele.checked = true;
+        }
+      }
+      syncRow(tr);
+      return;
+    }
+    if (kind === 'hepsi') {
+      YETKI_ACTIONS.forEach((a) => {
+        const el = tr.querySelector(`[data-yetki="${a.id}"]`);
+        if (el) el.checked = inp.checked;
+      });
+      syncRow(tr);
+      return;
+    }
+    syncRow(tr);
+  });
+
+  $('#yetkiSelectAll')?.addEventListener('click', () => {
+    table.querySelectorAll('tr[data-yetki-ekran]').forEach((tr) => {
+      const erisim = tr.querySelector('[data-yetki="erisim"]');
+      if (erisim) erisim.checked = true;
+      YETKI_ACTIONS.forEach((a) => {
+        const el = tr.querySelector(`[data-yetki="${a.id}"]`);
+        if (el) el.checked = true;
+      });
+      syncRow(tr);
+    });
+  });
+  $('#yetkiClearAll')?.addEventListener('click', () => {
+    table.querySelectorAll('tr[data-yetki-ekran]').forEach((tr) => {
+      const erisim = tr.querySelector('[data-yetki="erisim"]');
+      if (erisim) erisim.checked = false;
+      syncRow(tr);
+    });
+  });
+}
+
+function bindAvatarEvents() {
+  const file = $('#userAvatarFile');
+  const clearBtn = $('#userAvatarClear');
+  if (file) {
+    file.addEventListener('change', () => {
+      const f = file.files?.[0];
+      if (!f) return;
+      if (f.size > 350000) {
+        toast('Resim çok büyük (max ~350KB).');
+        file.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const data = String(reader.result || '');
+        if (!state.formRecord) state.formRecord = {};
+        state.formRecord.profil_resmi = data;
+        const preview = $('#userAvatarPreview');
+        if (preview) preview.innerHTML = `<img src="${escAttr(data)}" alt="Profil" />`;
+        if (clearBtn) clearBtn.hidden = false;
+      };
+      reader.readAsDataURL(f);
+    });
+  }
+  clearBtn?.addEventListener('click', () => {
+    if (!state.formRecord) state.formRecord = {};
+    state.formRecord.profil_resmi = null;
+    const preview = $('#userAvatarPreview');
+    if (preview) preview.innerHTML = '<span class="user-avatar-placeholder">Resim yok</span>';
+    if (file) file.value = '';
+    clearBtn.hidden = true;
+  });
+}
+
 function renderMasterDetailPanel(tab, rec) {
   const { primary, extras } = partitionMasterFields(tab.masterFields || []);
   const dFields = [...extras, ...(tab.detailFields || [])];
+  const screen = findScreen(state.screenId);
+  const ekstra = screen?.kullaniciYetkiPaneli
+    ? `${renderKullaniciProfilBlok(rec)}${renderYetkiGrid(rec)}`
+    : '';
   return `
     <div class="md-split">
       <section class="md-master" aria-label="Başlık alanları">
@@ -5005,7 +5392,8 @@ function renderMasterDetailPanel(tab, rec) {
           </div>
         </div>
       </section>
-    </div>`;
+    </div>
+    ${ekstra}`;
 }
 
 /** Master alanlar üstte + kalem grid altta — tek ekran */
@@ -5452,6 +5840,10 @@ function renderForm(screen) {
 
   state.formRecord = rec;
   bindNumeratorFieldListener(screen);
+  if (screen.kullaniciYetkiPaneli) {
+    bindYetkiGridEvents();
+    bindAvatarEvents();
+  }
 }
 
 function readFieldValue(el, field) {
@@ -5740,6 +6132,10 @@ async function openForm(mode) {
     toast('Bu ekran yalnızca incelenebilir.');
     return;
   }
+  if (!ekranYetkisi(screen.id, mode)) {
+    toast(`Bu ekranda «${MODE_LABELS[mode] || mode}» yetkiniz yok.`);
+    return;
+  }
 
   // Sipariş adayından iş emri: satır seçip Düzelt → Yeni + ön doldurma
   let adayPrefill = null;
@@ -5918,7 +6314,7 @@ async function saveForm() {
 
   const master = readTabbedPayload(screen);
 
-  // Kullanıcı kartı: giriş adı + şifre
+  // Kullanıcı kartı: giriş adı + şifre + yetki + profil
   if (screen.id === 'kullanicilar') {
     const adi = String(master.kullanici_adi || '').trim();
     if (adi && !master.kullanici_kodu) master.kullanici_kodu = adi;
@@ -5926,6 +6322,11 @@ async function saveForm() {
     delete master.parola_var;
     delete master.parola_hash;
     delete master.refresh_token_hash;
+    delete master.profil_var;
+    master.yetkiler = readYetkiGridFromDom();
+    if (state.formRecord && Object.prototype.hasOwnProperty.call(state.formRecord, 'profil_resmi')) {
+      master.profil_resmi = state.formRecord.profil_resmi;
+    }
   }
 
   const reqErr = validateRequired(screen, master);
@@ -6053,6 +6454,10 @@ async function deleteSelected() {
     toast('Silmek için satır seçin.');
     return;
   }
+  if (!ekranYetkisi(screen.id, 'sil')) {
+    toast('Bu ekranda silme yetkiniz yok.');
+    return;
+  }
   if (screen.id === 'numarator-tanimi') {
     toast('Numaratör silinmez; pasife alın.');
     return;
@@ -6077,8 +6482,10 @@ function runSearch(q) {
     return;
   }
   const hits = ALL_SCREENS.filter((s) =>
-    s.title.toLocaleLowerCase('tr').includes(query) ||
-    s.moduleTitle.toLocaleLowerCase('tr').includes(query)
+    ekranMenuGorunurMu(s.id) && (
+      s.title.toLocaleLowerCase('tr').includes(query) ||
+      s.moduleTitle.toLocaleLowerCase('tr').includes(query)
+    )
   ).slice(0, 12);
   if (!hits.length) {
     box.hidden = false;
@@ -6245,6 +6652,33 @@ function bindEvents() {
   document.addEventListener('click', (e) => {
     const picker = $('#firmaPicker');
     if (picker && !picker.contains(e.target)) closeFirmaPicker();
+    const userArea = $('#userProfileArea');
+    if (userArea && !userArea.contains(e.target)) closeUserChipMenu();
+  });
+
+  const userChip = $('#userChip');
+  if (userChip && !userChip.dataset.bound) {
+    userChip.dataset.bound = '1';
+    userChip.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openUserChipMenu(e.clientX, e.clientY);
+    });
+    // Sol tık da menüyü açsın (dokunmatik / keşfedilebilirlik)
+    userChip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const menu = $('#userChipMenu');
+      if (menu && !menu.hidden) closeUserChipMenu();
+      else openUserChipMenu(e.clientX, e.clientY);
+    });
+  }
+  $('#userChipMenu')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-user-action]');
+    if (!btn) return;
+    e.preventDefault();
+    const act = btn.getAttribute('data-user-action');
+    if (act === 'logout') logoutUser();
+    else if (act === 'login') promptLogin();
   });
 
   $('#btnMenu').addEventListener('click', () => {
@@ -6669,6 +7103,8 @@ async function restoreSession() {
     if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
   } catch (_) {
     /* parola zorunluysa sessiz geç */
+  } finally {
+    renderUserChip();
   }
 }
 
@@ -6677,6 +7113,7 @@ function bootFromHash() {
     .then(() => loadFirmalar())
     .catch(() => loadFirmalar())
     .finally(() => {
+      renderUserChip();
       renderSidebar();
       bindEvents();
       const id = (location.hash || '').replace(/^#/, '');

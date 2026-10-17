@@ -403,9 +403,206 @@ body {
   border-bottom: 1px solid var(--line);
   z-index: 6;
 }
-.bar-left, .bar-right { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
-.bar-right { flex: 1; justify-content: flex-end; max-width: 34rem; position: relative; }
+.bar-left, .bar-right, .bar-center { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.bar-left { flex: 1 1 auto; }
+.bar-center {
+  flex: 0 1 auto;
+  position: relative;
+  justify-content: center;
+  max-width: min(18rem, 28vw);
+}
+.bar-right { flex: 1 1 auto; justify-content: flex-end; max-width: 34rem; position: relative; }
 #homeSearchWrap[hidden] { display: none !important; }
+
+/* Üst bar kullanıcı bilgisi */
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.2rem 0.35rem;
+  border: 0;
+  background: transparent;
+  cursor: context-menu;
+  border-radius: 0.45rem;
+}
+.user-chip:hover { background: #f3f6f5; }
+.user-chip-avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e4ecea;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+}
+.user-chip-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.user-avatar-initials {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent, #1f7a6b);
+}
+.user-chip-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.15;
+}
+.user-chip-name {
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 11rem;
+}
+.user-chip-title {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 11rem;
+}
+.user-chip-menu {
+  position: absolute;
+  z-index: 50;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  min-width: 9.5rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  box-shadow: 0 8px 24px rgba(15, 40, 55, 0.12);
+}
+.user-chip-menu[hidden] { display: none !important; }
+.user-chip-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.user-chip-menu button:hover { background: #f0f5f4; }
+.user-chip-menu button.danger { color: #b42318; }
+.user-chip-menu button.danger:hover { background: #fef3f2; }
+.user-chip-menu button[hidden] { display: none !important; }
+
+/* Kullanıcı formu: profil + yetki paneli */
+.user-avatar-pane,
+.yetki-pane {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eef2f5;
+}
+.user-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.user-avatar-preview {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 0.55rem;
+  border: 1px dashed var(--line);
+  background: #f7faf9;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.user-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.user-avatar-placeholder {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 0.4rem;
+}
+.user-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+.user-avatar-pick { cursor: pointer; }
+.user-avatar-actions .hint,
+.yetki-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.yetki-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+.yetki-pane-actions { display: flex; gap: 0.35rem; }
+.yetki-scroll {
+  max-height: min(42vh, 28rem);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: #fff;
+}
+.yetki-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.yetki-table th,
+.yetki-table td {
+  padding: 0.35rem 0.45rem;
+  border-bottom: 1px solid #eef2f5;
+  vertical-align: middle;
+}
+.yetki-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f7faf9;
+  z-index: 1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.yetki-mod-row td {
+  background: #f0f5f4;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--ink);
+  padding: 0.4rem 0.55rem;
+}
+.yetki-erisim { width: 3.2rem; text-align: center; }
+.yetki-ekran { text-align: left; min-width: 10rem; }
+.yetki-act { width: 3.6rem; text-align: center; }
+.yetki-table input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
 
 .icon-btn {
   display: inline-grid;
@@ -1318,7 +1515,8 @@ tr.selected td { background: var(--accent-soft); }
   }
   .sidebar.open { transform: none; }
   .workspace-bar { flex-wrap: wrap; }
-  .bar-right { max-width: none; width: 100%; }
+  .bar-center { max-width: none; order: 2; }
+  .bar-right { max-width: none; width: 100%; order: 3; }
   .screen-view {
     grid-template-rows: auto auto minmax(180px, 32vh) 1fr;
     height: auto;
