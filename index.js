@@ -129,9 +129,13 @@ const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// IPv6 + IPv4 (Chrome localhost → ::1; yalnız 0.0.0.0 dinlenirse Failed to fetch)
+// Yerelde IPv6+IPv4 (::); PaaS’ta çoğunlukla 0.0.0.0 / HOST
 const server = require('http').createServer(app);
-server.listen({ port, host: '::', ipv6Only: false }, () => {
-    console.log(`Sistem http://localhost:${port} (IPv4+IPv6) adresinde çalışıyor.`);
+const host = process.env.HOST || (process.env.DATABASE_URL ? '0.0.0.0' : '::');
+const listenOpts = host === '::'
+  ? { port, host: '::', ipv6Only: false }
+  : { port, host };
+server.listen(listenOpts, () => {
+    console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
 });
