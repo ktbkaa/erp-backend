@@ -7310,9 +7310,12 @@ function refreshDependentLookups(screen, changedEl) {
       );
       if (one) els = [one];
     } else {
-      const master = document.querySelector(`select[data-master="${dep.key}"]`);
-      if (master) els.push(master);
-      // Rota akış / bileşen paneli (aynı anda görünür olabilir)
+      // Master/başlık: yalnızca dependsOn zinciri (BOM filtreli alan master stok'u ezmesin)
+      if (dep.dependsOn === changedKey) {
+        const master = document.querySelector(`select[data-master="${dep.key}"]`);
+        if (master) els.push(master);
+      }
+      // Rota akış / bileşen — BOM kapsamı burada
       document.querySelectorAll(
         `select[data-flow-field="${dep.key}"], select[data-flow-comp-field="${dep.key}"]`
       ).forEach((el) => els.push(el));
@@ -7321,7 +7324,9 @@ function refreshDependentLookups(screen, changedEl) {
       refreshLookupSelect(el, dep, ctx);
       ctx[dep.key] = el.value;
       // Zincir: ülke→il→ilçe / stok→ağaç→malzeme
-      refreshDependentLookups(screen, el);
+      if (el.hasAttribute('data-master') || el.hasAttribute('data-detail')) {
+        refreshDependentLookups(screen, el);
+      }
     });
   });
 }
