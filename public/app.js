@@ -5634,6 +5634,7 @@ const LOOKUP_ENDPOINTS = {
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?aktif=true',
   'stok-depo': '/stok-depo?aktif=true',
+  'stok-partileri': '/stok-partileri',
   'crm-adaylar': '/crm-adaylar?aktif=true',
   'crm-firsatlar': '/crm-firsatlar?durum=Acik',
   'crm-firsat-asamalari': '/crm-firsat-asamalari?aktif=true',
@@ -5642,8 +5643,13 @@ const LOOKUP_ENDPOINTS = {
   kisiler: '/kisiler',
   'kullanici-gruplari': '/kullanici-gruplari',
   'satin-alma-siparisleri': '/satin-alma-siparisleri',
+  'mal-kabuller': '/mal-kabuller',
+  'fiyat-listeleri': '/fiyat-listeleri',
+  'kk-kontrol-planlari': '/kk-kontrol-planlari',
+  'kk-ret-nedenleri': '/kk-ret-nedenleri',
   'urun-agaclari': '/urun-agaclari?tip=hepsi',
   rotalar: '/rotalar?tip=hepsi',
+  cariler: '/cariler?aktif=true',
   'cariler-musteri': '/cariler?tur=Musteri&aktif=true',
   'cariler-tedarikci': '/cariler?tur=Tedarikci&aktif=true',
   'kategoriler-abc': '/kategoriler?tip=ABC&aktif=true',
@@ -5664,43 +5670,21 @@ const LOOKUP_ENDPOINTS = {
   'hareket-kodlari-stok': '/hareket-kodlari?aktif=true&grup=inv',
 };
 
-
-async function ensureFilterLookups(screen) {
-  const needed = new Set();
-  (screen.filters || []).forEach((f) => {
-    if (f.type === 'lookup' && f.lookup) needed.add(f.lookup);
-  });
-  for (const key of needed) {
-    if (key === 'firmalar' && state.firmalar?.length) {
-      state.lookupCache.firmalar = state.firmalar;
-      continue;
-    }
-    if (key === 'is-yerleri' && state.isYerleri?.length) {
-      state.lookupCache['is-yerleri'] = state.isYerleri;
-      continue;
-    }
-    if (state.lookupCache[key]) continue;
-    const ep = LOOKUP_ENDPOINTS[key];
-    if (!ep) continue;
-    try {
-      state.lookupCache[key] = await api(ep);
-    } catch (_) {
-      state.lookupCache[key] = [];
-    }
-  }
-}
-
-/** Yeni kart sonrası eski liste kalmasın — her form açılışında yenilenir */
-const LOOKUP_ALWAYS_REFRESH = new Set([
-  'stoklar',
-  'stoklar-mamul',
-  'cariler-musteri',
-  'cariler-tedarikci',
-  'urun-agaclari',
-  'rotalar',
-  'depolar',
-  'is-yerleri',
-]);
+/** Ekran kaydı → ek lookup anahtarları (endpoint eşleşmesi yetmezse / alias) */
+const SCREEN_LOOKUP_EXTRAS = {
+  'stok-karti': ['stoklar', 'stoklar-mamul', 'stok-depo', 'stok-partileri'],
+  'cari-kartlari': ['cariler', 'cariler-musteri', 'cariler-tedarikci'],
+  'kategori-tanimi': [
+    'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',
+    'kategoriler-sektor', 'kategoriler-bolge',
+  ],
+  'hareket-kodlari': [
+    'hareket-kodlari', 'hareket-kodlari-teklif', 'hareket-kodlari-siparis',
+    'hareket-kodlari-sevk', 'hareket-kodlari-irsaliye', 'hareket-kodlari-fatura', 'hareket-kodlari-stok',
+  ],
+  kullanicilar: ['kisiler'],
+  'satis-siparisleri': ['siparisler'],
+};
 
 function invalidateLookups(...keys) {
   if (!keys.length) {
@@ -5712,7 +5696,46 @@ function invalidateLookups(...keys) {
   });
 }
 
-async function ensureLookups(screen) {
+/** Bu ekrana kaydedilen veri hangi sarı alan listelerini besler? */
+function lookupsFedByScreen(screen) {
+  if (!screen) return [];
+  const keys = new Set(SCREEN_LOOKUP_EXTRAS[screen.id] || []);
+  const base = typeof screenApiBase === 'function'
+    ? screenApiBase(screen.endpoint || '')
+    : String(screen.endpoint || '').split('?')[0];
+  if (base) {
+    Object.entries(LOOKUP_ENDPOINTS).forEach(([k, url]) => {
+      const path = String(url).split('?')[0];
+      if (path === base || path.startsWith(`${base}/`)) keys.add(k);
+    });
+  }
+  return [...keys];
+}
+
+function invalidateLookupsForScreen(screen) {
+  const keys = lookupsFedByScreen(screen);
+  if (keys.length) invalidateLookups(...keys);
+  else invalidateLookups(); // bilinmeyen ekran → tüm cache
+}
+
+async function fetchLookupKey(key) {
+  const ep = LOOKUP_ENDPOINTS[key];
+  if (!ep) {
+    state.lookupCache[key] = state.lookupCache[key] || [];
+    return state.lookupCache[key];
+  }
+  try {
+    const rows = await api(ep);
+    state.lookupCache[key] = Array.isArray(rows) ? rows : [];
+    if (key === 'firmalar') state.firmalar = state.lookupCache[key];
+    if (key === 'is-yerleri') state.isYerleri = state.lookupCache[key];
+  } catch (_) {
+    state.lookupCache[key] = [];
+  }
+  return state.lookupCache[key];
+}
+
+function collectScreenLookupKeys(screen) {
   const needed = new Set();
   const collect = (fields) => {
     (fields || []).forEach((f) => {
@@ -5736,24 +5759,25 @@ async function ensureLookups(screen) {
       needed.add('urun-agaclari');
     }
   });
-  for (const key of needed) {
-    if (key === 'firmalar' && state.firmalar?.length) {
-      state.lookupCache.firmalar = state.firmalar;
-      continue;
-    }
-    if (key === 'is-yerleri' && state.isYerleri?.length && !LOOKUP_ALWAYS_REFRESH.has(key)) {
-      state.lookupCache['is-yerleri'] = state.isYerleri;
-      continue;
-    }
-    if (state.lookupCache[key] && !LOOKUP_ALWAYS_REFRESH.has(key)) continue;
-    const ep = LOOKUP_ENDPOINTS[key];
-    if (!ep) continue;
-    try {
-      state.lookupCache[key] = await api(ep);
-    } catch (_) {
-      state.lookupCache[key] = [];
-    }
-  }
+  return needed;
+}
+
+async function ensureFilterLookups(screen) {
+  const needed = new Set();
+  (screen.filters || []).forEach((f) => {
+    if (f.type === 'lookup' && f.lookup) needed.add(f.lookup);
+  });
+  // Liste filtreleri de sarı alan — her açılışta taze veri
+  await Promise.all([...needed].map((key) => fetchLookupKey(key)));
+}
+
+/**
+ * Sarı alan (lookup) listeleri: form/liste her açılışında API'den yenilenir.
+ * Aksi halde yeni kaydedilen kartlar eski cache yüzünden görünmez.
+ */
+async function ensureLookups(screen) {
+  const needed = collectScreenLookupKeys(screen);
+  await Promise.all([...needed].map((key) => fetchLookupKey(key)));
 }
 
 function escAttr(v) {
@@ -7970,6 +7994,7 @@ async function saveForm() {
       }
       const sonuc = await api(path, { method: 'POST', body: JSON.stringify(body) });
       toast('Bağlı belge oluşturuldu.');
+      invalidateLookups();
       state.nestedLink = null;
       const formKey = state.activeTabKey;
       state.formMode = null;
@@ -8036,10 +8061,8 @@ async function saveForm() {
         }
       }
       const sonuc = await api(postUrl, { method: 'POST', body: JSON.stringify(body) });
-      // Stok/cari kaydı sonrası ürün ağacı vb. lookup'lar eski kalmasın
-      if (screen.id === 'stok-karti') invalidateLookups('stoklar', 'stoklar-mamul');
-      if (screen.id === 'cari-kartlari') invalidateLookups('cariler-musteri', 'cariler-tedarikci');
-      if (screen.id === 'urun-agaci') invalidateLookups('urun-agaclari');
+      // Sarı alan cache: bu ekranın beslediği tüm lookup'ları düşür
+      invalidateLookupsForScreen(screen);
       if (screen.id === 'toplu-is-emri' && sonuc?.olusturulan_sayisi) {
         toast(`${sonuc.olusturulan_sayisi} iş emri oluşturuldu${sonuc.hata_sayisi ? ` (${sonuc.hata_sayisi} hata)` : ''}.`);
       } else if (screen.id === 'siparis-is-emri' && sonuc?.emir_no) {
@@ -8059,7 +8082,7 @@ async function saveForm() {
       return;
     }
     toast('Kaydedildi.');
-    if (screen.id === 'stok-karti') invalidateLookups('stoklar', 'stoklar-mamul');
+    invalidateLookupsForScreen(screen);
     // form sekmesini kapat, listeye don
     const formKey = state.activeTabKey;
     state.formMode = null;
@@ -8090,6 +8113,7 @@ async function deleteSelected() {
   try {
     await api(`${screenApiBase(screen.endpoint)}/${row.id}`, { method: 'DELETE' });
     toast('Silindi.');
+    invalidateLookupsForScreen(screen);
     state.selectedId = null;
     await openScreen(screen.id);
   } catch (err) {
@@ -8495,6 +8519,7 @@ function bindEvents() {
         if (act.bodyKey) body[act.bodyKey] = rec.id;
         const sonuc = await api(path, { method: 'POST', body: JSON.stringify(body) });
         toast(act.label + ' tamam.');
+        invalidateLookups();
         if (sonuc?.stok_uyari?.length) {
           toast('Uyarı: bazı kalemlerde depo bakiyesi yetersiz olabilir.');
         }
