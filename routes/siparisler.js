@@ -21,8 +21,10 @@ const { firmaIdFromReq, andFirma, andFirmaViaIsYeri, andStokFirma, andCariFirma 
 async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
   let zorunlu = sert;
   if (zorunlu == null) {
-    const v = await parametreAl(clientOrPool, 'ATP_SERT', 'Hayir');
-    zorunlu = String(v).toLowerCase() === 'evet';
+    const vSert = await parametreAl(clientOrPool, 'ATP_SERT', 'Hayir');
+    const vZorunlu = await parametreAl(clientOrPool, 'ATP_ZORUNLU', 'Hayir');
+    zorunlu = String(vSert).toLowerCase() === 'evet'
+      || String(vZorunlu).toLowerCase() === 'evet';
   }
   const uyari = [];
   for (const k of kalemler) {

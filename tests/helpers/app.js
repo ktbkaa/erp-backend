@@ -26,6 +26,15 @@ function createApp() {
   app.use('/kokpit', require('../../routes/kokpit'));
   app.use('/fatura-kontrolleri', require('../../routes/fatura_kontrolleri'));
   app.use('/cari-hareketleri', require('../../routes/cari_hareketleri'));
+  app.use('/odeme-kosullari', require('../../routes/odeme_kosullari'));
+  app.use('/teslimat-kosullari', require('../../routes/teslimat_kosullari'));
+  app.use('/diller', require('../../routes/diller'));
+  app.use('/bankalar', require('../../routes/bankalar'));
+  app.use('/doviz-kurlari', require('../../routes/doviz_kurlari'));
+  app.use('/transfer-emirleri', require('../../routes/transfer_emirleri'));
+  app.use('/sayim-belgeleri', require('../../routes/sayim_belgeleri'));
+  app.use('/depolar', require('../../routes/depolar'));
+  app.use('/stoklar', require('../../routes/stoklar'));
   app.use(auditMiddleware(pool));
 
   const { errorHandler, notFoundHandler } = require('../../src/middleware/errorHandler');

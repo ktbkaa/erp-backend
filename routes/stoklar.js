@@ -218,18 +218,26 @@ async function saveChildren(client, stokId, body) {
 
 router.get('/', async (req, res) => {
     try {
-        const { tip } = req.query;
+        const { tip, aktif } = req.query;
         const params = [];
         const where = [];
         if (tip) {
-            params.push(tip);
-            where.push(`stok_tipi = $${params.length}`);
+            const tips = String(tip).split(',').map((t) => t.trim()).filter(Boolean);
+            if (tips.length === 1) {
+                params.push(tips[0]);
+                where.push(`stok_tipi = $${params.length}`);
+            } else if (tips.length > 1) {
+                params.push(tips);
+                where.push(`stok_tipi = ANY($${params.length}::text[])`);
+            }
         }
+        if (aktif === 'true') where.push('aktif IS DISTINCT FROM FALSE');
+        if (aktif === 'false') where.push('aktif = FALSE');
         const firmaId = firmaIdFromReq(req);
         const firmaClause = andStokFirma('stoklar', firmaId, params);
         if (firmaClause) where.push(firmaClause.replace(/^\s*AND\s+/i, ''));
         const ids = await pool.query(
-            `SELECT id FROM stoklar ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY id DESC`,
+            `SELECT id FROM stoklar ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY stok_kodu`,
             params
         );
         const stoklar = [];

@@ -6,7 +6,7 @@
 const SIPARIS_BASLIK = [
   'musteri_siparis_no', 'proje_kodu', 'is_yeri_id', 'depo_id', 'fiyat_liste_id',
   'teslim_tarihi', 'gecerlilik_tarihi', 'kur', 'iskonto_oran', 'iskonto_tutari',
-  'ara_toplam', 'toplam_kdv', 'genel_toplam', 'odeme_sekli', 'odeme_kosulu',
+  'ara_toplam', 'toplam_kdv', 'genel_toplam', 'odeme_sekli', 'odeme_kosulu', 'teslimat_kosulu',
   'sevk_adresi', 'sevk_il', 'sevk_ilce', 'sevk_ulke', 'sevk_posta_kodu',
   'para_birimi', 'aciklama', 'not_public', 'not_internal', 'siparis_kaynak',
   'firma_id', 'olusturan_kullanici', 'onaylayan_kullanici',
@@ -20,7 +20,7 @@ const SIPARIS_SATIR = [
 
 const FATURA_BASLIK = [
   'musteri_fatura_no', 'proje_kodu', 'firma_id', 'is_yeri_id', 'fiyat_liste_id',
-  'odeme_sekli', 'odeme_kosulu', 'vade_tarihi', 'odeme_durumu', 'odenen_tutar',
+  'odeme_sekli', 'odeme_kosulu', 'teslimat_kosulu', 'vade_tarihi', 'odeme_durumu', 'odenen_tutar',
   'kalan_tutar', 'fatura_kaynak_id', 'iade_mi', 'not_public', 'not_internal',
   'olusturan_kullanici', 'onaylayan_kullanici', 'para_birimi', 'kur',
   'sevk_adresi', 'aciklama', 'senaryo', 'fatura_tipi', 'fatura_tarihi',

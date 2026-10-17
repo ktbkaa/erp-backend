@@ -219,6 +219,156 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
+      {
+        id: 'odeme-kosulu-tanimi',
+        title: 'Ödeme Koşulu',
+        endpoint: '/odeme-kosullari',
+        crud: true,
+        codeField: 'kosul_kodu',
+        nameField: 'kosul_adi',
+        numeratorSeri: 'ODEME_KOSUL',
+        filters: [
+          { key: 'kosul_kodu', label: 'Kod' },
+          { key: 'kosul_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'kosul_kodu', label: 'Kod', mono: true },
+          { key: 'kosul_adi', label: 'Ad' },
+          { key: 'vade_gun', label: 'Vade (gün)' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'kosul_kodu', label: 'Koşul kodu', code: true, editableOnNew: true, required: true },
+          { key: 'kosul_adi', label: 'Koşul adı', name: true, required: true },
+          { key: 'vade_gun', label: 'Vade gün', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'teslimat-kosulu-tanimi',
+        title: 'Teslimat Koşulu',
+        endpoint: '/teslimat-kosullari',
+        crud: true,
+        codeField: 'kosul_kodu',
+        nameField: 'kosul_adi',
+        numeratorSeri: 'TESLIMAT_KOSUL',
+        filters: [
+          { key: 'kosul_kodu', label: 'Kod' },
+          { key: 'kosul_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'kosul_kodu', label: 'Kod', mono: true },
+          { key: 'kosul_adi', label: 'Ad' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'kosul_kodu', label: 'Koşul kodu', code: true, editableOnNew: true, required: true },
+          { key: 'kosul_adi', label: 'Koşul adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'dil-tanimi',
+        title: 'Dil Tanımı',
+        endpoint: '/diller',
+        crud: true,
+        codeField: 'dil_kodu',
+        nameField: 'dil_adi',
+        numeratorSeri: 'DIL',
+        filters: [
+          { key: 'dil_kodu', label: 'Kod' },
+          { key: 'dil_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'dil_kodu', label: 'Kod', mono: true },
+          { key: 'dil_adi', label: 'Ad' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'dil_kodu', label: 'Dil kodu', code: true, editableOnNew: true, required: true },
+          { key: 'dil_adi', label: 'Dil adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'banka-tanimi',
+        title: 'Banka Tanımı',
+        endpoint: '/bankalar',
+        crud: true,
+        codeField: 'banka_kodu',
+        nameField: 'banka_adi',
+        numeratorSeri: 'BANKA',
+        filters: [
+          { key: 'banka_kodu', label: 'Kod' },
+          { key: 'banka_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'banka_kodu', label: 'Kod', mono: true },
+          { key: 'banka_adi', label: 'Ad' },
+          { key: 'swift_kodu', label: 'SWIFT' },
+          { key: 'ulke_kodu', label: 'Ülke' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'banka_kodu', label: 'Banka kodu', code: true, editableOnNew: true, required: true },
+          { key: 'banka_adi', label: 'Banka adı', name: true, required: true },
+          { key: 'swift_kodu', label: 'SWIFT' },
+          { key: 'ulke_kodu', label: 'Ülke', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_kodu', labelKey: 'ulke_adi' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'doviz-kur-tanimi',
+        title: 'Döviz Kurları',
+        endpoint: '/doviz-kurlari',
+        crud: true,
+        codeField: 'kaynak_pb',
+        nameField: 'hedef_pb',
+        filters: [
+          { key: 'kaynak_pb', label: 'Kaynak PB' },
+          { key: 'hedef_pb', label: 'Hedef PB' },
+        ],
+        columns: [
+          { key: 'kur_tarihi', label: 'Tarih' },
+          { key: 'kaynak_pb', label: 'Kaynak', mono: true },
+          { key: 'hedef_pb', label: 'Hedef', mono: true },
+          { key: 'alis_kuru', label: 'Alış' },
+          { key: 'satis_kuru', label: 'Satış' },
+          { key: 'kaynak', label: 'Kaynak' },
+        ],
+        masterFields: [
+          { key: 'kur_tarihi', label: 'Kur tarihi', type: 'date', required: true },
+          { key: 'kaynak_pb', label: 'Kaynak PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', required: true },
+          { key: 'hedef_pb', label: 'Hedef PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', required: true },
+          { key: 'alis_kuru', label: 'Alış kuru', type: 'number', required: true },
+          { key: 'satis_kuru', label: 'Satış kuru', type: 'number', required: true },
+        ],
+        detailFields: [
+          { key: 'efektif_alis', label: 'Efektif alış', type: 'number' },
+          { key: 'efektif_satis', label: 'Efektif satış', type: 'number' },
+          { key: 'kaynak', label: 'Kaynak' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
 
       {
         id: 'hareket-kodlari',
@@ -558,7 +708,7 @@ const MODULES = [
     title: 'Stok',
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
-      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
+      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'transfer-emirleri', 'sayim-belgeleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
       { id: 'planlama', title: 'Planlama', screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
     ],
     screens: [
@@ -815,6 +965,80 @@ const MODULES = [
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
           { key: 'raf_kodu', label: 'Raf' },
           { key: 'konum_kodu', label: 'Konum' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'transfer-emirleri',
+        title: 'Transfer Emirleri',
+        endpoint: '/transfer-emirleri',
+        crud: true,
+        codeField: 'emir_no',
+        nameField: 'kaynak_depo_kodu',
+        numeratorSeri: 'TRANSFER_EMRI',
+        approveAction: { label: 'Onayla (Transfer)', path: '/transfer-emirleri/{id}/onayla' },
+        filters: [
+          { key: 'emir_no', label: 'Emir no' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'emir_no', label: 'Emir', mono: true },
+          { key: 'kaynak_depo_kodu', label: 'Kaynak', mono: true },
+          { key: 'hedef_depo_kodu', label: 'Hedef', mono: true },
+          { key: 'talep_tarihi', label: 'Talep' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'emir_no', label: 'Emir no', code: true },
+          { key: 'kaynak_depo_id', label: 'Kaynak depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'hedef_depo_id', label: 'Hedef depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'talep_tarihi', label: 'Talep tarihi', type: 'date' },
+          { key: 'planlanan_tarih', label: 'Planlanan', type: 'date' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'birim', label: 'Birim' },
+          { key: 'raf_kodu', label: 'Raf' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'sayim-belgeleri',
+        title: 'Sayım Belgeleri',
+        endpoint: '/sayim-belgeleri',
+        crud: true,
+        codeField: 'belge_no',
+        nameField: 'depo_kodu',
+        numeratorSeri: 'SAYIM_BELGE',
+        approveAction: { label: 'Onayla (Düzelt)', path: '/sayim-belgeleri/{id}/onayla' },
+        filters: [
+          { key: 'belge_no', label: 'Belge no' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'depo_kodu', label: 'Depo', mono: true },
+          { key: 'sayim_tarihi', label: 'Tarih' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'belge_no', label: 'Belge no', code: true },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'sayim_tarihi', label: 'Sayım tarihi', type: 'date' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'sistem_miktar', label: 'Sistem', type: 'number' },
+          { key: 'sayilan_miktar', label: 'Sayılan', type: 'number' },
+          { key: 'birim', label: 'Birim' },
+          { key: 'raf_kodu', label: 'Raf' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
@@ -1310,7 +1534,7 @@ const MODULES = [
         masterFields: [
           { key: 'agac_kodu', label: 'Kod', code: true, required: true },
           { key: 'agac_adi', label: 'Ad', name: true, required: true },
-          { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar-mamul', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
           { key: 'miktar', label: 'Miktar', type: 'number' },
           { key: 'gecerlilik_baslangic', label: 'Geçerlilik baş.', type: 'date' },
           { key: 'gecerlilik_bitis', label: 'Geçerlilik bitiş', type: 'date' },
@@ -1325,7 +1549,7 @@ const MODULES = [
             fields: [
               { key: 'agac_kodu', label: 'Kod', code: true, required: true },
               { key: 'agac_adi', label: 'Ad', name: true, required: true },
-              { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+              { key: 'mamul_stok_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'stoklar-mamul', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
               { key: 'miktar', label: 'Miktar', type: 'number' },
               { key: 'gecerlilik_baslangic', label: 'Geçerlilik baş.', type: 'date' },
               { key: 'gecerlilik_bitis', label: 'Geçerlilik bitiş', type: 'date' },
@@ -2561,6 +2785,7 @@ const MODULES = [
           { key: 'kur', label: 'Kur', type: 'number' },
           { key: 'iskonto_oran', label: 'İskonto %', type: 'number' },
           { key: 'odeme_kosulu', label: 'Ödeme koşulu' },
+          { key: 'teslimat_kosulu', label: 'Teslimat koşulu' },
           { key: 'odeme_sekli', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'] },
           { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
@@ -3567,6 +3792,27 @@ const TANIM_LOOKUP_BY_KEY = {
     parentResolveLookup: 'sehirler',
     parentResolveBy: 'sehir_adi',
     parentResolveTo: 'sehir_kodu',
+  },
+  odeme_kosulu: {
+    type: 'lookup',
+    lookup: 'odeme-kosullari',
+    valueKey: 'kosul_kodu',
+    labelKey: 'kosul_adi',
+    codeKey: 'kosul_kodu',
+  },
+  teslimat_kosulu: {
+    type: 'lookup',
+    lookup: 'teslimat-kosullari',
+    valueKey: 'kosul_kodu',
+    labelKey: 'kosul_adi',
+    codeKey: 'kosul_kodu',
+  },
+  dil_kodu: {
+    type: 'lookup',
+    lookup: 'diller',
+    valueKey: 'dil_kodu',
+    labelKey: 'dil_adi',
+    codeKey: 'dil_kodu',
   },
 };
 
@@ -5317,11 +5563,17 @@ const LOOKUP_ENDPOINTS = {
   firmalar: '/firmalar',
   'is-yerleri': '/is-yerleri',
   depolar: '/depolar',
-  stoklar: '/stoklar',
+  stoklar: '/stoklar?aktif=true',
+  'stoklar-mamul': '/stoklar?aktif=true&tip=Mamul,YariMamul',
   ulkeler: '/ulkeler?aktif=true',
   'para-birimleri': '/para-birimleri?aktif=true',
   sehirler: '/sehirler?aktif=true',
   ilceler: '/ilceler?aktif=true',
+  'odeme-kosullari': '/odeme-kosullari?aktif=true',
+  'teslimat-kosullari': '/teslimat-kosullari?aktif=true',
+  diller: '/diller?aktif=true',
+  bankalar: '/bankalar?aktif=true',
+  'doviz-kurlari': '/doviz-kurlari?son=true',
   'is-merkezleri': '/is-merkezleri',
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?aktif=true',
@@ -5382,6 +5634,28 @@ async function ensureFilterLookups(screen) {
   }
 }
 
+/** Yeni kart sonrası eski liste kalmasın — her form açılışında yenilenir */
+const LOOKUP_ALWAYS_REFRESH = new Set([
+  'stoklar',
+  'stoklar-mamul',
+  'cariler-musteri',
+  'cariler-tedarikci',
+  'urun-agaclari',
+  'rotalar',
+  'depolar',
+  'is-yerleri',
+]);
+
+function invalidateLookups(...keys) {
+  if (!keys.length) {
+    state.lookupCache = {};
+    return;
+  }
+  keys.forEach((k) => {
+    delete state.lookupCache[k];
+  });
+}
+
 async function ensureLookups(screen) {
   const needed = new Set();
   const collect = (fields) => {
@@ -5400,18 +5674,21 @@ async function ensureLookups(screen) {
     collect(tab.detailFields);
     collect(tab.grid?.fields);
     collect(tab.componentFields);
-    if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') needed.add('stoklar');
+    if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') {
+      needed.add('stoklar');
+      needed.add('stoklar-mamul');
+    }
   });
   for (const key of needed) {
     if (key === 'firmalar' && state.firmalar?.length) {
       state.lookupCache.firmalar = state.firmalar;
       continue;
     }
-    if (key === 'is-yerleri' && state.isYerleri?.length) {
+    if (key === 'is-yerleri' && state.isYerleri?.length && !LOOKUP_ALWAYS_REFRESH.has(key)) {
       state.lookupCache['is-yerleri'] = state.isYerleri;
       continue;
     }
-    if (state.lookupCache[key]) continue;
+    if (state.lookupCache[key] && !LOOKUP_ALWAYS_REFRESH.has(key)) continue;
     const ep = LOOKUP_ENDPOINTS[key];
     if (!ep) continue;
     try {
@@ -5522,8 +5799,17 @@ function lookupDisplay(field, value) {
 }
 
 function stokLookupById(id) {
-  const rows = state.lookupCache.stoklar || [];
-  return rows.find((r) => String(r.id) === String(id)) || null;
+  if (id == null || id === '') return null;
+  const pools = [
+    state.lookupCache.stoklar,
+    state.lookupCache['stoklar-mamul'],
+  ];
+  for (const rows of pools) {
+    if (!Array.isArray(rows)) continue;
+    const hit = rows.find((r) => String(r.id) === String(id));
+    if (hit) return hit;
+  }
+  return null;
 }
 
 function tipBadge(tip) {
@@ -5565,22 +5851,30 @@ function buildBomTreeFromFlat(satirlar) {
 }
 
 function ensureBomTree(rec) {
-  if (Array.isArray(rec.agac) && rec.agac.length) {
-    rec.satirlar = rec.agac.map((n) => ({ ...n }));
-  } else if (Array.isArray(rec.satirlar)) {
+  // satırlar düzenleme kaynağıdır. agac ile aynı referansa zorlamak
+  // (agac.map → satirlar) kayıtları silip «eklendi» toast’una rağmen boş ağaç bırakıyordu.
+  let nodes;
+  if (Array.isArray(rec.satirlar)) {
     const hasNest = rec.satirlar.some((s) => Array.isArray(s.alt_satirlar) && s.alt_satirlar.length);
     const hasUst = rec.satirlar.some((s) => s.ust_satir_id);
-    if (!hasNest && hasUst) rec.satirlar = buildBomTreeFromFlat(rec.satirlar);
+    if (!hasNest && hasUst) nodes = buildBomTreeFromFlat(rec.satirlar);
     else {
-      rec.satirlar = rec.satirlar.map((s) => ({
+      nodes = rec.satirlar.map((s) => ({
         ...s,
         alt_satirlar: Array.isArray(s.alt_satirlar) ? s.alt_satirlar : [],
       }));
     }
+  } else if (Array.isArray(rec.agac) && rec.agac.length) {
+    nodes = rec.agac.map((n) => ({
+      ...n,
+      alt_satirlar: Array.isArray(n.alt_satirlar) ? n.alt_satirlar : [],
+    }));
   } else {
-    rec.satirlar = [];
+    nodes = [];
   }
-  return rec.satirlar;
+  rec.satirlar = nodes;
+  rec.agac = nodes;
+  return nodes;
 }
 
 function getBomNode(nodes, path) {
@@ -6414,6 +6708,7 @@ function renderBomTree(tab, rec) {
   const canEdit = state.formMode !== 'incele';
   const mamul = stokLookupById(rec.mamul_stok_id);
   const selected = state.treeSel != null ? getBomNode(nodes, state.treeSel) : null;
+  const selStok = selected ? stokLookupById(selected.bilesen_stok_id) : null;
 
   return `
     <div class="bom-layout">
@@ -6433,7 +6728,7 @@ function renderBomTree(tab, rec) {
           </div>
           ${nodes.length
             ? nodes.map((n, i) => renderBomNode(n, String(i), 0)).join('')
-            : '<div class="detail-empty">Ağaç boş. Mamul altına bileşen ekleyin (yarı mamul / hammadde).</div>'}
+            : '<div class="detail-empty">Ağaç boş. «Yeni (kök altına)» ile yarı mamul veya hammadde ekleyin.</div>'}
         </div>
       </div>
       <div class="bom-editor-pane">
@@ -6442,8 +6737,24 @@ function renderBomTree(tab, rec) {
           <div class="form-tab-fields" data-bom-editor>
             ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, selected[f.key], 'data-bom-field'))).join('')}
           </div>
-          <p class="toolbar-hint">Tıklanan düğümün alt bileşenleri ağaçta açılır. Yarı mamule alt hammadde eklemek için düğümü seçip «Yeni alt bileşen» kullanın.</p>
-        ` : '<div class="detail-empty">Soldan bir bileşen seçin.</div>'}
+          ${canEdit ? `
+            <div class="bom-editor-actions">
+              <button type="button" class="btn action" data-bom-act="uygula">Bileşeni kaydet</button>
+              <button type="button" class="btn action ghost" data-bom-act="uygula-ve-yeni">Kaydet + yeni</button>
+            </div>
+          ` : ''}
+          <p class="toolbar-hint">
+            Stok, miktar ve birimi seçip <strong>Bileşeni kaydet</strong> ile sola yazın.
+            ${selStok && /yarı|yari/i.test(selStok.stok_tipi || '')
+    ? ' Bu bir yarı mamul — alt hammadde için soldan seçip «Yeni alt bileşen» kullanın.'
+    : ' Yarı mamule alt hammadde eklemek için düğümü seçip «Yeni alt bileşen» kullanın.'}
+          </p>
+        ` : `
+          <div class="detail-empty">
+            ${canEdit
+    ? 'Önce «Yeni (kök altına)» ile satır ekleyin, sonra burada stok seçip <strong>Bileşeni kaydet</strong> deyin.'
+    : 'Soldan bir bileşen seçin.'}
+          </div>`}
       </div>
     </div>`;
 }
@@ -6922,10 +7233,17 @@ function bindCascadeLookups(_screen) {
   else document.documentElement.dataset.cascadeBound = '1';
   root.addEventListener('change', (e) => {
     const el = e.target;
-    if (!(el instanceof HTMLSelectElement)) return;
-    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
+    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement)) return;
     const scr = findScreen(state.screenId);
     if (!scr || state.formMode == null) return;
+
+    // BOM sağ panel alanları — birim/miktar otomatik doldurulmaz (kullanıcı girer)
+    if (el.hasAttribute('data-bom-field')) {
+      return;
+    }
+
+    if (!(el instanceof HTMLSelectElement)) return;
+    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
     const key = el.getAttribute('data-master');
     if (key && state.formRecord) state.formRecord[key] = el.value;
     refreshDependentLookups(scr, el);
@@ -6968,25 +7286,87 @@ function readGridFromForm(tab) {
 }
 
 function persistBomEditor(rec, tab) {
-  if (state.treeSel == null) return;
+  if (state.treeSel == null) return null;
   const nodes = ensureBomTree(rec);
   const node = getBomNode(nodes, state.treeSel);
-  if (!node) return;
+  if (!node) return null;
   (tab.fields || []).forEach((f) => {
     const el = document.querySelector(`[data-bom-field="${f.key}"]`);
     if (!el) return;
     node[f.key] = readFieldValue(el, f);
-    // enrich display fields from lookup
-    if (f.key === 'bilesen_stok_id') {
-      const st = stokLookupById(node.bilesen_stok_id);
-      if (st) {
-        node.stok_kodu = st.stok_kodu;
-        node.stok_adi = st.stok_adi;
-        node.stok_tipi = st.stok_tipi;
-      }
-    }
   });
+  const st = stokLookupById(node.bilesen_stok_id);
+  if (st) {
+    node.stok_kodu = st.stok_kodu;
+    node.stok_adi = st.stok_adi;
+    node.stok_tipi = st.stok_tipi;
+  }
   if (!Array.isArray(node.alt_satirlar)) node.alt_satirlar = [];
+  return node;
+}
+
+/** Sağ panel → ağaç: bileşen stok + miktar zorunlu */
+function applyBomEditorSelection(screen, { addAnother = false } = {}) {
+  const tab = (screen.formTabs || []).find((t) => t.kind === 'bom-tree');
+  if (!tab) return false;
+  if (state.treeSel == null) {
+    toast('Önce soldan bir satır seçin veya «Yeni (kök altına)» ekleyin.');
+    return false;
+  }
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+  // agac eski kopyayı ezmesin — satırları tek kaynak yap
+  if (Array.isArray(state.formRecord.satirlar)) {
+    state.formRecord.agac = state.formRecord.satirlar;
+  }
+  const node = persistBomEditor(state.formRecord, tab);
+  if (!node) {
+    toast('Bileşen satırı bulunamadı.');
+    return false;
+  }
+  const nodes = state.formRecord.satirlar;
+  const stokId = node.bilesen_stok_id;
+  const miktar = Number(node.miktar);
+  if (!stokId) {
+    toast('Bileşen stok seçin.');
+    return false;
+  }
+  if (!Number.isFinite(miktar) || miktar <= 0) {
+    toast('Miktar 0’dan büyük olmalı.');
+    return false;
+  }
+  const st = stokLookupById(stokId);
+  if (st) {
+    node.stok_kodu = st.stok_kodu;
+    node.stok_adi = st.stok_adi;
+    node.stok_tipi = st.stok_tipi;
+    // birim kullanıcı boş bıraktıysa doldurma — bilinçli boş kalabilir
+  }
+  state.formRecord.satirlar = nodes;
+  state.formRecord.agac = nodes;
+  state.treeExpanded[state.treeSel] = true;
+  persistActiveFormTab();
+
+  if (addAnother) {
+    const blank = { ...emptyRowFromFields(tab.fields), miktar: '', birim: '', alt_satirlar: [] };
+    const parts = String(state.treeSel).split('.');
+    if (parts.length === 1) {
+      nodes.push(blank);
+      state.treeSel = String(nodes.length - 1);
+    } else {
+      const parentPath = parts.slice(0, -1).join('.');
+      const parent = getBomNode(nodes, parentPath);
+      if (!parent.alt_satirlar) parent.alt_satirlar = [];
+      parent.alt_satirlar.push(blank);
+      state.treeSel = `${parentPath}.${parent.alt_satirlar.length - 1}`;
+      state.treeExpanded[parentPath] = true;
+    }
+    toast(`${st?.stok_kodu || 'Bileşen'} ağaca eklendi — yeni satır hazır.`);
+  } else {
+    toast(`${st?.stok_kodu || 'Bileşen'} ağaca kaydedildi.`);
+  }
+  renderForm(screen);
+  return true;
 }
 
 function persistFlowEditor(rec, tab) {
@@ -7468,6 +7848,10 @@ async function saveForm() {
         }
       }
       const sonuc = await api(postUrl, { method: 'POST', body: JSON.stringify(body) });
+      // Stok/cari kaydı sonrası ürün ağacı vb. lookup'lar eski kalmasın
+      if (screen.id === 'stok-karti') invalidateLookups('stoklar', 'stoklar-mamul');
+      if (screen.id === 'cari-kartlari') invalidateLookups('cariler-musteri', 'cariler-tedarikci');
+      if (screen.id === 'urun-agaci') invalidateLookups('urun-agaclari');
       if (screen.id === 'toplu-is-emri' && sonuc?.olusturulan_sayisi) {
         toast(`${sonuc.olusturulan_sayisi} iş emri oluşturuldu${sonuc.hata_sayisi ? ` (${sonuc.hata_sayisi} hata)` : ''}.`);
       } else if (screen.id === 'siparis-is-emri' && sonuc?.emir_no) {
@@ -7487,6 +7871,7 @@ async function saveForm() {
       return;
     }
     toast('Kaydedildi.');
+    if (screen.id === 'stok-karti') invalidateLookups('stoklar', 'stoklar-mamul');
     // form sekmesini kapat, listeye don
     const formKey = state.activeTabKey;
     state.formMode = null;
@@ -8039,9 +8424,13 @@ function bindEvents() {
       const act = bomAct.getAttribute('data-bom-act');
       const tab = (screen.formTabs || []).find((t) => t.kind === 'bom-tree');
       if (!tab) return;
+      if (act === 'uygula' || act === 'uygula-ve-yeni') {
+        applyBomEditorSelection(screen, { addAnother: act === 'uygula-ve-yeni' });
+        return;
+      }
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const nodes = ensureBomTree(state.formRecord);
-      const blank = { ...emptyRowFromFields(tab.fields), alt_satirlar: [] };
+      const blank = { ...emptyRowFromFields(tab.fields), miktar: '', birim: '', alt_satirlar: [] };
       if (act === 'yeni-kok') {
         nodes.push(blank);
         state.treeSel = String(nodes.length - 1);
@@ -8051,8 +8440,14 @@ function bindEvents() {
           toast('Alt bileşen için önce üst düğümü (ör. yarı mamul) seçin.');
           return;
         }
+        // Seçili satırdaki sağ panel değişikliklerini kaybetme
+        persistBomEditor(state.formRecord, tab);
         const parent = getBomNode(nodes, state.treeSel);
         if (!parent) return;
+        if (!parent.bilesen_stok_id) {
+          toast('Önce bu satıra bileşen stok seçip «Bileşeni kaydet» deyin.');
+          return;
+        }
         if (!Array.isArray(parent.alt_satirlar)) parent.alt_satirlar = [];
         parent.alt_satirlar.push(blank);
         state.treeExpanded[state.treeSel] = true;
@@ -8066,6 +8461,8 @@ function bindEvents() {
         state.treeSel = null;
       }
       state.formRecord.satirlar = nodes;
+      state.formRecord.agac = nodes;
+      persistActiveFormTab();
       renderForm(screen);
       return;
     }
