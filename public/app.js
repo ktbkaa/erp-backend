@@ -1688,6 +1688,7 @@ const MODULES = [
           { key: 'rota_kodu', label: 'Kod', mono: true },
           { key: 'rota_adi', label: 'Ad' },
           { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'agac_kodu', label: 'Ürün ağacı', mono: true },
           { key: 'varsayilan', label: 'Varsayılan' },
           { key: 'sablon', label: 'Şablon' },
         ],
@@ -1695,6 +1696,11 @@ const MODULES = [
           { key: 'rota_kodu', label: 'Kod', code: true, required: true },
           { key: 'rota_adi', label: 'Ad', name: true, required: true },
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          {
+            key: 'urun_agaci_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
+            valueKey: 'id', labelKey: 'agac_adi', codeKey: 'agac_kodu', required: true,
+            dependsOn: 'stok_id', filterKey: 'mamul_stok_id',
+          },
           { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
           { key: 'sablon', label: 'Şablon', type: 'checkbox' },
           { key: 'gecerlilik_baslangic', label: 'Geçerlilik baş.', type: 'date' },
@@ -1709,6 +1715,11 @@ const MODULES = [
               { key: 'rota_kodu', label: 'Kod', code: true, required: true },
               { key: 'rota_adi', label: 'Ad', name: true, required: true },
               { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+              {
+                key: 'urun_agaci_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
+                valueKey: 'id', labelKey: 'agac_adi', codeKey: 'agac_kodu', required: true,
+                dependsOn: 'stok_id', filterKey: 'mamul_stok_id',
+              },
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
               { key: 'sablon', label: 'Şablon', type: 'checkbox' },
               { key: 'gecerlilik_baslangic', label: 'Geçerlilik baş.', type: 'date' },
@@ -1723,11 +1734,19 @@ const MODULES = [
               { key: 'operasyon_adi', label: 'Operasyon adı', required: true },
               { key: 'is_merkezi_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'merkez_adi', codeKey: 'merkez_kodu' },
               { key: 'sure_dk', label: 'Süre (dk)', type: 'number' },
-              { key: 'cikti_stok_id', label: 'Çıktı stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+              {
+                key: 'cikti_stok_id', label: 'Çıktı stok', type: 'lookup', lookup: 'stoklar',
+                valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu',
+                filterByBomKey: 'urun_agaci_id', includeBomRoot: true,
+              },
               { key: 'sonraki_sira_no', label: 'Sonraki sıra', type: 'number' },
             ],
             componentFields: [
-              { key: 'stok_id', label: 'Bileşen stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+              {
+                key: 'stok_id', label: 'Bileşen stok', type: 'lookup', lookup: 'stoklar',
+                valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu',
+                filterByBomKey: 'urun_agaci_id',
+              },
               { key: 'miktar', label: 'Miktar', type: 'number' },
               { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
             ],
@@ -3870,9 +3889,43 @@ function resolveCascadeParentValue(field, parentRaw) {
   return raw;
 }
 
+/** Seçili ürün ağacındaki bileşen (ve isteğe bağlı kök) stok id seti */
+function bomScopeStokIds(agacId, { includeRoot = false } = {}) {
+  if (agacId == null || agacId === '') return null;
+  const agac = (state.lookupCache['urun-agaclari'] || [])
+    .find((a) => String(a.id) === String(agacId));
+  if (!agac) return new Set();
+  const ids = new Set();
+  if (includeRoot && agac.mamul_stok_id) ids.add(Number(agac.mamul_stok_id));
+  const flat = Array.isArray(agac.satirlar) ? agac.satirlar : [];
+  flat.forEach((s) => {
+    if (s.bilesen_stok_id) ids.add(Number(s.bilesen_stok_id));
+  });
+  if (!flat.length && Array.isArray(agac.agac)) {
+    const walk = (nodes) => {
+      (nodes || []).forEach((n) => {
+        if (n.bilesen_stok_id) ids.add(Number(n.bilesen_stok_id));
+        if (n.alt_satirlar?.length) walk(n.alt_satirlar);
+      });
+    };
+    walk(agac.agac);
+  }
+  return ids;
+}
+
 function lookupRowsForField(field, ctx = {}) {
   const all = state.lookupCache[field.lookup] || [];
-  if (!field.dependsOn || !field.filterKey) return all;
+  let rows = all;
+
+  if (field.filterByBomKey) {
+    const bomId = ctx[field.filterByBomKey]
+      ?? state.formRecord?.[field.filterByBomKey];
+    if (bomId == null || bomId === '') return [];
+    const ids = bomScopeStokIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
+    rows = all.filter((r) => ids && ids.has(Number(r.id)));
+  }
+
+  if (!field.dependsOn || !field.filterKey) return rows;
   let parentRaw = ctx[field.dependsOn];
   // ulke boşsa ulke_kodu'ya düş (bazı ekranlar ülke kodunu ayrı tutar)
   if ((parentRaw === undefined || parentRaw === null || parentRaw === '')
@@ -3885,7 +3938,7 @@ function lookupRowsForField(field, ctx = {}) {
   }
   const parentVal = resolveCascadeParentValue(field, parentRaw);
   if (!parentVal) return [];
-  return all.filter((r) => String(r[field.filterKey]) === String(parentVal));
+  return rows.filter((r) => String(r[field.filterKey]) === String(parentVal));
 }
 
 function lookupOptionSelected(field, row, value) {
@@ -3902,9 +3955,11 @@ function buildLookupOptionsHtml(field, value, rows) {
   const vk = field.valueKey || 'id';
   const lk = field.labelKey || 'adi';
   const ck = field.codeKey;
-  const emptyLabel = field.dependsOn && !(value || rows.length)
-    ? '— önce üst alanı seçin —'
-    : '— seçin —';
+  let emptyLabel = '— seçin —';
+  if (!(value || rows.length)) {
+    if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı seçin —';
+    else if (field.dependsOn) emptyLabel = '— önce üst alanı seçin —';
+  }
   const opts = [`<option value="">${emptyLabel}</option>`].concat(
     rows.map((r) => {
       const val = r[vk];
@@ -3928,6 +3983,7 @@ function upgradeTanimLookups(screen) {
     mapFields(tab.masterFields);
     mapFields(tab.detailFields);
     mapFields(tab.grid?.fields);
+    mapFields(tab.componentFields);
   });
 }
 
@@ -5677,6 +5733,7 @@ async function ensureLookups(screen) {
     if (tab.kind === 'bom-tree' || tab.kind === 'rota-flow') {
       needed.add('stoklar');
       needed.add('stoklar-mamul');
+      needed.add('urun-agaclari');
     }
   });
   for (const key of needed) {
@@ -5733,7 +5790,8 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const scope = ctx || state.formRecord || {};
     const rows = lookupRowsForField(field, scope);
     const dep = field.dependsOn ? ` data-depends-on="${escAttr(field.dependsOn)}"` : '';
-    return `<select class="lookup-select" ${name} ${dis} ${req}${dep}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
+    const bom = field.filterByBomKey ? ` data-filter-bom="${escAttr(field.filterByBomKey)}"` : '';
+    return `<select class="lookup-select" ${name} ${dis} ${req}${dep}${bom}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
   }
   if (field.type === 'number') {
     return `<input type="number" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
@@ -6686,14 +6744,16 @@ function renderBomNode(node, path, depth) {
   const forceOpen = state.treeExpanded[path] === true
     || (state.treeSel != null && String(state.treeSel).startsWith(`${path}.`));
   const selected = String(state.treeSel) === path;
+  const hasStok = Boolean(node.bilesen_stok_id || kod);
+  const qty = (node.miktar !== '' && node.miktar != null) ? node.miktar : '';
   return `
     <div class="bom-node-wrap" style="--depth:${depth}">
-      <button type="button" class="bom-node ${selected ? 'selected' : ''}" data-bom-path="${path}">
+      <button type="button" class="bom-node ${selected ? 'selected' : ''} ${hasStok ? '' : 'bom-node-empty'}" data-bom-path="${path}">
         <span class="bom-toggle" data-bom-toggle="${path}">${kids.length ? (forceOpen ? '▾' : '▸') : '·'}</span>
-        ${tipBadge(tip)}
+        ${hasStok ? tipBadge(tip) : ''}
         <span class="bom-code mono">${kod || '—'}</span>
-        <span class="bom-name">${adi || 'Bileşen seçin'}</span>
-        <span class="bom-qty">${node.miktar ?? ''} ${node.birim || ''}</span>
+        <span class="bom-name">${adi || (hasStok ? '' : 'Bileşen seçin')}</span>
+        <span class="bom-qty">${qty}${qty !== '' && node.birim ? ` ${node.birim}` : (node.birim || '')}</span>
         ${kids.length ? `<span class="bom-child-count">${kids.length} alt</span>` : ''}
       </button>
       ${forceOpen && kids.length ? `
@@ -6772,6 +6832,12 @@ function renderRotaFlow(tab, rec) {
   const canEdit = state.formMode !== 'incele';
   const sel = state.flowSel;
   const selected = sel != null ? ops[sel] : null;
+  const bomId = rec.urun_agaci_id;
+  const bomLabel = (() => {
+    if (!bomId) return null;
+    const a = (state.lookupCache['urun-agaclari'] || []).find((x) => String(x.id) === String(bomId));
+    return a ? `${a.agac_kodu} — ${a.agac_adi}` : `Ağaç #${bomId}`;
+  })();
 
   const bySira = new Map(ops.map((o) => [Number(o.sira_no), o]));
 
@@ -6784,6 +6850,9 @@ function renderRotaFlow(tab, rec) {
             <button type="button" class="btn action danger" data-flow-act="sil-op">Sil</button>
           ` : '<span class="toolbar-hint">Operasyona tıklayın — önce/sonra ve bileşenler</span>'}
         </div>
+        ${bomLabel
+    ? `<p class="toolbar-hint">Malzemeler: <strong>${bomLabel}</strong> ürün ağacına göre</p>`
+    : '<p class="toolbar-hint">Bileşen/çıktı stok için önce Başlık sekmesinde ürün ağacı seçin.</p>'}
         <div class="rota-flow">
           ${ops.length ? ops.map((op, idx) => {
             const prev = ops.filter((x) => Number(x.sira_no) < Number(op.sira_no)).pop();
@@ -6791,10 +6860,11 @@ function renderRotaFlow(tab, rec) {
               ? bySira.get(Number(op.sonraki_sira_no))
               : ops.find((x) => Number(x.sira_no) > Number(op.sira_no));
             const open = sel === idx;
+            const hasKod = Boolean(op.operasyon_kodu || op.operasyon_adi);
             return `
-              <button type="button" class="rota-op-card ${open ? 'selected' : ''}" data-flow-idx="${idx}">
+              <button type="button" class="rota-op-card ${open ? 'selected' : ''} ${hasKod ? '' : 'rota-op-empty'}" data-flow-idx="${idx}">
                 <div class="rota-op-seq">Sıra ${op.sira_no || '—'}</div>
-                <div class="rota-op-title"><span class="mono">${op.operasyon_kodu || '—'}</span> ${op.operasyon_adi || ''}</div>
+                <div class="rota-op-title"><span class="mono">${op.operasyon_kodu || '—'}</span> ${op.operasyon_adi || (hasKod ? '' : 'Operasyon seçin')}</div>
                 <div class="rota-op-meta">
                   <span>← Önce: ${prev ? `${prev.operasyon_kodu} ${prev.operasyon_adi || ''}` : '— (ilk)'}</span>
                   <span>Sonra: ${next ? `${next.operasyon_kodu || ''} ${next.operasyon_adi || ''}` : '— (son)'} →</span>
@@ -6811,6 +6881,12 @@ function renderRotaFlow(tab, rec) {
           <div class="form-tab-fields" data-flow-editor>
             ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, selected[f.key], 'data-flow-field'))).join('')}
           </div>
+          ${canEdit ? `
+            <div class="bom-editor-actions rota-editor-actions">
+              <button type="button" class="btn action" data-flow-act="uygula-op">Operasyonu kaydet</button>
+            </div>
+            <p class="toolbar-hint">Kod, iş merkezi ve çıktı stoğu seçip <strong>Operasyonu kaydet</strong> ile sola yazın.</p>
+          ` : ''}
           <div class="section-label" style="margin-top:1rem">Bu operasyonun bileşenleri</div>
           <div class="inline-toolbar">
             ${canEdit ? `
@@ -6822,17 +6898,31 @@ function renderRotaFlow(tab, rec) {
             ${(selected.bilesenler || []).length ? selected.bilesenler.map((b, ci) => {
               const st = stokLookupById(b.stok_id);
               const picked = state.flowCompSel === ci;
+              const qty = (b.miktar !== '' && b.miktar != null) ? b.miktar : '';
+              const summary = st
+                ? `${st.stok_kodu} — ${st.stok_adi}`
+                : (b.stok_id ? String(b.stok_id) : 'Bileşen seçin');
+              const qtyTxt = qty !== '' ? ` · ${qty}${b.birim ? ` ${b.birim}` : ''}` : (b.birim ? ` · ${b.birim}` : '');
               return `
-                <div class="detail-slot ${picked ? 'selected' : ''}" data-flow-comp="${ci}">
+                <div class="detail-slot ${picked ? 'selected' : ''} ${st || b.stok_id ? '' : 'detail-slot-empty'}" data-flow-comp="${ci}">
                   <button type="button" class="detail-slot-pick" data-flow-comp-pick="${ci}">
-                    <span class="detail-slot-summary">${st ? `${st.stok_kodu} — ${st.stok_adi}` : (b.stok_id || '—')} · ${b.miktar ?? ''} ${b.birim || ''}</span>
+                    <span class="detail-slot-summary">${summary}${qtyTxt}</span>
                   </button>
                   ${picked && canEdit ? `
                     <div class="detail-slot-fields">
                       ${(tab.componentFields || []).map((f) => fieldShell(f, fieldControl(f, b[f.key], 'data-flow-comp-field'))).join('')}
+                      <div class="bom-editor-actions rota-editor-actions">
+                        <button type="button" class="btn action" data-flow-act="uygula-comp">Bileşeni kaydet</button>
+                        <button type="button" class="btn action ghost" data-flow-act="uygula-comp-ve-yeni">Kaydet + yeni</button>
+                      </div>
+                      <p class="toolbar-hint">Stok ürün ağacından gelir — miktar/birimi girip kaydedin.</p>
                     </div>` : ''}
                 </div>`;
-            }).join('') : '<div class="detail-empty">Bu operasyonda bileşen yok.</div>'}
+            }).join('') : `<div class="detail-empty">${canEdit
+    ? (bomId
+      ? '«Yeni bileşen» ile satır ekleyin, stok seçip <strong>Bileşeni kaydet</strong> deyin.'
+      : 'Önce Başlık sekmesinde ürün ağacı seçin.')
+    : 'Bu operasyonda bileşen yok.'}</div>`}
           </div>
         ` : '<div class="detail-empty">Soldan bir operasyon seçin — önceki/sonraki adım ve bileşenler burada.</div>'}
       </div>
@@ -7145,7 +7235,7 @@ function bindPasswordFieldPersist() {
   });
 }
 
-/** Ekrandaki tüm lookup alan tanımlarını topla (master + grid) */
+/** Ekrandaki tüm lookup alan tanımlarını topla (master + grid + rota bileşen) */
 function collectLookupFieldDefs(screen) {
   const out = [];
   const push = (arr) => { (arr || []).forEach((f) => { if (f?.type === 'lookup' && f.key) out.push(f); }); };
@@ -7156,6 +7246,7 @@ function collectLookupFieldDefs(screen) {
     push(tab.masterFields);
     push(tab.detailFields);
     push(tab.grid?.fields);
+    push(tab.componentFields);
   });
   return out;
 }
@@ -7196,31 +7287,42 @@ function refreshLookupSelect(el, field, ctx) {
   if (!stillValid) el.value = '';
 }
 
-/** Ülke/il değişince bağımlı il/ilçe listelerini yenile */
+/** Ülke/il / stok→ağaç / ağaç→BOM malzeme bağımlı listeleri yenile */
 function refreshDependentLookups(screen, changedEl) {
   const changedKey = changedEl.getAttribute('data-master')
     || changedEl.getAttribute('data-detail');
   if (!changedKey) return;
   const { ctx, didx, grid, isDetail } = cascadeScopeContext(changedEl);
+  ctx[changedKey] = changedEl.type === 'checkbox' ? changedEl.checked : changedEl.value;
+  if (state.formRecord && changedEl.hasAttribute('data-master')) {
+    state.formRecord[changedKey] = ctx[changedKey];
+  }
   const defs = collectLookupFieldDefs(screen);
-  const dependents = defs.filter((f) => f.dependsOn === changedKey);
+  const dependents = defs.filter((f) =>
+    f.dependsOn === changedKey || f.filterByBomKey === changedKey);
   if (!dependents.length) return;
 
   dependents.forEach((dep) => {
-    let el;
+    let els = [];
     if (isDetail) {
-      el = document.querySelector(
+      const one = document.querySelector(
         `select[data-detail="${dep.key}"][data-didx="${didx}"][data-grid="${grid}"]`
       );
+      if (one) els = [one];
     } else {
-      el = document.querySelector(`select[data-master="${dep.key}"]`);
+      const master = document.querySelector(`select[data-master="${dep.key}"]`);
+      if (master) els.push(master);
+      // Rota akış / bileşen paneli (aynı anda görünür olabilir)
+      document.querySelectorAll(
+        `select[data-flow-field="${dep.key}"], select[data-flow-comp-field="${dep.key}"]`
+      ).forEach((el) => els.push(el));
     }
-    if (!el) return;
-    ctx[changedKey] = changedEl.value;
-    refreshLookupSelect(el, dep, ctx);
-    ctx[dep.key] = el.value;
-    // Zincir: ülke→il→ilçe
-    refreshDependentLookups(screen, el);
+    els.forEach((el) => {
+      refreshLookupSelect(el, dep, ctx);
+      ctx[dep.key] = el.value;
+      // Zincir: ülke→il→ilçe / stok→ağaç→malzeme
+      refreshDependentLookups(screen, el);
+    });
   });
 }
 
@@ -7394,6 +7496,87 @@ function persistFlowEditor(rec, tab) {
     }
   }
   rec.operasyonlar = ops;
+}
+
+/** Sağ panel → akış: operasyon alanlarını sola yaz */
+function applyRotaOpSelection(screen) {
+  const tab = (screen.formTabs || []).find((t) => t.kind === 'rota-flow');
+  if (!tab) return false;
+  if (state.flowSel == null) {
+    toast('Önce soldan bir operasyon seçin veya «Yeni operasyon» ekleyin.');
+    return false;
+  }
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+  persistFlowEditor(state.formRecord, tab);
+  const op = state.formRecord.operasyonlar?.[state.flowSel];
+  if (!op) {
+    toast('Operasyon bulunamadı.');
+    return false;
+  }
+  if (!op.operasyon_kodu && !op.operasyon_adi) {
+    toast('Operasyon kodu veya adı girin.');
+    return false;
+  }
+  persistActiveFormTab();
+  toast(`${op.operasyon_kodu || 'Operasyon'} kaydedildi.`);
+  renderForm(screen);
+  return true;
+}
+
+/** Sağ panel → bileşen: stok + miktar zorunlu (ürün ağacı kapsamı) */
+function applyRotaCompSelection(screen, { addAnother = false } = {}) {
+  const tab = (screen.formTabs || []).find((t) => t.kind === 'rota-flow');
+  if (!tab) return false;
+  if (state.flowSel == null) {
+    toast('Önce operasyon seçin.');
+    return false;
+  }
+  if (state.flowCompSel == null) {
+    toast('Önce bir bileşen satırı seçin veya «Yeni bileşen» ekleyin.');
+    return false;
+  }
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+  if (!state.formRecord.urun_agaci_id) {
+    toast('Bileşen için önce Başlık sekmesinde ürün ağacı seçin.');
+    return false;
+  }
+  persistFlowEditor(state.formRecord, tab);
+  const op = state.formRecord.operasyonlar?.[state.flowSel];
+  const b = op?.bilesenler?.[state.flowCompSel];
+  if (!b) {
+    toast('Bileşen satırı bulunamadı.');
+    return false;
+  }
+  const stokId = b.stok_id;
+  const miktar = Number(b.miktar);
+  if (!stokId) {
+    toast('Bileşen stok seçin (ürün ağacı malzemeleri).');
+    return false;
+  }
+  if (!Number.isFinite(miktar) || miktar <= 0) {
+    toast('Miktar 0’dan büyük olmalı.');
+    return false;
+  }
+  const st = stokLookupById(stokId);
+  if (st) {
+    b.stok_kodu = st.stok_kodu;
+    b.stok_adi = st.stok_adi;
+    b.stok_tipi = st.stok_tipi;
+  }
+  persistActiveFormTab();
+
+  if (addAnother) {
+    const blank = emptyRowFromFields(tab.componentFields);
+    op.bilesenler.push(blank);
+    state.flowCompSel = op.bilesenler.length - 1;
+    toast(`${st?.stok_kodu || 'Bileşen'} eklendi — yeni satır hazır.`);
+  } else {
+    toast(`${st?.stok_kodu || 'Bileşen'} kaydedildi.`);
+  }
+  renderForm(screen);
+  return true;
 }
 
 function readTabbedPayload(screen) {
@@ -8494,6 +8677,14 @@ function bindEvents() {
       const act = flowAct.getAttribute('data-flow-act');
       const tab = (screen.formTabs || []).find((t) => t.kind === 'rota-flow');
       if (!tab) return;
+      if (act === 'uygula-op') {
+        applyRotaOpSelection(screen);
+        return;
+      }
+      if (act === 'uygula-comp' || act === 'uygula-comp-ve-yeni') {
+        applyRotaCompSelection(screen, { addAnother: act === 'uygula-comp-ve-yeni' });
+        return;
+      }
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const ops = Array.isArray(state.formRecord.operasyonlar) ? [...state.formRecord.operasyonlar] : [];
       if (act === 'yeni-op') {
@@ -8519,8 +8710,14 @@ function bindEvents() {
         state.flowCompSel = null;
       } else if (act === 'yeni-comp') {
         if (state.flowSel == null) { toast('Önce operasyon seçin.'); return; }
+        if (!state.formRecord.urun_agaci_id) {
+          toast('Bileşen eklemek için önce Başlık sekmesinde ürün ağacı seçin.');
+          return;
+        }
         const op = ops[state.flowSel];
         if (!op.bilesenler) op.bilesenler = [];
+        // Seçili satırdaki sağ panel değişikliklerini kaybetme
+        persistFlowEditor(state.formRecord, tab);
         op.bilesenler.push(emptyRowFromFields(tab.componentFields));
         state.flowCompSel = op.bilesenler.length - 1;
         state.formRecord.operasyonlar = ops;
@@ -8533,6 +8730,7 @@ function bindEvents() {
         state.flowCompSel = null;
         state.formRecord.operasyonlar = ops;
       }
+      persistActiveFormTab();
       renderForm(screen);
       return;
     }
