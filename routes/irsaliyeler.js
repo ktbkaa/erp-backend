@@ -209,7 +209,7 @@ router.post('/', async (req, res) => {
                 VALUES ($1, COALESCE($2,'TR1.2.1'), COALESCE($3,'TEMELIRSALIYE'), COALESCE($4,'SEVK'),
                         COALESCE($5::date,CURRENT_DATE), COALESCE($6::time,CURRENT_TIME),
                         COALESCE($7::date,CURRENT_DATE), COALESCE($8::time,CURRENT_TIME),
-                        $9,$10,$11,$12,$13,$14,$15,$16,COALESCE($17,'Türkiye'),$18,
+                        $9,$10,$11,$12,$13,$14,$15,$16,COALESCE($17,'TR'),$18,
                         $19,$20,$21,$22,$23,$24,$25,$26,COALESCE($27,'Taslak'),$28,$29)
                 RETURNING id
                 `,
@@ -453,7 +453,7 @@ router.post('/sevk-emrinden', async (req, res) => {
             sevk_adresi: req.body.sevk_adresi || sevk.sevk_adresi,
             sevk_il: req.body.sevk_il || sevk.sevk_il,
             sevk_ilce: req.body.sevk_ilce || sevk.sevk_ilce,
-            sevk_ulke: req.body.sevk_ulke || sevk.sevk_ulke || 'Türkiye',
+            sevk_ulke: req.body.sevk_ulke || sevk.sevk_ulke || 'TR',
             sevk_posta_kodu: req.body.sevk_posta_kodu || sevk.sevk_posta_kodu,
             aciklama: req.body.aciklama || `Sipariş No: ${sevk.siparis_no} — Sevk ${sevk.sevk_no}`,
             durum: 'Taslak',
@@ -472,7 +472,7 @@ router.post('/sevk-emrinden', async (req, res) => {
                      arac_plaka, dorse_plaka, sofor_adi, sofor_soyadi, sofor_tckn,
                      tasiyici_unvan, tasiyici_vkn, aciklama, durum,
                      kaynak_belge_tipi, kaynak_belge_id)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,'Türkiye'),$11,$12,$13,$14,$15,$16,$17,$18,$19,'Taslak',
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,'TR'),$11,$12,$13,$14,$15,$16,$17,$18,$19,'Taslak',
                         $20,$21)
                 RETURNING id
                 `,

@@ -64,7 +64,8 @@ const PURGE_TABLES = [
 /** Korunan sistem tanımları (truncate edilmez) */
 const KEEP = [
   'schema_migrations', 'kod_serileri', 'olcu_birimleri', 'hareket_kodlari',
-  'belge_tipleri', 'sistem_parametreleri', 'ulkeler', 'kategori_tanimlari',
+  'belge_tipleri', 'sistem_parametreleri', 'ulkeler', 'para_birimleri',
+  'sehirler', 'ilceler', 'kategori_tanimlari',
   'kullanici_gruplari', 'kisiler', 'kullanici_grup_uyeleri', 'kullanici_depo',
   'stok_siniflari', 'kk_kontrol_planlari', 'kk_ret_nedenleri',
   'crm_firsat_asamalari', 'crm_faaliyet_tipleri', 'hesap_belirleme_kurallari',

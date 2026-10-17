@@ -101,11 +101,18 @@ async function stokGetir(id) {
         pool.query('SELECT * FROM stok_barkodlari WHERE stok_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM stok_dil_tanimlari WHERE stok_id = $1 ORDER BY id', [id]),
     ]);
+    const row = stokRes.rows[0];
+    const bags = isyerleri.rows;
     return {
-        ...stokRes.rows[0],
+        ...row,
+        // Form master alanı: ilk aktif iş yeri bağından
+        is_yeri_id: row.is_yeri_id
+          || (bags.find((b) => b.aktif !== false)?.is_yeri_id)
+          || bags[0]?.is_yeri_id
+          || null,
         stok_detaylari: detaylar.rows,
         birim_tanimlari: birimler.rows,
-        is_yeri_baglari: isyerleri.rows,
+        is_yeri_baglari: bags,
         barkodlar: barkodlar.rows,
         dil_tanimlari: diller.rows,
     };
@@ -259,6 +266,30 @@ router.post('/', async (req, res) => {
         }
         const tip = trimOrNull(req.body.stok_tipi) || 'Ticari';
         const m = req.body;
+        // Master’daki firma / iş yeri — olmazsa olmaz
+        const firmaId = Number(m.firma_id) || firmaIdFromReq(req) || null;
+        const isYeriId = Number(m.is_yeri_id)
+          || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.is_yeri_id))
+          || null;
+        if (!firmaId) {
+            return res.status(400).json({
+                hata: 'Firma zorunludur.',
+                hatalar: [{ alan: 'firma_id', hata: 'Firma zorunludur.' }],
+            });
+        }
+        if (!isYeriId) {
+            return res.status(400).json({
+                hata: 'İş yeri zorunludur.',
+                hatalar: [{ alan: 'is_yeri_id', hata: 'İş yeri zorunludur.' }],
+            });
+        }
+        // Master iş yeri → stok_is_yeri bağları
+        if (!Array.isArray(m.is_yeri_baglari) || !m.is_yeri_baglari.some((b) => Number(b.is_yeri_id) === isYeriId)) {
+            m.is_yeri_baglari = [
+                { is_yeri_id: isYeriId, aktif: true },
+                ...((Array.isArray(m.is_yeri_baglari) ? m.is_yeri_baglari : [])),
+            ];
+        }
 
         const sonucId = await withTransaction(pool, async (client) => {
             const kod = trimOrNull(m.stok_kodu) || (await sonrakiKod(client, stokSeriKodundanTip(tip)));
@@ -281,7 +312,8 @@ router.post('/', async (req, res) => {
                     koli_brut_agirlik, kutu_brut_agirlik, kutu_en_mm, kutu_boy_mm, kutu_yukseklik_mm,
                     barkod, emniyet_stok, maksimum_stok, ulke_mensei, raf_omru_gun,
                     marka, temin_sekli, miktar_hassasiyeti,
-                    parti_politika, kalite_kontrol_gerekli, varsayilan_giris_depo_id, varsayilan_cikis_depo_id
+                    parti_politika, kalite_kontrol_gerekli, varsayilan_giris_depo_id, varsayilan_cikis_depo_id,
+                    firma_id
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,COALESCE($10,'Satinalma'),COALESCE($11,TRUE),
@@ -289,7 +321,8 @@ router.post('/', async (req, res) => {
                     $18,$19,$20,$21,$22,
                     $23,$24,$25,$26,$27,
                     $28,$29,COALESCE($30,3),
-                    COALESCE($31,'Takipsiz'),COALESCE($32,FALSE),$33,$34
+                    COALESCE($31,'Takipsiz'),COALESCE($32,FALSE),$33,$34,
+                    $35
                 )
                 RETURNING id
                 `,
@@ -308,6 +341,7 @@ router.post('/', async (req, res) => {
                     typeof m.kalite_kontrol_gerekli === 'boolean' ? m.kalite_kontrol_gerekli : false,
                     m.varsayilan_giris_depo_id || null,
                     m.varsayilan_cikis_depo_id || null,
+                    firmaId,
                 ]
             );
             const stokId = stokSonuc.rows[0].id;
@@ -345,6 +379,29 @@ router.put('/:id', async (req, res) => {
                 hata: "ABC kodu 'A', 'B' veya 'C' olmalı.",
                 hatalar: [{ alan: 'abc_kodu', hata: "ABC kodu 'A', 'B' veya 'C' olmalı." }],
             });
+        }
+        const isYeriId = Number(m.is_yeri_id)
+          || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.is_yeri_id))
+          || null;
+        if (m.firma_id !== undefined && m.firma_id !== null && m.firma_id !== '' && !Number(m.firma_id) && !firmaIdFromReq(req)) {
+            return res.status(400).json({
+                hata: 'Firma zorunludur.',
+                hatalar: [{ alan: 'firma_id', hata: 'Firma zorunludur.' }],
+            });
+        }
+        if (m.is_yeri_id !== undefined || Array.isArray(m.is_yeri_baglari)) {
+            if (!isYeriId) {
+                return res.status(400).json({
+                    hata: 'İş yeri zorunludur.',
+                    hatalar: [{ alan: 'is_yeri_id', hata: 'İş yeri zorunludur.' }],
+                });
+            }
+            if (!Array.isArray(m.is_yeri_baglari) || !m.is_yeri_baglari.some((b) => Number(b.is_yeri_id) === isYeriId)) {
+                m.is_yeri_baglari = [
+                    { is_yeri_id: isYeriId, aktif: true },
+                    ...((Array.isArray(m.is_yeri_baglari) ? m.is_yeri_baglari : [])),
+                ];
+            }
         }
 
         await withTransaction(pool, async (client) => {
@@ -390,7 +447,11 @@ router.put('/:id', async (req, res) => {
                     parti_politika = COALESCE($31, parti_politika),
                     kalite_kontrol_gerekli = COALESCE($32, kalite_kontrol_gerekli),
                     varsayilan_giris_depo_id = COALESCE($33, varsayilan_giris_depo_id),
-                    varsayilan_cikis_depo_id = COALESCE($34, varsayilan_cikis_depo_id)
+                    varsayilan_cikis_depo_id = COALESCE($34, varsayilan_cikis_depo_id),
+                    firma_id = COALESCE($35, firma_id),
+                    temin_suresi_gun = COALESCE($36, temin_suresi_gun),
+                    yeniden_siparis_seviyesi = COALESCE($37, yeniden_siparis_seviyesi),
+                    sabit_siparis_miktari = COALESCE($38, sabit_siparis_miktari)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -429,6 +490,10 @@ router.put('/:id', async (req, res) => {
                     typeof m.kalite_kontrol_gerekli === 'boolean' ? m.kalite_kontrol_gerekli : null,
                     m.varsayilan_giris_depo_id ?? null,
                     m.varsayilan_cikis_depo_id ?? null,
+                    Number(m.firma_id) || firmaIdFromReq(req) || null,
+                    m.temin_suresi_gun ?? null,
+                    m.yeniden_siparis_seviyesi ?? null,
+                    m.sabit_siparis_miktari ?? null,
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });

@@ -1,49 +1,68 @@
 const express = require('express');
-const crypto = require('crypto');
 const router = express.Router();
 const pool = require('../db');
 const { signAccess, signRefresh, verifyToken, hashToken } = require('../src/utils/jwt');
 const { parametreAl } = require('../src/utils/yetki');
 const { parseJsonArr } = require('../src/middleware/authJwt');
+const { hashParola, dogrulaParola } = require('../src/utils/parola');
 
-function hashParola(parola, salt = crypto.randomBytes(16).toString('hex')) {
-  const hash = crypto.scryptSync(String(parola), salt, 64).toString('hex');
-  return `${salt}:${hash}`;
+async function loadEkranYetkileri(kisiId) {
+  if (!kisiId) return [];
+  const r = await pool.query(
+    `SELECT ekran_id, erisim, yeni, incele, duzelt, kopyala, sil
+     FROM kullanici_ekran_yetkileri WHERE kisi_id=$1`,
+    [kisiId]
+  );
+  return r.rows;
 }
 
-function dogrulaParola(parola, stored) {
-  if (!stored || !stored.includes(':')) return false;
-  const [salt, hash] = stored.split(':');
-  const check = crypto.scryptSync(String(parola), salt, 64).toString('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(check, 'hex'));
-  } catch {
-    return false;
-  }
+async function loadFirmaYetkileri(kisiId) {
+  if (!kisiId) return [];
+  const r = await pool.query(
+    `SELECT f.id AS firma_id, f.firma_kodu, f.firma_adi
+     FROM kullanici_firma_yetkileri k
+     JOIN firmalar f ON f.id = k.firma_id
+     WHERE k.kisi_id=$1
+     ORDER BY f.firma_kodu`,
+    [kisiId]
+  );
+  return r.rows;
 }
 
-function kullaniciPayload(u) {
+async function kullaniciPayload(u) {
+  const [yetkiler, firma_yetkileri] = await Promise.all([
+    loadEkranYetkileri(u.id),
+    loadFirmaYetkileri(u.id),
+  ]);
   return {
+    id: u.id,
     kullanici_kodu: u.kullanici_kodu,
+    kullanici_adi: u.kullanici_adi || u.kullanici_kodu,
     ad: u.ad,
     soyad: u.soyad,
+    unvan: u.unvan || u.rol || '',
+    rol: u.rol,
     grup_kodu: u.grup_kodu,
     grup_adi: u.grup_adi,
+    profil_resmi: u.profil_resmi || null,
     satinalma_onay: u.satinalma_onay,
     satinalma_talep: u.satinalma_talep,
     kalite_kontrol: u.kalite_kontrol,
     modul_yetkileri: parseJsonArr(u.modul_yetkileri, ['*']),
     depo_yetkileri: parseJsonArr(u.depo_yetkileri, ['*']),
+    yetkiler,
+    firma_yetkileri,
   };
 }
 
 async function kullaniciYukle(kod) {
+  if (!kod) return null;
   const r = await pool.query(
     `SELECT k.*, g.satinalma_onay, g.satinalma_talep, g.kalite_kontrol,
             g.modul_yetkileri, g.depo_yetkileri, g.grup_adi
      FROM kisiler k
      LEFT JOIN kullanici_gruplari g ON g.grup_kodu = k.grup_kodu AND g.aktif = TRUE
-     WHERE k.kullanici_kodu = $1`,
+     WHERE k.kullanici_kodu = $1 OR k.kullanici_adi = $1`,
     [kod]
   );
   return r.rows[0] || null;
@@ -52,8 +71,12 @@ async function kullaniciYukle(kod) {
 /** POST /auth/login */
 router.post('/login', async (req, res, next) => {
   try {
-    const { kullanici_kodu, parola } = req.body || {};
-    if (!kullanici_kodu) return res.status(400).json({ hata: 'kullanici_kodu zorunlu.' });
+    const body = req.body || {};
+    const kullanici_kodu = body.kullanici_kodu || body.kullanici_adi || body.username;
+    const parola = body.parola || body.sifre || body.password;
+    if (!kullanici_kodu) {
+      return res.status(400).json({ hata: 'kullanici_adi (veya kullanici_kodu) zorunlu.' });
+    }
     const u = await kullaniciYukle(kullanici_kodu);
     if (!u || u.aktif === false) return res.status(401).json({ hata: 'Kullanıcı bulunamadı veya pasif.' });
 
@@ -77,7 +100,7 @@ router.post('/login', async (req, res, next) => {
     );
 
     res.json({
-      ...kullaniciPayload(u),
+      ...(await kullaniciPayload(u)),
       access_token,
       refresh_token,
       token_tipi: 'Bearer',
@@ -149,7 +172,7 @@ router.get('/me', async (req, res, next) => {
     if (!kod) return res.status(401).json({ hata: 'Kimlik yok.' });
     const u = await kullaniciYukle(kod);
     if (!u) return res.status(401).json({ hata: 'Kullanıcı yok.' });
-    res.json(kullaniciPayload(u));
+    res.json(await kullaniciPayload(u));
   } catch (err) {
     next(err);
   }

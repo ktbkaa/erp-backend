@@ -8,7 +8,9 @@ const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
 const { firmaContext } = require('./src/middleware/firmaContext');
 
-app.use(express.json());
+// Profil resmi (base64) + yetki JSON için varsayılan 100kb yetmez
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use((req, res, next) => {
     // Önizleme / farklı origin (Cursor Ports) için CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -103,6 +105,9 @@ app.use('/crm-gorevler', require('./routes/crm_gorevler'));
 app.use('/kod-serileri', require('./routes/kod_serileri'));
 app.use('/kategoriler', require('./routes/kategoriler'));
 app.use('/ulkeler', require('./routes/ulkeler'));
+app.use('/para-birimleri', require('./routes/para_birimleri'));
+app.use('/sehirler', require('./routes/sehirler'));
+app.use('/ilceler', require('./routes/ilceler'));
 app.use('/uretim-girisleri', require('./routes/uretim_girisleri'));
 app.use('/muhasebe-hesaplari', require('./routes/muhasebe_hesaplari'));
 app.use('/muhasebe-belgeleri', require('./routes/muhasebe_belgeleri'));
@@ -127,9 +132,13 @@ const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// IPv6 + IPv4 (Chrome localhost → ::1; yalnız 0.0.0.0 dinlenirse Failed to fetch)
+// Yerelde IPv6+IPv4 (::); PaaS’ta çoğunlukla 0.0.0.0 / HOST
 const server = require('http').createServer(app);
-server.listen({ port, host: '::', ipv6Only: false }, () => {
-    console.log(`Sistem http://localhost:${port} (IPv4+IPv6) adresinde çalışıyor.`);
+const host = process.env.HOST || (process.env.DATABASE_URL ? '0.0.0.0' : '::');
+const listenOpts = host === '::'
+  ? { port, host: '::', ipv6Only: false }
+  : { port, host };
+server.listen(listenOpts, () => {
+    console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
 });

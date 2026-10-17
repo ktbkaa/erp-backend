@@ -10,7 +10,8 @@
     "demo:cleanup": "node scripts/demo-cleanup.js",
     "demo:4-firma": "node scripts/demo-4-firma.js",
     "test": "node --test tests/**/*.test.js",
-    "demo:ornek-dongu": "node scripts/ornek-dongu-cn-tr-de.js"
+    "demo:ornek-dongu": "node scripts/ornek-dongu-cn-tr-de.js",
+    "demo:mrp": "node scripts/demo-mrp-ornek.js"
   },
   "keywords": [
     "erp",

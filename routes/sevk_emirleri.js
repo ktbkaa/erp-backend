@@ -113,7 +113,7 @@ router.post('/', async (req, res) => {
                     no, siparis_id, siparis.cari_id, depo_id, sevk_tarihi || null,
                     sevk_adresi || siparis.sevk_adresi || siparis.fatura_adres1 || siparis.adres,
                     sevk_il || siparis.il, sevk_ilce || siparis.ilce,
-                    sevk_ulke || siparis.ulke || 'Türkiye', sevk_posta_kodu || siparis.posta_kodu,
+                    sevk_ulke || siparis.ulke || 'TR', sevk_posta_kodu || siparis.posta_kodu,
                     durum || 'Taslak', hk, aciklama || `Sipariş ${siparis.siparis_no}`,
                 ]
             );

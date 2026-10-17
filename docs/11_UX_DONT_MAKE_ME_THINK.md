@@ -15,6 +15,7 @@ Yeni ekran ve formlarda varsayılan standart budur.
 8. **Master sabit.** Master alanlar ekranda sabit kalır; kaydırma yalnızca detay / ek bilgiler / liste gövdesinde olur.
 9. **Mutlu laf yok.** Boş / henüz hazır olmayan sekmelerde pazarlama metni yazma.
 10. **Her yeni özellik aynı kalıba girer.** Özel “zeki” düzen yerine mevcut shell + master/detay + sekme modeli.
+11. **Grupla, yığma.** Detay / ek bilgiler / kalem satırında alanlar Kimlik · Organizasyon · Adres · İletişim · Finans gibi tarama bloklarına ayrılır; düz 20’lik alan yağmuru yok.
 
 ## Form düzeni (sabit)
 

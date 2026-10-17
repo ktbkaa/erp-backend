@@ -14,6 +14,13 @@ async function parametreAl(clientOrPool, kod, varsayilan = null) {
     return v;
 }
 
+function isTamYetkili(kullanici) {
+    if (!kullanici) return false;
+    if (kullanici.grup_kodu === 'ADMIN') return true;
+    if (String(kullanici.rol || '').toLowerCase() === 'yonetici') return true;
+    return false;
+}
+
 async function kullaniciGetir(clientOrPool, kullaniciKodu) {
     if (!kullaniciKodu) return null;
     const r = await clientOrPool.query(
@@ -21,7 +28,7 @@ async function kullaniciGetir(clientOrPool, kullaniciKodu) {
                 g.modul_yetkileri, g.depo_yetkileri
          FROM kisiler k
          LEFT JOIN kullanici_gruplari g ON g.grup_kodu = k.grup_kodu AND g.aktif = TRUE
-         WHERE k.kullanici_kodu = $1`,
+         WHERE k.kullanici_kodu = $1 OR k.kullanici_adi = $1`,
         [kullaniciKodu]
     );
     return r.rows[0] || null;
@@ -49,6 +56,8 @@ async function assertYetki(clientOrPool, kullaniciKodu, alan, mesaj) {
         err.status = 403;
         throw err;
     }
+    if (isTamYetkili(kullanici)) return kullanici;
+
     if (alan === 'satinalma_onay') {
         const onayGrup = await parametreAl(clientOrPool, 'SATINALMA_ONAY_GRUP', 'SATINALMA');
         const ok = Boolean(kullanici.satinalma_onay) || kullanici.grup_kodu === onayGrup;
@@ -79,4 +88,5 @@ module.exports = {
     kullaniciGetir,
     reqKullaniciKodu,
     assertYetki,
+    isTamYetkili,
 };

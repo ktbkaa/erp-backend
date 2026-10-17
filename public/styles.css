@@ -403,9 +403,261 @@ body {
   border-bottom: 1px solid var(--line);
   z-index: 6;
 }
-.bar-left, .bar-right { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
-.bar-right { flex: 1; justify-content: flex-end; max-width: 34rem; position: relative; }
+.bar-left, .bar-right, .bar-center { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.bar-left { flex: 1 1 auto; }
+.bar-center {
+  flex: 0 1 auto;
+  position: relative;
+  justify-content: center;
+  max-width: min(18rem, 28vw);
+}
+.bar-right { flex: 1 1 auto; justify-content: flex-end; max-width: 34rem; position: relative; }
 #homeSearchWrap[hidden] { display: none !important; }
+
+/* Üst bar kullanıcı bilgisi */
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.2rem 0.35rem;
+  border: 0;
+  background: transparent;
+  cursor: context-menu;
+  border-radius: 0.45rem;
+}
+.user-chip:hover { background: #f3f6f5; }
+.user-chip-avatar {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e4ecea;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+}
+.user-chip-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.user-avatar-initials {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent, #1f7a6b);
+}
+.user-chip-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.15;
+}
+.user-chip-name {
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 11rem;
+}
+.user-chip-title {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 11rem;
+}
+.user-chip-menu {
+  position: absolute;
+  z-index: 50;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  min-width: 9.5rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  box-shadow: 0 8px 24px rgba(15, 40, 55, 0.12);
+}
+.user-chip-menu[hidden] { display: none !important; }
+.user-chip-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+.user-chip-menu button:hover { background: #f0f5f4; }
+.user-chip-menu button.danger { color: #b42318; }
+.user-chip-menu button.danger:hover { background: #fef3f2; }
+.user-chip-menu button[hidden] { display: none !important; }
+
+/* Kullanıcı formu: profil + yetki paneli */
+.kullanici-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+.user-avatar-pane,
+.firma-yetki-pane,
+.yetki-pane {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eef2f5;
+  flex: 0 0 auto;
+}
+.firma-yetki-scroll {
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: #fff;
+}
+.yetki-th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+.yetki-th-hepsi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent, #1f7a6b);
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.yetki-th-hepsi input {
+  width: 0.9rem;
+  height: 0.9rem;
+  cursor: pointer;
+}
+.yetki-table thead th {
+  vertical-align: bottom;
+}
+.user-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.user-avatar-preview {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 0.55rem;
+  border: 1px dashed var(--line);
+  background: #f7faf9;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.user-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.user-avatar-placeholder {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 0.4rem;
+}
+.user-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+.user-avatar-pick { cursor: pointer; }
+.user-avatar-actions .hint,
+.yetki-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.yetki-pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+.yetki-pane-actions { display: flex; gap: 0.35rem; }
+.yetki-scroll {
+  /* Sayfa kaydığı için sabit max-height yok; tablo doğal uzar */
+  max-height: none;
+  overflow: visible;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: #fff;
+}
+.form-tab-panel--scrollable .yetki-scroll {
+  max-height: none;
+}
+.yetki-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.yetki-table th,
+.yetki-table td {
+  padding: 0.35rem 0.45rem;
+  border-bottom: 1px solid #eef2f5;
+  vertical-align: middle;
+}
+.yetki-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f7faf9;
+  z-index: 1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding-top: 0.45rem;
+  padding-bottom: 0.4rem;
+}
+.form-tab-panel--scrollable .yetki-table thead th {
+  /* Sayfa kayarken başlık panelle birlikte gider */
+  position: sticky;
+  top: 0;
+}
+.yetki-mod-row td {
+  background: #f0f5f4;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--ink);
+  padding: 0.4rem 0.55rem;
+}
+.yetki-erisim { width: 3.2rem; text-align: center; }
+.yetki-ekran { text-align: left; min-width: 10rem; }
+.yetki-act { width: 3.6rem; text-align: center; }
+.yetki-table input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
 
 .icon-btn {
   display: inline-grid;
@@ -824,11 +1076,11 @@ body {
   position: sticky;
   top: 0;
   background: #f1f5f8 !important;
-  font-size: 0.72rem !important;
+  font-size: 0.75rem !important;
   font-weight: 600;
   color: var(--muted);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   z-index: 1;
   padding: 0.4rem 0.55rem !important;
 }
@@ -921,11 +1173,11 @@ tr.selected td { background: var(--accent-soft); }
 .form-tab-nav {
   border-right: 1px solid var(--line);
   overflow: auto;
-  padding: 0.5rem 0.35rem;
-  background: #f4f7f9;
+  padding: 0.45rem 0.3rem;
+  background: #f5f8fa;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
   align-self: stretch;
   height: 100%;
   min-height: 0;
@@ -934,13 +1186,14 @@ tr.selected td { background: var(--accent-soft); }
   text-align: left;
   border: 0;
   background: transparent;
-  padding: 0.5rem 0.65rem;
-  border-radius: 0.35rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: 0.3rem;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   font-weight: 500;
-  color: var(--ink);
+  color: #3a4553;
   cursor: pointer;
+  line-height: 1.25;
 }
 .form-tab-btn:hover { background: rgba(15, 40, 55, 0.06); }
 .form-tab-btn.active {
@@ -973,6 +1226,40 @@ tr.selected td { background: var(--accent-soft); }
   overflow: hidden;
   padding: 0;
 }
+/* Kullanıcı kartı: başlık doğal yükseklik, yetki/firma alta yapışır, panel kayar */
+.form-tab-panel--md.form-tab-panel--scrollable {
+  overflow: auto !important;
+  padding: 0.85rem 1.1rem 1.5rem;
+  display: block !important;
+  height: auto !important;
+  max-height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.form-tab-body:has(.form-tab-panel--scrollable) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.md-split--natural {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+}
+.md-split--natural .md-master,
+.md-split--natural .md-detail {
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+  max-height: none !important;
+}
+.md-split--natural .md-detail-scroll {
+  flex: 0 0 auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  min-height: 0 !important;
+}
 
 .md-split {
   flex: 1;
@@ -989,18 +1276,18 @@ tr.selected td { background: var(--accent-soft); }
 .md-master {
   flex: 0 0 auto;
   overflow: hidden;
-  padding: 0.85rem 1.25rem 0.75rem;
+  padding: 0.7rem 1.1rem 0.6rem;
   border-bottom: 1px solid var(--line);
-  background: #f8fafb;
+  background: #f7fafb;
 }
 .md-extras {
   flex: 0 1 auto;
-  max-height: 32%;
+  max-height: 28%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0.65rem 1.25rem 0.7rem;
+  padding: 0.55rem 1.1rem 0.55rem;
   border-bottom: 1px solid var(--line);
   background: #fcfdfd;
 }
@@ -1015,7 +1302,7 @@ tr.selected td { background: var(--accent-soft); }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0.75rem 1.25rem 1rem;
+  padding: 0.65rem 1.1rem 0.85rem;
   background: #fff;
 }
 .md-detail-scroll {
@@ -1023,49 +1310,72 @@ tr.selected td { background: var(--accent-soft); }
   min-height: 0;
   overflow: auto;
 }
+/* Krug: ALL CAPS yok — sessiz bölüm başlığı */
 .section-label {
-  margin: 0 0 0.65rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  margin: 0 0 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--muted);
 }
-/* İsim | kutu — 2 sütun, düzenli aralık */
+/* Alan grupları: kart değil, ince ayırıcı + tarama başlığı */
+.field-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.field-group {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.field-group + .field-group {
+  padding-top: 0.7rem;
+  border-top: 1px solid #e8eef2;
+}
+.field-group-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #4a5a68;
+}
+/* İsim | kutu — 2 sütun, sıkı düzenli aralık */
 .form-tab-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 0.65rem;
+  column-gap: 1.35rem;
+  row-gap: 0.48rem;
   align-items: start;
 }
 .form-tab-fields--master {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 0.7rem;
+  column-gap: 1.35rem;
+  row-gap: 0.5rem;
 }
 .form-tab-fields--detail {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 0.62rem;
+  column-gap: 1.35rem;
+  row-gap: 0.45rem;
 }
 .field {
   display: grid;
-  grid-template-columns: minmax(6.5rem, 8.5rem) minmax(0, 1fr);
-  gap: 0.55rem 0.75rem;
+  grid-template-columns: minmax(5.8rem, 7.6rem) minmax(0, 1fr);
+  gap: 0.35rem 0.55rem;
   align-items: center;
   min-width: 0;
 }
 .field label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: var(--ink);
-  line-height: 1.25;
+  color: #3a4553;
+  line-height: 1.2;
   text-align: right;
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
-  padding-right: 0.15rem;
+  padding-right: 0.1rem;
 }
 /* Zorunlu: * yok; etiket biraz daha belirgin */
 .field.required label {
@@ -1075,6 +1385,38 @@ tr.selected td { background: var(--accent-soft); }
 .field.required select,
 .field.required textarea {
   border-color: #c5d0d6;
+}
+/* Sorunlu / kritik zorunlu alan (firma, iş yeri…) — gözden kaçmasın */
+.field.field--critical {
+  background: linear-gradient(180deg, #fff8e8 0%, #fffdf6 100%);
+  border: 1px solid #e6c96a;
+  border-radius: 0.4rem;
+  padding: 0.45rem 0.55rem 0.55rem;
+  box-shadow: inset 0 0 0 1px rgba(230, 201, 106, 0.25);
+}
+.field.field--critical label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: #6a4e00;
+}
+.field-critical-hint {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #9a6b00;
+  background: #ffe8a3;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.35rem;
+}
+.field.field--critical input,
+.field.field--critical select,
+.field.field--critical textarea {
+  border-color: #d4b245;
+  background: #fff;
 }
 .field.field--code,
 .field.field--name {
@@ -1171,24 +1513,29 @@ tr.selected td { background: var(--accent-soft); }
   padding: 0.3rem 0.1rem;
 }
 .detail-slot-title {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 650;
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .detail-slot-summary { font-size: 0.88rem; color: var(--ink); }
 .detail-slot-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 1.5rem;
-  row-gap: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
   padding: 0.45rem 0 0.35rem;
-  border-top: 1px dashed var(--line);
+  border-top: 1px solid #e8eef2;
   margin-top: 0.25rem;
 }
+.detail-slot-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  row-gap: 0.4rem;
+}
 @media (max-width: 900px) {
-  .detail-slot-fields { grid-template-columns: 1fr; }
+  .detail-slot-fields-grid { grid-template-columns: 1fr; }
 }
 .detail-empty {
   color: var(--muted);
@@ -1318,7 +1665,8 @@ tr.selected td { background: var(--accent-soft); }
   }
   .sidebar.open { transform: none; }
   .workspace-bar { flex-wrap: wrap; }
-  .bar-right { max-width: none; width: 100%; }
+  .bar-center { max-width: none; order: 2; }
+  .bar-right { max-width: none; width: 100%; order: 3; }
   .screen-view {
     grid-template-rows: auto auto minmax(180px, 32vh) 1fr;
     height: auto;
@@ -1498,5 +1846,209 @@ tr.selected td { background: var(--accent-soft); }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* ── Sisteme giriş ─────────────────────────────────────────── */
+.app-shell[hidden],
+.login-view[hidden] {
+  display: none !important;
+}
+
+.login-view {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem 1.25rem 2rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.login-atmosphere {
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 18% 22%, rgba(12, 124, 105, 0.28), transparent 55%),
+    radial-gradient(ellipse 55% 50% at 88% 12%, rgba(45, 90, 120, 0.22), transparent 50%),
+    radial-gradient(ellipse 60% 45% at 72% 88%, rgba(12, 124, 105, 0.16), transparent 55%),
+    linear-gradient(155deg, #dce7ef 0%, #eef4f2 42%, #d5e8e3 100%);
+  animation: loginAtmosphereDrift 18s ease-in-out infinite alternate;
+}
+.login-atmosphere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(26, 35, 48, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 35, 48, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 20%, transparent 75%);
+  opacity: 0.7;
+}
+
+@keyframes loginAtmosphereDrift {
+  from { transform: translate3d(-1.5%, -1%, 0) scale(1.02); }
+  to { transform: translate3d(1.5%, 1.2%, 0) scale(1.06); }
+}
+
+.login-stage {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 26.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.login-brand {
+  text-align: center;
+  animation: loginBrandIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.login-brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 3.35rem;
+  height: 3.35rem;
+  margin-bottom: 0.85rem;
+  border-radius: 0.65rem;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  box-shadow: 0 12px 28px rgba(12, 124, 105, 0.28);
+}
+.login-brand-name {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(2.15rem, 6vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink);
+}
+.login-brand-lead {
+  margin: 0.65rem auto 0;
+  max-width: 22rem;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.35rem 1.35rem 1.15rem;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(213, 221, 230, 0.95);
+  border-radius: 0.85rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px rgba(26, 35, 48, 0.08);
+  animation: loginFormIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+.login-card-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 650;
+  color: var(--ink);
+}
+.login-card-sub {
+  margin: -0.35rem 0 0.2rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.login-field input {
+  font: inherit;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.login-field input:focus {
+  border-color: var(--sidebar-ring);
+  box-shadow: 0 0 0 3px rgba(125, 206, 192, 0.35);
+}
+.login-error {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.4rem;
+  background: #fceeee;
+  border: 1px solid #e8c0c0;
+  color: var(--danger);
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+.login-error[hidden] { display: none !important; }
+.login-submit {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.98rem;
+  border-radius: 0.5rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.login-submit:hover:not(:disabled) {
+  background: #0a6b5b;
+}
+.login-submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.login-foot {
+  margin: 0.15rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--sidebar-muted);
+}
+
+@keyframes loginBrandIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes loginFormIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .login-view { padding: 1.1rem 0.9rem 1.5rem; }
+  .login-card { padding: 1.15rem 1rem 1rem; }
+  .login-brand-name { font-size: 2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-atmosphere,
+  .login-brand,
+  .login-card {
+    animation: none;
   }
 }

@@ -414,7 +414,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                     (sevk_no, siparis_id, cari_id, depo_id, sevk_tarihi, sevk_adresi,
                      sevk_il, sevk_ilce, sevk_ulke, sevk_posta_kodu, durum, hareket_kodu_id, aciklama,
                      kaynak_belge_tipi, kaynak_belge_id)
-                VALUES ($1,$2,$3,$4,CURRENT_DATE,$5,$6,$7,COALESCE($8,'Türkiye'),$9,
+                VALUES ($1,$2,$3,$4,CURRENT_DATE,$5,$6,$7,COALESCE($8,'TR'),$9,
                         COALESCE($10,'Onayli'),$11,$12,$13,$14)
                 RETURNING id
                 `,

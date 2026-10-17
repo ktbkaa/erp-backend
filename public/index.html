@@ -8,9 +8,35 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261017g" />
+  <link rel="stylesheet" href="/styles.css?v=20261017t" />
 </head>
 <body>
+  <section id="viewLogin" class="login-view" aria-label="Sistem girişi" hidden>
+    <div class="login-atmosphere" aria-hidden="true"></div>
+    <div class="login-stage">
+      <div class="login-brand">
+        <span class="login-brand-mark">KTB</span>
+        <h1 class="login-brand-name">KTB ERP</h1>
+        <p class="login-brand-lead">Üretim, stok ve satış süreçlerinizi tek omurgada yönetin.</p>
+      </div>
+      <form class="login-card" id="loginForm" autocomplete="on">
+        <h2 class="login-card-title">Sisteme giriş</h2>
+        <p class="login-card-sub">Kullanıcı adı ve şifrenizle oturum açın.</p>
+        <label class="login-field">
+          <span>Kullanıcı adı</span>
+          <input id="loginUser" name="username" type="text" autocomplete="username" required placeholder="ornek.kullanici" />
+        </label>
+        <label class="login-field">
+          <span>Şifre</span>
+          <input id="loginPass" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+        </label>
+        <p class="login-error" id="loginError" hidden role="alert"></p>
+        <button type="submit" class="btn login-submit" id="loginSubmit">Giriş yap</button>
+        <p class="login-foot">KTB ERP · UI build <span id="loginBuildTag">20261017q</span></p>
+      </form>
+    </div>
+  </section>
+
   <div class="app-shell" id="appShell">
 
     <aside class="sidebar" id="sidebar">
@@ -21,7 +47,7 @@
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot">
         <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
-        <span class="build-tag" id="buildTag">UI build 20261017g</span>
+        <span class="build-tag" id="buildTag">UI build 20261017q</span>
       </div>
     </aside>
 
@@ -40,6 +66,19 @@
             <ul class="firma-picker-menu" id="firmaPickerMenu" role="listbox" hidden></ul>
           </div>
           <h1 class="screen-title" id="screenTitle" hidden>Ekran</h1>
+        </div>
+        <div class="bar-center" id="userProfileArea">
+          <div class="user-chip" id="userChip" title="Sağ tık: çıkış">
+            <div class="user-chip-avatar" id="userChipAvatar" aria-hidden="true"></div>
+            <div class="user-chip-text">
+              <span class="user-chip-name" id="userChipName">Oturum yok</span>
+              <span class="user-chip-title" id="userChipTitle">Giriş yapın</span>
+            </div>
+          </div>
+          <ul class="user-chip-menu" id="userChipMenu" role="menu" hidden>
+            <li role="none"><button type="button" role="menuitem" data-user-action="login">Giriş yap</button></li>
+            <li role="none"><button type="button" role="menuitem" data-user-action="logout" class="danger">Çıkış yap</button></li>
+          </ul>
         </div>
         <div class="bar-right" id="homeSearchWrap">
           <label class="search-label" for="screenSearch">Ekran ara</label>
@@ -76,6 +115,8 @@
             <button type="button" class="btn action danger" data-action="sil">Sil</button>
             <button type="button" class="btn action ghost" data-action="export-csv" title="Filtrelenmiş listeyi CSV indir">CSV</button>
             <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
+            <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
+            <button type="button" class="btn action" data-action="mrp-calistir" id="btnMrpCalistir" hidden title="MRP çalıştır ve sonuçları kaydet">MRP Çalıştır</button>
           </div>
 
           <div class="filter-pane" id="filterPane">
@@ -153,7 +194,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261017g"></script>
+  <script src="/app.js?v=20261017u"></script>
   <script>
     // Bağlantı kontrolü — Failed to fetch kök nedenini hemen göster
     (async function () {
@@ -162,10 +203,10 @@
         const r = await fetch('/health', { cache: 'no-store' });
         const j = await r.json();
         if (tag) tag.textContent = r.ok && j.durum === 'ok'
-          ? 'UI build 20261017g · API bağlı'
-          : 'UI build 20261017g · API hata';
+          ? 'UI build 20261017q · API bağlı'
+          : 'UI build 20261017q · API hata';
       } catch (e) {
-        if (tag) tag.textContent = 'UI build 20261017g · API YOK';
+        if (tag) tag.textContent = 'UI build 20261017q · API YOK';
         console.error('Health başarısız — sayfayı http://localhost:3000 ile açın', e);
       }
     })();

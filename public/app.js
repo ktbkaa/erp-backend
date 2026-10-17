@@ -130,6 +130,95 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
+      {
+        id: 'para-birimi-tanimi',
+        title: 'Para Birimi Tanımı',
+        endpoint: '/para-birimleri',
+        crud: true,
+        codeField: 'pb_kodu',
+        nameField: 'pb_adi',
+        numeratorSeri: 'PARA_BIRIM',
+        filters: [
+          { key: 'pb_kodu', label: 'PB kodu' },
+          { key: 'pb_adi', label: 'PB adı' },
+        ],
+        columns: [
+          { key: 'pb_kodu', label: 'Kod', mono: true },
+          { key: 'pb_adi', label: 'Ad' },
+          { key: 'sembol', label: 'Sembol' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'pb_kodu', label: 'Para birimi kodu', code: true, editableOnNew: true, required: true },
+          { key: 'pb_adi', label: 'Para birimi adı', name: true, required: true },
+          { key: 'sembol', label: 'Sembol' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'sehir-tanimi',
+        title: 'Şehir / İl Tanımı',
+        endpoint: '/sehirler',
+        crud: true,
+        codeField: 'sehir_kodu',
+        nameField: 'sehir_adi',
+        numeratorSeri: 'SEHIR',
+        filters: [
+          { key: 'sehir_kodu', label: 'Şehir kodu' },
+          { key: 'sehir_adi', label: 'Şehir adı' },
+          { key: 'ulke_kodu', label: 'Ülke' },
+        ],
+        columns: [
+          { key: 'sehir_kodu', label: 'Kod', mono: true },
+          { key: 'sehir_adi', label: 'Ad' },
+          { key: 'ulke_kodu', label: 'Ülke' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'sehir_kodu', label: 'Şehir kodu', code: true, editableOnNew: true, required: true },
+          { key: 'sehir_adi', label: 'Şehir adı', name: true, required: true },
+          { key: 'ulke_kodu', label: 'Ülke', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_kodu', labelKey: 'ulke_adi' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'ilce-tanimi',
+        title: 'İlçe Tanımı',
+        endpoint: '/ilceler',
+        crud: true,
+        codeField: 'ilce_kodu',
+        nameField: 'ilce_adi',
+        numeratorSeri: 'ILCE',
+        filters: [
+          { key: 'ilce_kodu', label: 'İlçe kodu' },
+          { key: 'ilce_adi', label: 'İlçe adı' },
+          { key: 'sehir_kodu', label: 'Şehir' },
+        ],
+        columns: [
+          { key: 'ilce_kodu', label: 'Kod', mono: true },
+          { key: 'ilce_adi', label: 'Ad' },
+          { key: 'sehir_kodu', label: 'Şehir' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'ilce_kodu', label: 'İlçe kodu', code: true, editableOnNew: true, required: true },
+          { key: 'ilce_adi', label: 'İlçe adı', name: true, required: true },
+          { key: 'sehir_kodu', label: 'Şehir', type: 'lookup', lookup: 'sehirler', valueKey: 'sehir_kodu', labelKey: 'sehir_adi' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
 
       {
         id: 'hareket-kodlari',
@@ -208,36 +297,52 @@ const MODULES = [
         title: 'Kullanıcılar',
         endpoint: '/kullanicilar',
         crud: true,
-        codeField: 'kullanici_kodu',
+        codeField: 'kullanici_adi',
         nameField: 'ad',
-        numeratorSeri: 'KULLANICI',
+        numeratorSeri: null,
         filters: [
-          { key: 'kullanici_kodu', label: 'Kullanıcı kodu' },
+          { key: 'kullanici_adi', label: 'Kullanıcı adı' },
           { key: 'ad', label: 'Ad' },
           { key: 'rol', label: 'Rol' },
+          { key: 'grup_kodu', label: 'Grup' },
         ],
         columns: [
-          { key: 'kullanici_kodu', label: 'Kod', mono: true },
+          { key: 'kullanici_adi', label: 'Kullanıcı adı', mono: true },
           { key: 'ad', label: 'Ad' },
           { key: 'soyad', label: 'Soyad' },
           { key: 'rol', label: 'Rol' },
           { key: 'grup_kodu', label: 'Grup', mono: true },
+          { key: 'parola_var', label: 'Şifre' },
           { key: 'aktif', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'kullanici_kodu', label: 'Kullanıcı kodu', code: true, required: true },
+          { key: 'kullanici_adi', label: 'Kullanıcı adı', required: true },
+          { key: 'sifre', label: 'Şifre', type: 'password', requiredOnNew: true },
           { key: 'ad', label: 'Ad', name: true, required: true },
           { key: 'soyad', label: 'Soyad', required: true },
-          { key: 'rol', label: 'Rol', type: 'select', options: ['Personel', 'Yonetici', 'Satinalma', 'Uretim', 'Finans'] },
+          { key: 'unvan', label: 'Ünvan' },
+          { key: 'rol', label: 'Rol', type: 'select', options: ['Yonetici', 'Personel', 'Satinalma', 'Uretim', 'Finans'] },
+          {
+            key: 'grup_kodu',
+            label: 'Grup',
+            type: 'lookup',
+            lookup: 'kullanici-gruplari',
+            valueKey: 'grup_kodu',
+            labelKey: 'grup_adi',
+            codeKey: 'grup_kodu',
+            required: true,
+          },
         ],
         detailFields: [
           { key: 'eposta', label: 'E-posta' },
           { key: 'telefon', label: 'Telefon' },
-          { key: 'grup_kodu', label: 'Grup kodu' },
+          { key: 'kullanici_kodu', label: 'Kullanıcı kodu (opsiyonel)' },
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
         ],
         detailKey: null,
         detailAsFields: true,
+        defaults: { rol: 'Yonetici', grup_kodu: 'ADMIN', aktif: true, yetkiler: [] },
+        kullaniciYetkiPaneli: true,
       },
       {
         id: 'kullanici-gruplari',
@@ -454,7 +559,7 @@ const MODULES = [
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
       { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
-      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-hesap'] },
+      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
     ],
     screens: [
       {
@@ -504,6 +609,31 @@ const MODULES = [
           {
             id: 'ana', label: 'Stok Kart', kind: 'master-detail',
             masterFields: [
+              // Firma / iş yeri — zorunlu (sorunlu) alanlar; master’da en üstte
+              {
+                key: 'firma_id',
+                label: 'Firma',
+                type: 'lookup',
+                lookup: 'firmalar',
+                valueKey: 'id',
+                labelKey: 'firma_adi',
+                codeKey: 'firma_kodu',
+                required: true,
+                lead: true,
+                critical: true,
+              },
+              {
+                key: 'is_yeri_id',
+                label: 'İş yeri',
+                type: 'lookup',
+                lookup: 'is-yerleri',
+                valueKey: 'id',
+                labelKey: 'is_yeri_adi',
+                codeKey: 'is_yeri_kodu',
+                required: true,
+                lead: true,
+                critical: true,
+              },
               { key: 'stok_tipi', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true, lead: true },
               { key: 'stok_kodu', label: 'Stok kodu', code: true, required: true },
               { key: 'stok_adi', label: 'Stok adı', name: true, required: true },
@@ -556,7 +686,8 @@ const MODULES = [
             ],
           },
           {
-            id: 'isyeri-bag', label: 'İş Yeri Bağları', kind: 'grid', key: 'is_yeri_baglari', slots: 3,
+            // Ek iş yerleri (asıl bağ master’daki İş yeri alanından gelir)
+            id: 'isyeri-bag', label: 'Ek İş Yerleri', kind: 'grid', key: 'is_yeri_baglari', slots: 2,
             fields: [
               { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
               { key: 'aktif', label: 'Aktif', type: 'checkbox' },
@@ -600,7 +731,10 @@ const MODULES = [
             label: 'MRP',
             kind: 'fields',
             fields: [
-              { key: 'emniyet_stok', label: 'Emniyet stok (MRP)', type: 'number' },
+              { key: 'emniyet_stok', label: 'Emniyet stok', type: 'number' },
+              { key: 'yeniden_siparis_seviyesi', label: 'Yeniden sipariş seviyesi', type: 'number' },
+              { key: 'sabit_siparis_miktari', label: 'Sabit sipariş miktarı', type: 'number' },
+              { key: 'temin_suresi_gun', label: 'Temin süresi (gün)', type: 'number' },
               { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
             ],
           },
@@ -718,12 +852,75 @@ const MODULES = [
         detailAsFields: true,
       },
       {
+        id: 'mrp-bagimsiz-ihtiyac',
+        title: 'MRP Bağımsız İhtiyaç',
+        endpoint: '/mrp/bagimsiz-ihtiyaclar',
+        crud: true,
+        codeField: 'ihtiyac_no',
+        nameField: 'stok_adi',
+        numeratorSeri: 'MRP_BI',
+        filters: [
+          { key: 'ihtiyac_no', label: 'No' },
+          { key: 'stok_kodu', label: 'Stok' },
+          { key: 'kaynak', label: 'Kaynak' },
+        ],
+        columns: [
+          { key: 'ihtiyac_no', label: 'No', mono: true },
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'miktar', label: 'Miktar' },
+          { key: 'ihtiyac_tarihi', label: 'İhtiyaç tar.' },
+          { key: 'kaynak', label: 'Kaynak' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'ihtiyac_no', label: 'İhtiyaç no', code: true, required: true },
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'miktar', label: 'Miktar', type: 'number', required: true },
+          { key: 'ihtiyac_tarihi', label: 'İhtiyaç tarihi', type: 'date', required: true },
+          { key: 'kaynak', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+        ],
+        detailFields: [
+          { key: 'birim', label: 'Birim' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'mrp-calisma',
+        title: 'MRP Çalıştır',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        mrpCalistirAction: true,
+        filters: [
+          { key: 'calisma_no', label: 'Çalışma no' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'calisma_no', label: 'No', mono: true },
+          { key: 'durum', label: 'Durum' },
+          { key: 'baslangic_ts', label: 'Başlangıç' },
+          { key: 'bitis_ts', label: 'Bitiş' },
+          { key: 'satir_sayisi', label: 'Satır' },
+          { key: 'net_pozitif', label: 'Net>0' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        nested: { screenId: 'mrp-sonuclar', link: 'mrp-sonuc' },
+      },
+      {
         id: 'mrp-hesap',
-        title: 'MRP Hesap',
+        title: 'MRP Anlık Hesap',
         endpoint: '/mrp',
         crud: false,
         readOnly: true,
         mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpCalistirAction: true,
         filters: [
           { key: 'stok_kodu', label: 'Stok kodu' },
           { key: 'oneri', label: 'Öneri' },
@@ -731,12 +928,42 @@ const MODULES = [
         columns: [
           { key: 'stok_kodu', label: 'Stok', mono: true },
           { key: 'stok_adi', label: 'Ad' },
+          { key: 'bagimsiz_ihtiyac', label: 'Bağımsız' },
+          { key: 'bagimli_ihtiyac', label: 'Bağımlı' },
           { key: 'emniyet_stok', label: 'Emniyet' },
-          { key: 'kullanilabilir_stok', label: 'Kullanılabilir' },
-          { key: 'acik_uretim_ihtiyaci', label: 'UE ihtiyaç' },
+          { key: 'kullanilabilir_stok', label: 'Eldeki' },
           { key: 'acik_satinalma', label: 'Açık SA' },
-          { key: 'net_ihtiyac', label: 'Net ihtiyaç' },
+          { key: 'planlanan_uretim', label: 'Açık UE' },
+          { key: 'net_ihtiyac', label: 'Net' },
+          { key: 'onerilen_miktar', label: 'Öneri miktar' },
           { key: 'oneri', label: 'Öneri' },
+          { key: 'planlanan_baslangic', label: 'Plan baş.' },
+        ],
+      },
+      {
+        id: 'mrp-sonuclar',
+        title: 'MRP Sonuçları',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpSonucMode: true,
+        filters: [
+          { key: 'stok_kodu', label: 'Stok' },
+          { key: 'oneri', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'bagimsiz_ihtiyac', label: 'Bağımsız' },
+          { key: 'bagimli_ihtiyac', label: 'Bağımlı' },
+          { key: 'kullanilabilir_stok', label: 'Eldeki' },
+          { key: 'net_ihtiyac', label: 'Net' },
+          { key: 'onerilen_miktar', label: 'Öneri miktar' },
+          { key: 'oneri', label: 'Öneri' },
+          { key: 'donusturuldu', label: 'Dönüştü' },
+          { key: 'donusum_belge_no', label: 'Belge' },
         ],
       },
       {
@@ -2044,7 +2271,7 @@ const MODULES = [
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
-        defaults: { musteri_tipi: 'Musteri', para_birimi: 'TRY', ulke: 'Türkiye' },
+        defaults: { musteri_tipi: 'Musteri', para_birimi: 'TRY', ulke: 'TR' },
       },
       {
         id: 'crm-faaliyet-planlari',
@@ -3244,10 +3471,218 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     s.filters.unshift({ key: 'aktif', label: 'Aktif', type: 'bool' });
   }
 
+  // Serbest metin tanım alanlarını Sabit Tanımlar lookup'ına çevir (tüm ekranlar)
+  upgradeTanimLookups(s);
+
   // Filtreleri form alanlarından zenginleştir (select/lookup → açılır liste)
   enrichFiltersFromForm(s);
 
   return s;
+}
+
+/** Para birimi / ülke / il / ilçe → tanım ekranı lookup */
+const TANIM_LOOKUP_BY_KEY = {
+  para_birimi: {
+    type: 'lookup',
+    lookup: 'para-birimleri',
+    valueKey: 'pb_kodu',
+    labelKey: 'pb_adi',
+    codeKey: 'pb_kodu',
+  },
+  ulke: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  sevk_ulke: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  ulke_mensei: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  ulke_kodu: {
+    type: 'lookup',
+    lookup: 'ulkeler',
+    valueKey: 'ulke_kodu',
+    labelKey: 'ulke_adi',
+    codeKey: 'ulke_kodu',
+  },
+  il: {
+    type: 'lookup',
+    lookup: 'sehirler',
+    valueKey: 'sehir_adi',
+    labelKey: 'sehir_adi',
+    codeKey: 'sehir_kodu',
+    dependsOn: 'ulke',
+    filterKey: 'ulke_kodu',
+  },
+  sehir: {
+    type: 'lookup',
+    lookup: 'sehirler',
+    valueKey: 'sehir_adi',
+    labelKey: 'sehir_adi',
+    codeKey: 'sehir_kodu',
+    dependsOn: 'ulke',
+    filterKey: 'ulke_kodu',
+  },
+  sevk_il: {
+    type: 'lookup',
+    lookup: 'sehirler',
+    valueKey: 'sehir_adi',
+    labelKey: 'sehir_adi',
+    codeKey: 'sehir_kodu',
+    dependsOn: 'sevk_ulke',
+    filterKey: 'ulke_kodu',
+  },
+  ilce: {
+    type: 'lookup',
+    lookup: 'ilceler',
+    valueKey: 'ilce_adi',
+    labelKey: 'ilce_adi',
+    codeKey: 'ilce_kodu',
+    dependsOn: 'il',
+    filterKey: 'sehir_kodu',
+    parentResolveLookup: 'sehirler',
+    parentResolveBy: 'sehir_adi',
+    parentResolveTo: 'sehir_kodu',
+  },
+  sevk_ilce: {
+    type: 'lookup',
+    lookup: 'ilceler',
+    valueKey: 'ilce_adi',
+    labelKey: 'ilce_adi',
+    codeKey: 'ilce_kodu',
+    dependsOn: 'sevk_il',
+    filterKey: 'sehir_kodu',
+    parentResolveLookup: 'sehirler',
+    parentResolveBy: 'sehir_adi',
+    parentResolveTo: 'sehir_kodu',
+  },
+};
+
+function applyTanimLookup(field) {
+  if (!field || !field.key) return field;
+  const def = TANIM_LOOKUP_BY_KEY[field.key];
+  if (!def) return field;
+  // select/checkbox/number/date veya zaten doğru lookup ise dokunma (label/required koru)
+  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'password') {
+    return field;
+  }
+  if (field.type === 'select' && Array.isArray(field.options) && field.options.length) {
+    return field;
+  }
+  return {
+    ...field,
+    type: 'lookup',
+    lookup: def.lookup,
+    valueKey: def.valueKey,
+    labelKey: def.labelKey,
+    codeKey: def.codeKey,
+    dependsOn: def.dependsOn,
+    filterKey: def.filterKey,
+    parentResolveLookup: def.parentResolveLookup,
+    parentResolveBy: def.parentResolveBy,
+    parentResolveTo: def.parentResolveTo,
+  };
+}
+
+/** Ülke adı/kodu → ulke_kodu; şehir adı/kodu → sehir_kodu */
+function resolveCascadeParentValue(field, parentRaw) {
+  if (parentRaw === undefined || parentRaw === null || parentRaw === '') return null;
+  const raw = String(parentRaw).trim();
+  if (!raw) return null;
+
+  if (field.parentResolveLookup) {
+    const rows = state.lookupCache[field.parentResolveLookup] || [];
+    const by = field.parentResolveBy;
+    const to = field.parentResolveTo;
+    const hit = rows.find((r) =>
+      String(r[by]) === raw
+      || String(r[to]) === raw
+      || (r.sehir_kodu && String(r.sehir_kodu) === raw)
+      || (r.sehir_adi && String(r.sehir_adi) === raw));
+    return hit ? hit[to] : null;
+  }
+
+  // ülke: kod veya ad
+  if (field.filterKey === 'ulke_kodu') {
+    const ulkeler = state.lookupCache.ulkeler || [];
+    const hit = ulkeler.find((u) =>
+      String(u.ulke_kodu) === raw || String(u.ulke_adi) === raw);
+    return hit ? hit.ulke_kodu : raw;
+  }
+  return raw;
+}
+
+function lookupRowsForField(field, ctx = {}) {
+  const all = state.lookupCache[field.lookup] || [];
+  if (!field.dependsOn || !field.filterKey) return all;
+  let parentRaw = ctx[field.dependsOn];
+  // ulke boşsa ulke_kodu'ya düş (bazı ekranlar ülke kodunu ayrı tutar)
+  if ((parentRaw === undefined || parentRaw === null || parentRaw === '')
+      && field.dependsOn === 'ulke' && ctx.ulke_kodu != null && ctx.ulke_kodu !== '') {
+    parentRaw = ctx.ulke_kodu;
+  }
+  if ((parentRaw === undefined || parentRaw === null || parentRaw === '')
+      && field.dependsOn === 'il' && ctx.sehir != null && ctx.sehir !== '') {
+    parentRaw = ctx.sehir;
+  }
+  const parentVal = resolveCascadeParentValue(field, parentRaw);
+  if (!parentVal) return [];
+  return all.filter((r) => String(r[field.filterKey]) === String(parentVal));
+}
+
+function lookupOptionSelected(field, row, value) {
+  const vk = field.valueKey || 'id';
+  const lk = field.labelKey || 'adi';
+  const ck = field.codeKey;
+  const v = value ?? '';
+  return String(v) === String(row[vk])
+    || (lk && String(v) === String(row[lk]))
+    || (ck && String(v) === String(row[ck]));
+}
+
+function buildLookupOptionsHtml(field, value, rows) {
+  const vk = field.valueKey || 'id';
+  const lk = field.labelKey || 'adi';
+  const ck = field.codeKey;
+  const emptyLabel = field.dependsOn && !(value || rows.length)
+    ? '— önce üst alanı seçin —'
+    : '— seçin —';
+  const opts = [`<option value="">${emptyLabel}</option>`].concat(
+    rows.map((r) => {
+      const val = r[vk];
+      const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
+      return `<option value="${escAttr(val)}" ${lookupOptionSelected(field, r, value) ? 'selected' : ''}>${label}</option>`;
+    })
+  );
+  return opts.join('');
+}
+
+function upgradeTanimLookups(screen) {
+  const mapFields = (arr) => {
+    if (!Array.isArray(arr)) return;
+    for (let i = 0; i < arr.length; i += 1) arr[i] = applyTanimLookup(arr[i]);
+  };
+  mapFields(screen.masterFields);
+  mapFields(screen.detailFields);
+  mapFields(screen.filters);
+  (screen.formTabs || []).forEach((tab) => {
+    mapFields(tab.fields);
+    mapFields(tab.masterFields);
+    mapFields(tab.detailFields);
+    mapFields(tab.grid?.fields);
+  });
 }
 
 /** Ekrandaki tüm form alanlarını topla */
@@ -3367,6 +3802,7 @@ const state = {
   sidebarSectionOpen: {},
   tabCtxKey: null,
   nestedLink: null, // { fromScreenId, fromId, convertPath, bodyKey, extra }
+  mrpCalismaId: null,
   session: null,
   firmalar: [],
   activeFirmaId: null,
@@ -3427,7 +3863,7 @@ function buildLinkedPrefill(link, sourceRec, extra = {}) {
       sevk_adresi: sourceRec.sevk_adresi,
       sevk_il: sourceRec.sevk_il,
       sevk_ilce: sourceRec.sevk_ilce,
-      sevk_ulke: sourceRec.sevk_ulke || 'Türkiye',
+      sevk_ulke: sourceRec.sevk_ulke || 'TR',
       sevk_posta_kodu: sourceRec.sevk_posta_kodu,
       arac_plaka: extra.arac_plaka || null,
       sofor_adi: extra.sofor_adi || null,
@@ -4048,9 +4484,22 @@ function ensureSidebarPath(screen) {
 }
 
 function modulYetkiliMi(modId) {
-  const mods = state.session?.modul_yetkileri;
+  const s = state.session;
+  if (!s) return true;
+  const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
+  if (list.length) {
+    // Ekran yetkisi tanımlıysa modülde en az bir ekran erişimi olmalı
+    const mod = MODULES.find((m) => m.id === modId);
+    if (!mod) return false;
+    return (mod.screens || []).some((sc) => ekranYetkisi(sc.id));
+  }
+  const mods = s.modul_yetkileri;
   if (!mods || !mods.length || mods.includes('*')) return true;
   return mods.includes(modId);
+}
+
+function ekranMenuGorunurMu(screenId) {
+  return ekranYetkisi(screenId);
 }
 
 function renderSidebar() {
@@ -4070,7 +4519,9 @@ function renderSidebar() {
     const itemsHtml = sections.map((sec) => {
       const secKey = `${mod.id}:${sec.id}`;
       if (sec.title == null) {
-        const screensHtml = sec.screens.map((s) => `
+        const visible = sec.screens.filter((s) => ekranMenuGorunurMu(s.id));
+        if (!visible.length) return '';
+        const screensHtml = visible.map((s) => `
           <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
             ${escapeHtml(s.title)}
           </button>`).join('');
@@ -4080,7 +4531,9 @@ function renderSidebar() {
         state.sidebarSectionOpen[secKey] = true;
       }
       const isOpen = Boolean(state.sidebarSectionOpen[secKey]);
-      const screensHtml = sec.screens.map((s) => `
+      const visible = sec.screens.filter((s) => ekranMenuGorunurMu(s.id));
+      if (!visible.length) return '';
+      const screensHtml = visible.map((s) => `
           <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
             ${escapeHtml(s.title)}
           </button>`).join('');
@@ -4132,20 +4585,214 @@ function showHome() {
   renderTabBar();
 }
 
+function renderUserChip() {
+  const chip = $('#userChip');
+  const nameEl = $('#userChipName');
+  const titleEl = $('#userChipTitle');
+  const avatarEl = $('#userChipAvatar');
+  const menu = $('#userChipMenu');
+  if (!chip || !nameEl || !titleEl || !avatarEl) return;
+  const s = state.session;
+  if (!s) {
+    nameEl.textContent = 'Oturum yok';
+    titleEl.textContent = 'Sağ tık → Giriş';
+    avatarEl.innerHTML = '<span class="user-avatar-initials">?</span>';
+    avatarEl.classList.remove('has-img');
+  } else {
+    const ad = [s.ad, s.soyad].filter(Boolean).join(' ') || s.kullanici_adi || s.kullanici_kodu || 'Kullanıcı';
+    nameEl.textContent = s.kullanici_adi || s.kullanici_kodu || ad;
+    titleEl.textContent = s.unvan || s.rol || s.grup_adi || '';
+    if (s.profil_resmi) {
+      avatarEl.innerHTML = `<img src="${escAttr(s.profil_resmi)}" alt="" />`;
+      avatarEl.classList.add('has-img');
+    } else {
+      const initials = (s.ad?.[0] || s.kullanici_adi?.[0] || '?').toUpperCase();
+      avatarEl.innerHTML = `<span class="user-avatar-initials">${escapeHtml(initials)}</span>`;
+      avatarEl.classList.remove('has-img');
+    }
+  }
+  if (menu) {
+    const loginBtn = menu.querySelector('[data-user-action="login"]');
+    const logoutBtn = menu.querySelector('[data-user-action="logout"]');
+    if (loginBtn) loginBtn.hidden = Boolean(s);
+    if (logoutBtn) logoutBtn.hidden = !s;
+  }
+}
+
+function closeUserChipMenu() {
+  const menu = $('#userChipMenu');
+  if (menu) menu.hidden = true;
+}
+
+function openUserChipMenu(x, y) {
+  const menu = $('#userChipMenu');
+  const area = $('#userProfileArea');
+  if (!menu || !area) return;
+  renderUserChip();
+  menu.hidden = false;
+  const rect = area.getBoundingClientRect();
+  const left = Math.min(Math.max(8, (x ?? rect.left) - rect.left), Math.max(8, rect.width - 160));
+  menu.style.left = `${left}px`;
+  menu.style.top = 'calc(100% + 0.35rem)';
+}
+
+function setLoginError(msg) {
+  const el = $('#loginError');
+  if (!el) return;
+  if (!msg) {
+    el.hidden = true;
+    el.textContent = '';
+    return;
+  }
+  el.hidden = false;
+  el.textContent = msg;
+}
+
+function showLoginView() {
+  const login = $('#viewLogin');
+  const shell = $('#appShell');
+  if (shell) shell.hidden = true;
+  if (login) login.hidden = false;
+  document.body.classList.add('is-login');
+  closeUserChipMenu();
+  setLoginError('');
+  const user = $('#loginUser');
+  const pass = $('#loginPass');
+  if (pass) pass.value = '';
+  // Odak: varsa kullanıcı adı doluysa şifre, değilse kullanıcı adı
+  requestAnimationFrame(() => {
+    if (user && !user.value) user.focus();
+    else if (pass) pass.focus();
+  });
+}
+
+function enterApp() {
+  const login = $('#viewLogin');
+  const shell = $('#appShell');
+  if (login) login.hidden = true;
+  if (shell) shell.hidden = false;
+  document.body.classList.remove('is-login');
+  renderUserChip();
+  renderSidebar();
+  renderFirmaPicker();
+}
+
+function applySession(ses, kullanici_adi) {
+  state.session = ses;
+  const kod = ses.kullanici_kodu || kullanici_adi || '';
+  if (kod) localStorage.setItem('ktb_kullanici_kodu', kod);
+  if (ses.access_token) localStorage.setItem('ktb_access_token', ses.access_token);
+  if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
+  // Bu cihazda oturum açıldı — boot’ta giriş ekranı zorlanmaz
+  localStorage.setItem('ktb_cihaz_oturum', '1');
+}
+
+function softSessionFromStorage() {
+  const kod = localStorage.getItem('ktb_kullanici_kodu');
+  if (!kod) return false;
+  if (!state.session) {
+    state.session = {
+      kullanici_kodu: kod,
+      kullanici_adi: kod,
+      ad: kod,
+      unvan: 'Yerel oturum',
+    };
+  }
+  return true;
+}
+
+async function logoutUser() {
+  try {
+    const refresh = localStorage.getItem('ktb_refresh_token');
+    const kod = localStorage.getItem('ktb_kullanici_kodu');
+    await api('/auth/logout', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refresh, kullanici_kodu: kod }),
+    }).catch(() => {});
+  } catch (_) { /* ignore */ }
+  localStorage.removeItem('ktb_access_token');
+  localStorage.removeItem('ktb_refresh_token');
+  localStorage.removeItem('ktb_kullanici_kodu');
+  localStorage.removeItem('ktb_cihaz_oturum');
+  state.session = null;
+  closeUserChipMenu();
+  renderUserChip();
+  renderSidebar();
+  showLoginView();
+  toast('Oturum kapatıldı.');
+}
+
+async function submitLoginForm(e) {
+  if (e) e.preventDefault();
+  closeUserChipMenu();
+  const kullanici_adi = ($('#loginUser')?.value || '').trim();
+  const sifre = ($('#loginPass')?.value || '').trim();
+  const btn = $('#loginSubmit');
+  if (!kullanici_adi) {
+    setLoginError('Kullanıcı adı gerekli.');
+    $('#loginUser')?.focus();
+    return;
+  }
+  if (!sifre) {
+    setLoginError('Şifre gerekli.');
+    $('#loginPass')?.focus();
+    return;
+  }
+  setLoginError('');
+  if (btn) btn.disabled = true;
+  try {
+    const ses = await api('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ kullanici_adi, sifre }),
+    });
+    applySession(ses, kullanici_adi);
+    enterApp();
+    await loadFirmalar().catch(() => {});
+    renderFirmaPicker();
+    showHome();
+    toast(`Hoş geldiniz, ${ses.kullanici_adi || ses.ad || ''}`);
+  } catch (err) {
+    setLoginError(err.message || 'Giriş başarısız');
+    $('#loginPass')?.focus();
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/** Eski prompt tabanlı giriş — menüden çağrılırsa giriş ekranına yönlendir. */
+function promptLogin() {
+  showLoginView();
+}
+
+function allowedFirmalar() {
+  const all = Array.isArray(state.firmalar) ? state.firmalar : [];
+  const fy = state.session?.firma_yetkileri;
+  if (!Array.isArray(fy) || !fy.length) return all;
+  const ids = new Set(fy.map((f) => Number(f.firma_id ?? f.id)).filter(Boolean));
+  const filtered = all.filter((f) => ids.has(Number(f.id)));
+  return filtered.length ? filtered : all;
+}
+
 function renderFirmaPicker() {
   const nameEl = $('#firmaPickerName');
   const menu = $('#firmaPickerMenu');
   const labelEl = $('#firmaProfileLabel');
   if (labelEl) labelEl.textContent = 'Firma profil alanı';
   if (!nameEl || !menu) return;
-  const aktif = state.firmalar.find((f) => Number(f.id) === Number(state.activeFirmaId));
+  const list = allowedFirmalar();
+  // Oturum firma kısıtı varsa aktif firmayı listeye çek
+  if (list.length && !list.some((f) => Number(f.id) === Number(state.activeFirmaId))) {
+    state.activeFirmaId = Number(list[0].id);
+    localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
+  }
+  const aktif = list.find((f) => Number(f.id) === Number(state.activeFirmaId)) || list[0];
   const yer = state.isYerleri.find((y) => Number(y.id) === Number(state.activeIsYeriId));
   nameEl.textContent = aktif
     ? (yer && state.isYerleri.length > 1
       ? `${aktif.firma_adi} · ${yer.is_yeri_kodu || yer.is_yeri_adi}`
       : aktif.firma_adi)
-    : (state.firmalar[0]?.firma_adi || 'Firma seçin');
-  menu.innerHTML = state.firmalar.map((f) => `
+    : 'Firma seçin';
+  menu.innerHTML = list.map((f) => `
     <li role="option">
       <button type="button" class="firma-picker-item ${Number(f.id) === Number(state.activeFirmaId) ? 'active' : ''}"
         data-firma-id="${f.id}">
@@ -4418,6 +5065,8 @@ function cellHtml(col, row, index = 0) {
   // Aktif kolonu Pasif olarak gösterilir: tik/Evet = pasif (aktif=false)
   if (col.key === 'aktif' && typeof val === 'boolean') {
     val = val ? 'Hayır' : 'Evet';
+  } else if (col.key === 'parola_var') {
+    val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
   }
@@ -4493,6 +5142,35 @@ function renderList(screen) {
   updateActionButtons(screen);
 }
 
+function isSessionTamYetkili() {
+  const s = state.session;
+  if (!s) return true; // oturum yoksa eski davranış (açık demo)
+  if (s.grup_kodu === 'ADMIN') return true;
+  if (String(s.rol || '').toLowerCase() === 'yonetici') return true;
+  const mods = s.modul_yetkileri;
+  if (Array.isArray(mods) && mods.includes('*') && !(s.yetkiler || []).length) return true;
+  return false;
+}
+
+/** Ekran erişim / aksiyon yetkisi. yetkiler boşsa ADMIN/modül* → tam; aksi halde satır şart. */
+function ekranYetkisi(screenId, action = null) {
+  const s = state.session;
+  if (!s) return true;
+  const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
+  if (!list.length) {
+    if (isSessionTamYetkili()) return true;
+    const mods = s.modul_yetkileri;
+    return Array.isArray(mods) && mods.includes('*');
+  }
+  const row = list.find((y) => y.ekran_id === screenId && y.erisim !== false);
+  if (!row) return false;
+  if (!action) return true;
+  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir') {
+    return Boolean(row.incele || row.duzelt || row.yeni);
+  }
+  return Boolean(row[action]);
+}
+
 function updateActionButtons(screen) {
   const hasSel = Boolean(state.selectedId);
   document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
@@ -4501,15 +5179,30 @@ function updateActionButtons(screen) {
       btn.disabled = act !== 'incele' || !hasSel;
       return;
     }
-    if (act === 'yeni') btn.disabled = false;
-    else if (act === 'export-csv') btn.disabled = false;
+    const allowed = ekranYetkisi(screen.id, act === 'export-csv' || act === 'mrp-talep' ? act : act);
+    if (!allowed && ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
+      btn.disabled = true;
+      return;
+    }
+    if (act === 'yeni') btn.disabled = !ekranYetkisi(screen.id, 'yeni');
+    else if (act === 'export-csv') btn.disabled = !ekranYetkisi(screen.id, 'export-csv');
     else if (act === 'mrp-talep') {
       btn.hidden = !screen.mrpTalepAction;
-      btn.disabled = false;
-    } else btn.disabled = !hasSel;
+      btn.disabled = !ekranYetkisi(screen.id, 'mrp-talep');
+    } else if (act === 'mrp-uretim') {
+      btn.hidden = !screen.mrpUretimAction;
+      btn.disabled = !ekranYetkisi(screen.id, 'mrp-uretim');
+    } else if (act === 'mrp-calistir') {
+      btn.hidden = !screen.mrpCalistirAction;
+      btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
+    } else btn.disabled = !hasSel || !ekranYetkisi(screen.id, act);
   });
   const mrpBtn = $('#btnMrpTalep');
   if (mrpBtn) mrpBtn.hidden = !screen.mrpTalepAction;
+  const mrpUe = $('#btnMrpUretim');
+  if (mrpUe) mrpUe.hidden = !screen.mrpUretimAction;
+  const mrpRun = $('#btnMrpCalistir');
+  if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
 }
 
 async function openScreen(id, opts = {}) {
@@ -4517,6 +5210,10 @@ async function openScreen(id, opts = {}) {
     const screen = findScreen(id);
     if (!screen) {
       toast(`Ekran bulunamadı: ${id || '?'}`);
+      return;
+    }
+    if (!ekranYetkisi(screen.id)) {
+      toast('Bu ekrana erişim yetkiniz yok.');
       return;
     }
 
@@ -4548,7 +5245,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017g`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017q`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -4573,7 +5270,22 @@ async function openScreen(id, opts = {}) {
       $('#sidebar').classList.remove('open');
     }
 
-    const data = await api(screen.endpoint);
+    let data;
+    if (screen.mrpSonucMode) {
+      // Son seçilen veya en son MRP çalışmasının sonuçları
+      let calismaId = state.mrpCalismaId;
+      if (!calismaId) {
+        const calismalar = await api('/mrp/calismalar');
+        calismaId = Array.isArray(calismalar) && calismalar[0] ? calismalar[0].id : null;
+        state.mrpCalismaId = calismaId;
+      }
+      data = calismaId ? await api(`/mrp/calismalar/${calismaId}/sonuclar`) : [];
+      if (banner && calismaId) {
+        banner.textContent = `${screen.title} · çalışma #${calismaId} · UI build 20261017u`;
+      }
+    } else {
+      data = await api(screen.endpoint);
+    }
     if (state.screenId !== id) return;
     let rows = Array.isArray(data) ? data : [];
     if (screen.id === 'numarator-tanimi') {
@@ -4607,6 +5319,9 @@ const LOOKUP_ENDPOINTS = {
   depolar: '/depolar',
   stoklar: '/stoklar',
   ulkeler: '/ulkeler?aktif=true',
+  'para-birimleri': '/para-birimleri?aktif=true',
+  sehirler: '/sehirler?aktif=true',
+  ilceler: '/ilceler?aktif=true',
   'is-merkezleri': '/is-merkezleri',
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?aktif=true',
@@ -4617,6 +5332,7 @@ const LOOKUP_ENDPOINTS = {
   'crm-faaliyet-tipleri': '/crm-faaliyet-tipleri?aktif=true',
   'crm-kontaklar': '/crm-kontaklar?aktif=true',
   kisiler: '/kisiler',
+  'kullanici-gruplari': '/kullanici-gruplari',
   'satin-alma-siparisleri': '/satin-alma-siparisleri',
   'urun-agaclari': '/urun-agaclari?tip=hepsi',
   rotalar: '/rotalar?tip=hepsi',
@@ -4710,7 +5426,7 @@ function escAttr(v) {
   return String(v ?? '').replace(/"/g, '&quot;');
 }
 
-function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
+function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', ctx = null) {
   const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
   const forceDisabled = state.formMode === 'incele' || codeLocked;
   const dis = forceDisabled ? 'disabled' : '';
@@ -4722,24 +5438,25 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
     const checked = field.key === 'aktif' ? !v : !!v;
     return `<input type="checkbox" ${name} ${checked ? 'checked' : ''} ${dis} ${req} />`;
   }
+  if (field.type === 'password') {
+    const needNew = field.requiredOnNew && state.formMode === 'yeni';
+    const ph = state.formMode === 'duzelt' || state.formMode === 'incele'
+      ? 'Boş bırakırsanız şifre değişmez'
+      : 'Giriş şifresi';
+    const reqPw = needNew ? 'aria-required="true"' : req;
+    // Mevcut hash asla forma basılmaz — yaz-only
+    return `<input type="password" ${name} value="" autocomplete="new-password" placeholder="${escAttr(ph)}" ${dis} ${reqPw} />`;
+  }
   if (field.type === 'select') {
     return `<select ${name} ${dis} ${req}>
       ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
     </select>`;
   }
   if (field.type === 'lookup') {
-    const rows = state.lookupCache[field.lookup] || [];
-    const vk = field.valueKey || 'id';
-    const lk = field.labelKey || 'adi';
-    const ck = field.codeKey;
-    const opts = [`<option value="">— seçin —</option>`].concat(
-      rows.map((r) => {
-        const val = r[vk];
-        const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
-        return `<option value="${escAttr(val)}" ${String(v) === String(val) ? 'selected' : ''}>${label}</option>`;
-      })
-    );
-    return `<select class="lookup-select" ${name} ${dis} ${req}>${opts.join('')}</select>`;
+    const scope = ctx || state.formRecord || {};
+    const rows = lookupRowsForField(field, scope);
+    const dep = field.dependsOn ? ` data-depends-on="${escAttr(field.dependsOn)}"` : '';
+    return `<select class="lookup-select" ${name} ${dis} ${req}${dep}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
   }
   if (field.type === 'number') {
     return `<input type="number" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
@@ -4751,11 +5468,11 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '') {
   return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
 }
 
-function detailFieldControl(field, value, idx, gridKey = null) {
+function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
   const extra = gridKey
     ? `data-didx="${idx}" data-grid="${gridKey}"`
     : `data-didx="${idx}"`;
-  return fieldControl(field, value, 'data-detail', extra);
+  return fieldControl(field, value, 'data-detail', extra, rowCtx || {});
 }
 
 function emptyRowFromFields(fields) {
@@ -4794,10 +5511,13 @@ function lookupDisplay(field, value) {
   if (value === undefined || value === null || value === '') return '—';
   const rows = state.lookupCache[field.lookup] || [];
   const vk = field.valueKey || 'id';
-  const hit = rows.find((r) => String(r[vk]) === String(value));
-  if (!hit) return String(value);
-  const ck = field.codeKey;
   const lk = field.labelKey || 'adi';
+  const ck = field.codeKey;
+  const hit = rows.find((r) =>
+    String(r[vk]) === String(value)
+    || (lk && String(r[lk]) === String(value))
+    || (ck && String(r[ck]) === String(value)));
+  if (!hit) return String(value);
   return ck ? `${hit[ck] || ''} — ${hit[lk] || ''}` : `${hit[lk] || hit[vk]}`;
 }
 
@@ -4909,6 +5629,7 @@ const MASTER_PRIMARY_MAX = 8;
 function masterFieldScore(f) {
   let s = 0;
   if (f.lead) s += 1000; // numaratör sürücü / önce seçilecek alan
+  if (f.critical) s += 900; // sorunlu / olmazsa olmaz — master’da kalsın
   if (f.code) s += 100;
   if (f.name) s += 90;
   if (f.required) s += 70;
@@ -4918,6 +5639,32 @@ function masterFieldScore(f) {
   if (f.type === 'select') s += 35;
   if (/_no$|_kodu$|_adi$/.test(f.key || '')) s += 20;
   return s;
+}
+
+/** Stok kartı: master firma/iş yeri ↔ is_yeri_baglari senkronu */
+function hydrateStokFirmaIsYeri(rec) {
+  if (!rec) return;
+  const bags = Array.isArray(rec.is_yeri_baglari) ? rec.is_yeri_baglari : [];
+  if (!rec.is_yeri_id && bags.length) {
+    const first = bags.find((b) => b.is_yeri_id) || bags[0];
+    if (first?.is_yeri_id) rec.is_yeri_id = Number(first.is_yeri_id);
+  }
+  if (!rec.firma_id && getActiveFirmaId()) {
+    rec.firma_id = getActiveFirmaId();
+  }
+}
+
+function syncStokFirmaIsYeriForSave(master) {
+  const firmaId = Number(master.firma_id) || getActiveFirmaId() || null;
+  const iyId = Number(master.is_yeri_id) || null;
+  if (firmaId) master.firma_id = firmaId;
+  if (iyId) {
+    master.is_yeri_id = iyId;
+    const bags = Array.isArray(master.is_yeri_baglari) ? [...master.is_yeri_baglari] : [];
+    const has = bags.some((b) => Number(b.is_yeri_id) === iyId);
+    if (!has) bags.unshift({ is_yeri_id: iyId, aktif: true });
+    master.is_yeri_baglari = bags;
+  }
 }
 
 /** Kalabalık master listesini birincil + ek alanlara böler; lead alanlar başta. */
@@ -4941,27 +5688,594 @@ function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
   };
 }
 
-function renderFieldGrid(fields, rec, attrName = 'data-master') {
-  return (fields || [])
-    .map((f) => fieldShell(f, fieldControl(f, rec[f.key], attrName)))
-    .join('');
+/** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / adres / …). */
+const FIELD_GROUP_DEFS = [
+  { id: 'kimlik', title: 'Kimlik', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|kod|adi|aciklama|turu|tipi|vergi_|pasaport|uzun_stok|tedarik_tipi|stok_tipi|musteri_tipi|ad$|soyad$|unvan)/i },
+  { id: 'organizasyon', title: 'Organizasyon', re: /^(firma_id|is_yeri_id|depo_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|asama_|sorumlu_|takip_eden)/i },
+  { id: 'adres', title: 'Adres', re: /^(ulke|il$|ilce|sehir|posta_|adres|fatura_adres|sevk_|enlem|boylam)/i },
+  { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|email|website|fax|yetkili)/i },
+  { id: 'finans', title: 'Finans', re: /^(para_birimi|kur$|odeme_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|genel_toplam|iskonto|kdv_|birim_fiyat|beklenen_gelir|muhasebe_)/i },
+  { id: 'olcu', title: 'Ölçü / birim', re: /^(birim|miktar|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu)/i },
+  { id: 'durum', title: 'Durum', re: /^(durum|aktif|pasif|notlar|not_|oncelik|gecerlilik|kaynak)/i },
+];
+const FIELD_GROUP_ORDER = FIELD_GROUP_DEFS.map((g) => g.id).concat(['diger']);
+
+function inferFieldGroup(f) {
+  if (f?.group && typeof f.group === 'object') return f.group;
+  if (typeof f?.group === 'string') {
+    const hit = FIELD_GROUP_DEFS.find((g) => g.id === f.group);
+    return hit || { id: f.group, title: f.groupLabel || f.group };
+  }
+  const k = f?.key || '';
+  for (const g of FIELD_GROUP_DEFS) {
+    if (g.re.test(k)) return { id: g.id, title: g.title };
+  }
+  return { id: 'diger', title: 'Diğer' };
+}
+
+function clusterFieldsByGroup(fields) {
+  const buckets = new Map();
+  (fields || []).forEach((f) => {
+    const g = inferFieldGroup(f);
+    if (!buckets.has(g.id)) buckets.set(g.id, { id: g.id, title: g.title, fields: [] });
+    buckets.get(g.id).fields.push(f);
+  });
+  return FIELD_GROUP_ORDER
+    .filter((id) => buckets.has(id))
+    .map((id) => buckets.get(id))
+    .concat([...buckets.values()].filter((b) => !FIELD_GROUP_ORDER.includes(b.id)));
+}
+
+function renderFieldGrid(fields, rec, attrName = 'data-master', opts = {}) {
+  const ctx = rec || {};
+  const list = fields || [];
+  const renderFlat = (arr, gridCls) => `
+    <div class="form-tab-fields ${gridCls}">
+      ${arr.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx))).join('')}
+    </div>`;
+
+  const gridCls = opts.gridClass
+    || (attrName === 'data-master' ? 'form-tab-fields--master' : 'form-tab-fields--detail');
+
+  // Başlık (primary) düz kalır — tarama için grup yok (çağıran zaten grid sarıyor)
+  if (!opts.grouped) {
+    return list.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], attrName, '', ctx))).join('');
+  }
+
+  const clusters = clusterFieldsByGroup(list);
+  if (list.length < 4 || clusters.length <= 1) {
+    return renderFlat(list, gridCls);
+  }
+
+  return clusters.map((c) => `
+    <div class="field-group" data-group="${escAttr(c.id)}">
+      <div class="field-group-title">${c.title}</div>
+      ${renderFlat(c.fields, gridCls)}
+    </div>`).join('');
+}
+
+function renderDetailFieldGrid(fields, rec, attrName = 'data-master') {
+  return renderFieldGrid(fields, rec, attrName, { grouped: true });
+}
+
+/** Grid satırı düzenlerken alanları gruplu göster */
+function renderGroupedDetailControls(fields, row, idx, gridKey) {
+  const list = fields || [];
+  if (list.length < 5) {
+    return `<div class="form-tab-fields form-tab-fields--detail detail-slot-fields-grid">${
+      list.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, gridKey, row))).join('')
+    }</div>`;
+  }
+  const clusters = clusterFieldsByGroup(list);
+  if (clusters.length <= 1) {
+    return `<div class="form-tab-fields form-tab-fields--detail detail-slot-fields-grid">${
+      list.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, gridKey, row))).join('')
+    }</div>`;
+  }
+  return clusters.map((c) => `
+    <div class="field-group" data-group="${escAttr(c.id)}">
+      <div class="field-group-title">${c.title}</div>
+      <div class="form-tab-fields form-tab-fields--detail detail-slot-fields-grid">
+        ${c.fields.map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, gridKey, row))).join('')}
+      </div>
+    </div>`).join('');
 }
 
 function fieldShell(f, controlHtml) {
   const cls = ['field'];
-  if (f.required) cls.push('required');
+  if (f.required || (f.requiredOnNew && state.formMode === 'yeni')) cls.push('required');
+  if (f.critical) cls.push('field--critical');
   if (f.type === 'lookup') cls.push('lookup');
+  if (f.type === 'password') cls.push('field--password');
   if (f.code) cls.push('field--code');
   if (f.name) cls.push('field--name');
-  // Asterisk yok — zorunluluk .required sınıfı + input aria-required ile
-  return `<div class="${cls.join(' ')}"><label>${f.label}</label>${controlHtml}</div>`;
+  // Asterisk yok — zorunluluk .required / .field--critical + aria-required
+  const hint = f.critical
+    ? '<span class="field-critical-hint">zorunlu</span>'
+    : '';
+  return `<div class="${cls.join(' ')}"><label>${f.label}${hint}</label>${controlHtml}</div>`;
+}
+
+const YETKI_ACTIONS = [
+  { id: 'yeni', label: 'Yeni' },
+  { id: 'incele', label: 'İncele' },
+  { id: 'duzelt', label: 'Düzelt' },
+  { id: 'kopyala', label: 'Kopyala' },
+  { id: 'sil', label: 'Sil' },
+];
+
+function allScreensCatalog() {
+  const out = [];
+  MODULES.forEach((mod) => {
+    (mod.screens || []).forEach((s) => {
+      out.push({
+        id: s.id,
+        title: s.title,
+        moduleId: mod.id,
+        moduleTitle: mod.title,
+      });
+    });
+  });
+  return out;
+}
+
+function isAdminLikeUser(rec) {
+  if (!rec) return false;
+  if (rec.grup_kodu === 'ADMIN') return true;
+  return String(rec.rol || '').toLowerCase() === 'yonetici';
+}
+
+/**
+ * ADMIN / Yönetici + boş yetki listesi = tüm ekranlar (gelecekte eklenenler dahil).
+ * Formda görsel olarak hepsi işaretli gösterilir.
+ */
+function yetkiMapFromRecord(rec) {
+  const map = {};
+  const list = rec?.yetkiler || [];
+  if (!list.length && isAdminLikeUser(rec)) {
+    allScreensCatalog().forEach((s) => {
+      map[s.id] = {
+        erisim: true, yeni: true, incele: true, duzelt: true, kopyala: true, sil: true,
+      };
+    });
+    return map;
+  }
+  list.forEach((y) => {
+    if (!y?.ekran_id) return;
+    map[y.ekran_id] = {
+      erisim: y.erisim !== false,
+      yeni: Boolean(y.yeni),
+      incele: Boolean(y.incele),
+      duzelt: Boolean(y.duzelt),
+      kopyala: Boolean(y.kopyala),
+      sil: Boolean(y.sil),
+    };
+  });
+  return map;
+}
+
+/** Tam yetkili kaydı küçük tut: tüm ekranlar doluysa boş dizi (= wildcard). */
+function compressYetkilerForSave(master) {
+  const all = allScreensCatalog();
+  const y = Array.isArray(master.yetkiler) ? master.yetkiler : [];
+  if (!isAdminLikeUser(master)) return;
+  const full = all.length > 0 && all.every((s) => {
+    const r = y.find((x) => x.ekran_id === s.id);
+    return r && r.yeni && r.incele && r.duzelt && r.kopyala && r.sil;
+  });
+  if (full || y.length === 0) {
+    // Boş = tüm mevcut + ileride eklenecek ekranlara tam yetki
+    master.yetkiler = [];
+  }
+  const firms = Array.isArray(state.firmalar) ? state.firmalar : [];
+  const fy = Array.isArray(master.firma_yetkileri) ? master.firma_yetkileri : [];
+  if (!firms.length || fy.length === 0 || fy.length >= firms.length) {
+    master.firma_yetkileri = [];
+  }
+}
+
+function resizeImageToDataUrl(file, maxSide = 256, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let { width, height } = img;
+        const scale = Math.min(1, maxSide / Math.max(width, height));
+        width = Math.max(1, Math.round(width * scale));
+        height = Math.max(1, Math.round(height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const data = canvas.toDataURL('image/jpeg', quality);
+        URL.revokeObjectURL(url);
+        resolve(data);
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Resim okunamadı'));
+    };
+    img.src = url;
+  });
+}
+
+function renderKullaniciProfilBlok(rec) {
+  const src = rec.profil_resmi || '';
+  const readonly = state.formMode === 'incele';
+  return `
+    <section class="user-avatar-pane" aria-label="Profil resmi">
+      <div class="section-label">Profil resmi</div>
+      <div class="user-avatar-row">
+        <div class="user-avatar-preview" id="userAvatarPreview">
+          ${src
+            ? `<img src="${escAttr(src)}" alt="Profil" />`
+            : '<span class="user-avatar-placeholder">Resim yok</span>'}
+        </div>
+        <div class="user-avatar-actions">
+          <label class="btn ghost user-avatar-pick"${readonly ? ' hidden' : ''}>
+            Resim seç
+            <input type="file" id="userAvatarFile" accept="image/*" hidden ${readonly ? 'disabled' : ''} />
+          </label>
+          <button type="button" class="btn ghost" id="userAvatarClear" ${readonly || !src ? 'hidden' : ''}>Kaldır</button>
+          <p class="hint">JPG/PNG; kayıtta otomatik küçültülür. ADMIN’de boş yetki = tüm ekranlar (yeniler dahil).</p>
+        </div>
+      </div>
+    </section>`;
+}
+
+function renderFirmaYetkiPane(rec) {
+  const readonly = state.formMode === 'incele';
+  const dis = readonly ? 'disabled' : '';
+  const firmalar = Array.isArray(state.firmalar) ? state.firmalar : [];
+  const rawSel = (rec.firma_yetkileri || []).map((f) => Number(f.firma_id ?? f.id)).filter(Boolean);
+  // ADMIN + boş liste = tüm firmalar (kısıt yok) — formda hepsi işaretli
+  const selected = new Set(
+    (!rawSel.length && isAdminLikeUser(rec))
+      ? firmalar.map((f) => Number(f.id))
+      : rawSel
+  );
+  const rows = firmalar.length
+    ? firmalar.map((f) => `
+      <tr data-firma-yetki="${escAttr(f.id)}">
+        <td class="yetki-erisim">
+          <input type="checkbox" data-firma-check="1" ${selected.has(Number(f.id)) ? 'checked' : ''} ${dis} />
+        </td>
+        <td class="yetki-ekran mono">${escapeHtml(f.firma_kodu || '')}</td>
+        <td>${escapeHtml(f.firma_adi || '')}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" class="detail-empty">Firma listesi yok.</td></tr>';
+
+  return `
+    <section class="firma-yetki-pane" aria-label="Firma profil yetkisi">
+      <div class="yetki-pane-head">
+        <div class="section-label">Firma profil yetkisi</div>
+        <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <button type="button" class="btn ghost" id="firmaYetkiSelectAll">Hepsi</button>
+          <button type="button" class="btn ghost" id="firmaYetkiClearAll">Temizle</button>
+        </div>
+      </div>
+      <p class="hint yetki-hint">Kullanıcının işlem yapabileceği firmaları satırdan işaretleyin. ADMIN’de hepsi / boş kayıt = tüm firmalar (kısıt yok).</p>
+      <div class="firma-yetki-scroll">
+        <table class="yetki-table" id="firmaYetkiTable">
+          <thead>
+            <tr>
+              <th class="yetki-erisim">
+                <label class="yetki-th-hepsi" title="Tüm firmalar">
+                  <input type="checkbox" data-firma-head="hepsi" ${dis} />
+                  <span>Hepsi</span>
+                </label>
+              </th>
+              <th class="yetki-ekran">Kod</th>
+              <th>Firma adı</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
+function renderYetkiGrid(rec) {
+  const map = yetkiMapFromRecord(rec);
+  const readonly = state.formMode === 'incele';
+  const dis = readonly ? 'disabled' : '';
+  const rows = allScreensCatalog();
+  let lastMod = null;
+  const body = rows.map((s) => {
+    const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
+    const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
+    let modRow = '';
+    if (s.moduleTitle !== lastMod) {
+      lastMod = s.moduleTitle;
+      modRow = `<tr class="yetki-mod-row"><td colspan="8">${escapeHtml(s.moduleTitle)}</td></tr>`;
+    }
+    return `${modRow}
+      <tr data-yetki-ekran="${escAttr(s.id)}">
+        <td class="yetki-erisim">
+          <input type="checkbox" data-yetki="erisim" ${y.erisim ? 'checked' : ''} ${dis} title="Ekran erişimi" />
+        </td>
+        <td class="yetki-ekran">${escapeHtml(s.title)}</td>
+        ${YETKI_ACTIONS.map((a) => `
+          <td class="yetki-act">
+            <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="${a.label}" />
+          </td>`).join('')}
+        <td class="yetki-act">
+          <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="Hepsi" />
+        </td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <section class="yetki-pane" aria-label="Ekran yetkileri">
+      <div class="yetki-pane-head">
+        <div class="section-label">Yetkiler</div>
+        <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <button type="button" class="btn ghost" id="yetkiSelectAll">Tüm ekranlar</button>
+          <button type="button" class="btn ghost" id="yetkiClearAll">Temizle</button>
+        </div>
+      </div>
+      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. ADMIN / Yönetici için tümü işaretli kaydedilirse yetki listesi boş tutulur — yeni eklenen ekranlar da otomatik açılır. Yalnızca İncele işaretliyse o ekranda sadece incele kullanılabilir.</p>
+      <div class="yetki-scroll">
+        <table class="yetki-table" id="yetkiTable">
+          <thead>
+            <tr>
+              <th class="yetki-erisim">
+                <div class="yetki-th">Erişim</div>
+                <label class="yetki-th-hepsi" title="Tüm erişimleri seç">
+                  <input type="checkbox" data-yetki-head="erisim" ${dis} />
+                  <span>Hepsi</span>
+                </label>
+              </th>
+              <th class="yetki-ekran">Ekran</th>
+              ${YETKI_ACTIONS.map((a) => `
+                <th class="yetki-act">
+                  <div class="yetki-th">${a.label}</div>
+                  <label class="yetki-th-hepsi" title="Tüm satırlarda ${a.label}">
+                    <input type="checkbox" data-yetki-head="${a.id}" ${dis} />
+                    <span>Hepsi</span>
+                  </label>
+                </th>`).join('')}
+              <th class="yetki-act">
+                <div class="yetki-th">Hepsi</div>
+                <label class="yetki-th-hepsi" title="Tüm aksiyonları seç">
+                  <input type="checkbox" data-yetki-head="hepsi" ${dis} />
+                  <span>Hepsi</span>
+                </label>
+              </th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
+function readYetkiGridFromDom() {
+  const rows = [];
+  document.querySelectorAll('#yetkiTable tbody tr[data-yetki-ekran]').forEach((tr) => {
+    const erisim = tr.querySelector('[data-yetki="erisim"]')?.checked;
+    if (!erisim) return;
+    const y = { ekran_id: tr.getAttribute('data-yetki-ekran'), erisim: true };
+    YETKI_ACTIONS.forEach((a) => {
+      y[a.id] = Boolean(tr.querySelector(`[data-yetki="${a.id}"]`)?.checked);
+    });
+    y.hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
+    rows.push(y);
+  });
+  return rows;
+}
+
+function readFirmaYetkiFromDom() {
+  const out = [];
+  document.querySelectorAll('#firmaYetkiTable tbody tr[data-firma-yetki]').forEach((tr) => {
+    if (!tr.querySelector('[data-firma-check]')?.checked) return;
+    const id = Number(tr.getAttribute('data-firma-yetki'));
+    if (id) out.push({ firma_id: id });
+  });
+  return out;
+}
+
+function bindYetkiGridEvents() {
+  const table = $('#yetkiTable');
+  if (!table || state.formMode === 'incele') return;
+
+  const syncRow = (tr) => {
+    const erisim = tr.querySelector('[data-yetki="erisim"]');
+    const acts = YETKI_ACTIONS.map((a) => tr.querySelector(`[data-yetki="${a.id}"]`));
+    const hepsi = tr.querySelector('[data-yetki="hepsi"]');
+    const on = Boolean(erisim?.checked);
+    acts.forEach((el) => { if (el) el.disabled = !on; });
+    if (hepsi) hepsi.disabled = !on;
+    if (!on) {
+      acts.forEach((el) => { if (el) el.checked = false; });
+      if (hepsi) hepsi.checked = false;
+      return;
+    }
+    if (hepsi) hepsi.checked = acts.every((el) => el?.checked);
+  };
+
+  const syncHeadChecks = () => {
+    const rows = [...table.querySelectorAll('tr[data-yetki-ekran]')];
+    const setHead = (key, pred) => {
+      const el = table.querySelector(`[data-yetki-head="${key}"]`);
+      if (!el) return;
+      el.checked = rows.length > 0 && rows.every(pred);
+      el.indeterminate = false;
+    };
+    setHead('erisim', (tr) => tr.querySelector('[data-yetki="erisim"]')?.checked);
+    YETKI_ACTIONS.forEach((a) => {
+      setHead(a.id, (tr) => tr.querySelector(`[data-yetki="${a.id}"]`)?.checked);
+    });
+    setHead('hepsi', (tr) => tr.querySelector('[data-yetki="hepsi"]')?.checked);
+  };
+
+  table.addEventListener('change', (e) => {
+    const head = e.target.closest('input[data-yetki-head]');
+    if (head) {
+      const kind = head.getAttribute('data-yetki-head');
+      const on = head.checked;
+      table.querySelectorAll('tr[data-yetki-ekran]').forEach((tr) => {
+        if (kind === 'erisim') {
+          const erisim = tr.querySelector('[data-yetki="erisim"]');
+          if (erisim) erisim.checked = on;
+          if (on) {
+            const incele = tr.querySelector('[data-yetki="incele"]');
+            if (incele) incele.checked = true;
+          }
+          syncRow(tr);
+          return;
+        }
+        if (kind === 'hepsi') {
+          const erisim = tr.querySelector('[data-yetki="erisim"]');
+          if (erisim && on) erisim.checked = true;
+          YETKI_ACTIONS.forEach((a) => {
+            const el = tr.querySelector(`[data-yetki="${a.id}"]`);
+            if (el) el.checked = on;
+          });
+          syncRow(tr);
+          return;
+        }
+        // tek aksiyon sütunu (yeni/incele/…)
+        const erisim = tr.querySelector('[data-yetki="erisim"]');
+        if (on && erisim) erisim.checked = true;
+        const el = tr.querySelector(`[data-yetki="${kind}"]`);
+        if (el) el.checked = on;
+        syncRow(tr);
+      });
+      syncHeadChecks();
+      return;
+    }
+
+    const inp = e.target.closest('input[data-yetki]');
+    if (!inp) return;
+    const tr = inp.closest('tr[data-yetki-ekran]');
+    if (!tr) return;
+    const kind = inp.getAttribute('data-yetki');
+    if (kind === 'erisim') {
+      if (inp.checked) {
+        const incele = tr.querySelector('[data-yetki="incele"]');
+        if (incele && !YETKI_ACTIONS.some((a) => tr.querySelector(`[data-yetki="${a.id}"]`)?.checked)) {
+          incele.checked = true;
+        }
+      }
+      syncRow(tr);
+      syncHeadChecks();
+      return;
+    }
+    if (kind === 'hepsi') {
+      YETKI_ACTIONS.forEach((a) => {
+        const el = tr.querySelector(`[data-yetki="${a.id}"]`);
+        if (el) el.checked = inp.checked;
+      });
+      syncRow(tr);
+      syncHeadChecks();
+      return;
+    }
+    syncRow(tr);
+    syncHeadChecks();
+  });
+
+  $('#yetkiSelectAll')?.addEventListener('click', () => {
+    table.querySelectorAll('tr[data-yetki-ekran]').forEach((tr) => {
+      const erisim = tr.querySelector('[data-yetki="erisim"]');
+      if (erisim) erisim.checked = true;
+      YETKI_ACTIONS.forEach((a) => {
+        const el = tr.querySelector(`[data-yetki="${a.id}"]`);
+        if (el) el.checked = true;
+      });
+      syncRow(tr);
+    });
+    syncHeadChecks();
+  });
+  $('#yetkiClearAll')?.addEventListener('click', () => {
+    table.querySelectorAll('tr[data-yetki-ekran]').forEach((tr) => {
+      const erisim = tr.querySelector('[data-yetki="erisim"]');
+      if (erisim) erisim.checked = false;
+      syncRow(tr);
+    });
+    syncHeadChecks();
+  });
+  syncHeadChecks();
+}
+
+function bindFirmaYetkiEvents() {
+  const table = $('#firmaYetkiTable');
+  if (!table || state.formMode === 'incele') return;
+
+  const syncHead = () => {
+    const head = table.querySelector('[data-firma-head="hepsi"]');
+    if (!head) return;
+    const boxes = [...table.querySelectorAll('[data-firma-check]')];
+    head.checked = boxes.length > 0 && boxes.every((b) => b.checked);
+  };
+
+  table.addEventListener('change', (e) => {
+    const head = e.target.closest('[data-firma-head="hepsi"]');
+    if (head) {
+      table.querySelectorAll('[data-firma-check]').forEach((b) => { b.checked = head.checked; });
+      return;
+    }
+    if (e.target.closest('[data-firma-check]')) syncHead();
+  });
+  $('#firmaYetkiSelectAll')?.addEventListener('click', () => {
+    table.querySelectorAll('[data-firma-check]').forEach((b) => { b.checked = true; });
+    syncHead();
+  });
+  $('#firmaYetkiClearAll')?.addEventListener('click', () => {
+    table.querySelectorAll('[data-firma-check]').forEach((b) => { b.checked = false; });
+    syncHead();
+  });
+  syncHead();
+}
+
+function bindAvatarEvents() {
+  const file = $('#userAvatarFile');
+  const clearBtn = $('#userAvatarClear');
+  if (file) {
+    file.addEventListener('change', async () => {
+      const f = file.files?.[0];
+      if (!f) return;
+      if (f.size > 5_000_000) {
+        toast('Resim çok büyük (max 5MB; otomatik küçültülür).');
+        file.value = '';
+        return;
+      }
+      try {
+        const data = await resizeImageToDataUrl(f, 256, 0.72);
+        if (!state.formRecord) state.formRecord = {};
+        state.formRecord.profil_resmi = data;
+        const preview = $('#userAvatarPreview');
+        if (preview) preview.innerHTML = `<img src="${escAttr(data)}" alt="Profil" />`;
+        if (clearBtn) clearBtn.hidden = false;
+      } catch (err) {
+        toast(err.message || 'Resim işlenemedi');
+        file.value = '';
+      }
+    });
+  }
+  clearBtn?.addEventListener('click', () => {
+    if (!state.formRecord) state.formRecord = {};
+    state.formRecord.profil_resmi = null;
+    const preview = $('#userAvatarPreview');
+    if (preview) preview.innerHTML = '<span class="user-avatar-placeholder">Resim yok</span>';
+    if (file) file.value = '';
+    clearBtn.hidden = true;
+  });
 }
 
 function renderMasterDetailPanel(tab, rec) {
   const { primary, extras } = partitionMasterFields(tab.masterFields || []);
   const dFields = [...extras, ...(tab.detailFields || [])];
-  return `
-    <div class="md-split">
+  const screen = findScreen(state.screenId);
+  const isUserCard = Boolean(screen?.kullaniciYetkiPaneli);
+  const head = `
+    <div class="md-split${isUserCard ? ' md-split--natural' : ''}">
       <section class="md-master" aria-label="Başlık alanları">
         <div class="section-label">Başlık</div>
         <div class="form-tab-fields form-tab-fields--master">
@@ -4971,13 +6285,20 @@ function renderMasterDetailPanel(tab, rec) {
       <section class="md-detail" aria-label="Ek alanlar">
         <div class="section-label">Ek bilgiler</div>
         <div class="md-detail-scroll">
-          <div class="form-tab-fields form-tab-fields--detail">
-            ${dFields.length
-              ? renderFieldGrid(dFields, rec)
-              : '<div class="detail-empty">Bu bölümde ek alan yok.</div>'}
-          </div>
+          ${dFields.length
+            ? `<div class="field-groups">${renderDetailFieldGrid(dFields, rec)}</div>`
+            : '<div class="detail-empty">Bu bölümde ek alan yok.</div>'}
         </div>
       </section>
+    </div>`;
+  if (!isUserCard) return head;
+  // Yetki / firma / profil — başlığın hemen altında, boş flex alanı olmadan
+  return `
+    <div class="kullanici-form-stack">
+      ${head}
+      ${renderKullaniciProfilBlok(rec)}
+      ${renderFirmaYetkiPane(rec)}
+      ${renderYetkiGrid(rec)}
     </div>`;
 }
 
@@ -5002,9 +6323,7 @@ function renderMasterGridPanel(tab, rec) {
       <section class="md-extras" aria-label="Ek başlık alanları">
         <div class="section-label">Ek bilgiler</div>
         <div class="md-extras-scroll">
-          <div class="form-tab-fields form-tab-fields--detail">
-            ${renderFieldGrid(extras, rec)}
-          </div>
+          <div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>
         </div>
       </section>` : ''}
       <section class="md-detail" aria-label="Kalemler">
@@ -5056,8 +6375,8 @@ function renderDynamicGrid(tab, rec) {
               </button>
             </div>
             ${editing || (!canEdit && selected) ? `
-              <div class="detail-slot-fields">
-                ${(tab.fields || []).map((f) => fieldShell(f, detailFieldControl(f, row[f.key], idx, key))).join('')}
+              <div class="detail-slot-fields field-groups">
+                ${renderGroupedDetailControls(tab.fields || [], row, idx, key)}
               </div>` : ''}
           </div>`;
       }).join('')}
@@ -5374,7 +6693,8 @@ function renderForm(screen) {
       </div>`;
     }
     if (tab.kind === 'master-detail') {
-      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
+      const scrollCls = screen.kullaniciYetkiPaneli ? ' form-tab-panel--scrollable' : '';
+      return `<div class="form-tab-panel form-tab-panel--md${scrollCls}" data-tab-panel="${tab.id}" ${hide}>
         ${renderMasterDetailPanel(tab, rec)}
       </div>`;
     }
@@ -5410,21 +6730,33 @@ function renderForm(screen) {
           <section class="md-detail" aria-label="Ek alanlar">
             <div class="section-label">Ek bilgiler</div>
             <div class="md-detail-scroll">
-              <div class="form-tab-fields form-tab-fields--detail">${renderFieldGrid(extras, rec)}</div>
+              <div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>
             </div>
           </section>
         </div>
       </div>`;
     }
+    // Çok alanlı sekmeler: gruplu tarama; az alanlı: düz grid
+    const tabFields = tab.fields || [];
+    const useGroups = !masterLike && tabFields.length >= 4;
     return `<div class="form-tab-panel ${masterLike ? 'form-tab-panel--fixed' : 'form-tab-panel--scroll'}" data-tab-panel="${tab.id}" ${hide}>
-      <div class="form-tab-fields ${masterLike ? 'form-tab-fields--master' : 'form-tab-fields--detail'}">
-        ${renderFieldGrid(tab.fields || [], rec)}
-      </div>
+      ${useGroups
+        ? `<div class="field-groups">${renderDetailFieldGrid(tabFields, rec)}</div>`
+        : `<div class="form-tab-fields ${masterLike ? 'form-tab-fields--master' : 'form-tab-fields--detail'}">
+            ${renderFieldGrid(tabFields, rec)}
+          </div>`}
     </div>`;
   }).join('');
 
   state.formRecord = rec;
   bindNumeratorFieldListener(screen);
+  bindPasswordFieldPersist();
+  bindCascadeLookups(screen);
+  if (screen.kullaniciYetkiPaneli) {
+    bindYetkiGridEvents();
+    bindFirmaYetkiEvents();
+    bindAvatarEvents();
+  }
 }
 
 function readFieldValue(el, field) {
@@ -5473,9 +6805,131 @@ function readMasterFromForm(screen) {
   collectTabFields(screen).forEach((f) => {
     const el = document.querySelector(`[data-master="${f.key}"]`);
     if (!el) return;
+    // Şifre alanı render'da her zaman value="" basılır; boş DOM, formRecord'daki
+    // (veya input sırasında saklanan) değeri silmesin — aksi halde kayıt şifresiz gider.
+    if (f.type === 'password') {
+      const v = String(el.value || '').trim();
+      if (v) out[f.key] = v;
+      else if (!out[f.key]) delete out[f.key];
+      return;
+    }
     out[f.key] = readFieldValue(el, f);
   });
   return out;
+}
+
+/** Şifre yazıldıkça formRecord'a yaz — yeniden çizimde input temizlense bile kayıtta kalsın. */
+function bindPasswordFieldPersist() {
+  document.querySelectorAll('input[type="password"][data-master]').forEach((el) => {
+    if (el.dataset.pwBound) return;
+    el.dataset.pwBound = '1';
+    const key = el.getAttribute('data-master');
+    if (!key) return;
+    el.addEventListener('input', () => {
+      if (!state.formRecord) state.formRecord = {};
+      const v = String(el.value || '').trim();
+      if (v) state.formRecord[key] = v;
+      else delete state.formRecord[key];
+    });
+  });
+}
+
+/** Ekrandaki tüm lookup alan tanımlarını topla (master + grid) */
+function collectLookupFieldDefs(screen) {
+  const out = [];
+  const push = (arr) => { (arr || []).forEach((f) => { if (f?.type === 'lookup' && f.key) out.push(f); }); };
+  push(screen.masterFields);
+  push(screen.detailFields);
+  (screen.formTabs || []).forEach((tab) => {
+    push(tab.fields);
+    push(tab.masterFields);
+    push(tab.detailFields);
+    push(tab.grid?.fields);
+  });
+  return out;
+}
+
+function findFieldDefByKey(screen, key) {
+  return collectLookupFieldDefs(screen).find((f) => f.key === key)
+    || (TANIM_LOOKUP_BY_KEY[key] ? applyTanimLookup({ key, label: key }) : null);
+}
+
+function cascadeScopeContext(el) {
+  const didx = el.getAttribute('data-didx');
+  const grid = el.getAttribute('data-grid');
+  if (didx != null && grid) {
+    const ctx = {};
+    document.querySelectorAll(`[data-detail][data-didx="${didx}"][data-grid="${grid}"]`).forEach((sib) => {
+      const k = sib.getAttribute('data-detail');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    return { ctx, didx, grid, isDetail: true };
+  }
+  const ctx = { ...(state.formRecord || {}) };
+  document.querySelectorAll('[data-master]').forEach((sib) => {
+    const k = sib.getAttribute('data-master');
+    if (!k) return;
+    ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+  });
+  return { ctx, isDetail: false };
+}
+
+function refreshLookupSelect(el, field, ctx) {
+  if (!el || !field) return;
+  const rows = lookupRowsForField(field, ctx);
+  const prev = el.value;
+  el.innerHTML = buildLookupOptionsHtml(field, prev, rows);
+  // Önceki değer filtrelenmiş listede yoksa temizle
+  const stillValid = rows.some((r) => lookupOptionSelected(field, r, el.value));
+  if (!stillValid) el.value = '';
+}
+
+/** Ülke/il değişince bağımlı il/ilçe listelerini yenile */
+function refreshDependentLookups(screen, changedEl) {
+  const changedKey = changedEl.getAttribute('data-master')
+    || changedEl.getAttribute('data-detail');
+  if (!changedKey) return;
+  const { ctx, didx, grid, isDetail } = cascadeScopeContext(changedEl);
+  const defs = collectLookupFieldDefs(screen);
+  const dependents = defs.filter((f) => f.dependsOn === changedKey);
+  if (!dependents.length) return;
+
+  dependents.forEach((dep) => {
+    let el;
+    if (isDetail) {
+      el = document.querySelector(
+        `select[data-detail="${dep.key}"][data-didx="${didx}"][data-grid="${grid}"]`
+      );
+    } else {
+      el = document.querySelector(`select[data-master="${dep.key}"]`);
+    }
+    if (!el) return;
+    ctx[changedKey] = changedEl.value;
+    refreshLookupSelect(el, dep, ctx);
+    ctx[dep.key] = el.value;
+    // Zincir: ülke→il→ilçe
+    refreshDependentLookups(screen, el);
+  });
+}
+
+function bindCascadeLookups(_screen) {
+  const root = document.getElementById('viewForm') || document;
+  if (root.dataset?.cascadeBound === '1' || document.documentElement.dataset.cascadeBound === '1') {
+    return;
+  }
+  if (root.dataset) root.dataset.cascadeBound = '1';
+  else document.documentElement.dataset.cascadeBound = '1';
+  root.addEventListener('change', (e) => {
+    const el = e.target;
+    if (!(el instanceof HTMLSelectElement)) return;
+    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
+    const scr = findScreen(state.screenId);
+    if (!scr || state.formMode == null) return;
+    const key = el.getAttribute('data-master');
+    if (key && state.formRecord) state.formRecord[key] = el.value;
+    refreshDependentLookups(scr, el);
+  });
 }
 
 function syncGridRowFromDom(tab, idx, baseRow = {}) {
@@ -5592,8 +7046,11 @@ function readTabbedPayload(screen) {
 
 function validateRequired(screen, payload) {
   for (const f of collectTabFields(screen)) {
-    if (!f.required) continue;
+    const need = f.required || (f.requiredOnNew && state.formMode === 'yeni');
+    if (!need) continue;
     if (f.code && state.formMode === 'duzelt') continue;
+    // Şifre: düzeltmede boş = değiştirme
+    if (f.type === 'password' && state.formMode === 'duzelt') continue;
     const v = payload[f.key];
     if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
       return `${f.label} zorunlu.`;
@@ -5708,6 +7165,10 @@ async function openForm(mode) {
   if (!screen) return;
   if (screen.readOnly && mode !== 'incele') {
     toast('Bu ekran yalnızca incelenebilir.');
+    return;
+  }
+  if (!ekranYetkisi(screen.id, mode)) {
+    toast(`Bu ekranda «${MODE_LABELS[mode] || mode}» yetkiniz yok.`);
     return;
   }
 
@@ -5862,6 +7323,10 @@ async function openForm(mode) {
     if (mode === 'yeni') record.seri_kodu = '';
   }
 
+  if (screen.id === 'stok-karti') {
+    hydrateStokFirmaIsYeri(record);
+  }
+
   state.formRecord = record;
   addFormTab(screen, mode, record);
   showView('form');
@@ -5887,6 +7352,34 @@ async function saveForm() {
   if (!screen || state.formMode === 'incele') return;
 
   const master = readTabbedPayload(screen);
+
+  // Stok kartı: master’daki firma / iş yeri zorunlu bağ
+  if (screen.id === 'stok-karti') {
+    syncStokFirmaIsYeriForSave(master);
+  }
+
+  // Kullanıcı kartı: giriş adı + şifre + yetki + profil
+  if (screen.id === 'kullanicilar') {
+    const adi = String(master.kullanici_adi || '').trim();
+    if (adi && !master.kullanici_kodu) master.kullanici_kodu = adi;
+    // DOM boş olsa bile input sırasında saklanan şifreyi kullan
+    const sifreDom = String(document.querySelector('[data-master="sifre"]')?.value || '').trim();
+    const sifreMem = String(master.sifre || state.formRecord?.sifre || '').trim();
+    const sifre = sifreDom || sifreMem;
+    if (sifre) master.sifre = sifre;
+    else delete master.sifre;
+    delete master.parola_var;
+    delete master.parola_hash;
+    delete master.refresh_token_hash;
+    delete master.profil_var;
+    master.yetkiler = readYetkiGridFromDom();
+    master.firma_yetkileri = readFirmaYetkiFromDom();
+    compressYetkilerForSave(master);
+    if (state.formRecord && Object.prototype.hasOwnProperty.call(state.formRecord, 'profil_resmi')) {
+      master.profil_resmi = state.formRecord.profil_resmi;
+    }
+  }
+
   const reqErr = validateRequired(screen, master);
   if (reqErr) {
     toast(reqErr);
@@ -6012,6 +7505,10 @@ async function deleteSelected() {
     toast('Silmek için satır seçin.');
     return;
   }
+  if (!ekranYetkisi(screen.id, 'sil')) {
+    toast('Bu ekranda silme yetkiniz yok.');
+    return;
+  }
   if (screen.id === 'numarator-tanimi') {
     toast('Numaratör silinmez; pasife alın.');
     return;
@@ -6036,8 +7533,10 @@ function runSearch(q) {
     return;
   }
   const hits = ALL_SCREENS.filter((s) =>
-    s.title.toLocaleLowerCase('tr').includes(query) ||
-    s.moduleTitle.toLocaleLowerCase('tr').includes(query)
+    ekranMenuGorunurMu(s.id) && (
+      s.title.toLocaleLowerCase('tr').includes(query) ||
+      s.moduleTitle.toLocaleLowerCase('tr').includes(query)
+    )
   ).slice(0, 12);
   if (!hits.length) {
     box.hidden = false;
@@ -6140,7 +7639,15 @@ function bindEvents() {
       if (act === 'sil') deleteSelected();
       else if (act === 'export-csv') exportListCsv();
       else if (act === 'mrp-talep') mrpTalepOlustur().catch((err) => toast(err.message));
-      else openForm(act).catch((err) => toast(err.message));
+      else if (act === 'mrp-uretim') mrpUretimOlustur().catch((err) => toast(err.message));
+      else if (act === 'mrp-calistir') mrpCalistirKaydet().catch((err) => toast(err.message));
+      else if (act === 'incele' && state.screenId === 'mrp-calisma') {
+        const sel = selectedRow();
+        if (sel?.id) {
+          state.mrpCalismaId = sel.id;
+          openScreen('mrp-sonuclar');
+        } else toast('Önce bir MRP çalışması seçin.');
+      } else openForm(act).catch((err) => toast(err.message));
       return;
     }
 
@@ -6150,7 +7657,12 @@ function bindEvents() {
       const screen = findScreen(state.screenId);
       if (screen) renderList(screen);
       if (e.detail >= 2) {
-        openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
+        if (screen?.id === 'mrp-calisma') {
+          state.mrpCalismaId = Number(row.dataset.id) || row.dataset.id;
+          openScreen('mrp-sonuclar');
+        } else {
+          openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
+        }
       }
       return;
     }
@@ -6204,7 +7716,40 @@ function bindEvents() {
   document.addEventListener('click', (e) => {
     const picker = $('#firmaPicker');
     if (picker && !picker.contains(e.target)) closeFirmaPicker();
+    const userArea = $('#userProfileArea');
+    if (userArea && !userArea.contains(e.target)) closeUserChipMenu();
   });
+
+  const userChip = $('#userChip');
+  if (userChip && !userChip.dataset.bound) {
+    userChip.dataset.bound = '1';
+    userChip.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openUserChipMenu(e.clientX, e.clientY);
+    });
+    // Sol tık da menüyü açsın (dokunmatik / keşfedilebilirlik)
+    userChip.addEventListener('click', (e) => {
+      e.preventDefault();
+      const menu = $('#userChipMenu');
+      if (menu && !menu.hidden) closeUserChipMenu();
+      else openUserChipMenu(e.clientX, e.clientY);
+    });
+  }
+  $('#userChipMenu')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-user-action]');
+    if (!btn) return;
+    e.preventDefault();
+    const act = btn.getAttribute('data-user-action');
+    if (act === 'logout') logoutUser();
+    else if (act === 'login') showLoginView();
+  });
+
+  const loginForm = $('#loginForm');
+  if (loginForm && !loginForm.dataset.bound) {
+    loginForm.dataset.bound = '1';
+    loginForm.addEventListener('submit', submitLoginForm);
+  }
 
   $('#btnMenu').addEventListener('click', () => {
     const shell = $('#appShell');
@@ -6279,13 +7824,41 @@ function bindEvents() {
   }
 
   async function mrpTalepOlustur() {
+    const screen = findScreen(state.screenId);
     const sel = selectedRow();
-    const body = sel?.stok_id
-      ? { stok_idler: [sel.stok_id] }
-      : {};
+    const body = {};
+    if (sel?.stok_id) body.stok_idler = [sel.stok_id];
+    if (screen?.mrpSonucMode && state.mrpCalismaId) body.calisma_id = state.mrpCalismaId;
+    if (getActiveFirmaId()) body.firma_id = getActiveFirmaId();
+    if (state.activeIsYeriId) body.is_yeri_id = state.activeIsYeriId;
     const sonuc = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
     toast(`SA talep oluştu: ${sonuc.talep_no || sonuc.id}`);
     openScreen('satin-alma-talepleri');
+  }
+
+  async function mrpUretimOlustur() {
+    const screen = findScreen(state.screenId);
+    const sel = selectedRow();
+    const body = {};
+    if (sel?.stok_id) body.stok_idler = [sel.stok_id];
+    if (screen?.mrpSonucMode && state.mrpCalismaId) body.calisma_id = state.mrpCalismaId;
+    if (getActiveFirmaId()) body.firma_id = getActiveFirmaId();
+    if (state.activeIsYeriId) body.is_yeri_id = state.activeIsYeriId;
+    const sonuc = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
+    toast(`${sonuc.olusan || 0} üretim emri oluştu`);
+    openScreen('uretim-emirleri');
+  }
+
+  async function mrpCalistirKaydet() {
+    const body = {
+      aciklama: 'UI MRP çalışması',
+      firma_id: getActiveFirmaId() || null,
+      is_yeri_id: state.activeIsYeriId || null,
+    };
+    const sonuc = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
+    state.mrpCalismaId = sonuc.calisma?.id || null;
+    toast(`MRP tamam: ${sonuc.calisma?.calisma_no || ''} · net>0: ${sonuc.calisma?.net_pozitif ?? '?'}`);
+    openScreen('mrp-sonuclar');
   }
 
   const btnSecondary = $('#btnFormSecondary');
@@ -6608,40 +8181,88 @@ function bindEvents() {
   });
 }
 
+async function tryRefreshAccessToken() {
+  const refresh = localStorage.getItem('ktb_refresh_token');
+  if (!refresh) return false;
+  try {
+    const data = await api('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refresh_token: refresh }),
+    });
+    if (data?.access_token) {
+      localStorage.setItem('ktb_access_token', data.access_token);
+      return true;
+    }
+  } catch (_) { /* ignore */ }
+  return false;
+}
+
 async function restoreSession() {
   try {
     const kod = localStorage.getItem('ktb_kullanici_kodu');
-    if (!kod) return;
     const token = localStorage.getItem('ktb_access_token');
+    const cihaz = localStorage.getItem('ktb_cihaz_oturum') === '1';
+    if (!kod && !token && !cihaz) return false;
+
     if (token) {
       try {
         state.session = await api('/auth/me');
-        return;
-      } catch (_) { /* token süresi dolmuş — login dene */ }
+        localStorage.setItem('ktb_cihaz_oturum', '1');
+        return Boolean(state.session);
+      } catch (_) { /* access süresi dolmuş */ }
     }
-    const ses = await api('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ kullanici_kodu: kod }),
-    });
-    state.session = ses;
-    if (ses.access_token) localStorage.setItem('ktb_access_token', ses.access_token);
-    if (ses.refresh_token) localStorage.setItem('ktb_refresh_token', ses.refresh_token);
+
+    if (await tryRefreshAccessToken()) {
+      try {
+        state.session = await api('/auth/me');
+        localStorage.setItem('ktb_cihaz_oturum', '1');
+        return Boolean(state.session);
+      } catch (_) { /* ignore */ }
+    }
+
+    // Parolasız kullanıcılar için kod ile yenileme
+    if (kod) {
+      try {
+        const ses = await api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ kullanici_kodu: kod }),
+        });
+        applySession(ses, kod);
+        return true;
+      } catch (_) { /* parola zorunlu — yine de bu cihaz oturumunu koru */ }
+    }
+
+    // Bu cihazdan daha önce giriş yapıldıysa token olmasa da uygulamayı aç
+    if (kod || cihaz) {
+      softSessionFromStorage();
+      if (kod && $('#loginUser') && !$('#loginUser').value) {
+        $('#loginUser').value = kod;
+      }
+      return true;
+    }
+    return false;
   } catch (_) {
-    /* parola zorunluysa sessiz geç */
+    return softSessionFromStorage();
+  } finally {
+    renderUserChip();
   }
 }
 
+/** Uygulamayı aç; giriş ekranı yalnızca çıkış / «Giriş yap» ile manuel açılır. */
+async function bootIntoApp() {
+  enterApp();
+  await loadFirmalar().catch(() => {});
+  renderFirmaPicker();
+  const id = (location.hash || '').replace(/^#/, '');
+  if (id && findScreen(id)) openScreen(id);
+  else showHome();
+}
+
 function bootFromHash() {
+  bindEvents();
   restoreSession()
-    .then(() => loadFirmalar())
-    .catch(() => loadFirmalar())
-    .finally(() => {
-      renderSidebar();
-      bindEvents();
-      const id = (location.hash || '').replace(/^#/, '');
-      if (id && findScreen(id)) openScreen(id);
-      else showHome();
-    });
+    .then(() => bootIntoApp())
+    .catch(() => bootIntoApp());
 }
 
 bootFromHash();
