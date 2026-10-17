@@ -4189,6 +4189,26 @@ function syncBetweenInputs(screen) {
   });
 }
 
+function filterBucket(f) {
+  const k = f.key || '';
+  if (k === 'firma_id' || k === 'firma_kodu' || k === 'firma_adi') return 'firma';
+  if (k === 'is_yeri_id' || k === 'is_yeri_kodu' || k === 'is_yeri_adi') return 'isyeri';
+  if (k === 'aktif' || f.type === 'bool') return 'aktif';
+  if (f.type === 'date' || /tarih|_date$/i.test(k)) return 'tarih';
+  return 'main';
+}
+
+function partitionFilters(filters) {
+  const buckets = { firma: [], isyeri: [], tarih: [], aktif: [], main: [] };
+  (filters || []).forEach((f) => {
+    buckets[filterBucket(f)].push(f);
+  });
+  return {
+    left: [...buckets.firma, ...buckets.isyeri, ...buckets.tarih, ...buckets.aktif],
+    right: buckets.main,
+  };
+}
+
 function filterValueControl(f, st) {
   if (f.type === 'lookup') {
     let rows = state.lookupCache[f.lookup];
@@ -4200,11 +4220,15 @@ function filterValueControl(f, st) {
     const vk = f.valueKey || 'id';
     const lk = f.labelKey || 'adi';
     const ck = f.codeKey;
-    const opts = [`<option value="">— tümü —</option>`].concat(
+    const opts = [`<option value="">—</option>`].concat(
       rows.map((r) => {
         const val = r[vk];
-        const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
-        return `<option value="${escAttr(val)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`;
+        // Kompakt etiket: kod öncelikli, uzun ad title'da
+        const code = ck ? (r[ck] || '') : '';
+        const name = r[lk] || '';
+        const label = code || name || String(val);
+        const title = code && name ? `${code} — ${name}` : (name || code || String(val));
+        return `<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`;
       })
     );
     return `<select data-filter-a="${f.key}">${opts.join('')}</select>
@@ -4221,27 +4245,44 @@ function filterValueControl(f, st) {
     </select>
       <input type="text" data-filter-b="${f.key}" value="" hidden />`;
   }
+  const isDate = f.type === 'date' || /tarih|_date$/i.test(f.key || '');
+  if (isDate) {
+    return `
+      <input type="date" data-filter-a="${f.key}" value="${escAttr(String(st.a || '').slice(0, 10))}" />
+      <input type="date" data-filter-b="${f.key}" value="${escAttr(String(st.b || '').slice(0, 10))}" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
+  }
   return `
-    <input type="text" data-filter-a="${f.key}" value="${escAttr(st.a || '')}" placeholder="Değer" />
-    <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="Bitiş" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
+    <input type="text" data-filter-a="${f.key}" value="${escAttr(st.a || '')}" placeholder="…" />
+    <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="…" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
 }
 
-function renderFilterPane(screen) {
-  const grid = $('#filterGrid');
-  grid.innerHTML = screen.filters.map((f) => {
-    const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
-    return `
-      <div class="filter-field">
-        <label>${f.label}</label>
-        <select data-filter-op="${f.key}">
+function renderFilterField(f) {
+  const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
+  const bucket = filterBucket(f);
+  return `
+    <div class="filter-field filter-field--${bucket}" data-filter-key="${f.key}">
+      <label>${f.label}</label>
+      <div class="filter-controls">
+        <select class="filter-op" data-filter-op="${f.key}" title="Operatör">
           ${OPERATORS.map((o) => `<option value="${o.id}" ${st.op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
         </select>
         <div class="filter-values${st.op === 'arasinda' ? ' split' : ''}" data-filter-values="${f.key}">
           ${filterValueControl(f, st)}
         </div>
       </div>
-    `;
-  }).join('');
+    </div>`;
+}
+
+function renderFilterPane(screen) {
+  const grid = $('#filterGrid');
+  const { left, right } = partitionFilters(screen.filters || []);
+  grid.innerHTML = `
+    <div class="filter-col filter-col--scope">
+      ${left.map(renderFilterField).join('') || '<div class="filter-col-empty"></div>'}
+    </div>
+    <div class="filter-col filter-col--main">
+      ${right.map(renderFilterField).join('') || '<div class="filter-col-empty"></div>'}
+    </div>`;
   grid.querySelectorAll('[data-filter-op]').forEach((el) => {
     el.addEventListener('change', () => syncBetweenInputs(screen));
   });
@@ -4388,7 +4429,7 @@ async function openScreen(id, opts = {}) {
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017a`;
+    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017c`;
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
