@@ -3531,7 +3531,16 @@ function resolveCascadeParentValue(field, parentRaw) {
 function lookupRowsForField(field, ctx = {}) {
   const all = state.lookupCache[field.lookup] || [];
   if (!field.dependsOn || !field.filterKey) return all;
-  const parentRaw = ctx[field.dependsOn];
+  let parentRaw = ctx[field.dependsOn];
+  // ulke boşsa ulke_kodu'ya düş (bazı ekranlar ülke kodunu ayrı tutar)
+  if ((parentRaw === undefined || parentRaw === null || parentRaw === '')
+      && field.dependsOn === 'ulke' && ctx.ulke_kodu != null && ctx.ulke_kodu !== '') {
+    parentRaw = ctx.ulke_kodu;
+  }
+  if ((parentRaw === undefined || parentRaw === null || parentRaw === '')
+      && field.dependsOn === 'il' && ctx.sehir != null && ctx.sehir !== '') {
+    parentRaw = ctx.sehir;
+  }
   const parentVal = resolveCascadeParentValue(field, parentRaw);
   if (!parentVal) return [];
   return all.filter((r) => String(r[field.filterKey]) === String(parentVal));
