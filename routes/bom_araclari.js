@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
+
+/** Seçili firmaya ait ağaçlar (ua.firma_id veya mamul stok firması) */
+function agacFirmaClause(firmaId, params) {
+    if (!firmaId) return { sql: ' AND FALSE', /* firma seçilmeden veri yok */ params };
+    params.push(firmaId);
+    const p = `$${params.length}`;
+    return {
+        sql: ` AND (ua.firma_id = ${p} OR s.firma_id = ${p})`,
+        params,
+    };
+}
 
 async function agacSatirlari(agacId) {
     const sonuc = await pool.query(
@@ -51,6 +63,7 @@ router.get('/patlatma', async (req, res) => {
     try {
         const miktarBaz = Math.max(0, Number(req.query.miktar) || 1);
         const { agac_id, mamul_stok_id, agac_kodu } = req.query;
+        const firmaId = firmaIdFromReq(req);
 
         let agacSql = `
             SELECT ua.*, s.stok_kodu AS mamul_kodu, s.stok_adi AS mamul_adi, s.stok_tipi AS mamul_tipi
@@ -58,6 +71,7 @@ router.get('/patlatma', async (req, res) => {
             JOIN stoklar s ON s.id = ua.mamul_stok_id
             WHERE ua.aktif IS DISTINCT FROM FALSE`;
         const params = [];
+        agacSql += agacFirmaClause(firmaId, params).sql;
         if (agac_id) {
             params.push(agac_id);
             agacSql += ` AND ua.id = $${params.length}`;
@@ -68,7 +82,7 @@ router.get('/patlatma', async (req, res) => {
             params.push(String(agac_kodu).trim());
             agacSql += ` AND UPPER(ua.agac_kodu) = UPPER($${params.length})`;
         }
-        // Filtre yoksa tüm aktif ağaçlar patlatılır (miktar ile)
+        // Firma seçiliyse o firmanın ağaçları; değilse boş
         agacSql += ' ORDER BY ua.agac_kodu, ua.id';
         const agaclar = await pool.query(agacSql, params);
         if (!agaclar.rows.length) {
@@ -177,27 +191,20 @@ router.get('/patlatma', async (req, res) => {
 router.get('/seviye-listesi', async (req, res) => {
     try {
         const { agac_id } = req.query;
-        let agaclar;
+        const firmaId = firmaIdFromReq(req);
+        const params = [];
+        let sql = `
+            SELECT ua.*, s.stok_kodu AS mamul_kodu, s.stok_adi AS mamul_adi
+            FROM urun_agaclari ua
+            JOIN stoklar s ON s.id = ua.mamul_stok_id
+            WHERE 1=1`;
+        sql += agacFirmaClause(firmaId, params).sql;
         if (agac_id) {
-            agaclar = await pool.query(
-                `
-                SELECT ua.*, s.stok_kodu AS mamul_kodu, s.stok_adi AS mamul_adi
-                FROM urun_agaclari ua
-                JOIN stoklar s ON s.id = ua.mamul_stok_id
-                WHERE ua.id = $1
-                `,
-                [agac_id]
-            );
-        } else {
-            agaclar = await pool.query(
-                `
-                SELECT ua.*, s.stok_kodu AS mamul_kodu, s.stok_adi AS mamul_adi
-                FROM urun_agaclari ua
-                JOIN stoklar s ON s.id = ua.mamul_stok_id
-                ORDER BY ua.id
-                `
-            );
+            params.push(agac_id);
+            sql += ` AND ua.id = $${params.length}`;
         }
+        sql += ' ORDER BY ua.id';
+        const agaclar = await pool.query(sql, params);
         const sonuc = [];
         for (const a of agaclar.rows) {
             const satirlar = await agacSatirlari(a.id);
