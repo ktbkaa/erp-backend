@@ -1503,7 +1503,7 @@ const MODULES = [
     id: 'uretim',
     title: 'Üretim',
     sections: [
-      { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-seviye-listesi', 'bom-malzeme-degisikligi'] },
+      { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-seviye-listesi', 'bom-malzeme-degisikligi'] },
       { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri'] },
       { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
       { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'rotalar', 'uretim-emri-tipleri'] },
@@ -1564,12 +1564,42 @@ const MODULES = [
         ],
       },
       {
+        id: 'bom-patlatma',
+        title: 'Ürün Ağacı Patlatma',
+        endpoint: '/bom/patlatma',
+        crud: false,
+        readOnly: true,
+        codeField: 'liste_kodu',
+        nameField: 'aciklama',
+        banner: 'MRP için: mamul/ağaç seçip miktar girin — tüm seviyeler (mamul → yarı mamul → hammadde) miktarlarıyla listelenir.',
+        filters: [
+          { key: 'agac_kodu', label: 'Ağaç kodu' },
+          { key: 'mamul_stok_id', label: 'Mamul stok', type: 'lookup', lookup: 'stoklar-mamul', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'agac_id', label: 'Ağaç', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'agac_adi', codeKey: 'agac_kodu' },
+          { key: 'miktar', label: 'Mamul miktar', type: 'number' },
+          { key: 'stok_kodu', label: 'Bileşen stok' },
+        ],
+        columns: [
+          { key: 'seviye', label: 'Sev.' },
+          { key: 'agac_kodu', label: 'Ağaç', mono: true },
+          { key: 'stok_kodu', label: 'Stok', mono: true },
+          { key: 'stok_adi', label: 'Ad' },
+          { key: 'stok_tipi', label: 'Tip' },
+          { key: 'birim_miktar', label: 'Birim miktar' },
+          { key: 'miktar', label: 'Toplam ihtiyaç' },
+          { key: 'birim', label: 'Birim' },
+          { key: 'yol', label: 'Yol' },
+        ],
+      },
+      {
         id: 'bom-seviye-listesi',
         title: 'Ürün Ağacı Seviye Listesi',
         endpoint: '/bom/seviye-listesi',
         crud: false,
+        readOnly: true,
         codeField: 'liste_kodu',
         nameField: 'aciklama',
+        banner: 'Tüm ürün ağaçlarının düz seviye dökümü (where-used / seviye raporu). Miktarlı patlatma için «Ürün Ağacı Patlatma» ekranını kullanın.',
         filters: [
           { key: 'agac_kodu', label: 'Ağaç kodu' },
           { key: 'stok_kodu', label: 'Stok kodu' },
@@ -4289,7 +4319,7 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
   state.formRecord = record;
   addFormTab(target, 'yeni', record);
   showView('form');
-  $('#homeSearchWrap').hidden = true;
+  ensureSearchBarVisible();
   $('#screenTitle').textContent = `${target.title} · Yeni (bağlı)`;
   renderForm(target);
   renderSidebar();
@@ -4778,9 +4808,65 @@ function ensureSidebarPath(screen) {
   }
 }
 
+/** Menüdeki tüm modül + bölüm anahtarlarını topla */
+function collectSidebarKeys() {
+  const mods = [];
+  const sections = [];
+  MODULES.filter((m) => modulYetkiliMi(m.id)).forEach((mod) => {
+    mods.push(mod.id);
+    moduleMenuSections(mod).forEach((sec) => {
+      if (sec.title == null) return;
+      if (!sec.screens.some((s) => ekranMenuGorunurMu(s.id))) return;
+      sections.push(`${mod.id}:${sec.id}`);
+    });
+  });
+  return { mods, sections };
+}
+
+/** Açık ekranı menüde bul: yolu aç + kaydır + kısa vurgu */
+function sidebarLocateActive() {
+  const screen = findScreen(state.screenId);
+  if (!screen) {
+    toast('Önce bir ekran açın.');
+    return;
+  }
+  ensureSidebarPath(screen);
+  renderSidebar();
+  requestAnimationFrame(() => {
+    const nav = $('#sidebarNav');
+    const active = nav?.querySelector(`.mod-item.active[data-screen="${screen.id}"]`);
+    if (!active) {
+      toast('Ekran menüde bulunamadı.');
+      return;
+    }
+    active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    active.classList.add('menu-flash');
+    setTimeout(() => active.classList.remove('menu-flash'), 1200);
+  });
+}
+
+function sidebarExpandAll() {
+  const { mods, sections } = collectSidebarKeys();
+  state.sidebarOpen = state.sidebarOpen || {};
+  state.sidebarSectionOpen = state.sidebarSectionOpen || {};
+  mods.forEach((id) => { state.sidebarOpen[id] = true; });
+  sections.forEach((k) => { state.sidebarSectionOpen[k] = true; });
+  renderSidebar();
+}
+
+function sidebarCollapseAll() {
+  const { mods, sections } = collectSidebarKeys();
+  state.sidebarOpen = state.sidebarOpen || {};
+  state.sidebarSectionOpen = state.sidebarSectionOpen || {};
+  mods.forEach((id) => { state.sidebarOpen[id] = false; });
+  sections.forEach((k) => { state.sidebarSectionOpen[k] = false; });
+  renderSidebar();
+}
+
 function modulYetkiliMi(modId) {
   const s = state.session;
   if (!s) return true;
+  if (isSessionTamYetkili()) return true;
   const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
   if (list.length) {
     // Ekran yetkisi tanımlıysa modülde en az bir ekran erişimi olmalı
@@ -4868,16 +4954,21 @@ function showHome() {
     history.pushState({ screenId: null }, '', location.pathname);
   }
   showView('home');
-  $('#homeSearchWrap').hidden = false;
+  ensureSearchBarVisible();
   const title = $('#screenTitle');
   if (title) {
     title.hidden = true;
     title.textContent = '';
   }
-  $('#screenSearch').value = '';
   $('#searchResults').hidden = true;
   renderSidebar();
   renderTabBar();
+}
+
+/** Üst arama çubuğu her zaman görünür (ana sayfa / liste / form) */
+function ensureSearchBarVisible() {
+  const wrap = $('#homeSearchWrap');
+  if (wrap) wrap.hidden = false;
 }
 
 function renderUserChip() {
@@ -4967,6 +5058,7 @@ function enterApp() {
   if (login) login.hidden = true;
   if (shell) shell.hidden = false;
   document.body.classList.remove('is-login');
+  ensureSearchBarVisible();
   renderUserChip();
   renderSidebar();
   renderFirmaPicker();
@@ -4986,12 +5078,23 @@ function softSessionFromStorage() {
   const kod = localStorage.getItem('ktb_kullanici_kodu');
   if (!kod) return false;
   if (!state.session) {
+    // Soft oturum: token yokken ekranları kilitleme (_soft → tam erişim)
     state.session = {
       kullanici_kodu: kod,
       kullanici_adi: kod,
       ad: kod,
       unvan: 'Yerel oturum',
+      grup_kodu: 'ADMIN',
+      rol: 'Yonetici',
+      modul_yetkileri: ['*'],
+      yetkiler: [],
+      _soft: true,
     };
+  } else if (state.session._soft !== false && !state.session.grup_kodu
+    && !(Array.isArray(state.session.yetkiler) && state.session.yetkiler.length)) {
+    state.session._soft = true;
+    state.session.grup_kodu = state.session.grup_kodu || 'ADMIN';
+    state.session.modul_yetkileri = state.session.modul_yetkileri || ['*'];
   }
   return true;
 }
@@ -5440,22 +5543,29 @@ function renderList(screen) {
 function isSessionTamYetkili() {
   const s = state.session;
   if (!s) return true; // oturum yoksa eski davranış (açık demo)
+  if (s._soft) return true; // token yok / soft oturum — ekranları kilitleme
   if (s.grup_kodu === 'ADMIN') return true;
   if (String(s.rol || '').toLowerCase() === 'yonetici') return true;
   const mods = s.modul_yetkileri;
-  if (Array.isArray(mods) && mods.includes('*') && !(s.yetkiler || []).length) return true;
+  if (Array.isArray(mods) && mods.includes('*')) return true;
   return false;
 }
 
-/** Ekran erişim / aksiyon yetkisi. yetkiler boşsa ADMIN/modül* → tam; aksi halde satır şart. */
+/**
+ * Ekran erişim / aksiyon yetkisi.
+ * ADMIN / Yönetici / soft oturum → her zaman tam erişim.
+ * Kısıtlı kullanıcıda yalnızca yetki satırları geçerlidir.
+ */
 function ekranYetkisi(screenId, action = null) {
   const s = state.session;
   if (!s) return true;
+  // Önce tam yetki — kısmi yetki satırları ADMIN'i engellemesin
+  if (isSessionTamYetkili()) return true;
   const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
   if (!list.length) {
-    if (isSessionTamYetkili()) return true;
     const mods = s.modul_yetkileri;
-    return Array.isArray(mods) && mods.includes('*');
+    // Yetki satırı yok + modül * veya tanımsız → aç
+    return !mods || !mods.length || mods.includes('*');
   }
   const row = list.find((y) => y.ekran_id === screenId && y.erisim !== false);
   if (!row) return false;
@@ -5534,13 +5644,17 @@ async function openScreen(id, opts = {}) {
       renderTabBar();
     }
     showView('screen');
-    $('#homeSearchWrap').hidden = true;
+    ensureSearchBarVisible();
     {
       const title = $('#screenTitle');
       if (title) { title.hidden = false; title.textContent = screen.title; }
     }
     const banner = $('#screenBanner');
-    if (banner) banner.textContent = `${screen.title} açık · UI build 20261017q`;
+    if (banner) {
+      banner.textContent = screen.banner
+        ? `${screen.title} — ${screen.banner}`
+        : `${screen.title} açık · UI build 20261017v`;
+    }
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
@@ -5836,6 +5950,31 @@ function emptyRowFromFields(fields) {
     else row[f.key] = '';
   });
   return row;
+}
+
+/** Ürün ağacı boş satır — önceki satırın stok/miktar/görünüm alanlarını asla taşıma */
+function blankBomRow(fields) {
+  return {
+    ...emptyRowFromFields(fields),
+    bilesen_stok_id: '',
+    miktar: '',
+    birim: '',
+    stok_kodu: '',
+    stok_adi: '',
+    stok_tipi: '',
+    sira_no: '',
+    alt_satirlar: [],
+  };
+}
+
+/** Form kontrolüne tıklanınca satır seçimi / yeniden çizim tetiklenmesin */
+function isFormControlClick(target) {
+  if (!target || !(target instanceof Element)) return false;
+  return Boolean(target.closest(
+    'select, input, textarea, option, label, button.btn, '
+    + '.bom-inline-editor, .rota-op-body, .detail-slot-fields, '
+    + '[data-flow-editor], [data-bom-editor], [contenteditable="true"]'
+  ));
 }
 
 /** Boş placeholder satır üretmez — yalnızca gerçek satırlar */
@@ -7443,6 +7582,34 @@ function bindCascadeLookups(_screen) {
   }
   if (root.dataset) root.dataset.cascadeBound = '1';
   else document.documentElement.dataset.cascadeBound = '1';
+  // Sarı lookup: panodan kod/ad yapıştırınca eşleşen seçeneği bul
+  root.addEventListener('paste', (e) => {
+    const el = e.target;
+    if (!(el instanceof HTMLSelectElement)) return;
+    if (!el.classList.contains('lookup-select') && el.getAttribute('data-master') == null
+      && el.getAttribute('data-detail') == null && el.getAttribute('data-bom-field') == null
+      && el.getAttribute('data-flow-field') == null && el.getAttribute('data-flow-comp-field') == null) {
+      return;
+    }
+    const text = String(e.clipboardData?.getData('text') || '').trim();
+    if (!text) return;
+    e.preventDefault();
+    const needle = text.toLocaleLowerCase('tr');
+    const opts = [...el.options];
+    const hit = opts.find((o) => o.value && (
+      String(o.value).toLocaleLowerCase('tr') === needle
+      || String(o.text).toLocaleLowerCase('tr') === needle
+      || String(o.text).toLocaleLowerCase('tr').startsWith(needle)
+      || String(o.text).toLocaleLowerCase('tr').includes(needle)
+    ));
+    if (hit) {
+      el.value = hit.value;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      toast(`Yapıştırıldı: ${hit.text}`);
+    } else {
+      toast(`Eşleşen seçenek yok: ${text}`);
+    }
+  });
   root.addEventListener('change', (e) => {
     const el = e.target;
     if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement)) return;
@@ -7580,10 +7747,9 @@ function applyBomEditorSelection(screen, { addAnother = false } = {}) {
   state.formRecord.satirlar = nodes;
   state.formRecord.agac = nodes;
   state.treeExpanded[state.treeSel] = true;
-  persistActiveFormTab();
 
   if (addAnother) {
-    const blank = { ...emptyRowFromFields(tab.fields), miktar: '', birim: '', alt_satirlar: [] };
+    const blank = blankBomRow(tab.fields);
     const parts = String(state.treeSel).split('.');
     if (parts.length === 1) {
       nodes.push(blank);
@@ -7600,7 +7766,10 @@ function applyBomEditorSelection(screen, { addAnother = false } = {}) {
   } else {
     toast(`${st?.stok_kodu || 'Bileşen'} ağaca kaydedildi.`);
   }
+  // Önce DOM’u yeni seçime göre çiz; sonra sekme anlık görüntüsü al
+  // (aksi halde eski editör değerleri boş satıra yazılır)
   renderForm(screen);
+  persistActiveFormTab();
   return true;
 }
 
@@ -7651,9 +7820,9 @@ function applyRotaOpSelection(screen) {
     toast('Operasyon kodu veya adı girin.');
     return false;
   }
-  persistActiveFormTab();
   toast(`${op.operasyon_kodu || 'Operasyon'} kaydedildi.`);
   renderForm(screen);
+  persistActiveFormTab();
   return true;
 }
 
@@ -7698,7 +7867,6 @@ function applyRotaCompSelection(screen, { addAnother = false } = {}) {
     b.stok_adi = st.stok_adi;
     b.stok_tipi = st.stok_tipi;
   }
-  persistActiveFormTab();
 
   if (addAnother) {
     const blank = emptyRowFromFields(tab.componentFields);
@@ -7709,6 +7877,7 @@ function applyRotaCompSelection(screen, { addAnother = false } = {}) {
     toast(`${st?.stok_kodu || 'Bileşen'} kaydedildi.`);
   }
   renderForm(screen);
+  persistActiveFormTab();
   return true;
 }
 
@@ -7849,7 +8018,7 @@ async function activateTab(tabKey) {
   ensureSidebarPath(screen);
   await ensureLookups(screen);
   showView('form');
-  $('#homeSearchWrap').hidden = true;
+  ensureSearchBarVisible();
   $('#screenTitle').textContent = tab.title;
   renderForm(screen);
   renderSidebar();
@@ -8026,7 +8195,7 @@ async function openForm(mode) {
   state.formRecord = record;
   addFormTab(screen, mode, record);
   showView('form');
-  $('#homeSearchWrap').hidden = true;
+  ensureSearchBarVisible();
   $('#screenTitle').textContent = `${screen.title} · ${MODE_LABELS[mode]}`;
   renderForm(screen);
   renderTabBar();
@@ -8354,9 +8523,15 @@ function bindEvents() {
 
     const row = e.target.closest('#dataBody tr[data-id]');
     if (row) {
-      state.selectedId = row.dataset.id;
       const screen = findScreen(state.screenId);
-      if (screen) renderList(screen);
+      // Listeyi yeniden çizme — metin seçimi / kopyala-yapıştır bozulmasın
+      const newId = row.dataset.id;
+      if (String(state.selectedId) !== String(newId)) {
+        state.selectedId = newId;
+        document.querySelectorAll('#dataBody tr.selected').forEach((tr) => tr.classList.remove('selected'));
+        row.classList.add('selected');
+        if (screen) updateActionButtons(screen);
+      }
       if (e.detail >= 2) {
         if (screen?.id === 'mrp-calisma') {
           state.mrpCalismaId = Number(row.dataset.id) || row.dataset.id;
@@ -8462,20 +8637,72 @@ function bindEvents() {
     }
   });
 
-  $('#btnApplyFilter').addEventListener('click', () => {
+  $('#btnSidebarLocate')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sidebarLocateActive();
+  });
+  $('#btnSidebarExpand')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sidebarExpandAll();
+  });
+  $('#btnSidebarCollapse')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sidebarCollapseAll();
+  });
+
+  $('#btnApplyFilter').addEventListener('click', async () => {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     readFilterState(screen);
+    // Patlatma: miktar sunucuda çarpılır — filtreyle API’yi yeniden çağır
+    if (screen.id === 'bom-patlatma') {
+      try {
+        $('#listMeta').textContent = 'Patlatılıyor…';
+        const qs = new URLSearchParams();
+        const st = state.filterState || {};
+        const pick = (k) => String(st[k]?.a || '').trim();
+        if (pick('agac_id')) qs.set('agac_id', pick('agac_id'));
+        if (pick('mamul_stok_id')) qs.set('mamul_stok_id', pick('mamul_stok_id'));
+        if (pick('agac_kodu')) qs.set('agac_kodu', pick('agac_kodu'));
+        const miktar = pick('miktar');
+        if (miktar) qs.set('miktar', miktar);
+        const data = await api(`${screen.endpoint}?${qs.toString()}`);
+        state.rows = ensureRowIds(Array.isArray(data) ? data : []);
+        // Sunucu filtreleri satır alanı değil — yalnız bileşen stok kodu client süzülür
+        const stokQ = pick('stok_kodu').toLocaleLowerCase('tr');
+        state.filtered = stokQ
+          ? state.rows.filter((r) => String(r.stok_kodu || '').toLocaleLowerCase('tr').includes(stokQ))
+          : state.rows.slice();
+        state.selectedId = null;
+        renderList(screen);
+        const banner = $('#screenBanner');
+        if (banner) {
+          banner.textContent = `${screen.title} — ${state.filtered.length} satır patlatıldı`
+            + (miktar ? ` (mamul × ${miktar})` : '');
+        }
+      } catch (err) {
+        toast(err.message || 'Patlatma başarısız');
+      }
+      return;
+    }
     state.filtered = applyFilters(state.rows, screen);
     state.selectedId = null;
     renderList(screen);
   });
 
-  $('#btnClearFilter').addEventListener('click', () => {
+  $('#btnClearFilter').addEventListener('click', async () => {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     state.filterState = buildDefaultFilterState(screen);
     renderFilterPane(screen);
+    if (screen.id === 'bom-patlatma') {
+      try {
+        const data = await api(screen.endpoint);
+        state.rows = ensureRowIds(Array.isArray(data) ? data : []);
+      } catch (err) {
+        toast(err.message || 'Liste yenilenemedi');
+      }
+    }
     state.filtered = applyFilters(state.rows, screen);
     state.selectedId = null;
     renderList(screen);
@@ -8746,11 +8973,11 @@ function bindEvents() {
         applyBomEditorSelection(screen, { addAnother: act === 'uygula-ve-yeni' });
         return;
       }
+      // Mevcut editörü önce ESKİ treeSel’e yaz; data-bom-path ile hedefi sonra seç
       const actPath = bomAct.getAttribute('data-bom-path');
-      if (actPath != null) state.treeSel = actPath;
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const nodes = ensureBomTree(state.formRecord);
-      const blank = { ...emptyRowFromFields(tab.fields), miktar: '', birim: '', alt_satirlar: [] };
+      const blank = blankBomRow(tab.fields);
       if (act === 'yeni-kok') {
         if (!state.formRecord.mamul_stok_id) {
           toast('Önce mamul (kök) seçin.');
@@ -8760,12 +8987,13 @@ function bindEvents() {
         state.treeSel = String(nodes.length - 1);
         state.treeExpanded[state.treeSel] = true;
       } else if (act === 'yeni-alt') {
-        if (state.treeSel == null) {
+        const parentPath = actPath != null ? actPath : state.treeSel;
+        if (parentPath == null) {
           toast('Alt malzeme için önce üst satırı (yarı mamul) seçin.');
           return;
         }
-        persistBomEditor(state.formRecord, tab);
-        const parent = getBomNode(nodes, state.treeSel);
+        state.treeSel = parentPath;
+        const parent = getBomNode(nodes, parentPath);
         if (!parent) return;
         if (!parent.bilesen_stok_id) {
           toast('Önce bu satıra malzeme seçip «Satırı uygula» deyin.');
@@ -8773,20 +9001,22 @@ function bindEvents() {
         }
         if (!Array.isArray(parent.alt_satirlar)) parent.alt_satirlar = [];
         parent.alt_satirlar.push(blank);
-        state.treeExpanded[state.treeSel] = true;
-        state.treeSel = `${state.treeSel}.${parent.alt_satirlar.length - 1}`;
+        state.treeExpanded[parentPath] = true;
+        state.treeSel = `${parentPath}.${parent.alt_satirlar.length - 1}`;
       } else if (act === 'sil') {
-        if (state.treeSel == null) {
+        const delPath = actPath != null ? actPath : state.treeSel;
+        if (delPath == null) {
           toast('Silmek için satır seçin.');
           return;
         }
-        removeBomNode(nodes, state.treeSel);
+        removeBomNode(nodes, delPath);
         state.treeSel = null;
       }
       state.formRecord.satirlar = nodes;
       state.formRecord.agac = nodes;
-      persistActiveFormTab();
+      // DOM henüz eski satırı gösteriyor — önce çiz, sonra sekme kaydı
       renderForm(screen);
+      persistActiveFormTab();
       return;
     }
     const bomToggle = e.target.closest('[data-bom-toggle]');
@@ -8802,13 +9032,14 @@ function bindEvents() {
       return;
     }
     const bomNode = e.target.closest('[data-bom-path]');
-    if (bomNode && screen && !e.target.closest('[data-bom-act]')) {
+    if (bomNode && screen && !e.target.closest('[data-bom-act]') && !isFormControlClick(e.target)) {
       e.preventDefault();
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const path = bomNode.getAttribute('data-bom-path');
       state.treeSel = path;
       state.treeExpanded[path] = true;
       renderForm(screen);
+      persistActiveFormTab();
       return;
     }
 
@@ -8872,25 +9103,29 @@ function bindEvents() {
         state.flowCompSel = null;
         state.formRecord.operasyonlar = ops;
       }
-      persistActiveFormTab();
+      // Yeni op/malzeme: önce çiz (eski DOM değerleri boş satıra yazılmasın)
       renderForm(screen);
+      persistActiveFormTab();
       return;
     }
-    const flowIdx = e.target.closest('[data-flow-idx]');
-    if (flowIdx && screen && !e.target.closest('[data-flow-act]')) {
+    // Yalnızca başlık satırından seç — gövdedeki sarı lookup tıklanınca renderForm olmasın
+    const flowHead = e.target.closest('.rota-op-head[data-flow-idx]');
+    if (flowHead && screen && !e.target.closest('[data-flow-act]') && !isFormControlClick(e.target)) {
       e.preventDefault();
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
-      state.flowSel = Number(flowIdx.getAttribute('data-flow-idx'));
+      state.flowSel = Number(flowHead.getAttribute('data-flow-idx'));
       state.flowCompSel = null;
       renderForm(screen);
+      persistActiveFormTab();
       return;
     }
     const flowCompPick = e.target.closest('[data-flow-comp-pick]');
-    if (flowCompPick && screen) {
+    if (flowCompPick && screen && !isFormControlClick(e.target)) {
       e.preventDefault();
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       state.flowCompSel = Number(flowCompPick.getAttribute('data-flow-comp-pick'));
       renderForm(screen);
+      persistActiveFormTab();
       return;
     }
 
