@@ -32,7 +32,7 @@
         </label>
         <p class="login-error" id="loginError" hidden role="alert"></p>
         <button type="submit" class="btn login-submit" id="loginSubmit">Giriş yap</button>
-        <p class="login-foot">KTB ERP · UI build <span id="loginBuildTag">20261018a</span></p>
+        <p class="login-foot">KTB ERP · UI build <span id="loginBuildTag">20261018b</span></p>
       </form>
     </div>
   </section>
@@ -47,7 +47,7 @@
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot">
         <a href="/health" target="_blank" class="health-link">Sistem durumu</a>
-        <span class="build-tag" id="buildTag">UI build 20261018a</span>
+        <span class="build-tag" id="buildTag">UI build 20261018b</span>
       </div>
     </aside>
 
@@ -194,7 +194,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261018a"></script>
+  <script src="/app.js?v=20261018b"></script>
   <script>
     // Bağlantı kontrolü — Failed to fetch kök nedenini hemen göster
     (async function () {
@@ -203,10 +203,10 @@
         const r = await fetch('/health', { cache: 'no-store' });
         const j = await r.json();
         if (tag) tag.textContent = r.ok && j.durum === 'ok'
-          ? 'UI build 20261018a · API bağlı'
-          : 'UI build 20261018a · API hata';
+          ? 'UI build 20261018b · API bağlı'
+          : 'UI build 20261018b · API hata';
       } catch (e) {
-        if (tag) tag.textContent = 'UI build 20261018a · API YOK';
+        if (tag) tag.textContent = 'UI build 20261018b · API YOK';
         console.error('Health başarısız — sayfayı http://localhost:3000 ile açın', e);
       }
     })();

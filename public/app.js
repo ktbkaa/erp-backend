@@ -4319,7 +4319,7 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
   state.formRecord = record;
   addFormTab(target, 'yeni', record);
   showView('form');
-  $('#homeSearchWrap').hidden = true;
+  ensureSearchBarVisible();
   $('#screenTitle').textContent = `${target.title} · Yeni (bağlı)`;
   renderForm(target);
   renderSidebar();
@@ -4899,16 +4899,21 @@ function showHome() {
     history.pushState({ screenId: null }, '', location.pathname);
   }
   showView('home');
-  $('#homeSearchWrap').hidden = false;
+  ensureSearchBarVisible();
   const title = $('#screenTitle');
   if (title) {
     title.hidden = true;
     title.textContent = '';
   }
-  $('#screenSearch').value = '';
   $('#searchResults').hidden = true;
   renderSidebar();
   renderTabBar();
+}
+
+/** Üst arama çubuğu her zaman görünür (ana sayfa / liste / form) */
+function ensureSearchBarVisible() {
+  const wrap = $('#homeSearchWrap');
+  if (wrap) wrap.hidden = false;
 }
 
 function renderUserChip() {
@@ -5583,7 +5588,7 @@ async function openScreen(id, opts = {}) {
       renderTabBar();
     }
     showView('screen');
-    $('#homeSearchWrap').hidden = true;
+    ensureSearchBarVisible();
     {
       const title = $('#screenTitle');
       if (title) { title.hidden = false; title.textContent = screen.title; }
@@ -7957,7 +7962,7 @@ async function activateTab(tabKey) {
   ensureSidebarPath(screen);
   await ensureLookups(screen);
   showView('form');
-  $('#homeSearchWrap').hidden = true;
+  ensureSearchBarVisible();
   $('#screenTitle').textContent = tab.title;
   renderForm(screen);
   renderSidebar();
@@ -8134,7 +8139,7 @@ async function openForm(mode) {
   state.formRecord = record;
   addFormTab(screen, mode, record);
   showView('form');
-  $('#homeSearchWrap').hidden = true;
+  ensureSearchBarVisible();
   $('#screenTitle').textContent = `${screen.title} · ${MODE_LABELS[mode]}`;
   renderForm(screen);
   renderTabBar();
