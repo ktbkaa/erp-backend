@@ -5003,6 +5003,7 @@ function enterApp() {
   if (login) login.hidden = true;
   if (shell) shell.hidden = false;
   document.body.classList.remove('is-login');
+  ensureSearchBarVisible();
   renderUserChip();
   renderSidebar();
   renderFirmaPicker();
