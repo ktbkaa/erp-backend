@@ -17,7 +17,11 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden; /* sayfa kaydırılmaz — yalnız içerik panelleri kayar */
+}
 body {
   font-family: var(--font);
   color: var(--ink);
@@ -28,7 +32,9 @@ body {
 .app-shell {
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
-  min-height: 100vh;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 .app-shell.sidebar-collapsed { grid-template-columns: 0 1fr; }
 .app-shell.sidebar-collapsed .sidebar { overflow: hidden; border: 0; }
@@ -38,10 +44,16 @@ body {
   color: var(--sidebar-ink);
   display: flex;
   flex-direction: column;
+  /* Viewport’a sabit: içerik ne kadar uzun olursa olsun menü bitmez */
+  position: sticky;
+  top: 0;
+  align-self: start;
   height: 100vh;
+  height: 100dvh;
   max-height: 100vh;
+  max-height: 100dvh;
+  width: var(--sidebar-w);
   z-index: 30;
-  position: relative;
   border-right: 1px solid #e6ebf0;
   box-shadow: 2px 0 18px rgba(26, 35, 48, 0.04);
   overflow: hidden;
@@ -252,16 +264,19 @@ body {
   20%, 55% { box-shadow: 0 0 0 2px var(--sidebar-ring); background: #dff5ef; }
 }
 .sidebar-foot {
-  padding: 0.55rem 0.75rem 0.85rem;
+  padding: 0.55rem 0.75rem 0.7rem;
   border-top: 1px solid #eef1f4;
   flex: 0 0 auto;
+  margin-top: auto; /* her zaman menünün en altına yapışır */
   background: #fff;
+  z-index: 2;
+  box-shadow: 0 -6px 14px rgba(26, 35, 48, 0.04);
 }
 .sidebar-tools {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.35rem;
-  margin-bottom: 0.55rem;
+  margin: 0;
 }
 .sidebar-tool-btn {
   display: grid;
@@ -297,8 +312,23 @@ body {
   font-family: ui-monospace, monospace;
 }
 
-.workspace { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; background: #f3f6f8; }
-.workspace-main { flex: 1; min-height: 0; position: relative; padding-bottom: 0; overflow: hidden; }
+.workspace {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  background: #f3f6f8;
+}
+.workspace-main {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  padding-bottom: 0;
+  overflow: hidden;
+}
 
 /* Üst belge sekmeleri — sabit boyut, hizalı X, sağ tık menüsü */
 .doc-tabs {
@@ -1269,12 +1299,12 @@ tr.selected td { background: var(--accent-soft); }
   overflow: hidden;
   padding: 0;
 }
-/* Kullanıcı kartı: başlık doğal yükseklik, yetki/firma alta yapışır, panel kayar */
+/* Kullanıcı kartı: panel viewport içinde kayar (sayfa kaydırılmaz) */
 .form-tab-panel--md.form-tab-panel--scrollable {
   overflow: auto !important;
   padding: 0.85rem 1.1rem 1.5rem;
   display: block !important;
-  height: auto !important;
+  height: 100%;
   max-height: 100%;
   flex: 1 1 auto;
   min-height: 0;
