@@ -1293,10 +1293,10 @@ tr.selected td { background: var(--accent-soft); }
 .form-tab-btn.stub { color: var(--sidebar-muted); font-weight: 400; }
 .form-tab-btn.stub.active { background: #6b7c8c; }
 
-/* İçerik: master sabit, yalnızca detay kayar */
+/* Form içeriği kayar — başlık+ek bilgiler uzun olsa kalemler / uyarılar erişilir */
 .form-tab-body {
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -1312,8 +1312,12 @@ tr.selected td { background: var(--accent-soft); }
 .form-tab-panel--fixed { overflow: hidden; }
 .form-tab-panel--scroll { overflow: auto; }
 .form-tab-panel--md {
-  overflow: hidden;
+  /* İçerik kadar uzar; kaydırma form-tab-body’de */
+  overflow: visible;
   padding: 0;
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 100%;
 }
 /* Kullanıcı kartı: panel viewport içinde kayar (sayfa kaydırılmaz) */
 .form-tab-panel--md.form-tab-panel--scrollable {
@@ -1351,20 +1355,23 @@ tr.selected td { background: var(--accent-soft); }
 }
 
 .md-split {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: auto;
+}
+/* Kalemli form: tüm blok doğal yükseklik — tek dış kaydırma */
+.md-split--grid {
+  min-height: 100%;
 }
 .md-split--grid .md-master {
-  /* Başlık sabit: birincil alanlar; ek bilgiler ayrı şerit */
   max-height: none;
-  overflow: hidden;
+  overflow: visible;
 }
 .md-master {
   flex: 0 0 auto;
-  overflow: hidden;
+  overflow: visible;
   padding: 0.7rem 1.1rem 0.6rem;
   border-bottom: 1px solid var(--line);
   background: #f7fafb;
@@ -1387,26 +1394,27 @@ tr.selected td { background: var(--accent-soft); }
   overflow: visible;
 }
 .md-detail {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: 14rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  padding: 0.65rem 1.1rem 0.85rem;
+  overflow: visible;
+  padding: 0.65rem 1.1rem 1.25rem;
   background: #fff;
 }
 .md-detail-scroll {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
 }
-/* Kalemsiz form: Ek bilgiler md-detail içinde — doğal yükseklik, panel kayar */
+/* Kalemsiz form: Ek bilgiler md-detail içinde — doğal yükseklik */
 .md-split:not(.md-split--grid) {
-  overflow: auto;
+  overflow: visible;
 }
 .md-split:not(.md-split--grid) .md-detail {
   flex: 0 0 auto;
   max-height: none;
+  min-height: 0;
   overflow: visible;
 }
 .md-split:not(.md-split--grid) .md-detail-scroll {
@@ -1906,13 +1914,16 @@ tr.selected td { background: var(--accent-soft); }
 .toast {
   position: fixed;
   right: 1rem;
-  bottom: 1rem;
+  top: 1rem;
+  bottom: auto;
   background: var(--ink);
   color: #fff;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  z-index: 50;
-  max-width: 22rem;
+  z-index: 400;
+  max-width: min(28rem, calc(100vw - 2rem));
+  box-shadow: 0 8px 24px rgba(15, 30, 40, 0.28);
+  pointer-events: none;
 }
 
 @media (max-width: 900px) {
