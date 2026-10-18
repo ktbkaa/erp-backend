@@ -4811,6 +4811,7 @@ function ensureSidebarPath(screen) {
 function modulYetkiliMi(modId) {
   const s = state.session;
   if (!s) return true;
+  if (isSessionTamYetkili()) return true;
   const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
   if (list.length) {
     // Ekran yetkisi tanımlıysa modülde en az bir ekran erişimi olmalı
@@ -5016,12 +5017,23 @@ function softSessionFromStorage() {
   const kod = localStorage.getItem('ktb_kullanici_kodu');
   if (!kod) return false;
   if (!state.session) {
+    // Soft oturum: token yokken ekranları kilitleme (_soft → tam erişim)
     state.session = {
       kullanici_kodu: kod,
       kullanici_adi: kod,
       ad: kod,
       unvan: 'Yerel oturum',
+      grup_kodu: 'ADMIN',
+      rol: 'Yonetici',
+      modul_yetkileri: ['*'],
+      yetkiler: [],
+      _soft: true,
     };
+  } else if (state.session._soft !== false && !state.session.grup_kodu
+    && !(Array.isArray(state.session.yetkiler) && state.session.yetkiler.length)) {
+    state.session._soft = true;
+    state.session.grup_kodu = state.session.grup_kodu || 'ADMIN';
+    state.session.modul_yetkileri = state.session.modul_yetkileri || ['*'];
   }
   return true;
 }
@@ -5470,22 +5482,29 @@ function renderList(screen) {
 function isSessionTamYetkili() {
   const s = state.session;
   if (!s) return true; // oturum yoksa eski davranış (açık demo)
+  if (s._soft) return true; // token yok / soft oturum — ekranları kilitleme
   if (s.grup_kodu === 'ADMIN') return true;
   if (String(s.rol || '').toLowerCase() === 'yonetici') return true;
   const mods = s.modul_yetkileri;
-  if (Array.isArray(mods) && mods.includes('*') && !(s.yetkiler || []).length) return true;
+  if (Array.isArray(mods) && mods.includes('*')) return true;
   return false;
 }
 
-/** Ekran erişim / aksiyon yetkisi. yetkiler boşsa ADMIN/modül* → tam; aksi halde satır şart. */
+/**
+ * Ekran erişim / aksiyon yetkisi.
+ * ADMIN / Yönetici / soft oturum → her zaman tam erişim.
+ * Kısıtlı kullanıcıda yalnızca yetki satırları geçerlidir.
+ */
 function ekranYetkisi(screenId, action = null) {
   const s = state.session;
   if (!s) return true;
+  // Önce tam yetki — kısmi yetki satırları ADMIN'i engellemesin
+  if (isSessionTamYetkili()) return true;
   const list = Array.isArray(s.yetkiler) ? s.yetkiler : [];
   if (!list.length) {
-    if (isSessionTamYetkili()) return true;
     const mods = s.modul_yetkileri;
-    return Array.isArray(mods) && mods.includes('*');
+    // Yetki satırı yok + modül * veya tanımsız → aç
+    return !mods || !mods.length || mods.includes('*');
   }
   const row = list.find((y) => y.ekran_id === screenId && y.erisim !== false);
   if (!row) return false;
