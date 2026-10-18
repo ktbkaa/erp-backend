@@ -4808,6 +4808,61 @@ function ensureSidebarPath(screen) {
   }
 }
 
+/** Menüdeki tüm modül + bölüm anahtarlarını topla */
+function collectSidebarKeys() {
+  const mods = [];
+  const sections = [];
+  MODULES.filter((m) => modulYetkiliMi(m.id)).forEach((mod) => {
+    mods.push(mod.id);
+    moduleMenuSections(mod).forEach((sec) => {
+      if (sec.title == null) return;
+      if (!sec.screens.some((s) => ekranMenuGorunurMu(s.id))) return;
+      sections.push(`${mod.id}:${sec.id}`);
+    });
+  });
+  return { mods, sections };
+}
+
+/** Açık ekranı menüde bul: yolu aç + kaydır + kısa vurgu */
+function sidebarLocateActive() {
+  const screen = findScreen(state.screenId);
+  if (!screen) {
+    toast('Önce bir ekran açın.');
+    return;
+  }
+  ensureSidebarPath(screen);
+  renderSidebar();
+  requestAnimationFrame(() => {
+    const nav = $('#sidebarNav');
+    const active = nav?.querySelector(`.mod-item.active[data-screen="${screen.id}"]`);
+    if (!active) {
+      toast('Ekran menüde bulunamadı.');
+      return;
+    }
+    active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    active.classList.add('menu-flash');
+    setTimeout(() => active.classList.remove('menu-flash'), 1200);
+  });
+}
+
+function sidebarExpandAll() {
+  const { mods, sections } = collectSidebarKeys();
+  state.sidebarOpen = state.sidebarOpen || {};
+  state.sidebarSectionOpen = state.sidebarSectionOpen || {};
+  mods.forEach((id) => { state.sidebarOpen[id] = true; });
+  sections.forEach((k) => { state.sidebarSectionOpen[k] = true; });
+  renderSidebar();
+}
+
+function sidebarCollapseAll() {
+  const { mods, sections } = collectSidebarKeys();
+  state.sidebarOpen = state.sidebarOpen || {};
+  state.sidebarSectionOpen = state.sidebarSectionOpen || {};
+  mods.forEach((id) => { state.sidebarOpen[id] = false; });
+  sections.forEach((k) => { state.sidebarSectionOpen[k] = false; });
+  renderSidebar();
+}
+
 function modulYetkiliMi(modId) {
   const s = state.session;
   if (!s) return true;
@@ -8580,6 +8635,19 @@ function bindEvents() {
     } else {
       shell.classList.toggle('sidebar-collapsed');
     }
+  });
+
+  $('#btnSidebarLocate')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sidebarLocateActive();
+  });
+  $('#btnSidebarExpand')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sidebarExpandAll();
+  });
+  $('#btnSidebarCollapse')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sidebarCollapseAll();
   });
 
   $('#btnApplyFilter').addEventListener('click', async () => {

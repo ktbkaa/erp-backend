@@ -242,9 +242,48 @@ body {
   font-weight: 600;
   box-shadow: none;
 }
+.mod-item.menu-flash {
+  animation: menuFlash 1.1s ease;
+}
+@keyframes menuFlash {
+  0%, 100% { box-shadow: none; }
+  20%, 55% { box-shadow: 0 0 0 2px var(--sidebar-ring); background: #dff5ef; }
+}
 .sidebar-foot {
-  padding: 0.75rem 1rem 1rem;
+  padding: 0.55rem 0.75rem 0.85rem;
   border-top: 1px solid #eef1f4;
+  flex: 0 0 auto;
+  background: #fff;
+}
+.sidebar-tools {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+.sidebar-tool-btn {
+  display: grid;
+  place-items: center;
+  height: 2.15rem;
+  border: 1px solid #e6ebf0;
+  border-radius: 0.4rem;
+  background: #f7faf9;
+  color: #4a5560;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.sidebar-tool-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--sidebar-ring);
+  color: var(--accent);
+}
+.sidebar-tool-btn:active {
+  transform: translateY(1px);
+}
+.sidebar-tool-btn:focus-visible {
+  outline: 2px solid var(--sidebar-ring);
+  outline-offset: 1px;
 }
 .health-link { color: var(--sidebar-muted); text-decoration: none; font-size: 0.85rem; }
 .health-link:hover { color: var(--accent); }
