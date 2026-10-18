@@ -295,8 +295,8 @@ const MODULES = [
           { key: 'aktif', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'dil_kodu', label: 'Dil kodu', code: true, editableOnNew: true, required: true },
-          { key: 'dil_adi', label: 'Dil adı', name: true, required: true },
+          { key: 'dil_kodu', label: 'Dil kodu', code: true, editableOnNew: true, required: true, autoFillLanguageName: true },
+          { key: 'dil_adi', label: 'Dil adı', name: true, required: true, readOnlyWhen: 'auto-dil' },
         ],
         detailFields: [
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
@@ -789,16 +789,14 @@ const MODULES = [
               { key: 'stok_adi', label: 'Stok adı', name: true, required: true },
               { key: 'stok_adi_2', label: 'Stok adı 2' },
               { key: 'uzun_stok_kodu', label: 'Uzun stok kodu' },
-              { key: 'tedarik_tipi', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'] },
-              { key: 'stok_takip_birimi', label: 'Stok takip birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
-              { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'tedarik_tipi', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'], hint: 'Satınalma veya üretim temini' },
+              { key: 'birim', label: 'Baz birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', required: true },
               { key: 'aciklama', label: 'Açıklama' },
               { key: 'satis_fiyati', label: 'Satış fiyatı', type: 'number' },
               { key: 'aktif', label: 'Aktif', type: 'checkbox' },
             ],
             detailFields: [
               { key: 'ulke_mensei', label: 'Ülke menşei', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_kodu', labelKey: 'ulke_adi' },
-              { key: 'temin_sekli', label: 'Temin şekli', type: 'lookup', lookup: 'kategoriler-temin', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
             ],
           },
           {
@@ -826,21 +824,13 @@ const MODULES = [
             ],
           },
           {
-            id: 'birim', label: 'Birim Tanımları', kind: 'grid', key: 'birim_tanimlari', slots: 3,
+            id: 'birim', label: 'Birim Dönüşümleri', kind: 'grid', key: 'birim_tanimlari', slots: 3,
             fields: [
-              { key: 'birim_kodu', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
-              { key: 'katsayi', label: 'Katsayı', type: 'number' },
-              { key: 'cevrilecek_birim', label: 'Çevrilecek birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'birim_kodu', label: 'Kaynak birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'katsayi', label: 'Miktar (katsayı)', type: 'number', hint: '1 kaynak = katsayı × hedef' },
+              { key: 'cevrilecek_birim', label: 'Hedef birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
               { key: 'barkod', label: 'Barkod' },
               { key: 'takip_birimi_mi', label: 'Takip birimi', type: 'checkbox' },
-            ],
-          },
-          {
-            // Ek iş yerleri (asıl bağ master’daki İş yeri alanından gelir)
-            id: 'isyeri-bag', label: 'Ek İş Yerleri', kind: 'grid', key: 'is_yeri_baglari', slots: 2,
-            fields: [
-              { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
-              { key: 'aktif', label: 'Aktif', type: 'checkbox' },
             ],
           },
           {
@@ -855,7 +845,6 @@ const MODULES = [
             fields: [
               { key: 'abc_kodu', label: 'ABC kodu', type: 'lookup', lookup: 'kategoriler-abc', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
               { key: 'marka', label: 'Marka', type: 'lookup', lookup: 'kategoriler-marka', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
-              { key: 'temin_sekli', label: 'Temin şekli', type: 'lookup', lookup: 'kategoriler-temin', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
             ],
           },
           {
@@ -869,9 +858,8 @@ const MODULES = [
           {
             id: 'dil-stok', label: 'Dil Tanımları', kind: 'grid', key: 'dil_tanimlari', slots: 2,
             fields: [
-              { key: 'dil_kodu', label: 'Dil kodu' },
-              { key: 'dil_adi', label: 'Dil adı' },
-              { key: 'stok_adi', label: 'Stok adı' },
+              { key: 'dil_kodu', label: 'Dil kodu', type: 'lookup', lookup: 'diller', valueKey: 'dil_kodu', labelKey: 'dil_adi', autoFillName: 'dil_adi' },
+              { key: 'stok_adi', label: 'Stok adı (dil)' },
               { key: 'aciklama', label: 'Açıklama' },
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
             ],
@@ -895,6 +883,11 @@ const MODULES = [
         title: 'Depo Bakiye',
         endpoint: '/stok-bakiyeleri',
         crud: false,
+        readOnly: true,
+        hideActions: true,
+        contextMenu: [
+          { id: 'stok-hareketleri', label: 'Stok Hareketleri', openScreen: 'stok-hareketleri', passFilters: ['stok_kodu', 'depo_kodu', 'stok_id', 'depo_id'] },
+        ],
         filters: [
           { key: 'depo_kodu', label: 'Depo kodu' },
           { key: 'stok_kodu', label: 'Stok kodu' },
@@ -902,6 +895,7 @@ const MODULES = [
           { key: 'stok_tipi', label: 'Stok tipi' },
           { key: 'stok_statu', label: 'Stok statü' },
           { key: 'parti_no', label: 'Parti no' },
+          { key: 'yalnizca_stokta', label: 'Yalnızca stokta olanları göster', type: 'checkbox', default: true, queryParam: true },
         ],
         columns: [
           { key: 'depo_kodu', label: 'Depo', mono: true },
@@ -960,6 +954,7 @@ const MODULES = [
           { key: 'aciklama', label: 'Açıklama' },
         ],
         detailFields: [
+          { key: 'barkod', label: 'Barkod', hint: 'Okutunca stok eşleşir' },
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
           { key: 'miktar', label: 'Miktar', type: 'number' },
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
@@ -1327,41 +1322,39 @@ const MODULES = [
           {
             id: 'ana', label: 'Cari Kart', kind: 'master-detail',
             masterFields: [
-              { key: 'cari_turu', label: 'Müşteri tipi', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, lead: true },
-              { key: 'cari_kodu', label: 'Cari kodu', code: true, required: true },
-              { key: 'cari_adi', label: 'Cari adı', name: true, required: true },
-              { key: 'aciklama', label: 'Açıklama' },
-              { key: 'vergi_no', label: 'VKN / TCKN' },
-              { key: 'fatura_adres1', label: 'Adres 1' },
+              { key: 'cari_turu', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, lead: true, group: 'kimlik' },
+              { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu', critical: true, group: 'organizasyon' },
+              { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu', group: 'organizasyon' },
+              { key: 'cari_kodu', label: 'Cari kodu', code: true, required: true, group: 'kimlik' },
+              { key: 'cari_adi', label: 'Cari adı', name: true, required: true, group: 'kimlik' },
+              { key: 'cari_adi_2', label: 'Cari adı 2', group: 'kimlik' },
+              { key: 'aktif', label: 'Aktif', type: 'checkbox', group: 'durum' },
             ],
             detailFields: [
-              { key: 'cari_adi_2', label: 'Cari adı 2' },
-              { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
-              { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
-              { key: 'vergi_dairesi', label: 'Vergi dairesi' },
-              { key: 'pasaport_no', label: 'Pasaport no' },
-              { key: 'ulke', label: 'Ülke', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_kodu', labelKey: 'ulke_adi' },
-              { key: 'ad', label: 'Ad' },
-              { key: 'soyad', label: 'Soyad' },
-              { key: 'fatura_adres2', label: 'Adres 2' },
-              { key: 'fatura_adres3', label: 'Adres 3' },
-              { key: 'il', label: 'İl' },
-              { key: 'ilce', label: 'İlçe' },
-              { key: 'posta_kodu', label: 'Posta kodu' },
-              { key: 'enlem', label: 'Enlem', type: 'number' },
-              { key: 'boylam', label: 'Boylam', type: 'number' },
-              { key: 'telefon', label: 'Telefon 1' },
-              { key: 'telefon2', label: 'Telefon 2' },
-              { key: 'cep_tel', label: 'Cep tel' },
-              { key: 'email', label: 'E-posta' },
-              { key: 'website', label: 'Website' },
-              { key: 'fax', label: 'Fax' },
-              { key: 'yetkili_adi', label: 'Yetkili' },
-              { key: 'yetkili_telefon', label: 'Yetkili tel' },
-              { key: 'para_birimi', label: 'Para birimi' },
-              { key: 'odeme_vadesi_gun', label: 'Vade (gün)', type: 'number' },
-              { key: 'aktif', label: 'Aktif', type: 'checkbox' },
-              { key: 'notlar', label: 'Notlar' },
+              { key: 'vergi_no', label: 'VKN / TCKN', group: 'finans' },
+              { key: 'vergi_dairesi', label: 'Vergi dairesi', group: 'finans' },
+              { key: 'pasaport_no', label: 'Pasaport no', group: 'kimlik' },
+              { key: 'ad', label: 'Ad', group: 'kimlik' },
+              { key: 'soyad', label: 'Soyad', group: 'kimlik' },
+              { key: 'ulke', label: 'Ülke', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_kodu', labelKey: 'ulke_adi', group: 'adres' },
+              { key: 'il', label: 'İl', group: 'adres' },
+              { key: 'ilce', label: 'İlçe', group: 'adres' },
+              { key: 'posta_kodu', label: 'Posta kodu', group: 'adres' },
+              { key: 'fatura_adres1', label: 'Adres 1', group: 'adres' },
+              { key: 'fatura_adres2', label: 'Adres 2', group: 'adres' },
+              { key: 'fatura_adres3', label: 'Adres 3', group: 'adres' },
+              { key: 'telefon', label: 'Telefon 1', group: 'iletisim' },
+              { key: 'telefon2', label: 'Telefon 2', group: 'iletisim' },
+              { key: 'cep_tel', label: 'Cep tel', group: 'iletisim' },
+              { key: 'email', label: 'E-posta', group: 'iletisim' },
+              { key: 'website', label: 'Website', group: 'iletisim' },
+              { key: 'fax', label: 'Fax', group: 'iletisim' },
+              { key: 'yetkili_adi', label: 'Yetkili', group: 'iletisim' },
+              { key: 'yetkili_telefon', label: 'Yetkili tel', group: 'iletisim' },
+              { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', group: 'finans' },
+              { key: 'odeme_vadesi_gun', label: 'Vade (gün)', type: 'number', group: 'finans' },
+              { key: 'aciklama', label: 'Açıklama', group: 'durum' },
+              { key: 'notlar', label: 'Notlar', group: 'durum' },
             ],
           },
           {
@@ -1422,9 +1415,8 @@ const MODULES = [
           {
             id: 'dil', label: 'Dil Tanımları', kind: 'grid', key: 'dil_tanimlari', slots: 2,
             fields: [
-              { key: 'dil_kodu', label: 'Dil kodu' },
-              { key: 'dil_adi', label: 'Dil adı' },
-              { key: 'cari_adi', label: 'Cari adı' },
+              { key: 'dil_kodu', label: 'Dil kodu', type: 'lookup', lookup: 'diller', valueKey: 'dil_kodu', labelKey: 'dil_adi', autoFillName: 'dil_adi' },
+              { key: 'cari_adi', label: 'Cari adı (dil)' },
               { key: 'aciklama', label: 'Açıklama' },
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
             ],
@@ -1995,16 +1987,18 @@ const MODULES = [
     id: 'satinalma',
     title: 'Satınalma',
     sections: [
-      { id: 'teklif', title: 'Teklif', screenIds: ['satin-alma-teklif-istekleri', 'satin-alma-teklifleri', 'satin-alma-anlasmalari'] },
+      { id: 'teklif', title: 'Teklif', screenIds: ['satin-alma-teklifleri', 'satin-alma-anlasmalari'] },
       { id: 'siparis', title: 'Sipariş', screenIds: ['satin-alma-talepleri', 'satin-alma-siparisleri'] },
-      { id: 'mal-kabul', title: 'Mal Kabul', screenIds: ['mal-kabuller'] },
-      { id: 'faturalar', title: 'Faturalar', screenIds: ['alis-faturalari'] },
+      { id: 'mal-kabul', title: 'Mal Kabul', screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri'] },
+      { id: 'faturalar', title: 'Faturalar', screenIds: ['alis-faturalari', 'belge-yonetimi'] },
     ],
     screens: [
       {
         id: 'satin-alma-teklif-istekleri',
         title: 'Satınalma Teklif İstekleri',
         endpoint: '/satin-alma-teklif-istekleri',
+        hidden: true,
+        deprecated: true,
         crud: true,
         numeratorSeri: 'SATINALMA_TEKLIF_ISTEK',
         codeField: 'istek_no',
@@ -2062,8 +2056,11 @@ const MODULES = [
           { key: 'teklif_no', label: 'Teklif no', code: true },
           { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
-          { key: 'istek_id', label: 'Teklif isteği', type: 'number' },
+          { key: 'talep_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'talep_no', fillFrom: 'talep-satirlar' },
+          { key: 'istek_id', label: 'Eski teklif isteği', type: 'number' },
           { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur', label: 'Kur', type: 'number' },
           { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'] },
           { key: 'aciklama', label: 'Açıklama', name: true },
@@ -2071,11 +2068,14 @@ const MODULES = [
         detailFields: [
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
           { key: 'miktar', label: 'Miktar', type: 'number' },
-          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur', label: 'Kur', type: 'number' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
+        defaults: { para_birimi: 'TRY', kur: 1 },
       },
       {
         id: 'satin-alma-anlasmalari',
@@ -2097,20 +2097,27 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'anlasma_no', label: 'Anlaşma no', code: true },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
           { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'teklif_id', label: 'Teklif', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'teklif_no' },
           { key: 'baslangic_tarihi', label: 'Başlangıç', type: 'date' },
           { key: 'bitis_tarihi', label: 'Bitiş', type: 'date' },
+          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur', label: 'Kur', type: 'number' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kapali', 'Iptal'] },
           { key: 'aciklama', label: 'Açıklama', name: true },
         ],
         detailFields: [
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
           { key: 'miktar', label: 'Miktar', type: 'number' },
-          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur', label: 'Kur', type: 'number' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
+        defaults: { para_birimi: 'TRY', kur: 1, durum: 'Taslak' },
       },
       {
         id: 'alis-faturalari',
@@ -2187,9 +2194,10 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'talep_no', label: 'Talep no', code: true },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
           { key: 'aciklama', label: 'Açıklama', name: true },
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
-          { key: 'tedarikci_cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu' },
+          { key: 'tedarikci_cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'] },
         ],
         detailFields: [
@@ -2230,6 +2238,7 @@ const MODULES = [
         masterFields: [
           { key: 'siparis_no', label: 'Sipariş no', code: true },
           { key: 'tedarikci_siparis_no', label: 'Tedarikçi sipariş no' },
+          { key: 'talep_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'talep_no', fillFrom: 'talep-satirlar' },
           { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
           { key: 'siparis_tarihi', label: 'Sipariş tarihi', type: 'date' },
           { key: 'teslim_tarihi', label: 'Teslim tarihi', type: 'date' },
@@ -2251,6 +2260,8 @@ const MODULES = [
           { key: 'satir_aciklama', label: 'Açıklama' },
           { key: 'miktar', label: 'Miktar', type: 'number' },
           { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur', label: 'Kur', type: 'number' },
           { key: 'iskonto_oran', label: 'İskonto %', type: 'number' },
           { key: 'kdv_oran', label: 'KDV %', type: 'number' },
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
@@ -2259,6 +2270,7 @@ const MODULES = [
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
+        defaults: { para_birimi: 'TRY', kur: 1, durum: 'Taslak' },
       },
       {
         id: 'mal-kabuller',
@@ -2289,12 +2301,13 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'kabul_no', label: 'Kabul no', code: true },
-          { key: 'siparis_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'siparis_no', required: true },
+          { key: 'siparis_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'siparis_no', required: true, fillFrom: 'siparis-satirlar' },
+          { key: 'tedarikci_irsaliye_id', label: 'Tedarikçi irsaliyesi', type: 'lookup', lookup: 'tedarikci-irsaliyeleri', valueKey: 'id', labelKey: 'irsaliye_no', fillFrom: 'tedarikci-irsaliye-satirlar' },
           { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
           { key: 'kabul_tarihi', label: 'Kabul tarihi', type: 'date' },
           { key: 'irsaliye_no_tedarikci', label: 'Tedarikçi irsaliye no' },
           { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
-          { key: 'fatura_no_tedarikci', label: 'Tedarikçi fatura no' },
+          { key: 'fatura_no_tedarikci', label: 'Tedarikçi fatura no (opsiyonel)' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Iptal', 'Kapali'] },
           { key: 'gkk_gerekli', label: 'GKK gerekli', type: 'checkbox' },
           { key: 'kabul_eden_kullanici', label: 'Kabul eden' },
@@ -2317,6 +2330,71 @@ const MODULES = [
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
+      },
+      {
+        id: 'tedarikci-irsaliyeleri',
+        title: 'Tedarikçi İrsaliyeleri',
+        endpoint: '/tedarikci-irsaliyeleri',
+        crud: true,
+        codeField: 'irsaliye_no',
+        nameField: 'cari_adi',
+        numeratorSeri: 'TEDARIKCI_IRSALIYE',
+        filters: [
+          { key: 'irsaliye_no', label: 'İrsaliye no' },
+          { key: 'cari_adi', label: 'Tedarikçi' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'irsaliye_no', label: 'İrsaliye', mono: true },
+          { key: 'cari_adi', label: 'Tedarikçi' },
+          { key: 'siparis_no', label: 'Sipariş', mono: true },
+          { key: 'irsaliye_tarihi', label: 'Tarih' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'irsaliye_no', label: 'İrsaliye no', code: true },
+          { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
+          { key: 'siparis_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'siparis_no', fillFrom: 'siparis-satirlar' },
+          { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Kismi', 'Kapali', 'Iptal'] },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'miktar', label: 'Miktar', type: 'number' },
+          { key: 'kabul_edilen', label: 'Kabul edilen', type: 'number' },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
+          { key: 'satir_aciklama', label: 'Açıklama' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { durum: 'Acik' },
+      },
+      {
+        id: 'belge-yonetimi',
+        title: 'İrsaliye / Fatura Yönetimi',
+        endpoint: '/belge-yonetimi',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        filters: [
+          { key: 'yon', label: 'Alış / Satış', type: 'select', options: ['', 'alis', 'satis'], queryParam: true },
+          { key: 'belge_turu', label: 'Belge türü', type: 'select', options: ['', 'irsaliye', 'fatura'], queryParam: true },
+          { key: 'belge_no', label: 'Belge no' },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'belge_sinifi', label: 'Sınıf' },
+          { key: 'belge_no', label: 'Belge no', mono: true },
+          { key: 'yon', label: 'Yön' },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'belge_tarihi', label: 'Tarih' },
+          { key: 'tutar', label: 'Tutar', mono: true },
+          { key: 'para_birimi', label: 'PB' },
+          { key: 'durum', label: 'Durum' },
+        ],
       },
     ],
   },
@@ -3559,7 +3637,7 @@ const MODULES = [
 
 /** Modül menü bölümleri — sections yoksa düz liste (Sabit Tanımlar). */
 function moduleMenuSections(mod) {
-  const screens = (mod.screens || []).filter((s) => s && s.id);
+  const screens = (mod.screens || []).filter((s) => s && s.id && !s.hidden && !s.deprecated);
   const byId = Object.fromEntries(screens.map((s) => [s.id, s]));
   if (Array.isArray(mod.sections) && mod.sections.length) {
     const used = new Set();
@@ -4574,6 +4652,7 @@ function compareValues(cell, op, a, b, def) {
 
 function applyFilters(rows, screen) {
   const active = screen.filters
+    .filter((f) => !f.queryParam) // sunucu filtreleri satır alanı değil
     .map((f) => ({ def: f, st: state.filterState[f.key] || { op: 'icerir', a: '', b: '' } }))
     .filter(({ st }) => (st.op === 'arasinda' ? Boolean(norm(st.a) || norm(st.b)) : Boolean(norm(st.a))));
   if (!active.length) return rows.slice();
@@ -4701,6 +4780,69 @@ function hideTabContextMenu() {
   const menu = $('#tabCtxMenu');
   if (menu) menu.hidden = true;
   state.tabCtxKey = null;
+  const listMenu = $('#listCtxMenu');
+  if (listMenu) listMenu.hidden = true;
+}
+
+function showListContextMenu(screen, clientX, clientY) {
+  const menu = $('#listCtxMenu');
+  if (!menu || !screen?.contextMenu?.length) return;
+  menu.innerHTML = screen.contextMenu.map((item) => `
+    <button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
+      data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(item.label)}</button>
+  `).join('');
+  menu.hidden = false;
+  const pad = 6;
+  const mw = menu.offsetWidth || 200;
+  const mh = menu.offsetHeight || 80;
+  let left = clientX;
+  let top = clientY;
+  if (left + mw > window.innerWidth - pad) left = Math.max(pad, window.innerWidth - mw - pad);
+  if (top + mh > window.innerHeight - pad) top = Math.max(pad, window.innerHeight - mh - pad);
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  if (!menu.dataset.bound) {
+    menu.dataset.bound = '1';
+    menu.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-list-ctx]');
+      if (!btn) return;
+      e.preventDefault();
+      menu.hidden = true;
+      const openId = btn.getAttribute('data-open-screen');
+      const item = (findScreen(state.screenId)?.contextMenu || [])
+        .find((x) => x.id === btn.getAttribute('data-list-ctx'));
+      const row = selectedRow();
+      if (openId) {
+        // Hedef ekrana filtre/query geçir
+        const pass = item?.passFilters || [];
+        const qs = [];
+        pass.forEach((k) => {
+          if (row?.[k] != null && row[k] !== '') qs.push(`${encodeURIComponent(k)}=${encodeURIComponent(row[k])}`);
+        });
+        openScreen(openId).then(() => {
+          const target = findScreen(openId);
+          if (!target || !row) return;
+          pass.forEach((k) => {
+            if (row[k] == null || row[k] === '') return;
+            if (!state.filterState) state.filterState = {};
+            state.filterState[k] = { op: 'esit', a: String(row[k]), b: '' };
+          });
+          if (target.filters?.some((f) => f.queryParam) || qs.length) {
+            api(buildListEndpoint(target)).then((data) => {
+              state.rows = ensureRowIds(Array.isArray(data) ? data : []);
+              state.filtered = applyFilters(state.rows, target);
+              renderList(target);
+              renderFilterPane(target);
+            }).catch((err) => toast(err.message));
+          } else {
+            state.filtered = applyFilters(state.rows, target);
+            renderList(target);
+            renderFilterPane(target);
+          }
+        });
+      }
+    });
+  }
 }
 
 function showTabContextMenu(tabKey, clientX, clientY) {
@@ -5225,7 +5367,10 @@ async function loadIsYerleriForActiveFirma() {
 function buildDefaultFilterState(screen) {
   const fs = {};
   (screen.filters || []).forEach((f) => {
-    if (f.key === 'aktif' || f.type === 'bool') {
+    if (f.type === 'checkbox') {
+      const on = f.default === true || f.default === 'true' || f.default === 1;
+      fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
+    } else if (f.key === 'aktif' || f.type === 'bool') {
       fs[f.key] = { op: 'esit', a: 'evet', b: '' };
     } else if (f.key === 'firma_id' && getActiveFirmaId()) {
       fs[f.key] = { op: 'esit', a: String(getActiveFirmaId()), b: '' };
@@ -5239,6 +5384,121 @@ function buildDefaultFilterState(screen) {
     }
   });
   return fs;
+}
+
+/** Liste endpoint’ine queryParam filtrelerini ekle (depo bakiye / belge yönetimi) */
+function buildListEndpoint(screen) {
+  let url = screen.endpoint || '';
+  const extras = [];
+  (screen.filters || []).forEach((f) => {
+    if (!f.queryParam) return;
+    const st = state.filterState?.[f.key];
+    if (!st) return;
+    if (f.type === 'checkbox') {
+      const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
+      extras.push(`${encodeURIComponent(f.key)}=${on ? '1' : '0'}`);
+      return;
+    }
+    if (st.a != null && String(st.a).trim() !== '') {
+      extras.push(`${encodeURIComponent(f.key)}=${encodeURIComponent(st.a)}`);
+    }
+  });
+  if (!extras.length) return url;
+  return url.includes('?') ? `${url}&${extras.join('&')}` : `${url}?${extras.join('&')}`;
+}
+
+const DIL_AD_MAP = {
+  TR: 'Türkçe', EN: 'English', DE: 'Deutsch', FR: 'Français',
+  IT: 'Italiano', ES: 'Español', RU: 'Русский', AR: 'العربية',
+  NL: 'Nederlands', PT: 'Português', ZH: '中文', JA: '日本語',
+};
+
+async function applyKurForParaBirimi(pbKod, kurEl, { force = false } = {}) {
+  if (!kurEl) return;
+  const pb = String(pbKod || 'TRY').toUpperCase();
+  if (pb === 'TRY' || pb === 'TL') {
+    kurEl.value = '1';
+    kurEl.disabled = true;
+    kurEl.title = 'TRY için kur sabittir';
+    return;
+  }
+  kurEl.disabled = false;
+  kurEl.title = '';
+  if (!force && kurEl.value && Number(kurEl.value) > 0 && Number(kurEl.value) !== 1) return;
+  try {
+    const r = await api(`/doviz-kurlari/cevir?miktar=1&kaynak_pb=${encodeURIComponent(pb)}&hedef_pb=TRY&tip=satis`);
+    if (r?.kur != null) kurEl.value = String(r.kur);
+  } catch (_) {
+    /* kur yoksa kullanıcı girer */
+  }
+}
+
+async function fillLinesFromSource(kind, sourceId) {
+  if (!sourceId || !state.formRecord) return;
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const detailKey = screen.detailKey || 'satirlar';
+  try {
+    if (kind === 'talep-satirlar') {
+      const talep = await api(`/satin-alma-talepleri/${sourceId}`);
+      if (!talep) return;
+      if (talep.tedarikci_cari_id && state.formRecord.cari_id == null) {
+        state.formRecord.cari_id = talep.tedarikci_cari_id;
+      }
+      if (talep.is_yeri_id && !state.formRecord.is_yeri_id) state.formRecord.is_yeri_id = talep.is_yeri_id;
+      if (talep.firma_id && !state.formRecord.firma_id) state.formRecord.firma_id = talep.firma_id;
+      state.formRecord.talep_id = Number(sourceId);
+      state.formRecord[detailKey] = (talep.satirlar || []).map((s) => ({
+        stok_id: s.stok_id,
+        miktar: s.miktar,
+        birim: s.birim,
+        birim_fiyat: s.birim_fiyat ?? 0,
+        satir_aciklama: s.aciklama || '',
+        _satir_kayitli: false,
+      }));
+      toast(`Talep ${talep.talep_no || sourceId} satırları yüklendi`);
+      renderForm(screen);
+    } else if (kind === 'siparis-satirlar') {
+      const sip = await api(`/satin-alma-siparisleri/${sourceId}`);
+      if (!sip) return;
+      state.formRecord.siparis_id = Number(sourceId);
+      if (sip.cari_id && !state.formRecord.cari_id) state.formRecord.cari_id = sip.cari_id;
+      if (sip.depo_id && !state.formRecord.depo_id) state.formRecord.depo_id = sip.depo_id;
+      state.formRecord[detailKey] = (sip.satirlar || [])
+        .filter((s) => Number(s.miktar) - Number(s.giren_miktar || 0) > 0)
+        .map((s) => ({
+          siparis_satir_id: s.id,
+          stok_id: s.stok_id,
+          miktar: Number(s.miktar) - Number(s.giren_miktar || 0),
+          birim: s.birim,
+          birim_fiyat: s.birim_fiyat,
+          _satir_kayitli: false,
+        }));
+      toast(`Sipariş ${sip.siparis_no || sourceId} kalan satırları yüklendi`);
+      renderForm(screen);
+    } else if (kind === 'tedarikci-irsaliye-satirlar') {
+      const ir = await api(`/tedarikci-irsaliyeleri/${sourceId}`);
+      if (!ir) return;
+      state.formRecord.tedarikci_irsaliye_id = Number(sourceId);
+      if (ir.siparis_id) state.formRecord.siparis_id = ir.siparis_id;
+      if (ir.irsaliye_no) state.formRecord.irsaliye_no_tedarikci = ir.irsaliye_no;
+      if (ir.irsaliye_tarihi) state.formRecord.irsaliye_tarihi = ir.irsaliye_tarihi;
+      state.formRecord[detailKey] = (ir.satirlar || [])
+        .filter((s) => Number(s.kalan_miktar != null ? s.kalan_miktar : (s.miktar - (s.kabul_edilen || 0))) > 0)
+        .map((s) => ({
+          siparis_satir_id: s.siparis_satir_id,
+          stok_id: s.stok_id,
+          miktar: Number(s.kalan_miktar != null ? s.kalan_miktar : (s.miktar - (s.kabul_edilen || 0))),
+          birim: s.birim,
+          birim_fiyat: s.birim_fiyat,
+          _satir_kayitli: false,
+        }));
+      toast(`İrsaliye ${ir.irsaliye_no || sourceId} kalan satırları yüklendi`);
+      renderForm(screen);
+    }
+  } catch (err) {
+    toast(err.message || 'Kaynak satırlar yüklenemedi');
+  }
 }
 
 function closeFirmaPicker() {
@@ -5299,9 +5559,15 @@ async function loadFirmalar() {
 function readFilterState(screen) {
   const next = {};
   screen.filters.forEach((f) => {
+    const aEl = document.querySelector(`[data-filter-a="${f.key}"]`);
+    let a = '';
+    if (aEl) {
+      if (aEl.type === 'checkbox') a = aEl.checked ? 'evet' : '';
+      else a = aEl.value || '';
+    }
     next[f.key] = {
       op: document.querySelector(`[data-filter-op="${f.key}"]`)?.value || 'esit',
-      a: document.querySelector(`[data-filter-a="${f.key}"]`)?.value || '',
+      a,
       b: document.querySelector(`[data-filter-b="${f.key}"]`)?.value || '',
     };
   });
@@ -5387,6 +5653,11 @@ function filterValueControl(f, st) {
     </select>
       <input type="text" data-filter-b="${f.key}" value="" hidden />`;
   }
+  if (f.type === 'checkbox') {
+    const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
+    return `<label class="filter-check"><input type="checkbox" data-filter-a="${f.key}" value="evet" ${on ? 'checked' : ''} /> Açık</label>
+      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+  }
   if (f.type === 'bool' || f.key === 'aktif') {
     const opts = [
       { v: 'evet', l: 'Evet' },
@@ -5411,6 +5682,9 @@ function filterValueControl(f, st) {
 
 function filterOperatorsFor(f) {
   // Açılır liste / bool: yazma yok → eşit / eşit değil yeterli
+  if (f.type === 'checkbox') {
+    return OPERATORS.filter((o) => o.id === 'esit');
+  }
   if (f.type === 'lookup' || f.type === 'select' || f.type === 'bool'
       || f.key === 'aktif' || (Array.isArray(f.options) && f.options.length)) {
     return OPERATORS.filter((o) => o.id === 'esit' || o.id === 'esit_degil');
@@ -5421,6 +5695,17 @@ function filterOperatorsFor(f) {
 function renderFilterField(f) {
   const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
   const bucket = filterBucket(f);
+  if (f.type === 'checkbox') {
+    return `
+    <div class="filter-field filter-field--${bucket} filter-field--check" data-filter-key="${f.key}">
+      <label>${f.label}</label>
+      <div class="filter-controls">
+        <div class="filter-values" data-filter-values="${f.key}">
+          ${filterValueControl(f, { ...st, op: 'esit' })}
+        </div>
+      </div>
+    </div>`;
+  }
   const ops = filterOperatorsFor(f);
   const op = ops.some((o) => o.id === st.op) ? st.op : (ops[0]?.id || 'esit');
   return `
@@ -5580,7 +5865,18 @@ function updateActionButtons(screen) {
   const hasSel = Boolean(state.selectedId);
   document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
     const act = btn.dataset.action;
-    if (screen.readOnly) {
+    if (screen.hideActions || (screen.readOnly && screen.crud === false)) {
+      // Salt okunur kontrol ekranı — Yeni/İncele/Düzelt gizle; CSV kalabilir
+      if (['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
+        btn.hidden = true;
+        btn.disabled = true;
+        return;
+      }
+      btn.hidden = false;
+    } else {
+      btn.hidden = false;
+    }
+    if (screen.readOnly && !screen.hideActions) {
       btn.disabled = act !== 'incele' || !hasSel;
       return;
     }
@@ -5693,7 +5989,7 @@ async function openScreen(id, opts = {}) {
         banner.textContent = `${screen.title} · çalışma #${calismaId} · UI build 20261017u`;
       }
     } else {
-      data = await api(screen.endpoint);
+      data = await api(buildListEndpoint(screen));
     }
     if (state.screenId !== id) return;
     let rows = Array.isArray(data) ? data : [];
@@ -5737,6 +6033,11 @@ const LOOKUP_ENDPOINTS = {
   diller: '/diller?aktif=true',
   bankalar: '/bankalar?aktif=true',
   'doviz-kurlari': '/doviz-kurlari?son=true',
+  'satin-alma-talepleri': '/satin-alma-talepleri',
+  'satin-alma-teklifleri': '/satin-alma-teklifleri',
+  'satin-alma-siparisleri': '/satin-alma-siparisleri',
+  'tedarikci-irsaliyeleri': '/tedarikci-irsaliyeleri',
+  'mal-kabuller': '/mal-kabuller',
   'is-merkezleri': '/is-merkezleri',
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?aktif=true',
@@ -6860,9 +7161,8 @@ function renderGridToolbar(tabKey, { canEdit }) {
   }
   return `<div class="inline-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}">Yeni</button>
-    <button type="button" class="btn action ghost" data-grid-act="duzelt" data-grid-key="${tabKey}">Düzelt</button>
-    <button type="button" class="btn action danger" data-grid-act="sil" data-grid-key="${tabKey}">Sil</button>
-    <span class="toolbar-hint">Önce satır seçin; Yeni boş satır ekler</span>
+    <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}">Sil</button>
+    <span class="toolbar-hint">Yeni boş satır ekler — kayıt için satırdaki Kaydet’i kullanın</span>
   </div>`;
 }
 
@@ -6876,22 +7176,29 @@ function renderDynamicGrid(tab, rec) {
   if (!rows.length) {
     return `
       ${renderGridToolbar(key, { canEdit })}
-      <div class="detail-empty">Henüz satır yok. ${canEdit ? 'Yeni ile ekleyin.' : ''}</div>`;
+      <div class="detail-empty">Henüz satır yok. ${canEdit ? 'Yeni ile ekleyin; Kaydet satırı belgeye yazar.' : ''}</div>`;
   }
 
   return `
     ${renderGridToolbar(key, { canEdit })}
-    <div class="detail-grid detail-grid--dynamic" data-grid-list="${key}">
+    <div class="detail-grid detail-grid--dynamic detail-grid--compact" data-grid-list="${key}">
       ${rows.map((row, idx) => {
         const selected = selIdx === idx;
         const editing = canEdit && selected;
+        const saved = row._satir_kayitli === true || row.id != null;
         return `
-          <div class="detail-slot ${selected ? 'selected' : ''}" data-grid-row="${key}" data-grid-idx="${idx}">
+          <div class="detail-slot detail-slot--compact ${selected ? 'selected' : ''} ${saved ? 'detail-slot--saved' : 'detail-slot--draft'}" data-grid-row="${key}" data-grid-idx="${idx}">
             <div class="detail-slot-head">
               <button type="button" class="detail-slot-pick" data-grid-pick="${key}" data-grid-idx="${idx}">
-                <span class="detail-slot-title">${idx + 1}. satır</span>
+                <span class="detail-slot-title">${idx + 1}. satır${saved ? '' : ' · taslak'}</span>
                 <span class="detail-slot-summary">${gridRowSummary(tab, row)}</span>
               </button>
+              ${canEdit ? `
+              <div class="detail-slot-actions" role="group" aria-label="Satır işlemleri">
+                <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı belgeye kaydet">Kaydet</button>
+                <button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>
+                <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
+              </div>` : ''}
             </div>
             ${editing || (!canEdit && selected) ? `
               <div class="detail-slot-fields field-groups">
@@ -7610,7 +7917,7 @@ function bindCascadeLookups(_screen) {
       toast(`Eşleşen seçenek yok: ${text}`);
     }
   });
-  root.addEventListener('change', (e) => {
+  root.addEventListener('change', async (e) => {
     const el = e.target;
     if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement)) return;
     const scr = findScreen(state.screenId);
@@ -7621,21 +7928,115 @@ function bindCascadeLookups(_screen) {
       return;
     }
 
-    if (!(el instanceof HTMLSelectElement)) return;
+    const masterKey = el.getAttribute('data-master');
+    const detailKey = el.getAttribute('data-detail');
+    const fieldKey = masterKey || detailKey;
+
+    // Barkod → stok eşleştirme (yanlış malzeme engeli)
+    if (fieldKey === 'barkod' && el instanceof HTMLInputElement && el.value.trim()) {
+      const kod = el.value.trim();
+      try {
+        const stoklar = state.lookupCache.stoklar || await api('/stoklar?aktif=true');
+        state.lookupCache.stoklar = stoklar;
+        let hit = null;
+        for (const s of stoklar) {
+          if (String(s.barkod || '') === kod) { hit = s; break; }
+          const bars = Array.isArray(s.barkodlar) ? s.barkodlar : [];
+          if (bars.some((b) => String(b.barkod) === kod)) { hit = s; break; }
+        }
+        if (!hit) {
+          // nested barkod endpoint yoksa stok listesinde ara
+          toast(`Barkod bulunamadı: ${kod}`);
+          return;
+        }
+        const stokEl = detailKey
+          ? document.querySelector(`select[data-detail="stok_id"][data-didx="${el.getAttribute('data-didx')}"][data-grid="${el.getAttribute('data-grid')}"]`)
+          : document.querySelector('select[data-master="stok_id"]');
+        if (stokEl) {
+          const current = stokEl.value;
+          if (current && String(current) !== String(hit.id)) {
+            toast('Barkod başka bir stokla eşleşiyor — yanlış malzeme engellendi.');
+            el.value = '';
+            return;
+          }
+          stokEl.value = String(hit.id);
+          stokEl.dispatchEvent(new Event('change', { bubbles: true }));
+          toast(`Barkod → ${hit.stok_kodu}`);
+        }
+      } catch (err) {
+        toast(err.message || 'Barkod çözülemedi');
+      }
+      return;
+    }
+
+    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && fieldKey === 'dil_kodu')) {
+      if (!(el instanceof HTMLSelectElement)) return;
+    }
     if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
-    const key = el.getAttribute('data-master');
-    if (key && state.formRecord) {
-      const f = collectTabFields(scr).find((x) => x.key === key)
-        || (scr.masterFields || []).find((x) => x.key === key);
-      state.formRecord[key] = f ? readFieldValue(el, f) : el.value;
+
+    if (masterKey && state.formRecord) {
+      const f = collectTabFields(scr).find((x) => x.key === masterKey)
+        || (scr.masterFields || []).find((x) => x.key === masterKey);
+      state.formRecord[masterKey] = f ? readFieldValue(el, f) : el.value;
     }
     refreshDependentLookups(scr, el);
+
+    // Dil kodu → dil adı
+    if (fieldKey === 'dil_kodu') {
+      const kod = String(el.value || '').toUpperCase();
+      let adi = DIL_AD_MAP[kod];
+      const dilRows = state.lookupCache.diller || [];
+      const hit = dilRows.find((d) => String(d.dil_kodu).toUpperCase() === kod);
+      if (hit?.dil_adi) adi = hit.dil_adi;
+      if (adi) {
+        if (masterKey) {
+          const nameEl = document.querySelector('[data-master="dil_adi"]');
+          if (nameEl) nameEl.value = adi;
+          if (state.formRecord) state.formRecord.dil_adi = adi;
+        } else if (detailKey) {
+          const didx = el.getAttribute('data-didx');
+          const grid = el.getAttribute('data-grid');
+          const nameEl = document.querySelector(
+            `[data-detail="dil_adi"][data-didx="${didx}"][data-grid="${grid}"]`
+          );
+          if (nameEl) nameEl.value = adi;
+        }
+      }
+    }
+
+    // Para birimi → kur
+    if (fieldKey === 'para_birimi') {
+      const pb = el.value;
+      if (masterKey) {
+        const kurEl = document.querySelector('[data-master="kur"]');
+        await applyKurForParaBirimi(pb, kurEl, { force: true });
+        if (state.formRecord && kurEl) state.formRecord.kur = Number(kurEl.value) || 1;
+      } else if (detailKey) {
+        const didx = el.getAttribute('data-didx');
+        const grid = el.getAttribute('data-grid');
+        const kurEl = document.querySelector(
+          `[data-detail="kur"][data-didx="${didx}"][data-grid="${grid}"]`
+        );
+        await applyKurForParaBirimi(pb, kurEl, { force: true });
+      }
+    }
+
+    // fillFrom: talep / sipariş / irsaliye satır doldurma
+    if (masterKey && el instanceof HTMLSelectElement) {
+      const f = collectTabFields(scr).find((x) => x.key === masterKey)
+        || (scr.masterFields || []).find((x) => x.key === masterKey);
+      if (f?.fillFrom && el.value) {
+        await fillLinesFromSource(f.fillFrom, el.value);
+        return;
+      }
+    }
+
     // Ürün ağacı / rota: mamul veya ağaç değişince tek ekranı yenile (kök + önizleme)
-    if (key && ['mamul_stok_id', 'stok_id', 'urun_agaci_id'].includes(key)
+    if (masterKey && ['mamul_stok_id', 'stok_id', 'urun_agaci_id'].includes(masterKey)
         && (scr.id === 'urun-agaci' || scr.id === 'rotalar')) {
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
-      if (key === 'mamul_stok_id' || key === 'stok_id') {
-        const st = stokLookupById(state.formRecord[key]);
+      if (masterKey === 'mamul_stok_id' || masterKey === 'stok_id') {
+        const st = stokLookupById(state.formRecord[masterKey]);
         if (st && scr.id === 'urun-agaci' && !String(state.formRecord.agac_adi || '').trim()) {
           state.formRecord.agac_adi = `${st.stok_adi} Ağacı`;
         }
@@ -8468,6 +8869,25 @@ function bindEvents() {
     });
   }
 
+  // Liste satırı sağ tık — ekran contextMenu (depo bakiye → stok hareketleri)
+  const dataBody = $('#dataBody');
+  if (dataBody && !dataBody.dataset.ctxBound) {
+    dataBody.dataset.ctxBound = '1';
+    dataBody.addEventListener('contextmenu', (e) => {
+      const tr = e.target.closest('tr[data-id]');
+      if (!tr) return;
+      const screen = findScreen(state.screenId);
+      if (!screen?.contextMenu?.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      state.selectedId = tr.getAttribute('data-id');
+      document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
+      tr.classList.add('selected');
+      updateActionButtons(screen);
+      showListContextMenu(screen, e.clientX, e.clientY);
+    });
+  }
+
   const tabCtx = $('#tabCtxMenu');
   if (tabCtx && !tabCtx.dataset.bound) {
     tabCtx.dataset.bound = '1';
@@ -8654,6 +9074,20 @@ function bindEvents() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     readFilterState(screen);
+    // queryParam filtreleri sunucuya gider — listeyi yeniden yükle
+    if ((screen.filters || []).some((f) => f.queryParam)) {
+      try {
+        $('#listMeta').textContent = 'Yükleniyor…';
+        const data = await api(buildListEndpoint(screen));
+        state.rows = ensureRowIds(Array.isArray(data) ? data : []);
+        state.filtered = applyFilters(state.rows, screen);
+        state.selectedId = null;
+        renderList(screen);
+      } catch (err) {
+        toast(err.message || 'Filtre uygulanamadı');
+      }
+      return;
+    }
     // Patlatma: miktar sunucuda çarpılır — filtreyle API’yi yeniden çağır
     if (screen.id === 'bom-patlatma') {
       try {
@@ -8916,7 +9350,9 @@ function bindEvents() {
         rows[state.gridSel.idx] = row;
       }
       if (act === 'yeni') {
-        rows.push(emptyRowFromFields(tab.fields));
+        const blank = emptyRowFromFields(tab.fields);
+        blank._satir_kayitli = false;
+        rows.push(blank);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: rows.length - 1 };
       } else if (act === 'duzelt') {
@@ -8936,6 +9372,61 @@ function bindEvents() {
       }
       renderForm(screen);
       return;
+    }
+
+    // Satır düzeyinde Kaydet / Düzelt / Kopyala
+    const rowAct = e.target.closest('[data-row-act]');
+    if (rowAct && screen) {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = rowAct.getAttribute('data-grid-key');
+      const idx = Number(rowAct.getAttribute('data-grid-idx'));
+      const act = rowAct.getAttribute('data-row-act');
+      const tab = resolveGridTab(screen, key);
+      if (!tab) return;
+      const masterSnap = readMasterFromForm(screen);
+      state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
+      let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
+      if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
+        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
+        rows[state.gridSel.idx] = row;
+      }
+      if (act === 'duzelt') {
+        state.formRecord[key] = rows;
+        state.gridSel = { key, idx };
+        renderForm(screen);
+        return;
+      }
+      if (act === 'kopyala') {
+        if (!rows[idx]) return;
+        const copy = { ...rows[idx] };
+        delete copy.id;
+        copy._satir_kayitli = false;
+        rows.splice(idx + 1, 0, copy);
+        state.formRecord[key] = rows;
+        state.gridSel = { key, idx: idx + 1 };
+        renderForm(screen);
+        toast('Satır kopyalandı — Kaydet ile belgeye yazın.');
+        return;
+      }
+      if (act === 'kaydet') {
+        if (rows[idx]) {
+          const { row } = syncGridRowFromDom(tab, idx, rows[idx]);
+          row._satir_kayitli = true;
+          rows[idx] = row;
+        }
+        state.formRecord[key] = rows;
+        state.gridSel = { key, idx };
+        // Belge + satırlar birlikte kalıcı kayda gider
+        saveForm().then(() => {
+          if (Array.isArray(state.formRecord?.[key])) {
+            state.formRecord[key] = state.formRecord[key].map((r, i) => (
+              i === idx ? { ...r, _satir_kayitli: true } : r
+            ));
+          }
+        }).catch(() => {});
+        return;
+      }
     }
     const gridPick = e.target.closest('[data-grid-pick]');
     if (gridPick && screen) {

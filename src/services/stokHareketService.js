@@ -23,6 +23,10 @@ async function stokHareketOlustur(client, {
     satirlar,
     bagliHareketId = null,
     depoZorunluAtla = false,
+    firmaId = null,
+    cariId = null,
+    kullaniciKodu = null,
+    referansNo = null,
 }) {
     if (!depoId) throw new Error('Stok hareketi için depo_id zorunludur.');
     if (!Array.isArray(satirlar) || satirlar.length === 0) {
@@ -46,14 +50,25 @@ async function stokHareketOlustur(client, {
     const cols = ['hareket_no', 'hareket_tipi', 'is_yeri_id', 'depo_id', 'belge_tipi', 'belge_id', 'aciklama', 'hareket_kodu_id'];
     const vals = [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, aciklama, hareketKoduId || null];
     // hedef_depo_id / bagli_hareket_id 015'te
+    // firma_id: açık parametre veya stok satırından türet
+    let resolvedFirmaId = firmaId || null;
+    if (!resolvedFirmaId && satirlar[0]?.stok_id) {
+        const fr = await client.query(`SELECT firma_id FROM stoklar WHERE id=$1`, [satirlar[0].stok_id]);
+        resolvedFirmaId = fr.rows[0]?.firma_id || null;
+    }
+
     const hareketRes = await client.query(
         `
         INSERT INTO stok_hareketleri
-            (hareket_no, hareket_tipi, is_yeri_id, depo_id, belge_tipi, belge_id, aciklama, hareket_kodu_id, hedef_depo_id, bagli_hareket_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+            (hareket_no, hareket_tipi, is_yeri_id, depo_id, belge_tipi, belge_id, aciklama, hareket_kodu_id,
+             hedef_depo_id, bagli_hareket_id, firma_id, cari_id, kullanici_kodu, referans_no)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         RETURNING *;
         `,
-        [...vals, hedefDepoId || null, bagliHareketId || null]
+        [
+            ...vals, hedefDepoId || null, bagliHareketId || null,
+            resolvedFirmaId, cariId || null, kullaniciKodu || null, referansNo || null,
+        ]
     );
     const hareket = hareketRes.rows[0];
 
@@ -197,26 +212,53 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
     const opts = (depoIdOrOpts && typeof depoIdOrOpts === 'object')
         ? depoIdOrOpts
         : { depoId: depoIdOrOpts };
-    const { depoId = null, stokStatu = null, stokId = null, firmaId = null } = opts;
+    const {
+        depoId = null, stokStatu = null, stokId = null, firmaId = null,
+        depoKodu = null, stokKodu = null, stokAdi = null, stokTipi = null,
+        partiNo = null, yalnizcaStokta = true,
+    } = opts;
     const params = [];
     const where = [];
     if (depoId) {
         params.push(depoId);
         where.push(`h.depo_id = $${params.length}`);
     }
+    if (depoKodu) {
+        params.push(`%${depoKodu}%`);
+        where.push(`d.depo_kodu ILIKE $${params.length}`);
+    }
     if (stokId) {
         params.push(stokId);
         where.push(`s.stok_id = $${params.length}`);
     }
+    if (stokKodu) {
+        params.push(`%${stokKodu}%`);
+        where.push(`st.stok_kodu ILIKE $${params.length}`);
+    }
+    if (stokAdi) {
+        params.push(`%${stokAdi}%`);
+        where.push(`st.stok_adi ILIKE $${params.length}`);
+    }
+    if (stokTipi) {
+        params.push(stokTipi);
+        where.push(`st.stok_tipi = $${params.length}`);
+    }
     if (stokStatu) {
         params.push(stokStatu);
         where.push(`COALESCE(s.stok_statu,'Kullanilabilir') = $${params.length}`);
+    }
+    if (partiNo) {
+        params.push(`%${partiNo}%`);
+        where.push(`p.parti_no ILIKE $${params.length}`);
     }
     if (firmaId) {
         params.push(firmaId);
         where.push(`(st.firma_id = $${params.length} OR h.firma_id = $${params.length})`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const havingSql = yalnizcaStokta
+        ? 'HAVING COALESCE(SUM(s.miktar * s.yon), 0) <> 0'
+        : '';
 
     const res = await pool.query(
         `
@@ -243,7 +285,7 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
         GROUP BY h.depo_id, d.depo_kodu, d.depo_adi, d.depo_rolu,
                  s.stok_id, st.stok_kodu, st.stok_adi, st.stok_tipi, st.emniyet_stok,
                  COALESCE(s.stok_statu, 'Kullanilabilir'), s.parti_id, p.parti_no
-        HAVING COALESCE(SUM(s.miktar * s.yon), 0) <> 0
+        ${havingSql}
         ORDER BY d.depo_kodu, st.stok_kodu, stok_statu, p.parti_no NULLS FIRST
         `,
         params

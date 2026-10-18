@@ -6,11 +6,18 @@ const { depoBakiyeListesi } = require('../src/services/stokHareketService');
 
 router.get('/', async (req, res) => {
     try {
+        const yalnizca = req.query.yalnizca_stokta;
         const liste = await depoBakiyeListesi(pool, {
             depoId: req.query.depo_id ? Number(req.query.depo_id) : null,
             stokId: req.query.stok_id ? Number(req.query.stok_id) : null,
             stokStatu: req.query.stok_statu || null,
             firmaId: firmaIdFromReq(req),
+            depoKodu: req.query.depo_kodu || null,
+            stokKodu: req.query.stok_kodu || null,
+            stokAdi: req.query.stok_adi || null,
+            stokTipi: req.query.stok_tipi || null,
+            partiNo: req.query.parti_no || null,
+            yalnizcaStokta: yalnizca == null || yalnizca === '1' || yalnizca === 'true' || yalnizca === 'Evet',
         });
         // Rezerve / kullanılabilir kolonları (INV-004)
         const enriched = [];

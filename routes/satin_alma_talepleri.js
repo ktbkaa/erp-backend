@@ -54,7 +54,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { is_yeri_id, aciklama, satirlar, tedarikci_cari_id } = req.body;
+        const { is_yeri_id, aciklama, satirlar, tedarikci_cari_id, firma_id } = req.body;
         if (!Array.isArray(satirlar) || satirlar.length === 0) {
             return res.status(400).json({ hata: 'satirlar zorunlu.' });
         }
@@ -63,13 +63,14 @@ router.post('/', async (req, res) => {
         if (kod) {
             olusturan = await assertYetki(pool, kod, 'satinalma_talep');
         }
+        const firmaId = firma_id || firmaIdFromReq(req) || null;
 
         const id = await withTransaction(pool, async (client) => {
             const no = await sonrakiBelgeNo(client, 'SATINALMA_TALEP');
             const baslik = await client.query(
-                `INSERT INTO satin_alma_talepleri (talep_no, is_yeri_id, aciklama, olusturan_id, tedarikci_cari_id)
-                 VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-                [no, is_yeri_id || null, aciklama || null, olusturan?.id || null, tedarikci_cari_id || null]
+                `INSERT INTO satin_alma_talepleri (talep_no, is_yeri_id, aciklama, olusturan_id, tedarikci_cari_id, firma_id)
+                 VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+                [no, is_yeri_id || null, aciklama || null, olusturan?.id || null, tedarikci_cari_id || null, firmaId]
             );
             const talepId = baslik.rows[0].id;
             for (const s of satirlar) {

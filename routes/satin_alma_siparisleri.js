@@ -49,11 +49,17 @@ router.get('/:id', async (req, res) => {
 /** Doğrudan satınalma siparişi (UI Yeni) */
 router.post('/', async (req, res) => {
     try {
-        const { cari_id, is_yeri_id, talep_id, durum, satirlar } = req.body;
+        const {
+            cari_id, is_yeri_id, talep_id, durum, satirlar, firma_id,
+            para_birimi, kur, siparis_tarihi, teslim_tarihi, depo_id,
+            odeme_kosulu, odeme_sekli, aciklama, not_public, not_internal, proje_kodu,
+            tedarikci_siparis_no,
+        } = req.body;
         if (!cari_id) return res.status(400).json({ hata: 'cari_id zorunlu.' });
         if (!Array.isArray(satirlar) || satirlar.length === 0) {
             return res.status(400).json({ hata: 'satirlar zorunlu.' });
         }
+        const firmaId = firma_id || firmaIdFromReq(req) || null;
 
         const id = await withTransaction(pool, async (client) => {
             const cari = await client.query(
@@ -72,9 +78,18 @@ router.post('/', async (req, res) => {
             let toplam = 0;
             const siparis = await client.query(
                 `INSERT INTO satin_alma_siparisleri
-                    (siparis_no, cari_id, is_yeri_id, talep_id, durum, toplam_tutar)
-                 VALUES ($1,$2,$3,$4,COALESCE($5,'Taslak'),0) RETURNING id`,
-                [no, cari_id, is_yeri_id || null, talep_id || null, durum || 'Taslak']
+                    (siparis_no, cari_id, is_yeri_id, talep_id, durum, toplam_tutar,
+                     firma_id, para_birimi, kur, siparis_tarihi, teslim_tarihi, depo_id,
+                     odeme_kosulu, odeme_sekli, aciklama, not_public, not_internal, proje_kodu,
+                     tedarikci_siparis_no)
+                 VALUES ($1,$2,$3,$4,COALESCE($5,'Taslak'),0,
+                     $6,$7,COALESCE($8,1),COALESCE($9::date,CURRENT_DATE),$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING id`,
+                [
+                    no, cari_id, is_yeri_id || null, talep_id || null, durum || 'Taslak',
+                    firmaId, para_birimi || 'TRY', kur ?? 1, siparis_tarihi || null, teslim_tarihi || null,
+                    depo_id || null, odeme_kosulu || null, odeme_sekli || null, aciklama || null,
+                    not_public || null, not_internal || null, proje_kodu || null, tedarikci_siparis_no || null,
+                ]
             );
             const siparisId = siparis.rows[0].id;
             for (const s of satirlar) {
@@ -140,11 +155,12 @@ router.post('/talep-donustur', async (req, res) => {
             let toplam = 0;
             const fiyatMap = birim_fiyatlar || {};
 
+            const firmaId = talep.rows[0].firma_id || firmaIdFromReq(req) || null;
             const siparis = await client.query(
                 `INSERT INTO satin_alma_siparisleri
-                    (siparis_no, cari_id, is_yeri_id, talep_id, durum, toplam_tutar)
-                 VALUES ($1,$2,$3,$4,'Onayli',0) RETURNING id`,
-                [no, cari_id, talep.rows[0].is_yeri_id, talep_id]
+                    (siparis_no, cari_id, is_yeri_id, talep_id, durum, toplam_tutar, firma_id)
+                 VALUES ($1,$2,$3,$4,'Onayli',0,$5) RETURNING id`,
+                [no, cari_id, talep.rows[0].is_yeri_id, talep_id, firmaId]
             );
             const siparisId = siparis.rows[0].id;
 

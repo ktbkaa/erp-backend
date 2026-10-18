@@ -10,5 +10,5 @@ module.exports = createBelgeRouter({
     allowedDurum: ['Taslak', 'Onayli', 'Kapali', 'Iptal'],
     requireCari: true,
     linePrice: true,
-    extraFields: ['teklif_id', 'baslangic_tarihi', 'bitis_tarihi', 'durum'],
+    extraFields: ['teklif_id', 'baslangic_tarihi', 'bitis_tarihi', 'durum', 'firma_id', 'is_yeri_id', 'para_birimi', 'kur'],
 });

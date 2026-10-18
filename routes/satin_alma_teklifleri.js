@@ -14,7 +14,7 @@ const router = createBelgeRouter({
   allowedDurum: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'],
   requireCari: true,
   linePrice: true,
-  extraFields: ['istek_id', 'gecerlilik_tarihi', 'durum', 'firma_id', 'is_yeri_id'],
+  extraFields: ['istek_id', 'talep_id', 'gecerlilik_tarihi', 'durum', 'firma_id', 'is_yeri_id', 'para_birimi', 'kur'],
 });
 
 /**

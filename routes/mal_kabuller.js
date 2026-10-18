@@ -44,10 +44,16 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
     try {
-        const { siparis_id, depo_id, satirlar } = req.body;
+        const {
+            siparis_id, depo_id, satirlar, firma_id,
+            irsaliye_no_tedarikci, irsaliye_tarihi, fatura_no_tedarikci,
+            kabul_tarihi, aciklama, not_internal, gkk_gerekli, kabul_eden_kullanici,
+            durum: kabulDurum, tedarikci_irsaliye_id,
+        } = req.body;
         if (!siparis_id || !depo_id) {
             return res.status(400).json({ hata: 'siparis_id ve depo_id zorunlu.' });
         }
+        // fatura_no_tedarikci zorunlu değil — yalnızca irsaliye/sipariş ile kabul yapılabilir
 
         const id = await withTransaction(pool, async (client) => {
             const siparis = await client.query(
@@ -69,14 +75,55 @@ router.post('/', async (req, res) => {
 
             let kabulSatirlari = satirlar;
             if (!Array.isArray(kabulSatirlari) || kabulSatirlari.length === 0) {
-                kabulSatirlari = siparisSatirlari.rows
-                    .map((s) => ({
-                        siparis_satir_id: s.id,
-                        miktar: Number(s.miktar) - Number(s.giren_miktar),
-                    }))
-                    .filter((s) => s.miktar > 0);
+                if (tedarikci_irsaliye_id) {
+                    const irsSat = await client.query(
+                        `SELECT * FROM tedarikci_irsaliye_satirlari WHERE irsaliye_id=$1 ORDER BY id`,
+                        [tedarikci_irsaliye_id]
+                    );
+                    kabulSatirlari = irsSat.rows
+                        .map((s) => ({
+                            siparis_satir_id: s.siparis_satir_id,
+                            stok_id: s.stok_id,
+                            miktar: Number(s.miktar) - Number(s.kabul_edilen || 0),
+                            birim: s.birim,
+                            birim_fiyat: s.birim_fiyat,
+                            _irsaliye_satir_id: s.id,
+                        }))
+                        .filter((s) => s.miktar > 0 && s.siparis_satir_id);
+                } else {
+                    kabulSatirlari = siparisSatirlari.rows
+                        .map((s) => ({
+                            siparis_satir_id: s.id,
+                            miktar: Number(s.miktar) - Number(s.giren_miktar),
+                        }))
+                        .filter((s) => s.miktar > 0);
+                }
+            } else {
+                // UI serbest satır: stok_id → siparis_satir_id eşle
+                kabulSatirlari = kabulSatirlari.map((ks) => {
+                    if (ks.siparis_satir_id) return ks;
+                    const hit = siparisSatirlari.rows.find(
+                        (s) => Number(s.stok_id) === Number(ks.stok_id)
+                            && Number(s.miktar) - Number(s.giren_miktar) > 0
+                    );
+                    return hit ? { ...ks, siparis_satir_id: hit.id } : ks;
+                }).filter((ks) => ks.siparis_satir_id && Number(ks.miktar) > 0);
             }
             if (kabulSatirlari.length === 0) throw new Error('Kabul edilecek kalan miktar yok.');
+
+            if (tedarikci_irsaliye_id) {
+                const ir = await client.query(
+                    `SELECT * FROM tedarikci_irsaliyeleri WHERE id=$1 FOR UPDATE`,
+                    [tedarikci_irsaliye_id]
+                );
+                if (!ir.rows[0]) throw new Error('Tedarikçi irsaliyesi bulunamadı.');
+                if (['Kapali', 'Iptal'].includes(ir.rows[0].durum)) {
+                    throw new Error(`İrsaliye kapalı/iptal: ${ir.rows[0].durum}`);
+                }
+                if (Number(ir.rows[0].cari_id) !== Number(siparis.rows[0].cari_id)) {
+                    throw new Error('İrsaliye tedarikçisi sipariş tedarikçisi ile uyuşmuyor.');
+                }
+            }
 
             const hareketSatirlari = [];
             const islenen = [];
@@ -194,18 +241,78 @@ router.post('/', async (req, res) => {
             }
 
             const kabulNo = await sonrakiBelgeNo(client, 'MAL_KABUL');
+            const firmaId = firma_id || siparis.rows[0].firma_id || firmaIdFromReq(req) || null;
             const kabul = await client.query(
-                `INSERT INTO mal_kabuller (kabul_no, siparis_id, depo_id, stok_hareket_id)
-                 VALUES ($1,$2,$3,$4) RETURNING id`,
-                [kabulNo, siparis_id, depo_id, anaHareketId]
+                `INSERT INTO mal_kabuller (
+                    kabul_no, siparis_id, depo_id, stok_hareket_id, firma_id, is_yeri_id,
+                    irsaliye_no_tedarikci, irsaliye_tarihi, fatura_no_tedarikci,
+                    kabul_tarihi, aciklama, not_internal, gkk_gerekli, kabul_eden_kullanici, durum,
+                    tedarikci_irsaliye_id
+                 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,CURRENT_DATE),$11,$12,$13,$14,COALESCE($15,'Onayli'),$16)
+                 RETURNING id`,
+                [
+                    kabulNo, siparis_id, depo_id, anaHareketId, firmaId, siparis.rows[0].is_yeri_id || null,
+                    irsaliye_no_tedarikci || null, irsaliye_tarihi || null, fatura_no_tedarikci || null,
+                    kabul_tarihi || null, aciklama || null, not_internal || null,
+                    gkk_gerekli === true || gkk_gerekli === 'true' || gkk_gerekli === 'Evet',
+                    kabul_eden_kullanici || null, kabulDurum || 'Onayli',
+                    tedarikci_irsaliye_id || null,
+                ]
             );
             const kabulId = kabul.rows[0].id;
 
             for (const s of islenen) {
+                const uiSat = Array.isArray(kabulSatirlari)
+                    ? kabulSatirlari.find((x) => Number(x.siparis_satir_id) === Number(s.siparis_satir_id)
+                        || Number(x.stok_id) === Number(s.stok_id))
+                    : null;
                 await client.query(
-                    `INSERT INTO mal_kabul_satirlari (kabul_id, siparis_satir_id, stok_id, miktar)
-                     VALUES ($1,$2,$3,$4)`,
-                    [kabulId, s.siparis_satir_id, s.stok_id, s.miktar]
+                    `INSERT INTO mal_kabul_satirlari (
+                        kabul_id, siparis_satir_id, stok_id, miktar,
+                        kabul_edilen, reddedilen, birim, birim_fiyat, parti_no, seri_no,
+                        stok_statu, raf_kodu, son_kullanma_tarihi, satir_aciklama
+                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+                    [
+                        kabulId, s.siparis_satir_id, s.stok_id, s.miktar,
+                        uiSat?.kabul_edilen ?? s.miktar, uiSat?.reddedilen ?? 0,
+                        uiSat?.birim || null, uiSat?.birim_fiyat ?? null,
+                        uiSat?.parti_no || null, uiSat?.seri_no || null,
+                        uiSat?.stok_statu || (s.kk ? 'Kalitede' : 'Kullanilabilir'),
+                        uiSat?.raf_kodu || null, uiSat?.son_kullanma_tarihi || null,
+                        uiSat?.satir_aciklama || null,
+                    ]
+                );
+                if (tedarikci_irsaliye_id) {
+                    const irsSatId = uiSat?._irsaliye_satir_id;
+                    if (irsSatId) {
+                        await client.query(
+                            `UPDATE tedarikci_irsaliye_satirlari
+                             SET kabul_edilen = COALESCE(kabul_edilen,0) + $1 WHERE id=$2`,
+                            [s.miktar, irsSatId]
+                        );
+                    } else {
+                        await client.query(
+                            `UPDATE tedarikci_irsaliye_satirlari
+                             SET kabul_edilen = COALESCE(kabul_edilen,0) + $1
+                             WHERE irsaliye_id=$2 AND (
+                               siparis_satir_id=$3 OR (siparis_satir_id IS NULL AND stok_id=$4)
+                             )`,
+                            [s.miktar, tedarikci_irsaliye_id, s.siparis_satir_id, s.stok_id]
+                        );
+                    }
+                }
+            }
+
+            if (tedarikci_irsaliye_id) {
+                const kalan = await client.query(
+                    `SELECT COUNT(*)::int AS n FROM tedarikci_irsaliye_satirlari
+                     WHERE irsaliye_id=$1 AND COALESCE(kabul_edilen,0) + 1e-9 < miktar`,
+                    [tedarikci_irsaliye_id]
+                );
+                const yeniDurum = kalan.rows[0].n === 0 ? 'Kapali' : 'Kismi';
+                await client.query(
+                    `UPDATE tedarikci_irsaliyeleri SET durum=$2 WHERE id=$1`,
+                    [tedarikci_irsaliye_id, yeniDurum]
                 );
             }
 
