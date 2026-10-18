@@ -38,11 +38,13 @@ body {
   color: var(--sidebar-ink);
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   z-index: 30;
   position: relative;
   border-right: 1px solid #e6ebf0;
   box-shadow: 2px 0 18px rgba(26, 35, 48, 0.04);
+  overflow: hidden;
 }
 .sidebar-brand {
   display: flex;
