@@ -6601,8 +6601,30 @@ function renderGroupedDetailControls(fields, row, idx, gridKey) {
     </div>`).join('');
 }
 
+/** Kısa veri alanları dar; lookup/ad/açıklama geniş — her alanı küçültme */
+function inferFieldSizeClass(f) {
+  if (f?.size === 'wide' || f?.size === 'short' || f?.size === 'medium') {
+    return `field--${f.size}`;
+  }
+  const k = String(f?.key || '');
+  if (f?.name || /aciklama|adres|not_|satir_aciklama/i.test(k)) return 'field--wide';
+  if (f?.type === 'lookup' && (f.codeKey || /stok|cari|depo|siparis|talep|irsaliye|firma|is_yeri|mamul|agac|teklif/i.test(k))) {
+    return 'field--wide';
+  }
+  if (
+    f?.type === 'checkbox'
+    || f?.code
+    || f?.type === 'number'
+    || /^(miktar|kur|katsayi|sira_no|.*_oran|kdv|iskonto|giren_miktar|kabul_edilen|reddedilen)$/i.test(k)
+    || /^(birim|para_birimi|dil_kodu|pb)$/i.test(k)
+  ) {
+    return 'field--short';
+  }
+  return 'field--medium';
+}
+
 function fieldShell(f, controlHtml) {
-  const cls = ['field'];
+  const cls = ['field', inferFieldSizeClass(f)];
   if (f.required || (f.requiredOnNew && state.formMode === 'yeni')) cls.push('required');
   if (f.critical) cls.push('field--critical');
   if (f.type === 'lookup') cls.push('lookup');

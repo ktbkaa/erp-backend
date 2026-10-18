@@ -2391,25 +2391,64 @@ tr.selected td { background: var(--accent-soft); }
   font-size: 0.75rem !important;
   min-width: 0 !important;
 }
+/* Detay satırı: 12 kolon — geniş (stok/lookup) vs kısa (miktar/kur/birim) dengeli */
 .detail-slot-fields-grid,
 .detail-slot--compact .form-tab-fields--detail {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
-  gap: 0.35rem 0.55rem;
-  padding-top: 0.35rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.5rem 0.7rem;
+  padding-top: 0.45rem;
+  align-items: start;
 }
 .detail-slot--compact .field {
   margin: 0;
+  /* Etiket üstte → girdi hücrenin tamamını kullanır (sıkışık yan yana etiket yok) */
+  grid-template-columns: 1fr;
+  gap: 0.2rem;
+  align-items: stretch;
+}
+.detail-slot--compact .field.field--wide {
+  grid-column: span 6; /* yarım satır — stok, cari, açıklama */
+}
+.detail-slot--compact .field.field--medium {
+  grid-column: span 4; /* 3’lü sıra */
+}
+.detail-slot--compact .field.field--short {
+  grid-column: span 2; /* kısa veri: miktar, kur, birim kodu */
+}
+.detail-slot--compact .field.lookup.field--medium {
+  grid-column: span 4;
+}
+@media (max-width: 1100px) {
+  .detail-slot--compact .field.field--wide { grid-column: span 12; }
+  .detail-slot--compact .field.field--medium { grid-column: span 6; }
+  .detail-slot--compact .field.field--short { grid-column: span 4; }
+}
+@media (max-width: 700px) {
+  .detail-slot--compact .form-tab-fields--detail,
+  .detail-slot-fields-grid {
+    grid-template-columns: 1fr;
+  }
+  .detail-slot--compact .field.field--wide,
+  .detail-slot--compact .field.field--medium,
+  .detail-slot--compact .field.field--short {
+    grid-column: span 1;
+  }
 }
 .detail-slot--compact .field label {
-  font-size: 0.72rem;
-  margin-bottom: 0.12rem;
+  font-size: 0.78rem;
+  margin-bottom: 0;
+  text-align: left;
+  justify-self: start;
 }
 .detail-slot--compact .field input,
-.detail-slot--compact .field select {
-  padding: 0.28rem 0.4rem;
-  font-size: 0.84rem;
-  min-height: 1.85rem;
+.detail-slot--compact .field select,
+.detail-slot--compact .field textarea {
+  padding: 0.4rem 0.55rem;
+  font-size: 0.9rem;
+  min-height: 2rem;
+  width: 100%;
+  max-width: 100%;
 }
 .filter-field--check .filter-check {
   display: inline-flex;
