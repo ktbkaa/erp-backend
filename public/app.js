@@ -8369,12 +8369,45 @@ function renderZincirStrip(screen, rec) {
   });
 }
 
+function syncFormActionButtons(screen) {
+  const mode = state.formMode;
+  const saveBtn = $('#btnFormSave');
+  const editBtn = $('#btnFormEdit');
+  const canEdit = Boolean(screen && !screen.readOnly && ekranYetkisi(screen.id, 'duzelt'));
+  const canSave = Boolean(screen && !screen.readOnly
+    && (mode === 'yeni' || mode === 'kopyala' || mode === 'duzelt')
+    && ekranYetkisi(screen.id, mode === 'duzelt' ? 'duzelt' : 'yeni'));
+
+  if (saveBtn) {
+    saveBtn.hidden = !canSave;
+    saveBtn.textContent = 'Kaydet';
+  }
+  if (editBtn) {
+    // İncelemede Kaydet yok — yerine Düzelt (kaydedince tekrar Düzelt’e döner)
+    editBtn.hidden = !(mode === 'incele' && canEdit);
+  }
+}
+
+function enterFormInceleMode(screen, record) {
+  state.formMode = 'incele';
+  state.formRecord = record || state.formRecord || {};
+  const tab = state.openTabs.find((t) => t.key === state.activeTabKey);
+  if (tab) {
+    tab.formMode = 'incele';
+    tab.formRecord = state.formRecord;
+  }
+  if (state.formSolo) {
+    document.title = `${screen.title} · İncele · KTB ERP`;
+  }
+  renderForm(screen);
+}
+
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
   $('#formModeBadge').textContent = MODE_LABELS[state.formMode] || state.formMode;
   $('#formScreenLabel').textContent = `${screen.title} · ${MODE_LABELS[state.formMode] || ''}`;
-  $('#btnFormSave').hidden = readonly;
+  syncFormActionButtons(screen);
   const conv = $('#btnFormConvert');
   if (conv) {
     const act = screen.convertAction || screen.approveAction;
@@ -9681,18 +9714,36 @@ async function saveForm() {
     }
   }
 
+  async function reloadRecordAfterSave(idHint) {
+    const id = idHint ?? master.id ?? state.formRecord?.id;
+    if (id == null || id === '') return { ...master };
+    try {
+      if (screen.id === 'numarator-tanimi') {
+        return await api(`/kod-serileri/${encodeURIComponent(master.seri_kodu || id)}`);
+      }
+      return await api(`${screenApiBase(screen.endpoint)}/${id}`);
+    } catch (_) {
+      return { ...master, id };
+    }
+  }
+
   try {
+    let savedId = master.id || null;
+
     if (screen.id === 'numarator-tanimi') {
       if (state.formMode === 'duzelt') {
         await api(`/kod-serileri/${encodeURIComponent(master.seri_kodu)}`, {
           method: 'PUT',
           body: JSON.stringify(master),
         });
+        savedId = master.seri_kodu;
       } else {
         await api('/kod-serileri', { method: 'POST', body: JSON.stringify(master) });
+        savedId = master.seri_kodu;
       }
     } else if (state.formMode === 'duzelt') {
       await api(`${screenApiBase(screen.endpoint)}/${master.id}`, { method: 'PUT', body: JSON.stringify(master) });
+      savedId = master.id;
     } else {
       const postUrl = screen.createEndpoint || screenApiBase(screen.endpoint);
       let body = master;
@@ -9713,38 +9764,46 @@ async function saveForm() {
         }
       }
       const sonuc = await api(postUrl, { method: 'POST', body: JSON.stringify(body) });
-      // Sarı alan cache: bu ekranın beslediği tüm lookup'ları düşür
       invalidateLookupsForScreen(screen);
       if (screen.id === 'toplu-is-emri' && sonuc?.olusturulan_sayisi) {
         toast(`${sonuc.olusturulan_sayisi} iş emri oluşturuldu${sonuc.hata_sayisi ? ` (${sonuc.hata_sayisi} hata)` : ''}.`);
-      } else if (screen.id === 'siparis-is-emri' && sonuc?.emir_no) {
-        toast(`İş emri ${sonuc.emir_no} oluşturuldu.`);
-      } else {
-        toast('Kaydedildi.');
-      }
-      const formKey = state.activeTabKey;
-      state.formMode = null;
-      state.formRecord = null;
-      state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
-      if (leaveFormSolo(screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri' ? 'uretim-emirleri' : screen.id)) {
+        if (leaveFormSolo('uretim-emirleri')) return;
+        await openScreen('uretim-emirleri');
         return;
       }
-      if (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri') {
+      if (screen.id === 'siparis-is-emri' && sonuc?.emir_no) {
+        toast(`İş emri ${sonuc.emir_no} oluşturuldu.`);
+        if (leaveFormSolo('uretim-emirleri')) return;
         await openScreen('uretim-emirleri');
-      } else {
-        await openScreen(screen.id);
+        return;
       }
-      return;
+      savedId = sonuc?.id ?? sonuc?.[screen.codeField] ?? master.id ?? null;
+      toast('Kaydedildi.');
     }
-    toast('Kaydedildi.');
+
+    if (screen.id !== 'numarator-tanimi' && state.formMode === 'duzelt') {
+      toast('Kaydedildi.');
+    } else if (screen.id === 'numarator-tanimi') {
+      toast('Kaydedildi.');
+    }
     invalidateLookupsForScreen(screen);
-    // form sekmesini kapat, listeye don
-    const formKey = state.activeTabKey;
-    state.formMode = null;
-    state.formRecord = null;
-    state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
-    if (leaveFormSolo(screen.id)) return;
-    await openScreen(screen.id);
+
+    // Kayıt sonrası inceleme modu — Kaydet kaybolur, Düzelt geri gelir
+    const fresh = await reloadRecordAfterSave(savedId);
+    if (screen.id === 'stok-karti') hydrateStokFirmaIsYeri(fresh);
+    (screen.formTabs || []).forEach((tab) => {
+      if (tab.kind === 'grid') {
+        const raw = Array.isArray(fresh[tab.key]) ? fresh[tab.key] : [];
+        fresh[tab.key] = normalizeGridRows(tab, raw.map(({ id, ...rest }) => rest));
+      }
+      if (tab.kind === 'master-grid') {
+        const gkey = tab.grid?.key || tab.key || '_detail';
+        const gtab = { kind: 'grid', key: gkey, fields: tab.grid?.fields || tab.detailFields || [], slots: tab.grid?.slots };
+        const raw = Array.isArray(fresh[gkey]) ? fresh[gkey] : [];
+        fresh[gkey] = normalizeGridRows(gtab, raw.map(({ id, ...rest }) => rest));
+      }
+    });
+    enterFormInceleMode(screen, fresh);
   } catch (err) {
     toast(err.message);
   }
@@ -10141,6 +10200,23 @@ function bindEvents() {
 
   $('#btnFormSave').addEventListener('click', () => {
     saveForm();
+  });
+
+  $('#btnFormEdit')?.addEventListener('click', () => {
+    const screen = findScreen(state.screenId);
+    if (!screen || state.formMode !== 'incele') return;
+    if (screen.readOnly || !ekranYetkisi(screen.id, 'duzelt')) {
+      toast('Bu ekranda düzeltme yetkiniz yok.');
+      return;
+    }
+    state.formMode = 'duzelt';
+    const tab = state.openTabs.find((t) => t.key === state.activeTabKey);
+    if (tab) tab.formMode = 'duzelt';
+    if (state.formSolo) {
+      document.title = `${screen.title} · Düzelt · KTB ERP`;
+    }
+    renderForm(screen);
+    toast('Düzeltme modu — Kaydet ile yazın.');
   });
 
   function exportListCsv() {
