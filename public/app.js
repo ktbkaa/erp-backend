@@ -797,6 +797,12 @@ const MODULES = [
             ],
             detailFields: [
               { key: 'ulke_mensei', label: 'Ülke menşei', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_kodu', labelKey: 'ulke_adi' },
+              { key: 'uretici_kodu', label: 'Üretici kodu' },
+              { key: 'eski_stok_kodu', label: 'Eski stok kodu' },
+              { key: 'orijinal_kod', label: 'Orijinal kod' },
+              { key: 'gtip_kodu', label: 'GTİP / gümrük kodu' },
+              { key: 'sinif_kodu', label: 'Sınıf kodu' },
+              { key: 'varsayilan_kdv_oran', label: 'Varsayılan KDV %', type: 'number' },
             ],
           },
           {
@@ -807,17 +813,18 @@ const MODULES = [
               { key: 'yogunluk', label: 'Yoğunluk', type: 'number' },
               { key: 'yogunluk_birimi', label: 'Yoğunluk birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
               { key: 'agirlik_birimi', label: 'Ağırlık birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'net_agirlik', label: 'Net ağırlık', type: 'number' },
+              { key: 'brut_agirlik', label: 'Brüt ağırlık', type: 'number' },
               { key: 'koli_brut_agirlik', label: 'Koli brüt ağırlık', type: 'number' },
               { key: 'kutu_brut_agirlik', label: 'Kutu brüt ağırlık', type: 'number' },
               { key: 'kutu_en_mm', label: 'Kutu en (mm)', type: 'number' },
               { key: 'kutu_boy_mm', label: 'Kutu boy (mm)', type: 'number' },
               { key: 'kutu_yukseklik_mm', label: 'Kutu yükseklik (mm)', type: 'number' },
               { key: 'barkod', label: 'Barkod' },
-              { key: 'emniyet_stok', label: 'Emniyet stok', type: 'number' },
-              { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
               { key: 'raf_omru_gun', label: 'Raf ömrü (gün)', type: 'number' },
               { key: 'miktar_hassasiyeti', label: 'Miktar hassasiyeti', type: 'number' },
               { key: 'parti_politika', label: 'Parti politikası', type: 'select', options: ['Takipsiz', 'IstegeBagli', 'Zorunlu'] },
+              { key: 'seri_politika', label: 'Seri politikası', type: 'select', options: ['Takipsiz', 'IstegeBagli', 'Zorunlu'] },
               { key: 'kalite_kontrol_gerekli', label: 'Kalite kontrol gerekli', type: 'checkbox' },
               { key: 'varsayilan_giris_depo_id', label: 'Varsayılan giriş depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
               { key: 'varsayilan_cikis_depo_id', label: 'Varsayılan çıkış depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
@@ -834,6 +841,17 @@ const MODULES = [
             ],
           },
           {
+            id: 'satinalma-stok', label: 'Satınalma', kind: 'fields',
+            fields: [
+              { key: 'satin_birimi', label: 'Satınalma birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'satis_birimi', label: 'Satış birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'sa_tolerans_min_yuzde', label: 'SA tolerans min %', type: 'number' },
+              { key: 'sa_tolerans_max_yuzde', label: 'SA tolerans max %', type: 'number' },
+              { key: 'varsayilan_kdv_oran', label: 'Varsayılan KDV %', type: 'number' },
+              { key: 'temin_suresi_gun', label: 'Temin süresi (gün)', type: 'number' },
+            ],
+          },
+          {
             id: 'detay', label: 'Stok Detay', kind: 'grid', key: 'stok_detaylari', slots: 1,
             fields: [
               { key: 'boyut', label: 'Boyut' },
@@ -845,6 +863,7 @@ const MODULES = [
             fields: [
               { key: 'abc_kodu', label: 'ABC kodu', type: 'lookup', lookup: 'kategoriler-abc', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
               { key: 'marka', label: 'Marka', type: 'lookup', lookup: 'kategoriler-marka', valueKey: 'kategori_kodu', labelKey: 'kategori_adi' },
+              { key: 'sinif_kodu', label: 'Sınıf kodu' },
             ],
           },
           {
@@ -870,8 +889,10 @@ const MODULES = [
             kind: 'fields',
             fields: [
               { key: 'emniyet_stok', label: 'Emniyet stok', type: 'number' },
+              { key: 'minimum_stok', label: 'Minimum stok', type: 'number' },
               { key: 'yeniden_siparis_seviyesi', label: 'Yeniden sipariş seviyesi', type: 'number' },
               { key: 'sabit_siparis_miktari', label: 'Sabit sipariş miktarı', type: 'number' },
+              { key: 'optimum_siparis_miktari', label: 'Optimum sipariş miktarı', type: 'number' },
               { key: 'temin_suresi_gun', label: 'Temin süresi (gün)', type: 'number' },
               { key: 'maksimum_stok', label: 'Maksimum stok', type: 'number' },
             ],
@@ -2194,19 +2215,49 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'talep_no', label: 'Talep no', code: true },
-          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
-          { key: 'aciklama', label: 'Açıklama', name: true },
+          { key: 'talep_tarihi', label: 'Talep tarihi', type: 'date' },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu', required: true },
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
           { key: 'tedarikci_cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu' },
+          { key: 'hedef_teslim_tarihi', label: 'Hedef teslim', type: 'date' },
+          { key: 'proje_kodu', label: 'Proje kodu' },
+          { key: 'bolge', label: 'Bölge' },
+          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
+          { key: 'kur', label: 'Kur', type: 'number' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'] },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+          { key: 'not_internal', label: 'Dahili not' },
         ],
         detailFields: [
-          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
-          { key: 'miktar', label: 'Miktar', type: 'number' },
-          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+          { key: 'satir_tipi', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', size: 'short' },
+          { key: 'miktar', label: 'Miktar', type: 'number', required: true, size: 'short' },
+          { key: 'tahmini_birim_fiyat', label: 'Tahmini fiyat', type: 'number', size: 'short' },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', size: 'short' },
+          { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
+          { key: 'kur', label: 'Kur', type: 'number', size: 'short' },
+          { key: 'kdv_oran', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'kdv_durumu', label: 'KDV durum', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'iskonto_oran', label: 'İsk %', type: 'number', size: 'short' },
+          { key: 'teslim_tarihi', label: 'Teslim', type: 'date', size: 'short' },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
+          { key: 'proje_kodu', label: 'Proje', size: 'short' },
+          { key: 'bolge', label: 'Bölge', size: 'short' },
+          { key: 'tedarikci_stok_kodu', label: 'Ted. stok kodu' },
+          { key: 'tedarikci_stok_adi', label: 'Ted. stok adı' },
+          { key: 'satir_aciklama', label: 'Açıklama' },
+          { key: 'rezervasyon_tipi', label: 'Rezervasyon tipi' },
+          { key: 'rezervasyon_iliski_no', label: 'Rezervasyon ilişki no' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
+        defaults: {
+          para_birimi: 'TRY', kur: 1, durum: 'Acik', kur_tipi: 'TCMB-ALIS',
+          kdv_oran: 20, kdv_durumu: 'Haric', satir_tipi: 'S',
+        },
       },
       {
         id: 'satin-alma-siparisleri',
@@ -2242,35 +2293,57 @@ const MODULES = [
           { key: 'cari_id', label: 'Tedarikçi', type: 'lookup', lookup: 'cariler-tedarikci', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
           { key: 'siparis_tarihi', label: 'Sipariş tarihi', type: 'date' },
           { key: 'teslim_tarihi', label: 'Teslim tarihi', type: 'date' },
+          { key: 'sevk_tarihi', label: 'Sevk tarihi', type: 'date' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'] },
-          { key: 'para_birimi', label: 'Para birimi' },
+          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
           { key: 'kur', label: 'Kur', type: 'number' },
           { key: 'odeme_kosulu', label: 'Ödeme koşulu' },
           { key: 'odeme_sekli', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'AcikHesap'] },
+          { key: 'teslimat_kosulu', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'kosul_kodu', labelKey: 'kosul_adi' },
           { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
           { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
           { key: 'proje_kodu', label: 'Proje kodu' },
+          { key: 'bolge', label: 'Bölge' },
           { key: 'aciklama', label: 'Açıklama' },
           { key: 'not_public', label: 'Tedarikçi notu' },
           { key: 'not_internal', label: 'Dahili not' },
         ],
         detailFields: [
-          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'satir_tipi', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', size: 'short' },
+          { key: 'miktar', label: 'Miktar', type: 'number', required: true, size: 'short' },
+          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number', required: true, size: 'short' },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', size: 'short' },
+          { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
+          { key: 'kur', label: 'Kur', type: 'number', size: 'short' },
+          { key: 'iskonto_oran', label: 'İsk1 %', type: 'number', size: 'short' },
+          { key: 'iskonto_oran2', label: 'İsk2 %', type: 'number', size: 'short' },
+          { key: 'iskonto_oran3', label: 'İsk3 %', type: 'number', size: 'short' },
+          { key: 'kdv_oran', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'kdv_durumu', label: 'KDV durum', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'tevkifat_kodu', label: 'Tevkifat kodu', size: 'short' },
+          { key: 'tevkifat_oran', label: 'Tevkifat %', type: 'number', size: 'short' },
+          { key: 'otv_oran', label: 'ÖTV %', type: 'number', size: 'short' },
+          { key: 'teslim_tarihi', label: 'Teslim', type: 'date', size: 'short' },
+          { key: 'sevk_tarihi', label: 'Sevk', type: 'date', size: 'short' },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
+          { key: 'proje_kodu', label: 'Proje', size: 'short' },
+          { key: 'bolge', label: 'Bölge', size: 'short' },
+          { key: 'tedarikci_stok_kodu', label: 'Ted. stok kodu' },
+          { key: 'tedarikci_stok_adi', label: 'Ted. stok adı' },
           { key: 'satir_aciklama', label: 'Açıklama' },
-          { key: 'miktar', label: 'Miktar', type: 'number' },
-          { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
-          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
-          { key: 'kur', label: 'Kur', type: 'number' },
-          { key: 'iskonto_oran', label: 'İskonto %', type: 'number' },
-          { key: 'kdv_oran', label: 'KDV %', type: 'number' },
-          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
-          { key: 'teslim_tarihi', label: 'Teslim', type: 'date' },
-          { key: 'giren_miktar', label: 'Giren', type: 'number' },
+          { key: 'rezervasyon_tipi', label: 'Rezervasyon tipi' },
+          { key: 'rezervasyon_iliski_no', label: 'Rezervasyon ilişki no' },
+          { key: 'giren_miktar', label: 'Giren', type: 'number', size: 'short' },
+          { key: 'tutar_ht', label: 'Tutar HT', type: 'number', size: 'short' },
+          { key: 'tutar_ttc', label: 'Tutar TTC', type: 'number', size: 'short' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
-        defaults: { para_birimi: 'TRY', kur: 1, durum: 'Taslak' },
+        defaults: { para_birimi: 'TRY', kur: 1, durum: 'Taslak', kur_tipi: 'TCMB-ALIS', kdv_durumu: 'Haric' },
       },
       {
         id: 'mal-kabuller',
@@ -5465,13 +5538,44 @@ async function fillLinesFromSource(kind, sourceId) {
       }
       if (talep.is_yeri_id && !state.formRecord.is_yeri_id) state.formRecord.is_yeri_id = talep.is_yeri_id;
       if (talep.firma_id && !state.formRecord.firma_id) state.formRecord.firma_id = talep.firma_id;
+      if (talep.depo_id && !state.formRecord.depo_id) state.formRecord.depo_id = talep.depo_id;
+      if (talep.proje_kodu && !state.formRecord.proje_kodu) state.formRecord.proje_kodu = talep.proje_kodu;
+      if (talep.bolge && !state.formRecord.bolge) state.formRecord.bolge = talep.bolge;
+      if (talep.para_birimi && !state.formRecord.para_birimi) state.formRecord.para_birimi = talep.para_birimi;
+      if (talep.kur != null && (state.formRecord.kur == null || state.formRecord.kur === '')) {
+        state.formRecord.kur = talep.kur;
+      }
+      if (talep.kur_tipi && !state.formRecord.kur_tipi) state.formRecord.kur_tipi = talep.kur_tipi;
+      if (talep.hedef_teslim_tarihi && !state.formRecord.teslim_tarihi) {
+        state.formRecord.teslim_tarihi = talep.hedef_teslim_tarihi;
+      }
       state.formRecord.talep_id = Number(sourceId);
       state.formRecord[detailKey] = (talep.satirlar || []).map((s) => ({
+        talep_satir_id: s.id,
+        satir_tipi: s.satir_tipi || 'S',
         stok_id: s.stok_id,
+        stok_kodu: s.stok_kodu,
+        stok_adi: s.stok_adi,
         miktar: s.miktar,
         birim: s.birim,
-        birim_fiyat: s.birim_fiyat ?? 0,
-        satir_aciklama: s.aciklama || '',
+        birim_fiyat: s.tahmini_birim_fiyat ?? s.birim_fiyat ?? 0,
+        para_birimi: s.para_birimi || talep.para_birimi || null,
+        kur: s.kur ?? talep.kur ?? 1,
+        kur_tipi: s.kur_tipi || talep.kur_tipi || null,
+        kdv_oran: s.kdv_oran ?? 20,
+        kdv_durumu: s.kdv_durumu || 'Haric',
+        iskonto_oran: s.iskonto_oran ?? 0,
+        iskonto_oran2: s.iskonto_oran2 ?? 0,
+        iskonto_oran3: s.iskonto_oran3 ?? 0,
+        teslim_tarihi: s.teslim_tarihi || talep.hedef_teslim_tarihi || null,
+        depo_id: s.depo_id || talep.depo_id || null,
+        proje_kodu: s.proje_kodu || talep.proje_kodu || null,
+        bolge: s.bolge || talep.bolge || null,
+        tedarikci_stok_kodu: s.tedarikci_stok_kodu || null,
+        tedarikci_stok_adi: s.tedarikci_stok_adi || null,
+        rezervasyon_tipi: s.rezervasyon_tipi || null,
+        rezervasyon_iliski_no: s.rezervasyon_iliski_no || null,
+        satir_aciklama: s.satir_aciklama || s.aciklama || '',
         _satir_kayitli: false,
       }));
       toast(`Talep ${talep.talep_no || sourceId} satırları yüklendi`);
@@ -5487,9 +5591,14 @@ async function fillLinesFromSource(kind, sourceId) {
         .map((s) => ({
           siparis_satir_id: s.id,
           stok_id: s.stok_id,
+          stok_kodu: s.stok_kodu,
+          stok_adi: s.stok_adi,
           miktar: Number(s.miktar) - Number(s.giren_miktar || 0),
           birim: s.birim,
           birim_fiyat: s.birim_fiyat,
+          tedarikci_stok_kodu: s.tedarikci_stok_kodu || null,
+          tedarikci_stok_adi: s.tedarikci_stok_adi || null,
+          satir_aciklama: s.satir_aciklama || null,
           _satir_kayitli: false,
         }));
       toast(`Sipariş ${sip.siparis_no || sourceId} kalan satırları yüklendi`);
@@ -6478,7 +6587,7 @@ function isFooterNoteField(f) {
     || /^not_/i.test(k);
 }
 
-/** Belge satırlarından ara / KDV / genel toplam (yoksa null). */
+/** Belge satırlarından ara / KDV / genel toplam (çoklu isk + KDV dahil/hariç + ÖTV + tevkifat). */
 function computeDocumentTotals(rows, fields) {
   const list = Array.isArray(rows) ? rows : [];
   const keys = new Set((fields || []).map((f) => f.key));
@@ -6489,20 +6598,44 @@ function computeDocumentTotals(rows, fields) {
   }
   let ara = 0;
   let kdv = 0;
+  let otv = 0;
+  let tev = 0;
+  let iskToplam = 0;
   list.forEach((row) => {
     const miktar = Number(row.miktar) || 0;
-    const fiyat = Number(row.birim_fiyat) || 0;
-    const isk = Number(row.iskonto_oran) || 0;
+    let fiyat = Number(row.birim_fiyat) || 0;
+    const isk1 = Number(row.iskonto_oran) || 0;
+    const isk2 = Number(row.iskonto_oran2) || 0;
+    const isk3 = Number(row.iskonto_oran3) || 0;
     const kdvOran = Number(row.kdv_oran) || 0;
-    const net = miktar * fiyat * (1 - isk / 100);
-    ara += net;
-    kdv += net * (kdvOran / 100);
+    const otvOran = Number(row.otv_oran) || 0;
+    const tevOran = Number(row.tevkifat_oran) || 0;
+    const dahil = String(row.kdv_durumu || 'Haric').toLocaleLowerCase('tr').startsWith('dahil');
+    if (dahil && kdvOran > 0) fiyat /= (1 + kdvOran / 100);
+    const brut = miktar * fiyat;
+    const i1 = brut * (isk1 / 100);
+    const after1 = brut - i1;
+    const i2 = after1 * (isk2 / 100);
+    const after2 = after1 - i2;
+    const i3 = after2 * (isk3 / 100);
+    const mal = after2 - i3;
+    const otvSatir = mal * (otvOran / 100);
+    const kdvSatir = (mal + otvSatir) * (kdvOran / 100);
+    const tevSatir = kdvSatir * (tevOran / 100);
+    ara += mal;
+    kdv += kdvSatir;
+    otv += otvSatir;
+    tev += tevSatir;
+    iskToplam += i1 + i2 + i3;
   });
   return {
     count: list.length,
     ara_toplam: ara,
+    toplam_iskonto: iskToplam,
+    toplam_otv: otv,
     toplam_kdv: kdv,
-    genel_toplam: ara + kdv,
+    toplam_tevkifat: tev,
+    genel_toplam: ara + otv + kdv - tev,
   };
 }
 
@@ -6518,9 +6651,20 @@ function renderDocumentFooter(rec, noteFields, gridFields, gridKey) {
     ? noteFields.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], 'data-master', '', rec || {}))).join('')
     : '<div class="md-footer-empty">Belge notu / bağlantı alanı yok</div>';
   const showMoney = totals.ara_toplam != null;
+  const extraRows = [];
+  if (showMoney && totals.toplam_iskonto > 0) {
+    extraRows.push(`<div class="md-total-row"><label>Toplam iskonto</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_iskonto))}" /></div>`);
+  }
+  if (showMoney && totals.toplam_otv > 0) {
+    extraRows.push(`<div class="md-total-row"><label>Toplam ÖTV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_otv))}" /></div>`);
+  }
+  if (showMoney && totals.toplam_tevkifat > 0) {
+    extraRows.push(`<div class="md-total-row"><label>Tevkifat</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_tevkifat))}" /></div>`);
+  }
   const totalsHtml = showMoney
     ? `
       <div class="md-total-row"><label>Ara toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.ara_toplam))}" /></div>
+      ${extraRows.join('')}
       <div class="md-total-row"><label>Toplam KDV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_kdv))}" /></div>
       <div class="md-total-row md-total-row--grand"><label>Genel toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.genel_toplam))}" /></div>`
     : `

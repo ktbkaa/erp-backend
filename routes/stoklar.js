@@ -321,7 +321,11 @@ router.post('/', async (req, res) => {
                     barkod, emniyet_stok, maksimum_stok, ulke_mensei, raf_omru_gun,
                     marka, temin_sekli, miktar_hassasiyeti,
                     parti_politika, kalite_kontrol_gerekli, varsayilan_giris_depo_id, varsayilan_cikis_depo_id,
-                    firma_id
+                    firma_id,
+                    satin_birimi, satis_birimi, gtip_kodu, uretici_kodu, eski_stok_kodu, orijinal_kod,
+                    sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, varsayilan_kdv_oran,
+                    minimum_stok, optimum_siparis_miktari, net_agirlik, brut_agirlik,
+                    seri_politika, sinif_kodu, temin_suresi_gun, yeniden_siparis_seviyesi, sabit_siparis_miktari
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,COALESCE($10,'Satinalma'),COALESCE($11,TRUE),
@@ -330,7 +334,11 @@ router.post('/', async (req, res) => {
                     $23,$24,$25,$26,$27,
                     $28,$29,COALESCE($30,3),
                     COALESCE($31,'Takipsiz'),COALESCE($32,FALSE),$33,$34,
-                    $35
+                    $35,
+                    $36,$37,$38,$39,$40,$41,
+                    COALESCE($42,0),COALESCE($43,0),COALESCE($44,20),
+                    COALESCE($45,0),$46,$47,$48,
+                    COALESCE($49,'Takipsiz'),$50,COALESCE($51,0),COALESCE($52,0),$53
                 )
                 RETURNING id
                 `,
@@ -350,6 +358,12 @@ router.post('/', async (req, res) => {
                     m.varsayilan_giris_depo_id || null,
                     m.varsayilan_cikis_depo_id || null,
                     firmaId,
+                    trimOrNull(m.satin_birimi), trimOrNull(m.satis_birimi), trimOrNull(m.gtip_kodu),
+                    trimOrNull(m.uretici_kodu), trimOrNull(m.eski_stok_kodu), trimOrNull(m.orijinal_kod),
+                    m.sa_tolerans_min_yuzde ?? 0, m.sa_tolerans_max_yuzde ?? 0, m.varsayilan_kdv_oran ?? 20,
+                    m.minimum_stok ?? 0, m.optimum_siparis_miktari ?? null, m.net_agirlik ?? null, m.brut_agirlik ?? null,
+                    trimOrNull(m.seri_politika) || 'Takipsiz', trimOrNull(m.sinif_kodu),
+                    m.temin_suresi_gun ?? 0, m.yeniden_siparis_seviyesi ?? 0, m.sabit_siparis_miktari ?? null,
                 ]
             );
             const stokId = stokSonuc.rows[0].id;
@@ -459,7 +473,22 @@ router.put('/:id', async (req, res) => {
                     firma_id = COALESCE($35, firma_id),
                     temin_suresi_gun = COALESCE($36, temin_suresi_gun),
                     yeniden_siparis_seviyesi = COALESCE($37, yeniden_siparis_seviyesi),
-                    sabit_siparis_miktari = COALESCE($38, sabit_siparis_miktari)
+                    sabit_siparis_miktari = COALESCE($38, sabit_siparis_miktari),
+                    satin_birimi = COALESCE($39, satin_birimi),
+                    satis_birimi = COALESCE($40, satis_birimi),
+                    gtip_kodu = COALESCE($41, gtip_kodu),
+                    uretici_kodu = COALESCE($42, uretici_kodu),
+                    eski_stok_kodu = COALESCE($43, eski_stok_kodu),
+                    orijinal_kod = COALESCE($44, orijinal_kod),
+                    sa_tolerans_min_yuzde = COALESCE($45, sa_tolerans_min_yuzde),
+                    sa_tolerans_max_yuzde = COALESCE($46, sa_tolerans_max_yuzde),
+                    varsayilan_kdv_oran = COALESCE($47, varsayilan_kdv_oran),
+                    minimum_stok = COALESCE($48, minimum_stok),
+                    optimum_siparis_miktari = COALESCE($49, optimum_siparis_miktari),
+                    net_agirlik = COALESCE($50, net_agirlik),
+                    brut_agirlik = COALESCE($51, brut_agirlik),
+                    seri_politika = COALESCE($52, seri_politika),
+                    sinif_kodu = COALESCE($53, sinif_kodu)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -502,6 +531,21 @@ router.put('/:id', async (req, res) => {
                     m.temin_suresi_gun ?? null,
                     m.yeniden_siparis_seviyesi ?? null,
                     m.sabit_siparis_miktari ?? null,
+                    trimOrNull(m.satin_birimi),
+                    trimOrNull(m.satis_birimi),
+                    trimOrNull(m.gtip_kodu),
+                    trimOrNull(m.uretici_kodu),
+                    trimOrNull(m.eski_stok_kodu),
+                    trimOrNull(m.orijinal_kod),
+                    m.sa_tolerans_min_yuzde ?? null,
+                    m.sa_tolerans_max_yuzde ?? null,
+                    m.varsayilan_kdv_oran ?? null,
+                    m.minimum_stok ?? null,
+                    m.optimum_siparis_miktari ?? null,
+                    m.net_agirlik ?? null,
+                    m.brut_agirlik ?? null,
+                    trimOrNull(m.seri_politika),
+                    trimOrNull(m.sinif_kodu),
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });
