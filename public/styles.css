@@ -1382,10 +1382,10 @@ tr.selected td { background: var(--accent-soft); }
   overflow: hidden;
 }
 .md-split--grid .md-head {
-  flex: 0 1 auto;
-  max-height: 26%;
+  flex: 0 0 auto;
+  max-height: none;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   border-bottom: 1px solid var(--line);
   background: #f7fafb;
 }
@@ -1532,7 +1532,7 @@ tr.selected td { background: var(--accent-soft); }
 }
 @media (max-width: 900px) {
   .md-footer { grid-template-columns: 1fr; }
-  .md-split--grid .md-head { max-height: 34%; }
+  .md-split--grid .md-head { max-height: none; overflow: visible; }
 }
 /* Kalemsiz form: Ek bilgiler md-detail içinde — doğal yükseklik */
 .md-split:not(.md-split--grid) {
@@ -2713,4 +2713,85 @@ tr.selected td { background: var(--accent-soft); }
   position: fixed;
   z-index: 60;
   min-width: 11rem;
+}
+
+/* Birim dönüşümü: katsayı,birim = katsayı,birim */
+.field--static {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding-bottom: 0.35rem;
+}
+.field-static,
+.cell-static {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink, #1a2b36);
+  user-select: none;
+}
+.detail-table th.col--eq,
+.detail-table td.col--eq {
+  width: 2.2rem;
+  min-width: 2.2rem;
+  max-width: 2.6rem;
+  text-align: center;
+  padding-left: 0.15rem;
+  padding-right: 0.15rem;
+}
+
+/* Form solo: Yeni/Düzelt/İncele/Kopya — yeni sekme, sol menü yok */
+body.form-solo .sidebar,
+.app-shell.form-solo .sidebar {
+  display: none !important;
+}
+body.form-solo .app-shell,
+.app-shell.form-solo {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.form-solo #tabBar,
+body.form-solo #btnMenu,
+body.form-solo #homeSearchWrap,
+body.form-solo #searchResults {
+  display: none !important;
+}
+body.form-solo .workspace-bar .bar-left {
+  gap: 0.5rem;
+}
+body.form-solo #viewHome,
+body.form-solo #viewScreen {
+  display: none !important;
+}
+body.form-solo #viewForm {
+  display: flex !important;
+}
+/* Form içi sekmeler üst şeritte — sol menü gibi dikey şerit yok */
+body.form-solo .form-tabs-layout {
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+}
+body.form-solo .form-tab-nav {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.15rem;
+  width: 100%;
+  max-width: none;
+  height: auto !important;
+  min-height: 0;
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0.35rem 0.55rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #f4f7f9;
+}
+body.form-solo .form-tab-nav .form-tab-btn {
+  white-space: nowrap;
+  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
 }

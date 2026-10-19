@@ -833,9 +833,11 @@ const MODULES = [
           {
             id: 'birim', label: 'Birim Dönüşümleri', kind: 'grid', key: 'birim_tanimlari', slots: 3,
             fields: [
-              { key: 'birim_kodu', label: 'Kaynak birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
-              { key: 'katsayi', label: 'Miktar (katsayı)', type: 'number', hint: '1 kaynak = katsayı × hedef' },
-              { key: 'cevrilecek_birim', label: 'Hedef birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
+              { key: 'kaynak_katsayi', label: 'Katsayı', type: 'number', size: 'short', hint: 'Sol miktar' },
+              { key: 'birim_kodu', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', size: 'short' },
+              { key: '_esittir', label: '=', type: 'static', size: 'short' },
+              { key: 'katsayi', label: 'Katsayı', type: 'number', size: 'short', hint: 'Sağ miktar' },
+              { key: 'cevrilecek_birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', size: 'short' },
               { key: 'barkod', label: 'Barkod' },
               { key: 'takip_birimi_mi', label: 'Takip birimi', type: 'checkbox' },
             ],
@@ -4485,6 +4487,8 @@ const state = {
   tabCtxKey: null,
   nestedLink: null, // { fromScreenId, fromId, convertPath, bodyKey, extra }
   mrpCalismaId: null,
+  formSolo: false, // ?view=form — yeni sekmede tam ekran form (sol menü yok)
+  formPrefill: null,
   session: null,
   firmalar: [],
   activeFirmaId: null,
@@ -6845,6 +6849,9 @@ function escAttr(v) {
 }
 
 function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', ctx = null) {
+  if (field.type === 'static') {
+    return `<span class="field-static" aria-hidden="true">${escAttr(field.label || '=')}</span>`;
+  }
   const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
   const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly;
   const dis = forceDisabled ? 'disabled' : '';
@@ -6903,7 +6910,9 @@ function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
 function emptyRowFromFields(fields) {
   const row = {};
   (fields || []).forEach((f) => {
+    if (f.type === 'static') return;
     if (f.type === 'checkbox') row[f.key] = false;
+    else if (f.key === 'kaynak_katsayi' || (f.key === 'katsayi' && f.type === 'number')) row[f.key] = 1;
     else row[f.key] = '';
   });
   return row;
@@ -6941,13 +6950,20 @@ function normalizeGridRows(tab, rows) {
   return (Array.isArray(rows) ? rows : []).map((src) => {
     const row = emptyRowFromFields(fields);
     fields.forEach((f) => {
+      if (f.type === 'static') return;
       if (f.type === 'checkbox') row[f.key] = Boolean(src?.[f.key]);
-      else if (src?.[f.key] !== undefined && src?.[f.key] !== null) row[f.key] = src[f.key];
+      else if (src?.[f.key] !== undefined && src?.[f.key] !== null && src[f.key] !== '') {
+        row[f.key] = src[f.key];
+      }
     });
     // nested children for rota etc.
     if (Array.isArray(src?.bilesenler)) row.bilesenler = src.bilesenler.map((b) => ({ ...b }));
     if (Array.isArray(src?.alt_satirlar)) row.alt_satirlar = src.alt_satirlar;
     Object.keys(src || {}).forEach((k) => {
+      if (k.startsWith('_')) {
+        row[k] = src[k];
+        return;
+      }
       if (row[k] === undefined && !['id'].includes(k)) row[k] = src[k];
     });
     return row;
@@ -7271,6 +7287,7 @@ function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
 }
 
 function detailColClass(f) {
+  if (f?.type === 'static') return 'col--eq';
   const size = inferFieldSizeClass(f).replace('field--', '');
   if (size === 'short' || f?.type === 'number' || f?.type === 'checkbox' || f?.code) return 'col--s';
   if (size === 'wide' || f?.name || f?.type === 'lookup') return 'col--l';
@@ -7394,6 +7411,9 @@ function inferFieldSizeClass(f) {
 }
 
 function fieldShell(f, controlHtml) {
+  if (f.type === 'static') {
+    return `<div class="field field--static field--short"><span class="field-static">${escAttr(f.label || '=')}</span></div>`;
+  }
   const cls = ['field', inferFieldSizeClass(f)];
   if (f.required || (f.requiredOnNew && state.formMode === 'yeni')) cls.push('required');
   if (f.critical) cls.push('field--critical');
@@ -7985,11 +8005,14 @@ function renderGridToolbar(tabKey, { canEdit }) {
   return `<div class="inline-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}">Yeni</button>
     <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}">Sil</button>
-    <span class="toolbar-hint">Yeni satır ekler · satırda Kaydet ile belgeye yazar</span>
+    <span class="toolbar-hint">Yeni satır ekler · satırda Kaydet satırı onaylar (belge üstteki Kaydet ile yazılır)</span>
   </div>`;
 }
 
 function renderDetailCell(field, row, idx, gridKey, canEdit) {
+  if (field.type === 'static') {
+    return `<span class="cell-static" aria-hidden="true">${escAttr(field.label || '=')}</span>`;
+  }
   if (!canEdit) {
     let text = '';
     if (field.type === 'lookup') text = lookupDisplay(field, row[field.key]);
@@ -8012,7 +8035,7 @@ function renderDynamicGrid(tab, rec) {
   if (!rows.length) {
     return `
       ${renderGridToolbar(key, { canEdit })}
-      <div class="detail-empty">Henüz satır yok. ${canEdit ? 'Yeni ile ekleyin; Kaydet satırı belgeye yazar.' : ''}</div>`;
+      <div class="detail-empty">Henüz satır yok. ${canEdit ? 'Yeni ile ekleyin; satırda Kaydet onaylar, belge üstteki Kaydet ile yazılır.' : ''}</div>`;
   }
 
   return `
@@ -8036,7 +8059,7 @@ function renderDynamicGrid(tab, rec) {
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
-                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı belgeye kaydet">Kaydet</button>
+                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">Kaydet</button>
                     <button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
                   </div>
@@ -8912,14 +8935,20 @@ function bindCascadeLookups(_screen) {
 function syncGridRowFromDom(tab, idx, baseRow = {}) {
   const row = { ...baseRow };
   let any = false;
+  const missing = [];
   (tab.fields || []).forEach((f) => {
+    if (f.type === 'static') return;
     const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"][data-grid="${tab.key}"]`);
     if (!el) return;
     row[f.key] = readFieldValue(el, f);
     if (f.type === 'checkbox') { if (el.checked) any = true; }
     else if (el.value !== '') any = true;
+    if (f.required) {
+      const v = row[f.key];
+      if (v === undefined || v === null || v === '') missing.push(f);
+    }
   });
-  return { row, any };
+  return { row, any, missing };
 }
 
 function readGridFromForm(tab) {
@@ -8932,12 +8961,17 @@ function readGridFromForm(tab) {
   for (let idx = 0; idx < count; idx += 1) {
     const { row, any } = syncGridRowFromDom(tab, idx, existing[idx] || {});
     const hasContent = any || Object.keys(row).some((k) => {
-      if (k === 'bilesenler' || k === 'alt_satirlar') return false;
+      if (k === 'bilesenler' || k === 'alt_satirlar' || k.startsWith('_')) return false;
+      // Varsayılan katsayı 1 boş satır sayılmaz
+      if (k === 'katsayi' || k === 'kaynak_katsayi') return false;
       const v = row[k];
       return v !== '' && v != null && v !== false;
     });
     if (hasContent) {
       if (Array.isArray(existing[idx]?.bilesenler)) row.bilesenler = existing[idx].bilesenler;
+      // UI-only alanları API'ye gönderme
+      delete row._esittir;
+      delete row._satir_kayitli;
       rows.push(row);
     }
   }
@@ -9289,7 +9323,73 @@ async function activateTab(tabKey) {
   renderTabBar();
 }
 
-async function openForm(mode) {
+function parseFormSoloQuery() {
+  try {
+    const q = new URLSearchParams(location.search || '');
+    if (q.get('view') !== 'form') return null;
+    const screenId = q.get('screen');
+    const mode = q.get('mode');
+    if (!screenId || !mode) return null;
+    return {
+      screenId,
+      mode,
+      id: q.get('id') || null,
+      prefillKey: q.get('prefill') || null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function applyFormSoloChrome() {
+  state.formSolo = true;
+  document.body.classList.add('form-solo');
+  const shell = $('#appShell');
+  if (shell) {
+    shell.classList.add('form-solo', 'sidebar-collapsed');
+  }
+}
+
+function leaveFormSolo(screenId) {
+  if (!state.formSolo) return false;
+  try { window.close(); } catch (_) { /* ignore */ }
+  const target = screenId ? `/?#${encodeURIComponent(screenId)}` : '/';
+  setTimeout(() => {
+    try {
+      if (!window.closed) location.href = target;
+    } catch (_) {
+      location.href = target;
+    }
+  }, 120);
+  return true;
+}
+
+function openFormInNewBrowserTab(screen, mode, { rowId = null, prefill = null } = {}) {
+  const params = new URLSearchParams({
+    view: 'form',
+    screen: screen.id,
+    mode,
+  });
+  if (rowId != null && rowId !== '') params.set('id', String(rowId));
+  if (prefill) {
+    const key = `ktb-form-prefill-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    try {
+      // localStorage: sessionStorage sekmeler arası paylaşılmaz
+      localStorage.setItem(key, JSON.stringify(prefill));
+      params.set('prefill', key);
+    } catch (_) { /* depolama doluysa yine de aç */ }
+  }
+  const url = `${location.origin}${location.pathname}?${params.toString()}`;
+  const win = window.open(url, '_blank');
+  if (win) {
+    try { win.focus(); } catch (_) { /* ignore */ }
+    return true;
+  }
+  toast('Tarayıcı yeni sekmeyi engelledi — açılır pencere izni verin.');
+  return false;
+}
+
+async function openForm(mode, opts = {}) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
   if (screen.readOnly && mode !== 'incele') {
@@ -9302,8 +9402,9 @@ async function openForm(mode) {
   }
 
   // Sipariş adayından iş emri: satır seçip Düzelt → Yeni + ön doldurma
-  let adayPrefill = null;
-  if (screen.createEndpoint && (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri')
+  let adayPrefill = state.formPrefill || null;
+  state.formPrefill = null;
+  if (!adayPrefill && screen.createEndpoint && (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri')
       && (mode === 'duzelt' || mode === 'incele' || mode === 'kopyala')) {
     const sel = selectedRow();
     if (!sel) {
@@ -9321,8 +9422,17 @@ async function openForm(mode) {
     return;
   }
 
+  // Liste ekranından: formu tarayıcıda yeni sekmede aç (sol menüsüz tam ekran)
+  if (!state.formSolo && !opts.inPlace) {
+    openFormInNewBrowserTab(screen, mode, {
+      rowId: needsRow ? row.id : null,
+      prefill: adayPrefill,
+    });
+    return;
+  }
+
   // Liste sekmesi yerinde kalsın; form yan (yeni) sekme olarak açılsın
-  addListTab(screen, { activate: false });
+  if (!state.formSolo) addListTab(screen, { activate: false });
   state.nestedLink = null;
 
   state.formMode = mode;
@@ -9537,15 +9647,17 @@ async function saveForm() {
       state.formMode = null;
       state.formRecord = null;
       state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
-      if (sonuc?.siparis_id && screen.id === 'satis-siparisleri') await openScreen('satis-siparisleri');
-      else if (sonuc?.siparis_no && screen.id === 'satin-alma-siparisleri') await openScreen('satin-alma-siparisleri');
-      else if (sonuc?.sevk_no || (sonuc?.id && screen.id === 'sevk-emirleri')) await openScreen('sevk-emirleri');
-      else if (sonuc?.irsaliye_no || sonuc?.ettn) await openScreen('irsaliyeler');
-      else if (sonuc?.fatura?.id) await openScreen('satis-faturalari');
-      else if (sonuc?.fatura_turu === 'Alis' || (sonuc?.mal_kabul_id && sonuc?.fatura_no)) await openScreen('alis-faturalari');
-      else if (sonuc?.fatura_no && screen.id === 'alis-faturalari') await openScreen('alis-faturalari');
-      else if (sonuc?.teklif_id || sonuc?.teklif_no) await openScreen('satis-teklifleri');
-      else await openScreen(screen.id);
+      const nextScreen = (sonuc?.siparis_id && screen.id === 'satis-siparisleri') ? 'satis-siparisleri'
+        : (sonuc?.siparis_no && screen.id === 'satin-alma-siparisleri') ? 'satin-alma-siparisleri'
+        : (sonuc?.sevk_no || (sonuc?.id && screen.id === 'sevk-emirleri')) ? 'sevk-emirleri'
+        : (sonuc?.irsaliye_no || sonuc?.ettn) ? 'irsaliyeler'
+        : (sonuc?.fatura?.id) ? 'satis-faturalari'
+        : (sonuc?.fatura_turu === 'Alis' || (sonuc?.mal_kabul_id && sonuc?.fatura_no)) ? 'alis-faturalari'
+        : (sonuc?.fatura_no && screen.id === 'alis-faturalari') ? 'alis-faturalari'
+        : (sonuc?.teklif_id || sonuc?.teklif_no) ? 'satis-teklifleri'
+        : screen.id;
+      if (leaveFormSolo(nextScreen)) return;
+      await openScreen(nextScreen);
       return;
     } catch (err) {
       toast(err.message || 'Bağlı kayıt başarısız');
@@ -9614,6 +9726,9 @@ async function saveForm() {
       state.formMode = null;
       state.formRecord = null;
       state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+      if (leaveFormSolo(screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri' ? 'uretim-emirleri' : screen.id)) {
+        return;
+      }
       if (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri') {
         await openScreen('uretim-emirleri');
       } else {
@@ -9628,6 +9743,7 @@ async function saveForm() {
     state.formMode = null;
     state.formRecord = null;
     state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+    if (leaveFormSolo(screen.id)) return;
     await openScreen(screen.id);
   } catch (err) {
     toast(err.message);
@@ -10009,6 +10125,7 @@ function bindEvents() {
   });
 
   $('#btnFormCancel').addEventListener('click', () => {
+    if (leaveFormSolo(state.screenId)) return;
     // Form sekmesini kapatma — liste sekmesine geç (yan sekmeler durur)
     persistActiveFormTab();
     const screenId = state.screenId;
@@ -10278,25 +10395,25 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — Kaydet ile belgeye yazın.');
+        toast('Satır kopyalandı — satırda Kaydet ile onaylayın; belge üstteki Kaydet ile yazılır.');
         return;
       }
       if (act === 'kaydet') {
+        // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
+        // Kalıcı kayıt üstteki Kaydet ile yapılır.
         if (rows[idx]) {
-          const { row } = syncGridRowFromDom(tab, idx, rows[idx]);
+          const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
+          if (missing?.length) {
+            toast(`Satır eksik: ${missing.map((f) => f.label || f.key).join(', ')}`);
+            return;
+          }
           row._satir_kayitli = true;
           rows[idx] = row;
         }
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
-        // Belge + satırlar birlikte kalıcı kayda gider
-        saveForm().then(() => {
-          if (Array.isArray(state.formRecord?.[key])) {
-            state.formRecord[key] = state.formRecord[key].map((r, i) => (
-              i === idx ? { ...r, _satir_kayitli: true } : r
-            ));
-          }
-        }).catch(() => {});
+        renderForm(screen);
+        toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
         return;
       }
     }
@@ -10600,6 +10717,30 @@ async function bootIntoApp() {
   enterApp();
   await loadFirmalar().catch(() => {});
   renderFirmaPicker();
+
+  const solo = parseFormSoloQuery();
+  if (solo && findScreen(solo.screenId)) {
+    applyFormSoloChrome();
+    state.screenId = solo.screenId;
+    if (solo.id) {
+      const rid = Number(solo.id);
+      const row = { id: Number.isFinite(rid) ? rid : solo.id };
+      state.rows = [row];
+      state.filtered = [row];
+      state.selectedId = row.id;
+    }
+    if (solo.prefillKey) {
+      try {
+        const raw = localStorage.getItem(solo.prefillKey);
+        if (raw) state.formPrefill = JSON.parse(raw);
+        localStorage.removeItem(solo.prefillKey);
+      } catch (_) { /* ignore */ }
+    }
+    document.title = `${findScreen(solo.screenId).title} · ${MODE_LABELS[solo.mode] || solo.mode} · KTB ERP`;
+    await openForm(solo.mode, { inPlace: true });
+    return;
+  }
+
   const id = (location.hash || '').replace(/^#/, '');
   if (id && findScreen(id)) openScreen(id);
   else showHome();

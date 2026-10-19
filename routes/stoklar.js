@@ -140,6 +140,15 @@ async function saveChildren(client, stokId, body) {
             const cevr = nonempty(d.cevrilecek_birim)
                 ? await assertBirim(client, d.cevrilecek_birim, 'Çevrilecek birim')
                 : null;
+            const kaynakKatsayi = d.kaynak_katsayi == null || d.kaynak_katsayi === ''
+                ? 1
+                : Number(d.kaynak_katsayi);
+            if (!Number.isFinite(kaynakKatsayi) || kaynakKatsayi <= 0) {
+                const err = new Error('Kaynak katsayi 0 dan buyuk olmalidir.');
+                err.status = 400;
+                err.alan = 'kaynak_katsayi';
+                throw err;
+            }
             const katsayi = Number(d.katsayi);
             if (!Number.isFinite(katsayi) || katsayi <= 0) {
                 const err = new Error('Birim katsayisi 0 dan buyuk olmalidir.');
@@ -150,12 +159,12 @@ async function saveChildren(client, stokId, body) {
             await client.query(
                 `
                 INSERT INTO stok_birim_tanimlari (
-                    stok_id, sira_no, birim_kodu, katsayi, cevrilecek_birim, barkod,
+                    stok_id, sira_no, birim_kodu, kaynak_katsayi, katsayi, cevrilecek_birim, barkod,
                     kutu_en_mm, kutu_boy_mm, kutu_yukseklik_mm, hacim, agirlik, takip_birimi_mi
-                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,COALESCE($12,FALSE))
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,COALESCE($13,FALSE))
                 `,
                 [
-                    stokId, sira, birim, katsayi, cevr, trimOrNull(d.barkod),
+                    stokId, sira, birim, kaynakKatsayi, katsayi, cevr, trimOrNull(d.barkod),
                     d.kutu_en_mm ?? null, d.kutu_boy_mm ?? null, d.kutu_yukseklik_mm ?? null,
                     d.hacim ?? null, d.agirlik ?? null, Boolean(d.takip_birimi_mi),
                 ]
@@ -374,7 +383,7 @@ router.post('/', async (req, res) => {
 
             // birim_tanimlari yoksa takip biriminden tek satır
             if (!Array.isArray(m.birim_tanimlari) || !m.birim_tanimlari.some((b) => nonempty(b.birim_kodu))) {
-                m.birim_tanimlari = [{ birim_kodu: takip, katsayi: 1, takip_birimi_mi: true }];
+                m.birim_tanimlari = [{ kaynak_katsayi: 1, birim_kodu: takip, katsayi: 1, cevrilecek_birim: takip, takip_birimi_mi: true }];
             }
             await saveChildren(client, stokId, m);
             return stokId;
