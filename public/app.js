@@ -8053,19 +8053,24 @@ function renderDynamicGrid(tab, rec) {
           ${rows.map((row, idx) => {
             const selected = selIdx === idx;
             const saved = row._satir_kayitli === true || row.id != null;
+            // Liste satırı: Düzelt ↔ Kaydet aynı yerde (ikisi birden değil)
+            const rowEditing = row._satir_duzenleniyor === true || !saved;
+            const rowActBtn = rowEditing
+              ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">Kaydet</button>`
+              : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>`;
+            const rowFieldsEditable = canEdit && rowEditing;
             return `
-              <tr class="${selected ? 'selected' : ''} ${saved ? 'detail-row--saved' : 'detail-row--draft'}"
+              <tr class="${selected ? 'selected' : ''} ${saved && !rowEditing ? 'detail-row--saved' : 'detail-row--draft'}"
                   data-grid-row="${key}" data-grid-idx="${idx}" data-grid-pick="${key}">
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
-                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">Kaydet</button>
-                    <button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>
+                    ${rowActBtn}
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
                   </div>
                 </td>` : ''}
                 <td class="col-seq">${idx + 1}</td>
-                ${fields.map((f) => `<td class="${detailColClass(f)}">${renderDetailCell(f, row, idx, key, canEdit)}</td>`).join('')}
+                ${fields.map((f) => `<td class="${detailColClass(f)}">${renderDetailCell(f, row, idx, key, rowFieldsEditable)}</td>`).join('')}
               </tr>`;
           }).join('')}
         </tbody>
@@ -8369,45 +8374,12 @@ function renderZincirStrip(screen, rec) {
   });
 }
 
-function syncFormActionButtons(screen) {
-  const mode = state.formMode;
-  const saveBtn = $('#btnFormSave');
-  const editBtn = $('#btnFormEdit');
-  const canEdit = Boolean(screen && !screen.readOnly && ekranYetkisi(screen.id, 'duzelt'));
-  const canSave = Boolean(screen && !screen.readOnly
-    && (mode === 'yeni' || mode === 'kopyala' || mode === 'duzelt')
-    && ekranYetkisi(screen.id, mode === 'duzelt' ? 'duzelt' : 'yeni'));
-
-  if (saveBtn) {
-    saveBtn.hidden = !canSave;
-    saveBtn.textContent = 'Kaydet';
-  }
-  if (editBtn) {
-    // İncelemede Kaydet yok — yerine Düzelt (kaydedince tekrar Düzelt’e döner)
-    editBtn.hidden = !(mode === 'incele' && canEdit);
-  }
-}
-
-function enterFormInceleMode(screen, record) {
-  state.formMode = 'incele';
-  state.formRecord = record || state.formRecord || {};
-  const tab = state.openTabs.find((t) => t.key === state.activeTabKey);
-  if (tab) {
-    tab.formMode = 'incele';
-    tab.formRecord = state.formRecord;
-  }
-  if (state.formSolo) {
-    document.title = `${screen.title} · İncele · KTB ERP`;
-  }
-  renderForm(screen);
-}
-
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
   $('#formModeBadge').textContent = MODE_LABELS[state.formMode] || state.formMode;
   $('#formScreenLabel').textContent = `${screen.title} · ${MODE_LABELS[state.formMode] || ''}`;
-  syncFormActionButtons(screen);
+  $('#btnFormSave').hidden = readonly;
   const conv = $('#btnFormConvert');
   if (conv) {
     const act = screen.convertAction || screen.approveAction;
@@ -9005,6 +8977,7 @@ function readGridFromForm(tab) {
       // UI-only alanları API'ye gönderme
       delete row._esittir;
       delete row._satir_kayitli;
+      delete row._satir_duzenleniyor;
       rows.push(row);
     }
   }
@@ -9714,36 +9687,18 @@ async function saveForm() {
     }
   }
 
-  async function reloadRecordAfterSave(idHint) {
-    const id = idHint ?? master.id ?? state.formRecord?.id;
-    if (id == null || id === '') return { ...master };
-    try {
-      if (screen.id === 'numarator-tanimi') {
-        return await api(`/kod-serileri/${encodeURIComponent(master.seri_kodu || id)}`);
-      }
-      return await api(`${screenApiBase(screen.endpoint)}/${id}`);
-    } catch (_) {
-      return { ...master, id };
-    }
-  }
-
   try {
-    let savedId = master.id || null;
-
     if (screen.id === 'numarator-tanimi') {
       if (state.formMode === 'duzelt') {
         await api(`/kod-serileri/${encodeURIComponent(master.seri_kodu)}`, {
           method: 'PUT',
           body: JSON.stringify(master),
         });
-        savedId = master.seri_kodu;
       } else {
         await api('/kod-serileri', { method: 'POST', body: JSON.stringify(master) });
-        savedId = master.seri_kodu;
       }
     } else if (state.formMode === 'duzelt') {
       await api(`${screenApiBase(screen.endpoint)}/${master.id}`, { method: 'PUT', body: JSON.stringify(master) });
-      savedId = master.id;
     } else {
       const postUrl = screen.createEndpoint || screenApiBase(screen.endpoint);
       let body = master;
@@ -9767,43 +9722,33 @@ async function saveForm() {
       invalidateLookupsForScreen(screen);
       if (screen.id === 'toplu-is-emri' && sonuc?.olusturulan_sayisi) {
         toast(`${sonuc.olusturulan_sayisi} iş emri oluşturuldu${sonuc.hata_sayisi ? ` (${sonuc.hata_sayisi} hata)` : ''}.`);
-        if (leaveFormSolo('uretim-emirleri')) return;
-        await openScreen('uretim-emirleri');
-        return;
-      }
-      if (screen.id === 'siparis-is-emri' && sonuc?.emir_no) {
+      } else if (screen.id === 'siparis-is-emri' && sonuc?.emir_no) {
         toast(`İş emri ${sonuc.emir_no} oluşturuldu.`);
-        if (leaveFormSolo('uretim-emirleri')) return;
-        await openScreen('uretim-emirleri');
+      } else {
+        toast('Kaydedildi.');
+      }
+      const formKey = state.activeTabKey;
+      state.formMode = null;
+      state.formRecord = null;
+      state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+      if (leaveFormSolo(screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri' ? 'uretim-emirleri' : screen.id)) {
         return;
       }
-      savedId = sonuc?.id ?? sonuc?.[screen.codeField] ?? master.id ?? null;
-      toast('Kaydedildi.');
+      if (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri') {
+        await openScreen('uretim-emirleri');
+      } else {
+        await openScreen(screen.id);
+      }
+      return;
     }
-
-    if (screen.id !== 'numarator-tanimi' && state.formMode === 'duzelt') {
-      toast('Kaydedildi.');
-    } else if (screen.id === 'numarator-tanimi') {
-      toast('Kaydedildi.');
-    }
+    toast('Kaydedildi.');
     invalidateLookupsForScreen(screen);
-
-    // Kayıt sonrası inceleme modu — Kaydet kaybolur, Düzelt geri gelir
-    const fresh = await reloadRecordAfterSave(savedId);
-    if (screen.id === 'stok-karti') hydrateStokFirmaIsYeri(fresh);
-    (screen.formTabs || []).forEach((tab) => {
-      if (tab.kind === 'grid') {
-        const raw = Array.isArray(fresh[tab.key]) ? fresh[tab.key] : [];
-        fresh[tab.key] = normalizeGridRows(tab, raw.map(({ id, ...rest }) => rest));
-      }
-      if (tab.kind === 'master-grid') {
-        const gkey = tab.grid?.key || tab.key || '_detail';
-        const gtab = { kind: 'grid', key: gkey, fields: tab.grid?.fields || tab.detailFields || [], slots: tab.grid?.slots };
-        const raw = Array.isArray(fresh[gkey]) ? fresh[gkey] : [];
-        fresh[gkey] = normalizeGridRows(gtab, raw.map(({ id, ...rest }) => rest));
-      }
-    });
-    enterFormInceleMode(screen, fresh);
+    const formKey = state.activeTabKey;
+    state.formMode = null;
+    state.formRecord = null;
+    state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+    if (leaveFormSolo(screen.id)) return;
+    await openScreen(screen.id);
   } catch (err) {
     toast(err.message);
   }
@@ -10202,23 +10147,6 @@ function bindEvents() {
     saveForm();
   });
 
-  $('#btnFormEdit')?.addEventListener('click', () => {
-    const screen = findScreen(state.screenId);
-    if (!screen || state.formMode !== 'incele') return;
-    if (screen.readOnly || !ekranYetkisi(screen.id, 'duzelt')) {
-      toast('Bu ekranda düzeltme yetkiniz yok.');
-      return;
-    }
-    state.formMode = 'duzelt';
-    const tab = state.openTabs.find((t) => t.key === state.activeTabKey);
-    if (tab) tab.formMode = 'duzelt';
-    if (state.formSolo) {
-      document.title = `${screen.title} · Düzelt · KTB ERP`;
-    }
-    renderForm(screen);
-    toast('Düzeltme modu — Kaydet ile yazın.');
-  });
-
   function exportListCsv() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
@@ -10415,8 +10343,10 @@ function bindEvents() {
         rows[state.gridSel.idx] = row;
       }
       if (act === 'yeni') {
+        rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
         const blank = emptyRowFromFields(tab.fields);
         blank._satir_kayitli = false;
+        blank._satir_duzenleniyor = true;
         rows.push(blank);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: rows.length - 1 };
@@ -10425,6 +10355,10 @@ function bindEvents() {
           toast('Düzeltmek için önce bir satır seçin.');
           return;
         }
+        rows.forEach((r, i) => {
+          if (!r) return;
+          r._satir_duzenleniyor = i === state.gridSel.idx;
+        });
         state.formRecord[key] = rows;
       } else if (act === 'sil') {
         if (state.gridSel.key !== key || state.gridSel.idx == null) {
@@ -10457,6 +10391,11 @@ function bindEvents() {
         rows[state.gridSel.idx] = row;
       }
       if (act === 'duzelt') {
+        // Düzelt → aynı yerde Kaydet; diğer satırlar kilitli kalsın
+        rows.forEach((r, i) => {
+          if (!r) return;
+          r._satir_duzenleniyor = i === idx;
+        });
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
         renderForm(screen);
@@ -10464,19 +10403,21 @@ function bindEvents() {
       }
       if (act === 'kopyala') {
         if (!rows[idx]) return;
+        rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
         const copy = { ...rows[idx] };
         delete copy.id;
         copy._satir_kayitli = false;
+        copy._satir_duzenleniyor = true;
         rows.splice(idx + 1, 0, copy);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — satırda Kaydet ile onaylayın; belge üstteki Kaydet ile yazılır.');
+        toast('Satır kopyalandı — Kaydet ile onaylayın.');
         return;
       }
       if (act === 'kaydet') {
         // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
-        // Kalıcı kayıt üstteki Kaydet ile yapılır.
+        // Onaydan sonra buton tekrar Düzelt olur.
         if (rows[idx]) {
           const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
           if (missing?.length) {
@@ -10484,6 +10425,7 @@ function bindEvents() {
             return;
           }
           row._satir_kayitli = true;
+          row._satir_duzenleniyor = false;
           rows[idx] = row;
         }
         state.formRecord[key] = rows;
