@@ -4055,19 +4055,37 @@ function buildLookupOptionsHtml(field, value, rows) {
   const vk = field.valueKey || 'id';
   const lk = field.labelKey || 'adi';
   const ck = field.codeKey;
-  let emptyLabel = '— seçin —';
+  let emptyLabel = '—';
   if (!(value || rows.length)) {
-    if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı seçin —';
-    else if (field.dependsOn) emptyLabel = '— önce üst alanı seçin —';
+    if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı —';
+    else if (field.dependsOn) emptyLabel = '— önce üst alan —';
   }
   const opts = [`<option value="">${emptyLabel}</option>`].concat(
     rows.map((r) => {
       const val = r[vk];
-      const label = ck ? `${r[ck] || ''} — ${r[lk] || ''}` : `${r[vk]} — ${r[lk] || ''}`;
-      return `<option value="${escAttr(val)}" ${lookupOptionSelected(field, r, value) ? 'selected' : ''}>${label}</option>`;
+      // Kod–ad: select’te kod, title’da tam metin (dar kutu)
+      const code = ck ? String(r[ck] || val || '') : '';
+      const name = String(r[lk] || '');
+      const label = ck ? (code || String(val)) : `${val} — ${name}`;
+      const title = ck ? `${code} — ${name}` : label;
+      return `<option value="${escAttr(val)}" title="${escAttr(title)}" ${lookupOptionSelected(field, r, value) ? 'selected' : ''}>${label}</option>`;
     })
   );
   return opts.join('');
+}
+
+function lookupNameOnly(field, value) {
+  if (value === undefined || value === null || value === '') return '';
+  const rows = state.lookupCache[field.lookup] || [];
+  const vk = field.valueKey || 'id';
+  const lk = field.labelKey || 'adi';
+  const ck = field.codeKey;
+  const hit = rows.find((r) =>
+    String(r[vk]) === String(value)
+    || (lk && String(r[lk]) === String(value))
+    || (ck && String(r[ck]) === String(value)));
+  if (!hit) return '';
+  return String(hit[lk] || '');
 }
 
 function upgradeTanimLookups(screen) {
@@ -6225,7 +6243,13 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const rows = lookupRowsForField(field, scope);
     const dep = field.dependsOn ? ` data-depends-on="${escAttr(field.dependsOn)}"` : '';
     const bom = field.filterByBomKey ? ` data-filter-bom="${escAttr(field.filterByBomKey)}"` : '';
-    return `<select class="lookup-select" ${name} ${dis} ${req}${dep}${bom}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
+    const sel = `<select class="lookup-select" ${name} ${dis} ${req}${dep}${bom}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
+    // Klasik ERP: dar kod select + geniş salt okunur ad
+    if (field.codeKey) {
+      const ad = lookupNameOnly(field, v) || '—';
+      return `<div class="lookup-pair">${sel}<input type="text" class="lookup-name-ro" value="${escAttr(ad)}" readonly tabindex="-1" aria-label="${escAttr(field.label)} adı" /></div>`;
+    }
+    return sel;
   }
   if (field.type === 'number') {
     return `<input type="number" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
@@ -6273,7 +6297,8 @@ function isFormControlClick(target) {
   if (!target || !(target instanceof Element)) return false;
   return Boolean(target.closest(
     'select, input, textarea, option, label, button.btn, '
-    + '.bom-inline-editor, .rota-op-body, .detail-slot-fields, '
+    + '.bom-inline-editor, .rota-op-body, .detail-slot-fields, .detail-table td input, '
+    + '.detail-table td select, .lookup-pair, '
     + '[data-flow-editor], [data-bom-editor], [contenteditable="true"]'
   ));
 }
@@ -6443,8 +6468,69 @@ function flattenBomForSave(nodes) {
   })).filter((n) => n.bilesen_stok_id && n.miktar != null && n.miktar !== '');
 }
 
-/** Başlıkta tutulacak alan sayısı — fazlası “Ek bilgiler”e iner (UX: master sabit/sade). */
-const MASTER_PRIMARY_MAX = 8;
+/** Başlıkta tutulacak alan sayısı — fazlası “Ek bilgiler”e iner (master ≤ ~%25). */
+const MASTER_PRIMARY_MAX = 6;
+
+/** Alt şeride inen not / açıklama alanları (master’dan ayrılır). */
+function isFooterNoteField(f) {
+  const k = String(f?.key || '');
+  return /^(aciklama|not_public|not_internal|acma_kapama|kaynak|onay_durumu)$/i.test(k)
+    || /^not_/i.test(k);
+}
+
+/** Belge satırlarından ara / KDV / genel toplam (yoksa null). */
+function computeDocumentTotals(rows, fields) {
+  const list = Array.isArray(rows) ? rows : [];
+  const keys = new Set((fields || []).map((f) => f.key));
+  const hasFiyat = keys.has('birim_fiyat') || list.some((r) => r.birim_fiyat != null && r.birim_fiyat !== '');
+  const hasMiktar = keys.has('miktar') || list.some((r) => r.miktar != null && r.miktar !== '');
+  if (!hasFiyat || !hasMiktar) {
+    return { count: list.length, ara_toplam: null, toplam_kdv: null, genel_toplam: null };
+  }
+  let ara = 0;
+  let kdv = 0;
+  list.forEach((row) => {
+    const miktar = Number(row.miktar) || 0;
+    const fiyat = Number(row.birim_fiyat) || 0;
+    const isk = Number(row.iskonto_oran) || 0;
+    const kdvOran = Number(row.kdv_oran) || 0;
+    const net = miktar * fiyat * (1 - isk / 100);
+    ara += net;
+    kdv += net * (kdvOran / 100);
+  });
+  return {
+    count: list.length,
+    ara_toplam: ara,
+    toplam_kdv: kdv,
+    genel_toplam: ara + kdv,
+  };
+}
+
+function formatTotalAmount(n) {
+  if (n == null || Number.isNaN(Number(n))) return '';
+  return Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function renderDocumentFooter(rec, noteFields, gridFields, gridKey) {
+  const rows = Array.isArray(rec?.[gridKey]) ? rec[gridKey] : [];
+  const totals = computeDocumentTotals(rows, gridFields);
+  const notesHtml = noteFields.length
+    ? noteFields.map((f) => fieldShell(f, fieldControl(f, rec?.[f.key], 'data-master', '', rec || {}))).join('')
+    : '<div class="md-footer-empty">Belge notu / bağlantı alanı yok</div>';
+  const showMoney = totals.ara_toplam != null;
+  const totalsHtml = showMoney
+    ? `
+      <div class="md-total-row"><label>Ara toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.ara_toplam))}" /></div>
+      <div class="md-total-row"><label>Toplam KDV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_kdv))}" /></div>
+      <div class="md-total-row md-total-row--grand"><label>Genel toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.genel_toplam))}" /></div>`
+    : `
+      <div class="md-total-row"><label>Satır</label><input type="text" readonly tabindex="-1" value="${totals.count} adet" /></div>`;
+  return `
+    <footer class="md-footer" aria-label="Toplam ve bağlantı">
+      <div class="md-footer-notes">${notesHtml}</div>
+      <div class="md-footer-totals">${totalsHtml}</div>
+    </footer>`;
+}
 
 function masterFieldScore(f) {
   let s = 0;
@@ -6487,13 +6573,19 @@ function syncStokFirmaIsYeriForSave(master) {
   }
 }
 
-/** Kalabalık master listesini birincil + ek alanlara böler; lead alanlar başta. */
+/** Kalabalık master listesini birincil + ek + alt şerit notlarına böler. */
 function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
-  const list = Array.isArray(fields) ? fields : [];
+  const raw = Array.isArray(fields) ? fields : [];
+  const footerNotes = raw.filter((f) => isFooterNoteField(f));
+  const list = raw.filter((f) => !isFooterNoteField(f));
   if (list.length <= maxPrimary) {
     const leads = list.filter((f) => f.lead);
     const rest = list.filter((f) => !f.lead);
-    return { primary: leads.length ? [...leads, ...rest] : list, extras: [] };
+    return {
+      primary: leads.length ? [...leads, ...rest] : list,
+      extras: [],
+      footerNotes,
+    };
   }
   const ranked = list
     .map((f, i) => ({ f, i, s: masterFieldScore(f) }))
@@ -6505,7 +6597,16 @@ function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
   return {
     primary: [...leads, ...rest],
     extras: list.filter((_, i) => !keep.has(i)),
+    footerNotes,
   };
+}
+
+function detailColClass(f) {
+  const size = inferFieldSizeClass(f).replace('field--', '');
+  if (size === 'short' || f?.type === 'number' || f?.type === 'checkbox' || f?.code) return 'col--s';
+  if (size === 'wide' || f?.name || f?.type === 'lookup') return 'col--l';
+  if (/miktar|fiyat|tutar|oran|kur/i.test(f?.key || '')) return 'col--m col--num';
+  return 'col--m';
 }
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / adres / …). */
@@ -7144,36 +7245,43 @@ function renderMasterDetailPanel(tab, rec) {
     </div>`;
 }
 
-/** Master alanlar üstte + kalem grid altta — tek ekran */
+/** Master alanlar üstte + kalem tablosu + alt toplam/bağlantı — klasik ERP */
 function renderMasterGridPanel(tab, rec) {
-  const { primary, extras } = partitionMasterFields(tab.masterFields || []);
+  const { primary, extras, footerNotes } = partitionMasterFields(tab.masterFields || []);
   const gridTab = {
     kind: 'grid',
     key: tab.grid?.key || tab.key || '_detail',
     slots: tab.grid?.slots,
     fields: tab.grid?.fields || tab.detailFields || [],
   };
+  const rowCount = Array.isArray(rec?.[gridTab.key]) ? rec[gridTab.key].length : 0;
   return `
     <div class="md-split md-split--grid">
-      <section class="md-master" aria-label="Başlık alanları">
-        <div class="section-label">Başlık</div>
-        <div class="form-tab-fields form-tab-fields--master">
-          ${renderFieldGrid(primary, rec)}
-        </div>
-      </section>
-      ${extras.length ? `
-      <section class="md-extras" aria-label="Ek başlık alanları">
-        <div class="section-label">Ek bilgiler</div>
-        <div class="md-extras-scroll">
-          <div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>
-        </div>
-      </section>` : ''}
+      <div class="md-head">
+        <section class="md-master" aria-label="Başlık alanları">
+          <div class="section-label">Başlık</div>
+          <div class="form-tab-fields form-tab-fields--master">
+            ${renderFieldGrid(primary, rec)}
+          </div>
+        </section>
+        ${extras.length ? `
+        <section class="md-extras" aria-label="Ek başlık alanları">
+          <div class="section-label">Ek bilgiler</div>
+          <div class="md-extras-scroll">
+            <div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>
+          </div>
+        </section>` : ''}
+      </div>
       <section class="md-detail" aria-label="Kalemler">
-        <div class="section-label">Kalemler</div>
+        <div class="md-detail-head">
+          <div class="section-label">Kalemler</div>
+          <span class="md-detail-meta">${rowCount} satır</span>
+        </div>
         <div class="md-detail-scroll">
           ${renderDynamicGrid(gridTab, rec)}
         </div>
       </section>
+      ${renderDocumentFooter(rec, footerNotes || [], gridTab.fields, gridTab.key)}
     </div>`;
 }
 
@@ -7184,12 +7292,25 @@ function renderGridToolbar(tabKey, { canEdit }) {
   return `<div class="inline-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}">Yeni</button>
     <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}">Sil</button>
-    <span class="toolbar-hint">Yeni boş satır ekler — kayıt için satırdaki Kaydet’i kullanın</span>
+    <span class="toolbar-hint">Yeni satır ekler · satırda Kaydet ile belgeye yazar</span>
   </div>`;
+}
+
+function renderDetailCell(field, row, idx, gridKey, canEdit) {
+  if (!canEdit) {
+    let text = '';
+    if (field.type === 'lookup') text = lookupDisplay(field, row[field.key]);
+    else if (field.type === 'checkbox') text = row[field.key] ? '✓' : '';
+    else text = row[field.key] == null || row[field.key] === '' ? '' : String(row[field.key]);
+    const mono = field.code || field.type === 'lookup' ? ' mono' : '';
+    return `<span class="cell-ro${mono}">${escAttr(text)}</span>`;
+  }
+  return detailFieldControl(field, row[field.key], idx, gridKey, row);
 }
 
 function renderDynamicGrid(tab, rec) {
   const key = tab.key;
+  const fields = tab.fields || [];
   const rows = normalizeGridRows(tab, Array.isArray(rec[key]) ? rec[key] : []);
   rec[key] = rows;
   const canEdit = state.formMode !== 'incele';
@@ -7203,31 +7324,35 @@ function renderDynamicGrid(tab, rec) {
 
   return `
     ${renderGridToolbar(key, { canEdit })}
-    <div class="detail-grid detail-grid--dynamic detail-grid--compact" data-grid-list="${key}">
-      ${rows.map((row, idx) => {
-        const selected = selIdx === idx;
-        const editing = canEdit && selected;
-        const saved = row._satir_kayitli === true || row.id != null;
-        return `
-          <div class="detail-slot detail-slot--compact ${selected ? 'selected' : ''} ${saved ? 'detail-slot--saved' : 'detail-slot--draft'}" data-grid-row="${key}" data-grid-idx="${idx}">
-            <div class="detail-slot-head">
-              <button type="button" class="detail-slot-pick" data-grid-pick="${key}" data-grid-idx="${idx}">
-                <span class="detail-slot-title">${idx + 1}. satır${saved ? '' : ' · taslak'}</span>
-                <span class="detail-slot-summary">${gridRowSummary(tab, row)}</span>
-              </button>
-              ${canEdit ? `
-              <div class="detail-slot-actions" role="group" aria-label="Satır işlemleri">
-                <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı belgeye kaydet">Kaydet</button>
-                <button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>
-                <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
-              </div>` : ''}
-            </div>
-            ${editing || (!canEdit && selected) ? `
-              <div class="detail-slot-fields field-groups">
-                ${renderGroupedDetailControls(tab.fields || [], row, idx, key)}
-              </div>` : ''}
-          </div>`;
-      }).join('')}
+    <div class="detail-table-wrap" data-grid-list="${key}">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th class="col-seq">#</th>
+            ${fields.map((f) => `<th class="${detailColClass(f)}" title="${escAttr(f.label)}">${escAttr(f.label)}</th>`).join('')}
+            ${canEdit ? '<th class="col-acts">İşlem</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row, idx) => {
+            const selected = selIdx === idx;
+            const saved = row._satir_kayitli === true || row.id != null;
+            return `
+              <tr class="${selected ? 'selected' : ''} ${saved ? 'detail-row--saved' : 'detail-row--draft'}"
+                  data-grid-row="${key}" data-grid-idx="${idx}" data-grid-pick="${key}">
+                <td class="col-seq">${idx + 1}</td>
+                ${fields.map((f) => `<td class="${detailColClass(f)}">${renderDetailCell(f, row, idx, key, canEdit)}</td>`).join('')}
+                ${canEdit ? `
+                <td class="col-acts">
+                  <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
+                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı belgeye kaydet">Kaydet</button>
+                    <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
+                  </div>
+                </td>` : ''}
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
     </div>`;
 }
 
@@ -7944,6 +8069,18 @@ function bindCascadeLookups(_screen) {
     if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement)) return;
     const scr = findScreen(state.screenId);
     if (!scr || state.formMode == null) return;
+
+    // Kod–ad lookup: ad kutusunu güncelle
+    if (el instanceof HTMLSelectElement && el.classList.contains('lookup-select')) {
+      const pair = el.closest('.lookup-pair');
+      const nameRo = pair?.querySelector('.lookup-name-ro');
+      if (nameRo) {
+        const opt = el.selectedOptions?.[0];
+        const title = opt?.getAttribute('title') || opt?.textContent || '';
+        const ad = title.includes('—') ? title.split('—').slice(1).join('—').trim() : (title || '—');
+        nameRo.value = el.value ? (ad || '—') : '—';
+      }
+    }
 
     // BOM sağ panel alanları — birim/miktar otomatik doldurulmaz (kullanıcı girer)
     if (el.hasAttribute('data-bom-field')) {
@@ -9452,6 +9589,18 @@ function bindEvents() {
     }
     const gridPick = e.target.closest('[data-grid-pick]');
     if (gridPick && screen) {
+      // Tablo hücresindeki input/select tıklanınca formu yeniden çizme (odak kaybı)
+      if (isFormControlClick(e.target)) {
+        const keyQuiet = gridPick.getAttribute('data-grid-pick');
+        const idxQuiet = Number(gridPick.getAttribute('data-grid-idx'));
+        if (keyQuiet != null && !Number.isNaN(idxQuiet)) {
+          state.gridSel = { key: keyQuiet, idx: idxQuiet };
+          document.querySelectorAll(`tr[data-grid-row="${keyQuiet}"]`).forEach((tr) => {
+            tr.classList.toggle('selected', Number(tr.getAttribute('data-grid-idx')) === idxQuiet);
+          });
+        }
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       const key = gridPick.getAttribute('data-grid-pick');
