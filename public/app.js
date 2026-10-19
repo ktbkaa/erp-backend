@@ -7328,9 +7328,9 @@ function renderDynamicGrid(tab, rec) {
       <table class="detail-table">
         <thead>
           <tr>
+            ${canEdit ? '<th class="col-acts">İşlem</th>' : ''}
             <th class="col-seq">#</th>
             ${fields.map((f) => `<th class="${detailColClass(f)}" title="${escAttr(f.label)}">${escAttr(f.label)}</th>`).join('')}
-            ${canEdit ? '<th class="col-acts">İşlem</th>' : ''}
           </tr>
         </thead>
         <tbody>
@@ -7340,15 +7340,16 @@ function renderDynamicGrid(tab, rec) {
             return `
               <tr class="${selected ? 'selected' : ''} ${saved ? 'detail-row--saved' : 'detail-row--draft'}"
                   data-grid-row="${key}" data-grid-idx="${idx}" data-grid-pick="${key}">
-                <td class="col-seq">${idx + 1}</td>
-                ${fields.map((f) => `<td class="${detailColClass(f)}">${renderDetailCell(f, row, idx, key, canEdit)}</td>`).join('')}
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
                     <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı belgeye kaydet">Kaydet</button>
+                    <button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
                   </div>
                 </td>` : ''}
+                <td class="col-seq">${idx + 1}</td>
+                ${fields.map((f) => `<td class="${detailColClass(f)}">${renderDetailCell(f, row, idx, key, canEdit)}</td>`).join('')}
               </tr>`;
           }).join('')}
         </tbody>

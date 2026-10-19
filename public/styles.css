@@ -2550,9 +2550,46 @@ tr.selected td { background: var(--accent-soft); }
   color: #5a6774;
 }
 .detail-table tr.selected .col-seq { color: #f0d8dc; }
+/* İşlem kolonu sol başta — yatay kaydırırken sabit kalsın */
 .detail-table .col-acts {
-  width: 9.5rem;
+  width: 11.5rem;
+  min-width: 11.5rem;
   white-space: nowrap;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: #3d4a57;
+  box-shadow: 2px 0 0 #d5dde6;
+}
+.detail-table thead .col-acts {
+  z-index: 4;
+}
+.detail-table tbody .col-acts {
+  background: #fff;
+}
+.detail-table tbody tr:nth-child(even) .col-acts { background: #f5f8fb; }
+.detail-table tbody tr:hover .col-acts { background: #eef5f8; }
+.detail-table tbody tr.selected .col-acts {
+  background: #5c2a32;
+}
+.detail-table .col-seq {
+  position: sticky;
+  left: 11.5rem;
+  z-index: 2;
+  background: inherit;
+}
+.detail-table thead .col-seq {
+  left: 11.5rem;
+  z-index: 3;
+  background: #3d4a57;
+}
+.detail-table tbody .col-seq { background: #fff; }
+.detail-table tbody tr:nth-child(even) .col-seq { background: #f5f8fb; }
+.detail-table tbody tr:hover .col-seq { background: #eef5f8; }
+.detail-table tbody tr.selected .col-seq { background: #5c2a32; }
+/* İnceleme modunda # en solda sticky */
+.detail-table:not(:has(.col-acts)) .col-seq {
+  left: 0;
 }
 .detail-table .col--xs { width: 3.2rem; }
 .detail-table .col--s { width: 5.5rem; }
