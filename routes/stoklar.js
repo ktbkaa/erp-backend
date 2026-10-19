@@ -325,7 +325,8 @@ router.post('/', async (req, res) => {
                     satin_birimi, satis_birimi, gtip_kodu, uretici_kodu, eski_stok_kodu, orijinal_kod,
                     sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, varsayilan_kdv_oran,
                     minimum_stok, optimum_siparis_miktari, net_agirlik, brut_agirlik,
-                    seri_politika, sinif_kodu, temin_suresi_gun, yeniden_siparis_seviyesi, sabit_siparis_miktari
+                    seri_politika, sinif_kodu, temin_suresi_gun, yeniden_siparis_seviyesi, sabit_siparis_miktari,
+                    cikis_tipi, silindi
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,COALESCE($10,'Satinalma'),COALESCE($11,TRUE),
@@ -338,7 +339,8 @@ router.post('/', async (req, res) => {
                     $36,$37,$38,$39,$40,$41,
                     COALESCE($42,0),COALESCE($43,0),COALESCE($44,20),
                     COALESCE($45,0),$46,$47,$48,
-                    COALESCE($49,'Takipsiz'),$50,COALESCE($51,0),COALESCE($52,0),$53
+                    COALESCE($49,'Takipsiz'),$50,COALESCE($51,0),COALESCE($52,0),$53,
+                    COALESCE($54,'Manuel'),COALESCE($55,FALSE)
                 )
                 RETURNING id
                 `,
@@ -364,6 +366,8 @@ router.post('/', async (req, res) => {
                     m.minimum_stok ?? 0, m.optimum_siparis_miktari ?? null, m.net_agirlik ?? null, m.brut_agirlik ?? null,
                     trimOrNull(m.seri_politika) || 'Takipsiz', trimOrNull(m.sinif_kodu),
                     m.temin_suresi_gun ?? 0, m.yeniden_siparis_seviyesi ?? 0, m.sabit_siparis_miktari ?? null,
+                    trimOrNull(m.cikis_tipi) || 'Manuel',
+                    typeof m.silindi === 'boolean' ? m.silindi : false,
                 ]
             );
             const stokId = stokSonuc.rows[0].id;
@@ -488,7 +492,9 @@ router.put('/:id', async (req, res) => {
                     net_agirlik = COALESCE($50, net_agirlik),
                     brut_agirlik = COALESCE($51, brut_agirlik),
                     seri_politika = COALESCE($52, seri_politika),
-                    sinif_kodu = COALESCE($53, sinif_kodu)
+                    sinif_kodu = COALESCE($53, sinif_kodu),
+                    cikis_tipi = COALESCE($54, cikis_tipi),
+                    silindi = COALESCE($55, silindi)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -546,6 +552,8 @@ router.put('/:id', async (req, res) => {
                     m.brut_agirlik ?? null,
                     trimOrNull(m.seri_politika),
                     trimOrNull(m.sinif_kodu),
+                    trimOrNull(m.cikis_tipi),
+                    typeof m.silindi === 'boolean' ? m.silindi : null,
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });

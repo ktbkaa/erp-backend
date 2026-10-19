@@ -16,10 +16,13 @@ router.get('/', async (req, res, next) => {
     }
     const r = await pool.query(
       `
-      SELECT e.*, f.fatura_no, f.fatura_turu, f.toplam_tutar, c.cari_kodu, c.cari_adi
+      SELECT e.*, f.fatura_no, f.fatura_turu, f.toplam_tutar, c.cari_kodu, c.cari_adi,
+             mk.kabul_no, sas.siparis_no
       FROM fatura_eslestirme e
       JOIN faturalar f ON f.id = e.fatura_id
       LEFT JOIN cariler c ON c.id = f.cari_id
+      LEFT JOIN mal_kabuller mk ON mk.id = e.mal_kabul_id
+      LEFT JOIN satin_alma_siparisleri sas ON sas.id = e.siparis_id
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY e.id DESC
       `,

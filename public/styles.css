@@ -1413,6 +1413,10 @@ tr.selected td { background: var(--accent-soft); }
 .md-split--grid .md-footer {
   flex: 0 0 auto;
 }
+/* Yalnız kalem/grid sekmesi — başlık yok, tablo tam yükseklik */
+.md-split--grid-only .md-detail {
+  flex: 1 1 auto;
+}
 .md-master {
   flex: 0 0 auto;
   overflow: visible;

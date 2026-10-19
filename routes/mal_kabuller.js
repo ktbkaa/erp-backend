@@ -10,7 +10,7 @@ const { parametreAl } = require('../src/utils/yetki');
 
 async function kabulGetir(id) {
     const k = await pool.query(`
-        SELECT mk.*, sas.siparis_no, d.depo_kodu, d.depo_adi
+        SELECT mk.*, sas.siparis_no, sas.cari_id, d.depo_kodu, d.depo_adi
         FROM mal_kabuller mk
         JOIN satin_alma_siparisleri sas ON sas.id = mk.siparis_id
         JOIN depolar d ON d.id = mk.depo_id

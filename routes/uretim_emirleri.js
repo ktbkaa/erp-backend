@@ -95,6 +95,12 @@ async function emirOlustur(client, opts) {
         siparis_id,
         emir_tipi_id,
         durum,
+        baslatildi,
+        cikis_tipi,
+        giris_tipi,
+        silindi,
+        kaynak_belge_tipi,
+        kaynak_belge_id,
     } = opts;
 
     const tip = await tipCozumle(client, emir_tipi_id, siparis_id);
@@ -111,8 +117,10 @@ async function emirOlustur(client, opts) {
         INSERT INTO uretim_emirleri
             (emir_no, stok_id, urun_agaci_id, rota_id, is_yeri_id,
              hammadde_depo_id, yari_mamul_depo_id, mamul_depo_id,
-             planlanan_miktar, durum, siparis_id, emir_tipi_id, planli_kesin)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+             planlanan_miktar, durum, siparis_id, emir_tipi_id, planli_kesin,
+             baslatildi, cikis_tipi, giris_tipi, silindi,
+             kaynak_belge_tipi, kaynak_belge_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
         RETURNING id
         `,
         [
@@ -129,6 +137,12 @@ async function emirOlustur(client, opts) {
             siparis_id || null,
             tip?.id || null,
             tip?.planli_kesin || 'Kesin',
+            typeof baslatildi === 'boolean' ? baslatildi : false,
+            cikis_tipi || 'Manuel',
+            giris_tipi || 'Manuel',
+            typeof silindi === 'boolean' ? silindi : false,
+            kaynak_belge_tipi || null,
+            kaynak_belge_id || null,
         ]
     );
     const emirId = emir.rows[0].id;
@@ -523,6 +537,12 @@ router.post('/', async (req, res) => {
             planlanan_miktar,
             siparis_id,
             emir_tipi_id,
+            baslatildi,
+            cikis_tipi,
+            giris_tipi,
+            silindi,
+            kaynak_belge_tipi,
+            kaynak_belge_id,
         } = req.body;
 
         if (!stok_id || !urun_agaci_id || !rota_id || !hammadde_depo_id || !mamul_depo_id || !planlanan_miktar) {
@@ -543,6 +563,12 @@ router.post('/', async (req, res) => {
                 planlanan_miktar,
                 siparis_id,
                 emir_tipi_id,
+                baslatildi,
+                cikis_tipi,
+                giris_tipi,
+                silindi,
+                kaynak_belge_tipi,
+                kaynak_belge_id,
             })
         );
 
@@ -916,7 +942,11 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { planlanan_miktar, durum, siparis_id, emir_tipi_id, planli_kesin } = req.body;
+        const {
+            planlanan_miktar, durum, siparis_id, emir_tipi_id, planli_kesin,
+            baslatildi, cikis_tipi, giris_tipi, silindi,
+            kaynak_belge_tipi, kaynak_belge_id,
+        } = req.body;
         const allowed = ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'];
         if (durum && !allowed.includes(durum)) {
             return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
@@ -936,7 +966,13 @@ router.put('/:id', async (req, res) => {
                 durum = COALESCE($3, durum),
                 siparis_id = COALESCE($4, siparis_id),
                 emir_tipi_id = COALESCE($5, emir_tipi_id),
-                planli_kesin = COALESCE($6, planli_kesin)
+                planli_kesin = COALESCE($6, planli_kesin),
+                baslatildi = COALESCE($7, baslatildi),
+                cikis_tipi = COALESCE($8, cikis_tipi),
+                giris_tipi = COALESCE($9, giris_tipi),
+                silindi = COALESCE($10, silindi),
+                kaynak_belge_tipi = COALESCE($11, kaynak_belge_tipi),
+                kaynak_belge_id = COALESCE($12, kaynak_belge_id)
             WHERE id = $1
             RETURNING id
             `,
@@ -947,6 +983,12 @@ router.put('/:id', async (req, res) => {
                 siparis_id || null,
                 emir_tipi_id || null,
                 tipPlanli,
+                typeof baslatildi === 'boolean' ? baslatildi : null,
+                cikis_tipi || null,
+                giris_tipi || null,
+                typeof silindi === 'boolean' ? silindi : null,
+                kaynak_belge_tipi || null,
+                kaynak_belge_id ?? null,
             ]
         );
         if (!upd.rows[0]) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
@@ -971,6 +1013,32 @@ router.post('/:id/onayla', async (req, res) => {
         if (!upd.rows[0]) {
             return res.status(400).json({
                 hata: 'Emir onaylanamadı (bulunamadı veya durum Taslak/OnayBekliyor değil).',
+            });
+        }
+        res.json(await emirGetir(upd.rows[0].id));
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+/** İş emrini başlat (baslatildi = true) */
+router.post('/:id/baslat', async (req, res) => {
+    try {
+        const upd = await pool.query(
+            `
+            UPDATE uretim_emirleri
+            SET baslatildi = TRUE,
+                durum = CASE WHEN durum = 'Acik' THEN 'Uretimde' ELSE durum END
+            WHERE id = $1
+              AND COALESCE(baslatildi, FALSE) = FALSE
+              AND durum IN ('Acik', 'Uretimde', 'OnayBekliyor')
+            RETURNING id
+            `,
+            [req.params.id]
+        );
+        if (!upd.rows[0]) {
+            return res.status(400).json({
+                hata: 'Emir başlatılamadı (bulunamadı, zaten başlatılmış veya durum uygun değil).',
             });
         }
         res.json(await emirGetir(upd.rows[0].id));
