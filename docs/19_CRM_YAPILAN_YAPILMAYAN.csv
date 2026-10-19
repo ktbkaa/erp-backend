@@ -1,0 +1,16 @@
+Kod;Özellik;Kaynak;Durum;Ekran;Tablo/API;Not
+C01;Müşteri adayları;Uyumsoft Adaylar;Yapildi;crm-adaylar;crm_adaylar;Cariye dönüştür
+C02;Aday→cari dönüşüm;Uyumsoft Dönüştür;Yapildi;crm-adaylar;/cariye-donustur;Musteri cari + kontak/fırsat bağ
+C03;Kontaklar;Uyumsoft Yetkili;Yapildi;crm-kontaklar;crm_kontaklar;Cari veya aday
+C04;Fırsatlar + ürün satırları;Uyumsoft Fırsatlar;Yapildi;crm-firsatlar;crm_firsatlar+satirlari;Aşama parametreli
+C05;Fırsat aşamaları tanımı;Uyumsoft Aşama;Yapildi;crm-firsat-asamalari;crm_firsat_asamalari;Seed aşamalar
+C06;Fırsat kapat;Uyumsoft Fırsat Kapat;Yapildi;API (+dialog);/kapat;UI birincil buton teklif
+C07;Fırsat→teklif;Uyumsoft Yeni Teklif;Yapildi;crm-firsatlar→satis-teklifleri;firsat_id;Nested convert
+C08;Faaliyet tipleri;Uyumsoft Faaliyet Tipi;Yapildi;crm-faaliyet-tipleri;crm_faaliyet_tipleri;Seed tipler
+C09;Faaliyet planı;Uyumsoft Plan;Yapildi;crm-faaliyet-planlari;crm_faaliyet_planlari;Plandan faaliyet
+C10;Faaliyetler;Uyumsoft Faaliyet;Yapildi;crm-faaliyetler;crm_faaliyetler;Cari/aday/fırsat
+C11;Görevler;ERP-CRM must-have;Yapildi;crm-gorevler;crm_gorevler;Dokümanda yok
+C12;CRM müşteri kartı kopyası;Uyumsoft Müşteriler;Yapilmadi;—;—;Mevcut cari kullanılır
+C13;Kampanya;Uyumsoft Kampanya;Yapilmadi;—;—;Dalga dışı
+C14;Anket;Uyumsoft Anket;Yapilmadi;—;—;Dalga dışı
+C15;Ajanda takvim UI;Uyumsoft Ajanda;Yapilmadi;—;—;Plan listesi yeterli
