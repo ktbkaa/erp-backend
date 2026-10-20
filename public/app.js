@@ -3048,7 +3048,7 @@ const MODULES = [
         codeField: 'siparis_no',
         nameField: 'cari_adi',
         compactMaster: true,
-        masterPrimaryMax: 12,
+        masterPrimaryMax: 16,
         convertAction: {
           label: 'Sevk Emri Oluştur',
           path: '/siparisler/{id}/sevk-emri-olustur',
@@ -3087,7 +3087,7 @@ const MODULES = [
           { key: 'faturalandi', label: 'Faturalandı' },
           { key: 'proje_kodu', label: 'Proje', mono: true },
         ],
-        // Kompakt başlık (kimlik + organizasyon) — finans/adres/not ayrı yerde
+        // Kompakt başlık — notlar alt şeritte; finans/geçerlilik kalemde; adres ayrı sekme
         masterFields: [
           { key: 'siparis_no', label: 'Sipariş no', code: true, lead: true },
           { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true, lead: true, fillCariAdres: true },
@@ -3099,8 +3099,14 @@ const MODULES = [
           { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu', lead: true },
           { key: 'teklif_id', label: 'Teklif', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'teklif_no', fillFrom: 'teklif-satirlar' },
           { key: 'musteri_siparis_no', label: 'Müş. sip. no' },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu', lead: true },
+          { key: 'odeme_kosulu', label: 'Ödeme koşulu', lead: true },
+          { key: 'teslimat_kosulu', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'kosul_kodu', labelKey: 'kosul_adi', lead: true },
+          // Alt şerit (Belge notu alanı)
+          { key: 'not_public', label: 'Müşteri notu' },
+          { key: 'not_internal', label: 'Dahili not' },
         ],
-        // Finans + satır verisi kalem formunda
+        // Finans + geçerlilik/fiyat listesi kalem formunda
         detailFields: [
           { key: 'satir_tipi', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
@@ -3116,6 +3122,8 @@ const MODULES = [
           { key: 'iskonto_oran3', label: 'İsk3 %', type: 'number', size: 'short' },
           { key: 'kdv_oran', label: 'KDV %', type: 'number', size: 'short' },
           { key: 'kdv_durumu', label: 'KDV durum', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'fiyat_liste_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'liste_adi', codeKey: 'liste_kodu' },
+          { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date', size: 'short' },
           { key: 'teslim_tarihi', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
           { key: 'proje_kodu', label: 'Proje', size: 'short' },
@@ -3134,23 +3142,11 @@ const MODULES = [
             id: 'kalemler',
             label: 'Kalemler',
             kind: 'master-grid',
-            masterFields: [
-              { key: 'siparis_no', label: 'Sipariş no', code: true, lead: true },
-              { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true, lead: true, fillCariAdres: true },
-              { key: 'siparis_tarihi', label: 'Tarih', type: 'date', lead: true },
-              { key: 'teslim_tarihi', label: 'Teslim', type: 'date', lead: true },
-              { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'], lead: true },
-              { key: 'siparis_turu', label: 'Tür', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true, lead: true },
-              { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu', lead: true },
-              { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu', lead: true },
-              { key: 'teklif_id', label: 'Teklif', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'teklif_no', fillFrom: 'teklif-satirlar' },
-              { key: 'musteri_siparis_no', label: 'Müş. sip. no' },
-            ],
+            masterFields: null, // screen.masterFields (normalize)
             grid: {
               key: 'kalemler',
               slots: 5,
-              // null → normalizeScreen detailFields ile doldurur
-              fields: null,
+              fields: null, // detailFields (normalize)
             },
           },
           {
@@ -3163,22 +3159,6 @@ const MODULES = [
               { key: 'sevk_ilce', label: 'İlçe' },
               { key: 'sevk_ulke', label: 'Ülke' },
               { key: 'sevk_posta_kodu', label: 'Posta kodu' },
-            ],
-          },
-          {
-            id: 'odeme',
-            label: 'Ödeme / Not',
-            kind: 'fields',
-            fields: [
-              { key: 'odeme_kosulu', label: 'Ödeme koşulu' },
-              { key: 'odeme_sekli', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'] },
-              { key: 'teslimat_kosulu', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'kosul_kodu', labelKey: 'kosul_adi' },
-              { key: 'fiyat_liste_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'liste_adi', codeKey: 'liste_kodu' },
-              { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date' },
-              { key: 'siparis_kaynak', label: 'Kaynak', type: 'select', options: ['Manuel', 'Teklif', 'Web', 'EDI', 'CRM'] },
-              { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
-              { key: 'not_public', label: 'Müşteri notu' },
-              { key: 'not_internal', label: 'Dahili not' },
             ],
           },
         ],
@@ -4096,9 +4076,14 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     else s.detailSlots = 3;
   }
 
-  // Elle tanımlı master-grid: grid.fields yoksa detailFields kopyala
+  // Elle tanımlı master-grid: master/grid boşsa ekran alanlarından kopyala
   (s.formTabs || []).forEach((tab) => {
-    if (tab?.kind === 'master-grid' && tab.grid
+    if (tab?.kind !== 'master-grid') return;
+    if ((!Array.isArray(tab.masterFields) || !tab.masterFields.length)
+        && Array.isArray(s.masterFields) && s.masterFields.length) {
+      tab.masterFields = s.masterFields.map((f) => ({ ...f }));
+    }
+    if (tab.grid
         && (!Array.isArray(tab.grid.fields) || !tab.grid.fields.length)
         && Array.isArray(s.detailFields) && s.detailFields.length) {
       tab.grid.fields = s.detailFields.map((f) => ({ ...f }));
@@ -8163,9 +8148,12 @@ function renderMasterGridPanel(tab, rec) {
     ? Number(screen.masterPrimaryMax)
     : MASTER_PRIMARY_MAX;
   const compact = Boolean(screen?.compactMaster);
-  // compactMaster: kimlik/org üst şeritte — kalem panelinde tekrarlama
-  const masterSrc = compact ? [] : (tab.masterFields || []);
-  const { primary, extras, footerNotes } = partitionMasterFields(masterSrc, maxPrimary);
+  const allMaster = tab.masterFields || screen?.masterFields || [];
+  const partitioned = partitionMasterFields(allMaster, maxPrimary);
+  // compactMaster: kimlik/org üst şeritte — notlar yine alt şeritte kalsın
+  const primary = compact ? [] : partitioned.primary;
+  const extras = compact ? [] : partitioned.extras;
+  const footerNotes = partitioned.footerNotes;
   const gridTab = {
     kind: 'grid',
     key: tab.grid?.key || tab.key || '_detail',
@@ -9421,7 +9409,7 @@ function applyRotaCompSelection(screen, { addAnother = false } = {}) {
 
 /** Başlıktan düşürülen PB/kur/depo gibi alanları ilk kalemden geri doldur (API bekler). */
 function backfillHeaderFromLines(out, screen) {
-  const lineKeys = ['para_birimi', 'kur', 'kur_tipi', 'depo_id', 'proje_kodu', 'bolge', 'teslim_tarihi', 'sevk_tarihi', 'iskonto_oran'];
+  const lineKeys = ['para_birimi', 'kur', 'kur_tipi', 'depo_id', 'proje_kodu', 'bolge', 'teslim_tarihi', 'sevk_tarihi', 'iskonto_oran', 'fiyat_liste_id', 'gecerlilik_tarihi'];
   let lines = null;
   (screen.formTabs || []).forEach((tab) => {
     if (lines) return;

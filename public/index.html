@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261020b" />
+  <link rel="stylesheet" href="/styles.css?v=20261020c" />
 </head>
 <body>
   <div id="formSoloLoader" class="form-solo-loader" hidden aria-live="polite" aria-busy="true">
@@ -73,7 +73,7 @@
         </label>
         <p class="login-error" id="loginError" hidden role="alert"></p>
         <button type="submit" class="btn login-submit" id="loginSubmit">Giriş yap</button>
-        <p class="login-foot">KTB ERP · UI build <span id="loginBuildTag">20261020b</span></p>
+        <p class="login-foot">KTB ERP · UI build <span id="loginBuildTag">20261020c</span></p>
       </form>
     </div>
   </section>
@@ -81,7 +81,7 @@
   <div class="app-shell" id="appShell">
 
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand" id="btnHome" title="KTB ERP · UI build 20261020b" aria-label="Ana sayfa">
+      <div class="sidebar-brand" id="btnHome" title="KTB ERP · UI build 20261020c" aria-label="Ana sayfa">
         <span class="brand-mark">KTB</span>
         <span class="brand-name">KTB ERP</span>
       </div>
@@ -252,7 +252,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261020b"></script>
+  <script src="/app.js?v=20261020c"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {
@@ -262,10 +262,10 @@
         const r = await fetch('/health', { cache: 'no-store' });
         const j = await r.json();
         setTip(r.ok && j.durum === 'ok'
-          ? 'KTB ERP · UI build 20261020b · API bağlı'
-          : 'KTB ERP · UI build 20261020b · API hata');
+          ? 'KTB ERP · UI build 20261020c · API bağlı'
+          : 'KTB ERP · UI build 20261020c · API hata');
       } catch (e) {
-        setTip('KTB ERP · UI build 20261020b · API YOK');
+        setTip('KTB ERP · UI build 20261020c · API YOK');
         console.error('Health başarısız — sayfayı http://localhost:3000 ile açın', e);
       }
     })();
