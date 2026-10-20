@@ -4016,6 +4016,125 @@ function dedupeMasterAgainstGrid(screen) {
   });
 }
 
+/**
+ * Belge ekranı mı? (başlık + kalem satırları — stok kartı / BOM / rota hariç)
+ * Satış siparişi kompakt kabuğu bu ekranlara uygulanır.
+ */
+function isCompactBelgeScreen(s) {
+  if (!s || s.compactMaster === false) return false;
+  if (s.detailAsFields) return false;
+  if (!Array.isArray(s.detailFields) || !s.detailFields.length) return false;
+  if (!(s.detailSlots > 0)) return false;
+  const skip = new Set([
+    'stok-karti', 'cari-kartlari', 'urun-agaci', 'rotalar',
+    'kullanicilar', 'kullanici-gruplari', 'firmalar', 'is-yerleri', 'depolar',
+    'bom-malzeme-degisikligi', 'bom-patlatma', 'bom-seviye-listesi',
+    'siparis-is-emri', 'toplu-is-emri',
+    // Kart / tanım — belge kabuğu değil
+    'crm-firsatlar', 'fiyat-listeleri', 'kk-kontrol-planlari',
+  ]);
+  if (skip.has(s.id)) return false;
+  if ((s.formTabs || []).some((t) => /bom|rota|yetki|workspace/i.test(String(t.kind || '')))) return false;
+  const dKeys = new Set(s.detailFields.map((f) => f.key));
+  // Klasik malzeme/satır belgeleri (+ üretim emri operasyon satırları)
+  return dKeys.has('stok_id') || dKeys.has('bilesen_stok_id')
+    || dKeys.has('miktar') || dKeys.has('satir_aciklama');
+}
+
+const COMPACT_DROP_KEYS = new Set([
+  'siparis_kaynak', 'teklif_kaynak', 'kaynak', 'belge_kaynak',
+]);
+const COMPACT_ADDR_RE = /^(sevk_|fatura_adres)/i;
+const COMPACT_TO_LINE_RE = /^(para_birimi|kur|kur_tipi|iskonto_oran|iskonto_oran2|iskonto_oran3|kdv_oran|kdv_durumu|otv_oran|tevkifat_oran|fiyat_liste_id|gecerlilik_tarihi|proje_kodu|bolge)$/i;
+const COMPACT_HEADER_LEAD_RE = /^(firma_id|is_yeri_id|cari_id|tedarikci_cari_id|durum|hareket_kodu_id|odeme_kosulu|odeme_sekli|teslimat_kosulu|siparis_turu|.*_tarihi$|.*_no$)$/i;
+
+/**
+ * Satış siparişi düzeni: kompakt başlık + Kalemler (+ Adres) + not alt şerit.
+ * Finans/geçerlilik/fiyat listesi → kalem; sevk adresi → Adres sekmesi.
+ */
+function applyCompactBelgeShell(s) {
+  if (!isCompactBelgeScreen(s)) return;
+
+  // Mevcut formTabs’taki adres / not / başlık alanlarını da topla (elle tanımlı kabuklar)
+  const fromTabs = [];
+  (s.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'fields' && Array.isArray(tab.fields)) fromTabs.push(...tab.fields);
+    if (Array.isArray(tab.masterFields)) fromTabs.push(...tab.masterFields);
+  });
+
+  const seen = new Set();
+  const master = [];
+  [...(s.masterFields || []), ...fromTabs].forEach((f) => {
+    if (!f?.key || seen.has(f.key)) return;
+    seen.add(f.key);
+    master.push(f);
+  });
+
+  const detail = Array.isArray(s.detailFields) ? [...s.detailFields] : [];
+  const detailKeys = new Set(detail.map((f) => f.key));
+  const header = [];
+  const adres = [];
+
+  master.forEach((f) => {
+    if (!f?.key) return;
+    if (COMPACT_DROP_KEYS.has(f.key)) return;
+    if (COMPACT_ADDR_RE.test(f.key)) {
+      adres.push({ ...f });
+      return;
+    }
+    if (isFooterNoteField(f)) {
+      header.push({ ...f }); // notlar master’da kalır → footer’a iner
+      return;
+    }
+    if (COMPACT_TO_LINE_RE.test(f.key)) {
+      if (!detailKeys.has(f.key)) {
+        detail.push({
+          ...f,
+          size: f.size || (f.type === 'date' || f.type === 'number' ? 'short' : undefined),
+        });
+        detailKeys.add(f.key);
+      }
+      return;
+    }
+    const next = { ...f };
+    if (f.code || f.required || COMPACT_HEADER_LEAD_RE.test(f.key) || /tarih/i.test(f.key)) {
+      next.lead = true;
+    }
+    if ((f.key === 'cari_id' || f.key === 'tedarikci_cari_id') && !next.fillCariAdres) {
+      next.fillCariAdres = true;
+    }
+    header.push(next);
+  });
+
+  s.masterFields = header;
+  s.detailFields = detail;
+  s.compactMaster = true;
+  if (!s.masterPrimaryMax || s.masterPrimaryMax < 12) s.masterPrimaryMax = 16;
+
+  const kalemLabel = /irsaliye|sevk|mal-kabul/i.test(s.id) ? 'Satırlar' : 'Kalemler';
+
+  const tabs = [{
+    id: 'kalemler',
+    label: kalemLabel,
+    kind: 'master-grid',
+    masterFields: header.map((f) => ({ ...f })),
+    grid: {
+      key: s.detailKey || '_detail',
+      slots: s.detailSlots,
+      fields: detail.map((f) => ({ ...f })),
+    },
+  }];
+  if (adres.length) {
+    tabs.push({
+      id: 'adres',
+      label: 'Adres',
+      kind: 'fields',
+      fields: adres,
+    });
+  }
+  s.formTabs = tabs;
+}
+
 function normalizeScreen(raw, moduleId, moduleTitle) {
   const s = { ...raw, moduleId, moduleTitle };
   s.readOnly = s.id === 'depo-bakiye' || s.crud === false;
@@ -4076,6 +4195,9 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     else s.detailSlots = 3;
   }
 
+  // Satış siparişi kompakt kabuğu → tüm uygun belge ekranları
+  applyCompactBelgeShell(s);
+
   // Elle tanımlı master-grid: master/grid boşsa ekran alanlarından kopyala
   (s.formTabs || []).forEach((tab) => {
     if (tab?.kind !== 'master-grid') return;
@@ -4126,7 +4248,7 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
       }];
     }
   } else {
-    // Elle tanımlı formTabs (irsaliye vb.) — yine dedupe
+    // Elle / kompakt kabuk formTabs — yine dedupe
     dedupeMasterAgainstGrid(s);
   }
 
