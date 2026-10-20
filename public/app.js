@@ -3922,6 +3922,78 @@ function moduleMenuSections(mod) {
   return [{ id: '_all', title: null, screens }];
 }
 
+/**
+ * Başlık ↔ kalem tekrarı: aynı alan hem master’da hem grid’de ise başlıktan düşür.
+ * Satır niteliğindeki alanlar yalnızca master’daysa kaleme taşı.
+ */
+function dedupeMasterAgainstGrid(screen) {
+  const ALWAYS_KEEP = new Set([
+    screen.codeField,
+    screen.nameField,
+    'firma_id',
+    'is_yeri_id',
+    'cari_id',
+    'tedarikci_cari_id',
+    'durum',
+  ].filter(Boolean));
+
+  const isDocRefId = (key) => (
+    /_id$/.test(key)
+    && !/^(stok|depo|parti|bilesen|fiyat_liste)_id$/.test(key)
+  );
+
+  const isLineish = (key) => (
+    /^(stok_id|stok_kodu|stok_adi|miktar|birim_fiyat|birim|kdv_oran|kdv_durumu|satir_|iskonto_oran|tedarikci_stok_|giren_miktar|kabul_edilen|reddedilen|sevk_edilen|kalan_|rezerve_|bekleyen_|fatura_edilen)/i.test(key)
+  );
+
+  const apply = (masterFields, gridFields) => {
+    if (!Array.isArray(masterFields) || !Array.isArray(gridFields) || !gridFields.length) {
+      return { masterFields, gridFields };
+    }
+    const gridKeys = new Set(gridFields.map((f) => f.key));
+    const moved = [];
+    const kept = [];
+    masterFields.forEach((f) => {
+      if (!f?.key) return;
+      if (ALWAYS_KEEP.has(f.key) || isDocRefId(f.key)) {
+        kept.push(f);
+        return;
+      }
+      if (gridKeys.has(f.key)) return; // kalemde var → başlıktan çıkar
+      if (isLineish(f.key)) {
+        moved.push(f);
+        return;
+      }
+      kept.push(f);
+    });
+    const nextGrid = moved.length
+      ? gridFields.concat(moved.filter((f) => !gridKeys.has(f.key)))
+      : gridFields;
+    return { masterFields: kept, gridFields: nextGrid };
+  };
+
+  if (Array.isArray(screen.masterFields) && Array.isArray(screen.detailFields) && screen.detailFields.length) {
+    const r = apply(screen.masterFields, screen.detailFields);
+    screen.masterFields = r.masterFields;
+    screen.detailFields = r.gridFields;
+  }
+
+  (screen.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'master-grid') {
+      const gFields = tab.grid?.fields || tab.detailFields || [];
+      const r = apply(tab.masterFields || screen.masterFields || [], gFields);
+      tab.masterFields = r.masterFields;
+      if (tab.grid) tab.grid.fields = r.gridFields;
+      else tab.detailFields = r.gridFields;
+    }
+    if (tab.kind === 'master-detail') {
+      const r = apply(tab.masterFields || [], tab.detailFields || []);
+      tab.masterFields = r.masterFields;
+      tab.detailFields = r.gridFields;
+    }
+  });
+}
+
 function normalizeScreen(raw, moduleId, moduleTitle) {
   const s = { ...raw, moduleId, moduleTitle };
   s.readOnly = s.id === 'depo-bakiye' || s.crud === false;
@@ -3982,6 +4054,11 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     else s.detailSlots = 3;
   }
 
+  // Önce başlık↔kalem tekrarını temizle (formTabs’tan önce)
+  if (!Array.isArray(s.formTabs) || !s.formTabs.length) {
+    dedupeMasterAgainstGrid(s);
+  }
+
   // Tek ekran: master üstte, detay altta (ayrı Master/Detay sekmeleri yok)
   if (!Array.isArray(s.formTabs) || !s.formTabs.length) {
     if (s.detailAsFields && s.detailFields.length) {
@@ -4012,6 +4089,9 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
         fields: s.masterFields,
       }];
     }
+  } else {
+    // Elle tanımlı formTabs (irsaliye vb.) — yine dedupe
+    dedupeMasterAgainstGrid(s);
   }
 
   // Aktif checkbox → Pasif (DB aktif kalır; tik = pasif)
@@ -9185,6 +9265,28 @@ function applyRotaCompSelection(screen, { addAnother = false } = {}) {
   return true;
 }
 
+/** Başlıktan düşürülen PB/kur/depo gibi alanları ilk kalemden geri doldur (API bekler). */
+function backfillHeaderFromLines(out, screen) {
+  const lineKeys = ['para_birimi', 'kur', 'kur_tipi', 'depo_id', 'proje_kodu', 'bolge', 'teslim_tarihi', 'sevk_tarihi', 'iskonto_oran'];
+  let lines = null;
+  (screen.formTabs || []).forEach((tab) => {
+    if (lines) return;
+    if (tab.kind === 'grid' && Array.isArray(out[tab.key]) && out[tab.key].length) lines = out[tab.key];
+    if (tab.kind === 'master-grid') {
+      const k = tab.grid?.key || tab.key || '_detail';
+      if (Array.isArray(out[k]) && out[k].length) lines = out[k];
+    }
+  });
+  if (!lines?.length) return;
+  const first = lines[0] || {};
+  lineKeys.forEach((k) => {
+    if (out[k] == null || out[k] === '') {
+      if (first[k] != null && first[k] !== '') out[k] = first[k];
+      else if (screen.defaults && screen.defaults[k] != null) out[k] = screen.defaults[k];
+    }
+  });
+}
+
 function readTabbedPayload(screen) {
   const out = readMasterFromForm(screen);
   (screen.formTabs || []).forEach((tab) => {
@@ -9210,6 +9312,7 @@ function readTabbedPayload(screen) {
       }));
     }
   });
+  backfillHeaderFromLines(out, screen);
   return out;
 }
 
@@ -9353,6 +9456,21 @@ function applyFormSoloChrome() {
   const shell = $('#appShell');
   if (shell) {
     shell.classList.add('form-solo', 'sidebar-collapsed');
+  }
+}
+
+function revealFormSoloReady() {
+  document.documentElement.classList.remove('form-solo-boot');
+  document.body.classList.remove('form-solo-booting');
+  const loader = $('#formSoloLoader');
+  if (loader) {
+    loader.hidden = true;
+    loader.setAttribute('aria-busy', 'false');
+  }
+  const shell = $('#appShell');
+  if (shell) {
+    shell.style.opacity = '';
+    shell.style.pointerEvents = '';
   }
 }
 
@@ -10755,10 +10873,16 @@ async function bootIntoApp() {
       } catch (_) { /* ignore */ }
     }
     document.title = `${findScreen(solo.screenId).title} · ${MODE_LABELS[solo.mode] || solo.mode} · KTB ERP`;
-    await openForm(solo.mode, { inPlace: true });
+    try {
+      await openForm(solo.mode, { inPlace: true });
+    } finally {
+      revealFormSoloReady();
+    }
     return;
   }
 
+  // Normal açılış — boot sınıfı kalmışsa temizle
+  revealFormSoloReady();
   const id = (location.hash || '').replace(/^#/, '');
   if (id && findScreen(id)) openScreen(id);
   else showHome();
