@@ -3700,6 +3700,337 @@ const MODULES = [
     ],
   },
   {
+    id: 'onay',
+    title: 'Onay Yönetimi',
+    sections: [
+      {
+        id: 'islem',
+        title: 'Onay',
+        screenIds: ['onaylarim', 'onay-izleme', 'onay-yetki-devri'],
+      },
+      {
+        id: 'tanimlar',
+        title: 'Sabit Tanımlar',
+        screenIds: [
+          'onay-rol-tanim',
+          'onay-rota-tanim',
+          'onay-mesaj-sablon',
+          'onay-modul-kullanim',
+          'onay-durum-tanim',
+        ],
+      },
+    ],
+    screens: [
+      {
+        id: 'onaylarim',
+        title: 'Onaylarım',
+        endpoint: '/onay-kayitlari?benim=true',
+        crud: false,
+        readOnly: false,
+        codeField: 'onay_no',
+        nameField: 'belge_ozet',
+        approveAction: { label: 'Onayla', path: '/onay-kayitlari/{id}/onayla' },
+        banner: 'Size (rolünüz / yetki devri) atanmış bekleyen onaylar. İncele → Onayla veya Reddet.',
+        filters: [
+          { key: 'onay_no', label: 'Onay no' },
+          { key: 'belge_no', label: 'Belge no' },
+          { key: 'modul_kodu', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'onay_no', label: 'Onay', mono: true },
+          { key: 'modul_kodu', label: 'Modül' },
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'belge_ozet', label: 'Özet' },
+          { key: 'tutar', label: 'Tutar' },
+          { key: 'durum_adi', label: 'Durum' },
+          { key: 'aktif_adim_sira', label: 'Adım' },
+          { key: 'baslama_tarihi', label: 'Başlama' },
+        ],
+        masterFields: [
+          { key: 'onay_no', label: 'Onay no', code: true },
+          { key: 'modul_kodu', label: 'Modül' },
+          { key: 'ekran_id', label: 'Ekran' },
+          { key: 'belge_no', label: 'Belge no' },
+          { key: 'belge_ozet', label: 'Özet', name: true },
+          { key: 'tutar', label: 'Tutar', type: 'number' },
+          { key: 'para_birimi', label: 'PB' },
+          { key: 'durum_kodu', label: 'Durum' },
+          { key: 'rota_adi', label: 'Rota' },
+          { key: 'baslatan_adi', label: 'Başlatan' },
+          { key: 'aciklama', label: 'Açıklama / not' },
+        ],
+        detailFields: [
+          { key: 'sira_no', label: 'Sıra', type: 'number' },
+          { key: 'adim_adi', label: 'Adım' },
+          { key: 'rol_adi', label: 'Rol' },
+          { key: 'durum_kodu', label: 'Durum' },
+          { key: 'onaylayan_adi', label: 'Onaylayan' },
+          { key: 'notlar', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+      },
+      {
+        id: 'onay-izleme',
+        title: 'Onay İzleme',
+        endpoint: '/onay-kayitlari',
+        crud: false,
+        readOnly: true,
+        codeField: 'onay_no',
+        nameField: 'belge_ozet',
+        banner: 'Tüm onay kayıtları — durum, belge ve rota izi.',
+        filters: [
+          { key: 'onay_no', label: 'Onay no' },
+          { key: 'belge_no', label: 'Belge no' },
+          { key: 'modul_kodu', label: 'Modül' },
+          { key: 'durum_kodu', label: 'Durum' },
+          { key: 'ekran_id', label: 'Ekran' },
+        ],
+        columns: [
+          { key: 'onay_no', label: 'Onay', mono: true },
+          { key: 'modul_kodu', label: 'Modül' },
+          { key: 'ekran_id', label: 'Ekran', mono: true },
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'tutar', label: 'Tutar' },
+          { key: 'durum_adi', label: 'Durum' },
+          { key: 'rota_adi', label: 'Rota' },
+          { key: 'baslatan_adi', label: 'Başlatan' },
+          { key: 'baslama_tarihi', label: 'Başlama' },
+          { key: 'kapanis_tarihi', label: 'Kapanış' },
+        ],
+        masterFields: [
+          { key: 'onay_no', label: 'Onay no', code: true },
+          { key: 'modul_kodu', label: 'Modül' },
+          { key: 'ekran_id', label: 'Ekran' },
+          { key: 'belge_no', label: 'Belge no' },
+          { key: 'belge_ozet', label: 'Özet', name: true },
+          { key: 'tutar', label: 'Tutar', type: 'number' },
+          { key: 'durum_kodu', label: 'Durum' },
+          { key: 'rota_adi', label: 'Rota' },
+          { key: 'kullanim_adi', label: 'Kullanım' },
+          { key: 'baslatan_adi', label: 'Başlatan' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'sira_no', label: 'Sıra', type: 'number' },
+          { key: 'adim_adi', label: 'Adım' },
+          { key: 'rol_adi', label: 'Rol' },
+          { key: 'durum_kodu', label: 'Durum' },
+          { key: 'onaylayan_adi', label: 'Onaylayan' },
+          { key: 'islem_tarihi', label: 'İşlem' },
+          { key: 'notlar', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+      },
+      {
+        id: 'onay-yetki-devri',
+        title: 'Onay Yetki Devri',
+        endpoint: '/onay-yetki-devirleri',
+        crud: true,
+        numeratorSeri: 'ONAY_DEVIR',
+        codeField: 'devir_kodu',
+        nameField: 'aciklama',
+        filters: [
+          { key: 'devir_kodu', label: 'Devir kodu' },
+          { key: 'veren_kodu', label: 'Veren' },
+          { key: 'alan_kodu', label: 'Alan' },
+        ],
+        columns: [
+          { key: 'devir_kodu', label: 'Kod', mono: true },
+          { key: 'veren_adi', label: 'Veren' },
+          { key: 'alan_adi', label: 'Alan' },
+          { key: 'rol_adi', label: 'Rol' },
+          { key: 'baslangic_tarihi', label: 'Başlangıç' },
+          { key: 'bitis_tarihi', label: 'Bitiş' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'devir_kodu', label: 'Devir kodu', code: true },
+          { key: 'veren_kisi_id', label: 'Yetkiyi veren', type: 'lookup', lookup: 'kisiler', valueKey: 'id', labelKey: 'ad', codeKey: 'kullanici_kodu', required: true },
+          { key: 'alan_kisi_id', label: 'Yetkiyi alan', type: 'lookup', lookup: 'kisiler', valueKey: 'id', labelKey: 'ad', codeKey: 'kullanici_kodu', required: true },
+          { key: 'rol_id', label: 'Rol (boş = tüm roller)', type: 'lookup', lookup: 'onay-rolleri', valueKey: 'id', labelKey: 'rol_adi', codeKey: 'rol_kodu' },
+          { key: 'baslangic_tarihi', label: 'Başlangıç', type: 'date', required: true },
+          { key: 'bitis_tarihi', label: 'Bitiş', type: 'date' },
+        ],
+        detailFields: [
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'onay-rol-tanim',
+        title: 'Onay Rol Tanımı',
+        endpoint: '/onay-rolleri',
+        crud: true,
+        numeratorSeri: 'ONAY_ROL',
+        codeField: 'rol_kodu',
+        nameField: 'rol_adi',
+        filters: [
+          { key: 'rol_kodu', label: 'Rol kodu' },
+          { key: 'rol_adi', label: 'Rol adı' },
+        ],
+        columns: [
+          { key: 'rol_kodu', label: 'Kod', mono: true },
+          { key: 'rol_adi', label: 'Ad' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'rol_kodu', label: 'Rol kodu', code: true },
+          { key: 'rol_adi', label: 'Rol adı', name: true, required: true },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [
+          { key: 'kisi_id', label: 'Kullanıcı', type: 'lookup', lookup: 'kisiler', valueKey: 'id', labelKey: 'ad', codeKey: 'kullanici_kodu' },
+          { key: 'grup_kodu', label: 'Grup', type: 'lookup', lookup: 'kullanici-gruplari', valueKey: 'grup_kodu', labelKey: 'grup_adi', codeKey: 'grup_kodu' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: 'uyeler',
+      },
+      {
+        id: 'onay-rota-tanim',
+        title: 'Onay Rotası',
+        endpoint: '/onay-rotalari',
+        crud: true,
+        numeratorSeri: 'ONAY_ROTA',
+        codeField: 'rota_kodu',
+        nameField: 'rota_adi',
+        banner: 'Rota + adım tasarımı tek ekranda. Adım sırası, rol ve isteğe bağlı min. tutar eşiği.',
+        filters: [
+          { key: 'rota_kodu', label: 'Rota kodu' },
+          { key: 'rota_adi', label: 'Rota adı' },
+        ],
+        columns: [
+          { key: 'rota_kodu', label: 'Kod', mono: true },
+          { key: 'rota_adi', label: 'Ad' },
+          { key: 'firma_kodu', label: 'Firma', mono: true },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'rota_kodu', label: 'Rota kodu', code: true },
+          { key: 'rota_adi', label: 'Rota adı', name: true, required: true },
+          { key: 'firma_id', label: 'Firma (boş = tümü)', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [
+          { key: 'sira_no', label: 'Sıra', type: 'number', required: true },
+          { key: 'adim_adi', label: 'Adım adı', required: true },
+          { key: 'rol_id', label: 'Onay rolü', type: 'lookup', lookup: 'onay-rolleri', valueKey: 'id', labelKey: 'rol_adi', codeKey: 'rol_kodu', required: true },
+          { key: 'zorunlu', label: 'Zorunlu', type: 'checkbox' },
+          { key: 'paralel', label: 'Paralel', type: 'checkbox' },
+          { key: 'min_tutar', label: 'Min. tutar (eşik)', type: 'number' },
+          { key: 'aciklama', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+      },
+      {
+        id: 'onay-mesaj-sablon',
+        title: 'Onay Mesaj Şablonu',
+        endpoint: '/onay-mesaj-sablonlari',
+        crud: true,
+        numeratorSeri: 'ONAY_SABLON',
+        codeField: 'sablon_kodu',
+        nameField: 'sablon_adi',
+        filters: [
+          { key: 'sablon_kodu', label: 'Kod' },
+          { key: 'olay', label: 'Olay' },
+        ],
+        columns: [
+          { key: 'sablon_kodu', label: 'Kod', mono: true },
+          { key: 'sablon_adi', label: 'Ad' },
+          { key: 'olay', label: 'Olay' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'sablon_kodu', label: 'Şablon kodu', code: true },
+          { key: 'sablon_adi', label: 'Şablon adı', name: true, required: true },
+          { key: 'olay', label: 'Olay', type: 'select', options: ['Bekleme', 'Onay', 'Red', 'Devret', 'Iptal', 'Tamam'], required: true },
+          { key: 'konu', label: 'Konu' },
+        ],
+        detailFields: [
+          { key: 'govde', label: 'Gövde ({{belge_no}}, {{modul}}, {{tutar}}, {{onayci}}, {{gerekce}})' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'onay-modul-kullanim',
+        title: 'Onay Modül Kullanımı',
+        endpoint: '/onay-modul-kullanimlari',
+        crud: true,
+        numeratorSeri: 'ONAY_KULLANIM',
+        codeField: 'kullanim_kodu',
+        nameField: 'kullanim_adi',
+        banner: 'Hangi ekranın hangi rotayı kullanacağı + min. tutar / otomatik onaya gönderim kuralı.',
+        filters: [
+          { key: 'kullanim_kodu', label: 'Kod' },
+          { key: 'ekran_id', label: 'Ekran' },
+          { key: 'modul_kodu', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'kullanim_kodu', label: 'Kod', mono: true },
+          { key: 'kullanim_adi', label: 'Ad' },
+          { key: 'modul_kodu', label: 'Modül' },
+          { key: 'ekran_id', label: 'Ekran', mono: true },
+          { key: 'rota_adi', label: 'Rota' },
+          { key: 'min_tutar', label: 'Min tutar' },
+          { key: 'otomatik_gonder', label: 'Oto. gönder' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'kullanim_kodu', label: 'Kullanım kodu', code: true },
+          { key: 'kullanim_adi', label: 'Kullanım adı', name: true, required: true },
+          { key: 'modul_kodu', label: 'Modül', type: 'select', options: ['Satinalma', 'Satis', 'Uretim', 'Stok', 'Finans', 'Kalite', 'CRM', 'Genel'], required: true },
+          { key: 'ekran_id', label: 'Ekran id', required: true },
+          { key: 'rota_id', label: 'Onay rotası', type: 'lookup', lookup: 'onay-rotalari', valueKey: 'id', labelKey: 'rota_adi', codeKey: 'rota_kodu', required: true },
+          { key: 'firma_id', label: 'Firma (boş = tümü)', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
+          { key: 'min_tutar', label: 'Min. tutar', type: 'number' },
+          { key: 'otomatik_gonder', label: 'Otomatik onaya gönder', type: 'checkbox' },
+          { key: 'sablon_id', label: 'Mesaj şablonu', type: 'lookup', lookup: 'onay-mesaj-sablonlari', valueKey: 'id', labelKey: 'sablon_adi', codeKey: 'sablon_kodu' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+          { key: 'aciklama', label: 'Açıklama' },
+        ],
+        detailFields: [],
+        detailKey: null,
+      },
+      {
+        id: 'onay-durum-tanim',
+        title: 'Onay Durum Tanımı',
+        endpoint: '/onay-durumlari',
+        crud: true,
+        codeField: 'durum_kodu',
+        nameField: 'durum_adi',
+        filters: [
+          { key: 'durum_kodu', label: 'Kod' },
+          { key: 'durum_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'durum_kodu', label: 'Kod', mono: true },
+          { key: 'durum_adi', label: 'Ad' },
+          { key: 'sira_no', label: 'Sıra' },
+          { key: 'nihai', label: 'Nihai' },
+          { key: 'olumlu', label: 'Olumlu' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'durum_kodu', label: 'Durum kodu', code: true, required: true },
+          { key: 'durum_adi', label: 'Durum adı', name: true, required: true },
+          { key: 'sira_no', label: 'Sıra', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'nihai', label: 'Nihai durum', type: 'checkbox' },
+          { key: 'olumlu', label: 'Olumlu (onay)', type: 'checkbox' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+    ],
+  },
+  {
     id: 'finans',
     title: 'Finans',
     sections: [
@@ -7015,6 +7346,11 @@ const LOOKUP_ENDPOINTS = {
   'hareket-kodlari-irsaliye': '/hareket-kodlari?belge_tipi=SatisIrsaliye&aktif=true',
   'hareket-kodlari-fatura': '/hareket-kodlari?belge_tipi=SatisFatura&aktif=true',
   'hareket-kodlari-stok': '/hareket-kodlari?aktif=true&grup=inv',
+  'onay-rolleri': '/onay-rolleri',
+  'onay-rotalari': '/onay-rotalari',
+  'onay-mesaj-sablonlari': '/onay-mesaj-sablonlari?aktif=true',
+  'onay-durumlari': '/onay-durumlari?aktif=true',
+  'onay-modul-kullanimlari': '/onay-modul-kullanimlari?aktif=true',
 };
 
 /** Ekran kaydı → ek lookup anahtarları (endpoint eşleşmesi yetmezse / alias) */
@@ -8755,6 +9091,10 @@ function renderForm(screen) {
         secShow = true;
         secLabel = 'Reddet';
         secBtn.dataset.secKind = 'kk-red';
+      } else if (screen.id === 'onaylarim' && rec.id && rec.durum_kodu === 'BEKLIYOR') {
+        secShow = true;
+        secLabel = 'Reddet';
+        secBtn.dataset.secKind = 'onay-red';
       }
       secBtn.hidden = !secShow;
       if (secShow) secBtn.textContent = secLabel;
@@ -8780,6 +9120,9 @@ function renderForm(screen) {
     if (screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk') {
       show = Boolean(screen.approveAction && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.durum));
     }
+    if (screen.id === 'onaylarim') {
+      show = Boolean(screen.approveAction && rec.durum_kodu === 'BEKLIYOR');
+    }
     conv.hidden = !show;
     if (show) {
       const preferApprove = (screen.approveAction && (
@@ -8790,6 +9133,7 @@ function renderForm(screen) {
         || (screen.id === 'satin-alma-teklifleri' && rec.durum === 'Taslak')
         || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
             && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.durum))
+        || (screen.id === 'onaylarim' && rec.durum_kodu === 'BEKLIYOR')
       ));
       const label = preferApprove
         ? screen.approveAction.label
@@ -10612,6 +10956,14 @@ function bindEvents() {
           const path = `/kk-emirleri/${rec.id}/reddet`;
           const sonuc = await api(path, { method: 'POST', body: JSON.stringify({}) });
           toast('Reddedildi.');
+          state.formRecord = sonuc;
+          renderForm(screen);
+        } else if (kind === 'onay-red') {
+          const gerekce = window.prompt('Red gerekçesi (opsiyonel):', '') ?? null;
+          if (gerekce === null) return;
+          const path = `/onay-kayitlari/${rec.id}/reddet`;
+          const sonuc = await api(path, { method: 'POST', body: JSON.stringify({ notlar: gerekce }) });
+          toast('Onay reddedildi.');
           state.formRecord = sonuc;
           renderForm(screen);
         } else if (kind === 'secondary' && screen.secondaryAction?.openScreen) {
