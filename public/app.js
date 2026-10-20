@@ -3047,6 +3047,8 @@ const MODULES = [
         numeratorSeri: 'SATIS_SIPARIS',
         codeField: 'siparis_no',
         nameField: 'cari_adi',
+        compactMaster: true,
+        masterPrimaryMax: 12,
         convertAction: {
           label: 'Sevk Emri Oluştur',
           path: '/siparisler/{id}/sevk-emri-olustur',
@@ -3085,43 +3087,24 @@ const MODULES = [
           { key: 'faturalandi', label: 'Faturalandı' },
           { key: 'proje_kodu', label: 'Proje', mono: true },
         ],
+        // Kompakt başlık (kimlik + organizasyon) — finans/adres/not ayrı yerde
         masterFields: [
-          { key: 'siparis_no', label: 'Sipariş no', code: true },
-          { key: 'musteri_siparis_no', label: 'Müşteri sipariş no' },
-          { key: 'teklif_id', label: 'Satış teklifi', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'teklif_no', fillFrom: 'teklif-satirlar' },
-          { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
-          { key: 'siparis_turu', label: 'Sipariş türü', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true },
-          { key: 'siparis_tarihi', label: 'Sipariş tarihi', type: 'date' },
-          { key: 'teslim_tarihi', label: 'Teslim tarihi', type: 'date' },
-          { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date' },
-          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'] },
-          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
-          { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'kur', label: 'Kur', type: 'number' },
-          { key: 'iskonto_oran', label: 'İskonto %', type: 'number' },
-          { key: 'odeme_kosulu', label: 'Ödeme koşulu' },
-          { key: 'teslimat_kosulu', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'kosul_kodu', labelKey: 'kosul_adi' },
-          { key: 'odeme_sekli', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'] },
-          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
-          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
-          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
-          { key: 'fiyat_liste_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'liste_adi', codeKey: 'liste_kodu' },
-          { key: 'proje_kodu', label: 'Proje kodu' },
-          { key: 'bolge', label: 'Bölge' },
-          { key: 'sevk_adresi', label: 'Sevk adresi' },
-          { key: 'sevk_il', label: 'Sevk il' },
-          { key: 'sevk_ilce', label: 'Sevk ilçe' },
-          { key: 'sevk_ulke', label: 'Sevk ülke' },
-          { key: 'sevk_posta_kodu', label: 'Posta kodu' },
-          { key: 'not_public', label: 'Müşteri notu' },
-          { key: 'not_internal', label: 'Dahili not' },
-          { key: 'siparis_kaynak', label: 'Kaynak', type: 'select', options: ['Manuel', 'Teklif', 'Web', 'EDI', 'CRM'] },
-          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+          { key: 'siparis_no', label: 'Sipariş no', code: true, lead: true },
+          { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true, lead: true, fillCariAdres: true },
+          { key: 'siparis_tarihi', label: 'Tarih', type: 'date', lead: true },
+          { key: 'teslim_tarihi', label: 'Teslim', type: 'date', lead: true },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'], lead: true },
+          { key: 'siparis_turu', label: 'Tür', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true, lead: true },
+          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu', lead: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu', lead: true },
+          { key: 'teklif_id', label: 'Teklif', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'teklif_no', fillFrom: 'teklif-satirlar' },
+          { key: 'musteri_siparis_no', label: 'Müş. sip. no' },
         ],
+        // Finans + satır verisi kalem formunda
         detailFields: [
           { key: 'satir_tipi', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
           { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
-          { key: 'satir_aciklama', label: 'Satır açıklama' },
+          { key: 'satir_aciklama', label: 'Açıklama' },
           { key: 'miktar', label: 'Miktar', type: 'number', size: 'short' },
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', size: 'short' },
           { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number', size: 'short' },
@@ -3146,6 +3129,59 @@ const MODULES = [
         detailKey: 'kalemler',
         detailSlots: 5,
         defaults: { para_birimi: 'TRY', kur: 1, kur_tipi: 'TCMB-SATIS', kdv_durumu: 'Haric', siparis_turu: 'SatisSiparis', durum: 'Taslak' },
+        formTabs: [
+          {
+            id: 'kalemler',
+            label: 'Kalemler',
+            kind: 'master-grid',
+            masterFields: [
+              { key: 'siparis_no', label: 'Sipariş no', code: true, lead: true },
+              { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true, lead: true, fillCariAdres: true },
+              { key: 'siparis_tarihi', label: 'Tarih', type: 'date', lead: true },
+              { key: 'teslim_tarihi', label: 'Teslim', type: 'date', lead: true },
+              { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'], lead: true },
+              { key: 'siparis_turu', label: 'Tür', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true, lead: true },
+              { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu', lead: true },
+              { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu', lead: true },
+              { key: 'teklif_id', label: 'Teklif', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'teklif_no', fillFrom: 'teklif-satirlar' },
+              { key: 'musteri_siparis_no', label: 'Müş. sip. no' },
+            ],
+            grid: {
+              key: 'kalemler',
+              slots: 5,
+              // null → normalizeScreen detailFields ile doldurur
+              fields: null,
+            },
+          },
+          {
+            id: 'adres',
+            label: 'Adres',
+            kind: 'fields',
+            fields: [
+              { key: 'sevk_adresi', label: 'Sevk adresi', size: 'wide' },
+              { key: 'sevk_il', label: 'İl' },
+              { key: 'sevk_ilce', label: 'İlçe' },
+              { key: 'sevk_ulke', label: 'Ülke' },
+              { key: 'sevk_posta_kodu', label: 'Posta kodu' },
+            ],
+          },
+          {
+            id: 'odeme',
+            label: 'Ödeme / Not',
+            kind: 'fields',
+            fields: [
+              { key: 'odeme_kosulu', label: 'Ödeme koşulu' },
+              { key: 'odeme_sekli', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'] },
+              { key: 'teslimat_kosulu', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'kosul_kodu', labelKey: 'kosul_adi' },
+              { key: 'fiyat_liste_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'liste_adi', codeKey: 'liste_kodu' },
+              { key: 'gecerlilik_tarihi', label: 'Geçerlilik', type: 'date' },
+              { key: 'siparis_kaynak', label: 'Kaynak', type: 'select', options: ['Manuel', 'Teklif', 'Web', 'EDI', 'CRM'] },
+              { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
+              { key: 'not_public', label: 'Müşteri notu' },
+              { key: 'not_internal', label: 'Dahili not' },
+            ],
+          },
+        ],
       },
       {
         id: 'sevk-emirleri',
@@ -3955,7 +3991,8 @@ function dedupeMasterAgainstGrid(screen) {
     const kept = [];
     masterFields.forEach((f) => {
       if (!f?.key) return;
-      if (ALWAYS_KEEP.has(f.key) || isDocRefId(f.key)) {
+      // lead/critical: belge başlığında kalsın (satırda da olabilir — örn. teslim_tarihi)
+      if (ALWAYS_KEEP.has(f.key) || isDocRefId(f.key) || f.lead || f.critical) {
         kept.push(f);
         return;
       }
@@ -3980,7 +4017,12 @@ function dedupeMasterAgainstGrid(screen) {
 
   (screen.formTabs || []).forEach((tab) => {
     if (tab.kind === 'master-grid') {
-      const gFields = tab.grid?.fields || tab.detailFields || [];
+      // null/boş grid.fields → ekran detailFields (satış siparişi kompakt kabuk)
+      if (tab.grid && (!Array.isArray(tab.grid.fields) || !tab.grid.fields.length)
+          && Array.isArray(screen.detailFields) && screen.detailFields.length) {
+        tab.grid.fields = screen.detailFields.map((f) => ({ ...f }));
+      }
+      const gFields = tab.grid?.fields || tab.detailFields || screen.detailFields || [];
       const r = apply(tab.masterFields || screen.masterFields || [], gFields);
       tab.masterFields = r.masterFields;
       if (tab.grid) tab.grid.fields = r.gridFields;
@@ -4053,6 +4095,15 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     else if (s.detailKey === 'stok_detaylari' || s.detailKey === 'cari_detaylari') s.detailSlots = 1;
     else s.detailSlots = 3;
   }
+
+  // Elle tanımlı master-grid: grid.fields yoksa detailFields kopyala
+  (s.formTabs || []).forEach((tab) => {
+    if (tab?.kind === 'master-grid' && tab.grid
+        && (!Array.isArray(tab.grid.fields) || !tab.grid.fields.length)
+        && Array.isArray(s.detailFields) && s.detailFields.length) {
+      tab.grid.fields = s.detailFields.map((f) => ({ ...f }));
+    }
+  });
 
   // Önce başlık↔kalem tekrarını temizle (formTabs’tan önce)
   if (!Array.isArray(s.formTabs) || !s.formTabs.length) {
@@ -5890,6 +5941,56 @@ async function applyKurForParaBirimi(pbKod, kurEl, { force = false } = {}) {
     if (r?.kur != null) kurEl.value = String(r.kur);
   } catch (_) {
     /* kur yoksa kullanıcı girer */
+  }
+}
+
+/**
+ * Cari seçilince sevk adresini Adres sekmesine doldur.
+ * Öncelik: varsayılan sevk adresi → fatura_adres* → adres.
+ * Ödeme / PB alanları da boşsa cari kartından alınır.
+ */
+async function fillAdresFromCari(cariId, { force = false } = {}) {
+  if (!cariId || !state.formRecord) return;
+  try {
+    const cari = await api(`/cariler/${cariId}`);
+    if (!cari) return;
+    const rec = state.formRecord;
+    const sevkList = Array.isArray(cari.sevk_adresleri) ? cari.sevk_adresleri : [];
+    const varsayilan = sevkList.find((a) => a.varsayilan && !a.pasif)
+      || sevkList.find((a) => !a.pasif)
+      || null;
+    const adresSatir = varsayilan
+      ? [varsayilan.adres1, varsayilan.adres2, varsayilan.adres3].filter(Boolean).join(' ').trim()
+      : '';
+    const patch = {
+      sevk_adresi: adresSatir
+        || cari.fatura_adres1
+        || cari.fatura_adresi
+        || cari.adres
+        || '',
+      sevk_il: (varsayilan && varsayilan.il) || cari.il || '',
+      sevk_ilce: (varsayilan && varsayilan.ilce) || cari.ilce || '',
+      sevk_ulke: (varsayilan && varsayilan.ulke) || cari.ulke || 'TR',
+      sevk_posta_kodu: (varsayilan && varsayilan.posta_kodu) || cari.posta_kodu || '',
+    };
+    Object.entries(patch).forEach(([k, v]) => {
+      if (force || !rec[k]) rec[k] = v;
+    });
+    // Ödeme sekmesi / satır varsayılanları — boşsa cari kartından
+    if ((force || !rec.odeme_kosulu) && cari.odeme_kosulu) rec.odeme_kosulu = cari.odeme_kosulu;
+    if ((force || !rec.odeme_sekli) && cari.odeme_sekli) rec.odeme_sekli = cari.odeme_sekli;
+    if ((force || !rec.teslimat_kosulu) && cari.teslimat_kosulu) rec.teslimat_kosulu = cari.teslimat_kosulu;
+    if ((force || !rec.para_birimi) && cari.para_birimi) rec.para_birimi = cari.para_birimi;
+    // Açık kalem satırlarına PB yansıt (henüz boş olanlar)
+    const detailKey = findScreen(state.screenId)?.detailKey || 'kalemler';
+    const rows = Array.isArray(rec[detailKey]) ? rec[detailKey] : [];
+    if (cari.para_birimi && rows.length) {
+      rows.forEach((row) => {
+        if (!row.para_birimi) row.para_birimi = cari.para_birimi;
+      });
+    }
+  } catch (err) {
+    console.warn('Cari adres doldurulamadı', err);
   }
 }
 
@@ -7983,7 +8084,7 @@ function bindAvatarEvents() {
 
 /** Klasik ERP kabuğu (satınalma teklifi ile aynı dil): kompakt başlık + gövde + alt şerit. */
 function renderClassicShell({
-  rec, primary, extras, bodyHtml, footerNotes, bodyLabel, metaHtml, natural, footerFields, footerKey,
+  rec, primary, extras, bodyHtml, footerNotes, bodyLabel, metaHtml, natural, footerFields, footerKey, compact,
 }) {
   const row = rec || {};
   const notes = Array.isArray(footerNotes) ? footerNotes : [];
@@ -8000,18 +8101,18 @@ function renderClassicShell({
     : '';
   const hasHead = (primary && primary.length) || (extras && extras.length);
   const headBlock = hasHead ? `
-      <div class="md-head">
+      <div class="md-head${compact ? ' md-head--compact' : ''}">
         ${primary?.length ? `
-        <section class="md-master" aria-label="Başlık alanları">
-          <div class="section-label">Başlık</div>
-          <div class="form-tab-fields form-tab-fields--master">
+        <section class="md-master${compact ? ' md-master--compact' : ''}" aria-label="Başlık alanları">
+          ${compact ? '' : '<div class="section-label">Başlık</div>'}
+          <div class="form-tab-fields form-tab-fields--master${compact ? ' form-tab-fields--compact' : ''}">
             ${renderFieldGrid(primary, row)}
           </div>
         </section>` : ''}
         ${extrasBlock}
       </div>` : '';
   return `
-    <div class="md-split md-split--grid${natural ? ' md-split--natural' : ''}${hasHead ? '' : ' md-split--grid-only'}">
+    <div class="md-split md-split--grid${compact ? ' md-split--compact' : ''}${natural ? ' md-split--natural' : ''}${hasHead ? '' : ' md-split--grid-only'}">
       ${headBlock}
       <section class="md-detail" aria-label="${escAttr(bodyLabel || 'Detay')}">
         <div class="md-detail-head">
@@ -8057,12 +8158,19 @@ function renderMasterDetailPanel(tab, rec) {
 
 /** Master alanlar üstte + kalem tablosu + alt toplam/bağlantı — klasik ERP */
 function renderMasterGridPanel(tab, rec) {
-  const { primary, extras, footerNotes } = partitionMasterFields(tab.masterFields || []);
+  const screen = findScreen(state.screenId);
+  const maxPrimary = Number(screen?.masterPrimaryMax) > 0
+    ? Number(screen.masterPrimaryMax)
+    : MASTER_PRIMARY_MAX;
+  const compact = Boolean(screen?.compactMaster);
+  // compactMaster: kimlik/org üst şeritte — kalem panelinde tekrarlama
+  const masterSrc = compact ? [] : (tab.masterFields || []);
+  const { primary, extras, footerNotes } = partitionMasterFields(masterSrc, maxPrimary);
   const gridTab = {
     kind: 'grid',
     key: tab.grid?.key || tab.key || '_detail',
     slots: tab.grid?.slots,
-    fields: tab.grid?.fields || tab.detailFields || [],
+    fields: tab.grid?.fields || tab.detailFields || screen?.detailFields || [],
   };
   const rowCount = Array.isArray(rec?.[gridTab.key]) ? rec[gridTab.key].length : 0;
   return renderClassicShell({
@@ -8075,7 +8183,29 @@ function renderMasterGridPanel(tab, rec) {
     metaHtml: `<span class="md-detail-meta">${rowCount} satır</span>`,
     footerFields: gridTab.fields,
     footerKey: gridTab.key,
+    compact: false,
   });
+}
+
+/** Kompakt başlık şeridi (sekmelerin üstünde — satış siparişi prototipi). */
+function renderCompactMasterBar(screen, rec) {
+  const el = $('#formCompactMaster');
+  if (!el) return;
+  if (!screen?.compactMaster) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+  const maxPrimary = Number(screen.masterPrimaryMax) > 0
+    ? Number(screen.masterPrimaryMax)
+    : MASTER_PRIMARY_MAX;
+  const fields = screen.masterFields || [];
+  const { primary } = partitionMasterFields(fields, maxPrimary);
+  el.hidden = false;
+  el.innerHTML = `
+    <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact" aria-label="Belge başlığı">
+      ${renderFieldGrid(primary, rec || {})}
+    </div>`;
 }
 
 function renderGridToolbar(tabKey, { canEdit }) {
@@ -8572,6 +8702,9 @@ function renderForm(screen) {
     tabsLayoutEl.style.display = 'grid';
   }
 
+  // Kompakt kimlik/org — sekmelerin üstünde (Adres/Ödeme'de de görünür)
+  renderCompactMasterBar(screen, rec);
+
   const tabs = screen.formTabs || [];
   if (!state.formActiveTab || !tabs.some((t) => t.id === state.formActiveTab)) {
     state.formActiveTab = tabs[0]?.id || null;
@@ -8637,21 +8770,34 @@ function renderForm(screen) {
     }
     const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart' || tab.id === 'baslik';
     const tabFields = tab.fields || [];
+    // Adres / Ödeme gibi yan sekmeler: tüm alanlar gövdede (üstte ikinci “Başlık” yok)
+    if (!masterLike) {
+      const bodyHtml = tabFields.length
+        ? `<div class="field-groups">${renderDetailFieldGrid(tabFields, rec)}</div>`
+        : '<div class="detail-empty">Bu sekmede alan yok.</div>';
+      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
+        ${renderClassicShell({
+          rec,
+          primary: [],
+          extras: [],
+          bodyHtml,
+          footerNotes: [],
+          bodyLabel: tab.label || 'Alanlar',
+        })}
+      </div>`;
+    }
     const { primary, extras, footerNotes } = partitionMasterFields(tabFields);
-    // Klasik kabuk: başlıkta birinciller, gövdede kalanlar (satınalma teklifi dili)
-    const bodyFields = masterLike ? extras : (tabFields.length > MASTER_PRIMARY_MAX ? extras : tabFields);
-    const headPrimary = masterLike || tabFields.length > MASTER_PRIMARY_MAX ? primary : [];
-    const bodyHtml = (bodyFields.length ? bodyFields : tabFields).length
-      ? `<div class="field-groups">${renderDetailFieldGrid(bodyFields.length ? bodyFields : tabFields, rec)}</div>`
+    const bodyHtml = extras.length
+      ? `<div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>`
       : '<div class="detail-empty">Bu sekmede alan yok.</div>';
     return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
       ${renderClassicShell({
         rec,
-        primary: headPrimary,
+        primary,
         extras: [],
         bodyHtml,
-        footerNotes: masterLike ? footerNotes : [],
-        bodyLabel: masterLike ? 'Ek bilgiler' : (tab.label || 'Alanlar'),
+        footerNotes,
+        bodyLabel: 'Ek bilgiler',
       })}
     </div>`;
   }).join('');
@@ -8998,6 +9144,14 @@ function bindCascadeLookups(_screen) {
         || (scr.masterFields || []).find((x) => x.key === masterKey);
       if (f?.fillFrom && el.value) {
         await fillLinesFromSource(f.fillFrom, el.value);
+        return;
+      }
+      // fillCariAdres: müşteri → Adres sekmesi (sevk_*) otomatik
+      if (f?.fillCariAdres && el.value) {
+        state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
+        await fillAdresFromCari(el.value, { force: true });
+        renderForm(scr);
+        toast('Cari adres / ödeme bilgileri forma aktarıldı');
         return;
       }
     }

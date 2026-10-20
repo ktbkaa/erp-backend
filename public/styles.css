@@ -1247,13 +1247,73 @@ tr.selected td { background: var(--accent-soft); }
   min-height: 0;
   display: grid !important;
   grid-template-columns: 200px 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "nav body"
+    "nav body";
   border-top: 1px solid var(--line);
 }
+.form-tabs-layout:has(#formCompactMaster:not([hidden])) {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "compact compact"
+    "nav body"
+    "nav body";
+}
+.form-compact-master {
+  grid-area: compact;
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #f4f7f9 0%, #eef3f6 100%);
+  padding: 0.4rem 0.75rem 0.35rem;
+}
+.form-compact-master[hidden] { display: none !important; }
+.form-compact-master .form-tab-fields--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 0.65rem;
+  row-gap: 0.22rem;
+}
+.form-compact-master .form-tab-fields--compact .field {
+  grid-template-columns: minmax(4.2rem, 5.6rem) minmax(0, 1fr);
+  gap: 0.15rem 0.3rem;
+}
+.form-compact-master .form-tab-fields--compact .field label {
+  font-size: 0.72rem;
+  color: #4a5a68;
+}
+.form-compact-master .form-tab-fields--compact .field input,
+.form-compact-master .form-tab-fields--compact .field select,
+.form-compact-master .form-tab-fields--compact .field textarea {
+  padding: 0.2rem 0.35rem;
+  min-height: 1.55rem;
+  font-size: 0.8rem;
+}
+.form-tabs-layout > .form-tab-nav { grid-area: nav; }
+.form-tabs-layout > .form-tab-body { grid-area: body; min-width: 0; min-height: 0; }
 .form-tabs-layout--single {
   grid-template-columns: 1fr !important;
+  grid-template-areas:
+    "body"
+    "body";
+}
+.form-tabs-layout--single:has(#formCompactMaster:not([hidden])) {
+  grid-template-areas:
+    "compact"
+    "body"
+    "body";
 }
 .form-tabs-layout--single .form-tab-nav[hidden] {
   display: none !important;
+}
+@media (max-width: 1100px) {
+  .form-compact-master .form-tab-fields--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 780px) {
+  .form-compact-master .form-tab-fields--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .form-tabs-layout[hidden],
 .form-split[hidden] {
@@ -2703,6 +2763,54 @@ tr.selected td { background: var(--accent-soft); }
   min-height: 1.75rem;
   font-size: 0.84rem;
 }
+
+/* Satış siparişi vb.: kompakt kimlik/organizasyon şeridi (finans/adres ayrı sekme) */
+.md-split--compact .md-head--compact {
+  background: linear-gradient(180deg, #f4f7f9 0%, #eef3f6 100%);
+  border-bottom: 1px solid #d5dde6;
+  padding: 0;
+}
+.md-split--compact .md-master--compact {
+  padding: 0.35rem 0.7rem 0.3rem;
+  background: transparent;
+  border-bottom: 0;
+}
+.md-split--compact .form-tab-fields--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 0.65rem;
+  row-gap: 0.22rem;
+}
+.md-split--compact .form-tab-fields--compact .field {
+  grid-template-columns: minmax(4.2rem, 5.6rem) minmax(0, 1fr);
+  gap: 0.15rem 0.3rem;
+}
+.md-split--compact .form-tab-fields--compact .field label {
+  font-size: 0.72rem;
+  color: #4a5a68;
+}
+.md-split--compact .form-tab-fields--compact .field input,
+.md-split--compact .form-tab-fields--compact .field select,
+.md-split--compact .form-tab-fields--compact .field textarea {
+  padding: 0.2rem 0.35rem;
+  min-height: 1.55rem;
+  font-size: 0.8rem;
+}
+.md-split--compact .md-detail {
+  padding-top: 0.3rem;
+}
+.md-split--compact .md-detail-head {
+  margin-bottom: 0.2rem;
+}
+@media (max-width: 1100px) {
+  .md-split--compact .form-tab-fields--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 780px) {
+  .md-split--compact .form-tab-fields--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .filter-field--check .filter-check {
   display: inline-flex;
   align-items: center;
@@ -2772,6 +2880,16 @@ body.form-solo #viewForm {
 body.form-solo .form-tabs-layout {
   grid-template-columns: 1fr !important;
   grid-template-rows: auto minmax(0, 1fr) !important;
+  grid-template-areas:
+    "nav"
+    "body" !important;
+}
+body.form-solo .form-tabs-layout:has(#formCompactMaster:not([hidden])) {
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  grid-template-areas:
+    "compact"
+    "nav"
+    "body" !important;
 }
 body.form-solo .form-tab-nav {
   display: flex !important;
