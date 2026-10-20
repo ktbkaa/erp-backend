@@ -1,9 +1,17 @@
 /**
  * Stok birim dönüşümü — stok_birim_tanimlari katsayıları.
  * Baz birim = stoklar.birim (katsayı 1 varsayılır).
- * Kayıt modeli: birim_kodu, cevrilecek_birim, katsayi
- *   → 1 × birim_kodu = katsayi × cevrilecek_birim (yoksa baz birim)
+ * Kayıt modeli: kaynak_katsayi × birim_kodu = katsayi × cevrilecek_birim
+ *   → 1 × birim_kodu = (katsayi / kaynak_katsayi) × cevrilecek_birim
  */
+function satirOran(row) {
+  const sag = Number(row.katsayi);
+  const sol = Number(row.kaynak_katsayi);
+  const kaynak = Number.isFinite(sol) && sol > 0 ? sol : 1;
+  if (!Number.isFinite(sag) || sag <= 0) return null;
+  return sag / kaynak;
+}
+
 async function stokBazBirim(clientOrPool, stokId) {
   const stok = await clientOrPool.query(
     `SELECT birim, stok_takip_birimi FROM stoklar WHERE id = $1`,
@@ -15,7 +23,7 @@ async function stokBazBirim(clientOrPool, stokId) {
 async function birimTanimlari(clientOrPool, stokId) {
   const r = await clientOrPool.query(
     `
-    SELECT birim_kodu, katsayi, cevrilecek_birim, takip_birimi_mi
+    SELECT birim_kodu, kaynak_katsayi, katsayi, cevrilecek_birim, takip_birimi_mi
     FROM stok_birim_tanimlari
     WHERE stok_id = $1
     ORDER BY sira_no NULLS LAST, id
@@ -39,8 +47,8 @@ async function birimKatsayi(clientOrPool, stokId, birim) {
   for (const row of rows) {
     const kod = String(row.birim_kodu || '').toLowerCase();
     const hedef = String(row.cevrilecek_birim || baz).toLowerCase();
-    const k = Number(row.katsayi);
-    if (!Number.isFinite(k) || k <= 0) continue;
+    const k = satirOran(row);
+    if (k == null) continue;
 
     // 1 kod = k × hedef; hedef baz ise doğrudan
     if (kod === target && hedef === bazL) return k;
@@ -57,7 +65,7 @@ async function birimKatsayi(clientOrPool, stokId, birim) {
 
   const err = new Error(
     `Stok ${stokId} için birim dönüşümü bulunamadı: ${birim} (baz=${baz}). `
-    + 'Birim Dönüşümleri sekmesinde kaynak→hedef katsayı tanımlayın.'
+    + 'Birim Dönüşümleri sekmesinde katsayı,birim = katsayı,birim tanımlayın.'
   );
   err.status = 400;
   throw err;

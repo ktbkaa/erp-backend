@@ -1247,13 +1247,73 @@ tr.selected td { background: var(--accent-soft); }
   min-height: 0;
   display: grid !important;
   grid-template-columns: 200px 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "nav body"
+    "nav body";
   border-top: 1px solid var(--line);
 }
+.form-tabs-layout:has(#formCompactMaster:not([hidden])) {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    "compact compact"
+    "nav body"
+    "nav body";
+}
+.form-compact-master {
+  grid-area: compact;
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #f4f7f9 0%, #eef3f6 100%);
+  padding: 0.4rem 0.75rem 0.35rem;
+}
+.form-compact-master[hidden] { display: none !important; }
+.form-compact-master .form-tab-fields--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 0.65rem;
+  row-gap: 0.22rem;
+}
+.form-compact-master .form-tab-fields--compact .field {
+  grid-template-columns: minmax(4.2rem, 5.6rem) minmax(0, 1fr);
+  gap: 0.15rem 0.3rem;
+}
+.form-compact-master .form-tab-fields--compact .field label {
+  font-size: 0.72rem;
+  color: #4a5a68;
+}
+.form-compact-master .form-tab-fields--compact .field input,
+.form-compact-master .form-tab-fields--compact .field select,
+.form-compact-master .form-tab-fields--compact .field textarea {
+  padding: 0.2rem 0.35rem;
+  min-height: 1.55rem;
+  font-size: 0.8rem;
+}
+.form-tabs-layout > .form-tab-nav { grid-area: nav; }
+.form-tabs-layout > .form-tab-body { grid-area: body; min-width: 0; min-height: 0; }
 .form-tabs-layout--single {
   grid-template-columns: 1fr !important;
+  grid-template-areas:
+    "body"
+    "body";
+}
+.form-tabs-layout--single:has(#formCompactMaster:not([hidden])) {
+  grid-template-areas:
+    "compact"
+    "body"
+    "body";
 }
 .form-tabs-layout--single .form-tab-nav[hidden] {
   display: none !important;
+}
+@media (max-width: 1100px) {
+  .form-compact-master .form-tab-fields--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 780px) {
+  .form-compact-master .form-tab-fields--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .form-tabs-layout[hidden],
 .form-split[hidden] {
@@ -1293,7 +1353,7 @@ tr.selected td { background: var(--accent-soft); }
 .form-tab-btn.stub { color: var(--sidebar-muted); font-weight: 400; }
 .form-tab-btn.stub.active { background: #6b7c8c; }
 
-/* Form gövdesi: kalemli ekranlarda katmanlar sabit, tablo kayar */
+/* Form gövdesi: tek kaydırma — başlık + kalemler + footer bir bütün */
 .form-tab-body {
   min-height: 0;
   overflow: auto;
@@ -1302,47 +1362,47 @@ tr.selected td { background: var(--accent-soft); }
   flex-direction: column;
 }
 .form-tab-panel {
-  flex: 1;
+  flex: 0 0 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 0.85rem 1.1rem;
 }
 .form-tab-panel[hidden] { display: none !important; }
-.form-tab-panel--fixed { overflow: hidden; }
-.form-tab-panel--scroll { overflow: auto; }
+.form-tab-panel--fixed { overflow: visible; }
+.form-tab-panel--scroll { overflow: visible; }
 .form-tab-panel--md {
   overflow: visible;
   padding: 0;
   flex: 0 0 auto;
   height: auto;
-  min-height: 100%;
+  min-height: 0;
 }
-/* Master-grid: viewport’u doldur — 4 katman (master / tablo / footer) */
+/* Master-grid: iç içe kaydırma yok — tüm form birlikte kayar */
 .form-tab-body:has(.md-split--grid) {
-  overflow: hidden;
+  overflow: auto;
 }
 .form-tab-panel--md:has(.md-split--grid) {
-  flex: 1 1 auto;
-  height: 100%;
+  flex: 0 0 auto;
+  height: auto;
   min-height: 0;
-  max-height: 100%;
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 }
-/* Kullanıcı kartı: panel viewport içinde kayar (sayfa kaydırılmaz) */
+/* Kullanıcı kartı: gövde ile birlikte kayar */
 .form-tab-panel--md.form-tab-panel--scrollable {
-  overflow: auto !important;
+  overflow: visible !important;
   padding: 0.85rem 1.1rem 1.5rem;
   display: block !important;
-  height: 100%;
-  max-height: 100%;
-  flex: 1 1 auto;
+  height: auto;
+  max-height: none;
+  flex: 0 0 auto;
   min-height: 0;
 }
 .form-tab-body:has(.form-tab-panel--scrollable) {
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1373,19 +1433,19 @@ tr.selected td { background: var(--accent-soft); }
   flex-direction: column;
   height: auto;
 }
-/* Klasik ERP: master ≤~25% · tablo ≥~50% · footer sabit */
+/* Klasik ERP: başlık + tablo + footer doğal akış — tek scroll */
 .md-split--grid {
-  flex: 1 1 auto;
-  height: 100%;
+  flex: 0 0 auto;
+  height: auto;
   min-height: 0;
-  max-height: 100%;
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
 }
 .md-split--grid .md-head {
-  flex: 0 1 auto;
-  max-height: 26%;
+  flex: 0 0 auto;
+  max-height: none;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   border-bottom: 1px solid var(--line);
   background: #f7fafb;
 }
@@ -1400,22 +1460,22 @@ tr.selected td { background: var(--accent-soft); }
   background: #f4f7f9;
 }
 .md-split--grid .md-detail {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   padding: 0.4rem 0.75rem 0.35rem;
 }
 .md-split--grid .md-detail-scroll {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
 }
 .md-split--grid .md-footer {
   flex: 0 0 auto;
 }
-/* Yalnız kalem/grid sekmesi — başlık yok, tablo tam yükseklik */
+/* Yalnız kalem/grid sekmesi — başlık yok, tablo doğal yükseklik */
 .md-split--grid-only .md-detail {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 .md-master {
   flex: 0 0 auto;
@@ -1532,7 +1592,7 @@ tr.selected td { background: var(--accent-soft); }
 }
 @media (max-width: 900px) {
   .md-footer { grid-template-columns: 1fr; }
-  .md-split--grid .md-head { max-height: 34%; }
+  .md-split--grid .md-head { max-height: none; overflow: visible; }
 }
 /* Kalemsiz form: Ek bilgiler md-detail içinde — doğal yükseklik */
 .md-split:not(.md-split--grid) {
@@ -2703,6 +2763,54 @@ tr.selected td { background: var(--accent-soft); }
   min-height: 1.75rem;
   font-size: 0.84rem;
 }
+
+/* Satış siparişi vb.: kompakt kimlik/organizasyon şeridi (finans/adres ayrı sekme) */
+.md-split--compact .md-head--compact {
+  background: linear-gradient(180deg, #f4f7f9 0%, #eef3f6 100%);
+  border-bottom: 1px solid #d5dde6;
+  padding: 0;
+}
+.md-split--compact .md-master--compact {
+  padding: 0.35rem 0.7rem 0.3rem;
+  background: transparent;
+  border-bottom: 0;
+}
+.md-split--compact .form-tab-fields--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 0.65rem;
+  row-gap: 0.22rem;
+}
+.md-split--compact .form-tab-fields--compact .field {
+  grid-template-columns: minmax(4.2rem, 5.6rem) minmax(0, 1fr);
+  gap: 0.15rem 0.3rem;
+}
+.md-split--compact .form-tab-fields--compact .field label {
+  font-size: 0.72rem;
+  color: #4a5a68;
+}
+.md-split--compact .form-tab-fields--compact .field input,
+.md-split--compact .form-tab-fields--compact .field select,
+.md-split--compact .form-tab-fields--compact .field textarea {
+  padding: 0.2rem 0.35rem;
+  min-height: 1.55rem;
+  font-size: 0.8rem;
+}
+.md-split--compact .md-detail {
+  padding-top: 0.3rem;
+}
+.md-split--compact .md-detail-head {
+  margin-bottom: 0.2rem;
+}
+@media (max-width: 1100px) {
+  .md-split--compact .form-tab-fields--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 780px) {
+  .md-split--compact .form-tab-fields--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .filter-field--check .filter-check {
   display: inline-flex;
   align-items: center;
@@ -2713,4 +2821,95 @@ tr.selected td { background: var(--accent-soft); }
   position: fixed;
   z-index: 60;
   min-width: 11rem;
+}
+
+/* Birim dönüşümü: katsayı,birim = katsayı,birim */
+.field--static {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding-bottom: 0.35rem;
+}
+.field-static,
+.cell-static {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink, #1a2b36);
+  user-select: none;
+}
+.detail-table th.col--eq,
+.detail-table td.col--eq {
+  width: 2.2rem;
+  min-width: 2.2rem;
+  max-width: 2.6rem;
+  text-align: center;
+  padding-left: 0.15rem;
+  padding-right: 0.15rem;
+}
+
+/* Form solo: Yeni/Düzelt/İncele/Kopya — yeni sekme, sol menü yok */
+body.form-solo .sidebar,
+.app-shell.form-solo .sidebar {
+  display: none !important;
+}
+body.form-solo .app-shell,
+.app-shell.form-solo {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+body.form-solo #tabBar,
+body.form-solo #btnMenu,
+body.form-solo #homeSearchWrap,
+body.form-solo #searchResults {
+  display: none !important;
+}
+body.form-solo .workspace-bar .bar-left {
+  gap: 0.5rem;
+}
+body.form-solo #viewHome,
+body.form-solo #viewScreen {
+  display: none !important;
+}
+body.form-solo #viewForm {
+  display: flex !important;
+}
+/* Form içi sekmeler üst şeritte — sol menü gibi dikey şerit yok */
+body.form-solo .form-tabs-layout {
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+  grid-template-areas:
+    "nav"
+    "body" !important;
+}
+body.form-solo .form-tabs-layout:has(#formCompactMaster:not([hidden])) {
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  grid-template-areas:
+    "compact"
+    "nav"
+    "body" !important;
+}
+body.form-solo .form-tab-nav {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.15rem;
+  width: 100%;
+  max-width: none;
+  height: auto !important;
+  min-height: 0;
+  border-right: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0.35rem 0.55rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #f4f7f9;
+}
+body.form-solo .form-tab-nav .form-tab-btn {
+  white-space: nowrap;
+  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
 }
