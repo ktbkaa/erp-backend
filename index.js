@@ -142,6 +142,8 @@ app.use('/onay-rolleri', require('./routes/onay_rolleri'));
 app.use('/onay-rotalari', require('./routes/onay_rotalari'));
 app.use('/onay-mesaj-sablonlari', require('./routes/onay_mesaj_sablonlari'));
 app.use('/onay-modul-kullanimlari', require('./routes/onay_modul_kullanimlari'));
+app.use('/onay-kurallari', require('./routes/onay_kurallari'));
+app.use('/onay-ekranlari', require('./routes/onay_ekranlari'));
 app.use('/onay-yetki-devirleri', require('./routes/onay_yetki_devirleri'));
 app.use('/onay-kayitlari', require('./routes/onay_kayitlari'));
 
