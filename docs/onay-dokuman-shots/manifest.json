@@ -1,0 +1,75 @@
+[
+  {
+    "file": "01-menu-onay",
+    "listHash": "onaylarim",
+    "label": "Menü — Onay Yönetimi",
+    "waitMs": 1200,
+    "ok": true
+  },
+  {
+    "file": "10-rol-liste",
+    "listHash": "onay-rol-tanim",
+    "label": "Onay Rolü — liste",
+    "ok": true
+  },
+  {
+    "file": "11-rol-form",
+    "screen": "onay-rol-tanim",
+    "mode": "incele",
+    "id": 5,
+    "label": "Onay Rolü — form",
+    "ok": true
+  },
+  {
+    "file": "20-kural-liste",
+    "listHash": "onay-kural-tanim",
+    "label": "Onay Kuralı — liste",
+    "ok": true
+  },
+  {
+    "file": "21-kural-form",
+    "screen": "onay-kural-tanim",
+    "mode": "incele",
+    "id": 2,
+    "label": "Onay Kuralı — form",
+    "ok": true
+  },
+  {
+    "file": "30-rota-liste",
+    "listHash": "onay-rota-tanim",
+    "label": "Onay Rotası — liste",
+    "ok": true
+  },
+  {
+    "file": "31-rota-form",
+    "screen": "onay-rota-tanim",
+    "mode": "incele",
+    "id": 1,
+    "label": "Onay Rotası — form",
+    "ok": true
+  },
+  {
+    "file": "40-mesaj-liste",
+    "listHash": "onay-mesaj-sablon",
+    "label": "Mesaj Şablonu — liste",
+    "ok": true
+  },
+  {
+    "file": "50-onaylarim",
+    "listHash": "onaylarim",
+    "label": "Onaylarım",
+    "ok": true
+  },
+  {
+    "file": "51-izleme",
+    "listHash": "onay-izleme",
+    "label": "Onay İzleme",
+    "ok": true
+  },
+  {
+    "file": "60-yetki-devri",
+    "listHash": "onay-yetki-devri",
+    "label": "Yetki Devri",
+    "ok": true
+  }
+]
