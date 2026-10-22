@@ -13,6 +13,8 @@ const MODULES = [
     screens: [
       {
         id: 'numarator-tanimi',
+        techId: 'SYS-NUM-SCR-001',
+        businessNameEn: 'NumberSeriesScreen',
         title: 'Numaratör Tanımı',
         endpoint: '/kod-serileri',
         crud: true,
@@ -48,6 +50,8 @@ const MODULES = [
       },
       {
         id: 'olcu-birimleri',
+        techId: 'MDM-UOM-SCR-001',
+        businessNameEn: 'UnitOfMeasureScreen',
         title: 'Ölçü Birimleri',
         endpoint: '/olcu-birimleri',
         crud: true,
@@ -74,6 +78,8 @@ const MODULES = [
       },
       {
         id: 'kategori-tanimi',
+        techId: 'MDM-CAT-SCR-001',
+        businessNameEn: 'CategoryDefinitionScreen',
         title: 'Kategori Tanımı',
         endpoint: '/kategoriler',
         crud: true,
@@ -105,6 +111,8 @@ const MODULES = [
       },
       {
         id: 'ulke-tanimi',
+        techId: 'MDM-CTRY-SCR-001',
+        businessNameEn: 'CountryDefinitionScreen',
         title: 'Ülke Tanımı',
         endpoint: '/ulkeler',
         crud: true,
@@ -132,6 +140,8 @@ const MODULES = [
       },
       {
         id: 'para-birimi-tanimi',
+        techId: 'MDM-CUR-SCR-001',
+        businessNameEn: 'CurrencyDefinitionScreen',
         title: 'Para Birimi Tanımı',
         endpoint: '/para-birimleri',
         crud: true,
@@ -161,6 +171,8 @@ const MODULES = [
       },
       {
         id: 'sehir-tanimi',
+        techId: 'MDM-CITY-SCR-001',
+        businessNameEn: 'CityProvinceScreen',
         title: 'Şehir / İl Tanımı',
         endpoint: '/sehirler',
         crud: true,
@@ -191,6 +203,8 @@ const MODULES = [
       },
       {
         id: 'ilce-tanimi',
+        techId: 'MDM-DIST-SCR-001',
+        businessNameEn: 'DistrictDefinitionScreen',
         title: 'İlçe Tanımı',
         endpoint: '/ilceler',
         crud: true,
@@ -221,6 +235,8 @@ const MODULES = [
       },
       {
         id: 'odeme-kosulu-tanimi',
+        techId: 'MDM-PAYT-SCR-001',
+        businessNameEn: 'PaymentTermsScreen',
         title: 'Ödeme Koşulu',
         endpoint: '/odeme-kosullari',
         crud: true,
@@ -251,6 +267,8 @@ const MODULES = [
       },
       {
         id: 'teslimat-kosulu-tanimi',
+        techId: 'MDM-DLVT-SCR-001',
+        businessNameEn: 'DeliveryTermsScreen',
         title: 'Teslimat Koşulu',
         endpoint: '/teslimat-kosullari',
         crud: true,
@@ -279,6 +297,8 @@ const MODULES = [
       },
       {
         id: 'dil-tanimi',
+        techId: 'MDM-LANG-SCR-001',
+        businessNameEn: 'LanguageDefinitionScreen',
         title: 'Dil Tanımı',
         endpoint: '/diller',
         crud: true,
@@ -306,6 +326,8 @@ const MODULES = [
       },
       {
         id: 'banka-tanimi',
+        techId: 'MDM-BANK-SCR-001',
+        businessNameEn: 'BankDefinitionScreen',
         title: 'Banka Tanımı',
         endpoint: '/bankalar',
         crud: true,
@@ -337,6 +359,8 @@ const MODULES = [
       },
       {
         id: 'doviz-kur-tanimi',
+        techId: 'FIN-FX-SCR-001',
+        businessNameEn: 'ExchangeRateScreen',
         title: 'Döviz Kurları',
         endpoint: '/doviz-kurlari',
         crud: true,
@@ -372,6 +396,8 @@ const MODULES = [
 
       {
         id: 'hareket-kodlari',
+        techId: 'INV-MVTC-SCR-001',
+        businessNameEn: 'MovementCodeScreen',
         title: 'Hareket Kodları',
         endpoint: '/hareket-kodlari',
         crud: true,
@@ -444,6 +470,8 @@ const MODULES = [
     screens: [
       {
         id: 'kullanicilar',
+        techId: 'SYS-USR-SCR-001',
+        businessNameEn: 'UsersScreen',
         title: 'Kullanıcılar',
         endpoint: '/kullanicilar',
         crud: true,
@@ -496,6 +524,8 @@ const MODULES = [
       },
       {
         id: 'kullanici-gruplari',
+        techId: 'SYS-GRP-SCR-001',
+        businessNameEn: 'UserGroupsScreen',
         title: 'Kullanıcı Grupları',
         endpoint: '/kullanici-gruplari',
         crud: true,
@@ -531,6 +561,8 @@ const MODULES = [
       },
       {
         id: 'sistem-parametreleri',
+        techId: 'SYS-PRM-SCR-001',
+        businessNameEn: 'SystemParametersScreen',
         title: 'Sistem Parametreleri',
         endpoint: '/sistem-parametreleri',
         crud: true,
@@ -563,6 +595,8 @@ const MODULES = [
 
       {
         id: 'audit-log',
+        techId: 'SYS-AUD-SCR-001',
+        businessNameEn: 'AuditLogScreen',
         title: 'Audit Log',
         endpoint: '/audit-log',
         crud: false,
@@ -583,6 +617,8 @@ const MODULES = [
       },
       {
         id: 'eposta-gonderimleri',
+        techId: 'SYS-MAIL-SCR-001',
+        businessNameEn: 'EmailDispatchScreen',
         title: 'E-posta Gönderimleri',
         endpoint: '/eposta-gonderimleri',
         crud: false,
@@ -615,6 +651,8 @@ const MODULES = [
     screens: [
       {
         id: 'firmalar',
+        techId: 'MDM-CO-SCR-001',
+        businessNameEn: 'CompanyScreen',
         title: 'Firmalar',
         endpoint: '/firmalar',
         crud: true,
@@ -638,6 +676,8 @@ const MODULES = [
       },
       {
         id: 'is-yerleri',
+        techId: 'MDM-PLANT-SCR-001',
+        businessNameEn: 'PlantSiteScreen',
         title: 'İş Yerleri',
         endpoint: '/is-yerleri',
         crud: true,
@@ -668,6 +708,8 @@ const MODULES = [
       },
       {
         id: 'depolar',
+        techId: 'MDM-WH-SCR-001',
+        businessNameEn: 'WarehouseMasterScreen',
         title: 'Depolar',
         endpoint: '/depolar',
         crud: true,
@@ -714,6 +756,8 @@ const MODULES = [
     screens: [
       {
         id: 'stok-karti',
+        techId: 'INV-ITM-SCR-001',
+        businessNameEn: 'ItemMasterScreen',
         title: 'Stok Kartı',
         endpoint: '/stoklar',
         crud: true,
@@ -906,6 +950,8 @@ const MODULES = [
       },
       {
         id: 'depo-bakiye',
+        techId: 'INV-BAL-SCR-001',
+        businessNameEn: 'WarehouseBalanceScreen',
         title: 'Depo Bakiye',
         endpoint: '/stok-bakiyeleri',
         crud: false,
@@ -941,6 +987,8 @@ const MODULES = [
       },
       {
         id: 'stok-hareketleri',
+        techId: 'INV-MVT-SCR-001',
+        businessNameEn: 'StockMovementScreen',
         title: 'Stok Hareketleri',
         endpoint: '/stok-hareketleri',
         crud: true,
@@ -995,6 +1043,8 @@ const MODULES = [
       },
       {
         id: 'transfer-emirleri',
+        techId: 'WMS-XFER-SCR-001',
+        businessNameEn: 'TransferOrderScreen',
         title: 'Transfer Emirleri',
         endpoint: '/transfer-emirleri',
         crud: true,
@@ -1033,6 +1083,8 @@ const MODULES = [
       },
       {
         id: 'sayim-belgeleri',
+        techId: 'WMS-CNT-SCR-001',
+        businessNameEn: 'PhysicalCountScreen',
         title: 'Sayım Belgeleri',
         endpoint: '/sayim-belgeleri',
         crud: true,
@@ -1069,6 +1121,8 @@ const MODULES = [
       },
       {
         id: 'stok-partileri',
+        techId: 'INV-LOT-SCR-001',
+        businessNameEn: 'LotBatchScreen',
         title: 'Stok Partileri',
         endpoint: '/stok-partileri',
         crud: true,
@@ -1101,6 +1155,8 @@ const MODULES = [
       },
       {
         id: 'mrp-bagimsiz-ihtiyac',
+        techId: 'MFG-IR-SCR-001',
+        businessNameEn: 'IndependentRequirementsScreen',
         title: 'MRP Bağımsız İhtiyaç',
         endpoint: '/mrp/bagimsiz-ihtiyaclar',
         crud: true,
@@ -1140,6 +1196,8 @@ const MODULES = [
       },
       {
         id: 'mrp-calisma',
+        techId: 'MFG-MRP-SCR-001',
+        businessNameEn: 'MrpRunScreen',
         title: 'MRP Çalıştır',
         endpoint: '/mrp/calismalar',
         crud: false,
@@ -1162,6 +1220,8 @@ const MODULES = [
       },
       {
         id: 'mrp-hesap',
+        techId: 'MFG-MRP-SCR-002',
+        businessNameEn: 'MrpInstantCalcScreen',
         title: 'MRP Anlık Hesap',
         endpoint: '/mrp',
         crud: false,
@@ -1190,6 +1250,8 @@ const MODULES = [
       },
       {
         id: 'mrp-sonuclar',
+        techId: 'MFG-MRP-RES-001',
+        businessNameEn: 'MrpResultsScreen',
         title: 'MRP Sonuçları',
         endpoint: '/mrp/calismalar',
         crud: false,
@@ -1216,6 +1278,8 @@ const MODULES = [
       },
       {
         id: 'stok-rezervasyonlari',
+        techId: 'INV-RSV-SCR-001',
+        businessNameEn: 'StockReservationScreen',
         title: 'Stok Rezervasyonları',
         endpoint: '/stok-rezervasyonlari',
         crud: false,
@@ -1237,6 +1301,8 @@ const MODULES = [
       },
       {
         id: 'stok-serileri',
+        techId: 'INV-SER-SCR-001',
+        businessNameEn: 'SerialNumberScreen',
         title: 'Stok Serileri',
         endpoint: '/stok-serileri',
         crud: true,
@@ -1268,6 +1334,8 @@ const MODULES = [
       },
       {
         id: 'stok-ikame',
+        techId: 'INV-SUB-SCR-001',
+        businessNameEn: 'ItemSubstitutionScreen',
         title: 'Stok İkame',
         endpoint: '/stok-ikame',
         crud: true,
@@ -1307,6 +1375,8 @@ const MODULES = [
     screens: [
       {
         id: 'cari-kartlari',
+        techId: 'MDM-BP-SCR-001',
+        businessNameEn: 'BusinessPartnerScreen',
         title: 'Cari Kartları',
         endpoint: '/cariler',
         crud: true,
@@ -1457,6 +1527,8 @@ const MODULES = [
       },
       {
         id: 'cari-ekstre',
+        techId: 'FIN-BPST-SCR-001',
+        businessNameEn: 'BusinessPartnerStatementScreen',
         title: 'Cari Ekstre',
         endpoint: '/cari-hareketleri',
         crud: false,
@@ -1477,6 +1549,8 @@ const MODULES = [
       },
       {
         id: 'tahsilat-odemeler',
+        techId: 'FIN-APAR-SCR-001',
+        businessNameEn: 'CollectionPaymentScreen',
         title: 'Tahsilat / Ödeme',
         endpoint: '/tahsilat-odemeler',
         crud: true,
@@ -1533,6 +1607,8 @@ const MODULES = [
     screens: [
       {
         id: 'urun-agaci',
+        techId: 'MFG-BOM-SCR-001',
+        businessNameEn: 'BillOfMaterialsScreen',
         title: 'Ürün Ağacı',
         endpoint: '/urun-agaclari',
         crud: true,
@@ -1587,6 +1663,8 @@ const MODULES = [
       },
       {
         id: 'bom-patlatma',
+        techId: 'MFG-BOM-SCR-002',
+        businessNameEn: 'BomExplosionScreen',
         title: 'Ürün Ağacı Patlatma',
         endpoint: '/bom/patlatma',
         crud: false,
@@ -1615,6 +1693,8 @@ const MODULES = [
       },
       {
         id: 'bom-seviye-listesi',
+        techId: 'MFG-BOM-SCR-003',
+        businessNameEn: 'BomLevelListScreen',
         title: 'Ürün Ağacı Seviye Listesi',
         endpoint: '/bom/seviye-listesi',
         crud: false,
@@ -1638,6 +1718,8 @@ const MODULES = [
       },
       {
         id: 'bom-malzeme-degisikligi',
+        techId: 'MFG-BOM-SCR-004',
+        businessNameEn: 'BomMaterialChangeScreen',
         title: 'Malzeme Değişikliği',
         endpoint: '/bom/malzeme-degisikligi',
         crud: true,
@@ -1666,6 +1748,8 @@ const MODULES = [
       },
       {
         id: 'sinif-tanimi',
+        techId: 'MFG-CLS-SCR-001',
+        businessNameEn: 'ClassDefinitionScreen',
         title: 'Sınıf Tanımı',
         endpoint: '/stok-siniflari',
         crud: true,
@@ -1696,6 +1780,8 @@ const MODULES = [
       },
       {
         id: 'is-merkezleri',
+        techId: 'MFG-WC-SCR-001',
+        businessNameEn: 'WorkCenterScreen',
         title: 'İş Merkezleri',
         endpoint: '/is-merkezleri',
         crud: true,
@@ -1721,6 +1807,8 @@ const MODULES = [
       },
       {
         id: 'rotalar',
+        techId: 'MFG-ROUT-SCR-001',
+        businessNameEn: 'RoutingScreen',
         title: 'Rotalar',
         endpoint: '/rotalar',
         crud: true,
@@ -1799,6 +1887,8 @@ const MODULES = [
       },
       {
         id: 'uretim-emri-tipleri',
+        techId: 'MFG-WOT-SCR-001',
+        businessNameEn: 'WorkOrderTypeScreen',
         title: 'Üretim Emri Tipleri',
         endpoint: '/uretim-emri-tipleri',
         crud: true,
@@ -1830,6 +1920,8 @@ const MODULES = [
       },
       {
         id: 'uretim-planlari',
+        techId: 'MFG-PLN-SCR-001',
+        businessNameEn: 'ProductionPlanScreen',
         title: 'Üretim Planları',
         endpoint: '/uretim-planlari',
         crud: true,
@@ -1872,6 +1964,8 @@ const MODULES = [
       },
       {
         id: 'uretim-emirleri',
+        techId: 'MFG-WO-SCR-001',
+        businessNameEn: 'WorkOrderScreen',
         title: 'Üretim Emirleri',
         endpoint: '/uretim-emirleri',
         crud: true,
@@ -1927,6 +2021,8 @@ const MODULES = [
       },
       {
         id: 'siparis-is-emri',
+        techId: 'MFG-WO-SCR-002',
+        businessNameEn: 'OrderToWorkOrderScreen',
         title: 'Siparişten İş Emri',
         endpoint: '/uretim-emirleri/siparis-adaylari',
         createEndpoint: '/uretim-emirleri/satis-siparisinden',
@@ -1965,6 +2061,8 @@ const MODULES = [
       },
       {
         id: 'toplu-is-emri',
+        techId: 'MFG-WO-SCR-003',
+        businessNameEn: 'BulkWorkOrderScreen',
         title: 'Toplu İş Emri',
         endpoint: '/uretim-emirleri/siparis-adaylari',
         createEndpoint: '/uretim-emirleri/toplu',
@@ -2001,6 +2099,8 @@ const MODULES = [
       },
       {
         id: 'stok-depo',
+        techId: 'INV-WHL-SCR-001',
+        businessNameEn: 'ItemWarehouseLinkScreen',
         title: 'Depo Stok Bağ',
         endpoint: '/stok-depo',
         crud: true,
@@ -2034,6 +2134,8 @@ const MODULES = [
       },
       {
         id: 'uretim-girisleri',
+        techId: 'MFG-RCPT-SCR-001',
+        businessNameEn: 'ProductionReceiptScreen',
         title: 'Üretim Girişleri',
         endpoint: '/uretim-girisleri',
         crud: true,
@@ -2073,6 +2175,8 @@ const MODULES = [
     screens: [
       {
         id: 'satin-alma-teklif-istekleri',
+        techId: 'PUR-RFQ-SCR-001',
+        businessNameEn: 'RequestForQuotationScreen',
         title: 'Satınalma Teklif İstekleri',
         endpoint: '/satin-alma-teklif-istekleri',
         hidden: true,
@@ -2106,6 +2210,8 @@ const MODULES = [
       },
       {
         id: 'satin-alma-teklifleri',
+        techId: 'PUR-QUO-SCR-001',
+        businessNameEn: 'PurchaseQuotationScreen',
         title: 'Satınalma Teklifleri',
         endpoint: '/satin-alma-teklifleri',
         crud: true,
@@ -2179,6 +2285,8 @@ const MODULES = [
       },
       {
         id: 'satin-alma-anlasmalari',
+        techId: 'PUR-AGR-SCR-001',
+        businessNameEn: 'PurchaseAgreementScreen',
         title: 'Satınalma Anlaşmaları',
         endpoint: '/satin-alma-anlasmalari',
         crud: true,
@@ -2221,6 +2329,8 @@ const MODULES = [
       },
       {
         id: 'alis-faturalari',
+        techId: 'FIN-PINV-SCR-001',
+        businessNameEn: 'PurchaseInvoiceScreen',
         title: 'Alış Faturaları',
         endpoint: '/faturalar?fatura_turu=Alis',
         crud: true,
@@ -2285,6 +2395,8 @@ const MODULES = [
       },
       {
         id: 'satin-alma-talepleri',
+        techId: 'PUR-REQ-SCR-001',
+        businessNameEn: 'PurchaseRequisitionScreen',
         title: 'Satınalma Talepleri',
         endpoint: '/satin-alma-talepleri',
         crud: true,
@@ -2349,6 +2461,8 @@ const MODULES = [
       },
       {
         id: 'satin-alma-siparisleri',
+        techId: 'PUR-ORD-SCR-001',
+        businessNameEn: 'PurchaseOrderScreen',
         title: 'Satınalma Siparişleri',
         endpoint: '/satin-alma-siparisleri',
         crud: true,
@@ -2437,6 +2551,8 @@ const MODULES = [
       },
       {
         id: 'mal-kabuller',
+        techId: 'PUR-GR-SCR-001',
+        businessNameEn: 'GoodsReceiptScreen',
         title: 'Mal Kabuller',
         endpoint: '/mal-kabuller',
         crud: true,
@@ -2497,6 +2613,8 @@ const MODULES = [
       },
       {
         id: 'tedarikci-irsaliyeleri',
+        techId: 'PUR-DLV-SCR-001',
+        businessNameEn: 'SupplierDeliveryNoteScreen',
         title: 'Tedarikçi İrsaliyeleri',
         endpoint: '/tedarikci-irsaliyeleri',
         crud: true,
@@ -2537,6 +2655,8 @@ const MODULES = [
       },
       {
         id: 'belge-yonetimi',
+        techId: 'PUR-DOC-SCR-001',
+        businessNameEn: 'DeliveryInvoiceManagementScreen',
         title: 'İrsaliye / Fatura Yönetimi',
         endpoint: '/belge-yonetimi',
         crud: false,
@@ -2573,6 +2693,8 @@ const MODULES = [
     screens: [
       {
         id: 'crm-firsat-asamalari',
+        techId: 'CRM-STG-SCR-001',
+        businessNameEn: 'OpportunityStageScreen',
         title: 'Fırsat Aşamaları',
         endpoint: '/crm-firsat-asamalari',
         crud: true,
@@ -2605,6 +2727,8 @@ const MODULES = [
       },
       {
         id: 'crm-faaliyet-tipleri',
+        techId: 'CRM-ACTT-SCR-001',
+        businessNameEn: 'ActivityTypeScreen',
         title: 'Faaliyet Tipleri',
         endpoint: '/crm-faaliyet-tipleri',
         crud: true,
@@ -2631,6 +2755,8 @@ const MODULES = [
       },
       {
         id: 'crm-adaylar',
+        techId: 'CRM-LEAD-SCR-001',
+        businessNameEn: 'LeadScreen',
         title: 'Müşteri Adayları',
         endpoint: '/crm-adaylar',
         crud: true,
@@ -2679,6 +2805,8 @@ const MODULES = [
       },
       {
         id: 'crm-kontaklar',
+        techId: 'CRM-CNT-SCR-001',
+        businessNameEn: 'ContactScreen',
         title: 'Kontaklar',
         endpoint: '/crm-kontaklar',
         crud: true,
@@ -2720,6 +2848,8 @@ const MODULES = [
       },
       {
         id: 'crm-firsatlar',
+        techId: 'CRM-OPP-SCR-001',
+        businessNameEn: 'OpportunityScreen',
         title: 'Fırsatlar',
         endpoint: '/crm-firsatlar',
         crud: true,
@@ -2782,6 +2912,8 @@ const MODULES = [
       },
       {
         id: 'crm-faaliyet-planlari',
+        techId: 'CRM-APLN-SCR-001',
+        businessNameEn: 'ActivityPlanScreen',
         title: 'Faaliyet Planları',
         endpoint: '/crm-faaliyet-planlari',
         crud: true,
@@ -2828,6 +2960,8 @@ const MODULES = [
       },
       {
         id: 'crm-faaliyetler',
+        techId: 'CRM-ACT-SCR-001',
+        businessNameEn: 'ActivityScreen',
         title: 'Faaliyetler',
         endpoint: '/crm-faaliyetler',
         crud: true,
@@ -2871,6 +3005,8 @@ const MODULES = [
       },
       {
         id: 'crm-gorevler',
+        techId: 'CRM-TASK-SCR-001',
+        businessNameEn: 'TaskScreen',
         title: 'Görevler',
         endpoint: '/crm-gorevler',
         crud: true,
@@ -2913,6 +3049,8 @@ const MODULES = [
       },
       {
         id: 'crm-ajanda',
+        techId: 'CRM-CAL-SCR-001',
+        businessNameEn: 'AgendaCalendarScreen',
         title: 'Ajanda',
         endpoint: '/crm-ajanda',
         crud: true,
@@ -2956,6 +3094,8 @@ const MODULES = [
     screens: [
       {
         id: 'satis-teklifleri',
+        techId: 'SAL-QUO-SCR-001',
+        businessNameEn: 'SalesQuotationScreen',
         title: 'Satış Teklifleri',
         endpoint: '/satis-teklifleri',
         crud: true,
@@ -3041,6 +3181,8 @@ const MODULES = [
       },
       {
         id: 'satis-siparisleri',
+        techId: 'SAL-ORD-SCR-001',
+        businessNameEn: 'SalesOrderScreen',
         title: 'Satış Siparişleri',
         endpoint: '/siparisler',
         crud: true,
@@ -3165,6 +3307,8 @@ const MODULES = [
       },
       {
         id: 'sevk-emirleri',
+        techId: 'SAL-SHP-SCR-001',
+        businessNameEn: 'ShipmentScreen',
         title: 'Sevk Emirleri',
         endpoint: '/sevk-emirleri',
         crud: true,
@@ -3242,6 +3386,8 @@ const MODULES = [
       },
       {
         id: 'irsaliyeler',
+        techId: 'SAL-DLV-SCR-001',
+        businessNameEn: 'DeliveryNoteScreen',
         title: 'İrsaliyeler',
         endpoint: '/irsaliyeler',
         crud: true,
@@ -3376,6 +3522,8 @@ const MODULES = [
       },
       {
         id: 'satis-faturalari',
+        techId: 'FIN-SINV-SCR-001',
+        businessNameEn: 'SalesInvoiceScreen',
         title: 'Satış Faturaları',
         endpoint: '/faturalar?fatura_turu=Satis',
         crud: true,
@@ -3467,6 +3615,8 @@ const MODULES = [
     screens: [
       {
         id: 'kk-emirleri-gkk',
+        techId: 'QLT-IQC-SCR-001',
+        businessNameEn: 'IncomingQcOrderScreen',
         title: 'GKK Emirleri',
         endpoint: '/kk-emirleri?yon=GKK',
         crud: false,
@@ -3505,6 +3655,8 @@ const MODULES = [
       },
       {
         id: 'kk-emirleri-ckk',
+        techId: 'QLT-OQC-SCR-001',
+        businessNameEn: 'OutgoingQcOrderScreen',
         title: 'ÇKK Emirleri',
         endpoint: '/kk-emirleri?yon=CKK',
         crud: false,
@@ -3543,6 +3695,8 @@ const MODULES = [
       },
       {
         id: 'kk-uygunsuzluklar',
+        techId: 'QLT-NCR-SCR-001',
+        businessNameEn: 'NonconformanceScreen',
         title: 'KK Uygunsuzluklar',
         endpoint: '/kk-uygunsuzluklar',
         crud: true,
@@ -3576,6 +3730,8 @@ const MODULES = [
       },
       {
         id: 'kk-capa',
+        techId: 'QLT-CAPA-SCR-001',
+        businessNameEn: 'CapaScreen',
         title: 'CAPA',
         endpoint: '/kk-capa',
         crud: true,
@@ -3608,6 +3764,8 @@ const MODULES = [
       },
       {
         id: 'kk-kontrol-planlari',
+        techId: 'QLT-PLAN-SCR-001',
+        businessNameEn: 'ControlPlanScreen',
         title: 'KK Kontrol Planları',
         endpoint: '/kk-kontrol-planlari',
         crud: true,
@@ -3644,6 +3802,8 @@ const MODULES = [
       },
       {
         id: 'kk-stok-planlari',
+        techId: 'QLT-ITMP-SCR-001',
+        businessNameEn: 'ItemControlPlanLinkScreen',
         title: 'KK Stok Plan Bağları',
         endpoint: '/kk-stok-planlari',
         crud: true,
@@ -3673,6 +3833,8 @@ const MODULES = [
       },
       {
         id: 'kk-ret-nedenleri',
+        techId: 'QLT-REJ-SCR-001',
+        businessNameEn: 'RejectionReasonScreen',
         title: 'KK Ret Nedenleri',
         endpoint: '/kk-ret-nedenleri',
         crud: true,
@@ -3723,6 +3885,8 @@ const MODULES = [
     screens: [
       {
         id: 'onaylarim',
+        techId: 'SYS-APR-SCR-001',
+        businessNameEn: 'MyApprovalsScreen',
         title: 'Onaylarım',
         endpoint: '/onay-kayitlari?benim=true',
         crud: false,
@@ -3771,6 +3935,8 @@ const MODULES = [
       },
       {
         id: 'onay-izleme',
+        techId: 'SYS-APR-SCR-002',
+        businessNameEn: 'ApprovalMonitoringScreen',
         title: 'Onay İzleme',
         endpoint: '/onay-kayitlari',
         crud: false,
@@ -3823,6 +3989,8 @@ const MODULES = [
       },
       {
         id: 'onay-yetki-devri',
+        techId: 'SYS-APR-SCR-003',
+        businessNameEn: 'ApprovalDelegationScreen',
         title: 'Onay Yetki Devri',
         endpoint: '/onay-yetki-devirleri',
         crud: true,
@@ -3860,6 +4028,8 @@ const MODULES = [
       },
       {
         id: 'onay-rol-tanim',
+        techId: 'SYS-APR-SCR-004',
+        businessNameEn: 'ApprovalRoleScreen',
         title: 'Onay Rolü',
         endpoint: '/onay-rolleri',
         crud: true,
@@ -3897,6 +4067,8 @@ const MODULES = [
       },
       {
         id: 'onay-kural-tanim',
+        techId: 'SYS-APR-SCR-005',
+        businessNameEn: 'ApprovalRuleScreen',
         title: 'Onay Kuralı',
         endpoint: '/onay-kurallari',
         crud: true,
@@ -3978,6 +4150,8 @@ const MODULES = [
       },
       {
         id: 'onay-rota-tanim',
+        techId: 'SYS-APR-SCR-006',
+        businessNameEn: 'ApprovalRouteScreen',
         title: 'Onay Rotası',
         endpoint: '/onay-rotalari',
         crud: true,
@@ -4072,6 +4246,8 @@ const MODULES = [
       },
       {
         id: 'onay-mesaj-sablon',
+        techId: 'SYS-APR-SCR-007',
+        businessNameEn: 'ApprovalMessageTemplateScreen',
         title: 'Onay Mesaj Şablonu',
         endpoint: '/onay-mesaj-sablonlari',
         crud: true,
@@ -4103,6 +4279,8 @@ const MODULES = [
       },
       {
         id: 'onay-durum-tanim',
+        techId: 'SYS-APR-SCR-008',
+        businessNameEn: 'ApprovalStatusScreen',
         title: 'Onay Durum Tanımı',
         endpoint: '/onay-durumlari',
         crud: true,
@@ -4146,6 +4324,8 @@ const MODULES = [
     screens: [
       {
         id: 'hesap-plani',
+        techId: 'FIN-COA-SCR-001',
+        businessNameEn: 'ChartOfAccountsScreen',
         title: 'Hesap Planı',
         endpoint: '/muhasebe-hesaplari',
         crud: true,
@@ -4180,6 +4360,8 @@ const MODULES = [
       },
       {
         id: 'muhasebe-belgeleri',
+        techId: 'FIN-JE-SCR-001',
+        businessNameEn: 'AccountingDocumentScreen',
         title: 'Muhasebe Belgeleri',
         endpoint: '/muhasebe-belgeleri',
         crud: true,
@@ -4214,6 +4396,8 @@ const MODULES = [
       },
       {
         id: 'mizan',
+        techId: 'FIN-TB-RPT-001',
+        businessNameEn: 'TrialBalanceReport',
         title: 'Mizan',
         endpoint: '/mizan',
         crud: false,
@@ -4233,6 +4417,8 @@ const MODULES = [
       },
       {
         id: 'hesap-belirleme-kurallari',
+        techId: 'FIN-ACR-SCR-001',
+        businessNameEn: 'AccountDeterminationRuleScreen',
         title: 'Hesap Belirleme Kuralları',
         endpoint: '/hesap-belirleme-kurallari',
         crud: true,
@@ -4263,6 +4449,8 @@ const MODULES = [
       },
       {
         id: 'fiyat-listeleri',
+        techId: 'FIN-PRC-SCR-001',
+        businessNameEn: 'PriceListScreen',
         title: 'Fiyat Listeleri',
         endpoint: '/fiyat-listeleri',
         crud: true,
@@ -4299,6 +4487,8 @@ const MODULES = [
       },
       {
         id: 'fatura-kontrolleri',
+        techId: 'FIN-3WAY-SCR-001',
+        businessNameEn: 'ThreeWayMatchScreen',
         title: 'Fatura Kontrolleri (3-way)',
         endpoint: '/fatura-kontrolleri',
         crud: false,
@@ -4333,6 +4523,8 @@ const MODULES = [
       },
       {
         id: 'kokpit',
+        techId: 'RPT-CPIT-SCR-001',
+        businessNameEn: 'CockpitDashboardScreen',
         title: 'Kokpit',
         endpoint: '/kokpit',
         crud: false,
@@ -7319,8 +7511,8 @@ async function openScreen(id, opts = {}) {
     const banner = $('#screenBanner');
     if (banner) {
       banner.textContent = screen.banner
-        ? `${screen.title} — ${screen.banner}`
-        : `${screen.title} açık · UI build 20261017v`;
+        ? `${screen.title} — ${screen.banner}${screen.techId ? ' · ' + screen.techId : ''}`
+        : `${screen.title} açık${screen.techId ? ' · ' + screen.techId : ''} · UI build 20261017v`;
     }
     $('#searchResults').hidden = true;
     $('#listMeta').textContent = 'Yükleniyor…';
@@ -10625,7 +10817,9 @@ function runSearch(q) {
   const hits = ALL_SCREENS.filter((s) =>
     ekranMenuGorunurMu(s.id) && (
       s.title.toLocaleLowerCase('tr').includes(query) ||
-      s.moduleTitle.toLocaleLowerCase('tr').includes(query)
+      s.moduleTitle.toLocaleLowerCase('tr').includes(query) ||
+      (s.techId && s.techId.toLocaleLowerCase('tr').includes(query)) ||
+      (s.businessNameEn && s.businessNameEn.toLocaleLowerCase('en').includes(query))
     )
   ).slice(0, 12);
   if (!hits.length) {
@@ -10635,9 +10829,9 @@ function runSearch(q) {
   }
   box.hidden = false;
   box.innerHTML = hits.map((s) => `
-    <button type="button" class="search-hit" data-screen="${s.id}">
+    <button type="button" class="search-hit" data-screen="${s.id}" data-tech-id="${s.techId || ''}">
       <strong>${s.title}</strong>
-      <span>${s.moduleTitle}</span>
+      <span>${s.moduleTitle}${s.techId ? ' · ' + s.techId : ''}</span>
     </button>
   `).join('');
 }

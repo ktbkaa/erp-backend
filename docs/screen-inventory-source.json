@@ -1,0 +1,1126 @@
+[
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "numarator-tanimi",
+    "title": "Numaratör Tanımı",
+    "endpoint": "/kod-serileri",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "olcu-birimleri",
+    "title": "Ölçü Birimleri",
+    "endpoint": "/olcu-birimleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "kategori-tanimi",
+    "title": "Kategori Tanımı",
+    "endpoint": "/kategoriler",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "ulke-tanimi",
+    "title": "Ülke Tanımı",
+    "endpoint": "/ulkeler",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "para-birimi-tanimi",
+    "title": "Para Birimi Tanımı",
+    "endpoint": "/para-birimleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "sehir-tanimi",
+    "title": "Şehir / İl Tanımı",
+    "endpoint": "/sehirler",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "ilce-tanimi",
+    "title": "İlçe Tanımı",
+    "endpoint": "/ilceler",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "odeme-kosulu-tanimi",
+    "title": "Ödeme Koşulu",
+    "endpoint": "/odeme-kosullari",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "teslimat-kosulu-tanimi",
+    "title": "Teslimat Koşulu",
+    "endpoint": "/teslimat-kosullari",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "dil-tanimi",
+    "title": "Dil Tanımı",
+    "endpoint": "/diller",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "banka-tanimi",
+    "title": "Banka Tanımı",
+    "endpoint": "/bankalar",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "doviz-kur-tanimi",
+    "title": "Döviz Kurları",
+    "endpoint": "/doviz-kurlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "id": "hareket-kodlari",
+    "title": "Hareket Kodları",
+    "endpoint": "/hareket-kodlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "id": "kullanicilar",
+    "title": "Kullanıcılar",
+    "endpoint": "/kullanicilar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "kullanicilar"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "id": "kullanici-gruplari",
+    "title": "Kullanıcı Grupları",
+    "endpoint": "/kullanici-gruplari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "kullanicilar"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "id": "sistem-parametreleri",
+    "title": "Sistem Parametreleri",
+    "endpoint": "/sistem-parametreleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "id": "audit-log",
+    "title": "Audit Log",
+    "endpoint": "/audit-log",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "gozlem"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "id": "eposta-gonderimleri",
+    "title": "E-posta Gönderimleri",
+    "endpoint": "/eposta-gonderimleri",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "iletisim"
+    ]
+  },
+  {
+    "moduleId": "ana-veri",
+    "moduleTitle": "Ana Veri",
+    "id": "firmalar",
+    "title": "Firmalar",
+    "endpoint": "/firmalar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "organizasyon"
+    ]
+  },
+  {
+    "moduleId": "ana-veri",
+    "moduleTitle": "Ana Veri",
+    "id": "is-yerleri",
+    "title": "İş Yerleri",
+    "endpoint": "/is-yerleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "organizasyon"
+    ]
+  },
+  {
+    "moduleId": "ana-veri",
+    "moduleTitle": "Ana Veri",
+    "id": "depolar",
+    "title": "Depolar",
+    "endpoint": "/depolar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "organizasyon"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "stok-karti",
+    "title": "Stok Kartı",
+    "endpoint": "/stoklar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "kartlar"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "depo-bakiye",
+    "title": "Depo Bakiye",
+    "endpoint": "/stok-bakiyeleri",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "stok-hareketleri",
+    "title": "Stok Hareketleri",
+    "endpoint": "/stok-hareketleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "transfer-emirleri",
+    "title": "Transfer Emirleri",
+    "endpoint": "/transfer-emirleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "sayim-belgeleri",
+    "title": "Sayım Belgeleri",
+    "endpoint": "/sayim-belgeleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "stok-partileri",
+    "title": "Stok Partileri",
+    "endpoint": "/stok-partileri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "mrp-bagimsiz-ihtiyac",
+    "title": "MRP Bağımsız İhtiyaç",
+    "endpoint": "/mrp/bagimsiz-ihtiyaclar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "planlama"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "mrp-calisma",
+    "title": "MRP Çalıştır",
+    "endpoint": "/mrp/calismalar",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "planlama"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "mrp-hesap",
+    "title": "MRP Anlık Hesap",
+    "endpoint": "/mrp",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "planlama"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "mrp-sonuclar",
+    "title": "MRP Sonuçları",
+    "endpoint": "/mrp/calismalar",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "planlama"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "stok-rezervasyonlari",
+    "title": "Stok Rezervasyonları",
+    "endpoint": "/stok-rezervasyonlari",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "stok-serileri",
+    "title": "Stok Serileri",
+    "endpoint": "/stok-serileri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "id": "stok-ikame",
+    "title": "Stok İkame",
+    "endpoint": "/stok-ikame",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "bakiye-hareket"
+    ]
+  },
+  {
+    "moduleId": "cari",
+    "moduleTitle": "Cari",
+    "id": "cari-kartlari",
+    "title": "Cari Kartları",
+    "endpoint": "/cariler",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "kartlar"
+    ]
+  },
+  {
+    "moduleId": "cari",
+    "moduleTitle": "Cari",
+    "id": "cari-ekstre",
+    "title": "Cari Ekstre",
+    "endpoint": "/cari-hareketleri",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "finans"
+    ]
+  },
+  {
+    "moduleId": "cari",
+    "moduleTitle": "Cari",
+    "id": "tahsilat-odemeler",
+    "title": "Tahsilat / Ödeme",
+    "endpoint": "/tahsilat-odemeler",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "finans"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "urun-agaci",
+    "title": "Ürün Ağacı",
+    "endpoint": "/urun-agaclari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "urun-agaci"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "bom-patlatma",
+    "title": "Ürün Ağacı Patlatma",
+    "endpoint": "/bom/patlatma",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "urun-agaci"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "bom-seviye-listesi",
+    "title": "Ürün Ağacı Seviye Listesi",
+    "endpoint": "/bom/seviye-listesi",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "urun-agaci"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "bom-malzeme-degisikligi",
+    "title": "Malzeme Değişikliği",
+    "endpoint": "/bom/malzeme-degisikligi",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "urun-agaci"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "sinif-tanimi",
+    "title": "Sınıf Tanımı",
+    "endpoint": "/stok-siniflari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "is-merkezleri",
+    "title": "İş Merkezleri",
+    "endpoint": "/is-merkezleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "rotalar",
+    "title": "Rotalar",
+    "endpoint": "/rotalar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "uretim-emri-tipleri",
+    "title": "Üretim Emri Tipleri",
+    "endpoint": "/uretim-emri-tipleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "uretim-planlari",
+    "title": "Üretim Planları",
+    "endpoint": "/uretim-planlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "is-emri"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "uretim-emirleri",
+    "title": "Üretim Emirleri",
+    "endpoint": "/uretim-emirleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "is-emri"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "siparis-is-emri",
+    "title": "Siparişten İş Emri",
+    "endpoint": "/uretim-emirleri/siparis-adaylari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "is-emri"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "toplu-is-emri",
+    "title": "Toplu İş Emri",
+    "endpoint": "/uretim-emirleri/siparis-adaylari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "is-emri"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "stok-depo",
+    "title": "Depo Stok Bağ",
+    "endpoint": "/stok-depo",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "depo"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "id": "uretim-girisleri",
+    "title": "Üretim Girişleri",
+    "endpoint": "/uretim-girisleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "is-emri"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "satin-alma-teklif-istekleri",
+    "title": "Satınalma Teklif İstekleri",
+    "endpoint": "/satin-alma-teklif-istekleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": []
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "satin-alma-teklifleri",
+    "title": "Satınalma Teklifleri",
+    "endpoint": "/satin-alma-teklifleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "teklif"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "satin-alma-anlasmalari",
+    "title": "Satınalma Anlaşmaları",
+    "endpoint": "/satin-alma-anlasmalari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "teklif"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "alis-faturalari",
+    "title": "Alış Faturaları",
+    "endpoint": "/faturalar?fatura_turu=Alis",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "faturalar"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "satin-alma-talepleri",
+    "title": "Satınalma Talepleri",
+    "endpoint": "/satin-alma-talepleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "siparis"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "satin-alma-siparisleri",
+    "title": "Satınalma Siparişleri",
+    "endpoint": "/satin-alma-siparisleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "siparis"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "mal-kabuller",
+    "title": "Mal Kabuller",
+    "endpoint": "/mal-kabuller",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "mal-kabul"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "tedarikci-irsaliyeleri",
+    "title": "Tedarikçi İrsaliyeleri",
+    "endpoint": "/tedarikci-irsaliyeleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "mal-kabul"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "id": "belge-yonetimi",
+    "title": "İrsaliye / Fatura Yönetimi",
+    "endpoint": "/belge-yonetimi",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "faturalar"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-firsat-asamalari",
+    "title": "Fırsat Aşamaları",
+    "endpoint": "/crm-firsat-asamalari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-faaliyet-tipleri",
+    "title": "Faaliyet Tipleri",
+    "endpoint": "/crm-faaliyet-tipleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-adaylar",
+    "title": "Müşteri Adayları",
+    "endpoint": "/crm-adaylar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "pipeline"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-kontaklar",
+    "title": "Kontaklar",
+    "endpoint": "/crm-kontaklar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "pipeline"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-firsatlar",
+    "title": "Fırsatlar",
+    "endpoint": "/crm-firsatlar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "pipeline"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-faaliyet-planlari",
+    "title": "Faaliyet Planları",
+    "endpoint": "/crm-faaliyet-planlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "faaliyet"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-faaliyetler",
+    "title": "Faaliyetler",
+    "endpoint": "/crm-faaliyetler",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "faaliyet"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-gorevler",
+    "title": "Görevler",
+    "endpoint": "/crm-gorevler",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "faaliyet"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "id": "crm-ajanda",
+    "title": "Ajanda",
+    "endpoint": "/crm-ajanda",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "faaliyet"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "id": "satis-teklifleri",
+    "title": "Satış Teklifleri",
+    "endpoint": "/satis-teklifleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "siparis"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "id": "satis-siparisleri",
+    "title": "Satış Siparişleri",
+    "endpoint": "/siparisler",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "siparis"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "id": "sevk-emirleri",
+    "title": "Sevk Emirleri",
+    "endpoint": "/sevk-emirleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "sevk"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "id": "irsaliyeler",
+    "title": "İrsaliyeler",
+    "endpoint": "/irsaliyeler",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "sevk"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "id": "satis-faturalari",
+    "title": "Satış Faturaları",
+    "endpoint": "/faturalar?fatura_turu=Satis",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "faturalar"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "id": "kk-emirleri-gkk",
+    "title": "GKK Emirleri",
+    "endpoint": "/kk-emirleri?yon=GKK",
+    "crud": false,
+    "readOnly": false,
+    "sections": [
+      "emirler"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "id": "kk-emirleri-ckk",
+    "title": "ÇKK Emirleri",
+    "endpoint": "/kk-emirleri?yon=CKK",
+    "crud": false,
+    "readOnly": false,
+    "sections": [
+      "emirler"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "id": "kk-uygunsuzluklar",
+    "title": "KK Uygunsuzluklar",
+    "endpoint": "/kk-uygunsuzluklar",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "emirler"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "id": "kk-capa",
+    "title": "CAPA",
+    "endpoint": "/kk-capa",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "emirler"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "id": "kk-kontrol-planlari",
+    "title": "KK Kontrol Planları",
+    "endpoint": "/kk-kontrol-planlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "id": "kk-stok-planlari",
+    "title": "KK Stok Plan Bağları",
+    "endpoint": "/kk-stok-planlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "id": "kk-ret-nedenleri",
+    "title": "KK Ret Nedenleri",
+    "endpoint": "/kk-ret-nedenleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onaylarim",
+    "title": "Onaylarım",
+    "endpoint": "/onay-kayitlari?benim=true",
+    "crud": false,
+    "readOnly": false,
+    "sections": [
+      "islem"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onay-izleme",
+    "title": "Onay İzleme",
+    "endpoint": "/onay-kayitlari",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "islem"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onay-yetki-devri",
+    "title": "Onay Yetki Devri",
+    "endpoint": "/onay-yetki-devirleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "islem"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onay-rol-tanim",
+    "title": "Onay Rolü",
+    "endpoint": "/onay-rolleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onay-kural-tanim",
+    "title": "Onay Kuralı",
+    "endpoint": "/onay-kurallari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onay-rota-tanim",
+    "title": "Onay Rotası",
+    "endpoint": "/onay-rotalari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onay-mesaj-sablon",
+    "title": "Onay Mesaj Şablonu",
+    "endpoint": "/onay-mesaj-sablonlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "id": "onay-durum-tanim",
+    "title": "Onay Durum Tanımı",
+    "endpoint": "/onay-durumlari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "id": "hesap-plani",
+    "title": "Hesap Planı",
+    "endpoint": "/muhasebe-hesaplari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "id": "muhasebe-belgeleri",
+    "title": "Muhasebe Belgeleri",
+    "endpoint": "/muhasebe-belgeleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "belgeler"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "id": "mizan",
+    "title": "Mizan",
+    "endpoint": "/mizan",
+    "crud": false,
+    "readOnly": false,
+    "sections": [
+      "raporlar"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "id": "hesap-belirleme-kurallari",
+    "title": "Hesap Belirleme Kuralları",
+    "endpoint": "/hesap-belirleme-kurallari",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "id": "fiyat-listeleri",
+    "title": "Fiyat Listeleri",
+    "endpoint": "/fiyat-listeleri",
+    "crud": true,
+    "readOnly": false,
+    "sections": [
+      "tanimlar"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "id": "fatura-kontrolleri",
+    "title": "Fatura Kontrolleri (3-way)",
+    "endpoint": "/fatura-kontrolleri",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "belgeler"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "id": "kokpit",
+    "title": "Kokpit",
+    "endpoint": "/kokpit",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "raporlar"
+    ]
+  }
+]
