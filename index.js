@@ -137,6 +137,15 @@ app.use('/crm-ajanda', require('./routes/crm_ajanda'));
 app.use('/hesap-belirleme-kurallari', require('./routes/hesap_belirleme_kurallari'));
 app.use('/fatura-kontrolleri', require('./routes/fatura_kontrolleri'));
 app.use('/tedarikci-degerlendirme', require('./routes/tedarikci_degerlendirme'));
+app.use('/onay-durumlari', require('./routes/onay_durumlari'));
+app.use('/onay-rolleri', require('./routes/onay_rolleri'));
+app.use('/onay-rotalari', require('./routes/onay_rotalari'));
+app.use('/onay-mesaj-sablonlari', require('./routes/onay_mesaj_sablonlari'));
+app.use('/onay-modul-kullanimlari', require('./routes/onay_modul_kullanimlari'));
+app.use('/onay-kurallari', require('./routes/onay_kurallari'));
+app.use('/onay-ekranlari', require('./routes/onay_ekranlari'));
+app.use('/onay-yetki-devirleri', require('./routes/onay_yetki_devirleri'));
+app.use('/onay-kayitlari', require('./routes/onay_kayitlari'));
 
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 app.use(notFoundHandler);
