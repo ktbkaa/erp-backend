@@ -35,6 +35,8 @@ function createApp() {
   app.use('/sayim-belgeleri', require('../../routes/sayim_belgeleri'));
   app.use('/depolar', require('../../routes/depolar'));
   app.use('/stoklar', require('../../routes/stoklar'));
+  app.use('/audit-log', require('../../routes/audit_log'));
+  app.use('/meta', require('../../routes/meta_ekran'));
   app.use(auditMiddleware(pool));
 
   const { errorHandler, notFoundHandler } = require('../../src/middleware/errorHandler');

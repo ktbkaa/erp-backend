@@ -1122,5 +1122,17 @@
     "sections": [
       "raporlar"
     ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "id": "tablo-bilgileri",
+    "title": "Tablo Bilgileri",
+    "endpoint": "/meta/ekranlar",
+    "crud": false,
+    "readOnly": true,
+    "sections": [
+      "gozlem"
+    ]
   }
 ]

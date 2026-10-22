@@ -6,8 +6,10 @@ router.get('/', async (req, res, next) => {
   try {
     const where = [];
     const params = [];
-    if (req.query.tablo) {
-      params.push(req.query.tablo);
+
+    const tablo = req.query.tablo_adi || req.query.tablo;
+    if (tablo) {
+      params.push(String(tablo));
       where.push(`tablo_adi = $${params.length}`);
     }
     if (req.query.kayit_id) {
@@ -15,9 +17,20 @@ router.get('/', async (req, res, next) => {
       where.push(`kayit_id = $${params.length}`);
     }
     if (req.query.kullanici_kodu) {
-      params.push(req.query.kullanici_kodu);
+      params.push(String(req.query.kullanici_kodu));
       where.push(`kullanici_kodu = $${params.length}`);
     }
+    if (req.query.islem) {
+      params.push(String(req.query.islem));
+      where.push(`islem = $${params.length}`);
+    }
+    // Ekran adı / endpoint parçası — yol veya tablo_adi üzerinde ara
+    const ekran = req.query.ekran || req.query.ekran_adi || req.query.q;
+    if (ekran) {
+      params.push(`%${String(ekran)}%`);
+      where.push(`(tablo_adi ILIKE $${params.length} OR yol ILIKE $${params.length})`);
+    }
+
     const limit = Math.min(Number(req.query.limit) || 100, 500);
     const r = await pool.query(
       `
@@ -26,7 +39,7 @@ router.get('/', async (req, res, next) => {
       ORDER BY id DESC
       LIMIT ${limit}
       `,
-      params
+      params,
     );
     res.json(r.rows);
   } catch (err) {

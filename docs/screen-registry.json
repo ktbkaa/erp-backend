@@ -1,7 +1,7 @@
 {
   "version": 1,
   "standard": "MODULE-SUBAREA-OBJECTTYPE-NNN",
-  "generatedAt": "2026-10-22T11:54:55.276Z",
+  "generatedAt": "2026-10-22T17:43:10.494Z",
   "notes": [
     "Route/hash id (legacyId) korunur; yetki (ekran_id) ve URL uyumluluğu bozulmaz.",
     "Teknik kimlik (id/techId) belge numaralarından ve DB tablo adlarından ayrıdır.",
@@ -2050,6 +2050,26 @@
       "filePath": "public/app.js",
       "previousTechnicalId": "kokpit",
       "change": "Added techId and businessNameEn; route id unchanged",
+      "status": "Changed",
+      "crud": false,
+      "readOnly": true
+    },
+    {
+      "id": "SYS-META-SCR-001",
+      "legacyId": "tablo-bilgileri",
+      "module": "SYS",
+      "subarea": "META",
+      "objectType": "SCR",
+      "displayNameTr": "Tablo Bilgileri",
+      "businessNameEn": "Screen Table Catalog",
+      "technicalNameEn": "ScreenTableCatalogScreen",
+      "navModuleId": "sistem",
+      "navModuleTitle": "Sistem",
+      "route": "#tablo-bilgileri",
+      "endpoint": "/meta/ekranlar",
+      "filePath": "public/app.js",
+      "previousTechnicalId": null,
+      "change": "Added Tablo Bilgileri meta explorer screen",
       "status": "Changed",
       "crud": false,
       "readOnly": true
