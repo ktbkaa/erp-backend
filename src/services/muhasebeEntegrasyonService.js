@@ -1,82 +1,141 @@
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
 const { cariHareketEkle } = require('./cariHareketService');
+const {
+  fisOlustur,
+  kaynakFisVarMi,
+  hesapIdCoz,
+  round2,
+} = require('./muhasebeMotorService');
 
 async function kuralBul(client, belgeTipi) {
   const r = await client.query(
-    `SELECT * FROM hesap_belirleme_kurallari WHERE belge_tipi=$1 AND aktif=TRUE LIMIT 1`,
+    `SELECT * FROM hesap_belirleme_kurallari
+     WHERE belge_tipi=$1 AND aktif=TRUE
+     ORDER BY CASE WHEN kural_kodu LIKE '%_TR' THEN 0 ELSE 1 END
+     LIMIT 1`,
     [belgeTipi]
   );
   return r.rows[0] || null;
 }
 
-async function hesapId(client, kod) {
-  const r = await client.query(`SELECT id FROM muhasebe_hesaplari WHERE hesap_kodu=$1`, [kod]);
-  return r.rows[0]?.id || null;
+async function vergiOran(client, ulkeKodu, oran) {
+  const r = await client.query(
+    `
+    SELECT vk.vergi_kodu, vk.indirilecek_hesap_kodu, vk.hesaplanan_hesap_kodu, vo.oran
+    FROM finans_vergi_kodlari vk
+    JOIN finans_vergi_oranlari vo ON vo.vergi_kod_id = vk.id
+    WHERE vk.ulke_kodu=$1 AND vk.aktif
+      AND vo.gecerlilik_baslangic <= CURRENT_DATE
+      AND (vo.gecerlilik_bitis IS NULL OR vo.gecerlilik_bitis >= CURRENT_DATE)
+      AND ABS(vo.oran - $2) < 0.01
+    ORDER BY vo.gecerlilik_baslangic DESC
+    LIMIT 1
+    `,
+    [ulkeKodu || 'TR', Number(oran) || 20]
+  );
+  return r.rows[0] || null;
 }
 
 /**
- * Onaylı faturadan muhasebe belgesi + cari hareket önerisi/oluşturma.
+ * Onaylı faturadan muhasebe belgesi + cari hareket.
+ * Idempotent: aynı fatura ikinci kez işlenmez.
  */
-async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null } = {}) {
+async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null, ulkeKodu = 'TR' } = {}) {
   const f = await client.query(`SELECT * FROM faturalar WHERE id=$1 FOR UPDATE`, [faturaId]);
   if (!f.rows[0]) throw Object.assign(new Error('Fatura bulunamadı.'), { status: 404 });
   const fatura = f.rows[0];
-  const tutar = Number(fatura.odenecek_tutar || fatura.toplam_tutar || 0);
-  if (tutar <= 0) throw Object.assign(new Error('Fatura tutarı sıfır.'), { status: 400 });
 
   const tip = String(fatura.fatura_turu || '').toLowerCase().includes('alis') ? 'Alis' : 'Satis';
-  const kural = await kuralBul(client, tip);
-  if (!kural) throw Object.assign(new Error(`Hesap kuralı yok: ${tip}`), { status: 400 });
+  const kaynakTip = tip === 'Alis' ? 'ALIS_FATURA' : 'SATIS_FATURA';
 
-  const borcId = await hesapId(client, kural.borc_hesap_kodu);
-  const alacakId = await hesapId(client, kural.alacak_hesap_kodu);
-  if (!borcId || !alacakId) {
-    throw Object.assign(new Error('Muhasebe hesap kartı eksik (120/150/320/600 seed).'), { status: 400 });
-  }
-
-  const no = await sonrakiBelgeNo(client, 'MUHASEBE_BELGE').catch(async () => {
-    // seri yoksa basit
-    const n = await client.query(`SELECT COUNT(*)::int+1 AS n FROM muhasebe_belgeleri`);
-    return `MB${String(n.rows[0].n).padStart(5, '0')}`;
+  const mevcut = await kaynakFisVarMi(client, {
+    firmaId: fatura.firma_id,
+    kaynakBelgeTipi: kaynakTip,
+    kaynakBelgeId: faturaId,
   });
-
-  const bel = await client.query(
-    `INSERT INTO muhasebe_belgeleri (belge_no, belge_tarihi, aciklama, durum)
-     VALUES ($1, CURRENT_DATE, $2, 'Onayli') RETURNING id`,
-    [no, `${tip} fatura ${fatura.fatura_no}`]
-  ).catch(async (err) => {
-    // kolon farkları için minimal insert
-    if (String(err.message).includes('column')) {
-      return client.query(
-        `INSERT INTO muhasebe_belgeleri (belge_no, aciklama) VALUES ($1,$2) RETURNING id`,
-        [no, `${tip} fatura ${fatura.fatura_no}`]
-      );
-    }
-    throw err;
-  });
-  const belgeId = bel.rows[0].id;
-
-  // kalemler — şema değişken olabilir
-  try {
-    await client.query(
-      `INSERT INTO muhasebe_belge_kalemleri (belge_id, hesap_id, borc, alacak, aciklama)
-       VALUES ($1,$2,$3,0,$4), ($1,$5,0,$3,$4)`,
-      [belgeId, borcId, tutar, fatura.fatura_no, alacakId]
+  if (mevcut) {
+    throw Object.assign(
+      new Error(`Fatura zaten muhasebeleştirilmiş (fiş ${mevcut.belge_no}).`),
+      { status: 409, kod: 'MUKERRER_FIS', muhasebe_belge_id: mevcut.id }
     );
-  } catch (_) {
-    await client.query(
-      `INSERT INTO muhasebe_belge_kalemleri (belge_id, hesap_kodu, borc_tutar, alacak_tutar)
-       VALUES ($1,$2,$3,0), ($1,$4,0,$3)`,
-      [belgeId, kural.borc_hesap_kodu, tutar, kural.alacak_hesap_kodu]
-    ).catch(() => {});
   }
 
-  // Cari hareket
+  const mal = round2(fatura.mal_hizmet_toplam || fatura.toplam_tutar || 0);
+  const kdv = round2(fatura.toplam_kdv || 0);
+  const odenecek = round2(fatura.odenecek_tutar || mal + kdv);
+  if (odenecek <= 0) throw Object.assign(new Error('Fatura tutarı sıfır.'), { status: 400 });
+
+  const kural = await kuralBul(client, tip);
+  if (!kural) {
+    throw Object.assign(new Error(`Hesap belirleme kuralı yok: ${tip}. Finans → Hesap Belirleme Kuralları.`), {
+      status: 400,
+      kod: 'KURAL_YOK',
+    });
+  }
+
+  const ulke = ulkeKodu || 'TR';
+  const lines = [];
+
+  if (tip === 'Satis') {
+    const alici = await hesapIdCoz(client, { hesap_kodu: kural.borc_hesap_kodu, ulke_kodu: ulke });
+    const gelir = await hesapIdCoz(client, { hesap_kodu: kural.alacak_hesap_kodu, ulke_kodu: ulke });
+    lines.push({
+      hesap_id: alici, borc: odenecek, alacak: 0,
+      cari_id: fatura.cari_id, aciklama: fatura.fatura_no,
+    });
+    lines.push({
+      hesap_id: gelir, borc: 0, alacak: mal,
+      aciklama: fatura.fatura_no,
+    });
+    if (kdv > 0) {
+      const vo = await vergiOran(client, ulke, fatura.kdv_oran_varsayilan || 20);
+      const kdvKod = vo?.hesaplanan_hesap_kodu || '391.01.001';
+      const kdvHesap = await hesapIdCoz(client, { hesap_kodu: kdvKod, ulke_kodu: ulke });
+      lines.push({
+        hesap_id: kdvHesap, borc: 0, alacak: kdv,
+        vergi_kodu: vo?.vergi_kodu || 'KDV20', aciklama: `KDV ${fatura.fatura_no}`,
+      });
+    }
+  } else {
+    const stok = await hesapIdCoz(client, { hesap_kodu: kural.borc_hesap_kodu, ulke_kodu: ulke });
+    const satici = await hesapIdCoz(client, { hesap_kodu: kural.alacak_hesap_kodu, ulke_kodu: ulke });
+    lines.push({
+      hesap_id: stok, borc: mal, alacak: 0, aciklama: fatura.fatura_no,
+    });
+    if (kdv > 0) {
+      const vo = await vergiOran(client, ulke, fatura.kdv_oran_varsayilan || 20);
+      const kdvKod = vo?.indirilecek_hesap_kodu || '191.01.001';
+      const kdvHesap = await hesapIdCoz(client, { hesap_kodu: kdvKod, ulke_kodu: ulke });
+      lines.push({
+        hesap_id: kdvHesap, borc: kdv, alacak: 0,
+        vergi_kodu: vo?.vergi_kodu || 'KDV20', aciklama: `KDV ${fatura.fatura_no}`,
+      });
+    }
+    lines.push({
+      hesap_id: satici, borc: 0, alacak: odenecek,
+      cari_id: fatura.cari_id, aciklama: fatura.fatura_no,
+    });
+  }
+
+  const fis = await fisOlustur(client, {
+    firmaId: fatura.firma_id || null,
+    ulkeKodu: ulke,
+    fisTipi: 'Mahsup',
+    belgeTarihi: fatura.fatura_tarihi || null,
+    aciklama: `${tip} fatura ${fatura.fatura_no}`,
+    paraBirimi: fatura.para_birimi || 'TRY',
+    kur: fatura.kur || 1,
+    lines,
+    kaynakBelgeTipi: kaynakTip,
+    kaynakBelgeId: faturaId,
+    olusturanKullanici: kullaniciKodu,
+    kesinlestir: true,
+  });
+
   if (tip === 'Satis') {
     await cariHareketEkle(client, {
       cariId: fatura.cari_id,
       yon: 'Borc',
-      tutar,
+      tutar: odenecek,
       belgeTipi: 'SATIS_FATURA',
       belgeId: faturaId,
       aciklama: `Satış fatura ${fatura.fatura_no}`,
@@ -85,14 +144,34 @@ async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null } = {}
     await cariHareketEkle(client, {
       cariId: fatura.cari_id,
       yon: 'Alacak',
-      tutar,
+      tutar: odenecek,
       belgeTipi: 'ALIS_FATURA',
       belgeId: faturaId,
       aciklama: `Alış fatura ${fatura.fatura_no}`,
     });
   }
 
-  return { muhasebe_belge_id: belgeId, belge_no: no, tutar, kural, kullaniciKodu };
+  await client.query(
+    `UPDATE faturalar SET muhasebelesti=TRUE, muhasebe_belge_id=$2, durum=COALESCE(durum,'Onayli')
+     WHERE id=$1`,
+    [faturaId, fis.id]
+  ).catch(async () => {
+    await client.query(
+      `UPDATE faturalar SET muhasebelesti=TRUE WHERE id=$1`,
+      [faturaId]
+    ).catch(() => {});
+  });
+
+  return {
+    muhasebe_belge_id: fis.id,
+    belge_no: fis.belge_no,
+    tutar: odenecek,
+    mal_hizmet: mal,
+    kdv,
+    kural,
+    kullaniciKodu,
+    satir_sayisi: lines.length,
+  };
 }
 
 module.exports = { faturadanMuhasebe, kuralBul };
