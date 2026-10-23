@@ -1152,7 +1152,7 @@ router.post('/:id/fatura-olustur', async (req, res) => {
             ok: true,
             fatura: { ...f.rows[0], kalemler: kalemler.rows, satirlar: kalemler.rows },
             irsaliye: await irsaliyeGetir(ir.id),
-            yonlendir: 'satis-faturalari',
+            yonlendir: 'fatura-yonetimi',
             mesaj: 'Fatura ekranına yönlendiriliyorsunuz',
         });
     } catch (err) {
