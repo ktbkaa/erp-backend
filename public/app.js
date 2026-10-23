@@ -10465,6 +10465,52 @@ function openFormInNewBrowserTab(screen, mode, { rowId = null, prefill = null } 
   return false;
 }
 
+/** Liste / meta ekranını yeni tarayıcı sekmesinde aç (Bilgi → Ekran / Log). */
+function openScreenInNewBrowserTab(screenId, opts = {}) {
+  if (!screenId || !findScreen(screenId)) {
+    toast(`Ekran bulunamadı: ${screenId || '?'}`);
+    return false;
+  }
+  const params = new URLSearchParams({
+    view: 'screen',
+    screen: screenId,
+  });
+  if (opts.focusScreenId) params.set('focus', String(opts.focusScreenId));
+  if (opts.banner) params.set('banner', String(opts.banner));
+  if (opts.filterState && typeof opts.filterState === 'object') {
+    const key = `ktb-screen-filter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    try {
+      localStorage.setItem(key, JSON.stringify(opts.filterState));
+      params.set('filters', key);
+    } catch (_) { /* depolama doluysa filtresiz aç */ }
+  }
+  const url = `${location.origin}${location.pathname}?${params.toString()}#${encodeURIComponent(screenId)}`;
+  const win = window.open(url, '_blank');
+  if (win) {
+    try { win.focus(); } catch (_) { /* ignore */ }
+    return true;
+  }
+  toast('Tarayıcı yeni sekmeyi engelledi — açılır pencere izni verin.');
+  return false;
+}
+
+function parseScreenOpenQuery() {
+  try {
+    const q = new URLSearchParams(location.search || '');
+    if (q.get('view') !== 'screen') return null;
+    const screenId = q.get('screen') || (location.hash || '').replace(/^#/, '');
+    if (!screenId) return null;
+    return {
+      screenId,
+      focusScreenId: q.get('focus') || null,
+      filtersKey: q.get('filters') || null,
+      banner: q.get('banner') || null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 async function openForm(mode, opts = {}) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
@@ -11147,8 +11193,7 @@ async function formInfoAction(act) {
     return;
   }
   if (act === 'ekran') {
-    state.metaFocusScreenId = screen.id;
-    await openScreen('tablo-bilgileri', { focusScreenId: screen.id });
+    openScreenInNewBrowserTab('tablo-bilgileri', { focusScreenId: screen.id });
     return;
   }
   if (act === 'log') {
@@ -11161,11 +11206,10 @@ async function formInfoAction(act) {
       tablo_adi: auditTablo ? { op: 'esit', a: String(auditTablo), b: '' } : { op: 'icerir', a: '', b: '' },
       ekran: { op: 'icerir', a: String(auditTablo || screen.id), b: '' },
     };
-    await openScreen('audit-log', { filterState });
-    const banner = $('#screenBanner');
-    if (banner) {
-      banner.textContent = `Audit Log — ${screen.title}${auditTablo ? ' · ' + auditTablo : ''}`;
-    }
+    openScreenInNewBrowserTab('audit-log', {
+      filterState,
+      banner: `Audit Log — ${screen.title}${auditTablo ? ' · ' + auditTablo : ''}`,
+    });
   }
 }
 
@@ -12172,6 +12216,37 @@ async function bootIntoApp() {
 
   // Normal açılış — boot sınıfı kalmışsa temizle
   revealFormSoloReady();
+
+  const screenOpen = parseScreenOpenQuery();
+  if (screenOpen && findScreen(screenOpen.screenId)) {
+    let filterState = null;
+    if (screenOpen.filtersKey) {
+      try {
+        const raw = localStorage.getItem(screenOpen.filtersKey);
+        if (raw) filterState = JSON.parse(raw);
+        localStorage.removeItem(screenOpen.filtersKey);
+      } catch (_) { /* ignore */ }
+    }
+    if (screenOpen.focusScreenId) state.metaFocusScreenId = screenOpen.focusScreenId;
+    await openScreen(screenOpen.screenId, {
+      focusScreenId: screenOpen.focusScreenId || undefined,
+      filterState: filterState || undefined,
+    });
+    if (screenOpen.banner) {
+      const banner = $('#screenBanner') || $('#metaBanner');
+      if (banner) banner.textContent = screenOpen.banner;
+    }
+    // URL’yi sadeleştir (yenilemede tekrar localStorage aramasın)
+    try {
+      history.replaceState(
+        { screenId: screenOpen.screenId },
+        '',
+        `${location.pathname}#${encodeURIComponent(screenOpen.screenId)}`,
+      );
+    } catch (_) { /* ignore */ }
+    return;
+  }
+
   const id = (location.hash || '').replace(/^#/, '');
   if (id && findScreen(id)) openScreen(id);
   else showHome();
