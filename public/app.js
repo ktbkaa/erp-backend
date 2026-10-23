@@ -1991,11 +1991,14 @@ const MODULES = [
         nameField: 'stok_kodu',
         approveAction: { label: 'Onayla', path: '/uretim-emirleri/{id}/onayla' },
         secondaryAction: { label: 'Başlat', path: '/uretim-emirleri/{id}/baslat' },
+        detailFillAction: { label: 'Detayları Doldur', path: '/uretim-emirleri/{id}/detaylari-doldur' },
+        bomRotaChangeAction: { label: 'BOM/Rota Uygula', path: '/uretim-emirleri/{id}/bom-rota-degistir' },
         filters: [
           { key: 'emir_no', label: 'Emir no' },
           { key: 'stok_kodu', label: 'Stok kodu' },
           { key: 'emir_tipi_kodu', label: 'Tip' },
           { key: 'durum', label: 'Durum' },
+          { key: 'acik_kapali', label: 'Açık/Kapalı' },
         ],
         columns: [
           { key: 'emir_no', label: 'Emir', mono: true },
@@ -2005,36 +2008,97 @@ const MODULES = [
           { key: 'planlanan_miktar', label: 'Plan' },
           { key: 'uretilen_miktar', label: 'Üretilen' },
           { key: 'planli_kesin', label: 'P/K' },
+          { key: 'acik_kapali', label: 'A/K' },
+          { key: 'onayli', label: 'Onay' },
           { key: 'baslatildi', label: 'Başlatıldı' },
           { key: 'durum', label: 'Durum' },
         ],
         masterFields: [
           { key: 'emir_no', label: 'Emir no', code: true },
+          { key: 'emir_tarihi', label: 'Emir tarihi', type: 'date', required: true },
           { key: 'emir_tipi_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'tip_adi', codeKey: 'tip_kodu' },
-          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar-mamul', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
           { key: 'urun_agaci_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'agac_adi', codeKey: 'agac_kodu', required: true },
           { key: 'rota_id', label: 'Rota', type: 'lookup', lookup: 'rotalar', valueKey: 'id', labelKey: 'rota_adi', codeKey: 'rota_kodu', required: true },
           { key: 'siparis_id', label: 'Satış siparişi', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no', codeKey: 'siparis_no' },
           { key: 'planlanan_miktar', label: 'Planlanan miktar', type: 'number', required: true },
-          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
+          { key: 'uretilen_miktar', label: 'Üretilen miktar', type: 'number', readOnly: true },
+          { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
           { key: 'hammadde_depo_id', label: 'Hammadde depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
           { key: 'yari_mamul_depo_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
-          { key: 'mamul_depo_id', label: 'Mamul depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'mamul_depo_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'plan_baslangic', label: 'Plan başlangıç', type: 'date' },
+          { key: 'plan_bitis', label: 'Plan bitiş', type: 'date' },
+          { key: 'bitis_tarihi', label: 'Bitiş tarihi', type: 'date' },
           { key: 'planli_kesin', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'] },
+          { key: 'acik_kapali', label: 'Açık/Kapalı', type: 'select', options: ['Acik', 'Kapali'] },
           { key: 'cikis_tipi', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'] },
           { key: 'giris_tipi', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'] },
-          { key: 'baslatildi', label: 'Başlatıldı', type: 'checkbox' },
           { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'] },
+          { key: 'onayli', label: 'Onaylı', type: 'checkbox' },
+          { key: 'yayinlandi', label: 'Yayınlandı', type: 'checkbox' },
+          { key: 'yazdirildi', label: 'Yazdırıldı', type: 'checkbox' },
+          { key: 'urun_girisi_tamamlandi', label: 'Ürün girişi tamam', type: 'checkbox' },
+          { key: 'baslatildi', label: 'Başlatıldı', type: 'checkbox', readOnly: true },
+          { key: 'aciklama', label: 'Açıklama', size: 'wide' },
         ],
         detailFields: [
-          { key: 'sira_no', label: 'Sıra', type: 'number' },
-          { key: 'operasyon_kodu', label: 'Operasyon kodu' },
+          { key: 'sira_no', label: 'Op. no', type: 'number', size: 'short' },
+          { key: 'operasyon_kodu', label: 'Operasyon kodu', size: 'short' },
           { key: 'operasyon_adi', label: 'Operasyon adı' },
-          { key: 'durum', label: 'Durum' },
+          { key: 'is_merkezi_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'merkez_adi', codeKey: 'merkez_kodu' },
+          { key: 'planlanan_miktar', label: 'Plan miktar', type: 'number', size: 'short' },
+          { key: 'uretilen_miktar', label: 'Üretilen', type: 'number', size: 'short', readOnly: true },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Bekliyor', 'Hazir', 'Tamamlandi', 'Kapali'] },
+          { key: 'ilk_operasyon', label: 'İlk op?', type: 'checkbox', readOnly: true },
+          { key: 'son_operasyon', label: 'Son op?', type: 'checkbox', readOnly: true },
         ],
         detailKey: 'operasyonlar',
-        detailSlots: 4,
-        defaults: { cikis_tipi: 'Manuel', giris_tipi: 'Manuel', baslatildi: false },
+        detailSlots: 6,
+        formTabs: [
+          {
+            id: 'bilgiler',
+            label: 'İş Emri Bilgileri',
+            kind: 'fields',
+            fields: null, // masterFields (normalize)
+          },
+          {
+            id: 'malzemeler',
+            label: 'İş Emri Malzemeleri',
+            kind: 'grid',
+            key: 'malzemeler',
+            slots: 6,
+            fields: [
+              { key: 'sira_no', label: 'Sıra', type: 'number', size: 'short' },
+              { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
+              { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', size: 'short' },
+              { key: 'planlanan_miktar', label: 'Plan miktar', type: 'number', size: 'short', required: true },
+              { key: 'tuketilen_miktar', label: 'Tüketilen', type: 'number', size: 'short', readOnly: true },
+              { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu' },
+            ],
+          },
+          {
+            id: 'rota',
+            label: 'Rota',
+            kind: 'grid',
+            key: 'operasyonlar',
+            slots: 6,
+            fields: null, // detailFields
+          },
+        ],
+        defaults: {
+          cikis_tipi: 'Manuel',
+          giris_tipi: 'Manuel',
+          baslatildi: false,
+          acik_kapali: 'Acik',
+          planli_kesin: 'Kesin',
+          onayli: false,
+          yayinlandi: false,
+          yazdirildi: false,
+          urun_girisi_tamamlandi: false,
+          durum: 'Acik',
+        },
       },
       {
         id: 'siparis-is-emri',
@@ -4894,8 +4958,29 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     }
   } else {
     // Elle / kompakt kabuk formTabs — yine dedupe
-    dedupeMasterAgainstGrid(s);
+    // İş emri gibi Bilgiler + Malzemeler + Rota: başlık stok/miktar/birim kalemlerle paylaşılır,
+    // dedupe onları başlıktan siler — çok grid’li elle kabukta atla.
+    const multiGridShell = (s.formTabs || []).filter((t) => t?.kind === 'grid').length >= 1
+      && (s.formTabs || []).some((t) => t?.kind === 'fields');
+    if (!multiGridShell) {
+      dedupeMasterAgainstGrid(s);
+    }
   }
+
+  // fields: null → masterFields / detailFields (iş emri Bilgiler + Rota vb.)
+  (s.formTabs || []).forEach((tab) => {
+    if (!tab) return;
+    if (tab.kind === 'fields' && !Array.isArray(tab.fields)) {
+      tab.fields = (s.masterFields || []).map((f) => ({ ...f }));
+    }
+    if (tab.kind === 'grid' && !Array.isArray(tab.fields)) {
+      if (tab.key === s.detailKey || tab.key === 'operasyonlar') {
+        tab.fields = (s.detailFields || []).map((f) => ({ ...f }));
+      } else {
+        tab.fields = [];
+      }
+    }
+  });
 
   // Aktif checkbox → Pasif (DB aktif kalır; tik = pasif)
   const remapAktifToPasif = (fields) => {
@@ -9486,6 +9571,28 @@ function renderForm(screen) {
       conv.dataset.convertKind = preferApprove ? 'approve' : 'convert';
     }
   }
+
+  // İş emri: Detayları Doldur + BOM/Rota Uygula (başlatılmamış, açık emir)
+  const fillBtn = $('#btnFormDetailFill');
+  const bomBtn = $('#btnFormBomRota');
+  const woCanRefill = screen.id === 'uretim-emirleri'
+    && rec.id
+    && state.formMode !== 'yeni'
+    && !readonly
+    && !rec.baslatildi
+    && Number(rec.uretilen_miktar || 0) <= 0
+    && !['Kapali', 'Iptal'].includes(rec.durum);
+  if (fillBtn) {
+    const showFill = woCanRefill && screen.detailFillAction;
+    fillBtn.hidden = !showFill;
+    if (showFill) fillBtn.textContent = screen.detailFillAction.label;
+  }
+  if (bomBtn) {
+    const showBom = woCanRefill && screen.bomRotaChangeAction;
+    bomBtn.hidden = !showBom;
+    if (showBom) bomBtn.textContent = screen.bomRotaChangeAction.label;
+  }
+
   // Belge zinciri şeridi (irsaliye)
   renderZincirStrip(screen, rec);
 
@@ -9566,7 +9673,8 @@ function renderForm(screen) {
         ${renderRotaFlow(tab, rec)}
       </div>`;
     }
-    const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart' || tab.id === 'baslik';
+    const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart'
+      || tab.id === 'baslik' || tab.id === 'bilgiler';
     const tabFields = tab.fields || [];
     // Adres / Ödeme gibi yan sekmeler: tüm alanlar gövdede (üstte ikinci “Başlık” yok)
     if (!masterLike) {
@@ -11694,6 +11802,60 @@ function bindEvents() {
         }
       } catch (err) {
         toast(err.message || 'İşlem başarısız');
+      }
+    });
+  }
+
+  const btnDetailFill = $('#btnFormDetailFill');
+  if (btnDetailFill) {
+    btnDetailFill.addEventListener('click', async () => {
+      const screen = findScreen(state.screenId);
+      const rec = state.formRecord;
+      if (!screen?.detailFillAction || !rec?.id) return;
+      if (!window.confirm('Malzeme ve rota satırları ürün ağacı + rotadan yeniden doldurulacak. Devam?')) return;
+      try {
+        const path = screen.detailFillAction.path.replace('{id}', rec.id);
+        const sonuc = await api(path, { method: 'POST', body: JSON.stringify({}) });
+        const nMal = sonuc._doldurulan?.malzeme ?? (sonuc.malzemeler || []).length;
+        const nOp = sonuc._doldurulan?.operasyon ?? (sonuc.operasyonlar || []).length;
+        toast(`${screen.detailFillAction.label}: ${nMal} malzeme, ${nOp} operasyon.`);
+        state.formRecord = sonuc;
+        renderForm(screen);
+      } catch (err) {
+        toast(err.message || 'Detay doldurma başarısız');
+      }
+    });
+  }
+
+  const btnBomRota = $('#btnFormBomRota');
+  if (btnBomRota) {
+    btnBomRota.addEventListener('click', async () => {
+      const screen = findScreen(state.screenId);
+      const rec = state.formRecord;
+      if (!screen?.bomRotaChangeAction || !rec?.id) return;
+      const master = readMasterFromForm(screen);
+      const urunAgaciId = master.urun_agaci_id ?? rec.urun_agaci_id;
+      const rotaId = master.rota_id ?? rec.rota_id;
+      if (!urunAgaciId && !rotaId) {
+        toast('Ürün ağacı veya rota seçin.');
+        return;
+      }
+      if (!window.confirm('Formdaki ürün ağacı / rota emre uygulanacak; malzemeler ve operasyonlar yenilenecek. Devam?')) return;
+      try {
+        const path = screen.bomRotaChangeAction.path.replace('{id}', rec.id);
+        const sonuc = await api(path, {
+          method: 'POST',
+          body: JSON.stringify({
+            urun_agaci_id: urunAgaciId || undefined,
+            rota_id: rotaId || undefined,
+            detaylari_doldur: true,
+          }),
+        });
+        toast(screen.bomRotaChangeAction.label + ' tamam.');
+        state.formRecord = sonuc;
+        renderForm(screen);
+      } catch (err) {
+        toast(err.message || 'BOM/rota uygulaması başarısız');
       }
     });
   }
