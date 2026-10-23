@@ -465,7 +465,7 @@ const MODULES = [
       { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar', 'kullanici-gruplari'] },
       { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri'] },
       { id: 'iletisim', title: 'İletişim', screenIds: ['eposta-gonderimleri'] },
-      { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log'] },
+      { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log', 'tablo-bilgileri'] },
     ],
     screens: [
       {
@@ -602,9 +602,10 @@ const MODULES = [
         crud: false,
         readOnly: true,
         filters: [
-          { key: 'tablo_adi', label: 'Tablo' },
-          { key: 'kullanici_kodu', label: 'Kullanıcı' },
-          { key: 'islem', label: 'İşlem' },
+          { key: 'tablo_adi', label: 'Tablo', queryParam: true },
+          { key: 'ekran', label: 'Ekran / yol', queryParam: true },
+          { key: 'kullanici_kodu', label: 'Kullanıcı', queryParam: true },
+          { key: 'islem', label: 'İşlem', queryParam: true },
         ],
         columns: [
           { key: 'kayit_tarihi', label: 'Zaman' },
@@ -613,6 +614,22 @@ const MODULES = [
           { key: 'kayit_id', label: 'Kayıt' },
           { key: 'islem', label: 'İşlem' },
           { key: 'yol', label: 'Yol' },
+        ],
+      },
+      {
+        id: 'tablo-bilgileri',
+        techId: 'SYS-META-SCR-001',
+        businessNameEn: 'ScreenTableCatalogScreen',
+        title: 'Tablo Bilgileri',
+        endpoint: '/meta/ekranlar',
+        crud: false,
+        readOnly: true,
+        metaExplorer: true,
+        filters: [],
+        columns: [
+          { key: 'title', label: 'Ekran' },
+          { key: 'techId', label: 'Teknik kimlik', mono: true },
+          { key: 'primaryTable', label: 'Ana tablo', mono: true },
         ],
       },
       {
@@ -5972,20 +5989,21 @@ function showView(name) {
   const home = $('#viewHome');
   const screen = $('#viewScreen');
   const form = $('#viewForm');
+  const meta = $('#viewMeta');
   if (!home || !screen || !form) {
     console.error('KTB ERP: view element missing', { home: !!home, screen: !!screen, form: !!form });
     return;
   }
 
-  // Sadece native hidden — CSS class savaşları yok
   home.hidden = name !== 'home';
   screen.hidden = name !== 'screen';
   form.hidden = name !== 'form';
+  if (meta) meta.hidden = name !== 'meta';
 
-  // Inline stil yedek (eski CSS cache’ine karşı)
   home.style.display = name === 'home' ? 'grid' : 'none';
   screen.style.display = name === 'screen' ? 'grid' : 'none';
   form.style.display = name === 'form' ? 'flex' : 'none';
+  if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
 }
 
 
@@ -7481,6 +7499,30 @@ async function openScreen(id, opts = {}) {
       return;
     }
 
+    if (screen.metaExplorer) {
+      state.screenId = id;
+      state.formMode = null;
+      state.selectedId = null;
+      if (location.hash !== `#${id}`) {
+        history.pushState({ screenId: id }, '', `#${id}`);
+      }
+      if (!opts.skipTab) addListTab(screen);
+      else {
+        state.activeTabKey = `list:${screen.id}`;
+        renderTabBar();
+      }
+      ensureSidebarPath(screen);
+      showView('meta');
+      const banner = $('#metaBanner');
+      if (banner) {
+        banner.textContent = screen.techId
+          ? `${screen.title} · ${screen.techId}`
+          : screen.title;
+      }
+      await openMetaExplorer(opts.focusScreenId || state.metaFocusScreenId || null);
+      return;
+    }
+
     state.screenId = id;
     state.selectedId = null;
     state.formMode = null;
@@ -7491,6 +7533,9 @@ async function openScreen(id, opts = {}) {
     // Filtre lookup'larını yükle (firma / iş yeri seçicileri)
     await ensureFilterLookups(screen);
     state.filterState = buildDefaultFilterState(screen);
+    if (opts.filterState && typeof opts.filterState === 'object') {
+      state.filterState = { ...state.filterState, ...opts.filterState };
+    }
     ensureSidebarPath(screen);
 
     if (location.hash !== `#${id}`) {
@@ -8348,7 +8393,7 @@ function fieldShell(f, controlHtml) {
   const hint = f.critical
     ? '<span class="field-critical-hint">zorunlu</span>'
     : '';
-  return `<div class="${cls.join(' ')}"><label>${f.label}${hint}</label>${controlHtml}</div>`;
+  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${f.label}${hint}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -10420,6 +10465,52 @@ function openFormInNewBrowserTab(screen, mode, { rowId = null, prefill = null } 
   return false;
 }
 
+/** Liste / meta ekranını yeni tarayıcı sekmesinde aç (Bilgi → Ekran / Log). */
+function openScreenInNewBrowserTab(screenId, opts = {}) {
+  if (!screenId || !findScreen(screenId)) {
+    toast(`Ekran bulunamadı: ${screenId || '?'}`);
+    return false;
+  }
+  const params = new URLSearchParams({
+    view: 'screen',
+    screen: screenId,
+  });
+  if (opts.focusScreenId) params.set('focus', String(opts.focusScreenId));
+  if (opts.banner) params.set('banner', String(opts.banner));
+  if (opts.filterState && typeof opts.filterState === 'object') {
+    const key = `ktb-screen-filter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    try {
+      localStorage.setItem(key, JSON.stringify(opts.filterState));
+      params.set('filters', key);
+    } catch (_) { /* depolama doluysa filtresiz aç */ }
+  }
+  const url = `${location.origin}${location.pathname}?${params.toString()}#${encodeURIComponent(screenId)}`;
+  const win = window.open(url, '_blank');
+  if (win) {
+    try { win.focus(); } catch (_) { /* ignore */ }
+    return true;
+  }
+  toast('Tarayıcı yeni sekmeyi engelledi — açılır pencere izni verin.');
+  return false;
+}
+
+function parseScreenOpenQuery() {
+  try {
+    const q = new URLSearchParams(location.search || '');
+    if (q.get('view') !== 'screen') return null;
+    const screenId = q.get('screen') || (location.hash || '').replace(/^#/, '');
+    if (!screenId) return null;
+    return {
+      screenId,
+      focusScreenId: q.get('focus') || null,
+      filtersKey: q.get('filters') || null,
+      banner: q.get('banner') || null,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 async function openForm(mode, opts = {}) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
@@ -10836,7 +10927,336 @@ function runSearch(q) {
   `).join('');
 }
 
+
+/* ========== Tablo Bilgileri / F1 / Form Bilgi menüsü ========== */
+state.metaFocusScreenId = state.metaFocusScreenId || null;
+state.metaNavCache = state.metaNavCache || null;
+state.metaOpenMods = state.metaOpenMods || {};
+
+function fmtMetaTs(v) {
+  if (!v) return '—';
+  try {
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) return String(v);
+    return d.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+  } catch (_) {
+    return String(v);
+  }
+}
+
+async function openMetaExplorer(focusScreenId) {
+  const navBody = $('#metaNavBody');
+  const detail = $('#metaDetail');
+  if (!navBody || !detail) return;
+  navBody.innerHTML = '<div class="meta-empty">Yükleniyor…</div>';
+  detail.innerHTML = '<div class="meta-empty">Soldan bir ekran seçin.</div>';
+  try {
+    const data = await api('/meta/ekranlar');
+    state.metaNavCache = data;
+    renderMetaNav(data, focusScreenId);
+    if (focusScreenId) {
+      state.metaFocusScreenId = focusScreenId;
+      await loadMetaScreenDetail(focusScreenId);
+    }
+  } catch (err) {
+    navBody.innerHTML = `<div class="meta-empty">${escapeHtml(err.message || 'Yüklenemedi')}</div>`;
+  }
+}
+
+function renderMetaNav(data, focusScreenId) {
+  const navBody = $('#metaNavBody');
+  if (!navBody) return;
+  const q = String($('#metaNavSearch')?.value || '').trim().toLocaleLowerCase('tr');
+  const modules = data?.modules || [];
+  const html = modules.map((mod) => {
+    let screens = mod.screens || [];
+    if (q) {
+      screens = screens.filter((s) =>
+        s.title.toLocaleLowerCase('tr').includes(q)
+        || s.screenId.includes(q)
+        || (s.techId || '').toLocaleLowerCase('tr').includes(q)
+        || (s.primaryTable || '').includes(q)
+        || (s.tables || []).some((t) => String(t).includes(q))
+      );
+    }
+    if (!screens.length) return '';
+    const open = state.metaOpenMods[mod.id] !== false
+      || screens.some((s) => s.screenId === focusScreenId);
+    state.metaOpenMods[mod.id] = open;
+    return `
+      <div class="meta-mod ${open ? 'open' : ''}" data-meta-mod="${escAttr(mod.id)}">
+        <button type="button" class="meta-mod-toggle" data-meta-mod-toggle="${escAttr(mod.id)}">
+          <span>${escapeHtml(mod.title)}</span>
+          <span class="meta-mod-count">${screens.length}</span>
+        </button>
+        <div class="meta-mod-screens" ${open ? '' : 'hidden'}>
+          ${screens.map((s) => `
+            <button type="button" class="meta-screen-item${s.screenId === focusScreenId ? ' active' : ''}"
+              data-meta-screen="${escAttr(s.screenId)}">
+              <strong>${escapeHtml(s.title)}</strong>
+              <span>${escapeHtml(s.techId || s.screenId)}${s.primaryTable ? ' · ' + escapeHtml(s.primaryTable) : ''}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>`;
+  }).join('');
+  navBody.innerHTML = html || '<div class="meta-empty">Eşleşen ekran yok.</div>';
+}
+
+async function loadMetaScreenDetail(screenId) {
+  const detail = $('#metaDetail');
+  if (!detail) return;
+  detail.innerHTML = '<div class="meta-empty">Yükleniyor…</div>';
+  document.querySelectorAll('.meta-screen-item').forEach((el) => {
+    el.classList.toggle('active', el.getAttribute('data-meta-screen') === screenId);
+  });
+  try {
+    const d = await api(`/meta/ekranlar/${encodeURIComponent(screenId)}`);
+    state.metaFocusScreenId = screenId;
+    detail.innerHTML = `
+      <header class="meta-detail-head">
+        <div>
+          <h2>${escapeHtml(d.title)}</h2>
+          <p class="meta-sub">
+            <code>${escapeHtml(d.techId || '—')}</code>
+            · route <code>#${escapeHtml(d.screenId)}</code>
+            ${d.endpoint ? '· API <code>' + escapeHtml(d.endpoint) + '</code>' : ''}
+          </p>
+        </div>
+        <button type="button" class="btn ghost sm" data-open-screen="${escAttr(d.screenId)}">Ekranı aç</button>
+      </header>
+      <p class="meta-hint">Aşağıda bu ekranın kullandığı tablo(lar) ve kolon adları listelenir. Formda bir alana tıklayıp <kbd>F1</kbd> ile de aynı bilgiyi görebilirsiniz.</p>
+      ${(d.tables || []).map((t) => `
+        <section class="meta-table-card">
+          <h3>
+            <code>${escapeHtml(t.name)}</code>
+            <span class="meta-role">${t.role === 'master' ? 'Ana tablo' : 'İlgili tablo'}</span>
+            <span class="meta-col-count">${t.columnCount} alan</span>
+          </h3>
+          <div class="table-scroll meta-cols-scroll">
+            <table class="meta-cols">
+              <thead><tr><th>Alan adı</th><th>Veri tipi</th><th>Null</th><th>Varsayılan</th></tr></thead>
+              <tbody>
+                ${(t.columns || []).map((c) => `
+                  <tr>
+                    <td><code>${escapeHtml(c.name)}</code></td>
+                    <td>${escapeHtml(c.dataType)}${c.maxLength ? '(' + c.maxLength + ')' : ''}</td>
+                    <td>${c.nullable ? 'Evet' : 'Hayır'}</td>
+                    <td class="muted">${escapeHtml(c.defaultValue || '—')}</td>
+                  </tr>
+                `).join('') || '<tr><td colspan="4">Kolon yok</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `).join('') || '<div class="meta-empty">Bu ekran için tablo eşlemesi yok.</div>'}
+    `;
+  } catch (err) {
+    detail.innerHTML = `<div class="meta-empty">${escapeHtml(err.message || 'Detay yüklenemedi')}</div>`;
+  }
+}
+
+function bindMetaExplorerEvents() {
+  const nav = $('#metaNav');
+  if (nav && !nav.dataset.bound) {
+    nav.dataset.bound = '1';
+    nav.addEventListener('click', (e) => {
+      const tog = e.target.closest('[data-meta-mod-toggle]');
+      if (tog) {
+        const id = tog.getAttribute('data-meta-mod-toggle');
+        state.metaOpenMods[id] = !state.metaOpenMods[id];
+        renderMetaNav(state.metaNavCache, state.metaFocusScreenId);
+        return;
+      }
+      const item = e.target.closest('[data-meta-screen]');
+      if (item) {
+        loadMetaScreenDetail(item.getAttribute('data-meta-screen'));
+        return;
+      }
+      const openScr = e.target.closest('[data-open-screen]');
+      if (openScr) {
+        openScreen(openScr.getAttribute('data-open-screen'));
+      }
+    });
+  }
+  const search = $('#metaNavSearch');
+  if (search && !search.dataset.bound) {
+    search.dataset.bound = '1';
+    search.addEventListener('input', () => {
+      if (state.metaNavCache) renderMetaNav(state.metaNavCache, state.metaFocusScreenId);
+    });
+  }
+  const detail = $('#metaDetail');
+  if (detail && !detail.dataset.bound) {
+    detail.dataset.bound = '1';
+    detail.addEventListener('click', (e) => {
+      const openScr = e.target.closest('[data-open-screen]');
+      if (openScr) openScreen(openScr.getAttribute('data-open-screen'));
+    });
+  }
+}
+
+function closeFieldHelp() {
+  const dlg = $('#fieldHelpDialog');
+  if (dlg) dlg.hidden = true;
+}
+function closeRecordInfo() {
+  const dlg = $('#recordInfoDialog');
+  if (dlg) dlg.hidden = true;
+}
+
+async function showFieldHelpForElement(el) {
+  if (!el) return;
+  const fieldEl = el.closest('[data-field-key], [data-master], [data-detail]');
+  if (!fieldEl && !el.getAttribute?.('data-master') && !el.getAttribute?.('data-detail')) return;
+  const key = fieldEl?.getAttribute('data-field-key')
+    || el.getAttribute('data-master')
+    || el.getAttribute('data-detail')
+    || fieldEl?.querySelector?.('[data-master], [data-detail]')?.getAttribute('data-master')
+    || fieldEl?.querySelector?.('[data-detail]')?.getAttribute('data-detail');
+  const screen = findScreen(state.screenId);
+  if (!screen || !key) {
+    toast('Alan bilgisi için önce bir form alanı seçin.');
+    return;
+  }
+  const body = $('#fieldHelpBody');
+  const dlg = $('#fieldHelpDialog');
+  if (!body || !dlg) return;
+  body.innerHTML = '<p>Yükleniyor…</p>';
+  dlg.hidden = false;
+  try {
+    const info = await api(`/meta/alan?screen=${encodeURIComponent(screen.id)}&field=${encodeURIComponent(key)}`);
+    body.innerHTML = `
+      <dl class="meta-dl">
+        <dt>Ekran</dt><dd>${escapeHtml(info.screenTitle)} <code>${escapeHtml(info.techId || info.screenId)}</code></dd>
+        <dt>Form alanı</dt><dd><code>${escapeHtml(info.fieldKey)}</code></dd>
+        <dt>Tablo</dt><dd><code>${escapeHtml(info.tableName || '—')}</code> ${info.role === 'master' ? '(ana)' : info.found ? '' : ''}</dd>
+        <dt>Kolon</dt><dd><code>${escapeHtml(info.columnName || '—')}</code></dd>
+        <dt>Veri tipi</dt><dd>${escapeHtml(info.dataType || '—')}</dd>
+      </dl>
+      ${info.found === false ? `<p class="meta-warn">${escapeHtml(info.note || '')}</p>` : ''}
+      <p class="meta-hint">İpucu: Tablo Bilgileri ekranından tüm alan listesine de ulaşabilirsiniz.</p>
+    `;
+  } catch (err) {
+    body.innerHTML = `<p class="meta-warn">${escapeHtml(err.message || 'Alınamadı')}</p>`;
+  }
+}
+
+async function showRecordInfo() {
+  const screen = findScreen(state.screenId);
+  const id = state.formRecord?.id || state.selectedId;
+  const body = $('#recordInfoBody');
+  const dlg = $('#recordInfoDialog');
+  if (!body || !dlg) return;
+  if (!screen) return toast('Ekran yok');
+  if (!id) {
+    body.innerHTML = '<p class="meta-warn">Kayıt bilgisi için önce kayıtlı bir belge/kart açın (yeni kayıtta oluşturan bilgisi henüz yoktur).</p>';
+    dlg.hidden = false;
+    return;
+  }
+  body.innerHTML = '<p>Yükleniyor…</p>';
+  dlg.hidden = false;
+  try {
+    const info = await api(`/meta/kayit-bilgi?screen=${encodeURIComponent(screen.id)}&id=${encodeURIComponent(id)}`);
+    body.innerHTML = `
+      <dl class="meta-dl">
+        <dt>Ekran</dt><dd>${escapeHtml(info.screenTitle)} <code>${escapeHtml(info.techId || info.screenId)}</code></dd>
+        <dt>Kayıt no (id)</dt><dd><code>${escapeHtml(info.recordId)}</code></dd>
+        <dt>Ana tablo</dt><dd><code>${escapeHtml(info.primaryTable || '—')}</code></dd>
+        <dt>Oluşturan</dt><dd>${escapeHtml(info.olusturan || '—')}</dd>
+        <dt>Oluşturma</dt><dd>${escapeHtml(fmtMetaTs(info.olusturmaTarihi))}</dd>
+        <dt>Son güncelleyen</dt><dd>${escapeHtml(info.guncelleyen || '—')}</dd>
+        <dt>Son güncelleme</dt><dd>${escapeHtml(fmtMetaTs(info.guncellemeTarihi))}</dd>
+      </dl>
+      <p class="meta-hint">Bilgi satırdaki denetim kolonlarından ve audit log özetinden derlenir.</p>
+    `;
+  } catch (err) {
+    body.innerHTML = `<p class="meta-warn">${escapeHtml(err.message || 'Alınamadı')}</p>`;
+  }
+}
+
+function toggleFormInfoMenu(force) {
+  const menu = $('#formInfoMenu');
+  const btn = $('#btnFormCancel');
+  if (!menu || !btn) return;
+  const open = force != null ? force : menu.hidden;
+  menu.hidden = !open;
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+async function formInfoAction(act) {
+  toggleFormInfoMenu(false);
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  if (act === 'kayit') {
+    await showRecordInfo();
+    return;
+  }
+  if (act === 'ekran') {
+    openScreenInNewBrowserTab('tablo-bilgileri', { focusScreenId: screen.id });
+    return;
+  }
+  if (act === 'log') {
+    let auditTablo = null;
+    try {
+      const meta = await api(`/meta/audit-anahtar/${encodeURIComponent(screen.id)}`);
+      auditTablo = meta.auditTablo || null;
+    } catch (_) { /* ignore */ }
+    const filterState = {
+      tablo_adi: auditTablo ? { op: 'esit', a: String(auditTablo), b: '' } : { op: 'icerir', a: '', b: '' },
+      ekran: { op: 'icerir', a: String(auditTablo || screen.id), b: '' },
+    };
+    openScreenInNewBrowserTab('audit-log', {
+      filterState,
+      banner: `Audit Log — ${screen.title}${auditTablo ? ' · ' + auditTablo : ''}`,
+    });
+  }
+}
+
+function bindMetaHelpGlobal() {
+  if (window.__ktbMetaHelpBound) return;
+  window.__ktbMetaHelpBound = true;
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'F1' && e.code !== 'F1') return;
+    const viewForm = $('#viewForm');
+    if (!viewForm || viewForm.hidden) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = document.activeElement;
+    showFieldHelpForElement(el);
+  }, true);
+  // Alan etiketine çift tıklama da F1 ile aynı yardımı açar
+  document.addEventListener('dblclick', (e) => {
+    const viewForm = $('#viewForm');
+    if (!viewForm || viewForm.hidden) return;
+    const field = e.target.closest?.('[data-field-key], [data-master], [data-detail]');
+    if (!field) return;
+    const ctl = field.matches('[data-master], [data-detail]')
+      ? field
+      : field.querySelector('[data-master], [data-detail]');
+    showFieldHelpForElement(ctl || field);
+  });
+  document.addEventListener('click', (e) => {
+    const wrap = $('#formInfoWrap');
+    const menu = $('#formInfoMenu');
+    if (!wrap || !menu || menu.hidden) return;
+    if (!wrap.contains(e.target)) toggleFormInfoMenu(false);
+  });
+  $('#fieldHelpClose')?.addEventListener('click', closeFieldHelp);
+  $('#fieldHelpOk')?.addEventListener('click', closeFieldHelp);
+  $('#recordInfoClose')?.addEventListener('click', closeRecordInfo);
+  $('#recordInfoOk')?.addEventListener('click', closeRecordInfo);
+  $('#fieldHelpDialog')?.addEventListener('click', (e) => {
+    if (e.target.id === 'fieldHelpDialog') closeFieldHelp();
+  });
+  $('#recordInfoDialog')?.addEventListener('click', (e) => {
+    if (e.target.id === 'recordInfoDialog') closeRecordInfo();
+  });
+}
+
 function bindEvents() {
+  bindMetaExplorerEvents();
+  bindMetaHelpGlobal();
   const nav = $('#sidebarNav');
   if (nav && !nav.dataset.bound) {
     nav.dataset.bound = '1';
@@ -11155,19 +11575,15 @@ function bindEvents() {
     renderList(screen);
   });
 
-  $('#btnFormCancel').addEventListener('click', () => {
-    if (leaveFormSolo(state.screenId)) return;
-    // Form sekmesini kapatma — liste sekmesine geç (yan sekmeler durur)
-    persistActiveFormTab();
-    const screenId = state.screenId;
-    const listKey = screenId ? `list:${screenId}` : null;
-    if (listKey && state.openTabs.some((t) => t.key === listKey)) {
-      activateTab(listKey).catch((err) => toast(err.message));
-    } else if (screenId) {
-      openScreen(screenId);
-    } else {
-      showHome();
-    }
+  $('#btnFormCancel').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFormInfoMenu();
+  });
+  $('#formInfoMenu')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-info-act]');
+    if (!btn) return;
+    formInfoAction(btn.getAttribute('data-info-act'));
   });
 
   $('#btnFormSave').addEventListener('click', () => {
@@ -11800,6 +12216,37 @@ async function bootIntoApp() {
 
   // Normal açılış — boot sınıfı kalmışsa temizle
   revealFormSoloReady();
+
+  const screenOpen = parseScreenOpenQuery();
+  if (screenOpen && findScreen(screenOpen.screenId)) {
+    let filterState = null;
+    if (screenOpen.filtersKey) {
+      try {
+        const raw = localStorage.getItem(screenOpen.filtersKey);
+        if (raw) filterState = JSON.parse(raw);
+        localStorage.removeItem(screenOpen.filtersKey);
+      } catch (_) { /* ignore */ }
+    }
+    if (screenOpen.focusScreenId) state.metaFocusScreenId = screenOpen.focusScreenId;
+    await openScreen(screenOpen.screenId, {
+      focusScreenId: screenOpen.focusScreenId || undefined,
+      filterState: filterState || undefined,
+    });
+    if (screenOpen.banner) {
+      const banner = $('#screenBanner') || $('#metaBanner');
+      if (banner) banner.textContent = screenOpen.banner;
+    }
+    // URL’yi sadeleştir (yenilemede tekrar localStorage aramasın)
+    try {
+      history.replaceState(
+        { screenId: screenOpen.screenId },
+        '',
+        `${location.pathname}#${encodeURIComponent(screenOpen.screenId)}`,
+      );
+    } catch (_) { /* ignore */ }
+    return;
+  }
+
   const id = (location.hash || '').replace(/^#/, '');
   if (id && findScreen(id)) openScreen(id);
   else showHome();

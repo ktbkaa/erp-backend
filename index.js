@@ -129,6 +129,7 @@ app.use('/cari-hareketleri', require('./routes/cari_hareketleri'));
 app.use('/fiyat-listeleri', require('./routes/fiyat_listeleri'));
 app.use('/kokpit', require('./routes/kokpit'));
 app.use('/audit-log', require('./routes/audit_log'));
+app.use('/meta', require('./routes/meta_ekran'));
 app.use('/stok-rezervasyonlari', require('./routes/stok_rezervasyonlari'));
 app.use('/stok-serileri', require('./routes/stok_serileri'));
 app.use('/kk-capa', require('./routes/kk_capa'));

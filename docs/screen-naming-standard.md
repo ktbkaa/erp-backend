@@ -164,6 +164,12 @@ Toplam ekran: **96**
 | `FIN-3WAY-SCR-001` | Fatura Kontrolleri (3-way) | Three Way Match | `fatura-kontrolleri` | Finans | `#fatura-kontrolleri` | `/fatura-kontrolleri` | Changed |
 | `RPT-CPIT-SCR-001` | Kokpit | Cockpit Dashboard | `kokpit` | Finans | `#kokpit` | `/kokpit` | Changed |
 
+## Tablo Bilgileri ekranı
+
+`SYS-META-SCR-001` (`tablo-bilgileri`) — Sistem > Gözlem altında ekran→tablo→alan kataloğu.
+Formda **Bilgi** menüsü (eski Liste sekmesi): Kayıt bilgisi / Ekran bilgisi / Log bilgisi.
+Form alanında **F1**: tablo + kolon adı. Kaynak: `src/meta/screenTableRegistry.json` + `information_schema`.
+
 ## Needs Review
 
 | Konu | Açıklama |
