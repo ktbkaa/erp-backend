@@ -132,9 +132,9 @@ async function resolveField(pool, screenId, fieldKey) {
 }
 
 const AUDIT_COL_CANDIDATES = [
-  'olusturan_kullanici', 'olusturan', 'olusturan_id',
+  'created_by', 'created_by', 'created_by_id',
   'guncelleyen_kullanici', 'guncelleyen', 'guncelleyen_id',
-  'olusturma_tarihi', 'guncelleme_tarihi', 'kayit_tarihi',
+  'olusturma_date', 'updated_at', 'created_at',
   'created_at', 'updated_at',
 ];
 
@@ -176,17 +176,17 @@ async function recordInfo(pool, screenId, recordId) {
     }
   }
 
-  // kişi id → ad
+  // kişi id → first_name
   let olusturanAd = null;
-  if (row?.olusturan_id) {
+  if (row?.created_by_id) {
     try {
       const k = await pool.query(
-        `SELECT TRIM(CONCAT(COALESCE(ad,''),' ',COALESCE(soyad,''))) AS ad,
-                COALESCE(kullanici_adi, kullanici_kodu) AS kod
-         FROM kisiler WHERE id=$1`,
-        [row.olusturan_id],
+        `SELECT TRIM(CONCAT(COALESCE(first_name,''),' ',COALESCE(last_name,''))) AS first_name,
+                COALESCE(username, user_code) AS kod
+         FROM users WHERE id=$1`,
+        [row.created_by_id],
       );
-      if (k.rows[0]) olusturanAd = k.rows[0].kod || k.rows[0].ad;
+      if (k.rows[0]) olusturanAd = k.rows[0].kod || k.rows[0].first_name;
     } catch (_) { /* ignore */ }
   }
 
@@ -196,12 +196,12 @@ async function recordInfo(pool, screenId, recordId) {
   try {
     const a = await pool.query(
       `
-      SELECT kullanici_kodu, islem, kayit_tarihi, yol, tablo_adi
-      FROM audit_log
-      WHERE kayit_id = $1
+      SELECT user_code, action, created_at, yol, table_name
+      FROM audit_logs
+      WHERE record_id = $1
         AND (
-          tablo_adi = $2
-          OR tablo_adi = $3
+          table_name = $2
+          OR table_name = $3
           OR yol ILIKE '%' || $2 || '%'
         )
       ORDER BY id ASC
@@ -214,15 +214,15 @@ async function recordInfo(pool, screenId, recordId) {
     }
   } catch (_) { /* ignore */ }
 
-  const createdUser = row?.olusturan_kullanici || row?.olusturan || olusturanAd
-    || auditFirst?.kullanici_kodu || null;
-  const createdAt = row?.olusturma_tarihi || row?.kayit_tarihi || row?.created_at
-    || auditFirst?.kayit_tarihi || null;
+  const createdUser = row?.created_by || row?.created_by || olusturanAd
+    || auditFirst?.user_code || null;
+  const createdAt = row?.olusturma_date || row?.created_at || row?.created_at
+    || auditFirst?.created_at || null;
   const updatedUser = row?.guncelleyen_kullanici || row?.guncelleyen
-    || (auditLast && auditLast !== auditFirst ? auditLast.kullanici_kodu : null)
+    || (auditLast && auditLast !== auditFirst ? auditLast.user_code : null)
     || null;
-  const updatedAt = row?.guncelleme_tarihi || row?.updated_at
-    || (auditLast && auditLast !== auditFirst ? auditLast.kayit_tarihi : null)
+  const updatedAt = row?.updated_at || row?.updated_at
+    || (auditLast && auditLast !== auditFirst ? auditLast.created_at : null)
     || null;
 
   return {
@@ -232,7 +232,7 @@ async function recordInfo(pool, screenId, recordId) {
     recordId: id,
     primaryTable: primary,
     auditTablo,
-    olusturan: createdUser,
+    created_by: createdUser,
     olusturmaTarihi: createdAt,
     guncelleyen: updatedUser,
     guncellemeTarihi: updatedAt,

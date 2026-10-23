@@ -3,11 +3,11 @@ const router = express.Router();
 const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
-/** GET /finans-ulke-paketleri */
+/** GET /finans-country-paketleri */
 router.get('/paketler', async (req, res, next) => {
   try {
     const r = await pool.query(
-      `SELECT * FROM finans_ulke_paketleri WHERE aktif=TRUE ORDER BY ulke_kodu`
+      `SELECT * FROM fin_country_packs WHERE is_active=TRUE ORDER BY country_code`
     );
     res.json(r.rows);
   } catch (err) {
@@ -16,30 +16,30 @@ router.get('/paketler', async (req, res, next) => {
 });
 
 /** Aktif firmanın muhasebe ülkesi + geçici işlem bağlamı yardımcıları */
-router.get('/aktif', async (req, res, next) => {
+router.get('/is_active', async (req, res, next) => {
   try {
     const firmaId = firmaIdFromReq(req);
     let firma = null;
     if (firmaId) {
       const f = await pool.query(
-        `SELECT id, firma_kodu, firma_adi, muhasebe_ulke_kodu, fonksiyonel_pb,
-                hesap_plani_kodu, raporlama_cercevesi, mali_yil_baslangic_ay, ebelge_saglayici
-         FROM firmalar WHERE id=$1`,
+        `SELECT id, company_code, company_name, accounting_country_code, functional_currency,
+                chart_of_accounts_code, reporting_framework, fiscal_year_start_month, e_document_provider
+         FROM companies WHERE id=$1`,
         [firmaId]
       );
       firma = f.rows[0] || null;
     }
-    const ulke = (firma?.muhasebe_ulke_kodu || 'TR').toUpperCase();
+    const country = (firma?.accounting_country_code || 'TR').toUpperCase();
     const paket = await pool.query(
-      `SELECT * FROM finans_ulke_paketleri WHERE ulke_kodu=$1`,
-      [ulke]
+      `SELECT * FROM fin_country_packs WHERE country_code=$1`,
+      [country]
     );
     res.json({
       firma,
-      muhasebe_ulke_kodu: ulke,
+      accounting_country_code: country,
       paket: paket.rows[0] || null,
-      aciklama:
-        'Varsayılan ülke aktif şirketin muhasebe ülkesidir. Geçici işlem ülkesi ana ülkeyi değiştirmez; '
+      description:
+        'Varsayılan ülke is_active şirketin muhasebe ülkesidir. Geçici işlem ülkesi ana ülkeyi değiştirmez; '
         + 'kesinleşmiş fişlerin ülkesi geriye dönük güncellenmez.',
     });
   } catch (err) {
@@ -51,42 +51,42 @@ router.get('/aktif', async (req, res, next) => {
 router.put('/firma/:id', async (req, res, next) => {
   try {
     const {
-      muhasebe_ulke_kodu, fonksiyonel_pb, hesap_plani_kodu,
-      raporlama_cercevesi, mali_yil_baslangic_ay, ebelge_saglayici,
+      accounting_country_code, functional_currency, chart_of_accounts_code,
+      reporting_framework, fiscal_year_start_month, e_document_provider,
     } = req.body || {};
-    if (muhasebe_ulke_kodu) {
+    if (accounting_country_code) {
       const p = await pool.query(
-        `SELECT ulke_kodu, yerel_pb, hesap_plani_kodu FROM finans_ulke_paketleri WHERE ulke_kodu=$1 AND aktif`,
-        [muhasebe_ulke_kodu]
+        `SELECT country_code, local_currency, chart_of_accounts_code FROM fin_country_packs WHERE country_code=$1 AND is_active`,
+        [accounting_country_code]
       );
       if (!p.rows[0]) {
         return res.status(400).json({
-          hata: `Geçersiz veya pasif ülke paketi: ${muhasebe_ulke_kodu}`,
+          hata: `Geçersiz veya is_inactive ülke paketi: ${accounting_country_code}`,
           kod: 'ULKE_PAKET_YOK',
         });
       }
       const upd = await pool.query(
         `
-        UPDATE firmalar SET
-          muhasebe_ulke_kodu=$2,
-          fonksiyonel_pb=COALESCE($3, $4, fonksiyonel_pb),
-          hesap_plani_kodu=COALESCE($5, $6, hesap_plani_kodu),
-          raporlama_cercevesi=COALESCE($7, raporlama_cercevesi),
-          mali_yil_baslangic_ay=COALESCE($8, mali_yil_baslangic_ay),
-          ebelge_saglayici=COALESCE($9, ebelge_saglayici)
+        UPDATE companies SET
+          accounting_country_code=$2,
+          functional_currency=COALESCE($3, $4, functional_currency),
+          chart_of_accounts_code=COALESCE($5, $6, chart_of_accounts_code),
+          reporting_framework=COALESCE($7, reporting_framework),
+          fiscal_year_start_month=COALESCE($8, fiscal_year_start_month),
+          e_document_provider=COALESCE($9, e_document_provider)
         WHERE id=$1 RETURNING *
         `,
         [
-          req.params.id, muhasebe_ulke_kodu,
-          fonksiyonel_pb, p.rows[0].yerel_pb,
-          hesap_plani_kodu, p.rows[0].hesap_plani_kodu,
-          raporlama_cercevesi, mali_yil_baslangic_ay, ebelge_saglayici,
+          req.params.id, accounting_country_code,
+          functional_currency, p.rows[0].local_currency,
+          chart_of_accounts_code, p.rows[0].chart_of_accounts_code,
+          reporting_framework, fiscal_year_start_month, e_document_provider,
         ]
       );
       if (!upd.rows[0]) return res.status(404).json({ hata: 'Firma bulunamadı.' });
       return res.json(upd.rows[0]);
     }
-    res.status(400).json({ hata: 'muhasebe_ulke_kodu gerekli.' });
+    res.status(400).json({ hata: 'accounting_country_code gerekli.' });
   } catch (err) {
     next(err);
   }
@@ -97,9 +97,9 @@ router.get('/hesaplar/:ulkeKodu', async (req, res, next) => {
   try {
     const r = await pool.query(
       `
-      SELECT * FROM muhasebe_hesaplari
-      WHERE aktif=TRUE AND (ulke_kodu=$1 OR ulke_kodu IS NULL)
-      ORDER BY hesap_kodu
+      SELECT * FROM gl_accounts
+      WHERE is_active=TRUE AND (country_code=$1 OR country_code IS NULL)
+      ORDER BY account_code
       `,
       [req.params.ulkeKodu]
     );

@@ -7,9 +7,9 @@ const STATULER = ['Kullanilabilir', 'Kalitede', 'Bloke'];
 
 /**
  * Merkezi stok hareket oluşturucu.
- * miktar pozitif; yon +1 giriş / -1 çıkış.
- * stok_statu: Kullanilabilir | Kalitede | Bloke (çıkışta yalnızca Kullanilabilir)
- * parti_id / parti_no / otomatikParti desteklenir.
+ * quantity pozitif; direction +1 giriş / -1 çıkış.
+ * stock_status: Kullanilabilir | Kalitede | Bloke (çıkışta yalnızca Kullanilabilir)
+ * lot_id / lot_no / otomatikParti desteklenir.
  */
 async function stokHareketOlustur(client, {
     hareketTipi,
@@ -18,7 +18,7 @@ async function stokHareketOlustur(client, {
     hedefDepoId = null,
     belgeTipi = null,
     belgeId = null,
-    aciklama = null,
+    description = null,
     hareketKoduId = null,
     satirlar,
     bagliHareketId = null,
@@ -28,40 +28,40 @@ async function stokHareketOlustur(client, {
     kullaniciKodu = null,
     referansNo = null,
 }) {
-    if (!depoId) throw new Error('Stok hareketi için depo_id zorunludur.');
+    if (!depoId) throw new Error('Stok hareketi için warehouse_id zorunludur.');
     if (!Array.isArray(satirlar) || satirlar.length === 0) {
         throw new Error('Stok hareketi için en az bir satır gerekli.');
     }
 
     let hareketKodu = null;
     if (hareketKoduId) {
-        const hk = await client.query(`SELECT * FROM hareket_kodlari WHERE id=$1`, [hareketKoduId]);
+        const hk = await client.query(`SELECT * FROM movement_codes WHERE id=$1`, [hareketKoduId]);
         hareketKodu = hk.rows[0] || null;
         if (!hareketKodu) throw new Error(`Hareket kodu bulunamadı: id=${hareketKoduId}`);
     }
 
     const paramNegatif = await stokNegatifIzinliMi(client);
-    const eksiIzin = Boolean(hareketKodu?.eksi_bakiye_izin) || paramNegatif;
+    const eksiIzin = Boolean(hareketKodu?.eksi_balance_izin) || paramNegatif;
     const depoZorunlu = !depoZorunluAtla
         && String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
 
     const hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
 
-    const cols = ['hareket_no', 'hareket_tipi', 'is_yeri_id', 'depo_id', 'belge_tipi', 'belge_id', 'aciklama', 'hareket_kodu_id'];
-    const vals = [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, aciklama, hareketKoduId || null];
-    // hedef_depo_id / bagli_hareket_id 015'te
-    // firma_id: açık parametre veya stok satırından türet
+    const cols = ['movement_no', 'movement_type', 'plant_id', 'warehouse_id', 'document_type', 'document_id', 'description', 'movement_code_id'];
+    const vals = [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, description, hareketKoduId || null];
+    // target_warehouse_id / bagli_movement_id 015'te
+    // company_id: açık parametre veya stok satırından türet
     let resolvedFirmaId = firmaId || null;
-    if (!resolvedFirmaId && satirlar[0]?.stok_id) {
-        const fr = await client.query(`SELECT firma_id FROM stoklar WHERE id=$1`, [satirlar[0].stok_id]);
-        resolvedFirmaId = fr.rows[0]?.firma_id || null;
+    if (!resolvedFirmaId && satirlar[0]?.item_id) {
+        const fr = await client.query(`SELECT company_id FROM items WHERE id=$1`, [satirlar[0].item_id]);
+        resolvedFirmaId = fr.rows[0]?.company_id || null;
     }
 
     const hareketRes = await client.query(
         `
-        INSERT INTO stok_hareketleri
-            (hareket_no, hareket_tipi, is_yeri_id, depo_id, belge_tipi, belge_id, aciklama, hareket_kodu_id,
-             hedef_depo_id, bagli_hareket_id, firma_id, cari_id, kullanici_kodu, referans_no)
+        INSERT INTO stock_movements
+            (movement_no, movement_type, plant_id, warehouse_id, document_type, document_id, description, movement_code_id,
+             target_warehouse_id, bagli_movement_id, company_id, partner_id, user_code, ref_no)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         RETURNING *;
         `,
@@ -74,28 +74,28 @@ async function stokHareketOlustur(client, {
 
     const eklenen = [];
     for (const s of satirlar) {
-        if (!s.stok_id || !s.miktar || !s.yon) {
-            throw new Error('Hareket satırında stok_id, miktar ve yon zorunludur.');
+        if (!s.item_id || !s.quantity || !s.direction) {
+            throw new Error('Hareket satırında item_id, quantity ve direction zorunludur.');
         }
-        if (Number(s.miktar) <= 0) throw new Error('Hareket miktarı 0 dan büyük olmalı.');
-        if (![1, -1].includes(Number(s.yon))) throw new Error('yon sadece 1 veya -1 olabilir.');
+        if (Number(s.quantity) <= 0) throw new Error('Hareket miktarı 0 dan büyük olmalı.');
+        if (![1, -1].includes(Number(s.direction))) throw new Error('direction sadece 1 veya -1 olabilir.');
 
-        const statu = s.stok_statu || (Number(s.yon) === 1 ? 'Kullanilabilir' : 'Kullanilabilir');
+        const statu = s.stock_status || (Number(s.direction) === 1 ? 'Kullanilabilir' : 'Kullanilabilir');
         if (!STATULER.includes(statu)) {
-            throw new Error(`Geçersiz stok_statu: ${statu}`);
+            throw new Error(`Geçersiz stock_status: ${statu}`);
         }
 
         if (depoZorunlu) {
-            await assertStokDepoIzin(client, s.stok_id, depoId);
-            if (hedefDepoId) await assertStokDepoIzin(client, s.stok_id, hedefDepoId);
+            await assertStokDepoIzin(client, s.item_id, depoId);
+            if (hedefDepoId) await assertStokDepoIzin(client, s.item_id, hedefDepoId);
         }
 
-        let partiId = s.parti_id || null;
-        if (Number(s.yon) === 1) {
+        let partiId = s.lot_id || null;
+        if (Number(s.direction) === 1) {
             const coz = await partiCozumle(client, {
-                stokId: s.stok_id,
-                partiId: s.parti_id,
-                partiNo: s.parti_no,
+                stokId: s.item_id,
+                partiId: s.lot_id,
+                partiNo: s.lot_no,
                 otomatik: s.otomatik_parti !== false,
                 kaynakTipi: belgeTipi,
                 kaynakId: belgeId,
@@ -103,34 +103,34 @@ async function stokHareketOlustur(client, {
             partiId = coz.partiId;
         } else if (partiId) {
             const p = await client.query(
-                `SELECT id FROM stok_partileri WHERE id=$1 AND stok_id=$2`,
-                [partiId, s.stok_id]
+                `SELECT id FROM item_lots WHERE id=$1 AND item_id=$2`,
+                [partiId, s.item_id]
             );
             if (!p.rows[0]) throw new Error(`Çıkış partisi stok ile uyuşmuyor: ${partiId}`);
         }
 
         // Çıkış: yalnızca Kullanilabilir (veya açıkça verilen statü bakiyesi)
-        const cikisStatu = s.stok_statu || 'Kullanilabilir';
-        if (Number(s.yon) === -1) {
+        const cikisStatu = s.stock_status || 'Kullanilabilir';
+        if (Number(s.direction) === -1) {
             if (cikisStatu !== 'Kullanilabilir' && !s.statu_cikis_izin) {
                 const err = new Error(
-                    `Kalitede/Bloke stok çıkışa kapalı. stok_id=${s.stok_id}, statu=${cikisStatu}`
+                    `Kalitede/Bloke stok çıkışa kapalı. item_id=${s.item_id}, statu=${cikisStatu}`
                 );
                 err.code = 'STATU_CIKIS_ENGEL';
                 throw err;
             }
             if (!eksiIzin) {
-                const bakiye = await depoStokBakiye(client, depoId, s.stok_id, {
+                const bakiye = await depoStokBakiye(client, depoId, s.item_id, {
                     stokStatu: cikisStatu,
                     partiId,
                 });
-                if (bakiye + 1e-9 < Number(s.miktar)) {
-                    const oneriler = await onerilenDepolar(client, s.stok_id, Number(s.miktar), depoId);
+                if (bakiye + 1e-9 < Number(s.quantity)) {
+                    const oneriler = await onerilenDepolar(client, s.item_id, Number(s.quantity), depoId);
                     const err = new Error(
-                        `Yetersiz kullanılabilir stok. Depo=${depoId}, stok_id=${s.stok_id}, statu=${cikisStatu}, bakiye=${bakiye}, istenen=${s.miktar}.`
+                        `Yetersiz kullanılabilir stok. Depo=${depoId}, item_id=${s.item_id}, statu=${cikisStatu}, bakiye=${bakiye}, istenen=${s.quantity}.`
                     );
                     err.code = 'YETERSIZ_STOK';
-                    err.detay = { depo_id: depoId, stok_id: s.stok_id, bakiye, istenen: Number(s.miktar), stok_statu: cikisStatu, onerilen_depolar: oneriler };
+                    err.detay = { warehouse_id: depoId, item_id: s.item_id, bakiye, istenen: Number(s.quantity), stock_status: cikisStatu, onerilen_depolar: oneriler };
                     throw err;
                 }
             }
@@ -138,27 +138,27 @@ async function stokHareketOlustur(client, {
 
         const satirRes = await client.query(
             `
-            INSERT INTO stok_hareket_satirlari
-                (hareket_id, stok_id, miktar, yon, birim, parti_id, stok_statu, raf_kodu, konum_kodu)
+            INSERT INTO stock_movement_lines
+                (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status, raf_code, konum_code)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             RETURNING *;
             `,
             [
-                hareket.id, s.stok_id, s.miktar, s.yon, s.birim || null, partiId,
-                Number(s.yon) === -1 ? cikisStatu : statu,
-                s.raf_kodu || null, s.konum_kodu || null,
+                hareket.id, s.item_id, s.quantity, s.direction, s.uom_code || null, partiId,
+                Number(s.direction) === -1 ? cikisStatu : statu,
+                s.raf_code || null, s.konum_code || null,
             ]
         );
         eklenen.push(satirRes.rows[0]);
 
-        // Ortalama maliyet (INV-011) — girişte birim_maliyet verilirse
-        if (Number(s.yon) === 1 && s.birim_maliyet != null) {
+        // Ortalama maliyet (INV-011) — girişte uom_cost verilirse
+        if (Number(s.direction) === 1 && s.uom_cost != null) {
             try {
                 const { maliyetGuncelleGiris } = require('./maliyetService');
                 await maliyetGuncelleGiris(client, {
-                    stokId: s.stok_id,
-                    miktar: s.miktar,
-                    birimMaliyet: s.birim_maliyet,
+                    stokId: s.item_id,
+                    quantity: s.quantity,
+                    birimMaliyet: s.uom_cost,
                     hareketId: hareket.id,
                 });
             } catch (_) { /* maliyet tablosu yoksa sessiz */ }
@@ -170,13 +170,13 @@ async function stokHareketOlustur(client, {
 
 async function assertStokDepoIzin(client, stokId, depoId) {
     const r = await client.query(
-        `SELECT 1 FROM stok_depo WHERE stok_id=$1 AND depo_id=$2 AND aktif=TRUE`,
+        `SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2 AND is_active=TRUE`,
         [stokId, depoId]
     );
     if (!r.rows[0]) {
-        // Tanım hiç yoksa: malzeme için hiç stok_depo yoksa da engelle
+        // Tanım hiç yoksa: malzeme için hiç item_warehouses yoksa da engelle
         const err = new Error(
-            `Malzeme-depo tanımı yok veya pasif. stok_id=${stokId}, depo_id=${depoId}`
+            `Malzeme-depo tanımı yok veya is_inactive. item_id=${stokId}, warehouse_id=${depoId}`
         );
         err.code = 'STOK_DEPO_YOK';
         err.status = 400;
@@ -189,18 +189,18 @@ async function depoStokBakiye(clientOrPool, depoId, stokId, { stokStatu = null, 
     let extra = '';
     if (stokStatu) {
         params.push(stokStatu);
-        extra += ` AND COALESCE(s.stok_statu,'Kullanilabilir') = $${params.length}`;
+        extra += ` AND COALESCE(s.stock_status,'Kullanilabilir') = $${params.length}`;
     }
     if (partiId) {
         params.push(partiId);
-        extra += ` AND s.parti_id = $${params.length}`;
+        extra += ` AND s.lot_id = $${params.length}`;
     }
     const res = await clientOrPool.query(
         `
-        SELECT COALESCE(SUM(s.miktar * s.yon), 0)::numeric AS bakiye
-        FROM stok_hareket_satirlari s
-        JOIN stok_hareketleri h ON h.id = s.hareket_id
-        WHERE h.depo_id = $1 AND s.stok_id = $2
+        SELECT COALESCE(SUM(s.quantity * s.direction), 0)::numeric AS bakiye
+        FROM stock_movement_lines s
+        JOIN stock_movements h ON h.id = s.movement_id
+        WHERE h.warehouse_id = $1 AND s.item_id = $2
         ${extra}
         `,
         params
@@ -221,72 +221,72 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
     const where = [];
     if (depoId) {
         params.push(depoId);
-        where.push(`h.depo_id = $${params.length}`);
+        where.push(`h.warehouse_id = $${params.length}`);
     }
     if (depoKodu) {
         params.push(`%${depoKodu}%`);
-        where.push(`d.depo_kodu ILIKE $${params.length}`);
+        where.push(`d.warehouse_code ILIKE $${params.length}`);
     }
     if (stokId) {
         params.push(stokId);
-        where.push(`s.stok_id = $${params.length}`);
+        where.push(`s.item_id = $${params.length}`);
     }
     if (stokKodu) {
         params.push(`%${stokKodu}%`);
-        where.push(`st.stok_kodu ILIKE $${params.length}`);
+        where.push(`st.item_code ILIKE $${params.length}`);
     }
     if (stokAdi) {
         params.push(`%${stokAdi}%`);
-        where.push(`st.stok_adi ILIKE $${params.length}`);
+        where.push(`st.item_name ILIKE $${params.length}`);
     }
     if (stokTipi) {
         params.push(stokTipi);
-        where.push(`st.stok_tipi = $${params.length}`);
+        where.push(`st.item_type = $${params.length}`);
     }
     if (stokStatu) {
         params.push(stokStatu);
-        where.push(`COALESCE(s.stok_statu,'Kullanilabilir') = $${params.length}`);
+        where.push(`COALESCE(s.stock_status,'Kullanilabilir') = $${params.length}`);
     }
     if (partiNo) {
         params.push(`%${partiNo}%`);
-        where.push(`p.parti_no ILIKE $${params.length}`);
+        where.push(`p.lot_no ILIKE $${params.length}`);
     }
     if (firmaId) {
         params.push(firmaId);
-        where.push(`(st.firma_id = $${params.length} OR h.firma_id = $${params.length})`);
+        where.push(`(st.company_id = $${params.length} OR h.company_id = $${params.length})`);
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
     const havingSql = yalnizcaStokta
-        ? 'HAVING COALESCE(SUM(s.miktar * s.yon), 0) <> 0'
+        ? 'HAVING COALESCE(SUM(s.quantity * s.direction), 0) <> 0'
         : '';
 
     const res = await pool.query(
         `
         SELECT
-            h.depo_id,
-            d.depo_kodu,
-            d.depo_adi,
-            d.depo_rolu,
-            s.stok_id,
-            st.stok_kodu,
-            st.stok_adi,
-            st.stok_tipi,
-            st.emniyet_stok,
-            COALESCE(s.stok_statu, 'Kullanilabilir') AS stok_statu,
-            s.parti_id,
-            p.parti_no,
-            COALESCE(SUM(s.miktar * s.yon), 0)::numeric AS bakiye
-        FROM stok_hareket_satirlari s
-        JOIN stok_hareketleri h ON h.id = s.hareket_id
-        JOIN depolar d ON d.id = h.depo_id
-        JOIN stoklar st ON st.id = s.stok_id
-        LEFT JOIN stok_partileri p ON p.id = s.parti_id
+            h.warehouse_id,
+            d.warehouse_code,
+            d.warehouse_name,
+            d.warehouse_rolu,
+            s.item_id,
+            st.item_code,
+            st.item_name,
+            st.item_type,
+            st.safety_stock,
+            COALESCE(s.stock_status, 'Kullanilabilir') AS stock_status,
+            s.lot_id,
+            p.lot_no,
+            COALESCE(SUM(s.quantity * s.direction), 0)::numeric AS bakiye
+        FROM stock_movement_lines s
+        JOIN stock_movements h ON h.id = s.movement_id
+        JOIN warehouses d ON d.id = h.warehouse_id
+        JOIN items st ON st.id = s.item_id
+        LEFT JOIN item_lots p ON p.id = s.lot_id
         ${whereSql}
-        GROUP BY h.depo_id, d.depo_kodu, d.depo_adi, d.depo_rolu,
-                 s.stok_id, st.stok_kodu, st.stok_adi, st.stok_tipi, st.emniyet_stok,
-                 COALESCE(s.stok_statu, 'Kullanilabilir'), s.parti_id, p.parti_no
+        GROUP BY h.warehouse_id, d.warehouse_code, d.warehouse_name, d.warehouse_rolu,
+                 s.item_id, st.item_code, st.item_name, st.item_type, st.safety_stock,
+                 COALESCE(s.stock_status, 'Kullanilabilir'), s.lot_id, p.lot_no
         ${havingSql}
-        ORDER BY d.depo_kodu, st.stok_kodu, stok_statu, p.parti_no NULLS FIRST
+        ORDER BY d.warehouse_code, st.item_code, stock_status, p.lot_no NULLS FIRST
         `,
         params
     );
@@ -294,10 +294,10 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
     return res.rows.map((r) => ({
         ...r,
         id: [
-            r.depo_id,
-            r.stok_id,
-            r.stok_statu || 'Kullanilabilir',
-            r.parti_id || 0,
+            r.warehouse_id,
+            r.item_id,
+            r.stock_status || 'Kullanilabilir',
+            r.lot_id || 0,
         ].join(':'),
     }));
 }
@@ -310,14 +310,14 @@ async function stokStatuTransfer(client, {
     depoId,
     isYeriId = null,
     stokId,
-    miktar,
-    birim = null,
+    quantity,
+    uom_code = null,
     partiId = null,
     kaynakStatu,
     hedefStatu,
     belgeTipi = null,
     belgeId = null,
-    aciklama = null,
+    description = null,
 }) {
     if (!STATULER.includes(kaynakStatu) || !STATULER.includes(hedefStatu)) {
         throw new Error('Geçersiz statü transferi.');
@@ -328,25 +328,25 @@ async function stokStatuTransfer(client, {
         depoId,
         belgeTipi,
         belgeId,
-        aciklama: aciklama || `Statü ${kaynakStatu} → ${hedefStatu}`,
+        description: description || `Statü ${kaynakStatu} → ${hedefStatu}`,
         depoZorunluAtla: true,
         satirlar: [
             {
-                stok_id: stokId,
-                miktar,
-                yon: -1,
-                birim,
-                parti_id: partiId,
-                stok_statu: kaynakStatu,
+                item_id: stokId,
+                quantity,
+                direction: -1,
+                uom_code,
+                lot_id: partiId,
+                stock_status: kaynakStatu,
                 statu_cikis_izin: true,
             },
             {
-                stok_id: stokId,
-                miktar,
-                yon: 1,
-                birim,
-                parti_id: partiId,
-                stok_statu: hedefStatu,
+                item_id: stokId,
+                quantity,
+                direction: 1,
+                uom_code,
+                lot_id: partiId,
+                stock_status: hedefStatu,
                 otomatik_parti: false,
             },
         ],
@@ -354,20 +354,20 @@ async function stokStatuTransfer(client, {
 }
 
 /**
- * Depo transferi: kaynak depodan -1, hedef depoya +1 (aynı statü).
+ * Depo transferi: source depodan -1, hedef depoya +1 (aynı statü).
  */
 async function depoTransfer(client, {
     kaynakDepoId,
     hedefDepoId,
     isYeriId = null,
     stokId,
-    miktar,
-    birim = null,
+    quantity,
+    uom_code = null,
     partiId = null,
     stokStatu = 'Kullanilabilir',
     belgeTipi = null,
     belgeId = null,
-    aciklama = null,
+    description = null,
     statuCikisIzin = false,
     depoZorunluAtla = false,
 }) {
@@ -379,15 +379,15 @@ async function depoTransfer(client, {
         hedefDepoId,
         belgeTipi,
         belgeId,
-        aciklama: aciklama || `Transfer → depo ${hedefDepoId}`,
+        description: description || `Transfer → depo ${hedefDepoId}`,
         depoZorunluAtla,
         satirlar: [{
-            stok_id: stokId,
-            miktar,
-            yon: -1,
-            birim,
-            parti_id: partiId,
-            stok_statu: stokStatu,
+            item_id: stokId,
+            quantity,
+            direction: -1,
+            uom_code,
+            lot_id: partiId,
+            stock_status: stokStatu,
             statu_cikis_izin: statuCikisIzin,
         }],
     });
@@ -397,16 +397,16 @@ async function depoTransfer(client, {
         depoId: hedefDepoId,
         belgeTipi,
         belgeId,
-        aciklama: aciklama || `Transfer ← depo ${kaynakDepoId}`,
+        description: description || `Transfer ← depo ${kaynakDepoId}`,
         bagliHareketId: cikis.hareket.id,
         depoZorunluAtla,
         satirlar: [{
-            stok_id: stokId,
-            miktar,
-            yon: 1,
-            birim,
-            parti_id: partiId,
-            stok_statu: stokStatu,
+            item_id: stokId,
+            quantity,
+            direction: 1,
+            uom_code,
+            lot_id: partiId,
+            stock_status: stokStatu,
             otomatik_parti: false,
         }],
     });

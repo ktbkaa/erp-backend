@@ -10,32 +10,32 @@ router.get('/', async (req, res) => {
         let tarihFiltre = '';
         if (baslangic) {
             params.push(baslangic);
-            tarihFiltre += ` AND b.belge_tarihi >= $${params.length}`;
+            tarihFiltre += ` AND b.document_date >= $${params.length}`;
         }
         if (bitis) {
             params.push(bitis);
-            tarihFiltre += ` AND b.belge_tarihi <= $${params.length}`;
+            tarihFiltre += ` AND b.document_date <= $${params.length}`;
         }
-        const sonuc = await pool.query(
+        const result = await pool.query(
             `
-            SELECT h.id AS hesap_id, h.hesap_kodu, h.hesap_adi, h.hesap_tipi,
-                   COALESCE(SUM(k.borc),0) AS borc,
-                   COALESCE(SUM(k.alacak),0) AS alacak,
-                   COALESCE(SUM(k.borc),0) - COALESCE(SUM(k.alacak),0) AS bakiye
-            FROM muhasebe_hesaplari h
-            LEFT JOIN muhasebe_belge_kalemleri k ON k.hesap_id = h.id
-            LEFT JOIN muhasebe_belgeleri b ON b.id = k.belge_id AND b.durum = 'Onayli' ${tarihFiltre}
-            WHERE h.aktif = TRUE AND h.hesap_tipi = 'Dogrudan'
-            GROUP BY h.id, h.hesap_kodu, h.hesap_adi, h.hesap_tipi
-            ORDER BY h.hesap_kodu
+            SELECT h.id AS account_id, h.account_code, h.account_name, h.account_type,
+                   COALESCE(SUM(k.debit),0) AS debit,
+                   COALESCE(SUM(k.credit),0) AS credit,
+                   COALESCE(SUM(k.debit),0) - COALESCE(SUM(k.credit),0) AS bakiye
+            FROM gl_accounts h
+            LEFT JOIN journal_entry_lines k ON k.account_id = h.id
+            LEFT JOIN journal_entries b ON b.id = k.document_id AND b.status = 'Onayli' ${tarihFiltre}
+            WHERE h.is_active = TRUE AND h.account_type = 'Dogrudan'
+            GROUP BY h.id, h.account_code, h.account_name, h.account_type
+            ORDER BY h.account_code
             `,
             params
         );
-        const rows = sonuc.rows.map((r) => ({
+        const rows = result.rows.map((r) => ({
             ...r,
-            // liste ekranı için kod/ad
-            mizan_kodu: r.hesap_kodu,
-            aciklama: r.hesap_adi,
+            // liste ekranı için kod/first_name
+            mizan_kodu: r.account_code,
+            description: r.account_name,
         }));
         res.json(rows);
     } catch (err) {

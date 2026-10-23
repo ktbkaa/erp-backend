@@ -1,5 +1,5 @@
 /**
- * Belge HTML çıktısı (yazdır / PDF önizleme). QR: ettn veya belge_no metin.
+ * Belge HTML çıktısı (yazdır / PDF önizleme). QR: uuid_ettn veya document_no metin.
  */
 function escapeHtml(s) {
   return String(s ?? '')
@@ -22,12 +22,12 @@ function belgeHtml({ baslik, belgeNo, tarih, cari, satirlar = [], toplamlar = {}
     .map(
       (s, i) => `<tr>
       <td>${i + 1}</td>
-      <td>${escapeHtml(s.stok_kodu || s.stok_id)}</td>
-      <td>${escapeHtml(s.stok_adi || '')}</td>
-      <td style="text-align:right">${escapeHtml(s.miktar)}</td>
-      <td>${escapeHtml(s.birim || '')}</td>
-      <td style="text-align:right">${escapeHtml(s.birim_fiyat ?? '')}</td>
-      <td style="text-align:right">${escapeHtml(s.toplam_tutar ?? '')}</td>
+      <td>${escapeHtml(s.item_code || s.item_id)}</td>
+      <td>${escapeHtml(s.item_name || '')}</td>
+      <td style="text-align:right">${escapeHtml(s.quantity)}</td>
+      <td>${escapeHtml(s.uom_code || '')}</td>
+      <td style="text-align:right">${escapeHtml(s.unit_price ?? '')}</td>
+      <td style="text-align:right">${escapeHtml(s.total_amount ?? '')}</td>
     </tr>`
     )
     .join('');
@@ -48,20 +48,20 @@ function belgeHtml({ baslik, belgeNo, tarih, cari, satirlar = [], toplamlar = {}
       <h1>${escapeHtml(baslik)}</h1>
       <div>Belge No: <strong>${escapeHtml(belgeNo)}</strong></div>
       <div>Tarih: ${escapeHtml(tarih || '')}</div>
-      <div>Cari: ${escapeHtml(cari?.cari_adi || cari?.cari_kodu || '')}</div>
-      ${ekstra.aciklama ? `<div>${escapeHtml(ekstra.aciklama)}</div>` : ''}
+      <div>Cari: ${escapeHtml(cari?.partner_name || cari?.partner_code || '')}</div>
+      ${ekstra.description ? `<div>${escapeHtml(ekstra.description)}</div>` : ''}
     </div>
-    <div>${qrSvgPlaceholder(ekstra.ettn || belgeNo)}</div>
+    <div>${qrSvgPlaceholder(ekstra.uuid_ettn || belgeNo)}</div>
   </div>
   <table>
     <thead><tr><th>#</th><th>Stok</th><th>Ad</th><th>Miktar</th><th>Birim</th><th>Fiyat</th><th>Tutar</th></tr></thead>
     <tbody>${rows || '<tr><td colspan="7">Kalem yok</td></tr>'}</tbody>
   </table>
   <div class="tot">
-    ${toplamlar.mal_hizmet_toplam != null ? `<div>Mal/Hizmet: ${escapeHtml(toplamlar.mal_hizmet_toplam)}</div>` : ''}
-    ${toplamlar.toplam_kdv != null ? `<div>KDV: ${escapeHtml(toplamlar.toplam_kdv)}</div>` : ''}
-    ${toplamlar.odenecek_tutar != null ? `<div><strong>Ödenecek: ${escapeHtml(toplamlar.odenecek_tutar)}</strong></div>` : ''}
-    ${toplamlar.toplam_tutar != null && toplamlar.odenecek_tutar == null ? `<div><strong>Toplam: ${escapeHtml(toplamlar.toplam_tutar)}</strong></div>` : ''}
+    ${toplamlar.net_amount != null ? `<div>Mal/Hizmet: ${escapeHtml(toplamlar.net_amount)}</div>` : ''}
+    ${toplamlar.tax_amount != null ? `<div>KDV: ${escapeHtml(toplamlar.tax_amount)}</div>` : ''}
+    ${toplamlar.payable_amount != null ? `<div><strong>Ödenecek: ${escapeHtml(toplamlar.payable_amount)}</strong></div>` : ''}
+    ${toplamlar.total_amount != null && toplamlar.payable_amount == null ? `<div><strong>Toplam: ${escapeHtml(toplamlar.total_amount)}</strong></div>` : ''}
   </div>
   <p class="no-print"><button onclick="window.print()">Yazdır / PDF</button></p>
 </body></html>`;

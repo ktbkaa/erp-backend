@@ -1,5 +1,5 @@
 /**
- * Ortak onay yardımcısı — belge durum geçişlerini tek yerden yönetir.
+ * Ortak onay yardımcısı — belge status geçişlerini tek yerden yönetir.
  * Genel WF motoru değil; mevcut onay uçlarını standartlaştırır (REQ-PLT-019).
  */
 const { withTransaction } = require('./withTransaction');
@@ -24,19 +24,19 @@ async function belgeOnayla(pool, {
       err.status = 404;
       throw err;
     }
-    const durum = cur.rows[0].durum;
-    if (fromDurumlar.length && !fromDurumlar.includes(durum)) {
-      const err = new Error(`Onaylanamaz. Durum: ${durum}`);
+    const status = cur.rows[0].status;
+    if (fromDurumlar.length && !fromDurumlar.includes(status)) {
+      const err = new Error(`Onaylanamaz. Durum: ${status}`);
       err.status = 409;
       throw err;
     }
-    const sets = [`durum = $2`];
+    const sets = [`status = $2`];
     const params = [id, toDurum];
     if (kullaniciId != null) {
       params.push(kullaniciId);
-      sets.push(`onaylayan_kisi_id = $${params.length}`);
+      sets.push(`approved_by_kisi_id = $${params.length}`);
       params.push(new Date());
-      sets.push(`onay_tarihi = $${params.length}`);
+      sets.push(`onay_date = $${params.length}`);
     }
     if (ekstraSet) sets.push(ekstraSet);
     await client.query(
@@ -44,7 +44,7 @@ async function belgeOnayla(pool, {
       [...params, ...ekstraParams]
     );
     if (typeof after === 'function') await after(client, cur.rows[0]);
-    return { id: Number(id), durum: toDurum };
+    return { id: Number(id), status: toDurum };
   });
 }
 

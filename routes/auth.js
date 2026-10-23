@@ -9,8 +9,8 @@ const { hashParola, dogrulaParola } = require('../src/utils/parola');
 async function loadEkranYetkileri(kisiId) {
   if (!kisiId) return [];
   const r = await pool.query(
-    `SELECT ekran_id, erisim, yeni, incele, duzelt, kopyala, sil
-     FROM kullanici_ekran_yetkileri WHERE kisi_id=$1`,
+    `SELECT screen_id, erisim, can_create AS yeni, incele, duzelt, kopyala, sil
+     FROM user_screen_permissions WHERE kisi_id=$1`,
     [kisiId]
   );
   return r.rows;
@@ -19,11 +19,11 @@ async function loadEkranYetkileri(kisiId) {
 async function loadFirmaYetkileri(kisiId) {
   if (!kisiId) return [];
   const r = await pool.query(
-    `SELECT f.id AS firma_id, f.firma_kodu, f.firma_adi
-     FROM kullanici_firma_yetkileri k
-     JOIN firmalar f ON f.id = k.firma_id
+    `SELECT f.id AS company_id, f.company_code, f.company_name
+     FROM user_company_permissions k
+     JOIN companies f ON f.id = k.company_id
      WHERE k.kisi_id=$1
-     ORDER BY f.firma_kodu`,
+     ORDER BY f.company_code`,
     [kisiId]
   );
   return r.rows;
@@ -36,20 +36,20 @@ async function kullaniciPayload(u) {
   ]);
   return {
     id: u.id,
-    kullanici_kodu: u.kullanici_kodu,
-    kullanici_adi: u.kullanici_adi || u.kullanici_kodu,
-    ad: u.ad,
-    soyad: u.soyad,
-    unvan: u.unvan || u.rol || '',
-    rol: u.rol,
-    grup_kodu: u.grup_kodu,
-    grup_adi: u.grup_adi,
-    profil_resmi: u.profil_resmi || null,
+    user_code: u.user_code,
+    username: u.username || u.user_code,
+    first_name: u.first_name,
+    last_name: u.last_name,
+    title: u.title || u.role || '',
+    role: u.role,
+    group_code: u.group_code,
+    group_name: u.group_name,
+    profile_image: u.profile_image || null,
     satinalma_onay: u.satinalma_onay,
-    satinalma_talep: u.satinalma_talep,
-    kalite_kontrol: u.kalite_kontrol,
-    modul_yetkileri: parseJsonArr(u.modul_yetkileri, ['*']),
-    depo_yetkileri: parseJsonArr(u.depo_yetkileri, ['*']),
+    purchase_requisition_ref: u.purchase_requisition_ref,
+    kalite_control: u.kalite_control,
+    module_permissions: parseJsonArr(u.module_permissions, ['*']),
+    warehouse_yetkileri: parseJsonArr(u.warehouse_yetkileri, ['*']),
     yetkiler,
     firma_yetkileri,
   };
@@ -58,11 +58,11 @@ async function kullaniciPayload(u) {
 async function kullaniciYukle(kod) {
   if (!kod) return null;
   const r = await pool.query(
-    `SELECT k.*, g.satinalma_onay, g.satinalma_talep, g.kalite_kontrol,
-            g.modul_yetkileri, g.depo_yetkileri, g.grup_adi
-     FROM kisiler k
-     LEFT JOIN kullanici_gruplari g ON g.grup_kodu = k.grup_kodu AND g.aktif = TRUE
-     WHERE k.kullanici_kodu = $1 OR k.kullanici_adi = $1`,
+    `SELECT k.*, g.satinalma_onay, g.purchase_requisition_ref, g.kalite_control,
+            g.module_permissions, g.warehouse_yetkileri, g.group_name
+     FROM users k
+     LEFT JOIN user_groups g ON g.group_code = k.group_code AND g.is_active = TRUE
+     WHERE k.user_code = $1 OR k.username = $1`,
     [kod]
   );
   return r.rows[0] || null;
@@ -72,13 +72,13 @@ async function kullaniciYukle(kod) {
 router.post('/login', async (req, res, next) => {
   try {
     const body = req.body || {};
-    const kullanici_kodu = body.kullanici_kodu || body.kullanici_adi || body.username;
+    const user_code = body.user_code || body.username || body.username;
     const parola = body.parola || body.sifre || body.password;
-    if (!kullanici_kodu) {
-      return res.status(400).json({ hata: 'kullanici_adi (veya kullanici_kodu) zorunlu.' });
+    if (!user_code) {
+      return res.status(400).json({ hata: 'username (veya user_code) zorunlu.' });
     }
-    const u = await kullaniciYukle(kullanici_kodu);
-    if (!u || u.aktif === false) return res.status(401).json({ hata: 'Kullanıcı bulunamadı veya pasif.' });
+    const u = await kullaniciYukle(user_code);
+    if (!u || u.is_active === false) return res.status(401).json({ hata: 'Kullanıcı bulunamadı veya is_inactive.' });
 
     if (u.parola_hash) {
       if (!parola || !dogrulaParola(parola, u.parola_hash)) {
@@ -92,10 +92,10 @@ router.post('/login', async (req, res, next) => {
     }
 
     const ttl = Number(await parametreAl(pool, 'JWT_TTL_DK', '480')) || 480;
-    const access_token = signAccess({ kullanici_kodu: u.kullanici_kodu, id: u.id }, ttl);
-    const refresh_token = signRefresh({ kullanici_kodu: u.kullanici_kodu, id: u.id });
+    const access_token = signAccess({ user_code: u.user_code, id: u.id }, ttl);
+    const refresh_token = signRefresh({ user_code: u.user_code, id: u.id });
     await pool.query(
-      `UPDATE kisiler SET son_giris_at = NOW(), refresh_token_hash = $2 WHERE id = $1`,
+      `UPDATE users SET son_giris_at = NOW(), refresh_token_hash = $2 WHERE id = $1`,
       [u.id, hashToken(refresh_token)]
     );
 
@@ -124,12 +124,12 @@ router.post('/refresh', async (req, res, next) => {
       return res.status(401).json({ hata: 'Refresh token geçersiz.' });
     }
     if (payload.typ !== 'refresh') return res.status(401).json({ hata: 'Token tipi hatalı.' });
-    const u = await kullaniciYukle(payload.kullanici_kodu);
+    const u = await kullaniciYukle(payload.user_code);
     if (!u || u.refresh_token_hash !== hashToken(refresh_token)) {
       return res.status(401).json({ hata: 'Refresh token eşleşmedi.' });
     }
     const ttl = Number(await parametreAl(pool, 'JWT_TTL_DK', '480')) || 480;
-    const access_token = signAccess({ kullanici_kodu: u.kullanici_kodu, id: u.id }, ttl);
+    const access_token = signAccess({ user_code: u.user_code, id: u.id }, ttl);
     res.json({ access_token, token_tipi: 'Bearer', expires_in_dk: ttl });
   } catch (err) {
     next(err);
@@ -139,21 +139,21 @@ router.post('/refresh', async (req, res, next) => {
 /** POST /auth/logout — refresh hash temizle */
 router.post('/logout', async (req, res, next) => {
   try {
-    const { refresh_token, kullanici_kodu } = req.body || {};
-    let kod = kullanici_kodu;
+    const { refresh_token, user_code } = req.body || {};
+    let kod = user_code;
     if (refresh_token) {
       try {
-        kod = verifyToken(refresh_token).kullanici_kodu;
+        kod = verifyToken(refresh_token).user_code;
       } catch (_) { /* ignore */ }
     }
     if (!kod) {
       const hdr = req.get('authorization') || '';
       if (hdr.startsWith('Bearer ')) {
-        try { kod = verifyToken(hdr.slice(7)).kullanici_kodu; } catch (_) { /* ignore */ }
+        try { kod = verifyToken(hdr.slice(7)).user_code; } catch (_) { /* ignore */ }
       }
     }
     if (kod) {
-      await pool.query(`UPDATE kisiler SET refresh_token_hash = NULL WHERE kullanici_kodu=$1`, [kod]);
+      await pool.query(`UPDATE users SET refresh_token_hash = NULL WHERE user_code=$1`, [kod]);
     }
     res.json({ ok: true });
   } catch (err) {
@@ -167,7 +167,7 @@ router.get('/me', async (req, res, next) => {
     const hdr = req.get('authorization') || '';
     const bearer = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
     const kod = bearer
-      ? verifyToken(bearer).kullanici_kodu
+      ? verifyToken(bearer).user_code
       : (req.get('x-kullanici-kodu') || null);
     if (!kod) return res.status(401).json({ hata: 'Kimlik yok.' });
     const u = await kullaniciYukle(kod);
@@ -180,17 +180,17 @@ router.get('/me', async (req, res, next) => {
 
 router.post('/parola-ayarla', async (req, res, next) => {
   try {
-    const { kullanici_kodu, parola, yeni_parola } = req.body || {};
-    if (!kullanici_kodu || !yeni_parola) {
-      return res.status(400).json({ hata: 'kullanici_kodu ve yeni_parola zorunlu.' });
+    const { user_code, parola, yeni_parola } = req.body || {};
+    if (!user_code || !yeni_parola) {
+      return res.status(400).json({ hata: 'user_code ve yeni_parola zorunlu.' });
     }
-    const r = await pool.query(`SELECT * FROM kisiler WHERE kullanici_kodu=$1`, [kullanici_kodu]);
+    const r = await pool.query(`SELECT * FROM users WHERE user_code=$1`, [user_code]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kullanıcı yok.' });
     if (r.rows[0].parola_hash && !dogrulaParola(parola || '', r.rows[0].parola_hash)) {
       return res.status(403).json({ hata: 'Mevcut parola hatalı.' });
     }
-    await pool.query(`UPDATE kisiler SET parola_hash=$1 WHERE id=$2`, [hashParola(yeni_parola), r.rows[0].id]);
-    res.json({ ok: true, kullanici_kodu });
+    await pool.query(`UPDATE users SET parola_hash=$1 WHERE id=$2`, [hashParola(yeni_parola), r.rows[0].id]);
+    res.json({ ok: true, user_code });
   } catch (err) {
     next(err);
   }

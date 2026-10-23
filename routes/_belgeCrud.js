@@ -25,15 +25,15 @@ function createBelgeRouter(cfg) {
 
     async function getir(id) {
         const baslikSql = requireCari
-            ? `SELECT t.*, c.cari_kodu, c.cari_adi FROM ${table} t JOIN cariler c ON c.id = t.cari_id WHERE t.id = $1`
+            ? `SELECT t.*, c.partner_code, c.partner_name FROM ${table} t JOIN partners c ON c.id = t.partner_id WHERE t.id = $1`
             : `SELECT * FROM ${table} WHERE id = $1`;
         const t = await pool.query(baslikSql, [id]);
         if (!t.rows[0]) return null;
         const satirlar = await pool.query(
             `
-            SELECT ls.*, s.stok_kodu, s.stok_adi
+            SELECT ls.*, s.item_code, s.item_name
             FROM ${lineTable} ls
-            JOIN stoklar s ON s.id = ls.stok_id
+            JOIN items s ON s.id = ls.item_id
             WHERE ls.${fk} = $1
             ORDER BY ls.id
             `,
@@ -49,13 +49,13 @@ function createBelgeRouter(cfg) {
             const firmaId = firmaIdFromReq(req);
             if (firmaId) {
                 params.push(firmaId);
-                sql += ` WHERE firma_id = $${params.length}`;
+                sql += ` WHERE company_id = $${params.length}`;
             }
             sql += ' ORDER BY id DESC';
             const liste = await pool.query(sql, params);
-            const sonuc = [];
-            for (const r of liste.rows) sonuc.push(await getir(r.id));
-            res.json(sonuc);
+            const result = [];
+            for (const r of liste.rows) result.push(await getir(r.id));
+            res.json(result);
         } catch (err) {
             res.status(500).json({ hata: err.message });
         }
@@ -73,9 +73,9 @@ function createBelgeRouter(cfg) {
 
     router.post('/', async (req, res) => {
         try {
-            const { cari_id, aciklama, satirlar } = req.body;
-            if (requireCari && !cari_id) {
-                return res.status(400).json({ hata: 'cari_id zorunludur.' });
+            const { partner_id, description, satirlar } = req.body;
+            if (requireCari && !partner_id) {
+                return res.status(400).json({ hata: 'partner_id zorunludur.' });
             }
             if (!Array.isArray(satirlar) || satirlar.length === 0) {
                 return res.status(400).json({ hata: 'satirlar zorunlu.' });
@@ -86,11 +86,11 @@ function createBelgeRouter(cfg) {
                 const cols = [noField];
                 const vals = [no];
                 if (requireCari) {
-                    cols.push('cari_id');
-                    vals.push(cari_id);
+                    cols.push('partner_id');
+                    vals.push(partner_id);
                 }
-                cols.push('aciklama');
-                vals.push(aciklama || null);
+                cols.push('description');
+                vals.push(description || null);
                 for (const f of extraFields) {
                     if (req.body[f] !== undefined) {
                         cols.push(f);
@@ -98,7 +98,7 @@ function createBelgeRouter(cfg) {
                     } else if (defaults[f] !== undefined) {
                         cols.push(f);
                         vals.push(defaults[f]);
-                    } else if (f === 'firma_id' && firmaIdFromReq(req)) {
+                    } else if (f === 'company_id' && firmaIdFromReq(req)) {
                         cols.push(f);
                         vals.push(firmaIdFromReq(req));
                     }
@@ -110,20 +110,20 @@ function createBelgeRouter(cfg) {
                 );
                 const docId = baslik.rows[0].id;
                 for (const s of satirlar) {
-                    if (!s.stok_id || s.miktar == null) throw new Error('Her satırda stok_id ve miktar zorunlu.');
-                    const stok = await client.query('SELECT id, birim FROM stoklar WHERE id=$1', [s.stok_id]);
-                    if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.stok_id}`);
+                    if (!s.item_id || s.quantity == null) throw new Error('Her satırda item_id ve quantity zorunlu.');
+                    const stok = await client.query('SELECT id, uom_code FROM items WHERE id=$1', [s.item_id]);
+                    if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
                     if (linePrice) {
                         await client.query(
-                            `INSERT INTO ${lineTable} (${fk}, stok_id, miktar, birim_fiyat, birim)
+                            `INSERT INTO ${lineTable} (${fk}, item_id, quantity, unit_price, uom_code)
                              VALUES ($1,$2,$3,$4,$5)`,
-                            [docId, s.stok_id, s.miktar, s.birim_fiyat ?? 0, s.birim || stok.rows[0].birim]
+                            [docId, s.item_id, s.quantity, s.unit_price ?? 0, s.uom_code || stok.rows[0].uom_code]
                         );
                     } else {
                         await client.query(
-                            `INSERT INTO ${lineTable} (${fk}, stok_id, miktar, birim)
+                            `INSERT INTO ${lineTable} (${fk}, item_id, quantity, uom_code)
                              VALUES ($1,$2,$3,$4)`,
-                            [docId, s.stok_id, s.miktar, s.birim || stok.rows[0].birim]
+                            [docId, s.item_id, s.quantity, s.uom_code || stok.rows[0].uom_code]
                         );
                     }
                 }
@@ -137,9 +137,9 @@ function createBelgeRouter(cfg) {
 
     router.put('/:id', async (req, res) => {
         try {
-            const { aciklama, durum, cari_id, satirlar } = req.body;
-            if (durum && allowedDurum && !allowedDurum.includes(durum)) {
-                return res.status(400).json({ hata: `Geçersiz durum: ${durum}` });
+            const { description, status, partner_id, satirlar } = req.body;
+            if (status && allowedDurum && !allowedDurum.includes(status)) {
+                return res.status(400).json({ hata: `Geçersiz status: ${status}` });
             }
             const id = await withTransaction(pool, async (client) => {
                 const mevcut = await client.query(
@@ -157,9 +157,9 @@ function createBelgeRouter(cfg) {
                     params.push(val);
                     sets.push(`${col}=$${params.length}`);
                 };
-                if (aciklama !== undefined) add('aciklama', aciklama);
-                if (durum) add('durum', durum);
-                if (requireCari && cari_id) add('cari_id', cari_id);
+                if (description !== undefined) add('description', description);
+                if (status) add('status', status);
+                if (requireCari && partner_id) add('partner_id', partner_id);
                 for (const f of extraFields) {
                     if (req.body[f] !== undefined) add(f, req.body[f]);
                 }
@@ -169,20 +169,20 @@ function createBelgeRouter(cfg) {
                 if (Array.isArray(satirlar)) {
                     await client.query(`DELETE FROM ${lineTable} WHERE ${fk}=$1`, [req.params.id]);
                     for (const s of satirlar) {
-                        if (!s.stok_id || s.miktar == null) continue;
-                        const stok = await client.query('SELECT id, birim FROM stoklar WHERE id=$1', [s.stok_id]);
-                        if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.stok_id}`);
+                        if (!s.item_id || s.quantity == null) continue;
+                        const stok = await client.query('SELECT id, uom_code FROM items WHERE id=$1', [s.item_id]);
+                        if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
                         if (linePrice) {
                             await client.query(
-                                `INSERT INTO ${lineTable} (${fk}, stok_id, miktar, birim_fiyat, birim)
+                                `INSERT INTO ${lineTable} (${fk}, item_id, quantity, unit_price, uom_code)
                                  VALUES ($1,$2,$3,$4,$5)`,
-                                [req.params.id, s.stok_id, s.miktar, s.birim_fiyat ?? 0, s.birim || stok.rows[0].birim]
+                                [req.params.id, s.item_id, s.quantity, s.unit_price ?? 0, s.uom_code || stok.rows[0].uom_code]
                             );
                         } else {
                             await client.query(
-                                `INSERT INTO ${lineTable} (${fk}, stok_id, miktar, birim)
+                                `INSERT INTO ${lineTable} (${fk}, item_id, quantity, uom_code)
                                  VALUES ($1,$2,$3,$4)`,
-                                [req.params.id, s.stok_id, s.miktar, s.birim || stok.rows[0].birim]
+                                [req.params.id, s.item_id, s.quantity, s.uom_code || stok.rows[0].uom_code]
                             );
                         }
                     }
@@ -197,8 +197,8 @@ function createBelgeRouter(cfg) {
 
     router.delete('/:id', async (req, res) => {
         try {
-            const sonuc = await pool.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [req.params.id]);
-            if (!sonuc.rows[0]) return res.status(404).json({ hata: notFound });
+            const result = await pool.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [req.params.id]);
+            if (!result.rows[0]) return res.status(404).json({ hata: notFound });
             res.json({ silindi: true, id: Number(req.params.id) });
         } catch (err) {
             res.status(500).json({ hata: err.message });

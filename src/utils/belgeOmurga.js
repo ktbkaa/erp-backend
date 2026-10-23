@@ -18,7 +18,7 @@ const BELGE_TIPI = Object.freeze({
     SAYIM: 'SAYIM',
 });
 
-/** hareket_kodlari.belge_tipi eşlemesi */
+/** movement_codes.document_type eşlemesi */
 const HAREKET_BELGE_TIPI = Object.freeze({
     [BELGE_TIPI.SATIS_TEKLIF]: 'SatisTeklif',
     [BELGE_TIPI.SATIS_SIPARIS]: 'SatisSiparis',
@@ -39,39 +39,39 @@ const HAREKET_BELGE_TIPI = Object.freeze({
 async function hareketKoduBul(client, belgeTipiKod, verilenId = null) {
     if (verilenId) {
         const r = await client.query(
-            `SELECT * FROM hareket_kodlari WHERE id=$1 AND aktif`,
+            `SELECT * FROM movement_codes WHERE id=$1 AND is_active`,
             [verilenId]
         );
         if (r.rows[0]) return r.rows[0];
     }
     const hkBelge = HAREKET_BELGE_TIPI[belgeTipiKod] || belgeTipiKod;
     const r = await client.query(
-        `SELECT * FROM hareket_kodlari
-         WHERE belge_tipi=$1 AND aktif
+        `SELECT * FROM movement_codes
+         WHERE document_type=$1 AND is_active
          ORDER BY id LIMIT 1`,
         [hkBelge]
     );
     return r.rows[0] || null;
 }
 
-function kaynakBelgeAlanlari(tip, id) {
-    if (!tip || id == null) return { kaynak_belge_tipi: null, kaynak_belge_id: null };
-    return { kaynak_belge_tipi: tip, kaynak_belge_id: Number(id) };
+function kaynakBelgeAlanlari(type, id) {
+    if (!type || id == null) return { source_document_type: null, source_document_id: null };
+    return { source_document_type: type, source_document_id: Number(id) };
 }
 
 function kalanMiktar(satir) {
-    const miktar = Number(satir.miktar || 0);
-    const sevk = Number(satir.sevk_edilen_miktar || 0);
-    return Math.max(0, miktar - sevk);
+    const quantity = Number(satir.quantity || 0);
+    const sevk = Number(satir.shipped_quantity || 0);
+    return Math.max(0, quantity - sevk);
 }
 
 async function stokNegatifIzinliMi(client) {
     const r = await client.query(
-        `SELECT deger FROM sistem_parametreleri
-         WHERE parametre_kodu='STOK_NEGATIF' AND aktif IS DISTINCT FROM FALSE
+        `SELECT value FROM system_parameters
+         WHERE parametre_code='STOK_NEGATIF' AND is_active IS DISTINCT FROM FALSE
          LIMIT 1`
     );
-    const v = String(r.rows[0]?.deger || 'Hayir').trim().toLowerCase();
+    const v = String(r.rows[0]?.value || 'Hayir').trim().toLowerCase();
     return ['evet', 'true', '1', 'yes', 'e'].includes(v);
 }
 
@@ -83,18 +83,18 @@ async function onerilenDepolar(client, stokId, gerekenMiktar, haricDepoId = null
     let haric = '';
     if (haricDepoId) {
         params.push(haricDepoId);
-        haric = `AND h.depo_id <> $${params.length}`;
+        haric = `AND h.warehouse_id <> $${params.length}`;
     }
     const r = await client.query(
         `
-        SELECT h.depo_id, d.depo_kodu, d.depo_adi,
-               COALESCE(SUM(s.miktar * s.yon), 0)::numeric AS bakiye
-        FROM stok_hareket_satirlari s
-        JOIN stok_hareketleri h ON h.id = s.hareket_id
-        JOIN depolar d ON d.id = h.depo_id
-        WHERE s.stok_id = $1 ${haric}
-        GROUP BY h.depo_id, d.depo_kodu, d.depo_adi
-        HAVING COALESCE(SUM(s.miktar * s.yon), 0) >= $2
+        SELECT h.warehouse_id, d.warehouse_code, d.warehouse_name,
+               COALESCE(SUM(s.quantity * s.direction), 0)::numeric AS bakiye
+        FROM stock_movement_lines s
+        JOIN stock_movements h ON h.id = s.movement_id
+        JOIN warehouses d ON d.id = h.warehouse_id
+        WHERE s.item_id = $1 ${haric}
+        GROUP BY h.warehouse_id, d.warehouse_code, d.warehouse_name
+        HAVING COALESCE(SUM(s.quantity * s.direction), 0) >= $2
         ORDER BY bakiye DESC
         LIMIT 5
         `,

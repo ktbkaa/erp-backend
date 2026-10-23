@@ -8,15 +8,15 @@ router.get('/', async (req, res) => {
     try {
         const yalnizca = req.query.yalnizca_stokta;
         const liste = await depoBakiyeListesi(pool, {
-            depoId: req.query.depo_id ? Number(req.query.depo_id) : null,
-            stokId: req.query.stok_id ? Number(req.query.stok_id) : null,
-            stokStatu: req.query.stok_statu || null,
+            depoId: req.query.warehouse_id ? Number(req.query.warehouse_id) : null,
+            stokId: req.query.item_id ? Number(req.query.item_id) : null,
+            stokStatu: req.query.stock_status || null,
             firmaId: firmaIdFromReq(req),
-            depoKodu: req.query.depo_kodu || null,
-            stokKodu: req.query.stok_kodu || null,
-            stokAdi: req.query.stok_adi || null,
-            stokTipi: req.query.stok_tipi || null,
-            partiNo: req.query.parti_no || null,
+            depoKodu: req.query.warehouse_code || null,
+            stokKodu: req.query.item_code || null,
+            stokAdi: req.query.item_name || null,
+            stokTipi: req.query.item_type || null,
+            partiNo: req.query.lot_no || null,
             yalnizcaStokta: yalnizca == null || yalnizca === '1' || yalnizca === 'true' || yalnizca === 'Evet',
         });
         // Rezerve / kullanılabilir kolonları (INV-004)
@@ -25,11 +25,11 @@ router.get('/', async (req, res) => {
             let rezerve = 0;
             try {
                 const r = await pool.query(
-                    `SELECT COALESCE(SUM(kalan_miktar),0)::numeric AS rezerve
-                     FROM stok_rezervasyonlari
-                     WHERE stok_id=$1 AND durum='Aktif'
-                       AND ($2::int IS NULL OR depo_id IS NULL OR depo_id=$2)`,
-                    [row.stok_id, row.depo_id]
+                    `SELECT COALESCE(SUM(remaining_quantity),0)::numeric AS rezerve
+                     FROM item_reservations
+                     WHERE item_id=$1 AND status='Aktif'
+                       AND ($2::int IS NULL OR warehouse_id IS NULL OR warehouse_id=$2)`,
+                    [row.item_id, row.warehouse_id]
                 );
                 rezerve = Number(r.rows[0].rezerve);
             } catch (_) { /* tablo yoksa 0 */ }

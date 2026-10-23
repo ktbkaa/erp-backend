@@ -17,22 +17,22 @@ function trimOrNull(v) {
 
 router.get('/', async (req, res) => {
     try {
-        const { tip, aktif } = req.query;
+        const { type, is_active } = req.query;
         const where = [];
         const params = [];
-        if (tip) {
-            params.push(tip);
-            where.push(`kategori_tipi = $${params.length}`);
+        if (type) {
+            params.push(type);
+            where.push(`category_type = $${params.length}`);
         }
-        if (aktif === 'true') where.push('aktif = TRUE');
-        if (aktif === 'false') where.push('aktif = FALSE');
+        if (is_active === 'true') where.push('is_active = TRUE');
+        if (is_active === 'false') where.push('is_active = FALSE');
         const sql = `
-            SELECT * FROM kategori_tanimlari
+            SELECT * FROM categories
             ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
-            ORDER BY kategori_tipi, kategori_kodu
+            ORDER BY category_type, category_code
         `;
-        const sonuc = await pool.query(sql, params);
-        res.json(sonuc.rows);
+        const result = await pool.query(sql, params);
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -40,9 +40,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const sonuc = await pool.query('SELECT * FROM kategori_tanimlari WHERE id = $1', [req.params.id]);
-        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Kategori bulunamadı.' });
-        res.json(sonuc.rows[0]);
+        const result = await pool.query('SELECT * FROM categories WHERE id = $1', [req.params.id]);
+        if (!result.rows[0]) return res.status(404).json({ hata: 'Kategori bulunamadı.' });
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -50,37 +50,37 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const kategori_adi = trimOrNull(req.body.kategori_adi);
-        const kategori_tipi = trimOrNull(req.body.kategori_tipi);
-        if (!kategori_adi) {
+        const category_name = trimOrNull(req.body.category_name);
+        const category_type = trimOrNull(req.body.category_type);
+        if (!category_name) {
             return res.status(400).json({
                 hata: 'Kategori adı zorunludur.',
-                hatalar: [{ alan: 'kategori_adi', hata: 'Kategori adı zorunludur.' }],
+                hatalar: [{ alan: 'category_name', hata: 'Kategori adı zorunludur.' }],
             });
         }
-        if (!TIPLER.includes(kategori_tipi)) {
+        if (!TIPLER.includes(category_type)) {
             return res.status(400).json({
-                hata: "kategori_tipi 'ABC', 'Marka' veya 'TeminSekli' olmalı.",
-                hatalar: [{ alan: 'kategori_tipi', hata: 'Geçersiz kategori tipi.' }],
+                hata: "category_type 'ABC', 'Marka' veya 'TeminSekli' olmalı.",
+                hatalar: [{ alan: 'category_type', hata: 'Geçersiz kategori tipi.' }],
             });
         }
 
         const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.kategori_kodu)
+            const kod = trimOrNull(req.body.category_code)
                 || (await sonrakiKod(client, 'KATEGORI'));
             const ins = await client.query(
                 `
-                INSERT INTO kategori_tanimlari
-                    (kategori_kodu, kategori_adi, kategori_tipi, aktif, aciklama)
+                INSERT INTO categories
+                    (category_code, category_name, category_type, is_active, description)
                 VALUES ($1, $2, $3, COALESCE($4, TRUE), $5)
                 RETURNING *
                 `,
                 [
                     kod,
-                    kategori_adi,
-                    kategori_tipi,
-                    typeof req.body.aktif === 'boolean' ? req.body.aktif : true,
-                    trimOrNull(req.body.aciklama),
+                    category_name,
+                    category_type,
+                    typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
+                    trimOrNull(req.body.description),
                 ]
             );
             return ins.rows[0];
@@ -88,7 +88,7 @@ router.post('/', async (req, res) => {
         res.status(201).json(row);
     } catch (err) {
         if (err.code === '23505') {
-            return res.status(409).json({ hata: 'Bu kategori kodu zaten var.', alan: 'kategori_kodu' });
+            return res.status(409).json({ hata: 'Bu kategori kodu zaten var.', alan: 'category_code' });
         }
         res.status(500).json({ hata: err.message });
     }
@@ -96,33 +96,33 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const kategori_adi = trimOrNull(req.body.kategori_adi);
-        if (!kategori_adi) {
+        const category_name = trimOrNull(req.body.category_name);
+        if (!category_name) {
             return res.status(400).json({
                 hata: 'Kategori adı zorunludur.',
-                hatalar: [{ alan: 'kategori_adi', hata: 'Kategori adı zorunludur.' }],
+                hatalar: [{ alan: 'category_name', hata: 'Kategori adı zorunludur.' }],
             });
         }
-        const kategori_tipi = trimOrNull(req.body.kategori_tipi);
-        if (kategori_tipi && !TIPLER.includes(kategori_tipi)) {
-            return res.status(400).json({ hata: 'Geçersiz kategori tipi.', alan: 'kategori_tipi' });
+        const category_type = trimOrNull(req.body.category_type);
+        if (category_type && !TIPLER.includes(category_type)) {
+            return res.status(400).json({ hata: 'Geçersiz kategori tipi.', alan: 'category_type' });
         }
         const upd = await pool.query(
             `
-            UPDATE kategori_tanimlari SET
-                kategori_adi = $2,
-                kategori_tipi = COALESCE($3, kategori_tipi),
-                aktif = COALESCE($4, aktif),
-                aciklama = $5
+            UPDATE categories SET
+                category_name = $2,
+                category_type = COALESCE($3, category_type),
+                is_active = COALESCE($4, is_active),
+                description = $5
             WHERE id = $1
             RETURNING *
             `,
             [
                 req.params.id,
-                kategori_adi,
-                kategori_tipi,
-                typeof req.body.aktif === 'boolean' ? req.body.aktif : null,
-                trimOrNull(req.body.aciklama),
+                category_name,
+                category_type,
+                typeof req.body.is_active === 'boolean' ? req.body.is_active : null,
+                trimOrNull(req.body.description),
             ]
         );
         if (!upd.rows[0]) return res.status(404).json({ hata: 'Kategori bulunamadı.' });
@@ -134,11 +134,11 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
-        const sonuc = await pool.query(
-            'DELETE FROM kategori_tanimlari WHERE id = $1 RETURNING id',
+        const result = await pool.query(
+            'DELETE FROM categories WHERE id = $1 RETURNING id',
             [req.params.id]
         );
-        if (!sonuc.rows[0]) return res.status(404).json({ hata: 'Kategori bulunamadı.' });
+        if (!result.rows[0]) return res.status(404).json({ hata: 'Kategori bulunamadı.' });
         res.json({ silindi: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });

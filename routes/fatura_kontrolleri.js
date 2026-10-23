@@ -6,23 +6,23 @@ router.get('/', async (req, res, next) => {
   try {
     const where = [];
     const params = [];
-    if (req.query.durum || req.query.sonuc) {
-      params.push(req.query.durum || req.query.sonuc);
-      where.push(`e.sonuc = $${params.length}`);
+    if (req.query.status || req.query.result) {
+      params.push(req.query.status || req.query.result);
+      where.push(`e.result = $${params.length}`);
     }
-    if (req.query.fatura_id) {
-      params.push(Number(req.query.fatura_id));
-      where.push(`e.fatura_id = $${params.length}`);
+    if (req.query.invoice_id) {
+      params.push(Number(req.query.invoice_id));
+      where.push(`e.invoice_id = $${params.length}`);
     }
     const r = await pool.query(
       `
-      SELECT e.*, f.fatura_no, f.fatura_turu, f.toplam_tutar, c.cari_kodu, c.cari_adi,
-             mk.kabul_no, sas.siparis_no
-      FROM fatura_eslestirme e
-      JOIN faturalar f ON f.id = e.fatura_id
-      LEFT JOIN cariler c ON c.id = f.cari_id
-      LEFT JOIN mal_kabuller mk ON mk.id = e.mal_kabul_id
-      LEFT JOIN satin_alma_siparisleri sas ON sas.id = e.siparis_id
+      SELECT e.*, f.invoice_no, f.invoice_type, f.total_amount, c.partner_code, c.partner_name,
+             mk.receipt_no, sas.order_no
+      FROM invoice_matches e
+      JOIN invoices f ON f.id = e.invoice_id
+      LEFT JOIN partners c ON c.id = f.partner_id
+      LEFT JOIN goods_receipts mk ON mk.id = e.goods_receipt_id
+      LEFT JOIN purchase_orders sas ON sas.id = e.sales_order_id
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY e.id DESC
       `,

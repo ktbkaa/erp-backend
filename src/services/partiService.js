@@ -2,8 +2,8 @@ const { sonrakiKod } = require('../utils/kodUretici');
 
 async function stokPartiPolitika(client, stokId) {
     const r = await client.query(
-        `SELECT id, stok_kodu, parti_politika, kalite_kontrol_gerekli, varsayilan_giris_depo_id, varsayilan_cikis_depo_id, emniyet_stok
-         FROM stoklar WHERE id=$1`,
+        `SELECT id, item_code, lot_politika, kalite_control_gerekli, varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id, safety_stock
+         FROM items WHERE id=$1`,
         [stokId]
     );
     if (!r.rows[0]) throw new Error(`Stok bulunamadı: ${stokId}`);
@@ -22,7 +22,7 @@ async function partiCozumle(client, {
     kaynakId = null,
 }) {
     const stok = await stokPartiPolitika(client, stokId);
-    const politika = stok.parti_politika || 'Takipsiz';
+    const politika = stok.lot_politika || 'Takipsiz';
 
     if (politika === 'Takipsiz') {
         return { partiId: null, stok };
@@ -30,22 +30,22 @@ async function partiCozumle(client, {
 
     if (partiId) {
         const p = await client.query(
-            `SELECT * FROM stok_partileri WHERE id=$1 AND stok_id=$2`,
+            `SELECT * FROM item_lots WHERE id=$1 AND item_id=$2`,
             [partiId, stokId]
         );
-        if (!p.rows[0]) throw new Error(`Parti stok ile uyuşmuyor: parti_id=${partiId}`);
+        if (!p.rows[0]) throw new Error(`Parti stok ile uyuşmuyor: lot_id=${partiId}`);
         return { partiId: p.rows[0].id, stok, parti: p.rows[0] };
     }
 
     if (partiNo) {
         const mevcut = await client.query(
-            `SELECT * FROM stok_partileri WHERE stok_id=$1 AND parti_no=$2`,
+            `SELECT * FROM item_lots WHERE item_id=$1 AND lot_no=$2`,
             [stokId, partiNo]
         );
         if (mevcut.rows[0]) return { partiId: mevcut.rows[0].id, stok, parti: mevcut.rows[0] };
         const ins = await client.query(
             `
-            INSERT INTO stok_partileri (stok_id, parti_no, kaynak_tipi, kaynak_id)
+            INSERT INTO item_lots (item_id, lot_no, source_type, source_id)
             VALUES ($1,$2,$3,$4) RETURNING *
             `,
             [stokId, partiNo, kaynakTipi, kaynakId]
@@ -57,7 +57,7 @@ async function partiCozumle(client, {
         const kod = await sonrakiKod(client, 'PARTI');
         const ins = await client.query(
             `
-            INSERT INTO stok_partileri (stok_id, parti_no, kaynak_tipi, kaynak_id)
+            INSERT INTO item_lots (item_id, lot_no, source_type, source_id)
             VALUES ($1,$2,$3,$4) RETURNING *
             `,
             [stokId, kod, kaynakTipi, kaynakId]
@@ -66,7 +66,7 @@ async function partiCozumle(client, {
     }
 
     if (politika === 'Zorunlu') {
-        throw new Error(`Parti zorunlu: stok_id=${stokId} (${stok.stok_kodu})`);
+        throw new Error(`Parti zorunlu: item_id=${stokId} (${stok.item_code})`);
     }
     return { partiId: null, stok };
 }

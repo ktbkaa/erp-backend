@@ -1,6 +1,6 @@
 /**
  * Merkezi irsaliye / fatura listesi — alış + satış, tek ekran.
- * Kaynak: irsaliyeler + faturalar (+ tedarikçi irsaliyeleri özeti).
+ * Kaynak: delivery_notes + invoices (+ tedarikçi irsaliyeleri özeti).
  */
 const express = require('express');
 const router = express.Router();
@@ -10,38 +10,38 @@ const { firmaIdFromReq } = require('../src/utils/firmaScope');
 router.get('/', async (req, res) => {
   try {
     const firmaId = firmaIdFromReq(req);
-    const yon = String(req.query.yon || req.query.alis_satis || '').toLowerCase(); // alis|satis|''
+    const direction = String(req.query.direction || req.query.alis_satis || '').toLowerCase(); // alis|satis|''
     const tur = String(req.query.belge_turu || '').toLowerCase(); // irsaliye|fatura|''
     const params = [];
     const firmaClause = (alias) => {
       if (!firmaId) return 'TRUE';
       params.push(firmaId);
-      return `${alias}.firma_id = $${params.length}`;
+      return `${alias}.company_id = $${params.length}`;
     };
 
     const parts = [];
 
     if (!tur || tur === 'irsaliye') {
-      // Satış irsaliyeleri (irsaliyeler tablosu)
-      if (!yon || yon === 'satis') {
+      // Satış irsaliyeleri (delivery_notes tablosu)
+      if (!direction || direction === 'satis') {
         parts.push(`
           SELECT
             'irsaliye'::text AS belge_sinifi,
             i.id,
-            i.irsaliye_no AS belge_no,
-            COALESCE(i.irsaliye_tipi, 'Satis') AS yon,
-            i.cari_id,
-            c.cari_kodu,
-            c.cari_adi,
-            i.irsaliye_tarihi AS belge_tarihi,
-            i.durum,
-            COALESCE(i.genel_toplam, 0) AS tutar,
-            i.para_birimi,
-            i.siparis_id AS kaynak_siparis_id,
-            NULL::int AS mal_kabul_id,
-            'irsaliyeler'::text AS kaynak_tablo
-          FROM irsaliyeler i
-          LEFT JOIN cariler c ON c.id = i.cari_id
+            i.delivery_note_no AS document_no,
+            COALESCE(i.delivery_note_type, 'Satis') AS direction,
+            i.partner_id,
+            c.partner_code,
+            c.partner_name,
+            i.delivery_date AS document_date,
+            i.status,
+            COALESCE(i.grand_total, 0) AS amount,
+            i.currency_code,
+            i.sales_order_id AS kaynak_siparis_id,
+            NULL::int AS goods_receipt_id,
+            'delivery_notes'::text AS kaynak_tablo
+          FROM delivery_notes i
+          LEFT JOIN partners c ON c.id = i.partner_id
           WHERE ${firmaClause('i')}
         `);
       }
@@ -49,49 +49,49 @@ router.get('/', async (req, res) => {
 
     if (!tur || tur === 'fatura') {
       let yonFilter = 'TRUE';
-      if (yon === 'alis') yonFilter = `f.fatura_turu IN ('Alis','AlisIade')`;
-      else if (yon === 'satis') yonFilter = `f.fatura_turu IN ('Satis','SatisIade') OR f.fatura_turu IS NULL`;
+      if (direction === 'alis') yonFilter = `f.invoice_type IN ('Alis','AlisIade')`;
+      else if (direction === 'satis') yonFilter = `f.invoice_type IN ('Satis','SatisIade') OR f.invoice_type IS NULL`;
       parts.push(`
         SELECT
           'fatura'::text AS belge_sinifi,
           f.id,
-          f.fatura_no AS belge_no,
-          f.fatura_turu AS yon,
-          f.cari_id,
-          c.cari_kodu,
-          c.cari_adi,
-          f.fatura_tarihi AS belge_tarihi,
-          f.durum,
-          COALESCE(f.odenecek_tutar, f.toplam_tutar, f.mal_hizmet_toplam, 0) AS tutar,
-          f.para_birimi,
-          f.siparis_id AS kaynak_siparis_id,
-          f.mal_kabul_id,
-          'faturalar'::text AS kaynak_tablo
-        FROM faturalar f
-        LEFT JOIN cariler c ON c.id = f.cari_id
+          f.invoice_no AS document_no,
+          f.invoice_type AS direction,
+          f.partner_id,
+          c.partner_code,
+          c.partner_name,
+          f.invoice_date AS document_date,
+          f.status,
+          COALESCE(f.payable_amount, f.total_amount, f.net_amount, 0) AS amount,
+          f.currency_code,
+          f.sales_order_id AS kaynak_siparis_id,
+          f.goods_receipt_id,
+          'invoices'::text AS kaynak_tablo
+        FROM invoices f
+        LEFT JOIN partners c ON c.id = f.partner_id
         WHERE ${firmaClause('f')} AND ${yonFilter}
       `);
     }
 
-    if ((!tur || tur === 'irsaliye') && (!yon || yon === 'alis')) {
+    if ((!tur || tur === 'irsaliye') && (!direction || direction === 'alis')) {
       parts.push(`
         SELECT
           'tedarikci_irsaliye'::text AS belge_sinifi,
           ti.id,
-          ti.irsaliye_no AS belge_no,
-          'Alis'::text AS yon,
-          ti.cari_id,
-          c.cari_kodu,
-          c.cari_adi,
-          ti.irsaliye_tarihi AS belge_tarihi,
-          ti.durum,
-          0::numeric AS tutar,
-          NULL::varchar AS para_birimi,
-          ti.siparis_id AS kaynak_siparis_id,
-          NULL::int AS mal_kabul_id,
-          'tedarikci_irsaliyeleri'::text AS kaynak_tablo
-        FROM tedarikci_irsaliyeleri ti
-        LEFT JOIN cariler c ON c.id = ti.cari_id
+          ti.delivery_note_no AS document_no,
+          'Alis'::text AS direction,
+          ti.partner_id,
+          c.partner_code,
+          c.partner_name,
+          ti.delivery_date AS document_date,
+          ti.status,
+          0::numeric AS amount,
+          NULL::varchar AS currency_code,
+          ti.sales_order_id AS kaynak_siparis_id,
+          NULL::int AS goods_receipt_id,
+          'vendor_delivery_notes'::text AS kaynak_tablo
+        FROM vendor_delivery_notes ti
+        LEFT JOIN partners c ON c.id = ti.partner_id
         WHERE ${firmaClause('ti')}
       `);
     }
@@ -102,13 +102,13 @@ router.get('/', async (req, res) => {
       SELECT * FROM (
         ${parts.join(' UNION ALL ')}
       ) x
-      ORDER BY belge_tarihi DESC NULLS LAST, id DESC
+      ORDER BY document_date DESC NULLS LAST, id DESC
       LIMIT 500`;
     const r = await pool.query(sql, params);
     res.json(r.rows.map((row) => ({
       ...row,
       id: `${row.belge_sinifi}:${row.id}`,
-      kayit_id: row.id,
+      record_id: row.id,
     })));
   } catch (err) {
     if (/does not exist|relation/i.test(err.message)) {

@@ -12,17 +12,17 @@ describe('fatura 3-way match', () => {
 
   it('eşleştirme kaydı üretir (alış)', async () => {
     const faturaId = await withTransaction(pool, async (client) => {
-      const cari = await client.query(`SELECT id FROM cariler ORDER BY id LIMIT 1`);
-      const stok = await client.query(`SELECT id FROM stoklar ORDER BY id LIMIT 1`);
+      const cari = await client.query(`SELECT id FROM partners ORDER BY id LIMIT 1`);
+      const stok = await client.query(`SELECT id FROM items ORDER BY id LIMIT 1`);
       if (!cari.rows[0] || !stok.rows[0]) return null;
       const no = `AF-3W-${Date.now()}`;
       const f = await client.query(
-        `INSERT INTO faturalar (fatura_no, cari_id, fatura_turu, toplam_tutar, durum)
+        `INSERT INTO invoices (invoice_no, partner_id, invoice_type, total_amount, status)
          VALUES ($1,$2,'Alis',100,'Taslak') RETURNING id`,
         [no, cari.rows[0].id]
       );
       await client.query(
-        `INSERT INTO fatura_detaylari (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar)
+        `INSERT INTO invoice_lines (invoice_id, item_id, quantity, unit_price, total_amount)
          VALUES ($1,$2,10,10,100)`,
         [f.rows[0].id, stok.rows[0].id]
       );
@@ -36,26 +36,26 @@ describe('fatura 3-way match', () => {
 
     const row = await withTransaction(pool, (client) => faturaEslestir(client, faturaId));
     assert.ok(row.id);
-    assert.ok(['Bekliyor', 'Uyumlu', 'FiyatFark', 'MiktarFark', 'Askida'].includes(row.sonuc));
+    assert.ok(['Bekliyor', 'Uyumlu', 'FiyatFark', 'MiktarFark', 'Askida'].includes(row.result));
 
-    const api = await request(app, 'GET', `/fatura-kontrolleri?fatura_id=${faturaId}`);
+    const api = await request(app, 'GET', `/fatura-kontrolleri?invoice_id=${faturaId}`);
     assert.equal(api.status, 200);
     assert.ok(Array.isArray(api.json));
-    assert.ok(api.json.some((r) => Number(r.fatura_id) === Number(faturaId)));
+    assert.ok(api.json.some((r) => Number(r.invoice_id) === Number(faturaId)));
   });
 
   it('satış faturasında 3-way reddeder', async () => {
     const faturaId = await withTransaction(pool, async (client) => {
-      const cari = await client.query(`SELECT id FROM cariler ORDER BY id LIMIT 1`);
-      const stok = await client.query(`SELECT id FROM stoklar ORDER BY id LIMIT 1`);
+      const cari = await client.query(`SELECT id FROM partners ORDER BY id LIMIT 1`);
+      const stok = await client.query(`SELECT id FROM items ORDER BY id LIMIT 1`);
       if (!cari.rows[0] || !stok.rows[0]) return null;
       const f = await client.query(
-        `INSERT INTO faturalar (fatura_no, cari_id, fatura_turu, toplam_tutar)
+        `INSERT INTO invoices (invoice_no, partner_id, invoice_type, total_amount)
          VALUES ($1,$2,'Satis',50) RETURNING id`,
         [`SF-3W-${Date.now()}`, cari.rows[0].id]
       );
       await client.query(
-        `INSERT INTO fatura_detaylari (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar)
+        `INSERT INTO invoice_lines (invoice_id, item_id, quantity, unit_price, total_amount)
          VALUES ($1,$2,1,50,50)`,
         [f.rows[0].id, stok.rows[0].id]
       );

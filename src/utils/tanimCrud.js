@@ -1,6 +1,6 @@
 /**
  * Soft-delete destekli basit tanım CRUD router fabrikası.
- * DELETE → aktif=false (TANIM_SOFT_DELETE=Evet, varsayılan).
+ * DELETE → is_active=false (TANIM_SOFT_DELETE=Evet, varsayılan).
  */
 const express = require('express');
 const pool = require('../../db');
@@ -22,7 +22,7 @@ function trimOrNull(v) {
  * @param {string} opts.table
  * @param {string} opts.codeCol
  * @param {string} opts.nameCol
- * @param {string} opts.seriKodu - kod_serileri.seri_kodu
+ * @param {string} opts.seriKodu - number_series.series_code
  * @param {string[]} [opts.extraCols] - insert/update extra columns
  * @param {string} [opts.orderBy]
  * @param {string} [opts.notFound]
@@ -43,11 +43,11 @@ function createTanimRouter(opts) {
   router.get('/', async (req, res, next) => {
     try {
       const where = [];
-      if (req.query.aktif === 'true') where.push('aktif = TRUE');
-      if (req.query.aktif === 'false') where.push('aktif = FALSE');
-      // cascade filtreleri (ulke_kodu vb.)
+      if (req.query.is_active === 'true') where.push('is_active = TRUE');
+      if (req.query.is_active === 'false') where.push('is_active = FALSE');
+      // cascade filtreleri (country_code vb.)
       const params = [];
-      for (const col of ['ulke_kodu', 'kaynak_pb', 'hedef_pb']) {
+      for (const col of ['country_code', 'source_pb', 'target_pb']) {
         if (req.query[col] && extraCols.includes(col)) {
           params.push(req.query[col]);
           where.push(`${col} = $${params.length}`);
@@ -76,7 +76,7 @@ function createTanimRouter(opts) {
       if (!name) return res.status(400).json({ hata: `${nameCol} zorunlu.` });
       const row = await withTransaction(pool, async (client) => {
         const kod = trimOrNull(req.body[codeCol]) || (await sonrakiKod(client, seriKodu));
-        const cols = [codeCol, nameCol, ...extraCols, 'aktif'];
+        const cols = [codeCol, nameCol, ...extraCols, 'is_active'];
         const vals = [
           kod,
           name,
@@ -86,7 +86,7 @@ function createTanimRouter(opts) {
             if (typeof v === 'boolean') return v;
             return trimOrNull(v);
           }),
-          typeof req.body.aktif === 'boolean' ? req.body.aktif : true,
+          typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
         ];
         const ph = cols.map((_, i) => `$${i + 1}`).join(',');
         const ins = await client.query(
@@ -114,9 +114,9 @@ function createTanimRouter(opts) {
           sets.push(`${c} = $${params.length}`);
         }
       }
-      if (typeof req.body.aktif === 'boolean') {
-        params.push(req.body.aktif);
-        sets.push(`aktif = $${params.length}`);
+      if (typeof req.body.is_active === 'boolean') {
+        params.push(req.body.is_active);
+        sets.push(`is_active = $${params.length}`);
       }
       const upd = await pool.query(
         `UPDATE ${table} SET ${sets.join(', ')} WHERE id=$1 RETURNING *`,
@@ -134,7 +134,7 @@ function createTanimRouter(opts) {
       const soft = String(await parametreAl(pool, 'TANIM_SOFT_DELETE', 'Evet')).toLowerCase() === 'evet';
       if (soft) {
         const r = await pool.query(
-          `UPDATE ${table} SET aktif=FALSE WHERE id=$1 RETURNING id`,
+          `UPDATE ${table} SET is_active=FALSE WHERE id=$1 RETURNING id`,
           [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: notFound });

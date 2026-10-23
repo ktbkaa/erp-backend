@@ -72,7 +72,7 @@ router.get('/alan', async (req, res, next) => {
 router.get('/kayit-bilgi', async (req, res, next) => {
   try {
     const screenId = String(req.query.screen || req.query.ekran || '').trim();
-    const id = req.query.id || req.query.kayit_id;
+    const id = req.query.id || req.query.record_id;
     if (!screenId || id == null) {
       return res.status(400).json({ hata: 'screen ve id zorunlu' });
     }

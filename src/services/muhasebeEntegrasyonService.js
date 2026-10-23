@@ -8,29 +8,29 @@ const {
 
 async function kuralBul(client, belgeTipi) {
   const r = await client.query(
-    `SELECT * FROM hesap_belirleme_kurallari
-     WHERE belge_tipi=$1 AND aktif=TRUE
-     ORDER BY CASE WHEN kural_kodu LIKE '%_TR' THEN 0 ELSE 1 END
+    `SELECT * FROM account_determination_rules
+     WHERE document_type=$1 AND is_active=TRUE
+     ORDER BY CASE WHEN rule_code LIKE '%_TR' THEN 0 ELSE 1 END
      LIMIT 1`,
     [belgeTipi]
   );
   return r.rows[0] || null;
 }
 
-async function vergiOran(client, ulkeKodu, oran) {
+async function vergiOran(client, ulkeKodu, rate) {
   const r = await client.query(
     `
-    SELECT vk.vergi_kodu, vk.indirilecek_hesap_kodu, vk.hesaplanan_hesap_kodu, vo.oran
-    FROM finans_vergi_kodlari vk
-    JOIN finans_vergi_oranlari vo ON vo.vergi_kod_id = vk.id
-    WHERE vk.ulke_kodu=$1 AND vk.aktif
-      AND vo.gecerlilik_baslangic <= CURRENT_DATE
-      AND (vo.gecerlilik_bitis IS NULL OR vo.gecerlilik_bitis >= CURRENT_DATE)
-      AND ABS(vo.oran - $2) < 0.01
-    ORDER BY vo.gecerlilik_baslangic DESC
+    SELECT vk.tax_code, vk.input_tax_account_code, vk.output_tax_account_code, vo.rate
+    FROM fin_tax_codes vk
+    JOIN fin_tax_rates vo ON vo.tax_code_id = vk.id
+    WHERE vk.country_code=$1 AND vk.is_active
+      AND vo.valid_from <= CURRENT_DATE
+      AND (vo.valid_to IS NULL OR vo.valid_to >= CURRENT_DATE)
+      AND ABS(vo.rate - $2) < 0.01
+    ORDER BY vo.valid_from DESC
     LIMIT 1
     `,
-    [ulkeKodu || 'TR', Number(oran) || 20]
+    [ulkeKodu || 'TR', Number(rate) || 20]
   );
   return r.rows[0] || null;
 }
@@ -40,90 +40,90 @@ async function vergiOran(client, ulkeKodu, oran) {
  * Idempotent: aynı fatura ikinci kez işlenmez.
  */
 async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null, ulkeKodu = 'TR' } = {}) {
-  const f = await client.query(`SELECT * FROM faturalar WHERE id=$1 FOR UPDATE`, [faturaId]);
+  const f = await client.query(`SELECT * FROM invoices WHERE id=$1 FOR UPDATE`, [faturaId]);
   if (!f.rows[0]) throw Object.assign(new Error('Fatura bulunamadı.'), { status: 404 });
   const fatura = f.rows[0];
 
-  const tip = String(fatura.fatura_turu || '').toLowerCase().includes('alis') ? 'Alis' : 'Satis';
-  const kaynakTip = tip === 'Alis' ? 'ALIS_FATURA' : 'SATIS_FATURA';
+  const type = String(fatura.invoice_type || '').toLowerCase().includes('alis') ? 'Alis' : 'Satis';
+  const kaynakTip = type === 'Alis' ? 'ALIS_FATURA' : 'SATIS_FATURA';
 
   const mevcut = await kaynakFisVarMi(client, {
-    firmaId: fatura.firma_id,
+    firmaId: fatura.company_id,
     kaynakBelgeTipi: kaynakTip,
     kaynakBelgeId: faturaId,
   });
   if (mevcut) {
     throw Object.assign(
-      new Error(`Fatura zaten muhasebeleştirilmiş (fiş ${mevcut.belge_no}).`),
-      { status: 409, kod: 'MUKERRER_FIS', muhasebe_belge_id: mevcut.id }
+      new Error(`Fatura zaten muhasebeleştirilmiş (fiş ${mevcut.document_no}).`),
+      { status: 409, kod: 'MUKERRER_FIS', gl_document_id: mevcut.id }
     );
   }
 
-  const mal = round2(fatura.mal_hizmet_toplam || fatura.toplam_tutar || 0);
-  const kdv = round2(fatura.toplam_kdv || 0);
-  const odenecek = round2(fatura.odenecek_tutar || mal + kdv);
+  const mal = round2(fatura.net_amount || fatura.total_amount || 0);
+  const kdv = round2(fatura.tax_amount || 0);
+  const odenecek = round2(fatura.payable_amount || mal + kdv);
   if (odenecek <= 0) throw Object.assign(new Error('Fatura tutarı sıfır.'), { status: 400 });
 
-  const kural = await kuralBul(client, tip);
+  const kural = await kuralBul(client, type);
   if (!kural) {
-    throw Object.assign(new Error(`Hesap belirleme kuralı yok: ${tip}. Finans → Hesap Belirleme Kuralları.`), {
+    throw Object.assign(new Error(`Hesap belirleme kuralı yok: ${type}. Finans → Hesap Belirleme Kuralları.`), {
       status: 400,
       kod: 'KURAL_YOK',
     });
   }
 
-  const ulke = ulkeKodu || 'TR';
+  const country = ulkeKodu || 'TR';
   const lines = [];
 
-  if (tip === 'Satis') {
-    const alici = await hesapIdCoz(client, { hesap_kodu: kural.borc_hesap_kodu, ulke_kodu: ulke });
-    const gelir = await hesapIdCoz(client, { hesap_kodu: kural.alacak_hesap_kodu, ulke_kodu: ulke });
+  if (type === 'Satis') {
+    const alici = await hesapIdCoz(client, { account_code: kural.debit_account_code, country_code: country });
+    const gelir = await hesapIdCoz(client, { account_code: kural.credit_account_code, country_code: country });
     lines.push({
-      hesap_id: alici, borc: odenecek, alacak: 0,
-      cari_id: fatura.cari_id, aciklama: fatura.fatura_no,
+      account_id: alici, debit: odenecek, credit: 0,
+      partner_id: fatura.partner_id, description: fatura.invoice_no,
     });
     lines.push({
-      hesap_id: gelir, borc: 0, alacak: mal,
-      aciklama: fatura.fatura_no,
+      account_id: gelir, debit: 0, credit: mal,
+      description: fatura.invoice_no,
     });
     if (kdv > 0) {
-      const vo = await vergiOran(client, ulke, fatura.kdv_oran_varsayilan || 20);
-      const kdvKod = vo?.hesaplanan_hesap_kodu || '391.01.001';
-      const kdvHesap = await hesapIdCoz(client, { hesap_kodu: kdvKod, ulke_kodu: ulke });
+      const vo = await vergiOran(client, country, fatura.vat_rate_varsayilan || 20);
+      const kdvKod = vo?.output_tax_account_code || '391.01.001';
+      const kdvHesap = await hesapIdCoz(client, { account_code: kdvKod, country_code: country });
       lines.push({
-        hesap_id: kdvHesap, borc: 0, alacak: kdv,
-        vergi_kodu: vo?.vergi_kodu || 'KDV20', aciklama: `KDV ${fatura.fatura_no}`,
+        account_id: kdvHesap, debit: 0, credit: kdv,
+        tax_code: vo?.tax_code || 'KDV20', description: `KDV ${fatura.invoice_no}`,
       });
     }
   } else {
-    const stok = await hesapIdCoz(client, { hesap_kodu: kural.borc_hesap_kodu, ulke_kodu: ulke });
-    const satici = await hesapIdCoz(client, { hesap_kodu: kural.alacak_hesap_kodu, ulke_kodu: ulke });
+    const stok = await hesapIdCoz(client, { account_code: kural.debit_account_code, country_code: country });
+    const satici = await hesapIdCoz(client, { account_code: kural.credit_account_code, country_code: country });
     lines.push({
-      hesap_id: stok, borc: mal, alacak: 0, aciklama: fatura.fatura_no,
+      account_id: stok, debit: mal, credit: 0, description: fatura.invoice_no,
     });
     if (kdv > 0) {
-      const vo = await vergiOran(client, ulke, fatura.kdv_oran_varsayilan || 20);
-      const kdvKod = vo?.indirilecek_hesap_kodu || '191.01.001';
-      const kdvHesap = await hesapIdCoz(client, { hesap_kodu: kdvKod, ulke_kodu: ulke });
+      const vo = await vergiOran(client, country, fatura.vat_rate_varsayilan || 20);
+      const kdvKod = vo?.input_tax_account_code || '191.01.001';
+      const kdvHesap = await hesapIdCoz(client, { account_code: kdvKod, country_code: country });
       lines.push({
-        hesap_id: kdvHesap, borc: kdv, alacak: 0,
-        vergi_kodu: vo?.vergi_kodu || 'KDV20', aciklama: `KDV ${fatura.fatura_no}`,
+        account_id: kdvHesap, debit: kdv, credit: 0,
+        tax_code: vo?.tax_code || 'KDV20', description: `KDV ${fatura.invoice_no}`,
       });
     }
     lines.push({
-      hesap_id: satici, borc: 0, alacak: odenecek,
-      cari_id: fatura.cari_id, aciklama: fatura.fatura_no,
+      account_id: satici, debit: 0, credit: odenecek,
+      partner_id: fatura.partner_id, description: fatura.invoice_no,
     });
   }
 
   const fis = await fisOlustur(client, {
-    firmaId: fatura.firma_id || null,
-    ulkeKodu: ulke,
+    firmaId: fatura.company_id || null,
+    ulkeKodu: country,
     fisTipi: 'Mahsup',
-    belgeTarihi: fatura.fatura_tarihi || null,
-    aciklama: `${tip} fatura ${fatura.fatura_no}`,
-    paraBirimi: fatura.para_birimi || 'TRY',
-    kur: fatura.kur || 1,
+    belgeTarihi: fatura.invoice_date || null,
+    description: `${type} fatura ${fatura.invoice_no}`,
+    paraBirimi: fatura.currency_code || 'TRY',
+    exchange_rate: fatura.exchange_rate || 1,
     lines,
     kaynakBelgeTipi: kaynakTip,
     kaynakBelgeId: faturaId,
@@ -131,46 +131,46 @@ async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null, ulkeK
     kesinlestir: true,
   });
 
-  if (tip === 'Satis') {
+  if (type === 'Satis') {
     await cariHareketEkle(client, {
-      cariId: fatura.cari_id,
-      yon: 'Borc',
-      tutar: odenecek,
+      cariId: fatura.partner_id,
+      direction: 'Borc',
+      amount: odenecek,
       belgeTipi: 'SATIS_FATURA',
       belgeId: faturaId,
-      aciklama: `Satış fatura ${fatura.fatura_no}`,
+      description: `Satış fatura ${fatura.invoice_no}`,
     });
   } else {
     await cariHareketEkle(client, {
-      cariId: fatura.cari_id,
-      yon: 'Alacak',
-      tutar: odenecek,
+      cariId: fatura.partner_id,
+      direction: 'Alacak',
+      amount: odenecek,
       belgeTipi: 'ALIS_FATURA',
       belgeId: faturaId,
-      aciklama: `Alış fatura ${fatura.fatura_no}`,
+      description: `Alış fatura ${fatura.invoice_no}`,
     });
   }
 
   await client.query(
-    `UPDATE faturalar SET muhasebelesti=TRUE, muhasebe_belge_id=$2, durum=COALESCE(durum,'Onayli')
+    `UPDATE invoices SET is_posted=TRUE, gl_document_id=$2, status=COALESCE(status,'Onayli')
      WHERE id=$1`,
     [faturaId, fis.id]
   ).catch(async () => {
     await client.query(
-      `UPDATE faturalar SET muhasebelesti=TRUE WHERE id=$1`,
+      `UPDATE invoices SET is_posted=TRUE WHERE id=$1`,
       [faturaId]
     ).catch(() => {});
   });
 
   return {
-    muhasebe_belge_id: fis.id,
-    belge_no: fis.belge_no,
-    tutar: odenecek,
+    gl_document_id: fis.id,
+    document_no: fis.document_no,
+    amount: odenecek,
     mal_hizmet: mal,
     kdv,
     kural,
     kullaniciKodu,
-    satir_sayisi: lines.length,
+    line_sayisi: lines.length,
   };
 }
 

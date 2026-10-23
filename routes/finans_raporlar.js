@@ -8,11 +8,11 @@ function tarihFiltre(query, alias = 'b') {
   let sql = '';
   if (query.baslangic) {
     params.push(query.baslangic);
-    sql += ` AND ${alias}.belge_tarihi >= $${params.length}`;
+    sql += ` AND ${alias}.document_date >= $${params.length}`;
   }
   if (query.bitis) {
     params.push(query.bitis);
-    sql += ` AND ${alias}.belge_tarihi <= $${params.length}`;
+    sql += ` AND ${alias}.document_date <= $${params.length}`;
   }
   return { sql, params };
 }
@@ -27,14 +27,14 @@ router.get('/yevmiye', async (req, res, next) => {
     }
     const r = await pool.query(
       `
-      SELECT b.id AS belge_id, b.belge_no, b.yevmiye_no, b.belge_tarihi, b.fis_tipi, b.aciklama AS belge_aciklama,
-             b.ulke_kodu, k.sira_no, h.hesap_kodu, h.hesap_adi, k.borc, k.alacak, k.aciklama AS kalem_aciklama
-      FROM muhasebe_belgeleri b
-      JOIN muhasebe_belge_kalemleri k ON k.belge_id = b.id
-      JOIN muhasebe_hesaplari h ON h.id = k.hesap_id
-      WHERE b.durum = 'Onayli' ${sql}
-        ${firmaId ? `AND (b.firma_id = $${params.length} OR b.firma_id IS NULL)` : ''}
-      ORDER BY b.belge_tarihi, b.yevmiye_no NULLS LAST, b.id, k.sira_no, k.id
+      SELECT b.id AS document_id, b.document_no, b.journal_number, b.document_date, b.voucher_type, b.description AS belge_aciklama,
+             b.country_code, k.line_no, h.account_code, h.account_name, k.debit, k.credit, k.description AS kalem_aciklama
+      FROM journal_entries b
+      JOIN journal_entry_lines k ON k.document_id = b.id
+      JOIN gl_accounts h ON h.id = k.account_id
+      WHERE b.status = 'Onayli' ${sql}
+        ${firmaId ? `AND (b.company_id = $${params.length} OR b.company_id IS NULL)` : ''}
+      ORDER BY b.document_date, b.journal_number NULLS LAST, b.id, k.line_no, k.id
       `,
       params
     );
@@ -47,38 +47,38 @@ router.get('/yevmiye', async (req, res, next) => {
 /** Büyük defter (hesap ekstresi) */
 router.get('/buyuk-defter', async (req, res, next) => {
   try {
-    const { hesap_kodu, hesap_id } = req.query;
-    if (!hesap_kodu && !hesap_id) {
-      return res.status(400).json({ hata: 'hesap_kodu veya hesap_id gerekli.' });
+    const { account_code, account_id } = req.query;
+    if (!account_code && !account_id) {
+      return res.status(400).json({ hata: 'account_code veya account_id gerekli.' });
     }
     const { sql, params } = tarihFiltre(req.query);
-    let hid = hesap_id ? Number(hesap_id) : null;
+    let hid = account_id ? Number(account_id) : null;
     if (!hid) {
-      const h = await pool.query(`SELECT id FROM muhasebe_hesaplari WHERE hesap_kodu=$1`, [hesap_kodu]);
+      const h = await pool.query(`SELECT id FROM gl_accounts WHERE account_code=$1`, [account_code]);
       if (!h.rows[0]) return res.status(404).json({ hata: 'Hesap bulunamadı.' });
       hid = h.rows[0].id;
     }
     params.push(hid);
     const r = await pool.query(
       `
-      SELECT b.belge_tarihi, b.belge_no, b.yevmiye_no, b.aciklama AS belge_aciklama,
-             k.borc, k.alacak, k.aciklama AS kalem_aciklama, h.hesap_kodu, h.hesap_adi
-      FROM muhasebe_belge_kalemleri k
-      JOIN muhasebe_belgeleri b ON b.id = k.belge_id
-      JOIN muhasebe_hesaplari h ON h.id = k.hesap_id
-      WHERE b.durum='Onayli' AND k.hesap_id=$${params.length} ${sql}
-      ORDER BY b.belge_tarihi, b.yevmiye_no NULLS LAST, k.id
+      SELECT b.document_date, b.document_no, b.journal_number, b.description AS belge_aciklama,
+             k.debit, k.credit, k.description AS kalem_aciklama, h.account_code, h.account_name
+      FROM journal_entry_lines k
+      JOIN journal_entries b ON b.id = k.document_id
+      JOIN gl_accounts h ON h.id = k.account_id
+      WHERE b.status='Onayli' AND k.account_id=$${params.length} ${sql}
+      ORDER BY b.document_date, b.journal_number NULLS LAST, k.id
       `,
       params
     );
-    let borc = 0;
-    let alacak = 0;
+    let debit = 0;
+    let credit = 0;
     const rows = r.rows.map((row) => {
-      borc += Number(row.borc);
-      alacak += Number(row.alacak);
-      return { ...row, kumulatif_bakiye: borc - alacak };
+      debit += Number(row.debit);
+      credit += Number(row.credit);
+      return { ...row, kumulatif_bakiye: debit - credit };
     });
-    res.json({ hesap_id: hid, hareketler: rows, toplam_borc: borc, toplam_alacak: alacak, bakiye: borc - alacak });
+    res.json({ account_id: hid, hareketler: rows, toplam_borc: debit, toplam_alacak: credit, bakiye: debit - credit });
   } catch (err) {
     next(err);
   }
@@ -88,22 +88,22 @@ router.get('/buyuk-defter', async (req, res, next) => {
 router.get('/bilanco', async (req, res, next) => {
   try {
     const bitis = req.query.bitis || new Date().toISOString().slice(0, 10);
-    const ulke = (req.query.ulke_kodu || 'TR').toUpperCase();
+    const country = (req.query.country_code || 'TR').toUpperCase();
     const r = await pool.query(
       `
-      SELECT h.hesap_sinifi,
-             COALESCE(SUM(k.borc),0) AS borc,
-             COALESCE(SUM(k.alacak),0) AS alacak
-      FROM muhasebe_hesaplari h
-      LEFT JOIN muhasebe_belge_kalemleri k ON k.hesap_id = h.id
-      LEFT JOIN muhasebe_belgeleri b ON b.id = k.belge_id AND b.durum='Onayli' AND b.belge_tarihi <= $1::date
-      WHERE h.aktif AND h.hesap_tipi='Dogrudan'
-        AND (h.ulke_kodu=$2 OR ($2='TR' AND (h.ulke_kodu IS NULL OR h.ulke_kodu='TR')))
-        AND h.hesap_sinifi IN ('1','2','3','4','5')
-      GROUP BY h.hesap_sinifi
-      ORDER BY h.hesap_sinifi
+      SELECT h.account_class,
+             COALESCE(SUM(k.debit),0) AS debit,
+             COALESCE(SUM(k.credit),0) AS credit
+      FROM gl_accounts h
+      LEFT JOIN journal_entry_lines k ON k.account_id = h.id
+      LEFT JOIN journal_entries b ON b.id = k.document_id AND b.status='Onayli' AND b.document_date <= $1::date
+      WHERE h.is_active AND h.account_type='Dogrudan'
+        AND (h.country_code=$2 OR ($2='TR' AND (h.country_code IS NULL OR h.country_code='TR')))
+        AND h.account_class IN ('1','2','3','4','5')
+      GROUP BY h.account_class
+      ORDER BY h.account_class
       `,
-      [bitis, ulke]
+      [bitis, country]
     );
     const sinifAd = {
       1: 'Dönen varlıklar',
@@ -113,26 +113,26 @@ router.get('/bilanco', async (req, res, next) => {
       5: 'Özkaynaklar',
     };
     const satirlar = r.rows.map((x) => {
-      const borc = Number(x.borc);
-      const alacak = Number(x.alacak);
-      const varlik = ['1', '2'].includes(x.hesap_sinifi);
+      const debit = Number(x.debit);
+      const credit = Number(x.credit);
+      const varlik = ['1', '2'].includes(x.account_class);
       return {
-        sinif: x.hesap_sinifi,
-        ad: sinifAd[x.hesap_sinifi] || x.hesap_sinifi,
-        tutar: varlik ? borc - alacak : alacak - borc,
-        borc,
-        alacak,
+        sinif: x.account_class,
+        first_name: sinifAd[x.account_class] || x.account_class,
+        amount: varlik ? debit - credit : credit - debit,
+        debit,
+        credit,
       };
     });
-    const varlik = satirlar.filter((s) => ['1', '2'].includes(s.sinif)).reduce((a, s) => a + s.tutar, 0);
-    const kaynak = satirlar.filter((s) => ['3', '4', '5'].includes(s.sinif)).reduce((a, s) => a + s.tutar, 0);
+    const varlik = satirlar.filter((s) => ['1', '2'].includes(s.sinif)).reduce((a, s) => a + s.amount, 0);
+    const source = satirlar.filter((s) => ['3', '4', '5'].includes(s.sinif)).reduce((a, s) => a + s.amount, 0);
     res.json({
       bitis,
-      ulke_kodu: ulke,
+      country_code: country,
       satirlar,
       toplam_varlik: varlik,
-      toplam_kaynak: kaynak,
-      dengeli: Math.abs(varlik - kaynak) < 0.05,
+      toplam_kaynak: source,
+      dengeli: Math.abs(varlik - source) < 0.05,
       not: 'Özet bilanço — detay hesap dökümü büyük defter/mizan ile doğrulanmalıdır.',
     });
   } catch (err) {
@@ -144,29 +144,29 @@ router.get('/gelir-tablosu', async (req, res, next) => {
   try {
     const baslangic = req.query.baslangic || `${new Date().getFullYear()}-01-01`;
     const bitis = req.query.bitis || new Date().toISOString().slice(0, 10);
-    const ulke = (req.query.ulke_kodu || 'TR').toUpperCase();
+    const country = (req.query.country_code || 'TR').toUpperCase();
     const r = await pool.query(
       `
-      SELECT h.hesap_kodu, h.hesap_adi, h.normal_bakiye,
-             COALESCE(SUM(k.borc),0) AS borc,
-             COALESCE(SUM(k.alacak),0) AS alacak
-      FROM muhasebe_hesaplari h
-      LEFT JOIN muhasebe_belge_kalemleri k ON k.hesap_id=h.id
-      LEFT JOIN muhasebe_belgeleri b ON b.id=k.belge_id AND b.durum='Onayli'
-        AND b.belge_tarihi BETWEEN $1::date AND $2::date
-      WHERE h.aktif AND h.hesap_tipi='Dogrudan'
-        AND h.hesap_sinifi='6'
-        AND (h.ulke_kodu=$3 OR ($3='TR' AND (h.ulke_kodu IS NULL OR h.ulke_kodu='TR')))
+      SELECT h.account_code, h.account_name, h.normal_balance,
+             COALESCE(SUM(k.debit),0) AS debit,
+             COALESCE(SUM(k.credit),0) AS credit
+      FROM gl_accounts h
+      LEFT JOIN journal_entry_lines k ON k.account_id=h.id
+      LEFT JOIN journal_entries b ON b.id=k.document_id AND b.status='Onayli'
+        AND b.document_date BETWEEN $1::date AND $2::date
+      WHERE h.is_active AND h.account_type='Dogrudan'
+        AND h.account_class='6'
+        AND (h.country_code=$3 OR ($3='TR' AND (h.country_code IS NULL OR h.country_code='TR')))
       GROUP BY h.id
-      HAVING COALESCE(SUM(k.borc),0) <> 0 OR COALESCE(SUM(k.alacak),0) <> 0
-      ORDER BY h.hesap_kodu
+      HAVING COALESCE(SUM(k.debit),0) <> 0 OR COALESCE(SUM(k.credit),0) <> 0
+      ORDER BY h.account_code
       `,
-      [baslangic, bitis, ulke]
+      [baslangic, bitis, country]
     );
     let gelir = 0;
     let gider = 0;
     const satirlar = r.rows.map((x) => {
-      const net = Number(x.alacak) - Number(x.borc);
+      const net = Number(x.credit) - Number(x.debit);
       if (net >= 0) gelir += net;
       else gider += -net;
       return { ...x, net };
@@ -174,7 +174,7 @@ router.get('/gelir-tablosu', async (req, res, next) => {
     res.json({
       baslangic,
       bitis,
-      ulke_kodu: ulke,
+      country_code: country,
       satirlar,
       toplam_gelir: gelir,
       toplam_gider: gider,

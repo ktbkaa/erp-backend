@@ -5,10 +5,10 @@
     "techId": "SYS-NUM-SCR-001",
     "endpoint": "/kod-serileri",
     "auditTablo": "kod-serileri",
-    "primaryTable": "kod_serileri",
+    "primaryTable": "number_series",
     "tables": [
       {
-        "name": "kod_serileri",
+        "name": "number_series",
         "role": "master"
       }
     ]
@@ -19,10 +19,10 @@
     "techId": "MDM-UOM-SCR-001",
     "endpoint": "/olcu-birimleri",
     "auditTablo": "olcu-birimleri",
-    "primaryTable": "olcu_birimleri",
+    "primaryTable": "units_of_measure",
     "tables": [
       {
-        "name": "olcu_birimleri",
+        "name": "units_of_measure",
         "role": "master"
       }
     ]
@@ -33,24 +33,24 @@
     "techId": "MDM-CAT-SCR-001",
     "endpoint": "/kategoriler",
     "auditTablo": "kategoriler",
-    "primaryTable": "kategori_tanimlari",
+    "primaryTable": "categories",
     "tables": [
       {
-        "name": "kategori_tanimlari",
+        "name": "categories",
         "role": "master"
       }
     ]
   },
-  "ulke-tanimi": {
-    "screenId": "ulke-tanimi",
+  "country-tanimi": {
+    "screenId": "country-tanimi",
     "title": "Ülke Tanımı",
     "techId": "MDM-CTRY-SCR-001",
-    "endpoint": "/ulkeler",
-    "auditTablo": "ulkeler",
-    "primaryTable": "ulkeler",
+    "endpoint": "/countries",
+    "auditTablo": "countries",
+    "primaryTable": "countries",
     "tables": [
       {
-        "name": "ulkeler",
+        "name": "countries",
         "role": "master"
       }
     ]
@@ -61,10 +61,10 @@
     "techId": "MDM-CUR-SCR-001",
     "endpoint": "/para-birimleri",
     "auditTablo": "para-birimleri",
-    "primaryTable": "para_birimleri",
+    "primaryTable": "currencies",
     "tables": [
       {
-        "name": "para_birimleri",
+        "name": "currencies",
         "role": "master"
       }
     ]
@@ -73,26 +73,26 @@
     "screenId": "sehir-tanimi",
     "title": "Şehir / İl Tanımı",
     "techId": "MDM-CITY-SCR-001",
-    "endpoint": "/sehirler",
-    "auditTablo": "sehirler",
-    "primaryTable": "sehirler",
+    "endpoint": "/cities",
+    "auditTablo": "cities",
+    "primaryTable": "cities",
     "tables": [
       {
-        "name": "sehirler",
+        "name": "cities",
         "role": "master"
       }
     ]
   },
-  "ilce-tanimi": {
-    "screenId": "ilce-tanimi",
+  "district-tanimi": {
+    "screenId": "district-tanimi",
     "title": "İlçe Tanımı",
     "techId": "MDM-DIST-SCR-001",
-    "endpoint": "/ilceler",
-    "auditTablo": "ilceler",
-    "primaryTable": "ilceler",
+    "endpoint": "/districts",
+    "auditTablo": "districts",
+    "primaryTable": "districts",
     "tables": [
       {
-        "name": "ilceler",
+        "name": "districts",
         "role": "master"
       }
     ]
@@ -103,10 +103,10 @@
     "techId": "MDM-PAYT-SCR-001",
     "endpoint": "/odeme-kosullari",
     "auditTablo": "odeme-kosullari",
-    "primaryTable": "odeme_kosullari",
+    "primaryTable": "payment_terms",
     "tables": [
       {
-        "name": "odeme_kosullari",
+        "name": "payment_terms",
         "role": "master"
       }
     ]
@@ -117,10 +117,10 @@
     "techId": "MDM-DLVT-SCR-001",
     "endpoint": "/teslimat-kosullari",
     "auditTablo": "teslimat-kosullari",
-    "primaryTable": "teslimat_kosullari",
+    "primaryTable": "delivery_terms",
     "tables": [
       {
-        "name": "teslimat_kosullari",
+        "name": "delivery_terms",
         "role": "master"
       }
     ]
@@ -129,12 +129,12 @@
     "screenId": "dil-tanimi",
     "title": "Dil Tanımı",
     "techId": "MDM-LANG-SCR-001",
-    "endpoint": "/diller",
-    "auditTablo": "diller",
-    "primaryTable": "diller",
+    "endpoint": "/languages",
+    "auditTablo": "languages",
+    "primaryTable": "languages",
     "tables": [
       {
-        "name": "diller",
+        "name": "languages",
         "role": "master"
       }
     ]
@@ -143,26 +143,26 @@
     "screenId": "banka-tanimi",
     "title": "Banka Tanımı",
     "techId": "MDM-BANK-SCR-001",
-    "endpoint": "/bankalar",
-    "auditTablo": "bankalar",
-    "primaryTable": "bankalar",
+    "endpoint": "/banks",
+    "auditTablo": "banks",
+    "primaryTable": "banks",
     "tables": [
       {
-        "name": "bankalar",
+        "name": "banks",
         "role": "master"
       }
     ]
   },
-  "doviz-kur-tanimi": {
-    "screenId": "doviz-kur-tanimi",
+  "doviz-exchange_rate-tanimi": {
+    "screenId": "doviz-exchange_rate-tanimi",
     "title": "Döviz Kurları",
     "techId": "FIN-FX-SCR-001",
     "endpoint": "/doviz-kurlari",
     "auditTablo": "doviz-kurlari",
-    "primaryTable": "doviz_kurlari",
+    "primaryTable": "exchange_rates",
     "tables": [
       {
-        "name": "doviz_kurlari",
+        "name": "exchange_rates",
         "role": "master"
       }
     ]
@@ -173,10 +173,10 @@
     "techId": "INV-MVTC-SCR-001",
     "endpoint": "/hareket-kodlari",
     "auditTablo": "hareket-kodlari",
-    "primaryTable": "hareket_kodlari",
+    "primaryTable": "movement_codes",
     "tables": [
       {
-        "name": "hareket_kodlari",
+        "name": "movement_codes",
         "role": "master"
       }
     ]
@@ -187,18 +187,18 @@
     "techId": "SYS-USR-SCR-001",
     "endpoint": "/kullanicilar",
     "auditTablo": "kullanicilar",
-    "primaryTable": "kisiler",
+    "primaryTable": "users",
     "tables": [
       {
-        "name": "kisiler",
+        "name": "users",
         "role": "master"
       },
       {
-        "name": "kullanici_ekran_yetkileri",
+        "name": "user_screen_permissions",
         "role": "related"
       },
       {
-        "name": "kullanici_firma_yetkileri",
+        "name": "user_company_permissions",
         "role": "related"
       }
     ]
@@ -209,10 +209,10 @@
     "techId": "SYS-GRP-SCR-001",
     "endpoint": "/kullanici-gruplari",
     "auditTablo": "kullanici-gruplari",
-    "primaryTable": "kullanici_gruplari",
+    "primaryTable": "user_groups",
     "tables": [
       {
-        "name": "kullanici_gruplari",
+        "name": "user_groups",
         "role": "master"
       }
     ]
@@ -223,10 +223,10 @@
     "techId": "SYS-PRM-SCR-001",
     "endpoint": "/sistem-parametreleri",
     "auditTablo": "sistem-parametreleri",
-    "primaryTable": "sistem_parametreleri",
+    "primaryTable": "system_parameters",
     "tables": [
       {
-        "name": "sistem_parametreleri",
+        "name": "system_parameters",
         "role": "master"
       }
     ]
@@ -237,10 +237,10 @@
     "techId": "SYS-AUD-SCR-001",
     "endpoint": "/audit-log",
     "auditTablo": "audit-log",
-    "primaryTable": "audit_log",
+    "primaryTable": "audit_logs",
     "tables": [
       {
-        "name": "audit_log",
+        "name": "audit_logs",
         "role": "master"
       }
     ]
@@ -251,24 +251,24 @@
     "techId": "SYS-MAIL-SCR-001",
     "endpoint": "/eposta-gonderimleri",
     "auditTablo": "eposta-gonderimleri",
-    "primaryTable": "eposta_gonderimleri",
+    "primaryTable": "email_dispatches",
     "tables": [
       {
-        "name": "eposta_gonderimleri",
+        "name": "email_dispatches",
         "role": "master"
       }
     ]
   },
-  "firmalar": {
-    "screenId": "firmalar",
+  "companies": {
+    "screenId": "companies",
     "title": "Firmalar",
     "techId": "MDM-CO-SCR-001",
-    "endpoint": "/firmalar",
-    "auditTablo": "firmalar",
-    "primaryTable": "firmalar",
+    "endpoint": "/companies",
+    "auditTablo": "companies",
+    "primaryTable": "companies",
     "tables": [
       {
-        "name": "firmalar",
+        "name": "companies",
         "role": "master"
       }
     ]
@@ -279,24 +279,24 @@
     "techId": "MDM-PLANT-SCR-001",
     "endpoint": "/is-yerleri",
     "auditTablo": "is-yerleri",
-    "primaryTable": "is_yerleri",
+    "primaryTable": "plants",
     "tables": [
       {
-        "name": "is_yerleri",
+        "name": "plants",
         "role": "master"
       }
     ]
   },
-  "depolar": {
-    "screenId": "depolar",
+  "warehouses": {
+    "screenId": "warehouses",
     "title": "Depolar",
     "techId": "MDM-WH-SCR-001",
-    "endpoint": "/depolar",
-    "auditTablo": "depolar",
-    "primaryTable": "depolar",
+    "endpoint": "/warehouses",
+    "auditTablo": "warehouses",
+    "primaryTable": "warehouses",
     "tables": [
       {
-        "name": "depolar",
+        "name": "warehouses",
         "role": "master"
       }
     ]
@@ -305,32 +305,32 @@
     "screenId": "stok-karti",
     "title": "Stok Kartı",
     "techId": "INV-ITM-SCR-001",
-    "endpoint": "/stoklar",
-    "auditTablo": "stoklar",
-    "primaryTable": "stoklar",
+    "endpoint": "/items",
+    "auditTablo": "items",
+    "primaryTable": "items",
     "tables": [
       {
-        "name": "stoklar",
+        "name": "items",
         "role": "master"
       },
       {
-        "name": "stok_detaylari",
+        "name": "item_details",
         "role": "related"
       },
       {
-        "name": "stok_birim_tanimlari",
+        "name": "item_uom_conversions",
         "role": "related"
       },
       {
-        "name": "stok_barkodlari",
+        "name": "item_barcodes",
         "role": "related"
       },
       {
-        "name": "stok_dil_tanimlari",
+        "name": "item_languages",
         "role": "related"
       },
       {
-        "name": "stok_is_yeri",
+        "name": "item_plants",
         "role": "related"
       }
     ]
@@ -341,18 +341,18 @@
     "techId": "INV-BAL-SCR-001",
     "endpoint": "/stok-bakiyeleri",
     "auditTablo": "stok-bakiyeleri",
-    "primaryTable": "stok_hareketleri",
+    "primaryTable": "stock_movements",
     "tables": [
       {
-        "name": "stok_hareketleri",
+        "name": "stock_movements",
         "role": "master"
       },
       {
-        "name": "stok_hareket_satirlari",
+        "name": "stock_movement_lines",
         "role": "related"
       },
       {
-        "name": "stok_rezervasyonlari",
+        "name": "item_reservations",
         "role": "related"
       }
     ]
@@ -363,14 +363,14 @@
     "techId": "INV-MVT-SCR-001",
     "endpoint": "/stok-hareketleri",
     "auditTablo": "stok-hareketleri",
-    "primaryTable": "stok_hareketleri",
+    "primaryTable": "stock_movements",
     "tables": [
       {
-        "name": "stok_hareketleri",
+        "name": "stock_movements",
         "role": "master"
       },
       {
-        "name": "stok_hareket_satirlari",
+        "name": "stock_movement_lines",
         "role": "related"
       }
     ]
@@ -381,14 +381,14 @@
     "techId": "WMS-XFER-SCR-001",
     "endpoint": "/transfer-emirleri",
     "auditTablo": "transfer-emirleri",
-    "primaryTable": "transfer_emirleri",
+    "primaryTable": "transfer_orders",
     "tables": [
       {
-        "name": "transfer_emirleri",
+        "name": "transfer_orders",
         "role": "master"
       },
       {
-        "name": "transfer_emri_satirlari",
+        "name": "transfer_order_lines",
         "role": "related"
       }
     ]
@@ -399,14 +399,14 @@
     "techId": "WMS-CNT-SCR-001",
     "endpoint": "/sayim-belgeleri",
     "auditTablo": "sayim-belgeleri",
-    "primaryTable": "sayim_belgeleri",
+    "primaryTable": "inventory_counts",
     "tables": [
       {
-        "name": "sayim_belgeleri",
+        "name": "inventory_counts",
         "role": "master"
       },
       {
-        "name": "sayim_belge_satirlari",
+        "name": "inventory_count_lines",
         "role": "related"
       }
     ]
@@ -417,14 +417,14 @@
     "techId": "INV-LOT-SCR-001",
     "endpoint": "/stok-partileri",
     "auditTablo": "stok-partileri",
-    "primaryTable": "stok_partileri",
+    "primaryTable": "item_lots",
     "tables": [
       {
-        "name": "stok_partileri",
+        "name": "item_lots",
         "role": "master"
       },
       {
-        "name": "stok_hareket_satirlari",
+        "name": "stock_movement_lines",
         "role": "related"
       }
     ]
@@ -435,10 +435,10 @@
     "techId": "MFG-IR-SCR-001",
     "endpoint": "/mrp/bagimsiz-ihtiyaclar",
     "auditTablo": "mrp",
-    "primaryTable": "mrp_bagimsiz_ihtiyaclar",
+    "primaryTable": "mrp_independent_requirements",
     "tables": [
       {
-        "name": "mrp_bagimsiz_ihtiyaclar",
+        "name": "mrp_independent_requirements",
         "role": "master"
       }
     ]
@@ -449,14 +449,14 @@
     "techId": "MFG-MRP-SCR-001",
     "endpoint": "/mrp/calismalar",
     "auditTablo": "mrp",
-    "primaryTable": "mrp_calismalari",
+    "primaryTable": "mrp_runs",
     "tables": [
       {
-        "name": "mrp_calismalari",
+        "name": "mrp_runs",
         "role": "master"
       },
       {
-        "name": "mrp_sonuclar",
+        "name": "mrp_results",
         "role": "related"
       }
     ]
@@ -467,18 +467,18 @@
     "techId": "MFG-MRP-SCR-002",
     "endpoint": "/mrp",
     "auditTablo": "mrp",
-    "primaryTable": "mrp_sonuclar",
+    "primaryTable": "mrp_results",
     "tables": [
       {
-        "name": "mrp_calismalari",
+        "name": "mrp_runs",
         "role": "related"
       },
       {
-        "name": "mrp_sonuclar",
+        "name": "mrp_results",
         "role": "master"
       },
       {
-        "name": "mrp_bagimsiz_ihtiyaclar",
+        "name": "mrp_independent_requirements",
         "role": "related"
       }
     ]
@@ -489,14 +489,14 @@
     "techId": "MFG-MRP-RES-001",
     "endpoint": "/mrp/calismalar",
     "auditTablo": "mrp",
-    "primaryTable": "mrp_sonuclar",
+    "primaryTable": "mrp_results",
     "tables": [
       {
-        "name": "mrp_sonuclar",
+        "name": "mrp_results",
         "role": "master"
       },
       {
-        "name": "mrp_calismalari",
+        "name": "mrp_runs",
         "role": "related"
       }
     ]
@@ -507,10 +507,10 @@
     "techId": "INV-RSV-SCR-001",
     "endpoint": "/stok-rezervasyonlari",
     "auditTablo": "stok-rezervasyonlari",
-    "primaryTable": "stok_rezervasyonlari",
+    "primaryTable": "item_reservations",
     "tables": [
       {
-        "name": "stok_rezervasyonlari",
+        "name": "item_reservations",
         "role": "master"
       }
     ]
@@ -521,10 +521,10 @@
     "techId": "INV-SER-SCR-001",
     "endpoint": "/stok-serileri",
     "auditTablo": "stok-serileri",
-    "primaryTable": "stok_serileri",
+    "primaryTable": "item_serials",
     "tables": [
       {
-        "name": "stok_serileri",
+        "name": "item_serials",
         "role": "master"
       }
     ]
@@ -535,10 +535,10 @@
     "techId": "INV-SUB-SCR-001",
     "endpoint": "/stok-ikame",
     "auditTablo": "stok-ikame",
-    "primaryTable": "stok_ikame",
+    "primaryTable": "item_substitutes",
     "tables": [
       {
-        "name": "stok_ikame",
+        "name": "item_substitutes",
         "role": "master"
       }
     ]
@@ -547,32 +547,32 @@
     "screenId": "cari-kartlari",
     "title": "Cari Kartları",
     "techId": "MDM-BP-SCR-001",
-    "endpoint": "/cariler",
-    "auditTablo": "cariler",
-    "primaryTable": "cariler",
+    "endpoint": "/partners",
+    "auditTablo": "partners",
+    "primaryTable": "partners",
     "tables": [
       {
-        "name": "cariler",
+        "name": "partners",
         "role": "master"
       },
       {
-        "name": "cari_detaylari",
+        "name": "partner_details",
         "role": "related"
       },
       {
-        "name": "cari_banka_bilgileri",
+        "name": "partner_bank_accounts",
         "role": "related"
       },
       {
-        "name": "cari_sevk_adresleri",
+        "name": "partner_ship_to_addresses",
         "role": "related"
       },
       {
-        "name": "cari_dil_tanimlari",
+        "name": "partner_languages",
         "role": "related"
       },
       {
-        "name": "cari_firma_parametreleri",
+        "name": "partner_company_params",
         "role": "related"
       }
     ]
@@ -583,10 +583,10 @@
     "techId": "FIN-BPST-SCR-001",
     "endpoint": "/cari-hareketleri",
     "auditTablo": "cari-hareketleri",
-    "primaryTable": "cari_hareketleri",
+    "primaryTable": "partner_ledger_entries",
     "tables": [
       {
-        "name": "cari_hareketleri",
+        "name": "partner_ledger_entries",
         "role": "master"
       }
     ]
@@ -597,10 +597,10 @@
     "techId": "FIN-APAR-SCR-001",
     "endpoint": "/tahsilat-odemeler",
     "auditTablo": "tahsilat-odemeler",
-    "primaryTable": "tahsilat_odemeler",
+    "primaryTable": "receipts_payments",
     "tables": [
       {
-        "name": "tahsilat_odemeler",
+        "name": "receipts_payments",
         "role": "master"
       }
     ]
@@ -611,14 +611,14 @@
     "techId": "MFG-BOM-SCR-001",
     "endpoint": "/urun-agaclari",
     "auditTablo": "urun-agaclari",
-    "primaryTable": "urun_agaclari",
+    "primaryTable": "boms",
     "tables": [
       {
-        "name": "urun_agaclari",
+        "name": "boms",
         "role": "master"
       },
       {
-        "name": "urun_agaci_satirlari",
+        "name": "bom_lines",
         "role": "related"
       }
     ]
@@ -629,32 +629,32 @@
     "techId": "MFG-BOM-SCR-002",
     "endpoint": "/bom/patlatma",
     "auditTablo": "bom",
-    "primaryTable": "urun_agaclari",
+    "primaryTable": "boms",
     "tables": [
       {
-        "name": "urun_agaclari",
+        "name": "boms",
         "role": "master"
       },
       {
-        "name": "urun_agaci_satirlari",
+        "name": "bom_lines",
         "role": "related"
       }
     ]
   },
-  "bom-seviye-listesi": {
-    "screenId": "bom-seviye-listesi",
+  "bom-level-listesi": {
+    "screenId": "bom-level-listesi",
     "title": "Ürün Ağacı Seviye Listesi",
     "techId": "MFG-BOM-SCR-003",
-    "endpoint": "/bom/seviye-listesi",
+    "endpoint": "/bom/level-listesi",
     "auditTablo": "bom",
-    "primaryTable": "urun_agaclari",
+    "primaryTable": "boms",
     "tables": [
       {
-        "name": "urun_agaclari",
+        "name": "boms",
         "role": "master"
       },
       {
-        "name": "urun_agaci_satirlari",
+        "name": "bom_lines",
         "role": "related"
       }
     ]
@@ -665,14 +665,14 @@
     "techId": "MFG-BOM-SCR-004",
     "endpoint": "/bom/malzeme-degisikligi",
     "auditTablo": "bom",
-    "primaryTable": "urun_agaclari",
+    "primaryTable": "boms",
     "tables": [
       {
-        "name": "urun_agaclari",
+        "name": "boms",
         "role": "master"
       },
       {
-        "name": "urun_agaci_satirlari",
+        "name": "bom_lines",
         "role": "related"
       }
     ]
@@ -683,10 +683,10 @@
     "techId": "MFG-CLS-SCR-001",
     "endpoint": "/stok-siniflari",
     "auditTablo": "stok-siniflari",
-    "primaryTable": "stok_siniflari",
+    "primaryTable": "item_classes",
     "tables": [
       {
-        "name": "stok_siniflari",
+        "name": "item_classes",
         "role": "master"
       }
     ]
@@ -697,28 +697,28 @@
     "techId": "MFG-WC-SCR-001",
     "endpoint": "/is-merkezleri",
     "auditTablo": "is-merkezleri",
-    "primaryTable": "is_merkezleri",
+    "primaryTable": "work_centers",
     "tables": [
       {
-        "name": "is_merkezleri",
+        "name": "work_centers",
         "role": "master"
       }
     ]
   },
-  "rotalar": {
-    "screenId": "rotalar",
+  "routings": {
+    "screenId": "routings",
     "title": "Rotalar",
     "techId": "MFG-ROUT-SCR-001",
-    "endpoint": "/rotalar",
-    "auditTablo": "rotalar",
-    "primaryTable": "rotalar",
+    "endpoint": "/routings",
+    "auditTablo": "routings",
+    "primaryTable": "routings",
     "tables": [
       {
-        "name": "rotalar",
+        "name": "routings",
         "role": "master"
       },
       {
-        "name": "rota_operasyonlari",
+        "name": "routing_operations",
         "role": "related"
       }
     ]
@@ -729,10 +729,10 @@
     "techId": "MFG-WOT-SCR-001",
     "endpoint": "/uretim-emri-tipleri",
     "auditTablo": "uretim-emri-tipleri",
-    "primaryTable": "uretim_emri_tipleri",
+    "primaryTable": "production_order_types",
     "tables": [
       {
-        "name": "uretim_emri_tipleri",
+        "name": "production_order_types",
         "role": "master"
       }
     ]
@@ -743,10 +743,10 @@
     "techId": "MFG-PLN-SCR-001",
     "endpoint": "/uretim-planlari",
     "auditTablo": "uretim-planlari",
-    "primaryTable": "uretim_planlari",
+    "primaryTable": "production_plans",
     "tables": [
       {
-        "name": "uretim_planlari",
+        "name": "production_plans",
         "role": "master"
       }
     ]
@@ -757,22 +757,22 @@
     "techId": "MFG-WO-SCR-001",
     "endpoint": "/uretim-emirleri",
     "auditTablo": "uretim-emirleri",
-    "primaryTable": "uretim_emirleri",
+    "primaryTable": "production_orders",
     "tables": [
       {
-        "name": "uretim_emirleri",
+        "name": "production_orders",
         "role": "master"
       },
       {
-        "name": "uretim_emri_bilesenleri",
+        "name": "production_order_components",
         "role": "related"
       },
       {
-        "name": "uretim_emri_operasyonlari",
+        "name": "production_order_operations",
         "role": "related"
       },
       {
-        "name": "uretim_emri_operasyon_bilesenleri",
+        "name": "production_order_operation_components",
         "role": "related"
       }
     ]
@@ -783,18 +783,18 @@
     "techId": "MFG-WO-SCR-002",
     "endpoint": "/uretim-emirleri/siparis-adaylari",
     "auditTablo": "uretim-emirleri",
-    "primaryTable": "uretim_emirleri",
+    "primaryTable": "production_orders",
     "tables": [
       {
-        "name": "uretim_emirleri",
+        "name": "production_orders",
         "role": "master"
       },
       {
-        "name": "uretim_emri_bilesenleri",
+        "name": "production_order_components",
         "role": "related"
       },
       {
-        "name": "uretim_emri_operasyonlari",
+        "name": "production_order_operations",
         "role": "related"
       }
     ]
@@ -805,14 +805,14 @@
     "techId": "MFG-WO-SCR-003",
     "endpoint": "/uretim-emirleri/siparis-adaylari",
     "auditTablo": "uretim-emirleri",
-    "primaryTable": "uretim_emirleri",
+    "primaryTable": "production_orders",
     "tables": [
       {
-        "name": "uretim_emirleri",
+        "name": "production_orders",
         "role": "master"
       },
       {
-        "name": "uretim_emri_bilesenleri",
+        "name": "production_order_components",
         "role": "related"
       }
     ]
@@ -823,10 +823,10 @@
     "techId": "INV-WHL-SCR-001",
     "endpoint": "/stok-depo",
     "auditTablo": "stok-depo",
-    "primaryTable": "stok_depo",
+    "primaryTable": "item_warehouses",
     "tables": [
       {
-        "name": "stok_depo",
+        "name": "item_warehouses",
         "role": "master"
       }
     ]
@@ -837,10 +837,10 @@
     "techId": "MFG-RCPT-SCR-001",
     "endpoint": "/uretim-girisleri",
     "auditTablo": "uretim-girisleri",
-    "primaryTable": "uretim_girisleri",
+    "primaryTable": "production_receipts",
     "tables": [
       {
-        "name": "uretim_girisleri",
+        "name": "production_receipts",
         "role": "master"
       }
     ]
@@ -851,14 +851,14 @@
     "techId": "PUR-RFQ-SCR-001",
     "endpoint": "/satin-alma-teklif-istekleri",
     "auditTablo": "satin-alma-teklif-istekleri",
-    "primaryTable": "satin_alma_teklif_istekleri",
+    "primaryTable": "rfqs",
     "tables": [
       {
-        "name": "satin_alma_teklif_istekleri",
+        "name": "rfqs",
         "role": "master"
       },
       {
-        "name": "satin_alma_teklif_istek_satirlari",
+        "name": "rfq_lines",
         "role": "related"
       }
     ]
@@ -869,14 +869,14 @@
     "techId": "PUR-QUO-SCR-001",
     "endpoint": "/satin-alma-teklifleri",
     "auditTablo": "satin-alma-teklifleri",
-    "primaryTable": "satin_alma_teklifleri",
+    "primaryTable": "purchase_quotations",
     "tables": [
       {
-        "name": "satin_alma_teklifleri",
+        "name": "purchase_quotations",
         "role": "master"
       },
       {
-        "name": "satin_alma_teklif_satirlari",
+        "name": "purchase_quotation_lines",
         "role": "related"
       }
     ]
@@ -887,14 +887,14 @@
     "techId": "PUR-AGR-SCR-001",
     "endpoint": "/satin-alma-anlasmalari",
     "auditTablo": "satin-alma-anlasmalari",
-    "primaryTable": "satin_alma_anlasmalari",
+    "primaryTable": "purchase_agreements",
     "tables": [
       {
-        "name": "satin_alma_anlasmalari",
+        "name": "purchase_agreements",
         "role": "master"
       },
       {
-        "name": "satin_alma_anlasma_satirlari",
+        "name": "purchase_agreement_lines",
         "role": "related"
       }
     ]
@@ -903,16 +903,16 @@
     "screenId": "alis-faturalari",
     "title": "Alış Faturaları",
     "techId": "FIN-PINV-SCR-001",
-    "endpoint": "/faturalar",
-    "auditTablo": "faturalar",
-    "primaryTable": "faturalar",
+    "endpoint": "/invoices",
+    "auditTablo": "invoices",
+    "primaryTable": "invoices",
     "tables": [
       {
-        "name": "faturalar",
+        "name": "invoices",
         "role": "master"
       },
       {
-        "name": "fatura_detaylari",
+        "name": "invoice_lines",
         "role": "related"
       }
     ]
@@ -923,14 +923,14 @@
     "techId": "PUR-REQ-SCR-001",
     "endpoint": "/satin-alma-talepleri",
     "auditTablo": "satin-alma-talepleri",
-    "primaryTable": "satin_alma_talepleri",
+    "primaryTable": "purchase_requisitions",
     "tables": [
       {
-        "name": "satin_alma_talepleri",
+        "name": "purchase_requisitions",
         "role": "master"
       },
       {
-        "name": "satin_alma_talep_satirlari",
+        "name": "purchase_requisition_lines",
         "role": "related"
       }
     ]
@@ -941,14 +941,14 @@
     "techId": "PUR-ORD-SCR-001",
     "endpoint": "/satin-alma-siparisleri",
     "auditTablo": "satin-alma-siparisleri",
-    "primaryTable": "satin_alma_siparisleri",
+    "primaryTable": "purchase_orders",
     "tables": [
       {
-        "name": "satin_alma_siparisleri",
+        "name": "purchase_orders",
         "role": "master"
       },
       {
-        "name": "satin_alma_siparis_satirlari",
+        "name": "purchase_order_lines",
         "role": "related"
       }
     ]
@@ -959,14 +959,14 @@
     "techId": "PUR-GR-SCR-001",
     "endpoint": "/mal-kabuller",
     "auditTablo": "mal-kabuller",
-    "primaryTable": "mal_kabuller",
+    "primaryTable": "goods_receipts",
     "tables": [
       {
-        "name": "mal_kabuller",
+        "name": "goods_receipts",
         "role": "master"
       },
       {
-        "name": "mal_kabul_satirlari",
+        "name": "goods_receipt_lines",
         "role": "related"
       }
     ]
@@ -977,14 +977,14 @@
     "techId": "PUR-DLV-SCR-001",
     "endpoint": "/tedarikci-irsaliyeleri",
     "auditTablo": "tedarikci-irsaliyeleri",
-    "primaryTable": "tedarikci_irsaliyeleri",
+    "primaryTable": "vendor_delivery_notes",
     "tables": [
       {
-        "name": "tedarikci_irsaliyeleri",
+        "name": "vendor_delivery_notes",
         "role": "master"
       },
       {
-        "name": "tedarikci_irsaliye_satirlari",
+        "name": "vendor_delivery_note_lines",
         "role": "related"
       }
     ]
@@ -995,18 +995,18 @@
     "techId": "PUR-DOC-SCR-001",
     "endpoint": "/belge-yonetimi",
     "auditTablo": "belge-yonetimi",
-    "primaryTable": "irsaliyeler",
+    "primaryTable": "delivery_notes",
     "tables": [
       {
-        "name": "irsaliyeler",
+        "name": "delivery_notes",
         "role": "master"
       },
       {
-        "name": "faturalar",
+        "name": "invoices",
         "role": "related"
       },
       {
-        "name": "tedarikci_irsaliyeleri",
+        "name": "vendor_delivery_notes",
         "role": "related"
       }
     ]
@@ -1017,10 +1017,10 @@
     "techId": "CRM-STG-SCR-001",
     "endpoint": "/crm-firsat-asamalari",
     "auditTablo": "crm-firsat-asamalari",
-    "primaryTable": "crm_firsat_asamalari",
+    "primaryTable": "crm_opportunity_stages",
     "tables": [
       {
-        "name": "crm_firsat_asamalari",
+        "name": "crm_opportunity_stages",
         "role": "master"
       }
     ]
@@ -1031,10 +1031,10 @@
     "techId": "CRM-ACTT-SCR-001",
     "endpoint": "/crm-faaliyet-tipleri",
     "auditTablo": "crm-faaliyet-tipleri",
-    "primaryTable": "crm_faaliyet_tipleri",
+    "primaryTable": "crm_activity_types",
     "tables": [
       {
-        "name": "crm_faaliyet_tipleri",
+        "name": "crm_activity_types",
         "role": "master"
       }
     ]
@@ -1045,10 +1045,10 @@
     "techId": "CRM-LEAD-SCR-001",
     "endpoint": "/crm-adaylar",
     "auditTablo": "crm-adaylar",
-    "primaryTable": "crm_adaylar",
+    "primaryTable": "crm_leads",
     "tables": [
       {
-        "name": "crm_adaylar",
+        "name": "crm_leads",
         "role": "master"
       }
     ]
@@ -1059,10 +1059,10 @@
     "techId": "CRM-CNT-SCR-001",
     "endpoint": "/crm-kontaklar",
     "auditTablo": "crm-kontaklar",
-    "primaryTable": "crm_kontaklar",
+    "primaryTable": "crm_contacts",
     "tables": [
       {
-        "name": "crm_kontaklar",
+        "name": "crm_contacts",
         "role": "master"
       }
     ]
@@ -1073,22 +1073,22 @@
     "techId": "CRM-OPP-SCR-001",
     "endpoint": "/crm-firsatlar",
     "auditTablo": "crm-firsatlar",
-    "primaryTable": "crm_firsatlar",
+    "primaryTable": "crm_opportunities",
     "tables": [
       {
-        "name": "crm_firsatlar",
+        "name": "crm_opportunities",
         "role": "master"
       },
       {
-        "name": "crm_firsat_asamalari",
+        "name": "crm_opportunity_stages",
         "role": "related"
       },
       {
-        "name": "crm_firsat_satirlari",
+        "name": "crm_opportunity_lines",
         "role": "related"
       },
       {
-        "name": "satis_teklif_satirlari",
+        "name": "sales_quotation_lines",
         "role": "related"
       }
     ]
@@ -1099,10 +1099,10 @@
     "techId": "CRM-APLN-SCR-001",
     "endpoint": "/crm-faaliyet-planlari",
     "auditTablo": "crm-faaliyet-planlari",
-    "primaryTable": "crm_faaliyet_planlari",
+    "primaryTable": "crm_activity_plans",
     "tables": [
       {
-        "name": "crm_faaliyet_planlari",
+        "name": "crm_activity_plans",
         "role": "master"
       }
     ]
@@ -1113,10 +1113,10 @@
     "techId": "CRM-ACT-SCR-001",
     "endpoint": "/crm-faaliyetler",
     "auditTablo": "crm-faaliyetler",
-    "primaryTable": "crm_faaliyetler",
+    "primaryTable": "crm_activities",
     "tables": [
       {
-        "name": "crm_faaliyetler",
+        "name": "crm_activities",
         "role": "master"
       }
     ]
@@ -1127,10 +1127,10 @@
     "techId": "CRM-TASK-SCR-001",
     "endpoint": "/crm-gorevler",
     "auditTablo": "crm-gorevler",
-    "primaryTable": "crm_gorevler",
+    "primaryTable": "crm_tasks",
     "tables": [
       {
-        "name": "crm_gorevler",
+        "name": "crm_tasks",
         "role": "master"
       }
     ]
@@ -1141,10 +1141,10 @@
     "techId": "CRM-CAL-SCR-001",
     "endpoint": "/crm-ajanda",
     "auditTablo": "crm-ajanda",
-    "primaryTable": "crm_ajanda",
+    "primaryTable": "crm_calendar_entries",
     "tables": [
       {
-        "name": "crm_ajanda",
+        "name": "crm_calendar_entries",
         "role": "master"
       }
     ]
@@ -1155,14 +1155,14 @@
     "techId": "SAL-QUO-SCR-001",
     "endpoint": "/satis-teklifleri",
     "auditTablo": "satis-teklifleri",
-    "primaryTable": "satis_teklifleri",
+    "primaryTable": "sales_quotations",
     "tables": [
       {
-        "name": "satis_teklifleri",
+        "name": "sales_quotations",
         "role": "master"
       },
       {
-        "name": "satis_teklif_satirlari",
+        "name": "sales_quotation_lines",
         "role": "related"
       }
     ]
@@ -1171,16 +1171,16 @@
     "screenId": "satis-siparisleri",
     "title": "Satış Siparişleri",
     "techId": "SAL-ORD-SCR-001",
-    "endpoint": "/siparisler",
-    "auditTablo": "siparisler",
-    "primaryTable": "siparisler",
+    "endpoint": "/sales_orders",
+    "auditTablo": "sales_orders",
+    "primaryTable": "sales_orders",
     "tables": [
       {
-        "name": "siparisler",
+        "name": "sales_orders",
         "role": "master"
       },
       {
-        "name": "siparis_detaylari",
+        "name": "sales_order_lines",
         "role": "related"
       }
     ]
@@ -1191,32 +1191,32 @@
     "techId": "SAL-SHP-SCR-001",
     "endpoint": "/sevk-emirleri",
     "auditTablo": "sevk-emirleri",
-    "primaryTable": "sevk_emirleri",
+    "primaryTable": "shipment_orders",
     "tables": [
       {
-        "name": "sevk_emirleri",
+        "name": "shipment_orders",
         "role": "master"
       },
       {
-        "name": "sevk_emri_satirlari",
+        "name": "shipment_order_lines",
         "role": "related"
       }
     ]
   },
-  "irsaliyeler": {
-    "screenId": "irsaliyeler",
+  "delivery_notes": {
+    "screenId": "delivery_notes",
     "title": "İrsaliyeler",
     "techId": "SAL-DLV-SCR-001",
-    "endpoint": "/irsaliyeler",
-    "auditTablo": "irsaliyeler",
-    "primaryTable": "irsaliyeler",
+    "endpoint": "/delivery_notes",
+    "auditTablo": "delivery_notes",
+    "primaryTable": "delivery_notes",
     "tables": [
       {
-        "name": "irsaliyeler",
+        "name": "delivery_notes",
         "role": "master"
       },
       {
-        "name": "irsaliye_satirlari",
+        "name": "delivery_note_lines",
         "role": "related"
       }
     ]
@@ -1225,16 +1225,16 @@
     "screenId": "satis-faturalari",
     "title": "Satış Faturaları",
     "techId": "FIN-SINV-SCR-001",
-    "endpoint": "/faturalar",
-    "auditTablo": "faturalar",
-    "primaryTable": "faturalar",
+    "endpoint": "/invoices",
+    "auditTablo": "invoices",
+    "primaryTable": "invoices",
     "tables": [
       {
-        "name": "faturalar",
+        "name": "invoices",
         "role": "master"
       },
       {
-        "name": "fatura_detaylari",
+        "name": "invoice_lines",
         "role": "related"
       }
     ]
@@ -1245,10 +1245,10 @@
     "techId": "QLT-IQC-SCR-001",
     "endpoint": "/kk-emirleri",
     "auditTablo": "kk-emirleri",
-    "primaryTable": "kk_emirleri",
+    "primaryTable": "qc_orders",
     "tables": [
       {
-        "name": "kk_emirleri",
+        "name": "qc_orders",
         "role": "master"
       }
     ]
@@ -1259,10 +1259,10 @@
     "techId": "QLT-OQC-SCR-001",
     "endpoint": "/kk-emirleri",
     "auditTablo": "kk-emirleri",
-    "primaryTable": "kk_emirleri",
+    "primaryTable": "qc_orders",
     "tables": [
       {
-        "name": "kk_emirleri",
+        "name": "qc_orders",
         "role": "master"
       }
     ]
@@ -1273,10 +1273,10 @@
     "techId": "QLT-NCR-SCR-001",
     "endpoint": "/kk-uygunsuzluklar",
     "auditTablo": "kk-uygunsuzluklar",
-    "primaryTable": "kk_uygunsuzluklar",
+    "primaryTable": "qc_nonconformances",
     "tables": [
       {
-        "name": "kk_uygunsuzluklar",
+        "name": "qc_nonconformances",
         "role": "master"
       }
     ]
@@ -1287,10 +1287,10 @@
     "techId": "QLT-CAPA-SCR-001",
     "endpoint": "/kk-capa",
     "auditTablo": "kk-capa",
-    "primaryTable": "kk_capa",
+    "primaryTable": "qc_capa",
     "tables": [
       {
-        "name": "kk_capa",
+        "name": "qc_capa",
         "role": "master"
       }
     ]
@@ -1301,10 +1301,10 @@
     "techId": "QLT-PLAN-SCR-001",
     "endpoint": "/kk-kontrol-planlari",
     "auditTablo": "kk-kontrol-planlari",
-    "primaryTable": "kk_kontrol_planlari",
+    "primaryTable": "qc_control_plans",
     "tables": [
       {
-        "name": "kk_kontrol_planlari",
+        "name": "qc_control_plans",
         "role": "master"
       }
     ]
@@ -1315,10 +1315,10 @@
     "techId": "QLT-ITMP-SCR-001",
     "endpoint": "/kk-stok-planlari",
     "auditTablo": "kk-stok-planlari",
-    "primaryTable": "kk_stok_planlari",
+    "primaryTable": "qc_item_plans",
     "tables": [
       {
-        "name": "kk_stok_planlari",
+        "name": "qc_item_plans",
         "role": "master"
       }
     ]
@@ -1329,10 +1329,10 @@
     "techId": "QLT-REJ-SCR-001",
     "endpoint": "/kk-ret-nedenleri",
     "auditTablo": "kk-ret-nedenleri",
-    "primaryTable": "kk_ret_nedenleri",
+    "primaryTable": "qc_rejection_reasons",
     "tables": [
       {
-        "name": "kk_ret_nedenleri",
+        "name": "qc_rejection_reasons",
         "role": "master"
       }
     ]
@@ -1343,10 +1343,10 @@
     "techId": "SYS-APR-SCR-001",
     "endpoint": "/onay-kayitlari",
     "auditTablo": "onay-kayitlari",
-    "primaryTable": "onay_kayitlari",
+    "primaryTable": "approval_records",
     "tables": [
       {
-        "name": "onay_kayitlari",
+        "name": "approval_records",
         "role": "master"
       }
     ]
@@ -1357,10 +1357,10 @@
     "techId": "SYS-APR-SCR-002",
     "endpoint": "/onay-kayitlari",
     "auditTablo": "onay-kayitlari",
-    "primaryTable": "onay_kayitlari",
+    "primaryTable": "approval_records",
     "tables": [
       {
-        "name": "onay_kayitlari",
+        "name": "approval_records",
         "role": "master"
       }
     ]
@@ -1371,24 +1371,24 @@
     "techId": "SYS-APR-SCR-003",
     "endpoint": "/onay-yetki-devirleri",
     "auditTablo": "onay-yetki-devirleri",
-    "primaryTable": "onay_yetki_devirleri",
+    "primaryTable": "approval_delegations",
     "tables": [
       {
-        "name": "onay_yetki_devirleri",
+        "name": "approval_delegations",
         "role": "master"
       }
     ]
   },
-  "onay-rol-tanim": {
-    "screenId": "onay-rol-tanim",
+  "onay-role-tanim": {
+    "screenId": "onay-role-tanim",
     "title": "Onay Rolü",
     "techId": "SYS-APR-SCR-004",
     "endpoint": "/onay-rolleri",
     "auditTablo": "onay-rolleri",
-    "primaryTable": "onay_rolleri",
+    "primaryTable": "approval_roles",
     "tables": [
       {
-        "name": "onay_rolleri",
+        "name": "approval_roles",
         "role": "master"
       }
     ]
@@ -1399,10 +1399,10 @@
     "techId": "SYS-APR-SCR-005",
     "endpoint": "/onay-kurallari",
     "auditTablo": "onay-kurallari",
-    "primaryTable": "onay_kurallari",
+    "primaryTable": "approval_rules",
     "tables": [
       {
-        "name": "onay_kurallari",
+        "name": "approval_rules",
         "role": "master"
       }
     ]
@@ -1413,38 +1413,38 @@
     "techId": "SYS-APR-SCR-006",
     "endpoint": "/onay-rotalari",
     "auditTablo": "onay-rotalari",
-    "primaryTable": "onay_rotalari",
+    "primaryTable": "approval_routes",
     "tables": [
       {
-        "name": "onay_rotalari",
+        "name": "approval_routes",
         "role": "master"
       }
     ]
   },
-  "onay-mesaj-sablon": {
-    "screenId": "onay-mesaj-sablon",
+  "onay-message-template": {
+    "screenId": "onay-message-template",
     "title": "Onay Mesaj Şablonu",
     "techId": "SYS-APR-SCR-007",
-    "endpoint": "/onay-mesaj-sablonlari",
-    "auditTablo": "onay-mesaj-sablonlari",
-    "primaryTable": "onay_mesaj_sablonlari",
+    "endpoint": "/onay-message-sablonlari",
+    "auditTablo": "onay-message-sablonlari",
+    "primaryTable": "approval_message_templates",
     "tables": [
       {
-        "name": "onay_mesaj_sablonlari",
+        "name": "approval_message_templates",
         "role": "master"
       }
     ]
   },
-  "onay-durum-tanim": {
-    "screenId": "onay-durum-tanim",
+  "onay-status-tanim": {
+    "screenId": "onay-status-tanim",
     "title": "Onay Durum Tanımı",
     "techId": "SYS-APR-SCR-008",
     "endpoint": "/onay-durumlari",
     "auditTablo": "onay-durumlari",
-    "primaryTable": "onay_durumlari",
+    "primaryTable": "approval_statuses",
     "tables": [
       {
-        "name": "onay_durumlari",
+        "name": "approval_statuses",
         "role": "master"
       }
     ]
@@ -1455,10 +1455,10 @@
     "techId": "FIN-COA-SCR-001",
     "endpoint": "/muhasebe-hesaplari",
     "auditTablo": "muhasebe-hesaplari",
-    "primaryTable": "muhasebe_hesaplari",
+    "primaryTable": "gl_accounts",
     "tables": [
       {
-        "name": "muhasebe_hesaplari",
+        "name": "gl_accounts",
         "role": "master"
       }
     ]
@@ -1469,14 +1469,14 @@
     "techId": "FIN-JE-SCR-001",
     "endpoint": "/muhasebe-belgeleri",
     "auditTablo": "muhasebe-belgeleri",
-    "primaryTable": "muhasebe_belgeleri",
+    "primaryTable": "journal_entries",
     "tables": [
       {
-        "name": "muhasebe_belgeleri",
+        "name": "journal_entries",
         "role": "master"
       },
       {
-        "name": "muhasebe_belge_kalemleri",
+        "name": "journal_entry_lines",
         "role": "related"
       }
     ]
@@ -1487,18 +1487,18 @@
     "techId": "FIN-TB-RPT-001",
     "endpoint": "/mizan",
     "auditTablo": "mizan",
-    "primaryTable": "muhasebe_hesaplari",
+    "primaryTable": "gl_accounts",
     "tables": [
       {
-        "name": "muhasebe_hesaplari",
+        "name": "gl_accounts",
         "role": "master"
       },
       {
-        "name": "muhasebe_belgeleri",
+        "name": "journal_entries",
         "role": "related"
       },
       {
-        "name": "muhasebe_belge_kalemleri",
+        "name": "journal_entry_lines",
         "role": "related"
       }
     ]
@@ -1509,10 +1509,10 @@
     "techId": "FIN-ACR-SCR-001",
     "endpoint": "/hesap-belirleme-kurallari",
     "auditTablo": "hesap-belirleme-kurallari",
-    "primaryTable": "hesap_belirleme_kurallari",
+    "primaryTable": "account_determination_rules",
     "tables": [
       {
-        "name": "hesap_belirleme_kurallari",
+        "name": "account_determination_rules",
         "role": "master"
       }
     ]
@@ -1523,14 +1523,14 @@
     "techId": "FIN-PRC-SCR-001",
     "endpoint": "/fiyat-listeleri",
     "auditTablo": "fiyat-listeleri",
-    "primaryTable": "fiyat_listeleri",
+    "primaryTable": "price_lists",
     "tables": [
       {
-        "name": "fiyat_listeleri",
+        "name": "price_lists",
         "role": "master"
       },
       {
-        "name": "fiyat_liste_satirlari",
+        "name": "price_list_lines",
         "role": "related"
       }
     ]
@@ -1541,22 +1541,22 @@
     "techId": "FIN-3WAY-SCR-001",
     "endpoint": "/fatura-kontrolleri",
     "auditTablo": "fatura-kontrolleri",
-    "primaryTable": "fatura_eslestirme",
+    "primaryTable": "invoice_matches",
     "tables": [
       {
-        "name": "fatura_eslestirme",
+        "name": "invoice_matches",
         "role": "master"
       },
       {
-        "name": "faturalar",
+        "name": "invoices",
         "role": "related"
       },
       {
-        "name": "mal_kabuller",
+        "name": "goods_receipts",
         "role": "related"
       },
       {
-        "name": "satin_alma_siparisleri",
+        "name": "purchase_orders",
         "role": "related"
       }
     ]
@@ -1570,19 +1570,19 @@
     "primaryTable": null,
     "tables": [
       {
-        "name": "sevk_emirleri",
+        "name": "shipment_orders",
         "role": "related"
       },
       {
-        "name": "satin_alma_talepleri",
+        "name": "purchase_requisitions",
         "role": "related"
       },
       {
-        "name": "kk_emirleri",
+        "name": "qc_orders",
         "role": "related"
       },
       {
-        "name": "cari_hareketleri",
+        "name": "partner_ledger_entries",
         "role": "related"
       }
     ]

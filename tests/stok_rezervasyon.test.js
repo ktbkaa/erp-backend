@@ -14,22 +14,22 @@ describe('stok rezervasyon', () => {
   it('rezervasyon kullanılabilir bakiyeyi düşürür', async () => {
     // Minimal fixture: stok + depo + giriş + sipariş
     const fx = await withTransaction(pool, async (client) => {
-      const firma = await client.query(`SELECT id FROM firmalar ORDER BY id LIMIT 1`);
-      const isYeri = await client.query(`SELECT id FROM is_yerleri ORDER BY id LIMIT 1`);
-      const depo = await client.query(`SELECT id FROM depolar ORDER BY id LIMIT 1`);
+      const firma = await client.query(`SELECT id FROM companies ORDER BY id LIMIT 1`);
+      const isYeri = await client.query(`SELECT id FROM plants ORDER BY id LIMIT 1`);
+      const depo = await client.query(`SELECT id FROM warehouses ORDER BY id LIMIT 1`);
       if (!firma.rows[0] || !depo.rows[0]) {
         const err = new Error('SKIP: seed firma/depo yok');
         err.skip = true;
         throw err;
       }
       const stok = await client.query(
-        `INSERT INTO stoklar (stok_kodu, stok_adi, stok_tipi, birim, aktif)
+        `INSERT INTO items (item_code, item_name, item_type, uom_code, is_active)
          VALUES ('RZ-TEST-' || floor(random()*1e6)::text, 'Rezerv Test', 'Ticari', 'AD', TRUE)
-         RETURNING id, stok_kodu`
+         RETURNING id, item_code`
       );
-      // stok_depo bağ (zorunlu olabilir)
+      // item_warehouses bağ (zorunlu olabilir)
       await client.query(
-        `INSERT INTO stok_depo (stok_id, depo_id, aktif) VALUES ($1,$2,TRUE)
+        `INSERT INTO item_warehouses (item_id, warehouse_id, is_active) VALUES ($1,$2,TRUE)
          ON CONFLICT DO NOTHING`,
         [stok.rows[0].id, depo.rows[0].id]
       ).catch(() => {});
@@ -38,25 +38,25 @@ describe('stok rezervasyon', () => {
         hareketTipi: 'STOK_GIRIS',
         depoId: depo.rows[0].id,
         depoZorunluAtla: true,
-        satirlar: [{ stok_id: stok.rows[0].id, miktar: 100, yon: 1, birim: 'AD' }],
+        satirlar: [{ item_id: stok.rows[0].id, quantity: 100, direction: 1, uom_code: 'AD' }],
       });
 
-      const cari = await client.query(`SELECT id, cari_kodu, cari_adi FROM cariler ORDER BY id LIMIT 1`);
+      const cari = await client.query(`SELECT id, partner_code, partner_name FROM partners ORDER BY id LIMIT 1`);
       if (!cari.rows[0]) {
         const err = new Error('SKIP: cari yok');
         err.skip = true;
         throw err;
       }
       const sip = await client.query(
-        `INSERT INTO siparisler (siparis_no, cari_id, cari_kodu, cari_adi, siparis_turu, toplam_tutar, durum)
+        `INSERT INTO sales_orders (order_no, partner_id, partner_code, partner_name, order_type, total_amount, status)
          VALUES ('SP-RZ-' || floor(random()*1e6)::text, $1, $2, $3, 'SatisSiparis', 0, 'Onayli')
          RETURNING id`,
-        [cari.rows[0].id, cari.rows[0].cari_kodu, cari.rows[0].cari_adi]
+        [cari.rows[0].id, cari.rows[0].partner_code, cari.rows[0].partner_name]
       );
       await client.query(
-        `INSERT INTO siparis_detaylari (siparis_id, stok_id, stok_kodu, stok_adi, stok_birimi, miktar, birim_fiyat, toplam_tutar)
+        `INSERT INTO sales_order_lines (sales_order_id, item_id, item_code, item_name, stock_uom, quantity, unit_price, total_amount)
          VALUES ($1,$2,$3,$4,'AD',40,1,40)`,
-        [sip.rows[0].id, stok.rows[0].id, stok.rows[0].stok_kodu, 'Rezerv Test']
+        [sip.rows[0].id, stok.rows[0].id, stok.rows[0].item_code, 'Rezerv Test']
       );
       return { siparisId: sip.rows[0].id, stokId: stok.rows[0].id, depoId: depo.rows[0].id };
     }).catch((e) => {
