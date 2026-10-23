@@ -10,25 +10,10 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { Pool } = require('pg');
-
-function requiredEnv(name) {
-    const value = process.env[name];
-    if (!value) {
-        throw new Error(`Eksik ortam değişkeni: ${name}. Önce .env dosyasını oluştur.`);
-    }
-    return value;
-}
+// DATABASE_URL (Neon/Render) veya yerel DB_* — db.js ile aynı bağlantı
+const pool = require('../db');
 
 async function main() {
-    const pool = new Pool({
-        host: process.env.DB_HOST || 'localhost',
-        port: Number(process.env.DB_PORT || 5432),
-        database: requiredEnv('DB_NAME'),
-        user: requiredEnv('DB_USER'),
-        password: requiredEnv('DB_PASSWORD'),
-    });
-
     const client = await pool.connect();
     try {
         await client.query(`

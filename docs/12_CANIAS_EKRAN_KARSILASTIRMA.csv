@@ -1,0 +1,94 @@
+grup;modul_kodu;canias_konu;ilgili_ktb_ekran;durum;aciklama;sonraki_adim_icin_not
+Ortak/BAS;BAS;Firma / şirket tanımı;Firmalar;Yapildi;CRUD + numaratör FIRMA;-
+Ortak/BAS;BAS;Tesis / iş yeri tanımı;İş Yerleri;Yapildi;Firma lookup + adres detay;-
+Ortak/BAS;BAS;Depo / stok yeri tanımı;Depolar;Yapildi;İş yeri bağı, varsayılan depo, raf/konum;-
+Ortak/BAS;BAS;Ölçü birimi tanımı;Ölçü Birimleri;Yapildi;Sabit Tanımlar + GET/POST/PUT/DELETE + aktif;-
+Ortak/BAS;BAS;Belge / kod numaratörü;Numaratör Tanımı;Yapildi;kod_serileri + ekran bağı + ayir;-
+Ortak/BAS;BAS;Destek / parametre tabloları (genel);Kategori Tanımı;Yapildi;ABC/Marka/TeminSekli/Sektor/Bolge;-
+Ortak/BAS;BAS;Ülke tanımı;Ülke Tanımı;Yapildi;ulkeler tablosu + CRUD + lookup;-
+Ortak/BAS;BAS;Kullanıcı / yetki / rol;Kullanıcılar + Gruplar;Kismi;UI var; JWT/hak seti yok;Auth/JWT ve UI ekranı yok
+Ortak/BAS;BAS;Merkezi yetkilendirme (menü/depo/firma);-;Yapilmadi;Canias BAS yetki modeli;v1 sonrası
+Stok/Malzeme;BAS/INV;Malzeme / stok kartı ana alanlar;Stok Kartı;Yapildi;Kod ad tip tedarik birim fiyat aktif;-
+Stok/Malzeme;BAS/INV;Stok tipi (hammadde/YM/mamul/ticari);Stok Kartı;Yapildi;CHECK + numaratör map;-
+Stok/Malzeme;BAS/INV;Tedarik tipi (üretim/satınalma);Stok Kartı;Yapildi;select alan;-
+Stok/Malzeme;BAS/INV;Stok takip birimi;Stok Kartı;Yapildi;olcu_birimleri lookup (sarı);-
+Stok/Malzeme;BAS/INV;Ölçü bilgileri (hacim ağırlık kutu);Stok Kartı > Ölçü Bilgileri;Yapildi;Alanlar stoklar tablosunda;-
+Stok/Malzeme;BAS/INV;Birim tanımları / birim çevrimi;Stok Kartı > Birim Tanımları;Yapildi;stok_birim_tanimlari + katsayı doğrulama;-
+Stok/Malzeme;BAS/INV;ABC kodu;Stok Kartı > Kategoriler;Yapildi;Kategori Tanımı lookup;-
+Stok/Malzeme;BAS/INV;Marka sınıflandırması;Stok Kartı > Kategoriler;Yapildi;Kategori Tanımı lookup;-
+Stok/Malzeme;BAS/INV;Temin şekli;Stok Kartı > Kategoriler + Stok Kart detay;Yapildi;Lookup;-
+Stok/Malzeme;BAS/INV;Ülke menşei;Stok Kartı detay;Yapildi;ulkeler lookup;-
+Stok/Malzeme;BAS/INV;Stok-işyeri bağlantısı;Stok Kartı > İş Yeri Bağları;Yapildi;stok_is_yeri detay grid;-
+Stok/Malzeme;INV;Depo bakiye (hareketten);Depo Bakiye;Yapildi;Salt incele; bakiye elle değişmez
+Stok/Malzeme;INV;Stok hareket motoru;Stok Hareketleri;Yapildi;Liste/inceleme ekranı + GET/:id;oluşturma süreçlerden
+Stok/Malzeme;BAS/INV;Barkod;Stok Kartı > Barkod;Yapildi;stok_barkodlari detay grid;-
+Stok/Malzeme;BAS/INV;Alternatif stok;-(kaldırıldı);Yapilmadi;Bilinçli kaldırıldı;İstenirse yeniden model
+Stok/Malzeme;BAS/INV;Dil tanımları (stok);Stok Kartı > Dil;Yapildi;stok_dil_tanimlari detay grid;-
+Stok/Malzeme;MRP;MRP parametreleri;Stok Kartı > MRP;Stub;Kapsam net değil;-
+Stok/Malzeme;BAS/INV;Şartname / revizyon bilgileri;-;Yapilmadi;Canias referans sekmeleri;Model yok
+Stok/Malzeme;BAS/INV;Satış / satınalma / üretim stok sekmeleri;-;Yapilmadi;Canias çoklu sekme;Kısmi alanlar ana kartta
+Stok/Malzeme;BAS/INV;Vergi / matris / kit / B2B / tekstil;-;Yapilmadi;Görüntüden doğrulanamadı;-
+Stok/Malzeme;INV;Parti / seri takibi;-;Yapilmadi;İlk sürüm dışı (doküman);-
+Stok/Malzeme;WMS;Gelişmiş depo (raf/konum);Depolar;Yapildi;raf_kodu + konum_kodu;-
+Cari;BAS;Cari kart ana alanlar (kod ad tip VKN adres);Cari Kartları;Yapildi;Master/detay ayrımı yapıldı;-
+Cari;BAS;Müşteri / tedarikçi / her ikisi;Cari Kartları;Yapildi;cari_turu + satınalma kuralı;-
+Cari;BAS;İletişim (tel eposta website fax);Cari Kartları detay;Yapildi;-;-
+Cari;BAS;Fatura adresi çok satır;Cari Kartları;Yapildi;adres1/2/3;-
+Cari;BAS;Banka bilgileri (IBAN SWIFT şube);Cari Kartları > Banka;Yapildi;cari_banka_bilgileri;-
+Cari;BAS;Sevk adresleri;Cari Kartları > Sevk;Yapildi;cari_sevk_adresleri;-
+Cari;BAS;Dil tanımları (cari);Cari Kartları > Dil;Yapildi;cari_dil_tanimlari;-
+Cari;BAS;Genel bilgiler (sektör bölge NACE sermaye);Cari Kartları > Genel;Yapildi;Sektor/Bolge kategori lookup;-
+Cari;BAS;Cari-işyeri / firma ilişkisi;Cari Kartları > Firma Parametreleri;Yapildi;cari_firma_parametreleri grid;-
+Cari;BAS;Muhasebe hesap / risk grubu / çoklu PB;Cari Kartları > Firma Parametreleri;Yapildi;Firma bazlı muhasebe/risk/PB;-
+Cari;E-Donusum;e-Uyum / e-Fatura cari;-;Yapilmadi;Bilinçli kaldırıldı/simüle yok;-
+Cari;BAS;Cari kategoriler / ek alanlar;Cari Kartları stubs;Stub;Sahte CRUD yok;-
+Cari;BAS;VKN/TCKN dış servis ara;-;Yapilmadi;Simüle edilmedi;-
+Cari;BAS;Haritada göster / adres no bul;-;Yapilmadi;Dış servis yok;-
+Cari;FIN;Cari hareket / borç-alacak motoru;-;Yapilmadi;Dokümanda fatura sonrası önerildi;-
+Üretim;BOM;Ürün ağacı (çok seviyeli);Ürün Ağacı;Yapildi;API + form + stok lookup + PUT satirlar;-
+Üretim;BOM;BOM satır bileşen miktar birim;Ürün Ağacı;Yapildi;satirlar detay + lookup;-
+Üretim;BOM;Alternatif / varyant ağaç;-;Yapilmadi;İleri seviye;-
+Üretim;ROU;Rota tanımı;Rotalar;Yapildi;API + form + PUT operasyonlar;-
+Üretim;ROU;Operasyon sırası / iş merkezi;Rotalar;Yapildi;Operasyon grid + iş merkezi lookup;-
+Üretim;ROU;Bileşen-operasyon ataması;API rota_operasyon_bilesenleri;Yapildi;PUT ile bilesenler kaydı;UI nested grid sınırlı
+Üretim;PRD;İş merkezi tanımı;İş Merkezleri;Yapildi;Basit CRUD form;-
+Üretim;PRD;Üretim emri;Üretim Emirleri;Yapildi;Form + stok/ağaç/rota/depo lookup;-
+Üretim;PRD;Üretim girişi / otomatik tüketim;Üretim Girişleri;Yapildi;Liste + emir üzerinden giriş API;-
+Üretim;PRD;Eksik malzeme analizi;-;Yapilmadi;İleri;-
+Satınalma;PUR;Satınalma talebi / istek;Satınalma Talepleri;Yapildi;Form + stok lookup + durum/onay;-
+Satınalma;PUR;Satınalma siparişi;Satınalma Siparişleri;Yapildi;Doğrudan POST + tedarikçi kuralı;-
+Satınalma;PUR;Satınalma onayı;durum + /onayla;Yapildi;Talep/sipariş onay endpoint + durum select;-
+Satınalma;PUR;Mal kabul / depo girişi;Mal Kabuller;Yapildi;API + stok hareket + depo/sipariş lookup;-
+Satınalma;PUR;Teklif / anlaşma / ihale / fason;Teklif İstekleri / Teklifler / Anlaşmalar;Yapildi;PURT01-03 1. dalga eklendi;-
+Satınalma;VER;Alış fatura kontrol;Alış Faturaları;Yapildi;fatura_turu=Alis ekranı;Alış VER yok
+Satış;SAL;Satış siparişi;Satış Siparişleri;Yapildi;Menü ekranı + /siparisler CRUD;-
+Satış;SAL;Sevk / irsaliye;İrsaliyeler;Yapildi;e-İrsaliye alanları + stok çıkış onayı;GİB gönderim Faz 2
+Satış;SAL;Satış faturası;Satış Faturaları;Yapildi;Menü ekranı + /faturalar CRUD;-
+Satış;SAL;Rezervasyon;-;Yapilmadi;-;-
+Lojistik;TRO;Depolar arası transfer emri;-;Yapilmadi;Dokümanda sonra;-
+Lojistik;INV;Sayım / stok düzeltme belgesi;-;Yapilmadi;-;-
+Finans;ACC/FIN;Genel muhasebe / finans;Hesap Planı / Muhasebe Belgeleri / Mizan;Kismi;FIN 1. dalga; portföy/kredi/DBS Faz 3;-
+E-Donusum;-;E-Fatura / E-İrsaliye;-;Yapilmadi;v1 sonrası;-
+UI/Kabuk;-;Sol modül menüsü;Shell;Yapildi;Satış modülü eklendi;-
+UI/Kabuk;-;Filtre (eşit/eşit değil/arasında) + liste;Tüm listeler;Yapildi;-;-
+UI/Kabuk;-;Yeni/İncele/Düzelt/Kopyala/Sil;CRUD ekranlar;Yapildi;Üst belge sekmeleri;-
+UI/Kabuk;-;Master sabit / detay kayar;Formlar;Yapildi;Don't Make Me Think UX;-
+UI/Kabuk;-;Lookup sarı alan + zorunlu *;Formlar;Yapildi;-;-
+UI/Kabuk;-;Form içi sol bölüm menüsü;Cari/Stok ve diğer formlar;Yapildi;-;-
+Sistem;SYS;Kullanıcı tanımı (SYST03);Kullanıcılar;Yapildi;CRUD + kod/grup/aktif;JWT Faz 2
+Sistem;SYS;Kullanıcı grupları (SYST40);Kullanıcı Grupları;Yapildi;kullanici_gruplari;Hak Faz 2
+Sistem;SYS;Sistem parametreleri (SYST06);Sistem Parametreleri;Yapildi;sistem_parametreleri;-
+Satınalma;PUR;Satınalma teklif isteği (PURT01);Satınalma Teklif İstekleri;Yapildi;Belge CRUD;-
+Satınalma;PUR;Satınalma teklifi (PURT02);Satınalma Teklifleri;Yapildi;Belge CRUD;-
+Satınalma;PUR;Satınalma anlaşması (PURT03);Satınalma Anlaşmaları;Yapildi;Belge CRUD;-
+Üretim;BOM;Ürün ağacı seviye listesi (BOMT05);Ürün Ağacı Seviye Listesi;Yapildi;Rapor ekranı;-
+Üretim;BOM;Malzeme değişikliği (BOMT03);Malzeme Değişikliği;Yapildi;Toplu bileşen değiştirme;-
+Üretim;PRD,BAS;Sınıf tanımı (BAST05);Sınıf Tanımı;Yapildi;stok_siniflari;Varyant Faz 2
+Üretim;PRD;İş emri onay (PRDT02/03);Üretim Emirleri /onayla;Yapildi;OnayBekliyor→Acik;-
+Üretim;PRD;Satış siparişinden iş emri (PRDT13);API satis-siparisinden;Yapildi;siparis_id bağı;UI sihirbazı Faz 2
+Finans;FIN;Hesap planı (FINT01);Hesap Planı;Yapildi;Ana/Ust/Dogrudan;-
+Finans;FIN;Muhasebe belgesi (FINT06);Muhasebe Belgeleri;Yapildi;Çift taraflı + onay;-
+Finans;FIN;Mizan (FINT62);Mizan;Yapildi;Onaylı belgelerden;-
+Satış;SAL;Satış teklifi;Satış Teklifleri;Yapildi;Teklif→sipariş dönüşümü;-
+Satış;SAL;Sevk emri;Sevk Emirleri;Yapildi;Sipariş→sevk;-
+Ortak/BAS;BAS;Hareket kodları;Hareket Kodları;Yapildi;Sol menü belge tipi + kod tanımı;-

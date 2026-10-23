@@ -3,25 +3,25 @@
  * Format: 1 harf + 5 rakam  →  M00001, H00001, T00001
  */
 async function sonrakiKod(client, seriKodu) {
-    const sonuc = await client.query(
+    const result = await client.query(
         `
-        SELECT seri_kodu, onek, son_numara
-        FROM kod_serileri
-        WHERE seri_kodu = $1
+        SELECT series_code, onek, son_numara
+        FROM number_series
+        WHERE series_code = $1
         FOR UPDATE
         `,
         [seriKodu]
     );
 
-    if (sonuc.rows.length === 0) {
+    if (result.rows.length === 0) {
         throw new Error(`Kod serisi tanımlı değil: ${seriKodu}`);
     }
 
-    const { onek, son_numara } = sonuc.rows[0];
+    const { onek, son_numara } = result.rows[0];
     const yeniNo = Number(son_numara) + 1;
 
     await client.query(
-        `UPDATE kod_serileri SET son_numara = $1 WHERE seri_kodu = $2`,
+        `UPDATE number_series SET son_numara = $1 WHERE series_code = $2`,
         [yeniNo, seriKodu]
     );
 
@@ -54,7 +54,7 @@ function cariSeriKodundanTur(cariTuru) {
         case 'HerIkisi':
             return 'CARI_HERIKISI';
         default:
-            throw new Error('cari_turu Musteri, Tedarikci veya HerIkisi olmalı.');
+            throw new Error('partner_type Musteri, Tedarikci veya HerIkisi olmalı.');
     }
 }
 

@@ -3,8 +3,13 @@ node_modules/
 .DS_Store
 npm-debug.log*
 *.log
+*.db
+erp.db
 .idea/
 .vscode/*
 !.vscode/mcp.json
 .cursor/*
 !.cursor/mcp.json
+
+# Local DB backups from demo cleanup
+backups/
