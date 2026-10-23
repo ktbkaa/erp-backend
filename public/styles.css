@@ -1677,14 +1677,31 @@ tr.selected td { background: var(--accent-soft); }
   text-overflow: unset;
   padding-right: 0.1rem;
 }
-/* Zorunlu: * yok; etiket biraz daha belirgin */
+/* Zorunlu / eksik: kırmızı * + etiket */
 .field.required label {
   font-weight: 600;
+}
+.field.required .req-star {
+  color: #c62828;
+  font-weight: 700;
+  margin-right: 0.2rem;
+  font-size: 0.95em;
+  line-height: 1;
+}
+.field.required:has(.req-star) input,
+.field.required:has(.req-star) select,
+.field.required:has(.req-star) textarea {
+  border-color: #e57373;
 }
 .field.required input,
 .field.required select,
 .field.required textarea {
   border-color: #c5d0d6;
+}
+.cvt-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: #5a6a72;
 }
 /* Sorunlu / kritik zorunlu alan (firma, iş yeri…) — gözden kaçmasın */
 .field.field--critical {
