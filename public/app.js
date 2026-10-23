@@ -3475,6 +3475,8 @@ const MODULES = [
         numeratorSeri: 'IRSALIYE',
         codeField: 'irsaliye_no',
         nameField: 'cari_adi',
+        compactMaster: false,
+        masterPrimaryMax: 18,
         convertAction: {
           label: 'Fatura Oluştur',
           path: '/irsaliyeler/{id}/fatura-olustur',
@@ -3485,119 +3487,209 @@ const MODULES = [
           { key: 'irsaliye_no', label: 'İrsaliye no' },
           { key: 'cari_adi', label: 'Cari' },
           { key: 'durum', label: 'Durum' },
+          { key: 'e_belge_durum', label: 'e-Belge' },
         ],
         columns: [
           { key: 'irsaliye_no', label: 'İrsaliye', mono: true },
           { key: 'cari_adi', label: 'Cari' },
           { key: 'depo_kodu', label: 'Depo', mono: true },
           { key: 'irsaliye_tarihi', label: 'İrs. tar.' },
-          { key: 'sevk_tarihi', label: 'Sevk tar.' },
+          { key: 'fiili_sevk_tarihi', label: 'Fiili sevk' },
           { key: 'arac_plaka', label: 'Plaka' },
-          { key: 'tasiyici_unvan', label: 'Taşıyıcı' },
-          { key: 'ara_toplam', label: 'Ara top.' },
+          { key: 'e_belge_durum', label: 'e-Belge' },
+          { key: 'ara_toplam', label: 'Mal' },
           { key: 'genel_toplam', label: 'Genel' },
-          { key: 'kaynak_belge_tipi', label: 'Kaynak' },
-          { key: 'iade_mi', label: 'İade' },
+          { key: 'fatura_durumu', label: 'Fatura' },
           { key: 'durum', label: 'Durum' },
         ],
         masterFields: [
-          { key: 'irsaliye_no', label: 'İrsaliye no', code: true },
-          { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
-          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
+          { key: 'irsaliye_no', label: 'İrsaliye no', code: true, lead: true },
+          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu', lead: true },
+          { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu', lead: true },
+          { key: 'irsaliye_tarihi', label: 'Belge tarihi', type: 'date', lead: true },
+          { key: 'irsaliye_zamani', label: 'Belge saati', lead: true },
+          { key: 'belge_seri', label: 'Seri', lead: true },
+          { key: 'belge_sira', label: 'Sıra', lead: true },
+          { key: 'gib_no', label: 'GİB no' },
+          { key: 'cari_id', label: 'Cari', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true, lead: true, fillCariAdres: true },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true, lead: true },
           { key: 'siparis_id', label: 'Sipariş', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no', fillFrom: 'siparis-kalemler' },
           { key: 'sevk_emri_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'sevk_no', fillFrom: 'sevk-satirlar' },
-          { key: 'kaynak_belge_tipi', label: 'Kaynak belge tipi' },
-          { key: 'kaynak_belge_id', label: 'Kaynak belge id', type: 'number' },
-          { key: 'senaryo', label: 'Senaryo', type: 'select', options: ['TEMELIRSALIYE'] },
-          { key: 'irsaliye_tipi', label: 'İrsaliye tipi', type: 'select', options: ['SEVK'] },
-          { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
-          { key: 'sevk_tarihi', label: 'Sevk tarihi', type: 'date' },
-          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', lead: true },
+          { key: 'kur', label: 'Kur', type: 'number', lead: true },
           { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'kur', label: 'Kur', type: 'number' },
-          { key: 'firma_id', label: 'Firma', type: 'lookup', lookup: 'firmalar', valueKey: 'id', labelKey: 'firma_adi', codeKey: 'firma_kodu' },
-          { key: 'is_yeri_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'is_yeri_adi', codeKey: 'is_yeri_kodu' },
-          { key: 'proje_kodu', label: 'Proje kodu' },
+          { key: 'kur_secenegi', label: 'Kur seçeneği', type: 'select', options: ['SevkTarihi', 'BelgeTarihi', 'Serbest'] },
+          { key: 'e_belge_durum', label: 'e-Belge durum', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
+          { key: 'fiili_sevk_tarihi', label: 'Fiili sevk tarihi', type: 'date', lead: true },
+          { key: 'fiili_sevk_zamani', label: 'Fiili sevk saati' },
+          { key: 'vade_tarihi', label: 'Vade tarihi', type: 'date' },
+          { key: 'vade_gun', label: 'Vade gün', type: 'number' },
+          { key: 'odeme_plani', label: 'Ödeme planı' },
+          { key: 'odeme_sekli', label: 'Ödeme şekli' },
+          { key: 'teslimat_kosulu', label: 'Teslim şekli', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'kosul_kodu', labelKey: 'kosul_adi' },
+          { key: 'nakliye_sirketi', label: 'Nakliye şirketi' },
+          { key: 'nakliyeci', label: 'Nakliyeci' },
+          { key: 'satis_temsilcisi', label: 'Satış temsilcisi' },
+          { key: 'proje_kodu', label: 'Proje' },
           { key: 'bolge', label: 'Bölge' },
-          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'] },
+          { key: 'fatura_durumu', label: 'Fatura durumu', type: 'select', options: ['Irsaliye', 'Kismi', 'Faturalandi'] },
+          { key: 'yazdirildi', label: 'Yazdırıldı', type: 'checkbox' },
+          { key: 'yerel_para_cikti', label: 'Çıktı yerel PB', type: 'checkbox' },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'], lead: true },
+          { key: 'aciklama', label: 'Açıklama 1' },
+          { key: 'aciklama_2', label: 'Açıklama 2' },
+          { key: 'aciklama_3', label: 'Açıklama 3' },
+          { key: 'irsaliye_alti_iskonto', label: 'İrs. altı iskonto', type: 'number' },
           { key: 'not_public', label: 'Müşteri notu' },
           { key: 'not_internal', label: 'Dahili not' },
         ],
         detailFields: [
-          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
+          { key: 'satir_tipi', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', size: 'short' },
+          { key: 'stok_id', label: 'Stok', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu', required: true },
           { key: 'satir_aciklama', label: 'Açıklama' },
-          { key: 'miktar', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'satir_aciklama2', label: 'Açıklama 2' },
+          { key: 'satir_aciklama3', label: 'Açıklama 3' },
           { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi', size: 'short' },
+          { key: 'miktar', label: 'Miktar', type: 'number', size: 'short', required: true },
+          { key: 'fiyat_liste_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'liste_adi', codeKey: 'liste_kodu' },
           { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number', size: 'short' },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', size: 'short' },
+          { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
+          { key: 'kur', label: 'Kur', type: 'number', size: 'short' },
+          { key: 'yerel_birim_fiyat', label: 'Yerel br.fiyat', type: 'number', size: 'short', readOnly: true },
           { key: 'iskonto_oran', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'iskonto_oran2', label: 'İsk2 %', type: 'number', size: 'short' },
-          { key: 'kdv_oran', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'iskonto_oran3', label: 'İsk3 %', type: 'number', size: 'short' },
           { key: 'kdv_durumu', label: 'KDV durum', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'parti_no', label: 'Parti' },
-          { key: 'seri_no', label: 'Seri' },
-          { key: 'raf_kodu', label: 'Raf' },
-          { key: 'stok_statu', label: 'Statü', type: 'select', options: ['Kullanilabilir', 'Kalitede', 'Bloke'] },
+          { key: 'kdv_kodu', label: 'KDV kodu', size: 'short' },
+          { key: 'kdv_oran', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'tevkifat_kodu', label: 'Tevkifat kodu', size: 'short' },
+          { key: 'tevkifat_oran', label: 'Tevkifat %', type: 'number', size: 'short' },
+          { key: 'otv_kodu', label: 'ÖTV kodu', size: 'short' },
+          { key: 'otv_oran', label: 'ÖTV %', type: 'number', size: 'short' },
+          { key: 'bandrol_oran', label: 'Bandrol %', type: 'number', size: 'short' },
+          { key: 'vergi_semasi', label: 'Vergi şeması', size: 'short' },
+          { key: 'vade_tarihi', label: 'Vade', type: 'date', size: 'short' },
+          { key: 'vade_gun', label: 'Vade gün', type: 'number', size: 'short' },
+          { key: 'musteri_referans_kod', label: 'Müş. ref' },
+          { key: 'parti_no', label: 'Parti', size: 'short' },
+          { key: 'seri_no', label: 'Seri', size: 'short' },
+          { key: 'siparis_detay_id', label: 'Sip. satır id', type: 'number', size: 'short' },
+          { key: 'siparis_no', label: 'Sipariş no', size: 'short' },
+          { key: 'fatura_edilen_miktar', label: 'Fatura edilen', type: 'number', size: 'short', readOnly: true },
+          { key: 'tutar_ht', label: 'Tutar', type: 'number', size: 'short', readOnly: true },
+          { key: 'stok_statu', label: 'Statü', type: 'select', options: ['Kullanilabilir', 'Kalitede', 'Bloke'], size: 'short' },
         ],
         detailKey: 'satirlar',
-        detailSlots: 5,
+        detailSlots: 6,
         detailAsFields: false,
-        defaults: { para_birimi: 'TRY', kur: 1, kur_tipi: 'TCMB-SATIS', senaryo: 'TEMELIRSALIYE', irsaliye_tipi: 'SEVK', durum: 'Taslak' },
-        // Tek ekran: başlık+sevk üstte, kalemler altta
+        defaults: {
+          para_birimi: 'TRY',
+          kur: 1,
+          kur_tipi: 'TCMB-SATIS',
+          kur_secenegi: 'SevkTarihi',
+          senaryo: 'TEMELIRSALIYE',
+          irsaliye_tipi: 'SEVK',
+          e_belge_durum: 'Hazir',
+          fatura_durumu: 'Irsaliye',
+          durum: 'Taslak',
+          yazdirildi: false,
+          yerel_para_cikti: false,
+          sevk_ulke: 'TR',
+        },
         formTabs: [
           {
-            id: 'kart',
-            label: 'İrsaliye',
+            id: 'giris',
+            label: 'İrsaliye Giriş',
             kind: 'master-grid',
-            masterFields: [
-              { key: 'irsaliye_no', label: 'İrsaliye no', code: true },
-              { key: 'cari_id', label: 'Müşteri', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu', required: true },
-              { key: 'depo_id', label: 'Depo', type: 'lookup', lookup: 'depolar', valueKey: 'id', labelKey: 'depo_adi', codeKey: 'depo_kodu', required: true },
-              { key: 'siparis_id', label: 'Sipariş', type: 'lookup', lookup: 'siparisler', valueKey: 'id', labelKey: 'siparis_no', fillFrom: 'siparis-kalemler' },
-              { key: 'sevk_emri_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'sevk_no', fillFrom: 'sevk-satirlar' },
-              { key: 'kaynak_belge_tipi', label: 'Kaynak belge tipi' },
-              { key: 'kaynak_belge_id', label: 'Kaynak belge id', type: 'number' },
-              { key: 'senaryo', label: 'Senaryo', type: 'select', options: ['TEMELIRSALIYE'] },
-              { key: 'irsaliye_tipi', label: 'Tip', type: 'select', options: ['SEVK'] },
-              { key: 'irsaliye_tarihi', label: 'İrsaliye tarihi', type: 'date' },
-              { key: 'sevk_tarihi', label: 'Sevk tarihi', type: 'date' },
-              { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
-              { key: 'kur_tipi', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-              { key: 'kur', label: 'Kur', type: 'number' },
-              { key: 'proje_kodu', label: 'Proje kodu' },
-              { key: 'bolge', label: 'Bölge' },
-              { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'] },
-              { key: 'ettn', label: 'ETTN' },
-              { key: 'sevk_adresi', label: 'Sevk adresi' },
-              { key: 'sevk_il', label: 'İl' },
-              { key: 'sevk_ilce', label: 'İlçe' },
-              { key: 'sevk_ulke', label: 'Ülke' },
-              { key: 'sevk_posta_kodu', label: 'Posta kodu' },
-              { key: 'arac_plaka', label: 'Araç plaka' },
-              { key: 'dorse_plaka', label: 'Dorse plaka' },
-              { key: 'sofor_adi', label: 'Şoför adı' },
-              { key: 'sofor_soyadi', label: 'Şoför soyadı' },
-              { key: 'sofor_tckn', label: 'Şoför TCKN' },
-              { key: 'tasiyici_unvan', label: 'Taşıyıcı ünvan' },
-              { key: 'tasiyici_vkn', label: 'Taşıyıcı VKN' },
-              { key: 'aciklama', label: 'Açıklama' },
-              { key: 'not_public', label: 'Müşteri notu' },
-              { key: 'not_internal', label: 'Dahili not' },
-              { key: 'hareket_kodu_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'hareket_adi', codeKey: 'hareket_kodu' },
-            ],
+            masterFields: null,
             grid: {
               key: 'satirlar',
-              slots: 5,
-              fields: [
-                { key: 'stok_id', label: 'Malzeme', type: 'lookup', lookup: 'stoklar', valueKey: 'id', labelKey: 'stok_adi', codeKey: 'stok_kodu' },
-                { key: 'satir_aciklama', label: 'Açıklama' },
-                { key: 'miktar', label: 'Miktar', type: 'number' },
-                { key: 'birim', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'birim_kodu', labelKey: 'birim_adi' },
-                { key: 'birim_fiyat', label: 'Birim fiyat', type: 'number' },
-                { key: 'iskonto_oran', label: 'İsk %', type: 'number' },
-                { key: 'kdv_oran', label: 'KDV %', type: 'number' },
-                { key: 'kdv_durumu', label: 'KDV durum', type: 'select', options: ['Haric', 'Dahil'] },
-              ],
+              slots: 6,
+              fields: null,
             },
+          },
+          {
+            id: 'genel',
+            label: 'Genel Bilgiler',
+            kind: 'fields',
+            fields: [
+              { key: 'sevk_cari_id', label: 'Sevk cari', type: 'lookup', lookup: 'cariler-musteri', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu' },
+              { key: 'sevk_adres_tipi', label: 'Sevk adres tipi' },
+              { key: 'sevk_ad', label: 'Sevk ad' },
+              { key: 'sevk_soyad', label: 'Sevk soyad' },
+              { key: 'sevk_adres1', label: 'Sevk adres 1', size: 'wide' },
+              { key: 'sevk_adres2', label: 'Sevk adres 2', size: 'wide' },
+              { key: 'sevk_adres3', label: 'Sevk adres 3', size: 'wide' },
+              { key: 'sevk_ulke', label: 'Sevk ülke', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_adi', labelKey: 'ulke_adi' },
+              { key: 'sevk_il', label: 'Sevk il', type: 'lookup', lookup: 'sehirler', valueKey: 'sehir_adi', labelKey: 'sehir_adi' },
+              { key: 'sevk_ilce', label: 'Sevk ilçe', type: 'lookup', lookup: 'ilceler', valueKey: 'ilce_adi', labelKey: 'ilce_adi' },
+              { key: 'sevk_posta_kodu', label: 'Sevk posta kodu' },
+              { key: 'sevk_tel1', label: 'Sevk tel 1' },
+              { key: 'sevk_tel2', label: 'Sevk tel 2' },
+              { key: 'gumruk', label: 'Gümrük' },
+              { key: 'sevk_adresi', label: 'Sevk adresi (özet)', size: 'wide' },
+              { key: 'tevkifat_kodu', label: 'Tevkifat kodu' },
+              { key: 'tevkifat_oran', label: 'Tevkifat oranı', type: 'number' },
+              { key: 'tevkifat_tutari', label: 'Tevkifat tutarı', type: 'number' },
+              { key: 'vergi_semasi', label: 'Vergi şeması' },
+              { key: 'ozel_hareket_tipi', label: 'Özel hareket tipi' },
+              { key: 'fin_vade_tarihi', label: 'Fin. vade tarih', type: 'date' },
+              { key: 'fin_vade_gun', label: 'Fin. vade gün', type: 'number' },
+              { key: 'stok_tarihi', label: 'Stok tarihi', type: 'date' },
+              { key: 'fatura_adres1', label: 'Fatura adres 1', size: 'wide' },
+              { key: 'fatura_adres2', label: 'Fatura adres 2', size: 'wide' },
+              { key: 'fatura_adres3', label: 'Fatura adres 3', size: 'wide' },
+              { key: 'fatura_posta_kodu', label: 'Fatura posta kodu' },
+              { key: 'fatura_ulke', label: 'Fatura ülke', type: 'lookup', lookup: 'ulkeler', valueKey: 'ulke_adi', labelKey: 'ulke_adi' },
+              { key: 'fatura_il', label: 'Fatura il', type: 'lookup', lookup: 'sehirler', valueKey: 'sehir_adi', labelKey: 'sehir_adi' },
+              { key: 'fatura_ilce', label: 'Fatura ilçe', type: 'lookup', lookup: 'ilceler', valueKey: 'ilce_adi', labelKey: 'ilce_adi' },
+              { key: 'sozlesme_kodu', label: 'Sözleşme kodu' },
+              { key: 'cari_unvan', label: 'Cari unvan', size: 'wide' },
+              { key: 'cari_unvan2', label: 'Cari unvan 2', size: 'wide' },
+              { key: 'vergi_dairesi', label: 'Vergi dairesi' },
+              { key: 'vergi_no', label: 'Vergi no' },
+            ],
+          },
+          {
+            id: 'e-irsaliye',
+            label: 'e-İrsaliye',
+            kind: 'fields',
+            fields: [
+              { key: 'irsaliye_tipi', label: 'e-İrsaliye tipi', type: 'select', options: ['SEVK', 'MATBU', 'IADE'] },
+              { key: 'senaryo', label: 'İrsaliye senaryosu', type: 'select', options: ['TEMELIRSALIYE', 'TICARIIRSALIYE'] },
+              { key: 'ettn', label: 'ETTN', readOnly: true },
+              { key: 'posta_kutusu_alias', label: 'Posta kutusu (alias)' },
+              { key: 'alis_on_irsaliye', label: 'Alış ön irsaliye' },
+              { key: 'matbu_seri', label: 'Matbu seri' },
+              { key: 'matbu_sira', label: 'Matbu sıra' },
+              { key: 'matbu_belge_tarihi', label: 'Matbu belge tarih', type: 'date' },
+              { key: 'portal_iletildigi_tarih', label: 'Portala iletilen tarih', type: 'date' },
+              { key: 'e_ticaret_web', label: 'e-Ticaret web adres', size: 'wide' },
+              { key: 'e_ticaret_ad', label: 'e-Ticaret ad' },
+              { key: 'e_ticaret_soyad', label: 'e-Ticaret soyad' },
+              { key: 'e_ticaret_email', label: 'e-Ticaret email' },
+            ],
+          },
+          {
+            id: 'arac',
+            label: 'Araç Bilgileri',
+            kind: 'fields',
+            fields: [
+              { key: 'teslim_eden', label: 'Teslim eden' },
+              { key: 'arac_kodu', label: 'Araç kodu' },
+              { key: 'arac_plaka', label: 'Araç plaka' },
+              { key: 'sofor_tckn', label: 'TCKN' },
+              { key: 'sofor_adi', label: 'Şoför adı' },
+              { key: 'sofor_soyadi', label: 'Şoför soyadı' },
+              { key: 'sofor_cep', label: 'Cep no' },
+              { key: 'arac_aciklama', label: 'Açıklama', size: 'wide' },
+              { key: 'dorse_plaka', label: 'Dorse plaka no' },
+              { key: 'kargo_no', label: 'Kargo numarası' },
+              { key: 'tasiyici_unvan', label: 'Taşıyıcı ünvan', size: 'wide' },
+              { key: 'tasiyici_vkn', label: 'Taşıyıcı VKN' },
+            ],
           },
         ],
       },
@@ -8175,7 +8267,7 @@ const MASTER_PRIMARY_MAX = 6;
 /** Alt şeride inen not / açıklama alanları (master’dan ayrılır). */
 function isFooterNoteField(f) {
   const k = String(f?.key || '');
-  return /^(aciklama|not_public|not_internal|acma_kapama|kaynak|onay_durumu)$/i.test(k)
+  return /^(aciklama(_\d+)?|not_public|not_internal|acma_kapama|kaynak|onay_durumu|irsaliye_alti_iskonto)$/i.test(k)
     || /^not_/i.test(k);
 }
 
@@ -8192,6 +8284,7 @@ function computeDocumentTotals(rows, fields) {
   let kdv = 0;
   let otv = 0;
   let tev = 0;
+  let bandrol = 0;
   let iskToplam = 0;
   list.forEach((row) => {
     const miktar = Number(row.miktar) || 0;
@@ -8202,6 +8295,7 @@ function computeDocumentTotals(rows, fields) {
     const kdvOran = Number(row.kdv_oran) || 0;
     const otvOran = Number(row.otv_oran) || 0;
     const tevOran = Number(row.tevkifat_oran) || 0;
+    const bandOran = Number(row.bandrol_oran) || 0;
     const dahil = String(row.kdv_durumu || 'Haric').toLocaleLowerCase('tr').startsWith('dahil');
     if (dahil && kdvOran > 0) fiyat /= (1 + kdvOran / 100);
     const brut = miktar * fiyat;
@@ -8214,10 +8308,12 @@ function computeDocumentTotals(rows, fields) {
     const otvSatir = mal * (otvOran / 100);
     const kdvSatir = (mal + otvSatir) * (kdvOran / 100);
     const tevSatir = kdvSatir * (tevOran / 100);
+    const bandSatir = mal * (bandOran / 100);
     ara += mal;
     kdv += kdvSatir;
     otv += otvSatir;
     tev += tevSatir;
+    bandrol += bandSatir;
     iskToplam += i1 + i2 + i3;
   });
   return {
@@ -8227,7 +8323,8 @@ function computeDocumentTotals(rows, fields) {
     toplam_otv: otv,
     toplam_kdv: kdv,
     toplam_tevkifat: tev,
-    genel_toplam: ara + otv + kdv - tev,
+    toplam_bandrol: bandrol,
+    genel_toplam: ara + otv + kdv - tev + bandrol,
   };
 }
 
@@ -8255,12 +8352,20 @@ function renderDocumentFooter(rec, noteFields, gridFields, gridKey) {
   if (showMoney && totals.toplam_tevkifat > 0) {
     extraRows.push(`<div class="md-total-row"><label>Tevkifat</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_tevkifat))}" /></div>`);
   }
+  if (showMoney && totals.toplam_bandrol > 0) {
+    extraRows.push(`<div class="md-total-row"><label>Bandrol</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_bandrol))}" /></div>`);
+  }
+  const altiIsk = Number(rec?.irsaliye_alti_iskonto) || 0;
+  if (showMoney && altiIsk > 0) {
+    extraRows.push(`<div class="md-total-row"><label>İrs. altı iskonto</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(altiIsk))}" /></div>`);
+  }
+  const genel = showMoney ? (Number(totals.genel_toplam) || 0) - altiIsk : null;
   const totalsHtml = showMoney
     ? `
-      <div class="md-total-row"><label>Ara toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.ara_toplam))}" /></div>
+      <div class="md-total-row"><label>Mal tutarı</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.ara_toplam))}" /></div>
       ${extraRows.join('')}
       <div class="md-total-row"><label>Toplam KDV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.toplam_kdv))}" /></div>
-      <div class="md-total-row md-total-row--grand"><label>Genel toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.genel_toplam))}" /></div>`
+      <div class="md-total-row md-total-row--grand"><label>Genel toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(genel))}" /></div>`
     : `
       <div class="md-total-row"><label>Satır</label><input type="text" readonly tabindex="-1" value="${totals.count} adet" /></div>`;
   return `
