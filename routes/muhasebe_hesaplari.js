@@ -4,8 +4,24 @@ const pool = require('../db');
 
 router.get('/', async (req, res) => {
     try {
+        const ulke = req.query.ulke_kodu || null;
+        const tip = req.query.hesap_tipi || null;
+        const params = [];
+        const where = ['TRUE'];
+        if (ulke) {
+            params.push(ulke);
+            where.push(`(ulke_kodu = $${params.length} OR ulke_kodu IS NULL)`);
+        }
+        if (tip) {
+            params.push(tip);
+            where.push(`hesap_tipi = $${params.length}`);
+        }
+        if (String(req.query.aktif || '') === '1' || String(req.query.aktif || '').toLowerCase() === 'true') {
+            where.push('aktif = TRUE');
+        }
         const sonuc = await pool.query(
-            'SELECT * FROM muhasebe_hesaplari ORDER BY hesap_kodu'
+            `SELECT * FROM muhasebe_hesaplari WHERE ${where.join(' AND ')} ORDER BY hesap_kodu`,
+            params
         );
         res.json(sonuc.rows);
     } catch (err) {
@@ -25,7 +41,10 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { hesap_kodu, hesap_adi, hesap_tipi, ust_hesap_kodu, para_birimi, aktif } = req.body;
+        const {
+            hesap_kodu, hesap_adi, hesap_tipi, ust_hesap_kodu, para_birimi, aktif,
+            ulke_kodu, hesap_plani_kodu, hesap_sinifi, normal_bakiye, kontrol_hesabi, mutabakat_tipi,
+        } = req.body;
         if (!hesap_kodu || !hesap_adi) {
             return res.status(400).json({ hata: 'hesap_kodu ve hesap_adi zorunlu.' });
         }
@@ -36,11 +55,17 @@ router.post('/', async (req, res) => {
         const sonuc = await pool.query(
             `
             INSERT INTO muhasebe_hesaplari
-                (hesap_kodu, hesap_adi, hesap_tipi, ust_hesap_kodu, para_birimi, aktif)
-            VALUES ($1,$2,$3,$4,COALESCE($5,'TRY'),COALESCE($6,TRUE))
+                (hesap_kodu, hesap_adi, hesap_tipi, ust_hesap_kodu, para_birimi, aktif,
+                 ulke_kodu, hesap_plani_kodu, hesap_sinifi, normal_bakiye, kontrol_hesabi, mutabakat_tipi)
+            VALUES ($1,$2,$3,$4,COALESCE($5,'TRY'),COALESCE($6,TRUE),
+                    COALESCE($7,'TR'),COALESCE($8,'TDHP'),$9,COALESCE($10,'Borc'),COALESCE($11,FALSE),$12)
             RETURNING *
             `,
-            [hesap_kodu, hesap_adi, tip, ust_hesap_kodu || null, para_birimi, aktif]
+            [
+                hesap_kodu, hesap_adi, tip, ust_hesap_kodu || null, para_birimi, aktif,
+                ulke_kodu, hesap_plani_kodu, hesap_sinifi || null, normal_bakiye, kontrol_hesabi,
+                mutabakat_tipi || null,
+            ]
         );
         res.status(201).json(sonuc.rows[0]);
     } catch (err) {

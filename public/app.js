@@ -4618,9 +4618,10 @@ const MODULES = [
     id: 'finans',
     title: 'Finans',
     sections: [
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['hesap-plani', 'hesap-belirleme-kurallari', 'fiyat-listeleri'] },
-      { id: 'belgeler', title: 'Belgeler', screenIds: ['muhasebe-belgeleri', 'fatura-kontrolleri'] },
-      { id: 'raporlar', title: 'Raporlar', screenIds: ['mizan', 'kokpit'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['hesap-plani', 'hesap-belirleme-kurallari', 'finans-vergi-kodlari', 'muhasebe-donemleri', 'fiyat-listeleri'] },
+      { id: 'belgeler', title: 'Belgeler', screenIds: ['muhasebe-belgeleri', 'finans-nakit-hareketleri', 'fatura-kontrolleri'] },
+      { id: 'nakit', title: 'Banka / Kasa', screenIds: ['finans-banka-hesaplari', 'finans-kasa-hesaplari'] },
+      { id: 'raporlar', title: 'Raporlar', screenIds: ['mizan', 'finans-yevmiye', 'finans-bilanco', 'finans-gelir-tablosu', 'kokpit'] },
     ],
     screens: [
       {
@@ -4633,15 +4634,19 @@ const MODULES = [
         codeField: 'hesap_kodu',
         nameField: 'hesap_adi',
         numeratorSeri: null,
+        helpText: 'Ana/Üst hesaplar sınıflandırma içindir; fiş yalnızca Doğrudan (yaprak) hesaplara yazılır. Ülke paketi şirketin muhasebe ülkesine göre filtrelenir.',
         filters: [
           { key: 'hesap_kodu', label: 'Hesap kodu' },
           { key: 'hesap_adi', label: 'Hesap adı' },
           { key: 'hesap_tipi', label: 'Tip' },
+          { key: 'ulke_kodu', label: 'Ülke', queryParam: true },
         ],
         columns: [
           { key: 'hesap_kodu', label: 'Kod', mono: true },
           { key: 'hesap_adi', label: 'Ad' },
           { key: 'hesap_tipi', label: 'Tip' },
+          { key: 'ulke_kodu', label: 'Ülke' },
+          { key: 'hesap_sinifi', label: 'Sınıf' },
           { key: 'ust_hesap_kodu', label: 'Üst', mono: true },
           { key: 'aktif', label: 'Aktif' },
         ],
@@ -4649,15 +4654,22 @@ const MODULES = [
           { key: 'hesap_kodu', label: 'Hesap kodu', code: true, editableOnNew: true, required: true },
           { key: 'hesap_adi', label: 'Hesap adı', name: true, required: true },
           { key: 'hesap_tipi', label: 'Hesap tipi', type: 'select', options: ['Ana', 'Ust', 'Dogrudan'], required: true },
+          { key: 'ulke_kodu', label: 'Ülke', type: 'select', options: ['TR', 'AZ', 'DE', 'NL'], required: true },
+          { key: 'hesap_plani_kodu', label: 'Hesap planı' },
+          { key: 'hesap_sinifi', label: 'Sınıf (1–6)' },
+          { key: 'normal_bakiye', label: 'Normal bakiye', type: 'select', options: ['Borc', 'Alacak'] },
         ],
         detailFields: [
           { key: 'ust_hesap_kodu', label: 'Üst hesap kodu' },
-          { key: 'para_birimi', label: 'Para birimi' },
+          { key: 'para_birimi', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kontrol_hesabi', label: 'Kontrol hesabı', type: 'checkbox' },
+          { key: 'mutabakat_tipi', label: 'Mutabakat', type: 'select', options: ['', 'Cari', 'Banka', 'Kasa', 'Stok', 'SabitKiymet'] },
           { key: 'aktif', label: 'Aktif', type: 'checkbox' },
           { key: 'silinecek', label: 'Silinecek', type: 'checkbox' },
         ],
         detailKey: null,
         detailAsFields: true,
+        defaults: { ulke_kodu: 'TR', hesap_plani_kodu: 'TDHP', hesap_tipi: 'Dogrudan', normal_bakiye: 'Borc', aktif: true },
       },
       {
         id: 'muhasebe-belgeleri',
@@ -4669,31 +4681,217 @@ const MODULES = [
         codeField: 'belge_no',
         nameField: 'aciklama',
         numeratorSeri: 'MUHASEBE_BELGE',
+        approveAction: { label: 'Kesinleştir', path: '/muhasebe-belgeleri/{id}/kesinlestir' },
+        convertAction: { label: 'Ters Kayıt', path: '/muhasebe-belgeleri/{id}/ters-kayit' },
+        helpText: 'Toplam borç = toplam alacak olmalıdır. Kesinleşmiş fiş değiştirilemez; hata için ters kayıt kullanın.',
         filters: [
           { key: 'belge_no', label: 'Belge no' },
           { key: 'durum', label: 'Durum' },
+          { key: 'ulke_kodu', label: 'Ülke' },
+          { key: 'fis_tipi', label: 'Fiş tipi' },
         ],
         columns: [
           { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'yevmiye_no', label: 'Yevmiye' },
           { key: 'belge_tarihi', label: 'Tarih' },
+          { key: 'fis_tipi', label: 'Tip' },
+          { key: 'ulke_kodu', label: 'Ülke' },
           { key: 'durum', label: 'Durum' },
           { key: 'toplam_borc', label: 'Borç' },
           { key: 'toplam_alacak', label: 'Alacak' },
         ],
         masterFields: [
           { key: 'belge_no', label: 'Belge no', code: true },
-          { key: 'belge_tarihi', label: 'Belge tarihi', type: 'date' },
+          { key: 'belge_tarihi', label: 'Belge tarihi', type: 'date', required: true },
+          { key: 'fis_tipi', label: 'Fiş tipi', type: 'select', options: ['Mahsup', 'Tahsilat', 'Tediye', 'Acilis', 'Kapanis', 'Ters'], required: true },
+          { key: 'ulke_kodu', label: 'Muhasebe ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL'], required: true },
+          { key: 'islem_ulke_kodu', label: 'İşlem ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL', ''] },
+          { key: 'vergi_ulke_kodu', label: 'Vergi ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL', ''] },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'kur', label: 'Kur', type: 'number' },
           { key: 'aciklama', label: 'Açıklama', name: true },
-          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal'] },
+          { key: 'durum', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal'], readOnly: true },
+          { key: 'yevmiye_no', label: 'Yevmiye no', readOnly: true },
         ],
         detailFields: [
-          { key: 'hesap_id', label: 'Hesap', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'hesap_adi', codeKey: 'hesap_kodu' },
-          { key: 'borc', label: 'Borç', type: 'number' },
-          { key: 'alacak', label: 'Alacak', type: 'number' },
+          { key: 'hesap_id', label: 'Hesap', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'hesap_adi', codeKey: 'hesap_kodu', required: true },
+          { key: 'borc', label: 'Borç', type: 'number', help: 'Hesabın sol tarafı (varlık/gider artışı genelde borç).' },
+          { key: 'alacak', label: 'Alacak', type: 'number', help: 'Hesabın sağ tarafı (kaynak/gelir artışı genelde alacak).' },
+          { key: 'vergi_kodu', label: 'Vergi kodu' },
+          { key: 'cari_id', label: 'Cari', type: 'lookup', lookup: 'cariler', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu' },
           { key: 'aciklama', label: 'Kalem açıklama' },
         ],
         detailKey: 'kalemler',
-        detailSlots: 6,
+        detailSlots: 8,
+        defaults: { fis_tipi: 'Mahsup', ulke_kodu: 'TR', para_birimi: 'TRY', kur: 1, durum: 'Taslak' },
+      },
+      {
+        id: 'muhasebe-donemleri',
+        techId: 'FIN-PER-SCR-001',
+        businessNameEn: 'AccountingPeriodScreen',
+        title: 'Muhasebe Dönemleri',
+        endpoint: '/muhasebe-donemleri',
+        crud: false,
+        codeField: 'donem_no',
+        nameField: 'durum',
+        approveAction: { label: 'Dönemi Kapat', path: '/muhasebe-donemleri/{id}/kapat' },
+        convertAction: { label: 'Yeniden Aç', path: '/muhasebe-donemleri/{id}/yeniden-ac' },
+        helpText: 'Kapalı döneme kesin fiş yazılamaz. Yeniden açma yetki ve audit ile izlenir.',
+        filters: [
+          { key: 'mali_yil', label: 'Mali yıl' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'mali_yil', label: 'Yıl' },
+          { key: 'donem_no', label: 'Dönem' },
+          { key: 'baslangic_tarihi', label: 'Başlangıç' },
+          { key: 'bitis_tarihi', label: 'Bitiş' },
+          { key: 'durum', label: 'Durum' },
+          { key: 'kapatan_kullanici', label: 'Kapatan' },
+        ],
+        masterFields: [
+          { key: 'mali_yil', label: 'Mali yıl', readOnly: true },
+          { key: 'donem_no', label: 'Dönem no', readOnly: true },
+          { key: 'baslangic_tarihi', label: 'Başlangıç', type: 'date', readOnly: true },
+          { key: 'bitis_tarihi', label: 'Bitiş', type: 'date', readOnly: true },
+          { key: 'durum', label: 'Durum', readOnly: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'finans-vergi-kodlari',
+        techId: 'FIN-TAX-SCR-001',
+        businessNameEn: 'TaxCodeScreen',
+        title: 'Vergi Kodları',
+        endpoint: '/finans-vergi-kodlari',
+        crud: false,
+        codeField: 'vergi_kodu',
+        nameField: 'vergi_adi',
+        filters: [
+          { key: 'ulke_kodu', label: 'Ülke', queryParam: true },
+          { key: 'vergi_kodu', label: 'Kod' },
+        ],
+        columns: [
+          { key: 'ulke_kodu', label: 'Ülke' },
+          { key: 'vergi_kodu', label: 'Kod', mono: true },
+          { key: 'vergi_adi', label: 'Ad' },
+          { key: 'vergi_turu', label: 'Tür' },
+          { key: 'oran', label: 'Oran %' },
+          { key: 'hesaplanan_hesap_kodu', label: 'Hesaplanan' },
+          { key: 'indirilecek_hesap_kodu', label: 'İndirilecek' },
+        ],
+      },
+      {
+        id: 'finans-banka-hesaplari',
+        techId: 'FIN-BNK-SCR-001',
+        businessNameEn: 'BankAccountScreen',
+        title: 'Banka Hesapları',
+        endpoint: '/finans-nakit/banka-hesaplari',
+        crud: true,
+        codeField: 'hesap_kodu',
+        nameField: 'hesap_adi',
+        numeratorSeri: 'FIN_BANKA_HESAP',
+        filters: [
+          { key: 'hesap_kodu', label: 'Kod' },
+          { key: 'hesap_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'hesap_kodu', label: 'Kod', mono: true },
+          { key: 'hesap_adi', label: 'Ad' },
+          { key: 'iban', label: 'IBAN', mono: true },
+          { key: 'para_birimi', label: 'PB' },
+          { key: 'banka_adi', label: 'Banka' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'hesap_kodu', label: 'Hesap kodu', code: true },
+          { key: 'hesap_adi', label: 'Hesap adı', name: true, required: true },
+          { key: 'banka_id', label: 'Banka', type: 'lookup', lookup: 'bankalar', valueKey: 'id', labelKey: 'banka_adi', codeKey: 'banka_kodu' },
+          { key: 'iban', label: 'IBAN' },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', required: true },
+          { key: 'muhasebe_hesap_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'hesap_adi', codeKey: 'hesap_kodu' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { para_birimi: 'TRY', aktif: true },
+      },
+      {
+        id: 'finans-kasa-hesaplari',
+        techId: 'FIN-CSH-SCR-001',
+        businessNameEn: 'CashAccountScreen',
+        title: 'Kasa Hesapları',
+        endpoint: '/finans-nakit/kasa-hesaplari',
+        crud: true,
+        codeField: 'kasa_kodu',
+        nameField: 'kasa_adi',
+        numeratorSeri: 'FIN_KASA',
+        filters: [
+          { key: 'kasa_kodu', label: 'Kod' },
+          { key: 'kasa_adi', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'kasa_kodu', label: 'Kod', mono: true },
+          { key: 'kasa_adi', label: 'Ad' },
+          { key: 'para_birimi', label: 'PB' },
+          { key: 'aktif', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'kasa_kodu', label: 'Kasa kodu', code: true },
+          { key: 'kasa_adi', label: 'Kasa adı', name: true, required: true },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi', required: true },
+          { key: 'muhasebe_hesap_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'hesap_adi', codeKey: 'hesap_kodu' },
+          { key: 'aktif', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { para_birimi: 'TRY', aktif: true },
+      },
+      {
+        id: 'finans-nakit-hareketleri',
+        techId: 'FIN-CSHMV-SCR-001',
+        businessNameEn: 'CashMovementScreen',
+        title: 'Nakit Hareketleri',
+        endpoint: '/finans-nakit/hareketler',
+        crud: true,
+        codeField: 'hareket_no',
+        nameField: 'aciklama',
+        numeratorSeri: 'FIN_NAKIT_HAREKET',
+        filters: [
+          { key: 'hareket_no', label: 'No' },
+          { key: 'yon', label: 'Yön' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'hareket_no', label: 'No', mono: true },
+          { key: 'hareket_tarihi', label: 'Tarih' },
+          { key: 'yon', label: 'Yön' },
+          { key: 'tutar', label: 'Tutar' },
+          { key: 'para_birimi', label: 'PB' },
+          { key: 'cari_adi', label: 'Cari' },
+          { key: 'durum', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'hareket_no', label: 'Hareket no', code: true },
+          { key: 'hareket_tarihi', label: 'Tarih', type: 'date', required: true },
+          { key: 'yon', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Virman'], required: true },
+          { key: 'tutar', label: 'Tutar', type: 'number', required: true },
+          { key: 'para_birimi', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'pb_kodu', labelKey: 'pb_adi' },
+          { key: 'banka_hesap_id', label: 'Banka hesabı', type: 'number' },
+          { key: 'kasa_hesap_id', label: 'Kasa', type: 'number' },
+          { key: 'cari_id', label: 'Cari', type: 'lookup', lookup: 'cariler', valueKey: 'id', labelKey: 'cari_adi', codeKey: 'cari_kodu' },
+          { key: 'muhasebelestir', label: 'Muhasebeleştir', type: 'checkbox' },
+          { key: 'karsi_hesap_kodu', label: 'Karşı hesap kodu' },
+          { key: 'aciklama', label: 'Açıklama', name: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { yon: 'Giris', para_birimi: 'TRY', muhasebelestir: true },
       },
       {
         id: 'mizan',
@@ -4707,6 +4905,8 @@ const MODULES = [
         filters: [
           { key: 'hesap_kodu', label: 'Hesap kodu' },
           { key: 'hesap_adi', label: 'Hesap adı' },
+          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', queryParam: true },
         ],
         columns: [
           { key: 'hesap_kodu', label: 'Hesap', mono: true },
@@ -4714,6 +4914,72 @@ const MODULES = [
           { key: 'borc', label: 'Borç' },
           { key: 'alacak', label: 'Alacak' },
           { key: 'bakiye', label: 'Bakiye' },
+        ],
+      },
+      {
+        id: 'finans-yevmiye',
+        techId: 'FIN-JL-RPT-001',
+        businessNameEn: 'JournalReport',
+        title: 'Yevmiye Defteri',
+        endpoint: '/finans-raporlar/yevmiye',
+        crud: false,
+        codeField: 'belge_no',
+        nameField: 'hesap_kodu',
+        filters: [
+          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', queryParam: true },
+        ],
+        columns: [
+          { key: 'belge_tarihi', label: 'Tarih' },
+          { key: 'yevmiye_no', label: 'Yevmiye' },
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'hesap_kodu', label: 'Hesap', mono: true },
+          { key: 'hesap_adi', label: 'Ad' },
+          { key: 'borc', label: 'Borç' },
+          { key: 'alacak', label: 'Alacak' },
+        ],
+      },
+      {
+        id: 'finans-bilanco',
+        techId: 'FIN-BS-RPT-001',
+        businessNameEn: 'BalanceSheetReport',
+        title: 'Bilanço (Özet)',
+        endpoint: '/finans-raporlar/bilanco',
+        crud: false,
+        codeField: 'sinif',
+        nameField: 'ad',
+        listResponseKey: 'satirlar',
+        filters: [
+          { key: 'bitis', label: 'Tarih', queryParam: true },
+          { key: 'ulke_kodu', label: 'Ülke', queryParam: true },
+        ],
+        columns: [
+          { key: 'sinif', label: 'Sınıf' },
+          { key: 'ad', label: 'Kalem' },
+          { key: 'tutar', label: 'Tutar' },
+        ],
+      },
+      {
+        id: 'finans-gelir-tablosu',
+        techId: 'FIN-PL-RPT-001',
+        businessNameEn: 'IncomeStatementReport',
+        title: 'Gelir Tablosu',
+        endpoint: '/finans-raporlar/gelir-tablosu',
+        crud: false,
+        codeField: 'hesap_kodu',
+        nameField: 'hesap_adi',
+        listResponseKey: 'satirlar',
+        filters: [
+          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', queryParam: true },
+          { key: 'ulke_kodu', label: 'Ülke', queryParam: true },
+        ],
+        columns: [
+          { key: 'hesap_kodu', label: 'Hesap', mono: true },
+          { key: 'hesap_adi', label: 'Ad' },
+          { key: 'borc', label: 'Borç' },
+          { key: 'alacak', label: 'Alacak' },
+          { key: 'net', label: 'Net' },
         ],
       },
       {
@@ -7958,6 +8224,9 @@ async function openScreen(id, opts = {}) {
     }
     if (state.screenId !== id) return;
     let rows = Array.isArray(data) ? data : [];
+    if (!Array.isArray(data) && data && typeof data === 'object' && screen.listResponseKey) {
+      rows = Array.isArray(data[screen.listResponseKey]) ? data[screen.listResponseKey] : [];
+    }
     if (screen.id === 'numarator-tanimi') {
       rows = rows.map((r) => ({ ...r, id: r.seri_kodu }));
     }
@@ -9776,6 +10045,16 @@ function renderForm(screen) {
     if (screen.id === 'irsaliyeler' && rec.durum === 'FaturayaDonustu') {
       show = false;
     }
+    if (screen.id === 'muhasebe-belgeleri') {
+      if (rec.durum === 'Taslak') show = Boolean(screen.approveAction);
+      else if (rec.durum === 'Onayli' && !rec.ters_belge_id) show = Boolean(screen.convertAction);
+      else show = false;
+    }
+    if (screen.id === 'muhasebe-donemleri') {
+      if (rec.durum === 'Kapali') show = Boolean(screen.convertAction);
+      else if (['Acik', 'YenidenAcik'].includes(rec.durum)) show = Boolean(screen.approveAction);
+      else show = false;
+    }
     if (screen.id === 'uretim-emirleri') {
       show = Boolean(screen.approveAction && ['Taslak', 'OnayBekliyor'].includes(rec.durum));
     }
@@ -9853,6 +10132,8 @@ function renderForm(screen) {
     if (show) {
       const preferApprove = (screen.approveAction && (
         (screen.id === 'irsaliyeler' && rec.durum === 'Taslak')
+        || (screen.id === 'muhasebe-belgeleri' && rec.durum === 'Taslak')
+        || (screen.id === 'muhasebe-donemleri' && ['Acik', 'YenidenAcik'].includes(rec.durum))
         || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.durum))
         || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.durum))
         || (screen.id === 'satin-alma-talepleri' && rec.durum === 'Acik')
