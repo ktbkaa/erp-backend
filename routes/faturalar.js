@@ -24,6 +24,11 @@ const EBELGE_ALANLAR = [
   'kaynak_belge_tipi', 'kaynak_belge_id', 'durum', 'kdv_oran_varsayilan',
 ];
 
+/** Başlık güncellemesi: e-belge + FATURA_BASLIK birleşik */
+function baslikUpdateParams(body) {
+  return pickFields({ ...ebelgeParams(body), ...body }, FATURA_BASLIK);
+}
+
 async function faturaGetir(id, clientOrPool = pool) {
   const f = await clientOrPool.query(
     `
@@ -123,7 +128,7 @@ router.post('/', async (req, res, next) => {
     if (!Array.isArray(kalemler) || kalemler.length === 0) {
       return res.status(400).json({ hata: 'En az bir fatura kalemi gerekli.' });
     }
-    const ekstra = ebelgeParams(req.body);
+    const ekstra = baslikUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
       const tur = fatura_turu || ekstra.fatura_tipi || 'Satis';
@@ -139,7 +144,9 @@ router.post('/', async (req, res, next) => {
         toplam_kdv += satir * (kdvOran / 100);
       }
 
-      const extras = pickFields({ ...req.body, ...ekstra }, FATURA_BASLIK);
+      const extras = { ...ekstra };
+      delete extras.kdv_oran_varsayilan;
+
       if (extras.kalan_tutar == null) extras.kalan_tutar = toplam_tutar + toplam_kdv;
       const baslik = appendInsert(
         ['fatura_no', 'cari_id', 'fatura_turu', 'toplam_tutar', 'mal_hizmet_toplam', 'toplam_kdv', 'odenecek_tutar'],
@@ -191,7 +198,7 @@ router.put('/:id', async (req, res, next) => {
   try {
     const { fatura_turu, cari_id } = req.body;
     const kalemler = req.body.kalemler || req.body.satirlar;
-    const ekstra = ebelgeParams(req.body);
+    const ekstra = baslikUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
       const mevcut = await client.query('SELECT id FROM faturalar WHERE id=$1 FOR UPDATE', [req.params.id]);
@@ -210,6 +217,7 @@ router.put('/:id', async (req, res, next) => {
         sets.push(`cari_id = $${params.length}`);
       }
       for (const [k, v] of Object.entries(ekstra)) {
+        if (k === 'kdv_oran_varsayilan') continue;
         params.push(v);
         sets.push(`${k} = $${params.length}`);
       }
@@ -219,7 +227,7 @@ router.put('/:id', async (req, res, next) => {
         let toplam_kdv = 0;
         for (const k of kalemler) {
           const satir = Number(k.miktar) * Number(k.birim_fiyat);
-          const kdvOran = Number(k.kdv_oran ?? ekstra.kdv_oran_varsayilan ?? 20);
+          const kdvOran = Number(k.kdv_oran ?? 20);
           toplam += satir;
           toplam_kdv += satir * (kdvOran / 100);
         }
@@ -236,18 +244,28 @@ router.put('/:id', async (req, res, next) => {
           await client.query(`UPDATE faturalar SET ${sets.join(', ')} WHERE id = $1`, params);
         }
         await client.query('DELETE FROM fatura_detaylari WHERE fatura_id=$1', [req.params.id]);
+        let sira = 1;
         for (const k of kalemler) {
           if (!k.stok_id || k.miktar == null || k.birim_fiyat == null) continue;
           const satirToplam = Number(k.miktar) * Number(k.birim_fiyat);
           const kdvOran = Number(k.kdv_oran ?? 20);
+          const kdvTutari = satirToplam * (kdvOran / 100);
+          const satirEx = pickFields(k, FATURA_SATIR);
+          if (satirEx.tutar_ht == null) satirEx.tutar_ht = satirToplam;
+          if (satirEx.tutar_ttc == null) satirEx.tutar_ttc = satirToplam + kdvTutari;
+          if (satirEx.net_birim_fiyat == null) satirEx.net_birim_fiyat = k.birim_fiyat;
+          if (satirEx.sira_no == null) satirEx.sira_no = sira++;
+          if (satirEx.kdv_oran == null) satirEx.kdv_oran = kdvOran;
+          if (satirEx.kdv_tutari == null) satirEx.kdv_tutari = kdvTutari;
+          if (satirEx.birim == null) satirEx.birim = k.birim || null;
+          const sat = appendInsert(
+            ['fatura_id', 'stok_id', 'miktar', 'birim_fiyat', 'toplam_tutar', 'mal_hizmet_tutari'],
+            [req.params.id, k.stok_id, k.miktar, k.birim_fiyat, satirToplam, satirToplam],
+            satirEx
+          );
           await client.query(
-            `INSERT INTO fatura_detaylari
-              (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar, birim, kdv_oran, kdv_tutari, mal_hizmet_tutari)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-            [
-              req.params.id, k.stok_id, k.miktar, k.birim_fiyat, satirToplam,
-              k.birim || null, kdvOran, satirToplam * (kdvOran / 100), satirToplam,
-            ]
+            `INSERT INTO fatura_detaylari (${sat.cols.join(',')}) VALUES (${sat.placeholders})`,
+            sat.vals
           );
         }
       } else if (sets.length) {

@@ -14,6 +14,12 @@ const {
 } = require('../src/utils/belgeOmurga');
 const { rezervasyonTuket } = require('../src/services/rezervasyonService');
 const { belgeHtml } = require('../src/services/belgePdfService');
+const {
+    pickFields,
+    appendInsert,
+    FATURA_BASLIK,
+    FATURA_SATIR,
+} = require('../src/utils/belgeAlanlari');
 
 function nOrNull(v) {
     if (v === undefined || v === null || v === '') return null;
@@ -907,7 +913,7 @@ router.post('/sevk-emrinden', async (req, res) => {
     }
 });
 
-/** İrsaliye → Satış faturası — P39: yalnız Onayli */
+/** İrsaliye → Satış faturası — Onaylı + GİB gönderildi; numaratörden no kabul edilir */
 router.post('/:id/fatura-olustur', async (req, res) => {
     try {
         const ir = await irsaliyeGetir(req.params.id);
@@ -918,80 +924,194 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                 kod: 'IRSALIYE_DURUM_KILIDI',
             });
         }
-
-        const kdvOran = req.body.kdv_oran != null ? Number(req.body.kdv_oran) : 20;
-        const iskontoOran = req.body.iskonto_oran != null ? Number(req.body.iskonto_oran) : 0;
+        if (String(ir.e_belge_durum || '') !== 'Gonderildi') {
+            return res.status(400).json({
+                hata: 'Fatura oluşturmak için irsaliyenin e-belge durumu GİB’e gönderilmiş (Gonderildi) olmalıdır.',
+                kod: 'IRSALIYE_GIB_KILIDI',
+                e_belge_durum: ir.e_belge_durum || null,
+            });
+        }
 
         const faturaId = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'FATURA');
+            const no = (req.body.fatura_no && String(req.body.fatura_no).trim())
+                || (await sonrakiBelgeNo(client, 'FATURA'));
             const hk = await hareketKoduBul(client, BELGE_TIPI.SATIS_FATURA);
+            const kurBelge = Number(ir.kur) > 0 ? Number(ir.kur) : 1;
 
             const kalemler = [];
-            for (const s of ir.satirlar) {
+            for (const s of (ir.satirlar || [])) {
                 const stok = await client.query(
                     'SELECT satis_fiyati, birim FROM stoklar WHERE id=$1',
                     [s.stok_id]
                 );
                 const fiyat = req.body.birim_fiyatlar?.[s.stok_id]
-                    ?? Number(stok.rows[0]?.satis_fiyati || 0);
-                const h = satirHesapla({
-                    miktar: s.miktar,
+                    ?? (s.birim_fiyat != null && Number(s.birim_fiyat) > 0
+                        ? Number(s.birim_fiyat)
+                        : Number(stok.rows[0]?.satis_fiyati || 0));
+                const h = satirHesapPaketi({
+                    ...s,
                     birim_fiyat: fiyat,
-                    iskonto_oran: iskontoOran,
-                    kdv_oran: kdvOran,
-                });
+                    miktar: s.miktar,
+                    kdv_oran: s.kdv_oran != null ? s.kdv_oran : (req.body.kdv_oran ?? 20),
+                    iskonto_oran: s.iskonto_oran != null ? s.iskonto_oran : (req.body.iskonto_oran ?? 0),
+                }, kurBelge);
                 kalemler.push({
                     sira_no: s.sira_no,
                     stok_id: s.stok_id,
                     miktar: s.miktar,
                     birim: s.birim || stok.rows[0]?.birim,
                     birim_fiyat: fiyat,
+                    depo_id: s.depo_id || ir.depo_id || null,
+                    fiyat_liste_id: s.fiyat_liste_id || null,
+                    para_birimi: s.para_birimi || ir.para_birimi || 'TRY',
+                    kur_tipi: s.kur_tipi || ir.kur_tipi || null,
+                    kur: h.kur,
+                    yerel_birim_fiyat: h.yp_birim_fiyat,
+                    yerel_para_tutari: h.yp_tutar,
+                    kdv_kodu: s.kdv_kodu || null,
+                    tevkifat_kodu: s.tevkifat_kodu || null,
+                    otv_kodu: s.otv_kodu || null,
+                    vergi_semasi: s.vergi_semasi || null,
+                    satir_tipi: s.satir_tipi || 'S',
+                    satir_aciklama: s.satir_aciklama || null,
+                    satir_aciklama2: s.satir_aciklama2 || null,
+                    satir_aciklama3: s.satir_aciklama3 || null,
+                    musteri_referans_kod: s.musteri_referans_kod || null,
+                    vade_tarihi: s.vade_tarihi || null,
+                    vade_gun: s.vade_gun != null ? s.vade_gun : null,
+                    siparis_no: s.siparis_no || null,
+                    seri_no: s.seri_no || null,
                     irsaliye_satir_id: s.id,
                     siparis_detay_id: s.siparis_detay_id || null,
                     ...h,
                 });
             }
             const top = belgelerToplam(kalemler);
+            const bandrol = kalemler.reduce((a, k) => a + (Number(k.bandrol_tutari) || 0), 0);
+            const vadeGun = ir.vade_gun != null ? ir.vade_gun : ir.fin_vade_gun;
 
-            const f = await client.query(
-                `
-                INSERT INTO faturalar
-                    (fatura_no, cari_id, fatura_turu, fatura_tipi, senaryo, ozellestirme_no,
-                     fatura_tarihi, para_birimi, irsaliye_id, siparis_id, hareket_kodu_id,
-                     sevk_adresi, aciklama, toplam_tutar, mal_hizmet_toplam, toplam_iskonto,
-                     toplam_kdv, odenecek_tutar, durum, ettn,
-                     kaynak_belge_tipi, kaynak_belge_id)
-                VALUES ($1,$2,'Satis','SATIS','TICARIFATURA','TR1.2',
-                        CURRENT_DATE,'TRY',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'Taslak', gen_random_uuid(),
-                        $13,$14)
-                RETURNING id
-                `,
-                [
-                    no, ir.cari_id, ir.id, ir.siparis_id, hk?.id || null,
-                    ir.sevk_adresi,
-                    `İrsaliye No: ${ir.irsaliye_no}${ir.siparis_no ? ` / Sipariş: ${ir.siparis_no}` : ''}`,
-                    top.toplam_tutar, top.mal_hizmet_toplam, top.toplam_iskonto,
-                    top.toplam_kdv, top.odenecek_tutar,
-                    BELGE_TIPI.IRSALIYE, ir.id,
-                ]
+            const baslikKaynak = {
+                fatura_tipi: 'SATIS',
+                senaryo: 'TICARIFATURA',
+                ozellestirme_no: 'TR1.2',
+                fatura_tarihi: req.body.fatura_tarihi || ir.irsaliye_tarihi
+                    || new Date().toISOString().slice(0, 10),
+                para_birimi: ir.para_birimi || 'TRY',
+                kur: kurBelge,
+                kur_tipi: ir.kur_tipi || 'TCMB-SATIS',
+                kur_secenegi: ir.kur_secenegi || 'BelgeTarihi',
+                bolge: ir.bolge || null,
+                irsaliye_id: ir.id,
+                siparis_id: ir.siparis_id || null,
+                hareket_kodu_id: hk?.id || null,
+                firma_id: ir.firma_id || null,
+                is_yeri_id: ir.is_yeri_id || null,
+                depo_id: ir.depo_id || null,
+                fiyat_liste_id: ir.fiyat_liste_id || null,
+                proje_kodu: ir.proje_kodu || null,
+                satis_temsilcisi: ir.satis_temsilcisi || null,
+                odeme_sekli: ir.odeme_sekli || null,
+                odeme_plani: ir.odeme_plani || null,
+                odeme_kosulu: ir.odeme_kosulu || null,
+                teslimat_kosulu: ir.teslimat_kosulu || null,
+                vade_tarihi: ir.vade_tarihi || ir.fin_vade_tarihi || null,
+                vade_gun: vadeGun,
+                odeme_vadesi_gun: vadeGun,
+                e_belge_durum: 'Hazir',
+                belge_seri: ir.belge_seri || null,
+                belge_sira: ir.belge_sira || null,
+                gib_no: ir.gib_no || null,
+                sevk_adresi: ir.sevk_adresi || null,
+                sevk_cari_id: ir.sevk_cari_id || null,
+                sevk_adres_tipi: ir.sevk_adres_tipi || null,
+                sevk_ad: ir.sevk_ad || null,
+                sevk_soyad: ir.sevk_soyad || null,
+                sevk_adres1: ir.sevk_adres1 || null,
+                sevk_adres2: ir.sevk_adres2 || null,
+                sevk_adres3: ir.sevk_adres3 || null,
+                sevk_tel1: ir.sevk_tel1 || null,
+                sevk_tel2: ir.sevk_tel2 || null,
+                sevk_il: ir.sevk_il || null,
+                sevk_ilce: ir.sevk_ilce || null,
+                sevk_ulke: ir.sevk_ulke || null,
+                sevk_posta_kodu: ir.sevk_posta_kodu || null,
+                gumruk: ir.gumruk || null,
+                fatura_adres1: ir.fatura_adres1 || null,
+                fatura_adres2: ir.fatura_adres2 || null,
+                fatura_adres3: ir.fatura_adres3 || null,
+                fatura_posta_kodu: ir.fatura_posta_kodu || null,
+                fatura_ulke: ir.fatura_ulke || null,
+                fatura_il: ir.fatura_il || null,
+                fatura_ilce: ir.fatura_ilce || null,
+                sozlesme_kodu: ir.sozlesme_kodu || null,
+                cari_unvan: ir.cari_unvan || null,
+                cari_unvan2: ir.cari_unvan2 || null,
+                vergi_dairesi: ir.vergi_dairesi || null,
+                vergi_no: ir.vergi_no || null,
+                tevkifat_kodu: ir.tevkifat_kodu || null,
+                tevkifat_oran: ir.tevkifat_oran ?? 0,
+                tevkifat_tutari: ir.tevkifat_tutari ?? 0,
+                vergi_semasi: ir.vergi_semasi || null,
+                ozel_hareket_tipi: ir.ozel_hareket_tipi || null,
+                fin_vade_tarihi: ir.fin_vade_tarihi || null,
+                fin_vade_gun: ir.fin_vade_gun ?? null,
+                stok_tarihi: ir.stok_tarihi || null,
+                aciklama: ir.aciklama || `İrsaliye No: ${ir.irsaliye_no}`,
+                aciklama_2: ir.aciklama_2 || null,
+                aciklama_3: ir.aciklama_3 || null,
+                not_public: ir.not_public || null,
+                not_internal: ir.not_internal || null,
+                fatura_alti_iskonto: ir.irsaliye_alti_iskonto ?? 0,
+                toplam_otv: top.toplam_otv || 0,
+                toplam_tevkifat: top.toplam_tevkifat || 0,
+                toplam_bandrol: bandrol,
+                kalan_tutar: top.odenecek_tutar,
+                durum: 'Taslak',
+                kaynak_belge_tipi: BELGE_TIPI.IRSALIYE,
+                kaynak_belge_id: ir.id,
+            };
+            const extras = pickFields(baslikKaynak, FATURA_BASLIK);
+            delete extras.ettn;
+            const baslik = appendInsert(
+                ['fatura_no', 'cari_id', 'fatura_turu', 'toplam_tutar', 'mal_hizmet_toplam',
+                    'toplam_iskonto', 'toplam_kdv', 'odenecek_tutar', 'ettn'],
+                [no, ir.cari_id, 'Satis', top.toplam_tutar, top.mal_hizmet_toplam,
+                    top.toplam_iskonto, top.toplam_kdv, top.odenecek_tutar, null],
+                extras
             );
-            const fid = f.rows[0].id;
+            const cols = [];
+            const vals = [];
+            const ph = [];
+            baslik.cols.forEach((c, i) => {
+                cols.push(c);
+                if (c === 'ettn') {
+                    ph.push('gen_random_uuid()');
+                } else {
+                    vals.push(baslik.vals[i]);
+                    ph.push(`$${vals.length}`);
+                }
+            });
+            const fIns = await client.query(
+                `INSERT INTO faturalar (${cols.join(',')}) VALUES (${ph.join(',')}) RETURNING id`,
+                vals
+            );
+            const fid = fIns.rows[0].id;
             for (const k of kalemler) {
+                const satirEx = pickFields({
+                    ...k,
+                    net_birim_fiyat: k.birim_fiyat,
+                    kaynak_belge_tipi: BELGE_TIPI.IRSALIYE,
+                    kaynak_belge_id: ir.id,
+                    kaynak_belge_satir_id: k.irsaliye_satir_id,
+                }, FATURA_SATIR);
+                const sat = appendInsert(
+                    ['fatura_id', 'stok_id', 'miktar', 'birim_fiyat', 'toplam_tutar', 'mal_hizmet_tutari'],
+                    [fid, k.stok_id, k.miktar, k.birim_fiyat, k.satir_toplam, k.mal_hizmet_tutari],
+                    satirEx
+                );
                 await client.query(
-                    `
-                    INSERT INTO fatura_detaylari
-                        (fatura_id, stok_id, miktar, birim_fiyat, toplam_tutar, sira_no, birim,
-                         iskonto_oran, iskonto_tutari, kdv_oran, kdv_tutari, mal_hizmet_tutari,
-                         irsaliye_satir_id, siparis_detay_id,
-                         kaynak_belge_tipi, kaynak_belge_id, kaynak_belge_satir_id)
-                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
-                    `,
-                    [
-                        fid, k.stok_id, k.miktar, k.birim_fiyat, k.satir_toplam, k.sira_no, k.birim,
-                        k.iskonto_oran, k.iskonto_tutari, k.kdv_oran, k.kdv_tutari, k.mal_hizmet_tutari,
-                        k.irsaliye_satir_id, k.siparis_detay_id,
-                        BELGE_TIPI.IRSALIYE, ir.id, k.irsaliye_satir_id,
-                    ]
+                    `INSERT INTO fatura_detaylari (${sat.cols.join(',')}) VALUES (${sat.placeholders})`,
+                    sat.vals
                 );
                 if (k.siparis_detay_id) {
                     await client.query(
@@ -1001,9 +1121,19 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                         [k.siparis_detay_id, k.miktar]
                     );
                 }
+                if (k.irsaliye_satir_id) {
+                    await client.query(
+                        `UPDATE irsaliye_satirlari
+                         SET fatura_edilen_miktar = COALESCE(fatura_edilen_miktar,0) + $2
+                         WHERE id=$1`,
+                        [k.irsaliye_satir_id, k.miktar]
+                    ).catch(() => {});
+                }
             }
             await client.query(
-                `UPDATE irsaliyeler SET durum='FaturayaDonustu' WHERE id=$1`,
+                `UPDATE irsaliyeler
+                 SET durum='FaturayaDonustu', fatura_durumu='Faturalandi'
+                 WHERE id=$1`,
                 [ir.id]
             );
             return fid;
@@ -1022,6 +1152,8 @@ router.post('/:id/fatura-olustur', async (req, res) => {
             ok: true,
             fatura: { ...f.rows[0], kalemler: kalemler.rows, satirlar: kalemler.rows },
             irsaliye: await irsaliyeGetir(ir.id),
+            yonlendir: 'satis-faturalari',
+            mesaj: 'Fatura ekranına yönlendiriliyorsunuz',
         });
     } catch (err) {
         res.status(500).json({ hata: err.message });

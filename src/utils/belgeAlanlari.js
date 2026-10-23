@@ -19,18 +19,43 @@ const SIPARIS_SATIR = [
 ];
 
 const FATURA_BASLIK = [
-  'musteri_fatura_no', 'proje_kodu', 'firma_id', 'is_yeri_id', 'fiyat_liste_id',
-  'odeme_sekli', 'odeme_kosulu', 'teslimat_kosulu', 'vade_tarihi', 'odeme_durumu', 'odenen_tutar',
-  'kalan_tutar', 'fatura_kaynak_id', 'iade_mi', 'not_public', 'not_internal',
-  'olusturan_kullanici', 'onaylayan_kullanici', 'para_birimi', 'kur',
-  'sevk_adresi', 'aciklama', 'senaryo', 'fatura_tipi', 'fatura_tarihi',
+  'musteri_fatura_no', 'proje_kodu', 'firma_id', 'is_yeri_id', 'fiyat_liste_id', 'depo_id',
+  'odeme_sekli', 'odeme_kosulu', 'odeme_plani', 'teslimat_kosulu', 'vade_tarihi', 'vade_gun',
+  'odeme_durumu', 'odenen_tutar', 'kalan_tutar', 'fatura_kaynak_id', 'iade_mi',
+  'not_public', 'not_internal', 'olusturan_kullanici', 'onaylayan_kullanici',
+  'para_birimi', 'kur', 'kur_tipi', 'kur_secenegi', 'bolge', 'satis_temsilcisi',
+  'sevk_adresi', 'aciklama', 'aciklama_2', 'aciklama_3', 'senaryo', 'fatura_tipi', 'fatura_tarihi',
   'odeme_vadesi_gun', 'mal_kabul_id', 'siparis_id', 'irsaliye_id',
+  'e_belge_durum', 'belge_seri', 'belge_sira', 'gib_no', 'ettn', 'ozellestirme_no',
+  'posta_kutusu_alias', 'portal_iletildigi_tarih',
+  'e_ticaret_web', 'e_ticaret_ad', 'e_ticaret_soyad', 'e_ticaret_email',
+  'sevk_cari_id', 'sevk_adres_tipi', 'sevk_ad', 'sevk_soyad',
+  'sevk_adres1', 'sevk_adres2', 'sevk_adres3', 'sevk_tel1', 'sevk_tel2',
+  'sevk_il', 'sevk_ilce', 'sevk_ulke', 'sevk_posta_kodu', 'gumruk',
+  'fatura_adres1', 'fatura_adres2', 'fatura_adres3', 'fatura_posta_kodu',
+  'fatura_ulke', 'fatura_il', 'fatura_ilce',
+  'sozlesme_kodu', 'cari_unvan', 'cari_unvan2', 'vergi_dairesi', 'vergi_no',
+  'tevkifat_kodu', 'tevkifat_oran', 'tevkifat_tutari', 'vergi_semasi', 'ozel_hareket_tipi',
+  'fin_vade_tarihi', 'fin_vade_gun', 'stok_tarihi',
+  'yazdirildi', 'yerel_para_cikti',
+  'fatura_alti_iskonto', 'toplam_otv', 'toplam_tevkifat', 'toplam_bandrol',
+  'hareket_kodu_id', 'kaynak_belge_tipi', 'kaynak_belge_id', 'durum',
 ];
 
 const FATURA_SATIR = [
-  'satir_aciklama', 'net_birim_fiyat', 'tutar_ht', 'tutar_ttc', 'urun_tipi',
-  'maliyet_birim', 'depo_id', 'parti_id', 'seri_no', 'iskonto_oran',
-  'iskonto_tutari', 'kdv_oran', 'kdv_tutari', 'birim', 'sira_no',
+  'satir_tipi', 'satir_aciklama', 'satir_aciklama2', 'satir_aciklama3',
+  'net_birim_fiyat', 'tutar_ht', 'tutar_ttc', 'urun_tipi',
+  'maliyet_birim', 'depo_id', 'parti_id', 'seri_no', 'fiyat_liste_id',
+  'para_birimi', 'kur_tipi', 'kur', 'yerel_birim_fiyat', 'yerel_para_tutari',
+  'iskonto_oran', 'iskonto_oran2', 'iskonto_oran3',
+  'iskonto_tutari', 'iskonto_tutari2', 'iskonto_tutari3',
+  'kdv_kodu', 'kdv_oran', 'kdv_tutari', 'kdv_durumu',
+  'tevkifat_kodu', 'tevkifat_oran', 'tevkifat_tutari',
+  'otv_kodu', 'otv_oran', 'otv_tutari', 'bandrol_oran', 'bandrol_tutari',
+  'vergi_semasi', 'vade_tarihi', 'vade_gun', 'musteri_referans_kod',
+  'proje_kodu', 'siparis_no', 'birim', 'sira_no',
+  'irsaliye_satir_id', 'siparis_detay_id',
+  'kaynak_belge_tipi', 'kaynak_belge_id', 'kaynak_belge_satir_id',
 ];
 
 function pickFields(body, keys) {
