@@ -2757,8 +2757,161 @@ tr.selected td { background: var(--accent-soft); }
   padding: 0.15rem 0.28rem;
   font-size: 0.74rem;
 }
-.form-tab-fields--master .field.field--short {
-  /* master’da kısa alanlar dar kalsın */
+/* Orantılı alan genişlikleri — kısa veri kutuyu şişirmez */
+.field.field--short {
+  max-width: 15rem;
+}
+.field.field--short > input:not([type="checkbox"]),
+.field.field--short > select {
+  max-width: 9.5rem;
+  width: 100%;
+}
+.field.field--medium {
+  max-width: 26rem;
+}
+.field.field--wide {
+  max-width: none;
+  grid-column: 1 / -1;
+}
+.field.field--check {
+  max-width: 13rem;
+}
+.field.field--check label {
+  text-align: left;
+}
+.field-check-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.85rem;
+  grid-column: 1 / -1;
+  padding: 0.15rem 0;
+}
+.field-check-cluster .field.field--check {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 0.35rem;
+  max-width: none;
+  align-items: center;
+}
+.field-check-cluster .field.field--check label {
+  order: 2;
+  text-align: left;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.field-check-cluster .field.field--check input[type="checkbox"] {
+  order: 1;
+}
+
+/* --- Dense form (iş emri vb.): daha küçük, 3 sütun, az boşluk --- */
+.form-view--dense .form-tab-body {
+  padding: 0.35rem 0.65rem 0.5rem;
+}
+.form-view--dense .field-groups {
+  gap: 0.45rem;
+}
+.form-view--dense .field-group + .field-group {
+  padding-top: 0.4rem;
+}
+.form-view--dense .field-group-title,
+.form-view--dense .section-label {
+  margin: 0 0 0.28rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: #5a6a78;
+}
+.form-view--dense .form-tab-fields,
+.form-view--dense .form-tab-fields--master,
+.form-view--dense .form-tab-fields--detail,
+.form-view--dense .form-tab-fields--dense {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 0.7rem;
+  row-gap: 0.28rem;
+  align-items: center;
+}
+.form-view--dense .field {
+  grid-template-columns: minmax(4.6rem, 5.8rem) minmax(0, 1fr);
+  gap: 0.12rem 0.35rem;
+}
+.form-view--dense .field label {
+  font-size: 0.74rem;
+  color: #3d4a57;
+}
+.form-view--dense .field input,
+.form-view--dense .field select,
+.form-view--dense .field textarea {
+  padding: 0.16rem 0.32rem;
+  min-height: 1.45rem;
+  font-size: 0.78rem;
+  border-radius: 0.22rem;
+  line-height: 1.25;
+}
+.form-view--dense .field.field--short {
+  max-width: 13.5rem;
+}
+.form-view--dense .field.field--short > input:not([type="checkbox"]),
+.form-view--dense .field.field--short > select {
+  max-width: 8rem;
+}
+.form-view--dense .field.field--medium {
+  max-width: 22rem;
+}
+.form-view--dense .field.field--wide {
+  grid-column: 1 / -1;
+  max-width: 40rem;
+}
+.form-view--dense .field.field--critical {
+  padding: 0.2rem 0.35rem 0.28rem;
+  border-radius: 0.28rem;
+}
+.form-view--dense .field-critical-hint {
+  font-size: 0.62rem;
+  padding: 0.05rem 0.25rem;
+}
+.form-view--dense .lookup-pair {
+  grid-template-columns: minmax(3.8rem, 5.5rem) minmax(0, 1fr);
+  gap: 0.2rem;
+}
+.form-view--dense .lookup-pair .lookup-name-ro {
+  min-height: 1.45rem;
+  padding: 0.12rem 0.28rem;
+  font-size: 0.74rem;
+}
+.form-view--dense .md-split .md-master,
+.form-view--dense .md-split .md-extras,
+.form-view--dense .md-split .md-detail {
+  padding: 0.4rem 0.65rem;
+}
+.form-view--dense .md-footer-notes {
+  padding: 0.25rem 0.65rem 0.4rem;
+}
+.form-view--dense .md-footer-notes .field {
+  max-width: 36rem;
+}
+@media (max-width: 1100px) {
+  .form-view--dense .form-tab-fields,
+  .form-view--dense .form-tab-fields--master,
+  .form-view--dense .form-tab-fields--detail,
+  .form-view--dense .form-tab-fields--dense {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .form-view--dense .form-tab-fields,
+  .form-view--dense .form-tab-fields--master,
+  .form-view--dense .form-tab-fields--detail,
+  .form-view--dense .form-tab-fields--dense {
+    grid-template-columns: 1fr;
+  }
+  .form-view--dense .field.field--short,
+  .form-view--dense .field.field--medium {
+    max-width: none;
+  }
+  .form-view--dense .field.field--short > input:not([type="checkbox"]),
+  .form-view--dense .field.field--short > select {
+    max-width: none;
+  }
 }
 .md-split--grid .form-tab-fields--master {
   column-gap: 1rem;
