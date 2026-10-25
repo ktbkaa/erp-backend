@@ -1,0 +1,1599 @@
+{
+  "numarator-tanimi": {
+    "screenId": "numarator-tanimi",
+    "title": "Numaratör Tanımı",
+    "techId": "SYS-NUM-SCR-001",
+    "endpoint": "/kod-serileri",
+    "auditTablo": "kod-serileri",
+    "primaryTable": "number_series",
+    "tables": [
+      {
+        "name": "number_series",
+        "role": "master"
+      }
+    ]
+  },
+  "olcu-birimleri": {
+    "screenId": "olcu-birimleri",
+    "title": "Ölçü Birimleri",
+    "techId": "MDM-UOM-SCR-001",
+    "endpoint": "/olcu-birimleri",
+    "auditTablo": "olcu-birimleri",
+    "primaryTable": "units_of_measure",
+    "tables": [
+      {
+        "name": "units_of_measure",
+        "role": "master"
+      }
+    ]
+  },
+  "kategori-tanimi": {
+    "screenId": "kategori-tanimi",
+    "title": "Kategori Tanımı",
+    "techId": "MDM-CAT-SCR-001",
+    "endpoint": "/kategoriler",
+    "auditTablo": "kategoriler",
+    "primaryTable": "categories",
+    "tables": [
+      {
+        "name": "categories",
+        "role": "master"
+      }
+    ]
+  },
+  "country-tanimi": {
+    "screenId": "country-tanimi",
+    "title": "Ülke Tanımı",
+    "techId": "MDM-CTRY-SCR-001",
+    "endpoint": "/countries",
+    "auditTablo": "countries",
+    "primaryTable": "countries",
+    "tables": [
+      {
+        "name": "countries",
+        "role": "master"
+      }
+    ]
+  },
+  "para-birimi-tanimi": {
+    "screenId": "para-birimi-tanimi",
+    "title": "Para Birimi Tanımı",
+    "techId": "MDM-CUR-SCR-001",
+    "endpoint": "/para-birimleri",
+    "auditTablo": "para-birimleri",
+    "primaryTable": "currencies",
+    "tables": [
+      {
+        "name": "currencies",
+        "role": "master"
+      }
+    ]
+  },
+  "sehir-tanimi": {
+    "screenId": "sehir-tanimi",
+    "title": "Şehir / İl Tanımı",
+    "techId": "MDM-CITY-SCR-001",
+    "endpoint": "/cities",
+    "auditTablo": "cities",
+    "primaryTable": "cities",
+    "tables": [
+      {
+        "name": "cities",
+        "role": "master"
+      }
+    ]
+  },
+  "district-tanimi": {
+    "screenId": "district-tanimi",
+    "title": "İlçe Tanımı",
+    "techId": "MDM-DIST-SCR-001",
+    "endpoint": "/districts",
+    "auditTablo": "districts",
+    "primaryTable": "districts",
+    "tables": [
+      {
+        "name": "districts",
+        "role": "master"
+      }
+    ]
+  },
+  "odeme-kosulu-tanimi": {
+    "screenId": "odeme-kosulu-tanimi",
+    "title": "Ödeme Koşulu",
+    "techId": "MDM-PAYT-SCR-001",
+    "endpoint": "/odeme-kosullari",
+    "auditTablo": "odeme-kosullari",
+    "primaryTable": "payment_terms",
+    "tables": [
+      {
+        "name": "payment_terms",
+        "role": "master"
+      }
+    ]
+  },
+  "teslimat-kosulu-tanimi": {
+    "screenId": "teslimat-kosulu-tanimi",
+    "title": "Teslimat Koşulu",
+    "techId": "MDM-DLVT-SCR-001",
+    "endpoint": "/teslimat-kosullari",
+    "auditTablo": "teslimat-kosullari",
+    "primaryTable": "delivery_terms",
+    "tables": [
+      {
+        "name": "delivery_terms",
+        "role": "master"
+      }
+    ]
+  },
+  "dil-tanimi": {
+    "screenId": "dil-tanimi",
+    "title": "Dil Tanımı",
+    "techId": "MDM-LANG-SCR-001",
+    "endpoint": "/languages",
+    "auditTablo": "languages",
+    "primaryTable": "languages",
+    "tables": [
+      {
+        "name": "languages",
+        "role": "master"
+      }
+    ]
+  },
+  "banka-tanimi": {
+    "screenId": "banka-tanimi",
+    "title": "Banka Tanımı",
+    "techId": "MDM-BANK-SCR-001",
+    "endpoint": "/banks",
+    "auditTablo": "banks",
+    "primaryTable": "banks",
+    "tables": [
+      {
+        "name": "banks",
+        "role": "master"
+      }
+    ]
+  },
+  "doviz-exchange_rate-tanimi": {
+    "screenId": "doviz-exchange_rate-tanimi",
+    "title": "Döviz Kurları",
+    "techId": "FIN-FX-SCR-001",
+    "endpoint": "/doviz-kurlari",
+    "auditTablo": "doviz-kurlari",
+    "primaryTable": "exchange_rates",
+    "tables": [
+      {
+        "name": "exchange_rates",
+        "role": "master"
+      }
+    ]
+  },
+  "hareket-kodlari": {
+    "screenId": "hareket-kodlari",
+    "title": "Hareket Kodları",
+    "techId": "INV-MVTC-SCR-001",
+    "endpoint": "/hareket-kodlari",
+    "auditTablo": "hareket-kodlari",
+    "primaryTable": "movement_codes",
+    "tables": [
+      {
+        "name": "movement_codes",
+        "role": "master"
+      }
+    ]
+  },
+  "kullanicilar": {
+    "screenId": "kullanicilar",
+    "title": "Kullanıcılar",
+    "techId": "SYS-USR-SCR-001",
+    "endpoint": "/kullanicilar",
+    "auditTablo": "kullanicilar",
+    "primaryTable": "users",
+    "tables": [
+      {
+        "name": "users",
+        "role": "master"
+      },
+      {
+        "name": "user_screen_permissions",
+        "role": "related"
+      },
+      {
+        "name": "user_company_permissions",
+        "role": "related"
+      }
+    ]
+  },
+  "kullanici-gruplari": {
+    "screenId": "kullanici-gruplari",
+    "title": "Kullanıcı Grupları",
+    "techId": "SYS-GRP-SCR-001",
+    "endpoint": "/kullanici-gruplari",
+    "auditTablo": "kullanici-gruplari",
+    "primaryTable": "user_groups",
+    "tables": [
+      {
+        "name": "user_groups",
+        "role": "master"
+      }
+    ]
+  },
+  "sistem-parametreleri": {
+    "screenId": "sistem-parametreleri",
+    "title": "Sistem Parametreleri",
+    "techId": "SYS-PRM-SCR-001",
+    "endpoint": "/sistem-parametreleri",
+    "auditTablo": "sistem-parametreleri",
+    "primaryTable": "system_parameters",
+    "tables": [
+      {
+        "name": "system_parameters",
+        "role": "master"
+      }
+    ]
+  },
+  "audit-log": {
+    "screenId": "audit-log",
+    "title": "Audit Log",
+    "techId": "SYS-AUD-SCR-001",
+    "endpoint": "/audit-log",
+    "auditTablo": "audit-log",
+    "primaryTable": "audit_logs",
+    "tables": [
+      {
+        "name": "audit_logs",
+        "role": "master"
+      }
+    ]
+  },
+  "eposta-gonderimleri": {
+    "screenId": "eposta-gonderimleri",
+    "title": "E-posta Gönderimleri",
+    "techId": "SYS-MAIL-SCR-001",
+    "endpoint": "/eposta-gonderimleri",
+    "auditTablo": "eposta-gonderimleri",
+    "primaryTable": "email_dispatches",
+    "tables": [
+      {
+        "name": "email_dispatches",
+        "role": "master"
+      }
+    ]
+  },
+  "companies": {
+    "screenId": "companies",
+    "title": "Firmalar",
+    "techId": "MDM-CO-SCR-001",
+    "endpoint": "/companies",
+    "auditTablo": "companies",
+    "primaryTable": "companies",
+    "tables": [
+      {
+        "name": "companies",
+        "role": "master"
+      }
+    ]
+  },
+  "is-yerleri": {
+    "screenId": "is-yerleri",
+    "title": "İş Yerleri",
+    "techId": "MDM-PLANT-SCR-001",
+    "endpoint": "/is-yerleri",
+    "auditTablo": "is-yerleri",
+    "primaryTable": "plants",
+    "tables": [
+      {
+        "name": "plants",
+        "role": "master"
+      }
+    ]
+  },
+  "warehouses": {
+    "screenId": "warehouses",
+    "title": "Depolar",
+    "techId": "MDM-WH-SCR-001",
+    "endpoint": "/warehouses",
+    "auditTablo": "warehouses",
+    "primaryTable": "warehouses",
+    "tables": [
+      {
+        "name": "warehouses",
+        "role": "master"
+      }
+    ]
+  },
+  "stok-karti": {
+    "screenId": "stok-karti",
+    "title": "Stok Kartı",
+    "techId": "INV-ITM-SCR-001",
+    "endpoint": "/items",
+    "auditTablo": "items",
+    "primaryTable": "items",
+    "tables": [
+      {
+        "name": "items",
+        "role": "master"
+      },
+      {
+        "name": "item_details",
+        "role": "related"
+      },
+      {
+        "name": "item_uom_conversions",
+        "role": "related"
+      },
+      {
+        "name": "item_barcodes",
+        "role": "related"
+      },
+      {
+        "name": "item_languages",
+        "role": "related"
+      },
+      {
+        "name": "item_plants",
+        "role": "related"
+      }
+    ]
+  },
+  "depo-bakiye": {
+    "screenId": "depo-bakiye",
+    "title": "Depo Bakiye",
+    "techId": "INV-BAL-SCR-001",
+    "endpoint": "/stok-bakiyeleri",
+    "auditTablo": "stok-bakiyeleri",
+    "primaryTable": "stock_movements",
+    "tables": [
+      {
+        "name": "stock_movements",
+        "role": "master"
+      },
+      {
+        "name": "stock_movement_lines",
+        "role": "related"
+      },
+      {
+        "name": "item_reservations",
+        "role": "related"
+      }
+    ]
+  },
+  "stok-hareketleri": {
+    "screenId": "stok-hareketleri",
+    "title": "Stok Hareketleri",
+    "techId": "INV-MVT-SCR-001",
+    "endpoint": "/stok-hareketleri",
+    "auditTablo": "stok-hareketleri",
+    "primaryTable": "stock_movements",
+    "tables": [
+      {
+        "name": "stock_movements",
+        "role": "master"
+      },
+      {
+        "name": "stock_movement_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "transfer-emirleri": {
+    "screenId": "transfer-emirleri",
+    "title": "Transfer Emirleri",
+    "techId": "WMS-XFER-SCR-001",
+    "endpoint": "/transfer-emirleri",
+    "auditTablo": "transfer-emirleri",
+    "primaryTable": "transfer_orders",
+    "tables": [
+      {
+        "name": "transfer_orders",
+        "role": "master"
+      },
+      {
+        "name": "transfer_order_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "sayim-belgeleri": {
+    "screenId": "sayim-belgeleri",
+    "title": "Sayım Belgeleri",
+    "techId": "WMS-CNT-SCR-001",
+    "endpoint": "/sayim-belgeleri",
+    "auditTablo": "sayim-belgeleri",
+    "primaryTable": "inventory_counts",
+    "tables": [
+      {
+        "name": "inventory_counts",
+        "role": "master"
+      },
+      {
+        "name": "inventory_count_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "stok-partileri": {
+    "screenId": "stok-partileri",
+    "title": "Stok Partileri",
+    "techId": "INV-LOT-SCR-001",
+    "endpoint": "/stok-partileri",
+    "auditTablo": "stok-partileri",
+    "primaryTable": "item_lots",
+    "tables": [
+      {
+        "name": "item_lots",
+        "role": "master"
+      },
+      {
+        "name": "stock_movement_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "mrp-bagimsiz-ihtiyac": {
+    "screenId": "mrp-bagimsiz-ihtiyac",
+    "title": "MRP Bağımsız İhtiyaç",
+    "techId": "MFG-IR-SCR-001",
+    "endpoint": "/mrp/bagimsiz-ihtiyaclar",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_independent_requirements",
+    "tables": [
+      {
+        "name": "mrp_independent_requirements",
+        "role": "master"
+      }
+    ]
+  },
+  "mrp-calisma": {
+    "screenId": "mrp-calisma",
+    "title": "MRP Çalıştır",
+    "techId": "MFG-MRP-SCR-001",
+    "endpoint": "/mrp/calismalar",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_runs",
+    "tables": [
+      {
+        "name": "mrp_runs",
+        "role": "master"
+      },
+      {
+        "name": "mrp_results",
+        "role": "related"
+      }
+    ]
+  },
+  "mrp-hesap": {
+    "screenId": "mrp-hesap",
+    "title": "MRP Anlık Hesap",
+    "techId": "MFG-MRP-SCR-002",
+    "endpoint": "/mrp",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_results",
+    "tables": [
+      {
+        "name": "mrp_runs",
+        "role": "related"
+      },
+      {
+        "name": "mrp_results",
+        "role": "master"
+      },
+      {
+        "name": "mrp_independent_requirements",
+        "role": "related"
+      }
+    ]
+  },
+  "mrp-sonuclar": {
+    "screenId": "mrp-sonuclar",
+    "title": "MRP Sonuçları",
+    "techId": "MFG-MRP-RES-001",
+    "endpoint": "/mrp/calismalar",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_results",
+    "tables": [
+      {
+        "name": "mrp_results",
+        "role": "master"
+      },
+      {
+        "name": "mrp_runs",
+        "role": "related"
+      }
+    ]
+  },
+  "stok-rezervasyonlari": {
+    "screenId": "stok-rezervasyonlari",
+    "title": "Stok Rezervasyonları",
+    "techId": "INV-RSV-SCR-001",
+    "endpoint": "/stok-rezervasyonlari",
+    "auditTablo": "stok-rezervasyonlari",
+    "primaryTable": "item_reservations",
+    "tables": [
+      {
+        "name": "item_reservations",
+        "role": "master"
+      }
+    ]
+  },
+  "stok-serileri": {
+    "screenId": "stok-serileri",
+    "title": "Stok Serileri",
+    "techId": "INV-SER-SCR-001",
+    "endpoint": "/stok-serileri",
+    "auditTablo": "stok-serileri",
+    "primaryTable": "item_serials",
+    "tables": [
+      {
+        "name": "item_serials",
+        "role": "master"
+      }
+    ]
+  },
+  "stok-ikame": {
+    "screenId": "stok-ikame",
+    "title": "Stok İkame",
+    "techId": "INV-SUB-SCR-001",
+    "endpoint": "/stok-ikame",
+    "auditTablo": "stok-ikame",
+    "primaryTable": "item_substitutes",
+    "tables": [
+      {
+        "name": "item_substitutes",
+        "role": "master"
+      }
+    ]
+  },
+  "cari-kartlari": {
+    "screenId": "cari-kartlari",
+    "title": "Cari Kartları",
+    "techId": "MDM-BP-SCR-001",
+    "endpoint": "/partners",
+    "auditTablo": "partners",
+    "primaryTable": "partners",
+    "tables": [
+      {
+        "name": "partners",
+        "role": "master"
+      },
+      {
+        "name": "partner_details",
+        "role": "related"
+      },
+      {
+        "name": "partner_bank_accounts",
+        "role": "related"
+      },
+      {
+        "name": "partner_ship_to_addresses",
+        "role": "related"
+      },
+      {
+        "name": "partner_languages",
+        "role": "related"
+      },
+      {
+        "name": "partner_company_params",
+        "role": "related"
+      }
+    ]
+  },
+  "cari-ekstre": {
+    "screenId": "cari-ekstre",
+    "title": "Cari Ekstre",
+    "techId": "FIN-BPST-SCR-001",
+    "endpoint": "/cari-hareketleri",
+    "auditTablo": "cari-hareketleri",
+    "primaryTable": "partner_ledger_entries",
+    "tables": [
+      {
+        "name": "partner_ledger_entries",
+        "role": "master"
+      }
+    ]
+  },
+  "tahsilat-odemeler": {
+    "screenId": "tahsilat-odemeler",
+    "title": "Tahsilat / Ödeme",
+    "techId": "FIN-APAR-SCR-001",
+    "endpoint": "/tahsilat-odemeler",
+    "auditTablo": "tahsilat-odemeler",
+    "primaryTable": "receipts_payments",
+    "tables": [
+      {
+        "name": "receipts_payments",
+        "role": "master"
+      }
+    ]
+  },
+  "urun-agaci": {
+    "screenId": "urun-agaci",
+    "title": "Ürün Ağacı",
+    "techId": "MFG-BOM-SCR-001",
+    "endpoint": "/urun-agaclari",
+    "auditTablo": "urun-agaclari",
+    "primaryTable": "boms",
+    "tables": [
+      {
+        "name": "boms",
+        "role": "master"
+      },
+      {
+        "name": "bom_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "bom-patlatma": {
+    "screenId": "bom-patlatma",
+    "title": "Ürün Ağacı Patlatma",
+    "techId": "MFG-BOM-SCR-002",
+    "endpoint": "/bom/patlatma",
+    "auditTablo": "bom",
+    "primaryTable": "boms",
+    "tables": [
+      {
+        "name": "boms",
+        "role": "master"
+      },
+      {
+        "name": "bom_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "bom-level-listesi": {
+    "screenId": "bom-level-listesi",
+    "title": "Ürün Ağacı Seviye Listesi",
+    "techId": "MFG-BOM-SCR-003",
+    "endpoint": "/bom/level-listesi",
+    "auditTablo": "bom",
+    "primaryTable": "boms",
+    "tables": [
+      {
+        "name": "boms",
+        "role": "master"
+      },
+      {
+        "name": "bom_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "bom-malzeme-degisikligi": {
+    "screenId": "bom-malzeme-degisikligi",
+    "title": "Malzeme Değişikliği",
+    "techId": "MFG-BOM-SCR-004",
+    "endpoint": "/bom/malzeme-degisikligi",
+    "auditTablo": "bom",
+    "primaryTable": "boms",
+    "tables": [
+      {
+        "name": "boms",
+        "role": "master"
+      },
+      {
+        "name": "bom_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "sinif-tanimi": {
+    "screenId": "sinif-tanimi",
+    "title": "Sınıf Tanımı",
+    "techId": "MFG-CLS-SCR-001",
+    "endpoint": "/stok-siniflari",
+    "auditTablo": "stok-siniflari",
+    "primaryTable": "item_classes",
+    "tables": [
+      {
+        "name": "item_classes",
+        "role": "master"
+      }
+    ]
+  },
+  "is-merkezleri": {
+    "screenId": "is-merkezleri",
+    "title": "İş Merkezleri",
+    "techId": "MFG-WC-SCR-001",
+    "endpoint": "/is-merkezleri",
+    "auditTablo": "is-merkezleri",
+    "primaryTable": "work_centers",
+    "tables": [
+      {
+        "name": "work_centers",
+        "role": "master"
+      }
+    ]
+  },
+  "routings": {
+    "screenId": "routings",
+    "title": "Rotalar",
+    "techId": "MFG-ROUT-SCR-001",
+    "endpoint": "/routings",
+    "auditTablo": "routings",
+    "primaryTable": "routings",
+    "tables": [
+      {
+        "name": "routings",
+        "role": "master"
+      },
+      {
+        "name": "routing_operations",
+        "role": "related"
+      }
+    ]
+  },
+  "uretim-emri-tipleri": {
+    "screenId": "uretim-emri-tipleri",
+    "title": "Üretim Emri Tipleri",
+    "techId": "MFG-WOT-SCR-001",
+    "endpoint": "/uretim-emri-tipleri",
+    "auditTablo": "uretim-emri-tipleri",
+    "primaryTable": "production_order_types",
+    "tables": [
+      {
+        "name": "production_order_types",
+        "role": "master"
+      }
+    ]
+  },
+  "uretim-planlari": {
+    "screenId": "uretim-planlari",
+    "title": "Üretim Planları",
+    "techId": "MFG-PLN-SCR-001",
+    "endpoint": "/uretim-planlari",
+    "auditTablo": "uretim-planlari",
+    "primaryTable": "production_plans",
+    "tables": [
+      {
+        "name": "production_plans",
+        "role": "master"
+      }
+    ]
+  },
+  "uretim-emirleri": {
+    "screenId": "uretim-emirleri",
+    "title": "Üretim Emirleri",
+    "techId": "MFG-WO-SCR-001",
+    "endpoint": "/uretim-emirleri",
+    "auditTablo": "uretim-emirleri",
+    "primaryTable": "production_orders",
+    "tables": [
+      {
+        "name": "production_orders",
+        "role": "master"
+      },
+      {
+        "name": "production_order_components",
+        "role": "related"
+      },
+      {
+        "name": "production_order_operations",
+        "role": "related"
+      },
+      {
+        "name": "production_order_operation_components",
+        "role": "related"
+      }
+    ]
+  },
+  "siparis-is-emri": {
+    "screenId": "siparis-is-emri",
+    "title": "Siparişten İş Emri",
+    "techId": "MFG-WO-SCR-002",
+    "endpoint": "/uretim-emirleri/siparis-adaylari",
+    "auditTablo": "uretim-emirleri",
+    "primaryTable": "production_orders",
+    "tables": [
+      {
+        "name": "production_orders",
+        "role": "master"
+      },
+      {
+        "name": "production_order_components",
+        "role": "related"
+      },
+      {
+        "name": "production_order_operations",
+        "role": "related"
+      }
+    ]
+  },
+  "toplu-is-emri": {
+    "screenId": "toplu-is-emri",
+    "title": "Toplu İş Emri",
+    "techId": "MFG-WO-SCR-003",
+    "endpoint": "/uretim-emirleri/siparis-adaylari",
+    "auditTablo": "uretim-emirleri",
+    "primaryTable": "production_orders",
+    "tables": [
+      {
+        "name": "production_orders",
+        "role": "master"
+      },
+      {
+        "name": "production_order_components",
+        "role": "related"
+      }
+    ]
+  },
+  "stok-depo": {
+    "screenId": "stok-depo",
+    "title": "Depo Stok Bağ",
+    "techId": "INV-WHL-SCR-001",
+    "endpoint": "/stok-depo",
+    "auditTablo": "stok-depo",
+    "primaryTable": "item_warehouses",
+    "tables": [
+      {
+        "name": "item_warehouses",
+        "role": "master"
+      }
+    ]
+  },
+  "uretim-girisleri": {
+    "screenId": "uretim-girisleri",
+    "title": "Üretim Girişleri",
+    "techId": "MFG-RCPT-SCR-001",
+    "endpoint": "/uretim-girisleri",
+    "auditTablo": "uretim-girisleri",
+    "primaryTable": "production_receipts",
+    "tables": [
+      {
+        "name": "production_receipts",
+        "role": "master"
+      }
+    ]
+  },
+  "satin-alma-teklif-istekleri": {
+    "screenId": "satin-alma-teklif-istekleri",
+    "title": "Satınalma Teklif İstekleri",
+    "techId": "PUR-RFQ-SCR-001",
+    "endpoint": "/satin-alma-teklif-istekleri",
+    "auditTablo": "satin-alma-teklif-istekleri",
+    "primaryTable": "rfqs",
+    "tables": [
+      {
+        "name": "rfqs",
+        "role": "master"
+      },
+      {
+        "name": "rfq_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "satin-alma-teklifleri": {
+    "screenId": "satin-alma-teklifleri",
+    "title": "Satınalma Teklifleri",
+    "techId": "PUR-QUO-SCR-001",
+    "endpoint": "/satin-alma-teklifleri",
+    "auditTablo": "satin-alma-teklifleri",
+    "primaryTable": "purchase_quotations",
+    "tables": [
+      {
+        "name": "purchase_quotations",
+        "role": "master"
+      },
+      {
+        "name": "purchase_quotation_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "satin-alma-anlasmalari": {
+    "screenId": "satin-alma-anlasmalari",
+    "title": "Satınalma Anlaşmaları",
+    "techId": "PUR-AGR-SCR-001",
+    "endpoint": "/satin-alma-anlasmalari",
+    "auditTablo": "satin-alma-anlasmalari",
+    "primaryTable": "purchase_agreements",
+    "tables": [
+      {
+        "name": "purchase_agreements",
+        "role": "master"
+      },
+      {
+        "name": "purchase_agreement_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "alis-faturalari": {
+    "screenId": "alis-faturalari",
+    "title": "Alış Faturaları",
+    "techId": "FIN-PINV-SCR-001",
+    "endpoint": "/invoices",
+    "auditTablo": "invoices",
+    "primaryTable": "invoices",
+    "tables": [
+      {
+        "name": "invoices",
+        "role": "master"
+      },
+      {
+        "name": "invoice_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "satin-alma-talepleri": {
+    "screenId": "satin-alma-talepleri",
+    "title": "Satınalma Talepleri",
+    "techId": "PUR-REQ-SCR-001",
+    "endpoint": "/satin-alma-talepleri",
+    "auditTablo": "satin-alma-talepleri",
+    "primaryTable": "purchase_requisitions",
+    "tables": [
+      {
+        "name": "purchase_requisitions",
+        "role": "master"
+      },
+      {
+        "name": "purchase_requisition_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "satin-alma-siparisleri": {
+    "screenId": "satin-alma-siparisleri",
+    "title": "Satınalma Siparişleri",
+    "techId": "PUR-ORD-SCR-001",
+    "endpoint": "/satin-alma-siparisleri",
+    "auditTablo": "satin-alma-siparisleri",
+    "primaryTable": "purchase_orders",
+    "tables": [
+      {
+        "name": "purchase_orders",
+        "role": "master"
+      },
+      {
+        "name": "purchase_order_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "mal-kabuller": {
+    "screenId": "mal-kabuller",
+    "title": "Mal Kabuller",
+    "techId": "PUR-GR-SCR-001",
+    "endpoint": "/mal-kabuller",
+    "auditTablo": "mal-kabuller",
+    "primaryTable": "goods_receipts",
+    "tables": [
+      {
+        "name": "goods_receipts",
+        "role": "master"
+      },
+      {
+        "name": "goods_receipt_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "tedarikci-irsaliyeleri": {
+    "screenId": "tedarikci-irsaliyeleri",
+    "title": "Tedarikçi İrsaliyeleri",
+    "techId": "PUR-DLV-SCR-001",
+    "endpoint": "/tedarikci-irsaliyeleri",
+    "auditTablo": "tedarikci-irsaliyeleri",
+    "primaryTable": "vendor_delivery_notes",
+    "tables": [
+      {
+        "name": "vendor_delivery_notes",
+        "role": "master"
+      },
+      {
+        "name": "vendor_delivery_note_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "belge-yonetimi": {
+    "screenId": "belge-yonetimi",
+    "title": "İrsaliye / Fatura Yönetimi",
+    "techId": "PUR-DOC-SCR-001",
+    "endpoint": "/belge-yonetimi",
+    "auditTablo": "belge-yonetimi",
+    "primaryTable": "delivery_notes",
+    "tables": [
+      {
+        "name": "delivery_notes",
+        "role": "master"
+      },
+      {
+        "name": "invoices",
+        "role": "related"
+      },
+      {
+        "name": "vendor_delivery_notes",
+        "role": "related"
+      }
+    ]
+  },
+  "crm-firsat-asamalari": {
+    "screenId": "crm-firsat-asamalari",
+    "title": "Fırsat Aşamaları",
+    "techId": "CRM-STG-SCR-001",
+    "endpoint": "/crm-firsat-asamalari",
+    "auditTablo": "crm-firsat-asamalari",
+    "primaryTable": "crm_opportunity_stages",
+    "tables": [
+      {
+        "name": "crm_opportunity_stages",
+        "role": "master"
+      }
+    ]
+  },
+  "crm-faaliyet-tipleri": {
+    "screenId": "crm-faaliyet-tipleri",
+    "title": "Faaliyet Tipleri",
+    "techId": "CRM-ACTT-SCR-001",
+    "endpoint": "/crm-faaliyet-tipleri",
+    "auditTablo": "crm-faaliyet-tipleri",
+    "primaryTable": "crm_activity_types",
+    "tables": [
+      {
+        "name": "crm_activity_types",
+        "role": "master"
+      }
+    ]
+  },
+  "crm-adaylar": {
+    "screenId": "crm-adaylar",
+    "title": "Müşteri Adayları",
+    "techId": "CRM-LEAD-SCR-001",
+    "endpoint": "/crm-adaylar",
+    "auditTablo": "crm-adaylar",
+    "primaryTable": "crm_leads",
+    "tables": [
+      {
+        "name": "crm_leads",
+        "role": "master"
+      }
+    ]
+  },
+  "crm-kontaklar": {
+    "screenId": "crm-kontaklar",
+    "title": "Kontaklar",
+    "techId": "CRM-CNT-SCR-001",
+    "endpoint": "/crm-kontaklar",
+    "auditTablo": "crm-kontaklar",
+    "primaryTable": "crm_contacts",
+    "tables": [
+      {
+        "name": "crm_contacts",
+        "role": "master"
+      }
+    ]
+  },
+  "crm-firsatlar": {
+    "screenId": "crm-firsatlar",
+    "title": "Fırsatlar",
+    "techId": "CRM-OPP-SCR-001",
+    "endpoint": "/crm-firsatlar",
+    "auditTablo": "crm-firsatlar",
+    "primaryTable": "crm_opportunities",
+    "tables": [
+      {
+        "name": "crm_opportunities",
+        "role": "master"
+      },
+      {
+        "name": "crm_opportunity_stages",
+        "role": "related"
+      },
+      {
+        "name": "crm_opportunity_lines",
+        "role": "related"
+      },
+      {
+        "name": "sales_quotation_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "crm-faaliyet-planlari": {
+    "screenId": "crm-faaliyet-planlari",
+    "title": "Faaliyet Planları",
+    "techId": "CRM-APLN-SCR-001",
+    "endpoint": "/crm-faaliyet-planlari",
+    "auditTablo": "crm-faaliyet-planlari",
+    "primaryTable": "crm_activity_plans",
+    "tables": [
+      {
+        "name": "crm_activity_plans",
+        "role": "master"
+      }
+    ]
+  },
+  "crm-faaliyetler": {
+    "screenId": "crm-faaliyetler",
+    "title": "Faaliyetler",
+    "techId": "CRM-ACT-SCR-001",
+    "endpoint": "/crm-faaliyetler",
+    "auditTablo": "crm-faaliyetler",
+    "primaryTable": "crm_activities",
+    "tables": [
+      {
+        "name": "crm_activities",
+        "role": "master"
+      }
+    ]
+  },
+  "crm-gorevler": {
+    "screenId": "crm-gorevler",
+    "title": "Görevler",
+    "techId": "CRM-TASK-SCR-001",
+    "endpoint": "/crm-gorevler",
+    "auditTablo": "crm-gorevler",
+    "primaryTable": "crm_tasks",
+    "tables": [
+      {
+        "name": "crm_tasks",
+        "role": "master"
+      }
+    ]
+  },
+  "crm-ajanda": {
+    "screenId": "crm-ajanda",
+    "title": "Ajanda",
+    "techId": "CRM-CAL-SCR-001",
+    "endpoint": "/crm-ajanda",
+    "auditTablo": "crm-ajanda",
+    "primaryTable": "crm_calendar_entries",
+    "tables": [
+      {
+        "name": "crm_calendar_entries",
+        "role": "master"
+      }
+    ]
+  },
+  "satis-teklifleri": {
+    "screenId": "satis-teklifleri",
+    "title": "Satış Teklifleri",
+    "techId": "SAL-QUO-SCR-001",
+    "endpoint": "/satis-teklifleri",
+    "auditTablo": "satis-teklifleri",
+    "primaryTable": "sales_quotations",
+    "tables": [
+      {
+        "name": "sales_quotations",
+        "role": "master"
+      },
+      {
+        "name": "sales_quotation_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "satis-siparisleri": {
+    "screenId": "satis-siparisleri",
+    "title": "Satış Siparişleri",
+    "techId": "SAL-ORD-SCR-001",
+    "endpoint": "/sales_orders",
+    "auditTablo": "sales_orders",
+    "primaryTable": "sales_orders",
+    "tables": [
+      {
+        "name": "sales_orders",
+        "role": "master"
+      },
+      {
+        "name": "sales_order_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "sevk-emirleri": {
+    "screenId": "sevk-emirleri",
+    "title": "Sevk Emirleri",
+    "techId": "SAL-SHP-SCR-001",
+    "endpoint": "/sevk-emirleri",
+    "auditTablo": "sevk-emirleri",
+    "primaryTable": "shipment_orders",
+    "tables": [
+      {
+        "name": "shipment_orders",
+        "role": "master"
+      },
+      {
+        "name": "shipment_order_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "delivery_notes": {
+    "screenId": "delivery_notes",
+    "title": "İrsaliyeler",
+    "techId": "SAL-DLV-SCR-001",
+    "endpoint": "/delivery_notes",
+    "auditTablo": "delivery_notes",
+    "primaryTable": "delivery_notes",
+    "tables": [
+      {
+        "name": "delivery_notes",
+        "role": "master"
+      },
+      {
+        "name": "delivery_note_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "satis-faturalari": {
+    "screenId": "satis-faturalari",
+    "title": "Satış Faturaları",
+    "techId": "FIN-SINV-SCR-001",
+    "endpoint": "/invoices",
+    "auditTablo": "invoices",
+    "primaryTable": "invoices",
+    "tables": [
+      {
+        "name": "invoices",
+        "role": "master"
+      },
+      {
+        "name": "invoice_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "kk-emirleri-gkk": {
+    "screenId": "kk-emirleri-gkk",
+    "title": "GKK Emirleri",
+    "techId": "QLT-IQC-SCR-001",
+    "endpoint": "/kk-emirleri",
+    "auditTablo": "kk-emirleri",
+    "primaryTable": "qc_orders",
+    "tables": [
+      {
+        "name": "qc_orders",
+        "role": "master"
+      }
+    ]
+  },
+  "kk-emirleri-ckk": {
+    "screenId": "kk-emirleri-ckk",
+    "title": "ÇKK Emirleri",
+    "techId": "QLT-OQC-SCR-001",
+    "endpoint": "/kk-emirleri",
+    "auditTablo": "kk-emirleri",
+    "primaryTable": "qc_orders",
+    "tables": [
+      {
+        "name": "qc_orders",
+        "role": "master"
+      }
+    ]
+  },
+  "kk-uygunsuzluklar": {
+    "screenId": "kk-uygunsuzluklar",
+    "title": "KK Uygunsuzluklar",
+    "techId": "QLT-NCR-SCR-001",
+    "endpoint": "/kk-uygunsuzluklar",
+    "auditTablo": "kk-uygunsuzluklar",
+    "primaryTable": "qc_nonconformances",
+    "tables": [
+      {
+        "name": "qc_nonconformances",
+        "role": "master"
+      }
+    ]
+  },
+  "kk-capa": {
+    "screenId": "kk-capa",
+    "title": "CAPA",
+    "techId": "QLT-CAPA-SCR-001",
+    "endpoint": "/kk-capa",
+    "auditTablo": "kk-capa",
+    "primaryTable": "qc_capa",
+    "tables": [
+      {
+        "name": "qc_capa",
+        "role": "master"
+      }
+    ]
+  },
+  "kk-kontrol-planlari": {
+    "screenId": "kk-kontrol-planlari",
+    "title": "KK Kontrol Planları",
+    "techId": "QLT-PLAN-SCR-001",
+    "endpoint": "/kk-kontrol-planlari",
+    "auditTablo": "kk-kontrol-planlari",
+    "primaryTable": "qc_control_plans",
+    "tables": [
+      {
+        "name": "qc_control_plans",
+        "role": "master"
+      }
+    ]
+  },
+  "kk-stok-planlari": {
+    "screenId": "kk-stok-planlari",
+    "title": "KK Stok Plan Bağları",
+    "techId": "QLT-ITMP-SCR-001",
+    "endpoint": "/kk-stok-planlari",
+    "auditTablo": "kk-stok-planlari",
+    "primaryTable": "qc_item_plans",
+    "tables": [
+      {
+        "name": "qc_item_plans",
+        "role": "master"
+      }
+    ]
+  },
+  "kk-ret-nedenleri": {
+    "screenId": "kk-ret-nedenleri",
+    "title": "KK Ret Nedenleri",
+    "techId": "QLT-REJ-SCR-001",
+    "endpoint": "/kk-ret-nedenleri",
+    "auditTablo": "kk-ret-nedenleri",
+    "primaryTable": "qc_rejection_reasons",
+    "tables": [
+      {
+        "name": "qc_rejection_reasons",
+        "role": "master"
+      }
+    ]
+  },
+  "onaylarim": {
+    "screenId": "onaylarim",
+    "title": "Onaylarım",
+    "techId": "SYS-APR-SCR-001",
+    "endpoint": "/onay-kayitlari",
+    "auditTablo": "onay-kayitlari",
+    "primaryTable": "approval_records",
+    "tables": [
+      {
+        "name": "approval_records",
+        "role": "master"
+      }
+    ]
+  },
+  "onay-izleme": {
+    "screenId": "onay-izleme",
+    "title": "Onay İzleme",
+    "techId": "SYS-APR-SCR-002",
+    "endpoint": "/onay-kayitlari",
+    "auditTablo": "onay-kayitlari",
+    "primaryTable": "approval_records",
+    "tables": [
+      {
+        "name": "approval_records",
+        "role": "master"
+      }
+    ]
+  },
+  "onay-yetki-devri": {
+    "screenId": "onay-yetki-devri",
+    "title": "Onay Yetki Devri",
+    "techId": "SYS-APR-SCR-003",
+    "endpoint": "/onay-yetki-devirleri",
+    "auditTablo": "onay-yetki-devirleri",
+    "primaryTable": "approval_delegations",
+    "tables": [
+      {
+        "name": "approval_delegations",
+        "role": "master"
+      }
+    ]
+  },
+  "onay-role-tanim": {
+    "screenId": "onay-role-tanim",
+    "title": "Onay Rolü",
+    "techId": "SYS-APR-SCR-004",
+    "endpoint": "/onay-rolleri",
+    "auditTablo": "onay-rolleri",
+    "primaryTable": "approval_roles",
+    "tables": [
+      {
+        "name": "approval_roles",
+        "role": "master"
+      }
+    ]
+  },
+  "onay-kural-tanim": {
+    "screenId": "onay-kural-tanim",
+    "title": "Onay Kuralı",
+    "techId": "SYS-APR-SCR-005",
+    "endpoint": "/onay-kurallari",
+    "auditTablo": "onay-kurallari",
+    "primaryTable": "approval_rules",
+    "tables": [
+      {
+        "name": "approval_rules",
+        "role": "master"
+      }
+    ]
+  },
+  "onay-rota-tanim": {
+    "screenId": "onay-rota-tanim",
+    "title": "Onay Rotası",
+    "techId": "SYS-APR-SCR-006",
+    "endpoint": "/onay-rotalari",
+    "auditTablo": "onay-rotalari",
+    "primaryTable": "approval_routes",
+    "tables": [
+      {
+        "name": "approval_routes",
+        "role": "master"
+      }
+    ]
+  },
+  "onay-message-template": {
+    "screenId": "onay-message-template",
+    "title": "Onay Mesaj Şablonu",
+    "techId": "SYS-APR-SCR-007",
+    "endpoint": "/onay-message-sablonlari",
+    "auditTablo": "onay-message-sablonlari",
+    "primaryTable": "approval_message_templates",
+    "tables": [
+      {
+        "name": "approval_message_templates",
+        "role": "master"
+      }
+    ]
+  },
+  "onay-status-tanim": {
+    "screenId": "onay-status-tanim",
+    "title": "Onay Durum Tanımı",
+    "techId": "SYS-APR-SCR-008",
+    "endpoint": "/onay-durumlari",
+    "auditTablo": "onay-durumlari",
+    "primaryTable": "approval_statuses",
+    "tables": [
+      {
+        "name": "approval_statuses",
+        "role": "master"
+      }
+    ]
+  },
+  "hesap-plani": {
+    "screenId": "hesap-plani",
+    "title": "Hesap Planı",
+    "techId": "FIN-COA-SCR-001",
+    "endpoint": "/muhasebe-hesaplari",
+    "auditTablo": "muhasebe-hesaplari",
+    "primaryTable": "gl_accounts",
+    "tables": [
+      {
+        "name": "gl_accounts",
+        "role": "master"
+      }
+    ]
+  },
+  "muhasebe-belgeleri": {
+    "screenId": "muhasebe-belgeleri",
+    "title": "Muhasebe Belgeleri",
+    "techId": "FIN-JE-SCR-001",
+    "endpoint": "/muhasebe-belgeleri",
+    "auditTablo": "muhasebe-belgeleri",
+    "primaryTable": "journal_entries",
+    "tables": [
+      {
+        "name": "journal_entries",
+        "role": "master"
+      },
+      {
+        "name": "journal_entry_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "mizan": {
+    "screenId": "mizan",
+    "title": "Mizan",
+    "techId": "FIN-TB-RPT-001",
+    "endpoint": "/mizan",
+    "auditTablo": "mizan",
+    "primaryTable": "gl_accounts",
+    "tables": [
+      {
+        "name": "gl_accounts",
+        "role": "master"
+      },
+      {
+        "name": "journal_entries",
+        "role": "related"
+      },
+      {
+        "name": "journal_entry_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "hesap-belirleme-kurallari": {
+    "screenId": "hesap-belirleme-kurallari",
+    "title": "Hesap Belirleme Kuralları",
+    "techId": "FIN-ACR-SCR-001",
+    "endpoint": "/hesap-belirleme-kurallari",
+    "auditTablo": "hesap-belirleme-kurallari",
+    "primaryTable": "account_determination_rules",
+    "tables": [
+      {
+        "name": "account_determination_rules",
+        "role": "master"
+      }
+    ]
+  },
+  "fiyat-listeleri": {
+    "screenId": "fiyat-listeleri",
+    "title": "Fiyat Listeleri",
+    "techId": "FIN-PRC-SCR-001",
+    "endpoint": "/fiyat-listeleri",
+    "auditTablo": "fiyat-listeleri",
+    "primaryTable": "price_lists",
+    "tables": [
+      {
+        "name": "price_lists",
+        "role": "master"
+      },
+      {
+        "name": "price_list_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "fatura-kontrolleri": {
+    "screenId": "fatura-kontrolleri",
+    "title": "Fatura Kontrolleri (3-way)",
+    "techId": "FIN-3WAY-SCR-001",
+    "endpoint": "/fatura-kontrolleri",
+    "auditTablo": "fatura-kontrolleri",
+    "primaryTable": "invoice_matches",
+    "tables": [
+      {
+        "name": "invoice_matches",
+        "role": "master"
+      },
+      {
+        "name": "invoices",
+        "role": "related"
+      },
+      {
+        "name": "goods_receipts",
+        "role": "related"
+      },
+      {
+        "name": "purchase_orders",
+        "role": "related"
+      }
+    ]
+  },
+  "kokpit": {
+    "screenId": "kokpit",
+    "title": "Kokpit",
+    "techId": "RPT-CPIT-SCR-001",
+    "endpoint": "/kokpit",
+    "auditTablo": "kokpit",
+    "primaryTable": null,
+    "tables": [
+      {
+        "name": "shipment_orders",
+        "role": "related"
+      },
+      {
+        "name": "purchase_requisitions",
+        "role": "related"
+      },
+      {
+        "name": "qc_orders",
+        "role": "related"
+      },
+      {
+        "name": "partner_ledger_entries",
+        "role": "related"
+      }
+    ]
+  },
+  "tablo-bilgileri": {
+    "screenId": "tablo-bilgileri",
+    "title": "Tablo Bilgileri",
+    "techId": "SYS-META-SCR-001",
+    "endpoint": "/meta/ekranlar",
+    "auditTablo": "meta",
+    "primaryTable": null,
+    "tables": []
+  }
+}
