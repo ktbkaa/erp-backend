@@ -293,9 +293,16 @@
 
         <section id="viewForm" class="view form-view" hidden>
           <div class="form-topbar">
-            <div>
-              <span class="mode-badge" id="formModeBadge">Yeni</span>
-              <strong id="formScreenLabel"></strong>
+            <div class="form-topbar-left">
+              <div class="form-topbar-meta">
+                <span class="form-module-label" id="formModuleLabel"></span>
+                <span class="form-topbar-sep" aria-hidden="true">/</span>
+                <strong id="formScreenLabel"></strong>
+              </div>
+              <div class="form-topbar-status">
+                <span class="mode-badge" id="formModeBadge">Yeni</span>
+                <span class="form-record-chip" id="formRecordChip" hidden></span>
+              </div>
             </div>
             <div class="form-actions">
               <div class="info-menu-wrap" id="formInfoWrap">
@@ -310,7 +317,7 @@
               <button type="button" class="btn action ghost" id="btnFormSecondary" hidden>İkinci işlem</button>
               <button type="button" class="btn action ghost" id="btnFormDetailFill" hidden>Detayları Doldur</button>
               <button type="button" class="btn action ghost" id="btnFormBomRota" hidden>BOM/Rota Uygula</button>
-              <button type="button" class="btn" id="btnFormSave">Kaydet</button>
+              <button type="button" class="btn action" id="btnFormSave">Kaydet</button>
             </div>
           </div>
           <div class="form-tabs-layout" id="formTabsLayout" hidden>

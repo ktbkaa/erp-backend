@@ -14,6 +14,15 @@
   --font: "Instrument Sans", sans-serif;
   --display: "Space Grotesk", sans-serif;
   --sidebar-w: 268px;
+  /* ERP form design tokens */
+  --erp-form-bg: #eef2f5;
+  --erp-card-bg: #ffffff;
+  --erp-card-border: #d9e1e8;
+  --erp-card-radius: 8px;
+  --erp-field-gap-x: 0.85rem;
+  --erp-field-gap-y: 0.45rem;
+  --erp-label-w: 7.2rem;
+  --erp-readonly-bg: #f1f4f7;
 }
 
 * { box-sizing: border-box; }
@@ -1220,22 +1229,96 @@ tr.selected td { background: var(--accent-soft); }
   height: 100%;
   background: #fff;
 }
+.form-view.erp-form--master,
+.form-view.erp-form--document {
+  background: var(--erp-form-bg);
+}
 .form-topbar {
   flex: 0 0 auto;
-  padding: 0.65rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 1.1rem;
   border-bottom: 1px solid var(--line);
   background: #fff;
+  z-index: 12;
+}
+.form-topbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.form-topbar-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.form-module-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.form-topbar-sep { color: #c0CAD3; font-weight: 400; }
+.form-topbar-meta strong {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.form-topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 .mode-badge {
   display: inline-block;
-  margin-right: 0.45rem;
-  padding: 0.15rem 0.45rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 0.3rem;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
+.mode-badge[data-mode="incele"] {
+  background: #e8eef3;
+  color: #4a5a68;
+}
+.mode-badge[data-mode="duzelt"] {
+  background: #fff0d9;
+  color: #8a5a10;
+}
+.mode-badge[data-mode="yeni"],
+.mode-badge[data-mode="kopyala"] {
+  background: var(--accent-soft);
+  color: #0a5c4f;
+}
+.form-record-chip {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #f7fafb;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.form-record-chip[hidden] { display: none !important; }
 .form-split {
   flex: 1;
   min-height: 0;
@@ -3487,4 +3570,219 @@ body.sql-splitting iframe { pointer-events: none; }
 .sql-db-modal-head strong {
   font-family: var(--display);
   font-size: 0.95rem;
+}
+
+/* —— ERP form design standard: master (tanım/kart) —— */
+.erp-master-panel {
+  padding: 0.85rem 1.1rem 1.25rem;
+  min-height: 0;
+}
+.erp-field-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 0.85rem;
+  align-items: start;
+}
+.erp-field-card {
+  background: var(--erp-card-bg);
+  border: 1px solid var(--erp-card-border);
+  border-radius: var(--erp-card-radius);
+  padding: 0.65rem 0.8rem 0.75rem;
+  box-shadow: 0 1px 0 rgba(26, 35, 48, 0.03);
+  min-width: 0;
+}
+.erp-field-card[data-group="kimlik"],
+.erp-field-card[data-group="diger"] {
+  grid-column: 1 / -1;
+}
+.erp-field-card-head {
+  margin: 0 0 0.55rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #eef2f5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #3a4553;
+}
+.erp-field-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  column-gap: var(--erp-field-gap-x) !important;
+  row-gap: var(--erp-field-gap-y) !important;
+}
+.erp-field-card-grid .field {
+  grid-template-columns: minmax(5.5rem, var(--erp-label-w)) minmax(0, 1fr) !important;
+  gap: 0.2rem 0.45rem !important;
+  align-items: center;
+}
+.erp-field-card-grid .field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4a5a68;
+  line-height: 1.25;
+}
+.erp-field-card-grid .field--wide {
+  grid-column: 1 / -1;
+}
+.erp-field-card-grid .field input,
+.erp-field-card-grid .field select,
+.erp-field-card-grid .field textarea {
+  min-height: 1.85rem;
+  padding: 0.28rem 0.45rem;
+  font-size: 0.86rem;
+  border-radius: 5px;
+}
+.erp-master-notes {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  background: var(--erp-card-bg);
+  border: 1px solid var(--erp-card-border);
+  border-radius: var(--erp-card-radius);
+}
+.form-view.erp-form--master .form-tab-nav {
+  background: #f3f6f8;
+}
+.form-view.erp-form--master .form-tab-body {
+  background: transparent;
+}
+.form-view.erp-form--master .form-tab-panel--md.erp-master-panel {
+  padding: 0.85rem 1.1rem 1.25rem;
+}
+
+/* Salt okunur / zorunlu ayrımı */
+.field--readonly input,
+.field--readonly select,
+.field--readonly textarea,
+.field--readonly .lookup-name-ro {
+  background: var(--erp-readonly-bg) !important;
+  color: #3a4553;
+}
+.field .req-mark {
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 0.15rem;
+}
+.field .field-ro-hint {
+  margin-left: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 650;
+  color: var(--muted);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+/* —— ERP form design standard: document (başlık-kalem) —— */
+.form-view.erp-form--document .form-compact-master {
+  background: linear-gradient(180deg, #f7fafb 0%, #eef3f6 100%);
+  padding: 0.45rem 0.85rem 0.5rem;
+}
+.erp-doc-header-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+.form-view.erp-form--document .md-detail {
+  background: #fff;
+  border-top: 1px solid var(--line);
+}
+.form-view.erp-form--document .md-detail-head {
+  padding: 0.45rem 0.85rem;
+  background: #f7fafb;
+  border-bottom: 1px solid #eef1f4;
+}
+.form-view.erp-form--document .md-detail-head .section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2c3642;
+}
+.form-view.erp-form--document .md-detail-scroll {
+  padding: 0.45rem 0.65rem 0.65rem;
+}
+.form-view.erp-form--document .md-footer {
+  background: #f0f4f7;
+  border-top: 1px solid #d5dde6;
+  padding: 0.55rem 0.85rem 0.65rem;
+}
+.form-view.erp-form--document .md-total-row--grand label {
+  font-weight: 750;
+  color: #0a5c4f;
+}
+.form-view.erp-form--document .md-total-row--grand input {
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+.erp-grid-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+  padding: 0.2rem 0;
+}
+.erp-grid-toolbar .toolbar-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.form-view.erp-form--document .detail-table {
+  width: max(100%, 860px);
+  font-size: 0.78rem;
+}
+.form-view.erp-form--document .detail-table thead th {
+  background: #2f3b48;
+  font-size: 0.7rem;
+  padding: 0.4rem 0.35rem;
+}
+.form-view.erp-form--document .detail-table .col-acts {
+  width: 5.6rem;
+  min-width: 5.6rem;
+}
+.form-view.erp-form--document .detail-table .col-seq {
+  left: 5.6rem;
+  width: 2.2rem;
+}
+.form-view.erp-form--document .detail-table thead .col-seq {
+  left: 5.6rem;
+}
+.form-view.erp-form--document .detail-row-actions {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+.form-view.erp-form--document .detail-row-actions .btn.sm {
+  min-width: 1.55rem !important;
+  padding: 0.15rem 0.3rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1;
+}
+.form-view.erp-form--document .detail-table .col--num,
+.form-view.erp-form--document .detail-table td.col--num,
+.form-view.erp-form--document .detail-table th.col--num {
+  text-align: right;
+}
+.form-view.erp-form--document .detail-table td.col--num input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.erp-doc-side-panel {
+  padding: 0.85rem 1.1rem 1.2rem;
+}
+.erp-doc-side-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #3a4553;
+  margin-bottom: 0.55rem;
+}
+
+@media (max-width: 1100px) {
+  .erp-field-cards { grid-template-columns: 1fr; }
+  .erp-field-card[data-group="kimlik"],
+  .erp-field-card[data-group="diger"] { grid-column: auto; }
+  .erp-field-card-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (max-width: 780px) {
+  .form-topbar { padding: 0.5rem 0.75rem; }
+  .erp-master-panel { padding: 0.65rem 0.75rem 1rem; }
 }

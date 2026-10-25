@@ -8915,15 +8915,60 @@ function detailColClass(f) {
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / address / …). */
 const FIELD_GROUP_DEFS = [
-  { id: 'kimlik', title: 'Kimlik', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|kod|adi|description|turu|tipi|vergi_|pasaport|uzun_stok|tedarik_type|item_type|customer_type|first_name$|last_name$|title)/i },
-  { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|warehouse_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|asama_|sorumlu_|takip_eden)/i },
+  { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|order_no|quotation_no|kod|adi|description|turu|tipi|vergi_|pasaport|uzun_stok|tedarik_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order)/i },
+  { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
+  { id: 'depo', title: 'Depo / stok yeri', re: /^(warehouse_id|depo|component_warehouse|wip_warehouse|fg_warehouse)/i },
+  { id: 'planlama', title: 'Planlama', re: /^(plan_|planli|planlanan|plan_start|plan_end|end_date|teslim|delivery_date|gecerlilik|cikis_type|giris_type)/i },
   { id: 'address', title: 'Adres', re: /^(country|il$|district|sehir|posta_|address|fatura_adres|sevk_|enlem|boylam)/i },
   { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|email|website|fax|yetkili)/i },
-  { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|beklenen_gelir|muhasebe_)/i },
-  { id: 'olcu', title: 'Ölçü / uom_code', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu)/i },
-  { id: 'status', title: 'Durum', re: /^(status|is_active|is_inactive|notlar|not_|priority|gecerlilik|source)/i },
+  { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|payment_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|beklenen_gelir|muhasebe_|delivery_term)/i },
+  { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity)/i },
+  { id: 'status', title: 'Durum', re: /^(status|is_active|is_inactive|notlar|not_|priority|source|onayli|yayinlandi|is_printed|is_started|acik_kapali|product_girisi)/i },
 ];
 const FIELD_GROUP_ORDER = FIELD_GROUP_DEFS.map((g) => g.id).concat(['diger']);
+
+/** Form düzeni: master (tanım/kart) | document (başlık-kalem belge) */
+function findScreenModule(screen) {
+  if (!screen) return null;
+  return MODULES.find((m) => (m.screens || []).some((s) => s.id === screen.id)) || null;
+}
+
+function inferFormLayoutKind(screen) {
+  if (!screen) return 'master';
+  if (screen.formLayout === 'document' || screen.formLayout === 'master') return screen.formLayout;
+  if (screen.compactMaster) return 'document';
+  if (screen.detailAsFields || screen.kullaniciYetkiPaneli) return 'master';
+  const tabs = screen.formTabs || [];
+  if (tabs.some((t) => t.kind === 'master-grid')) return 'document';
+  if (tabs.some((t) => t.kind === 'fields' || t.kind === 'master-detail')) return 'master';
+  if (Array.isArray(screen.detailFields) && screen.detailFields.length && screen.detailSlots) {
+    return 'document';
+  }
+  return 'master';
+}
+
+function applyFormLayoutChrome(screen) {
+  const view = $('#viewForm');
+  if (!view) return;
+  const kind = inferFormLayoutKind(screen);
+  view.classList.toggle('erp-form--master', kind === 'master');
+  view.classList.toggle('erp-form--document', kind === 'document');
+  view.dataset.formLayout = kind;
+}
+
+function renderGroupedFieldCards(fields, rec, attrName = 'data-master') {
+  const list = (fields || []).filter((f) => f && f.type !== 'static');
+  if (!list.length) return '<div class="detail-empty detail-empty--quiet"></div>';
+  const clusters = clusterFieldsByGroup(list);
+  const ctx = rec || {};
+  return `<div class="erp-field-cards">${clusters.map((c) => `
+    <section class="erp-field-card" data-group="${escAttr(c.id)}" aria-label="${escAttr(c.title)}">
+      <header class="erp-field-card-head">${escAttr(c.title)}</header>
+      <div class="form-tab-fields form-tab-fields--master erp-field-card-grid">
+        ${c.fields.map((f) => fieldShell(f, fieldControl(f, ctx[f.key], attrName, '', ctx), ctx[f.key])).join('')}
+      </div>
+    </section>`).join('')}</div>`;
+}
 
 function inferFieldGroup(f) {
   if (f?.group && typeof f.group === 'object') return f.group;
@@ -9040,7 +9085,10 @@ function fieldShell(f, controlHtml, value) {
   }
   const cls = ['field', inferFieldSizeClass(f)];
   const isReq = Boolean(f.required || (f.requiredOnNew && state.formMode === 'yeni'));
+  const codeLocked = f.code && !(f.editableOnNew && state.formMode === 'yeni');
+  const isRo = Boolean(f.readOnly || state.formMode === 'incele' || codeLocked);
   if (isReq) cls.push('required');
+  if (isRo) cls.push('field--readonly');
   if (f.critical) cls.push('field--critical');
   if (f.type === 'lookup') cls.push('lookup');
   if (f.type === 'password') cls.push('field--password');
@@ -9050,10 +9098,10 @@ function fieldShell(f, controlHtml, value) {
   // Eksik zorunlu alan: kırmızı *
   const star = (isReq && empty && state.formMode !== 'incele')
     ? '<span class="req-star" title="Doldurulması zorunlu">*</span>'
-    : '';
+    : (isReq ? '<span class="req-mark" title="Zorunlu alan">*</span>' : '');
   const hint = f.critical
     ? '<span class="field-critical-hint">zorunlu</span>'
-    : '';
+    : (isRo && f.readOnly ? '<span class="field-ro-hint">sistem</span>' : '');
   return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${star}${f.label}${hint}</label>${controlHtml}</div>`;
 }
 
@@ -9578,22 +9626,16 @@ function renderClassicShell({
 function renderMasterDetailPanel(tab, rec) {
   const screen = findScreen(state.screenId);
   const isUserCard = Boolean(screen?.kullaniciYetkiPaneli);
-  const { primary, extras, footerNotes } = partitionMasterFields(tab.masterFields || []);
-  const dFields = [...(tab.detailFields || [])];
-  const bodyFields = [...extras, ...dFields];
-  // Az alanlı kart: hepsi başlıkta kalsın, boş gövde gösterme
-  const useBody = bodyFields.length > 0;
-  const shell = renderClassicShell({
-    rec,
-    primary: useBody ? primary : [...primary, ...extras],
-    extras: [],
-    bodyHtml: useBody
-      ? `<div class="field-groups">${renderDetailFieldGrid(bodyFields, rec)}</div>`
-      : '<div class="detail-empty detail-empty--quiet"></div>',
-    footerNotes,
-    bodyLabel: 'Ek bilgiler',
-    natural: isUserCard || !useBody,
-  });
+  const all = [...(tab.masterFields || []), ...(tab.detailFields || [])];
+  const footerNotes = all.filter((f) => isFooterNoteField(f));
+  const bodyFields = all.filter((f) => !isFooterNoteField(f));
+  const shell = `
+    <div class="erp-master-panel md-split--natural">
+      ${renderGroupedFieldCards(bodyFields, rec)}
+      ${footerNotes.length ? `<div class="erp-master-notes">${footerNotes.map((f) =>
+        fieldShell(f, fieldControl(f, rec?.[f.key], 'data-master', '', rec || {}), rec?.[f.key])
+      ).join('')}</div>` : ''}
+    </div>`;
   if (!isUserCard) return shell;
   return `
     <div class="kullanici-form-stack">
@@ -9677,7 +9719,7 @@ function renderMasterGridPanel(tab, rec) {
     extras,
     bodyHtml: renderDynamicGrid(gridTab, rec),
     footerNotes,
-    bodyLabel: 'Kalemler',
+    bodyLabel: 'Detay kalemleri',
     metaHtml: `<span class="md-detail-meta">${rowCount} satır</span>`,
     footerFields: gridTab.fields,
     footerKey: gridTab.key,
@@ -9701,19 +9743,22 @@ function renderCompactMasterBar(screen, rec) {
   const { primary } = partitionMasterFields(fields, maxPrimary);
   el.hidden = false;
   el.innerHTML = `
-    <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact" aria-label="Belge başlığı">
-      ${renderFieldGrid(primary, rec || {})}
+    <div class="erp-doc-header" aria-label="Belge üst bilgileri">
+      <div class="erp-doc-header-label">Belge üst bilgileri</div>
+      <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact">
+        ${renderFieldGrid(primary, rec || {})}
+      </div>
     </div>`;
 }
 
 function renderGridToolbar(tabKey, { canEdit }) {
   if (!canEdit) {
-    return `<div class="inline-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın</span></div>`;
+    return `<div class="inline-toolbar erp-grid-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın</span></div>`;
   }
-  return `<div class="inline-toolbar" data-grid-toolbar="${tabKey}">
-    <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}">Yeni</button>
-    <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}">Sil</button>
-    <span class="toolbar-hint">Yeni satır ekler · satırda Kaydet satırı onaylar (belge üstteki Kaydet ile yazılır)</span>
+  return `<div class="inline-toolbar erp-grid-toolbar" data-grid-toolbar="${tabKey}">
+    <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}" title="Yeni satır">＋ Satır</button>
+    <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}" title="Seçili satırı sil">✕ Sil</button>
+    <span class="toolbar-hint">Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır</span>
   </div>`;
 }
 
@@ -9764,8 +9809,8 @@ function renderDynamicGrid(tab, rec) {
             // Liste satırı: Düzelt ↔ Kaydet aynı yerde (ikisi birden değil)
             const rowEditing = row._satir_duzenleniyor === true || !saved;
             const rowActBtn = rowEditing
-              ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">Kaydet</button>`
-              : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>`;
+              ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>`
+              : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">✎</button>`;
             const rowFieldsEditable = canEdit && rowEditing;
             return `
               <tr class="${selected ? 'selected' : ''} ${saved && !rowEditing ? 'detail-row--saved' : 'detail-row--draft'}"
@@ -9774,7 +9819,7 @@ function renderDynamicGrid(tab, rec) {
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
                     ${rowActBtn}
-                    <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
+                    <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">⧉</button>
                   </div>
                 </td>` : ''}
                 <td class="col-seq">${idx + 1}</td>
@@ -10085,8 +10130,34 @@ function renderZincirStrip(screen, rec) {
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
-  $('#formModeBadge').textContent = MODE_LABELS[state.formMode] || state.formMode;
-  $('#formScreenLabel').textContent = `${screen.title} · ${MODE_LABELS[state.formMode] || ''}`;
+  applyFormLayoutChrome(screen);
+  const mod = findScreenModule(screen);
+  const modEl = $('#formModuleLabel');
+  if (modEl) modEl.textContent = mod?.title || 'ERP';
+  const modeLabel = MODE_LABELS[state.formMode] || state.formMode;
+  const badge = $('#formModeBadge');
+  if (badge) {
+    badge.textContent = modeLabel;
+    badge.dataset.mode = state.formMode || '';
+  }
+  const screenLabel = $('#formScreenLabel');
+  if (screenLabel) screenLabel.textContent = screen.title;
+  const chip = $('#formRecordChip');
+  if (chip) {
+    const codeKey = screen.codeField;
+    const codeVal = codeKey ? rec?.[codeKey] : null;
+    const statusVal = rec?.status;
+    const parts = [];
+    if (codeVal) parts.push(String(codeVal));
+    if (statusVal) parts.push(String(statusVal));
+    if (parts.length) {
+      chip.hidden = false;
+      chip.textContent = parts.join(' · ');
+    } else {
+      chip.hidden = true;
+      chip.textContent = '';
+    }
+  }
   $('#btnFormSave').hidden = readonly;
   const conv = $('#btnFormConvert');
   if (conv) {
@@ -10121,7 +10192,12 @@ function renderForm(screen) {
       else show = false;
     }
     if (screen.id === 'uretim-emirleri') {
-      show = Boolean(screen.approveAction && ['Taslak', 'OnayBekliyor'].includes(rec.status));
+      show = Boolean(
+        screen.approveAction
+        && rec.id
+        && state.formMode !== 'yeni'
+        && ['Taslak', 'OnayBekliyor'].includes(rec.status)
+      );
     }
     if (screen.id === 'uretim-planlari') {
       show = Boolean(screen.convertAction && rec.status === 'Acik' && !rec.production_order_id);
@@ -10324,35 +10400,27 @@ function renderForm(screen) {
     const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart'
       || tab.id === 'baslik' || tab.id === 'bilgiler';
     const tabFields = tab.fields || [];
-    // Adres / Ödeme gibi yan sekmeler: tüm alanlar gövdede (üstte ikinci “Başlık” yok)
-    if (!masterLike) {
-      const bodyHtml = tabFields.length
-        ? `<div class="field-groups">${renderDetailFieldGrid(tabFields, rec)}</div>`
-        : '<div class="detail-empty">Bu sekmede alan yok.</div>';
-      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
-        ${renderClassicShell({
-          rec,
-          primary: [],
-          extras: [],
-          bodyHtml,
-          footerNotes: [],
-          bodyLabel: tab.label || 'Alanlar',
-        })}
+    const layoutKind = inferFormLayoutKind(screen);
+    // Tanım / kart formları: tüm alanlar gruplu kartlarda
+    if (layoutKind === 'master' || masterLike) {
+      const notes = tabFields.filter((f) => isFooterNoteField(f));
+      const body = tabFields.filter((f) => !isFooterNoteField(f));
+      return `<div class="form-tab-panel form-tab-panel--md erp-master-panel" data-tab-panel="${tab.id}" ${hide}>
+        ${body.length ? renderGroupedFieldCards(body, rec) : '<div class="detail-empty">Bu sekmede alan yok.</div>'}
+        ${notes.length ? `<div class="erp-master-notes">${notes.map((f) =>
+          fieldShell(f, fieldControl(f, rec?.[f.key], 'data-master', '', rec || {}), rec?.[f.key])
+        ).join('')}</div>` : ''}
       </div>`;
     }
-    const { primary, extras, footerNotes } = partitionMasterFields(tabFields);
-    const bodyHtml = extras.length
-      ? `<div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>`
+    // Belge yan sekmeleri (Adres vb.): gruplu kartlar
+    const bodyHtml = tabFields.length
+      ? renderGroupedFieldCards(tabFields, rec)
       : '<div class="detail-empty">Bu sekmede alan yok.</div>';
     return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
-      ${renderClassicShell({
-        rec,
-        primary,
-        extras: [],
-        bodyHtml,
-        footerNotes,
-        bodyLabel: 'Ek bilgiler',
-      })}
+      <div class="erp-doc-side-panel">
+        <div class="erp-doc-side-label">${escAttr(tab.label || 'Alanlar')}</div>
+        ${bodyHtml}
+      </div>
     </div>`;
   }).join('');
 
