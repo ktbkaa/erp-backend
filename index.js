@@ -40,10 +40,20 @@ app.get('/health', async (req, res) => {
     const pool = require('./db');
     try {
         await pool.query('SELECT 1');
+        let ayna = 'kapali';
+        if (pool._mirror) {
+            try {
+                await pool._mirror.query('SELECT 1');
+                ayna = 'bagli';
+            } catch (e) {
+                ayna = `hata: ${e.message}`;
+            }
+        }
         res.json({
             status: 'ok',
             zaman: new Date().toISOString(),
             veritabani: 'bagli',
+            ayna,
         });
     } catch (err) {
         res.status(500).json({

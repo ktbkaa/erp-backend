@@ -42,6 +42,9 @@ npm run migrate
 
 Bu komut tablolarını **silmez**; eksik tabloları/kolonları ekler.
 
+Yerel pgAdmin + Cloud Agent çift DB: `docs/ops/YEREL_POSTGRES_PGADMIN.md`  
+(`DB_MIRROR_URL` + `npm run db:mirror-sync`)
+
 ### 4) Demo döngüsünü bir kez çalıştır
 
 ```bash
