@@ -1,4 +1,13 @@
 -- Diğer ülkeler için örnek şehir / ilçe (ülke→şehir kademeli seçim)
+-- Önce eksik ülkeler (IT vb.) — aksi halde sehirler_ulke_kodu_fkey patlar
+
+INSERT INTO ulkeler (ulke_kodu, ulke_adi) VALUES
+    ('TR', 'Türkiye'),
+    ('DE', 'Almanya'),
+    ('US', 'Amerika Birleşik Devletleri'),
+    ('CN', 'Çin'),
+    ('IT', 'İtalya')
+ON CONFLICT (ulke_kodu) DO NOTHING;
 
 INSERT INTO sehirler (sehir_kodu, sehir_adi, ulke_kodu) VALUES
     ('DE-BE', 'Berlin', 'DE'),
