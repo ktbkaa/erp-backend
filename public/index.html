@@ -221,8 +221,48 @@
 
         <section id="viewSql" class="view sql-view" hidden>
           <div class="sql-layout">
-            <aside class="sql-conn-panel" aria-label="Veritabanı bağlantısı">
-              <div class="sql-conn-title">DB bağlantısı</div>
+            <div class="sql-main">
+              <div class="sql-toolbar">
+                <strong id="sqlBanner">SQL Sorgu</strong>
+                <button type="button" class="btn ghost sql-db-btn" id="sqlBtnDb" title="Veritabanı bağlantısı">
+                  <span class="sql-db-btn-label">DB</span>
+                  <span class="sql-db-btn-status" id="sqlConnChip">—</span>
+                </button>
+                <div class="sql-tx-wrap" id="sqlTxWrap" hidden>
+                  <span class="sql-tx-label">Yazma işlemi:</span>
+                  <label class="sql-tx-opt"><input type="radio" name="sqlTx" value="commit" /> COMMIT</label>
+                  <label class="sql-tx-opt"><input type="radio" name="sqlTx" value="rollback" /> ROLLBACK</label>
+                </div>
+                <div class="sql-toolbar-spacer"></div>
+                <button type="button" class="btn action" id="sqlBtnRun">Çalıştır (Ctrl+Enter)</button>
+              </div>
+              <div class="sql-sheet-bar" id="sqlSheetBar" aria-label="Sorgu sayfaları"></div>
+              <div class="sql-split" id="sqlSplit">
+                <div class="sql-editor-wrap" id="sqlEditorPane">
+                  <pre class="sql-highlight" id="sqlHighlight" aria-hidden="true"></pre>
+                  <textarea id="sqlEditor" class="sql-editor" spellcheck="false" placeholder="SELECT * FROM items LIMIT 50;"></textarea>
+                </div>
+                <div class="sql-splitter" id="sqlSplitter" role="separator" aria-orientation="horizontal" title="Sürükleyerek boyutlandır"></div>
+                <div class="sql-result-pane" id="sqlResultPane">
+                  <div class="sql-result-meta" id="sqlResultMeta"></div>
+                  <div class="sql-result-scroll">
+                    <table class="sql-result-table" id="sqlResultTable">
+                      <thead id="sqlResultHead"></thead>
+                      <tbody id="sqlResultBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sql-db-modal" id="sqlDbModal" hidden>
+            <div class="sql-db-modal-backdrop" data-sql-db-close></div>
+            <div class="sql-db-modal-card" role="dialog" aria-labelledby="sqlDbModalTitle">
+              <div class="sql-db-modal-head">
+                <strong id="sqlDbModalTitle">DB bağlantısı</strong>
+                <button type="button" class="btn tiny ghost" data-sql-db-close aria-label="Kapat">✕</button>
+              </div>
               <label class="sql-field"><span>Profil</span>
                 <select id="sqlProfile"></select>
               </label>
@@ -247,32 +287,6 @@
                 <button type="button" class="btn tiny ghost" id="sqlBtnReset">Varsayılan</button>
               </div>
               <p class="sql-conn-status" id="sqlConnStatus">—</p>
-              <div class="sql-perm-box" id="sqlPermBox"></div>
-              <div class="sql-suggest-head">Tablolar / öneriler</div>
-              <div class="sql-suggest-list" id="sqlSuggestList"></div>
-            </aside>
-            <div class="sql-main">
-              <div class="sql-toolbar">
-                <strong id="sqlBanner">SQL Sorgu</strong>
-                <div class="sql-tx-wrap" id="sqlTxWrap" hidden>
-                  <span class="sql-tx-label">Yazma işlemi:</span>
-                  <label class="sql-tx-opt"><input type="radio" name="sqlTx" value="commit" /> COMMIT</label>
-                  <label class="sql-tx-opt"><input type="radio" name="sqlTx" value="rollback" /> ROLLBACK</label>
-                </div>
-                <button type="button" class="btn action" id="sqlBtnRun">Çalıştır (Ctrl+Enter)</button>
-              </div>
-              <div class="sql-editor-wrap">
-                <pre class="sql-highlight" id="sqlHighlight" aria-hidden="true"></pre>
-                <textarea id="sqlEditor" class="sql-editor" spellcheck="false" placeholder="SELECT * FROM items LIMIT 50;"></textarea>
-              </div>
-              <div class="sql-result-meta" id="sqlResultMeta"></div>
-              <div class="sql-result-scroll">
-                <table class="sql-result-table" id="sqlResultTable">
-                  <thead id="sqlResultHead"></thead>
-                  <tbody id="sqlResultBody"></tbody>
-                </table>
-              </div>
-              <div class="sql-admin-perm" id="sqlAdminPerm" hidden></div>
             </div>
           </div>
         </section>

@@ -158,12 +158,6 @@ router.get('/meta', async (req, res) => {
       tables: tables.rows,
       columns: cols.rows,
       profiles: profiles.rows,
-      suggestions: [
-        { label: 'SELECT * FROM items LIMIT 50', kind: 'select' },
-        { label: 'SELECT * FROM partners LIMIT 50', kind: 'select' },
-        { label: 'SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'', kind: 'select' },
-        { label: 'BEGIN  →  INSERT/UPDATE/DELETE  →  COMMIT veya ROLLBACK (ekran otomatik sarar)', kind: 'hint' },
-      ],
     });
   } catch (err) {
     res.status(500).json({ hata: err.message });

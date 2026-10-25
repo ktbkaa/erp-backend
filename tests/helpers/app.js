@@ -38,6 +38,8 @@ function createApp() {
   app.use('/audit-log', require('../../routes/audit_logs'));
   app.use('/meta', require('../../routes/meta_ekran'));
   app.use('/sql-console', require('../../routes/sql_console'));
+  app.use('/users', require('../../routes/users'));
+  app.use('/kullanicilar', require('../../routes/users'));
   app.use(auditMiddleware(pool));
 
   const { errorHandler, notFoundHandler } = require('../../src/middleware/errorHandler');

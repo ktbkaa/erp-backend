@@ -519,7 +519,13 @@ const MODULES = [
         ],
         detailKey: null,
         detailAsFields: true,
-        defaults: { role: 'Yonetici', group_code: 'ADMIN', is_active: true, yetkiler: [] },
+        defaults: {
+          role: 'Yonetici',
+          group_code: 'ADMIN',
+          is_active: true,
+          yetkiler: [],
+          sql_permissions: { can_select: true, can_insert: false, can_update: false, can_delete: false },
+        },
         kullaniciYetkiPaneli: true,
       },
       {
@@ -9594,8 +9600,55 @@ function renderMasterDetailPanel(tab, rec) {
       ${shell}
       ${renderKullaniciProfilBlok(rec)}
       ${renderFirmaYetkiPane(rec)}
+      ${renderSqlYetkiPane(rec)}
       ${renderYetkiGrid(rec)}
     </div>`;
+}
+
+function renderSqlYetkiPane(rec) {
+  const p = rec?.sql_permissions || {
+    can_select: true,
+    can_insert: false,
+    can_update: false,
+    can_delete: false,
+  };
+  const readonly = state.formMode === 'incele';
+  const dis = readonly ? 'disabled' : '';
+  const chk = (key, label) => `
+    <label class="sql-yetki-opt">
+      <input type="checkbox" data-sql-yetki="${key}" ${p[key] ? 'checked' : ''} ${dis} />
+      <span>${label}</span>
+    </label>`;
+  return `
+    <section class="yetki-pane sql-yetki-pane" aria-label="SQL Sorgu yetkileri">
+      <div class="yetki-pane-head">
+        <div class="section-label">SQL Sorgu yetkileri</div>
+      </div>
+      <p class="hint yetki-hint">SQL Sorgu ekranında bu kullanıcının çalıştırabileceği ifade türleri. INSERT / UPDATE / DELETE için ekranda COMMIT veya ROLLBACK seçimi zorunludur.</p>
+      <div class="sql-yetki-checks">
+        ${chk('can_select', 'SELECT')}
+        ${chk('can_insert', 'INSERT')}
+        ${chk('can_update', 'UPDATE')}
+        ${chk('can_delete', 'DELETE')}
+      </div>
+    </section>`;
+}
+
+function readSqlYetkiFromDom() {
+  const box = document.querySelector('.sql-yetki-pane');
+  if (!box) {
+    return { can_select: true, can_insert: false, can_update: false, can_delete: false };
+  }
+  const val = (key, def) => {
+    const el = box.querySelector(`[data-sql-yetki="${key}"]`);
+    return el ? el.checked : def;
+  };
+  return {
+    can_select: val('can_select', true),
+    can_insert: val('can_insert', false),
+    can_update: val('can_update', false),
+    can_delete: val('can_delete', false),
+  };
 }
 
 /** Master alanlar üstte + kalem tablosu + alt toplam/bağlantı — klasik ERP */
@@ -11438,6 +11491,7 @@ async function saveForm() {
     delete master.profil_var;
     master.yetkiler = readYetkiGridFromDom();
     master.firma_yetkileri = readFirmaYetkiFromDom();
+    master.sql_permissions = readSqlYetkiFromDom();
     compressYetkilerForSave(master);
     if (state.formRecord && Object.prototype.hasOwnProperty.call(state.formRecord, 'profile_image')) {
       master.profile_image = state.formRecord.profile_image;
@@ -12961,10 +13015,63 @@ async function restoreSession() {
 }
 
 /* ========== SQL Sorgu ekranı ========== */
+const SQL_SHEETS_KEY = 'ktb_sql_sheets_v1';
+const SQL_SPLIT_KEY = 'ktb_sql_split_ratio';
+
 const sqlConsoleState = {
   meta: null,
   bound: false,
+  sheets: [],
+  activeId: null,
+  sheetSeq: 1,
 };
+
+function sqlNewSheet(partial = {}) {
+  const n = sqlConsoleState.sheetSeq++;
+  return {
+    id: `s${Date.now()}_${n}`,
+    name: partial.name || `Sheet ${n}`,
+    sql: partial.sql || 'SELECT * FROM items LIMIT 50;',
+    result: partial.result || null,
+    txMode: partial.txMode || null,
+  };
+}
+
+function sqlLoadSheetsFromStorage() {
+  try {
+    const raw = localStorage.getItem(SQL_SHEETS_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.sheets) || !parsed.sheets.length) return false;
+    sqlConsoleState.sheets = parsed.sheets.map((s, i) => ({
+      id: s.id || `s_restored_${i}`,
+      name: s.name || `Sheet ${i + 1}`,
+      sql: s.sql || '',
+      result: null,
+      txMode: s.txMode || null,
+    }));
+    sqlConsoleState.activeId = parsed.activeId && sqlConsoleState.sheets.some((s) => s.id === parsed.activeId)
+      ? parsed.activeId
+      : sqlConsoleState.sheets[0].id;
+    sqlConsoleState.sheetSeq = sqlConsoleState.sheets.length + 1;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function sqlPersistSheets() {
+  try {
+    localStorage.setItem(SQL_SHEETS_KEY, JSON.stringify({
+      activeId: sqlConsoleState.activeId,
+      sheets: sqlConsoleState.sheets.map(({ id, name, sql, txMode }) => ({ id, name, sql, txMode })),
+    }));
+  } catch (_) { /* ignore quota */ }
+}
+
+function sqlActiveSheet() {
+  return sqlConsoleState.sheets.find((s) => s.id === sqlConsoleState.activeId) || sqlConsoleState.sheets[0];
+}
 
 function sqlEscapeHtml(s) {
   return String(s ?? '')
@@ -12996,6 +13103,89 @@ function sqlSyncHighlight() {
   hi.scrollLeft = ed.scrollLeft;
   const tx = $('#sqlTxWrap');
   if (tx) tx.hidden = !sqlDetectWrite(ed.value);
+  const sheet = sqlActiveSheet();
+  if (sheet) sheet.sql = ed.value;
+}
+
+function sqlCaptureEditorToSheet() {
+  const sheet = sqlActiveSheet();
+  const ed = $('#sqlEditor');
+  if (!sheet || !ed) return;
+  sheet.sql = ed.value;
+  const checked = document.querySelector('input[name="sqlTx"]:checked');
+  sheet.txMode = checked?.value || null;
+}
+
+function sqlApplySheetToEditor(sheet) {
+  const ed = $('#sqlEditor');
+  if (!ed || !sheet) return;
+  ed.value = sheet.sql || '';
+  document.querySelectorAll('input[name="sqlTx"]').forEach((inp) => {
+    inp.checked = sheet.txMode ? inp.value === sheet.txMode : false;
+  });
+  sqlSyncHighlight();
+  sqlRenderResult(sheet.result);
+}
+
+function sqlRenderSheetBar() {
+  const bar = $('#sqlSheetBar');
+  if (!bar) return;
+  bar.innerHTML = [
+    ...sqlConsoleState.sheets.map((s) => `
+      <button type="button" class="sql-sheet-tab${s.id === sqlConsoleState.activeId ? ' active' : ''}" data-sql-sheet="${escAttr(s.id)}" title="${escAttr(s.name)}">
+        <span class="sql-sheet-name">${escAttr(s.name)}</span>
+        ${sqlConsoleState.sheets.length > 1 ? `<span class="sql-sheet-close" data-sql-sheet-close="${escAttr(s.id)}" title="Kapat">×</span>` : ''}
+      </button>`),
+    `<button type="button" class="sql-sheet-add" id="sqlSheetAdd" title="Yeni sorgu sayfası">+</button>`,
+  ].join('');
+}
+
+function sqlSwitchSheet(id) {
+  if (!id || id === sqlConsoleState.activeId) return;
+  sqlCaptureEditorToSheet();
+  if (!sqlConsoleState.sheets.some((s) => s.id === id)) return;
+  sqlConsoleState.activeId = id;
+  sqlApplySheetToEditor(sqlActiveSheet());
+  sqlRenderSheetBar();
+  sqlPersistSheets();
+}
+
+function sqlAddSheet() {
+  sqlCaptureEditorToSheet();
+  const sheet = sqlNewSheet();
+  sqlConsoleState.sheets.push(sheet);
+  sqlConsoleState.activeId = sheet.id;
+  sqlApplySheetToEditor(sheet);
+  sqlRenderSheetBar();
+  sqlPersistSheets();
+  $('#sqlEditor')?.focus();
+}
+
+function sqlCloseSheet(id) {
+  if (sqlConsoleState.sheets.length <= 1) return;
+  sqlCaptureEditorToSheet();
+  const idx = sqlConsoleState.sheets.findIndex((s) => s.id === id);
+  if (idx < 0) return;
+  sqlConsoleState.sheets.splice(idx, 1);
+  if (sqlConsoleState.activeId === id) {
+    const next = sqlConsoleState.sheets[Math.max(0, idx - 1)];
+    sqlConsoleState.activeId = next.id;
+  }
+  sqlApplySheetToEditor(sqlActiveSheet());
+  sqlRenderSheetBar();
+  sqlPersistSheets();
+}
+
+function sqlRenameSheet(id) {
+  const sheet = sqlConsoleState.sheets.find((s) => s.id === id);
+  if (!sheet) return;
+  const name = prompt('Sayfa adı', sheet.name);
+  if (name == null) return;
+  const trimmed = String(name).trim();
+  if (!trimmed) return;
+  sheet.name = trimmed.slice(0, 40);
+  sqlRenderSheetBar();
+  sqlPersistSheets();
 }
 
 function sqlFillConnectionForm(conn, profiles) {
@@ -13011,74 +13201,17 @@ function sqlFillConnectionForm(conn, profiles) {
   set('#sqlPort', conn.port);
   set('#sqlDatabase', conn.database);
   set('#sqlUser', conn.user);
+  const label = `${conn.user}@${conn.host}:${conn.port}/${conn.database}${conn.override ? ' (oturum)' : ''}`;
   const st = $('#sqlConnStatus');
-  if (st) {
-    st.textContent = `${conn.label || 'Bağlantı'}: ${conn.user}@${conn.host}:${conn.port}/${conn.database}${conn.override ? ' (oturum)' : ''}`;
-  }
+  if (st) st.textContent = `${conn.label || 'Bağlantı'}: ${label}`;
+  const chip = $('#sqlConnChip');
+  if (chip) chip.textContent = `${conn.database || 'db'} · ${conn.host || 'host'}`;
 }
 
-function sqlRenderPerms(perms, isAdmin) {
-  const box = $('#sqlPermBox');
-  if (!box) return;
-  const p = perms || {};
-  const chip = (ok, label) =>
-    `<span class="sql-perm-chip ${ok ? 'on' : 'off'}">${label}</span>`;
-  box.innerHTML = `
-    <div class="sql-perm-title">SQL yetkilerin${isAdmin ? ' (yönetici=tam)' : ''}</div>
-    <div class="sql-perm-chips">
-      ${chip(p.can_select, 'SELECT')}
-      ${chip(p.can_insert, 'INSERT')}
-      ${chip(p.can_update, 'UPDATE')}
-      ${chip(p.can_delete, 'DELETE')}
-    </div>
-    <p class="sql-perm-hint">INSERT / UPDATE / DELETE için COMMIT veya ROLLBACK seçimi zorunlu.</p>`;
-}
-
-function sqlRenderSuggestions(meta) {
-  const list = $('#sqlSuggestList');
-  if (!list) return;
-  const tables = (meta?.tables || []).slice(0, 80);
-  const sugg = meta?.suggestions || [];
-  list.innerHTML = [
-    ...sugg.filter((s) => s.kind !== 'hint').map((s) =>
-      `<button type="button" class="sql-suggest-item" data-sql="${escAttr(s.label)}">${escAttr(s.label)}</button>`),
-    ...tables.map((t) =>
-      `<button type="button" class="sql-suggest-item" data-sql="SELECT * FROM ${t.table_name} LIMIT 50;">${escAttr(t.table_name)}</button>`),
-  ].join('') || '<div class="sql-empty">Öneri yok</div>';
-}
-
-async function sqlRenderAdminPerms() {
-  const wrap = $('#sqlAdminPerm');
-  if (!wrap) return;
-  if (!sqlConsoleState.meta?.is_admin) {
-    wrap.hidden = true;
-    wrap.innerHTML = '';
-    return;
-  }
-  wrap.hidden = false;
-  try {
-    const rows = await api('/sql-console/permissions');
-    wrap.innerHTML = `
-      <div class="sql-admin-title">Kullanıcı SQL yetkileri</div>
-      <div class="sql-admin-scroll">
-        <table class="sql-admin-table">
-          <thead><tr><th>Kullanıcı</th><th>SELECT</th><th>INSERT</th><th>UPDATE</th><th>DELETE</th><th></th></tr></thead>
-          <tbody>
-            ${(rows || []).map((r) => `
-              <tr data-kisi="${r.kisi_id}">
-                <td>${escAttr(r.user_code || r.username || r.kisi_id)}</td>
-                <td><input type="checkbox" data-p="can_select" ${r.can_select ? 'checked' : ''} /></td>
-                <td><input type="checkbox" data-p="can_insert" ${r.can_insert ? 'checked' : ''} /></td>
-                <td><input type="checkbox" data-p="can_update" ${r.can_update ? 'checked' : ''} /></td>
-                <td><input type="checkbox" data-p="can_delete" ${r.can_delete ? 'checked' : ''} /></td>
-                <td><button type="button" class="btn tiny" data-sql-perm-save="${r.kisi_id}">Kaydet</button></td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`;
-  } catch (err) {
-    wrap.innerHTML = `<p class="sql-error">${escAttr(err.message)}</p>`;
-  }
+function sqlSetDbModalOpen(open) {
+  const modal = $('#sqlDbModal');
+  if (!modal) return;
+  modal.hidden = !open;
 }
 
 function sqlRenderResult(payload) {
@@ -13086,8 +13219,16 @@ function sqlRenderResult(payload) {
   const head = $('#sqlResultHead');
   const body = $('#sqlResultBody');
   if (!meta || !head || !body) return;
+  const sheet = sqlActiveSheet();
+  if (sheet) sheet.result = payload || null;
   if (payload?.hata) {
     meta.innerHTML = `<span class="sql-error">${escAttr(payload.hata)}</span>`;
+    head.innerHTML = '';
+    body.innerHTML = '';
+    return;
+  }
+  if (!payload) {
+    meta.innerHTML = '';
     head.innerHTML = '';
     body.innerHTML = '';
     return;
@@ -13106,16 +13247,64 @@ function sqlRenderResult(payload) {
   ).join('') || `<tr><td colspan="${Math.max(fields.length, 1)}" class="sql-empty">Satır yok</td></tr>`;
 }
 
+function sqlApplySplitRatio(ratio) {
+  const split = $('#sqlSplit');
+  if (!split) return;
+  const r = Math.min(0.8, Math.max(0.2, Number(ratio) || 0.4));
+  split.style.setProperty('--sql-editor-ratio', `${(r * 100).toFixed(1)}%`);
+  try { localStorage.setItem(SQL_SPLIT_KEY, String(r)); } catch (_) { /* ignore */ }
+}
+
+function sqlBindSplitter() {
+  const handle = $('#sqlSplitter');
+  const split = $('#sqlSplit');
+  if (!handle || !split) return;
+  let dragging = false;
+  const onMove = (e) => {
+    if (!dragging) return;
+    const rect = split.getBoundingClientRect();
+    if (rect.height < 40) return;
+    const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top;
+    sqlApplySplitRatio(y / rect.height);
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('sql-splitting');
+  };
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    dragging = true;
+    document.body.classList.add('sql-splitting');
+  });
+  handle.addEventListener('touchstart', (e) => {
+    dragging = true;
+    document.body.classList.add('sql-splitting');
+    e.preventDefault();
+  }, { passive: false });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+}
+
 async function openSqlConsole() {
   bindSqlConsoleEvents();
+  if (!sqlConsoleState.sheets.length) {
+    if (!sqlLoadSheetsFromStorage()) {
+      const first = sqlNewSheet();
+      sqlConsoleState.sheets = [first];
+      sqlConsoleState.activeId = first.id;
+    }
+  }
+  sqlRenderSheetBar();
+  sqlApplySheetToEditor(sqlActiveSheet());
+  const savedRatio = Number(localStorage.getItem(SQL_SPLIT_KEY) || 0.4);
+  sqlApplySplitRatio(savedRatio);
   try {
     const meta = await api('/sql-console/meta');
     sqlConsoleState.meta = meta;
     sqlFillConnectionForm(meta.connection, meta.profiles);
-    sqlRenderPerms(meta.permissions, meta.is_admin);
-    sqlRenderSuggestions(meta);
-    await sqlRenderAdminPerms();
-    sqlSyncHighlight();
   } catch (err) {
     toast(err.message || 'SQL konsol yüklenemedi');
   }
@@ -13126,7 +13315,10 @@ function bindSqlConsoleEvents() {
   sqlConsoleState.bound = true;
   const ed = $('#sqlEditor');
   if (ed) {
-    ed.addEventListener('input', sqlSyncHighlight);
+    ed.addEventListener('input', () => {
+      sqlSyncHighlight();
+      sqlPersistSheets();
+    });
     ed.addEventListener('scroll', () => {
       const hi = $('#sqlHighlight');
       if (hi) { hi.scrollTop = ed.scrollTop; hi.scrollLeft = ed.scrollLeft; }
@@ -13139,13 +13331,19 @@ function bindSqlConsoleEvents() {
     });
   }
   $('#sqlBtnRun')?.addEventListener('click', () => sqlRun());
+  $('#sqlBtnDb')?.addEventListener('click', () => sqlSetDbModalOpen(true));
+  $('#sqlDbModal')?.addEventListener('click', (e) => {
+    if (e.target.closest('[data-sql-db-close]')) sqlSetDbModalOpen(false);
+  });
   $('#sqlBtnTest')?.addEventListener('click', () => sqlConnectionAction('test'));
   $('#sqlBtnUse')?.addEventListener('click', () => sqlConnectionAction('use'));
   $('#sqlBtnReset')?.addEventListener('click', async () => {
     try {
       await api('/sql-console/connection/reset', { method: 'POST', body: JSON.stringify({}) });
       toast('Varsayılan bağlantıya dönüldü');
-      await openSqlConsole();
+      const meta = await api('/sql-console/meta');
+      sqlConsoleState.meta = meta;
+      sqlFillConnectionForm(meta.connection, meta.profiles);
     } catch (err) { toast(err.message); }
   });
   $('#sqlProfile')?.addEventListener('change', (e) => {
@@ -13156,29 +13354,33 @@ function bindSqlConsoleEvents() {
     $('#sqlDatabase').value = opt.dataset.db || '';
     $('#sqlUser').value = opt.dataset.user || '';
   });
-  $('#sqlSuggestList')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-sql]');
-    if (!btn) return;
-    const ed2 = $('#sqlEditor');
-    if (ed2) { ed2.value = btn.getAttribute('data-sql') || ''; sqlSyncHighlight(); ed2.focus(); }
+  $('#sqlSheetBar')?.addEventListener('click', (e) => {
+    const close = e.target.closest('[data-sql-sheet-close]');
+    if (close) {
+      e.preventDefault();
+      e.stopPropagation();
+      sqlCloseSheet(close.getAttribute('data-sql-sheet-close'));
+      return;
+    }
+    if (e.target.closest('#sqlSheetAdd')) {
+      sqlAddSheet();
+      return;
+    }
+    const tab = e.target.closest('[data-sql-sheet]');
+    if (tab) sqlSwitchSheet(tab.getAttribute('data-sql-sheet'));
   });
-  $('#sqlAdminPerm')?.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-sql-perm-save]');
-    if (!btn) return;
-    const tr = btn.closest('tr');
-    const kisiId = btn.getAttribute('data-sql-perm-save');
-    const body = {};
-    tr.querySelectorAll('input[data-p]').forEach((inp) => {
-      body[inp.getAttribute('data-p')] = inp.checked;
+  $('#sqlSheetBar')?.addEventListener('dblclick', (e) => {
+    const tab = e.target.closest('[data-sql-sheet]');
+    if (tab) sqlRenameSheet(tab.getAttribute('data-sql-sheet'));
+  });
+  document.querySelectorAll('input[name="sqlTx"]').forEach((inp) => {
+    inp.addEventListener('change', () => {
+      const sheet = sqlActiveSheet();
+      if (sheet) sheet.txMode = document.querySelector('input[name="sqlTx"]:checked')?.value || null;
+      sqlPersistSheets();
     });
-    try {
-      await api(`/sql-console/permissions/${kisiId}`, {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      });
-      toast('SQL yetkileri kaydedildi');
-    } catch (err) { toast(err.message); }
   });
+  sqlBindSplitter();
 }
 
 function sqlReadConnBody() {
@@ -13208,7 +13410,10 @@ async function sqlConnectionAction(kind) {
       });
       toast('Bağlantı oturuma alındı');
       $('#sqlPassword').value = '';
-      await openSqlConsole();
+      const meta = await api('/sql-console/meta');
+      sqlConsoleState.meta = meta;
+      sqlFillConnectionForm(meta.connection, meta.profiles);
+      sqlSetDbModalOpen(false);
     }
   } catch (err) {
     toast(err.message || 'Bağlantı hatası');
@@ -13216,6 +13421,7 @@ async function sqlConnectionAction(kind) {
 }
 
 async function sqlRun() {
+  sqlCaptureEditorToSheet();
   const sql = $('#sqlEditor')?.value || '';
   const isWrite = sqlDetectWrite(sql);
   let txMode = null;
@@ -13234,6 +13440,7 @@ async function sqlRun() {
       body: JSON.stringify({ sql, txMode }),
     });
     sqlRenderResult(payload);
+    sqlPersistSheets();
   } catch (err) {
     sqlRenderResult({ hata: err.message || String(err) });
   }

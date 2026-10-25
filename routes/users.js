@@ -105,11 +105,49 @@ async function saveFirmaYetkileri(client, kisiId, companies) {
   }
 }
 
+async function loadSqlPermissions(client, kisiId) {
+  const r = await client.query(
+    `SELECT can_select, can_insert, can_update, can_delete
+     FROM user_sql_permissions WHERE kisi_id=$1`,
+    [kisiId]
+  ).catch(() => ({ rows: [] }));
+  if (r.rows[0]) {
+    return {
+      can_select: Boolean(r.rows[0].can_select),
+      can_insert: Boolean(r.rows[0].can_insert),
+      can_update: Boolean(r.rows[0].can_update),
+      can_delete: Boolean(r.rows[0].can_delete),
+    };
+  }
+  return { can_select: true, can_insert: false, can_update: false, can_delete: false };
+}
+
+async function saveSqlPermissions(client, kisiId, sqlPerms) {
+  if (!sqlPerms || typeof sqlPerms !== 'object') return;
+  await client.query(
+    `INSERT INTO user_sql_permissions (kisi_id, can_select, can_insert, can_update, can_delete)
+     VALUES ($1,$2,$3,$4,$5)
+     ON CONFLICT (kisi_id) DO UPDATE SET
+       can_select=EXCLUDED.can_select,
+       can_insert=EXCLUDED.can_insert,
+       can_update=EXCLUDED.can_update,
+       can_delete=EXCLUDED.can_delete`,
+    [
+      kisiId,
+      sqlPerms.can_select !== false,
+      Boolean(sqlPerms.can_insert),
+      Boolean(sqlPerms.can_update),
+      Boolean(sqlPerms.can_delete),
+    ]
+  );
+}
+
 async function hydrateUser(row) {
   if (!row) return null;
   const out = sanitizeRow(row);
   out.yetkiler = await loadYetkiler(pool, row.id);
   out.firma_yetkileri = await loadFirmaYetkileri(pool, row.id);
+  out.sql_permissions = await loadSqlPermissions(pool, row.id);
   return out;
 }
 
@@ -167,6 +205,7 @@ router.post('/', async (req, res) => {
       first_name, last_name, eposta, telefon, role, title,
       user_code, username, is_active, group_code,
       sifre, parola, password, profile_image, yetkiler, firma_yetkileri, companies,
+      sql_permissions,
     } = req.body;
     if (!first_name || !last_name) {
       return res.status(400).json({ hata: 'first_name ve last_name zorunludur.' });
@@ -202,6 +241,9 @@ router.post('/', async (req, res) => {
     const row = result.rows[0];
     await saveYetkiler(client, row.id, yetkiler);
     await saveFirmaYetkileri(client, row.id, firmaList);
+    if (sql_permissions !== undefined) {
+      await saveSqlPermissions(client, row.id, sql_permissions);
+    }
     await client.query('COMMIT');
     res.status(201).json(await hydrateUser(row));
   } catch (err) {
@@ -224,6 +266,7 @@ router.put('/:id', async (req, res) => {
       first_name, last_name, eposta, telefon, role, title,
       user_code, username, is_active, group_code,
       sifre, parola, password, profile_image, yetkiler, firma_yetkileri, companies,
+      sql_permissions,
     } = req.body;
 
     const loginAdi = username !== undefined ? cleanLoginName(username) : undefined;
@@ -270,6 +313,9 @@ router.put('/:id', async (req, res) => {
     }
     if (firmaList !== undefined) {
       await saveFirmaYetkileri(client, Number(req.params.id), firmaList);
+    }
+    if (sql_permissions !== undefined) {
+      await saveSqlPermissions(client, Number(req.params.id), sql_permissions);
     }
     await client.query('COMMIT');
     res.json(await hydrateUser(result.rows[0]));
