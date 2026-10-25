@@ -1690,8 +1690,8 @@ const MODULES = [
             ],
             fields: [
               { key: 'component_item_id', label: 'Malzeme', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-              { key: 'quantity', label: 'Miktar', type: 'number', required: true },
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+              { key: 'quantity', label: 'Miktar', type: 'number', required: true },
             ],
           },
         ],
@@ -1879,6 +1879,12 @@ const MODULES = [
         ],
         detailFields: [],
         detailKey: null,
+        // Stok → varsayılan ürün ağacı
+        formLinks: {
+          item_id: [
+            { field: 'product_bom_id', pick: 'bomForItem' },
+          ],
+        },
         formTabs: [
           {
             id: 'rota',
@@ -1888,7 +1894,7 @@ const MODULES = [
             headerFields: [
               { key: 'route_code', label: 'Kod', code: true, required: true },
               { key: 'route_name', label: 'Ad', name: true, required: true },
-              { key: 'item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+              { key: 'item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true },
               {
                 key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
                 valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true,
@@ -1914,8 +1920,8 @@ const MODULES = [
                 valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code',
                 filterByBomKey: 'product_bom_id',
               },
-              { key: 'quantity', label: 'Miktar', type: 'number' },
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+              { key: 'quantity', label: 'Miktar', type: 'number' },
             ],
           },
         ],
@@ -1980,19 +1986,24 @@ const MODULES = [
           { key: 'order_no', label: 'Emir', mono: true },
         ],
         masterFields: [
-          { key: 'plan_no', label: 'Plan no', code: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-          { key: 'planlanan_start', label: 'Planlanan başlangıç', type: 'date' },
-          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date' },
-          { key: 'is_started', label: 'Başlatıldı', type: 'checkbox' },
-          { key: 'fixed', label: 'Sabit', type: 'checkbox' },
-          { key: 'malzeme', label: 'Malzeme (MRP)', type: 'checkbox' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Baslatildi', 'Kapali', 'Iptal'] },
-          { key: 'description', label: 'Açıklama' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
+          { key: 'plan_no', label: 'Plan no', code: true, group: 'kimlik' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true, group: 'kimlik' },
+          { key: 'planlanan_start', label: 'Planlanan başlangıç', type: 'date', group: 'planlama' },
+          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
+          { key: 'is_started', label: 'Başlatıldı', type: 'checkbox', group: 'status' },
+          { key: 'fixed', label: 'Sabit', type: 'checkbox', group: 'status' },
+          { key: 'malzeme', label: 'Malzeme (MRP)', type: 'checkbox', group: 'status' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Baslatildi', 'Kapali', 'Iptal'], group: 'status' },
+          { key: 'description', label: 'Açıklama', group: 'status' },
         ],
+        formLinks: {
+          item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+          ],
+        },
         detailFields: [],
         detailKey: null,
         defaults: { status: 'Acik', is_started: false, fixed: false, malzeme: false },
@@ -2032,34 +2043,50 @@ const MODULES = [
           { key: 'status', label: 'Durum' },
         ],
         masterFields: [
-          { key: 'order_no', label: 'Emir no', code: true },
-          { key: 'order_date', label: 'Emir tarihi', type: 'date', required: true },
-          { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true },
-          { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true },
-          { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no' },
-          { key: 'planlanan_quantity', label: 'Planlanan quantity', type: 'number', required: true },
-          { key: 'produced_quantity', label: 'Üretilen quantity', type: 'number', readOnly: true },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-          { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date' },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date' },
-          { key: 'end_date', label: 'Bitiş tarihi', type: 'date' },
-          { key: 'planli_kesin', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'] },
-          { key: 'acik_kapali', label: 'Açık/Kapalı', type: 'select', options: ['Acik', 'Kapali'] },
-          { key: 'cikis_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'] },
-          { key: 'giris_type', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'] },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'] },
-          { key: 'onayli', label: 'Onaylı', type: 'checkbox' },
-          { key: 'yayinlandi', label: 'Yayınlandı', type: 'checkbox' },
-          { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox' },
-          { key: 'product_girisi_tamamlandi', label: 'Ürün girişi tamam', type: 'checkbox' },
-          { key: 'is_started', label: 'Başlatıldı', type: 'checkbox', readOnly: true },
-          { key: 'description', label: 'Açıklama', size: 'wide' },
+          // 1) Organizasyon
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', lead: true },
+          { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
+          // 2) Üretim kimliği — stok → ağaç → rota (önem / bağımlılık sırası)
+          { key: 'order_no', label: 'Emir no', code: true, group: 'kimlik' },
+          { key: 'order_date', label: 'Emir tarihi', type: 'date', required: true, group: 'kimlik' },
+          {
+            key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items-mamul',
+            valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik',
+          },
+          {
+            key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
+            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
+            dependsOn: 'item_id', filterKey: 'finished_good_item_id',
+          },
+          {
+            key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings',
+            valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true, group: 'kimlik',
+            dependsOn: 'item_id', filterKey: 'item_id',
+          },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
+          { key: 'planlanan_quantity', label: 'Planlanan quantity', type: 'number', required: true, group: 'kimlik' },
+          { key: 'produced_quantity', label: 'Üretilen quantity', type: 'number', readOnly: true, group: 'kimlik' },
+          { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', group: 'kimlik' },
+          // 3) Depolar — stok kartı varsayılan giriş/çıkış
+          { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
+          { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
+          { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
+          // 4) Planlama
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'date', group: 'planlama' },
+          { key: 'end_date', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+          { key: 'planli_kesin', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama' },
+          { key: 'cikis_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
+          { key: 'giris_type', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
+          // 5) Durum / notlar
+          { key: 'acik_kapali', label: 'Açık/Kapalı', type: 'select', options: ['Acik', 'Kapali'], group: 'status' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'], group: 'status' },
+          { key: 'onayli', label: 'Onaylı', type: 'checkbox', group: 'status' },
+          { key: 'yayinlandi', label: 'Yayınlandı', type: 'checkbox', group: 'status' },
+          { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox', group: 'status' },
+          { key: 'product_girisi_tamamlandi', label: 'Ürün girişi tamam', type: 'checkbox', group: 'status' },
+          { key: 'is_started', label: 'Başlatıldı', type: 'checkbox', readOnly: true, group: 'status' },
+          { key: 'description', label: 'Açıklama', size: 'wide', group: 'status' },
         ],
         detailFields: [
           { key: 'line_no', label: 'Op. no', type: 'number', size: 'short' },
@@ -2105,6 +2132,19 @@ const MODULES = [
             fields: null, // detailFields
           },
         ],
+        // Stok seçilince ağaç / rota / birim / depolar otomatik
+        formLinks: {
+          item_id: [
+            { field: 'product_bom_id', pick: 'bomForItem' },
+            { field: 'route_id', pick: 'routeForItem' },
+            { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'component_warehouse_id', fromItem: 'varsayilan_cikis_warehouse_id' },
+            { field: 'fg_warehouse_id', fromItem: 'varsayilan_giris_warehouse_id' },
+          ],
+          product_bom_id: [
+            { field: 'route_id', pick: 'routeForBom' },
+          ],
+        },
         defaults: {
           cikis_type: 'Manuel',
           giris_type: 'Manuel',
@@ -2144,17 +2184,38 @@ const MODULES = [
           { key: 'onerilen_rota_kodu', label: 'Rota', mono: true },
         ],
         masterFields: [
-          { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', required: true },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code' },
-          { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true },
-          { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true },
-          { key: 'planlanan_quantity', label: 'Planlanan quantity', type: 'number', required: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'fg_warehouse_id', label: 'Mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+          { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
+          { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', required: true, group: 'kimlik' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+          {
+            key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
+            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
+            dependsOn: 'item_id', filterKey: 'finished_good_item_id',
+          },
+          {
+            key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings',
+            valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true, group: 'kimlik',
+            dependsOn: 'item_id', filterKey: 'item_id',
+          },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
+          { key: 'planlanan_quantity', label: 'Planlanan quantity', type: 'number', required: true, group: 'kimlik' },
+          { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
+          { key: 'fg_warehouse_id', label: 'Mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
+          { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
         ],
+        formLinks: {
+          item_id: [
+            { field: 'product_bom_id', pick: 'bomForItem' },
+            { field: 'route_id', pick: 'routeForItem' },
+            { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'component_warehouse_id', fromItem: 'varsayilan_cikis_warehouse_id' },
+            { field: 'fg_warehouse_id', fromItem: 'varsayilan_giris_warehouse_id' },
+          ],
+          product_bom_id: [
+            { field: 'route_id', pick: 'routeForBom' },
+          ],
+        },
         detailFields: [],
         detailKey: null,
       },
@@ -2189,12 +2250,29 @@ const MODULES = [
         detailFields: [
           { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', required: true },
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true },
-          { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true },
+          {
+            key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
+            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true,
+            dependsOn: 'item_id', filterKey: 'finished_good_item_id',
+          },
+          {
+            key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings',
+            valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true,
+            dependsOn: 'item_id', filterKey: 'item_id',
+          },
           { key: 'planlanan_quantity', label: 'Miktar', type: 'number', required: true },
         ],
         detailKey: 'kalemler',
         detailSlots: 6,
+        formLinks: {
+          item_id: [
+            { field: 'product_bom_id', pick: 'bomForItem' },
+            { field: 'route_id', pick: 'routeForItem' },
+          ],
+          product_bom_id: [
+            { field: 'route_id', pick: 'routeForBom' },
+          ],
+        },
       },
       {
         id: 'stok-depo',
@@ -3254,12 +3332,14 @@ const MODULES = [
           { key: 'internal_note', label: 'Dahili not' },
         ],
         // Finans + geçerlilik/fiyat listesi kalem formunda
+        // Kalem sırası: stok → birim → miktar → depo (bağlantı / önem)
         detailFields: [
           { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'line_description', label: 'Açıklama' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
           { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
@@ -3272,7 +3352,6 @@ const MODULES = [
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
           { key: 'valid_date', label: 'Geçerlilik', type: 'date', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'project_code', label: 'Proje', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'shipped_quantity', label: 'Sevk edilen', type: 'number', size: 'short' },
@@ -3471,13 +3550,13 @@ const MODULES = [
         ],
         detailFields: [
           { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', size: 'short' },
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', size: 'short' },
           { key: 'line_description', label: 'Açıklama' },
           { key: 'line_description_2', label: 'Açıklama 2' },
           { key: 'line_description_3', label: 'Açıklama 3' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
           { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
@@ -8942,12 +9021,12 @@ function detailColClass(f) {
 const FIELD_GROUP_DEFS = [
   { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
   { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|tedarik_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code)/i },
+  { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity|planlanan_quantity)/i },
   { id: 'depo', title: 'Depo / stok yeri', re: /^(warehouse_id|depo|component_warehouse|wip_warehouse|fg_warehouse)/i },
   { id: 'planlama', title: 'Planlama', re: /^(plan_|planli|planlanan|plan_start|plan_end|end_date|teslim|delivery_date|gecerlilik|cikis_type|giris_type)/i },
   { id: 'address', title: 'Adres', re: /^(country|il$|district|sehir|posta_|address|bill_address|fatura_adres|sevk_|enlem|boylam|mensei)/i },
   { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|mobile_|email|website|fax|yetkili)/i },
   { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|payment_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|sales_price|varsayilan_vat|tax_|beklenen_gelir|muhasebe_|delivery_term)/i },
-  { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity)/i },
   { id: 'status', title: 'Durum / notlar', re: /^(status|is_active|is_inactive|silindi|description|notlar|not_|priority|source|onayli|yayinlandi|is_printed|is_started|acik_kapali|product_girisi|planli_kesin)/i },
 ];
 const FIELD_GROUP_ORDER = FIELD_GROUP_DEFS.map((g) => g.id).concat(['diger']);
@@ -10968,6 +11047,34 @@ function cascadeScopeContext(el) {
     });
     return { ctx, didx, grid, isDetail: true };
   }
+  if (el.hasAttribute('data-bom-field')) {
+    const ctx = { ...(state.formRecord || {}) };
+    document.querySelectorAll('[data-bom-field]').forEach((sib) => {
+      const k = sib.getAttribute('data-bom-field');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    document.querySelectorAll('[data-master]').forEach((sib) => {
+      const k = sib.getAttribute('data-master');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    return { ctx, isDetail: false, isBomField: true };
+  }
+  if (el.hasAttribute('data-flow-comp-field')) {
+    const ctx = { ...(state.formRecord || {}) };
+    document.querySelectorAll('[data-flow-comp-field]').forEach((sib) => {
+      const k = sib.getAttribute('data-flow-comp-field');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    document.querySelectorAll('[data-master]').forEach((sib) => {
+      const k = sib.getAttribute('data-master');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    return { ctx, isDetail: false, isFlowComp: true };
+  }
   const ctx = { ...(state.formRecord || {}) };
   document.querySelectorAll('[data-master]').forEach((sib) => {
     const k = sib.getAttribute('data-master');
@@ -10985,6 +11092,239 @@ function refreshLookupSelect(el, field, ctx) {
   // Önceki değer filtrelenmiş listede yoksa temizle
   const stillValid = rows.some((r) => lookupOptionSelected(field, r, el.value));
   if (!stillValid) el.value = '';
+}
+
+/** Bağlı alan doldurma — yeniden giriş kilidi */
+let _formLinking = false;
+
+function pickDefaultBomForItem(itemId) {
+  if (itemId == null || itemId === '') return null;
+  const rows = (state.lookupCache['urun-agaclari'] || [])
+    .filter((r) => String(r.finished_good_item_id) === String(itemId));
+  if (!rows.length) return null;
+  const active = rows.filter((r) => r.is_active !== false && !r.silindi);
+  const pool = active.length ? active : rows;
+  return pool.slice().sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
+}
+
+function pickDefaultRouteForItem(itemId, bomId = null) {
+  if (itemId == null || itemId === '') return null;
+  let rows = (state.lookupCache.routings || [])
+    .filter((r) => String(r.item_id) === String(itemId));
+  if (!rows.length) return null;
+  if (bomId != null && bomId !== '') {
+    const forBom = rows.filter((r) => String(r.product_bom_id) === String(bomId));
+    if (forBom.length) rows = forBom;
+  }
+  const def = rows.find((r) => r.varsayilan);
+  if (def) return def;
+  return rows.slice().sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
+}
+
+function syncLookupNameRo(sel) {
+  if (!(sel instanceof HTMLSelectElement)) return;
+  const pair = sel.closest('.lookup-pair');
+  const nameRo = pair?.querySelector('.lookup-name-ro');
+  if (!nameRo) return;
+  const opt = sel.selectedOptions?.[0];
+  const title = opt?.getAttribute('title') || opt?.textContent || '';
+  const first_name = title.includes('—') ? title.split('—').slice(1).join('—').trim() : (title || '—');
+  nameRo.value = sel.value ? (first_name || '—') : '—';
+}
+
+/** Select değerini seçenek yoksa ekleyerek yazar; name-ro + formRecord günceller. */
+function setLinkedSelectValue(sel, value, fieldKey) {
+  if (!sel || sel.disabled) return false;
+  const str = value == null || value === '' ? '' : String(value);
+  if (str && ![...sel.options].some((o) => String(o.value) === str)) {
+    const opt = document.createElement('option');
+    opt.value = str;
+    opt.textContent = str;
+    sel.appendChild(opt);
+  }
+  if (String(sel.value) === str) {
+    syncLookupNameRo(sel);
+    return false;
+  }
+  sel.value = str;
+  syncLookupNameRo(sel);
+  if (sel.hasAttribute('data-master') && state.formRecord && fieldKey) {
+    state.formRecord[fieldKey] = str;
+  }
+  return true;
+}
+
+function resolveFormLinkValue(rule, ctx) {
+  const itemId = ctx.item_id || ctx.finished_good_item_id || ctx.component_item_id;
+  if (rule.fromItem) {
+    const st = stokLookupById(itemId);
+    if (!st) return '';
+    const v = st[rule.fromItem];
+    return v == null ? '' : v;
+  }
+  if (rule.pick === 'bomForItem') {
+    return pickDefaultBomForItem(itemId)?.id ?? '';
+  }
+  if (rule.pick === 'routeForItem') {
+    return pickDefaultRouteForItem(itemId, ctx.product_bom_id)?.id ?? '';
+  }
+  if (rule.pick === 'routeForBom') {
+    return pickDefaultRouteForItem(itemId, ctx.product_bom_id || ctx[rule.bomKey || 'product_bom_id'])?.id ?? '';
+  }
+  if (rule.value != null) return rule.value;
+  return '';
+}
+
+/** Satınalma / mal kabul gibi giriş yönlü ekranlar — varsayılan giriş deposu */
+function isInboundWarehouseScreen(screen) {
+  const id = String(screen?.id || '');
+  return /satin-alma|mal-kabul|tedarikci-irsaliye|alis|purchase/i.test(id);
+}
+
+function findLinkedTargetEl(targetKey, { isDetail, didx, grid, isBomField, isFlowComp }) {
+  if (isBomField) {
+    return document.querySelector(
+      `select[data-bom-field="${targetKey}"], input[data-bom-field="${targetKey}"]`
+    );
+  }
+  if (isFlowComp) {
+    return document.querySelector(
+      `select[data-flow-comp-field="${targetKey}"], input[data-flow-comp-field="${targetKey}"]`
+    );
+  }
+  if (isDetail && didx != null && grid) {
+    return document.querySelector(
+      `select[data-detail="${targetKey}"][data-didx="${didx}"][data-grid="${grid}"], `
+      + `input[data-detail="${targetKey}"][data-didx="${didx}"][data-grid="${grid}"]`
+    );
+  }
+  return document.querySelector(
+    `select[data-master="${targetKey}"], input[data-master="${targetKey}"]`
+  );
+}
+
+/**
+ * Ekran formLinks + satır stok→birim/depo bağlantıları.
+ * Parent değişince bağımlı alanları filtreler ve varsayılanları yazar.
+ */
+async function applyFormLinkages(screen, changedKey, changedEl) {
+  if (_formLinking || !screen || !changedKey || !changedEl) return;
+  const links = screen.formLinks?.[changedKey];
+  const isDetail = changedEl.hasAttribute('data-detail');
+  const isBomField = changedEl.hasAttribute('data-bom-field');
+  const isFlowComp = changedEl.hasAttribute('data-flow-comp-field');
+  const didx = changedEl.getAttribute('data-didx');
+  const grid = changedEl.getAttribute('data-grid');
+  const scope = { isDetail, didx, grid, isBomField, isFlowComp };
+
+  const stokChanged = ['item_id', 'component_item_id', 'finished_good_item_id'].includes(changedKey);
+  const whFrom = isInboundWarehouseScreen(screen)
+    ? 'varsayilan_giris_warehouse_id'
+    : 'varsayilan_cikis_warehouse_id';
+
+  // Satır / BOM / rota bileşen stok → birim (+ grid’de depo)
+  const detailStokRules = (stokChanged && (isDetail || isBomField || isFlowComp))
+    ? [
+      { field: 'uom_code', fromItem: 'uom_code' },
+      ...(isDetail ? [{ field: 'warehouse_id', fromItem: whFrom }] : []),
+    ]
+    : [];
+
+  const rules = [...(links || []), ...detailStokRules];
+  if (!rules.length) return;
+
+  _formLinking = true;
+  try {
+    // BOM/rota listeleri güncel olsun
+    if (['item_id', 'finished_good_item_id', 'product_bom_id', 'component_item_id'].includes(changedKey)) {
+      await Promise.all([
+        fetchLookupKey('urun-agaclari'),
+        fetchLookupKey('routings'),
+        fetchLookupKey('items'),
+        fetchLookupKey('items-mamul'),
+      ]);
+    }
+
+    const { ctx } = cascadeScopeContext(changedEl);
+    ctx[changedKey] = changedEl.type === 'checkbox' ? changedEl.checked : changedEl.value;
+
+    // Önce bağımlı lookup seçeneklerini yenile
+    refreshDependentLookups(screen, changedEl);
+
+    // ctx’i DOM’dan tazele (filtre sonrası)
+    const fresh = cascadeScopeContext(changedEl).ctx;
+    Object.assign(ctx, fresh);
+    ctx[changedKey] = changedEl.type === 'checkbox' ? changedEl.checked : changedEl.value;
+
+    const filled = [];
+    for (const rule of rules) {
+      const targetKey = rule.field;
+      if (!targetKey) continue;
+      const target = findLinkedTargetEl(targetKey, scope);
+      if (!target || target.disabled) continue;
+
+      // Parent temizlendiyse bağımlıyı da temizle
+      const parentEmpty = ctx[changedKey] == null || ctx[changedKey] === '';
+      const nextVal = parentEmpty ? '' : resolveFormLinkValue(rule, ctx);
+
+      // Lookup seçeneklerini hedef için yenile (dependsOn zinciri)
+      const fieldDef = collectLookupFieldDefs(screen).find((f) => f.key === targetKey)
+        || (isDetail || isBomField || isFlowComp
+          ? (screen.formTabs || []).flatMap((t) => [
+            ...(t.fields || []),
+            ...(t.componentFields || []),
+            ...(t.grid?.fields || []),
+          ]).find((f) => f.key === targetKey)
+            || (screen.detailFields || []).find((f) => f.key === targetKey)
+          : null);
+      if (target instanceof HTMLSelectElement && fieldDef?.type === 'lookup') {
+        refreshLookupSelect(target, fieldDef, ctx);
+      }
+
+      const writeMaster = !isDetail && !isBomField && !isFlowComp;
+      if (target instanceof HTMLSelectElement) {
+        if (setLinkedSelectValue(target, nextVal, writeMaster ? targetKey : null)) {
+          filled.push(targetKey);
+          ctx[targetKey] = target.value;
+          // Rota, ağaç seçimine göre yeniden seçilsin diye zincir
+          if (targetKey === 'product_bom_id' && screen.formLinks?.product_bom_id) {
+            for (const sub of screen.formLinks.product_bom_id) {
+              const subEl = findLinkedTargetEl(sub.field, scope);
+              if (!subEl || subEl.disabled) continue;
+              const subDef = collectLookupFieldDefs(screen).find((f) => f.key === sub.field);
+              if (subDef) refreshLookupSelect(subEl, subDef, ctx);
+              const subVal = parentEmpty ? '' : resolveFormLinkValue(sub, ctx);
+              if (setLinkedSelectValue(subEl, subVal, writeMaster ? sub.field : null)) {
+                filled.push(sub.field);
+                ctx[sub.field] = subEl.value;
+              }
+            }
+          }
+        }
+      } else if (target instanceof HTMLInputElement) {
+        const str = nextVal == null ? '' : String(nextVal);
+        if (target.value !== str) {
+          target.value = str;
+          filled.push(targetKey);
+          if (writeMaster && state.formRecord) state.formRecord[targetKey] = str;
+        }
+      }
+    }
+
+    if (filled.length && stokChanged) {
+      const labels = filled.map((k) => {
+        if (k === 'product_bom_id') return 'ürün ağacı';
+        if (k === 'route_id') return 'rota';
+        if (k === 'uom_code') return 'birim';
+        if (k.includes('warehouse')) return 'depo';
+        return k;
+      });
+      const uniq = [...new Set(labels)];
+      toast(`Stok bağlantısı: ${uniq.join(', ')} dolduruldu`);
+    }
+  } finally {
+    _formLinking = false;
+  }
 }
 
 /** Ülke/il / stok→ağaç / ağaç→BOM malzeme bağımlı listeleri yenile */
@@ -11084,14 +11424,19 @@ function bindCascadeLookups(_screen) {
       }
     }
 
-    // BOM sağ panel alanları — uom_code/quantity otomatik doldurulmaz (kullanıcı girer)
+    // BOM satır editörü — stok seçilince birim otomatik; miktarı kullanıcı girer
     if (el.hasAttribute('data-bom-field')) {
+      const bomKey = el.getAttribute('data-bom-field');
+      if (!_formLinking && bomKey) {
+        await applyFormLinkages(scr, bomKey, el);
+      }
       return;
     }
 
     const masterKey = el.getAttribute('data-master');
     const detailKey = el.getAttribute('data-detail');
-    const fieldKey = masterKey || detailKey;
+    const flowCompKey = el.getAttribute('data-flow-comp-field');
+    const fieldKey = masterKey || detailKey || flowCompKey;
 
     // Barkod → stok eşleştirme (yanlış malzeme engeli)
     if (fieldKey === 'barkod' && el instanceof HTMLInputElement && el.value.trim()) {
@@ -11133,7 +11478,8 @@ function bindCascadeLookups(_screen) {
     if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && fieldKey === 'dil_code')) {
       if (!(el instanceof HTMLSelectElement)) return;
     }
-    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')) return;
+    if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')
+        && !el.hasAttribute('data-flow-comp-field')) return;
 
     if (masterKey && state.formRecord) {
       const f = collectTabFields(scr).find((x) => x.key === masterKey)
@@ -11141,6 +11487,9 @@ function bindCascadeLookups(_screen) {
       state.formRecord[masterKey] = f ? readFieldValue(el, f) : el.value;
     }
     refreshDependentLookups(scr, el);
+    if (!_formLinking && fieldKey) {
+      await applyFormLinkages(scr, fieldKey, el);
+    }
 
     // Dil kodu → dil adı
     if (fieldKey === 'dil_code') {
