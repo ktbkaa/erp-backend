@@ -3244,12 +3244,16 @@ body.form-solo .form-tab-nav .form-tab-btn {
   font-size: 0.78rem;
   font-weight: 650;
   color: var(--ink);
+  flex-shrink: 0;
 }
 .sql-suggest-list {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  min-height: 0;
+  min-height: 8rem;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-bottom: 0.5rem;
 }
 .sql-suggest-item {
   text-align: left;

@@ -13143,7 +13143,7 @@ function bindSqlConsoleEvents() {
   $('#sqlBtnUse')?.addEventListener('click', () => sqlConnectionAction('use'));
   $('#sqlBtnReset')?.addEventListener('click', async () => {
     try {
-      await api('/sql-console/connection/reset', { method: 'POST', body: {} });
+      await api('/sql-console/connection/reset', { method: 'POST', body: JSON.stringify({}) });
       toast('Varsayılan bağlantıya dönüldü');
       await openSqlConsole();
     } catch (err) { toast(err.message); }
@@ -13172,7 +13172,10 @@ function bindSqlConsoleEvents() {
       body[inp.getAttribute('data-p')] = inp.checked;
     });
     try {
-      await api(`/sql-console/permissions/${kisiId}`, { method: 'PUT', body });
+      await api(`/sql-console/permissions/${kisiId}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      });
       toast('SQL yetkileri kaydedildi');
     } catch (err) { toast(err.message); }
   });
@@ -13193,10 +13196,16 @@ async function sqlConnectionAction(kind) {
   const body = sqlReadConnBody();
   try {
     if (kind === 'test') {
-      const r = await api('/sql-console/connection/test', { method: 'POST', body });
+      const r = await api('/sql-console/connection/test', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
       toast(`Bağlantı OK · ${r.db} / ${r.usr}`);
     } else {
-      await api('/sql-console/connection/use', { method: 'POST', body });
+      await api('/sql-console/connection/use', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
       toast('Bağlantı oturuma alındı');
       $('#sqlPassword').value = '';
       await openSqlConsole();
@@ -13222,7 +13231,7 @@ async function sqlRun() {
   try {
     const payload = await api('/sql-console/execute', {
       method: 'POST',
-      body: { sql, txMode },
+      body: JSON.stringify({ sql, txMode }),
     });
     sqlRenderResult(payload);
   } catch (err) {
