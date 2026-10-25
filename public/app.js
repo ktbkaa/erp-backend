@@ -8478,8 +8478,20 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     return `<input type="password" ${name} value="" autocomplete="new-password" placeholder="${escAttr(ph)}" ${dis} ${reqPw} />`;
   }
   if (field.type === 'select') {
+    const opts = field.options || [];
+    // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
+    if (opts.length === 2) {
+      const radioName = `${attrName.replace('data-', '')}_${field.key}`;
+      return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
+        const on = String(v) === String(o) || (v === '' && o === opts[0]);
+        return `<label class="seg-opt${on ? ' is-on' : ''}">
+          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(o)}" ${on ? 'checked' : ''} ${dis} ${req} />
+          <span>${escAttr(o)}</span>
+        </label>`;
+      }).join('')}</div>`;
+    }
     return `<select ${name} ${dis} ${req}>
-      ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
+      ${opts.map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
     </select>`;
   }
   if (field.type === 'lookup') {
@@ -8956,18 +8968,20 @@ function applyFormLayoutChrome(screen) {
   view.dataset.formLayout = kind;
 }
 
+/** Tanım/kart formları: tek sıkı ızgara — alanları ayrı kartlara bölme. */
 function renderGroupedFieldCards(fields, rec, attrName = 'data-master') {
   const list = (fields || []).filter((f) => f && f.type !== 'static');
   if (!list.length) return '<div class="detail-empty detail-empty--quiet"></div>';
-  const clusters = clusterFieldsByGroup(list);
   const ctx = rec || {};
-  return `<div class="erp-field-cards">${clusters.map((c) => `
-    <section class="erp-field-card" data-group="${escAttr(c.id)}" aria-label="${escAttr(c.title)}">
-      <header class="erp-field-card-head">${escAttr(c.title)}</header>
-      <div class="form-tab-fields form-tab-fields--master erp-field-card-grid">
-        ${c.fields.map((f) => fieldShell(f, fieldControl(f, ctx[f.key], attrName, '', ctx), ctx[f.key])).join('')}
-      </div>
-    </section>`).join('')}</div>`;
+  return `<div class="erp-master-dense">
+    <div class="form-tab-fields form-tab-fields--master erp-dense-grid">
+      ${list.map((f) => fieldShell(f, fieldControl(f, ctx[f.key], attrName, '', ctx), ctx[f.key])).join('')}
+    </div>
+  </div>`;
+}
+
+function isBinarySelectField(field) {
+  return field?.type === 'select' && Array.isArray(field.options) && field.options.length === 2;
 }
 
 function inferFieldGroup(f) {
@@ -9051,25 +9065,30 @@ function renderGroupedDetailControls(fields, row, idx, gridKey) {
     </div>`).join('');
 }
 
-/** Kısa veri alanları dar; lookup/first_name/açıklama geniş — her alanı küçültme */
+/** Alan genişliği veri tipine göre: kısa kod/sayı ≠ yarım ekran. */
 function inferFieldSizeClass(f) {
   if (f?.size === 'wide' || f?.size === 'short' || f?.size === 'medium') {
     return `field--${f.size}`;
   }
   const k = String(f?.key || '');
-  if (f?.name || /description|address|not_|line_description/i.test(k)) return 'field--wide';
-  if (f?.type === 'lookup' && (f.codeKey || /stok|cari|depo|siparis|talep|irsaliye|firma|is_yeri|mamul|agac|teklif/i.test(k))) {
+  if (f?.type === 'checkbox') return 'field--check';
+  if (isBinarySelectField(f)) return 'field--seg';
+  if (f?.name || /description|address|not_|line_description|public_note|internal_note/i.test(k)) {
     return 'field--wide';
   }
+  // Kod+ad lookup: orta (çift kontrol); tek başına full-wide değil
+  if (f?.type === 'lookup' && f.codeKey) return 'field--medium';
+  if (f?.type === 'lookup') return 'field--medium';
   if (
-    f?.type === 'checkbox'
-    || f?.code
+    f?.code
     || f?.type === 'number'
-    || /^(quantity|exchange_rate|katsayi|line_no|.*_oran|kdv|iskonto|giren_quantity|accepted_flag|reddedilen)$/i.test(k)
-    || /^(uom_code|currency_code|dil_code|pb)$/i.test(k)
+    || f?.type === 'date'
+    || /^(quantity|exchange_rate|katsayi|line_no|.*_oran|kdv|iskonto|giren_quantity|accepted_flag|reddedilen|status)$/i.test(k)
+    || /^(uom_code|currency_code|dil_code|pb|order_type|item_type|tedarik_type)$/i.test(k)
   ) {
     return 'field--short';
   }
+  if ((f?.type === 'select') && (f.options || []).length <= 5) return 'field--short';
   return 'field--medium';
 }
 
@@ -9099,10 +9118,7 @@ function fieldShell(f, controlHtml, value) {
   const star = (isReq && empty && state.formMode !== 'incele')
     ? '<span class="req-star" title="Doldurulması zorunlu">*</span>'
     : (isReq ? '<span class="req-mark" title="Zorunlu alan">*</span>' : '');
-  const hint = f.critical
-    ? '<span class="field-critical-hint">zorunlu</span>'
-    : (isRo && f.readOnly ? '<span class="field-ro-hint">sistem</span>' : '');
-  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${star}${f.label}${hint}</label>${controlHtml}</div>`;
+  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${star}${f.label}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -10479,10 +10495,18 @@ function collectTabFields(screen) {
   return fields;
 }
 
+function findFieldControlEl(attrName, key) {
+  const radios = document.querySelectorAll(`input[type="radio"][${attrName}="${key}"]`);
+  if (radios.length) {
+    return [...radios].find((r) => r.checked) || radios[0];
+  }
+  return document.querySelector(`[${attrName}="${key}"]`);
+}
+
 function readMasterFromForm(screen) {
   const out = { ...(state.formRecord || {}) };
   collectTabFields(screen).forEach((f) => {
-    const el = document.querySelector(`[data-master="${f.key}"]`);
+    const el = findFieldControlEl('data-master', f.key);
     if (!el) return;
     // Şifre alanı render'da her zaman value="" basılır; boş DOM, formRecord'daki
     // (veya input sırasında saklanan) değeri silmesin — aksi halde kayıt şifresiz gider.

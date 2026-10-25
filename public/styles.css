@@ -3572,83 +3572,175 @@ body.sql-splitting iframe { pointer-events: none; }
   font-size: 0.95rem;
 }
 
-/* —— ERP form design standard: master (tanım/kart) —— */
+/* —— ERP form design standard: master (tanım/kart) — sıkı tek ızgara —— */
 .erp-master-panel {
-  padding: 0.85rem 1.1rem 1.25rem;
+  padding: 0.7rem 0.95rem 1rem;
   min-height: 0;
+  background: #fff;
 }
-.erp-field-cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem 0.85rem;
-  align-items: start;
-}
-.erp-field-card {
-  background: var(--erp-card-bg);
+.erp-master-dense {
+  background: #fff;
   border: 1px solid var(--erp-card-border);
-  border-radius: var(--erp-card-radius);
-  padding: 0.65rem 0.8rem 0.75rem;
-  box-shadow: 0 1px 0 rgba(26, 35, 48, 0.03);
-  min-width: 0;
+  border-radius: 6px;
+  padding: 0.55rem 0.65rem 0.65rem;
 }
-.erp-field-card[data-group="kimlik"],
-.erp-field-card[data-group="diger"] {
-  grid-column: 1 / -1;
+/* Sabit genişlik + satır kaydırma: kısa alan yarım ekranı kaplamaz */
+.erp-dense-grid {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 0.32rem 0.7rem;
+  align-items: flex-start;
 }
-.erp-field-card-head {
-  margin: 0 0 0.55rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid #eef2f5;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: #3a4553;
-}
-.erp-field-card-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  column-gap: var(--erp-field-gap-x) !important;
-  row-gap: var(--erp-field-gap-y) !important;
-}
-.erp-field-card-grid .field {
-  grid-template-columns: minmax(5.5rem, var(--erp-label-w)) minmax(0, 1fr) !important;
-  gap: 0.2rem 0.45rem !important;
+.erp-dense-grid .field {
+  display: grid !important;
+  grid-template-columns: 5.6rem minmax(0, 1fr) !important;
+  gap: 0.12rem 0.3rem !important;
   align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
 }
-.erp-field-card-grid .field label {
-  font-size: 0.78rem;
+.erp-dense-grid .field label {
+  font-size: 0.72rem;
   font-weight: 600;
   color: #4a5a68;
-  line-height: 1.25;
+  line-height: 1.15;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.erp-field-card-grid .field--wide {
-  grid-column: 1 / -1;
+.erp-dense-grid .field input,
+.erp-dense-grid .field select,
+.erp-dense-grid .field textarea {
+  min-height: 1.55rem;
+  padding: 0.15rem 0.3rem;
+  font-size: 0.78rem;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
-.erp-field-card-grid .field input,
-.erp-field-card-grid .field select,
-.erp-field-card-grid .field textarea {
-  min-height: 1.85rem;
-  padding: 0.28rem 0.45rem;
-  font-size: 0.86rem;
-  border-radius: 5px;
+.erp-dense-grid .field--short { width: 11.2rem; }
+.erp-dense-grid .field--seg {
+  width: auto;
+  min-width: 12.5rem;
+  grid-template-columns: 5.2rem auto !important;
+}
+.erp-dense-grid .field--medium { width: 16.5rem; }
+.erp-dense-grid .field.lookup.field--medium { width: 20.5rem; }
+.erp-dense-grid .field--wide {
+  width: min(100%, 34rem);
+  flex-basis: min(100%, 34rem);
+}
+.erp-dense-grid .field--wide label {
+  white-space: normal;
+}
+.erp-dense-grid .lookup-pair {
+  grid-template-columns: 4.6rem minmax(0, 1fr);
+  gap: 0.18rem;
+}
+.erp-dense-grid .lookup-pair .lookup-name-ro {
+  min-height: 1.55rem;
+  padding: 0.12rem 0.28rem;
+  font-size: 0.74rem;
+}
+.erp-dense-grid .field.field--critical {
+  padding: 0.1rem 0.15rem;
+  box-shadow: none;
+  background: transparent;
+  border-color: transparent;
+}
+.erp-dense-grid .field-critical-hint { display: none; }
+/* Checkbox: [✓] Etiket — dar satır */
+.erp-dense-grid .field--check {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.35rem;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  grid-template-columns: none !important;
+  padding: 0.15rem 0.2rem 0.15rem 0;
+}
+.erp-dense-grid .field--check label {
+  text-align: left;
+  white-space: nowrap;
+  overflow: visible;
+  order: 2;
+  font-size: 0.74rem;
+}
+.erp-dense-grid .field--check input[type="checkbox"] {
+  order: 1;
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
 }
 .erp-master-notes {
-  margin-top: 0.75rem;
-  padding: 0.65rem 0.8rem;
-  background: var(--erp-card-bg);
+  margin-top: 0.55rem;
+  padding: 0.45rem 0.65rem;
+  background: #fff;
   border: 1px solid var(--erp-card-border);
-  border-radius: var(--erp-card-radius);
+  border-radius: 6px;
 }
 .form-view.erp-form--master .form-tab-nav {
   background: #f3f6f8;
 }
 .form-view.erp-form--master .form-tab-body {
-  background: transparent;
+  background: var(--erp-form-bg);
 }
 .form-view.erp-form--master .form-tab-panel--md.erp-master-panel {
-  padding: 0.85rem 1.1rem 1.25rem;
+  padding: 0.7rem 0.95rem 1rem;
 }
 
-/* Salt okunur / zorunlu ayrımı */
+/* İki seçenek: segment (aç/kapa) — büyük select yok */
+.seg-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+  background: #f4f7f9;
+  max-width: 100%;
+}
+.seg-opt {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  cursor: pointer;
+  min-width: 0;
+}
+.seg-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.seg-opt span {
+  display: block;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.74rem;
+  font-weight: 650;
+  color: var(--muted);
+  white-space: nowrap;
+  border-right: 1px solid var(--line);
+  line-height: 1.25;
+}
+.seg-opt:last-child span { border-right: 0; }
+.seg-opt:has(input:checked) span,
+.seg-opt.is-on span {
+  background: var(--accent);
+  color: #fff;
+}
+.seg-opt:has(input:disabled) { cursor: default; opacity: 0.7; }
+.field--check input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+
+/* Salt okunur */
 .field--readonly input,
 .field--readonly select,
 .field--readonly textarea,
@@ -3661,13 +3753,15 @@ body.sql-splitting iframe { pointer-events: none; }
   font-weight: 700;
   margin-right: 0.15rem;
 }
-.field .field-ro-hint {
-  margin-left: 0.3rem;
-  font-size: 0.65rem;
-  font-weight: 650;
-  color: var(--muted);
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
+
+@media (max-width: 720px) {
+  .erp-dense-grid .field--short,
+  .erp-dense-grid .field--medium,
+  .erp-dense-grid .field.lookup.field--medium,
+  .erp-dense-grid .field--wide {
+    width: 100%;
+    flex-basis: 100%;
+  }
 }
 
 /* —— ERP form design standard: document (başlık-kalem) —— */
@@ -3774,15 +3868,7 @@ body.sql-splitting iframe { pointer-events: none; }
   margin-bottom: 0.55rem;
 }
 
-@media (max-width: 1100px) {
-  .erp-field-cards { grid-template-columns: 1fr; }
-  .erp-field-card[data-group="kimlik"],
-  .erp-field-card[data-group="diger"] { grid-column: auto; }
-  .erp-field-card-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
 @media (max-width: 780px) {
   .form-topbar { padding: 0.5rem 0.75rem; }
-  .erp-master-panel { padding: 0.65rem 0.75rem 1rem; }
+  .erp-master-panel { padding: 0.55rem 0.65rem 0.85rem; }
 }
