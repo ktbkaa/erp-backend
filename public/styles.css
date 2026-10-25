@@ -3590,32 +3590,34 @@ body.sql-splitting iframe { pointer-events: none; }
 }
 .form-view.erp-form--master .form-tab-panel--md.erp-master-panel,
 .form-view.erp-form--master .form-tab-panel--md:has(.erp-master-panel) {
-  padding: 0.75rem 1rem 1.1rem;
+  padding: 0.55rem 0.75rem 0.9rem;
   flex: 0 0 auto;
   height: auto;
-  align-self: flex-start;
+  align-self: stretch;
   width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
-/* Tek yüzey + bölüm ayırıcı — kart yığını yok; yükseklik içeriğe göre */
+/* Tam genişlik yüzey — yan boşluk yok; yükseklik içeriğe göre */
 .erp-balanced {
   display: flex;
   flex-direction: column;
   gap: 0;
   width: 100%;
-  max-width: 78rem;
+  max-width: none;
   height: fit-content;
   flex: 0 0 auto;
-  align-self: flex-start;
+  align-self: stretch;
   background: #fff;
   border: 1px solid var(--erp-card-border, #dde3ea);
   border-radius: 8px;
-  padding: 0.9rem 1.1rem 1.15rem;
+  padding: 0.85rem 1rem 1.05rem;
   box-sizing: border-box;
 }
 .erp-section {
   min-width: 0;
-  padding: 0.85rem 0 0.95rem;
+  padding: 0.8rem 0 0.9rem;
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -3625,7 +3627,7 @@ body.sql-splitting iframe { pointer-events: none; }
   border-top: 1px solid #e4ebf0;
 }
 .erp-section-title {
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.55rem;
   padding: 0;
   border: 0;
   font-size: 0.8rem;
@@ -3634,20 +3636,22 @@ body.sql-splitting iframe { pointer-events: none; }
   text-transform: none;
   color: #4a5a68;
 }
+/* Flex wrap: satırdaki alanlar genişleyerek yan boşluğu doldurur */
 .erp-section-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: 1.25rem;
-  row-gap: 0.85rem;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.2rem;
+  align-items: flex-start;
 }
 .erp-section-grid .field {
   display: flex !important;
   flex-direction: column;
   gap: 0.3rem;
   align-items: stretch;
-  min-width: 0;
-  width: 100%;
+  flex: 1 1 16.5rem;
+  min-width: min(100%, 12rem);
+  max-width: 100%;
+  width: auto;
   box-sizing: border-box;
   grid-template-columns: none !important;
   padding: 0 !important;
@@ -3683,18 +3687,25 @@ body.sql-splitting iframe { pointer-events: none; }
   min-height: 3.6rem;
   resize: vertical;
 }
-.erp-section-grid .field-span-1 { grid-column: span 1; }
-.erp-section-grid .field-span-2 { grid-column: span 2; }
-.erp-section-grid .field-span-3 { grid-column: span 3; }
+.erp-section-grid .field-span-1 { flex: 1 1 16.5rem; }
+.erp-section-grid .field-span-2 { flex: 1 1 22rem; }
+.erp-section-grid .field-span-3,
+.erp-section-grid .field-span-full {
+  flex: 1 1 100%;
+  max-width: 100%;
+}
+.erp-section-grid .field-span--compact {
+  flex: 1 1 12rem;
+}
 .erp-section-grid .lookup-pair {
-  grid-template-columns: minmax(4.2rem, 5.5rem) minmax(0, 1fr);
-  gap: 0.28rem;
+  grid-template-columns: minmax(3.8rem, 5.2rem) minmax(0, 1fr);
+  gap: 0.25rem;
   width: 100%;
 }
 .erp-section-grid .lookup-pair .lookup-name-ro {
   min-height: 2.05rem;
-  padding: 0.3rem 0.4rem;
-  font-size: 0.82rem;
+  padding: 0.3rem 0.35rem;
+  font-size: 0.8rem;
 }
 .erp-section-grid .field.field--critical {
   padding: 0 !important;
@@ -3813,26 +3824,18 @@ body.sql-splitting iframe { pointer-events: none; }
   margin-right: 0.15rem;
 }
 
-@media (max-width: 1100px) {
-  .erp-section-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .erp-section-grid .field-span-2 { grid-column: span 2; }
-  .erp-section-grid .field-span-3 { grid-column: span 2; }
-}
 @media (max-width: 720px) {
-  .erp-balanced { max-width: none; gap: 0.85rem; }
   .erp-section-grid {
-    grid-template-columns: 1fr;
-    row-gap: 0.55rem;
+    gap: 0.55rem;
   }
+  .erp-section-grid .field,
   .erp-section-grid .field-span-1,
   .erp-section-grid .field-span-2,
-  .erp-section-grid .field-span-3 {
-    grid-column: span 1;
+  .erp-section-grid .field-span--compact {
+    flex: 1 1 100%;
   }
   .erp-section-grid .field--check {
-    padding-top: 0.15rem;
+    margin-top: 0.15rem;
   }
 }
 

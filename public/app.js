@@ -8991,9 +8991,9 @@ function mergeTinyFieldGroups(clusters, minSize = 2) {
   return out;
 }
 
-/** CSS grid sütun span — 3 kolon düzenli; yalnız açıklama tam geniş. */
+/** auto-fit ızgara: açıklama tam satır; diğerleri eşit paylaşır. */
 function fieldSpanClass(f) {
-  if (isFooterNoteField(f) || f?.size === 'wide') return 'field-span-3';
+  if (isFooterNoteField(f) || f?.size === 'wide') return 'field-span-full';
   if (f?.type === 'checkbox' || isBinarySelectField(f)) return 'field-span-1 field-span--compact';
   return 'field-span-1';
 }
