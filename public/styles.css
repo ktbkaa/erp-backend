@@ -3572,116 +3572,15 @@ body.sql-splitting iframe { pointer-events: none; }
   font-size: 0.95rem;
 }
 
-/* —— ERP form design standard: master (tanım/kart) — sıkı tek ızgara —— */
+/* —— ERP form design standard: master (tanım/kart) — dengeli 3 kolon —— */
 .erp-master-panel {
-  padding: 0.7rem 0.95rem 1rem;
+  padding: 0.65rem 0.85rem 1rem;
   min-height: 0;
-  background: #fff;
-}
-.erp-master-dense {
-  background: #fff;
-  border: 1px solid var(--erp-card-border);
-  border-radius: 6px;
-  padding: 0.55rem 0.65rem 0.65rem;
-}
-/* Sabit genişlik + satır kaydırma: kısa alan yarım ekranı kaplamaz */
-.erp-dense-grid {
-  display: flex !important;
-  flex-wrap: wrap;
-  gap: 0.32rem 0.7rem;
-  align-items: flex-start;
-}
-.erp-dense-grid .field {
-  display: grid !important;
-  grid-template-columns: 5.6rem minmax(0, 1fr) !important;
-  gap: 0.12rem 0.3rem !important;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 0;
-  box-sizing: border-box;
-}
-.erp-dense-grid .field label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #4a5a68;
-  line-height: 1.15;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.erp-dense-grid .field input,
-.erp-dense-grid .field select,
-.erp-dense-grid .field textarea {
-  min-height: 1.55rem;
-  padding: 0.15rem 0.3rem;
-  font-size: 0.78rem;
-  border-radius: 3px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-.erp-dense-grid .field--short { width: 11.2rem; }
-.erp-dense-grid .field--seg {
-  width: auto;
-  min-width: 12.5rem;
-  grid-template-columns: 5.2rem auto !important;
-}
-.erp-dense-grid .field--medium { width: 16.5rem; }
-.erp-dense-grid .field.lookup.field--medium { width: 20.5rem; }
-.erp-dense-grid .field--wide {
-  width: min(100%, 34rem);
-  flex-basis: min(100%, 34rem);
-}
-.erp-dense-grid .field--wide label {
-  white-space: normal;
-}
-.erp-dense-grid .lookup-pair {
-  grid-template-columns: 4.6rem minmax(0, 1fr);
-  gap: 0.18rem;
-}
-.erp-dense-grid .lookup-pair .lookup-name-ro {
-  min-height: 1.55rem;
-  padding: 0.12rem 0.28rem;
-  font-size: 0.74rem;
-}
-.erp-dense-grid .field.field--critical {
-  padding: 0.1rem 0.15rem;
-  box-shadow: none;
+  height: auto;
   background: transparent;
-  border-color: transparent;
-}
-.erp-dense-grid .field-critical-hint { display: none; }
-/* Checkbox: [✓] Etiket — dar satır */
-.erp-dense-grid .field--check {
-  display: inline-flex !important;
-  align-items: center;
-  gap: 0.35rem;
-  width: auto;
-  min-width: 0;
-  max-width: none;
-  grid-template-columns: none !important;
-  padding: 0.15rem 0.2rem 0.15rem 0;
-}
-.erp-dense-grid .field--check label {
-  text-align: left;
-  white-space: nowrap;
-  overflow: visible;
-  order: 2;
-  font-size: 0.74rem;
-}
-.erp-dense-grid .field--check input[type="checkbox"] {
-  order: 1;
-  width: 0.95rem;
-  height: 0.95rem;
-  flex: 0 0 auto;
-}
-.erp-master-notes {
-  margin-top: 0.55rem;
-  padding: 0.45rem 0.65rem;
-  background: #fff;
-  border: 1px solid var(--erp-card-border);
-  border-radius: 6px;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
 }
 .form-view.erp-form--master .form-tab-nav {
   background: #f3f6f8;
@@ -3689,8 +3588,168 @@ body.sql-splitting iframe { pointer-events: none; }
 .form-view.erp-form--master .form-tab-body {
   background: var(--erp-form-bg);
 }
-.form-view.erp-form--master .form-tab-panel--md.erp-master-panel {
-  padding: 0.7rem 0.95rem 1rem;
+.form-view.erp-form--master .form-tab-panel--md.erp-master-panel,
+.form-view.erp-form--master .form-tab-panel--md:has(.erp-master-panel) {
+  padding: 0.75rem 1rem 1.1rem;
+  flex: 0 0 auto;
+  height: auto;
+  align-self: flex-start;
+  width: 100%;
+}
+
+/* Tek yüzey + bölüm ayırıcı — kart yığını yok; yükseklik içeriğe göre */
+.erp-balanced {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: 78rem;
+  height: fit-content;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--erp-card-border, #dde3ea);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem 1.15rem;
+  box-sizing: border-box;
+}
+.erp-section {
+  min-width: 0;
+  padding: 0.85rem 0 0.95rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  flex: 0 0 auto;
+}
+.erp-section + .erp-section {
+  border-top: 1px solid #e4ebf0;
+}
+.erp-section-title {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  border: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #4a5a68;
+}
+.erp-section-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  row-gap: 0.85rem;
+  align-items: start;
+}
+.erp-section-grid .field {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: stretch;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  grid-template-columns: none !important;
+  padding: 0 !important;
+  margin: 0;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.erp-section-grid .field label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: #4a5a68;
+  line-height: 1.2;
+  text-align: left !important;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  padding: 0;
+  order: 0;
+}
+.erp-section-grid .field input,
+.erp-section-grid .field select,
+.erp-section-grid .field textarea {
+  min-height: 2.05rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.84rem;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.erp-section-grid .field textarea {
+  min-height: 3.6rem;
+  resize: vertical;
+}
+.erp-section-grid .field-span-1 { grid-column: span 1; }
+.erp-section-grid .field-span-2 { grid-column: span 2; }
+.erp-section-grid .field-span-3 { grid-column: span 3; }
+.erp-section-grid .lookup-pair {
+  grid-template-columns: minmax(4.2rem, 5.5rem) minmax(0, 1fr);
+  gap: 0.28rem;
+  width: 100%;
+}
+.erp-section-grid .lookup-pair .lookup-name-ro {
+  min-height: 2.05rem;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.82rem;
+}
+.erp-section-grid .field.field--critical {
+  padding: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.erp-section-grid .field.field--critical label {
+  display: block !important;
+  justify-content: flex-start !important;
+  color: #4a5a68 !important;
+  font-weight: 650 !important;
+}
+.erp-section-grid .field-critical-hint { display: none !important; }
+/* Checkbox: etiket yanına, input satırıyla hizalı */
+.erp-section-grid .field--check {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.05rem;
+  margin-top: 1.15rem; /* üst etiket satırı kadar boşluk */
+  padding: 0 !important;
+}
+.erp-section-grid .field--check label {
+  order: 2;
+  font-size: 0.8rem;
+  font-weight: 550;
+  white-space: nowrap;
+  text-align: left !important;
+}
+.erp-section-grid .field--check input[type="checkbox"] {
+  order: 1;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  margin: 0;
+}
+.erp-section-grid .field--seg {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.erp-section-grid .field--seg .seg-toggle {
+  width: fit-content;
+  max-width: 100%;
+}
+.erp-master-notes {
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  background: #fff;
+  border: 1px solid var(--erp-card-border, #dde3ea);
+  border-radius: 8px;
 }
 
 /* İki seçenek: segment (aç/kapa) — büyük select yok */
@@ -3754,13 +3813,26 @@ body.sql-splitting iframe { pointer-events: none; }
   margin-right: 0.15rem;
 }
 
+@media (max-width: 1100px) {
+  .erp-section-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .erp-section-grid .field-span-2 { grid-column: span 2; }
+  .erp-section-grid .field-span-3 { grid-column: span 2; }
+}
 @media (max-width: 720px) {
-  .erp-dense-grid .field--short,
-  .erp-dense-grid .field--medium,
-  .erp-dense-grid .field.lookup.field--medium,
-  .erp-dense-grid .field--wide {
-    width: 100%;
-    flex-basis: 100%;
+  .erp-balanced { max-width: none; gap: 0.85rem; }
+  .erp-section-grid {
+    grid-template-columns: 1fr;
+    row-gap: 0.55rem;
+  }
+  .erp-section-grid .field-span-1,
+  .erp-section-grid .field-span-2,
+  .erp-section-grid .field-span-3 {
+    grid-column: span 1;
+  }
+  .erp-section-grid .field--check {
+    padding-top: 0.15rem;
   }
 }
 
