@@ -837,7 +837,6 @@ const MODULES = [
           {
             id: 'ana', label: 'Stok Kart', kind: 'master-detail',
             masterFields: [
-              // Firma / iş yeri — zorunlu (sorunlu) alanlar; master’da en üstte
               {
                 key: 'company_id',
                 label: 'Firma',
@@ -849,6 +848,7 @@ const MODULES = [
                 required: true,
                 lead: true,
                 critical: true,
+                group: 'organizasyon',
               },
               {
                 key: 'plant_id',
@@ -861,26 +861,27 @@ const MODULES = [
                 required: true,
                 lead: true,
                 critical: true,
+                group: 'organizasyon',
               },
-              { key: 'item_type', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true, lead: true },
-              { key: 'item_code', label: 'Stok kodu', code: true, required: true },
-              { key: 'item_name', label: 'Stok adı', name: true, required: true },
-              { key: 'item_name_2', label: 'Stok adı 2' },
-              { key: 'uzun_item_code', label: 'Uzun stok kodu' },
-              { key: 'tedarik_type', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'], hint: 'Satınalma veya üretim temini' },
-              { key: 'uom_code', label: 'Baz uom_code', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', required: true },
-              { key: 'description', label: 'Açıklama' },
-              { key: 'sales_price', label: 'Satış fiyatı', type: 'number' },
-              { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+              { key: 'item_type', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true, lead: true, group: 'kimlik' },
+              { key: 'item_code', label: 'Stok kodu', code: true, required: true, group: 'kimlik' },
+              { key: 'item_name', label: 'Stok adı', name: true, required: true, group: 'kimlik' },
+              { key: 'item_name_2', label: 'Stok adı 2', group: 'kimlik' },
+              { key: 'uzun_item_code', label: 'Uzun stok kodu', group: 'kimlik' },
+              { key: 'tedarik_type', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'], hint: 'Satınalma veya üretim temini', group: 'kimlik' },
+              { key: 'uom_code', label: 'Baz birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', required: true, group: 'olcu' },
+              { key: 'sales_price', label: 'Satış fiyatı', type: 'number', group: 'finans' },
+              { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
             ],
             detailFields: [
-              { key: 'country_mensei', label: 'Ülke menşei', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
-              { key: 'uretici_code', label: 'Üretici kodu' },
-              { key: 'old_item_code', label: 'Eski stok kodu' },
-              { key: 'original_code', label: 'Orijinal kod' },
-              { key: 'gtip_code', label: 'GTİP / gümrük kodu' },
-              { key: 'class_code', label: 'Sınıf kodu' },
-              { key: 'varsayilan_vat_rate', label: 'Varsayılan KDV %', type: 'number' },
+              { key: 'country_mensei', label: 'Ülke menşei', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name', group: 'address' },
+              { key: 'uretici_code', label: 'Üretici kodu', group: 'kimlik' },
+              { key: 'old_item_code', label: 'Eski stok kodu', group: 'kimlik' },
+              { key: 'original_code', label: 'Orijinal kod', group: 'kimlik' },
+              { key: 'gtip_code', label: 'GTİP / gümrük kodu', group: 'kimlik' },
+              { key: 'class_code', label: 'Sınıf kodu', group: 'kimlik' },
+              { key: 'varsayilan_vat_rate', label: 'Varsayılan KDV %', type: 'number', group: 'finans' },
+              { key: 'description', label: 'Açıklama', group: 'status' },
             ],
           },
           {
@@ -8478,8 +8479,20 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     return `<input type="password" ${name} value="" autocomplete="new-password" placeholder="${escAttr(ph)}" ${dis} ${reqPw} />`;
   }
   if (field.type === 'select') {
+    const opts = field.options || [];
+    // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
+    if (opts.length === 2) {
+      const radioName = `${attrName.replace('data-', '')}_${field.key}`;
+      return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
+        const on = String(v) === String(o) || (v === '' && o === opts[0]);
+        return `<label class="seg-opt${on ? ' is-on' : ''}">
+          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(o)}" ${on ? 'checked' : ''} ${dis} ${req} />
+          <span>${escAttr(o)}</span>
+        </label>`;
+      }).join('')}</div>`;
+    }
     return `<select ${name} ${dis} ${req}>
-      ${(field.options || []).map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
+      ${opts.map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
     </select>`;
   }
   if (field.type === 'lookup') {
@@ -8915,15 +8928,108 @@ function detailColClass(f) {
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / address / …). */
 const FIELD_GROUP_DEFS = [
-  { id: 'kimlik', title: 'Kimlik', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|kod|adi|description|turu|tipi|vergi_|pasaport|uzun_stok|tedarik_type|item_type|customer_type|first_name$|last_name$|title)/i },
-  { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|warehouse_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|asama_|sorumlu_|takip_eden)/i },
-  { id: 'address', title: 'Adres', re: /^(country|il$|district|sehir|posta_|address|fatura_adres|sevk_|enlem|boylam)/i },
-  { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|email|website|fax|yetkili)/i },
-  { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|beklenen_gelir|muhasebe_)/i },
-  { id: 'olcu', title: 'Ölçü / uom_code', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu)/i },
-  { id: 'status', title: 'Durum', re: /^(status|is_active|is_inactive|notlar|not_|priority|gecerlilik|source)/i },
+  { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
+  { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|tedarik_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code)/i },
+  { id: 'depo', title: 'Depo / stok yeri', re: /^(warehouse_id|depo|component_warehouse|wip_warehouse|fg_warehouse)/i },
+  { id: 'planlama', title: 'Planlama', re: /^(plan_|planli|planlanan|plan_start|plan_end|end_date|teslim|delivery_date|gecerlilik|cikis_type|giris_type)/i },
+  { id: 'address', title: 'Adres', re: /^(country|il$|district|sehir|posta_|address|bill_address|fatura_adres|sevk_|enlem|boylam|mensei)/i },
+  { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|mobile_|email|website|fax|yetkili)/i },
+  { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|payment_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|sales_price|varsayilan_vat|tax_|beklenen_gelir|muhasebe_|delivery_term)/i },
+  { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity)/i },
+  { id: 'status', title: 'Durum / notlar', re: /^(status|is_active|is_inactive|silindi|description|notlar|not_|priority|source|onayli|yayinlandi|is_printed|is_started|acik_kapali|product_girisi|planli_kesin)/i },
 ];
 const FIELD_GROUP_ORDER = FIELD_GROUP_DEFS.map((g) => g.id).concat(['diger']);
+
+/** Form düzeni: master (tanım/kart) | document (başlık-kalem belge) */
+function findScreenModule(screen) {
+  if (!screen) return null;
+  return MODULES.find((m) => (m.screens || []).some((s) => s.id === screen.id)) || null;
+}
+
+function inferFormLayoutKind(screen) {
+  if (!screen) return 'master';
+  if (screen.formLayout === 'document' || screen.formLayout === 'master') return screen.formLayout;
+  if (screen.compactMaster) return 'document';
+  if (screen.detailAsFields || screen.kullaniciYetkiPaneli) return 'master';
+  const tabs = screen.formTabs || [];
+  if (tabs.some((t) => t.kind === 'master-grid')) return 'document';
+  if (tabs.some((t) => t.kind === 'fields' || t.kind === 'master-detail')) return 'master';
+  if (Array.isArray(screen.detailFields) && screen.detailFields.length && screen.detailSlots) {
+    return 'document';
+  }
+  return 'master';
+}
+
+function applyFormLayoutChrome(screen) {
+  const view = $('#viewForm');
+  if (!view) return;
+  const kind = inferFormLayoutKind(screen);
+  view.classList.toggle('erp-form--master', kind === 'master');
+  view.classList.toggle('erp-form--document', kind === 'document');
+  view.dataset.formLayout = kind;
+}
+
+/** Küçük grupları birleştir — 1 alanlık başlık gürültüsü yok. */
+function mergeTinyFieldGroups(clusters, minSize = 2) {
+  const src = (clusters || []).map((c) => ({ ...c, fields: [...(c.fields || [])] }));
+  if (src.length <= 1) return src;
+  const out = [];
+  for (const c of src) {
+    if (c.fields.length < minSize && out.length) {
+      out[out.length - 1].fields.push(...c.fields);
+      continue;
+    }
+    if (c.fields.length < minSize && !out.length) {
+      out.push(c);
+      continue;
+    }
+    if (out.length && out[out.length - 1].fields.length < minSize) {
+      c.fields = out.pop().fields.concat(c.fields);
+    }
+    out.push(c);
+  }
+  return out;
+}
+
+/** auto-fit ızgara: açıklama tam satır; diğerleri eşit paylaşır. */
+function fieldSpanClass(f) {
+  if (isFooterNoteField(f) || f?.size === 'wide') return 'field-span-full';
+  if (f?.type === 'checkbox' || isBinarySelectField(f)) return 'field-span-1 field-span--compact';
+  return 'field-span-1';
+}
+
+/** Tanım/kart: tek panel, bölüm başlıklı 3 kolon — kart yığını yok. */
+function renderGroupedFieldCards(fields, rec, attrName = 'data-master') {
+  const list = (fields || []).filter((f) => f && f.type !== 'static');
+  if (!list.length) return '<div class="detail-empty detail-empty--quiet"></div>';
+  const ctx = rec || {};
+  // Tek alanlık grupları birleştir; 2+ alanlı bölümler kalsın
+  const clusters = mergeTinyFieldGroups(clusterFieldsByGroup(list), 2);
+  const renderCell = (f) => fieldShell(
+    f,
+    fieldControl(f, ctx[f.key], attrName, '', ctx),
+    ctx[f.key],
+  ).replace(
+    /^<div class="/,
+    `<div class="${fieldSpanClass(f)} `,
+  );
+  if (list.length < 4 || clusters.length <= 1) {
+    return `<div class="erp-balanced">
+      <div class="erp-section-grid">${list.map(renderCell).join('')}</div>
+    </div>`;
+  }
+  return `<div class="erp-balanced">
+    ${clusters.map((c) => `
+      <section class="erp-section" data-group="${escAttr(c.id)}">
+        <h3 class="erp-section-title">${escAttr(c.title)}</h3>
+        <div class="erp-section-grid">${c.fields.map(renderCell).join('')}</div>
+      </section>`).join('')}
+  </div>`;
+}
+
+function isBinarySelectField(field) {
+  return field?.type === 'select' && Array.isArray(field.options) && field.options.length === 2;
+}
 
 function inferFieldGroup(f) {
   if (f?.group && typeof f.group === 'object') return f.group;
@@ -9006,25 +9112,30 @@ function renderGroupedDetailControls(fields, row, idx, gridKey) {
     </div>`).join('');
 }
 
-/** Kısa veri alanları dar; lookup/first_name/açıklama geniş — her alanı küçültme */
+/** Alan genişliği veri tipine göre: kısa kod/sayı ≠ yarım ekran. */
 function inferFieldSizeClass(f) {
   if (f?.size === 'wide' || f?.size === 'short' || f?.size === 'medium') {
     return `field--${f.size}`;
   }
   const k = String(f?.key || '');
-  if (f?.name || /description|address|not_|line_description/i.test(k)) return 'field--wide';
-  if (f?.type === 'lookup' && (f.codeKey || /stok|cari|depo|siparis|talep|irsaliye|firma|is_yeri|mamul|agac|teklif/i.test(k))) {
+  if (f?.type === 'checkbox') return 'field--check';
+  if (isBinarySelectField(f)) return 'field--seg';
+  if (f?.name || /description|address|not_|line_description|public_note|internal_note/i.test(k)) {
     return 'field--wide';
   }
+  // Kod+ad lookup: orta (çift kontrol); tek başına full-wide değil
+  if (f?.type === 'lookup' && f.codeKey) return 'field--medium';
+  if (f?.type === 'lookup') return 'field--medium';
   if (
-    f?.type === 'checkbox'
-    || f?.code
+    f?.code
     || f?.type === 'number'
-    || /^(quantity|exchange_rate|katsayi|line_no|.*_oran|kdv|iskonto|giren_quantity|accepted_flag|reddedilen)$/i.test(k)
-    || /^(uom_code|currency_code|dil_code|pb)$/i.test(k)
+    || f?.type === 'date'
+    || /^(quantity|exchange_rate|katsayi|line_no|.*_oran|kdv|iskonto|giren_quantity|accepted_flag|reddedilen|status)$/i.test(k)
+    || /^(uom_code|currency_code|dil_code|pb|order_type|item_type|tedarik_type)$/i.test(k)
   ) {
     return 'field--short';
   }
+  if ((f?.type === 'select') && (f.options || []).length <= 5) return 'field--short';
   return 'field--medium';
 }
 
@@ -9040,7 +9151,10 @@ function fieldShell(f, controlHtml, value) {
   }
   const cls = ['field', inferFieldSizeClass(f)];
   const isReq = Boolean(f.required || (f.requiredOnNew && state.formMode === 'yeni'));
+  const codeLocked = f.code && !(f.editableOnNew && state.formMode === 'yeni');
+  const isRo = Boolean(f.readOnly || state.formMode === 'incele' || codeLocked);
   if (isReq) cls.push('required');
+  if (isRo) cls.push('field--readonly');
   if (f.critical) cls.push('field--critical');
   if (f.type === 'lookup') cls.push('lookup');
   if (f.type === 'password') cls.push('field--password');
@@ -9050,11 +9164,8 @@ function fieldShell(f, controlHtml, value) {
   // Eksik zorunlu alan: kırmızı *
   const star = (isReq && empty && state.formMode !== 'incele')
     ? '<span class="req-star" title="Doldurulması zorunlu">*</span>'
-    : '';
-  const hint = f.critical
-    ? '<span class="field-critical-hint">zorunlu</span>'
-    : '';
-  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${star}${f.label}${hint}</label>${controlHtml}</div>`;
+    : (isReq ? '<span class="req-mark" title="Zorunlu alan">*</span>' : '');
+  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${star}${f.label}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -9578,22 +9689,12 @@ function renderClassicShell({
 function renderMasterDetailPanel(tab, rec) {
   const screen = findScreen(state.screenId);
   const isUserCard = Boolean(screen?.kullaniciYetkiPaneli);
-  const { primary, extras, footerNotes } = partitionMasterFields(tab.masterFields || []);
-  const dFields = [...(tab.detailFields || [])];
-  const bodyFields = [...extras, ...dFields];
-  // Az alanlı kart: hepsi başlıkta kalsın, boş gövde gösterme
-  const useBody = bodyFields.length > 0;
-  const shell = renderClassicShell({
-    rec,
-    primary: useBody ? primary : [...primary, ...extras],
-    extras: [],
-    bodyHtml: useBody
-      ? `<div class="field-groups">${renderDetailFieldGrid(bodyFields, rec)}</div>`
-      : '<div class="detail-empty detail-empty--quiet"></div>',
-    footerNotes,
-    bodyLabel: 'Ek bilgiler',
-    natural: isUserCard || !useBody,
-  });
+  // Master/tanım: açıklama notları ızgarada kalsın — altta boşluk + yetim şerit yok
+  const all = [...(tab.masterFields || []), ...(tab.detailFields || [])];
+  const shell = `
+    <div class="erp-master-panel md-split--natural">
+      ${renderGroupedFieldCards(all, rec)}
+    </div>`;
   if (!isUserCard) return shell;
   return `
     <div class="kullanici-form-stack">
@@ -9677,7 +9778,7 @@ function renderMasterGridPanel(tab, rec) {
     extras,
     bodyHtml: renderDynamicGrid(gridTab, rec),
     footerNotes,
-    bodyLabel: 'Kalemler',
+    bodyLabel: 'Detay kalemleri',
     metaHtml: `<span class="md-detail-meta">${rowCount} satır</span>`,
     footerFields: gridTab.fields,
     footerKey: gridTab.key,
@@ -9701,19 +9802,22 @@ function renderCompactMasterBar(screen, rec) {
   const { primary } = partitionMasterFields(fields, maxPrimary);
   el.hidden = false;
   el.innerHTML = `
-    <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact" aria-label="Belge başlığı">
-      ${renderFieldGrid(primary, rec || {})}
+    <div class="erp-doc-header" aria-label="Belge üst bilgileri">
+      <div class="erp-doc-header-label">Belge üst bilgileri</div>
+      <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact">
+        ${renderFieldGrid(primary, rec || {})}
+      </div>
     </div>`;
 }
 
 function renderGridToolbar(tabKey, { canEdit }) {
   if (!canEdit) {
-    return `<div class="inline-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın</span></div>`;
+    return `<div class="inline-toolbar erp-grid-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın</span></div>`;
   }
-  return `<div class="inline-toolbar" data-grid-toolbar="${tabKey}">
-    <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}">Yeni</button>
-    <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}">Sil</button>
-    <span class="toolbar-hint">Yeni satır ekler · satırda Kaydet satırı onaylar (belge üstteki Kaydet ile yazılır)</span>
+  return `<div class="inline-toolbar erp-grid-toolbar" data-grid-toolbar="${tabKey}">
+    <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}" title="Yeni satır">＋ Satır</button>
+    <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}" title="Seçili satırı sil">✕ Sil</button>
+    <span class="toolbar-hint">Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır</span>
   </div>`;
 }
 
@@ -9764,8 +9868,8 @@ function renderDynamicGrid(tab, rec) {
             // Liste satırı: Düzelt ↔ Kaydet aynı yerde (ikisi birden değil)
             const rowEditing = row._satir_duzenleniyor === true || !saved;
             const rowActBtn = rowEditing
-              ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">Kaydet</button>`
-              : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">Düzelt</button>`;
+              ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>`
+              : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">✎</button>`;
             const rowFieldsEditable = canEdit && rowEditing;
             return `
               <tr class="${selected ? 'selected' : ''} ${saved && !rowEditing ? 'detail-row--saved' : 'detail-row--draft'}"
@@ -9774,7 +9878,7 @@ function renderDynamicGrid(tab, rec) {
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
                     ${rowActBtn}
-                    <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">Kopyala</button>
+                    <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">⧉</button>
                   </div>
                 </td>` : ''}
                 <td class="col-seq">${idx + 1}</td>
@@ -10085,8 +10189,34 @@ function renderZincirStrip(screen, rec) {
 function renderForm(screen) {
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
-  $('#formModeBadge').textContent = MODE_LABELS[state.formMode] || state.formMode;
-  $('#formScreenLabel').textContent = `${screen.title} · ${MODE_LABELS[state.formMode] || ''}`;
+  applyFormLayoutChrome(screen);
+  const mod = findScreenModule(screen);
+  const modEl = $('#formModuleLabel');
+  if (modEl) modEl.textContent = mod?.title || 'ERP';
+  const modeLabel = MODE_LABELS[state.formMode] || state.formMode;
+  const badge = $('#formModeBadge');
+  if (badge) {
+    badge.textContent = modeLabel;
+    badge.dataset.mode = state.formMode || '';
+  }
+  const screenLabel = $('#formScreenLabel');
+  if (screenLabel) screenLabel.textContent = screen.title;
+  const chip = $('#formRecordChip');
+  if (chip) {
+    const codeKey = screen.codeField;
+    const codeVal = codeKey ? rec?.[codeKey] : null;
+    const statusVal = rec?.status;
+    const parts = [];
+    if (codeVal) parts.push(String(codeVal));
+    if (statusVal) parts.push(String(statusVal));
+    if (parts.length) {
+      chip.hidden = false;
+      chip.textContent = parts.join(' · ');
+    } else {
+      chip.hidden = true;
+      chip.textContent = '';
+    }
+  }
   $('#btnFormSave').hidden = readonly;
   const conv = $('#btnFormConvert');
   if (conv) {
@@ -10121,7 +10251,12 @@ function renderForm(screen) {
       else show = false;
     }
     if (screen.id === 'uretim-emirleri') {
-      show = Boolean(screen.approveAction && ['Taslak', 'OnayBekliyor'].includes(rec.status));
+      show = Boolean(
+        screen.approveAction
+        && rec.id
+        && state.formMode !== 'yeni'
+        && ['Taslak', 'OnayBekliyor'].includes(rec.status)
+      );
     }
     if (screen.id === 'uretim-planlari') {
       show = Boolean(screen.convertAction && rec.status === 'Acik' && !rec.production_order_id);
@@ -10324,35 +10459,22 @@ function renderForm(screen) {
     const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart'
       || tab.id === 'baslik' || tab.id === 'bilgiler';
     const tabFields = tab.fields || [];
-    // Adres / Ödeme gibi yan sekmeler: tüm alanlar gövdede (üstte ikinci “Başlık” yok)
-    if (!masterLike) {
-      const bodyHtml = tabFields.length
-        ? `<div class="field-groups">${renderDetailFieldGrid(tabFields, rec)}</div>`
-        : '<div class="detail-empty">Bu sekmede alan yok.</div>';
-      return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
-        ${renderClassicShell({
-          rec,
-          primary: [],
-          extras: [],
-          bodyHtml,
-          footerNotes: [],
-          bodyLabel: tab.label || 'Alanlar',
-        })}
+    const layoutKind = inferFormLayoutKind(screen);
+    // Tanım / kart formları: bölümlü 3 kolon — notlar da aynı ızgarada
+    if (layoutKind === 'master' || masterLike) {
+      return `<div class="form-tab-panel form-tab-panel--md erp-master-panel" data-tab-panel="${tab.id}" ${hide}>
+        ${tabFields.length ? renderGroupedFieldCards(tabFields, rec) : '<div class="detail-empty">Bu sekmede alan yok.</div>'}
       </div>`;
     }
-    const { primary, extras, footerNotes } = partitionMasterFields(tabFields);
-    const bodyHtml = extras.length
-      ? `<div class="field-groups">${renderDetailFieldGrid(extras, rec)}</div>`
+    // Belge yan sekmeleri (Adres vb.): gruplu kartlar
+    const bodyHtml = tabFields.length
+      ? renderGroupedFieldCards(tabFields, rec)
       : '<div class="detail-empty">Bu sekmede alan yok.</div>';
     return `<div class="form-tab-panel form-tab-panel--md" data-tab-panel="${tab.id}" ${hide}>
-      ${renderClassicShell({
-        rec,
-        primary,
-        extras: [],
-        bodyHtml,
-        footerNotes,
-        bodyLabel: 'Ek bilgiler',
-      })}
+      <div class="erp-doc-side-panel">
+        <div class="erp-doc-side-label">${escAttr(tab.label || 'Alanlar')}</div>
+        ${bodyHtml}
+      </div>
     </div>`;
   }).join('');
 
@@ -10411,10 +10533,18 @@ function collectTabFields(screen) {
   return fields;
 }
 
+function findFieldControlEl(attrName, key) {
+  const radios = document.querySelectorAll(`input[type="radio"][${attrName}="${key}"]`);
+  if (radios.length) {
+    return [...radios].find((r) => r.checked) || radios[0];
+  }
+  return document.querySelector(`[${attrName}="${key}"]`);
+}
+
 function readMasterFromForm(screen) {
   const out = { ...(state.formRecord || {}) };
   collectTabFields(screen).forEach((f) => {
-    const el = document.querySelector(`[data-master="${f.key}"]`);
+    const el = findFieldControlEl('data-master', f.key);
     if (!el) return;
     // Şifre alanı render'da her zaman value="" basılır; boş DOM, formRecord'daki
     // (veya input sırasında saklanan) değeri silmesin — aksi halde kayıt şifresiz gider.

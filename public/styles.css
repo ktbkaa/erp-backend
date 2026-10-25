@@ -14,6 +14,15 @@
   --font: "Instrument Sans", sans-serif;
   --display: "Space Grotesk", sans-serif;
   --sidebar-w: 268px;
+  /* ERP form design tokens */
+  --erp-form-bg: #eef2f5;
+  --erp-card-bg: #ffffff;
+  --erp-card-border: #d9e1e8;
+  --erp-card-radius: 8px;
+  --erp-field-gap-x: 0.85rem;
+  --erp-field-gap-y: 0.45rem;
+  --erp-label-w: 7.2rem;
+  --erp-readonly-bg: #f1f4f7;
 }
 
 * { box-sizing: border-box; }
@@ -1220,22 +1229,96 @@ tr.selected td { background: var(--accent-soft); }
   height: 100%;
   background: #fff;
 }
+.form-view.erp-form--master,
+.form-view.erp-form--document {
+  background: var(--erp-form-bg);
+}
 .form-topbar {
   flex: 0 0 auto;
-  padding: 0.65rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 1.1rem;
   border-bottom: 1px solid var(--line);
   background: #fff;
+  z-index: 12;
+}
+.form-topbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.form-topbar-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.form-module-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.form-topbar-sep { color: #c0CAD3; font-weight: 400; }
+.form-topbar-meta strong {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.form-topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 .mode-badge {
   display: inline-block;
-  margin-right: 0.45rem;
-  padding: 0.15rem 0.45rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 0.3rem;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
+.mode-badge[data-mode="incele"] {
+  background: #e8eef3;
+  color: #4a5a68;
+}
+.mode-badge[data-mode="duzelt"] {
+  background: #fff0d9;
+  color: #8a5a10;
+}
+.mode-badge[data-mode="yeni"],
+.mode-badge[data-mode="kopyala"] {
+  background: var(--accent-soft);
+  color: #0a5c4f;
+}
+.form-record-chip {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #f7fafb;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.form-record-chip[hidden] { display: none !important; }
 .form-split {
   flex: 1;
   min-height: 0;
@@ -3487,4 +3570,380 @@ body.sql-splitting iframe { pointer-events: none; }
 .sql-db-modal-head strong {
   font-family: var(--display);
   font-size: 0.95rem;
+}
+
+/* —— ERP form design standard: master (tanım/kart) — dengeli 3 kolon —— */
+.erp-master-panel {
+  padding: 0.65rem 0.85rem 1rem;
+  min-height: 0;
+  height: auto;
+  background: transparent;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-view.erp-form--master .form-tab-nav {
+  background: #f3f6f8;
+}
+.form-view.erp-form--master .form-tab-body {
+  background: var(--erp-form-bg);
+}
+.form-view.erp-form--master .form-tab-panel--md.erp-master-panel,
+.form-view.erp-form--master .form-tab-panel--md:has(.erp-master-panel) {
+  padding: 0.55rem 0.75rem 0.9rem;
+  flex: 0 0 auto;
+  height: auto;
+  align-self: stretch;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+/* Tam genişlik yüzey — yan boşluk yok; yükseklik içeriğe göre */
+.erp-balanced {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: none;
+  height: fit-content;
+  flex: 0 0 auto;
+  align-self: stretch;
+  background: #fff;
+  border: 1px solid var(--erp-card-border, #dde3ea);
+  border-radius: 8px;
+  padding: 0.85rem 1rem 1.05rem;
+  box-sizing: border-box;
+}
+.erp-section {
+  min-width: 0;
+  padding: 0.8rem 0 0.9rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  flex: 0 0 auto;
+}
+.erp-section + .erp-section {
+  border-top: 1px solid #e4ebf0;
+}
+.erp-section-title {
+  margin: 0 0 0.55rem;
+  padding: 0;
+  border: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #4a5a68;
+}
+/* Flex wrap: satırdaki alanlar genişleyerek yan boşluğu doldurur */
+.erp-section-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.2rem;
+  align-items: flex-start;
+}
+.erp-section-grid .field {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: stretch;
+  flex: 1 1 16.5rem;
+  min-width: min(100%, 12rem);
+  max-width: 100%;
+  width: auto;
+  box-sizing: border-box;
+  grid-template-columns: none !important;
+  padding: 0 !important;
+  margin: 0;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.erp-section-grid .field label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: #4a5a68;
+  line-height: 1.2;
+  text-align: left !important;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  padding: 0;
+  order: 0;
+}
+.erp-section-grid .field input,
+.erp-section-grid .field select,
+.erp-section-grid .field textarea {
+  min-height: 2.05rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.84rem;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.erp-section-grid .field textarea {
+  min-height: 3.6rem;
+  resize: vertical;
+}
+.erp-section-grid .field-span-1 { flex: 1 1 16.5rem; }
+.erp-section-grid .field-span-2 { flex: 1 1 22rem; }
+.erp-section-grid .field-span-3,
+.erp-section-grid .field-span-full {
+  flex: 1 1 100%;
+  max-width: 100%;
+}
+.erp-section-grid .field-span--compact {
+  flex: 1 1 12rem;
+}
+.erp-section-grid .lookup-pair {
+  grid-template-columns: minmax(3.8rem, 5.2rem) minmax(0, 1fr);
+  gap: 0.25rem;
+  width: 100%;
+}
+.erp-section-grid .lookup-pair .lookup-name-ro {
+  min-height: 2.05rem;
+  padding: 0.3rem 0.35rem;
+  font-size: 0.8rem;
+}
+.erp-section-grid .field.field--critical {
+  padding: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.erp-section-grid .field.field--critical label {
+  display: block !important;
+  justify-content: flex-start !important;
+  color: #4a5a68 !important;
+  font-weight: 650 !important;
+}
+.erp-section-grid .field-critical-hint { display: none !important; }
+/* Checkbox: etiket yanına, input satırıyla hizalı */
+.erp-section-grid .field--check {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.05rem;
+  margin-top: 1.15rem; /* üst etiket satırı kadar boşluk */
+  padding: 0 !important;
+}
+.erp-section-grid .field--check label {
+  order: 2;
+  font-size: 0.8rem;
+  font-weight: 550;
+  white-space: nowrap;
+  text-align: left !important;
+}
+.erp-section-grid .field--check input[type="checkbox"] {
+  order: 1;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  margin: 0;
+}
+.erp-section-grid .field--seg {
+  display: flex !important;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.erp-section-grid .field--seg .seg-toggle {
+  width: fit-content;
+  max-width: 100%;
+}
+.erp-master-notes {
+  margin-top: 0.55rem;
+  padding: 0.55rem 0.75rem;
+  background: #fff;
+  border: 1px solid var(--erp-card-border, #dde3ea);
+  border-radius: 8px;
+}
+
+/* İki seçenek: segment (aç/kapa) — büyük select yok */
+.seg-toggle {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+  background: #f4f7f9;
+  max-width: 100%;
+}
+.seg-opt {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  cursor: pointer;
+  min-width: 0;
+}
+.seg-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.seg-opt span {
+  display: block;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.74rem;
+  font-weight: 650;
+  color: var(--muted);
+  white-space: nowrap;
+  border-right: 1px solid var(--line);
+  line-height: 1.25;
+}
+.seg-opt:last-child span { border-right: 0; }
+.seg-opt:has(input:checked) span,
+.seg-opt.is-on span {
+  background: var(--accent);
+  color: #fff;
+}
+.seg-opt:has(input:disabled) { cursor: default; opacity: 0.7; }
+.field--check input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+}
+
+/* Salt okunur */
+.field--readonly input,
+.field--readonly select,
+.field--readonly textarea,
+.field--readonly .lookup-name-ro {
+  background: var(--erp-readonly-bg) !important;
+  color: #3a4553;
+}
+.field .req-mark {
+  color: var(--accent);
+  font-weight: 700;
+  margin-right: 0.15rem;
+}
+
+@media (max-width: 720px) {
+  .erp-section-grid {
+    gap: 0.55rem;
+  }
+  .erp-section-grid .field,
+  .erp-section-grid .field-span-1,
+  .erp-section-grid .field-span-2,
+  .erp-section-grid .field-span--compact {
+    flex: 1 1 100%;
+  }
+  .erp-section-grid .field--check {
+    margin-top: 0.15rem;
+  }
+}
+
+/* —— ERP form design standard: document (başlık-kalem) —— */
+.form-view.erp-form--document .form-compact-master {
+  background: linear-gradient(180deg, #f7fafb 0%, #eef3f6 100%);
+  padding: 0.45rem 0.85rem 0.5rem;
+}
+.erp-doc-header-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+.form-view.erp-form--document .md-detail {
+  background: #fff;
+  border-top: 1px solid var(--line);
+}
+.form-view.erp-form--document .md-detail-head {
+  padding: 0.45rem 0.85rem;
+  background: #f7fafb;
+  border-bottom: 1px solid #eef1f4;
+}
+.form-view.erp-form--document .md-detail-head .section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2c3642;
+}
+.form-view.erp-form--document .md-detail-scroll {
+  padding: 0.45rem 0.65rem 0.65rem;
+}
+.form-view.erp-form--document .md-footer {
+  background: #f0f4f7;
+  border-top: 1px solid #d5dde6;
+  padding: 0.55rem 0.85rem 0.65rem;
+}
+.form-view.erp-form--document .md-total-row--grand label {
+  font-weight: 750;
+  color: #0a5c4f;
+}
+.form-view.erp-form--document .md-total-row--grand input {
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+.erp-grid-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+  padding: 0.2rem 0;
+}
+.erp-grid-toolbar .toolbar-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.form-view.erp-form--document .detail-table {
+  width: max(100%, 860px);
+  font-size: 0.78rem;
+}
+.form-view.erp-form--document .detail-table thead th {
+  background: #2f3b48;
+  font-size: 0.7rem;
+  padding: 0.4rem 0.35rem;
+}
+.form-view.erp-form--document .detail-table .col-acts {
+  width: 5.6rem;
+  min-width: 5.6rem;
+}
+.form-view.erp-form--document .detail-table .col-seq {
+  left: 5.6rem;
+  width: 2.2rem;
+}
+.form-view.erp-form--document .detail-table thead .col-seq {
+  left: 5.6rem;
+}
+.form-view.erp-form--document .detail-row-actions {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+.form-view.erp-form--document .detail-row-actions .btn.sm {
+  min-width: 1.55rem !important;
+  padding: 0.15rem 0.3rem !important;
+  font-size: 0.78rem !important;
+  line-height: 1;
+}
+.form-view.erp-form--document .detail-table .col--num,
+.form-view.erp-form--document .detail-table td.col--num,
+.form-view.erp-form--document .detail-table th.col--num {
+  text-align: right;
+}
+.form-view.erp-form--document .detail-table td.col--num input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.erp-doc-side-panel {
+  padding: 0.85rem 1.1rem 1.2rem;
+}
+.erp-doc-side-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #3a4553;
+  margin-bottom: 0.55rem;
+}
+
+@media (max-width: 780px) {
+  .form-topbar { padding: 0.5rem 0.75rem; }
+  .erp-master-panel { padding: 0.55rem 0.65rem 0.85rem; }
 }
