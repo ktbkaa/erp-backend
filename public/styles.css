@@ -2800,6 +2800,145 @@ tr.selected td { background: var(--accent-soft); }
   font-size: 0.88rem;
 }
 
+/* Lookup widget: ok yerine noktalı halka; ↓ ile native liste */
+.lookup-widget {
+  display: flex;
+  align-items: stretch;
+  gap: 0.28rem;
+  min-width: 0;
+  width: 100%;
+}
+.lookup-widget > .lookup-pair,
+.lookup-widget > select.lookup-pick {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+select.lookup-pick,
+select.lookup-select.lookup-pick {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+  padding-right: 0.45rem;
+}
+select.lookup-pick::-ms-expand { display: none; }
+.lookup-browse-btn {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  margin: 0;
+  border: 1.5px solid #9aabba;
+  border-radius: 50%;
+  background: #fff;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--accent, #0a6b5c);
+  transition: border-color 0.12s, background 0.12s;
+}
+.lookup-browse-btn:hover {
+  border-color: var(--accent, #0a6b5c);
+  background: #eef7f4;
+}
+.lookup-browse-btn:focus-visible {
+  outline: 2px solid var(--sidebar-ring, #7db8a8);
+  outline-offset: 1px;
+}
+.lookup-browse-dot {
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 50%;
+  background: currentColor;
+  display: block;
+}
+.field.lookup .lookup-browse-btn,
+.erp-section-grid .lookup-browse-btn {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+.detail-table .lookup-browse-btn {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+.detail-table .lookup-browse-dot {
+  width: 0.28rem;
+  height: 0.28rem;
+}
+.filter-values .lookup-widget {
+  flex: 1 1 auto;
+}
+
+/* Lookup liste popup */
+.lookup-browser-dialog {
+  width: min(52rem, 100%);
+  max-height: min(88vh, 40rem);
+  display: flex;
+  flex-direction: column;
+}
+.lookup-browser-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 1rem 0.35rem;
+  border-bottom: 1px solid var(--line, #dde3ea);
+}
+.lookup-browser-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--line, #dde3ea);
+  border-radius: 6px;
+}
+.lookup-browser-count {
+  font-size: 0.75rem;
+  color: var(--muted, #6a7a88);
+  white-space: nowrap;
+}
+.lookup-browser-body {
+  padding: 0 !important;
+  overflow: auto;
+  min-height: 12rem;
+  max-height: min(60vh, 28rem);
+}
+.lookup-browser-table-wrap { overflow: auto; }
+.lookup-browser-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+.lookup-browser-table th,
+.lookup-browser-table td {
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid #e8eef2;
+  text-align: left;
+  white-space: nowrap;
+}
+.lookup-browser-table th {
+  position: sticky;
+  top: 0;
+  background: #f4f7f9;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4a5a68;
+  z-index: 1;
+}
+.lookup-browser-table th.num,
+.lookup-browser-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.lookup-browser-table .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8rem; }
+.lookup-browser-row { cursor: pointer; }
+.lookup-browser-row:hover { background: #eef7f4; }
+.lookup-browser-row.is-selected { background: #dceee8; font-weight: 600; }
+.lookup-browser-row:focus-visible { outline: 2px solid var(--accent, #0a6b5c); outline-offset: -2px; }
+.lookup-browser-empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--muted, #6a7a88);
+  font-size: 0.88rem;
+}
+
 /* Kod–ad lookup: dar kod + geniş ad */
 .lookup-pair {
   display: grid;
@@ -3696,6 +3835,9 @@ body.sql-splitting iframe { pointer-events: none; }
 }
 .erp-section-grid .field-span--compact {
   flex: 1 1 12rem;
+}
+.erp-section-grid .lookup-widget {
+  width: 100%;
 }
 .erp-section-grid .lookup-pair {
   grid-template-columns: minmax(3.8rem, 5.2rem) minmax(0, 1fr);
