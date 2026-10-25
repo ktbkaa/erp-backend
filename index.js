@@ -135,6 +135,7 @@ app.use('/fiyat-listeleri', require('./routes/price_lists'));
 app.use('/kokpit', require('./routes/kokpit'));
 app.use('/audit-log', require('./routes/audit_logs'));
 app.use('/meta', require('./routes/meta_ekran'));
+app.use('/sql-console', require('./routes/sql_console'));
 app.use('/stok-rezervasyonlari', require('./routes/item_reservations'));
 app.use('/stok-serileri', require('./routes/item_serials'));
 app.use('/kk-capa', require('./routes/qc_capa'));

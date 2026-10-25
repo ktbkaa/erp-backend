@@ -37,6 +37,7 @@ function createApp() {
   app.use('/items', require('../../routes/items'));
   app.use('/audit-log', require('../../routes/audit_logs'));
   app.use('/meta', require('../../routes/meta_ekran'));
+  app.use('/sql-console', require('../../routes/sql_console'));
   app.use(auditMiddleware(pool));
 
   const { errorHandler, notFoundHandler } = require('../../src/middleware/errorHandler');

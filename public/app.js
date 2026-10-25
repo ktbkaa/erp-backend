@@ -465,7 +465,7 @@ const MODULES = [
       { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar', 'kullanici-gruplari'] },
       { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri'] },
       { id: 'iletisim', title: 'İletişim', screenIds: ['eposta-gonderimleri'] },
-      { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log', 'tablo-bilgileri'] },
+      { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log', 'tablo-bilgileri', 'sql-sorgu'] },
     ],
     screens: [
       {
@@ -631,6 +631,17 @@ const MODULES = [
           { key: 'techId', label: 'Teknik kimlik', mono: true },
           { key: 'primaryTable', label: 'Ana tablo', mono: true },
         ],
+      },
+      {
+        id: 'sql-sorgu',
+        techId: 'SYS-SQL-SCR-001',
+        businessNameEn: 'SqlQueryScreen',
+        title: 'SQL Sorgu',
+        endpoint: '/sql-console',
+        crud: false,
+        sqlConsole: true,
+        filters: [],
+        columns: [],
       },
       {
         id: 'eposta-gonderimleri',
@@ -6571,6 +6582,7 @@ function showView(name) {
   const screen = $('#viewScreen');
   const form = $('#viewForm');
   const meta = $('#viewMeta');
+  const sql = $('#viewSql');
   if (!home || !screen || !form) {
     console.error('KTB ERP: view element missing', { home: !!home, screen: !!screen, form: !!form });
     return;
@@ -6580,11 +6592,13 @@ function showView(name) {
   screen.hidden = name !== 'screen';
   form.hidden = name !== 'form';
   if (meta) meta.hidden = name !== 'meta';
+  if (sql) sql.hidden = name !== 'sql';
 
   home.style.display = name === 'home' ? 'grid' : 'none';
   screen.style.display = name === 'screen' ? 'grid' : 'none';
   form.style.display = name === 'form' ? 'flex' : 'none';
   if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
+  if (sql) sql.style.display = name === 'sql' ? 'grid' : 'none';
 }
 
 
@@ -8106,6 +8120,30 @@ async function openScreen(id, opts = {}) {
           : screen.title;
       }
       await openMetaExplorer(opts.focusScreenId || state.metaFocusScreenId || null);
+      return;
+    }
+
+    if (screen.sqlConsole) {
+      state.screenId = id;
+      state.formMode = null;
+      state.selectedId = null;
+      if (location.hash !== `#${id}`) {
+        history.pushState({ screenId: id }, '', `#${id}`);
+      }
+      if (!opts.skipTab) addListTab(screen);
+      else {
+        state.activeTabKey = `list:${screen.id}`;
+        renderTabBar();
+      }
+      ensureSidebarPath(screen);
+      showView('sql');
+      const banner = $('#sqlBanner');
+      if (banner) {
+        banner.textContent = screen.techId
+          ? `${screen.title} · ${screen.techId}`
+          : screen.title;
+      }
+      await openSqlConsole();
       return;
     }
 
@@ -12919,6 +12957,276 @@ async function restoreSession() {
     return softSessionFromStorage();
   } finally {
     renderUserChip();
+  }
+}
+
+/* ========== SQL Sorgu ekranı ========== */
+const sqlConsoleState = {
+  meta: null,
+  bound: false,
+};
+
+function sqlEscapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function sqlHighlight(text) {
+  const esc = sqlEscapeHtml(text);
+  return esc.replace(
+    /\b(SELECT|FROM|WHERE|AND|OR|INSERT|INTO|VALUES|UPDATE|SET|DELETE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|GROUP|BY|ORDER|LIMIT|OFFSET|AS|WITH|DISTINCT|HAVING|CASE|WHEN|THEN|ELSE|END|NULL|TRUE|FALSE|NOT|IN|LIKE|ILIKE|BETWEEN|EXISTS|UNION|ALL|BEGIN|COMMIT|ROLLBACK|RETURNING)\b/gi,
+    '<span class="sql-kw">$1</span>'
+  ).replace(/('[^']*')/g, '<span class="sql-str">$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="sql-num">$1</span>');
+}
+
+function sqlDetectWrite(sql) {
+  const t = String(sql || '').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ').trim();
+  return /^(INSERT|UPDATE|DELETE|MERGE)\b/i.test(t);
+}
+
+function sqlSyncHighlight() {
+  const ed = $('#sqlEditor');
+  const hi = $('#sqlHighlight');
+  if (!ed || !hi) return;
+  hi.innerHTML = `${sqlHighlight(ed.value)}\n`;
+  hi.scrollTop = ed.scrollTop;
+  hi.scrollLeft = ed.scrollLeft;
+  const tx = $('#sqlTxWrap');
+  if (tx) tx.hidden = !sqlDetectWrite(ed.value);
+}
+
+function sqlFillConnectionForm(conn, profiles) {
+  const sel = $('#sqlProfile');
+  if (sel && Array.isArray(profiles)) {
+    sel.innerHTML = `<option value="">— aktif / özel —</option>${profiles.map((p) =>
+      `<option value="${p.id}" data-host="${escAttr(p.host)}" data-port="${p.port}" data-db="${escAttr(p.database_name)}" data-user="${escAttr(p.username)}">${escAttr(p.profile_name)}${p.is_default ? ' (varsayılan)' : ''}</option>`
+    ).join('')}`;
+  }
+  if (!conn) return;
+  const set = (id, v) => { const el = $(id); if (el) el.value = v ?? ''; };
+  set('#sqlHost', conn.host);
+  set('#sqlPort', conn.port);
+  set('#sqlDatabase', conn.database);
+  set('#sqlUser', conn.user);
+  const st = $('#sqlConnStatus');
+  if (st) {
+    st.textContent = `${conn.label || 'Bağlantı'}: ${conn.user}@${conn.host}:${conn.port}/${conn.database}${conn.override ? ' (oturum)' : ''}`;
+  }
+}
+
+function sqlRenderPerms(perms, isAdmin) {
+  const box = $('#sqlPermBox');
+  if (!box) return;
+  const p = perms || {};
+  const chip = (ok, label) =>
+    `<span class="sql-perm-chip ${ok ? 'on' : 'off'}">${label}</span>`;
+  box.innerHTML = `
+    <div class="sql-perm-title">SQL yetkilerin${isAdmin ? ' (yönetici=tam)' : ''}</div>
+    <div class="sql-perm-chips">
+      ${chip(p.can_select, 'SELECT')}
+      ${chip(p.can_insert, 'INSERT')}
+      ${chip(p.can_update, 'UPDATE')}
+      ${chip(p.can_delete, 'DELETE')}
+    </div>
+    <p class="sql-perm-hint">INSERT / UPDATE / DELETE için COMMIT veya ROLLBACK seçimi zorunlu.</p>`;
+}
+
+function sqlRenderSuggestions(meta) {
+  const list = $('#sqlSuggestList');
+  if (!list) return;
+  const tables = (meta?.tables || []).slice(0, 80);
+  const sugg = meta?.suggestions || [];
+  list.innerHTML = [
+    ...sugg.filter((s) => s.kind !== 'hint').map((s) =>
+      `<button type="button" class="sql-suggest-item" data-sql="${escAttr(s.label)}">${escAttr(s.label)}</button>`),
+    ...tables.map((t) =>
+      `<button type="button" class="sql-suggest-item" data-sql="SELECT * FROM ${t.table_name} LIMIT 50;">${escAttr(t.table_name)}</button>`),
+  ].join('') || '<div class="sql-empty">Öneri yok</div>';
+}
+
+async function sqlRenderAdminPerms() {
+  const wrap = $('#sqlAdminPerm');
+  if (!wrap) return;
+  if (!sqlConsoleState.meta?.is_admin) {
+    wrap.hidden = true;
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.hidden = false;
+  try {
+    const rows = await api('/sql-console/permissions');
+    wrap.innerHTML = `
+      <div class="sql-admin-title">Kullanıcı SQL yetkileri</div>
+      <div class="sql-admin-scroll">
+        <table class="sql-admin-table">
+          <thead><tr><th>Kullanıcı</th><th>SELECT</th><th>INSERT</th><th>UPDATE</th><th>DELETE</th><th></th></tr></thead>
+          <tbody>
+            ${(rows || []).map((r) => `
+              <tr data-kisi="${r.kisi_id}">
+                <td>${escAttr(r.user_code || r.username || r.kisi_id)}</td>
+                <td><input type="checkbox" data-p="can_select" ${r.can_select ? 'checked' : ''} /></td>
+                <td><input type="checkbox" data-p="can_insert" ${r.can_insert ? 'checked' : ''} /></td>
+                <td><input type="checkbox" data-p="can_update" ${r.can_update ? 'checked' : ''} /></td>
+                <td><input type="checkbox" data-p="can_delete" ${r.can_delete ? 'checked' : ''} /></td>
+                <td><button type="button" class="btn tiny" data-sql-perm-save="${r.kisi_id}">Kaydet</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (err) {
+    wrap.innerHTML = `<p class="sql-error">${escAttr(err.message)}</p>`;
+  }
+}
+
+function sqlRenderResult(payload) {
+  const meta = $('#sqlResultMeta');
+  const head = $('#sqlResultHead');
+  const body = $('#sqlResultBody');
+  if (!meta || !head || !body) return;
+  if (payload?.hata) {
+    meta.innerHTML = `<span class="sql-error">${escAttr(payload.hata)}</span>`;
+    head.innerHTML = '';
+    body.innerHTML = '';
+    return;
+  }
+  const fields = payload.fields || [];
+  meta.innerHTML = [
+    `<span>${escAttr(payload.verb || '')}</span>`,
+    `<span>${payload.rowCount ?? 0} satır</span>`,
+    payload.transaction ? `<span class="sql-tx-badge">${escAttr(payload.transaction)}</span>` : '',
+    `<span>${payload.ms ?? 0} ms</span>`,
+    payload.truncated ? '<span class="sql-warn">ilk 1000 satır</span>' : '',
+  ].filter(Boolean).join(' · ');
+  head.innerHTML = `<tr>${fields.map((f) => `<th>${escAttr(f)}</th>`).join('')}</tr>`;
+  body.innerHTML = (payload.rows || []).map((row) =>
+    `<tr>${fields.map((f) => `<td>${escAttr(row[f])}</td>`).join('')}</tr>`
+  ).join('') || `<tr><td colspan="${Math.max(fields.length, 1)}" class="sql-empty">Satır yok</td></tr>`;
+}
+
+async function openSqlConsole() {
+  bindSqlConsoleEvents();
+  try {
+    const meta = await api('/sql-console/meta');
+    sqlConsoleState.meta = meta;
+    sqlFillConnectionForm(meta.connection, meta.profiles);
+    sqlRenderPerms(meta.permissions, meta.is_admin);
+    sqlRenderSuggestions(meta);
+    await sqlRenderAdminPerms();
+    sqlSyncHighlight();
+  } catch (err) {
+    toast(err.message || 'SQL konsol yüklenemedi');
+  }
+}
+
+function bindSqlConsoleEvents() {
+  if (sqlConsoleState.bound) return;
+  sqlConsoleState.bound = true;
+  const ed = $('#sqlEditor');
+  if (ed) {
+    ed.addEventListener('input', sqlSyncHighlight);
+    ed.addEventListener('scroll', () => {
+      const hi = $('#sqlHighlight');
+      if (hi) { hi.scrollTop = ed.scrollTop; hi.scrollLeft = ed.scrollLeft; }
+    });
+    ed.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        sqlRun();
+      }
+    });
+  }
+  $('#sqlBtnRun')?.addEventListener('click', () => sqlRun());
+  $('#sqlBtnTest')?.addEventListener('click', () => sqlConnectionAction('test'));
+  $('#sqlBtnUse')?.addEventListener('click', () => sqlConnectionAction('use'));
+  $('#sqlBtnReset')?.addEventListener('click', async () => {
+    try {
+      await api('/sql-console/connection/reset', { method: 'POST', body: {} });
+      toast('Varsayılan bağlantıya dönüldü');
+      await openSqlConsole();
+    } catch (err) { toast(err.message); }
+  });
+  $('#sqlProfile')?.addEventListener('change', (e) => {
+    const opt = e.target.selectedOptions?.[0];
+    if (!opt || !opt.value) return;
+    $('#sqlHost').value = opt.dataset.host || '';
+    $('#sqlPort').value = opt.dataset.port || '5432';
+    $('#sqlDatabase').value = opt.dataset.db || '';
+    $('#sqlUser').value = opt.dataset.user || '';
+  });
+  $('#sqlSuggestList')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-sql]');
+    if (!btn) return;
+    const ed2 = $('#sqlEditor');
+    if (ed2) { ed2.value = btn.getAttribute('data-sql') || ''; sqlSyncHighlight(); ed2.focus(); }
+  });
+  $('#sqlAdminPerm')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-sql-perm-save]');
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const kisiId = btn.getAttribute('data-sql-perm-save');
+    const body = {};
+    tr.querySelectorAll('input[data-p]').forEach((inp) => {
+      body[inp.getAttribute('data-p')] = inp.checked;
+    });
+    try {
+      await api(`/sql-console/permissions/${kisiId}`, { method: 'PUT', body });
+      toast('SQL yetkileri kaydedildi');
+    } catch (err) { toast(err.message); }
+  });
+}
+
+function sqlReadConnBody() {
+  return {
+    host: $('#sqlHost')?.value?.trim(),
+    port: Number($('#sqlPort')?.value || 5432),
+    database: $('#sqlDatabase')?.value?.trim(),
+    user: $('#sqlUser')?.value?.trim(),
+    password: $('#sqlPassword')?.value ?? '',
+    label: 'Oturum bağlantısı',
+  };
+}
+
+async function sqlConnectionAction(kind) {
+  const body = sqlReadConnBody();
+  try {
+    if (kind === 'test') {
+      const r = await api('/sql-console/connection/test', { method: 'POST', body });
+      toast(`Bağlantı OK · ${r.db} / ${r.usr}`);
+    } else {
+      await api('/sql-console/connection/use', { method: 'POST', body });
+      toast('Bağlantı oturuma alındı');
+      $('#sqlPassword').value = '';
+      await openSqlConsole();
+    }
+  } catch (err) {
+    toast(err.message || 'Bağlantı hatası');
+  }
+}
+
+async function sqlRun() {
+  const sql = $('#sqlEditor')?.value || '';
+  const isWrite = sqlDetectWrite(sql);
+  let txMode = null;
+  if (isWrite) {
+    const checked = document.querySelector('input[name="sqlTx"]:checked');
+    if (!checked) {
+      toast('Yazma sorgusu için COMMIT veya ROLLBACK seçin.');
+      $('#sqlTxWrap').hidden = false;
+      return;
+    }
+    txMode = checked.value;
+  }
+  try {
+    const payload = await api('/sql-console/execute', {
+      method: 'POST',
+      body: { sql, txMode },
+    });
+    sqlRenderResult(payload);
+  } catch (err) {
+    sqlRenderResult({ hata: err.message || String(err) });
   }
 }
 

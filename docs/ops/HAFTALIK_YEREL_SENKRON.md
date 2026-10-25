@@ -1,6 +1,8 @@
 # Haftalık yerel senkron (hatırlatıcı)
 
-Her **Pazar** (veya haftada bir gün) aşağıdaki komutları **kendi bilgisayarında**, proje klasöründe çalıştır.  
+**Agent kuralı:** Her Pazar bu komutlar hatırlatılır. Pazar çalışılmadıysa, o hafta sohbette verdiğin **ilk prompt’tan sonra** agent komutları ve nasıl yapılacağını adım adım anlatır.
+
+Her **Pazar** (veya sonraki ilk çalışma günü) aşağıdaki komutları **kendi bilgisayarında**, proje klasöründe çalıştır.  
 Amaç: kod + şema + DB yedeği senin makinede dursun.
 
 ## Önkoşul
