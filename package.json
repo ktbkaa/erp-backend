@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "migrate": "node db/migrate.js",
+    "db:backup": "node scripts/db-backup.js",
     "demo:cycle": "node scripts/demo-cycle.js",
     "demo:cleanup": "node scripts/demo-cleanup.js",
     "demo:4-firma": "node scripts/demo-4-firma.js",
