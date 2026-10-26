@@ -73,9 +73,7 @@ body.is-login {
   z-index: 30;
   border-right: 1px solid #e6ebf0;
   box-shadow: 2px 0 18px rgba(26, 35, 48, 0.04);
-  /* x görünür: alt sekmeler toggle’ı menü dışına taşar */
-  overflow-x: visible;
-  overflow-y: hidden;
+  overflow: hidden;
 }
 .sidebar-brand {
   display: flex;
@@ -283,7 +281,6 @@ body.is-login {
   20%, 55% { box-shadow: 0 0 0 2px var(--sidebar-ring); background: #dff5ef; }
 }
 .sidebar-foot {
-  position: relative;
   padding: 0.55rem 0.75rem 0.7rem;
   border-top: 1px solid #eef1f4;
   flex: 0 0 auto;
@@ -298,47 +295,52 @@ body.is-login {
   gap: 0.35rem;
   margin: 0;
 }
-/* Sol menü dibinde — hemen dışında; sağa + yukarı ok; tıklanınca alt sekmeler açılır */
+/* Sol menü araçlarının hemen bitişiği (workspace sol-alt) — sağa + yukarı ok */
+.doc-tabs-dock {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  order: 99;
+  z-index: 5;
+}
 .sidebar-tabs-toggle {
-  position: absolute;
-  right: -1.15rem;
-  bottom: 0.2rem;
-  z-index: 45;
+  --tabs-toggle-bg: #f3f6f8; /* workspace arkaplan */
+  --tabs-toggle-fg: var(--accent);
+  flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 2.15rem;
-  height: 2.15rem;
+  width: 1.85rem;
+  height: 1.85rem;
+  margin: 0;
   padding: 0;
-  border: 1px solid #c9d4dc;
-  border-radius: 0.65rem 0.65rem 0.4rem 0.4rem;
-  background: #fff;
-  color: #3d5a66;
+  border: 1px solid transparent;
+  border-radius: 0.55rem 0.55rem 0 0;
+  background: var(--tabs-toggle-bg);
+  color: var(--tabs-toggle-fg);
   cursor: pointer;
-  box-shadow: 2px 3px 12px rgba(26, 35, 48, 0.16);
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+  box-shadow: none;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
-.sidebar-tabs-toggle:hover {
-  background: var(--accent-soft);
-  border-color: var(--sidebar-ring);
-  color: var(--accent);
+body.doc-tabs-open .sidebar-tabs-toggle {
+  --tabs-toggle-bg: #e4ecf1; /* sekme şeridi arkaplanı */
 }
-.sidebar-tabs-toggle:active { transform: translateY(1px); }
+.sidebar-tabs-toggle:hover:not(:disabled) {
+  background: var(--tabs-toggle-fg); /* hover: buton renkli */
+  border-color: var(--tabs-toggle-fg);
+  color: var(--tabs-toggle-bg); /* oklar arkaplan renginde */
+}
+.sidebar-tabs-toggle:active:not(:disabled) { filter: brightness(0.96); }
 .sidebar-tabs-toggle:focus-visible {
   outline: 2px solid var(--sidebar-ring);
   outline-offset: 1px;
 }
-.sidebar-tabs-toggle[aria-expanded="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
 .sidebar-tabs-toggle:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: default;
-  box-shadow: none;
-}
-.app-shell.sidebar-collapsed .sidebar-tabs-toggle {
-  display: none;
 }
 .sidebar-tool-btn {
   display: grid;
@@ -399,14 +401,14 @@ body.is-login {
   align-items: flex-start;
   min-height: 0;
   height: 1.85rem;
-  padding: 0 0.5rem 0;
+  padding: 0 0.45rem 0 0.2rem;
   background: #e4ecf1;
   border-top: 1px solid var(--line);
   border-bottom: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  flex: 0 0 auto;
-  order: 99;
+  flex: 1 1 auto;
+  min-width: 0;
   transition: height 0.16s ease, min-height 0.16s ease, padding 0.16s ease, opacity 0.12s ease;
 }
 .doc-tabs:empty,
@@ -415,6 +417,17 @@ body.is-login {
 }
 body:not(.doc-tabs-open) .doc-tabs:not(:empty) {
   display: none !important;
+}
+body.doc-tabs-open .doc-tabs-dock {
+  background: #e4ecf1;
+  border-top: 1px solid var(--line);
+}
+body:not(.doc-tabs-open) .doc-tabs-dock {
+  background: transparent;
+  border-top: 0;
+  /* yalnızca toggle: sol menü araçlarının hemen bitişiğinde */
+  align-self: flex-start;
+  width: auto;
 }
 .doc-tabs.doc-tabs--bottom .tab-item,
 .doc-tabs .tab-item {
@@ -3175,6 +3188,7 @@ body.form-solo .app-shell,
 }
 body.form-solo #tabBar,
 body.form-solo #btnOpenTabs,
+body.form-solo .doc-tabs-dock,
 body.form-solo #btnMenu,
 body.form-solo #homeSearchWrap,
 body.form-solo #searchResults {
