@@ -2178,6 +2178,22 @@ tr.selected td { background: var(--accent-soft); }
   margin-bottom: 0.45rem;
 }
 .bom-inline-fields { margin-bottom: 0.35rem; }
+.bom-alt-materials {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed #c5d5cf;
+}
+.bom-alt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem;
+  align-items: start;
+  margin-bottom: 0.45rem;
+  padding: 0.4rem 0.45rem;
+  background: #f7faf9;
+  border: 1px solid #e2ebe7;
+  border-radius: 0.4rem;
+}
 .bom-editor-actions, .rota-editor-actions {
   display: flex;
   flex-wrap: wrap;

@@ -161,6 +161,9 @@ router.get('/patlatma', async (req, res) => {
                 };
                 out.push(line);
 
+                // Patlatmayı durdur — alt seviye / çapraz BOM yok
+                if (c.stop_explosion) continue;
+
                 // Aynı ağaç içinde nested satırlar
                 out.push(...await explodeTree(rows, Number(c.id), level + 1, nodePath, toplam, rootAgac, visitedBomIds));
 
