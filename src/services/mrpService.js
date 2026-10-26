@@ -41,12 +41,16 @@ function addDays(dateStr, days) {
     return toDateStr(d);
 }
 
-async function loadStokMap(pool, { stokId = null } = {}) {
+async function loadStokMap(pool, { stokId = null, firmaId = null } = {}) {
     const params = [];
     let where = 'WHERE s.is_active IS DISTINCT FROM FALSE';
     if (stokId) {
         params.push(stokId);
         where += ` AND s.id = $${params.length}`;
+    }
+    if (firmaId) {
+        params.push(firmaId);
+        where += ` AND (s.company_id IS NULL OR s.company_id = $${params.length})`;
     }
     const r = await pool.query(
         `SELECT s.id, s.item_code, s.item_name, s.item_type, s.tedarik_type, s.uom_code,
@@ -94,7 +98,7 @@ async function loadSupplyMaps(pool, { isYeriId = null, stokId = null } = {}) {
         `SELECT ss.item_id,
                 SUM(GREATEST(ss.quantity - COALESCE(ss.giren_quantity,0), 0))::numeric AS acik_siparis
          FROM purchase_order_lines ss
-         JOIN purchase_orders s ON s.id = ss.sales_order_id
+         JOIN purchase_orders s ON s.id = ss.purchase_order_id
          WHERE s.status NOT IN ('Iptal', 'Kapali')
          GROUP BY ss.item_id`
     );
@@ -207,7 +211,7 @@ async function mrpHesapla(pool, {
     firmaId = null,
     stokId = null,
 } = {}) {
-    const stokMap = await loadStokMap(pool, { stokId: null });
+    const stokMap = await loadStokMap(pool, { stokId: null, firmaId });
     const bomByParent = await loadBomChildren(pool);
     const { kullanilabilir, acikSiparis, planUretim } = await loadSupplyMaps(pool, { isYeriId, stokId });
     const independent = await loadIndependentDemand(pool, { isYeriId, firmaId });
@@ -390,7 +394,7 @@ async function mrpCalistir(client, {
         if (r.net_ihtiyac > 0) netPozitif += 1;
         await client.query(
             `INSERT INTO mrp_results (
-                run_id, item_id, level, source_item_id,
+                run_id, item_id, seviye, source_item_id,
                 brut_ihtiyac, bagimsiz_ihtiyac, bagimli_ihtiyac,
                 safety_stock, reorder_point, available_stock,
                 acik_satinalma, planlanan_production, net_ihtiyac, onerilen_quantity,
@@ -399,7 +403,7 @@ async function mrpCalistir(client, {
                 $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18
              )`,
             [
-                calisma.id, r.item_id, r.level, r.source_item_id,
+                calisma.id, r.item_id, r.level ?? r.seviye ?? 0, r.source_item_id,
                 r.brut_ihtiyac, r.bagimsiz_ihtiyac, r.bagimli_ihtiyac,
                 r.safety_stock, r.reorder_point, r.available_stock,
                 r.acik_satinalma, r.planlanan_production, r.net_ihtiyac, r.onerilen_quantity,

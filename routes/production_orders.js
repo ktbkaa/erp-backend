@@ -195,6 +195,7 @@ async function emirOlustur(client, opts) {
         product_bom_id,
         route_id,
         plant_id,
+        company_id,
         component_warehouse_id,
         wip_warehouse_id,
         fg_warehouse_id,
@@ -237,15 +238,15 @@ async function emirOlustur(client, opts) {
     const emir = await client.query(
         `
         INSERT INTO production_orders
-            (order_no, item_id, product_bom_id, route_id, plant_id,
+            (order_no, item_id, product_bom_id, route_id, plant_id, company_id,
              component_warehouse_id, wip_warehouse_id, fg_warehouse_id,
              planlanan_quantity, status, sales_order_id, order_type_id, planli_kesin,
              is_started, cikis_type, giris_type, silindi,
              source_document_type, source_document_id,
              order_date, start_date, plan_start, plan_end, end_date,
              uom_code, acik_kapali, onayli, yayinlandi, is_printed, product_girisi_tamamlandi, description)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,
-                $20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+                $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
         RETURNING id
         `,
         [
@@ -254,6 +255,7 @@ async function emirOlustur(client, opts) {
             product_bom_id,
             route_id,
             plant_id || null,
+            company_id || null,
             component_warehouse_id,
             wip_warehouse_id || null,
             fg_warehouse_id,
@@ -308,7 +310,7 @@ async function emirGetir(id) {
                ua.bom_code, r.route_code,
                type.type_code AS emir_tipi_kodu,
                type.type_name AS emir_tipi_adi,
-               sp.order_no
+               sp.order_no AS sales_order_no
         FROM production_orders ue
         JOIN items s ON s.id = ue.item_id
         LEFT JOIN warehouses hd ON hd.id = ue.component_warehouse_id

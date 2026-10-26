@@ -816,7 +816,7 @@ router.post('/:id/onayla', async (req, res) => {
             }
 
             await client.query(
-                `UPDATE delivery_notes SET status='Onayli', stock_movement_id=$2, warehouse_id=$3 WHERE id=$1`,
+                `UPDATE delivery_notes SET status='Onayli', item_movement_id=$2, warehouse_id=$3 WHERE id=$1`,
                 [ir.id, hareket.hareket.id, depoId]
             );
         });
@@ -865,6 +865,7 @@ router.post('/sevk-emrinden', async (req, res) => {
             const hk = await hareketKoduBul(client, BELGE_TIPI.IRSALIYE, body.movement_code_id || null);
             if (!hk) throw new Error('Satış irsaliye hareket kodu tanımlı değil.');
 
+            const firmaId = body.company_id || sevk.company_id || firmaIdFromReq(req) || null;
             const baslik = await client.query(
                 `
                 INSERT INTO delivery_notes
@@ -872,9 +873,9 @@ router.post('/sevk-emrinden', async (req, res) => {
                      ship_to_address, ship_city, ship_district, ship_country, ship_postal_code,
                      vehicle_plate, trailer_plate, driver_name, driver_last_name, driver_national_id,
                      carrier_title, carrier_tax_id, description, status,
-                     source_document_type, source_document_id)
+                     source_document_type, source_document_id, company_id, plant_id, project_code)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,'TR'),$11,$12,$13,$14,$15,$16,$17,$18,$19,'Taslak',
-                        $20,$21)
+                        $20,$21,$22,$23,$24)
                 RETURNING id
                 `,
                 [
@@ -884,6 +885,7 @@ router.post('/sevk-emrinden', async (req, res) => {
                     body.driver_name || null, body.driver_last_name || null, body.driver_national_id || null,
                     body.carrier_title || null, body.carrier_tax_id || null, body.description,
                     BELGE_TIPI.SEVK_EMRI, sevk.id,
+                    firmaId, body.plant_id || sevk.plant_id || null, body.project_code || sevk.project_code || null,
                 ]
             );
             const iid = baslik.rows[0].id;
@@ -1257,7 +1259,7 @@ router.post('/:id/iade', async (req, res) => {
                     })),
                 });
                 await client.query(
-                    `UPDATE delivery_notes SET status='Onayli', stock_movement_id=$2 WHERE id=$1`,
+                    `UPDATE delivery_notes SET status='Onayli', item_movement_id=$2 WHERE id=$1`,
                     [iadeId, hareket.hareket.id]
                 ).catch(() =>
                     client.query(`UPDATE delivery_notes SET status='Onayli' WHERE id=$1`, [iadeId])
