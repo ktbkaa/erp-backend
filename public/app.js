@@ -2138,68 +2138,68 @@ const MODULES = [
             kind: 'rota-workspace',
             key: 'operasyonlar',
             headerFields: [
-              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-              { key: 'route_code', label: 'Kod', code: true, required: true },
-              { key: 'route_name', label: 'Ad', name: true, required: true },
-              { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'] },
-              { key: 'item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true },
+              { key: 'item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, critical: true, group: 'kimlik' },
               {
                 key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
-                valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true,
+                valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, lead: true, critical: true, group: 'kimlik',
                 dependsOn: 'item_id', filterKey: 'finished_good_item_id',
               },
-              { key: 'alt_no', label: 'Alt no' },
-              { key: 'alt_description', label: 'Alt açıklama' },
-              { key: 'revision', label: 'Revizyon' },
-              { key: 'brand_code', label: 'Marka' },
-              { key: 'min_quantity', label: 'Min. miktar', type: 'number' },
-              { key: 'max_quantity', label: 'Maks. miktar', type: 'number' },
-              { key: 'valid_from', label: 'Geç. baş.', type: 'date' },
-              { key: 'valid_to', label: 'Geç. bitiş', type: 'date' },
-              { key: 'wo_change_mode', label: 'İE değişiklik', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'] },
-              { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
-              { key: 'template', label: 'Şablon', type: 'checkbox' },
-              { key: 'is_reverse', label: 'Ters rota', type: 'checkbox' },
-              { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-              { key: 'notes', label: 'Not', size: 'wide' },
+              { key: 'route_code', label: 'Kod', code: true, required: true, lead: true, group: 'kimlik' },
+              { key: 'route_name', label: 'Ad', name: true, required: true, lead: true, group: 'kimlik' },
+              { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'], group: 'kimlik' },
+              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+              { key: 'alt_no', label: 'Alt no', group: 'kimlik' },
+              { key: 'alt_description', label: 'Alt açıklama', group: 'kimlik' },
+              { key: 'revision', label: 'Revizyon', group: 'kimlik' },
+              { key: 'brand_code', label: 'Marka', group: 'kimlik' },
+              { key: 'min_quantity', label: 'Min. miktar', type: 'number', group: 'olcu' },
+              { key: 'max_quantity', label: 'Maks. miktar', type: 'number', group: 'olcu' },
+              { key: 'valid_from', label: 'Geç. baş.', type: 'date', group: 'planlama' },
+              { key: 'valid_to', label: 'Geç. bitiş', type: 'date', group: 'planlama' },
+              { key: 'wo_change_mode', label: 'İE değişiklik', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'], group: 'status' },
+              { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox', group: 'status' },
+              { key: 'template', label: 'Şablon', type: 'checkbox', group: 'status' },
+              { key: 'is_reverse', label: 'Ters rota', type: 'checkbox', group: 'status' },
+              { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
+              { key: 'notes', label: 'Not', size: 'wide', group: 'status' },
             ],
             fields: [
-              { key: 'line_no', label: 'Operasyon no', type: 'number', required: true, size: 'short' },
-              { key: 'operation_code', label: 'Operasyon kodu', required: true, size: 'short' },
-              { key: 'operation_name', label: 'Operasyon', required: true },
-              { key: 'description', label: 'Açıklama' },
-              { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
+              { key: 'line_no', label: 'Operasyon no', type: 'number', required: true, size: 'short', lead: true, group: 'kimlik' },
+              { key: 'operation_code', label: 'Operasyon kodu', required: true, size: 'short', lead: true, group: 'kimlik' },
+              { key: 'operation_name', label: 'Operasyon', required: true, lead: true, group: 'kimlik' },
+              { key: 'description', label: 'Açıklama', group: 'kimlik' },
+              { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', group: 'organizasyon' },
               {
                 key: 'work_station_id', label: 'İş istasyonu', type: 'lookup', lookup: 'is-istasyonlari',
-                valueKey: 'id', labelKey: 'station_name', codeKey: 'station_code',
+                valueKey: 'id', labelKey: 'station_name', codeKey: 'station_code', group: 'organizasyon',
                 dependsOn: 'work_center_id', filterKey: 'work_center_id',
               },
-              { key: 'op_time', label: 'Op birim süre', type: 'number', size: 'short' },
-              { key: 'op_time_uom', label: 'Op. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
-              { key: 'setup_time', label: 'Hazırlık süre', type: 'number', size: 'short' },
-              { key: 'setup_time_uom', label: 'H. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
-              { key: 'wait_time', label: 'Bekleme süre', type: 'number', size: 'short' },
-              { key: 'wait_time_uom', label: 'B. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
-              { key: 'unload_time', label: 'Boşaltma süre', type: 'number', size: 'short' },
-              { key: 'unload_time_uom', label: 'Boş. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
-              { key: 'sure_dk', label: 'Süre dk (eski)', type: 'number', size: 'short' },
-              { key: 'cost_factor_1', label: 'Maliyet katsayısı 1', type: 'number', size: 'short' },
-              { key: 'cost_factor_2', label: 'Maliyet katsayısı 2', type: 'number', size: 'short' },
               {
                 key: 'output_item_id', label: 'Çıktı', type: 'lookup', lookup: 'items',
-                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code',
+                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', group: 'olcu',
                 filterByBomKey: 'product_bom_id', includeBomRoot: true,
               },
-              { key: 'note1', label: 'Not 1' },
-              { key: 'note2', label: 'Not 2' },
-              { key: 'include_precost', label: 'Ön maliyet', type: 'checkbox' },
-              { key: 'include_std_cost', label: 'Standart maliyet', type: 'checkbox' },
-              { key: 'include_actual_cost', label: 'Fiili maliyette dikkate al', type: 'checkbox' },
-              { key: 'is_disassemble', label: 'Demonte operasyon', type: 'checkbox' },
-              { key: 'is_subcontract', label: 'Fason operasyon', type: 'checkbox' },
-              { key: 'is_shared_op', label: 'Ortak operasyonda kullanılır', type: 'checkbox' },
-              { key: 'require_qc', label: 'Kalite kontrolü yapılacak', type: 'checkbox' },
-              { key: 'require_spc', label: 'SPC kontrolü yapılacak', type: 'checkbox' },
+              { key: 'op_time', label: 'Op birim süre', type: 'number', size: 'short', group: 'planlama' },
+              { key: 'op_time_uom', label: 'Op. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
+              { key: 'setup_time', label: 'Hazırlık süre', type: 'number', size: 'short', group: 'planlama' },
+              { key: 'setup_time_uom', label: 'H. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
+              { key: 'wait_time', label: 'Bekleme süre', type: 'number', size: 'short', group: 'planlama' },
+              { key: 'wait_time_uom', label: 'B. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
+              { key: 'unload_time', label: 'Boşaltma süre', type: 'number', size: 'short', group: 'planlama' },
+              { key: 'unload_time_uom', label: 'Boş. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
+              { key: 'sure_dk', label: 'Süre dk (eski)', type: 'number', size: 'short', group: 'planlama' },
+              { key: 'cost_factor_1', label: 'Maliyet katsayısı 1', type: 'number', size: 'short', group: 'finans' },
+              { key: 'cost_factor_2', label: 'Maliyet katsayısı 2', type: 'number', size: 'short', group: 'finans' },
+              { key: 'include_precost', label: 'Ön maliyet', type: 'checkbox', group: 'finans' },
+              { key: 'include_std_cost', label: 'Standart maliyet', type: 'checkbox', group: 'finans' },
+              { key: 'include_actual_cost', label: 'Fiili maliyette dikkate al', type: 'checkbox', group: 'finans' },
+              { key: 'is_disassemble', label: 'Demonte operasyon', type: 'checkbox', group: 'status' },
+              { key: 'is_subcontract', label: 'Fason operasyon', type: 'checkbox', group: 'status' },
+              { key: 'is_shared_op', label: 'Ortak operasyonda kullanılır', type: 'checkbox', group: 'status' },
+              { key: 'require_qc', label: 'Kalite kontrolü yapılacak', type: 'checkbox', group: 'status' },
+              { key: 'require_spc', label: 'SPC kontrolü yapılacak', type: 'checkbox', group: 'status' },
+              { key: 'note1', label: 'Not 1', group: 'status' },
+              { key: 'note2', label: 'Not 2', group: 'status' },
             ],
             componentFields: [
               {
@@ -2894,61 +2894,61 @@ const MODULES = [
           { key: 'project_code', label: 'Proje', mono: true },
         ],
         masterFields: [
-          { key: 'order_no', label: 'Sipariş no', code: true },
-          { key: 'supplier_order_no', label: 'Tedarikçi sipariş no' },
-          { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar' },
-          { key: 'quotation_id', label: 'Satınalma teklifi', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'sa-teklif-satirlar' },
-          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'order_date', label: 'Sipariş tarihi', type: 'date' },
-          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date' },
-          { key: 'ship_date', label: 'Sevk tarihi', type: 'date' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'] },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
-          { key: 'payment_term_code', label: 'Ödeme koşulu' },
-          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'AcikHesap'] },
-          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'project_code', label: 'Proje kodu' },
-          { key: 'region', label: 'Bölge' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'public_note', label: 'Tedarikçi notu' },
-          { key: 'internal_note', label: 'Dahili not' },
+          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, critical: true, group: 'kimlik' },
+          { key: 'order_no', label: 'Sipariş no', code: true, lead: true, group: 'kimlik' },
+          { key: 'order_date', label: 'Sipariş tarihi', type: 'date', lead: true, group: 'kimlik' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
+          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
+          { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar', group: 'kimlik' },
+          { key: 'quotation_id', label: 'Satınalma teklifi', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'sa-teklif-satirlar', group: 'kimlik' },
+          { key: 'supplier_order_no', label: 'Tedarikçi sipariş no', group: 'kimlik' },
+          { key: 'ship_date', label: 'Sevk tarihi', type: 'date', group: 'planlama' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'finans' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], group: 'finans' },
+          { key: 'exchange_rate', label: 'Kur', type: 'number', group: 'finans' },
+          { key: 'payment_term_code', label: 'Ödeme koşulu', group: 'finans' },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'AcikHesap'], group: 'finans' },
+          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', group: 'planlama' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+          { key: 'project_code', label: 'Proje kodu', group: 'organizasyon' },
+          { key: 'region', label: 'Bölge', group: 'organizasyon' },
+          { key: 'description', label: 'Açıklama', group: 'status' },
+          { key: 'public_note', label: 'Tedarikçi notu', group: 'status' },
+          { key: 'internal_note', label: 'Dahili not', group: 'status' },
         ],
         detailFields: [
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number', required: true, size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
-          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short' },
-          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short' },
-          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short' },
-          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'ship_date', label: 'Sevk', type: 'date', size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
-          { key: 'region', label: 'Bölge', size: 'short' },
-          { key: 'supplier_item_code', label: 'Ted. stok kodu' },
-          { key: 'supplier_item_name', label: 'Ted. stok adı' },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'rezervasyon_type', label: 'Rezervasyon tipi' },
-          { key: 'rezervasyon_iliski_no', label: 'Rezervasyon ilişki no' },
-          { key: 'giren_quantity', label: 'Giren', type: 'number', size: 'short' },
-          { key: 'remaining_quantity', label: 'Bekleyen', type: 'number', size: 'short' },
-          { key: 'amount_ex_tax', label: 'Tutar HT', type: 'number', size: 'short' },
-          { key: 'amount_ttc', label: 'Tutar TTC', type: 'number', size: 'short' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short', lead: true, group: 'olcu' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short', group: 'olcu' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', required: true, size: 'short', lead: true, group: 'finans' },
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short', group: 'kimlik' },
+          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short', group: 'finans' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short', group: 'finans' },
+          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short', group: 'finans' },
+          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short', group: 'finans' },
+          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short', group: 'finans' },
+          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short', group: 'planlama' },
+          { key: 'ship_date', label: 'Sevk', type: 'date', size: 'short', group: 'planlama' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
+          { key: 'project_code', label: 'Proje', size: 'short', group: 'organizasyon' },
+          { key: 'region', label: 'Bölge', size: 'short', group: 'organizasyon' },
+          { key: 'supplier_item_code', label: 'Ted. stok kodu', group: 'kimlik' },
+          { key: 'supplier_item_name', label: 'Ted. stok adı', group: 'kimlik' },
+          { key: 'line_description', label: 'Açıklama', group: 'status' },
+          { key: 'rezervasyon_type', label: 'Rezervasyon tipi', group: 'status' },
+          { key: 'rezervasyon_iliski_no', label: 'Rezervasyon ilişki no', group: 'status' },
+          { key: 'giren_quantity', label: 'Giren', type: 'number', size: 'short', group: 'olcu' },
+          { key: 'remaining_quantity', label: 'Bekleyen', type: 'number', size: 'short', group: 'olcu' },
+          { key: 'amount_ex_tax', label: 'Tutar HT', type: 'number', size: 'short', group: 'finans' },
+          { key: 'amount_ttc', label: 'Tutar TTC', type: 'number', size: 'short', group: 'finans' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
@@ -7061,6 +7061,306 @@ function hideTabContextMenu() {
   state.tabCtxKey = null;
   const listMenu = $('#listCtxMenu');
   if (listMenu) listMenu.hidden = true;
+  const formMenu = $('#formCtxMenu');
+  if (formMenu) formMenu.hidden = true;
+}
+
+/**
+ * Belge zinciri: kaynak (önceki) + sonraki işlem bağlantıları.
+ * enabled=false → menüde disable görünür.
+ */
+const BELGE_BAGLANTI = {
+  'satin-alma-talepleri': {
+    kaynaklar: [],
+    sonrakiler: [
+      { id: 'sa-teklif', label: 'Satınalma teklifi', screenId: 'satin-alma-teklifleri', findBy: ['requisition_id'] },
+      { id: 'sa-siparis', label: 'Satınalma siparişi', screenId: 'satin-alma-siparisleri', findBy: ['requisition_id'] },
+    ],
+  },
+  'satin-alma-teklifleri': {
+    kaynaklar: [
+      { id: 'talep', label: 'Satınalma talebi (kaynak)', field: 'requisition_id', screenId: 'satin-alma-talepleri' },
+    ],
+    sonrakiler: [
+      { id: 'sa-siparis', label: 'Satınalma siparişi', screenId: 'satin-alma-siparisleri', findBy: ['quotation_id'] },
+    ],
+  },
+  'satin-alma-siparisleri': {
+    kaynaklar: [
+      { id: 'talep', label: 'Satınalma talebi (kaynak)', field: 'requisition_id', screenId: 'satin-alma-talepleri' },
+      { id: 'teklif', label: 'Satınalma teklifi (kaynak)', field: 'quotation_id', screenId: 'satin-alma-teklifleri' },
+    ],
+    sonrakiler: [
+      {
+        id: 'mal-kabul',
+        label: 'Mal kabul',
+        screenId: 'mal-kabuller',
+        findBy: ['purchase_order_id', 'sales_order_id'],
+      },
+    ],
+  },
+  'mal-kabuller': {
+    kaynaklar: [
+      { id: 'sa-siparis', label: 'Satınalma siparişi (kaynak)', field: 'purchase_order_id', altFields: ['sales_order_id'], screenId: 'satin-alma-siparisleri' },
+      { id: 'ted-irs', label: 'Tedarikçi irsaliyesi (kaynak)', field: 'vendor_delivery_note_id', screenId: 'tedarikci-irsaliyeleri' },
+    ],
+    sonrakiler: [
+      {
+        id: 'alis-fatura',
+        label: 'Alış faturası',
+        screenId: 'fatura-yonetimi',
+        findBy: ['goods_receipt_id', 'source_document_id'],
+        findExtra: (row, rec) => String(row.invoice_type || '').toLowerCase().includes('alis')
+          && (Number(row.goods_receipt_id) === Number(rec.id)
+            || (row.source_document_type === 'MAL_KABUL' && Number(row.source_document_id) === Number(rec.id))),
+      },
+    ],
+  },
+  'satis-teklifleri': {
+    kaynaklar: [],
+    sonrakiler: [
+      { id: 'satis-siparis', label: 'Satış siparişi', screenId: 'sales_orders', findBy: ['quotation_id'] },
+    ],
+  },
+  'sales_orders': {
+    kaynaklar: [
+      { id: 'teklif', label: 'Satış teklifi (kaynak)', field: 'quotation_id', screenId: 'satis-teklifleri' },
+    ],
+    sonrakiler: [
+      { id: 'sevk', label: 'Sevk emri', screenId: 'sevk-emirleri', findBy: ['sales_order_id'] },
+      { id: 'irsaliye', label: 'Satış irsaliyesi', screenId: 'irsaliye-yonetimi', findBy: ['sales_order_id'] },
+      { id: 'fatura', label: 'Satış faturası', screenId: 'fatura-yonetimi', findBy: ['sales_order_id'] },
+    ],
+  },
+  'sevk-emirleri': {
+    kaynaklar: [
+      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'sales_orders' },
+    ],
+    sonrakiler: [
+      { id: 'irsaliye', label: 'Satış irsaliyesi', screenId: 'irsaliye-yonetimi', findBy: ['shipment_order_id'] },
+    ],
+  },
+  'irsaliye-yonetimi': {
+    kaynaklar: [
+      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'sales_orders' },
+      { id: 'sevk', label: 'Sevk emri (kaynak)', field: 'shipment_order_id', screenId: 'sevk-emirleri' },
+    ],
+    sonrakiler: [
+      {
+        id: 'fatura',
+        label: 'Satış faturası',
+        screenId: 'fatura-yonetimi',
+        findBy: ['delivery_note_id'],
+      },
+    ],
+  },
+  'fatura-yonetimi': {
+    kaynaklar: [
+      { id: 'irsaliye', label: 'İrsaliye (kaynak)', field: 'delivery_note_id', screenId: 'irsaliye-yonetimi' },
+      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'sales_orders' },
+      { id: 'mal-kabul', label: 'Mal kabul (kaynak)', field: 'goods_receipt_id', screenId: 'mal-kabuller' },
+    ],
+    sonrakiler: [],
+  },
+};
+
+function getBelgeBaglanti(screen) {
+  if (!screen) return { kaynaklar: [], sonrakiler: [] };
+  const base = BELGE_BAGLANTI[screen.id] || { kaynaklar: [], sonrakiler: [] };
+  // Ekran özel override
+  return {
+    kaynaklar: screen.documentNav?.kaynaklar || base.kaynaklar || [],
+    sonrakiler: screen.documentNav?.sonrakiler || base.sonrakiler || [],
+  };
+}
+
+function recSourceId(rec, link) {
+  if (!rec || !link) return null;
+  const keys = [link.field].concat(link.altFields || []).filter(Boolean);
+  for (const k of keys) {
+    const v = rec[k];
+    if (v != null && v !== '') return Number(v) || v;
+  }
+  return null;
+}
+
+async function findLinkedRecord(link, rec) {
+  const target = findScreen(link.screenId);
+  if (!target?.endpoint || !rec?.id) return null;
+  try {
+    const data = await api(target.endpoint);
+    const rows = Array.isArray(data) ? data : [];
+    const keys = link.findBy || [];
+    return rows.find((row) => {
+      if (typeof link.findExtra === 'function' && link.findExtra(row, rec)) return true;
+      return keys.some((k) => Number(row[k]) === Number(rec.id));
+    }) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function buildFormBaglantiMenuItems(screen, rec) {
+  const cfg = getBelgeBaglanti(screen);
+  const items = [];
+  if (cfg.kaynaklar.length) {
+    items.push({ type: 'heading', label: 'Kaynak belge' });
+    cfg.kaynaklar.forEach((k) => {
+      const tid = recSourceId(rec, k);
+      items.push({
+        type: 'item',
+        id: `src:${k.id}`,
+        label: k.label,
+        enabled: Boolean(tid),
+        screenId: k.screenId,
+        targetId: tid,
+        kind: 'kaynak',
+      });
+    });
+  }
+  if (cfg.sonrakiler.length) {
+    items.push({ type: 'heading', label: 'Sonraki işlem' });
+    for (const s of cfg.sonrakiler) {
+      const found = await findLinkedRecord(s, rec);
+      items.push({
+        type: 'item',
+        id: `next:${s.id}`,
+        label: s.label,
+        enabled: Boolean(found?.id),
+        screenId: s.screenId,
+        targetId: found?.id || null,
+        kind: 'sonraki',
+        hint: found ? null : 'Henüz oluşturulmadı',
+      });
+    }
+  }
+  return items;
+}
+
+async function showFormContextMenu(clientX, clientY) {
+  const menu = $('#formCtxMenu');
+  const screen = findScreen(state.screenId);
+  if (!menu || !screen || !state.formMode) return;
+  const rec = state.formRecord || {};
+  if (!rec.id || state.formMode === 'yeni' || state.formMode === 'kopyala') {
+    menu.innerHTML = `<span class="ctx-heading">Belge bağlantısı</span>
+      <button type="button" disabled class="is-disabled">Kayıt kaydedildikten sonra kullanılabilir</button>`;
+  } else {
+    menu.innerHTML = `<span class="ctx-heading">Yükleniyor…</span>`;
+    menu.hidden = false;
+    positionCtxMenu(menu, clientX, clientY);
+    const items = await buildFormBaglantiMenuItems(screen, rec);
+    if (!items.length) {
+      menu.innerHTML = `<span class="ctx-heading">Belge bağlantısı</span>
+        <button type="button" disabled class="is-disabled">Bu ekranda tanımlı bağlantı yok</button>`;
+    } else {
+      menu.innerHTML = items.map((it) => {
+        if (it.type === 'heading') return `<span class="ctx-heading">${escAttr(it.label)}</span>`;
+        if (it.type === 'sep') return '<div class="ctx-sep"></div>';
+        const dis = it.enabled ? '' : 'disabled class="is-disabled"';
+        const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
+        return `<button type="button" role="menuitem" ${dis}${title}
+          data-form-ctx="${escAttr(it.id)}"
+          data-open-screen="${escAttr(it.screenId || '')}"
+          data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`;
+      }).join('');
+    }
+  }
+  menu.hidden = false;
+  positionCtxMenu(menu, clientX, clientY);
+  if (!menu.dataset.bound) {
+    menu.dataset.bound = '1';
+    menu.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-form-ctx]');
+      if (!btn || btn.disabled) return;
+      e.preventDefault();
+      menu.hidden = true;
+      const sid = btn.getAttribute('data-open-screen');
+      const rid = btn.getAttribute('data-open-id');
+      if (sid && rid) {
+        openRecordById(sid, rid, 'incele').catch((err) => toast(err.message));
+      }
+    });
+  }
+}
+
+function positionCtxMenu(menu, clientX, clientY) {
+  const pad = 6;
+  const mw = menu.offsetWidth || 220;
+  const mh = menu.offsetHeight || 120;
+  let left = clientX;
+  let top = clientY;
+  if (left + mw > window.innerWidth - pad) left = Math.max(pad, window.innerWidth - mw - pad);
+  if (top + mh > window.innerHeight - pad) top = Math.max(pad, window.innerHeight - mh - pad);
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+}
+
+/** Form üst çubuğu: İncele → Yeni/Düzelt/Kopyala/Sil; Düzelt → Yeni/Kopyala/Sil */
+function updateFormCrudButtons(screen) {
+  const mode = state.formMode;
+  const hasId = Boolean(state.formRecord?.id);
+  const wrap = $('#formCrudActions');
+  const map = {
+    yeni: $('#btnFormYeni'),
+    duzelt: $('#btnFormDuzelt'),
+    kopyala: $('#btnFormKopyala'),
+    sil: $('#btnFormSil'),
+  };
+  if (!wrap || !map.yeni) return;
+  if (!screen || screen.readOnly || screen.crud === false || screen.hideActions) {
+    Object.values(map).forEach((b) => { if (b) { b.hidden = true; b.disabled = true; } });
+    return;
+  }
+  const showYeni = mode === 'incele' || mode === 'duzelt';
+  const showDuzelt = mode === 'incele' && hasId;
+  const showKopyala = (mode === 'incele' || mode === 'duzelt') && hasId;
+  const showSil = (mode === 'incele' || mode === 'duzelt') && hasId;
+
+  map.yeni.hidden = !showYeni;
+  map.duzelt.hidden = !showDuzelt;
+  map.kopyala.hidden = !showKopyala;
+  map.sil.hidden = !showSil;
+
+  map.yeni.disabled = showYeni ? !ekranYetkisi(screen.id, 'yeni') : true;
+  map.duzelt.disabled = showDuzelt ? !ekranYetkisi(screen.id, 'duzelt') : true;
+  map.kopyala.disabled = showKopyala ? !ekranYetkisi(screen.id, 'kopyala') : true;
+  map.sil.disabled = showSil ? !ekranYetkisi(screen.id, 'sil') : true;
+
+  wrap.hidden = !(showYeni || showDuzelt || showKopyala || showSil);
+}
+
+async function formCrudAction(act) {
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const rec = state.formRecord || {};
+  if (act === 'yeni') {
+    await openForm('yeni', { inPlace: true });
+    return;
+  }
+  if (!rec.id) {
+    toast('Önce kayıtlı bir belge gerekli.');
+    return;
+  }
+  // openForm selectedRow() kullanır
+  state.selectedId = rec.id;
+  if (!state.rows?.some((r) => String(r.id) === String(rec.id))) {
+    state.rows = [{ id: rec.id, ...(rec || {}) }];
+    state.filtered = state.rows;
+  } else {
+    state.filtered = state.rows;
+  }
+  if (act === 'duzelt') {
+    await openForm('duzelt', { inPlace: true });
+    return;
+  }
+  if (act === 'kopyala') {
+    await openForm('kopyala', { inPlace: true });
+    return;
+  }
+  if (act === 'sil') {
+    await deleteSelected();
+  }
 }
 
 function showListContextMenu(screen, clientX, clientY) {
@@ -9474,11 +9774,11 @@ function detailColClass(f) {
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / address / …). */
 const FIELD_GROUP_DEFS = [
-  { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
-  { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|tedarik_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code)/i },
+  { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|work_center|work_station|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
+  { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|operation_|line_no|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|tedarik_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code|output_item)/i },
   { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity|planlanan_quantity)/i },
   { id: 'depo', title: 'Depo / stok yeri', re: /^(warehouse_id|depo|component_warehouse|wip_warehouse|fg_warehouse)/i },
-  { id: 'planlama', title: 'Planlama', re: /^(plan_|planli|planlanan|plan_start|plan_end|end_date|teslim|delivery_date|gecerlilik|cikis_type|giris_type)/i },
+  { id: 'planlama', title: 'Planlama', re: /^(plan_|planli|planlanan|plan_start|plan_end|end_date|teslim|delivery_date|gecerlilik|cikis_type|giris_type|op_time|setup_time|wait_time|unload_time|sure_dk)/i },
   { id: 'address', title: 'Adres', re: /^(country|il$|district|sehir|posta_|address|bill_address|fatura_adres|sevk_|enlem|boylam|mensei)/i },
   { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|mobile_|email|website|fax|yetkili)/i },
   { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|payment_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|sales_price|varsayilan_vat|tax_|beklenen_gelir|muhasebe_|delivery_term)/i },
@@ -10657,8 +10957,8 @@ function renderRotaFlow(tab, rec) {
       ${headerFields.length ? `
         <div class="bom-workspace-header">
           <div class="section-label">Rota başlığı</div>
-          <div class="form-tab-fields bom-header-fields">
-            ${headerFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key], 'data-master', '', rec), rec[f.key])).join('')}
+          <div class="bom-header-fields">
+            ${renderGroupedFieldCards(headerFields, rec, 'data-master')}
           </div>
         </div>` : ''}
       <div class="rota-workspace-body">
@@ -10681,6 +10981,10 @@ function renderRotaFlow(tab, rec) {
           <div class="inline-toolbar">
             ${canEdit ? `
               <button type="button" class="btn action" data-flow-act="yeni-op">+ Operasyon</button>
+              ${sel != null ? `
+                <button type="button" class="btn action" data-flow-act="uygula-op">Kaydet</button>
+                <button type="button" class="btn action danger" data-flow-act="sil-op">Seçili operasyonu sil</button>
+              ` : ''}
             ` : ''}
           </div>
           <div class="rota-flow">
@@ -10698,12 +11002,12 @@ function renderRotaFlow(tab, rec) {
                 </button>
                 ${open ? `
                   <div class="rota-op-body">
-                    <div class="form-tab-fields" data-flow-editor>
-                      ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, op[f.key], 'data-flow-field', '', op), op[f.key])).join('')}
+                    <div data-flow-editor>
+                      ${renderGroupedFieldCards(tab.fields || [], op, 'data-flow-field')}
                     </div>
                     ${canEdit ? `
                       <div class="bom-editor-actions rota-editor-actions">
-                        <button type="button" class="btn action" data-flow-act="uygula-op">Operasyonu uygula</button>
+                        <button type="button" class="btn action" data-flow-act="uygula-op">Kaydet</button>
                         <button type="button" class="btn action danger" data-flow-act="sil-op">Operasyonu sil</button>
                       </div>` : ''}
                     <div class="section-label">Bu adımın malzemeleri (ağaçtan)</div>
@@ -10831,6 +11135,7 @@ function renderForm(screen) {
     }
   }
   $('#btnFormSave').hidden = readonly;
+  updateFormCrudButtons(screen);
   const conv = $('#btnFormConvert');
   if (conv) {
     const act = screen.convertAction || screen.approveAction;
@@ -12603,7 +12908,7 @@ function applyRotaOpSelection(screen) {
     toast('Operasyon kodu veya adı girin.');
     return false;
   }
-  toast(`${op.operation_code || 'Operasyon'} kaydedildi.`);
+  toast(`${op.operation_code || 'Operasyon'} kaydedildi — belgeyi kaydetmeyi unutmayın.`);
   renderForm(screen);
   persistActiveFormTab();
   return true;
@@ -13874,6 +14179,14 @@ function bindEvents() {
     if (e.key === 'Escape') hideTabContextMenu();
   });
 
+  // Form ctx menü dışına tıklanınca kapat (list/tab ile aynı)
+  document.addEventListener('click', (e) => {
+    const formMenu = $('#formCtxMenu');
+    if (formMenu && !formMenu.hidden && !e.target.closest('#formCtxMenu')) {
+      formMenu.hidden = true;
+    }
+  }, true);
+
   $('#btnHome').addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -14064,6 +14377,23 @@ function bindEvents() {
 
   $('#btnFormSave').addEventListener('click', () => {
     saveForm();
+  });
+
+  $('#formCrudActions')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-form-act]');
+    if (!btn || btn.disabled || btn.hidden) return;
+    e.preventDefault();
+    formCrudAction(btn.getAttribute('data-form-act')).catch((err) => toast(err.message));
+  });
+
+  // Form boş alanına sağ tık → belge kaynağı / sonraki işlem
+  const viewFormEl = $('#viewForm');
+  viewFormEl?.addEventListener('contextmenu', (e) => {
+    if (!state.formMode) return;
+    // Input/lookup içinde tarayıcı menüsü kalsın
+    if (e.target.closest('input, textarea, select, button, a, .lookup-panel, .tab-ctx-menu')) return;
+    e.preventDefault();
+    showFormContextMenu(e.clientX, e.clientY).catch((err) => toast(err.message));
   });
 
   function exportListCsv() {

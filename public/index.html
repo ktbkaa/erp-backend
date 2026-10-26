@@ -155,6 +155,7 @@
         <button type="button" role="menuitem" data-tab-ctx="close-all" class="danger">Tümünü kapat</button>
       </div>
       <div class="tab-ctx-menu" id="listCtxMenu" role="menu" hidden></div>
+      <div class="tab-ctx-menu form-ctx-menu" id="formCtxMenu" role="menu" hidden></div>
 
       <main class="workspace-main">
         <section id="viewHome" class="view home-view">
@@ -304,6 +305,12 @@
               </div>
             </div>
             <div class="form-actions">
+              <div class="form-crud-actions" id="formCrudActions" aria-label="Kayıt işlemleri" hidden>
+                <button type="button" class="btn action ghost" data-form-act="yeni" id="btnFormYeni" hidden>Yeni</button>
+                <button type="button" class="btn action ghost" data-form-act="duzelt" id="btnFormDuzelt" hidden>Düzelt</button>
+                <button type="button" class="btn action ghost" data-form-act="kopyala" id="btnFormKopyala" hidden>Kopyala</button>
+                <button type="button" class="btn action danger" data-form-act="sil" id="btnFormSil" hidden>Sil</button>
+              </div>
               <div class="info-menu-wrap" id="formInfoWrap">
                 <button type="button" class="btn ghost" id="btnFormCancel" title="Kayıt / ekran / log bilgisi" aria-haspopup="menu" aria-expanded="false">Bilgi &#9662;</button>
                 <div class="info-menu" id="formInfoMenu" role="menu" hidden>
