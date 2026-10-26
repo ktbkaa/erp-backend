@@ -5,6 +5,7 @@ const { mrpHesapla, mrpCalistir } = require('../src/services/mrpService');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -281,10 +282,11 @@ router.post('/talep-olustur', async (req, res, next) => {
                 const iy = await client.query('SELECT id FROM plants ORDER BY id LIMIT 1');
                 isYeriId = iy.rows[0]?.id || null;
             }
+            const firmaId = num(req.body.company_id) || firmaIdFromReq(req) || null;
             const t = await client.query(
-                `INSERT INTO purchase_requisitions (requisition_no, plant_id, status, description)
-                 VALUES ($1,$2,'Acik',$3) RETURNING id`,
-                [no, isYeriId, `MRP — ${adaylar.length} kalem`]
+                `INSERT INTO purchase_requisitions (requisition_no, plant_id, status, description, company_id)
+                 VALUES ($1,$2,'Acik',$3,$4) RETURNING id`,
+                [no, isYeriId, `MRP — ${adaylar.length} kalem`, firmaId]
             );
             const id = t.rows[0].id;
             for (const a of adaylar) {
@@ -404,13 +406,20 @@ router.post('/uretim-emri-olustur', async (req, res, next) => {
                 }
                 const no = await sonrakiBelgeNo(client, 'URETIM_EMRI');
                 const quantity = a.onerilen_quantity || a.net_ihtiyac;
+                const firmaId = num(req.body.company_id) || firmaIdFromReq(req) || null;
+                const wipDepo = num(req.body.wip_warehouse_id) || null;
                 const emir = await client.query(
                     `INSERT INTO production_orders
-                        (order_no, item_id, product_bom_id, route_id, plant_id,
-                         component_warehouse_id, fg_warehouse_id, planlanan_quantity, status, planli_kesin)
-                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Acik','Planli')
+                        (order_no, item_id, product_bom_id, route_id, plant_id, company_id,
+                         component_warehouse_id, wip_warehouse_id, fg_warehouse_id, planlanan_quantity, status, planli_kesin,
+                         description)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'Acik','Planli',$11)
                      RETURNING id, order_no`,
-                    [no, a.item_id, bom.rows[0].id, rota.rows[0].id, isYeriId, hmDepo, mamDepo, quantity]
+                    [
+                      no, a.item_id, bom.rows[0].id, rota.rows[0].id, isYeriId, firmaId,
+                      hmDepo, wipDepo, mamDepo, quantity,
+                      `MRP üretim emri ${a.item_code || a.item_id}`,
+                    ]
                 );
                 // bileşenler BOM'dan
                 const agac = await client.query('SELECT quantity FROM boms WHERE id=$1', [bom.rows[0].id]);
