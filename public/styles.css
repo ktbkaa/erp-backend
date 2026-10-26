@@ -332,6 +332,11 @@ body.is-login {
   border-color: var(--accent);
   color: #fff;
 }
+.sidebar-tabs-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
 .app-shell.sidebar-collapsed .sidebar-tabs-toggle {
   display: none;
 }
