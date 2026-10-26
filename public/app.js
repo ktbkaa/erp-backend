@@ -1637,7 +1637,7 @@ const MODULES = [
       { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'] },
       { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri'] },
       { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'routings', 'uretim-emri-tipleri'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri'] },
     ],
     screens: [
       {
@@ -2024,6 +2024,37 @@ const MODULES = [
         detailFields: [],
       },
       {
+        id: 'is-istasyonlari',
+        techId: 'MFG-WS-SCR-001',
+        businessNameEn: 'WorkStationScreen',
+        title: 'İş İstasyonları',
+        endpoint: '/is-istasyonlari',
+        crud: true,
+        numeratorSeri: 'IS_ISTASYONU',
+        codeField: 'station_code',
+        nameField: 'station_name',
+        filters: [
+          { key: 'station_code', label: 'İstasyon kodu' },
+          { key: 'station_name', label: 'İstasyon adı' },
+          { key: 'center_name', label: 'İş merkezi' },
+        ],
+        columns: [
+          { key: 'station_code', label: 'Kod', mono: true },
+          { key: 'station_name', label: 'Ad' },
+          { key: 'center_code', label: 'Merkez', mono: true },
+          { key: 'center_name', label: 'Merkez adı' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'station_code', label: 'Kod', code: true },
+          { key: 'station_name', label: 'Ad', name: true, required: true },
+          { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', required: true },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        defaults: { is_active: true },
+      },
+      {
         id: 'routings',
         techId: 'MFG-ROUT-SCR-001',
         businessNameEn: 'RoutingScreen',
@@ -2037,35 +2068,67 @@ const MODULES = [
           { key: 'route_code', label: 'Rota kodu' },
           { key: 'route_name', label: 'Rota adı' },
           { key: 'item_code', label: 'Stok kodu' },
+          { key: 'plant_id', label: 'Tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'route_type', label: 'Tip', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'] },
+          { key: 'alt_no', label: 'Alt no' },
         ],
         columns: [
           { key: 'route_code', label: 'Kod', mono: true },
           { key: 'route_name', label: 'Ad' },
           { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'alt_no', label: 'Alt', mono: true },
+          { key: 'route_type', label: 'Tip' },
           { key: 'bom_code', label: 'Ürün ağacı', mono: true },
+          { key: 'plant_code', label: 'Tesis', mono: true },
           { key: 'varsayilan', label: 'Varsayılan' },
           { key: 'template', label: 'Şablon' },
+          { key: 'is_reverse', label: 'Ters' },
         ],
         masterFields: [
-          { key: 'route_code', label: 'Kod', code: true, required: true },
-          { key: 'route_name', label: 'Ad', name: true, required: true },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
+          { key: 'plant_id', label: 'İş yeri / tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+          { key: 'route_code', label: 'Kod', code: true, required: true, group: 'kimlik' },
+          { key: 'route_name', label: 'Ad', name: true, required: true, group: 'kimlik' },
+          { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'], required: true, group: 'kimlik' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, group: 'kimlik' },
           {
             key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
-            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true,
+            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
             dependsOn: 'item_id', filterKey: 'finished_good_item_id',
           },
-          { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
-          { key: 'template', label: 'Şablon', type: 'checkbox' },
-          { key: 'valid_from', label: 'Geçerlilik baş.', type: 'date' },
-          { key: 'valid_to', label: 'Geçerlilik bitiş', type: 'date' },
+          { key: 'alt_no', label: 'Alternatif no', group: 'kimlik' },
+          { key: 'alt_description', label: 'Alternatif açıklama', group: 'kimlik' },
+          { key: 'revision', label: 'Revizyon', group: 'kimlik' },
+          { key: 'brand_code', label: 'Marka', group: 'kimlik' },
+          { key: 'attr3_code', label: 'Özellik 3', group: 'kimlik' },
+          { key: 'min_quantity', label: 'Min. miktar', type: 'number', group: 'olcu' },
+          { key: 'max_quantity', label: 'Maks. miktar', type: 'number', group: 'olcu' },
+          { key: 'valid_from', label: 'Geçerlilik baş.', type: 'date', group: 'planlama' },
+          { key: 'valid_to', label: 'Geçerlilik bitiş', type: 'date', group: 'planlama' },
+          { key: 'wo_change_mode', label: 'İE değişiklik izni', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'], group: 'status' },
+          { key: 'varsayilan', label: 'Varsayılan ürün rotası', type: 'checkbox', group: 'status' },
+          { key: 'template', label: 'Şablon', type: 'checkbox', group: 'status' },
+          { key: 'is_reverse', label: 'Ters rota', type: 'checkbox', group: 'status' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
+          { key: 'notes', label: 'Not', size: 'wide', group: 'status' },
         ],
         detailFields: [],
         detailKey: null,
-        // Stok → varsayılan ürün ağacı
+        defaults: {
+          route_type: 'Uretim',
+          alt_no: '00',
+          min_quantity: 0,
+          max_quantity: 999999999,
+          wo_change_mode: 'Serbest',
+          varsayilan: false,
+          template: false,
+          is_reverse: false,
+          is_active: true,
+        },
         formLinks: {
           item_id: [
             { field: 'product_bom_id', pick: 'bomForItem' },
+            { field: 'brand_code', fromItem: 'marka' },
           ],
         },
         formTabs: [
@@ -2075,27 +2138,68 @@ const MODULES = [
             kind: 'rota-workspace',
             key: 'operasyonlar',
             headerFields: [
+              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
               { key: 'route_code', label: 'Kod', code: true, required: true },
               { key: 'route_name', label: 'Ad', name: true, required: true },
+              { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'] },
               { key: 'item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true },
               {
                 key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
                 valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true,
                 dependsOn: 'item_id', filterKey: 'finished_good_item_id',
               },
+              { key: 'alt_no', label: 'Alt no' },
+              { key: 'alt_description', label: 'Alt açıklama' },
+              { key: 'revision', label: 'Revizyon' },
+              { key: 'brand_code', label: 'Marka' },
+              { key: 'min_quantity', label: 'Min. miktar', type: 'number' },
+              { key: 'max_quantity', label: 'Maks. miktar', type: 'number' },
+              { key: 'valid_from', label: 'Geç. baş.', type: 'date' },
+              { key: 'valid_to', label: 'Geç. bitiş', type: 'date' },
+              { key: 'wo_change_mode', label: 'İE değişiklik', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'] },
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
+              { key: 'template', label: 'Şablon', type: 'checkbox' },
+              { key: 'is_reverse', label: 'Ters rota', type: 'checkbox' },
+              { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+              { key: 'notes', label: 'Not', size: 'wide' },
             ],
             fields: [
-              { key: 'line_no', label: 'Sıra', type: 'number', required: true },
-              { key: 'operation_code', label: 'Kod', required: true },
-              { key: 'operation_name', label: 'Ad', required: true },
+              { key: 'line_no', label: 'Operasyon no', type: 'number', required: true, size: 'short' },
+              { key: 'operation_code', label: 'Operasyon kodu', required: true, size: 'short' },
+              { key: 'operation_name', label: 'Operasyon', required: true },
+              { key: 'description', label: 'Açıklama' },
               { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
-              { key: 'sure_dk', label: 'Süre (dk)', type: 'number' },
+              {
+                key: 'work_station_id', label: 'İş istasyonu', type: 'lookup', lookup: 'is-istasyonlari',
+                valueKey: 'id', labelKey: 'station_name', codeKey: 'station_code',
+                dependsOn: 'work_center_id', filterKey: 'work_center_id',
+              },
+              { key: 'op_time', label: 'Op birim süre', type: 'number', size: 'short' },
+              { key: 'op_time_uom', label: 'Op. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
+              { key: 'setup_time', label: 'Hazırlık süre', type: 'number', size: 'short' },
+              { key: 'setup_time_uom', label: 'H. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
+              { key: 'wait_time', label: 'Bekleme süre', type: 'number', size: 'short' },
+              { key: 'wait_time_uom', label: 'B. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
+              { key: 'unload_time', label: 'Boşaltma süre', type: 'number', size: 'short' },
+              { key: 'unload_time_uom', label: 'Boş. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short' },
+              { key: 'sure_dk', label: 'Süre dk (eski)', type: 'number', size: 'short' },
+              { key: 'cost_factor_1', label: 'Maliyet katsayısı 1', type: 'number', size: 'short' },
+              { key: 'cost_factor_2', label: 'Maliyet katsayısı 2', type: 'number', size: 'short' },
               {
                 key: 'output_item_id', label: 'Çıktı', type: 'lookup', lookup: 'items',
                 valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code',
                 filterByBomKey: 'product_bom_id', includeBomRoot: true,
               },
+              { key: 'note1', label: 'Not 1' },
+              { key: 'note2', label: 'Not 2' },
+              { key: 'include_precost', label: 'Ön maliyet', type: 'checkbox' },
+              { key: 'include_std_cost', label: 'Standart maliyet', type: 'checkbox' },
+              { key: 'include_actual_cost', label: 'Fiili maliyette dikkate al', type: 'checkbox' },
+              { key: 'is_disassemble', label: 'Demonte operasyon', type: 'checkbox' },
+              { key: 'is_subcontract', label: 'Fason operasyon', type: 'checkbox' },
+              { key: 'is_shared_op', label: 'Ortak operasyonda kullanılır', type: 'checkbox' },
+              { key: 'require_qc', label: 'Kalite kontrolü yapılacak', type: 'checkbox' },
+              { key: 'require_spc', label: 'SPC kontrolü yapılacak', type: 'checkbox' },
             ],
             componentFields: [
               {
@@ -2105,6 +2209,14 @@ const MODULES = [
               },
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
               { key: 'quantity', label: 'Miktar', type: 'number' },
+            ],
+            equipmentFields: [
+              { key: 'line_no', label: 'Satır no', type: 'number', size: 'short' },
+              { key: 'equipment_code', label: 'Ekipman kodu', required: true, size: 'short' },
+              { key: 'equipment_name', label: 'Ekipman adı' },
+              { key: 'cavity_count', label: 'Göz sayısı', type: 'number', size: 'short' },
+              { key: 'used_cavity_count', label: 'Kullanılan göz', type: 'number', size: 'short' },
+              { key: 'notes', label: 'Not' },
             ],
           },
         ],
@@ -6045,9 +6157,12 @@ function collectScreenFormFields(screen) {
   push(screen.detailFields);
   (screen.formTabs || []).forEach((tab) => {
     push(tab.fields);
+    push(tab.headerFields);
     push(tab.masterFields);
     push(tab.detailFields);
     push(tab.grid?.fields);
+    push(tab.componentFields);
+    push(tab.equipmentFields);
   });
   return out;
 }
@@ -6150,6 +6265,7 @@ const state = {
   treeExpanded: {},
   flowSel: null,
   flowCompSel: null,
+  flowEquipSel: null,
   sidebarOpen: {},
   sidebarSectionOpen: {},
   tabCtxKey: null,
@@ -8583,6 +8699,8 @@ const LOOKUP_ENDPOINTS = {
   'fatura-yonetimi': '/invoices',
   'irsaliye-yonetimi': '/delivery_notes',
   'is-merkezleri': '/is-merkezleri',
+  'is-istasyonlari': '/is-istasyonlari?is_active=true',
+  'rota-sablonlari': '/routings?type=hepsi&template=true',
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-planlari': '/uretim-planlari',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?is_active=true',
@@ -8649,6 +8767,8 @@ const SCREEN_LOOKUP_EXTRAS = {
   'fatura-yonetimi': ['fatura-yonetimi', 'alis-faturalari', 'satis-faturalari', 'mal-kabuller'],
   'irsaliye-yonetimi': ['irsaliye-yonetimi', 'delivery_notes'],
   'fatura-kontrolleri': ['alis-faturalari', 'fatura-yonetimi', 'mal-kabuller', 'satin-alma-siparisleri'],
+  routings: ['is-istasyonlari', 'rota-sablonlari', 'is-merkezleri', 'urun-agaclari'],
+  'is-istasyonlari': ['is-merkezleri', 'is-istasyonlari'],
 };
 
 function invalidateLookups(...keys) {
@@ -8949,6 +9069,7 @@ function normalizeGridRows(tab, rows) {
     });
     // nested children for rota etc.
     if (Array.isArray(src?.bilesenler)) row.bilesenler = src.bilesenler.map((b) => ({ ...b }));
+    if (Array.isArray(src?.ekipmanlar)) row.ekipmanlar = src.ekipmanlar.map((e) => ({ ...e }));
     if (Array.isArray(src?.alt_satirlar)) row.alt_satirlar = src.alt_satirlar;
     Object.keys(src || {}).forEach((k) => {
       if (k.startsWith('_')) {
@@ -10508,6 +10629,7 @@ function renderRotaFlow(tab, rec) {
   ).map((op) => ({
     ...op,
     bilesenler: Array.isArray(op.bilesenler) ? op.bilesenler : [],
+    ekipmanlar: Array.isArray(op.ekipmanlar) ? op.ekipmanlar : [],
   }));
   ops.sort((a, b) => Number(a.line_no || 0) - Number(b.line_no || 0));
   rec.operasyonlar = ops;
@@ -10519,6 +10641,16 @@ function renderRotaFlow(tab, rec) {
     : null;
   const mamul = stokLookupById(rec.item_id);
   const headerFields = tab.headerFields || [];
+  const equipFields = tab.equipmentFields || [];
+  const sablonField = {
+    key: '_sablon_rota_id',
+    label: 'Şablon rota',
+    type: 'lookup',
+    lookup: 'rota-sablonlari',
+    valueKey: 'id',
+    labelKey: 'route_name',
+    codeKey: 'route_code',
+  };
 
   return `
     <div class="rota-workspace">
@@ -10526,7 +10658,7 @@ function renderRotaFlow(tab, rec) {
         <div class="bom-workspace-header">
           <div class="section-label">Rota başlığı</div>
           <div class="form-tab-fields bom-header-fields">
-            ${headerFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key], 'data-master'), rec[f.key])).join('')}
+            ${headerFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key], 'data-master', '', rec), rec[f.key])).join('')}
           </div>
         </div>` : ''}
       <div class="rota-workspace-body">
@@ -10534,6 +10666,16 @@ function renderRotaFlow(tab, rec) {
           <div class="section-label">Ürün ağacı (malzeme kaynağı)</div>
           ${renderBomPreviewTree(bomRec, mamul)}
           <p class="toolbar-hint">Operasyon malzemeleri bu ağaçtan seçilir.</p>
+          ${canEdit ? `
+            <div class="section-label" style="margin-top:1rem">Şablon uygula</div>
+            <div class="form-tab-fields">
+              ${fieldShell(sablonField, fieldControl(sablonField, rec._sablon_rota_id, 'data-master', '', rec), rec._sablon_rota_id)}
+            </div>
+            <div class="inline-toolbar">
+              <button type="button" class="btn action" data-flow-act="sablon-uygula">Şablonu uygula</button>
+            </div>
+            <p class="toolbar-hint">Şablon operasyonları mevcut adımların yerine kopyalanır.</p>
+          ` : ''}
         </aside>
         <div class="rota-flow-main">
           <div class="inline-toolbar">
@@ -10546,17 +10688,18 @@ function renderRotaFlow(tab, rec) {
     const open = sel === idx;
     const hasKod = Boolean(op.operation_code || op.operation_name);
     const cikti = stokLookupById(op.output_item_id);
+    const eqCount = (op.ekipmanlar || []).length;
     return `
               <div class="rota-op-block ${open ? 'selected' : ''} ${hasKod ? '' : 'rota-op-empty'}" data-flow-idx="${idx}">
                 <button type="button" class="rota-op-head" data-flow-idx="${idx}">
                   <span class="rota-op-seq">${idx + 1}. adım · Sıra ${op.line_no || '—'}</span>
                   <span class="rota-op-title"><span class="mono">${op.operation_code || '—'}</span> ${op.operation_name || (hasKod ? '' : 'Operasyon girin')}</span>
-                  <span class="rota-op-comp-count">${(op.bilesenler || []).length} malzeme${cikti ? ` · çıktı ${cikti.item_code}` : ''}</span>
+                  <span class="rota-op-comp-count">${(op.bilesenler || []).length} malzeme${eqCount ? ` · ${eqCount} ekipman` : ''}${cikti ? ` · çıktı ${cikti.item_code}` : ''}</span>
                 </button>
                 ${open ? `
                   <div class="rota-op-body">
                     <div class="form-tab-fields" data-flow-editor>
-                      ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, op[f.key], 'data-flow-field'), op[f.key])).join('')}
+                      ${(tab.fields || []).map((f) => fieldShell(f, fieldControl(f, op[f.key], 'data-flow-field', '', op), op[f.key])).join('')}
                     </div>
                     ${canEdit ? `
                       <div class="bom-editor-actions rota-editor-actions">
@@ -10580,7 +10723,7 @@ function renderRotaFlow(tab, rec) {
                         </button>
                         ${picked && canEdit ? `
                           <div class="detail-slot-fields">
-                            ${(tab.componentFields || []).map((f) => fieldShell(f, fieldControl(f, b[f.key], 'data-flow-comp-field'), b[f.key])).join('')}
+                            ${(tab.componentFields || []).map((f) => fieldShell(f, fieldControl(f, b[f.key], 'data-flow-comp-field', '', { ...op, ...b }), b[f.key])).join('')}
                             <div class="bom-editor-actions rota-editor-actions">
                               <button type="button" class="btn action" data-flow-act="uygula-comp">Malzemeyi uygula</button>
                               <button type="button" class="btn action ghost" data-flow-act="uygula-comp-ve-yeni">Uygula + yeni</button>
@@ -10589,6 +10732,35 @@ function renderRotaFlow(tab, rec) {
                           </div>` : ''}
                       </div>`;
   }).join('') : `<div class="detail-empty">${canEdit && bomId ? '«+ Malzeme» ile ağaçtan satır ekleyin.' : 'Malzeme yok.'}</div>`}
+                    ${equipFields.length ? `
+                    <div class="section-label">Bu adımın ekipmanları</div>
+                    <div class="inline-toolbar">
+                      ${canEdit ? `
+                        <button type="button" class="btn action" data-flow-act="yeni-eq">+ Ekipman</button>
+                      ` : ''}
+                    </div>
+                    ${(op.ekipmanlar || []).length ? op.ekipmanlar.map((eq, ei) => {
+    const picked = state.flowEquipSel === ei;
+    const label = eq.equipment_code
+      ? `${eq.equipment_code}${eq.equipment_name ? ` — ${eq.equipment_name}` : ''}`
+      : 'Ekipman girin';
+    return `
+                      <div class="detail-slot ${picked ? 'selected' : ''} ${eq.equipment_code ? '' : 'detail-slot-empty'}" data-flow-eq="${ei}">
+                        <button type="button" class="detail-slot-pick" data-flow-eq-pick="${ei}">
+                          <span class="detail-slot-summary"><span class="mono">${escAttr(label)}</span>${eq.cavity_count ? ` · ${eq.cavity_count} göz` : ''}</span>
+                        </button>
+                        ${picked && canEdit ? `
+                          <div class="detail-slot-fields">
+                            ${equipFields.map((f) => fieldShell(f, fieldControl(f, eq[f.key], 'data-flow-equip-field', '', eq), eq[f.key])).join('')}
+                            <div class="bom-editor-actions rota-editor-actions">
+                              <button type="button" class="btn action" data-flow-act="uygula-eq">Ekipmanı uygula</button>
+                              <button type="button" class="btn action ghost" data-flow-act="uygula-eq-ve-yeni">Uygula + yeni</button>
+                              <button type="button" class="btn action danger" data-flow-act="sil-eq">Sil</button>
+                            </div>
+                          </div>` : ''}
+                      </div>`;
+  }).join('') : `<div class="detail-empty">${canEdit ? '«+ Ekipman» ile satır ekleyin.' : 'Ekipman yok.'}</div>`}
+                    ` : ''}
                   </div>` : ''}
               </div>
               ${idx < ops.length - 1 ? '<div class="rota-arrow">↓</div>' : ''}`;
@@ -11024,10 +11196,12 @@ function collectLookupFieldDefs(screen) {
   push(screen.detailFields);
   (screen.formTabs || []).forEach((tab) => {
     push(tab.fields);
+    push(tab.headerFields);
     push(tab.masterFields);
     push(tab.detailFields);
     push(tab.grid?.fields);
     push(tab.componentFields);
+    push(tab.equipmentFields);
   });
   return out;
 }
@@ -11114,6 +11288,18 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'center_code', label: 'Merkez kodu', mono: true },
     { key: 'center_name', label: 'Merkez adı' },
   ],
+  'is-istasyonlari': [
+    { key: 'station_code', label: 'İstasyon kodu', mono: true },
+    { key: 'station_name', label: 'İstasyon adı' },
+    { key: 'center_code', label: 'Merkez', mono: true },
+    { key: 'center_name', label: 'Merkez adı' },
+  ],
+  'rota-sablonlari': [
+    { key: 'route_code', label: 'Şablon kodu', mono: true },
+    { key: 'route_name', label: 'Şablon adı' },
+    { key: 'item_code', label: 'Stok', mono: true },
+    { key: 'alt_no', label: 'Alt', mono: true },
+  ],
   sales_orders: [
     { key: 'order_no', label: 'Sipariş no', mono: true },
   ],
@@ -11169,8 +11355,20 @@ function resolveSelectFieldDef(sel) {
     || sel.getAttribute('data-detail')
     || sel.getAttribute('data-bom-field')
     || sel.getAttribute('data-flow-field')
-    || sel.getAttribute('data-flow-comp-field');
+    || sel.getAttribute('data-flow-comp-field')
+    || sel.getAttribute('data-flow-equip-field');
   if (key && screen) {
+    if (key === '_sablon_rota_id') {
+      return {
+        key: '_sablon_rota_id',
+        label: 'Şablon rota',
+        type: 'lookup',
+        lookup: 'rota-sablonlari',
+        valueKey: 'id',
+        labelKey: 'route_name',
+        codeKey: 'route_code',
+      };
+    }
     const hit = findFieldDefByKey(screen, key)
       || collectScreenFormFields(screen).find((f) => f.key === key);
     if (hit) return hit;
@@ -11417,6 +11615,11 @@ function cascadeScopeContext(el) {
   }
   if (el.hasAttribute('data-flow-comp-field')) {
     const ctx = { ...(state.formRecord || {}) };
+    document.querySelectorAll('[data-flow-field]').forEach((sib) => {
+      const k = sib.getAttribute('data-flow-field');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
     document.querySelectorAll('[data-flow-comp-field]').forEach((sib) => {
       const k = sib.getAttribute('data-flow-comp-field');
       if (!k) return;
@@ -11428,6 +11631,25 @@ function cascadeScopeContext(el) {
       ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
     });
     return { ctx, isDetail: false, isFlowComp: true };
+  }
+  if (el.hasAttribute('data-flow-field') || el.hasAttribute('data-flow-equip-field')) {
+    const ctx = { ...(state.formRecord || {}) };
+    document.querySelectorAll('[data-flow-field]').forEach((sib) => {
+      const k = sib.getAttribute('data-flow-field');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    document.querySelectorAll('[data-flow-equip-field]').forEach((sib) => {
+      const k = sib.getAttribute('data-flow-equip-field');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    document.querySelectorAll('[data-master]').forEach((sib) => {
+      const k = sib.getAttribute('data-master');
+      if (!k) return;
+      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    });
+    return { ctx, isDetail: false, isFlowField: true };
   }
   const ctx = { ...(state.formRecord || {}) };
   document.querySelectorAll('[data-master]').forEach((sib) => {
@@ -11717,7 +11939,10 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
 /** Ülke/il / stok→ağaç / ağaç→BOM malzeme bağımlı listeleri yenile */
 function refreshDependentLookups(screen, changedEl) {
   const changedKey = changedEl.getAttribute('data-master')
-    || changedEl.getAttribute('data-detail');
+    || changedEl.getAttribute('data-detail')
+    || changedEl.getAttribute('data-flow-field')
+    || changedEl.getAttribute('data-flow-comp-field')
+    || changedEl.getAttribute('data-bom-field');
   if (!changedKey) return;
   const { ctx, didx, grid, isDetail } = cascadeScopeContext(changedEl);
   ctx[changedKey] = changedEl.type === 'checkbox' ? changedEl.checked : changedEl.value;
@@ -11750,8 +11975,9 @@ function refreshDependentLookups(screen, changedEl) {
     els.forEach((el) => {
       refreshLookupSelect(el, dep, ctx);
       ctx[dep.key] = el.value;
-      // Zincir: ülke→il→ilçe / stok→ağaç→malzeme
-      if (el.hasAttribute('data-master') || el.hasAttribute('data-detail')) {
+      // Zincir: ülke→il→ilçe / stok→ağaç→malzeme / merkez→istasyon
+      if (el.hasAttribute('data-master') || el.hasAttribute('data-detail')
+        || el.hasAttribute('data-flow-field') || el.hasAttribute('data-flow-comp-field')) {
         refreshDependentLookups(screen, el);
       }
     });
@@ -11771,7 +11997,8 @@ function bindCascadeLookups(_screen) {
     if (!(el instanceof HTMLSelectElement)) return;
     if (!el.classList.contains('lookup-select') && el.getAttribute('data-master') == null
       && el.getAttribute('data-detail') == null && el.getAttribute('data-bom-field') == null
-      && el.getAttribute('data-flow-field') == null && el.getAttribute('data-flow-comp-field') == null) {
+      && el.getAttribute('data-flow-field') == null && el.getAttribute('data-flow-comp-field') == null
+      && el.getAttribute('data-flow-equip-field') == null) {
       return;
     }
     const text = String(e.clipboardData?.getData('text') || '').trim();
@@ -12239,6 +12466,14 @@ function persistFlowEditor(rec, tab) {
       b[f.key] = readFieldValue(el, f);
     });
   }
+  if (state.flowEquipSel != null && op.ekipmanlar?.[state.flowEquipSel]) {
+    const eq = op.ekipmanlar[state.flowEquipSel];
+    (tab.equipmentFields || []).forEach((f) => {
+      const el = document.querySelector(`[data-flow-equip-field="${f.key}"]`);
+      if (!el) return;
+      eq[f.key] = readFieldValue(el, f);
+    });
+  }
   // auto-link sonraki_line_no if empty: next op in list
   ops.sort((a, b) => Number(a.line_no || 0) - Number(b.line_no || 0));
   for (let i = 0; i < ops.length; i += 1) {
@@ -12247,6 +12482,105 @@ function persistFlowEditor(rec, tab) {
     }
   }
   rec.operasyonlar = ops;
+}
+
+/** Ekipman satırı uygula */
+function applyRotaEquipSelection(screen, { addAnother = false } = {}) {
+  const tab = findRotaTab(screen);
+  if (!tab) return false;
+  if (state.flowSel == null) {
+    toast('Önce operasyon seçin.');
+    return false;
+  }
+  if (state.flowEquipSel == null) {
+    toast('Önce bir ekipman satırı seçin veya «+ Ekipman» ekleyin.');
+    return false;
+  }
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+  persistFlowEditor(state.formRecord, tab);
+  const op = state.formRecord.operasyonlar?.[state.flowSel];
+  const eq = op?.ekipmanlar?.[state.flowEquipSel];
+  if (!eq) {
+    toast('Ekipman satırı bulunamadı.');
+    return false;
+  }
+  if (!eq.equipment_code && !eq.equipment_name) {
+    toast('Ekipman kodu veya adı girin.');
+    return false;
+  }
+  if (!eq.equipment_code && eq.equipment_name) eq.equipment_code = eq.equipment_name;
+  if (addAnother) {
+    const blank = emptyRowFromFields(tab.equipmentFields);
+    const next = (op.ekipmanlar || []).reduce((m, e) => Math.max(m, Number(e.line_no) || 0), 0) + 10;
+    blank.line_no = next;
+    op.ekipmanlar.push(blank);
+    state.flowEquipSel = op.ekipmanlar.length - 1;
+    toast(`${eq.equipment_code} eklendi — yeni satır hazır.`);
+  } else {
+    toast(`${eq.equipment_code} kaydedildi.`);
+  }
+  renderForm(screen);
+  persistActiveFormTab();
+  return true;
+}
+
+/** Şablon rota operasyonlarını bu forma uygula (kayıtlıysa API, değilse istemci kopyası). */
+async function applyRotaSablon(screen) {
+  const rec = state.formRecord || {};
+  const master = readMasterFromForm(screen);
+  Object.assign(rec, master);
+  const sablonEl = document.querySelector('[data-master="_sablon_rota_id"]');
+  if (sablonEl) rec._sablon_rota_id = sablonEl.value || '';
+  state.formRecord = rec;
+  const sablonId = rec._sablon_rota_id;
+  if (!sablonId) {
+    toast('Önce şablon rota seçin.');
+    return false;
+  }
+  if (!window.confirm('Şablon operasyonları mevcut adımların yerine yazılacak. Devam?')) return false;
+
+  try {
+    if (rec.id && state.formMode === 'duzelt') {
+      const result = await api(`/routings/${rec.id}/sablon-uygula`, {
+        method: 'POST',
+        body: JSON.stringify({ template_id: Number(sablonId) }),
+      });
+      state.formRecord = {
+        ...result,
+        _sablon_rota_id: sablonId,
+      };
+      state.flowSel = result.operasyonlar?.length ? 0 : null;
+      state.flowCompSel = null;
+      state.flowEquipSel = null;
+      toast(`${(result.operasyonlar || []).length} operasyon şablondan uygulandı.`);
+      renderForm(screen);
+      persistActiveFormTab();
+      return true;
+    }
+
+    // Yeni kayıt: şablonu çekip istemcide kopyala
+    const sablon = await api(`/routings/${Number(sablonId)}`);
+    const ops = (sablon.operasyonlar || []).map((op) => {
+      const { id, route_id, ...rest } = op;
+      return {
+        ...rest,
+        bilesenler: (op.bilesenler || []).map(({ id: _bid, operasyon_id, ...b }) => ({ ...b })),
+        ekipmanlar: (op.ekipmanlar || []).map(({ id: _eid, operation_id, ...e }) => ({ ...e })),
+      };
+    });
+    state.formRecord.operasyonlar = ops;
+    state.flowSel = ops.length ? 0 : null;
+    state.flowCompSel = null;
+    state.flowEquipSel = null;
+    toast(`${ops.length} operasyon şablondan kopyalandı (kayıtta yazılır).`);
+    renderForm(screen);
+    persistActiveFormTab();
+    return true;
+  } catch (err) {
+    toast(err.message || 'Şablon uygulanamadı.');
+    return false;
+  }
 }
 
 /** Sağ panel → akış: operasyon alanlarını sola yaz */
@@ -12374,7 +12708,11 @@ function readTabbedPayload(screen) {
       out.operasyonlar = (out.operasyonlar || []).map((op) => ({
         ...op,
         bilesenler: (op.bilesenler || []).filter((b) => b.item_id && b.quantity != null && b.quantity !== ''),
+        ekipmanlar: (op.ekipmanlar || []).filter((e) => e.equipment_code || e.equipment_name),
       }));
+      // Şablon seçimi formda kalsın; API kaydında strip edilir
+      const sablonEl = document.querySelector('[data-master="_sablon_rota_id"]');
+      if (sablonEl) out._sablon_rota_id = sablonEl.value || '';
     }
   });
   backfillHeaderFromLines(out, screen);
@@ -12677,6 +13015,7 @@ async function openForm(mode, opts = {}) {
   state.treeExpanded = {};
   state.flowSel = null;
   state.flowCompSel = null;
+  state.flowEquipSel = null;
   let record = {};
 
   async function loadRecord(id) {
@@ -12729,6 +13068,7 @@ async function openForm(mode, opts = {}) {
           ? src.operasyonlar.map((op) => ({
             ...op,
             bilesenler: Array.isArray(op.bilesenler) ? op.bilesenler.map(({ id, ...b }) => b) : [],
+            ekipmanlar: Array.isArray(op.ekipmanlar) ? op.ekipmanlar.map(({ id, ...e }) => e) : [],
           }))
           : [];
       }
@@ -12913,6 +13253,7 @@ async function saveForm() {
       toast('En az bir operasyon ekleyin.');
       return;
     }
+    delete master._sablon_rota_id;
   }
 
   try {
@@ -14307,6 +14648,14 @@ function bindEvents() {
         applyRotaCompSelection(screen, { addAnother: act === 'uygula-comp-ve-yeni' });
         return;
       }
+      if (act === 'uygula-eq' || act === 'uygula-eq-ve-yeni') {
+        applyRotaEquipSelection(screen, { addAnother: act === 'uygula-eq-ve-yeni' });
+        return;
+      }
+      if (act === 'sablon-uygula') {
+        applyRotaSablon(screen).catch((err) => toast(err.message || String(err)));
+        return;
+      }
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const ops = Array.isArray(state.formRecord.operasyonlar) ? [...state.formRecord.operasyonlar] : [];
       if (act === 'yeni-op') {
@@ -14315,7 +14664,17 @@ function bindEvents() {
           ...emptyRowFromFields(tab.fields),
           line_no: nextSira,
           operation_code: `OP${nextSira}`,
+          op_time_uom: 'dk',
+          setup_time_uom: 'dk',
+          wait_time_uom: 'dk',
+          unload_time_uom: 'dk',
+          include_precost: true,
+          include_std_cost: true,
+          include_actual_cost: true,
+          cost_factor_1: 1,
+          cost_factor_2: 1,
           bilesenler: [],
+          ekipmanlar: [],
         });
         // önceki son ops'un sonraki_line_no bağla
         if (ops.length >= 2) {
@@ -14324,12 +14683,14 @@ function bindEvents() {
         state.formRecord.operasyonlar = ops;
         state.flowSel = ops.length - 1;
         state.flowCompSel = null;
+        state.flowEquipSel = null;
       } else if (act === 'sil-op') {
         if (state.flowSel == null) { toast('Operasyon seçin.'); return; }
         ops.splice(state.flowSel, 1);
         state.formRecord.operasyonlar = ops;
         state.flowSel = null;
         state.flowCompSel = null;
+        state.flowEquipSel = null;
       } else if (act === 'yeni-comp') {
         if (state.flowSel == null) { toast('Önce operasyon seçin.'); return; }
         if (!state.formRecord.product_bom_id) {
@@ -14342,6 +14703,7 @@ function bindEvents() {
         persistFlowEditor(state.formRecord, tab);
         op.bilesenler.push(emptyRowFromFields(tab.componentFields));
         state.flowCompSel = op.bilesenler.length - 1;
+        state.flowEquipSel = null;
         state.formRecord.operasyonlar = ops;
       } else if (act === 'sil-comp') {
         if (state.flowSel == null || state.flowCompSel == null) {
@@ -14350,6 +14712,26 @@ function bindEvents() {
         }
         ops[state.flowSel].bilesenler.splice(state.flowCompSel, 1);
         state.flowCompSel = null;
+        state.formRecord.operasyonlar = ops;
+      } else if (act === 'yeni-eq') {
+        if (state.flowSel == null) { toast('Önce operasyon seçin.'); return; }
+        const op = ops[state.flowSel];
+        if (!op.ekipmanlar) op.ekipmanlar = [];
+        persistFlowEditor(state.formRecord, tab);
+        const blank = emptyRowFromFields(tab.equipmentFields);
+        blank.line_no = op.ekipmanlar.reduce((m, e) => Math.max(m, Number(e.line_no) || 0), 0) + 10;
+        op.ekipmanlar.push(blank);
+        state.flowEquipSel = op.ekipmanlar.length - 1;
+        state.flowCompSel = null;
+        state.formRecord.operasyonlar = ops;
+      } else if (act === 'sil-eq') {
+        if (state.flowSel == null || state.flowEquipSel == null) {
+          toast('Ekipman seçin.');
+          return;
+        }
+        if (!ops[state.flowSel].ekipmanlar) ops[state.flowSel].ekipmanlar = [];
+        ops[state.flowSel].ekipmanlar.splice(state.flowEquipSel, 1);
+        state.flowEquipSel = null;
         state.formRecord.operasyonlar = ops;
       }
       // Yeni op/malzeme: önce çiz (eski DOM değerleri boş satıra yazılmasın)
@@ -14364,6 +14746,7 @@ function bindEvents() {
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       state.flowSel = Number(flowHead.getAttribute('data-flow-idx'));
       state.flowCompSel = null;
+      state.flowEquipSel = null;
       renderForm(screen);
       persistActiveFormTab();
       return;
@@ -14373,6 +14756,17 @@ function bindEvents() {
       e.preventDefault();
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       state.flowCompSel = Number(flowCompPick.getAttribute('data-flow-comp-pick'));
+      state.flowEquipSel = null;
+      renderForm(screen);
+      persistActiveFormTab();
+      return;
+    }
+    const flowEqPick = e.target.closest('[data-flow-eq-pick]');
+    if (flowEqPick && screen && !isFormControlClick(e.target)) {
+      e.preventDefault();
+      state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
+      state.flowEquipSel = Number(flowEqPick.getAttribute('data-flow-eq-pick'));
+      state.flowCompSel = null;
       renderForm(screen);
       persistActiveFormTab();
       return;
