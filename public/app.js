@@ -1650,48 +1650,161 @@ const MODULES = [
         numeratorSeri: 'URUN_AGACI',
         codeField: 'bom_code',
         nameField: 'bom_name',
+        // BOMT01 liste filtreleri
         filters: [
-          { key: 'bom_code', label: 'Ağaç kodu' },
-          { key: 'bom_name', label: 'Ağaç adı' },
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'item_name', label: 'Stok adı' },
+          { key: 'bom_code', label: 'Ü.A. no' },
+          { key: 'item_code', label: 'Malzeme no' },
+          { key: 'bom_name', label: 'Açıklama' },
+          { key: 'plant_id', label: 'Tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'category', label: 'Kategori', type: 'select', options: ['Standart', 'Alternatif', 'Varyant', 'Demontaj', 'Benzer'] },
+          { key: 'alt_no', label: 'Alt no' },
+          { key: 'bom_type', label: 'Tip', type: 'select', options: ['Uretim', 'Satis', 'Prototype', 'YariMamul'] },
+          { key: 'design_department', label: 'Bölüm', type: 'select', options: ['Standart', 'Muhendislik', 'Uretim', 'Kalite'] },
+          { key: 'bom_status', label: 'Statü', type: 'select', options: ['Aktif', 'Taslak', 'Onayli', 'Pasif', 'TarihceYok'] },
+          { key: 'silindi', label: 'Silinen', type: 'checkbox' },
         ],
         columns: [
-          { key: 'bom_code', label: 'Kod', mono: true },
-          { key: 'bom_name', label: 'Ad' },
-          { key: 'item_code', label: 'Kök stok', mono: true },
-          { key: 'item_name', label: 'Kök adı' },
-          { key: 'item_type', label: 'Tip' },
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'plant_code', label: 'Tesis', mono: true },
+          { key: 'alt_no', label: 'Alt', mono: true },
+          { key: 'bom_code', label: 'Ü.A. no', mono: true },
+          { key: 'item_code', label: 'Malzeme', mono: true },
+          { key: 'bom_name', label: 'Açıklama' },
+          { key: 'valid_from', label: 'Geç. baş.' },
           { key: 'valid_to', label: 'Geç. bitiş' },
+          { key: 'category', label: 'Ktg.' },
+          { key: 'bom_type', label: 'Tip' },
+          { key: 'bom_status', label: 'Statü' },
+          { key: 'is_default_for_wo', label: 'İE vars.' },
         ],
         masterFields: [
-          { key: 'bom_code', label: 'Kod', code: true, required: true },
-          { key: 'bom_name', label: 'Ad', name: true, required: true },
-          { key: 'finished_good_item_id', label: 'Kök stok (Mamul)', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'valid_from', label: 'Geçerlilik baş.', type: 'date' },
-          { key: 'valid_to', label: 'Geçerlilik bitiş', type: 'date' },
-          { key: 'min_quantity', label: 'Min quantity', type: 'number' },
-          { key: 'max_quantity', label: 'Max quantity', type: 'number' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', lead: true },
+          { key: 'plant_id', label: 'Tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', lead: true },
+          { key: 'category', label: 'Ü.A. kategori', type: 'select', options: ['Standart', 'Alternatif', 'Varyant', 'Demontaj', 'Benzer'], required: true, group: 'kimlik', lead: true },
+          { key: 'bom_code', label: 'Ü.A. no', code: true, required: true, group: 'kimlik' },
+          { key: 'bom_name', label: 'Açıklama', name: true, required: true, group: 'kimlik' },
+          { key: 'finished_good_item_id', label: 'Malzeme no', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+          { key: 'alt_no', label: 'Alt no', required: true, group: 'kimlik' },
+          { key: 'quantity', label: 'Temel miktar', type: 'number', required: true, group: 'olcu' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'olcu' },
+          { key: 'min_quantity', label: 'Min. parti', type: 'number', group: 'olcu' },
+          { key: 'max_quantity', label: 'Maks. parti', type: 'number', group: 'olcu' },
+          { key: 'valid_from', label: 'Başlangıç tarihi', type: 'date', group: 'planlama' },
+          { key: 'valid_to', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+          { key: 'bom_type', label: 'Ü.A. tipi', type: 'select', options: ['Uretim', 'Satis', 'Prototype', 'YariMamul'], required: true, group: 'kimlik' },
+          { key: 'design_department', label: 'Tasarım bölümü', type: 'select', options: ['Standart', 'Muhendislik', 'Uretim', 'Kalite'], required: true, group: 'kimlik' },
+          { key: 'bom_status', label: 'Ü.A. statüsü', type: 'select', options: ['Aktif', 'Taslak', 'Onayli', 'Pasif', 'TarihceYok'], required: true, group: 'status' },
+          { key: 'element_interval', label: 'Eleman aralığı', type: 'number', group: 'kimlik' },
+          { key: 'proportional_qty', label: 'Oransal miktar', type: 'number', group: 'olcu' },
+          { key: 'drawing_no', label: 'Çizim no', group: 'kimlik' },
+          { key: 'revision', label: 'Revizyon / boyut', group: 'kimlik' },
+          { key: 'customer_partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', group: 'kimlik' },
+          { key: 'is_cad', label: 'CAD', type: 'checkbox', group: 'status' },
+          { key: 'is_default_for_wo', label: 'İş emri varsayılan', type: 'checkbox', group: 'status' },
+          { key: 'is_disassembly', label: 'Demontaj', type: 'checkbox', group: 'status' },
+          { key: 'is_active', label: 'Aktif / devrede', type: 'checkbox', group: 'status' },
+          { key: 'silindi', label: 'Silindi', type: 'checkbox', group: 'status' },
+          { key: 'notes', label: 'Notlar', size: 'wide', group: 'status' },
         ],
         detailFields: [],
         detailKey: null,
+        defaults: {
+          category: 'Standart',
+          alt_no: '00',
+          bom_type: 'Uretim',
+          design_department: 'Standart',
+          bom_status: 'Aktif',
+          quantity: 1,
+          element_interval: 10,
+          proportional_qty: 1,
+          min_quantity: 0,
+          max_quantity: 999999999,
+          is_active: true,
+          is_default_for_wo: false,
+          is_disassembly: false,
+          is_cad: false,
+          silindi: false,
+        },
+        formLinks: {
+          finished_good_item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'bom_name', fromItem: 'item_name', asName: true },
+          ],
+          category: [
+            { field: 'is_disassembly', valueFromCategory: 'Demontaj' },
+          ],
+        },
         formTabs: [
           {
+            id: 'genel',
+            label: 'Genel',
+            kind: 'fields',
+            fields: [
+              { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
+              { key: 'plant_id', label: 'Tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+              { key: 'bom_code', label: 'Ü.A. no', code: true, required: true, group: 'kimlik' },
+              { key: 'alt_no', label: 'Alt no', required: true, group: 'kimlik' },
+              { key: 'finished_good_item_id', label: 'Malzeme no', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+              { key: 'bom_name', label: 'Açıklama', name: true, required: true, group: 'kimlik' },
+              { key: 'quantity', label: 'Temel miktar', type: 'number', required: true, group: 'olcu' },
+              { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'olcu' },
+              { key: 'min_quantity', label: 'Min. parti', type: 'number', group: 'olcu' },
+              { key: 'max_quantity', label: 'Maks. parti', type: 'number', group: 'olcu' },
+              { key: 'valid_from', label: 'Başlangıç tarihi', type: 'date', group: 'planlama' },
+              { key: 'valid_to', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+              { key: 'bom_type', label: 'Ü.A. tipi', type: 'select', options: ['Uretim', 'Satis', 'Prototype', 'YariMamul'], required: true, group: 'kimlik' },
+              { key: 'design_department', label: 'Tasarım bölümü', type: 'select', options: ['Standart', 'Muhendislik', 'Uretim', 'Kalite'], required: true, group: 'kimlik' },
+              { key: 'bom_status', label: 'Ü.A. statüsü', type: 'select', options: ['Aktif', 'Taslak', 'Onayli', 'Pasif', 'TarihceYok'], required: true, group: 'status' },
+              { key: 'category', label: 'Kategori', type: 'select', options: ['Standart', 'Alternatif', 'Varyant', 'Demontaj', 'Benzer'], required: true, group: 'kimlik' },
+              { key: 'element_interval', label: 'Eleman aralığı', type: 'number', group: 'kimlik' },
+              { key: 'proportional_qty', label: 'Oransal miktar', type: 'number', group: 'olcu' },
+              { key: 'drawing_no', label: 'Çizim no', group: 'kimlik' },
+              { key: 'revision', label: 'Revizyon / boyut', group: 'kimlik' },
+              { key: 'customer_partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', group: 'kimlik' },
+              { key: 'is_default_for_wo', label: 'İş emri varsayılan', type: 'checkbox', group: 'status' },
+              { key: 'is_disassembly', label: 'Demontaj', type: 'checkbox', group: 'status' },
+              { key: 'is_active', label: 'Devrede', type: 'checkbox', group: 'status' },
+              { key: 'is_cad', label: 'CAD', type: 'checkbox', group: 'status' },
+              { key: 'silindi', label: 'Silindi', type: 'checkbox', group: 'status' },
+              { key: 'notes', label: 'Notlar', size: 'wide', group: 'status' },
+            ],
+          },
+          {
             id: 'agac',
-            label: 'Ürün Ağacı',
+            label: 'Elemanlar',
             kind: 'bom-workspace',
             key: 'satirlar',
             headerFields: [
-              { key: 'bom_code', label: 'Kod', code: true, required: true },
-              { key: 'bom_name', label: 'Ad', name: true, required: true },
-              { key: 'finished_good_item_id', label: 'Mamul (kök)', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-              { key: 'quantity', label: 'Miktar', type: 'number' },
+              { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+              { key: 'plant_id', label: 'Tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+              { key: 'bom_code', label: 'Ü.A. no', code: true, required: true },
+              { key: 'alt_no', label: 'Alt no', required: true },
+              { key: 'finished_good_item_id', label: 'Malzeme no', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true },
+              { key: 'bom_name', label: 'Açıklama', name: true, required: true },
+              { key: 'quantity', label: 'Temel miktar', type: 'number', required: true },
+              { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+              { key: 'min_quantity', label: 'Min. parti', type: 'number' },
+              { key: 'max_quantity', label: 'Maks. parti', type: 'number' },
+              { key: 'valid_from', label: 'Başlangıç', type: 'date' },
+              { key: 'valid_to', label: 'Bitiş', type: 'date' },
+              { key: 'is_default_for_wo', label: 'İş emri varsayılan', type: 'checkbox' },
+              { key: 'is_disassembly', label: 'Demontaj', type: 'checkbox' },
+              { key: 'is_active', label: 'Devrede', type: 'checkbox' },
             ],
             fields: [
-              { key: 'component_item_id', label: 'Malzeme', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-              { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-              { key: 'quantity', label: 'Miktar', type: 'number', required: true },
+              { key: 'line_no', label: 'Kalem', type: 'number', size: 'short' },
+              { key: 'component_type', label: 'Komp. tipi', type: 'select', options: ['Stok', 'Phantom', 'Metin', 'YanUrun', 'Fason'], size: 'short' },
+              { key: 'component_item_id', label: 'Eleman / malzeme', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+              { key: 'component_alt_no', label: 'K. alt no', size: 'short' },
+              { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+              { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short' },
+              { key: 'scrap_pct', label: 'Fire %', type: 'number', size: 'short' },
+              { key: 'operation_seq', label: 'Op. sırası', type: 'number', size: 'short' },
+              { key: 'line_description', label: 'Açıklama' },
+              { key: 'is_fixed_qty', label: 'Sabit miktar', type: 'checkbox' },
+              { key: 'goes_to_wo', label: 'İş emrine', type: 'checkbox' },
+              { key: 'is_phantom', label: 'Phantom', type: 'checkbox' },
+              { key: 'is_byproduct', label: 'Yan ürün', type: 'checkbox' },
             ],
           },
         ],
@@ -1706,23 +1819,27 @@ const MODULES = [
         readOnly: true,
         codeField: 'list_code',
         nameField: 'description',
-        banner: 'MRP için: mamul/ağaç seçip quantity girin — tüm seviyeler (mamul → yarı mamul → hammadde) miktarlarıyla listelenir.',
+        banner: 'Mamul/ağaç + miktar ile çok seviyeli patlatma (yarı mamul ağaçları dahil). Fire % satırdan uygulanır.',
         filters: [
           { key: 'bom_code', label: 'Ağaç kodu' },
           { key: 'finished_good_item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
           { key: 'agac_id', label: 'Ağaç', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code' },
-          { key: 'quantity', label: 'Mamul quantity', type: 'number' },
+          { key: 'quantity', label: 'Mamul miktar', type: 'number' },
           { key: 'item_code', label: 'Bileşen stok' },
         ],
         columns: [
           { key: 'level', label: 'Sev.' },
           { key: 'bom_code', label: 'Ağaç', mono: true },
+          { key: 'alt_no', label: 'Alt', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
           { key: 'item_name', label: 'Ad' },
           { key: 'item_type', label: 'Tip' },
-          { key: 'birim_miktar', label: 'Birim quantity' },
+          { key: 'component_type', label: 'Komp.' },
+          { key: 'birim_miktar', label: 'Birim miktar' },
+          { key: 'scrap_pct', label: 'Fire %' },
           { key: 'quantity', label: 'Toplam ihtiyaç' },
           { key: 'uom_code', label: 'Birim' },
+          { key: 'operation_seq', label: 'Op.' },
           { key: 'yol', label: 'Yol' },
         ],
       },
@@ -8638,6 +8755,15 @@ function blankBomRow(fields) {
     item_name: '',
     item_type: '',
     line_no: '',
+    component_type: 'Stok',
+    component_alt_no: '00',
+    line_description: '',
+    scrap_pct: 0,
+    operation_seq: '',
+    is_fixed_qty: false,
+    goes_to_wo: true,
+    is_phantom: false,
+    is_byproduct: false,
     alt_satirlar: [],
   };
 }
@@ -8821,6 +8947,17 @@ function flattenBomForSave(nodes) {
     quantity: n.quantity,
     uom_code: n.uom_code || null,
     line_no: n.line_no,
+    component_type: n.component_type || 'Stok',
+    component_alt_no: n.component_alt_no != null ? String(n.component_alt_no) : '00',
+    line_description: n.line_description || n.description || null,
+    scrap_pct: n.scrap_pct != null ? Number(n.scrap_pct) : 0,
+    operation_seq: n.operation_seq !== '' && n.operation_seq != null ? Number(n.operation_seq) : null,
+    is_fixed_qty: Boolean(n.is_fixed_qty),
+    goes_to_wo: n.goes_to_wo == null ? true : Boolean(n.goes_to_wo),
+    is_phantom: Boolean(n.is_phantom) || n.component_type === 'Phantom',
+    is_byproduct: Boolean(n.is_byproduct) || n.component_type === 'YanUrun',
+    valid_from: n.valid_from || null,
+    valid_to: n.valid_to || null,
     alt_satirlar: flattenBomForSave(n.alt_satirlar || []),
   })).filter((n) => n.component_item_id && n.quantity != null && n.quantity !== '');
 }
@@ -10073,6 +10210,9 @@ function renderBomNode(node, path, depth, tab, canEdit) {
           <span class="bom-code mono">${kod || '—'}</span>
           <span class="bom-name">${adi || (hasStok ? '' : 'Malzeme seçin')}</span>
           <span class="bom-qty">${qty}${qty !== '' && node.uom_code ? ` ${node.uom_code}` : (node.uom_code || '')}</span>
+          ${node.scrap_pct ? `<span class="bom-scrap" title="Fire %">F${node.scrap_pct}%</span>` : ''}
+          ${node.operation_seq != null && node.operation_seq !== '' ? `<span class="bom-op mono" title="Op. sırası">Op.${node.operation_seq}</span>` : ''}
+          ${node.component_type && node.component_type !== 'Stok' ? `<span class="type-badge type-other">${escapeHtml(node.component_type)}</span>` : ''}
           ${kids.length ? `<span class="bom-child-count">${kids.length} alt</span>` : ''}
         </button>
         ${canEdit ? `
@@ -10116,11 +10256,11 @@ function renderBomTree(tab, rec) {
     <div class="bom-workspace">
       ${headerFields.length ? `
         <div class="bom-workspace-header">
-          <div class="section-label">Mamul (kök)</div>
+          <div class="section-label">Ürün ağacı başlığı (BOMT01)</div>
           <div class="form-tab-fields bom-header-fields">
             ${headerFields.map((f) => fieldShell(f, fieldControl(f, rec[f.key], 'data-master'), rec[f.key])).join('')}
           </div>
-          <p class="toolbar-hint">Önce mamul seçin; ağaç <strong>Mamul → Yarı mamul → Hammadde</strong> şeklinde aşağı doğru büyür.</p>
+          <p class="toolbar-hint">Firma · Tesis · Malzeme · Alt no · Temel miktar / birim · Geçerlilik. Ağaç: <strong>Mamul → Yarı mamul → Hammadde</strong>.</p>
         </div>` : ''}
       <div class="bom-workspace-tree">
         <div class="bom-tree-legend">
@@ -10130,7 +10270,9 @@ function renderBomTree(tab, rec) {
         </div>
         <div class="inline-toolbar">
           ${canEdit ? `
-            <button type="button" class="btn action" data-bom-act="yeni-kok">+ Kök altına yarı mamul / hammadde</button>
+            <button type="button" class="btn action" data-bom-act="yeni-kok">+ Eleman ekle</button>
+            <button type="button" class="btn action ghost" data-bom-act="coklu-ekle">Çoklu malzeme ekle</button>
+            <button type="button" class="btn action ghost" data-bom-act="eleman-kopyala" ${state.treeSel == null ? 'disabled' : ''}>Eleman kopyala</button>
           ` : ''}
         </div>
         <div class="bom-tree" data-bom-tree>
@@ -10749,8 +10891,12 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'currency_name', label: 'Para birimi' },
   ],
   'urun-agaclari': [
-    { key: 'bom_code', label: 'Ağaç kodu', mono: true },
-    { key: 'bom_name', label: 'Ağaç adı' },
+    { key: 'bom_code', label: 'Ü.A. no', mono: true },
+    { key: 'alt_no', label: 'Alt', mono: true },
+    { key: 'item_code', label: 'Malzeme', mono: true },
+    { key: 'bom_name', label: 'Açıklama' },
+    { key: 'category', label: 'Kategori' },
+    { key: 'bom_status', label: 'Statü' },
   ],
   routings: [
     { key: 'route_code', label: 'Rota kodu', mono: true },
@@ -11100,11 +11246,22 @@ let _formLinking = false;
 function pickDefaultBomForItem(itemId) {
   if (itemId == null || itemId === '') return null;
   const rows = (state.lookupCache['urun-agaclari'] || [])
-    .filter((r) => String(r.finished_good_item_id) === String(itemId));
-  if (!rows.length) return null;
-  const active = rows.filter((r) => r.is_active !== false && !r.silindi);
-  const pool = active.length ? active : rows;
-  return pool.slice().sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
+    .filter((r) => String(r.finished_good_item_id) === String(itemId)
+      && r.is_active !== false && !r.silindi);
+  if (!rows.length) {
+    const any = (state.lookupCache['urun-agaclari'] || [])
+      .filter((r) => String(r.finished_good_item_id) === String(itemId));
+    if (!any.length) return null;
+    return any.slice().sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
+  }
+  const woDef = rows.find((r) => r.is_default_for_wo);
+  if (woDef) return woDef;
+  return rows.slice().sort((a, b) => {
+    const aa = String(a.alt_no || '00');
+    const bb = String(b.alt_no || '00');
+    if (aa !== bb) return aa.localeCompare(bb, 'tr');
+    return Number(b.id) - Number(a.id);
+  })[0] || null;
 }
 
 function pickDefaultRouteForItem(itemId, bomId = null) {
@@ -11159,8 +11316,17 @@ function resolveFormLinkValue(rule, ctx) {
   if (rule.fromItem) {
     const st = stokLookupById(itemId);
     if (!st) return '';
-    const v = st[rule.fromItem];
+    let v = st[rule.fromItem];
+    if (rule.asName && rule.fromItem === 'item_name' && v) {
+      // Ürün ağacı adı: «Malzeme Adı Ağacı» — kullanıcı boş bırakmışsa
+      const cur = ctx.bom_name;
+      if (cur && String(cur).trim()) return cur;
+      return `${v} Ağacı`;
+    }
     return v == null ? '' : v;
+  }
+  if (rule.valueFromCategory) {
+    return String(ctx.category || '') === String(rule.valueFromCategory);
   }
   if (rule.pick === 'bomForItem') {
     return pickDefaultBomForItem(itemId)?.id ?? '';
@@ -11222,10 +11388,11 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
     ? 'varsayilan_giris_warehouse_id'
     : 'varsayilan_cikis_warehouse_id';
 
-  // Satır / BOM / rota bileşen stok → birim (+ grid’de depo)
+  // Satır / BOM / rota bileşen stok → birim / açıklama (+ grid’de depo)
   const detailStokRules = (stokChanged && (isDetail || isBomField || isFlowComp))
     ? [
       { field: 'uom_code', fromItem: 'uom_code' },
+      ...(isBomField ? [{ field: 'line_description', fromItem: 'item_name' }] : []),
       ...(isDetail ? [{ field: 'warehouse_id', fromItem: whFrom }] : []),
     ]
     : [];
@@ -11263,20 +11430,23 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
       const target = findLinkedTargetEl(targetKey, scope);
       if (!target || target.disabled) continue;
 
-      // Parent temizlendiyse bağımlıyı da temizle
+      // Parent temizlendiyse bağımlıyı da temizle (isim / kategori bayrakları hariç)
       const parentEmpty = ctx[changedKey] == null || ctx[changedKey] === '';
+      if (parentEmpty && (rule.asName || rule.valueFromCategory)) continue;
       const nextVal = parentEmpty ? '' : resolveFormLinkValue(rule, ctx);
 
       // Lookup seçeneklerini hedef için yenile (dependsOn zinciri)
       const fieldDef = collectLookupFieldDefs(screen).find((f) => f.key === targetKey)
+        || (screen.masterFields || []).find((f) => f.key === targetKey)
         || (isDetail || isBomField || isFlowComp
           ? (screen.formTabs || []).flatMap((t) => [
             ...(t.fields || []),
+            ...(t.headerFields || []),
             ...(t.componentFields || []),
             ...(t.grid?.fields || []),
           ]).find((f) => f.key === targetKey)
             || (screen.detailFields || []).find((f) => f.key === targetKey)
-          : null);
+          : (screen.formTabs || []).flatMap((t) => t.fields || []).find((f) => f.key === targetKey));
       if (target instanceof HTMLSelectElement && fieldDef?.type === 'lookup') {
         refreshLookupSelect(target, fieldDef, ctx);
       }
@@ -11301,8 +11471,17 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
             }
           }
         }
-      } else if (target instanceof HTMLInputElement) {
-        const str = nextVal == null ? '' : String(nextVal);
+      } else if (target instanceof HTMLInputElement && target.type === 'checkbox') {
+        const on = Boolean(nextVal);
+        if (target.checked !== on) {
+          target.checked = on;
+          filled.push(targetKey);
+          if (writeMaster && state.formRecord) state.formRecord[targetKey] = on;
+        }
+      } else if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+        const str = nextVal == null || nextVal === false ? '' : String(nextVal);
+        // asName: dolu adı ezme
+        if (rule.asName && String(target.value || '').trim()) continue;
         if (target.value !== str) {
           target.value = str;
           filled.push(targetKey);
@@ -11639,11 +11818,104 @@ function findRotaTab(screen) {
 }
 
 /** Satır içi editör → ağaç: malzeme + quantity zorunlu */
+/** BOMT01 — çoklu malzeme seçimi (Ctrl/çoklu işaret → ağaca ekle) */
+async function openBomMultiItemPicker(screen, tab) {
+  await fetchLookupKey('items');
+  const items = state.lookupCache.items || [];
+  if (!items.length) {
+    toast('Stok listesi boş.');
+    return;
+  }
+  const dlg = document.createElement('div');
+  dlg.className = 'cvt-overlay';
+  dlg.innerHTML = `
+    <div class="cvt-dialog lookup-browser-dialog" role="dialog" aria-modal="true" style="max-width:52rem">
+      <header class="cvt-dialog-head">
+        <strong>Çoklu malzeme ekleme</strong>
+        <button type="button" class="btn action ghost" data-bom-multi-close>×</button>
+      </header>
+      <div class="cvt-dialog-body">
+        <p class="toolbar-hint">Ctrl/Shift ile birden fazla satır seçin veya soldaki kutuları işaretleyin; Onay ile köke eklenir.</p>
+        <input type="search" class="filter-input" data-bom-multi-q placeholder="Kod / ad ara…" style="width:100%;margin-bottom:.5rem" />
+        <div class="detail-table-wrap" style="max-height:22rem;overflow:auto">
+          <table class="detail-table">
+            <thead><tr><th></th><th>Kod</th><th>Ad</th><th>Tip</th><th>Birim</th></tr></thead>
+            <tbody data-bom-multi-body></tbody>
+          </table>
+        </div>
+      </div>
+      <footer class="cvt-dialog-foot">
+        <button type="button" class="btn action ghost" data-bom-multi-close>Kapat</button>
+        <button type="button" class="btn action" data-bom-multi-ok>Onay</button>
+      </footer>
+    </div>`;
+  document.body.appendChild(dlg);
+  const body = dlg.querySelector('[data-bom-multi-body]');
+  const qEl = dlg.querySelector('[data-bom-multi-q]');
+  const selected = new Set();
+
+  const paint = () => {
+    const q = String(qEl.value || '').trim().toLocaleLowerCase('tr');
+    const rows = items.filter((r) => {
+      if (!q) return true;
+      return String(r.item_code || '').toLocaleLowerCase('tr').includes(q)
+        || String(r.item_name || '').toLocaleLowerCase('tr').includes(q);
+    }).slice(0, 400);
+    body.innerHTML = rows.map((r) => `
+      <tr data-id="${escAttr(r.id)}">
+        <td><input type="checkbox" data-bom-multi-chk value="${escAttr(r.id)}" ${selected.has(String(r.id)) ? 'checked' : ''} /></td>
+        <td class="mono">${escapeHtml(r.item_code || '')}</td>
+        <td>${escapeHtml(r.item_name || '')}</td>
+        <td>${escapeHtml(r.item_type || '')}</td>
+        <td class="mono">${escapeHtml(r.uom_code || '')}</td>
+      </tr>`).join('');
+  };
+  paint();
+  qEl.addEventListener('input', paint);
+  body.addEventListener('change', (e) => {
+    const chk = e.target.closest('[data-bom-multi-chk]');
+    if (!chk) return;
+    if (chk.checked) selected.add(String(chk.value));
+    else selected.delete(String(chk.value));
+  });
+  const close = () => dlg.remove();
+  dlg.querySelectorAll('[data-bom-multi-close]').forEach((b) => b.addEventListener('click', close));
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+  dlg.querySelector('[data-bom-multi-ok]').addEventListener('click', () => {
+    if (!selected.size) {
+      toast('En az bir malzeme seçin.');
+      return;
+    }
+    const nodes = ensureBomTree(state.formRecord);
+    const fields = tab.fields || [];
+    [...selected].forEach((id) => {
+      const st = stokLookupById(id);
+      if (!st) return;
+      const row = blankBomRow(fields);
+      row.component_item_id = String(st.id);
+      row.uom_code = st.uom_code || '';
+      row.quantity = 1;
+      row.line_description = st.item_name || '';
+      row.item_code = st.item_code;
+      row.item_name = st.item_name;
+      row.item_type = st.item_type;
+      nodes.push(row);
+    });
+    state.formRecord.satirlar = nodes;
+    state.formRecord.agac = nodes;
+    state.treeSel = String(nodes.length - 1);
+    close();
+    renderForm(screen);
+    toast(`${selected.size} malzeme eklendi — miktarları kontrol edip kaydedin.`);
+  });
+  qEl.focus();
+}
+
 function applyBomEditorSelection(screen, { addAnother = false } = {}) {
   const tab = findBomTab(screen);
   if (!tab) return false;
   if (state.treeSel == null) {
-    toast('Önce bir satır seçin veya «+ Kök altına…» ekleyin.');
+    toast('Önce bir satır seçin veya «+ Eleman ekle» kullanın.');
     return false;
   }
   const master = readMasterFromForm(screen);
@@ -13612,6 +13884,48 @@ function bindEvents() {
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const nodes = ensureBomTree(state.formRecord);
       const blank = blankBomRow(tab.fields);
+      if (act === 'coklu-ekle') {
+        if (!state.formRecord.finished_good_item_id) {
+          toast('Önce mamul (kök) seçin.');
+          return;
+        }
+        openBomMultiItemPicker(screen, tab).catch((err) => toast(err.message || 'Malzeme seçilemedi'));
+        return;
+      }
+      if (act === 'eleman-kopyala') {
+        if (state.treeSel == null) {
+          toast('Kopyalanacak elemanı seçin.');
+          return;
+        }
+        const src = getBomNode(nodes, state.treeSel);
+        if (!src?.component_item_id) {
+          toast('Seçili satırda malzeme yok.');
+          return;
+        }
+        const copy = {
+          ...blankBomRow(tab.fields),
+          ...src,
+          alt_satirlar: [],
+          id: undefined,
+          line_no: '',
+        };
+        const parts = String(state.treeSel).split('.');
+        if (parts.length === 1) {
+          nodes.push(copy);
+          state.treeSel = String(nodes.length - 1);
+        } else {
+          const parentPath = parts.slice(0, -1).join('.');
+          const parent = getBomNode(nodes, parentPath);
+          if (!parent.alt_satirlar) parent.alt_satirlar = [];
+          parent.alt_satirlar.push(copy);
+          state.treeSel = `${parentPath}.${parent.alt_satirlar.length - 1}`;
+        }
+        state.formRecord.satirlar = nodes;
+        state.formRecord.agac = nodes;
+        renderForm(screen);
+        toast('Eleman kopyalandı — kaydetmeyi unutmayın.');
+        return;
+      }
       if (act === 'yeni-kok') {
         if (!state.formRecord.finished_good_item_id) {
           toast('Önce mamul (kök) seçin.');

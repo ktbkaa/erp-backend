@@ -55,21 +55,48 @@ function nest(rows, parentId = null, level = 1, path = []) {
     return out;
 }
 
+/** Mamul/yarı için varsayılan (aktif) ürün ağacı — iş emri varsayılanı öncelikli */
+async function pickBomForItem(itemId, firmaId) {
+    if (!itemId) return null;
+    const params = [itemId];
+    let sql = `
+        SELECT ua.*, s.item_code AS mamul_kodu, s.item_name AS mamul_adi, s.item_type AS mamul_tipi
+        FROM boms ua
+        JOIN items s ON s.id = ua.finished_good_item_id
+        WHERE ua.finished_good_item_id = $1
+          AND ua.is_active IS DISTINCT FROM FALSE
+          AND COALESCE(ua.silindi, FALSE) = FALSE`;
+    if (firmaId) {
+        params.push(firmaId);
+        sql += ` AND (ua.company_id = $${params.length} OR s.company_id = $${params.length})`;
+    }
+    sql += `
+        ORDER BY ua.is_default_for_wo DESC NULLS LAST, ua.alt_no ASC, ua.id DESC
+        LIMIT 1`;
+    const r = await pool.query(sql, params);
+    return r.rows[0] || null;
+}
+
 /**
- * BOM patlatma — mamul miktarına göre çok seviyeli ağacı düz listeye açar (MRP görünümü).
- * Query: agac_id | finished_good_item_id | bom_code, quantity (varsayılan 1)
+ * BOM patlatma — mamul miktarına göre çok seviyeli ağaç + çapraz ağaç (yarı mamul BOM).
+ * Query: agac_id | finished_good_item_id | bom_code, quantity (varsayılan 1),
+ *        cross_bom=1 (varsayılan), max_depth=12
  */
 router.get('/patlatma', async (req, res) => {
     try {
         const miktarBaz = Math.max(0, Number(req.query.quantity) || 1);
         const { agac_id, finished_good_item_id, bom_code } = req.query;
         const firmaId = firmaIdFromReq(req);
+        const crossBom = String(req.query.cross_bom ?? '1') !== '0';
+        const maxDepth = Math.min(20, Math.max(1, Number(req.query.max_depth) || 12));
 
         let agacSql = `
-            SELECT ua.*, s.item_code AS mamul_kodu, s.item_name AS mamul_adi, s.item_type AS mamul_tipi
+            SELECT ua.*, s.item_code AS mamul_kodu, s.item_name AS mamul_adi, s.item_type AS mamul_tipi,
+                   s.uom_code AS mamul_uom
             FROM boms ua
             JOIN items s ON s.id = ua.finished_good_item_id
-            WHERE ua.is_active IS DISTINCT FROM FALSE`;
+            WHERE ua.is_active IS DISTINCT FROM FALSE
+              AND COALESCE(ua.silindi, FALSE) = FALSE`;
         const params = [];
         agacSql += agacFirmaClause(firmaId, params).sql;
         if (agac_id) {
@@ -82,61 +109,92 @@ router.get('/patlatma', async (req, res) => {
             params.push(String(bom_code).trim());
             agacSql += ` AND UPPER(ua.bom_code) = UPPER($${params.length})`;
         }
-        // Firma seçiliyse o firmanın ağaçları; değilse boş
-        agacSql += ' ORDER BY ua.bom_code, ua.id';
+        agacSql += ' ORDER BY ua.is_default_for_wo DESC NULLS LAST, ua.bom_code, ua.id';
         const agaclar = await pool.query(agacSql, params);
         if (!agaclar.rows.length) {
             return res.json([]);
         }
 
-        function explode(rows, parentId, level, path, parentQty, agac) {
+        const bomCache = new Map();
+        async function linesForBom(bomId) {
+            if (bomCache.has(bomId)) return bomCache.get(bomId);
+            const rows = await agacSatirlari(bomId);
+            bomCache.set(bomId, rows);
+            return rows;
+        }
+
+        async function explodeTree(rows, parentId, level, path, parentQty, rootAgac, visitedBomIds) {
             const out = [];
+            if (level > maxDepth) return out;
             const children = rows.filter((r) => {
                 const p = r.parent_line_id == null ? null : Number(r.parent_line_id);
                 return p === parentId;
             });
-            children.forEach((c, idx) => {
+            for (let idx = 0; idx < children.length; idx += 1) {
+                const c = children[idx];
                 const birimMiktar = Number(c.quantity) || 0;
-                const toplam = birimMiktar * parentQty;
+                const scrap = Math.max(0, Number(c.scrap_pct) || 0);
+                const toplam = birimMiktar * parentQty * (1 + scrap / 100);
                 const nodePath = [...path, c.item_code];
                 const line = {
                     level,
                     sira: idx + 1,
-                    agac_id: agac.id,
-                    bom_code: agac.bom_code,
-                    bom_name: agac.bom_name,
-                    mamul_kodu: agac.mamul_kodu,
-                    mamul_adi: agac.mamul_adi,
+                    agac_id: rootAgac.id,
+                    bom_code: rootAgac.bom_code,
+                    bom_name: rootAgac.bom_name,
+                    mamul_kodu: rootAgac.mamul_kodu,
+                    mamul_adi: rootAgac.mamul_adi,
                     satir_id: c.id,
                     item_id: c.component_item_id,
                     item_code: c.item_code,
                     item_name: c.item_name,
                     item_type: c.item_type,
+                    component_type: c.component_type || 'Stok',
+                    scrap_pct: scrap,
+                    operation_seq: c.operation_seq,
                     birim_miktar: birimMiktar,
                     quantity: toplam,
                     uom_code: c.uom_code,
                     yol: nodePath.join(' > '),
-                    list_code: `${agac.bom_code}-L${level}-${c.id}`,
+                    list_code: `${rootAgac.bom_code}-L${level}-${c.id}`,
                     description: `${nodePath.join(' › ')} × ${toplam}`,
                 };
                 out.push(line);
-                out.push(...explode(rows, Number(c.id), level + 1, nodePath, toplam, agac));
-            });
+
+                // Aynı ağaç içinde nested satırlar
+                out.push(...await explodeTree(rows, Number(c.id), level + 1, nodePath, toplam, rootAgac, visitedBomIds));
+
+                // Çapraz BOM: yarı mamul/mamul kendi ağacına patlar
+                if (crossBom && !c.is_phantom && /mamul|yarı|yari/i.test(String(c.item_type || ''))) {
+                    const childBom = await pickBomForItem(c.component_item_id, firmaId);
+                    if (childBom && !visitedBomIds.has(childBom.id)) {
+                        const nextVisited = new Set(visitedBomIds);
+                        nextVisited.add(childBom.id);
+                        const childRows = await linesForBom(childBom.id);
+                        const childBase = Number(childBom.quantity) || 1;
+                        const childFactor = toplam / childBase;
+                        out.push(...await explodeTree(
+                            childRows, null, level + 1, nodePath, childFactor, rootAgac, nextVisited
+                        ));
+                    }
+                }
+            }
             return out;
         }
 
         const result = [];
         for (const a of agaclar.rows) {
-            const satirlar = await agacSatirlari(a.id);
+            const satirlar = await linesForBom(a.id);
             const bazAgac = Number(a.quantity) || 1;
             const kokCarpan = miktarBaz / bazAgac;
-            // Kök mamul satırı (level 0) — sorgulanan quantity
             result.push({
                 level: 0,
                 sira: 0,
                 agac_id: a.id,
                 bom_code: a.bom_code,
                 bom_name: a.bom_name,
+                category: a.category,
+                alt_no: a.alt_no,
                 mamul_kodu: a.mamul_kodu,
                 mamul_adi: a.mamul_adi,
                 satir_id: null,
@@ -146,40 +204,13 @@ router.get('/patlatma', async (req, res) => {
                 item_type: a.mamul_tipi || 'Mamul',
                 birim_miktar: bazAgac,
                 quantity: miktarBaz,
-                uom_code: null,
+                uom_code: a.uom_code || a.mamul_uom || null,
                 yol: a.mamul_kodu,
                 list_code: `${a.bom_code}-KOK`,
                 description: `Mamul ${a.mamul_kodu} × ${miktarBaz}`,
             });
-            const hasParent = satirlar.some((r) => r.parent_line_id != null);
-            if (hasParent) {
-                result.push(...explode(satirlar, null, 1, [a.mamul_kodu], kokCarpan, a));
-            } else {
-                satirlar.forEach((c, idx) => {
-                    const birimMiktar = Number(c.quantity) || 0;
-                    const toplam = birimMiktar * kokCarpan;
-                    result.push({
-                        level: 1,
-                        sira: idx + 1,
-                        agac_id: a.id,
-                        bom_code: a.bom_code,
-                        bom_name: a.bom_name,
-                        mamul_kodu: a.mamul_kodu,
-                        mamul_adi: a.mamul_adi,
-                        satir_id: c.id,
-                        item_id: c.component_item_id,
-                        item_code: c.item_code,
-                        item_name: c.item_name,
-                        item_type: c.item_type,
-                        birim_miktar: birimMiktar,
-                        quantity: toplam,
-                        uom_code: c.uom_code,
-                        yol: `${a.mamul_kodu} > ${c.item_code}`,
-                        list_code: `${a.bom_code}-L1-${c.id}`,
-                        description: `${a.mamul_kodu} › ${c.item_code} × ${toplam}`,
-                    });
-                });
-            }
+            const visited = new Set([a.id]);
+            result.push(...await explodeTree(satirlar, null, 1, [a.mamul_kodu], kokCarpan, a, visited));
         }
         res.json(result);
     } catch (err) {

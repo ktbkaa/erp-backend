@@ -2072,6 +2072,22 @@ tr.selected td { background: var(--accent-soft); }
 .bom-code { font-weight: 700; }
 .bom-name { color: var(--ink); }
 .bom-qty { color: var(--muted); font-size: 0.85rem; }
+.bom-scrap, .bom-op {
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 0.05rem 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 3px;
+}
+.bom-header-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+}
+.bom-header-fields .field-shell {
+  flex: 1 1 9.5rem;
+  min-width: 8.5rem;
+}
 .bom-child-count {
   font-size: 0.72rem;
   color: var(--muted);
