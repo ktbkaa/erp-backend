@@ -6805,12 +6805,39 @@ function showView(name) {
 }
 
 
+function setDocTabsOpen(open) {
+  const want = !!open && (state.openTabs?.length > 0);
+  document.body.classList.toggle('doc-tabs-open', want);
+  const bar = $('#tabBar');
+  if (bar) {
+    bar.hidden = !want;
+    if (!state.openTabs?.length) bar.innerHTML = '';
+  }
+  const btn = $('#btnOpenTabs');
+  if (btn) {
+    btn.setAttribute('aria-expanded', want ? 'true' : 'false');
+    btn.title = want ? 'Açık sekmeleri gizle' : 'Açık sekmeleri göster';
+    btn.setAttribute('aria-label', btn.title);
+    btn.disabled = !(state.openTabs?.length > 0);
+  }
+}
+
+function toggleDocTabs() {
+  setDocTabsOpen(!document.body.classList.contains('doc-tabs-open'));
+}
+
+function hideDocTabsWhileWorking() {
+  if (document.body.classList.contains('doc-tabs-open')) setDocTabsOpen(false);
+}
+
 function renderTabBar() {
   const bar = $('#tabBar');
   if (!bar) return;
   if (!state.openTabs.length) {
     bar.innerHTML = '';
+    bar.hidden = true;
     hideTabContextMenu();
+    setDocTabsOpen(false);
     return;
   }
   bar.innerHTML = state.openTabs.map((t) => {
@@ -6824,6 +6851,14 @@ function renderTabBar() {
       <span class="tab-close" data-tab-close-key="${t.key}" title="Sekmeyi kapat" aria-label="Sekmeyi kapat">×</span>
     </button>`;
   }).join('');
+  // İçerik varken varsayılan gizli; yalnızca kullanıcı açtıysa görünür
+  const open = document.body.classList.contains('doc-tabs-open');
+  bar.hidden = !open;
+  const btn = $('#btnOpenTabs');
+  if (btn) {
+    btn.disabled = false;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
 }
 
 function escapeHtml(str) {
@@ -13369,6 +13404,28 @@ function bindEvents() {
     e.preventDefault();
     sidebarCollapseAll();
   });
+  $('#btnOpenTabs')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!(state.openTabs?.length > 0)) {
+      toast('Açık sekme yok');
+      return;
+    }
+    toggleDocTabs();
+  });
+
+  // Form / liste ile uğraşırken alt sekme şeridini gizle
+  const workspaceMain = document.querySelector('.workspace-main');
+  if (workspaceMain && !workspaceMain.dataset.tabsHideBound) {
+    workspaceMain.dataset.tabsHideBound = '1';
+    const hideOnInteract = (e) => {
+      if (e.target.closest('#tabBar, #btnOpenTabs, #tabCtxMenu')) return;
+      hideDocTabsWhileWorking();
+    };
+    workspaceMain.addEventListener('pointerdown', hideOnInteract, true);
+    workspaceMain.addEventListener('focusin', hideOnInteract, true);
+    workspaceMain.addEventListener('keydown', hideOnInteract, true);
+  }
 
   $('#btnApplyFilter').addEventListener('click', async () => {
     const screen = findScreen(state.screenId);
