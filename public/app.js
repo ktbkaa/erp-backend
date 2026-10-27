@@ -2635,7 +2635,7 @@ const MODULES = [
     sections: [
       { id: 'teklif', title: 'Teklif', screenIds: ['satin-alma-teklifleri', 'satin-alma-anlasmalari'] },
       { id: 'siparis', title: 'Sipariş', screenIds: ['satin-alma-talepleri', 'satin-alma-siparisleri'] },
-      { id: 'mal-kabul', title: 'Mal Kabul', screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri'] },
+      { id: 'mal-kabul', title: 'Mal Kabul', screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri'] },
     ],
     screens: [
       {
@@ -2980,9 +2980,9 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'receipt_no', label: 'Kabul no', code: true },
-          { key: 'sales_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', required: true, fillFrom: 'siparis-satirlar' },
+          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', required: true, fillFrom: 'siparis-satirlar' },
           { key: 'vendor_delivery_note_id', label: 'Tedarikçi irsaliyesi', type: 'lookup', lookup: 'tedarikci-irsaliyeleri', valueKey: 'id', labelKey: 'delivery_note_no', fillFrom: 'tedarikci-irsaliye-satirlar' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
+          { key: 'warehouse_id', label: 'Depo (bilgi)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'receipt_date', label: 'Kabul tarihi', type: 'date' },
           { key: 'vendor_delivery_note_no', label: 'Tedarikçi irsaliye no' },
           { key: 'delivery_date', label: 'İrsaliye tarihi', type: 'date' },
@@ -3035,7 +3035,7 @@ const MODULES = [
         masterFields: [
           { key: 'delivery_note_no', label: 'İrsaliye no', code: true },
           { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'sales_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-satirlar' },
+          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-satirlar' },
           { key: 'delivery_date', label: 'İrsaliye tarihi', type: 'date' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kismi', 'Kapali', 'Iptal'] },
           { key: 'description', label: 'Açıklama' },
@@ -3051,6 +3051,54 @@ const MODULES = [
         detailKey: 'satirlar',
         detailSlots: 5,
         defaults: { status: 'Acik' },
+      },
+      {
+        id: 'giris-kontrolleri',
+        techId: 'QLT-INC-SCR-001',
+        businessNameEn: 'IncomingInspectionScreen',
+        title: 'Giriş Kontrolleri',
+        endpoint: '/giris-kontrolleri',
+        crud: false,
+        codeField: 'inspection_no',
+        nameField: 'order_no',
+        approveAction: { label: 'Onayla → Giriş Kalite', path: '/giris-kontrolleri/{id}/onayla' },
+        filters: [
+          { key: 'inspection_no', label: 'Kontrol no' },
+          { key: 'order_no', label: 'Sipariş' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'inspection_no', label: 'Kontrol', mono: true },
+          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'receipt_no', label: 'Mal kabul', mono: true },
+          { key: 'kaynak_depo_kodu', label: 'Giriş depo', mono: true },
+          { key: 'hedef_depo_kodu', label: 'Kalite depo', mono: true },
+          { key: 'inspection_date', label: 'Tarih' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'inspection_no', label: 'Kontrol no', code: true },
+          { key: 'order_no', label: 'Sipariş no' },
+          { key: 'receipt_no', label: 'Mal kabul no' },
+          { key: 'kaynak_depo_kodu', label: 'Giriş depo' },
+          { key: 'hedef_depo_kodu', label: 'Giriş kalite depo' },
+          { key: 'status', label: 'Durum' },
+          { key: 'inspected_by', label: 'Kontrol eden' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'item_code', label: 'Stok kodu' },
+          { key: 'item_name', label: 'Stok adı' },
+          { key: 'ordered_quantity', label: 'Sipariş miktarı', type: 'number' },
+          { key: 'received_quantity', label: 'Gelen miktar', type: 'number' },
+          { key: 'accepted_quantity', label: 'Kabul miktarı', type: 'number' },
+          { key: 'rejected_quantity', label: 'Red miktarı', type: 'number' },
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'match_ok', label: 'Tutarlı', type: 'checkbox' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        readOnly: false,
       },
     ],
   },
@@ -4238,7 +4286,7 @@ const MODULES = [
         id: 'kk-emirleri-gkk',
         techId: 'QLT-IQC-SCR-001',
         businessNameEn: 'IncomingQcOrderScreen',
-        title: 'GKK Emirleri',
+        title: 'Giriş Kalite Emirleri',
         endpoint: '/kk-emirleri?direction=GKK',
         crud: false,
         codeField: 'order_no',
@@ -4278,7 +4326,7 @@ const MODULES = [
         id: 'kk-emirleri-ckk',
         techId: 'QLT-OQC-SCR-001',
         businessNameEn: 'OutgoingQcOrderScreen',
-        title: 'ÇKK Emirleri',
+        title: 'Çıkış Kalite Emirleri',
         endpoint: '/kk-emirleri?direction=CKK',
         crud: false,
         codeField: 'order_no',
@@ -7107,6 +7155,12 @@ const BELGE_BAGLANTI = {
     ],
     sonrakiler: [
       {
+        id: 'giris-kontrol',
+        label: 'Giriş kontrol',
+        screenId: 'giris-kontrolleri',
+        findBy: ['goods_receipt_id'],
+      },
+      {
         id: 'alis-fatura',
         label: 'Alış faturası',
         screenId: 'fatura-yonetimi',
@@ -7115,6 +7169,15 @@ const BELGE_BAGLANTI = {
           && (Number(row.goods_receipt_id) === Number(rec.id)
             || (row.source_document_type === 'MAL_KABUL' && Number(row.source_document_id) === Number(rec.id))),
       },
+    ],
+  },
+  'giris-kontrolleri': {
+    kaynaklar: [
+      { id: 'mal-kabul', label: 'Mal kabul (kaynak)', field: 'goods_receipt_id', screenId: 'mal-kabuller' },
+      { id: 'sa-siparis', label: 'Satınalma siparişi (kaynak)', field: 'purchase_order_id', screenId: 'satin-alma-siparisleri' },
+    ],
+    sonrakiler: [
+      { id: 'gkk', label: 'Giriş kalite emri', screenId: 'kk-emirleri-gkk', findBy: ['source_id'] },
     ],
   },
   'satis-teklifleri': {
@@ -8122,7 +8185,8 @@ async function fillLinesFromSource(kind, sourceId) {
     } else if (kind === 'siparis-satirlar') {
       const sip = await api(`/satin-alma-siparisleri/${sourceId}`);
       if (!sip) return;
-      state.formRecord.sales_order_id = Number(sourceId);
+      state.formRecord.purchase_order_id = Number(sourceId);
+      state.formRecord.sales_order_id = Number(sourceId); // geriye uyum
       if (sip.partner_id && !state.formRecord.partner_id) state.formRecord.partner_id = sip.partner_id;
       if (sip.warehouse_id && !state.formRecord.warehouse_id) state.formRecord.warehouse_id = sip.warehouse_id;
       state.formRecord[detailKey] = (sip.satirlar || [])
@@ -8146,7 +8210,11 @@ async function fillLinesFromSource(kind, sourceId) {
       const ir = await api(`/tedarikci-irsaliyeleri/${sourceId}`);
       if (!ir) return;
       state.formRecord.vendor_delivery_note_id = Number(sourceId);
-      if (ir.sales_order_id) state.formRecord.sales_order_id = ir.sales_order_id;
+      if (ir.purchase_order_id || ir.sales_order_id) {
+        const poId = Number(ir.purchase_order_id || ir.sales_order_id);
+        state.formRecord.purchase_order_id = poId;
+        state.formRecord.sales_order_id = poId;
+      }
       if (ir.delivery_note_no) state.formRecord.vendor_delivery_note_no = ir.delivery_note_no;
       if (ir.delivery_date) state.formRecord.delivery_date = ir.delivery_date;
       state.formRecord[detailKey] = (ir.satirlar || [])
@@ -8994,6 +9062,7 @@ const LOOKUP_ENDPOINTS = {
   'satin-alma-siparisleri': '/satin-alma-siparisleri',
   'tedarikci-irsaliyeleri': '/tedarikci-irsaliyeleri',
   'mal-kabuller': '/mal-kabuller',
+  'giris-kontrolleri': '/giris-kontrolleri',
   'alis-faturalari': '/invoices?invoice_type=Alis',
   'satis-teklifleri': '/satis-teklifleri',
   'satis-faturalari': '/invoices?invoice_type=Satis',

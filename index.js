@@ -85,6 +85,7 @@ app.use('/satin-alma-teklifleri', require('./routes/purchase_quotations'));
 app.use('/satin-alma-anlasmalari', require('./routes/purchase_agreements'));
 app.use('/satin-alma-siparisleri', require('./routes/purchase_orders'));
 app.use('/mal-kabuller', require('./routes/goods_receipts'));
+app.use('/giris-kontrolleri', require('./routes/incoming_inspections'));
 app.use('/tedarikci-irsaliyeleri', require('./routes/vendor_delivery_notes'));
 app.use('/belge-yonetimi', require('./routes/belge_yonetimi'));
 app.use('/uretim-emirleri', require('./routes/production_orders'));

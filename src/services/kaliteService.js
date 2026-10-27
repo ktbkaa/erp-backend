@@ -2,23 +2,49 @@ const { sonrakiBelgeNo } = require('../utils/belgeNo');
 const { parametreAl } = require('../utils/yetki');
 const { depoTransfer } = require('./stokHareketService');
 
-async function depoBulKodVeyaRol(client, { kodParam, role }) {
+async function depoBulKodVeyaRol(client, { kodParam, role, plantId = null }) {
     const kod = await parametreAl(client, kodParam, null);
     if (kod) {
-        const r = await client.query(
-            `SELECT * FROM warehouses WHERE warehouse_code=$1 AND is_active=TRUE LIMIT 1`,
-            [kod]
-        );
+        const params = [kod];
+        let sql = `SELECT * FROM warehouses WHERE warehouse_code=$1 AND is_active=TRUE`;
+        if (plantId) {
+            params.push(plantId);
+            sql += ` AND plant_id=$${params.length}`;
+        }
+        sql += ' LIMIT 1';
+        const r = await client.query(sql, params);
         if (r.rows[0]) return r.rows[0];
+        // Parametre kodu başka tesisin deposu olabilir; rol ile devam et
     }
     if (role) {
-        const r = await client.query(
-            `SELECT * FROM warehouses WHERE warehouse_rolu=$1 AND is_active=TRUE ORDER BY id LIMIT 1`,
-            [role]
-        );
+        const params = [role];
+        let sql = `SELECT * FROM warehouses WHERE warehouse_rolu=$1 AND is_active=TRUE`;
+        if (plantId) {
+            params.push(plantId);
+            sql += ` AND plant_id=$${params.length}`;
+        }
+        sql += ' ORDER BY id LIMIT 1';
+        const r = await client.query(sql, params);
         if (r.rows[0]) return r.rows[0];
     }
     return null;
+}
+
+async function ckkHedefDepoCozumle(client, itemId, plantId = null) {
+    const st = await client.query(`SELECT item_type FROM items WHERE id=$1`, [itemId]);
+    const tip = st.rows[0]?.item_type || 'Mamul';
+    if (tip === 'YariMamul') {
+        return depoBulKodVeyaRol(client, {
+            kodParam: 'YARIMAMUL_DEPO_KODU',
+            role: 'YariMamul',
+            plantId,
+        });
+    }
+    return depoBulKodVeyaRol(client, {
+        kodParam: 'MAMUL_DEPO_KODU',
+        role: 'Mamul',
+        plantId,
+    });
 }
 
 async function stokPlanBul(client, stokId, direction) {
@@ -210,10 +236,14 @@ async function emirOnayla(client, emirId, {
 
     let hedef = hedefDepoId || emir.target_warehouse_id;
     if (!hedef && onay && accepted > 0) {
-        const role = emir.direction === 'GKK' ? 'Hammadde' : 'Mamul';
-        const kodP = emir.direction === 'GKK' ? 'HAMMADDE_DEPO_KODU' : 'MAMUL_DEPO_KODU';
-        const d = await depoBulKodVeyaRol(client, { kodParam: kodP, role });
-        if (!d) throw new Error(`Hedef depo bulunamadı (${kodP} / ${role}).`);
+        let d = null;
+        if (emir.direction === 'GKK') {
+            d = await depoBulKodVeyaRol(client, { kodParam: 'HAMMADDE_DEPO_KODU', role: 'Hammadde' });
+            if (!d) throw new Error('Hedef depo bulunamadı (HAMMADDE_DEPO_KODU / Hammadde).');
+        } else {
+            d = await ckkHedefDepoCozumle(client, emir.item_id);
+            if (!d) throw new Error('Hedef depo bulunamadı (Mamul / YariMamul).');
+        }
         hedef = d.id;
     }
 
@@ -309,11 +339,14 @@ async function emirOnayla(client, emirId, {
 /**
  * Mal kabul / üretim girişi için KK akışı yardımcıları.
  */
-async function gkkDepoCozumle(client) {
-    return depoBulKodVeyaRol(client, { kodParam: 'GKK_DEPO_KODU', role: 'GKK' });
+async function girisDepoCozumle(client, plantId = null) {
+    return depoBulKodVeyaRol(client, { kodParam: 'GIRIS_DEPO_KODU', role: 'Giris', plantId });
 }
-async function ckkDepoCozumle(client) {
-    return depoBulKodVeyaRol(client, { kodParam: 'CKK_DEPO_KODU', role: 'CKK' });
+async function gkkDepoCozumle(client, plantId = null) {
+    return depoBulKodVeyaRol(client, { kodParam: 'GKK_DEPO_KODU', role: 'GKK', plantId });
+}
+async function ckkDepoCozumle(client, plantId = null) {
+    return depoBulKodVeyaRol(client, { kodParam: 'CKK_DEPO_KODU', role: 'CKK', plantId });
 }
 
 module.exports = {
@@ -321,8 +354,10 @@ module.exports = {
     emirGetir,
     emirKaydet,
     emirOnayla,
+    girisDepoCozumle,
     gkkDepoCozumle,
     ckkDepoCozumle,
+    ckkHedefDepoCozumle,
     depoBulKodVeyaRol,
     stokPlanBul,
 };

@@ -10,6 +10,7 @@ const EKRANLAR = [
   { screen_id: 'satin-alma-teklifleri', screen_name: 'Satınalma Teklifleri', module: 'Satınalma', tech_id: 'PUR-QUO-SCR-001' },
   { screen_id: 'satin-alma-siparisleri', screen_name: 'Satınalma Siparişleri', module: 'Satınalma', tech_id: 'PUR-ORD-SCR-001' },
   { screen_id: 'mal-kabuller', screen_name: 'Mal Kabuller', module: 'Satınalma', tech_id: 'PUR-GR-SCR-001' },
+  { screen_id: 'giris-kontrolleri', screen_name: 'Giriş Kontrolleri', module: 'Kalite', tech_id: 'QLT-INC-SCR-001' },
   { screen_id: 'alis-faturalari', screen_name: 'Alış Faturaları', module: 'Satınalma', tech_id: 'FIN-PINV-SCR-001' },
   { screen_id: 'satis-teklifleri', screen_name: 'Satış Teklifleri', module: 'Satış', tech_id: 'SAL-QUO-SCR-001' },
   { screen_id: 'satis-siparisleri', screen_name: 'Satış Siparişleri', module: 'Satış', tech_id: 'SAL-ORD-SCR-001' },
@@ -20,8 +21,8 @@ const EKRANLAR = [
   { screen_id: 'uretim-planlari', screen_name: 'Üretim Planları', module: 'Üretim', tech_id: 'MFG-PLN-SCR-001' },
   { screen_id: 'transfer-emirleri', screen_name: 'Transfer Emirleri', module: 'Stok', tech_id: 'WMS-XFER-SCR-001' },
   { screen_id: 'sayim-belgeleri', screen_name: 'Sayım Belgeleri', module: 'Stok', tech_id: 'WMS-CNT-SCR-001' },
-  { screen_id: 'kk-emirleri-gkk', screen_name: 'GKK Emirleri', module: 'Kalite', tech_id: 'QLT-IQC-SCR-001' },
-  { screen_id: 'kk-emirleri-ckk', screen_name: 'ÇKK Emirleri', module: 'Kalite', tech_id: 'QLT-OQC-SCR-001' },
+  { screen_id: 'kk-emirleri-gkk', screen_name: 'Giriş Kalite Emirleri', module: 'Kalite', tech_id: 'QLT-IQC-SCR-001' },
+  { screen_id: 'kk-emirleri-ckk', screen_name: 'Çıkış Kalite Emirleri', module: 'Kalite', tech_id: 'QLT-OQC-SCR-001' },
   { screen_id: 'fatura-kontrolleri', screen_name: 'Fatura Kontrolleri', module: 'Finans', tech_id: 'FIN-3WAY-SCR-001' },
   { screen_id: 'muhasebe-belgeleri', screen_name: 'Muhasebe Belgeleri', module: 'Finans', tech_id: 'FIN-JE-SCR-001' },
 ];
