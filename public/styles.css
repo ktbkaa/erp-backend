@@ -1430,6 +1430,14 @@ tr.selected td { background: var(--accent-soft); }
 }
 .rota-advanced[open] > summary::before { content: '▾'; }
 .rota-advanced-body { padding-top: 0.25rem; }
+.rota-op-materials {
+  margin: 0.65rem 0 0.25rem;
+  padding: 0.45rem 0.55rem 0.55rem;
+  border: 1px solid var(--line, #dde3ea);
+  border-radius: 0.4rem;
+  background: #f7faf9;
+}
+.rota-op-materials .section-label { margin-top: 0; }
 .rota-mat-row {
   display: flex;
   align-items: center;
