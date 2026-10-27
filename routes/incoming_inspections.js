@@ -57,7 +57,17 @@ router.get('/', async (req, res) => {
         const firmaId = firmaIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
-            where.push(`gk.company_id = $${params.length}`);
+            where.push(`(
+              gk.company_id = $${params.length}
+              OR (gk.company_id IS NULL AND EXISTS (
+                SELECT 1 FROM purchase_orders po
+                WHERE po.id = gk.purchase_order_id AND po.company_id = $${params.length}
+              ))
+              OR (gk.company_id IS NULL AND EXISTS (
+                SELECT 1 FROM plants p
+                WHERE p.id = gk.plant_id AND p.company_id = $${params.length}
+              ))
+            )`);
         }
         if (req.query.purchase_order_id) {
             params.push(Number(req.query.purchase_order_id));

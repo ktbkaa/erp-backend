@@ -211,7 +211,11 @@ router.post('/', async (req, res) => {
             const anaHareketId = hareket.hareket.id;
 
             const kabulNo = await sonrakiBelgeNo(client, 'MAL_KABUL');
-            const firmaId = company_id || siparis.rows[0].company_id || firmaIdFromReq(req) || null;
+            let firmaId = company_id || siparis.rows[0].company_id || firmaIdFromReq(req) || null;
+            if (!firmaId && plantId) {
+                const pf = await client.query(`SELECT company_id FROM plants WHERE id=$1`, [plantId]);
+                firmaId = pf.rows[0]?.company_id || null;
+            }
             const gkkDepo = await gkkDepoCozumle(client, plantId);
             const kabul = await client.query(
                 `INSERT INTO goods_receipts (
