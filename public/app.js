@@ -9174,10 +9174,10 @@ function escAttr(v) {
   return String(v ?? '').replace(/"/g, '&quot;');
 }
 
-/** Noktalı halka — tıklanınca tablo popup; ↓ tuşu native listeyi açar */
+/** Noktalı halka — tıklanınca ekran benzeri liste/CRUD popup; ↓ tuşu native listeyi açar */
 function lookupBrowseButtonHtml(disabled) {
   if (disabled) return '';
-  return `<button type="button" class="lookup-browse-btn" tabindex="-1" title="Liste aç" aria-label="Kayıt listesini aç"><span class="lookup-browse-dot" aria-hidden="true"></span></button>`;
+  return `<button type="button" class="lookup-browse-btn" tabindex="-1" title="Liste / ekran aç" aria-label="Kayıt listesini ve ekran işlemlerini aç"><span class="lookup-browse-dot" aria-hidden="true"></span></button>`;
 }
 
 function wrapLookupPick(innerHtml, disabled = false) {
@@ -11642,11 +11642,102 @@ function warehouseIdFromCtx(ctx) {
 }
 
 let _lookupBrowserState = null;
+let _lookupBrowserFocusBound = false;
+
+/** Lookup anahtarı → kaynak ekran (CRUD popup için) */
+const LOOKUP_TO_SCREEN = {
+  items: 'stok-karti',
+  'items-mamul': 'stok-karti',
+  'stok-depo': 'stok-depo',
+  'stok-partileri': 'stok-partileri',
+  partners: 'cari-kartlari',
+  'partners-musteri': 'cari-kartlari',
+  'partners-tedarikci': 'cari-kartlari',
+  companies: 'companies',
+  'is-yerleri': 'is-yerleri',
+  warehouses: 'warehouses',
+  'olcu-birimleri': 'olcu-birimleri',
+  countries: 'country-tanimi',
+  cities: 'sehir-tanimi',
+  districts: 'district-tanimi',
+  'para-birimleri': 'para-birimi-tanimi',
+  'odeme-kosullari': 'odeme-kosulu-tanimi',
+  'teslimat-kosullari': 'teslimat-kosulu-tanimi',
+  languages: 'dil-tanimi',
+  banks: 'banka-tanimi',
+  'doviz-kurlari': 'doviz-exchange_rate-tanimi',
+  'kategoriler-abc': 'kategori-tanimi',
+  'kategoriler-marka': 'kategori-tanimi',
+  'kategoriler-temin': 'kategori-tanimi',
+  'kategoriler-sektor': 'kategori-tanimi',
+  'kategoriler-region': 'kategori-tanimi',
+  'urun-agaclari': 'urun-agaci',
+  routings: 'routings',
+  'rota-sablonlari': 'routings',
+  'is-merkezleri': 'is-merkezleri',
+  'is-istasyonlari': 'is-istasyonlari',
+  'uretim-emri-tipleri': 'uretim-emri-tipleri',
+  'uretim-emirleri': 'uretim-emirleri',
+  'uretim-planlari': 'uretim-planlari',
+  'satin-alma-talepleri': 'satin-alma-talepleri',
+  'satin-alma-teklifleri': 'satin-alma-teklifleri',
+  'satin-alma-siparisleri': 'satin-alma-siparisleri',
+  'tedarikci-irsaliyeleri': 'tedarikci-irsaliyeleri',
+  'mal-kabuller': 'mal-kabuller',
+  'satis-teklifleri': 'satis-teklifleri',
+  sales_orders: 'satis-siparisleri',
+  'sevk-emirleri': 'sevk-emirleri',
+  delivery_notes: 'irsaliye-yonetimi',
+  'irsaliye-yonetimi': 'irsaliye-yonetimi',
+  'alis-faturalari': 'fatura-yonetimi',
+  'satis-faturalari': 'fatura-yonetimi',
+  'fatura-yonetimi': 'fatura-yonetimi',
+  users: 'kullanicilar',
+  'kullanici-gruplari': 'kullanici-gruplari',
+  'hareket-kodlari': 'hareket-kodlari',
+  'hareket-kodlari-teklif': 'hareket-kodlari',
+  'hareket-kodlari-siparis': 'hareket-kodlari',
+  'hareket-kodlari-sevk': 'hareket-kodlari',
+  'hareket-kodlari-irsaliye': 'hareket-kodlari',
+  'hareket-kodlari-fatura': 'hareket-kodlari',
+  'hareket-kodlari-stok': 'hareket-kodlari',
+  'crm-adaylar': 'crm-adaylar',
+  'crm-firsatlar': 'crm-firsatlar',
+  'crm-kontaklar': 'crm-kontaklar',
+  'crm-firsat-asamalari': 'crm-firsat-asamalari',
+  'crm-faaliyet-tipleri': 'crm-faaliyet-tipleri',
+  'kk-kontrol-planlari': 'kk-kontrol-planlari',
+  'kk-ret-nedenleri': 'kk-ret-nedenleri',
+  'fiyat-listeleri': 'fiyat-listeleri',
+  'muhasebe-hesaplari': 'muhasebe-hesaplari',
+  'onay-rolleri': 'onay-rolleri',
+  'onay-rotalari': 'onay-rotalari',
+};
+
+function screenForLookupKey(lookupKey) {
+  if (!lookupKey) return null;
+  const mapped = LOOKUP_TO_SCREEN[lookupKey];
+  if (mapped) return findScreen(mapped);
+  const byId = findScreen(lookupKey);
+  if (byId) return byId;
+  const ep = LOOKUP_ENDPOINTS[lookupKey];
+  if (!ep) return null;
+  const path = String(ep).split('?')[0];
+  const hit = ALL_SCREENS.find((s) => {
+    const base = typeof screenApiBase === 'function'
+      ? screenApiBase(s.endpoint || '')
+      : String(s.endpoint || '').split('?')[0];
+    return base && (path === base || path.startsWith(`${base}/`));
+  });
+  return hit ? findScreen(hit.id) : null;
+}
 
 function closeLookupBrowser() {
   const dlg = $('#lookupBrowserDialog');
   if (dlg) dlg.hidden = true;
   _lookupBrowserState = null;
+  const selBtn = $('#lookupBrowserSelect');
+  if (selBtn) selBtn.disabled = true;
 }
 
 function resolveSelectFieldDef(sel) {
@@ -11709,14 +11800,21 @@ async function enrichLookupRowsWithQty(field, rows, ctx) {
   }
 }
 
+function lookupBrowserRowValue(row, valueKey) {
+  if (!row) return '';
+  if (row._opt != null) return row._opt;
+  return row[valueKey];
+}
+
 function renderLookupBrowserTable(rows, cols, selectedVal, valueKey) {
   if (!rows.length) {
     return '<div class="lookup-browser-empty">Kayıt bulunamadı.</div>';
   }
   const head = cols.map((c) => `<th class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(c.label)}</th>`).join('');
-  const body = rows.map((r) => {
-    const val = r._opt != null ? r._opt : r[valueKey];
+  const body = rows.map((r, idx) => {
+    const val = lookupBrowserRowValue(r, valueKey);
     const sel = String(val) === String(selectedVal) ? ' is-selected' : '';
+    const rid = r.id != null ? String(r.id) : '';
     const cells = cols.map((c) => {
       let raw = r[c.key];
       if (c.key === '_opt') raw = r._opt;
@@ -11726,7 +11824,7 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey) {
       }
       return `<td class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(String(raw))}</td>`;
     }).join('');
-    return `<tr class="lookup-browser-row${sel}" data-lookup-val="${escAttr(val)}" tabindex="0">${cells}</tr>`;
+    return `<tr class="lookup-browser-row${sel}" data-lookup-val="${escAttr(val)}" data-lookup-id="${escAttr(rid)}" data-lookup-idx="${idx}" tabindex="0">${cells}</tr>`;
   }).join('');
   return `<div class="lookup-browser-table-wrap"><table class="lookup-browser-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
@@ -11738,6 +11836,99 @@ function filterLookupBrowserRows(rows, cols, q) {
     const v = c.key === '_opt' ? r._opt : r[c.key];
     return String(v ?? '').toLocaleLowerCase('tr').includes(needle);
   }));
+}
+
+function updateLookupBrowserActionButtons() {
+  const st = _lookupBrowserState;
+  const bar = $('#lookupBrowserActions');
+  const selBtn = $('#lookupBrowserSelect');
+  if (!st) {
+    if (bar) bar.hidden = true;
+    if (selBtn) selBtn.disabled = true;
+    return;
+  }
+  const screen = st.targetScreen;
+  const canCrud = Boolean(screen && screen.crud !== false && !screen.readOnly && !screen.hideActions);
+  if (bar) {
+    bar.hidden = !canCrud;
+    if (canCrud) {
+      const hasId = st.selectedRow?.id != null && st.selectedRow?.id !== '';
+      bar.querySelectorAll('[data-lb-act]').forEach((btn) => {
+        const act = btn.getAttribute('data-lb-act');
+        if (act === 'yeni') {
+          btn.disabled = !ekranYetkisi(screen.id, 'yeni');
+        } else if (act === 'sil') {
+          btn.disabled = !hasId || !ekranYetkisi(screen.id, 'sil');
+        } else {
+          btn.disabled = !hasId || !ekranYetkisi(screen.id, act);
+        }
+      });
+    }
+  }
+  if (selBtn) {
+    const hasPick = st.selectedVal != null && String(st.selectedVal) !== '';
+    selBtn.disabled = !hasPick;
+  }
+}
+
+function paintLookupBrowser() {
+  const st = _lookupBrowserState;
+  if (!st) return;
+  const body = $('#lookupBrowserBody');
+  const search = $('#lookupBrowserSearch');
+  const count = $('#lookupBrowserCount');
+  if (!body) return;
+  const filtered = filterLookupBrowserRows(st.allRows, st.cols, search?.value || '');
+  st.filteredRows = filtered;
+  if (count) count.textContent = `${filtered.length} kayıt`;
+  body.innerHTML = renderLookupBrowserTable(
+    filtered,
+    st.cols,
+    st.selectedVal,
+    st.valueKey,
+  );
+  updateLookupBrowserActionButtons();
+}
+
+function setLookupBrowserSelection(val, row) {
+  const st = _lookupBrowserState;
+  if (!st) return;
+  st.selectedVal = val != null ? String(val) : '';
+  st.selectedRow = row || st.allRows.find((r) => String(lookupBrowserRowValue(r, st.valueKey)) === String(val)) || null;
+  paintLookupBrowser();
+}
+
+async function reloadLookupBrowserRows() {
+  const st = _lookupBrowserState;
+  if (!st?.sel) return;
+  const field = st.field;
+  const { ctx } = cascadeScopeContext(st.sel);
+  let rows = [];
+  if (field.type === 'lookup' && field.lookup) {
+    invalidateLookups(field.lookup);
+    await fetchLookupKey(field.lookup);
+    rows = lookupRowsForField(field, ctx);
+    // Formdaki select seçeneklerini de taze tut
+    const html = buildLookupOptionsHtml(field, st.sel.value, rows);
+    st.sel.innerHTML = html;
+  } else if (Array.isArray(field.options) && field.options.length) {
+    rows = field.options.map((o) => ({ _opt: o }));
+  } else {
+    rows = [...st.sel.options]
+      .filter((o) => o.value !== '')
+      .map((o) => ({ _opt: o.value, _label: o.textContent }));
+  }
+  let cols = lookupBrowserColumnsFor(field);
+  if (st.valueKey === '_opt' && cols[0]?.key === '_opt') {
+    cols = [{ key: '_opt', label: field.label || 'Seçenek' }];
+  }
+  const enriched = await enrichLookupRowsWithQty(field, rows, ctx);
+  st.allRows = enriched.rows;
+  st.cols = enriched.qtyCol ? cols.concat([enriched.qtyCol]) : cols;
+  if (st.selectedVal) {
+    st.selectedRow = st.allRows.find((r) => String(lookupBrowserRowValue(r, st.valueKey)) === String(st.selectedVal)) || null;
+  }
+  paintLookupBrowser();
 }
 
 async function openLookupBrowserForSelect(sel) {
@@ -11755,7 +11946,6 @@ async function openLookupBrowserForSelect(sel) {
     rows = field.options.map((o) => ({ _opt: o }));
     valueKey = '_opt';
   } else {
-    // select option’larından üret
     rows = [...sel.options]
       .filter((o) => o.value !== '')
       .map((o) => ({ _opt: o.value, _label: o.textContent }));
@@ -11770,43 +11960,46 @@ async function openLookupBrowserForSelect(sel) {
   rows = enriched.rows;
   if (enriched.qtyCol) cols = cols.concat([enriched.qtyCol]);
 
+  const targetScreen = field.lookup ? screenForLookupKey(field.lookup) : null;
+  const initialVal = sel.value || '';
+  const initialRow = rows.find((r) => String(lookupBrowserRowValue(r, valueKey)) === String(initialVal)) || null;
+
   _lookupBrowserState = {
     sel,
     field,
     valueKey,
     cols,
     allRows: rows,
+    filteredRows: rows,
+    selectedVal: initialVal,
+    selectedRow: initialRow,
+    targetScreen,
   };
 
   const dlg = $('#lookupBrowserDialog');
   const title = $('#lookupBrowserTitle');
-  const body = $('#lookupBrowserBody');
   const search = $('#lookupBrowserSearch');
-  const count = $('#lookupBrowserCount');
-  if (!dlg || !body) return;
-  if (title) title.textContent = `${field.label || 'Kayıt'} — liste`;
+  if (!dlg) return;
+  const screenTitle = targetScreen?.title || field.label || 'Kayıt';
+  if (title) title.textContent = `${screenTitle}`;
   if (search) search.value = '';
-  const paint = () => {
-    const filtered = filterLookupBrowserRows(
-      _lookupBrowserState.allRows,
-      _lookupBrowserState.cols,
-      search?.value || '',
-    );
-    if (count) count.textContent = `${filtered.length} kayıt`;
-    body.innerHTML = renderLookupBrowserTable(
-      filtered,
-      _lookupBrowserState.cols,
-      sel.value,
-      _lookupBrowserState.valueKey,
-    );
-  };
-  paint();
+  paintLookupBrowser();
   dlg.hidden = false;
   search?.focus();
   if (search && !search.dataset.bound) {
     search.dataset.bound = '1';
     search.addEventListener('input', () => {
-      if (_lookupBrowserState) paint();
+      if (_lookupBrowserState) paintLookupBrowser();
+    });
+  }
+  if (!_lookupBrowserFocusBound) {
+    _lookupBrowserFocusBound = true;
+    window.addEventListener('focus', () => {
+      if (!_lookupBrowserState) return;
+      const d = $('#lookupBrowserDialog');
+      if (!d || d.hidden) return;
+      // Yeni/Düzelt sekmesinden dönünce listeyi yenile
+      reloadLookupBrowserRows().catch(() => {});
     });
   }
 }
@@ -11816,11 +12009,15 @@ function applyLookupBrowserValue(val) {
   if (!st?.sel) return;
   const sel = st.sel;
   const str = String(val ?? '');
-  // option yoksa ekle
-  if (str && ![...sel.options].some((o) => String(o.value) === str)) {
+  if (str && st.field?.type === 'lookup' && st.field.lookup) {
+    // seçenek listesini taze satırlarla doldur
+    const rows = st.allRows || [];
+    sel.innerHTML = buildLookupOptionsHtml(st.field, str, rows);
+  } else if (str && ![...sel.options].some((o) => String(o.value) === str)) {
     const opt = document.createElement('option');
     opt.value = str;
-    opt.textContent = str;
+    const row = st.selectedRow;
+    opt.textContent = row?._label || row?.[st.field?.codeKey] || row?.[st.field?.labelKey] || str;
     sel.appendChild(opt);
   }
   sel.value = str;
@@ -11829,11 +12026,61 @@ function applyLookupBrowserValue(val) {
   sel.focus();
 }
 
+async function lookupBrowserCrudAction(act) {
+  const st = _lookupBrowserState;
+  if (!st) return;
+  const screen = st.targetScreen;
+  if (!screen) {
+    toast('Bu alan için bağlı ekran yok.');
+    return;
+  }
+  if (act === 'yeni') {
+    openFormInNewBrowserTab(screen, 'yeni');
+    return;
+  }
+  const row = st.selectedRow;
+  const rowId = row?.id;
+  if (rowId == null || rowId === '') {
+    toast('Önce listeden bir kayıt seçin.');
+    return;
+  }
+  if (act === 'incele' || act === 'duzelt' || act === 'kopyala') {
+    openFormInNewBrowserTab(screen, act, { rowId });
+    return;
+  }
+  if (act === 'sil') {
+    if (!ekranYetkisi(screen.id, 'sil')) {
+      toast('Bu ekranda silme yetkiniz yok.');
+      return;
+    }
+    if (screen.id === 'numarator-tanimi') {
+      toast('Numaratör silinmez; pasife alın.');
+      return;
+    }
+    const label = row[screen.codeField] || row[st.field?.codeKey] || rowId;
+    if (!confirm(`${label} silinsin mi?`)) return;
+    try {
+      await api(`${screenApiBase(screen.endpoint)}/${rowId}`, { method: 'DELETE' });
+      toast('Silindi.');
+      if (String(st.selectedVal) === String(lookupBrowserRowValue(row, st.valueKey))) {
+        st.selectedVal = '';
+        st.selectedRow = null;
+        if (st.sel) {
+          st.sel.value = '';
+          st.sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+      await reloadLookupBrowserRows();
+    } catch (err) {
+      toast(err.message || String(err));
+    }
+  }
+}
+
 function bindLookupBrowseUi() {
   if (document.documentElement.dataset.lookupBrowseBound === '1') return;
   document.documentElement.dataset.lookupBrowseBound = '1';
 
-  // Halka buton → popup
   document.addEventListener('click', (e) => {
     const btn = e.target.closest?.('.lookup-browse-btn');
     if (btn) {
@@ -11844,12 +12091,38 @@ function bindLookupBrowseUi() {
       if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
       return;
     }
-    const row = e.target.closest?.('.lookup-browser-row');
-    if (row && $('#lookupBrowserDialog') && !$('#lookupBrowserDialog').hidden) {
+
+    const dlg = $('#lookupBrowserDialog');
+    if (!dlg || dlg.hidden) return;
+
+    const actBtn = e.target.closest?.('#lookupBrowserActions [data-lb-act]');
+    if (actBtn && !actBtn.disabled) {
       e.preventDefault();
-      applyLookupBrowserValue(row.getAttribute('data-lookup-val'));
+      lookupBrowserCrudAction(actBtn.getAttribute('data-lb-act')).catch((err) => toast(err.message || String(err)));
       return;
     }
+
+    if (e.target.id === 'lookupBrowserSelect') {
+      e.preventDefault();
+      if (_lookupBrowserState?.selectedVal != null && String(_lookupBrowserState.selectedVal) !== '') {
+        applyLookupBrowserValue(_lookupBrowserState.selectedVal);
+      } else {
+        toast('Önce listeden bir satır seçin.');
+      }
+      return;
+    }
+
+    const row = e.target.closest?.('.lookup-browser-row');
+    if (row) {
+      e.preventDefault();
+      const val = row.getAttribute('data-lookup-val');
+      const idx = Number(row.getAttribute('data-lookup-idx'));
+      const filtered = _lookupBrowserState?.filteredRows || [];
+      const hit = Number.isFinite(idx) ? filtered[idx] : null;
+      setLookupBrowserSelection(val, hit);
+      return;
+    }
+
     if (e.target.id === 'lookupBrowserClose' || e.target.id === 'lookupBrowserCancel') {
       e.preventDefault();
       closeLookupBrowser();
@@ -11860,7 +12133,21 @@ function bindLookupBrowseUi() {
     }
   });
 
-  // Satır Enter ile seç
+  // Çift tık → alana uygula (Seç)
+  document.addEventListener('dblclick', (e) => {
+    const dlg = $('#lookupBrowserDialog');
+    if (!dlg || dlg.hidden) return;
+    const row = e.target.closest?.('.lookup-browser-row');
+    if (!row) return;
+    e.preventDefault();
+    const val = row.getAttribute('data-lookup-val');
+    const idx = Number(row.getAttribute('data-lookup-idx'));
+    const filtered = _lookupBrowserState?.filteredRows || [];
+    const hit = Number.isFinite(idx) ? filtered[idx] : null;
+    setLookupBrowserSelection(val, hit);
+    applyLookupBrowserValue(val);
+  });
+
   document.addEventListener('keydown', (e) => {
     const dlg = $('#lookupBrowserDialog');
     if (dlg && !dlg.hidden) {
@@ -11873,7 +12160,13 @@ function bindLookupBrowseUi() {
         const row = e.target.closest?.('.lookup-browser-row');
         if (row) {
           e.preventDefault();
-          applyLookupBrowserValue(row.getAttribute('data-lookup-val'));
+          const val = row.getAttribute('data-lookup-val');
+          applyLookupBrowserValue(val);
+          return;
+        }
+        if (_lookupBrowserState?.selectedVal && document.activeElement?.id === 'lookupBrowserSearch') {
+          e.preventDefault();
+          applyLookupBrowserValue(_lookupBrowserState.selectedVal);
         }
       }
       return;
@@ -11885,7 +12178,6 @@ function bindLookupBrowseUi() {
     const sel = e.target.closest?.('select.lookup-pick');
     if (!sel || sel.disabled) return;
     if (e.target.closest?.('.lookup-browse-btn')) return;
-    // Sağ tık / orta tık dokunma
     if (e.button !== 0) return;
     e.preventDefault();
     sel.focus();

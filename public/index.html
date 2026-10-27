@@ -405,18 +405,26 @@
         <h2 id="lookupBrowserTitle">Kayıt seç</h2>
         <button type="button" class="icon-btn" id="lookupBrowserClose" aria-label="Kapat">×</button>
       </header>
+      <div class="lookup-browser-actionbar" id="lookupBrowserActions" hidden>
+        <button type="button" class="btn action" data-lb-act="yeni">Yeni</button>
+        <button type="button" class="btn action ghost" data-lb-act="incele">İncele</button>
+        <button type="button" class="btn action ghost" data-lb-act="duzelt">Düzelt</button>
+        <button type="button" class="btn action ghost" data-lb-act="kopyala">Kopyala</button>
+        <button type="button" class="btn action danger" data-lb-act="sil">Sil</button>
+      </div>
       <div class="lookup-browser-toolbar">
         <input type="search" id="lookupBrowserSearch" class="lookup-browser-search" placeholder="Ara (kod / ad)…" autocomplete="off" />
         <span class="lookup-browser-count" id="lookupBrowserCount"></span>
       </div>
       <div class="cvt-body lookup-browser-body" id="lookupBrowserBody"></div>
-      <footer class="cvt-foot">
+      <footer class="cvt-foot lookup-browser-foot">
         <button type="button" class="btn ghost" id="lookupBrowserCancel">Vazgeç</button>
+        <button type="button" class="btn action" id="lookupBrowserSelect" disabled>Seç</button>
       </footer>
     </div>
   </div>
 
-  <script src="/app.js?v=20261026bomgap"></script>
+  <script src="/app.js?v=20261027lookupcrud"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

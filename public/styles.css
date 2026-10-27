@@ -3024,12 +3024,30 @@ select.lookup-pick::-ms-expand { display: none; }
   flex: 1 1 auto;
 }
 
-/* Lookup liste popup */
+/* Lookup liste popup (ekran benzeri: CRUD + seç) */
 .lookup-browser-dialog {
-  width: min(52rem, 100%);
-  max-height: min(88vh, 40rem);
+  width: min(56rem, 100%);
+  max-height: min(90vh, 44rem);
   display: flex;
   flex-direction: column;
+}
+.lookup-browser-actionbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid var(--line, #dde3ea);
+  background: #f7fafb;
+}
+.lookup-browser-actionbar[hidden] { display: none !important; }
+.lookup-browser-actionbar .btn.action {
+  min-width: 4.6rem;
+}
+.lookup-browser-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
 }
 .lookup-browser-toolbar {
   display: flex;
