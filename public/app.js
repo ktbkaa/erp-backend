@@ -7008,6 +7008,9 @@ function hideDocTabsWhileWorking() {
   if (document.body.classList.contains('doc-tabs-open')) setDocTabsOpen(false);
 }
 
+const TAB_GLYPH_LIST = `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3.5" width="9" height="9" rx="1.3"/><path d="M7.5 2h5.2a1.3 1.3 0 0 1 1.3 1.3V10"/></svg>`;
+const TAB_GLYPH_FORM = `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="4" width="8.5" height="8.5" rx="1.2"/><rect x="4.5" y="2" width="8.5" height="8.5" rx="1.2"/><path d="M7.2 7.8h4M9.2 5.8v4" stroke-linecap="round"/></svg>`;
+
 function renderTabBar() {
   const bar = $('#tabBar');
   if (!bar) return;
@@ -7022,8 +7025,10 @@ function renderTabBar() {
     const isForm = t.kind === 'form';
     const kind = isForm ? (MODE_LABELS[t.formMode] || 'Form') : 'Liste';
     const active = t.key === state.activeTabKey ? ' active' : '';
+    const glyph = isForm ? TAB_GLYPH_FORM : TAB_GLYPH_LIST;
     return `
     <button type="button" class="tab-item ${isForm ? 'tab-form' : 'tab-list'}${active}" data-tab-key="${t.key}" title="${escapeAttr(t.title)}" aria-current="${t.key === state.activeTabKey ? 'page' : 'false'}">
+      <span class="tab-glyph">${glyph}</span>
       <span class="tab-kind">${kind}</span>
       <span class="tab-title">${escapeHtml(t.title)}</span>
       <span class="tab-close" data-tab-close-key="${t.key}" title="Sekmeyi kapat" aria-label="Sekmeyi kapat">×</span>
@@ -11376,7 +11381,13 @@ function renderForm(screen) {
       chip.textContent = '';
     }
   }
-  $('#btnFormSave').hidden = readonly;
+  const saveHidden = readonly;
+  ['btnFormSave', 'btnFormSaveClose', 'btnFormSaveNew'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = saveHidden;
+  });
+  const saveGroup = $('#formSaveGroup');
+  if (saveGroup) saveGroup.hidden = saveHidden;
   updateFormCrudButtons(screen);
   const conv = $('#btnFormConvert');
   if (conv) {
@@ -14007,7 +14018,68 @@ function playNestedEnterAnimation() {
   playNestedEnterAnimation._t = setTimeout(() => view.classList.remove('nested-enter'), 420);
 }
 
-async function saveForm() {
+/** Kayıt sonrası: stay = formda kal, close = listeye dön, new = yeni form */
+async function finishSaveForm(screen, saved, after = 'stay') {
+  const listScreenId = (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri')
+    ? 'uretim-emirleri'
+    : screen.id;
+  const formKey = state.activeTabKey;
+  const id = saved?.id ?? state.formRecord?.id ?? null;
+
+  if (after === 'stay' && id != null && screen.id !== 'toplu-is-emri' && screen.id !== 'siparis-is-emri') {
+    state.selectedId = id;
+    if (!state.rows?.some((r) => String(r.id) === String(id))) {
+      state.rows = [{ ...(saved || {}), id }, ...(state.rows || [])];
+    } else {
+      state.rows = state.rows.map((r) => (String(r.id) === String(id) ? { ...r, ...(saved || {}) } : r));
+    }
+    state.filtered = state.rows;
+    // Aynı sekmede Düzelt’e geç — yeni sekme açma
+    let record = { ...(saved || {}), id };
+    try {
+      record = await api(`${screenApiBase(screen.endpoint)}/${id}`);
+    } catch (_) { /* kaydedilen haliyle devam */ }
+    state.formMode = 'duzelt';
+    state.formRecord = record;
+    state.formActiveTab = state.formActiveTab || screen.formTabs?.[0]?.id || null;
+    const tab = state.openTabs.find((t) => t.key === formKey);
+    if (tab) {
+      tab.formMode = 'duzelt';
+      tab.formRecord = record;
+      const code = record?.[screen.codeField] || '';
+      tab.title = code ? `${screen.title} · ${code}` : screen.title;
+    }
+    showView('form');
+    ensureSearchBarVisible();
+    const titleEl = $('#screenTitle');
+    if (titleEl) titleEl.textContent = `${screen.title} · ${MODE_LABELS.duzelt}`;
+    renderForm(screen);
+    renderTabBar();
+    return;
+  }
+
+  state.formMode = null;
+  state.formRecord = null;
+  state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
+
+  if (after === 'new') {
+    if (leaveFormSolo(listScreenId)) return;
+    if (listScreenId !== screen.id) {
+      await openScreen(listScreenId);
+    } else {
+      state.screenId = screen.id;
+      addListTab(screen, { activate: false });
+    }
+    await openForm('yeni', { inPlace: true });
+    return;
+  }
+
+  // close → liste
+  if (leaveFormSolo(listScreenId)) return;
+  await openScreen(listScreenId);
+}
+
+async function saveForm({ after = 'stay' } = {}) {
   const screen = findScreen(state.screenId);
   if (!screen || state.formMode === 'incele') return;
 
@@ -14103,6 +14175,7 @@ async function saveForm() {
   }
 
   try {
+    let saved = { ...master };
     if (screen.id === 'numarator-tanimi') {
       if (state.formMode === 'duzelt') {
         await api(`/kod-serileri/${encodeURIComponent(master.series_code)}`, {
@@ -14112,58 +14185,57 @@ async function saveForm() {
       } else {
         await api('/kod-serileri', { method: 'POST', body: JSON.stringify(master) });
       }
-    } else if (state.formMode === 'duzelt') {
-      await api(`${screenApiBase(screen.endpoint)}/${master.id}`, { method: 'PUT', body: JSON.stringify(master) });
-    } else {
-      const postUrl = screen.createEndpoint || screenApiBase(screen.endpoint);
-      let body = master;
-      if (screen.id === 'toplu-is-emri') {
-        body = {
-          ortak: {
-            order_type_id: master.order_type_id || null,
-            plant_id: master.plant_id || null,
-            component_warehouse_id: master.component_warehouse_id,
-            fg_warehouse_id: master.fg_warehouse_id,
-            wip_warehouse_id: master.wip_warehouse_id || null,
-          },
-          kalemler: (master.kalemler || []).filter((k) => k.item_id && k.sales_order_id),
-        };
-        if (!body.kalemler.length) {
-          toast('En az bir kalem ekleyin.');
-          return;
-        }
-      }
-      const result = await api(postUrl, { method: 'POST', body: JSON.stringify(body) });
+      toast('Kaydedildi.');
       invalidateLookupsForScreen(screen);
-      if (screen.id === 'toplu-is-emri' && result?.olusturulan_sayisi) {
-        toast(`${result.olusturulan_sayisi} iş emri oluşturuldu${result.hata_sayisi ? ` (${result.hata_sayisi} hata)` : ''}.`);
-      } else if (screen.id === 'siparis-is-emri' && result?.order_no) {
-        toast(`İş emri ${result.order_no} oluşturuldu.`);
-      } else {
-        toast('Kaydedildi.');
-      }
-      const formKey = state.activeTabKey;
-      state.formMode = null;
-      state.formRecord = null;
-      state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
-      if (leaveFormSolo(screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri' ? 'uretim-emirleri' : screen.id)) {
-        return;
-      }
-      if (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri') {
-        await openScreen('uretim-emirleri');
-      } else {
-        await openScreen(screen.id);
-      }
+      await finishSaveForm(screen, saved, after === 'stay' ? 'close' : after);
       return;
     }
-    toast('Kaydedildi.');
+
+    if (state.formMode === 'duzelt') {
+      const result = await api(`${screenApiBase(screen.endpoint)}/${master.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(master),
+      });
+      saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
+      toast('Kaydedildi.');
+      invalidateLookupsForScreen(screen);
+      await finishSaveForm(screen, saved, after);
+      return;
+    }
+
+    const postUrl = screen.createEndpoint || screenApiBase(screen.endpoint);
+    let body = master;
+    if (screen.id === 'toplu-is-emri') {
+      body = {
+        ortak: {
+          order_type_id: master.order_type_id || null,
+          plant_id: master.plant_id || null,
+          component_warehouse_id: master.component_warehouse_id,
+          fg_warehouse_id: master.fg_warehouse_id,
+          wip_warehouse_id: master.wip_warehouse_id || null,
+        },
+        kalemler: (master.kalemler || []).filter((k) => k.item_id && k.sales_order_id),
+      };
+      if (!body.kalemler.length) {
+        toast('En az bir kalem ekleyin.');
+        return;
+      }
+    }
+    const result = await api(postUrl, { method: 'POST', body: JSON.stringify(body) });
     invalidateLookupsForScreen(screen);
-    const formKey = state.activeTabKey;
-    state.formMode = null;
-    state.formRecord = null;
-    state.openTabs = state.openTabs.filter((t) => t.key !== formKey);
-    if (leaveFormSolo(screen.id)) return;
-    await openScreen(screen.id);
+    if (screen.id === 'toplu-is-emri' && result?.olusturulan_sayisi) {
+      toast(`${result.olusturulan_sayisi} iş emri oluşturuldu${result.hata_sayisi ? ` (${result.hata_sayisi} hata)` : ''}.`);
+    } else if (screen.id === 'siparis-is-emri' && result?.order_no) {
+      toast(`İş emri ${result.order_no} oluşturuldu.`);
+    } else {
+      toast('Kaydedildi.');
+    }
+    saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
+    // Toplu / sipariş→İE oluşturma: formda kalmak anlamsız → kapat
+    const effectiveAfter = (screen.id === 'toplu-is-emri' || screen.id === 'siparis-is-emri')
+      ? (after === 'new' ? 'new' : 'close')
+      : after;
+    await finishSaveForm(screen, saved, effectiveAfter);
   } catch (err) {
     toast(err.message);
   }
@@ -14916,8 +14988,14 @@ function bindEvents() {
     formInfoAction(btn.getAttribute('data-info-act'));
   });
 
-  $('#btnFormSave').addEventListener('click', () => {
-    saveForm();
+  $('#btnFormSave')?.addEventListener('click', () => {
+    saveForm({ after: 'stay' }).catch((err) => toast(err.message));
+  });
+  $('#btnFormSaveClose')?.addEventListener('click', () => {
+    saveForm({ after: 'close' }).catch((err) => toast(err.message));
+  });
+  $('#btnFormSaveNew')?.addEventListener('click', () => {
+    saveForm({ after: 'new' }).catch((err) => toast(err.message));
   });
 
   $('#formCrudActions')?.addEventListener('click', (e) => {
