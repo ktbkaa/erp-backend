@@ -9361,6 +9361,8 @@ function normalizeGridRows(tab, rows) {
   const fields = tab.fields || [];
   return (Array.isArray(rows) ? rows : []).map((src) => {
     const row = emptyRowFromFields(fields);
+    // DB satır kimliği her zaman korunsun (UI alanında olmasa bile)
+    if (src?.id !== undefined && src?.id !== null && src.id !== '') row.id = src.id;
     fields.forEach((f) => {
       if (f.type === 'static') return;
       if (f.type === 'checkbox') row[f.key] = Boolean(src?.[f.key]);
@@ -9377,7 +9379,7 @@ function normalizeGridRows(tab, rows) {
         row[k] = src[k];
         return;
       }
-      if (row[k] === undefined && !['id'].includes(k)) row[k] = src[k];
+      if (row[k] === undefined) row[k] = src[k];
     });
     return row;
   });
@@ -10706,6 +10708,7 @@ function renderDynamicGrid(tab, rec) {
             ${canEdit ? '<th class="col-acts">İşlem</th>' : ''}
             <th class="col-seq">#</th>
             ${fields.map((f) => `<th class="${detailColClass(f)}" title="${escAttr(f.label)}">${escAttr(f.label)}</th>`).join('')}
+            <th class="col-id" title="Satır ID">ID</th>
           </tr>
         </thead>
         <tbody>
@@ -10718,6 +10721,7 @@ function renderDynamicGrid(tab, rec) {
               ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>`
               : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">✎</button>`;
             const rowFieldsEditable = canEdit && rowEditing;
+            const rowIdText = (row.id != null && row.id !== '') ? String(row.id) : '—';
             return `
               <tr class="${selected ? 'selected' : ''} ${saved && !rowEditing ? 'detail-row--saved' : 'detail-row--draft'}"
                   data-grid-row="${key}" data-grid-idx="${idx}" data-grid-pick="${key}">
@@ -10730,6 +10734,7 @@ function renderDynamicGrid(tab, rec) {
                 </td>` : ''}
                 <td class="col-seq">${idx + 1}</td>
                 ${fields.map((f) => `<td class="${detailColClass(f)}">${renderDetailCell(f, row, idx, key, rowFieldsEditable)}</td>`).join('')}
+                <td class="col-id"><span class="mono cell-ro">${escAttr(rowIdText)}</span></td>
               </tr>`;
           }).join('')}
         </tbody>
@@ -13898,10 +13903,17 @@ async function openForm(mode, opts = {}) {
   };
 
   function initSpecialTabs(src) {
+    const stripIds = mode === 'kopyala' || mode === 'yeni';
+    const keepOrStrip = (row) => {
+      if (!row || typeof row !== 'object') return row;
+      if (!stripIds) return { ...row };
+      const { id, ...rest } = row;
+      return rest;
+    };
     (screen.formTabs || []).forEach((tab) => {
       if (tab.kind === 'grid') {
         const raw = Array.isArray(src[tab.key]) ? src[tab.key] : [];
-        record[tab.key] = normalizeGridRows(tab, raw.map(({ id, ...rest }) => rest));
+        record[tab.key] = normalizeGridRows(tab, raw.map(keepOrStrip));
       }
       if (tab.kind === 'master-grid') {
         const gkey = tab.grid?.key || tab.key || '_detail';
@@ -13912,7 +13924,7 @@ async function openForm(mode, opts = {}) {
           slots: tab.grid?.slots,
         };
         const raw = Array.isArray(src[gkey]) ? src[gkey] : [];
-        record[gkey] = normalizeGridRows(gtab, raw.map(({ id, ...rest }) => rest));
+        record[gkey] = normalizeGridRows(gtab, raw.map(keepOrStrip));
       }
       if (tab.kind === 'bom-tree' || tab.kind === 'bom-workspace') {
         record.satirlar = Array.isArray(src.agac) && src.agac.length
@@ -13922,11 +13934,14 @@ async function openForm(mode, opts = {}) {
       }
       if (tab.kind === 'rota-flow' || tab.kind === 'rota-workspace') {
         record.operasyonlar = Array.isArray(src.operasyonlar)
-          ? src.operasyonlar.map((op) => ({
-            ...op,
-            bilesenler: Array.isArray(op.bilesenler) ? op.bilesenler.map(({ id, ...b }) => b) : [],
-            ekipmanlar: Array.isArray(op.ekipmanlar) ? op.ekipmanlar.map(({ id, ...e }) => e) : [],
-          }))
+          ? src.operasyonlar.map((op) => {
+            const base = keepOrStrip(op);
+            return {
+              ...base,
+              bilesenler: Array.isArray(op.bilesenler) ? op.bilesenler.map(keepOrStrip) : [],
+              ekipmanlar: Array.isArray(op.ekipmanlar) ? op.ekipmanlar.map(keepOrStrip) : [],
+            };
+          })
           : [];
       }
     });

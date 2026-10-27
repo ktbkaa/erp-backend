@@ -3009,6 +3009,17 @@ tr.selected td { background: var(--accent-soft); }
   font-weight: 600;
   color: #5a6774;
 }
+.detail-table .col-id {
+  width: 3.4rem;
+  min-width: 3.2rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #6a7784;
+  white-space: nowrap;
+}
+.detail-table thead .col-id {
+  text-align: center;
+}
 .detail-table tr.selected .col-seq { color: #f0d8dc; }
 /* İşlem kolonu sol başta — yatay kaydırırken sabit kalsın */
 .detail-table .col-acts {
