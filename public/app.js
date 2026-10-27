@@ -11088,6 +11088,20 @@ async function applyBomMaterialsToRota(screen, { quiet = false, force = false, o
   return true;
 }
 
+/** Operasyon üst alanları düz grid (grup başlıksız) — sıra tanım sırası. */
+function renderRotaPrimaryFields(fields, op, attrName = 'data-flow-field') {
+  const list = (fields || []).filter((f) => f && f.type !== 'static');
+  if (!list.length) return '';
+  const ctx = op || {};
+  return `<div class="erp-balanced rota-op-primary">
+    <div class="erp-section-grid">${list.map((f) => fieldShell(
+    f,
+    fieldControl(f, ctx[f.key], attrName, '', ctx),
+    ctx[f.key],
+  ).replace(/^<div class="/, `<div class="${fieldSpanClass(f)} `)).join('')}</div>
+  </div>`;
+}
+
 /** Operasyon üst alanları + Planlama / Gelişmiş accordion. materialsHtml üst alanlardan sonra gömülür. */
 function renderRotaOpFields(tab, op, { materialsHtml = '', headerBomId = '' } = {}) {
   const all = tab.fields || [];
@@ -11099,7 +11113,7 @@ function renderRotaOpFields(tab, op, { materialsHtml = '', headerBomId = '' } = 
   const showAdv = Boolean(state.rotaShowAdvanced);
   return `
     <div data-flow-editor>
-      ${renderGroupedFieldCards(primary, opCtx, 'data-flow-field')}
+      ${renderRotaPrimaryFields(primary, opCtx, 'data-flow-field')}
       ${materialsHtml || ''}
       ${planlama.length ? `
         <details class="rota-advanced" data-rota-section="planlama" ${showPlan ? 'open' : ''}>
