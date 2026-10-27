@@ -1406,6 +1406,45 @@ tr.selected td { background: var(--accent-soft); }
 .rota-op-body .erp-balanced {
   width: 100%;
 }
+.rota-advanced {
+  margin: 0.65rem 0 0.35rem;
+  border: 1px solid var(--line, #dde3ea);
+  border-radius: 0.4rem;
+  background: #fafcfd;
+  padding: 0.15rem 0.55rem 0.45rem;
+}
+.rota-advanced > summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #4a5a68;
+  padding: 0.35rem 0.15rem;
+  list-style: none;
+}
+.rota-advanced > summary::-webkit-details-marker { display: none; }
+.rota-advanced > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 0.35rem;
+  color: var(--accent, #0a6b5c);
+}
+.rota-advanced[open] > summary::before { content: '▾'; }
+.rota-advanced-body { padding-top: 0.25rem; }
+.rota-mat-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+}
+.rota-mat-row .detail-slot-pick {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.rota-mat-slot .btn.tiny.danger {
+  flex: 0 0 auto;
+  min-width: 2.6rem;
+}
+.rota-equip-block { margin-top: 0.75rem; }
 .mode-badge {
   display: inline-block;
   padding: 0.15rem 0.5rem;

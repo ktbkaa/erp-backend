@@ -2149,57 +2149,47 @@ const MODULES = [
               { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'], group: 'kimlik' },
               { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
               { key: 'alt_no', label: 'Alt no', group: 'kimlik' },
-              { key: 'alt_description', label: 'Alt açıklama', group: 'kimlik' },
-              { key: 'revision', label: 'Revizyon', group: 'kimlik' },
-              { key: 'brand_code', label: 'Marka', group: 'kimlik' },
-              { key: 'min_quantity', label: 'Min. miktar', type: 'number', group: 'olcu' },
-              { key: 'max_quantity', label: 'Maks. miktar', type: 'number', group: 'olcu' },
-              { key: 'valid_from', label: 'Geç. baş.', type: 'date', group: 'planlama' },
-              { key: 'valid_to', label: 'Geç. bitiş', type: 'date', group: 'planlama' },
-              { key: 'wo_change_mode', label: 'İE değişiklik', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'], group: 'status' },
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox', group: 'status' },
-              { key: 'template', label: 'Şablon', type: 'checkbox', group: 'status' },
-              { key: 'is_reverse', label: 'Ters rota', type: 'checkbox', group: 'status' },
               { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
-              { key: 'notes', label: 'Not', size: 'wide', group: 'status' },
             ],
             fields: [
               { key: 'line_no', label: 'Operasyon no', type: 'number', required: true, size: 'short', lead: true, group: 'kimlik' },
               { key: 'operation_code', label: 'Operasyon kodu', required: true, size: 'short', lead: true, group: 'kimlik' },
               { key: 'operation_name', label: 'Operasyon', required: true, lead: true, group: 'kimlik' },
-              { key: 'description', label: 'Açıklama', group: 'kimlik' },
               { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', group: 'organizasyon' },
               {
                 key: 'work_station_id', label: 'İş istasyonu', type: 'lookup', lookup: 'is-istasyonlari',
                 valueKey: 'id', labelKey: 'station_name', codeKey: 'station_code', group: 'organizasyon',
                 dependsOn: 'work_center_id', filterKey: 'work_center_id',
               },
-              {
-                key: 'output_item_id', label: 'Çıktı', type: 'lookup', lookup: 'items',
-                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', group: 'olcu',
-                filterByBomKey: 'product_bom_id', includeBomRoot: true,
-              },
               { key: 'op_time', label: 'Op birim süre', type: 'number', size: 'short', group: 'planlama' },
               { key: 'op_time_uom', label: 'Op. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
               { key: 'setup_time', label: 'Hazırlık süre', type: 'number', size: 'short', group: 'planlama' },
               { key: 'setup_time_uom', label: 'H. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
-              { key: 'wait_time', label: 'Bekleme süre', type: 'number', size: 'short', group: 'planlama' },
-              { key: 'wait_time_uom', label: 'B. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
-              { key: 'unload_time', label: 'Boşaltma süre', type: 'number', size: 'short', group: 'planlama' },
-              { key: 'unload_time_uom', label: 'Boş. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama' },
-              { key: 'sure_dk', label: 'Süre dk (eski)', type: 'number', size: 'short', group: 'planlama' },
-              { key: 'cost_factor_1', label: 'Maliyet katsayısı 1', type: 'number', size: 'short', group: 'finans' },
-              { key: 'cost_factor_2', label: 'Maliyet katsayısı 2', type: 'number', size: 'short', group: 'finans' },
-              { key: 'include_precost', label: 'Ön maliyet', type: 'checkbox', group: 'finans' },
-              { key: 'include_std_cost', label: 'Standart maliyet', type: 'checkbox', group: 'finans' },
-              { key: 'include_actual_cost', label: 'Fiili maliyette dikkate al', type: 'checkbox', group: 'finans' },
-              { key: 'is_disassemble', label: 'Demonte operasyon', type: 'checkbox', group: 'status' },
-              { key: 'is_subcontract', label: 'Fason operasyon', type: 'checkbox', group: 'status' },
-              { key: 'is_shared_op', label: 'Ortak operasyonda kullanılır', type: 'checkbox', group: 'status' },
-              { key: 'require_qc', label: 'Kalite kontrolü yapılacak', type: 'checkbox', group: 'status' },
-              { key: 'require_spc', label: 'SPC kontrolü yapılacak', type: 'checkbox', group: 'status' },
-              { key: 'note1', label: 'Not 1', group: 'status' },
-              { key: 'note2', label: 'Not 2', group: 'status' },
+              // Gelişmiş / nadiren kullanılan — varsayılan gizli
+              { key: 'description', label: 'Açıklama', group: 'kimlik', advanced: true },
+              {
+                key: 'output_item_id', label: 'Çıktı', type: 'lookup', lookup: 'items',
+                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', group: 'olcu', advanced: true,
+                filterByBomKey: 'product_bom_id', includeBomRoot: true,
+              },
+              { key: 'wait_time', label: 'Bekleme süre', type: 'number', size: 'short', group: 'planlama', advanced: true },
+              { key: 'wait_time_uom', label: 'B. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', advanced: true },
+              { key: 'unload_time', label: 'Boşaltma süre', type: 'number', size: 'short', group: 'planlama', advanced: true },
+              { key: 'unload_time_uom', label: 'Boş. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', advanced: true },
+              { key: 'sure_dk', label: 'Süre dk (eski)', type: 'number', size: 'short', group: 'planlama', advanced: true },
+              { key: 'cost_factor_1', label: 'Maliyet katsayısı 1', type: 'number', size: 'short', group: 'finans', advanced: true },
+              { key: 'cost_factor_2', label: 'Maliyet katsayısı 2', type: 'number', size: 'short', group: 'finans', advanced: true },
+              { key: 'include_precost', label: 'Ön maliyet', type: 'checkbox', group: 'finans', advanced: true },
+              { key: 'include_std_cost', label: 'Standart maliyet', type: 'checkbox', group: 'finans', advanced: true },
+              { key: 'include_actual_cost', label: 'Fiili maliyette dikkate al', type: 'checkbox', group: 'finans', advanced: true },
+              { key: 'is_disassemble', label: 'Demonte operasyon', type: 'checkbox', group: 'status', advanced: true },
+              { key: 'is_subcontract', label: 'Fason operasyon', type: 'checkbox', group: 'status', advanced: true },
+              { key: 'is_shared_op', label: 'Ortak operasyonda kullanılır', type: 'checkbox', group: 'status', advanced: true },
+              { key: 'require_qc', label: 'Kalite kontrolü yapılacak', type: 'checkbox', group: 'status', advanced: true },
+              { key: 'require_spc', label: 'SPC kontrolü yapılacak', type: 'checkbox', group: 'status', advanced: true },
+              { key: 'note1', label: 'Not 1', group: 'status', advanced: true },
+              { key: 'note2', label: 'Not 2', group: 'status', advanced: true },
             ],
             componentFields: [
               {
@@ -10922,6 +10912,184 @@ function renderBomTree(tab, rec) {
     </div>`;
 }
 
+/** Ürün ağacı satırlarından rotaya aktarılacak malzemeler (yaprak / iş emrine giden). */
+function collectBomMaterialsForRota(bomRec) {
+  if (!bomRec) return [];
+  let flat = Array.isArray(bomRec.satirlar) ? bomRec.satirlar.slice() : [];
+  if (!flat.length && Array.isArray(bomRec.agac)) {
+    const out = [];
+    const walk = (nodes) => {
+      (nodes || []).forEach((n) => {
+        out.push(n);
+        if (n.alt_satirlar?.length) walk(n.alt_satirlar);
+      });
+    };
+    walk(bomRec.agac);
+    flat = out;
+  }
+  flat = flat.filter((s) => s && s.component_item_id);
+  flat = flat.filter((s) => s.goes_to_wo !== false && s.goes_to_wo !== 0 && s.goes_to_wo !== '0');
+  const parentIds = new Set(flat.map((s) => s.parent_line_id).filter((v) => v != null && v !== ''));
+  const hasHierarchy = parentIds.size > 0;
+  const lines = hasHierarchy
+    ? flat.filter((s) => !parentIds.has(s.id))
+    : flat;
+  // Aynı stok birden fazla satırda olabilir → birleştir
+  const byItem = new Map();
+  lines.forEach((s) => {
+    const id = Number(s.component_item_id);
+    if (!Number.isFinite(id)) return;
+    const qty = Number(s.quantity != null && s.quantity !== '' ? s.quantity : s.net_quantity) || 0;
+    const uom = s.uom_code || s.item_uom_code || '';
+    const prev = byItem.get(id);
+    if (prev) {
+      prev.quantity = Number(prev.quantity || 0) + qty;
+    } else {
+      byItem.set(id, {
+        item_id: id,
+        quantity: qty,
+        uom_code: uom,
+        operation_seq: s.operation_seq,
+        operation_code: s.operation_code || '',
+      });
+    }
+  });
+  return [...byItem.values()];
+}
+
+function emptyRotaOperation(lineNo = 10) {
+  return {
+    line_no: lineNo,
+    operation_code: `OP${lineNo}`,
+    operation_name: 'Üretim',
+    op_time_uom: 'dk',
+    setup_time_uom: 'dk',
+    wait_time_uom: 'dk',
+    unload_time_uom: 'dk',
+    include_precost: true,
+    include_std_cost: true,
+    include_actual_cost: true,
+    cost_factor_1: 1,
+    cost_factor_2: 1,
+    bilesenler: [],
+    ekipmanlar: [],
+  };
+}
+
+function materialToRotaComp(m) {
+  return {
+    item_id: m.item_id,
+    quantity: m.quantity,
+    uom_code: m.uom_code || '',
+  };
+}
+
+/**
+ * Ağaç malzemelerini operasyonlara dağıt.
+ * BOM satırında op kodu/sırası varsa eşleştir; yoksa ilk operasyona yaz.
+ */
+function distributeBomMaterialsToOps(ops, materials, { replace = true } = {}) {
+  const list = Array.isArray(ops) ? ops.map((o) => ({
+    ...o,
+    bilesenler: Array.isArray(o.bilesenler) ? [...o.bilesenler] : [],
+    ekipmanlar: Array.isArray(o.ekipmanlar) ? [...o.ekipmanlar] : [],
+  })) : [];
+  if (!list.length) list.push(emptyRotaOperation(10));
+  if (replace) list.forEach((op) => { op.bilesenler = []; });
+
+  const unassigned = [];
+  (materials || []).forEach((m) => {
+    let idx = -1;
+    if (m.operation_code) {
+      idx = list.findIndex((o) => String(o.operation_code || '') === String(m.operation_code));
+    }
+    if (idx < 0 && m.operation_seq != null && m.operation_seq !== '') {
+      idx = list.findIndex((o) => Number(o.line_no) === Number(m.operation_seq));
+    }
+    if (idx >= 0) list[idx].bilesenler.push(materialToRotaComp(m));
+    else unassigned.push(m);
+  });
+  if (unassigned.length) {
+    list[0].bilesenler.push(...unassigned.map(materialToRotaComp));
+  }
+  return list;
+}
+
+async function loadBomRecordForRota(bomId) {
+  if (bomId == null || bomId === '') return null;
+  let bomRec = (state.lookupCache['urun-agaclari'] || [])
+    .find((a) => String(a.id) === String(bomId));
+  const thin = bomRec && !((bomRec.satirlar && bomRec.satirlar.length) || (bomRec.agac && bomRec.agac.length));
+  if (!bomRec || thin) {
+    try {
+      bomRec = await api(`/urun-agaclari/${bomId}`);
+      const cache = state.lookupCache['urun-agaclari'] || [];
+      const i = cache.findIndex((a) => String(a.id) === String(bomId));
+      if (i >= 0) cache[i] = bomRec;
+      else cache.push(bomRec);
+      state.lookupCache['urun-agaclari'] = cache;
+    } catch (_) {
+      /* cache’teki haliyle devam */
+    }
+  }
+  return bomRec || null;
+}
+
+/** Ürün ağacından operasyon malzemelerini getir (manuel giriş yerine). */
+async function applyBomMaterialsToRota(screen, { quiet = false, force = false } = {}) {
+  const tab = findRotaTab(screen);
+  if (!tab) return false;
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+  persistFlowEditor(state.formRecord, tab);
+  const bomId = state.formRecord.product_bom_id;
+  if (!bomId) {
+    if (!quiet) toast('Önce ürün ağacı seçin.');
+    return false;
+  }
+  const bomRec = await loadBomRecordForRota(bomId);
+  const materials = collectBomMaterialsForRota(bomRec);
+  if (!materials.length) {
+    if (!quiet) toast('Ürün ağacında aktarılacak malzeme satırı yok.');
+    return false;
+  }
+  const ops = Array.isArray(state.formRecord.operasyonlar) ? state.formRecord.operasyonlar : [];
+  const existingCount = ops.reduce((n, o) => n + ((o.bilesenler || []).filter((b) => b.item_id).length), 0);
+  if (existingCount && !force) {
+    if (!window.confirm(
+      `Operasyonlarda ${existingCount} malzeme var. Ağaçtan ${materials.length} satır ile değiştirilsin mi?\n(Gereksiz satırları sonra silebilirsiniz.)`,
+    )) return false;
+  }
+  state.formRecord.operasyonlar = distributeBomMaterialsToOps(ops, materials, { replace: true });
+  state.flowSel = 0;
+  state.flowCompSel = null;
+  state.flowEquipSel = null;
+  if (!quiet) {
+    toast(`${materials.length} malzeme ürün ağacından operasyonlara aktarıldı — şimdi operasyon detaylarını girin.`);
+  }
+  renderForm(screen);
+  persistActiveFormTab();
+  return true;
+}
+
+function renderRotaOpFields(tab, op) {
+  const all = tab.fields || [];
+  const primary = all.filter((f) => !f.advanced);
+  const advanced = all.filter((f) => f.advanced);
+  const showAdv = Boolean(state.rotaShowAdvanced);
+  return `
+    <div data-flow-editor>
+      ${renderGroupedFieldCards(primary, op, 'data-flow-field')}
+      ${advanced.length ? `
+        <details class="rota-advanced" ${showAdv ? 'open' : ''}>
+          <summary>Gelişmiş alanlar (${advanced.length})</summary>
+          <div class="rota-advanced-body">
+            ${renderGroupedFieldCards(advanced, op, 'data-flow-field')}
+          </div>
+        </details>` : ''}
+    </div>`;
+}
+
 function renderRotaFlow(tab, rec) {
   const ops = normalizeGridRows(
     { fields: tab.fields },
@@ -10951,6 +11119,7 @@ function renderRotaFlow(tab, rec) {
     labelKey: 'route_name',
     codeKey: 'route_code',
   };
+  const matTotal = ops.reduce((n, o) => n + (o.bilesenler || []).length, 0);
 
   return `
     <div class="rota-workspace">
@@ -10965,14 +11134,19 @@ function renderRotaFlow(tab, rec) {
         <aside class="rota-bom-side">
           <div class="section-label">Ürün ağacı (malzeme kaynağı)</div>
           ${renderBomPreviewTree(bomRec, mamul)}
-          <p class="toolbar-hint">Operasyon malzemeleri bu ağaçtan seçilir.</p>
+          <p class="toolbar-hint">Malzemeler ağaçtan otomatik aktarılır; gereksiz satırları operasyondan silebilirsiniz.</p>
           ${canEdit ? `
+            <div class="inline-toolbar" style="margin-top:.5rem;flex-wrap:wrap">
+              <button type="button" class="btn action" data-flow-act="agactan-malzeme" ${bomId ? '' : 'disabled'} title="Ağaç satırlarını operasyon malzemelerine yaz">
+                Ağaçtan malzemeleri getir
+              </button>
+            </div>
             <div class="section-label" style="margin-top:1rem">Şablon uygula</div>
             <div class="form-tab-fields">
               ${fieldShell(sablonField, fieldControl(sablonField, rec._sablon_rota_id, 'data-master', '', rec), rec._sablon_rota_id)}
             </div>
             <div class="inline-toolbar">
-              <button type="button" class="btn action" data-flow-act="sablon-uygula">Şablonu uygula</button>
+              <button type="button" class="btn action ghost" data-flow-act="sablon-uygula">Şablonu uygula</button>
             </div>
             <p class="toolbar-hint">Şablon operasyonları mevcut adımların yerine kopyalanır.</p>
           ` : ''}
@@ -10981,10 +11155,12 @@ function renderRotaFlow(tab, rec) {
           <div class="inline-toolbar">
             ${canEdit ? `
               <button type="button" class="btn action" data-flow-act="yeni-op">+ Operasyon</button>
+              <button type="button" class="btn action" data-flow-act="agactan-malzeme" ${bomId ? '' : 'disabled'}>Ağaçtan malzeme</button>
               ${sel != null ? `
                 <button type="button" class="btn action" data-flow-act="uygula-op">Kaydet</button>
                 <button type="button" class="btn action danger" data-flow-act="sil-op">Seçili operasyonu sil</button>
               ` : ''}
+              <span class="toolbar-hint">${matTotal ? `${matTotal} malzeme satırı` : 'Malzeme henüz yok — ağaçtan getirin'}</span>
             ` : ''}
           </div>
           <div class="rota-flow">
@@ -11002,18 +11178,17 @@ function renderRotaFlow(tab, rec) {
                 </button>
                 ${open ? `
                   <div class="rota-op-body">
-                    <div data-flow-editor>
-                      ${renderGroupedFieldCards(tab.fields || [], op, 'data-flow-field')}
-                    </div>
+                    ${renderRotaOpFields(tab, op)}
                     ${canEdit ? `
                       <div class="bom-editor-actions rota-editor-actions">
                         <button type="button" class="btn action" data-flow-act="uygula-op">Kaydet</button>
                         <button type="button" class="btn action danger" data-flow-act="sil-op">Operasyonu sil</button>
                       </div>` : ''}
-                    <div class="section-label">Bu adımın malzemeleri (ağaçtan)</div>
+                    <div class="section-label">Bu adımın malzemeleri</div>
                     <div class="inline-toolbar">
                       ${canEdit && bomId ? `
-                        <button type="button" class="btn action" data-flow-act="yeni-comp">+ Malzeme</button>
+                        <button type="button" class="btn action ghost" data-flow-act="agactan-malzeme">Ağaçtan yenile</button>
+                        <button type="button" class="btn action ghost" data-flow-act="yeni-comp">+ Elle malzeme</button>
                       ` : (!bomId ? '<span class="toolbar-hint">Önce ürün ağacı seçin.</span>' : '')}
                     </div>
                     ${(op.bilesenler || []).length ? op.bilesenler.map((b, ci) => {
@@ -11021,29 +11196,33 @@ function renderRotaFlow(tab, rec) {
     const picked = state.flowCompSel === ci;
     const qty = (b.quantity !== '' && b.quantity != null) ? b.quantity : '';
     return `
-                      <div class="detail-slot ${picked ? 'selected' : ''} ${st || b.item_id ? '' : 'detail-slot-empty'}" data-flow-comp="${ci}">
-                        <button type="button" class="detail-slot-pick" data-flow-comp-pick="${ci}">
-                          <span class="detail-slot-summary">${st ? `${tipBadge(st.item_type)} ${st.item_code} — ${st.item_name}` : (b.item_id || 'Malzeme seçin')}${qty !== '' ? ` · ${qty}${b.uom_code ? ` ${b.uom_code}` : ''}` : ''}</span>
-                        </button>
+                      <div class="detail-slot rota-mat-slot ${picked ? 'selected' : ''} ${st || b.item_id ? '' : 'detail-slot-empty'}" data-flow-comp="${ci}">
+                        <div class="rota-mat-row">
+                          <button type="button" class="detail-slot-pick" data-flow-comp-pick="${ci}">
+                            <span class="detail-slot-summary">${st ? `${tipBadge(st.item_type)} ${st.item_code} — ${st.item_name}` : (b.item_id || 'Malzeme seçin')}${qty !== '' ? ` · ${qty}${b.uom_code ? ` ${b.uom_code}` : ''}` : ''}</span>
+                          </button>
+                          ${canEdit ? `
+                            <button type="button" class="btn tiny danger" data-flow-act="sil-comp" data-flow-comp-idx="${ci}" title="Malzemeyi sil">Sil</button>
+                          ` : ''}
+                        </div>
                         ${picked && canEdit ? `
                           <div class="detail-slot-fields">
                             ${(tab.componentFields || []).map((f) => fieldShell(f, fieldControl(f, b[f.key], 'data-flow-comp-field', '', { ...op, ...b }), b[f.key])).join('')}
                             <div class="bom-editor-actions rota-editor-actions">
-                              <button type="button" class="btn action" data-flow-act="uygula-comp">Malzemeyi uygula</button>
-                              <button type="button" class="btn action ghost" data-flow-act="uygula-comp-ve-yeni">Uygula + yeni</button>
-                              <button type="button" class="btn action danger" data-flow-act="sil-comp">Sil</button>
+                              <button type="button" class="btn action" data-flow-act="uygula-comp">Kaydet</button>
                             </div>
                           </div>` : ''}
                       </div>`;
-  }).join('') : `<div class="detail-empty">${canEdit && bomId ? '«+ Malzeme» ile ağaçtan satır ekleyin.' : 'Malzeme yok.'}</div>`}
+  }).join('') : `<div class="detail-empty">${canEdit && bomId ? '«Ağaçtan malzemeleri getir» ile doldurun veya elle ekleyin.' : 'Malzeme yok.'}</div>`}
                     ${equipFields.length ? `
-                    <div class="section-label">Bu adımın ekipmanları</div>
-                    <div class="inline-toolbar">
-                      ${canEdit ? `
-                        <button type="button" class="btn action" data-flow-act="yeni-eq">+ Ekipman</button>
-                      ` : ''}
-                    </div>
-                    ${(op.ekipmanlar || []).length ? op.ekipmanlar.map((eq, ei) => {
+                    <details class="rota-advanced rota-equip-block">
+                      <summary>Ekipman (opsiyonel)${eqCount ? ` — ${eqCount}` : ''}</summary>
+                      <div class="inline-toolbar">
+                        ${canEdit ? `
+                          <button type="button" class="btn action ghost" data-flow-act="yeni-eq">+ Ekipman</button>
+                        ` : ''}
+                      </div>
+                      ${(op.ekipmanlar || []).length ? op.ekipmanlar.map((eq, ei) => {
     const picked = state.flowEquipSel === ei;
     const label = eq.equipment_code
       ? `${eq.equipment_code}${eq.equipment_name ? ` — ${eq.equipment_name}` : ''}`
@@ -11057,13 +11236,13 @@ function renderRotaFlow(tab, rec) {
                           <div class="detail-slot-fields">
                             ${equipFields.map((f) => fieldShell(f, fieldControl(f, eq[f.key], 'data-flow-equip-field', '', eq), eq[f.key])).join('')}
                             <div class="bom-editor-actions rota-editor-actions">
-                              <button type="button" class="btn action" data-flow-act="uygula-eq">Ekipmanı uygula</button>
-                              <button type="button" class="btn action ghost" data-flow-act="uygula-eq-ve-yeni">Uygula + yeni</button>
+                              <button type="button" class="btn action" data-flow-act="uygula-eq">Kaydet</button>
                               <button type="button" class="btn action danger" data-flow-act="sil-eq">Sil</button>
                             </div>
                           </div>` : ''}
                       </div>`;
-  }).join('') : `<div class="detail-empty">${canEdit ? '«+ Ekipman» ile satır ekleyin.' : 'Ekipman yok.'}</div>`}
+  }).join('') : `<div class="detail-empty">${canEdit ? 'Gerekirse ekipman ekleyin.' : 'Ekipman yok.'}</div>`}
+                    </details>
                     ` : ''}
                   </div>` : ''}
               </div>
@@ -12700,6 +12879,18 @@ function bindCascadeLookups(_screen) {
     refreshDependentLookups(scr, el);
     if (!_formLinking && fieldKey) {
       await applyFormLinkages(scr, fieldKey, el);
+    }
+
+    // Rota: ürün ağacı seçilince malzemeleri otomatik getir (manuel satır kalabalığını önle)
+    if (scr.id === 'routings' && masterKey === 'product_bom_id' && el.value
+        && state.formMode !== 'incele') {
+      const ops = Array.isArray(state.formRecord?.operasyonlar) ? state.formRecord.operasyonlar : [];
+      const existing = ops.reduce((n, o) => n + ((o.bilesenler || []).filter((b) => b.item_id).length), 0);
+      if (!existing) {
+        await applyBomMaterialsToRota(scr, { quiet: false, force: true }).catch(() => {});
+      } else {
+        toast('Ürün ağacı değişti — malzemeleri yenilemek için «Ağaçtan malzemeleri getir» kullanın.');
+      }
     }
 
     // Dil kodu → dil adı
@@ -15278,6 +15469,10 @@ function bindEvents() {
         applyRotaSablon(screen).catch((err) => toast(err.message || String(err)));
         return;
       }
+      if (act === 'agactan-malzeme') {
+        applyBomMaterialsToRota(screen).catch((err) => toast(err.message || String(err)));
+        return;
+      }
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
       const ops = Array.isArray(state.formRecord.operasyonlar) ? [...state.formRecord.operasyonlar] : [];
       if (act === 'yeni-op') {
@@ -15328,11 +15523,20 @@ function bindEvents() {
         state.flowEquipSel = null;
         state.formRecord.operasyonlar = ops;
       } else if (act === 'sil-comp') {
-        if (state.flowSel == null || state.flowCompSel == null) {
+        if (state.flowSel == null) {
+          toast('Önce operasyon seçin.');
+          return;
+        }
+        const idxAttr = flowAct.getAttribute('data-flow-comp-idx');
+        const compIdx = idxAttr != null && idxAttr !== ''
+          ? Number(idxAttr)
+          : state.flowCompSel;
+        if (compIdx == null || Number.isNaN(compIdx)) {
           toast('Bileşen seçin.');
           return;
         }
-        ops[state.flowSel].bilesenler.splice(state.flowCompSel, 1);
+        if (!ops[state.flowSel].bilesenler) ops[state.flowSel].bilesenler = [];
+        ops[state.flowSel].bilesenler.splice(compIdx, 1);
         state.flowCompSel = null;
         state.formRecord.operasyonlar = ops;
       } else if (act === 'yeni-eq') {
