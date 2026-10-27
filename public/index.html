@@ -155,6 +155,7 @@
         <button type="button" role="menuitem" data-tab-ctx="close-all" class="danger">Tümünü kapat</button>
       </div>
       <div class="tab-ctx-menu" id="listCtxMenu" role="menu" hidden></div>
+      <div class="tab-ctx-menu form-ctx-menu" id="formCtxMenu" role="menu" hidden></div>
 
       <main class="workspace-main">
         <section id="viewHome" class="view home-view">
@@ -304,19 +305,50 @@
               </div>
             </div>
             <div class="form-actions">
+              <div class="form-crud-actions" id="formCrudActions" aria-label="Kayıt işlemleri" hidden>
+                <button type="button" class="btn action ghost form-act-btn" data-form-act="yeni" id="btnFormYeni" hidden>Yeni</button>
+                <button type="button" class="btn action ghost form-act-btn" data-form-act="duzelt" id="btnFormDuzelt" hidden>Düzelt</button>
+                <button type="button" class="btn action ghost form-act-btn" data-form-act="kopyala" id="btnFormKopyala" hidden>Kopyala</button>
+                <button type="button" class="btn action danger form-act-btn" data-form-act="sil" id="btnFormSil" hidden>Sil</button>
+              </div>
+              <button type="button" class="btn action ghost form-act-btn" id="btnFormConvert" hidden>Dönüştür</button>
+              <button type="button" class="btn action ghost form-act-btn" id="btnFormSecondary" hidden>İkinci işlem</button>
+              <button type="button" class="btn action ghost form-act-btn" id="btnFormDetailFill" hidden>Detayları Doldur</button>
+              <button type="button" class="btn action ghost form-act-btn" id="btnFormBomRota" hidden>BOM/Rota Uygula</button>
+              <div class="form-save-group" id="formSaveGroup" role="group" aria-label="Kaydet seçenekleri">
+                <button type="button" class="btn action form-save-btn" id="btnFormSave" title="Kaydet (formda kal)">
+                  <span class="form-save-ico" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="1.6"/><path d="M5 2.5v4h6v-4"/><path d="M5.5 11.5h5"/></svg>
+                  </span>
+                  <span class="form-save-label">Kaydet</span>
+                </button>
+                <button type="button" class="btn action form-save-btn" id="btnFormSaveClose" title="Kaydet ve kapat">
+                  <span class="form-save-ico" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="1.5" y="3.5" width="9" height="9" rx="1.4"/><path d="M10.5 5.5h2.2a1.3 1.3 0 0 1 1.3 1.3v6.2a1.3 1.3 0 0 1-1.3 1.3H6.8a1.3 1.3 0 0 1-1.3-1.3V12"/><path d="M11.2 8.2 13.6 10.6M13.6 8.2 11.2 10.6" stroke-linecap="round"/></svg>
+                  </span>
+                  <span class="form-save-label">Kaydet kapat</span>
+                </button>
+                <button type="button" class="btn action form-save-btn" id="btnFormSaveNew" title="Kaydet ve yeni">
+                  <span class="form-save-ico" aria-hidden="true">
+                    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="1.5" y="3.5" width="9" height="9" rx="1.4"/><path d="M10.5 5.5h2.2a1.3 1.3 0 0 1 1.3 1.3v6.2a1.3 1.3 0 0 1-1.3 1.3H6.8a1.3 1.3 0 0 1-1.3-1.3V12"/><path d="M12.4 8.2v4M10.4 10.2h4" stroke-linecap="round"/></svg>
+                  </span>
+                  <span class="form-save-label">Kaydet yeni</span>
+                </button>
+              </div>
               <div class="info-menu-wrap" id="formInfoWrap">
-                <button type="button" class="btn ghost" id="btnFormCancel" title="Kayıt / ekran / log bilgisi" aria-haspopup="menu" aria-expanded="false">Bilgi &#9662;</button>
+                <button type="button" class="btn form-info-btn" id="btnFormCancel" title="Bilgi — kayıt / ekran / log" aria-label="Bilgi" aria-haspopup="menu" aria-expanded="false">
+                  <svg class="form-info-ico" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+                    <rect x="2.5" y="7.5" width="11.5" height="11.5" rx="1.6"/>
+                    <rect x="6.25" y="4.25" width="11.5" height="11.5" rx="1.6"/>
+                    <rect x="10" y="1" width="11.5" height="11.5" rx="1.6"/>
+                  </svg>
+                </button>
                 <div class="info-menu" id="formInfoMenu" role="menu" hidden>
                   <button type="button" role="menuitem" data-info-act="kayit">Kayıt bilgisi</button>
                   <button type="button" role="menuitem" data-info-act="ekran">Ekran bilgisi</button>
                   <button type="button" role="menuitem" data-info-act="log">Log bilgisi</button>
                 </div>
               </div>
-              <button type="button" class="btn action ghost" id="btnFormConvert" hidden>Dönüştür</button>
-              <button type="button" class="btn action ghost" id="btnFormSecondary" hidden>İkinci işlem</button>
-              <button type="button" class="btn action ghost" id="btnFormDetailFill" hidden>Detayları Doldur</button>
-              <button type="button" class="btn action ghost" id="btnFormBomRota" hidden>BOM/Rota Uygula</button>
-              <button type="button" class="btn action" id="btnFormSave">Kaydet</button>
             </div>
           </div>
           <div class="form-tabs-layout" id="formTabsLayout" hidden>
@@ -339,11 +371,10 @@
 
       <div class="doc-tabs-dock" id="docTabsDock">
         <button type="button" class="sidebar-tabs-toggle" id="btnOpenTabs" title="Açık sekmeleri göster" aria-label="Açık sekmeleri göster" aria-controls="tabBar" aria-expanded="false" disabled>
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 19V8"/>
-            <path d="M6 19h11"/>
-            <path d="M3.5 10.5 6 8l2.5 2.5"/>
-            <path d="M14.5 16.5 17 19l-2.5 2.5"/>
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+            <rect x="2.5" y="7.5" width="11.5" height="11.5" rx="1.6"/>
+            <rect x="6.25" y="4.25" width="11.5" height="11.5" rx="1.6"/>
+            <rect x="10" y="1" width="11.5" height="11.5" rx="1.6"/>
           </svg>
         </button>
         <nav class="doc-tabs doc-tabs--bottom" id="tabBar" aria-label="Açık sekmeler" hidden></nav>
@@ -398,18 +429,26 @@
         <h2 id="lookupBrowserTitle">Kayıt seç</h2>
         <button type="button" class="icon-btn" id="lookupBrowserClose" aria-label="Kapat">×</button>
       </header>
+      <div class="lookup-browser-actionbar" id="lookupBrowserActions" hidden>
+        <button type="button" class="btn action" data-lb-act="yeni">Yeni</button>
+        <button type="button" class="btn action ghost" data-lb-act="incele">İncele</button>
+        <button type="button" class="btn action ghost" data-lb-act="duzelt">Düzelt</button>
+        <button type="button" class="btn action ghost" data-lb-act="kopyala">Kopyala</button>
+        <button type="button" class="btn action danger" data-lb-act="sil">Sil</button>
+      </div>
       <div class="lookup-browser-toolbar">
         <input type="search" id="lookupBrowserSearch" class="lookup-browser-search" placeholder="Ara (kod / ad)…" autocomplete="off" />
         <span class="lookup-browser-count" id="lookupBrowserCount"></span>
       </div>
       <div class="cvt-body lookup-browser-body" id="lookupBrowserBody"></div>
-      <footer class="cvt-foot">
+      <footer class="cvt-foot lookup-browser-foot">
         <button type="button" class="btn ghost" id="lookupBrowserCancel">Vazgeç</button>
+        <button type="button" class="btn action" id="lookupBrowserSelect" disabled>Seç</button>
       </footer>
     </div>
   </div>
 
-  <script src="/app.js?v=20261026bomgap"></script>
+  <script src="/app.js?v=20261027rotaopbom"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

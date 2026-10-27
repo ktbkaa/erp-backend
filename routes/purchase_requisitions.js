@@ -45,7 +45,35 @@ async function insertTalepSatir(client, talepId, s, sira) {
   );
   if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
   const st = stok.rows[0];
-  await client.query(
+  const vals = [
+    talepId, s.item_id, s.quantity, s.uom_code || st.purchase_uom || st.uom_code, sira,
+    s.line_type || 'S', s.line_description || null,
+    s.delivery_date || null, s.warehouse_id || null, s.project_code || null, s.region || null,
+    s.tahmini_unit_price ?? s.unit_price ?? 0,
+    s.currency_code || null, s.exchange_rate ?? null, s.rate_type || null,
+    s.vat_rate ?? st.varsayilan_vat_rate ?? 20, s.vat_mode || 'Haric', s.discount_rate ?? 0,
+    s.supplier_item_code || null, s.supplier_item_name || null,
+    s.rezervasyon_type || null, s.rezervasyon_iliski_no || null,
+    s.item_code || st.item_code, s.item_name || st.item_name,
+  ];
+  const existingId = s.id != null && s.id !== '' ? Number(s.id) : null;
+  if (existingId && Number.isFinite(existingId)) {
+    const upd = await client.query(
+      `UPDATE purchase_requisition_lines SET
+          item_id=$3, quantity=$4, uom_code=$5, line_no=$6,
+          line_type=COALESCE($7,'S'), line_description=$8,
+          delivery_date=$9, warehouse_id=$10, project_code=$11, region=$12,
+          tahmini_unit_price=COALESCE($13::numeric,0), currency_code=$14, exchange_rate=$15, rate_type=$16,
+          vat_rate=COALESCE($17::numeric,20), vat_mode=COALESCE($18,'Haric'), discount_rate=COALESCE($19::numeric,0),
+          supplier_item_code=$20, supplier_item_name=$21,
+          rezervasyon_type=$22, rezervasyon_iliski_no=$23, item_code=$24, item_name=$25
+       WHERE id=$1 AND requisition_id=$2
+       RETURNING id`,
+      [existingId, ...vals]
+    );
+    if (upd.rows[0]) return upd.rows[0].id;
+  }
+  const ins = await client.query(
     `INSERT INTO purchase_requisition_lines (
         requisition_id, item_id, quantity, uom_code, line_no, line_type, line_description,
         delivery_date, warehouse_id, project_code, region,
@@ -59,19 +87,10 @@ async function insertTalepSatir(client, talepId, s, sira) {
         COALESCE($12::numeric,0),$13,$14,$15,
         COALESCE($16::numeric,20),COALESCE($17,'Haric'),COALESCE($18::numeric,0),
         $19,$20,$21,$22,$23,$24
-     )`,
-    [
-      talepId, s.item_id, s.quantity, s.uom_code || st.purchase_uom || st.uom_code, sira,
-      s.line_type || 'S', s.line_description || null,
-      s.delivery_date || null, s.warehouse_id || null, s.project_code || null, s.region || null,
-      s.tahmini_unit_price ?? s.unit_price ?? 0,
-      s.currency_code || null, s.exchange_rate ?? null, s.rate_type || null,
-      s.vat_rate ?? st.varsayilan_vat_rate ?? 20, s.vat_mode || 'Haric', s.discount_rate ?? 0,
-      s.supplier_item_code || null, s.supplier_item_name || null,
-      s.rezervasyon_type || null, s.rezervasyon_iliski_no || null,
-      s.item_code || st.item_code, s.item_name || st.item_name,
-    ]
+     ) RETURNING id`,
+    vals
   );
+  return ins.rows[0].id;
 }
 
 router.get('/', async (req, res) => {
@@ -124,7 +143,7 @@ router.post('/', async (req, res) => {
       const no = await sonrakiBelgeNo(client, 'SATINALMA_TALEP');
       const baslik = await client.query(
         `INSERT INTO purchase_requisitions (
-            requisition_no, plant_id, description, created_by_id, supplier_partner_id, company_id,
+            requisition_no, plant_id, description, created_by_user_id, supplier_partner_id, company_id,
             warehouse_id, project_code, region, target_delivery_date, requisition_date,
             currency_code, exchange_rate, rate_type, internal_note
          ) VALUES (
@@ -203,12 +222,22 @@ router.put('/:id', async (req, res) => {
         ]
       );
       if (Array.isArray(satirlar)) {
-        await client.query('DELETE FROM purchase_requisition_lines WHERE requisition_id=$1', [req.params.id]);
+        const keepIds = [];
         let sira = 1;
         for (const s of satirlar) {
           if (!s.item_id || s.quantity == null) continue;
-          await insertTalepSatir(client, Number(req.params.id), s, s.line_no || sira);
+          const lineId = await insertTalepSatir(client, Number(req.params.id), s, s.line_no || sira);
+          if (lineId != null) keepIds.push(lineId);
           sira += 1;
+        }
+        if (keepIds.length) {
+          await client.query(
+            `DELETE FROM purchase_requisition_lines
+             WHERE requisition_id=$1 AND NOT (id = ANY($2::int[]))`,
+            [req.params.id, keepIds]
+          );
+        } else {
+          await client.query('DELETE FROM purchase_requisition_lines WHERE requisition_id=$1', [req.params.id]);
         }
       }
       return Number(req.params.id);
@@ -228,7 +257,7 @@ router.post('/:id/onayla', async (req, res) => {
     const result = await withTransaction(pool, async (client) => {
       const upd = await client.query(
         `UPDATE purchase_requisitions SET
-            status='Onayli', approved_by_id=$2, onay_date=CURRENT_TIMESTAMP,
+            status='Onayli', approved_by_user_id=$2, onay_date=CURRENT_TIMESTAMP,
             supplier_partner_id=COALESCE($3, supplier_partner_id)
          WHERE id=$1 AND status='Acik' RETURNING *`,
         [req.params.id, approved_by.id, req.body.supplier_partner_id || null]

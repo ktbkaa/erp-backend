@@ -21,7 +21,7 @@ async function firsatGetir(id) {
         JOIN crm_opportunity_stages asama ON asama.id = f.stage_id
         LEFT JOIN partners c ON c.id = f.partner_id
         LEFT JOIN crm_leads a ON a.id = f.lead_id
-        LEFT JOIN users o ON o.id = f.created_by_id
+        LEFT JOIN users o ON o.id = f.created_by_user_id
         LEFT JOIN users t ON t.id = f.takip_by_id
         LEFT JOIN plants iy ON iy.id = f.plant_id
         WHERE f.id = $1
@@ -186,7 +186,7 @@ router.post('/', async (req, res) => {
                 `
                 INSERT INTO crm_opportunities
                     (firsat_code, firsat_name, konu, customer_type, partner_id, lead_id, stage_id,
-                     created_by_id, takip_by_id, beklenen_gelir, currency_code, degerlendirme,
+                     created_by_user_id, takip_by_id, beklenen_gelir, currency_code, degerlendirme,
                      target_kapatma_date, country, plant_id, description, status)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),COALESCE($11,'TRY'),$12,
                         $13,COALESCE($14,'TR'),$15,$16,'Acik')
@@ -196,7 +196,7 @@ router.post('/', async (req, res) => {
                     kod, b.firsat_name, b.konu || null, musteriTipi,
                     musteriTipi === 'Musteri' ? b.partner_id : null,
                     musteriTipi === 'Aday' ? b.lead_id : (b.lead_id || null),
-                    asamaId, b.created_by_id || null, b.takip_by_id || null,
+                    asamaId, b.created_by_user_id || b.created_by_id || null, b.takip_by_id || null,
                     b.beklenen_gelir, b.currency_code, b.degerlendirme ?? null,
                     b.target_kapatma_date || null, b.country || null, b.plant_id || null,
                     b.description || null,
@@ -240,7 +240,7 @@ router.put('/:id', async (req, res) => {
                     partner_id = COALESCE($5, partner_id),
                     lead_id = COALESCE($6, lead_id),
                     stage_id = COALESCE($7, stage_id),
-                    created_by_id = COALESCE($8, created_by_id),
+                    created_by_user_id = COALESCE($8, created_by_user_id),
                     takip_by_id = COALESCE($9, takip_by_id),
                     beklenen_gelir = COALESCE($10, beklenen_gelir),
                     currency_code = COALESCE($11, currency_code),
@@ -254,7 +254,7 @@ router.put('/:id', async (req, res) => {
                 [
                     req.params.id, b.firsat_name || null, b.konu ?? null, b.customer_type || null,
                     b.partner_id || null, b.lead_id || null, b.stage_id || null,
-                    b.created_by_id || null, b.takip_by_id || null, b.beklenen_gelir ?? null,
+                    b.created_by_user_id || b.created_by_id || null, b.takip_by_id || null, b.beklenen_gelir ?? null,
                     b.currency_code || null, b.degerlendirme ?? null, b.target_kapatma_date || null,
                     b.country ?? null, b.plant_id || null, b.description ?? null,
                 ]
