@@ -2922,14 +2922,15 @@ tr.selected td { background: var(--accent-soft); }
   font-weight: 500;
   color: var(--ink);
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--line);
+  border: 1px solid #c5d0de;
   border-radius: 0.45rem;
-  background: #fff;
+  background: #f5f8fc;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 .login-field input:focus {
   outline: none;
+  background: #fff;
   border-color: rgba(63, 135, 245, 0.55);
   box-shadow: 0 0 0 3px rgba(63, 135, 245, 0.16), 0 0 12px rgba(63, 135, 245, 0.18);
 }
