@@ -9991,8 +9991,34 @@ const LOOKUP_ENDPOINTS = {
   'onay-message-sablonlari': '/onay-message-sablonlari?is_active=true',
   'onay-durumlari': '/onay-durumlari?is_active=true',
   'onay-module-kullanimlari': '/onay-module-kullanimlari?is_active=true',
+  'onay-modul-kullanimlari': '/onay-module-kullanimlari?is_active=true',
   'onay-kurallari': '/onay-kurallari?is_active=true',
   'onay-ekranlari': '/onay-ekranlari',
+  'onay-rota-tanim': '/onay-rotalari',
+  'onay-message-template': '/onay-message-sablonlari?is_active=true',
+  // İK / HR tanımları
+  'hr-personel': '/hr-personel',
+  'hr-departmanlar': '/hr-org/departmanlar',
+  'hr-pozisyonlar': '/hr-org/pozisyonlar',
+  'hr-calisma-takvimleri': '/hr-takvim/takvimler',
+  'hr-vardiyalar': '/hr-takvim/vardiyalar',
+  'hr-resmi-tatiller': '/hr-takvim/tatiller',
+  'hr-izin-turleri': '/hr-izin/turler?is_active=true',
+  'hr-izin-talepleri': '/hr-izin/talepler',
+  'hr-bordro-donemleri': '/hr-bordro/donemler',
+  'hr-bordro-parametreleri': '/hr-bordro/parametreler',
+  'hr-bordro-calismalari': '/hr-bordro/calismalar',
+  'hr-is-ilanlari': '/hr-ise-alim/ilanlar',
+  'hr-adaylar': '/hr-ise-alim/adaylar',
+  'hr-cikis-nedenleri': '/hr-ise-alim/cikis-nedenleri',
+  'hr-ucretler': '/hr-bordro/ucretler',
+  'hr-avanslar': '/hr-bordro/avanslar',
+  // Diğer tanım ekranları
+  'belge-tipleri': '/belge-tipleri?is_active=true',
+  'finans-vergi-kodlari': '/finans-vergi-kodlari',
+  'finans-ulke-paketleri': '/finans-country/paketler',
+  'mali-yillar': '/muhasebe-donemleri/mali-yillar',
+  'muhasebe-donemleri': '/muhasebe-donemleri',
 };
 
 /** Ekran kaydı → ek lookup anahtarları (endpoint eşleşmesi yetmezse / alias) */
@@ -10016,6 +10042,21 @@ const SCREEN_LOOKUP_EXTRAS = {
   'fatura-kontrolleri': ['alis-faturalari', 'fatura-yonetimi', 'mal-kabuller', 'satin-alma-siparisleri'],
   routings: ['is-istasyonlari', 'rota-sablonlari', 'is-merkezleri', 'urun-agaclari'],
   'is-istasyonlari': ['is-merkezleri', 'is-istasyonlari'],
+  'hr-izin-turleri': ['hr-izin-turleri'],
+  'hr-personel': ['hr-personel'],
+  'hr-departmanlar': ['hr-departmanlar'],
+  'hr-pozisyonlar': ['hr-pozisyonlar'],
+  'hr-calisma-takvimleri': ['hr-calisma-takvimleri'],
+  'hr-vardiyalar': ['hr-vardiyalar'],
+  'hr-cikis-nedenleri': ['hr-cikis-nedenleri'],
+  'hr-bordro-donemleri': ['hr-bordro-donemleri'],
+  'hr-is-ilanlari': ['hr-is-ilanlari'],
+  'belge-tipleri': ['belge-tipleri'],
+  'finans-vergi-kodlari': ['finans-vergi-kodlari'],
+  'finans-ulke-paketleri': ['finans-ulke-paketleri'],
+  'mali-yillar': ['mali-yillar'],
+  'onay-rota-tanim': ['onay-rota-tanim', 'onay-rotalari'],
+  'onay-message-template': ['onay-message-template', 'onay-message-sablonlari'],
 };
 
 function invalidateLookups(...keys) {
@@ -10050,8 +10091,25 @@ function invalidateLookupsForScreen(screen) {
   else invalidateLookups(); // bilinmeyen ekran → tüm cache
 }
 
+/** Lookup anahtarı → API yolu. LOOKUP_ENDPOINTS yoksa ekran id / endpoint’ten çöz. */
+function resolveLookupEndpoint(key) {
+  if (!key) return null;
+  if (LOOKUP_ENDPOINTS[key]) return LOOKUP_ENDPOINTS[key];
+  // lookup: 'ekran-id' kalıbı — tanım ekranı endpoint’ini kullan
+  const screen = (typeof findScreen === 'function' && findScreen(key))
+    || (typeof screenForLookupKey === 'function' && screenForLookupKey(key))
+    || null;
+  if (screen?.endpoint) {
+    const base = typeof screenApiBase === 'function'
+      ? screenApiBase(screen.endpoint)
+      : String(screen.endpoint).split('?')[0];
+    return base || null;
+  }
+  return null;
+}
+
 async function fetchLookupKey(key) {
-  const ep = LOOKUP_ENDPOINTS[key];
+  const ep = resolveLookupEndpoint(key);
   if (!ep) {
     state.lookupCache[key] = state.lookupCache[key] || [];
     return state.lookupCache[key];
@@ -12953,7 +13011,28 @@ const LOOKUP_TO_SCREEN = {
   'fiyat-listeleri': 'fiyat-listeleri',
   'muhasebe-hesaplari': 'muhasebe-hesaplari',
   'onay-rolleri': 'onay-rolleri',
-  'onay-rotalari': 'onay-rotalari',
+  'onay-rotalari': 'onay-rota-tanim',
+  'onay-rota-tanim': 'onay-rota-tanim',
+  'onay-message-template': 'onay-message-template',
+  'onay-message-sablonlari': 'onay-message-template',
+  'hr-personel': 'hr-personel',
+  'hr-departmanlar': 'hr-departmanlar',
+  'hr-pozisyonlar': 'hr-pozisyonlar',
+  'hr-calisma-takvimleri': 'hr-calisma-takvimleri',
+  'hr-vardiyalar': 'hr-vardiyalar',
+  'hr-resmi-tatiller': 'hr-resmi-tatiller',
+  'hr-izin-turleri': 'hr-izin-turleri',
+  'hr-izin-talepleri': 'hr-izin-talepleri',
+  'hr-bordro-donemleri': 'hr-bordro-donemleri',
+  'hr-bordro-parametreleri': 'hr-bordro-parametreleri',
+  'hr-is-ilanlari': 'hr-is-ilanlari',
+  'hr-adaylar': 'hr-adaylar',
+  'hr-cikis-nedenleri': 'hr-cikis-nedenleri',
+  'belge-tipleri': 'belge-tipleri',
+  'finans-vergi-kodlari': 'finans-vergi-kodlari',
+  'finans-ulke-paketleri': 'finans-ulke-paketleri',
+  'mali-yillar': 'mali-yillar',
+  'muhasebe-donemleri': 'muhasebe-donemleri',
 };
 
 function screenForLookupKey(lookupKey) {
