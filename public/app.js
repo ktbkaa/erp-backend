@@ -12861,6 +12861,47 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'uom_code', label: 'Birim kodu', mono: true },
     { key: 'uom_name', label: 'Birim adı' },
   ],
+  'hr-izin-turleri': [
+    { key: 'leave_code', label: 'Kod', mono: true },
+    { key: 'leave_name', label: 'Ad' },
+    { key: 'is_paid', label: 'Ücretli' },
+    { key: 'accrual_method', label: 'Hak ediş' },
+  ],
+  'hr-personel': [
+    { key: 'employee_no', label: 'Sicil', mono: true },
+    { key: 'first_name', label: 'Ad' },
+    { key: 'last_name', label: 'Soyad' },
+    { key: 'department_name', label: 'Departman' },
+  ],
+  'hr-departmanlar': [
+    { key: 'department_code', label: 'Kod', mono: true },
+    { key: 'department_name', label: 'Ad' },
+  ],
+  'hr-pozisyonlar': [
+    { key: 'position_code', label: 'Kod', mono: true },
+    { key: 'position_name', label: 'Ad' },
+  ],
+  'hr-vardiyalar': [
+    { key: 'shift_code', label: 'Kod', mono: true },
+    { key: 'shift_name', label: 'Ad' },
+  ],
+  'hr-calisma-takvimleri': [
+    { key: 'calendar_code', label: 'Kod', mono: true },
+    { key: 'calendar_name', label: 'Ad' },
+  ],
+  'hr-cikis-nedenleri': [
+    { key: 'reason_code', label: 'Kod', mono: true },
+    { key: 'reason_name', label: 'Ad' },
+  ],
+  'hr-bordro-donemleri': [
+    { key: 'period_code', label: 'Dönem', mono: true },
+    { key: 'year_no', label: 'Yıl' },
+    { key: 'month_no', label: 'Ay' },
+  ],
+  'hr-is-ilanlari': [
+    { key: 'requisition_no', label: 'No', mono: true },
+    { key: 'title', label: 'Başlık' },
+  ],
   countries: [
     { key: 'country_code', label: 'Ülke kodu', mono: true },
     { key: 'country_name', label: 'Ülke adı' },
