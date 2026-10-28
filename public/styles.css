@@ -2924,8 +2924,8 @@ tr.selected td { background: var(--accent-soft); }
 }
 .login-field input:focus {
   outline: none;
-  border-color: rgba(63, 135, 245, 0.45);
-  box-shadow: 0 0 0 2px rgba(63, 135, 245, 0.08), 0 0 10px rgba(63, 135, 245, 0.1);
+  border-color: rgba(63, 135, 245, 0.55);
+  box-shadow: 0 0 0 3px rgba(63, 135, 245, 0.16), 0 0 12px rgba(63, 135, 245, 0.18);
 }
 .login-error {
   margin: 0;
