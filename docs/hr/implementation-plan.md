@@ -25,7 +25,7 @@
 | 4 | Ücret, avans, bordro motoru | Tamam (TR-2025 parametre seti) |
 | 5 | İşe alım, onboarding, zimmet | Tamam |
 | 6 | İşten çıkış / ön hesaplaşma | Tamam (uzman onayı zorunlu notu ile) |
-| 7 | Test + kullanıcı kılavuzu + PDF | Devam |
+| 7 | Test + kullanıcı kılavuzu + PDF | Tamam (birim 5/5, smoke OK, IK_Modul_Rehberi.pdf) |
 
 ## Teknik kararlar
 
