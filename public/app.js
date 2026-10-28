@@ -6900,6 +6900,8 @@ const state = {
   detailRows: [],
   openTabs: [],
   activeTabKey: null,
+  /** Alt sekme şeridi varsayılan açık; kullanıcı kapatırsa false */
+  docTabsPreferOpen: true,
   formContext: null,
   formActiveTab: null,
   lookupCache: {},
@@ -7650,12 +7652,11 @@ function setDocTabsOpen(open) {
   }
 }
 
+/** Alt sekme şeridi: varsayılan açık; kullanıcı isteğe göre kapatır. */
 function toggleDocTabs() {
-  setDocTabsOpen(!document.body.classList.contains('doc-tabs-open'));
-}
-
-function hideDocTabsWhileWorking() {
-  if (document.body.classList.contains('doc-tabs-open')) setDocTabsOpen(false);
+  const next = !document.body.classList.contains('doc-tabs-open');
+  state.docTabsPreferOpen = next;
+  setDocTabsOpen(next);
 }
 
 const TAB_GLYPH_LIST = `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3.5" width="9" height="9" rx="1.3"/><path d="M7.5 2h5.2a1.3 1.3 0 0 1 1.3 1.3V10"/></svg>`;
@@ -7684,14 +7685,9 @@ function renderTabBar() {
       <span class="tab-close" data-tab-close-key="${t.key}" title="Sekmeyi kapat" aria-label="Sekmeyi kapat">×</span>
     </button>`;
   }).join('');
-  // İçerik varken varsayılan gizli; yalnızca kullanıcı açtıysa görünür
-  const open = document.body.classList.contains('doc-tabs-open');
-  bar.hidden = !open;
-  const btn = $('#btnOpenTabs');
-  if (btn) {
-    btn.disabled = false;
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
+  // Varsayılan açık; kullanıcı gizlediyse (docTabsPreferOpen=false) kapalı kalır
+  if (state.docTabsPreferOpen === undefined) state.docTabsPreferOpen = true;
+  setDocTabsOpen(state.docTabsPreferOpen !== false);
 }
 
 function escapeHtml(str) {
@@ -15616,19 +15612,6 @@ function bindEvents() {
     }
     toggleDocTabs();
   });
-
-  // Form / liste ile uğraşırken alt sekme şeridini gizle
-  const workspaceMain = document.querySelector('.workspace-main');
-  if (workspaceMain && !workspaceMain.dataset.tabsHideBound) {
-    workspaceMain.dataset.tabsHideBound = '1';
-    const hideOnInteract = (e) => {
-      if (e.target.closest('#tabBar, #btnOpenTabs, #tabCtxMenu')) return;
-      hideDocTabsWhileWorking();
-    };
-    workspaceMain.addEventListener('pointerdown', hideOnInteract, true);
-    workspaceMain.addEventListener('focusin', hideOnInteract, true);
-    workspaceMain.addEventListener('keydown', hideOnInteract, true);
-  }
 
   $('#btnApplyFilter').addEventListener('click', async () => {
     const screen = findScreen(state.screenId);

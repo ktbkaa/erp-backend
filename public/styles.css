@@ -394,7 +394,7 @@ body.doc-tabs-open .sidebar-tabs-toggle {
   overflow: hidden;
 }
 
-/* Alt belge sekmeleri — ince şerit, yuvarlak üst köşe; çalışma sırasında gizlenir */
+/* Alt belge sekmeleri — ince şerit, yuvarlak üst köşe; varsayılan açık, isteğe göre gizlenir */
 .doc-tabs {
   display: flex;
   gap: 0.22rem;
