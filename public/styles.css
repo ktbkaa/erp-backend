@@ -1245,12 +1245,12 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 }
 .filter-field select, .filter-field input {
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid #c5d0de;
   border-radius: 0.35rem;
   padding: 0.28rem 0.45rem;
   font: inherit;
   font-size: 0.82rem;
-  background: #fff;
+  background: #f5f8fc;
   min-width: 0;
   height: 1.7rem;
 }
@@ -1260,16 +1260,22 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 .field input, .field select, .field textarea,
 .detail-scroll input {
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid #c5d0de;
   border-radius: 0.5rem;
   padding: 0.45rem 0.55rem;
   font: inherit;
-  background: #fff;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background: #f5f8fc;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.field input:hover, .field select:hover, .field textarea:hover,
+.detail-scroll input:hover {
+  border-color: #aeb9ca;
+  background: #f0f4fa;
 }
 .field input:focus, .field select:focus, .field textarea:focus,
 .detail-scroll input:focus {
   outline: none;
+  background: #fff;
   border-color: rgba(63, 135, 245, 0.55);
   box-shadow: 0 0 0 3px rgba(63, 135, 245, 0.16), 0 0 12px rgba(63, 135, 245, 0.18);
 }
