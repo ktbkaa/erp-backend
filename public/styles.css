@@ -1270,8 +1270,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 .field input:focus, .field select:focus, .field textarea:focus,
 .detail-scroll input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  border-color: rgba(63, 135, 245, 0.45);
+  box-shadow: 0 0 0 2px rgba(63, 135, 245, 0.08), 0 0 10px rgba(63, 135, 245, 0.1);
 }
 .filter-values {
   display: grid;
@@ -2923,8 +2923,9 @@ tr.selected td { background: var(--accent-soft); }
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .login-field input:focus {
-  border-color: var(--sidebar-ring);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  outline: none;
+  border-color: rgba(63, 135, 245, 0.45);
+  box-shadow: 0 0 0 2px rgba(63, 135, 245, 0.08), 0 0 10px rgba(63, 135, 245, 0.1);
 }
 .login-error {
   margin: 0;
@@ -3741,9 +3742,7 @@ body.form-solo .form-tab-nav .form-tab-btn {
 .info-menu button:hover { background: var(--sidebar-active); color: var(--ink); }
 
 .field[data-field-key]:focus-within {
-  outline: 1px dashed var(--sidebar-ring);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: none;
 }
 
 @media (max-width: 900px) {
