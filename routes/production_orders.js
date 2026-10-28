@@ -788,6 +788,16 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
                 const ciktiDepo = ckk.id;
                 const hedefDepo = await ckkHedefDepoCozumle(client, op.output_item_id, emir.plant_id);
+                // CKK/hedef depo izinlerini otomatik aç (kalite akışı)
+                for (const wid of [ciktiDepo, hedefDepo?.id].filter(Boolean)) {
+                    await client.query(
+                        `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+                         SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+                           SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
+                         )`,
+                        [op.output_item_id, wid, emir.plant_id]
+                    );
+                }
                 const h = await stokHareketOlustur(client, {
                     hareketTipi: 'URETIM_GIRIS',
                     isYeriId: emir.plant_id,
@@ -795,6 +805,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                     belgeTipi: 'URETIM_EMRI_OP',
                     belgeId: op.id,
                     description: `${emir.order_no} / ${op.operation_code} çıktı → Çıkış Kalite`,
+                    depoZorunluAtla: true,
                     satirlar: [{
                         item_id: op.output_item_id,
                         quantity,
@@ -975,6 +986,15 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
             const ckk = await ckkDepoCozumle(client, emir.plant_id);
             if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
             const hedefDepo = await ckkHedefDepoCozumle(client, op.output_item_id, emir.plant_id);
+            for (const wid of [ckk.id, hedefDepo?.id].filter(Boolean)) {
+                await client.query(
+                    `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+                     SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+                       SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
+                     )`,
+                    [op.output_item_id, wid, emir.plant_id]
+                );
+            }
             const h = await stokHareketOlustur(client, {
                 hareketTipi: 'URETIM_GIRIS',
                 isYeriId: emir.plant_id,
@@ -982,6 +1002,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
                 belgeTipi: 'URETIM_EMRI_OP',
                 belgeId: op.id,
                 description: `${emir.order_no} / ${op.operation_code} çıktı → Çıkış Kalite`,
+                depoZorunluAtla: true,
                 satirlar: [{
                     item_id: op.output_item_id,
                     quantity,
