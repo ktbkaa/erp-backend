@@ -429,4 +429,94 @@ router.post('/cikislar/:id/onayla', async (req, res) => {
   }
 });
 
+// ---- Çıkış nedenleri (parametre) ----
+router.get('/cikis-nedenleri', async (req, res) => {
+  try {
+    const firmaId = firmaIdFromReq(req);
+    const r = await pool.query(
+      `SELECT * FROM hr_termination_reasons
+       WHERE (company_id IS NULL OR company_id=$1 OR $1 IS NULL)
+       ORDER BY reason_code`,
+      [firmaId || null],
+    );
+    res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.get('/cikis-nedenleri/:id', async (req, res) => {
+  try {
+    const r = await pool.query(`SELECT * FROM hr_termination_reasons WHERE id=$1`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Neden bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.post('/cikis-nedenleri', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const firmaId = firmaIdFromReq(req) || b.company_id || null;
+    if (!b.reason_code || !b.reason_name) {
+      return res.status(400).json({ hata: 'reason_code ve reason_name zorunlu.' });
+    }
+    const r = await pool.query(
+      `INSERT INTO hr_termination_reasons (
+         company_id, country_code, reason_code, reason_name,
+         severance_default, notice_default, requires_document, is_active, description
+       ) VALUES (
+         $1, COALESCE($2,'TR'), $3, $4,
+         COALESCE($5,FALSE), COALESCE($6,FALSE), COALESCE($7,FALSE), COALESCE($8,TRUE), $9
+       ) RETURNING *`,
+      [
+        firmaId, b.country_code, b.reason_code, b.reason_name,
+        b.severance_default, b.notice_default, b.requires_document, b.is_active, b.description || null,
+      ],
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.put('/cikis-nedenleri/:id', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const r = await pool.query(
+      `UPDATE hr_termination_reasons SET
+         reason_name = COALESCE($2, reason_name),
+         severance_default = COALESCE($3, severance_default),
+         notice_default = COALESCE($4, notice_default),
+         requires_document = COALESCE($5, requires_document),
+         is_active = COALESCE($6, is_active),
+         description = COALESCE($7, description),
+         country_code = COALESCE($8, country_code)
+       WHERE id=$1 RETURNING *`,
+      [
+        req.params.id, b.reason_name, b.severance_default, b.notice_default,
+        b.requires_document, b.is_active, b.description, b.country_code,
+      ],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Neden bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.delete('/cikis-nedenleri/:id', async (req, res) => {
+  try {
+    const r = await pool.query(
+      `UPDATE hr_termination_reasons SET is_active=FALSE WHERE id=$1 RETURNING *`,
+      [req.params.id],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Neden bulunamadı.' });
+    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
 module.exports = router;

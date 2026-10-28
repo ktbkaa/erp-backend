@@ -117,6 +117,16 @@ router.get('/vardiyalar', async (req, res) => {
   }
 });
 
+router.get('/vardiyalar/:id', async (req, res) => {
+  try {
+    const r = await pool.query(`SELECT * FROM hr_shifts WHERE id=$1`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Vardiya bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
 router.post('/vardiyalar', async (req, res) => {
   try {
     const b = req.body || {};
@@ -130,17 +140,58 @@ router.post('/vardiyalar', async (req, res) => {
         `INSERT INTO hr_shifts (
            company_id, shift_code, shift_name, start_time, end_time, break_minutes,
            crosses_midnight, net_hours, is_active, description
-         ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,60),COALESCE($7,FALSE),$8,TRUE,$9)
+         ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,60),COALESCE($7,FALSE),$8,COALESCE($9,TRUE),$10)
          RETURNING id`,
         [
           firmaId, kod, b.shift_name, b.start_time, b.end_time, b.break_minutes,
-          b.crosses_midnight, b.net_hours || null, b.description || null,
+          b.crosses_midnight, b.net_hours || null, b.is_active, b.description || null,
         ],
       );
       return ins.rows[0].id;
     });
     const row = await pool.query(`SELECT * FROM hr_shifts WHERE id=$1`, [id]);
     res.status(201).json(row.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.put('/vardiyalar/:id', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const r = await pool.query(
+      `UPDATE hr_shifts SET
+         shift_name = COALESCE($2, shift_name),
+         start_time = COALESCE($3, start_time),
+         end_time = COALESCE($4, end_time),
+         break_minutes = COALESCE($5, break_minutes),
+         crosses_midnight = COALESCE($6, crosses_midnight),
+         net_hours = COALESCE($7, net_hours),
+         is_active = COALESCE($8, is_active),
+         description = COALESCE($9, description)
+       WHERE id=$1 RETURNING *`,
+      [
+        req.params.id, b.shift_name, b.start_time, b.end_time, b.break_minutes,
+        b.crosses_midnight, b.net_hours, b.is_active, b.description,
+      ],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Vardiya bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.delete('/vardiyalar/:id', async (req, res) => {
+  try {
+    const used = await pool.query(`SELECT 1 FROM hr_employees WHERE shift_id=$1 LIMIT 1`, [req.params.id]);
+    if (used.rows[0]) {
+      await pool.query(`UPDATE hr_shifts SET is_active=FALSE WHERE id=$1`, [req.params.id]);
+      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+    }
+    const r = await pool.query(`DELETE FROM hr_shifts WHERE id=$1 RETURNING id`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Vardiya bulunamadı.' });
+    res.json({ silindi: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -174,6 +225,23 @@ router.get('/vardiya-atamalari', async (req, res) => {
   }
 });
 
+router.get('/vardiya-atamalari/:id', async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT a.*, e.employee_no, e.first_name, e.last_name, s.shift_code, s.shift_name
+       FROM hr_shift_assignments a
+       JOIN hr_employees e ON e.id = a.employee_id
+       JOIN hr_shifts s ON s.id = a.shift_id
+       WHERE a.id=$1`,
+      [req.params.id],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Atama bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
 router.post('/vardiya-atamalari', async (req, res) => {
   try {
     const b = req.body || {};
@@ -192,6 +260,34 @@ router.post('/vardiya-atamalari', async (req, res) => {
   }
 });
 
+router.put('/vardiya-atamalari/:id', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const r = await pool.query(
+      `UPDATE hr_shift_assignments SET
+         shift_id = COALESCE($2, shift_id),
+         start_date = COALESCE($3, start_date),
+         end_date = COALESCE($4, end_date)
+       WHERE id=$1 RETURNING *`,
+      [req.params.id, b.shift_id, b.start_date, b.end_date],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Atama bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.delete('/vardiya-atamalari/:id', async (req, res) => {
+  try {
+    const r = await pool.query(`DELETE FROM hr_shift_assignments WHERE id=$1 RETURNING id`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Atama bulunamadı.' });
+    res.json({ silindi: true, id: Number(req.params.id) });
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
 router.get('/tatiller', async (req, res) => {
   try {
     const firmaId = firmaIdFromReq(req);
@@ -204,6 +300,16 @@ router.get('/tatiller', async (req, res) => {
       [firmaId || null, year],
     );
     res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.get('/tatiller/:id', async (req, res) => {
+  try {
+    const r = await pool.query(`SELECT * FROM hr_public_holidays WHERE id=$1`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Tatil bulunamadı.' });
+    res.json(r.rows[0]);
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -229,6 +335,39 @@ router.post('/tatiller', async (req, res) => {
       [firmaId, b.country_code, b.holiday_date, b.holiday_name, b.is_half_day, year],
     );
     res.status(201).json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.put('/tatiller/:id', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const r = await pool.query(
+      `UPDATE hr_public_holidays SET
+         holiday_date = COALESCE($2, holiday_date),
+         holiday_name = COALESCE($3, holiday_name),
+         is_half_day = COALESCE($4, is_half_day),
+         year_no = COALESCE($5, year_no),
+         country_code = COALESCE($6, country_code)
+       WHERE id=$1 RETURNING *`,
+      [
+        req.params.id, b.holiday_date, b.holiday_name, b.is_half_day,
+        b.year_no, b.country_code,
+      ],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Tatil bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.delete('/tatiller/:id', async (req, res) => {
+  try {
+    const r = await pool.query(`DELETE FROM hr_public_holidays WHERE id=$1 RETURNING id`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Tatil bulunamadı.' });
+    res.json({ silindi: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

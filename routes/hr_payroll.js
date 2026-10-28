@@ -8,15 +8,66 @@ const {
   getParamSet, loadParams, calculateEmployeePayroll, calculateForEmployee, round2,
 } = require('../src/services/hrPayrollService');
 
+async function parametreSetGetir(id) {
+  const set = await pool.query(`SELECT * FROM hr_payroll_param_sets WHERE id=$1`, [id]);
+  if (!set.rows[0]) return null;
+  const vals = await pool.query(
+    `SELECT id, param_key, param_value, value_text, description
+     FROM hr_payroll_param_values WHERE param_set_id=$1 ORDER BY param_key`,
+    [id],
+  );
+  const brackets = await pool.query(
+    `SELECT id, line_no, up_to_amount, rate, fixed_amount
+     FROM hr_payroll_tax_brackets WHERE param_set_id=$1 ORDER BY line_no`,
+    [id],
+  );
+  return {
+    ...set.rows[0],
+    param_values: vals.rows,
+    tax_brackets: brackets.rows,
+    values: Object.fromEntries(vals.rows.map((v) => [v.param_key, Number(v.param_value)])),
+    brackets: brackets.rows,
+  };
+}
+
+async function syncParamChildren(client, setId, paramValues, taxBrackets) {
+  if (Array.isArray(paramValues)) {
+    await client.query(`DELETE FROM hr_payroll_param_values WHERE param_set_id=$1`, [setId]);
+    for (const v of paramValues) {
+      if (!v.param_key || v.param_value == null) continue;
+      await client.query(
+        `INSERT INTO hr_payroll_param_values (param_set_id, param_key, param_value, value_text, description)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [setId, v.param_key, v.param_value, v.value_text || null, v.description || null],
+      );
+    }
+  }
+  if (Array.isArray(taxBrackets)) {
+    await client.query(`DELETE FROM hr_payroll_tax_brackets WHERE param_set_id=$1`, [setId]);
+    let line = 10;
+    for (const b of taxBrackets) {
+      if (b.rate == null) continue;
+      await client.query(
+        `INSERT INTO hr_payroll_tax_brackets (param_set_id, line_no, up_to_amount, rate, fixed_amount)
+         VALUES ($1,$2,$3,$4,COALESCE($5,0))`,
+        [setId, b.line_no || line, b.up_to_amount ?? null, b.rate, b.fixed_amount],
+      );
+      line += 10;
+    }
+  }
+}
+
 // ---- Parametre setleri ----
 router.get('/parametreler', async (req, res) => {
   try {
-    const country = req.query.country_code || 'TR';
-    const sets = await pool.query(
-      `SELECT * FROM hr_payroll_param_sets WHERE country_code=$1 ORDER BY effective_from DESC`,
-      [country],
+    const country = req.query.country_code;
+    const r = await pool.query(
+      `SELECT * FROM hr_payroll_param_sets
+       WHERE ($1::text IS NULL OR country_code=$1)
+       ORDER BY country_code, effective_from DESC`,
+      [country || null],
     );
-    res.json(sets.rows);
+    res.json(r.rows);
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -24,10 +75,97 @@ router.get('/parametreler', async (req, res) => {
 
 router.get('/parametreler/:id', async (req, res) => {
   try {
-    const set = await pool.query(`SELECT * FROM hr_payroll_param_sets WHERE id=$1`, [req.params.id]);
-    if (!set.rows[0]) return res.status(404).json({ hata: 'Parametre seti bulunamadı.' });
-    const params = await loadParams(pool, set.rows[0].id);
-    res.json({ ...set.rows[0], values: params.map, brackets: params.brackets });
+    const row = await parametreSetGetir(req.params.id);
+    if (!row) return res.status(404).json({ hata: 'Parametre seti bulunamadı.' });
+    res.json(row);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.post('/parametreler', async (req, res) => {
+  try {
+    const b = req.body || {};
+    if (!b.country_code || !b.set_code || !b.set_name || !b.effective_from) {
+      return res.status(400).json({ hata: 'country_code, set_code, set_name, effective_from zorunlu.' });
+    }
+    const id = await withTransaction(pool, async (client) => {
+      const ins = await client.query(
+        `INSERT INTO hr_payroll_param_sets (
+           country_code, set_code, set_name, effective_from, effective_to,
+           source_url, source_note, is_active
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,TRUE))
+         RETURNING id`,
+        [
+          b.country_code, b.set_code, b.set_name, b.effective_from, b.effective_to || null,
+          b.source_url || null, b.source_note || null, b.is_active,
+        ],
+      );
+      const setId = ins.rows[0].id;
+      await syncParamChildren(
+        client,
+        setId,
+        b.param_values || b.satirlar || null,
+        b.tax_brackets || null,
+      );
+      return setId;
+    });
+    res.status(201).json(await parametreSetGetir(id));
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.put('/parametreler/:id', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const id = await withTransaction(pool, async (client) => {
+      const upd = await client.query(
+        `UPDATE hr_payroll_param_sets SET
+           set_name = COALESCE($2, set_name),
+           effective_from = COALESCE($3, effective_from),
+           effective_to = COALESCE($4, effective_to),
+           source_url = COALESCE($5, source_url),
+           source_note = COALESCE($6, source_note),
+           is_active = COALESCE($7, is_active)
+         WHERE id=$1 RETURNING id`,
+        [
+          req.params.id, b.set_name, b.effective_from, b.effective_to,
+          b.source_url, b.source_note, b.is_active,
+        ],
+      );
+      if (!upd.rows[0]) {
+        const err = new Error('Parametre seti bulunamadı.');
+        err.status = 404;
+        throw err;
+      }
+      await syncParamChildren(
+        client,
+        Number(req.params.id),
+        b.param_values || b.satirlar,
+        b.tax_brackets,
+      );
+      return Number(req.params.id);
+    });
+    res.json(await parametreSetGetir(id));
+  } catch (err) {
+    res.status(err.status || 500).json({ hata: err.message });
+  }
+});
+
+router.delete('/parametreler/:id', async (req, res) => {
+  try {
+    const used = await pool.query(
+      `SELECT 1 FROM hr_payroll_runs WHERE param_set_id=$1 LIMIT 1`,
+      [req.params.id],
+    );
+    if (used.rows[0]) {
+      await pool.query(`UPDATE hr_payroll_param_sets SET is_active=FALSE WHERE id=$1`, [req.params.id]);
+      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+    }
+    const r = await pool.query(`DELETE FROM hr_payroll_param_sets WHERE id=$1 RETURNING id`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Parametre seti bulunamadı.' });
+    res.json({ silindi: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

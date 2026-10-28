@@ -3,13 +3,105 @@ const router = express.Router();
 const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
-/** GET /finans-country-paketleri */
+/** GET /finans-country/paketler — UI id = country_code */
 router.get('/paketler', async (req, res, next) => {
   try {
+    const onlyActive = req.query.is_active === 'true';
     const r = await pool.query(
-      `SELECT * FROM fin_country_packs WHERE is_active=TRUE ORDER BY country_code`
+      `SELECT country_code AS id, country_code, country_name, local_currency,
+              chart_of_accounts_code, reporting_framework, retention_years,
+              e_document_note, is_active, created_at
+       FROM fin_country_packs
+       WHERE ($1::boolean IS NOT TRUE OR is_active=TRUE)
+       ORDER BY country_code`,
+      [onlyActive || null],
     );
     res.json(r.rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/paketler/:kod', async (req, res, next) => {
+  try {
+    const r = await pool.query(
+      `SELECT country_code AS id, country_code, country_name, local_currency,
+              chart_of_accounts_code, reporting_framework, retention_years,
+              e_document_note, is_active, created_at
+       FROM fin_country_packs WHERE country_code=$1`,
+      [String(req.params.kod).toUpperCase()],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Ülke paketi bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/paketler', async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    if (!b.country_code || !b.country_name) {
+      return res.status(400).json({ hata: 'country_code ve country_name zorunlu.' });
+    }
+    const r = await pool.query(
+      `INSERT INTO fin_country_packs (
+         country_code, country_name, local_currency, chart_of_accounts_code,
+         reporting_framework, retention_years, e_document_note, is_active
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,10),$7,COALESCE($8,TRUE))
+       RETURNING country_code AS id, country_code, country_name, local_currency,
+                 chart_of_accounts_code, reporting_framework, retention_years,
+                 e_document_note, is_active, created_at`,
+      [
+        String(b.country_code).toUpperCase(), b.country_name, b.local_currency || null,
+        b.chart_of_accounts_code || null, b.reporting_framework || null,
+        b.retention_years, b.e_document_note || null, b.is_active,
+      ],
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/paketler/:kod', async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    const r = await pool.query(
+      `UPDATE fin_country_packs SET
+         country_name = COALESCE($2, country_name),
+         local_currency = COALESCE($3, local_currency),
+         chart_of_accounts_code = COALESCE($4, chart_of_accounts_code),
+         reporting_framework = COALESCE($5, reporting_framework),
+         retention_years = COALESCE($6, retention_years),
+         e_document_note = COALESCE($7, e_document_note),
+         is_active = COALESCE($8, is_active)
+       WHERE country_code=$1
+       RETURNING country_code AS id, country_code, country_name, local_currency,
+                 chart_of_accounts_code, reporting_framework, retention_years,
+                 e_document_note, is_active, created_at`,
+      [
+        String(req.params.kod).toUpperCase(), b.country_name, b.local_currency,
+        b.chart_of_accounts_code, b.reporting_framework, b.retention_years,
+        b.e_document_note, b.is_active,
+      ],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Ülke paketi bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/paketler/:kod', async (req, res, next) => {
+  try {
+    const r = await pool.query(
+      `UPDATE fin_country_packs SET is_active=FALSE WHERE country_code=$1
+       RETURNING country_code AS id, country_code, is_active`,
+      [String(req.params.kod).toUpperCase()],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Ülke paketi bulunamadı.' });
+    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
   } catch (err) {
     next(err);
   }

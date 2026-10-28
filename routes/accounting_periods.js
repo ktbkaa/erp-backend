@@ -23,6 +23,56 @@ router.get('/mali-yillar', async (req, res, next) => {
   }
 });
 
+router.get('/mali-yillar/:id', async (req, res, next) => {
+  try {
+    const r = await pool.query(`SELECT * FROM fiscal_years WHERE id=$1`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Mali yıl bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/mali-yillar', async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    const firmaId = firmaIdFromReq(req) || b.company_id;
+    if (!firmaId || !b.year) {
+      return res.status(400).json({ hata: 'company_id ve year zorunlu.' });
+    }
+    const year = Number(b.year);
+    const start = b.start_date || `${year}-01-01`;
+    const end = b.end_date || `${year}-12-31`;
+    const r = await pool.query(
+      `INSERT INTO fiscal_years (company_id, year, start_date, end_date, status)
+       VALUES ($1,$2,$3,$4,COALESCE($5,'Acik'))
+       RETURNING *`,
+      [firmaId, year, start, end, b.status],
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/mali-yillar/:id', async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    const r = await pool.query(
+      `UPDATE fiscal_years SET
+         start_date = COALESCE($2, start_date),
+         end_date = COALESCE($3, end_date),
+         status = COALESCE($4, status)
+       WHERE id=$1 RETURNING *`,
+      [req.params.id, b.start_date, b.end_date, b.status],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Mali yıl bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/', async (req, res, next) => {
   try {
     const firmaId = firmaIdFromReq(req);

@@ -4,6 +4,14 @@ Menü: **İnsan Kaynakları**
 
 ## 1. Özlük
 
+### Tanımlar / Parametreler (önce buradan)
+Menü **İnsan Kaynakları → Tanımlar / Parametreler**:
+- Departmanlar, Pozisyonlar
+- Çalışma takvimleri, Vardiyalar, Resmî tatiller
+- **İzin türleri** (kod, ücretli/ücretsiz, hak ediş yöntemi, belge zorunluluğu)
+- **Bordro parametreleri** (oranlar + GV dilimleri)
+- **Çıkış nedenleri** (kıdem/ihbar varsayılanları)
+
 ### Departman / Pozisyon
 1. **Departmanlar** → Yeni → ad, isteğe bağlı üst departman ve maliyet merkezi.
 2. **Pozisyonlar** → departmana bağlayın.

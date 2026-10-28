@@ -15,13 +15,98 @@ function gunFarki(start, end) {
 router.get('/turler', async (req, res) => {
   try {
     const firmaId = firmaIdFromReq(req);
+    const onlyActive = req.query.is_active === 'true';
     const r = await pool.query(
       `SELECT * FROM hr_leave_types
-       WHERE is_active=TRUE AND (company_id IS NULL OR company_id=$1)
+       WHERE (company_id IS NULL OR company_id=$1 OR $1=0)
+         AND ($2::boolean IS NOT TRUE OR is_active=TRUE)
        ORDER BY leave_code`,
-      [firmaId || 0],
+      [firmaId || 0, onlyActive || null],
     );
     res.json(r.rows);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.get('/turler/:id', async (req, res) => {
+  try {
+    const r = await pool.query(`SELECT * FROM hr_leave_types WHERE id=$1`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'İzin türü bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.post('/turler', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const firmaId = firmaIdFromReq(req) || b.company_id || null;
+    if (!b.leave_code || !b.leave_name) {
+      return res.status(400).json({ hata: 'leave_code ve leave_name zorunlu.' });
+    }
+    const r = await pool.query(
+      `INSERT INTO hr_leave_types (
+         company_id, country_code, leave_code, leave_name, is_paid, unit, accrual_method,
+         requires_document, affects_payroll, approval_route_screen, is_active, description
+       ) VALUES (
+         $1, COALESCE($2,'TR'), $3, $4, COALESCE($5,TRUE), COALESCE($6,'Gun'), COALESCE($7,'Talep'),
+         COALESCE($8,FALSE), COALESCE($9,TRUE), COALESCE($10,'hr-izin-talepleri'), COALESCE($11,TRUE), $12
+       ) RETURNING *`,
+      [
+        firmaId, b.country_code, b.leave_code, b.leave_name, b.is_paid, b.unit, b.accrual_method,
+        b.requires_document, b.affects_payroll, b.approval_route_screen, b.is_active, b.description || null,
+      ],
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.put('/turler/:id', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const r = await pool.query(
+      `UPDATE hr_leave_types SET
+         leave_name = COALESCE($2, leave_name),
+         is_paid = COALESCE($3, is_paid),
+         unit = COALESCE($4, unit),
+         accrual_method = COALESCE($5, accrual_method),
+         requires_document = COALESCE($6, requires_document),
+         affects_payroll = COALESCE($7, affects_payroll),
+         approval_route_screen = COALESCE($8, approval_route_screen),
+         is_active = COALESCE($9, is_active),
+         description = COALESCE($10, description),
+         country_code = COALESCE($11, country_code)
+       WHERE id=$1 RETURNING *`,
+      [
+        req.params.id, b.leave_name, b.is_paid, b.unit, b.accrual_method,
+        b.requires_document, b.affects_payroll, b.approval_route_screen, b.is_active,
+        b.description, b.country_code,
+      ],
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'İzin türü bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+router.delete('/turler/:id', async (req, res) => {
+  try {
+    const used = await pool.query(
+      `SELECT 1 FROM hr_leave_requests WHERE leave_type_id=$1 LIMIT 1`,
+      [req.params.id],
+    );
+    if (used.rows[0]) {
+      await pool.query(`UPDATE hr_leave_types SET is_active=FALSE WHERE id=$1`, [req.params.id]);
+      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+    }
+    const r = await pool.query(`DELETE FROM hr_leave_types WHERE id=$1 RETURNING id`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'İzin türü bulunamadı.' });
+    res.json({ silindi: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

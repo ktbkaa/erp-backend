@@ -26,6 +26,7 @@
 | 5 | İşe alım, onboarding, zimmet | Tamam |
 | 6 | İşten çıkış / ön hesaplaşma | Tamam (uzman onayı zorunlu notu ile) |
 | 7 | Test + kullanıcı kılavuzu + PDF | Tamam (birim 5/5, smoke OK, IK_Modul_Rehberi.pdf) |
+| 8 | Tanımlar / parametre ekranları | Tamam — İK Tanımlar bölümü + çapraz modül eksikler |
 
 ## Teknik kararlar
 
