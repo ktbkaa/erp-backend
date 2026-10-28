@@ -1,0 +1,168 @@
+{
+  "firmaId": 4,
+  "bom": {
+    "id": 34,
+    "bom_code": "A00045"
+  },
+  "item": {
+    "id": 204,
+    "item_code": "TEST-SUT-M01"
+  },
+  "routing": {
+    "id": 33,
+    "route_code": "O00046"
+  },
+  "wc": {
+    "id": 4,
+    "center_code": "GIDA-IM1"
+  },
+  "partner": {
+    "id": 128,
+    "partner_code": "T00053"
+  },
+  "priceList": {
+    "id": 26,
+    "list_code": "GIDA-SAT-4-1793195378396"
+  },
+  "sq": {
+    "id": 21,
+    "quotation_no": "ST00022"
+  },
+  "so": {
+    "id": 61,
+    "order_no": "B00053"
+  },
+  "mrp": {
+    "id": 17,
+    "run_no": "MR00014"
+  },
+  "pr": {
+    "id": 46,
+    "requisition_no": "L00050"
+  },
+  "po": {
+    "id": 48,
+    "order_no": "P00049"
+  },
+  "ar": {
+    "id": 8,
+    "onay_no": "NK00007"
+  },
+  "route": {
+    "id": 2,
+    "route_code": "OR-SA-SIPARIS"
+  },
+  "gr": {
+    "id": 32,
+    "receipt_no": "R00033"
+  },
+  "gk": {
+    "id": 9,
+    "inspection_no": "GK00009"
+  },
+  "gkk": {
+    "id": 64,
+    "order_no": "QE00064"
+  },
+  "ckk": {
+    "id": 64,
+    "order_no": "QE00064",
+    "direction": "GKK"
+  },
+  "af": {
+    "id": 89,
+    "invoice_no": "AF00023"
+  },
+  "ue": {
+    "id": 39,
+    "order_no": "E00072"
+  },
+  "dn": {
+    "id": 28,
+    "delivery_note_no": "IR00031"
+  },
+  "fa": {
+    "id": 90,
+    "invoice_no": "FA00025"
+  },
+  "ozet": {
+    "firma": {
+      "id": 4,
+      "code": "GIDA",
+      "name": "Anadolu Süt ve Süt Ürünleri A.Ş."
+    },
+    "tags": {
+      "BASE": "TEST-SUT-BASE",
+      "MAN": "TEST-SUT-MAN",
+      "MRP": "TEST-SUT-MRP",
+      "LABEL": "CANIAS-TAM-DONGU-TEST"
+    },
+    "base": {
+      "tag": "TEST-SUT-BASE",
+      "label": "CANIAS-TAM-DONGU-TEST",
+      "partners": {
+        "ted1": "T00052",
+        "ted2": "T00053",
+        "mus1": "M00077",
+        "mus2": "M00078"
+      },
+      "items": {
+        "cigSut": "TEST-SUT-H01",
+        "kultur": "TEST-SUT-H02",
+        "sise": "TEST-SUT-A01",
+        "kapak": "TEST-SUT-A02",
+        "pastorizasyon": "TEST-SUT-Y01",
+        "sut1L": "TEST-SUT-M01",
+        "yogurt": "TEST-SUT-M02",
+        "hmPcb": "TEST-SUT-H01",
+        "hmCap": "TEST-SUT-H02",
+        "hmCoil": "TEST-SUT-A01",
+        "hmCase": "TEST-SUT-A02",
+        "fg": "TEST-SUT-M01"
+      },
+      "bom": "A00045",
+      "route": "O00046",
+      "price_list": "GIDA-SAT-4-1793195378396",
+      "gap_notes": [
+        "Maliyet merkezi (BAST06) ayrı tablo/ekran yok — iş merkezi adına MC-SUT-01 işlendi"
+      ],
+      "sa_approval_route": "OR-SA-SIPARIS"
+    },
+    "man": {
+      "tag": "TEST-SUT-MAN",
+      "sales_quotation": "ST00022",
+      "sales_order": "B00052",
+      "purchase_requisition": "L00049",
+      "purchase_order": "P00048",
+      "sa_approval": "NK00006",
+      "goods_receipt": "R00032",
+      "production_order": "E00070",
+      "shipment": "SE00028",
+      "delivery_note": "IR00030",
+      "purchase_invoice": "AF00022",
+      "sales_invoice": "FA00024"
+    },
+    "mrp": {
+      "tag": "TEST-SUT-MRP",
+      "sales_order": "B00053",
+      "independent_requirement": "BI00015",
+      "mrp_run": "MR00014",
+      "mrp_net_positive": 5,
+      "purchase_requisition": "L00050",
+      "purchase_order": "P00049",
+      "sa_approval": "NK00007",
+      "goods_receipt": "R00033",
+      "purchase_invoice": "AF00023",
+      "production_from_mrp": [
+        "E00072"
+      ],
+      "shipment": "SE00029",
+      "delivery_note": "IR00031",
+      "sales_invoice": "FA00025"
+    },
+    "how_to_filter": {
+      "ui": "Üst bardan firma = GIDA seçin. Listelerde project_code / açıklama alanına TEST-SUT-MAN veya TEST-SUT-MRP yazın.",
+      "sql": "WHERE company_id = <GIDA> AND (project_code IN ('TEST-SUT-MAN','TEST-SUT-MRP') OR description ILIKE '%TEST-SUT%' OR description ILIKE '%CANIAS-TAM-DONGU-TEST%')"
+    }
+  }
+}
