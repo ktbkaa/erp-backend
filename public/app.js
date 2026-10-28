@@ -10217,10 +10217,19 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const opts = field.options || [];
     // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
     if (opts.length === 2) {
-      const radioName = `${attrName.replace('data-', '')}_${field.key}`;
+      // Satır bazlı benzersiz name — aksi halde tüm grid aynı radio grubunu paylaşır
+      const didxM = /data-didx="([^"]*)"/.exec(extraAttrs || '');
+      const gridM = /data-grid="([^"]*)"/.exec(extraAttrs || '');
+      const radioName = [
+        String(attrName || 'field').replace(/^data-/, ''),
+        gridM?.[1] || 'master',
+        didxM?.[1] ?? 'x',
+        field.key,
+      ].join('_');
+      const cur = (v === '' || v == null) ? opts[0] : v;
       return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
-        const on = String(v) === String(o) || (v === '' && o === opts[0]);
-        return `<label class="seg-opt${on ? ' is-on' : ''}">
+        const on = String(cur) === String(o);
+        return `<label class="seg-opt">
           <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(o)}" ${on ? 'checked' : ''} ${dis} ${req} />
           <span>${escAttr(o)}</span>
         </label>`;
@@ -14245,16 +14254,26 @@ function bindCascadeLookups(_screen) {
   });
 }
 
+function findDetailControlEl(key, idx, gridKey) {
+  const sel = `[data-detail="${key}"][data-didx="${idx}"][data-grid="${gridKey}"]`;
+  const radios = document.querySelectorAll(`input[type="radio"]${sel}`);
+  if (radios.length) {
+    return [...radios].find((r) => r.checked) || radios[0];
+  }
+  return document.querySelector(sel);
+}
+
 function syncGridRowFromDom(tab, idx, baseRow = {}) {
   const row = { ...baseRow };
   let any = false;
   const missing = [];
   (tab.fields || []).forEach((f) => {
     if (f.type === 'static') return;
-    const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"][data-grid="${tab.key}"]`);
+    const el = findDetailControlEl(f.key, idx, tab.key);
     if (!el) return;
     row[f.key] = readFieldValue(el, f);
     if (f.type === 'checkbox') { if (el.checked) any = true; }
+    else if (el.type === 'radio') { if (el.checked && el.value !== '') any = true; }
     else if (el.value !== '') any = true;
     if (f.required) {
       const v = row[f.key];

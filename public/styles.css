@@ -4394,10 +4394,13 @@ body.sql-splitting iframe { pointer-events: none; }
   line-height: 1.25;
 }
 .seg-opt:last-child span { border-right: 0; }
-.seg-opt:has(input:checked) span,
-.seg-opt.is-on span {
+.seg-opt:has(input:checked) span {
   background: var(--accent);
   color: #fff;
+}
+.seg-opt:not(:has(input:checked)) span {
+  background: transparent;
+  color: var(--muted);
 }
 .seg-opt:has(input:disabled) { cursor: default; opacity: 0.7; }
 .field--check input[type="checkbox"] {
