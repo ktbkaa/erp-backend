@@ -156,6 +156,15 @@ app.use('/onay-ekranlari', require('./routes/onay_ekranlari'));
 app.use('/onay-yetki-devirleri', require('./routes/approval_delegations'));
 app.use('/onay-kayitlari', require('./routes/approval_records'));
 
+// İK / HR
+app.use('/hr-personel', require('./routes/hr_employees'));
+app.use('/hr-org', require('./routes/hr_org'));
+app.use('/hr-izin', require('./routes/hr_leave'));
+app.use('/hr-takvim', require('./routes/hr_calendars'));
+app.use('/hr-puantaj', require('./routes/hr_attendance'));
+app.use('/hr-bordro', require('./routes/hr_payroll'));
+app.use('/hr-ise-alim', require('./routes/hr_recruitment'));
+
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 app.use(notFoundHandler);
 app.use(errorHandler);

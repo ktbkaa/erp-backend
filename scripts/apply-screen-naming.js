@@ -198,6 +198,7 @@ for (const m of Object.values(MAP)) {
 
 const navModuleMap = {
   'sabit-tanimlar': 'Sabit Tanımlar',
+  'fixed-tanimlar': 'Sabit Tanımlar',
   sistem: 'Sistem',
   'ana-veri': 'Ana Veri',
   stok: 'Stok',
@@ -209,6 +210,7 @@ const navModuleMap = {
   kalite: 'Kalite',
   onay: 'Onay',
   finans: 'Finans',
+  'insan-kaynaklari': 'İnsan Kaynakları',
 };
 
 const registry = {

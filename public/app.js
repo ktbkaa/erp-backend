@@ -454,6 +454,35 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
+      {
+        id: 'belge-tipleri',
+        techId: 'MDM-DOCTYPE-SCR-001',
+        businessNameEn: 'DocumentTypeScreen',
+        title: 'Belge Tipleri',
+        endpoint: '/belge-tipleri',
+        crud: true,
+        codeField: 'document_type_code',
+        nameField: 'document_type_name',
+        filters: [
+          { key: 'document_type_code', label: 'Kod' },
+          { key: 'module', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'document_type_code', label: 'Kod', mono: true },
+          { key: 'document_type_name', label: 'Ad' },
+          { key: 'module', label: 'Modül' },
+          { key: 'item_etkisi', label: 'Stok etkisi' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'document_type_code', label: 'Belge tipi kodu', code: true, required: true, editableOnNew: true },
+          { key: 'document_type_name', label: 'Belge tipi adı', name: true, required: true },
+          { key: 'module', label: 'Modül' },
+          { key: 'item_etkisi', label: 'Stok etkisi', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: { is_active: true },
+      },
 
     ],
   },
@@ -4548,10 +4577,46 @@ const MODULES = [
           'onay-rota-tanim',
           'onay-message-template',
           'onay-status-tanim',
+          'onay-modul-kullanimlari',
         ],
       },
     ],
     screens: [
+      {
+        id: 'onay-modul-kullanimlari',
+        techId: 'SYS-APR-SCR-USG',
+        businessNameEn: 'ApprovalModuleUsageScreen',
+        title: 'Onay Modül Kullanımları',
+        endpoint: '/onay-module-kullanimlari',
+        crud: true,
+        numeratorSeri: 'ONAY_KULLANIM',
+        codeField: 'kullanim_code',
+        nameField: 'kullanim_name',
+        columns: [
+          { key: 'kullanim_code', label: 'Kod', mono: true },
+          { key: 'kullanim_name', label: 'Ad' },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'screen_id', label: 'Ekran' },
+          { key: 'route_code', label: 'Rota' },
+          { key: 'company_name', label: 'Firma' },
+          { key: 'min_amount', label: 'Min tutar' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'kullanim_code', label: 'Kullanım kodu', code: true },
+          { key: 'kullanim_name', label: 'Ad', name: true, required: true },
+          { key: 'module_code', label: 'Modül kodu', required: true },
+          { key: 'screen_id', label: 'Ekran id', required: true },
+          { key: 'route_id', label: 'Onay rotası', type: 'lookup', lookup: 'onay-rota-tanim', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true },
+          { key: 'company_id', label: 'Firma (opsiyonel)', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'template_id', label: 'Mesaj şablonu', type: 'lookup', lookup: 'onay-message-template', valueKey: 'id', labelKey: 'template_name', codeKey: 'template_code' },
+          { key: 'min_amount', label: 'Min tutar', type: 'number' },
+          { key: 'otomatik_gonder', label: 'Otomatik gönder', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        defaults: { is_active: true, min_amount: 0 },
+      },
       {
         id: 'onaylarim',
         techId: 'SYS-APR-SCR-001',
@@ -4986,7 +5051,7 @@ const MODULES = [
     id: 'finans',
     title: 'Finans',
     sections: [
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['hesap-plani', 'hesap-belirleme-kurallari', 'finans-vergi-kodlari', 'muhasebe-donemleri', 'fiyat-listeleri'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['hesap-plani', 'hesap-belirleme-kurallari', 'finans-vergi-kodlari', 'finans-ulke-paketleri', 'mali-yillar', 'muhasebe-donemleri', 'fiyat-listeleri'] },
       { id: 'belgeler', title: 'Belgeler', screenIds: ['muhasebe-belgeleri', 'finans-nakit-hareketleri', 'fatura-kontrolleri'] },
       { id: 'nakit', title: 'Banka / Kasa', screenIds: ['finans-banka-hesaplari', 'finans-kasa-hesaplari'] },
       { id: 'raporlar', title: 'Raporlar', screenIds: ['mizan', 'finans-yevmiye', 'finans-bilanco', 'finans-gelir-tablosu', 'kokpit'] },
@@ -5134,7 +5199,7 @@ const MODULES = [
         businessNameEn: 'TaxCodeScreen',
         title: 'Vergi Kodları',
         endpoint: '/finans-vergi-kodlari',
-        crud: false,
+        crud: true,
         codeField: 'tax_code',
         nameField: 'tax_name',
         filters: [
@@ -5149,7 +5214,88 @@ const MODULES = [
           { key: 'rate', label: 'Oran %' },
           { key: 'output_tax_account_code', label: 'Hesaplanan' },
           { key: 'input_tax_account_code', label: 'İndirilecek' },
+          { key: 'is_active', label: 'Aktif' },
         ],
+        masterFields: [
+          { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
+          { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
+          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
+          { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
+          { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: 'oranlar',
+        detailSlots: 4,
+        formTabs: [
+          {
+            id: 'oranlar',
+            label: 'Oranlar',
+            kind: 'grid',
+            key: 'oranlar',
+            slots: 4,
+            fields: [
+              { key: 'rate', label: 'Oran %', type: 'number', required: true },
+              { key: 'valid_from', label: 'Geçerlilik başı', type: 'date', required: true },
+              { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
+              { key: 'source_note', label: 'Kaynak' },
+            ],
+          },
+        ],
+        defaults: { country_code: 'TR', tax_type: 'KDV', is_active: true },
+      },
+      {
+        id: 'finans-ulke-paketleri',
+        techId: 'FIN-CPK-SCR-001',
+        businessNameEn: 'CountryPackScreen',
+        title: 'Finans Ülke Paketleri',
+        endpoint: '/finans-country/paketler',
+        crud: true,
+        codeField: 'country_code',
+        nameField: 'country_name',
+        columns: [
+          { key: 'country_code', label: 'Ülke', mono: true },
+          { key: 'country_name', label: 'Ad' },
+          { key: 'local_currency', label: 'PB' },
+          { key: 'chart_of_accounts_code', label: 'Hesap planı' },
+          { key: 'reporting_framework', label: 'Raporlama' },
+          { key: 'retention_years', label: 'Saklama (yıl)' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'country_code', label: 'Ülke kodu', code: true, required: true, editableOnNew: true },
+          { key: 'country_name', label: 'Ülke adı', name: true, required: true },
+          { key: 'local_currency', label: 'Yerel para birimi' },
+          { key: 'chart_of_accounts_code', label: 'Hesap planı kodu' },
+          { key: 'reporting_framework', label: 'Raporlama çerçevesi' },
+          { key: 'retention_years', label: 'Saklama süresi (yıl)', type: 'number' },
+          { key: 'e_document_note', label: 'e-Belge notu' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: { is_active: true, retention_years: 10 },
+      },
+      {
+        id: 'mali-yillar',
+        techId: 'FIN-FY-SCR-001',
+        businessNameEn: 'FiscalYearScreen',
+        title: 'Mali Yıllar',
+        endpoint: '/muhasebe-donemleri/mali-yillar',
+        crud: true,
+        codeField: 'year',
+        nameField: 'year',
+        columns: [
+          { key: 'year', label: 'Yıl' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'year', label: 'Yıl', type: 'number', required: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kapali'] },
+        ],
+        defaults: { status: 'Acik' },
       },
       {
         id: 'finans-banka-hesaplari',
@@ -5470,6 +5616,740 @@ const MODULES = [
         columns: [
           { key: 'metrik', label: 'Metrik' },
           { key: 'value', label: 'Değer', mono: true },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'insan-kaynaklari',
+    title: 'İnsan Kaynakları',
+    sections: [
+      { id: 'ozluk', title: 'Özlük', screenIds: ['hr-personel'] },
+      { id: 'zaman', title: 'Zaman & İzin', screenIds: ['hr-izin-talepleri', 'hr-izin-bakiyeleri', 'hr-puantaj', 'hr-vardiya-atamalari'] },
+      { id: 'bordro', title: 'Ücret & Bordro', screenIds: ['hr-ucretler', 'hr-avanslar', 'hr-bordro-donemleri', 'hr-bordro-calismalari'] },
+      { id: 'ise-alim', title: 'İşe Alım & Çıkış', screenIds: ['hr-is-ilanlari', 'hr-adaylar', 'hr-onboarding', 'hr-zimmetler', 'hr-isten-cikis'] },
+      {
+        id: 'tanimlar',
+        title: 'Tanımlar / Parametreler',
+        screenIds: [
+          'hr-departmanlar',
+          'hr-pozisyonlar',
+          'hr-calisma-takvimleri',
+          'hr-vardiyalar',
+          'hr-resmi-tatiller',
+          'hr-izin-turleri',
+          'hr-bordro-parametreleri',
+          'hr-cikis-nedenleri',
+        ],
+      },
+    ],
+    screens: [
+      {
+        id: 'hr-personel',
+        techId: 'HR-EMP-SCR-001',
+        businessNameEn: 'EmployeeMasterScreen',
+        title: 'Personel Kartları',
+        endpoint: '/hr-personel',
+        crud: true,
+        numeratorSeri: 'HR_EMPLOYEE',
+        codeField: 'employee_no',
+        nameField: 'first_name',
+        filters: [
+          { key: 'q', label: 'Ara' },
+          { key: 'employment_status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'department_name', label: 'Departman' },
+          { key: 'position_name', label: 'Pozisyon' },
+          { key: 'hire_date', label: 'İşe giriş' },
+          { key: 'employment_status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'employee_no', label: 'Personel no', code: true },
+          { key: 'first_name', label: 'Ad', name: true, required: true },
+          { key: 'last_name', label: 'Soyad', required: true },
+          { key: 'national_id', label: 'T.C. / Kimlik no' },
+          { key: 'birth_date', label: 'Doğum tarihi', type: 'date' },
+          { key: 'nationality_code', label: 'Uyruğu' },
+          { key: 'country_code', label: 'Ülke kodu' },
+          { key: 'marital_status', label: 'Medeni hâl', type: 'select', options: ['', 'Bekar', 'Evli', 'Diger'] },
+          { key: 'blood_type', label: 'Kan grubu' },
+          { key: 'email', label: 'E-posta' },
+          { key: 'phone', label: 'Telefon' },
+          { key: 'mobile_phone', label: 'Cep' },
+          { key: 'address', label: 'Adres' },
+          { key: 'emergency_contact_name', label: 'Acil kişi' },
+          { key: 'emergency_contact_phone', label: 'Acil telefon' },
+          { key: 'department_id', label: 'Departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
+          { key: 'position_id', label: 'Pozisyon', type: 'lookup', lookup: 'hr-pozisyonlar', valueKey: 'id', labelKey: 'position_name', codeKey: 'position_code' },
+          { key: 'manager_employee_id', label: 'Yönetici', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no' },
+          { key: 'hire_date', label: 'İşe giriş', type: 'date', required: true },
+          { key: 'contract_type', label: 'Sözleşme', type: 'select', options: ['BelirsizSureli', 'BelirliSureli', 'KismiSureli', 'Stajyer'] },
+          { key: 'employment_status', label: 'Durum', type: 'select', options: ['Aktif', 'Izinli', 'Ayrildi', 'Askida'] },
+          { key: 'probation_end_date', label: 'Deneme bitiş', type: 'date' },
+          { key: 'contract_end_date', label: 'Sözleşme bitiş', type: 'date' },
+          { key: 'work_calendar_id', label: 'Çalışma takvimi', type: 'lookup', lookup: 'hr-calisma-takvimleri', valueKey: 'id', labelKey: 'calendar_name', codeKey: 'calendar_code' },
+          { key: 'shift_id', label: 'Vardiya', type: 'lookup', lookup: 'hr-vardiyalar', valueKey: 'id', labelKey: 'shift_name', codeKey: 'shift_code' },
+          { key: 'cost_center_code', label: 'Maliyet merkezi' },
+          { key: 'employee_type', label: 'Personel türü' },
+          { key: 'iban', label: 'IBAN' },
+          { key: 'bank_name', label: 'Banka' },
+          { key: 'sgk_sicil_no', label: 'SGK sicil' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-departmanlar',
+        techId: 'HR-DEPT-SCR-001',
+        businessNameEn: 'DepartmentScreen',
+        title: 'Departmanlar',
+        endpoint: '/hr-org/departmanlar',
+        crud: true,
+        numeratorSeri: 'HR_DEPT',
+        codeField: 'department_code',
+        nameField: 'department_name',
+        columns: [
+          { key: 'department_code', label: 'Kod', mono: true },
+          { key: 'department_name', label: 'Ad' },
+          { key: 'parent_name', label: 'Üst departman' },
+          { key: 'cost_center_code', label: 'Maliyet mer.' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'department_code', label: 'Kod', code: true },
+          { key: 'department_name', label: 'Ad', name: true, required: true },
+          { key: 'parent_id', label: 'Üst departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
+          { key: 'cost_center_code', label: 'Maliyet merkezi' },
+          { key: 'manager_employee_id', label: 'Yönetici', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-pozisyonlar',
+        techId: 'HR-POS-SCR-001',
+        businessNameEn: 'PositionScreen',
+        title: 'Pozisyonlar',
+        endpoint: '/hr-org/pozisyonlar',
+        crud: true,
+        numeratorSeri: 'HR_POS',
+        codeField: 'position_code',
+        nameField: 'position_name',
+        columns: [
+          { key: 'position_code', label: 'Kod', mono: true },
+          { key: 'position_name', label: 'Ad' },
+          { key: 'department_name', label: 'Departman' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'position_code', label: 'Kod', code: true },
+          { key: 'position_name', label: 'Ad', name: true, required: true },
+          { key: 'department_id', label: 'Departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-calisma-takvimleri',
+        techId: 'HR-CAL-SCR-001',
+        businessNameEn: 'WorkCalendarScreen',
+        title: 'Çalışma Takvimleri',
+        endpoint: '/hr-takvim/takvimler',
+        crud: true,
+        numeratorSeri: 'HR_CAL',
+        codeField: 'calendar_code',
+        nameField: 'calendar_name',
+        columns: [
+          { key: 'calendar_code', label: 'Kod', mono: true },
+          { key: 'calendar_name', label: 'Ad' },
+          { key: 'version_no', label: 'Sürüm' },
+          { key: 'work_days_per_week', label: 'Gün/hafta' },
+          { key: 'daily_net_hours', label: 'Net saat' },
+          { key: 'weekly_net_hours', label: 'Haftalık net' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'calendar_code', label: 'Kod', code: true },
+          { key: 'calendar_name', label: 'Ad', name: true, required: true },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'work_days_per_week', label: 'Çalışma günü/hafta', type: 'number' },
+          { key: 'daily_presence_hours', label: 'Günlük bulunma', type: 'number' },
+          { key: 'daily_net_hours', label: 'Günlük net', type: 'number' },
+          { key: 'break_minutes', label: 'Ara (dk)', type: 'number' },
+          { key: 'weekly_net_hours', label: 'Haftalık net', type: 'number' },
+          { key: 'effective_from', label: 'Geçerlilik başı', type: 'date' },
+          { key: 'effective_to', label: 'Geçerlilik sonu', type: 'date' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-vardiyalar',
+        techId: 'HR-SHF-SCR-001',
+        businessNameEn: 'ShiftScreen',
+        title: 'Vardiyalar',
+        endpoint: '/hr-takvim/vardiyalar',
+        crud: true,
+        numeratorSeri: 'HR_SHIFT',
+        codeField: 'shift_code',
+        nameField: 'shift_name',
+        columns: [
+          { key: 'shift_code', label: 'Kod', mono: true },
+          { key: 'shift_name', label: 'Ad' },
+          { key: 'start_time', label: 'Başlangıç' },
+          { key: 'end_time', label: 'Bitiş' },
+          { key: 'break_minutes', label: 'Ara' },
+          { key: 'crosses_midnight', label: 'Gece aşımı' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'shift_code', label: 'Kod', code: true },
+          { key: 'shift_name', label: 'Ad', name: true, required: true },
+          { key: 'start_time', label: 'Başlangıç', required: true },
+          { key: 'end_time', label: 'Bitiş', required: true },
+          { key: 'break_minutes', label: 'Ara (dk)', type: 'number' },
+          { key: 'crosses_midnight', label: 'Gece yarısını aşar', type: 'checkbox' },
+          { key: 'net_hours', label: 'Net saat', type: 'number' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-resmi-tatiller',
+        techId: 'HR-HOL-SCR-001',
+        businessNameEn: 'PublicHolidayScreen',
+        title: 'Resmî Tatiller',
+        endpoint: '/hr-takvim/tatiller',
+        crud: true,
+        columns: [
+          { key: 'holiday_date', label: 'Tarih' },
+          { key: 'holiday_name', label: 'Ad' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'year_no', label: 'Yıl' },
+          { key: 'is_half_day', label: 'Yarım gün' },
+        ],
+        masterFields: [
+          { key: 'holiday_date', label: 'Tarih', type: 'date', required: true },
+          { key: 'holiday_name', label: 'Ad', name: true, required: true },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'year_no', label: 'Yıl', type: 'number' },
+          { key: 'is_half_day', label: 'Yarım gün', type: 'checkbox' },
+        ],
+      },
+      {
+        id: 'hr-izin-talepleri',
+        techId: 'HR-LV-SCR-001',
+        businessNameEn: 'LeaveRequestScreen',
+        title: 'İzin Talepleri',
+        endpoint: '/hr-izin/talepler',
+        crud: true,
+        numeratorSeri: 'HR_LEAVE_REQ',
+        codeField: 'request_no',
+        approveAction: { label: 'Onayla', path: '/hr-izin/talepler/{id}/onayla' },
+        convertAction: { label: 'Gönder', path: '/hr-izin/talepler/{id}/gonder' },
+        columns: [
+          { key: 'request_no', label: 'No', mono: true },
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'leave_name', label: 'İzin türü' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'quantity', label: 'Süre' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'request_no', label: 'Talep no', code: true },
+          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
+          { key: 'leave_type_id', label: 'İzin türü', type: 'lookup', lookup: 'hr-izin-turleri', valueKey: 'id', labelKey: 'leave_name', codeKey: 'leave_code', required: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date', required: true },
+          { key: 'end_date', label: 'Bitiş', type: 'date', required: true },
+          { key: 'unit', label: 'Birim', type: 'select', options: ['Gun', 'Saat', 'YarimGun'] },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-izin-turleri',
+        techId: 'HR-LVT-SCR-001',
+        businessNameEn: 'LeaveTypeScreen',
+        title: 'İzin Türleri',
+        endpoint: '/hr-izin/turler',
+        crud: true,
+        codeField: 'leave_code',
+        nameField: 'leave_name',
+        filters: [
+          { key: 'leave_code', label: 'Kod' },
+          { key: 'leave_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'leave_code', label: 'Kod', mono: true },
+          { key: 'leave_name', label: 'Ad' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'is_paid', label: 'Ücretli' },
+          { key: 'unit', label: 'Birim' },
+          { key: 'accrual_method', label: 'Hak ediş' },
+          { key: 'requires_document', label: 'Belge' },
+          { key: 'affects_payroll', label: 'Bordro' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'leave_code', label: 'Kod', code: true, required: true, editableOnNew: true },
+          { key: 'leave_name', label: 'Ad', name: true, required: true },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'is_paid', label: 'Ücretli', type: 'checkbox' },
+          { key: 'unit', label: 'Birim', type: 'select', options: ['Gun', 'Saat', 'YarimGun'] },
+          { key: 'accrual_method', label: 'Hak ediş yöntemi', type: 'select', options: ['YillikKidem', 'Talep', 'Sabit'] },
+          { key: 'requires_document', label: 'Belge zorunlu', type: 'checkbox' },
+          { key: 'affects_payroll', label: 'Bordroya etki', type: 'checkbox' },
+          { key: 'approval_route_screen', label: 'Onay ekranı' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        defaults: {
+          country_code: 'TR',
+          is_paid: true,
+          unit: 'Gun',
+          accrual_method: 'Talep',
+          affects_payroll: true,
+          is_active: true,
+        },
+      },
+      {
+        id: 'hr-vardiya-atamalari',
+        techId: 'HR-SHA-SCR-001',
+        businessNameEn: 'ShiftAssignmentScreen',
+        title: 'Vardiya Atamaları',
+        endpoint: '/hr-takvim/vardiya-atamalari',
+        crud: true,
+        columns: [
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'shift_code', label: 'Vardiya', mono: true },
+          { key: 'shift_name', label: 'Vardiya adı' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+        ],
+        masterFields: [
+          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
+          { key: 'shift_id', label: 'Vardiya', type: 'lookup', lookup: 'hr-vardiyalar', valueKey: 'id', labelKey: 'shift_name', codeKey: 'shift_code', required: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date', required: true },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+        ],
+      },
+      {
+        id: 'hr-cikis-nedenleri',
+        techId: 'HR-TRR-SCR-001',
+        businessNameEn: 'TerminationReasonScreen',
+        title: 'Çıkış Nedenleri',
+        endpoint: '/hr-ise-alim/cikis-nedenleri',
+        crud: true,
+        codeField: 'reason_code',
+        nameField: 'reason_name',
+        columns: [
+          { key: 'reason_code', label: 'Kod', mono: true },
+          { key: 'reason_name', label: 'Ad' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'severance_default', label: 'Kıdem varsayılan' },
+          { key: 'notice_default', label: 'İhbar varsayılan' },
+          { key: 'requires_document', label: 'Belge' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'reason_code', label: 'Kod', code: true, required: true, editableOnNew: true },
+          { key: 'reason_name', label: 'Ad', name: true, required: true },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'severance_default', label: 'Kıdem uygun varsayılan', type: 'checkbox' },
+          { key: 'notice_default', label: 'İhbar uygun varsayılan', type: 'checkbox' },
+          { key: 'requires_document', label: 'Belge zorunlu', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        defaults: { country_code: 'TR', is_active: true },
+      },
+      {
+        id: 'hr-izin-bakiyeleri',
+        techId: 'HR-LVB-SCR-001',
+        businessNameEn: 'LeaveBalanceScreen',
+        title: 'İzin Bakiyeleri',
+        endpoint: '/hr-izin/bakiyeler',
+        crud: false,
+        readOnly: true,
+        columns: [
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'leave_name', label: 'İzin türü' },
+          { key: 'year_no', label: 'Yıl' },
+          { key: 'accrued', label: 'Hak ediş' },
+          { key: 'used', label: 'Kullanılan' },
+          { key: 'closing_balance', label: 'Kalan' },
+        ],
+        masterFields: [
+          { key: 'employee_no', label: 'Sicil' },
+          { key: 'leave_name', label: 'İzin türü' },
+          { key: 'year_no', label: 'Yıl' },
+          { key: 'closing_balance', label: 'Kalan' },
+        ],
+      },
+      {
+        id: 'hr-puantaj',
+        techId: 'HR-ATT-SCR-001',
+        businessNameEn: 'AttendanceDayScreen',
+        title: 'Günlük Puantaj',
+        endpoint: '/hr-puantaj/gunluk',
+        crud: false,
+        readOnly: true,
+        columns: [
+          { key: 'work_date', label: 'Tarih' },
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'planned_minutes', label: 'Plan (dk)' },
+          { key: 'actual_minutes', label: 'Gerçek (dk)' },
+          { key: 'overtime_minutes', label: 'FM (dk)' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'work_date', label: 'Tarih' },
+          { key: 'planned_minutes', label: 'Plan' },
+          { key: 'actual_minutes', label: 'Gerçek' },
+          { key: 'overtime_minutes', label: 'Fazla mesai' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-ucretler',
+        techId: 'HR-SAL-SCR-001',
+        businessNameEn: 'EmployeeSalaryScreen',
+        title: 'Ücret Tanımları',
+        endpoint: '/hr-bordro/ucretler',
+        crud: true,
+        columns: [
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'effective_from', label: 'Geçerlilik' },
+          { key: 'wage_type', label: 'Tür' },
+          { key: 'gross_amount', label: 'Brüt' },
+          { key: 'currency_code', label: 'PB' },
+        ],
+        masterFields: [
+          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
+          { key: 'effective_from', label: 'Geçerlilik başı', type: 'date', required: true },
+          { key: 'effective_to', label: 'Geçerlilik sonu', type: 'date' },
+          { key: 'wage_type', label: 'Ücret türü', type: 'select', options: ['Aylik', 'Gunluk', 'Saatlik'] },
+          { key: 'gross_amount', label: 'Brüt tutar', type: 'number', required: true },
+          { key: 'currency_code', label: 'Para birimi' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-avanslar',
+        techId: 'HR-ADV-SCR-001',
+        businessNameEn: 'AdvanceScreen',
+        title: 'Avanslar',
+        endpoint: '/hr-bordro/avanslar',
+        crud: true,
+        numeratorSeri: 'HR_ADVANCE',
+        codeField: 'advance_no',
+        approveAction: { label: 'Onayla', path: '/hr-bordro/avanslar/{id}/onayla' },
+        convertAction: { label: 'Öde', path: '/hr-bordro/avanslar/{id}/ode' },
+        columns: [
+          { key: 'advance_no', label: 'No', mono: true },
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'paid_amount', label: 'Ödenen' },
+          { key: 'deducted_amount', label: 'Mahsup' },
+          { key: 'remaining_balance', label: 'Kalan' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'advance_no', label: 'Avans no', code: true },
+          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
+          { key: 'request_date', label: 'Talep tarihi', type: 'date' },
+          { key: 'amount', label: 'Tutar', type: 'number', required: true },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-bordro-donemleri',
+        techId: 'HR-PRP-SCR-001',
+        businessNameEn: 'PayrollPeriodScreen',
+        title: 'Bordro Dönemleri',
+        endpoint: '/hr-bordro/donemler',
+        crud: true,
+        codeField: 'period_code',
+        columns: [
+          { key: 'period_code', label: 'Dönem', mono: true },
+          { key: 'year_no', label: 'Yıl' },
+          { key: 'month_no', label: 'Ay' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'status', label: 'Durum' },
+          { key: 'country_code', label: 'Ülke' },
+        ],
+        masterFields: [
+          { key: 'period_code', label: 'Dönem kodu', code: true },
+          { key: 'year_no', label: 'Yıl', type: 'number', required: true },
+          { key: 'month_no', label: 'Ay', type: 'number', required: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'status', label: 'Durum' },
+        ],
+      },
+      {
+        id: 'hr-bordro-calismalari',
+        techId: 'HR-PRR-SCR-001',
+        businessNameEn: 'PayrollRunScreen',
+        title: 'Bordro Çalışmaları',
+        endpoint: '/hr-bordro/calismalar',
+        crud: true,
+        numeratorSeri: 'HR_PAYROLL_RUN',
+        codeField: 'run_no',
+        approveAction: { label: 'Onayla', path: '/hr-bordro/calismalar/{id}/onayla' },
+        convertAction: { label: 'Kesinleştir', path: '/hr-bordro/calismalar/{id}/kesinlestir' },
+        secondaryAction: { label: 'Hesapla', path: '/hr-bordro/calismalar/{id}/hesapla' },
+        columns: [
+          { key: 'run_no', label: 'No', mono: true },
+          { key: 'period_code', label: 'Dönem' },
+          { key: 'status', label: 'Durum' },
+          { key: 'employee_count', label: 'Kişi' },
+          { key: 'total_gross', label: 'Toplam brüt' },
+          { key: 'total_net', label: 'Toplam net' },
+          { key: 'total_employer_cost', label: 'İşveren maliyeti' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true },
+          { key: 'period_id', label: 'Dönem', type: 'lookup', lookup: 'hr-bordro-donemleri', valueKey: 'id', labelKey: 'period_code', required: true },
+          { key: 'status', label: 'Durum' },
+          { key: 'employee_count', label: 'Personel sayısı', type: 'number' },
+          { key: 'total_gross', label: 'Toplam brüt', type: 'number' },
+          { key: 'total_net', label: 'Toplam net', type: 'number' },
+          { key: 'total_employer_cost', label: 'İşveren maliyeti', type: 'number' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-bordro-parametreleri',
+        techId: 'HR-PRM-SCR-001',
+        businessNameEn: 'PayrollParamScreen',
+        title: 'Bordro Parametreleri',
+        endpoint: '/hr-bordro/parametreler',
+        crud: true,
+        codeField: 'set_code',
+        nameField: 'set_name',
+        filters: [
+          { key: 'country_code', label: 'Ülke', queryParam: true },
+          { key: 'set_code', label: 'Kod' },
+        ],
+        columns: [
+          { key: 'set_code', label: 'Kod', mono: true },
+          { key: 'set_name', label: 'Ad' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'effective_from', label: 'Başlangıç' },
+          { key: 'effective_to', label: 'Bitiş' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'set_code', label: 'Set kodu', code: true, required: true, editableOnNew: true },
+          { key: 'set_name', label: 'Set adı', name: true, required: true },
+          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'effective_from', label: 'Geçerlilik başı', type: 'date', required: true },
+          { key: 'effective_to', label: 'Geçerlilik sonu', type: 'date' },
+          { key: 'source_url', label: 'Kaynak URL' },
+          { key: 'source_note', label: 'Kaynak notu' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: 'param_values',
+        detailSlots: 8,
+        formTabs: [
+          {
+            id: 'degerler',
+            label: 'Parametre değerleri',
+            kind: 'grid',
+            key: 'param_values',
+            slots: 10,
+            fields: [
+              { key: 'param_key', label: 'Anahtar', required: true },
+              { key: 'param_value', label: 'Değer', type: 'number', required: true },
+              { key: 'description', label: 'Açıklama' },
+            ],
+          },
+          {
+            id: 'dilimler',
+            label: 'GV dilimleri',
+            kind: 'grid',
+            key: 'tax_brackets',
+            slots: 6,
+            fields: [
+              { key: 'line_no', label: 'Sıra', type: 'number' },
+              { key: 'up_to_amount', label: 'Üst sınır', type: 'number' },
+              { key: 'rate', label: 'Oran', type: 'number', required: true },
+              { key: 'fixed_amount', label: 'Sabit', type: 'number' },
+            ],
+          },
+        ],
+        defaults: { country_code: 'TR', is_active: true },
+      },
+      {
+        id: 'hr-is-ilanlari',
+        techId: 'HR-JOB-SCR-001',
+        businessNameEn: 'JobRequisitionScreen',
+        title: 'İş İlanları',
+        endpoint: '/hr-ise-alim/ilanlar',
+        crud: true,
+        numeratorSeri: 'HR_JOB_REQ',
+        codeField: 'requisition_no',
+        columns: [
+          { key: 'requisition_no', label: 'No', mono: true },
+          { key: 'title', label: 'Başlık' },
+          { key: 'department_name', label: 'Departman' },
+          { key: 'position_name', label: 'Pozisyon' },
+          { key: 'headcount', label: 'Adet' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'requisition_no', label: 'İlan no', code: true },
+          { key: 'title', label: 'Başlık', name: true, required: true },
+          { key: 'department_id', label: 'Departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
+          { key: 'position_id', label: 'Pozisyon', type: 'lookup', lookup: 'hr-pozisyonlar', valueKey: 'id', labelKey: 'position_name', codeKey: 'position_code' },
+          { key: 'headcount', label: 'Kontenjan', type: 'number' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kapali', 'Iptal'] },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-adaylar',
+        techId: 'HR-CAND-SCR-001',
+        businessNameEn: 'CandidateScreen',
+        title: 'Adaylar',
+        endpoint: '/hr-ise-alim/adaylar',
+        crud: true,
+        numeratorSeri: 'HR_CANDIDATE',
+        codeField: 'candidate_no',
+        convertAction: { label: 'İşe Al → Personel', path: '/hr-ise-alim/adaylar/{id}/ise-al' },
+        columns: [
+          { key: 'candidate_no', label: 'No', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'email', label: 'E-posta' },
+          { key: 'requisition_title', label: 'İlan' },
+          { key: 'status', label: 'Durum' },
+          { key: 'employee_no', label: 'Personel' },
+        ],
+        masterFields: [
+          { key: 'candidate_no', label: 'Aday no', code: true },
+          { key: 'first_name', label: 'Ad', name: true, required: true },
+          { key: 'last_name', label: 'Soyad', required: true },
+          { key: 'email', label: 'E-posta' },
+          { key: 'phone', label: 'Telefon' },
+          { key: 'requisition_id', label: 'İş ilanı', type: 'lookup', lookup: 'hr-is-ilanlari', valueKey: 'id', labelKey: 'title', codeKey: 'requisition_no' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-onboarding',
+        techId: 'HR-ONB-SCR-001',
+        businessNameEn: 'OnboardingTaskScreen',
+        title: 'Onboarding Görevleri',
+        endpoint: '/hr-ise-alim/onboarding',
+        crud: false,
+        readOnly: true,
+        approveAction: { label: 'Tamamla', path: '/hr-ise-alim/onboarding/{id}/tamamla' },
+        columns: [
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'task_code', label: 'Kod', mono: true },
+          { key: 'task_name', label: 'Görev' },
+          { key: 'status', label: 'Durum' },
+          { key: 'due_date', label: 'Termin' },
+        ],
+        masterFields: [
+          { key: 'task_code', label: 'Kod' },
+          { key: 'task_name', label: 'Görev' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-zimmetler',
+        techId: 'HR-AST-SCR-001',
+        businessNameEn: 'AssetAssignmentScreen',
+        title: 'Zimmetler',
+        endpoint: '/hr-ise-alim/zimmetler',
+        crud: true,
+        approveAction: { label: 'İade Al', path: '/hr-ise-alim/zimmetler/{id}/iade' },
+        columns: [
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'asset_code', label: 'Kod', mono: true },
+          { key: 'asset_name', label: 'Ad' },
+          { key: 'assigned_at', label: 'Teslim' },
+          { key: 'returned_at', label: 'İade' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
+          { key: 'asset_code', label: 'Zimmet kodu', code: true, required: true },
+          { key: 'asset_name', label: 'Zimmet adı', name: true, required: true },
+          { key: 'assigned_at', label: 'Teslim tarihi', type: 'date' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'hr-isten-cikis',
+        techId: 'HR-TRM-SCR-001',
+        businessNameEn: 'TerminationScreen',
+        title: 'İşten Çıkış',
+        endpoint: '/hr-ise-alim/cikislar',
+        crud: true,
+        numeratorSeri: 'HR_TERMINATION',
+        codeField: 'termination_no',
+        approveAction: { label: 'Onayla & Pasife Al', path: '/hr-ise-alim/cikislar/{id}/onayla' },
+        columns: [
+          { key: 'termination_no', label: 'No', mono: true },
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'termination_date', label: 'Çıkış' },
+          { key: 'reason_code', label: 'Neden' },
+          { key: 'severance_eligible', label: 'Kıdem?' },
+          { key: 'net_settlement', label: 'Net hesaplaşma' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'termination_no', label: 'Çıkış no', code: true },
+          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
+          { key: 'notice_date', label: 'Bildirim', type: 'date' },
+          { key: 'last_work_date', label: 'Son çalışma', type: 'date' },
+          { key: 'termination_date', label: 'Ayrılış tarihi', type: 'date', required: true },
+          { key: 'reason_code', label: 'Neden', type: 'lookup', lookup: 'hr-cikis-nedenleri', valueKey: 'reason_code', labelKey: 'reason_name', codeKey: 'reason_code', required: true },
+          { key: 'reason_name', label: 'Neden açıklama' },
+          { key: 'unused_leave_days', label: 'Kullanılmamış izin (gün)', type: 'number' },
+          { key: 'other_amount', label: 'Diğer ödemeler', type: 'number' },
+          { key: 'deduction_amount', label: 'Kesintiler', type: 'number' },
+          { key: 'severance_eligible', label: 'Kıdem uygun', type: 'checkbox' },
+          { key: 'notice_eligible', label: 'İhbar uygun', type: 'checkbox' },
+          { key: 'severance_amount', label: 'Kıdem tutarı', type: 'number' },
+          { key: 'notice_amount', label: 'İhbar tutarı', type: 'number' },
+          { key: 'unused_leave_amount', label: 'İzin ücreti', type: 'number' },
+          { key: 'net_settlement', label: 'Net hesaplaşma', type: 'number' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
         ],
       },
     ],
@@ -6298,6 +7178,8 @@ const state = {
   detailRows: [],
   openTabs: [],
   activeTabKey: null,
+  /** Alt sekme şeridi varsayılan açık; kullanıcı kapatırsa false */
+  docTabsPreferOpen: true,
   formContext: null,
   formActiveTab: null,
   lookupCache: {},
@@ -6975,7 +7857,7 @@ async function refreshCodeFromNumeratorField(force = false) {
   if (!screen?.numeratorFromField || !screen.codeField) return;
   if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
   const tipKey = screen.numeratorFromField.field;
-  const tipEl = document.querySelector(`[data-master="${tipKey}"]`);
+  const tipEl = findAttrControl('data-master', tipKey);
   const tipVal = tipEl ? tipEl.value : state.formRecord?.[tipKey];
   if (tipVal == null || tipVal === '') return;
   if (state.formRecord) state.formRecord[tipKey] = tipVal;
@@ -6987,7 +7869,7 @@ async function refreshCodeFromNumeratorField(force = false) {
     if (!state.formRecord) state.formRecord = {};
     state.formRecord[screen.codeField] = kod;
     state.formNumeratorSeri = seri;
-    const codeEl = document.querySelector(`[data-master="${screen.codeField}"]`);
+    const codeEl = findAttrControl('data-master', screen.codeField);
     if (codeEl) codeEl.value = kod;
   } catch (err) {
     toast(err.message || String(err));
@@ -6998,12 +7880,15 @@ function bindNumeratorFieldListener(screen) {
   if (!screen?.numeratorFromField) return;
   if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
   const tipKey = screen.numeratorFromField.field;
-  const tipEl = document.querySelector(`[data-master="${tipKey}"]`);
+  const tipControls = [
+    ...document.querySelectorAll(`input[type="radio"][data-master="${tipKey}"]`),
+  ];
+  const tipEl = tipControls[0] || findAttrControl('data-master', tipKey);
   if (!tipEl || tipEl.dataset.numeratorBound === '1') return;
   tipEl.dataset.numeratorBound = '1';
-  tipEl.addEventListener('change', () => {
-    refreshCodeFromNumeratorField(true);
-  });
+  const onChange = () => { refreshCodeFromNumeratorField(true); };
+  if (tipControls.length) tipControls.forEach((r) => r.addEventListener('change', onChange));
+  else tipEl.addEventListener('change', onChange);
 }
 
 function showView(name) {
@@ -7048,12 +7933,11 @@ function setDocTabsOpen(open) {
   }
 }
 
+/** Alt sekme şeridi: varsayılan açık; kullanıcı isteğe göre kapatır. */
 function toggleDocTabs() {
-  setDocTabsOpen(!document.body.classList.contains('doc-tabs-open'));
-}
-
-function hideDocTabsWhileWorking() {
-  if (document.body.classList.contains('doc-tabs-open')) setDocTabsOpen(false);
+  const next = !document.body.classList.contains('doc-tabs-open');
+  state.docTabsPreferOpen = next;
+  setDocTabsOpen(next);
 }
 
 const TAB_GLYPH_LIST = `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3.5" width="9" height="9" rx="1.3"/><path d="M7.5 2h5.2a1.3 1.3 0 0 1 1.3 1.3V10"/></svg>`;
@@ -7082,14 +7966,9 @@ function renderTabBar() {
       <span class="tab-close" data-tab-close-key="${t.key}" title="Sekmeyi kapat" aria-label="Sekmeyi kapat">×</span>
     </button>`;
   }).join('');
-  // İçerik varken varsayılan gizli; yalnızca kullanıcı açtıysa görünür
-  const open = document.body.classList.contains('doc-tabs-open');
-  bar.hidden = !open;
-  const btn = $('#btnOpenTabs');
-  if (btn) {
-    btn.disabled = false;
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
+  // Varsayılan açık; kullanıcı gizlediyse (docTabsPreferOpen=false) kapalı kalır
+  if (state.docTabsPreferOpen === undefined) state.docTabsPreferOpen = true;
+  setDocTabsOpen(state.docTabsPreferOpen !== false);
 }
 
 function escapeHtml(str) {
@@ -7576,6 +8455,7 @@ const MOD_ICONS = {
   satis: '<svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
   kalite: '<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
   finans: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+  'insan-kaynaklari': '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
 };
 
 function ensureSidebarPath(screen) {
@@ -8585,6 +9465,7 @@ function filterValueControl(f, st) {
     const ck = f.codeKey;
     const seen = new Set();
     const opts = [`<option value="">— seçin —</option>`];
+    let curLabel = '';
     rows.forEach((r) => {
       const val = r[vk];
       if (val == null || val === '') return;
@@ -8601,21 +9482,23 @@ function filterValueControl(f, st) {
         label = name;
       }
       const title = code && name ? `${code} — ${name}` : (name || code || String(val));
+      if (String(st.a) === String(val)) curLabel = title;
       opts.push(`<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`);
     });
-    return `${wrapLookupPick(`<select class="lookup-pick" data-filter-a="${f.key}">${opts.join('')}</select>`)}
+    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${opts.join('')}</select>`, curLabel, false)}
       <input type="text" data-filter-b="${f.key}" value="" hidden />`;
   }
   if (f.type === 'select' || (Array.isArray(f.options) && f.options.length)) {
     const opts = f.options || [];
-    return `${wrapLookupPick(`<select class="lookup-pick" data-filter-a="${f.key}">
+    const cur = st.a == null || st.a === '' ? '' : String(st.a);
+    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">
       <option value="">— seçin —</option>
       ${opts.map((o) => {
         const v = typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o;
         const l = typeof o === 'object' ? (o.label ?? o.adi ?? o.l ?? v) : o;
         return `<option value="${escAttr(v)}" ${String(st.a) === String(v) ? 'selected' : ''}>${l}</option>`;
       }).join('')}
-    </select>`)}
+    </select>`, cur, false)}
       <input type="text" data-filter-b="${f.key}" value="" hidden />`;
   }
   if (f.type === 'checkbox') {
@@ -9114,8 +9997,34 @@ const LOOKUP_ENDPOINTS = {
   'onay-message-sablonlari': '/onay-message-sablonlari?is_active=true',
   'onay-durumlari': '/onay-durumlari?is_active=true',
   'onay-module-kullanimlari': '/onay-module-kullanimlari?is_active=true',
+  'onay-modul-kullanimlari': '/onay-module-kullanimlari?is_active=true',
   'onay-kurallari': '/onay-kurallari?is_active=true',
   'onay-ekranlari': '/onay-ekranlari',
+  'onay-rota-tanim': '/onay-rotalari',
+  'onay-message-template': '/onay-message-sablonlari?is_active=true',
+  // İK / HR tanımları
+  'hr-personel': '/hr-personel',
+  'hr-departmanlar': '/hr-org/departmanlar',
+  'hr-pozisyonlar': '/hr-org/pozisyonlar',
+  'hr-calisma-takvimleri': '/hr-takvim/takvimler',
+  'hr-vardiyalar': '/hr-takvim/vardiyalar',
+  'hr-resmi-tatiller': '/hr-takvim/tatiller',
+  'hr-izin-turleri': '/hr-izin/turler?is_active=true',
+  'hr-izin-talepleri': '/hr-izin/talepler',
+  'hr-bordro-donemleri': '/hr-bordro/donemler',
+  'hr-bordro-parametreleri': '/hr-bordro/parametreler',
+  'hr-bordro-calismalari': '/hr-bordro/calismalar',
+  'hr-is-ilanlari': '/hr-ise-alim/ilanlar',
+  'hr-adaylar': '/hr-ise-alim/adaylar',
+  'hr-cikis-nedenleri': '/hr-ise-alim/cikis-nedenleri',
+  'hr-ucretler': '/hr-bordro/ucretler',
+  'hr-avanslar': '/hr-bordro/avanslar',
+  // Diğer tanım ekranları
+  'belge-tipleri': '/belge-tipleri?is_active=true',
+  'finans-vergi-kodlari': '/finans-vergi-kodlari',
+  'finans-ulke-paketleri': '/finans-country/paketler',
+  'mali-yillar': '/muhasebe-donemleri/mali-yillar',
+  'muhasebe-donemleri': '/muhasebe-donemleri',
 };
 
 /** Ekran kaydı → ek lookup anahtarları (endpoint eşleşmesi yetmezse / alias) */
@@ -9139,6 +10048,21 @@ const SCREEN_LOOKUP_EXTRAS = {
   'fatura-kontrolleri': ['alis-faturalari', 'fatura-yonetimi', 'mal-kabuller', 'satin-alma-siparisleri'],
   routings: ['is-istasyonlari', 'rota-sablonlari', 'is-merkezleri', 'urun-agaclari'],
   'is-istasyonlari': ['is-merkezleri', 'is-istasyonlari'],
+  'hr-izin-turleri': ['hr-izin-turleri'],
+  'hr-personel': ['hr-personel'],
+  'hr-departmanlar': ['hr-departmanlar'],
+  'hr-pozisyonlar': ['hr-pozisyonlar'],
+  'hr-calisma-takvimleri': ['hr-calisma-takvimleri'],
+  'hr-vardiyalar': ['hr-vardiyalar'],
+  'hr-cikis-nedenleri': ['hr-cikis-nedenleri'],
+  'hr-bordro-donemleri': ['hr-bordro-donemleri'],
+  'hr-is-ilanlari': ['hr-is-ilanlari'],
+  'belge-tipleri': ['belge-tipleri'],
+  'finans-vergi-kodlari': ['finans-vergi-kodlari'],
+  'finans-ulke-paketleri': ['finans-ulke-paketleri'],
+  'mali-yillar': ['mali-yillar'],
+  'onay-rota-tanim': ['onay-rota-tanim', 'onay-rotalari'],
+  'onay-message-template': ['onay-message-template', 'onay-message-sablonlari'],
 };
 
 function invalidateLookups(...keys) {
@@ -9173,8 +10097,25 @@ function invalidateLookupsForScreen(screen) {
   else invalidateLookups(); // bilinmeyen ekran → tüm cache
 }
 
+/** Lookup anahtarı → API yolu. LOOKUP_ENDPOINTS yoksa ekran id / endpoint’ten çöz. */
+function resolveLookupEndpoint(key) {
+  if (!key) return null;
+  if (LOOKUP_ENDPOINTS[key]) return LOOKUP_ENDPOINTS[key];
+  // lookup: 'ekran-id' kalıbı — tanım ekranı endpoint’ini kullan
+  const screen = (typeof findScreen === 'function' && findScreen(key))
+    || (typeof screenForLookupKey === 'function' && screenForLookupKey(key))
+    || null;
+  if (screen?.endpoint) {
+    const base = typeof screenApiBase === 'function'
+      ? screenApiBase(screen.endpoint)
+      : String(screen.endpoint).split('?')[0];
+    return base || null;
+  }
+  return null;
+}
+
 async function fetchLookupKey(key) {
-  const ep = LOOKUP_ENDPOINTS[key];
+  const ep = resolveLookupEndpoint(key);
   if (!ep) {
     state.lookupCache[key] = state.lookupCache[key] || [];
     return state.lookupCache[key];
@@ -9250,8 +10191,50 @@ function lookupBrowseButtonHtml(disabled) {
   return `<button type="button" class="lookup-browse-btn" tabindex="-1" title="Liste / ekran aç" aria-label="Kayıt listesini ve ekran işlemlerini aç"><span class="lookup-browse-dot" aria-hidden="true"></span></button>`;
 }
 
+/** LIKE %metin% — kullanıcı % yazsa da tek sarmalama */
+function normalizeLikeNeedle(q) {
+  let s = String(q || '').trim();
+  s = s.replace(/^%+/, '').replace(/%+$/, '').trim();
+  return s.toLocaleLowerCase('tr');
+}
+
+function likeIncludes(haystack, needle) {
+  if (!needle) return true;
+  return String(haystack ?? '').toLocaleLowerCase('tr').includes(needle);
+}
+
 function wrapLookupPick(innerHtml, disabled = false) {
   return `<div class="lookup-widget">${innerHtml}${lookupBrowseButtonHtml(disabled)}</div>`;
+}
+
+/** Yazılabilir lookup: gizli select (değer) + typeahead (manuel arama %…%) */
+function wrapLookupCombobox(selectHtml, displayText, disabled = false) {
+  const shown = displayText && displayText !== '—' ? displayText : '';
+  return `<div class="lookup-widget lookup-combobox">
+    <div class="lookup-combo-main">
+      ${selectHtml}
+      <input type="text" class="lookup-typeahead" value="${escAttr(shown)}"
+        placeholder="Yazarak ara (%…%)" ${disabled ? 'disabled' : ''} autocomplete="off"
+        spellcheck="false" />
+      <div class="lookup-suggest" hidden role="listbox"></div>
+    </div>
+    ${lookupBrowseButtonHtml(disabled)}
+  </div>`;
+}
+
+function syncLookupTypeaheadFromSelect(sel) {
+  if (!sel) return;
+  const widget = sel.closest('.lookup-widget');
+  const ta = widget?.querySelector('.lookup-typeahead');
+  if (!ta) return;
+  const opt = sel.selectedOptions?.[0];
+  let text = opt?.getAttribute('title') || opt?.textContent || '';
+  if (!sel.value || text === '—' || text === emptyLookupLabel()) text = '';
+  ta.value = text;
+}
+
+function emptyLookupLabel() {
+  return '—';
 }
 
 function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', ctx = null) {
@@ -9282,33 +10265,33 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const opts = field.options || [];
     // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
     if (opts.length === 2) {
-      const radioName = `${attrName.replace('data-', '')}_${field.key}`;
+      // Her segment örneği benzersiz name alsın (master/grid/bom/flow — tüm ekranlar)
+      if (!fieldControl._segSeq) fieldControl._segSeq = 0;
+      fieldControl._segSeq += 1;
+      const radioName = `seg_${String(attrName || 'f').replace(/[^a-z0-9]+/gi, '_')}_${field.key}_${fieldControl._segSeq}`;
+      const cur = (v === '' || v == null) ? opts[0] : v;
       return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
-        const on = String(v) === String(o) || (v === '' && o === opts[0]);
-        return `<label class="seg-opt${on ? ' is-on' : ''}">
+        const on = String(cur) === String(o);
+        return `<label class="seg-opt">
           <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(o)}" ${on ? 'checked' : ''} ${dis} ${req} />
           <span>${escAttr(o)}</span>
         </label>`;
       }).join('')}</div>`;
     }
-    const sel = `<select class="lookup-pick" ${name} ${dis} ${req}>
+    const sel = `<select class="lookup-pick lookup-combo-select" ${name} ${dis} ${req}>
+      <option value="">—</option>
       ${opts.map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
     </select>`;
-    return wrapLookupPick(sel, Boolean(dis));
+    return wrapLookupCombobox(sel, v === '' || v == null ? '' : String(v), Boolean(dis));
   }
   if (field.type === 'lookup') {
     const scope = ctx || state.formRecord || {};
     const rows = lookupRowsForField(field, scope);
     const dep = field.dependsOn ? ` data-depends-on="${escAttr(field.dependsOn)}"` : '';
     const bom = field.filterByBomKey ? ` data-filter-bom="${escAttr(field.filterByBomKey)}"` : '';
-    const sel = `<select class="lookup-select lookup-pick" ${name} ${dis} ${req}${dep}${bom}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
-    // Klasik ERP: dar kod select + geniş salt okunur first_name
-    if (field.codeKey) {
-      const first_name = lookupNameOnly(field, v) || '—';
-      const pair = `<div class="lookup-pair">${sel}<input type="text" class="lookup-name-ro" value="${escAttr(first_name)}" readonly tabindex="-1" aria-label="${escAttr(field.label)} adı" /></div>`;
-      return wrapLookupPick(pair, Boolean(dis));
-    }
-    return wrapLookupPick(sel, Boolean(dis));
+    const sel = `<select class="lookup-select lookup-pick lookup-combo-select" ${name} ${dis} ${req}${dep}${bom}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
+    const display = lookupDisplay(field, v);
+    return wrapLookupCombobox(sel, display === '—' ? '' : display, Boolean(dis));
   }
   if (field.type === 'number') {
     return `<input type="number" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
@@ -10784,21 +11767,18 @@ function renderDynamicGrid(tab, rec) {
           ${rows.map((row, idx) => {
             const selected = selIdx === idx;
             const saved = row._satir_kayitli === true || row.id != null;
-            // Liste satırı: Düzelt ↔ Kaydet aynı yerde (ikisi birden değil)
-            const rowEditing = row._satir_duzenleniyor === true || !saved;
-            const rowActBtn = rowEditing
-              ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>`
-              : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">✎</button>`;
-            const rowFieldsEditable = canEdit && rowEditing;
+            // Manuel yazma: form düzenlenebilirse satır alanları doğrudan yazılabilir
+            const rowFieldsEditable = canEdit;
             const rowIdText = (row.id != null && row.id !== '') ? String(row.id) : '—';
             return `
-              <tr class="${selected ? 'selected' : ''} ${saved && !rowEditing ? 'detail-row--saved' : 'detail-row--draft'}"
+              <tr class="${selected ? 'selected' : ''} ${saved ? 'detail-row--saved' : 'detail-row--draft'}"
                   data-grid-row="${key}" data-grid-idx="${idx}" data-grid-pick="${key}">
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
-                    ${rowActBtn}
+                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">⧉</button>
+                    <button type="button" class="btn action ghost sm danger" data-row-act="sil" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı sil">✕</button>
                   </div>
                 </td>` : ''}
                 <td class="col-seq">${idx + 1}</td>
@@ -11425,6 +12405,8 @@ function renderZincirStrip(screen, rec) {
 }
 
 function renderForm(screen) {
+  // Segment radio name sayacı — her render’da sıfırla
+  if (typeof fieldControl === 'function') fieldControl._segSeq = 0;
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
   applyFormLayoutChrome(screen);
@@ -11550,6 +12532,11 @@ function renderForm(screen) {
         secShow = true;
         secLabel = screen.approveAction.label;
         secBtn.dataset.secKind = 'approve';
+      } else if (screen.id === 'hr-bordro-calismalari' && rec.id && screen.secondaryAction
+        && ['Taslak', 'Hesaplandi'].includes(rec.status)) {
+        secShow = true;
+        secLabel = screen.secondaryAction.label;
+        secBtn.dataset.secKind = 'baslat';
       }
       secBtn.hidden = !secShow;
       if (secShow) secBtn.textContent = secLabel;
@@ -11578,6 +12565,33 @@ function renderForm(screen) {
     if (screen.id === 'onaylarim') {
       show = Boolean(screen.approveAction && rec.status_code === 'BEKLIYOR');
     }
+    if (screen.id === 'hr-izin-talepleri') {
+      if (rec.status === 'Taslak') show = Boolean(screen.convertAction);
+      else if (['Gonderildi', 'YoneticiOnay', 'IkOnay'].includes(rec.status)) show = Boolean(screen.approveAction);
+      else show = false;
+    }
+    if (screen.id === 'hr-avanslar') {
+      if (['Taslak', 'OnayBekliyor'].includes(rec.status)) show = Boolean(screen.approveAction);
+      else if (rec.status === 'Onaylandi') show = Boolean(screen.convertAction);
+      else show = false;
+    }
+    if (screen.id === 'hr-bordro-calismalari') {
+      if (rec.status === 'Hesaplandi') show = Boolean(screen.approveAction);
+      else if (rec.status === 'Onaylandi') show = Boolean(screen.convertAction);
+      else show = false;
+    }
+    if (screen.id === 'hr-adaylar') {
+      show = Boolean(screen.convertAction && rec.status !== 'IseAlindi' && !rec.employee_id);
+    }
+    if (screen.id === 'hr-onboarding') {
+      show = Boolean(screen.approveAction && rec.status === 'Bekliyor');
+    }
+    if (screen.id === 'hr-zimmetler') {
+      show = Boolean(screen.approveAction && rec.status === 'Zimmette');
+    }
+    if (screen.id === 'hr-isten-cikis') {
+      show = Boolean(screen.approveAction && ['Taslak', 'Kontrol'].includes(rec.status));
+    }
     conv.hidden = !show;
     if (show) {
       const preferApprove = (screen.approveAction && (
@@ -11591,6 +12605,12 @@ function renderForm(screen) {
         || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
             && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status))
         || (screen.id === 'onaylarim' && rec.status_code === 'BEKLIYOR')
+        || (screen.id === 'hr-izin-talepleri' && ['Gonderildi', 'YoneticiOnay', 'IkOnay'].includes(rec.status))
+        || (screen.id === 'hr-avanslar' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
+        || (screen.id === 'hr-bordro-calismalari' && rec.status === 'Hesaplandi')
+        || (screen.id === 'hr-onboarding' && rec.status === 'Bekliyor')
+        || (screen.id === 'hr-zimmetler' && rec.status === 'Zimmette')
+        || (screen.id === 'hr-isten-cikis' && ['Taslak', 'Kontrol'].includes(rec.status))
       ));
       const label = preferApprove
         ? screen.approveAction.label
@@ -11727,11 +12747,112 @@ function renderForm(screen) {
   bindNumeratorFieldListener(screen);
   bindPasswordFieldPersist();
   bindCascadeLookups(screen);
+  enableDetailTableColumnResize(screen);
   if (screen.kullaniciYetkiPaneli) {
     bindYetkiGridEvents();
     bindFirmaYetkiEvents();
     bindAvatarEvents();
   }
+}
+
+/** Detay tablolarında sütun genişliğini sürükleyerek ayarla (localStorage’da saklanır). */
+function detailColWidthStorageKey(screen, gridKey) {
+  const sid = screen?.id || screen?.screenId || 'form';
+  return `ktb_detail_col_widths:${sid}:${gridKey || 'default'}`;
+}
+
+function readStoredDetailColWidths(screen, gridKey) {
+  try {
+    const raw = localStorage.getItem(detailColWidthStorageKey(screen, gridKey));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredDetailColWidths(screen, gridKey, widths) {
+  try {
+    localStorage.setItem(detailColWidthStorageKey(screen, gridKey), JSON.stringify(widths));
+  } catch { /* ignore quota */ }
+}
+
+function syncStickyDetailOffsets(table) {
+  if (!table) return;
+  const actsTh = table.querySelector('thead th.col-acts');
+  const seqTh = table.querySelector('thead th.col-seq');
+  if (!actsTh || !seqTh) return;
+  const actsW = Math.round(actsTh.getBoundingClientRect().width);
+  table.querySelectorAll('th.col-seq, td.col-seq').forEach((el) => {
+    el.style.left = `${actsW}px`;
+  });
+}
+
+function enableDetailTableColumnResize(screen) {
+  const root = document.getElementById('viewForm') || document;
+  root.querySelectorAll('.detail-table-wrap .detail-table').forEach((table) => {
+    if (table.dataset.colResizeBound === '1') return;
+    table.dataset.colResizeBound = '1';
+    const wrap = table.closest('.detail-table-wrap');
+    const gridKey = wrap?.getAttribute('data-grid-list') || 'default';
+    const stored = readStoredDetailColWidths(screen, gridKey) || {};
+    const heads = [...table.querySelectorAll('thead th')];
+    heads.forEach((th, colIdx) => {
+      th.style.position = th.style.position || '';
+      if (!th.style.position) th.style.position = 'sticky';
+      const key = th.classList.contains('col-acts') ? 'acts'
+        : th.classList.contains('col-seq') ? 'seq'
+          : th.classList.contains('col-id') ? 'id'
+            : `c${colIdx}`;
+      th.dataset.colKey = key;
+      if (stored[key]) {
+        const w = Math.max(40, Number(stored[key]) || 0);
+        if (w) {
+          th.style.width = `${w}px`;
+          th.style.minWidth = `${w}px`;
+          th.style.maxWidth = `${w}px`;
+        }
+      }
+      if (th.querySelector('.col-resizer')) return;
+      const grip = document.createElement('span');
+      grip.className = 'col-resizer';
+      grip.title = 'Sütun genişliğini sürükleyerek ayarla';
+      grip.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const startX = e.clientX;
+        const startW = th.getBoundingClientRect().width;
+        grip.classList.add('active');
+        document.body.classList.add('col-resizing');
+        const onMove = (ev) => {
+          const next = Math.max(40, Math.round(startW + (ev.clientX - startX)));
+          th.style.width = `${next}px`;
+          th.style.minWidth = `${next}px`;
+          th.style.maxWidth = `${next}px`;
+          if (th.classList.contains('col-acts')) syncStickyDetailOffsets(table);
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          grip.classList.remove('active');
+          document.body.classList.remove('col-resizing');
+          const widths = {};
+          heads.forEach((h) => {
+            const k = h.dataset.colKey;
+            if (!k) return;
+            widths[k] = Math.round(h.getBoundingClientRect().width);
+          });
+          writeStoredDetailColWidths(screen, gridKey, widths);
+          syncStickyDetailOffsets(table);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+      th.appendChild(grip);
+    });
+    syncStickyDetailOffsets(table);
+  });
 }
 
 function readFieldValue(el, field) {
@@ -11778,12 +12899,31 @@ function collectTabFields(screen) {
   return fields;
 }
 
+/** Radio ise işaretli olanı tercih et (segment S/H, Haric/Dahil vb.). */
+function findAttrControl(attrName, key, root = document, extraSel = '') {
+  if (!attrName || key == null) return null;
+  const q = `[${attrName}="${key}"]${extraSel || ''}`;
+  const radios = root.querySelectorAll(`input[type="radio"]${q}`);
+  if (radios.length) return [...radios].find((r) => r.checked) || radios[0];
+  return root.querySelector(q);
+}
+
 function findFieldControlEl(attrName, key) {
-  const radios = document.querySelectorAll(`input[type="radio"][${attrName}="${key}"]`);
-  if (radios.length) {
-    return [...radios].find((r) => r.checked) || radios[0];
-  }
-  return document.querySelector(`[${attrName}="${key}"]`);
+  return findAttrControl(attrName, key, document);
+}
+
+/** Form kontrolünden değer oku; unchecked radio’yu yok say. */
+function controlDomValue(el) {
+  if (!el) return undefined;
+  if (el.type === 'radio') return el.checked ? el.value : undefined;
+  if (el.type === 'checkbox') return el.checked;
+  return el.value;
+}
+
+function assignControlInto(ctx, key, el) {
+  if (!key || !el) return;
+  if (el.type === 'radio' && !el.checked) return;
+  ctx[key] = controlDomValue(el);
 }
 
 function readMasterFromForm(screen) {
@@ -11887,6 +13027,47 @@ const LOOKUP_BROWSER_COLUMNS = {
   'olcu-birimleri': [
     { key: 'uom_code', label: 'Birim kodu', mono: true },
     { key: 'uom_name', label: 'Birim adı' },
+  ],
+  'hr-izin-turleri': [
+    { key: 'leave_code', label: 'Kod', mono: true },
+    { key: 'leave_name', label: 'Ad' },
+    { key: 'is_paid', label: 'Ücretli' },
+    { key: 'accrual_method', label: 'Hak ediş' },
+  ],
+  'hr-personel': [
+    { key: 'employee_no', label: 'Sicil', mono: true },
+    { key: 'first_name', label: 'Ad' },
+    { key: 'last_name', label: 'Soyad' },
+    { key: 'department_name', label: 'Departman' },
+  ],
+  'hr-departmanlar': [
+    { key: 'department_code', label: 'Kod', mono: true },
+    { key: 'department_name', label: 'Ad' },
+  ],
+  'hr-pozisyonlar': [
+    { key: 'position_code', label: 'Kod', mono: true },
+    { key: 'position_name', label: 'Ad' },
+  ],
+  'hr-vardiyalar': [
+    { key: 'shift_code', label: 'Kod', mono: true },
+    { key: 'shift_name', label: 'Ad' },
+  ],
+  'hr-calisma-takvimleri': [
+    { key: 'calendar_code', label: 'Kod', mono: true },
+    { key: 'calendar_name', label: 'Ad' },
+  ],
+  'hr-cikis-nedenleri': [
+    { key: 'reason_code', label: 'Kod', mono: true },
+    { key: 'reason_name', label: 'Ad' },
+  ],
+  'hr-bordro-donemleri': [
+    { key: 'period_code', label: 'Dönem', mono: true },
+    { key: 'year_no', label: 'Yıl' },
+    { key: 'month_no', label: 'Ay' },
+  ],
+  'hr-is-ilanlari': [
+    { key: 'requisition_no', label: 'No', mono: true },
+    { key: 'title', label: 'Başlık' },
   ],
   countries: [
     { key: 'country_code', label: 'Ülke kodu', mono: true },
@@ -12038,7 +13219,28 @@ const LOOKUP_TO_SCREEN = {
   'fiyat-listeleri': 'fiyat-listeleri',
   'muhasebe-hesaplari': 'muhasebe-hesaplari',
   'onay-rolleri': 'onay-rolleri',
-  'onay-rotalari': 'onay-rotalari',
+  'onay-rotalari': 'onay-rota-tanim',
+  'onay-rota-tanim': 'onay-rota-tanim',
+  'onay-message-template': 'onay-message-template',
+  'onay-message-sablonlari': 'onay-message-template',
+  'hr-personel': 'hr-personel',
+  'hr-departmanlar': 'hr-departmanlar',
+  'hr-pozisyonlar': 'hr-pozisyonlar',
+  'hr-calisma-takvimleri': 'hr-calisma-takvimleri',
+  'hr-vardiyalar': 'hr-vardiyalar',
+  'hr-resmi-tatiller': 'hr-resmi-tatiller',
+  'hr-izin-turleri': 'hr-izin-turleri',
+  'hr-izin-talepleri': 'hr-izin-talepleri',
+  'hr-bordro-donemleri': 'hr-bordro-donemleri',
+  'hr-bordro-parametreleri': 'hr-bordro-parametreleri',
+  'hr-is-ilanlari': 'hr-is-ilanlari',
+  'hr-adaylar': 'hr-adaylar',
+  'hr-cikis-nedenleri': 'hr-cikis-nedenleri',
+  'belge-tipleri': 'belge-tipleri',
+  'finans-vergi-kodlari': 'finans-vergi-kodlari',
+  'finans-ulke-paketleri': 'finans-ulke-paketleri',
+  'mali-yillar': 'mali-yillar',
+  'muhasebe-donemleri': 'muhasebe-donemleri',
 };
 
 function screenForLookupKey(lookupKey) {
@@ -12157,11 +13359,12 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey) {
 }
 
 function filterLookupBrowserRows(rows, cols, q) {
-  const needle = String(q || '').trim().toLocaleLowerCase('tr');
+  // Arka plan: yazılan metin LIKE %metin% olarak uygulanır
+  const needle = normalizeLikeNeedle(q);
   if (!needle) return rows;
   return rows.filter((r) => cols.some((c) => {
     const v = c.key === '_opt' ? r._opt : r[c.key];
-    return String(v ?? '').toLocaleLowerCase('tr').includes(needle);
+    return likeIncludes(v, needle);
   }));
 }
 
@@ -12309,7 +13512,12 @@ async function openLookupBrowserForSelect(sel) {
   if (!dlg) return;
   const screenTitle = targetScreen?.title || field.label || 'Kayıt';
   if (title) title.textContent = `${screenTitle}`;
-  if (search) search.value = '';
+  // Typeahead’teki metni arama kutusuna taşı (LIKE %…%)
+  const typed = sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead')?.value || '';
+  if (search) {
+    search.value = typed.trim();
+    search.placeholder = 'Ara — LIKE %metin% …';
+  }
   paintLookupBrowser();
   dlg.hidden = false;
   search?.focus();
@@ -12344,13 +13552,22 @@ function applyLookupBrowserValue(val) {
     const opt = document.createElement('option');
     opt.value = str;
     const row = st.selectedRow;
-    opt.textContent = row?._label || row?.[st.field?.codeKey] || row?.[st.field?.labelKey] || str;
+    const title = row?._label
+      || (st.field?.codeKey && row?.[st.field.codeKey]
+        ? `${row[st.field.codeKey]} — ${row[st.field.labelKey] || ''}`
+        : null)
+      || row?.[st.field?.labelKey]
+      || str;
+    opt.textContent = title;
+    opt.setAttribute('title', title);
     sel.appendChild(opt);
   }
   sel.value = str;
+  syncLookupTypeaheadFromSelect(sel);
   sel.dispatchEvent(new Event('change', { bubbles: true }));
   closeLookupBrowser();
-  sel.focus();
+  const ta = sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead');
+  (ta || sel).focus();
 }
 
 async function lookupBrowserCrudAction(act) {
@@ -12404,9 +13621,111 @@ async function lookupBrowserCrudAction(act) {
   }
 }
 
+function closeLookupSuggest(widget) {
+  const box = widget?.querySelector('.lookup-suggest');
+  if (box) {
+    box.hidden = true;
+    box.innerHTML = '';
+  }
+}
+
+function paintLookupSuggest(widget, sel, needle) {
+  const box = widget?.querySelector('.lookup-suggest');
+  if (!box || !sel) return;
+  const n = normalizeLikeNeedle(needle);
+  const opts = [...sel.options].filter((o) => o.value !== '');
+  const matches = n
+    ? opts.filter((o) => likeIncludes(o.getAttribute('title') || o.textContent, n)
+      || likeIncludes(o.value, n))
+    : opts.slice(0, 40);
+  const limited = matches.slice(0, 40);
+  if (!limited.length) {
+    box.innerHTML = `<div class="lookup-suggest-empty">Eşleşme yok (LIKE %${escAttr(n || '')}% )</div>`;
+    box.hidden = false;
+    return;
+  }
+  box.innerHTML = limited.map((o) => {
+    const label = o.getAttribute('title') || o.textContent || o.value;
+    return `<button type="button" class="lookup-suggest-item" role="option" data-lookup-pick="${escAttr(o.value)}" title="${escAttr(label)}">${escAttr(label)}</button>`;
+  }).join('');
+  box.hidden = false;
+}
+
+function applyLookupTypeaheadPick(widget, val) {
+  const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+  if (!sel) return;
+  const str = String(val ?? '');
+  if (str && ![...sel.options].some((o) => String(o.value) === str)) return;
+  sel.value = str;
+  syncLookupTypeaheadFromSelect(sel);
+  closeLookupSuggest(widget);
+  sel.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 function bindLookupBrowseUi() {
   if (document.documentElement.dataset.lookupBrowseBound === '1') return;
   document.documentElement.dataset.lookupBrowseBound = '1';
+
+  // Manuel yazma: typeahead → LIKE %…% öneri listesi
+  document.addEventListener('input', (e) => {
+    const ta = e.target?.closest?.('.lookup-typeahead');
+    if (!ta) return;
+    const widget = ta.closest('.lookup-widget');
+    const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+    if (!sel || sel.disabled) return;
+    paintLookupSuggest(widget, sel, ta.value);
+  });
+  document.addEventListener('focusin', (e) => {
+    const ta = e.target?.closest?.('.lookup-typeahead');
+    if (!ta) return;
+    const widget = ta.closest('.lookup-widget');
+    const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+    if (!sel || sel.disabled) return;
+    // Seçili değeri göster; boşsa öneri aç
+    if (!ta.value) paintLookupSuggest(widget, sel, '');
+  });
+  document.addEventListener('keydown', (e) => {
+    const ta = e.target?.closest?.('.lookup-typeahead');
+    if (!ta) return;
+    const widget = ta.closest('.lookup-widget');
+    const box = widget?.querySelector('.lookup-suggest');
+    if (e.key === 'Escape') {
+      closeLookupSuggest(widget);
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const first = box && !box.hidden ? box.querySelector('.lookup-suggest-item') : null;
+      if (first) {
+        applyLookupTypeaheadPick(widget, first.getAttribute('data-lookup-pick'));
+        return;
+      }
+      // Öneri yoksa liste popup’ı aç (yazılan metin LIKE aramasına gider)
+      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+      return;
+    }
+    if (e.key === 'ArrowDown' && (e.altKey || box?.hidden)) {
+      e.preventDefault();
+      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+    }
+  });
+  document.addEventListener('mousedown', (e) => {
+    const item = e.target.closest?.('.lookup-suggest-item');
+    if (item) {
+      e.preventDefault();
+      const widget = item.closest('.lookup-widget');
+      applyLookupTypeaheadPick(widget, item.getAttribute('data-lookup-pick'));
+      return;
+    }
+    if (!e.target.closest?.('.lookup-combobox')) {
+      document.querySelectorAll('.lookup-suggest:not([hidden])').forEach((box) => {
+        box.hidden = true;
+        box.innerHTML = '';
+      });
+    }
+  });
 
   document.addEventListener('click', (e) => {
     const btn = e.target.closest?.('.lookup-browse-btn');
@@ -12517,69 +13836,49 @@ function cascadeScopeContext(el) {
   if (didx != null && grid) {
     const ctx = {};
     document.querySelectorAll(`[data-detail][data-didx="${didx}"][data-grid="${grid}"]`).forEach((sib) => {
-      const k = sib.getAttribute('data-detail');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-detail'), sib);
     });
     return { ctx, didx, grid, isDetail: true };
   }
   if (el.hasAttribute('data-bom-field')) {
     const ctx = { ...(state.formRecord || {}) };
     document.querySelectorAll('[data-bom-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-bom-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-bom-field'), sib);
     });
     document.querySelectorAll('[data-master]').forEach((sib) => {
-      const k = sib.getAttribute('data-master');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-master'), sib);
     });
     return { ctx, isDetail: false, isBomField: true };
   }
   if (el.hasAttribute('data-flow-comp-field')) {
     const ctx = { ...(state.formRecord || {}) };
     document.querySelectorAll('[data-flow-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-field'), sib);
     });
     document.querySelectorAll('[data-flow-comp-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-comp-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-comp-field'), sib);
     });
     document.querySelectorAll('[data-master]').forEach((sib) => {
-      const k = sib.getAttribute('data-master');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-master'), sib);
     });
     return { ctx, isDetail: false, isFlowComp: true };
   }
   if (el.hasAttribute('data-flow-field') || el.hasAttribute('data-flow-equip-field')) {
     const ctx = { ...(state.formRecord || {}) };
     document.querySelectorAll('[data-flow-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-field'), sib);
     });
     document.querySelectorAll('[data-flow-equip-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-equip-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-equip-field'), sib);
     });
     document.querySelectorAll('[data-master]').forEach((sib) => {
-      const k = sib.getAttribute('data-master');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-master'), sib);
     });
     return { ctx, isDetail: false, isFlowField: true };
   }
   const ctx = { ...(state.formRecord || {}) };
   document.querySelectorAll('[data-master]').forEach((sib) => {
-    const k = sib.getAttribute('data-master');
-    if (!k) return;
-    ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    assignControlInto(ctx, sib.getAttribute('data-master'), sib);
   });
   return { ctx, isDetail: false };
 }
@@ -12592,6 +13891,7 @@ function refreshLookupSelect(el, field, ctx) {
   // Önceki değer filtrelenmiş listede yoksa temizle
   const stillValid = rows.some((r) => lookupOptionSelected(field, r, el.value));
   if (!stillValid) el.value = '';
+  syncLookupTypeaheadFromSelect(el);
 }
 
 /** Bağlı alan doldurma — yeniden giriş kilidi */
@@ -12951,7 +14251,12 @@ function bindCascadeLookups(_screen) {
     if (!scr || state.formMode == null) return;
 
     // Kod–first_name lookup: first_name kutusunu güncelle
-    if (el instanceof HTMLSelectElement && el.classList.contains('lookup-select')) {
+    if (el instanceof HTMLSelectElement && (
+      el.classList.contains('lookup-select')
+      || el.classList.contains('lookup-pick')
+      || el.classList.contains('lookup-combo-select')
+    )) {
+      syncLookupTypeaheadFromSelect(el);
       const pair = el.closest('.lookup-pair');
       const nameRo = pair?.querySelector('.lookup-name-ro');
       if (nameRo) {
@@ -13109,16 +14414,21 @@ function bindCascadeLookups(_screen) {
   });
 }
 
+function findDetailControlEl(key, idx, gridKey) {
+  return findAttrControl('data-detail', key, document, `[data-didx="${idx}"][data-grid="${gridKey}"]`);
+}
+
 function syncGridRowFromDom(tab, idx, baseRow = {}) {
   const row = { ...baseRow };
   let any = false;
   const missing = [];
   (tab.fields || []).forEach((f) => {
     if (f.type === 'static') return;
-    const el = document.querySelector(`[data-detail="${f.key}"][data-didx="${idx}"][data-grid="${tab.key}"]`);
+    const el = findDetailControlEl(f.key, idx, tab.key);
     if (!el) return;
     row[f.key] = readFieldValue(el, f);
     if (f.type === 'checkbox') { if (el.checked) any = true; }
+    else if (el.type === 'radio') { if (el.checked && el.value !== '') any = true; }
     else if (el.value !== '') any = true;
     if (f.required) {
       const v = row[f.key];
@@ -13162,7 +14472,7 @@ function persistBomEditor(rec, tab) {
   const node = getBomNode(nodes, state.treeSel);
   if (!node) return null;
   (tab.fields || []).forEach((f) => {
-    const el = document.querySelector(`[data-bom-field="${f.key}"]`);
+    const el = findAttrControl('data-bom-field', f.key);
     if (!el) return;
     node[f.key] = readFieldValue(el, f);
   });
@@ -13173,7 +14483,7 @@ function persistBomEditor(rec, tab) {
     const idx = Number(rowEl.getAttribute('data-bom-alt-row'));
     const row = { ...(node.alternatifler?.[idx] || blankBomAltRow(altFields)) };
     altFields.forEach((f) => {
-      const el = rowEl.querySelector(`[data-bom-alt-field="${f.key}"]`);
+      const el = findAttrControl('data-bom-alt-field', f.key, rowEl);
       if (!el) return;
       row[f.key] = readFieldValue(el, f);
     });
@@ -13385,14 +14695,14 @@ function persistFlowEditor(rec, tab) {
   if (state.flowSel == null || !ops[state.flowSel]) return;
   const op = ops[state.flowSel];
   (tab.fields || []).forEach((f) => {
-    const el = document.querySelector(`[data-flow-field="${f.key}"]`);
+    const el = findAttrControl('data-flow-field', f.key);
     if (!el) return;
     op[f.key] = readFieldValue(el, f);
   });
   if (state.flowCompSel != null && op.bilesenler?.[state.flowCompSel]) {
     const b = op.bilesenler[state.flowCompSel];
     (tab.componentFields || []).forEach((f) => {
-      const el = document.querySelector(`[data-flow-comp-field="${f.key}"]`);
+      const el = findAttrControl('data-flow-comp-field', f.key);
       if (!el) return;
       b[f.key] = readFieldValue(el, f);
     });
@@ -13400,7 +14710,7 @@ function persistFlowEditor(rec, tab) {
   if (state.flowEquipSel != null && op.ekipmanlar?.[state.flowEquipSel]) {
     const eq = op.ekipmanlar[state.flowEquipSel];
     (tab.equipmentFields || []).forEach((f) => {
-      const el = document.querySelector(`[data-flow-equip-field="${f.key}"]`);
+      const el = findAttrControl('data-flow-equip-field', f.key);
       if (!el) return;
       eq[f.key] = readFieldValue(el, f);
     });
@@ -14976,19 +16286,6 @@ function bindEvents() {
     toggleDocTabs();
   });
 
-  // Form / liste ile uğraşırken alt sekme şeridini gizle
-  const workspaceMain = document.querySelector('.workspace-main');
-  if (workspaceMain && !workspaceMain.dataset.tabsHideBound) {
-    workspaceMain.dataset.tabsHideBound = '1';
-    const hideOnInteract = (e) => {
-      if (e.target.closest('#tabBar, #btnOpenTabs, #tabCtxMenu')) return;
-      hideDocTabsWhileWorking();
-    };
-    workspaceMain.addEventListener('pointerdown', hideOnInteract, true);
-    workspaceMain.addEventListener('focusin', hideOnInteract, true);
-    workspaceMain.addEventListener('keydown', hideOnInteract, true);
-  }
-
   $('#btnApplyFilter').addEventListener('click', async () => {
     const screen = findScreen(state.screenId);
     if (!screen) return;
@@ -15411,7 +16708,7 @@ function bindEvents() {
       return;
     }
 
-    // Satır düzeyinde Kaydet / Düzelt / Kopyala
+    // Satır düzeyinde Kaydet / Kopyala / Sil
     const rowAct = e.target.closest('[data-row-act]');
     if (rowAct && screen) {
       e.preventDefault();
@@ -15424,12 +16721,15 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
+      // Aktif satır DOM’dan oku (manuel yazılan değerler kaybolmasın)
+      if (rows[idx]) {
+        const { row } = syncGridRowFromDom(tab, idx, rows[idx]);
+        rows[idx] = row;
+      } else if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
         const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
         rows[state.gridSel.idx] = row;
       }
       if (act === 'duzelt') {
-        // Düzelt → aynı yerde Kaydet; diğer satırlar is_locked kalsın
         rows.forEach((r, i) => {
           if (!r) return;
           r._satir_duzenleniyor = i === idx;
@@ -15437,6 +16737,17 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
         renderForm(screen);
+        return;
+      }
+      if (act === 'sil') {
+        if (!rows[idx]) return;
+        rows.splice(idx, 1);
+        state.formRecord[key] = rows;
+        state.gridSel = rows.length
+          ? { key, idx: Math.min(idx, rows.length - 1) }
+          : { key: null, idx: null };
+        renderForm(screen);
+        toast('Satır silindi.');
         return;
       }
       if (act === 'kopyala') {
@@ -15455,7 +16766,6 @@ function bindEvents() {
       }
       if (act === 'kaydet') {
         // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
-        // Onaydan sonra buton tekrar Düzelt olur.
         if (rows[idx]) {
           const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
           if (missing?.length) {

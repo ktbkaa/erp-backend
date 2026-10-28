@@ -14,10 +14,16 @@ describe('meta ekran tablolari', () => {
     assert.equal(res.status, 200);
     assert.ok(Array.isArray(res.json.modules));
     assert.ok(Array.isArray(res.json.screens));
-    assert.ok(res.json.screens.length >= 90);
+    assert.ok(res.json.screens.length >= 120);
     const stok = res.json.screens.find((s) => s.screenId === 'stok-karti');
     assert.ok(stok);
     assert.equal(stok.primaryTable, 'items');
+    const hr = res.json.screens.find((s) => s.screenId === 'hr-personel');
+    assert.ok(hr, 'İK personel ekranı Tablo Bilgileri listesinde olmalı');
+    assert.equal(hr.primaryTable, 'hr_employees');
+    const hrMod = res.json.modules.find((m) => m.id === 'insan-kaynaklari');
+    assert.ok(hrMod, 'İnsan Kaynakları modül grubu olmalı');
+    assert.ok(hrMod.screens.some((s) => s.screenId === 'hr-personel'));
   });
 
   it('ekran detayında kolonlar gelir', async () => {
