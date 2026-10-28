@@ -22,7 +22,7 @@ const { stokHareketOlustur } = require('../src/services/stokHareketService');
 const { mrpCalistir } = require('../src/services/mrpService');
 const { sonrakiKod, stokSeriKodundanTip, cariSeriKodundanTur } = require('../src/utils/kodUretici');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { baslatOnay } = require('../src/services/onayService');
+const { baslatOnay, onaylaAdim } = require('../src/services/onayService');
 
 const TAG = {
   BASE: 'TEST-SUT-BASE',
@@ -679,6 +679,145 @@ async function createItem(client, {
   return row;
 }
 
+/**
+ * GIDA SA sipariş onay rotası (OR-SA-SIPARIS) + roller — eksikse oluşturur.
+ * D5: artık atlanmaz; rota zorunlu.
+ */
+async function ensureSaSiparisOnayTanimi(client, firmaId) {
+  const owner = (await client.query(`SELECT id FROM users WHERE user_code='owner'`)).rows[0];
+  if (!owner) throw new Error('owner kullanıcısı yok — SA onay rolleri bağlanamaz.');
+
+  for (const [kod, adi] of [
+    ['SA_MUDUR-GIDA', 'Satınalma Müdürü'],
+    ['FINANS-GIDA', 'Finans Onayı'],
+    ['SA_MUDUR-GLOBAL', 'Satınalma Müdürü'],
+    ['FINANS-GLOBAL', 'Finans Onayı'],
+  ]) {
+    const companyId = kod.includes('GIDA') ? firmaId : null;
+    const exists = await client.query(
+      `SELECT id FROM approval_roles
+       WHERE role_code = $1::varchar
+         AND (($2::int IS NULL AND company_id IS NULL) OR company_id = $2::int)
+       LIMIT 1`,
+      [kod, companyId]
+    );
+    if (!exists.rows[0]) {
+      await client.query(
+        `INSERT INTO approval_roles (role_code, role_name, description, kisi_id, company_id, is_active)
+         VALUES ($1::varchar, $2::varchar, $3::text, $4::int, $5::int, TRUE)`,
+        [kod, adi, `CANIAS-TAM-DONGU-TEST ${adi}`, owner.id, companyId]
+      );
+    }
+  }
+
+  await client.query(
+    `INSERT INTO approval_rules (
+       rule_code, rule_name, description, screen_id, company_id, is_active, line_no, term_min_amount, otomatik_onay
+     )
+     SELECT 'OM-SA-SIPARIS', 'Satınalma siparişi onayı',
+            'CANIAS-TAM-DONGU-TEST / PURT05', 'satin-alma-siparisleri',
+            NULL, TRUE, 10, 0, FALSE
+     WHERE NOT EXISTS (SELECT 1 FROM approval_rules WHERE rule_code='OM-SA-SIPARIS')`
+  );
+
+  await client.query(
+    `INSERT INTO approval_routes (
+       route_code, route_name, description, screen_id, rule_id, company_id, is_active, versiyon
+     )
+     SELECT 'OR-SA-SIPARIS', 'Satınalma sipariş rotası',
+            'SA müdürü → finans eşiği (CANIAS-TAM-DONGU-TEST)',
+            'satin-alma-siparisleri', k.id, NULL, TRUE, 1
+     FROM approval_rules k
+     WHERE k.rule_code='OM-SA-SIPARIS'
+       AND NOT EXISTS (SELECT 1 FROM approval_routes WHERE route_code='OR-SA-SIPARIS')`
+  );
+
+  await client.query(
+    `UPDATE approval_routes r SET
+       screen_id = 'satin-alma-siparisleri',
+       rule_id = COALESCE(r.rule_id, k.id),
+       is_active = TRUE
+     FROM approval_rules k
+     WHERE r.route_code='OR-SA-SIPARIS' AND k.rule_code='OM-SA-SIPARIS'`
+  );
+
+  const rota = (await client.query(
+    `SELECT id FROM approval_routes WHERE route_code='OR-SA-SIPARIS' AND is_active=TRUE`
+  )).rows[0];
+  if (!rota) throw new Error('OR-SA-SIPARIS rotası oluşturulamadı.');
+
+  for (const [lineNo, stepName, roleName, minAmount, roleCode] of [
+    [10, 'Satınalma müdürü onayı', 'Satınalma Müdürü', null, 'SA_MUDUR-GLOBAL'],
+    [20, 'Finans onayı (eşik üzeri)', 'Finans Onayı', 50000, 'FINANS-GLOBAL'],
+  ]) {
+    const rol = (await client.query(
+      `SELECT id FROM approval_roles WHERE role_code=$1 LIMIT 1`,
+      [roleCode]
+    )).rows[0];
+    await client.query(
+      `INSERT INTO approval_route_steps (
+         route_id, line_no, step_name, role_id, role_name, zorunlu, min_amount
+       )
+       SELECT $1, $2, $3, $4, $5, TRUE, $6
+       WHERE NOT EXISTS (
+         SELECT 1 FROM approval_route_steps a WHERE a.route_id=$1 AND a.line_no=$2
+       )`,
+      [rota.id, lineNo, stepName, rol?.id || null, roleName, minAmount]
+    );
+  }
+
+  await client.query(
+    `INSERT INTO approval_module_usages (
+       kullanim_code, kullanim_name, module_code, screen_id, route_id, min_amount, is_active, description
+     )
+     SELECT 'OM-SA-SIPARIS', 'Satınalma siparişi onayı', 'SATINALMA',
+            'satin-alma-siparisleri', $1, 0, TRUE,
+            'CANIAS-TAM-DONGU-TEST SA sipariş onay'
+     WHERE NOT EXISTS (SELECT 1 FROM approval_module_usages WHERE kullanim_code='OM-SA-SIPARIS')`,
+    [rota.id]
+  );
+
+  log(`  SA sipariş onay rotası hazır: OR-SA-SIPARIS (#${rota.id})`);
+  return rota;
+}
+
+/** SA sipariş için onay kaydı başlat + tüm adımları onayla (atlama yok) */
+async function calistirSaSiparisOnay(client, { firmaId, po, tag }) {
+  const kullanici = (await client.query(`SELECT * FROM users WHERE user_code='owner'`)).rows[0];
+  if (!kullanici) throw new Error('owner yok — SA onay adımları tamamlanamaz.');
+
+  let kayit = await baslatOnay(client, {
+    company_id: firmaId,
+    screen_id: 'satin-alma-siparisleri',
+    module_code: 'SATINALMA',
+    document_id: po.id,
+    document_no: po.order_no,
+    document_ozet: `[${tag}] SA onay`,
+    amount: Number(po.total_amount) || 0,
+    currency_code: po.currency_code || 'TRY',
+    baslatan_kisi_id: kullanici.id,
+    description: `[${tag}] ${TAG.LABEL} SA siparişi onay süreci`,
+  });
+
+  if (kayit?.atlandi) {
+    throw new Error(`SA onay atlandı (${kayit.neden}) — beklenmiyor.`);
+  }
+  if (!kayit?.id) throw new Error('SA onay kaydı oluşmadı.');
+
+  let guard = 0;
+  while (kayit.status_code === 'BEKLIYOR' && guard < 10) {
+    kayit = await onaylaAdim(client, kayit.id, kullanici, {
+      notlar: `[${tag}] ${TAG.LABEL} adım onayı`,
+    });
+    guard += 1;
+  }
+  if (kayit.status_code !== 'ONAYLANDI') {
+    throw new Error(`SA onay tamamlanamadı: ${kayit.onay_no || kayit.id} → ${kayit.status_code}`);
+  }
+  log(`  SA onay tamam: ${kayit.onay_no || kayit.id} (${kayit.status_code}) belge=${po.order_no}`);
+  return kayit;
+}
+
 /** Üretim sonrası CKK emirlerini onayla → Mamul/YarıMamul */
 async function onaylaCkk(firmaId, productionOrderId, tag) {
   const r = await pool.query(
@@ -874,7 +1013,10 @@ async function seedBase(client, org) {
     bom: bom.bom_code,
     route: rota.route_code,
     price_list: pl.list_code,
-    gap_notes: ['Maliyet merkezi (BAST06) ayrı tablo/ekran yok — iş merkezi adına MC-SUT-01 işlendi'],
+    gap_notes: [
+      'Maliyet merkezi (BAST06) ayrı tablo/ekran yok — iş merkezi adına MC-SUT-01 işlendi',
+    ],
+    sa_approval_route: 'OR-SA-SIPARIS',
   };
 
   return {
@@ -1017,28 +1159,8 @@ async function seedManuel(client, org, base) {
   }, firma.id);
 
   await api('POST', `/satin-alma-siparisleri/${po.id}/onayla`, {}, firma.id);
-
-  // Onay kaydı (varsa rota)
-  try {
-    const kullanici = (await client.query(`SELECT * FROM users WHERE user_code='owner'`)).rows[0];
-    if (kullanici) {
-      await baslatOnay(client, {
-        company_id: firma.id,
-        screen_id: 'satin-alma-siparisleri',
-        module_code: 'SATINALMA',
-        document_id: po.id,
-        document_no: po.order_no,
-        document_ozet: `[${tag}] SA onay örneği`,
-        amount: Number(po.total_amount) || 0,
-        currency_code: 'TRY',
-        baslatan_kisi_id: kullanici.id,
-        description: `[${tag}] Manuel SA siparişi onay süreci`,
-      });
-      log('  onay kaydı başlatıldı');
-    }
-  } catch (err) {
-    log(`  onay atlandı: ${err.message}`);
-  }
+  // Merkezi onay: rota zorunlu; adımlar tamamlanmadan devam edilmez
+  const onayMan = await calistirSaSiparisOnay(client, { firmaId: firma.id, po, tag });
 
   // Mal kabul / UE stok dokunur — açık txn stok kilidi bırakmasın
   await client.query('COMMIT');
@@ -1122,6 +1244,7 @@ async function seedManuel(client, org, base) {
     sales_order: so.order_no,
     purchase_requisition: pr.requisition_no,
     purchase_order: po.order_no,
+    sa_approval: onayMan.onay_no || String(onayMan.id),
     goods_receipt: mk.receipt_no,
     production_order: ue.order_no || String(ue.id),
     shipment: sevk?.shipment_no || sevk?.id || null,
@@ -1284,6 +1407,7 @@ async function seedMrp(client, org, base) {
   let poMrp = null;
   let mkMrp = null;
   let alisFaturaMrp = null;
+  let onayMrp = null;
   const prId = talep?.id || talep?.talep_id || talep?.requisition_id;
   await client.query('COMMIT');
   await client.query('BEGIN');
@@ -1309,7 +1433,7 @@ async function seedMrp(client, org, base) {
       }, firma.id);
       if (poMrp?.id) {
         if (poMrp.status !== 'Onayli') {
-          await api('POST', `/satin-alma-siparisleri/${poMrp.id}/onayla`, {}, firma.id).catch(() => null);
+          await api('POST', `/satin-alma-siparisleri/${poMrp.id}/onayla`, {}, firma.id);
         }
         await tagBelge(client, 'purchase_orders', poMrp.id, firma.id, tag);
         // Açıklamayı ayrı autocommit bağlantıyla yaz (API kilitleriyle çakışmasın)
@@ -1322,26 +1446,7 @@ async function seedMrp(client, org, base) {
             );
           } finally { tc.release(); }
         }
-        // Onay kaydı
-        try {
-          const kullanici = (await client.query(`SELECT * FROM users WHERE user_code='owner'`)).rows[0];
-          if (kullanici) {
-            await baslatOnay(client, {
-              company_id: firma.id,
-              screen_id: 'satin-alma-siparisleri',
-              module_code: 'SATINALMA',
-              document_id: poMrp.id,
-              document_no: poMrp.order_no,
-              document_ozet: `[${tag}] MRP SA onay örneği`,
-              amount: Number(poMrp.total_amount) || 0,
-              currency_code: 'TRY',
-              baslatan_kisi_id: kullanici.id,
-              description: `[${tag}] MRP SA siparişi onay süreci`,
-            });
-          }
-        } catch (err) {
-          log(`  MRP onay atlandı: ${err.message}`);
-        }
+        onayMrp = await calistirSaSiparisOnay(client, { firmaId: firma.id, po: poMrp, tag });
 
         mkMrp = await api('POST', '/mal-kabuller', {
           purchase_order_id: poMrp.id,
@@ -1502,6 +1607,7 @@ async function seedMrp(client, org, base) {
     mrp_net_positive: sonuc.calisma?.net_pozitif || null,
     purchase_requisition: talep?.requisition_no || talep?.talep_no || null,
     purchase_order: poMrp?.order_no || null,
+    sa_approval: onayMrp ? (onayMrp.onay_no || String(onayMrp.id)) : null,
     goods_receipt: mkMrp?.receipt_no || null,
     purchase_invoice: alisFaturaMrp?.invoice_no || null,
     production_from_mrp: ueNos,
@@ -1529,6 +1635,7 @@ async function main() {
     org = await ensureOrg(client);
     summary.firma = { id: org.firma.id, code: org.firma.company_code, name: org.firma.company_name };
     await purgeGida(client, org.firma.id);
+    await ensureSaSiparisOnayTanimi(client, org.firma.id);
     base = await seedBase(client, org);
     await client.query('COMMIT');
     log('  BASE commit OK');

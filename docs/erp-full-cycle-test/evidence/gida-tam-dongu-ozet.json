@@ -14,10 +14,10 @@
     "tag": "TEST-SUT-BASE",
     "label": "CANIAS-TAM-DONGU-TEST",
     "partners": {
-      "ted1": "T00046",
-      "ted2": "T00047",
-      "mus1": "M00071",
-      "mus2": "M00072"
+      "ted1": "T00052",
+      "ted2": "T00053",
+      "mus1": "M00077",
+      "mus2": "M00078"
     },
     "items": {
       "cigSut": "TEST-SUT-H01",
@@ -33,42 +33,45 @@
       "hmCase": "TEST-SUT-A02",
       "fg": "TEST-SUT-M01"
     },
-    "bom": "A00042",
-    "route": "O00043",
-    "price_list": "GIDA-SAT-4-1793194276045",
+    "bom": "A00045",
+    "route": "O00046",
+    "price_list": "GIDA-SAT-4-1793195378396",
     "gap_notes": [
       "Maliyet merkezi (BAST06) ayrı tablo/ekran yok — iş merkezi adına MC-SUT-01 işlendi"
-    ]
+    ],
+    "sa_approval_route": "OR-SA-SIPARIS"
   },
   "man": {
     "tag": "TEST-SUT-MAN",
-    "sales_quotation": "ST00019",
-    "sales_order": "B00047",
-    "purchase_requisition": "L00044",
-    "purchase_order": "P00043",
-    "goods_receipt": "R00028",
-    "production_order": "E00064",
-    "shipment": "SE00024",
-    "delivery_note": "IR00026",
-    "purchase_invoice": "AF00018",
-    "sales_invoice": "FA00020"
+    "sales_quotation": "ST00022",
+    "sales_order": "B00052",
+    "purchase_requisition": "L00049",
+    "purchase_order": "P00048",
+    "sa_approval": "NK00006",
+    "goods_receipt": "R00032",
+    "production_order": "E00070",
+    "shipment": "SE00028",
+    "delivery_note": "IR00030",
+    "purchase_invoice": "AF00022",
+    "sales_invoice": "FA00024"
   },
   "mrp": {
     "tag": "TEST-SUT-MRP",
-    "sales_order": "B00048",
-    "independent_requirement": "BI00013",
-    "mrp_run": "MR00012",
+    "sales_order": "B00053",
+    "independent_requirement": "BI00015",
+    "mrp_run": "MR00014",
     "mrp_net_positive": 5,
-    "purchase_requisition": "L00045",
-    "purchase_order": "P00044",
-    "goods_receipt": "R00029",
-    "purchase_invoice": "AF00019",
+    "purchase_requisition": "L00050",
+    "purchase_order": "P00049",
+    "sa_approval": "NK00007",
+    "goods_receipt": "R00033",
+    "purchase_invoice": "AF00023",
     "production_from_mrp": [
-      "E00066"
+      "E00072"
     ],
-    "shipment": "SE00025",
-    "delivery_note": "IR00027",
-    "sales_invoice": "FA00021"
+    "shipment": "SE00029",
+    "delivery_note": "IR00031",
+    "sales_invoice": "FA00025"
   },
   "how_to_filter": {
     "ui": "Üst bardan firma = GIDA seçin. Listelerde project_code / açıklama alanına TEST-SUT-MAN veya TEST-SUT-MRP yazın.",

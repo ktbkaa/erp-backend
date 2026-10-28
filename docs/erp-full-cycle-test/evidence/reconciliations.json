@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-28T13:32:12.213Z",
+  "generated_at": "2026-10-28T13:50:11.984254+00:00",
   "balances": [
     {
       "warehouse_code": "GIDA-HMD",
@@ -188,5 +188,19 @@
     "shipment": "SE00025",
     "delivery_note": "IR00027",
     "sales_invoice": "FA00021"
-  }
+  },
+  "sa_approvals": [
+    {
+      "onay_no": "NK00007",
+      "document_no": "P00049",
+      "status_code": "ONAYLANDI",
+      "amount": 44094
+    },
+    {
+      "onay_no": "NK00006",
+      "document_no": "P00048",
+      "status_code": "ONAYLANDI",
+      "amount": 4590
+    }
+  ]
 }

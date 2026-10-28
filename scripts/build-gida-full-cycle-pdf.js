@@ -29,6 +29,8 @@ const STEPS = [
   ['10-mrp.png', '10-11', 'MRP Çalıştırma / Sonuç (MRPT)', ozet.mrp.mrp_run],
   ['12-purchase-req.png', '12', 'Satınalma Talepleri (PURT04)', `${ozet.man.purchase_requisition} / ${ozet.mrp.purchase_requisition}`],
   ['15-purchase-order.png', '15', 'Satınalma Siparişleri (PURT05)', `${ozet.man.purchase_order} / ${ozet.mrp.purchase_order}`],
+  ['15b-sa-approval-route.png', '15b', 'SA Sipariş Onay Rotası (OR-SA-SIPARIS)', ozet.base.sa_approval_route || 'OR-SA-SIPARIS'],
+  ['15c-sa-approval-records.png', '15c', 'SA Onay Kayıtları', `${ozet.man.sa_approval || ''} / ${ozet.mrp.sa_approval || ''}`],
   ['16-goods-receipt.png', '16', 'Mal Kabul → Giriş Depo (INVT01)', `${ozet.man.goods_receipt} / ${ozet.mrp.goods_receipt}`],
   ['16b-incoming-insp.png', '16b', 'Giriş Kontrolleri', 'GK onayı → Giriş Kalite'],
   ['16c-gkk.png', '16c', 'Giriş Kalite Emirleri (GKK)', 'Onay → Hammadde Depo'],
@@ -115,7 +117,7 @@ const html = `<!DOCTYPE html>
     <ul>
       <li>MAN zinciri: ${esc(ozet.man.sales_order)} → ${esc(ozet.man.purchase_order)} → ${esc(ozet.man.goods_receipt)} → ${esc(ozet.man.production_order)} → ${esc(ozet.man.delivery_note)} → ${esc(ozet.man.sales_invoice)}</li>
       <li>MRP zinciri: ${esc(ozet.mrp.sales_order)} / ${esc(ozet.mrp.mrp_run)} → ${esc(ozet.mrp.purchase_order)} → ${esc(Array.isArray(ozet.mrp.production_from_mrp) ? ozet.mrp.production_from_mrp.join(',') : ozet.mrp.production_from_mrp)} → ${esc(ozet.mrp.sales_invoice)}</li>
-      <li>Düzeltme: Üretim CKK depo izni + CKK onay sonrası mamul stok; satış irsaliye/fatura tamamlandı.</li>
+      <li>Düzeltme: Üretim CKK depo izni + CKK onay; SA sipariş merkezi onay rotası OR-SA-SIPARIS (MAN/MRP ONAYLANDI).</li>
       <li>Gap: BAST06 maliyet merkezi ayrı ekran/tablo yok (iş merkezi adına MC-SUT-01 notu).</li>
     </ul>
   </section>
@@ -163,9 +165,9 @@ const html = `<!DOCTYPE html>
       <li><strong>Düzeltildi:</strong> Üretim çıktısı CKK deposuna yazılırken item_warehouses izni yoktu → otomatik izin + depoZorunluAtla.</li>
       <li><strong>Düzeltildi:</strong> CKK onay adımı üretim sonrası eklendi; mamul stok oluşunca irsaliye/fatura tamamlandı.</li>
       <li><strong>Düzeltildi:</strong> Mal kabul → Giriş Kontrol → GKK zinciri GIDA testinde doğrulandı.</li>
+      <li><strong>Düzeltildi (D5):</strong> SA sipariş onay rotası eklendi (<code>OR-SA-SIPARIS</code>); PO Onayla → baslatOnay; adımlar ONAYLANDI. Kolon fix <code>approved_by_kisi_id</code>.</li>
       <li><strong>Açık gap:</strong> Maliyet merkezi master ekranı (BAST06) yok.</li>
       <li><strong>Kısmi:</strong> RFQ / satınalma info kaydı UI’si zayıf; MRP senaryosu talep→sipariş ile doğrulandı.</li>
-      <li><strong>Not:</strong> Onay modülü rotası GIDA SA siparişi için tanımlı değil (uyarı, engel değil).</li>
     </ul>
   </section>
 
@@ -180,9 +182,11 @@ fs.writeFileSync(OUT_HTML, html, 'utf8');
 console.log('HTML:', OUT_HTML);
 
 (async () => {
-  const browser = await puppeteer.connect({
-    browserURL: 'http://127.0.0.1:9222',
+  const browser = await puppeteer.launch({
+    executablePath: '/usr/local/bin/google-chrome',
+    headless: 'new',
     defaultViewport: { width: 1240, height: 1754 },
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
   const page = await browser.newPage();
   await page.goto('file://' + OUT_HTML, { waitUntil: 'networkidle0', timeout: 120000 });
@@ -196,7 +200,7 @@ console.log('HTML:', OUT_HTML);
   const st = fs.statSync(OUT_PDF);
   console.log('PDF:', OUT_PDF, Math.round(st.size / 1024), 'KB');
   console.log('Artifact:', ARTIFACT);
-  await browser.disconnect();
+  await browser.close();
   process.exit(0);
 })().catch((e) => {
   console.error(e);
