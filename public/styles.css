@@ -3250,6 +3250,94 @@ body.col-resizing iframe { pointer-events: none; }
   flex: 1 1 auto;
   min-width: 0;
 }
+.lookup-combobox .lookup-combo-main {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lookup-combobox select.lookup-combo-select,
+.lookup-combobox select.lookup-pick {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.lookup-typeahead {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #c5d0de;
+  border-radius: 0.45rem;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+  font-size: 0.9rem;
+  background: #f5f8fc;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.lookup-typeahead:hover {
+  border-color: #aeb9ca;
+  background: #f0f4fa;
+}
+.lookup-typeahead:focus {
+  outline: none;
+  background: #fff;
+  border-color: rgba(63, 135, 245, 0.55);
+  box-shadow: 0 0 0 3px rgba(63, 135, 245, 0.16), 0 0 12px rgba(63, 135, 245, 0.18);
+}
+.detail-table .lookup-typeahead {
+  min-height: 1.65rem;
+  padding: 0.18rem 0.3rem;
+  font-size: 0.78rem;
+  border-radius: 0.3rem;
+}
+.lookup-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 40;
+  max-height: 14rem;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  box-shadow: var(--shadow-card);
+  padding: 0.2rem;
+}
+.lookup-suggest-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.3rem;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lookup-suggest-item:hover,
+.lookup-suggest-item:focus {
+  background: rgba(63, 135, 245, 0.1);
+  color: var(--accent);
+}
+.lookup-suggest-empty {
+  padding: 0.55rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
 select.lookup-pick,
 select.lookup-select.lookup-pick {
   appearance: none;

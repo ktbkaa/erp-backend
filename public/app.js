@@ -9465,6 +9465,7 @@ function filterValueControl(f, st) {
     const ck = f.codeKey;
     const seen = new Set();
     const opts = [`<option value="">— seçin —</option>`];
+    let curLabel = '';
     rows.forEach((r) => {
       const val = r[vk];
       if (val == null || val === '') return;
@@ -9481,21 +9482,23 @@ function filterValueControl(f, st) {
         label = name;
       }
       const title = code && name ? `${code} — ${name}` : (name || code || String(val));
+      if (String(st.a) === String(val)) curLabel = title;
       opts.push(`<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`);
     });
-    return `${wrapLookupPick(`<select class="lookup-pick" data-filter-a="${f.key}">${opts.join('')}</select>`)}
+    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${opts.join('')}</select>`, curLabel, false)}
       <input type="text" data-filter-b="${f.key}" value="" hidden />`;
   }
   if (f.type === 'select' || (Array.isArray(f.options) && f.options.length)) {
     const opts = f.options || [];
-    return `${wrapLookupPick(`<select class="lookup-pick" data-filter-a="${f.key}">
+    const cur = st.a == null || st.a === '' ? '' : String(st.a);
+    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">
       <option value="">— seçin —</option>
       ${opts.map((o) => {
         const v = typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o;
         const l = typeof o === 'object' ? (o.label ?? o.adi ?? o.l ?? v) : o;
         return `<option value="${escAttr(v)}" ${String(st.a) === String(v) ? 'selected' : ''}>${l}</option>`;
       }).join('')}
-    </select>`)}
+    </select>`, cur, false)}
       <input type="text" data-filter-b="${f.key}" value="" hidden />`;
   }
   if (f.type === 'checkbox') {
@@ -10188,8 +10191,50 @@ function lookupBrowseButtonHtml(disabled) {
   return `<button type="button" class="lookup-browse-btn" tabindex="-1" title="Liste / ekran aç" aria-label="Kayıt listesini ve ekran işlemlerini aç"><span class="lookup-browse-dot" aria-hidden="true"></span></button>`;
 }
 
+/** LIKE %metin% — kullanıcı % yazsa da tek sarmalama */
+function normalizeLikeNeedle(q) {
+  let s = String(q || '').trim();
+  s = s.replace(/^%+/, '').replace(/%+$/, '').trim();
+  return s.toLocaleLowerCase('tr');
+}
+
+function likeIncludes(haystack, needle) {
+  if (!needle) return true;
+  return String(haystack ?? '').toLocaleLowerCase('tr').includes(needle);
+}
+
 function wrapLookupPick(innerHtml, disabled = false) {
   return `<div class="lookup-widget">${innerHtml}${lookupBrowseButtonHtml(disabled)}</div>`;
+}
+
+/** Yazılabilir lookup: gizli select (değer) + typeahead (manuel arama %…%) */
+function wrapLookupCombobox(selectHtml, displayText, disabled = false) {
+  const shown = displayText && displayText !== '—' ? displayText : '';
+  return `<div class="lookup-widget lookup-combobox">
+    <div class="lookup-combo-main">
+      ${selectHtml}
+      <input type="text" class="lookup-typeahead" value="${escAttr(shown)}"
+        placeholder="Yazarak ara (%…%)" ${disabled ? 'disabled' : ''} autocomplete="off"
+        spellcheck="false" />
+      <div class="lookup-suggest" hidden role="listbox"></div>
+    </div>
+    ${lookupBrowseButtonHtml(disabled)}
+  </div>`;
+}
+
+function syncLookupTypeaheadFromSelect(sel) {
+  if (!sel) return;
+  const widget = sel.closest('.lookup-widget');
+  const ta = widget?.querySelector('.lookup-typeahead');
+  if (!ta) return;
+  const opt = sel.selectedOptions?.[0];
+  let text = opt?.getAttribute('title') || opt?.textContent || '';
+  if (!sel.value || text === '—' || text === emptyLookupLabel()) text = '';
+  ta.value = text;
+}
+
+function emptyLookupLabel() {
+  return '—';
 }
 
 function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', ctx = null) {
@@ -10233,24 +10278,20 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
         </label>`;
       }).join('')}</div>`;
     }
-    const sel = `<select class="lookup-pick" ${name} ${dis} ${req}>
+    const sel = `<select class="lookup-pick lookup-combo-select" ${name} ${dis} ${req}>
+      <option value="">—</option>
       ${opts.map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
     </select>`;
-    return wrapLookupPick(sel, Boolean(dis));
+    return wrapLookupCombobox(sel, v === '' || v == null ? '' : String(v), Boolean(dis));
   }
   if (field.type === 'lookup') {
     const scope = ctx || state.formRecord || {};
     const rows = lookupRowsForField(field, scope);
     const dep = field.dependsOn ? ` data-depends-on="${escAttr(field.dependsOn)}"` : '';
     const bom = field.filterByBomKey ? ` data-filter-bom="${escAttr(field.filterByBomKey)}"` : '';
-    const sel = `<select class="lookup-select lookup-pick" ${name} ${dis} ${req}${dep}${bom}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
-    // Klasik ERP: dar kod select + geniş salt okunur first_name
-    if (field.codeKey) {
-      const first_name = lookupNameOnly(field, v) || '—';
-      const pair = `<div class="lookup-pair">${sel}<input type="text" class="lookup-name-ro" value="${escAttr(first_name)}" readonly tabindex="-1" aria-label="${escAttr(field.label)} adı" /></div>`;
-      return wrapLookupPick(pair, Boolean(dis));
-    }
-    return wrapLookupPick(sel, Boolean(dis));
+    const sel = `<select class="lookup-select lookup-pick lookup-combo-select" ${name} ${dis} ${req}${dep}${bom}>${buildLookupOptionsHtml(field, v, rows)}</select>`;
+    const display = lookupDisplay(field, v);
+    return wrapLookupCombobox(sel, display === '—' ? '' : display, Boolean(dis));
   }
   if (field.type === 'number') {
     return `<input type="number" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
@@ -13318,11 +13359,12 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey) {
 }
 
 function filterLookupBrowserRows(rows, cols, q) {
-  const needle = String(q || '').trim().toLocaleLowerCase('tr');
+  // Arka plan: yazılan metin LIKE %metin% olarak uygulanır
+  const needle = normalizeLikeNeedle(q);
   if (!needle) return rows;
   return rows.filter((r) => cols.some((c) => {
     const v = c.key === '_opt' ? r._opt : r[c.key];
-    return String(v ?? '').toLocaleLowerCase('tr').includes(needle);
+    return likeIncludes(v, needle);
   }));
 }
 
@@ -13470,7 +13512,12 @@ async function openLookupBrowserForSelect(sel) {
   if (!dlg) return;
   const screenTitle = targetScreen?.title || field.label || 'Kayıt';
   if (title) title.textContent = `${screenTitle}`;
-  if (search) search.value = '';
+  // Typeahead’teki metni arama kutusuna taşı (LIKE %…%)
+  const typed = sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead')?.value || '';
+  if (search) {
+    search.value = typed.trim();
+    search.placeholder = 'Ara — LIKE %metin% …';
+  }
   paintLookupBrowser();
   dlg.hidden = false;
   search?.focus();
@@ -13505,13 +13552,22 @@ function applyLookupBrowserValue(val) {
     const opt = document.createElement('option');
     opt.value = str;
     const row = st.selectedRow;
-    opt.textContent = row?._label || row?.[st.field?.codeKey] || row?.[st.field?.labelKey] || str;
+    const title = row?._label
+      || (st.field?.codeKey && row?.[st.field.codeKey]
+        ? `${row[st.field.codeKey]} — ${row[st.field.labelKey] || ''}`
+        : null)
+      || row?.[st.field?.labelKey]
+      || str;
+    opt.textContent = title;
+    opt.setAttribute('title', title);
     sel.appendChild(opt);
   }
   sel.value = str;
+  syncLookupTypeaheadFromSelect(sel);
   sel.dispatchEvent(new Event('change', { bubbles: true }));
   closeLookupBrowser();
-  sel.focus();
+  const ta = sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead');
+  (ta || sel).focus();
 }
 
 async function lookupBrowserCrudAction(act) {
@@ -13565,9 +13621,111 @@ async function lookupBrowserCrudAction(act) {
   }
 }
 
+function closeLookupSuggest(widget) {
+  const box = widget?.querySelector('.lookup-suggest');
+  if (box) {
+    box.hidden = true;
+    box.innerHTML = '';
+  }
+}
+
+function paintLookupSuggest(widget, sel, needle) {
+  const box = widget?.querySelector('.lookup-suggest');
+  if (!box || !sel) return;
+  const n = normalizeLikeNeedle(needle);
+  const opts = [...sel.options].filter((o) => o.value !== '');
+  const matches = n
+    ? opts.filter((o) => likeIncludes(o.getAttribute('title') || o.textContent, n)
+      || likeIncludes(o.value, n))
+    : opts.slice(0, 40);
+  const limited = matches.slice(0, 40);
+  if (!limited.length) {
+    box.innerHTML = `<div class="lookup-suggest-empty">Eşleşme yok (LIKE %${escAttr(n || '')}% )</div>`;
+    box.hidden = false;
+    return;
+  }
+  box.innerHTML = limited.map((o) => {
+    const label = o.getAttribute('title') || o.textContent || o.value;
+    return `<button type="button" class="lookup-suggest-item" role="option" data-lookup-pick="${escAttr(o.value)}" title="${escAttr(label)}">${escAttr(label)}</button>`;
+  }).join('');
+  box.hidden = false;
+}
+
+function applyLookupTypeaheadPick(widget, val) {
+  const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+  if (!sel) return;
+  const str = String(val ?? '');
+  if (str && ![...sel.options].some((o) => String(o.value) === str)) return;
+  sel.value = str;
+  syncLookupTypeaheadFromSelect(sel);
+  closeLookupSuggest(widget);
+  sel.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 function bindLookupBrowseUi() {
   if (document.documentElement.dataset.lookupBrowseBound === '1') return;
   document.documentElement.dataset.lookupBrowseBound = '1';
+
+  // Manuel yazma: typeahead → LIKE %…% öneri listesi
+  document.addEventListener('input', (e) => {
+    const ta = e.target?.closest?.('.lookup-typeahead');
+    if (!ta) return;
+    const widget = ta.closest('.lookup-widget');
+    const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+    if (!sel || sel.disabled) return;
+    paintLookupSuggest(widget, sel, ta.value);
+  });
+  document.addEventListener('focusin', (e) => {
+    const ta = e.target?.closest?.('.lookup-typeahead');
+    if (!ta) return;
+    const widget = ta.closest('.lookup-widget');
+    const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+    if (!sel || sel.disabled) return;
+    // Seçili değeri göster; boşsa öneri aç
+    if (!ta.value) paintLookupSuggest(widget, sel, '');
+  });
+  document.addEventListener('keydown', (e) => {
+    const ta = e.target?.closest?.('.lookup-typeahead');
+    if (!ta) return;
+    const widget = ta.closest('.lookup-widget');
+    const box = widget?.querySelector('.lookup-suggest');
+    if (e.key === 'Escape') {
+      closeLookupSuggest(widget);
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const first = box && !box.hidden ? box.querySelector('.lookup-suggest-item') : null;
+      if (first) {
+        applyLookupTypeaheadPick(widget, first.getAttribute('data-lookup-pick'));
+        return;
+      }
+      // Öneri yoksa liste popup’ı aç (yazılan metin LIKE aramasına gider)
+      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+      return;
+    }
+    if (e.key === 'ArrowDown' && (e.altKey || box?.hidden)) {
+      e.preventDefault();
+      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+    }
+  });
+  document.addEventListener('mousedown', (e) => {
+    const item = e.target.closest?.('.lookup-suggest-item');
+    if (item) {
+      e.preventDefault();
+      const widget = item.closest('.lookup-widget');
+      applyLookupTypeaheadPick(widget, item.getAttribute('data-lookup-pick'));
+      return;
+    }
+    if (!e.target.closest?.('.lookup-combobox')) {
+      document.querySelectorAll('.lookup-suggest:not([hidden])').forEach((box) => {
+        box.hidden = true;
+        box.innerHTML = '';
+      });
+    }
+  });
 
   document.addEventListener('click', (e) => {
     const btn = e.target.closest?.('.lookup-browse-btn');
@@ -13733,6 +13891,7 @@ function refreshLookupSelect(el, field, ctx) {
   // Önceki değer filtrelenmiş listede yoksa temizle
   const stillValid = rows.some((r) => lookupOptionSelected(field, r, el.value));
   if (!stillValid) el.value = '';
+  syncLookupTypeaheadFromSelect(el);
 }
 
 /** Bağlı alan doldurma — yeniden giriş kilidi */
@@ -14092,7 +14251,12 @@ function bindCascadeLookups(_screen) {
     if (!scr || state.formMode == null) return;
 
     // Kod–first_name lookup: first_name kutusunu güncelle
-    if (el instanceof HTMLSelectElement && el.classList.contains('lookup-select')) {
+    if (el instanceof HTMLSelectElement && (
+      el.classList.contains('lookup-select')
+      || el.classList.contains('lookup-pick')
+      || el.classList.contains('lookup-combo-select')
+    )) {
+      syncLookupTypeaheadFromSelect(el);
       const pair = el.closest('.lookup-pair');
       const nameRo = pair?.querySelector('.lookup-name-ro');
       if (nameRo) {
