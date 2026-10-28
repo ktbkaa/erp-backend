@@ -899,24 +899,6 @@
       }
     ]
   },
-  "alis-faturalari": {
-    "screenId": "alis-faturalari",
-    "title": "Alış Faturaları",
-    "techId": "FIN-PINV-SCR-001",
-    "endpoint": "/invoices",
-    "auditTablo": "invoices",
-    "primaryTable": "invoices",
-    "tables": [
-      {
-        "name": "invoices",
-        "role": "master"
-      },
-      {
-        "name": "invoice_lines",
-        "role": "related"
-      }
-    ]
-  },
   "satin-alma-talepleri": {
     "screenId": "satin-alma-talepleri",
     "title": "Satınalma Talepleri",
@@ -985,28 +967,6 @@
       },
       {
         "name": "vendor_delivery_note_lines",
-        "role": "related"
-      }
-    ]
-  },
-  "belge-yonetimi": {
-    "screenId": "belge-yonetimi",
-    "title": "İrsaliye / Fatura Yönetimi",
-    "techId": "PUR-DOC-SCR-001",
-    "endpoint": "/belge-yonetimi",
-    "auditTablo": "belge-yonetimi",
-    "primaryTable": "delivery_notes",
-    "tables": [
-      {
-        "name": "delivery_notes",
-        "role": "master"
-      },
-      {
-        "name": "invoices",
-        "role": "related"
-      },
-      {
-        "name": "vendor_delivery_notes",
         "role": "related"
       }
     ]
@@ -1199,42 +1159,6 @@
       },
       {
         "name": "shipment_order_lines",
-        "role": "related"
-      }
-    ]
-  },
-  "delivery_notes": {
-    "screenId": "delivery_notes",
-    "title": "İrsaliyeler",
-    "techId": "SAL-DLV-SCR-001",
-    "endpoint": "/delivery_notes",
-    "auditTablo": "delivery_notes",
-    "primaryTable": "delivery_notes",
-    "tables": [
-      {
-        "name": "delivery_notes",
-        "role": "master"
-      },
-      {
-        "name": "delivery_note_lines",
-        "role": "related"
-      }
-    ]
-  },
-  "satis-faturalari": {
-    "screenId": "satis-faturalari",
-    "title": "Satış Faturaları",
-    "techId": "FIN-SINV-SCR-001",
-    "endpoint": "/invoices",
-    "auditTablo": "invoices",
-    "primaryTable": "invoices",
-    "tables": [
-      {
-        "name": "invoices",
-        "role": "master"
-      },
-      {
-        "name": "invoice_lines",
         "role": "related"
       }
     ]
@@ -1613,5 +1537,701 @@
     "auditTablo": "meta",
     "primaryTable": null,
     "tables": []
+  },
+  "belge-tipleri": {
+    "screenId": "belge-tipleri",
+    "title": "Belge Tipleri",
+    "techId": "MDM-DOCTYPE-SCR-001",
+    "endpoint": "/belge-tipleri",
+    "auditTablo": "belge-tipleri",
+    "primaryTable": "document_types",
+    "tables": [
+      {
+        "name": "document_types",
+        "role": "master"
+      }
+    ]
+  },
+  "sql-sorgu": {
+    "screenId": "sql-sorgu",
+    "title": "SQL Sorgu",
+    "techId": "SYS-SQL-SCR-001",
+    "endpoint": "/sql-console",
+    "auditTablo": "sql-console",
+    "primaryTable": "sql_connection_profiles",
+    "tables": [
+      {
+        "name": "sql_connection_profiles",
+        "role": "master"
+      },
+      {
+        "name": "user_sql_permissions",
+        "role": "related"
+      }
+    ]
+  },
+  "is-istasyonlari": {
+    "screenId": "is-istasyonlari",
+    "title": "İş İstasyonları",
+    "techId": "MFG-WS-SCR-001",
+    "endpoint": "/is-istasyonlari",
+    "auditTablo": "is-istasyonlari",
+    "primaryTable": "work_stations",
+    "tables": [
+      {
+        "name": "work_stations",
+        "role": "master"
+      },
+      {
+        "name": "work_centers",
+        "role": "related"
+      }
+    ]
+  },
+  "irsaliye-yonetimi": {
+    "screenId": "irsaliye-yonetimi",
+    "title": "İrsaliye Yönetimi",
+    "techId": "SAL-DLV-SCR-001",
+    "endpoint": "/delivery_notes",
+    "auditTablo": "delivery_notes",
+    "primaryTable": "delivery_notes",
+    "tables": [
+      {
+        "name": "delivery_notes",
+        "role": "master"
+      },
+      {
+        "name": "delivery_note_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "fatura-yonetimi": {
+    "screenId": "fatura-yonetimi",
+    "title": "Fatura Yönetimi",
+    "techId": "SAL-INV-SCR-001",
+    "endpoint": "/invoices",
+    "auditTablo": "invoices",
+    "primaryTable": "invoices",
+    "tables": [
+      {
+        "name": "invoices",
+        "role": "master"
+      },
+      {
+        "name": "invoice_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "onay-modul-kullanimlari": {
+    "screenId": "onay-modul-kullanimlari",
+    "title": "Onay Modül Kullanımları",
+    "techId": "SYS-APR-SCR-USG",
+    "endpoint": "/onay-module-kullanimlari",
+    "auditTablo": "onay-module-kullanimlari",
+    "primaryTable": "approval_module_usages",
+    "tables": [
+      {
+        "name": "approval_module_usages",
+        "role": "master"
+      }
+    ]
+  },
+  "muhasebe-donemleri": {
+    "screenId": "muhasebe-donemleri",
+    "title": "Muhasebe Dönemleri",
+    "techId": "FIN-PER-SCR-001",
+    "endpoint": "/muhasebe-donemleri",
+    "auditTablo": "muhasebe-donemleri",
+    "primaryTable": "accounting_periods",
+    "tables": [
+      {
+        "name": "accounting_periods",
+        "role": "master"
+      },
+      {
+        "name": "fiscal_years",
+        "role": "related"
+      }
+    ]
+  },
+  "finans-vergi-kodlari": {
+    "screenId": "finans-vergi-kodlari",
+    "title": "Vergi Kodları",
+    "techId": "FIN-TAX-SCR-001",
+    "endpoint": "/finans-vergi-kodlari",
+    "auditTablo": "finans-vergi-kodlari",
+    "primaryTable": "fin_tax_codes",
+    "tables": [
+      {
+        "name": "fin_tax_codes",
+        "role": "master"
+      },
+      {
+        "name": "fin_tax_rates",
+        "role": "related"
+      }
+    ]
+  },
+  "finans-ulke-paketleri": {
+    "screenId": "finans-ulke-paketleri",
+    "title": "Finans Ülke Paketleri",
+    "techId": "FIN-CPK-SCR-001",
+    "endpoint": "/finans-country/paketler",
+    "auditTablo": "finans-country",
+    "primaryTable": "fin_country_packs",
+    "tables": [
+      {
+        "name": "fin_country_packs",
+        "role": "master"
+      }
+    ]
+  },
+  "mali-yillar": {
+    "screenId": "mali-yillar",
+    "title": "Mali Yıllar",
+    "techId": "FIN-FY-SCR-001",
+    "endpoint": "/muhasebe-donemleri/mali-yillar",
+    "auditTablo": "mali-yillar",
+    "primaryTable": "fiscal_years",
+    "tables": [
+      {
+        "name": "fiscal_years",
+        "role": "master"
+      },
+      {
+        "name": "accounting_periods",
+        "role": "related"
+      }
+    ]
+  },
+  "finans-banka-hesaplari": {
+    "screenId": "finans-banka-hesaplari",
+    "title": "Banka Hesapları",
+    "techId": "FIN-BNK-SCR-001",
+    "endpoint": "/finans-nakit/banka-hesaplari",
+    "auditTablo": "finans-nakit",
+    "primaryTable": "fin_bank_accounts",
+    "tables": [
+      {
+        "name": "fin_bank_accounts",
+        "role": "master"
+      },
+      {
+        "name": "banks",
+        "role": "related"
+      }
+    ]
+  },
+  "finans-kasa-hesaplari": {
+    "screenId": "finans-kasa-hesaplari",
+    "title": "Kasa Hesapları",
+    "techId": "FIN-CSH-SCR-001",
+    "endpoint": "/finans-nakit/kasa-hesaplari",
+    "auditTablo": "finans-nakit",
+    "primaryTable": "fin_cash_accounts",
+    "tables": [
+      {
+        "name": "fin_cash_accounts",
+        "role": "master"
+      }
+    ]
+  },
+  "finans-nakit-hareketleri": {
+    "screenId": "finans-nakit-hareketleri",
+    "title": "Nakit Hareketleri",
+    "techId": "FIN-CSHMV-SCR-001",
+    "endpoint": "/finans-nakit/hareketler",
+    "auditTablo": "finans-nakit",
+    "primaryTable": "fin_cash_movements",
+    "tables": [
+      {
+        "name": "fin_cash_movements",
+        "role": "master"
+      },
+      {
+        "name": "fin_bank_accounts",
+        "role": "related"
+      },
+      {
+        "name": "fin_cash_accounts",
+        "role": "related"
+      }
+    ]
+  },
+  "finans-yevmiye": {
+    "screenId": "finans-yevmiye",
+    "title": "Yevmiye Defteri",
+    "techId": "FIN-JL-RPT-001",
+    "endpoint": "/finans-raporlar/yevmiye",
+    "auditTablo": "finans-raporlar",
+    "primaryTable": "journal_entries",
+    "tables": [
+      {
+        "name": "journal_entries",
+        "role": "master"
+      },
+      {
+        "name": "journal_entry_lines",
+        "role": "related"
+      },
+      {
+        "name": "gl_accounts",
+        "role": "related"
+      }
+    ]
+  },
+  "finans-bilanco": {
+    "screenId": "finans-bilanco",
+    "title": "Bilanço (Özet)",
+    "techId": "FIN-BS-RPT-001",
+    "endpoint": "/finans-raporlar/bilanco",
+    "auditTablo": "finans-raporlar",
+    "primaryTable": "gl_accounts",
+    "tables": [
+      {
+        "name": "gl_accounts",
+        "role": "master"
+      },
+      {
+        "name": "journal_entries",
+        "role": "related"
+      },
+      {
+        "name": "journal_entry_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "finans-gelir-tablosu": {
+    "screenId": "finans-gelir-tablosu",
+    "title": "Gelir Tablosu",
+    "techId": "FIN-PL-RPT-001",
+    "endpoint": "/finans-raporlar/gelir-tablosu",
+    "auditTablo": "finans-raporlar",
+    "primaryTable": "gl_accounts",
+    "tables": [
+      {
+        "name": "gl_accounts",
+        "role": "master"
+      },
+      {
+        "name": "journal_entries",
+        "role": "related"
+      },
+      {
+        "name": "journal_entry_lines",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-personel": {
+    "screenId": "hr-personel",
+    "title": "Personel Kartları",
+    "techId": "HR-EMP-SCR-001",
+    "endpoint": "/hr-personel",
+    "auditTablo": "hr-personel",
+    "primaryTable": "hr_employees",
+    "tables": [
+      {
+        "name": "hr_employees",
+        "role": "master"
+      },
+      {
+        "name": "hr_employment_history",
+        "role": "related"
+      },
+      {
+        "name": "hr_departments",
+        "role": "related"
+      },
+      {
+        "name": "hr_positions",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-departmanlar": {
+    "screenId": "hr-departmanlar",
+    "title": "Departmanlar",
+    "techId": "HR-DEPT-SCR-001",
+    "endpoint": "/hr-org/departmanlar",
+    "auditTablo": "hr-org",
+    "primaryTable": "hr_departments",
+    "tables": [
+      {
+        "name": "hr_departments",
+        "role": "master"
+      }
+    ]
+  },
+  "hr-pozisyonlar": {
+    "screenId": "hr-pozisyonlar",
+    "title": "Pozisyonlar",
+    "techId": "HR-POS-SCR-001",
+    "endpoint": "/hr-org/pozisyonlar",
+    "auditTablo": "hr-org",
+    "primaryTable": "hr_positions",
+    "tables": [
+      {
+        "name": "hr_positions",
+        "role": "master"
+      },
+      {
+        "name": "hr_departments",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-calisma-takvimleri": {
+    "screenId": "hr-calisma-takvimleri",
+    "title": "Çalışma Takvimleri",
+    "techId": "HR-CAL-SCR-001",
+    "endpoint": "/hr-takvim/takvimler",
+    "auditTablo": "hr-takvim",
+    "primaryTable": "hr_work_calendars",
+    "tables": [
+      {
+        "name": "hr_work_calendars",
+        "role": "master"
+      }
+    ]
+  },
+  "hr-vardiyalar": {
+    "screenId": "hr-vardiyalar",
+    "title": "Vardiyalar",
+    "techId": "HR-SHF-SCR-001",
+    "endpoint": "/hr-takvim/vardiyalar",
+    "auditTablo": "hr-takvim",
+    "primaryTable": "hr_shifts",
+    "tables": [
+      {
+        "name": "hr_shifts",
+        "role": "master"
+      }
+    ]
+  },
+  "hr-resmi-tatiller": {
+    "screenId": "hr-resmi-tatiller",
+    "title": "Resmî Tatiller",
+    "techId": "HR-HOL-SCR-001",
+    "endpoint": "/hr-takvim/tatiller",
+    "auditTablo": "hr-takvim",
+    "primaryTable": "hr_public_holidays",
+    "tables": [
+      {
+        "name": "hr_public_holidays",
+        "role": "master"
+      }
+    ]
+  },
+  "hr-izin-talepleri": {
+    "screenId": "hr-izin-talepleri",
+    "title": "İzin Talepleri",
+    "techId": "HR-LV-SCR-001",
+    "endpoint": "/hr-izin/talepler",
+    "auditTablo": "hr-izin",
+    "primaryTable": "hr_leave_requests",
+    "tables": [
+      {
+        "name": "hr_leave_requests",
+        "role": "master"
+      },
+      {
+        "name": "hr_leave_types",
+        "role": "related"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-izin-turleri": {
+    "screenId": "hr-izin-turleri",
+    "title": "İzin Türleri",
+    "techId": "HR-LVT-SCR-001",
+    "endpoint": "/hr-izin/turler",
+    "auditTablo": "hr-izin",
+    "primaryTable": "hr_leave_types",
+    "tables": [
+      {
+        "name": "hr_leave_types",
+        "role": "master"
+      }
+    ]
+  },
+  "hr-vardiya-atamalari": {
+    "screenId": "hr-vardiya-atamalari",
+    "title": "Vardiya Atamaları",
+    "techId": "HR-SHA-SCR-001",
+    "endpoint": "/hr-takvim/vardiya-atamalari",
+    "auditTablo": "hr-takvim",
+    "primaryTable": "hr_shift_assignments",
+    "tables": [
+      {
+        "name": "hr_shift_assignments",
+        "role": "master"
+      },
+      {
+        "name": "hr_shifts",
+        "role": "related"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-cikis-nedenleri": {
+    "screenId": "hr-cikis-nedenleri",
+    "title": "Çıkış Nedenleri",
+    "techId": "HR-TRR-SCR-001",
+    "endpoint": "/hr-ise-alim/cikis-nedenleri",
+    "auditTablo": "hr-ise-alim",
+    "primaryTable": "hr_termination_reasons",
+    "tables": [
+      {
+        "name": "hr_termination_reasons",
+        "role": "master"
+      }
+    ]
+  },
+  "hr-izin-bakiyeleri": {
+    "screenId": "hr-izin-bakiyeleri",
+    "title": "İzin Bakiyeleri",
+    "techId": "HR-LVB-SCR-001",
+    "endpoint": "/hr-izin/bakiyeler",
+    "auditTablo": "hr-izin",
+    "primaryTable": "hr_leave_balances",
+    "tables": [
+      {
+        "name": "hr_leave_balances",
+        "role": "master"
+      },
+      {
+        "name": "hr_leave_balance_movements",
+        "role": "related"
+      },
+      {
+        "name": "hr_leave_types",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-puantaj": {
+    "screenId": "hr-puantaj",
+    "title": "Günlük Puantaj",
+    "techId": "HR-ATT-SCR-001",
+    "endpoint": "/hr-puantaj/gunluk",
+    "auditTablo": "hr-puantaj",
+    "primaryTable": "hr_attendance_days",
+    "tables": [
+      {
+        "name": "hr_attendance_days",
+        "role": "master"
+      },
+      {
+        "name": "hr_attendance_raw",
+        "role": "related"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-ucretler": {
+    "screenId": "hr-ucretler",
+    "title": "Ücret Tanımları",
+    "techId": "HR-SAL-SCR-001",
+    "endpoint": "/hr-bordro/ucretler",
+    "auditTablo": "hr-bordro",
+    "primaryTable": "hr_employee_salaries",
+    "tables": [
+      {
+        "name": "hr_employee_salaries",
+        "role": "master"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-avanslar": {
+    "screenId": "hr-avanslar",
+    "title": "Avanslar",
+    "techId": "HR-ADV-SCR-001",
+    "endpoint": "/hr-bordro/avanslar",
+    "auditTablo": "hr-bordro",
+    "primaryTable": "hr_advances",
+    "tables": [
+      {
+        "name": "hr_advances",
+        "role": "master"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-bordro-donemleri": {
+    "screenId": "hr-bordro-donemleri",
+    "title": "Bordro Dönemleri",
+    "techId": "HR-PRP-SCR-001",
+    "endpoint": "/hr-bordro/donemler",
+    "auditTablo": "hr-bordro",
+    "primaryTable": "hr_payroll_periods",
+    "tables": [
+      {
+        "name": "hr_payroll_periods",
+        "role": "master"
+      }
+    ]
+  },
+  "hr-bordro-calismalari": {
+    "screenId": "hr-bordro-calismalari",
+    "title": "Bordro Çalışmaları",
+    "techId": "HR-PRR-SCR-001",
+    "endpoint": "/hr-bordro/calismalar",
+    "auditTablo": "hr-bordro",
+    "primaryTable": "hr_payroll_runs",
+    "tables": [
+      {
+        "name": "hr_payroll_runs",
+        "role": "master"
+      },
+      {
+        "name": "hr_payroll_lines",
+        "role": "related"
+      },
+      {
+        "name": "hr_payroll_periods",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-bordro-parametreleri": {
+    "screenId": "hr-bordro-parametreleri",
+    "title": "Bordro Parametreleri",
+    "techId": "HR-PRM-SCR-001",
+    "endpoint": "/hr-bordro/parametreler",
+    "auditTablo": "hr-bordro",
+    "primaryTable": "hr_payroll_param_sets",
+    "tables": [
+      {
+        "name": "hr_payroll_param_sets",
+        "role": "master"
+      },
+      {
+        "name": "hr_payroll_param_values",
+        "role": "related"
+      },
+      {
+        "name": "hr_payroll_tax_brackets",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-is-ilanlari": {
+    "screenId": "hr-is-ilanlari",
+    "title": "İş İlanları",
+    "techId": "HR-JOB-SCR-001",
+    "endpoint": "/hr-ise-alim/ilanlar",
+    "auditTablo": "hr-ise-alim",
+    "primaryTable": "hr_job_requisitions",
+    "tables": [
+      {
+        "name": "hr_job_requisitions",
+        "role": "master"
+      },
+      {
+        "name": "hr_departments",
+        "role": "related"
+      },
+      {
+        "name": "hr_positions",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-adaylar": {
+    "screenId": "hr-adaylar",
+    "title": "Adaylar",
+    "techId": "HR-CAND-SCR-001",
+    "endpoint": "/hr-ise-alim/adaylar",
+    "auditTablo": "hr-ise-alim",
+    "primaryTable": "hr_candidates",
+    "tables": [
+      {
+        "name": "hr_candidates",
+        "role": "master"
+      },
+      {
+        "name": "hr_job_requisitions",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-onboarding": {
+    "screenId": "hr-onboarding",
+    "title": "Onboarding Görevleri",
+    "techId": "HR-ONB-SCR-001",
+    "endpoint": "/hr-ise-alim/onboarding",
+    "auditTablo": "hr-ise-alim",
+    "primaryTable": "hr_onboarding_tasks",
+    "tables": [
+      {
+        "name": "hr_onboarding_tasks",
+        "role": "master"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-zimmetler": {
+    "screenId": "hr-zimmetler",
+    "title": "Zimmetler",
+    "techId": "HR-AST-SCR-001",
+    "endpoint": "/hr-ise-alim/zimmetler",
+    "auditTablo": "hr-ise-alim",
+    "primaryTable": "hr_asset_assignments",
+    "tables": [
+      {
+        "name": "hr_asset_assignments",
+        "role": "master"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
+  },
+  "hr-isten-cikis": {
+    "screenId": "hr-isten-cikis",
+    "title": "İşten Çıkış",
+    "techId": "HR-TRM-SCR-001",
+    "endpoint": "/hr-ise-alim/cikislar",
+    "auditTablo": "hr-ise-alim",
+    "primaryTable": "hr_terminations",
+    "tables": [
+      {
+        "name": "hr_terminations",
+        "role": "master"
+      },
+      {
+        "name": "hr_termination_reasons",
+        "role": "related"
+      },
+      {
+        "name": "hr_employees",
+        "role": "related"
+      }
+    ]
   }
 }
