@@ -12700,11 +12700,112 @@ function renderForm(screen) {
   bindNumeratorFieldListener(screen);
   bindPasswordFieldPersist();
   bindCascadeLookups(screen);
+  enableDetailTableColumnResize(screen);
   if (screen.kullaniciYetkiPaneli) {
     bindYetkiGridEvents();
     bindFirmaYetkiEvents();
     bindAvatarEvents();
   }
+}
+
+/** Detay tablolarında sütun genişliğini sürükleyerek ayarla (localStorage’da saklanır). */
+function detailColWidthStorageKey(screen, gridKey) {
+  const sid = screen?.id || screen?.screenId || 'form';
+  return `ktb_detail_col_widths:${sid}:${gridKey || 'default'}`;
+}
+
+function readStoredDetailColWidths(screen, gridKey) {
+  try {
+    const raw = localStorage.getItem(detailColWidthStorageKey(screen, gridKey));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredDetailColWidths(screen, gridKey, widths) {
+  try {
+    localStorage.setItem(detailColWidthStorageKey(screen, gridKey), JSON.stringify(widths));
+  } catch { /* ignore quota */ }
+}
+
+function syncStickyDetailOffsets(table) {
+  if (!table) return;
+  const actsTh = table.querySelector('thead th.col-acts');
+  const seqTh = table.querySelector('thead th.col-seq');
+  if (!actsTh || !seqTh) return;
+  const actsW = Math.round(actsTh.getBoundingClientRect().width);
+  table.querySelectorAll('th.col-seq, td.col-seq').forEach((el) => {
+    el.style.left = `${actsW}px`;
+  });
+}
+
+function enableDetailTableColumnResize(screen) {
+  const root = document.getElementById('viewForm') || document;
+  root.querySelectorAll('.detail-table-wrap .detail-table').forEach((table) => {
+    if (table.dataset.colResizeBound === '1') return;
+    table.dataset.colResizeBound = '1';
+    const wrap = table.closest('.detail-table-wrap');
+    const gridKey = wrap?.getAttribute('data-grid-list') || 'default';
+    const stored = readStoredDetailColWidths(screen, gridKey) || {};
+    const heads = [...table.querySelectorAll('thead th')];
+    heads.forEach((th, colIdx) => {
+      th.style.position = th.style.position || '';
+      if (!th.style.position) th.style.position = 'sticky';
+      const key = th.classList.contains('col-acts') ? 'acts'
+        : th.classList.contains('col-seq') ? 'seq'
+          : th.classList.contains('col-id') ? 'id'
+            : `c${colIdx}`;
+      th.dataset.colKey = key;
+      if (stored[key]) {
+        const w = Math.max(40, Number(stored[key]) || 0);
+        if (w) {
+          th.style.width = `${w}px`;
+          th.style.minWidth = `${w}px`;
+          th.style.maxWidth = `${w}px`;
+        }
+      }
+      if (th.querySelector('.col-resizer')) return;
+      const grip = document.createElement('span');
+      grip.className = 'col-resizer';
+      grip.title = 'Sütun genişliğini sürükleyerek ayarla';
+      grip.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const startX = e.clientX;
+        const startW = th.getBoundingClientRect().width;
+        grip.classList.add('active');
+        document.body.classList.add('col-resizing');
+        const onMove = (ev) => {
+          const next = Math.max(40, Math.round(startW + (ev.clientX - startX)));
+          th.style.width = `${next}px`;
+          th.style.minWidth = `${next}px`;
+          th.style.maxWidth = `${next}px`;
+          if (th.classList.contains('col-acts')) syncStickyDetailOffsets(table);
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          grip.classList.remove('active');
+          document.body.classList.remove('col-resizing');
+          const widths = {};
+          heads.forEach((h) => {
+            const k = h.dataset.colKey;
+            if (!k) return;
+            widths[k] = Math.round(h.getBoundingClientRect().width);
+          });
+          writeStoredDetailColWidths(screen, gridKey, widths);
+          syncStickyDetailOffsets(table);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+      th.appendChild(grip);
+    });
+    syncStickyDetailOffsets(table);
+  });
 }
 
 function readFieldValue(el, field) {
