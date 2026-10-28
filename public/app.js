@@ -7857,7 +7857,7 @@ async function refreshCodeFromNumeratorField(force = false) {
   if (!screen?.numeratorFromField || !screen.codeField) return;
   if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
   const tipKey = screen.numeratorFromField.field;
-  const tipEl = document.querySelector(`[data-master="${tipKey}"]`);
+  const tipEl = findAttrControl('data-master', tipKey);
   const tipVal = tipEl ? tipEl.value : state.formRecord?.[tipKey];
   if (tipVal == null || tipVal === '') return;
   if (state.formRecord) state.formRecord[tipKey] = tipVal;
@@ -7869,7 +7869,7 @@ async function refreshCodeFromNumeratorField(force = false) {
     if (!state.formRecord) state.formRecord = {};
     state.formRecord[screen.codeField] = kod;
     state.formNumeratorSeri = seri;
-    const codeEl = document.querySelector(`[data-master="${screen.codeField}"]`);
+    const codeEl = findAttrControl('data-master', screen.codeField);
     if (codeEl) codeEl.value = kod;
   } catch (err) {
     toast(err.message || String(err));
@@ -7880,12 +7880,15 @@ function bindNumeratorFieldListener(screen) {
   if (!screen?.numeratorFromField) return;
   if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
   const tipKey = screen.numeratorFromField.field;
-  const tipEl = document.querySelector(`[data-master="${tipKey}"]`);
+  const tipControls = [
+    ...document.querySelectorAll(`input[type="radio"][data-master="${tipKey}"]`),
+  ];
+  const tipEl = tipControls[0] || findAttrControl('data-master', tipKey);
   if (!tipEl || tipEl.dataset.numeratorBound === '1') return;
   tipEl.dataset.numeratorBound = '1';
-  tipEl.addEventListener('change', () => {
-    refreshCodeFromNumeratorField(true);
-  });
+  const onChange = () => { refreshCodeFromNumeratorField(true); };
+  if (tipControls.length) tipControls.forEach((r) => r.addEventListener('change', onChange));
+  else tipEl.addEventListener('change', onChange);
 }
 
 function showView(name) {
@@ -10217,15 +10220,10 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const opts = field.options || [];
     // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
     if (opts.length === 2) {
-      // Satır bazlı benzersiz name — aksi halde tüm grid aynı radio grubunu paylaşır
-      const didxM = /data-didx="([^"]*)"/.exec(extraAttrs || '');
-      const gridM = /data-grid="([^"]*)"/.exec(extraAttrs || '');
-      const radioName = [
-        String(attrName || 'field').replace(/^data-/, ''),
-        gridM?.[1] || 'master',
-        didxM?.[1] ?? 'x',
-        field.key,
-      ].join('_');
+      // Her segment örneği benzersiz name alsın (master/grid/bom/flow — tüm ekranlar)
+      if (!fieldControl._segSeq) fieldControl._segSeq = 0;
+      fieldControl._segSeq += 1;
+      const radioName = `seg_${String(attrName || 'f').replace(/[^a-z0-9]+/gi, '_')}_${field.key}_${fieldControl._segSeq}`;
       const cur = (v === '' || v == null) ? opts[0] : v;
       return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
         const on = String(cur) === String(o);
@@ -11728,21 +11726,18 @@ function renderDynamicGrid(tab, rec) {
           ${rows.map((row, idx) => {
             const selected = selIdx === idx;
             const saved = row._satir_kayitli === true || row.id != null;
-            // Liste satırı: Düzelt ↔ Kaydet aynı yerde (ikisi birden değil)
-            const rowEditing = row._satir_duzenleniyor === true || !saved;
-            const rowActBtn = rowEditing
-              ? `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>`
-              : `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzenle">✎</button>`;
-            const rowFieldsEditable = canEdit && rowEditing;
+            // Manuel yazma: form düzenlenebilirse satır alanları doğrudan yazılabilir
+            const rowFieldsEditable = canEdit;
             const rowIdText = (row.id != null && row.id !== '') ? String(row.id) : '—';
             return `
-              <tr class="${selected ? 'selected' : ''} ${saved && !rowEditing ? 'detail-row--saved' : 'detail-row--draft'}"
+              <tr class="${selected ? 'selected' : ''} ${saved ? 'detail-row--saved' : 'detail-row--draft'}"
                   data-grid-row="${key}" data-grid-idx="${idx}" data-grid-pick="${key}">
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
-                    ${rowActBtn}
+                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">⧉</button>
+                    <button type="button" class="btn action ghost sm danger" data-row-act="sil" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı sil">✕</button>
                   </div>
                 </td>` : ''}
                 <td class="col-seq">${idx + 1}</td>
@@ -12369,6 +12364,8 @@ function renderZincirStrip(screen, rec) {
 }
 
 function renderForm(screen) {
+  // Segment radio name sayacı — her render’da sıfırla
+  if (typeof fieldControl === 'function') fieldControl._segSeq = 0;
   const readonly = state.formMode === 'incele';
   const rec = state.formRecord || {};
   applyFormLayoutChrome(screen);
@@ -12861,12 +12858,31 @@ function collectTabFields(screen) {
   return fields;
 }
 
+/** Radio ise işaretli olanı tercih et (segment S/H, Haric/Dahil vb.). */
+function findAttrControl(attrName, key, root = document, extraSel = '') {
+  if (!attrName || key == null) return null;
+  const q = `[${attrName}="${key}"]${extraSel || ''}`;
+  const radios = root.querySelectorAll(`input[type="radio"]${q}`);
+  if (radios.length) return [...radios].find((r) => r.checked) || radios[0];
+  return root.querySelector(q);
+}
+
 function findFieldControlEl(attrName, key) {
-  const radios = document.querySelectorAll(`input[type="radio"][${attrName}="${key}"]`);
-  if (radios.length) {
-    return [...radios].find((r) => r.checked) || radios[0];
-  }
-  return document.querySelector(`[${attrName}="${key}"]`);
+  return findAttrControl(attrName, key, document);
+}
+
+/** Form kontrolünden değer oku; unchecked radio’yu yok say. */
+function controlDomValue(el) {
+  if (!el) return undefined;
+  if (el.type === 'radio') return el.checked ? el.value : undefined;
+  if (el.type === 'checkbox') return el.checked;
+  return el.value;
+}
+
+function assignControlInto(ctx, key, el) {
+  if (!key || !el) return;
+  if (el.type === 'radio' && !el.checked) return;
+  ctx[key] = controlDomValue(el);
 }
 
 function readMasterFromForm(screen) {
@@ -13662,69 +13678,49 @@ function cascadeScopeContext(el) {
   if (didx != null && grid) {
     const ctx = {};
     document.querySelectorAll(`[data-detail][data-didx="${didx}"][data-grid="${grid}"]`).forEach((sib) => {
-      const k = sib.getAttribute('data-detail');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-detail'), sib);
     });
     return { ctx, didx, grid, isDetail: true };
   }
   if (el.hasAttribute('data-bom-field')) {
     const ctx = { ...(state.formRecord || {}) };
     document.querySelectorAll('[data-bom-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-bom-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-bom-field'), sib);
     });
     document.querySelectorAll('[data-master]').forEach((sib) => {
-      const k = sib.getAttribute('data-master');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-master'), sib);
     });
     return { ctx, isDetail: false, isBomField: true };
   }
   if (el.hasAttribute('data-flow-comp-field')) {
     const ctx = { ...(state.formRecord || {}) };
     document.querySelectorAll('[data-flow-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-field'), sib);
     });
     document.querySelectorAll('[data-flow-comp-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-comp-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-comp-field'), sib);
     });
     document.querySelectorAll('[data-master]').forEach((sib) => {
-      const k = sib.getAttribute('data-master');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-master'), sib);
     });
     return { ctx, isDetail: false, isFlowComp: true };
   }
   if (el.hasAttribute('data-flow-field') || el.hasAttribute('data-flow-equip-field')) {
     const ctx = { ...(state.formRecord || {}) };
     document.querySelectorAll('[data-flow-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-field'), sib);
     });
     document.querySelectorAll('[data-flow-equip-field]').forEach((sib) => {
-      const k = sib.getAttribute('data-flow-equip-field');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-flow-equip-field'), sib);
     });
     document.querySelectorAll('[data-master]').forEach((sib) => {
-      const k = sib.getAttribute('data-master');
-      if (!k) return;
-      ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+      assignControlInto(ctx, sib.getAttribute('data-master'), sib);
     });
     return { ctx, isDetail: false, isFlowField: true };
   }
   const ctx = { ...(state.formRecord || {}) };
   document.querySelectorAll('[data-master]').forEach((sib) => {
-    const k = sib.getAttribute('data-master');
-    if (!k) return;
-    ctx[k] = sib.type === 'checkbox' ? sib.checked : sib.value;
+    assignControlInto(ctx, sib.getAttribute('data-master'), sib);
   });
   return { ctx, isDetail: false };
 }
@@ -14255,12 +14251,7 @@ function bindCascadeLookups(_screen) {
 }
 
 function findDetailControlEl(key, idx, gridKey) {
-  const sel = `[data-detail="${key}"][data-didx="${idx}"][data-grid="${gridKey}"]`;
-  const radios = document.querySelectorAll(`input[type="radio"]${sel}`);
-  if (radios.length) {
-    return [...radios].find((r) => r.checked) || radios[0];
-  }
-  return document.querySelector(sel);
+  return findAttrControl('data-detail', key, document, `[data-didx="${idx}"][data-grid="${gridKey}"]`);
 }
 
 function syncGridRowFromDom(tab, idx, baseRow = {}) {
@@ -14317,7 +14308,7 @@ function persistBomEditor(rec, tab) {
   const node = getBomNode(nodes, state.treeSel);
   if (!node) return null;
   (tab.fields || []).forEach((f) => {
-    const el = document.querySelector(`[data-bom-field="${f.key}"]`);
+    const el = findAttrControl('data-bom-field', f.key);
     if (!el) return;
     node[f.key] = readFieldValue(el, f);
   });
@@ -14328,7 +14319,7 @@ function persistBomEditor(rec, tab) {
     const idx = Number(rowEl.getAttribute('data-bom-alt-row'));
     const row = { ...(node.alternatifler?.[idx] || blankBomAltRow(altFields)) };
     altFields.forEach((f) => {
-      const el = rowEl.querySelector(`[data-bom-alt-field="${f.key}"]`);
+      const el = findAttrControl('data-bom-alt-field', f.key, rowEl);
       if (!el) return;
       row[f.key] = readFieldValue(el, f);
     });
@@ -14540,14 +14531,14 @@ function persistFlowEditor(rec, tab) {
   if (state.flowSel == null || !ops[state.flowSel]) return;
   const op = ops[state.flowSel];
   (tab.fields || []).forEach((f) => {
-    const el = document.querySelector(`[data-flow-field="${f.key}"]`);
+    const el = findAttrControl('data-flow-field', f.key);
     if (!el) return;
     op[f.key] = readFieldValue(el, f);
   });
   if (state.flowCompSel != null && op.bilesenler?.[state.flowCompSel]) {
     const b = op.bilesenler[state.flowCompSel];
     (tab.componentFields || []).forEach((f) => {
-      const el = document.querySelector(`[data-flow-comp-field="${f.key}"]`);
+      const el = findAttrControl('data-flow-comp-field', f.key);
       if (!el) return;
       b[f.key] = readFieldValue(el, f);
     });
@@ -14555,7 +14546,7 @@ function persistFlowEditor(rec, tab) {
   if (state.flowEquipSel != null && op.ekipmanlar?.[state.flowEquipSel]) {
     const eq = op.ekipmanlar[state.flowEquipSel];
     (tab.equipmentFields || []).forEach((f) => {
-      const el = document.querySelector(`[data-flow-equip-field="${f.key}"]`);
+      const el = findAttrControl('data-flow-equip-field', f.key);
       if (!el) return;
       eq[f.key] = readFieldValue(el, f);
     });
@@ -16553,7 +16544,7 @@ function bindEvents() {
       return;
     }
 
-    // Satır düzeyinde Kaydet / Düzelt / Kopyala
+    // Satır düzeyinde Kaydet / Kopyala / Sil
     const rowAct = e.target.closest('[data-row-act]');
     if (rowAct && screen) {
       e.preventDefault();
@@ -16566,12 +16557,15 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
+      // Aktif satır DOM’dan oku (manuel yazılan değerler kaybolmasın)
+      if (rows[idx]) {
+        const { row } = syncGridRowFromDom(tab, idx, rows[idx]);
+        rows[idx] = row;
+      } else if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
         const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
         rows[state.gridSel.idx] = row;
       }
       if (act === 'duzelt') {
-        // Düzelt → aynı yerde Kaydet; diğer satırlar is_locked kalsın
         rows.forEach((r, i) => {
           if (!r) return;
           r._satir_duzenleniyor = i === idx;
@@ -16579,6 +16573,17 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
         renderForm(screen);
+        return;
+      }
+      if (act === 'sil') {
+        if (!rows[idx]) return;
+        rows.splice(idx, 1);
+        state.formRecord[key] = rows;
+        state.gridSel = rows.length
+          ? { key, idx: Math.min(idx, rows.length - 1) }
+          : { key: null, idx: null };
+        renderForm(screen);
+        toast('Satır silindi.');
         return;
       }
       if (act === 'kopyala') {
@@ -16597,7 +16602,6 @@ function bindEvents() {
       }
       if (act === 'kaydet') {
         // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
-        // Onaydan sonra buton tekrar Düzelt olur.
         if (rows[idx]) {
           const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
           if (missing?.length) {
