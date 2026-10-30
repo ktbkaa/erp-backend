@@ -465,6 +465,8 @@ const MODULES = [
           { key: 'document_type', label: 'Belge tipi' },
           { key: 'direction', label: 'Yön' },
           { key: 'stock_etkisi', label: 'Stok' },
+          { key: 'gkk_emri_olussun', label: 'GKK' },
+          { key: 'ckk_emri_olussun', label: 'CKK' },
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
@@ -489,8 +491,16 @@ const MODULES = [
           { key: 'eksi_balance_izin', label: 'Eksi bakiye izin', type: 'checkbox' },
           { key: 'gl_account_code', label: 'Muhasebe hesap kodu' },
           { key: 'description', label: 'Açıklama' },
+          { key: 'gkk_emri_olussun', label: 'Giriş kalite emri oluşsun', type: 'checkbox' },
+          { key: 'ckk_emri_olussun', label: 'Çıkış kalite emri oluşsun', type: 'checkbox' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
+        defaults: {
+          is_active: true,
+          stock_etkisi: false,
+          gkk_emri_olussun: false,
+          ckk_emri_olussun: false,
+        },
         detailKey: null,
         detailAsFields: true,
       },
@@ -10370,6 +10380,12 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
+  } else if (col.key === 'document_type' && val != null && val !== '') {
+    const tips = state.lookupCache?.['hareket-belge-tipleri'];
+    if (Array.isArray(tips)) {
+      const hit = tips.find((t) => String(t.id) === String(val) || String(t.document_type) === String(val));
+      if (hit?.label) val = hit.label;
+    }
   }
   if (val === null || val === undefined || val === '') val = '—';
   return col.mono ? `<span class="mono">${val}</span>` : String(val);
@@ -11700,7 +11716,7 @@ const FIELD_GROUP_DEFS = [
   { id: 'address', title: 'Adres', re: /^(country|il$|district|sehir|posta_|address|bill_address|fatura_adres|sevk_|enlem|boylam|mensei)/i },
   { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|mobile_|email|website|fax|yetkili)/i },
   { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|payment_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|sales_price|varsayilan_vat|tax_|beklenen_gelir|muhasebe_|delivery_term)/i },
-  { id: 'status', title: 'Durum / notlar', re: /^(status|is_active|is_inactive|silindi|description|notlar|not_|priority|source|onayli|yayinlandi|is_printed|is_started|acik_kapali|product_girisi|planli_kesin)/i },
+  { id: 'status', title: 'Durum / notlar', re: /^(status|is_active|is_inactive|silindi|description|notlar|not_|priority|source|onayli|yayinlandi|is_printed|is_started|acik_kapali|product_girisi|planli_kesin|gkk_emri_olussun|ckk_emri_olussun)/i },
 ];
 const FIELD_GROUP_ORDER = FIELD_GROUP_DEFS.map((g) => g.id).concat(['diger']);
 

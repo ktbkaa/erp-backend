@@ -5,6 +5,7 @@ const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { stokHareketOlustur } = require('../src/services/stokHareketService');
 const { hareketKoduBul, BELGE_TIPI } = require('../src/utils/belgeOmurga');
+const { hareketKodundanKkEmirleri } = require('../src/services/kaliteService');
 
 async function hareketGetir(id) {
     const h = await pool.query(
@@ -201,6 +202,15 @@ router.post('/', async (req, res) => {
                 hareketKoduId: hareketKodu.id,
                 satirlar: satirHazir.map((s) => ({ ...s, direction })),
             });
+            // Hareket kodu bayrakları: giriş/çıkış kalite emri
+            if (hareketKodu.gkk_emri_olussun || hareketKodu.ckk_emri_olussun) {
+                await hareketKodundanKkEmirleri(client, {
+                    hareketKodu,
+                    hareket: hareket.hareket,
+                    satirlar: hareket.satirlar || [],
+                    plantId: hareket.hareket.plant_id || body.plant_id || null,
+                });
+            }
             return hareket.hareket.id;
         });
 

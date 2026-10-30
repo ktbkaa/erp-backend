@@ -179,6 +179,7 @@ router.post('/', async (req, res) => {
         const {
             movement_code, movement_name, document_type, direction, stock_etkisi,
             partner_zorunlu, warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
+            gkk_emri_olussun, ckk_emri_olussun,
         } = req.body;
         if (!movement_code || !movement_name || !document_type) {
             return res.status(400).json({ hata: 'movement_code, movement_name, document_type zorunlu.' });
@@ -193,14 +194,16 @@ router.post('/', async (req, res) => {
             `
             INSERT INTO movement_codes
                 (movement_code, movement_name, document_type, direction, stock_etkisi, partner_zorunlu,
-                 warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active)
+                 warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
+                 gkk_emri_olussun, ckk_emri_olussun)
             VALUES ($1,$2,$3,$4,COALESCE($5,FALSE),COALESCE($6,FALSE),COALESCE($7,FALSE),
-                    COALESCE($8,FALSE),$9,$10,COALESCE($11,TRUE))
+                    COALESCE($8,FALSE),$9,$10,COALESCE($11,TRUE),COALESCE($12,FALSE),COALESCE($13,FALSE))
             RETURNING *
             `,
             [
                 movement_code, movement_name, check.tip, type, stock_etkisi, partner_zorunlu,
                 warehouse_zorunlu, eksi_balance_izin, gl_account_code || null, description || null, is_active,
+                gkk_emri_olussun, ckk_emri_olussun,
             ]
         );
         res.status(201).json(result.rows[0]);
@@ -214,6 +217,7 @@ router.put('/:id', async (req, res) => {
         const {
             movement_name, document_type, direction, stock_etkisi, partner_zorunlu,
             warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
+            gkk_emri_olussun, ckk_emri_olussun,
         } = req.body;
         let tip = document_type;
         if (document_type) {
@@ -236,12 +240,16 @@ router.put('/:id', async (req, res) => {
                 eksi_balance_izin = COALESCE($8, eksi_balance_izin),
                 gl_account_code = COALESCE($9, gl_account_code),
                 description = COALESCE($10, description),
-                is_active = COALESCE($11, is_active)
+                is_active = COALESCE($11, is_active),
+                gkk_emri_olussun = COALESCE($12, gkk_emri_olussun),
+                ckk_emri_olussun = COALESCE($13, ckk_emri_olussun)
             WHERE id=$1 RETURNING *
             `,
             [
                 req.params.id, movement_name, tip, direction, stock_etkisi, partner_zorunlu,
                 warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
+                typeof gkk_emri_olussun === 'boolean' ? gkk_emri_olussun : null,
+                typeof ckk_emri_olussun === 'boolean' ? ckk_emri_olussun : null,
             ]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Hareket kodu bulunamadı.' });

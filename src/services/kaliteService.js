@@ -349,6 +349,107 @@ async function ckkDepoCozumle(client, plantId = null) {
     return depoBulKodVeyaRol(client, { kodParam: 'CKK_DEPO_KODU', role: 'CKK', plantId });
 }
 
+/**
+ * Hareket kodu bayraklarına göre stok hareketinden GKK/CKK emri üretir.
+ * Giriş satırlarında (direction>0) stok Kalitede’ye alınır; gerekirse kalite deposuna transfer edilir.
+ */
+async function hareketKodundanKkEmirleri(client, {
+    hareketKodu,
+    hareket,
+    satirlar = [],
+    plantId = null,
+}) {
+    if (!hareketKodu || !hareket?.id) return [];
+    const wantGkk = Boolean(hareketKodu.gkk_emri_olussun);
+    const wantCkk = Boolean(hareketKodu.ckk_emri_olussun);
+    if (!wantGkk && !wantCkk) return [];
+
+    const isYeri = plantId || hareket.plant_id || null;
+    const emirler = [];
+    const girisSatirlari = (satirlar || []).filter((s) => Number(s.direction) > 0 && Number(s.quantity) > 0);
+
+    for (const yon of [
+        wantGkk ? 'GKK' : null,
+        wantCkk ? 'CKK' : null,
+    ].filter(Boolean)) {
+        const kaliteDepo = yon === 'GKK'
+            ? await gkkDepoCozumle(client, isYeri)
+            : await ckkDepoCozumle(client, isYeri);
+        if (!kaliteDepo) {
+            throw Object.assign(
+                new Error(yon === 'GKK'
+                    ? 'Giriş kalite deposu tanımlı değil (GKK_DEPO_KODU / warehouse_rolu=GKK).'
+                    : 'Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).'),
+                { status: 400 }
+            );
+        }
+        const hedefDepo = yon === 'GKK'
+            ? await depoBulKodVeyaRol(client, {
+                kodParam: 'HAMMADDE_DEPO_KODU',
+                role: 'Hammadde',
+                plantId: isYeri,
+            })
+            : null;
+
+        for (const s of girisSatirlari) {
+            let depoId = Number(hareket.warehouse_id);
+            let stokHareketId = hareket.id;
+            let partiId = s.lot_id || null;
+
+            if (Number(depoId) !== Number(kaliteDepo.id)) {
+                const tr = await depoTransfer(client, {
+                    kaynakDepoId: depoId,
+                    hedefDepoId: kaliteDepo.id,
+                    isYeriId: isYeri,
+                    stokId: s.item_id,
+                    quantity: Number(s.quantity),
+                    uom_code: s.uom_code,
+                    stokStatu: 'Kullanilabilir',
+                    belgeTipi: yon === 'GKK' ? 'GKK_AKTAR' : 'CKK_AKTAR',
+                    belgeId: hareket.id,
+                    description: `${hareketKodu.movement_code || ''} → ${yon}`,
+                    depoZorunluAtla: true,
+                });
+                stokHareketId = tr.giris.hareket.id;
+                depoId = kaliteDepo.id;
+                partiId = tr.giris.satirlar?.[0]?.lot_id || partiId;
+                await client.query(
+                    `UPDATE stock_movement_lines SET stock_status='Kalitede'
+                     WHERE movement_id=$1 AND direction=1`,
+                    [stokHareketId]
+                );
+            } else {
+                await client.query(
+                    `UPDATE stock_movement_lines SET stock_status='Kalitede'
+                     WHERE id=$1`,
+                    [s.id]
+                );
+            }
+
+            let hedefDepoId = hedefDepo?.id || null;
+            if (yon === 'CKK') {
+                const hd = await ckkHedefDepoCozumle(client, s.item_id, isYeri);
+                hedefDepoId = hd?.id || null;
+            }
+
+            const emir = await kkEmriOlustur(client, {
+                direction: yon,
+                stokId: s.item_id,
+                partiId,
+                depoId,
+                hedefDepoId,
+                quantity: Number(s.quantity),
+                kaynakTipi: 'STOK_HAREKET',
+                kaynakId: hareket.id,
+                stokHareketId,
+                description: `${hareketKodu.movement_code || ''} ${hareketKodu.movement_name || ''} → ${yon}`,
+            });
+            emirler.push(emir);
+        }
+    }
+    return emirler;
+}
+
 module.exports = {
     kkEmriOlustur,
     emirGetir,
@@ -360,4 +461,5 @@ module.exports = {
     ckkHedefDepoCozumle,
     depoBulKodVeyaRol,
     stokPlanBul,
+    hareketKodundanKkEmirleri,
 };
