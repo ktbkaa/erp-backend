@@ -2168,14 +2168,12 @@ tr.selected td { background: var(--accent-soft); }
   row-gap: 0.45rem;
 }
 .field {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(5.8rem, 7.6rem) minmax(0, 1fr);
   gap: 0.35rem 0.55rem;
   align-items: center;
   min-width: 0;
-}
-.field {
-  position: relative;
 }
 .field label {
   font-size: 0.8rem;
