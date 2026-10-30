@@ -15,7 +15,8 @@ router.get('/', async (req, res) => {
         }
         const result = await pool.query(
             `
-            SELECT series_code, onek, description, son_numara, screen_code, screen_name, is_active, created_at
+            SELECT series_code AS id, series_code, onek, description, son_numara,
+                   screen_code, screen_name, is_active, created_at
             FROM number_series
             ${where}
             ORDER BY COALESCE(screen_name, description), series_code
@@ -31,7 +32,9 @@ router.get('/', async (req, res) => {
 router.get('/:seriKodu', async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT * FROM number_series WHERE series_code = $1`,
+            `SELECT series_code AS id, series_code, onek, description, son_numara,
+                    screen_code, screen_name, is_active, created_at
+             FROM number_series WHERE series_code = $1`,
             [req.params.seriKodu]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Numaratör bulunamadı.' });
@@ -87,7 +90,8 @@ router.put('/:seriKodu', async (req, res) => {
             ]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Numaratör bulunamadı.' });
-        res.json(result.rows[0]);
+        const row = result.rows[0];
+        res.json({ ...row, id: row.series_code || row.id });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -106,7 +110,7 @@ router.post('/', async (req, res) => {
             `
             INSERT INTO number_series (series_code, onek, description, son_numara, screen_code, screen_name, is_active)
             VALUES ($1, $2, $3, COALESCE($4, 0), $5, $6, TRUE)
-            RETURNING *
+            RETURNING series_code AS id, series_code, onek, description, son_numara, screen_code, screen_name, is_active, created_at
             `,
             [series_code, String(onek).toUpperCase(), description, son_numara ?? 0, screen_code || null, screen_name || null]
         );

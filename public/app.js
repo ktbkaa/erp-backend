@@ -50,8 +50,17 @@ const MODULES = [
           { key: 'description', label: 'Açıklama', name: true, required: true },
         ],
         detailFields: [
-          { key: 'screen_code', label: 'Ekran kodu' },
-          { key: 'screen_name', label: 'Ekran adı' },
+          {
+            key: 'screen_code',
+            label: 'Ekran kodu',
+            type: 'lookup',
+            lookup: 'ekranlar',
+            valueKey: 'screen_code',
+            labelKey: 'screen_name',
+            codeKey: 'screen_code',
+            autoFillName: 'screen_name',
+          },
+          { key: 'screen_name', label: 'Ekran adı', readOnly: true },
           { key: 'son_numara', label: 'Son numara', type: 'number' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
@@ -8219,7 +8228,7 @@ async function showFormContextMenu(clientX, clientY) {
   const screen = findScreen(state.screenId);
   if (!menu || !screen || !state.formMode) return;
   const rec = state.formRecord || {};
-  if (!rec.id || state.formMode === 'yeni' || state.formMode === 'kopyala') {
+  if (!recordIdentity(screen, rec) || state.formMode === 'yeni' || state.formMode === 'kopyala') {
     menu.innerHTML = `<span class="ctx-heading">Belge bağlantısı</span>
       <button type="button" disabled class="is-disabled">Kayıt kaydedildikten sonra kullanılabilir</button>`;
   } else {
@@ -8273,10 +8282,30 @@ function positionCtxMenu(menu, clientX, clientY) {
   menu.style.top = `${top}px`;
 }
 
+/** Kayıt kimliği: numeric id yoksa codeField (numaratör series_code vb.) */
+function recordIdentity(screen, rec) {
+  if (!rec || typeof rec !== 'object') return null;
+  if (rec.id !== undefined && rec.id !== null && rec.id !== '') return rec.id;
+  const cf = screen?.codeField;
+  if (cf && rec[cf] !== undefined && rec[cf] !== null && rec[cf] !== '') return rec[cf];
+  if (rec.series_code) return rec.series_code;
+  return null;
+}
+
+function ensureFormRecordId(screen, rec) {
+  if (!rec || typeof rec !== 'object') return rec;
+  const id = recordIdentity(screen, rec);
+  if (id != null && (rec.id === undefined || rec.id === null || rec.id === '')) {
+    rec.id = id;
+  }
+  return rec;
+}
+
 /** Form üst çubuğu: İncele → Yeni/Düzelt/Kopyala/Sil; Düzelt → Yeni/Kopyala/Sil */
 function updateFormCrudButtons(screen) {
   const mode = state.formMode;
-  const hasId = Boolean(state.formRecord?.id);
+  if (screen && state.formRecord) ensureFormRecordId(screen, state.formRecord);
+  const hasId = Boolean(recordIdentity(screen, state.formRecord));
   const wrap = $('#formCrudActions');
   const map = {
     yeni: $('#btnFormYeni'),
@@ -8292,7 +8321,8 @@ function updateFormCrudButtons(screen) {
   const showYeni = mode === 'incele' || mode === 'duzelt';
   const showDuzelt = mode === 'incele' && hasId;
   const showKopyala = (mode === 'incele' || mode === 'duzelt') && hasId;
-  const showSil = (mode === 'incele' || mode === 'duzelt') && hasId;
+  // Numaratör fiziksel silinmez — Sil gizle
+  const showSil = (mode === 'incele' || mode === 'duzelt') && hasId && screen.id !== 'numarator-tanimi';
 
   map.yeni.hidden = !showYeni;
   map.duzelt.hidden = !showDuzelt;
@@ -8310,19 +8340,20 @@ function updateFormCrudButtons(screen) {
 async function formCrudAction(act) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
-  const rec = state.formRecord || {};
+  const rec = ensureFormRecordId(screen, state.formRecord || {}) || {};
   if (act === 'yeni') {
     await openForm('yeni', { inPlace: true });
     return;
   }
-  if (!rec.id) {
+  const rid = recordIdentity(screen, rec);
+  if (rid == null) {
     toast('Önce kayıtlı bir belge gerekli.');
     return;
   }
   // openForm selectedRow() kullanır
-  state.selectedId = rec.id;
-  if (!state.rows?.some((r) => String(r.id) === String(rec.id))) {
-    state.rows = [{ id: rec.id, ...(rec || {}) }];
+  state.selectedId = rid;
+  if (!state.rows?.some((r) => String(r.id) === String(rid))) {
+    state.rows = [{ ...rec, id: rid }];
     state.filtered = state.rows;
   } else {
     state.filtered = state.rows;
@@ -10320,7 +10351,37 @@ function resolveLookupEndpoint(key) {
   return null;
 }
 
+function buildEkranLookupRows() {
+  return (ALL_SCREENS || []).map((s) => ({
+    id: s.id,
+    screen_code: s.id,
+    screen_id: s.id,
+    screen_name: s.title,
+    tech_id: s.techId || '',
+    module_title: s.moduleTitle || '',
+  })).sort((a, b) => String(a.screen_name).localeCompare(String(b.screen_name), 'tr'));
+}
+
 async function fetchLookupKey(key) {
+  // UI ekran kataloğu — API’ye gitmeden MODULES’ten
+  if (key === 'ekranlar' || key === 'screens' || key === 'onay-ekranlari') {
+    // onay-ekranlari API varsa onu tercih et; yoksa tam katalog
+    if (key === 'onay-ekranlari') {
+      try {
+        const rows = await api('/onay-ekranlari');
+        if (Array.isArray(rows) && rows.length) {
+          state.lookupCache[key] = rows.map((r) => ({
+            ...r,
+            screen_code: r.screen_code || r.screen_id,
+            screen_name: r.screen_name || r.title,
+          }));
+          return state.lookupCache[key];
+        }
+      } catch (_) { /* fallback */ }
+    }
+    state.lookupCache[key] = buildEkranLookupRows();
+    return state.lookupCache[key];
+  }
   const ep = resolveLookupEndpoint(key);
   if (!ep) {
     state.lookupCache[key] = state.lookupCache[key] || [];
@@ -13399,6 +13460,18 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'type_code', label: 'Tip kodu', mono: true },
     { key: 'type_name', label: 'Tip adı' },
   ],
+  ekranlar: [
+    { key: 'screen_code', label: 'Ekran kodu', mono: true },
+    { key: 'screen_name', label: 'Ekran adı' },
+    { key: 'module_title', label: 'Modül' },
+    { key: 'tech_id', label: 'Tech ID', mono: true },
+  ],
+  screens: [
+    { key: 'screen_code', label: 'Ekran kodu', mono: true },
+    { key: 'screen_name', label: 'Ekran adı' },
+    { key: 'module_title', label: 'Modül' },
+    { key: 'tech_id', label: 'Tech ID', mono: true },
+  ],
 };
 
 function lookupBrowserColumnsFor(field) {
@@ -14643,6 +14716,36 @@ function bindCascadeLookups(_screen) {
       }
     }
 
+    // autoFillName: lookup seçilince bağlı ad alanını doldur (ekran kodu → ekran adı vb.)
+    if (el instanceof HTMLSelectElement && fieldKey) {
+      const fDef = collectTabFields(scr).find((x) => x.key === fieldKey)
+        || (scr.masterFields || []).find((x) => x.key === fieldKey)
+        || (scr.detailFields || []).find((x) => x.key === fieldKey);
+      const targetKey = fDef?.autoFillName;
+      if (targetKey) {
+        const rows = state.lookupCache[fDef.lookup] || [];
+        const vk = fDef.valueKey || 'id';
+        const lk = fDef.labelKey || 'adi';
+        const hit = rows.find((r) => String(r[vk]) === String(el.value));
+        const adi = hit ? (hit[lk] || hit.screen_name || hit.dil_name || '') : '';
+        const fillTarget = (sel) => {
+          if (!sel) return;
+          sel.value = adi;
+          if (state.formRecord && (masterKey || !detailKey)) state.formRecord[targetKey] = adi;
+        };
+        if (masterKey || (detailKey && !el.getAttribute('data-didx'))) {
+          fillTarget(document.querySelector(`[data-master="${targetKey}"]`)
+            || document.querySelector(`[data-detail="${targetKey}"]`));
+        } else if (detailKey) {
+          const didx = el.getAttribute('data-didx');
+          const grid = el.getAttribute('data-grid');
+          fillTarget(document.querySelector(
+            `[data-detail="${targetKey}"][data-didx="${didx}"][data-grid="${grid}"]`
+          ));
+        }
+      }
+    }
+
     // Para birimi → exchange_rate
     if (fieldKey === 'currency_code') {
       const pb = el.value;
@@ -15666,13 +15769,19 @@ async function openForm(mode, opts = {}) {
   if (screen.id === 'numarator-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
     record.son_numara = 0;
     record.is_active = true;
-    if (mode === 'yeni') record.series_code = '';
+    // Seri kodu kullanıcıdan yeniden alınır (PK)
+    record.series_code = '';
   }
 
   if (screen.id === 'stok-karti') {
     hydrateStokFirmaIsYeri(record);
   }
 
+  // İncele/Düzelt: API’de id yoksa codeField’dan kimlik (numaratör series_code vb.)
+  // Yeni/Kopyala’da id ekleme — kayıt henüz kaydedilmedi
+  if (mode === 'incele' || mode === 'duzelt') {
+    ensureFormRecordId(screen, record);
+  }
   state.formRecord = record;
   addFormTab(screen, mode, record);
   showView('form');
