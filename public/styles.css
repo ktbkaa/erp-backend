@@ -157,13 +157,21 @@ body.is-login {
   width: min(100%, 18rem);
   height: auto;
 }
+/* Ana sayfa: şeffaf maske ile zemine baskı / damga (beyaz PNG zemini yok) */
 .ktb-logo--hero {
   pointer-events: none;
-}
-.ktb-logo--hero .ktb-logo-img {
-  width: min(72vw, 28rem);
-  height: auto;
-  opacity: 0.82;
+  width: min(68vw, 26rem);
+  aspect-ratio: 650 / 150;
+  background: color-mix(in srgb, var(--accent) 35%, var(--ink) 65%);
+  opacity: 0.11;
+  -webkit-mask-image: url("/assets/ktb-logo-clear.png");
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-image: url("/assets/ktb-logo-clear.png");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
 }
 /* legacy brand tokens (eski marka kutusu) */
 .brand-mark {
