@@ -48,6 +48,14 @@
   --zebra: #fafbfd;
   --accent-border: #9bb7ef;
   --shadow-ink: rgba(42, 42, 42, 0.06);
+  /* Logo tonları — Sümbül (mavi varsayılan); tema ile güncellenir */
+  --logo-light: #6ec4ff;
+  --logo-mid: #2f7ff0;
+  --logo-deep: #1557c9;
+  --logo-dark: #0a2f8a;
+  --logo-ink: #142a52;
+  --logo-accent: #3f87f5;
+  --logo-rule: #c5ceda;
   /* legacy aliases (önceki pastel palet referansları) */
   --palette-main: var(--accent-soft);
   --palette-cyan: var(--page);
@@ -118,12 +126,82 @@ body.is-login {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  padding: 1.05rem 1rem;
+  padding: 0.85rem 0.95rem;
   cursor: pointer;
   border-bottom: 1px solid var(--line);
   min-height: 4.1rem;
   background: #fff;
 }
+.ktb-logo-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ktb-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  user-select: none;
+}
+.ktb-logo-icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 2.15rem;
+  height: auto;
+  overflow: visible;
+}
+.ktb-seg-a { fill: url(#ktbGradA); }
+.ktb-seg-b { fill: url(#ktbGradB); }
+.ktb-seg-c { fill: url(#ktbGradC); }
+.ktb-seg-d { fill: url(#ktbGradD); }
+.ktb-logo-rule {
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: stretch;
+  min-height: 1.55rem;
+  margin: 0.15rem 0;
+  background: var(--logo-rule);
+  opacity: 0.95;
+}
+.ktb-logo-word {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.ktb-logo-ktb { color: var(--logo-ink); }
+.ktb-logo-erp { color: var(--logo-accent); }
+.ktb-logo--sidebar .ktb-logo-word { font-size: 1.12rem; }
+.ktb-logo--sidebar .ktb-logo-icon { width: 1.85rem; }
+.ktb-logo--login {
+  justify-content: center;
+  gap: 0.95rem;
+  margin-bottom: 0.35rem;
+}
+.ktb-logo--login .ktb-logo-icon { width: 3.1rem; }
+.ktb-logo--login .ktb-logo-rule { min-height: 2.4rem; }
+.ktb-logo--login .ktb-logo-word { font-size: clamp(2rem, 5.5vw, 2.55rem); gap: 0.38rem; }
+.ktb-logo--hero {
+  gap: clamp(1rem, 2.5vw, 1.6rem);
+  opacity: 0.88;
+  pointer-events: none;
+  filter: saturate(0.95);
+}
+.ktb-logo--hero .ktb-logo-icon { width: clamp(4.5rem, 12vw, 7.5rem); }
+.ktb-logo--hero .ktb-logo-rule {
+  min-height: clamp(3.5rem, 10vw, 5.8rem);
+  background: rgba(120, 132, 148, 0.35);
+}
+.ktb-logo--hero .ktb-logo-word {
+  font-size: clamp(3.2rem, 9vw, 5.6rem);
+  gap: 0.45rem;
+}
+.ktb-logo--hero .ktb-logo-ktb,
+.ktb-logo--hero .ktb-logo-erp {
+  opacity: 0.72;
+}
+/* legacy brand tokens (eski marka kutusu) */
 .brand-mark {
   width: 2.15rem;
   height: 2.15rem;
@@ -136,7 +214,7 @@ body.is-login {
   font-weight: 700;
   font-size: 0.72rem;
   letter-spacing: 0.02em;
-  box-shadow: 0 6px 14px rgba(63, 135, 245, 0.28);
+  box-shadow: 0 6px 14px var(--accent-glow);
 }
 .brand-name {
   font-family: var(--display);
@@ -1126,20 +1204,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   min-height: 0;
 }
 .ktb-emboss {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(7rem, 22vw, 14rem);
-  letter-spacing: 0.12em;
-  color: transparent;
-  background: linear-gradient(180deg, rgba(180, 188, 196, 0.55), rgba(150, 160, 170, 0.28));
-  -webkit-background-clip: text;
-  background-clip: text;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35),
-    0 -1px 0 rgba(26, 35, 48, 0.06);
-  opacity: 0.32;
-  user-select: none;
-  pointer-events: none;
+  /* geriye dönük: eski KTB damgası — hero logo tercih edilir */
+  display: none;
 }
 
 .screen-view {
@@ -3090,31 +3156,13 @@ tr.selected td { background: var(--accent-soft); }
   animation: loginBrandIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .login-brand-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 3.35rem;
-  height: 3.35rem;
-  margin-bottom: 0.85rem;
-  border-radius: 0.65rem;
-  background: var(--accent);
-  color: #fff;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  box-shadow: 0 12px 28px rgba(63, 135, 245, 0.28);
+  display: none;
 }
 .login-brand-name {
-  margin: 0;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(2.15rem, 6vw, 2.75rem);
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  color: var(--ink);
+  display: none;
 }
 .login-brand-lead {
-  margin: 0.65rem auto 0;
+  margin: 0.85rem auto 0;
   max-width: 22rem;
   font-size: 0.98rem;
   line-height: 1.45;
@@ -4918,6 +4966,7 @@ body.sql-splitting iframe { pointer-events: none; }
   color: var(--accent);
   opacity: 0.55;
 }
+.sidebar-brand:hover .ktb-logo-erp { filter: brightness(1.08); }
 .sidebar-brand:hover .brand-name { color: var(--accent); }
 .doc-tabs {
   background: #fff;
@@ -4930,11 +4979,17 @@ body.doc-tabs-open .doc-tabs-dock {
   border-radius: 0.55rem !important;
   box-shadow: 0 8px 18px rgba(63, 135, 245, 0.28);
 }
-.login-brand-mark {
-  background: var(--accent) !important;
-}
 
 /* ========== UI prefs: themes + settings ========== */
+html[data-theme="blue"] {
+  --logo-light: #6ec4ff;
+  --logo-mid: #2f7ff0;
+  --logo-deep: #1557c9;
+  --logo-dark: #0a2f8a;
+  --logo-ink: #142a52;
+  --logo-accent: #3f87f5;
+  --logo-rule: #c5ceda;
+}
 html[data-theme="green"] {
   --ink: #1a2e2a;
   --muted: #5a726c;
@@ -4965,6 +5020,13 @@ html[data-theme="green"] {
   --hover-row: rgba(27, 143, 120, 0.08);
   --zebra: #f5fcfa;
   --accent-border: #7ecfbc;
+  --logo-light: #7ed9c4;
+  --logo-mid: #1b8f78;
+  --logo-deep: #12715e;
+  --logo-dark: #0a4a3d;
+  --logo-ink: #14352e;
+  --logo-accent: #1b8f78;
+  --logo-rule: #b7d4cb;
 }
 html[data-theme="red"] {
   --accent: #e04545;
@@ -4978,6 +5040,13 @@ html[data-theme="red"] {
   --accent-border: #ef9a9a;
   --cyan: #f07167;
   --cyan-soft: rgba(240, 113, 103, 0.12);
+  --logo-light: #ff8f8f;
+  --logo-mid: #e04545;
+  --logo-deep: #c93636;
+  --logo-dark: #8a1f1f;
+  --logo-ink: #4a1818;
+  --logo-accent: #e04545;
+  --logo-rule: #e0c8c8;
 }
 html[data-theme="orange"] {
   --accent: #e67e22;
@@ -4991,6 +5060,13 @@ html[data-theme="orange"] {
   --accent-border: #f5c18a;
   --cyan: #f39c12;
   --cyan-soft: rgba(243, 156, 18, 0.12);
+  --logo-light: #f5b86a;
+  --logo-mid: #e67e22;
+  --logo-deep: #d35400;
+  --logo-dark: #8a3a00;
+  --logo-ink: #4a2a0e;
+  --logo-accent: #e67e22;
+  --logo-rule: #e2d0bc;
 }
 html[data-theme="purple"] {
   --accent: #7c5cfc;
@@ -5004,6 +5080,13 @@ html[data-theme="purple"] {
   --accent-border: #b8a6ff;
   --cyan: #9b7bff;
   --cyan-soft: rgba(155, 123, 255, 0.12);
+  --logo-light: #b8a6ff;
+  --logo-mid: #7c5cfc;
+  --logo-deep: #6545e8;
+  --logo-dark: #3a258a;
+  --logo-ink: #2a1a55;
+  --logo-accent: #7c5cfc;
+  --logo-rule: #d0c8e8;
 }
 html[data-theme="yellow"] {
   --accent: #c9a227;
@@ -5017,6 +5100,13 @@ html[data-theme="yellow"] {
   --accent-border: #e6d089;
   --cyan: #d4af37;
   --cyan-soft: rgba(212, 175, 55, 0.14);
+  --logo-light: #e6d089;
+  --logo-mid: #c9a227;
+  --logo-deep: #b08d1c;
+  --logo-dark: #6e5710;
+  --logo-ink: #3f340c;
+  --logo-accent: #c9a227;
+  --logo-rule: #ddd4b8;
 }
 
 .settings-wrap { position: relative; flex: 0 0 auto; }
