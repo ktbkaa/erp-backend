@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261030pbmanuel" />
+  <link rel="stylesheet" href="/styles.css?v=20261030kurtip" />
 </head>
 <body>
   <div id="formSoloLoader" class="form-solo-loader" hidden aria-live="polite" aria-busy="true">
@@ -199,6 +199,7 @@
             <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
             <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
             <button type="button" class="btn action" data-action="mrp-calistir" id="btnMrpCalistir" hidden title="MRP çalıştır ve sonuçları kaydet">MRP Çalıştır</button>
+            <button type="button" class="btn action" data-action="tcmb-cek" id="btnTcmbCek" hidden title="TCMB today.xml — tanımlı para birimleri için günlük kurları çek">TCMB’den Çek</button>
           </div>
 
           <div class="filter-pane" id="filterPane">
@@ -473,7 +474,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261030pbmanuel"></script>
+  <script src="/app.js?v=20261030kurtip"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

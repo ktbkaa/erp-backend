@@ -384,32 +384,63 @@ const MODULES = [
         crud: true,
         codeField: 'source_pb',
         nameField: 'target_pb',
+        tcmbCekAction: true,
         filters: [
           { key: 'source_pb', label: 'Kaynak PB' },
           { key: 'target_pb', label: 'Hedef PB' },
+          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel', 'Seed'] },
         ],
         columns: [
           { key: 'rate_date', label: 'Tarih' },
-          { key: 'source_pb', label: 'Kaynak', mono: true },
-          { key: 'target_pb', label: 'Hedef', mono: true },
+          { key: 'source_pb', label: 'Kaynak PB', mono: true },
+          { key: 'target_pb', label: 'Hedef PB', mono: true },
           { key: 'buy_rate', label: 'Alış' },
           { key: 'sell_rate', label: 'Satış' },
-          { key: 'source', label: 'Kaynak' },
+          { key: 'source', label: 'Kur kaynağı' },
         ],
         masterFields: [
           { key: 'rate_date', label: 'Kur tarihi', type: 'date', required: true },
           { key: 'source_pb', label: 'Kaynak PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
           { key: 'target_pb', label: 'Hedef PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
-          { key: 'buy_rate', label: 'Alış kuru', type: 'number', required: true },
-          { key: 'sell_rate', label: 'Satış kuru', type: 'number', required: true },
+          {
+            key: 'buy_rate',
+            label: 'Alış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz alış (Forex Buying): Kaydi/hesaplar arası işlemde kurumun sizden döviz aldığı kur. TCMB seçiliyse bültenden gelir; Manuel’de banka veya sözleşmenize göre girin. Belgede «Kur tipi = Alış» bu değeri kullanır.',
+          },
+          {
+            key: 'sell_rate',
+            label: 'Satış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz satış (Forex Selling): Kaydi işlemde kurumun size döviz sattığı kur. Genelde alıştan yüksektir (makas). Satış belgelerinde sıkça bu tip seçilir. TCMB gösterge niteliğindedir; banka kurunuz farklı olabilir.',
+          },
         ],
         detailFields: [
-          { key: 'effective_buy_rate', label: 'Efektif alış', type: 'number' },
-          { key: 'effective_sell_rate', label: 'Efektif satış', type: 'number' },
-          { key: 'source', label: 'Kaynak' },
+          {
+            key: 'effective_buy_rate',
+            label: 'Efektif alış',
+            type: 'number',
+            info: 'Efektif alış (Banknote Buying): Nakit banknot dövizi kurumun sizden aldığı kur. Elden döviz bozdurma senaryosu. TCMB’de bazı paralarda boş olabilir; o zaman döviz alışa düşülür.',
+          },
+          {
+            key: 'effective_sell_rate',
+            label: 'Efektif satış',
+            type: 'number',
+            info: 'Efektif satış (Banknote Selling): Nakit banknotu kurumdan alırken kullanılan kur. Nakit makası genelde kaydi makastan geniştir. Manuel tanımlarken fiilen uyguladığınız gişe/banka kurunu yazın.',
+          },
+          {
+            key: 'source',
+            label: 'Kur kaynağı',
+            type: 'select',
+            options: ['TCMB', 'Manuel'],
+            info: 'TCMB: Sistem Parametreleri’ndeki TCMB_KUR_URL (today.xml) ile iş günü bülteni çekilir; TCMB_KUR_AUTO=true ise günde bir kez otomatik güncellenir. Manuel: TCMB’de olmayan pariteler (ör. MXN) veya kendi banka kurunuz.',
+          },
         ],
         detailKey: null,
         detailAsFields: true,
+        defaults: { target_pb: 'TRY', source: 'Manuel', rate_date: null },
       },
 
       {
@@ -9123,23 +9154,204 @@ const DIL_AD_MAP = {
   NL: 'Nederlands', PT: 'Português', ZH: '中文', JA: '日本語',
 };
 
-async function applyKurForParaBirimi(pbKod, kurEl, { force = false } = {}) {
-  if (!kurEl) return;
+/** Belge kur tipi → /doviz-kurlari/cevir type */
+const KUR_TIPI_OPTIONS = [
+  { value: 'TCMB-ALIS', label: 'Alış' },
+  { value: 'TCMB-SATIS', label: 'Satış' },
+  { value: 'EFKT-ALIS', label: 'Efektif alış' },
+  { value: 'EFKT-SATIS', label: 'Efektif satış' },
+  { value: 'Serbest', label: 'Serbest' },
+];
+
+function rateTypeToCevirType(rateType) {
+  const t = String(rateType || '').toUpperCase();
+  if (t === 'SERBEST') return null;
+  if (t.includes('EFKT') && t.includes('ALIS')) return 'efektif-alis';
+  if (t.includes('EFKT') && t.includes('SATIS')) return 'efektif-satis';
+  if (t.includes('ALIS')) return 'alis';
+  return 'satis';
+}
+
+function setControlDisabled(el, disabled, title = '') {
+  if (!el) return;
+  el.disabled = Boolean(disabled);
+  if (title != null) el.title = title;
+  const widget = el.closest?.('.lookup-widget');
+  if (widget) {
+    widget.querySelectorAll('.lookup-typeahead, .lookup-browse-btn, select').forEach((n) => {
+      if (n !== el) {
+        if ('disabled' in n) n.disabled = Boolean(disabled);
+      }
+    });
+  }
+  // segment radios
+  if (el.type === 'radio') {
+    const name = el.getAttribute('name');
+    if (name) {
+      document.querySelectorAll(`input[type="radio"][name="${name}"]`).forEach((r) => {
+        r.disabled = Boolean(disabled);
+      });
+    }
+  }
+}
+
+/**
+ * Para birimi + kur tipine göre kur alanını doldur / kilitle.
+ * TRY → kur=1, kur tipi ve kur disabled.
+ * Diğer → kur tipi seçilebilir; Serbest değilse TCMB/DB’den kur gelir.
+ */
+async function applyKurForParaBirimi(pbKod, kurEl, { force = false, rateType = null, rateTypeEl = null } = {}) {
   const pb = String(pbKod || 'TRY').toUpperCase();
+  const tipEl = rateTypeEl
+    || (kurEl?.hasAttribute?.('data-master')
+      ? findAttrControl('data-master', 'rate_type')
+      : null)
+    || findAttrControl('data-master', 'rate_type')
+    || findAttrControl('data-detail', 'rate_type');
+  const tip = rateType != null
+    ? rateType
+    : (tipEl ? (tipEl.type === 'radio' ? (tipEl.checked ? tipEl.value : readMasterDetailValue('rate_type')) : tipEl.value) : null)
+      || state.formRecord?.rate_type
+      || 'TCMB-SATIS';
+
+  if (!kurEl && !tipEl) return;
+
   if (pb === 'TRY' || pb === 'TL') {
-    kurEl.value = '1';
-    kurEl.disabled = true;
-    kurEl.title = 'TRY için exchange_rate sabittir';
+    if (kurEl) {
+      kurEl.value = '1';
+      setControlDisabled(kurEl, true, 'TRY için kur sabittir (1)');
+    }
+    if (tipEl) setControlDisabled(tipEl, true, 'TRY için kur tipi gerekmez');
+    if (state.formRecord) {
+      state.formRecord.exchange_rate = 1;
+      state.formRecord.currency_code = pb === 'TL' ? 'TRY' : pb;
+    }
     return;
   }
-  kurEl.disabled = false;
-  kurEl.title = '';
-  if (!force && kurEl.value && Number(kurEl.value) > 0 && Number(kurEl.value) !== 1) return;
+
+  if (tipEl) setControlDisabled(tipEl, false, '');
+  const cevirType = rateTypeToCevirType(tip);
+  const serbest = cevirType == null;
+
+  if (kurEl) {
+    setControlDisabled(kurEl, false, serbest ? 'Serbest kur — elle girin' : '');
+    if (serbest) {
+      // Serbest: kullanıcı girer; zorla üzerine yazma
+      if (force && (!kurEl.value || Number(kurEl.value) === 1)) {
+        /* boş bırakılabilir */
+      }
+      return;
+    }
+    if (!force && kurEl.value && Number(kurEl.value) > 0 && Number(kurEl.value) !== 1) return;
+    try {
+      const r = await api(
+        `/doviz-kurlari/cevir?quantity=1&source_pb=${encodeURIComponent(pb)}&target_pb=TRY&type=${encodeURIComponent(cevirType)}`
+      );
+      if (r?.exchange_rate != null) {
+        kurEl.value = String(r.exchange_rate);
+        if (state.formRecord && kurEl.hasAttribute('data-master')) {
+          state.formRecord.exchange_rate = Number(r.exchange_rate);
+          state.formRecord.rate_type = tip;
+        }
+      }
+    } catch (_) {
+      /* kur yoksa kullanıcı girer / Serbest’e geçebilir */
+    }
+  }
+}
+
+/** Form açılışında / PB değişiminde tüm kur kontrollerini hizala */
+async function syncDocumentKurFields(force = true) {
+  const pb = String(
+    readMasterDetailValue('currency_code') || state.formRecord?.currency_code || 'TRY'
+  ).toUpperCase();
+  const tip = String(
+    readMasterDetailValue('rate_type') || state.formRecord?.rate_type || 'TCMB-SATIS'
+  );
+  const kurEl = findAttrControl('data-master', 'exchange_rate');
+  const tipEl = findAttrControl('data-master', 'rate_type');
+  await applyKurForParaBirimi(pb, kurEl, { force, rateType: tip, rateTypeEl: tipEl });
+}
+
+/** Form alanı oku (segment radio / select / input) */
+function readMasterDetailValue(key) {
+  const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+  if (!el) return state.formRecord?.[key] ?? '';
+  if (el.type === 'radio') return el.checked ? el.value : (state.formRecord?.[key] ?? '');
+  return el.value;
+}
+
+/** Form alanı yaz (segment radio grubunu da günceller) */
+function writeMasterDetailValue(key, val) {
+  if (val == null) return;
+  const str = String(val);
+  const radios = [
+    ...document.querySelectorAll(`input[type="radio"][data-master="${key}"]`),
+    ...document.querySelectorAll(`input[type="radio"][data-detail="${key}"]`),
+  ];
+  if (radios.length) {
+    radios.forEach((r) => { r.checked = String(r.value) === str; });
+  } else {
+    const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+    if (el) el.value = str;
+  }
+  if (state.formRecord) state.formRecord[key] = val;
+}
+
+/**
+ * Döviz kuru formu: Kur kaynağı=TCMB iken alış/satış TCMB XML’den.
+ * TCMB bülteninde para birimi yoksa (ör. MXN) → Manuel’e düş, elle girilsin.
+ */
+async function fillDovizFromTcmbIfNeeded() {
+  if (state.screenId !== 'doviz-exchange_rate-tanimi') return;
+  if (state.formMode === 'incele') return;
+  const source = String(readMasterDetailValue('source') || '').trim();
+  if (source.toUpperCase() !== 'TCMB') return;
+
+  let sourcePb = String(readMasterDetailValue('source_pb') || '').trim();
+  let targetPb = String(readMasterDetailValue('target_pb') || 'TRY').trim() || 'TRY';
+  // Lookup bazen ad basmış olabilir → kodu çöz
+  const resolvePbCode = (raw) => {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^[A-Z]{3}$/i.test(s)) return s.toUpperCase();
+    const rows = state.lookupCache['para-birimleri'] || [];
+    const hit = rows.find((r) =>
+      String(r.currency_code).toUpperCase() === s.toUpperCase()
+      || String(r.currency_name || '').toLocaleLowerCase('tr') === s.toLocaleLowerCase('tr')
+      || `${r.currency_code} - ${r.currency_name}`.toLocaleLowerCase('tr') === s.toLocaleLowerCase('tr'));
+    return hit ? String(hit.currency_code).toUpperCase() : s.toUpperCase();
+  };
+  sourcePb = resolvePbCode(sourcePb);
+  targetPb = resolvePbCode(targetPb) || 'TRY';
+  if (!sourcePb) return;
+
+  // Select’te kodu netleştir
+  writeMasterDetailValue('source_pb', sourcePb);
+  writeMasterDetailValue('target_pb', targetPb);
+  const srcSel = findAttrControl('data-master', 'source_pb');
+  if (srcSel) syncLookupTypeaheadFromSelect(srcSel);
+  const tgtSel = findAttrControl('data-master', 'target_pb');
+  if (tgtSel) syncLookupTypeaheadFromSelect(tgtSel);
+
+  const tarih = String(readMasterDetailValue('rate_date') || '').slice(0, 10);
   try {
-    const r = await api(`/doviz-kurlari/cevir?quantity=1&source_pb=${encodeURIComponent(pb)}&target_pb=TRY&type=satis`);
-    if (r?.exchange_rate != null) kurEl.value = String(r.exchange_rate);
-  } catch (_) {
-    /* exchange_rate yoksa kullanıcı girer */
+    const q = new URLSearchParams({ source_pb: sourcePb, target_pb: targetPb });
+    if (tarih) q.set('tarih', tarih);
+    const r = await api(`/doviz-kurlari/tcmb-onizleme?${q}`);
+    writeMasterDetailValue('buy_rate', r.buy_rate);
+    writeMasterDetailValue('sell_rate', r.sell_rate);
+    writeMasterDetailValue('effective_buy_rate', r.effective_buy_rate);
+    writeMasterDetailValue('effective_sell_rate', r.effective_sell_rate);
+    if (r.rate_date) writeMasterDetailValue('rate_date', r.rate_date);
+    writeMasterDetailValue('source', 'TCMB');
+    toast(`TCMB ${r.bulletin_no || r.rate_date || ''}: ${sourcePb}/${targetPb} dolduruldu`);
+  } catch (err) {
+    // TCMB’de yok (MXN vb.) → Manuel; alış/satış kullanıcıdan
+    writeMasterDetailValue('source', 'Manuel');
+    toast(
+      `${sourcePb} TCMB bülteninde yok. Kur kaynağı Manuel’e alındı — alış/satışı elle girin.`
+    );
   }
 }
 
@@ -9947,7 +10159,7 @@ function ekranYetkisi(screenId, action = null) {
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
-  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir') {
+  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir' || action === 'tcmb-cek') {
     return Boolean(row.incele || row.duzelt || row.yeni);
   }
   return Boolean(row[action]);
@@ -9988,6 +10200,9 @@ function updateActionButtons(screen) {
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
+    } else if (act === 'tcmb-cek') {
+      btn.hidden = !screen.tcmbCekAction;
+      btn.disabled = !ekranYetkisi(screen.id, 'tcmb-cek');
     } else btn.disabled = !hasSel || !ekranYetkisi(screen.id, act);
   });
   const mrpBtn = $('#btnMrpTalep');
@@ -9996,6 +10211,8 @@ function updateActionButtons(screen) {
   if (mrpUe) mrpUe.hidden = !screen.mrpUretimAction;
   const mrpRun = $('#btnMrpCalistir');
   if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
+  const tcmbBtn = $('#btnTcmbCek');
+  if (tcmbBtn) tcmbBtn.hidden = !screen.tcmbCekAction;
 }
 
 async function openScreen(id, opts = {}) {
@@ -10540,27 +10757,42 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     return `<input type="password" ${name} value="" autocomplete="new-password" placeholder="${escAttr(ph)}" ${dis} ${reqPw} />`;
   }
   if (field.type === 'select') {
-    const opts = field.options || [];
+    let opts = field.options || [];
+    // Kur tipi: kod yerine okunur etiket (Alış / Satış / Efektif…)
+    if (field.key === 'rate_type' && opts.length && typeof opts[0] === 'string') {
+      opts = KUR_TIPI_OPTIONS.filter((o) => opts.includes(o.value));
+      if (!opts.length) opts = KUR_TIPI_OPTIONS.slice();
+    }
+    const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
+    const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.adi ?? o.l ?? optVal(o)) : o);
     // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
     if (opts.length === 2) {
       // Her segment örneği benzersiz name alsın (master/grid/bom/flow — tüm ekranlar)
       if (!fieldControl._segSeq) fieldControl._segSeq = 0;
       fieldControl._segSeq += 1;
       const radioName = `seg_${String(attrName || 'f').replace(/[^a-z0-9]+/gi, '_')}_${field.key}_${fieldControl._segSeq}`;
-      const cur = (v === '' || v == null) ? opts[0] : v;
+      const cur = (v === '' || v == null) ? optVal(opts[0]) : v;
       return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
-        const on = String(cur) === String(o);
+        const ov = optVal(o);
+        const on = String(cur) === String(ov);
         return `<label class="seg-opt">
-          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(o)}" ${on ? 'checked' : ''} ${dis} ${req} />
-          <span>${escAttr(o)}</span>
+          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(ov)}" ${on ? 'checked' : ''} ${dis} ${req} />
+          <span>${escAttr(optLabel(o))}</span>
         </label>`;
       }).join('')}</div>`;
     }
+    const curLabel = (() => {
+      const hit = opts.find((o) => String(optVal(o)) === String(v));
+      return hit ? String(optLabel(hit)) : (v === '' || v == null ? '' : String(v));
+    })();
     const sel = `<select class="lookup-pick lookup-combo-select" ${name} ${dis} ${req}>
       <option value="">—</option>
-      ${opts.map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
+      ${opts.map((o) => {
+        const ov = optVal(o);
+        return `<option value="${escAttr(ov)}" ${String(v) === String(ov) ? 'selected' : ''}>${escAttr(optLabel(o) || '—')}</option>`;
+      }).join('')}
     </select>`;
-    return wrapLookupCombobox(sel, v === '' || v == null ? '' : String(v), Boolean(dis));
+    return wrapLookupCombobox(sel, curLabel, Boolean(dis));
   }
   if (field.type === 'lookup') {
     const scope = ctx || state.formRecord || {};
@@ -11347,7 +11579,10 @@ function fieldShell(f, controlHtml, value) {
   const star = (isReq && empty && state.formMode !== 'incele')
     ? '<span class="req-star" title="Doldurulması zorunlu">*</span>'
     : (isReq ? '<span class="req-mark" title="Zorunlu alan">*</span>' : '');
-  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${star}${f.label}</label>${controlHtml}</div>`;
+  const infoBtn = f.info
+    ? `<button type="button" class="field-info-btn" data-field-info="${escAttr(f.key)}" title="Alan bilgisi" aria-label="${escAttr(f.label || f.key)} bilgisi">i</button>`
+    : '';
+  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi">${infoBtn}<label>${star}${f.label}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -13104,6 +13339,10 @@ function renderForm(screen) {
     bindFirmaYetkiEvents();
     bindAvatarEvents();
   }
+  // TRY → kur kilitli; diğer PB → kur tipine göre doldur
+  if (findAttrControl('data-master', 'exchange_rate') || findAttrControl('data-master', 'currency_code')) {
+    syncDocumentKurFields(false).catch(() => {});
+  }
 }
 
 /** Detay tablolarında sütun genişliğini sürükleyerek ayarla (localStorage’da saklanır). */
@@ -14757,21 +14996,38 @@ function bindCascadeLookups(_screen) {
       }
     }
 
-    // Para birimi → exchange_rate
-    if (fieldKey === 'currency_code') {
-      const pb = el.value;
+    // Para birimi / kur tipi → exchange_rate (TRY ise kur kilitli)
+    if (fieldKey === 'currency_code' || fieldKey === 'rate_type') {
       if (masterKey) {
-        const kurEl = document.querySelector('[data-master="exchange_rate"]');
-        await applyKurForParaBirimi(pb, kurEl, { force: true });
-        if (state.formRecord && kurEl) state.formRecord.exchange_rate = Number(kurEl.value) || 1;
+        await syncDocumentKurFields(true);
+        if (state.formRecord) {
+          const kurEl = findAttrControl('data-master', 'exchange_rate');
+          if (kurEl) state.formRecord.exchange_rate = Number(kurEl.value) || 1;
+          state.formRecord.rate_type = readMasterDetailValue('rate_type') || state.formRecord.rate_type;
+          state.formRecord.currency_code = readMasterDetailValue('currency_code') || state.formRecord.currency_code;
+        }
       } else if (detailKey) {
         const didx = el.getAttribute('data-didx');
         const grid = el.getAttribute('data-grid');
         const kurEl = document.querySelector(
-          `[data-detail="exchange_rate"][data-didx="${didx}"][data-grid="${grid}"]`
+          `[data-detail="exchange_rate"][data-didx="${didx}"]${grid != null ? `[data-grid="${grid}"]` : ''}`
         );
-        await applyKurForParaBirimi(pb, kurEl, { force: true });
+        const tipEl = document.querySelector(
+          `[data-detail="rate_type"][data-didx="${didx}"]${grid != null ? `[data-grid="${grid}"]` : ''}`
+        );
+        const pbEl = document.querySelector(
+          `[data-detail="currency_code"][data-didx="${didx}"]${grid != null ? `[data-grid="${grid}"]` : ''}`
+        );
+        const pb = fieldKey === 'currency_code' ? el.value : (pbEl?.value || '');
+        const tip = fieldKey === 'rate_type' ? el.value : (tipEl?.value || 'TCMB-SATIS');
+        await applyKurForParaBirimi(pb, kurEl, { force: true, rateType: tip, rateTypeEl: tipEl });
       }
+    }
+
+    // Döviz kuru formu: Kur kaynağı = TCMB → alış/satış TCMB XML’den
+    if (scr.id === 'doviz-exchange_rate-tanimi'
+      && ['source', 'source_pb', 'target_pb', 'rate_date'].includes(fieldKey)) {
+      await fillDovizFromTcmbIfNeeded();
     }
 
     // fillFrom: teklif / talep / sipariş / sevk / irsaliye / mal-kabul satır doldurma
@@ -15784,6 +16040,12 @@ async function openForm(mode, opts = {}) {
     record.series_code = '';
   }
 
+  if (screen.id === 'doviz-exchange_rate-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
+    if (!record.rate_date) record.rate_date = new Date().toISOString().slice(0, 10);
+    if (!record.target_pb) record.target_pb = 'TRY';
+    if (!record.source) record.source = 'Manuel';
+  }
+
   if (screen.id === 'stok-karti') {
     hydrateStokFirmaIsYeri(record);
   }
@@ -16328,13 +16590,16 @@ function closeRecordInfo() {
   if (dlg) dlg.hidden = true;
 }
 
-async function showFieldHelpForElement(el) {
-  if (!el) return;
-  const fieldEl = el.closest('[data-field-key], [data-master], [data-detail]');
-  if (!fieldEl && !el.getAttribute?.('data-master') && !el.getAttribute?.('data-detail')) return;
-  const key = fieldEl?.getAttribute('data-field-key')
-    || el.getAttribute('data-master')
-    || el.getAttribute('data-detail')
+async function showFieldHelpForElement(el, forcedKey = null) {
+  if (!el && !forcedKey) return;
+  const fieldEl = el?.closest?.('[data-field-key], [data-master], [data-detail]');
+  if (!forcedKey && !fieldEl && !el?.getAttribute?.('data-master') && !el?.getAttribute?.('data-detail')
+    && !el?.getAttribute?.('data-field-info')) return;
+  const key = forcedKey
+    || fieldEl?.getAttribute('data-field-key')
+    || el?.getAttribute('data-master')
+    || el?.getAttribute('data-detail')
+    || el?.getAttribute('data-field-info')
     || fieldEl?.querySelector?.('[data-master], [data-detail]')?.getAttribute('data-master')
     || fieldEl?.querySelector?.('[data-detail]')?.getAttribute('data-detail');
   const screen = findScreen(state.screenId);
@@ -16347,6 +16612,19 @@ async function showFieldHelpForElement(el) {
   if (!body || !dlg) return;
   body.innerHTML = '<p>Yükleniyor…</p>';
   dlg.hidden = false;
+  const titleEl = $('#fieldHelpTitle');
+  const fieldDef = collectTabFields(screen).find((f) => f.key === key)
+    || (screen.masterFields || []).find((f) => f.key === key)
+    || (screen.detailFields || []).find((f) => f.key === key);
+  if (fieldDef?.info) {
+    if (titleEl) titleEl.textContent = `${fieldDef.label || key} — bilgi`;
+    body.innerHTML = `
+      <p class="meta-help-lead">${escapeHtml(fieldDef.info)}</p>
+      <p class="meta-hint">Manuel tanımlarken bankanızın / sözleşmenizin fiilen uyguladığı kuru yazın. TCMB gösterge niteliğindedir; günde bir kez (iş günü) güncellenir.</p>
+    `;
+    return;
+  }
+  if (titleEl) titleEl.textContent = 'Alan bilgisi (F1)';
   try {
     const info = await api(`/meta/alan?screen=${encodeURIComponent(screen.id)}&field=${encodeURIComponent(key)}`);
     body.innerHTML = `
@@ -16458,6 +16736,17 @@ function bindMetaHelpGlobal() {
       ? field
       : field.querySelector('[data-master], [data-detail]');
     showFieldHelpForElement(ctl || field);
+  });
+  // Alan sağ üstündeki «i» bilgi butonu
+  document.addEventListener('click', (e) => {
+    const infoBtn = e.target.closest?.('[data-field-info]');
+    if (!infoBtn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const key = infoBtn.getAttribute('data-field-info');
+    const field = infoBtn.closest('[data-field-key]');
+    const ctl = field?.querySelector('[data-master], [data-detail]') || field;
+    showFieldHelpForElement(ctl || infoBtn, key);
   });
   document.addEventListener('click', (e) => {
     const wrap = $('#formInfoWrap');
@@ -16588,6 +16877,7 @@ function bindEvents() {
       else if (act === 'mrp-talep') mrpTalepOlustur().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') mrpUretimOlustur().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') mrpCalistirKaydet().catch((err) => toast(err.message));
+      else if (act === 'tcmb-cek') tcmbKurCek().catch((err) => toast(err.message));
       else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
@@ -16934,6 +17224,32 @@ function bindEvents() {
     const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
     toast(`${result.olusan || 0} üretim emri oluştu`);
     openScreen('uretim-emirleri');
+  }
+
+  /** Döviz Kurları listesi: TCMB today.xml → tanımlı PB’ler için upsert */
+  async function tcmbKurCek() {
+    const screen = findScreen(state.screenId);
+    if (!screen?.tcmbCekAction) return;
+    if (!ekranYetkisi(screen.id, 'tcmb-cek')) {
+      toast('Bu işlem için yetkiniz yok.');
+      return;
+    }
+    toast('TCMB kurları çekiliyor…');
+    try {
+      const result = await api('/doviz-kurlari/tcmb-cek', {
+        method: 'POST',
+        body: JSON.stringify({ target_pb: 'TRY' }),
+      });
+      const skip = (result.skipped_currencies || []).length
+        ? ` (tanımsız atlanan: ${result.skipped_currencies.slice(0, 8).join(', ')}${result.skipped_currencies.length > 8 ? '…' : ''})`
+        : '';
+      toast(
+        `TCMB ${result.bulletin_no || ''} · ${result.rate_date}: ${result.upserted_count} kur yazıldı${skip}`
+      );
+      await openScreen(screen.id);
+    } catch (err) {
+      toast(err.message || 'TCMB kurları alınamadı');
+    }
   }
 
   async function mrpCalistirKaydet() {

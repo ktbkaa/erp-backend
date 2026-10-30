@@ -2,11 +2,101 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { trimOrNull } = require('../src/utils/tanimCrud');
+const {
+  syncTcmbRates,
+  resolveFetchUrl,
+  fetchXml,
+  parseTcmbXml,
+  DEFAULT_TODAY_URL,
+  readParam,
+} = require('../src/services/tcmbKurService');
 
 function num(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
+
+/** TCMB kaynak URL / otomatik ayar özeti */
+router.get('/tcmb-durum', async (req, res, next) => {
+  try {
+    const url = await resolveFetchUrl(pool, {});
+    const auto = await readParam(pool, 'TCMB_KUR_AUTO', 'true');
+    const last = await pool.query(
+      `SELECT rate_date, COUNT(*)::int AS n, MAX(created_at) AS last_at
+       FROM exchange_rates WHERE source = 'TCMB'
+       GROUP BY rate_date ORDER BY rate_date DESC LIMIT 5`
+    );
+    res.json({
+      url,
+      default_url: DEFAULT_TODAY_URL,
+      auto: /^(1|true|evet|yes|on)$/i.test(String(auto || '')),
+      son_tcmb_gunleri: last.rows,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /doviz-kurlari/tcmb-cek
+ * body/query: { tarih?, url?, target_pb? }
+ * Tanımlı para birimleri için TCMB kurlarını çeker ve kaydeder.
+ */
+router.post('/tcmb-cek', async (req, res, next) => {
+  try {
+    const tarih = trimOrNull(req.body?.tarih) || trimOrNull(req.query.tarih);
+    const url = trimOrNull(req.body?.url) || trimOrNull(req.query.url);
+    const targetPb = trimOrNull(req.body?.target_pb) || trimOrNull(req.query.target_pb) || 'TRY';
+    const result = await syncTcmbRates(pool, { tarih, url, targetPb });
+    res.status(201).json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
+    next(err);
+  }
+});
+
+/**
+ * GET /doviz-kurlari/tcmb-onizleme?source_pb=USD&target_pb=TRY&tarih=
+ * Tek çift için TCMB kurunu döner (DB’ye yazmaz).
+ */
+router.get('/tcmb-onizleme', async (req, res, next) => {
+  try {
+    const source = trimOrNull(req.query.source_pb);
+    const hedef = trimOrNull(req.query.target_pb) || 'TRY';
+    if (!source) return res.status(400).json({ hata: 'source_pb zorunlu.' });
+    if (source === hedef) {
+      return res.json({ source_pb: source, target_pb: hedef, buy_rate: 1, sell_rate: 1 });
+    }
+    const url = await resolveFetchUrl(pool, {
+      tarih: trimOrNull(req.query.tarih),
+      url: trimOrNull(req.query.url),
+    });
+    const parsed = parseTcmbXml(await fetchXml(url));
+    const hit = parsed.rates.find((r) => r.currency_code === String(source).toUpperCase());
+    if (!hit || hit.buy_rate == null || hit.sell_rate == null) {
+      return res.status(404).json({
+        hata: `${String(source).toUpperCase()} TCMB günlük bülteninde yok. Kur kaynağını Manuel yapıp alış/satışı elle girin.`,
+        tcmb_yok: true,
+        source_pb: String(source).toUpperCase(),
+      });
+    }
+    res.json({
+      url,
+      rate_date: parsed.bulletinDate,
+      bulletin_no: parsed.bulletinNo,
+      source_pb: hit.currency_code,
+      target_pb: String(hedef).toUpperCase(),
+      buy_rate: hit.buy_rate,
+      sell_rate: hit.sell_rate,
+      effective_buy_rate: hit.effective_buy_rate,
+      effective_sell_rate: hit.effective_sell_rate,
+      source: 'TCMB',
+    });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
+    next(err);
+  }
+});
 
 router.get('/', async (req, res, next) => {
   try {
@@ -44,7 +134,27 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/** GET /doviz-kurlari/cevir?quantity=&source_pb=&target_pb=&tarih=&type=satis|alis */
+/** type → exchange_rates kolonu (alış / satış / efektif) */
+function resolveRateColumn(typeRaw) {
+  const t = String(typeRaw || 'satis').toLowerCase().replace(/_/g, '-');
+  if (t === 'alis' || t === 'tcmb-alis' || t === 'buy' || t === 'forex-buying') return 'buy_rate';
+  if (t === 'efektif-alis' || t === 'efkt-alis' || t === 'banknote-buying') return 'effective_buy_rate';
+  if (t === 'efektif-satis' || t === 'efkt-satis' || t === 'banknote-selling') return 'effective_sell_rate';
+  return 'sell_rate';
+}
+
+function pickRateValue(row, col) {
+  if (!row) return null;
+  let v = num(row[col]);
+  // Efektif boşsa döviz alış/satışa düş
+  if (v == null || v <= 0) {
+    if (col === 'effective_buy_rate') v = num(row.buy_rate);
+    if (col === 'effective_sell_rate') v = num(row.sell_rate);
+  }
+  return v != null && v > 0 ? v : null;
+}
+
+/** GET /doviz-kurlari/cevir?quantity=&source_pb=&target_pb=&tarih=&type=satis|alis|efektif-alis|efektif-satis */
 router.get('/cevir', async (req, res, next) => {
   try {
     const quantity = num(req.query.quantity);
@@ -56,7 +166,7 @@ router.get('/cevir', async (req, res, next) => {
     if (source === hedef) {
       return res.json({ quantity, result: quantity, exchange_rate: 1, source_pb: source, target_pb: hedef });
     }
-    const type = String(req.query.type || 'satis').toLowerCase() === 'alis' ? 'buy_rate' : 'sell_rate';
+    const col = resolveRateColumn(req.query.type || req.query.rate_type || 'satis');
     const params = [source, hedef];
     let sql = `SELECT * FROM exchange_rates WHERE source_pb=$1 AND target_pb=$2`;
     if (req.query.tarih) {
@@ -73,18 +183,20 @@ router.get('/cevir', async (req, res, next) => {
         [hedef, source]
       );
       if (rev.rows[0]) {
-        const k = Number(rev.rows[0][type]);
+        const k = pickRateValue(rev.rows[0], col);
+        if (k == null) return res.status(404).json({ hata: 'Kur bulunamadı.' });
         const result = quantity / k;
         return res.json({
-          quantity, result, exchange_rate: 1 / k, ters: true,
+          quantity, result, exchange_rate: 1 / k, ters: true, rate_column: col,
           source_pb: source, target_pb: hedef, kur_kaydi: rev.rows[0],
         });
       }
       return res.status(404).json({ hata: 'Kur bulunamadı.' });
     }
-    const exchange_rate = Number(r.rows[0][type]);
+    const exchange_rate = pickRateValue(r.rows[0], col);
+    if (exchange_rate == null) return res.status(404).json({ hata: 'Kur bulunamadı.' });
     res.json({
-      quantity, result: quantity * exchange_rate, exchange_rate,
+      quantity, result: quantity * exchange_rate, exchange_rate, rate_column: col,
       source_pb: source, target_pb: hedef, kur_kaydi: r.rows[0],
     });
   } catch (err) {
