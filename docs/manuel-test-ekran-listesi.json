@@ -1,1138 +1,475 @@
 {
-  "generatedAt": "2026-10-30T15:27:31.271781+03:00",
-  "screenCount": 132,
-  "modules": [
+  "generatedAt": "2026-10-30T15:42:51.879286+03:00",
+  "stepCount": 57,
+  "phases": [
     {
-      "id": "diger",
-      "title": "Diğer",
-      "screens": [
+      "phase": "A — Giriş ve firma iskeleti",
+      "intro": "Önce sisteme girip firmayı / iş yerini / depoyu hazırlayın.",
+      "steps": [
         {
-          "id": "numarator-tanimi",
-          "title": "Numaratör Tanımı",
-          "techId": "SYS-NUM-SCR-001",
-          "endpoint": "/kod-serileri",
-          "crud": true,
-          "readOnly": false
+          "no": 1,
+          "title": "Uygulamayı açıp giriş yapın",
+          "screen": "# (login)",
+          "action": "Admin (veya yetkili) kullanıcı ile oturum açın.",
+          "expected": "Ana menü ve modüller görünür."
         },
         {
-          "id": "olcu-birimleri",
-          "title": "Ölçü Birimleri",
-          "techId": "MDM-UOM-SCR-001",
-          "endpoint": "/olcu-birimleri",
-          "crud": true,
-          "readOnly": false
+          "no": 2,
+          "title": "Aktif firmayı seçin / oluşturun",
+          "screen": "#companies",
+          "action": "TEKS (veya yeni firma) kartını açın; yoksa Yeni ile firma kodu + unvan kaydedin.",
+          "expected": "Firma listede; üst barda aktif firma doğru."
         },
         {
-          "id": "kategori-tanimi",
-          "title": "Kategori Tanımı",
-          "techId": "MDM-CAT-SCR-001",
-          "endpoint": "/kategoriler",
-          "crud": true,
-          "readOnly": false
+          "no": 3,
+          "title": "İş yeri (plant) tanımlayın",
+          "screen": "#is-yerleri",
+          "action": "Firmaya bağlı en az bir iş yeri ekleyin (kod, ad, şehir).",
+          "expected": "İş yeri kaydı oluştu; firmaya bağlı."
         },
         {
-          "id": "country-tanimi",
-          "title": "Ülke Tanımı",
-          "techId": "MDM-CTRY-SCR-001",
-          "endpoint": "/countries",
-          "crud": true,
-          "readOnly": false
+          "no": 4,
+          "title": "Depo tanımlayın",
+          "screen": "#warehouses",
+          "action": "İş yerine bağlı ana depo + gerekirse hammadde/mamul depo ekleyin.",
+          "expected": "Depolar listelenir; varsayılan depo seçilebilir."
         },
         {
-          "id": "para-birimi-tanimi",
-          "title": "Para Birimi Tanımı",
-          "techId": "MDM-CUR-SCR-001",
-          "endpoint": "/para-birimleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "sehir-tanimi",
-          "title": "Şehir / İl Tanımı",
-          "techId": "MDM-CITY-SCR-001",
-          "endpoint": "/cities",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "district-tanimi",
-          "title": "İlçe Tanımı",
-          "techId": "MDM-DIST-SCR-001",
-          "endpoint": "/districts",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "odeme-kosulu-tanimi",
-          "title": "Ödeme Koşulu",
-          "techId": "MDM-PAYT-SCR-001",
-          "endpoint": "/odeme-kosullari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "teslimat-kosulu-tanimi",
-          "title": "Teslimat Koşulu",
-          "techId": "MDM-DLVT-SCR-001",
-          "endpoint": "/teslimat-kosullari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "dil-tanimi",
-          "title": "Dil Tanımı",
-          "techId": "MDM-LANG-SCR-001",
-          "endpoint": "/languages",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "banka-tanimi",
-          "title": "Banka Tanımı",
-          "techId": "MDM-BANK-SCR-001",
-          "endpoint": "/banks",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "doviz-exchange_rate-tanimi",
-          "title": "Döviz Kurları",
-          "techId": "FIN-FX-SCR-001",
-          "endpoint": "/doviz-kurlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hareket-kodlari",
-          "title": "Hareket Kodları",
-          "techId": "INV-MVTC-SCR-001",
-          "endpoint": "/hareket-kodlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "belge-tipleri",
-          "title": "Belge Tipleri",
-          "techId": "MDM-DOCTYPE-SCR-001",
-          "endpoint": "/belge-tipleri",
-          "crud": true,
-          "readOnly": false
+          "no": 5,
+          "title": "Kullanıcı–firma yetkisi",
+          "screen": "#kullanicilar",
+          "action": "Test kullanıcısının bu firmaya erişimi olduğundan emin olun.",
+          "expected": "Firma değiştirince ekranlar dolu / boş doğru davranır."
         }
       ]
     },
     {
-      "id": "sistem",
-      "title": "Sistem",
-      "screens": [
+      "phase": "B — Sabit tanımlar (bir kez)",
+      "intro": "Belge ve kartlar için ortak parametreler. Eksikse sonraki adımlarda lookup boş kalır.",
+      "steps": [
         {
-          "id": "kullanicilar",
-          "title": "Kullanıcılar",
-          "techId": "SYS-USR-SCR-001",
-          "endpoint": "/kullanicilar",
-          "crud": true,
-          "readOnly": false
+          "no": 6,
+          "title": "Numaratörler",
+          "screen": "#numarator-tanimi",
+          "action": "Stok, cari, sipariş, irsaliye, fatura, iş emri serilerinin aktif olduğunu kontrol edin.",
+          "expected": "Yeni kayıtta kod otomatik gelir."
         },
         {
-          "id": "kullanici-gruplari",
-          "title": "Kullanıcı Grupları",
-          "techId": "SYS-GRP-SCR-001",
-          "endpoint": "/kullanici-gruplari",
-          "crud": true,
-          "readOnly": false
+          "no": 7,
+          "title": "Ölçü birimleri",
+          "screen": "#olcu-birimleri",
+          "action": "AD, KG, MT, LT vb. temel birimleri ekleyin / doğrulayın.",
+          "expected": "Stok kartında birim seçilebilir."
         },
         {
-          "id": "sistem-parametreleri",
-          "title": "Sistem Parametreleri",
-          "techId": "SYS-PRM-SCR-001",
-          "endpoint": "/sistem-parametreleri",
-          "crud": true,
-          "readOnly": false
+          "no": 8,
+          "title": "Para birimi ve döviz kuru",
+          "screen": "#para-birimi-tanimi → #doviz-exchange_rate-tanimi",
+          "action": "TRY (ve gerekirse USD/EUR) + güncel kur girin.",
+          "expected": "Belgelerde PB ve kur doluyor."
         },
         {
-          "id": "audit-log",
-          "title": "Audit Log",
-          "techId": "SYS-AUD-SCR-001",
-          "endpoint": "/audit-log",
-          "crud": false,
-          "readOnly": true
+          "no": 9,
+          "title": "Ülke / şehir / ilçe",
+          "screen": "#country-tanimi → #sehir-tanimi → #district-tanimi",
+          "action": "TR ve ilgili şehirleri tamamlayın.",
+          "expected": "Cari adres lookup’ları dolu."
         },
         {
-          "id": "tablo-bilgileri",
-          "title": "Tablo Bilgileri",
-          "techId": "SYS-META-SCR-001",
-          "endpoint": "/meta/ekranlar",
-          "crud": false,
-          "readOnly": true
+          "no": 10,
+          "title": "Ödeme ve teslimat koşulları",
+          "screen": "#odeme-kosulu-tanimi → #teslimat-kosulu-tanimi",
+          "action": "Peşin, 30 gün vb. ve teslimat şartlarını ekleyin.",
+          "expected": "Sipariş / faturada seçilebiliyor."
         },
         {
-          "id": "sql-sorgu",
-          "title": "SQL Sorgu",
-          "techId": "SYS-SQL-SCR-001",
-          "endpoint": "/sql-console",
-          "crud": false,
-          "readOnly": true
+          "no": 11,
+          "title": "Hareket kodları ve belge tipleri",
+          "screen": "#hareket-kodlari → #belge-tipleri",
+          "action": "Stok giriş/çıkış kodları ve belge tiplerini kontrol edin (stok etkisi).",
+          "expected": "Mal kabul / irsaliye onayında stok hareketi oluşur."
         },
         {
-          "id": "eposta-gonderimleri",
-          "title": "E-posta Gönderimleri",
-          "techId": "SYS-MAIL-SCR-001",
-          "endpoint": "/eposta-gonderimleri",
-          "crud": false,
-          "readOnly": true
+          "no": 12,
+          "title": "Kategori / dil / banka (isteğe bağlı)",
+          "screen": "#kategori-tanimi, #dil-tanimi, #banka-tanimi",
+          "action": "İhtiyaç kadar tanımlayın.",
+          "expected": "Lookup’larda görünür."
         }
       ]
     },
     {
-      "id": "ana-veri",
-      "title": "Ana Veri",
-      "screens": [
+      "phase": "C — Ana kartlar (stok + cari)",
+      "intro": "İş süreçlerinin dayandığı kartlar. Önce hammadde/mamul, sonra tedarikçi/müşteri.",
+      "steps": [
         {
-          "id": "companies",
-          "title": "Firmalar",
-          "techId": "MDM-CO-SCR-001",
-          "endpoint": "/companies",
-          "crud": true,
-          "readOnly": false
+          "no": 13,
+          "title": "Hammadde stok kartları",
+          "screen": "#stok-karti",
+          "action": "En az 2–3 hammadde: kod, ad, birim, takip birimi, tip=Hammadde.",
+          "expected": "Liste ve detay kayıtlı; lookup’ta çıkar."
         },
         {
-          "id": "is-yerleri",
-          "title": "İş Yerleri",
-          "techId": "MDM-PLANT-SCR-001",
-          "endpoint": "/is-yerleri",
-          "crud": true,
-          "readOnly": false
+          "no": 14,
+          "title": "Mamul stok kartı",
+          "screen": "#stok-karti",
+          "action": "1 mamul kartı açın (tip=Mamul), birim ve fiyat alanlarını doldurun.",
+          "expected": "Mamul kartı kaydedildi."
         },
         {
-          "id": "warehouses",
-          "title": "Depolar",
-          "techId": "MDM-WH-SCR-001",
-          "endpoint": "/warehouses",
-          "crud": true,
-          "readOnly": false
+          "no": 15,
+          "title": "Stok–depo / iş yeri bağlantısı",
+          "screen": "#stok-depo (veya stok kartı altı)",
+          "action": "Kartların depo/iş yeri ilişkilerini doğrulayın.",
+          "expected": "Bakiye ekranında stok görünür (miktar 0 olabilir)."
+        },
+        {
+          "no": 16,
+          "title": "Tedarikçi cari",
+          "screen": "#cari-kartlari",
+          "action": "En az 1 tedarikçi: kod, unvan, tip, ödeme koşulu, PB.",
+          "expected": "Satınalma belgelerinde cari seçilir."
+        },
+        {
+          "no": 17,
+          "title": "Müşteri cari",
+          "screen": "#cari-kartlari",
+          "action": "En az 1 müşteri cari açın.",
+          "expected": "Satış belgelerinde cari seçilir."
         }
       ]
     },
     {
-      "id": "stok",
-      "title": "Stok",
-      "screens": [
+      "phase": "D — Üretim tanımı (BOM + rota)",
+      "intro": "Mamulü üretmek için ağaç ve operasyon sırası.",
+      "steps": [
         {
-          "id": "stok-karti",
-          "title": "Stok Kartı",
-          "techId": "INV-ITM-SCR-001",
-          "endpoint": "/items",
-          "crud": true,
-          "readOnly": false
+          "no": 18,
+          "title": "İş merkezi ve iş istasyonu",
+          "screen": "#is-merkezleri → #is-istasyonlari",
+          "action": "En az bir iş merkezi + istasyon tanımlayın.",
+          "expected": "Rotada seçilebilir."
         },
         {
-          "id": "depo-bakiye",
-          "title": "Depo Bakiye",
-          "techId": "INV-BAL-SCR-001",
-          "endpoint": "/stok-bakiyeleri",
-          "crud": false,
-          "readOnly": true
+          "no": 19,
+          "title": "Ürün ağacı (BOM)",
+          "screen": "#urun-agaci",
+          "action": "Mamul altına hammaddeleri miktarlarıyla bağlayın; kaydedin / patlatmayı deneyin.",
+          "expected": "BOM satırları doğru; patlatma / seviye listesi çalışır."
         },
         {
-          "id": "stok-hareketleri",
-          "title": "Stok Hareketleri",
-          "techId": "INV-MVT-SCR-001",
-          "endpoint": "/stok-hareketleri",
-          "crud": true,
-          "readOnly": false
+          "no": 20,
+          "title": "Rota (operasyonlar)",
+          "screen": "#routings",
+          "action": "OP10, OP20… sırasıyla operasyon ekleyin; iş merkezi bağlayın.",
+          "expected": "İş emrine rota uygulanabiliyor."
         },
         {
-          "id": "transfer-emirleri",
-          "title": "Transfer Emirleri",
-          "techId": "WMS-XFER-SCR-001",
-          "endpoint": "/transfer-emirleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "sayim-belgeleri",
-          "title": "Sayım Belgeleri",
-          "techId": "WMS-CNT-SCR-001",
-          "endpoint": "/sayim-belgeleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "stok-partileri",
-          "title": "Stok Partileri",
-          "techId": "INV-LOT-SCR-001",
-          "endpoint": "/stok-partileri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "mrp-bagimsiz-ihtiyac",
-          "title": "MRP Bağımsız İhtiyaç",
-          "techId": "MFG-IR-SCR-001",
-          "endpoint": "/mrp/bagimsiz-ihtiyaclar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "mrp-calisma",
-          "title": "MRP Çalıştır",
-          "techId": "MFG-MRP-SCR-001",
-          "endpoint": "/mrp/calismalar",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "mrp-hesap",
-          "title": "MRP Anlık Hesap",
-          "techId": "MFG-MRP-SCR-002",
-          "endpoint": "/mrp",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "mrp-sonuclar",
-          "title": "MRP Sonuçları",
-          "techId": "MFG-MRP-RES-001",
-          "endpoint": "/mrp/calismalar",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "stok-rezervasyonlari",
-          "title": "Stok Rezervasyonları",
-          "techId": "INV-RSV-SCR-001",
-          "endpoint": "/stok-rezervasyonlari",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "stok-serileri",
-          "title": "Stok Serileri",
-          "techId": "INV-SER-SCR-001",
-          "endpoint": "/stok-serileri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "stok-ikame",
-          "title": "Stok İkame",
-          "techId": "INV-SUB-SCR-001",
-          "endpoint": "/stok-ikame",
-          "crud": true,
-          "readOnly": false
+          "no": 21,
+          "title": "Üretim emri tipi (varsa)",
+          "screen": "#uretim-emri-tipleri",
+          "action": "Standart tipi kontrol edin.",
+          "expected": "İş emri formunda tip seçilir."
         }
       ]
     },
     {
-      "id": "cari",
-      "title": "Cari",
-      "screens": [
+      "phase": "E — Satınalma döngüsü (alış)",
+      "intro": "Hammaddeyi tedarikçiden alıp depoya sokun.",
+      "steps": [
         {
-          "id": "cari-kartlari",
-          "title": "Cari Kartları",
-          "techId": "MDM-BP-SCR-001",
-          "endpoint": "/partners",
-          "crud": true,
-          "readOnly": false
+          "no": 22,
+          "title": "Satınalma talebi",
+          "screen": "#satin-alma-talepleri",
+          "action": "Hammadde satırlarıyla talep oluşturun; kaydedin.",
+          "expected": "Talep numarası üretildi, durum uygun."
         },
         {
-          "id": "cari-ekstre",
-          "title": "Cari Ekstre",
-          "techId": "FIN-BPST-SCR-001",
-          "endpoint": "/cari-hareketleri",
-          "crud": false,
-          "readOnly": true
+          "no": 23,
+          "title": "Teklif isteği / satınalma teklifi (isteğe bağlı)",
+          "screen": "#satin-alma-teklif-istekleri → #satin-alma-teklifleri",
+          "action": "Talepten teklife ilerleyin veya doğrudan teklif girin.",
+          "expected": "Teklif satırları ve tedarikçi bağlı."
         },
         {
-          "id": "tahsilat-odemeler",
-          "title": "Tahsilat / Ödeme",
-          "techId": "FIN-APAR-SCR-001",
-          "endpoint": "/tahsilat-odemeler",
-          "crud": true,
-          "readOnly": false
+          "no": 24,
+          "title": "Satınalma siparişi",
+          "screen": "#satin-alma-siparisleri",
+          "action": "Tekliften veya sıfırdan SA siparişi oluşturun; onaylayın (onay varsa).",
+          "expected": "Sipariş Onaylı / açık durumda."
+        },
+        {
+          "no": 25,
+          "title": "Mal kabul",
+          "screen": "#mal-kabuller",
+          "action": "SA siparişinden mal kabul oluşturun; miktarları kabul edin; onaylayın.",
+          "expected": "Stok bakiyesi arttı; hareket oluştu."
+        },
+        {
+          "no": 26,
+          "title": "Tedarikçi irsaliyesi (varsa)",
+          "screen": "#tedarikci-irsaliyeleri",
+          "action": "Gelen irsaliyeyi kaydedin / ilişkilendirin.",
+          "expected": "Belge listede görünür."
+        },
+        {
+          "no": 27,
+          "title": "Alış faturası",
+          "screen": "#fatura-yonetimi",
+          "action": "Tür=Alış; mal kabulden fatura oluşturun; kaydedin / muhasebeleştirin.",
+          "expected": "Fatura oluştu; 3-way ekranında eşleşme görülebilir."
+        },
+        {
+          "no": 28,
+          "title": "Fatura kontrolü (3-way)",
+          "screen": "#fatura-kontrolleri",
+          "action": "Sipariş–mal kabul–fatura eşlemesini kontrol edin.",
+          "expected": "Sonuç Bekliyor değilse tutarlı / fark açıklanabilir."
         }
       ]
     },
     {
-      "id": "uretim",
-      "title": "Üretim",
-      "screens": [
+      "phase": "F — Üretim döngüsü",
+      "intro": "Depodaki hammadde ile mamul üretin.",
+      "steps": [
         {
-          "id": "urun-agaci",
-          "title": "Ürün Ağacı",
-          "techId": "MFG-BOM-SCR-001",
-          "endpoint": "/urun-agaclari",
-          "crud": true,
-          "readOnly": false
+          "no": 29,
+          "title": "Üretim planı (isteğe bağlı)",
+          "screen": "#uretim-planlari",
+          "action": "Plan kaydı açın veya doğrudan iş emrine geçin.",
+          "expected": "Plan görünür veya atlandı."
         },
         {
-          "id": "bom-patlatma",
-          "title": "Ürün Ağacı Patlatma",
-          "techId": "MFG-BOM-SCR-002",
-          "endpoint": "/bom/patlatma",
-          "crud": false,
-          "readOnly": true
+          "no": 30,
+          "title": "İş emri oluştur",
+          "screen": "#uretim-emirleri",
+          "action": "Mamul + miktar; BOM/rota uygula; kaydet.",
+          "expected": "Bileşen ve operasyon satırları doldu."
         },
         {
-          "id": "bom-level-listesi",
-          "title": "Ürün Ağacı Seviye Listesi",
-          "techId": "MFG-BOM-SCR-003",
-          "endpoint": "/bom/level-listesi",
-          "crud": false,
-          "readOnly": true
+          "no": 31,
+          "title": "İş emrini yürüt / üretim girişi",
+          "screen": "#uretim-emirleri → #uretim-girisleri",
+          "action": "Operasyonları tamamlayın; mamul girişini onaylayın.",
+          "expected": "Mamul stok bakiyesi arttı; hammadde düştü (tüketim varsa)."
         },
         {
-          "id": "bom-malzeme-degisikligi",
-          "title": "Malzeme Değişikliği",
-          "techId": "MFG-BOM-SCR-004",
-          "endpoint": "/bom/malzeme-degisikligi",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "sinif-tanimi",
-          "title": "Sınıf Tanımı",
-          "techId": "MFG-CLS-SCR-001",
-          "endpoint": "/stok-siniflari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "is-merkezleri",
-          "title": "İş Merkezleri",
-          "techId": "MFG-WC-SCR-001",
-          "endpoint": "/is-merkezleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "is-istasyonlari",
-          "title": "İş İstasyonları",
-          "techId": "MFG-WS-SCR-001",
-          "endpoint": "/is-istasyonlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "routings",
-          "title": "Rotalar",
-          "techId": "MFG-ROUT-SCR-001",
-          "endpoint": "/routings",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "uretim-emri-tipleri",
-          "title": "Üretim Emri Tipleri",
-          "techId": "MFG-WOT-SCR-001",
-          "endpoint": "/uretim-emri-tipleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "uretim-planlari",
-          "title": "Üretim Planları",
-          "techId": "MFG-PLN-SCR-001",
-          "endpoint": "/uretim-planlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "uretim-emirleri",
-          "title": "Üretim Emirleri",
-          "techId": "MFG-WO-SCR-001",
-          "endpoint": "/uretim-emirleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "siparis-is-emri",
-          "title": "Siparişten İş Emri",
-          "techId": "MFG-WO-SCR-002",
-          "endpoint": "/uretim-emirleri/siparis-adaylari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "toplu-is-emri",
-          "title": "Toplu İş Emri",
-          "techId": "MFG-WO-SCR-003",
-          "endpoint": "/uretim-emirleri/siparis-adaylari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "stok-depo",
-          "title": "Depo Stok Bağ",
-          "techId": "INV-WHL-SCR-001",
-          "endpoint": "/stok-depo",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "uretim-girisleri",
-          "title": "Üretim Girişleri",
-          "techId": "MFG-RCPT-SCR-001",
-          "endpoint": "/uretim-girisleri",
-          "crud": true,
-          "readOnly": false
+          "no": 32,
+          "title": "Depo bakiyesi kontrolü",
+          "screen": "#depo-bakiye",
+          "action": "Hammadde ve mamul bakiyelerini doğrulayın.",
+          "expected": "Miktarlar beklenenle uyumlu."
         }
       ]
     },
     {
-      "id": "satinalma",
-      "title": "Satınalma",
-      "screens": [
+      "phase": "G — Satış döngüsü",
+      "intro": "Mamulü müşteriye sevk edip faturalayın.",
+      "steps": [
         {
-          "id": "satin-alma-teklif-istekleri",
-          "title": "Satınalma Teklif İstekleri",
-          "techId": "PUR-RFQ-SCR-001",
-          "endpoint": "/satin-alma-teklif-istekleri",
-          "crud": true,
-          "readOnly": false
+          "no": 33,
+          "title": "Satış teklifi",
+          "screen": "#satis-teklifleri",
+          "action": "Müşteri + mamul satırı ile teklif oluşturun.",
+          "expected": "Teklif kaydı ve tutar doğru."
         },
         {
-          "id": "satin-alma-teklifleri",
-          "title": "Satınalma Teklifleri",
-          "techId": "PUR-QUO-SCR-001",
-          "endpoint": "/satin-alma-teklifleri",
-          "crud": true,
-          "readOnly": false
+          "no": 34,
+          "title": "Satış siparişi",
+          "screen": "#satis-siparisleri",
+          "action": "Tekliften siparişe çevirin veya yeni sipariş açın; onaylayın.",
+          "expected": "Sipariş açık/onaylı."
         },
         {
-          "id": "satin-alma-anlasmalari",
-          "title": "Satınalma Anlaşmaları",
-          "techId": "PUR-AGR-SCR-001",
-          "endpoint": "/satin-alma-anlasmalari",
-          "crud": true,
-          "readOnly": false
+          "no": 35,
+          "title": "Sevk emri",
+          "screen": "#sevk-emirleri",
+          "action": "Siparişten sevk oluşturun; depo seçin.",
+          "expected": "Sevk satırları dolu."
         },
         {
-          "id": "satin-alma-talepleri",
-          "title": "Satınalma Talepleri",
-          "techId": "PUR-REQ-SCR-001",
-          "endpoint": "/satin-alma-talepleri",
-          "crud": true,
-          "readOnly": false
+          "no": 36,
+          "title": "Satış irsaliyesi",
+          "screen": "#irsaliye-yonetimi",
+          "action": "Sevkten irsaliye; onayla (stok çıkış).",
+          "expected": "Mamul bakiyesi azaldı; e-belge durumu (simülasyon) güncellendi."
         },
         {
-          "id": "satin-alma-siparisleri",
-          "title": "Satınalma Siparişleri",
-          "techId": "PUR-ORD-SCR-001",
-          "endpoint": "/satin-alma-siparisleri",
-          "crud": true,
-          "readOnly": false
+          "no": 37,
+          "title": "Satış faturası",
+          "screen": "#fatura-yonetimi",
+          "action": "Tür=Satış; irsaliyeden fatura oluşturun; kaydedin.",
+          "expected": "Fatura ve cari borç / muhasebe etkisi oluştu."
         },
         {
-          "id": "mal-kabuller",
-          "title": "Mal Kabuller",
-          "techId": "PUR-GR-SCR-001",
-          "endpoint": "/mal-kabuller",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "tedarikci-irsaliyeleri",
-          "title": "Tedarikçi İrsaliyeleri",
-          "techId": "PUR-DLV-SCR-001",
-          "endpoint": "/tedarikci-irsaliyeleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "giris-kontrolleri",
-          "title": "Giriş Kontrolleri",
-          "techId": "QLT-INC-SCR-001",
-          "endpoint": "/giris-kontrolleri",
-          "crud": false,
-          "readOnly": false
+          "no": 38,
+          "title": "Cari ekstre",
+          "screen": "#cari-ekstre",
+          "action": "Müşteri ve tedarikçi hareketlerini kontrol edin.",
+          "expected": "Alış/satış faturaları ekstrede görünür."
         }
       ]
     },
     {
-      "id": "crm",
-      "title": "CRM",
-      "screens": [
+      "phase": "H — Kalite (örnek)",
+      "intro": "Mal kabul veya üretim sonrası kalite emri.",
+      "steps": [
         {
-          "id": "crm-firsat-asamalari",
-          "title": "Fırsat Aşamaları",
-          "techId": "CRM-STG-SCR-001",
-          "endpoint": "/crm-firsat-asamalari",
-          "crud": true,
-          "readOnly": false
+          "no": 39,
+          "title": "Kontrol planı / ret nedeni",
+          "screen": "#kk-kontrol-planlari → #kk-ret-nedenleri",
+          "action": "Temel tanımları doğrulayın.",
+          "expected": "Emir formunda seçilebilir."
         },
         {
-          "id": "crm-faaliyet-tipleri",
-          "title": "Faaliyet Tipleri",
-          "techId": "CRM-ACTT-SCR-001",
-          "endpoint": "/crm-faaliyet-tipleri",
-          "crud": true,
-          "readOnly": false
+          "no": 40,
+          "title": "Giriş kalite emri (GKK)",
+          "screen": "#kk-emirleri-gkk",
+          "action": "Mal kabule bağlı veya bağımsız GKK emri açın; sonuç girin.",
+          "expected": "Emir kapandı / uygunluk kaydı var."
         },
         {
-          "id": "crm-adaylar",
-          "title": "Müşteri Adayları",
-          "techId": "CRM-LEAD-SCR-001",
-          "endpoint": "/crm-adaylar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "crm-kontaklar",
-          "title": "Kontaklar",
-          "techId": "CRM-CNT-SCR-001",
-          "endpoint": "/crm-kontaklar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "crm-firsatlar",
-          "title": "Fırsatlar",
-          "techId": "CRM-OPP-SCR-001",
-          "endpoint": "/crm-firsatlar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "crm-faaliyet-planlari",
-          "title": "Faaliyet Planları",
-          "techId": "CRM-APLN-SCR-001",
-          "endpoint": "/crm-faaliyet-planlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "crm-faaliyetler",
-          "title": "Faaliyetler",
-          "techId": "CRM-ACT-SCR-001",
-          "endpoint": "/crm-faaliyetler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "crm-gorevler",
-          "title": "Görevler",
-          "techId": "CRM-TASK-SCR-001",
-          "endpoint": "/crm-gorevler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "crm-ajanda",
-          "title": "Ajanda",
-          "techId": "CRM-CAL-SCR-001",
-          "endpoint": "/crm-ajanda",
-          "crud": true,
-          "readOnly": false
+          "no": 41,
+          "title": "Çıkış kalite (CKK) — isteğe bağlı",
+          "screen": "#kk-emirleri-ckk",
+          "action": "Sevk öncesi örnek kontrol.",
+          "expected": "Kayıt oluştu."
         }
       ]
     },
     {
-      "id": "satis",
-      "title": "Satış",
-      "screens": [
+      "phase": "I — CRM (isteğe bağlı)",
+      "intro": "Satış öncesi pipeline.",
+      "steps": [
         {
-          "id": "satis-teklifleri",
-          "title": "Satış Teklifleri",
-          "techId": "SAL-QUO-SCR-001",
-          "endpoint": "/satis-teklifleri",
-          "crud": true,
-          "readOnly": false
+          "no": 42,
+          "title": "Aday → kontak → fırsat",
+          "screen": "#crm-adaylar → #crm-kontaklar → #crm-firsatlar",
+          "action": "Bir fırsat oluşturup aşama ilerletin; teklife bağlayın.",
+          "expected": "Fırsat teklife dönüştürülebilir."
         },
         {
-          "id": "satis-siparisleri",
-          "title": "Satış Siparişleri",
-          "techId": "SAL-ORD-SCR-001",
-          "endpoint": "/sales_orders",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "sevk-emirleri",
-          "title": "Sevk Emirleri",
-          "techId": "SAL-SHP-SCR-001",
-          "endpoint": "/sevk-emirleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "irsaliye-yonetimi",
-          "title": "İrsaliye Yönetimi",
-          "techId": "SAL-DLV-SCR-001",
-          "endpoint": "/delivery_notes",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "fatura-yonetimi",
-          "title": "Fatura Yönetimi",
-          "techId": "SAL-INV-SCR-001",
-          "endpoint": "/invoices",
-          "crud": true,
-          "readOnly": false
+          "no": 43,
+          "title": "Faaliyet / görev / ajanda",
+          "screen": "#crm-faaliyetler → #crm-gorevler → #crm-ajanda",
+          "action": "Bir görüşme veya görev kaydı girin.",
+          "expected": "Ajandada görünür."
         }
       ]
     },
     {
-      "id": "kalite",
-      "title": "Kalite",
-      "screens": [
+      "phase": "J — Onay ve finans iskeleti",
+      "intro": "Onay rotaları ve muhasebe temel tanımları.",
+      "steps": [
         {
-          "id": "kk-emirleri-gkk",
-          "title": "Giriş Kalite Emirleri",
-          "techId": "QLT-IQC-SCR-001",
-          "endpoint": "/kk-emirleri?direction=GKK",
-          "crud": false,
-          "readOnly": false
+          "no": 44,
+          "title": "Onay rol / kural / rota",
+          "screen": "#onay-role-tanim → #onay-kural-tanim → #onay-rota-tanim",
+          "action": "SA siparişi veya fatura için basit rota tanımlayın.",
+          "expected": "Belgede Onayla akışı çalışır; #onaylarim’da görünür."
         },
         {
-          "id": "kk-emirleri-ckk",
-          "title": "Çıkış Kalite Emirleri",
-          "techId": "QLT-OQC-SCR-001",
-          "endpoint": "/kk-emirleri?direction=CKK",
-          "crud": false,
-          "readOnly": false
+          "no": 45,
+          "title": "Hesap planı + mali yıl + dönem",
+          "screen": "#hesap-plani → #mali-yillar → #muhasebe-donemleri",
+          "action": "Temel hesaplar, açık mali yıl ve dönemler.",
+          "expected": "Fiş / fatura muhasebeleştirmesi dönem açıkken çalışır."
         },
         {
-          "id": "kk-uygunsuzluklar",
-          "title": "KK Uygunsuzluklar",
-          "techId": "QLT-NCR-SCR-001",
-          "endpoint": "/kk-uygunsuzluklar",
-          "crud": true,
-          "readOnly": false
+          "no": 46,
+          "title": "Vergi kodu / ülke paketi (TR)",
+          "screen": "#finans-vergi-kodlari → #finans-ulke-paketleri",
+          "action": "KDV kodlarını ve TR paketini doğrulayın.",
+          "expected": "Faturada vergi hesaplanır."
         },
         {
-          "id": "kk-capa",
-          "title": "CAPA",
-          "techId": "QLT-CAPA-SCR-001",
-          "endpoint": "/kk-capa",
-          "crud": true,
-          "readOnly": false
+          "no": 47,
+          "title": "Banka / kasa",
+          "screen": "#finans-banka-hesaplari → #finans-kasa-hesaplari",
+          "action": "Bir banka ve bir kasa hesabı açın.",
+          "expected": "Nakit hareketinde seçilir."
         },
         {
-          "id": "kk-kontrol-planlari",
-          "title": "KK Kontrol Planları",
-          "techId": "QLT-PLAN-SCR-001",
-          "endpoint": "/kk-kontrol-planlari",
-          "crud": true,
-          "readOnly": false
+          "no": 48,
+          "title": "Tahsilat / ödeme örneği",
+          "screen": "#tahsilat-odemeler veya #finans-nakit-hareketleri",
+          "action": "Müşteriden tahsilat veya tedarikçiye ödeme girin.",
+          "expected": "Cari bakiye ve kasa/banka güncellendi."
         },
         {
-          "id": "kk-stok-planlari",
-          "title": "KK Stok Plan Bağları",
-          "techId": "QLT-ITMP-SCR-001",
-          "endpoint": "/kk-stok-planlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "kk-ret-nedenleri",
-          "title": "KK Ret Nedenleri",
-          "techId": "QLT-REJ-SCR-001",
-          "endpoint": "/kk-ret-nedenleri",
-          "crud": true,
-          "readOnly": false
+          "no": 49,
+          "title": "Mizan / yevmiye özeti",
+          "screen": "#mizan → #finans-yevmiye",
+          "action": "Dönem aralığı ile rapor alın.",
+          "expected": "Hareketli hesaplar listelenir."
         }
       ]
     },
     {
-      "id": "onay",
-      "title": "Onay Yönetimi",
-      "screens": [
+      "phase": "K — İnsan kaynakları (temel)",
+      "intro": "Firma için İK iskeleti.",
+      "steps": [
         {
-          "id": "onay-modul-kullanimlari",
-          "title": "Onay Modül Kullanımları",
-          "techId": "SYS-APR-SCR-USG",
-          "endpoint": "/onay-module-kullanimlari",
-          "crud": true,
-          "readOnly": false
+          "no": 50,
+          "title": "Departman ve pozisyon",
+          "screen": "#hr-departmanlar → #hr-pozisyonlar",
+          "action": "Organizasyon ağacını kurun.",
+          "expected": "Personel kartında seçilir."
         },
         {
-          "id": "onaylarim",
-          "title": "Onaylarım",
-          "techId": "SYS-APR-SCR-001",
-          "endpoint": "/onay-kayitlari?benim=true",
-          "crud": false,
-          "readOnly": false
+          "no": 51,
+          "title": "Çalışma takvimi / vardiya / tatil",
+          "screen": "#hr-calisma-takvimleri → #hr-vardiyalar → #hr-resmi-tatiller",
+          "action": "Standart takvim ve bir vardiya tanımlayın.",
+          "expected": "Personelde atanabilir."
         },
         {
-          "id": "onay-izleme",
-          "title": "Onay İzleme",
-          "techId": "SYS-APR-SCR-002",
-          "endpoint": "/onay-kayitlari",
-          "crud": false,
-          "readOnly": true
+          "no": 52,
+          "title": "Personel kartı",
+          "screen": "#hr-personel",
+          "action": "En az 1 personel: sicil, ad soyad, işe giriş, departman.",
+          "expected": "Kart kaydedildi."
         },
         {
-          "id": "onay-yetki-devri",
-          "title": "Onay Yetki Devri",
-          "techId": "SYS-APR-SCR-003",
-          "endpoint": "/onay-yetki-devirleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "onay-role-tanim",
-          "title": "Onay Rolü",
-          "techId": "SYS-APR-SCR-004",
-          "endpoint": "/onay-rolleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "onay-kural-tanim",
-          "title": "Onay Kuralı",
-          "techId": "SYS-APR-SCR-005",
-          "endpoint": "/onay-kurallari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "onay-rota-tanim",
-          "title": "Onay Rotası",
-          "techId": "SYS-APR-SCR-006",
-          "endpoint": "/onay-rotalari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "onay-message-template",
-          "title": "Onay Mesaj Şablonu",
-          "techId": "SYS-APR-SCR-007",
-          "endpoint": "/onay-message-sablonlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "onay-status-tanim",
-          "title": "Onay Durum Tanımı",
-          "techId": "SYS-APR-SCR-008",
-          "endpoint": "/onay-durumlari",
-          "crud": true,
-          "readOnly": false
+          "no": 53,
+          "title": "İzin türü + izin talebi (örnek)",
+          "screen": "#hr-izin-turleri → #hr-izin-talepleri",
+          "action": "Yıllık izin türü ve bir talep oluşturun; gönder/onayla.",
+          "expected": "Bakiye / talep durumu güncellendi."
         }
       ]
     },
     {
-      "id": "finans",
-      "title": "Finans",
-      "screens": [
+      "phase": "L — Sistem kontrolü ve kapanış",
+      "intro": "Kurulumun tutarlı olduğunu doğrulayın.",
+      "steps": [
         {
-          "id": "hesap-plani",
-          "title": "Hesap Planı",
-          "techId": "FIN-COA-SCR-001",
-          "endpoint": "/muhasebe-hesaplari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "muhasebe-belgeleri",
-          "title": "Muhasebe Belgeleri",
-          "techId": "FIN-JE-SCR-001",
-          "endpoint": "/muhasebe-belgeleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "muhasebe-donemleri",
-          "title": "Muhasebe Dönemleri",
-          "techId": "FIN-PER-SCR-001",
-          "endpoint": "/muhasebe-donemleri",
-          "crud": false,
-          "readOnly": false
-        },
-        {
-          "id": "finans-vergi-kodlari",
-          "title": "Vergi Kodları",
-          "techId": "FIN-TAX-SCR-001",
-          "endpoint": "/finans-vergi-kodlari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "finans-ulke-paketleri",
-          "title": "Finans Ülke Paketleri",
-          "techId": "FIN-CPK-SCR-001",
-          "endpoint": "/finans-country/paketler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "mali-yillar",
-          "title": "Mali Yıllar",
-          "techId": "FIN-FY-SCR-001",
-          "endpoint": "/muhasebe-donemleri/mali-yillar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "finans-banka-hesaplari",
-          "title": "Banka Hesapları",
-          "techId": "FIN-BNK-SCR-001",
-          "endpoint": "/finans-nakit/banka-hesaplari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "finans-kasa-hesaplari",
-          "title": "Kasa Hesapları",
-          "techId": "FIN-CSH-SCR-001",
-          "endpoint": "/finans-nakit/kasa-hesaplari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "finans-nakit-hareketleri",
-          "title": "Nakit Hareketleri",
-          "techId": "FIN-CSHMV-SCR-001",
-          "endpoint": "/finans-nakit/hareketler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "mizan",
-          "title": "Mizan",
-          "techId": "FIN-TB-RPT-001",
-          "endpoint": "/mizan",
-          "crud": false,
-          "readOnly": false
-        },
-        {
-          "id": "finans-yevmiye",
-          "title": "Yevmiye Defteri",
-          "techId": "FIN-JL-RPT-001",
-          "endpoint": "/finans-raporlar/yevmiye",
-          "crud": false,
-          "readOnly": false
-        },
-        {
-          "id": "finans-bilanco",
-          "title": "Bilanço (Özet)",
-          "techId": "FIN-BS-RPT-001",
-          "endpoint": "/finans-raporlar/bilanco",
-          "crud": false,
-          "readOnly": false
-        },
-        {
-          "id": "finans-gelir-tablosu",
-          "title": "Gelir Tablosu",
-          "techId": "FIN-PL-RPT-001",
-          "endpoint": "/finans-raporlar/gelir-tablosu",
-          "crud": false,
-          "readOnly": false
-        },
-        {
-          "id": "hesap-belirleme-kurallari",
-          "title": "Hesap Belirleme Kuralları",
-          "techId": "FIN-ACR-SCR-001",
-          "endpoint": "/hesap-belirleme-kurallari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "fiyat-listeleri",
-          "title": "Fiyat Listeleri",
-          "techId": "FIN-PRC-SCR-001",
-          "endpoint": "/fiyat-listeleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "fatura-kontrolleri",
-          "title": "Fatura Kontrolleri (3-way)",
-          "techId": "FIN-3WAY-SCR-001",
-          "endpoint": "/fatura-kontrolleri",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "kokpit",
+          "no": 54,
           "title": "Kokpit",
-          "techId": "RPT-CPIT-SCR-001",
-          "endpoint": "/kokpit",
-          "crud": false,
-          "readOnly": true
-        }
-      ]
-    },
-    {
-      "id": "insan-kaynaklari",
-      "title": "İnsan Kaynakları",
-      "screens": [
-        {
-          "id": "hr-personel",
-          "title": "Personel Kartları",
-          "techId": "HR-EMP-SCR-001",
-          "endpoint": "/hr-personel",
-          "crud": true,
-          "readOnly": false
+          "screen": "#kokpit",
+          "action": "Açık sipariş, sevk, kalite özetine bakın.",
+          "expected": "TEKS verisi özetlerde görünür."
         },
         {
-          "id": "hr-departmanlar",
-          "title": "Departmanlar",
-          "techId": "HR-DEPT-SCR-001",
-          "endpoint": "/hr-org/departmanlar",
-          "crud": true,
-          "readOnly": false
+          "no": 55,
+          "title": "Audit log",
+          "screen": "#audit-log",
+          "action": "Son oluşturduğunuz belgelerden birinin logunu filtreleyin.",
+          "expected": "Kullanıcı + tablo + kayıt izi var."
         },
         {
-          "id": "hr-pozisyonlar",
-          "title": "Pozisyonlar",
-          "techId": "HR-POS-SCR-001",
-          "endpoint": "/hr-org/pozisyonlar",
-          "crud": true,
-          "readOnly": false
+          "no": 56,
+          "title": "Tablo Bilgileri",
+          "screen": "#tablo-bilgileri",
+          "action": "İnsan Kaynakları ve Finans gruplarının listelendiğini kontrol edin.",
+          "expected": "Ekran → ana tablo eşlemesi açılıyor."
         },
         {
-          "id": "hr-calisma-takvimleri",
-          "title": "Çalışma Takvimleri",
-          "techId": "HR-CAL-SCR-001",
-          "endpoint": "/hr-takvim/takvimler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-vardiyalar",
-          "title": "Vardiyalar",
-          "techId": "HR-SHF-SCR-001",
-          "endpoint": "/hr-takvim/vardiyalar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-resmi-tatiller",
-          "title": "Resmî Tatiller",
-          "techId": "HR-HOL-SCR-001",
-          "endpoint": "/hr-takvim/tatiller",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-izin-talepleri",
-          "title": "İzin Talepleri",
-          "techId": "HR-LV-SCR-001",
-          "endpoint": "/hr-izin/talepler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-izin-turleri",
-          "title": "İzin Türleri",
-          "techId": "HR-LVT-SCR-001",
-          "endpoint": "/hr-izin/turler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-vardiya-atamalari",
-          "title": "Vardiya Atamaları",
-          "techId": "HR-SHA-SCR-001",
-          "endpoint": "/hr-takvim/vardiya-atamalari",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-cikis-nedenleri",
-          "title": "Çıkış Nedenleri",
-          "techId": "HR-TRR-SCR-001",
-          "endpoint": "/hr-ise-alim/cikis-nedenleri",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-izin-bakiyeleri",
-          "title": "İzin Bakiyeleri",
-          "techId": "HR-LVB-SCR-001",
-          "endpoint": "/hr-izin/bakiyeler",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "hr-puantaj",
-          "title": "Günlük Puantaj",
-          "techId": "HR-ATT-SCR-001",
-          "endpoint": "/hr-puantaj/gunluk",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "hr-ucretler",
-          "title": "Ücret Tanımları",
-          "techId": "HR-SAL-SCR-001",
-          "endpoint": "/hr-bordro/ucretler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-avanslar",
-          "title": "Avanslar",
-          "techId": "HR-ADV-SCR-001",
-          "endpoint": "/hr-bordro/avanslar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-bordro-donemleri",
-          "title": "Bordro Dönemleri",
-          "techId": "HR-PRP-SCR-001",
-          "endpoint": "/hr-bordro/donemler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-bordro-calismalari",
-          "title": "Bordro Çalışmaları",
-          "techId": "HR-PRR-SCR-001",
-          "endpoint": "/hr-bordro/calismalar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-bordro-parametreleri",
-          "title": "Bordro Parametreleri",
-          "techId": "HR-PRM-SCR-001",
-          "endpoint": "/hr-bordro/parametreler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-is-ilanlari",
-          "title": "İş İlanları",
-          "techId": "HR-JOB-SCR-001",
-          "endpoint": "/hr-ise-alim/ilanlar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-adaylar",
-          "title": "Adaylar",
-          "techId": "HR-CAND-SCR-001",
-          "endpoint": "/hr-ise-alim/adaylar",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-onboarding",
-          "title": "Onboarding Görevleri",
-          "techId": "HR-ONB-SCR-001",
-          "endpoint": "/hr-ise-alim/onboarding",
-          "crud": false,
-          "readOnly": true
-        },
-        {
-          "id": "hr-zimmetler",
-          "title": "Zimmetler",
-          "techId": "HR-AST-SCR-001",
-          "endpoint": "/hr-ise-alim/zimmetler",
-          "crud": true,
-          "readOnly": false
-        },
-        {
-          "id": "hr-isten-cikis",
-          "title": "İşten Çıkış",
-          "techId": "HR-TRM-SCR-001",
-          "endpoint": "/hr-ise-alim/cikislar",
-          "crud": true,
-          "readOnly": false
+          "no": 57,
+          "title": "Firma izolasyonu",
+          "screen": "Firma seçici",
+          "action": "Başka firmaya geçip TEKS kayıtlarının görünmediğini doğrulayın; geri dönün.",
+          "expected": "Veri firmalar arası karışmaz."
         }
       ]
     }
