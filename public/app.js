@@ -18016,12 +18016,29 @@ function bindEvents() {
             }
             saved._satir_kayitli = true;
             saved._satir_duzenleniyor = false;
-            rows[idx] = saved;
+            // Kaydedilen satır alta; en üste boş yeni satır
+            rows.splice(idx, 1);
+            rows.push(saved);
+            const blank = emptyRowFromFields(tab.fields);
+            blank._satir_kayitli = false;
+            blank._satir_duzenleniyor = true;
+            if (key === 'districts') blank.is_active = true;
+            rows.unshift(blank);
             state.formRecord[key] = rows;
-            state.gridSel = { key, idx };
-            // Lookup cache (ilçe) taze
+            state.gridSel = { key, idx: 0 };
             if (key === 'districts') delete state.lookupCache.districts;
             renderForm(screen);
+            // Yeni satırın ilk yazılabilir alanına odak
+            requestAnimationFrame(() => {
+              const first = document.querySelector(
+                `tr[data-grid-row="${key}"][data-grid-idx="0"] input:not([disabled]):not([type="checkbox"]), `
+                + `tr[data-grid-row="${key}"][data-grid-idx="0"] select:not([disabled])`
+              );
+              if (first) {
+                first.focus();
+                if (typeof first.select === 'function') first.select();
+              }
+            });
             if (saved.id != null) {
               toast(`Satır kaydedildi · ID ${saved.id}`);
             } else {
