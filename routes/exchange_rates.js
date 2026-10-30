@@ -74,7 +74,11 @@ router.get('/tcmb-onizleme', async (req, res, next) => {
     const parsed = parseTcmbXml(await fetchXml(url));
     const hit = parsed.rates.find((r) => r.currency_code === String(source).toUpperCase());
     if (!hit || hit.buy_rate == null || hit.sell_rate == null) {
-      return res.status(404).json({ hata: `${source} için TCMB kuru yok veya sistemde eşleşmedi.` });
+      return res.status(404).json({
+        hata: `${String(source).toUpperCase()} TCMB günlük bülteninde yok. Kur kaynağını Manuel yapıp alış/satışı elle girin.`,
+        tcmb_yok: true,
+        source_pb: String(source).toUpperCase(),
+      });
     }
     res.json({
       url,

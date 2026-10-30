@@ -112,8 +112,21 @@ curl -X POST http://localhost:3000/doviz-kurlari/tcmb-cek \
 
 - Resmi tatil ve hafta sonunda yeni bülten olmayabilir; `bulletin_no` / `rate_date` alanlarına bakın.
 - TCMB’de olup sizde tanımlı olmayan kodlar sessizce atlanır — önce Para Birimi Tanımı’na ekleyin.
+- **Sizde var, TCMB’de yok** (ör. MXN): formda Kur kaynağı=TCMB seçilirse sistem uyarır ve **Manuel**’e düşer; alış/satışı elle girersiniz. Toplu **TCMB’den Çek** bu kodları zaten atlar.
+- TCMB bültenindeki başlıca kodlar (örnek): USD, EUR, GBP, CHF, JPY, AUD, CAD, SAR, … — tam liste `today.xml` içindedir; MXN yoktur.
 - Ağ çıkışı yoksa (firewall) `TCMB_KUR_URL` erişilemez; sunucunun `tcmb.gov.tr`’ye HTTP GET yapabilmesi gerekir.
 - Bu kurlar **gösterge** niteliğindedir; banka satış/alış politikanız farklıysa Manuel veya efektif alanları kullanın.
+
+## “TCMB kuru yok” ekranda ne olur?
+
+Örnek: Kaynak PB = **MXN**, Kur kaynağı = **TCMB**.
+
+1. Sistem TCMB XML’de MXN arar → yok.
+2. Toast: `MXN TCMB bülteninde yok. Kur kaynağı Manuel’e alındı — alış/satışı elle girin.`
+3. **Kur kaynağı** otomatik **Manuel** olur.
+4. Alış / satış alanlarını kendiniz doldurup kaydedersiniz.
+
+Bu beklenen davranıştır: TCMB yayınlamadığı paritelerde resmi otomatik kur yoktur; manuel (veya banka) kuru kullanılır.
 
 ## Doğrulama checklist
 

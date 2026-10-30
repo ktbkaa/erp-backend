@@ -413,7 +413,7 @@ const MODULES = [
             label: 'Kur kaynağı',
             type: 'select',
             options: ['TCMB', 'Manuel'],
-            // TCMB seçilince alış/satış TCMB XML’den doldurulur (bağlantı: Sistem Parametreleri TCMB_KUR_URL)
+            // TCMB: bültende varsa alış/satış dolar; yoksa (MXN vb.) Manuel’e düşülür
           },
         ],
         detailKey: null,
@@ -9152,44 +9152,85 @@ async function applyKurForParaBirimi(pbKod, kurEl, { force = false } = {}) {
   }
 }
 
-/** Döviz kuru formu: Kur kaynağı=TCMB iken alış/satış/efektif TCMB XML’den */
+/** Form alanı oku (segment radio / select / input) */
+function readMasterDetailValue(key) {
+  const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+  if (!el) return state.formRecord?.[key] ?? '';
+  if (el.type === 'radio') return el.checked ? el.value : (state.formRecord?.[key] ?? '');
+  return el.value;
+}
+
+/** Form alanı yaz (segment radio grubunu da günceller) */
+function writeMasterDetailValue(key, val) {
+  if (val == null) return;
+  const str = String(val);
+  const radios = [
+    ...document.querySelectorAll(`input[type="radio"][data-master="${key}"]`),
+    ...document.querySelectorAll(`input[type="radio"][data-detail="${key}"]`),
+  ];
+  if (radios.length) {
+    radios.forEach((r) => { r.checked = String(r.value) === str; });
+  } else {
+    const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+    if (el) el.value = str;
+  }
+  if (state.formRecord) state.formRecord[key] = val;
+}
+
+/**
+ * Döviz kuru formu: Kur kaynağı=TCMB iken alış/satış TCMB XML’den.
+ * TCMB bülteninde para birimi yoksa (ör. MXN) → Manuel’e düş, elle girilsin.
+ */
 async function fillDovizFromTcmbIfNeeded() {
   if (state.screenId !== 'doviz-exchange_rate-tanimi') return;
   if (state.formMode === 'incele') return;
-  const sourceEl = document.querySelector('[data-master="source"], [data-detail="source"]');
-  const source = String(sourceEl?.value || state.formRecord?.source || '').trim();
+  const source = String(readMasterDetailValue('source') || '').trim();
   if (source.toUpperCase() !== 'TCMB') return;
-  const sourcePb = document.querySelector('[data-master="source_pb"]')?.value
-    || state.formRecord?.source_pb;
-  const targetPb = document.querySelector('[data-master="target_pb"]')?.value
-    || state.formRecord?.target_pb
-    || 'TRY';
+
+  let sourcePb = String(readMasterDetailValue('source_pb') || '').trim();
+  let targetPb = String(readMasterDetailValue('target_pb') || 'TRY').trim() || 'TRY';
+  // Lookup bazen ad basmış olabilir → kodu çöz
+  const resolvePbCode = (raw) => {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^[A-Z]{3}$/i.test(s)) return s.toUpperCase();
+    const rows = state.lookupCache['para-birimleri'] || [];
+    const hit = rows.find((r) =>
+      String(r.currency_code).toUpperCase() === s.toUpperCase()
+      || String(r.currency_name || '').toLocaleLowerCase('tr') === s.toLocaleLowerCase('tr')
+      || `${r.currency_code} - ${r.currency_name}`.toLocaleLowerCase('tr') === s.toLocaleLowerCase('tr'));
+    return hit ? String(hit.currency_code).toUpperCase() : s.toUpperCase();
+  };
+  sourcePb = resolvePbCode(sourcePb);
+  targetPb = resolvePbCode(targetPb) || 'TRY';
   if (!sourcePb) return;
-  const tarih = document.querySelector('[data-master="rate_date"]')?.value
-    || state.formRecord?.rate_date
-    || '';
+
+  // Select’te kodu netleştir
+  writeMasterDetailValue('source_pb', sourcePb);
+  writeMasterDetailValue('target_pb', targetPb);
+  const srcSel = findAttrControl('data-master', 'source_pb');
+  if (srcSel) syncLookupTypeaheadFromSelect(srcSel);
+  const tgtSel = findAttrControl('data-master', 'target_pb');
+  if (tgtSel) syncLookupTypeaheadFromSelect(tgtSel);
+
+  const tarih = String(readMasterDetailValue('rate_date') || '').slice(0, 10);
   try {
-    const q = new URLSearchParams({
-      source_pb: sourcePb,
-      target_pb: targetPb || 'TRY',
-    });
-    if (tarih) q.set('tarih', String(tarih).slice(0, 10));
+    const q = new URLSearchParams({ source_pb: sourcePb, target_pb: targetPb });
+    if (tarih) q.set('tarih', tarih);
     const r = await api(`/doviz-kurlari/tcmb-onizleme?${q}`);
-    const setVal = (key, val) => {
-      if (val == null) return;
-      const el = document.querySelector(`[data-master="${key}"], [data-detail="${key}"]`);
-      if (el) el.value = String(val);
-      if (state.formRecord) state.formRecord[key] = val;
-    };
-    setVal('buy_rate', r.buy_rate);
-    setVal('sell_rate', r.sell_rate);
-    setVal('effective_buy_rate', r.effective_buy_rate);
-    setVal('effective_sell_rate', r.effective_sell_rate);
-    if (r.rate_date) setVal('rate_date', r.rate_date);
-    setVal('source', 'TCMB');
+    writeMasterDetailValue('buy_rate', r.buy_rate);
+    writeMasterDetailValue('sell_rate', r.sell_rate);
+    writeMasterDetailValue('effective_buy_rate', r.effective_buy_rate);
+    writeMasterDetailValue('effective_sell_rate', r.effective_sell_rate);
+    if (r.rate_date) writeMasterDetailValue('rate_date', r.rate_date);
+    writeMasterDetailValue('source', 'TCMB');
     toast(`TCMB ${r.bulletin_no || r.rate_date || ''}: ${sourcePb}/${targetPb} dolduruldu`);
   } catch (err) {
-    toast(err.message || 'TCMB önizleme alınamadı');
+    // TCMB’de yok (MXN vb.) → Manuel; alış/satış kullanıcıdan
+    writeMasterDetailValue('source', 'Manuel');
+    toast(
+      `${sourcePb} TCMB bülteninde yok. Kur kaynağı Manuel’e alındı — alış/satışı elle girin.`
+    );
   }
 }
 
