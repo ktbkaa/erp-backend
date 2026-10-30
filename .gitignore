@@ -13,3 +13,4 @@ erp.db
 
 # Local DB backups from demo cleanup
 backups/
+scripts/__pycache__/

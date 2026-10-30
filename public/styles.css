@@ -829,9 +829,9 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 }
 .yetki-pane-actions { display: flex; gap: 0.35rem; }
 .yetki-scroll {
-  /* Sayfa kaydığı için sabit max-height yok; tablo doğal uzar */
   max-height: none;
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid var(--line);
   border-radius: 0.45rem;
   background: #fff;
@@ -841,6 +841,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 }
 .yetki-table {
   width: 100%;
+  min-width: 42rem;
   border-collapse: collapse;
   font-size: 0.82rem;
 }
@@ -864,7 +865,6 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   padding-bottom: 0.4rem;
 }
 .form-tab-panel--scrollable .yetki-table thead th {
-  /* Sayfa kayarken başlık panelle birlikte gider */
   position: sticky;
   top: 0;
 }
@@ -873,15 +873,78 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   font-weight: 600;
   font-size: 0.75rem;
   color: var(--ink);
-  padding: 0.4rem 0.55rem;
+  padding: 0;
+}
+.yetki-mod-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.yetki-mod-toggle:hover {
+  background: rgba(63, 135, 245, 0.08);
+}
+.yetki-mod-caret {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--line);
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--accent);
+  flex: 0 0 auto;
+  transition: transform 0.15s ease;
+}
+.yetki-mod-row.is-open .yetki-mod-caret {
+  transform: rotate(90deg);
+}
+.yetki-mod-count {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.yetki-screen-row.is-collapsed {
+  display: none;
 }
 .yetki-erisim { width: 3.2rem; text-align: center; }
 .yetki-ekran { text-align: left; min-width: 10rem; }
 .yetki-act { width: 3.6rem; text-align: center; }
 .yetki-table input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
+  width: 1.05rem;
+  height: 1.05rem;
   cursor: pointer;
+  accent-color: var(--accent);
+}
+.yetki-act-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+.yetki-act-letter {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.yetki-screen-row:not(.has-erisim) .yetki-act-cell {
+  opacity: 0.35;
+}
+.yetki-screen-row.has-erisim .yetki-act-letter {
+  color: var(--accent);
 }
 
 .icon-btn {
@@ -2827,6 +2890,117 @@ tr.selected td { background: var(--accent-soft); }
   padding: 1.5rem 1.25rem 2rem;
   overflow: hidden;
   isolation: isolate;
+}
+
+.login-ldap-switch {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.55rem 0.4rem 0.7rem;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(26, 35, 48, 0.08);
+  backdrop-filter: blur(8px);
+}
+.login-ldap-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.login-ldap-switch.is-on .login-ldap-label {
+  color: var(--accent);
+}
+.login-ldap-toggle {
+  position: relative;
+  width: 2.55rem;
+  height: 1.4rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #c5d0de;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+.login-ldap-toggle[aria-checked="true"] {
+  background: var(--accent);
+}
+.login-ldap-knob {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform 0.18s ease;
+}
+.login-ldap-toggle[aria-checked="true"] .login-ldap-knob {
+  transform: translateX(1.15rem);
+}
+.login-ldap-toggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.login-pass-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.login-pass-wrap input {
+  width: 100%;
+  padding-right: 2.55rem;
+}
+.login-pass-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.login-pass-toggle:hover {
+  color: var(--ink);
+  background: rgba(63, 135, 245, 0.08);
+}
+.login-pass-toggle[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.login-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.1rem 0 0;
+  font-size: 0.86rem;
+  font-weight: 550;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+.login-remember input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.login-view.is-ldap .login-card-sub {
+  color: var(--accent);
 }
 
 .login-atmosphere {

@@ -7211,6 +7211,7 @@ const state = {
   rotaShowAdvanced: false,
   sidebarOpen: {},
   sidebarSectionOpen: {},
+  yetkiModOpen: {},
   tabCtxKey: null,
   nestedLink: null, // { fromScreenId, fromId, convertPath, bodyKey, extra }
   mrpCalismaId: null,
@@ -8732,6 +8733,84 @@ function setLoginError(msg) {
   el.textContent = msg;
 }
 
+function isLoginRememberOn() {
+  return Boolean($('#loginRemember')?.checked);
+}
+
+function isLoginLdapOn() {
+  return $('#loginLdapToggle')?.getAttribute('aria-checked') === 'true';
+}
+
+function applyLoginRememberUi() {
+  const remember = $('#loginRemember');
+  const user = $('#loginUser');
+  if (!remember || !user) return;
+  const on = localStorage.getItem('ktb_remember_me') === '1';
+  remember.checked = on;
+  if (on) {
+    const saved = localStorage.getItem('ktb_remember_user') || '';
+    if (saved && !user.value) user.value = saved;
+  }
+}
+
+function persistLoginRemember(username) {
+  if (isLoginRememberOn()) {
+    localStorage.setItem('ktb_remember_me', '1');
+    if (username) localStorage.setItem('ktb_remember_user', username);
+  } else {
+    localStorage.removeItem('ktb_remember_me');
+    localStorage.removeItem('ktb_remember_user');
+  }
+}
+
+function setLoginLdapMode(on) {
+  const btn = $('#loginLdapToggle');
+  const wrap = btn?.closest('.login-ldap-switch');
+  const view = $('#viewLogin');
+  const sub = $('#loginCardSub');
+  const checked = Boolean(on);
+  if (btn) {
+    btn.setAttribute('aria-checked', checked ? 'true' : 'false');
+  }
+  wrap?.classList.toggle('is-on', checked);
+  view?.classList.toggle('is-ldap', checked);
+  localStorage.setItem('ktb_ldap_login', checked ? '1' : '0');
+  if (sub) {
+    sub.textContent = checked
+      ? 'LDAP açık — domain / bilgisayar şifrenizle oturum açın.'
+      : 'Kullanıcı adı ve şifrenizle oturum açın.';
+  }
+}
+
+async function refreshLoginLdapStatus() {
+  const btn = $('#loginLdapToggle');
+  if (!btn) return;
+  let status = { available: false, enabled: false, configured: false, message: '' };
+  try {
+    status = await api('/auth/ldap-status', { skipFirma: true });
+  } catch (_) { /* sunucu yoksa yerel tercih */ }
+  btn.dataset.ldapAvailable = status.available ? '1' : '0';
+  btn.dataset.ldapMessage = status.message || '';
+  btn.title = status.message || 'LDAP girişi';
+  // Tercih: kayıtlı anahtar; LDAP hiç yapılandırılmamışsa kapalı bırak
+  const pref = localStorage.getItem('ktb_ldap_login') === '1';
+  setLoginLdapMode(pref && (status.available || status.enabled));
+}
+
+function toggleLoginPasswordVisibility() {
+  const pass = $('#loginPass');
+  const btn = $('#loginPassToggle');
+  if (!pass || !btn) return;
+  const show = pass.type === 'password';
+  pass.type = show ? 'text' : 'password';
+  btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  btn.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
+  const open = btn.querySelector('.login-eye-open');
+  const closed = btn.querySelector('.login-eye-closed');
+  if (open) open.hidden = show;
+  if (closed) closed.hidden = !show;
+}
+
 function showLoginView() {
   const login = $('#viewLogin');
   const shell = $('#appShell');
@@ -8740,9 +8819,23 @@ function showLoginView() {
   document.body.classList.add('is-login');
   closeUserChipMenu();
   setLoginError('');
+  applyLoginRememberUi();
+  refreshLoginLdapStatus().catch(() => {});
   const user = $('#loginUser');
   const pass = $('#loginPass');
-  if (pass) pass.value = '';
+  if (pass) {
+    pass.value = '';
+    pass.type = 'password';
+  }
+  const eye = $('#loginPassToggle');
+  if (eye) {
+    eye.setAttribute('aria-pressed', 'false');
+    eye.setAttribute('aria-label', 'Şifreyi göster');
+    const open = eye.querySelector('.login-eye-open');
+    const closed = eye.querySelector('.login-eye-closed');
+    if (open) open.hidden = false;
+    if (closed) closed.hidden = true;
+  }
   // Odak: varsa kullanıcı adı doluysa şifre, değilse kullanıcı adı
   requestAnimationFrame(() => {
     if (user && !user.value) user.focus();
@@ -8806,15 +8899,20 @@ async function logoutUser() {
       body: JSON.stringify({ refresh_token: refresh, user_code: kod }),
     }).catch(() => {});
   } catch (_) { /* ignore */ }
+  const rememberUser = localStorage.getItem('ktb_remember_me') === '1'
+    ? (localStorage.getItem('ktb_remember_user') || localStorage.getItem('ktb_kullanici_kodu') || '')
+    : '';
   localStorage.removeItem('ktb_access_token');
   localStorage.removeItem('ktb_refresh_token');
   localStorage.removeItem('ktb_kullanici_kodu');
   localStorage.removeItem('ktb_cihaz_oturum');
+  if (rememberUser) localStorage.setItem('ktb_remember_user', rememberUser);
   state.session = null;
   closeUserChipMenu();
   renderUserChip();
   renderSidebar();
   showLoginView();
+  if (rememberUser && $('#loginUser')) $('#loginUser').value = rememberUser;
   toast('Oturum kapatıldı.');
 }
 
@@ -8824,13 +8922,14 @@ async function submitLoginForm(e) {
   const username = ($('#loginUser')?.value || '').trim();
   const sifre = ($('#loginPass')?.value || '').trim();
   const btn = $('#loginSubmit');
+  const ldap = isLoginLdapOn();
   if (!username) {
     setLoginError('Kullanıcı adı gerekli.');
     $('#loginUser')?.focus();
     return;
   }
   if (!sifre) {
-    setLoginError('Şifre gerekli.');
+    setLoginError(ldap ? 'Domain / bilgisayar şifresi gerekli.' : 'Şifre gerekli.');
     $('#loginPass')?.focus();
     return;
   }
@@ -8839,14 +8938,16 @@ async function submitLoginForm(e) {
   try {
     const ses = await api('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, sifre }),
+      body: JSON.stringify({ username, sifre, ldap }),
     });
+    persistLoginRemember(username);
     applySession(ses, username);
     enterApp();
     await loadFirmalar().catch(() => {});
     renderFirmaPicker();
     showHome();
-    toast(`Hoş geldiniz, ${ses.username || ses.first_name || ''}`);
+    const via = ses.auth_method === 'ldap' ? ' (LDAP)' : '';
+    toast(`Hoş geldiniz, ${ses.username || ses.first_name || ''}${via}`);
   } catch (err) {
     setLoginError(err.message || 'Giriş başarısız');
     $('#loginPass')?.focus();
@@ -11358,29 +11459,56 @@ function renderYetkiGrid(rec) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const rows = allScreensCatalog();
-  let lastMod = null;
-  const body = rows.map((s) => {
-    const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
-    const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
-    let modRow = '';
-    if (s.moduleTitle !== lastMod) {
-      lastMod = s.moduleTitle;
-      modRow = `<tr class="yetki-mod-row"><td colspan="8">${escapeHtml(s.moduleTitle)}</td></tr>`;
+  const byMod = [];
+  rows.forEach((s) => {
+    const last = byMod[byMod.length - 1];
+    if (!last || last.title !== s.moduleTitle) {
+      byMod.push({ id: s.moduleId || s.moduleTitle, title: s.moduleTitle, screens: [s] });
+    } else {
+      last.screens.push(s);
     }
-    return `${modRow}
-      <tr data-yetki-ekran="${escAttr(s.id)}">
+  });
+
+  const body = byMod.map((mod) => {
+    // Default kapalı — yalnızca bu oturumda açılanlar açık kalsın
+    const open = Boolean(state.yetkiModOpen?.[mod.id]);
+    const modRow = `
+      <tr class="yetki-mod-row${open ? ' is-open' : ''}" data-yetki-mod="${escAttr(mod.id)}">
+        <td colspan="8">
+          <button type="button" class="yetki-mod-toggle" data-yetki-mod-toggle="${escAttr(mod.id)}"
+            aria-expanded="${open ? 'true' : 'false'}">
+            <span class="yetki-mod-caret" aria-hidden="true">▸</span>
+            <span>${escapeHtml(mod.title)}</span>
+            <span class="yetki-mod-count">${mod.screens.length} ekran</span>
+          </button>
+        </td>
+      </tr>`;
+    const screenRows = mod.screens.map((s) => {
+      const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
+      const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
+      return `
+      <tr class="yetki-screen-row${open ? '' : ' is-collapsed'}${y.erisim ? ' has-erisim' : ''}"
+          data-yetki-ekran="${escAttr(s.id)}" data-yetki-mod-of="${escAttr(mod.id)}">
         <td class="yetki-erisim">
           <input type="checkbox" data-yetki="erisim" ${y.erisim ? 'checked' : ''} ${dis} title="Ekran erişimi" />
         </td>
         <td class="yetki-ekran">${escapeHtml(s.title)}</td>
         ${YETKI_ACTIONS.map((a) => `
           <td class="yetki-act">
-            <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="${a.label}" />
+            <label class="yetki-act-cell" title="${a.label}">
+              <span class="yetki-act-letter">${escapeHtml(a.label.slice(0, 1))}</span>
+              <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} aria-label="${a.label}" />
+            </label>
           </td>`).join('')}
         <td class="yetki-act">
-          <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="Hepsi" />
+          <label class="yetki-act-cell" title="Hepsi">
+            <span class="yetki-act-letter">H</span>
+            <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} aria-label="Hepsi" />
+          </label>
         </td>
       </tr>`;
+    }).join('');
+    return `${modRow}${screenRows}`;
   }).join('');
 
   return `
@@ -11388,11 +11516,13 @@ function renderYetkiGrid(rec) {
       <div class="yetki-pane-head">
         <div class="section-label">Yetkiler</div>
         <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <button type="button" class="btn ghost" id="yetkiExpandAllMods">Başlıkları aç</button>
+          <button type="button" class="btn ghost" id="yetkiCollapseAllMods">Başlıkları kapat</button>
           <button type="button" class="btn ghost" id="yetkiSelectAll">Tüm ekranlar</button>
           <button type="button" class="btn ghost" id="yetkiClearAll">Temizle</button>
         </div>
       </div>
-      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. ADMIN / Yönetici için tümü işaretli kaydedilirse yetki listesi boş tutulur — yeni eklenen ekranlar da otomatik açılır. Yalnızca İncele işaretliyse o ekranda sadece incele kullanılabilir.</p>
+      <p class="hint yetki-hint">Modül başlığına tıklayarak ekran listesini açın/kapatın (varsayılan kapalı). Sol yuvarlak kutu erişim; açılınca Yeni / İncele / Düzelt / Kopyala / Sil kutuları etkinleşir. ADMIN’de tümü işaretli kaydedilirse yetki listesi boş tutulur.</p>
       <div class="yetki-scroll">
         <table class="yetki-table" id="yetkiTable">
           <thead>
@@ -11453,15 +11583,53 @@ function readFirmaYetkiFromDom() {
   return out;
 }
 
+function setYetkiModOpen(modId, open) {
+  if (!state.yetkiModOpen) state.yetkiModOpen = {};
+  state.yetkiModOpen[modId] = Boolean(open);
+  const table = $('#yetkiTable');
+  if (!table) return;
+  const modRow = table.querySelector(`tr.yetki-mod-row[data-yetki-mod="${CSS.escape(modId)}"]`);
+  const btn = modRow?.querySelector('[data-yetki-mod-toggle]');
+  modRow?.classList.toggle('is-open', open);
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  table.querySelectorAll(`tr.yetki-screen-row[data-yetki-mod-of="${CSS.escape(modId)}"]`).forEach((tr) => {
+    tr.classList.toggle('is-collapsed', !open);
+  });
+}
+
 function bindYetkiGridEvents() {
   const table = $('#yetkiTable');
-  if (!table || state.formMode === 'incele') return;
+  if (!table) return;
+
+  table.addEventListener('click', (e) => {
+    const toggle = e.target.closest('[data-yetki-mod-toggle]');
+    if (!toggle) return;
+    e.preventDefault();
+    const modId = toggle.getAttribute('data-yetki-mod-toggle');
+    if (!modId) return;
+    const open = toggle.getAttribute('aria-expanded') !== 'true';
+    setYetkiModOpen(modId, open);
+  });
+
+  $('#yetkiExpandAllMods')?.addEventListener('click', () => {
+    table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
+      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), true);
+    });
+  });
+  $('#yetkiCollapseAllMods')?.addEventListener('click', () => {
+    table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
+      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), false);
+    });
+  });
+
+  if (state.formMode === 'incele') return;
 
   const syncRow = (tr) => {
     const erisim = tr.querySelector('[data-yetki="erisim"]');
     const acts = YETKI_ACTIONS.map((a) => tr.querySelector(`[data-yetki="${a.id}"]`));
     const hepsi = tr.querySelector('[data-yetki="hepsi"]');
     const on = Boolean(erisim?.checked);
+    tr.classList.toggle('has-erisim', on);
     acts.forEach((el) => { if (el) el.disabled = !on; });
     if (hepsi) hepsi.disabled = !on;
     if (!on) {
@@ -11470,6 +11638,9 @@ function bindYetkiGridEvents() {
       return;
     }
     if (hepsi) hepsi.checked = acts.every((el) => el?.checked);
+    // Erişim açılınca satırın modülü kapalıysa aç — Yeni/Düzelt görünsün
+    const modId = tr.getAttribute('data-yetki-mod-of');
+    if (modId && tr.classList.contains('is-collapsed')) setYetkiModOpen(modId, true);
   };
 
   const syncHeadChecks = () => {
@@ -15313,6 +15484,8 @@ async function openForm(mode, opts = {}) {
     toast(`Bu ekranda «${MODE_LABELS[mode] || mode}» yetkiniz yok.`);
     return;
   }
+  // Kullanıcı yetki grid: form her açıldığında modül başlıkları kapalı
+  if (screen.kullaniciYetkiPaneli) state.yetkiModOpen = {};
 
   // Sipariş adayından iş emri: satır seçip Düzelt → Yeni + ön doldurma
   let adayPrefill = state.formPrefill || null;
@@ -16389,6 +16562,35 @@ function bindEvents() {
   if (loginForm && !loginForm.dataset.bound) {
     loginForm.dataset.bound = '1';
     loginForm.addEventListener('submit', submitLoginForm);
+    $('#loginPassToggle')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleLoginPasswordVisibility();
+    });
+    $('#loginRemember')?.addEventListener('change', () => {
+      if (!isLoginRememberOn()) {
+        localStorage.removeItem('ktb_remember_me');
+        localStorage.removeItem('ktb_remember_user');
+      } else {
+        localStorage.setItem('ktb_remember_me', '1');
+        const u = ($('#loginUser')?.value || '').trim();
+        if (u) localStorage.setItem('ktb_remember_user', u);
+      }
+    });
+    $('#loginLdapToggle')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const btn = $('#loginLdapToggle');
+      if (!btn || btn.disabled) return;
+      const next = btn.getAttribute('aria-checked') !== 'true';
+      if (next && btn.dataset.ldapAvailable === '0') {
+        setLoginError(btn.dataset.ldapMessage
+          || 'LDAP yapılandırılmamış. LDAP_ENABLED ve LDAP_URL / UPN ayarlarını kontrol edin.');
+      } else {
+        setLoginError('');
+      }
+      setLoginLdapMode(next);
+    });
+    applyLoginRememberUi();
+    refreshLoginLdapStatus().catch(() => {});
   }
 
   $('#btnMenu').addEventListener('click', () => {
