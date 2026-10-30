@@ -9421,10 +9421,11 @@ function buildDefaultFilterState(screen) {
     } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
-      // Açılır listeler: boş operatör satırı = filtresiz
+      // Açılır listeler: boş operatör satırı = filtresiz (İçerir bu alanlarda yok)
       fs[f.key] = { op: '', a: '', b: '' };
     } else {
-      fs[f.key] = { op: '', a: '', b: '' };
+      // Metin alanları: varsayılan İçerir (değer boşken filtre uygulanmaz)
+      fs[f.key] = { op: 'icerir', a: '', b: '' };
     }
   });
   return fs;
@@ -10289,8 +10290,14 @@ function filterOperatorsFor(f) {
   return OPERATORS;
 }
 
+function defaultTextFilterOp(f) {
+  const ops = filterOperatorsFor(f);
+  if (ops.some((o) => o.id === 'icerir')) return 'icerir';
+  return '';
+}
+
 function renderFilterField(f) {
-  const st = state.filterState[f.key] || { op: '', a: '', b: '' };
+  const st = state.filterState[f.key] || { op: defaultTextFilterOp(f), a: '', b: '' };
   const bucket = filterBucket(f);
   if (f.type === 'checkbox') {
     const ops = filterOperatorsFor(f);
