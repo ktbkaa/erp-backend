@@ -43,19 +43,32 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+function districtCodeFrom(cityCode, districtName) {
+    const vowels = new Set('aeıioöuüâêîôûAEIİOÖUÜÂÊÎÔÛ'.split(''));
+    const cons = String(districtName || '')
+        .split('')
+        .filter((ch) => /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(ch) && !vowels.has(ch))
+        .map((ch) => ch.toLocaleUpperCase('tr-TR'))
+        .join('');
+    return `${String(cityCode || '').trim()}${cons}`;
+}
+
 router.post('/', async (req, res) => {
     try {
-        const district_code = trimOrNull(req.body.district_code);
         const district_name = trimOrNull(req.body.district_name);
-        if (!district_code) return res.status(400).json({ hata: 'district_code zorunludur.' });
+        const city_code = trimOrNull(req.body.city_code);
         if (!district_name) return res.status(400).json({ hata: 'district_name zorunludur.' });
+        if (!city_code) return res.status(400).json({ hata: 'city_code zorunludur.' });
+        const district_code = trimOrNull(req.body.district_code)
+            || districtCodeFrom(city_code, district_name);
+        if (!district_code) return res.status(400).json({ hata: 'district_code üretilemedi.' });
         const ins = await pool.query(
             `INSERT INTO districts (district_code, district_name, city_code, is_active)
              VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
             [
                 district_code,
                 district_name,
-                trimOrNull(req.body.city_code),
+                city_code,
                 typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
             ]
         );
