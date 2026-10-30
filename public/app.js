@@ -1,9 +1,21 @@
 const OPERATORS = [
+  { id: 'filtresiz', label: 'Filtresiz' },
   { id: 'icerir', label: 'İçerir' },
   { id: 'esit', label: 'Eşit' },
   { id: 'esit_degil', label: 'Eşit değil' },
   { id: 'arasinda', label: 'Arasında' },
+  { id: 'bos', label: 'Boş' },
+  { id: 'bos_degil', label: 'Boş değil' },
 ];
+
+/** Değer girişi gerektirmeyen / gizlenen operatörler */
+function filterOpHidesValues(op) {
+  return op === 'filtresiz' || op === 'bos' || op === 'bos_degil';
+}
+
+function filterOpNeedsBetween(op) {
+  return op === 'arasinda';
+}
 
 const MODULES = [
   {
@@ -7770,12 +7782,20 @@ function resolveFilterCell(row, def, screen) {
   return row[def.key];
 }
 
+function isBlankCell(cell) {
+  return cell === null || cell === undefined || String(cell).trim() === '';
+}
+
 function compareValues(cell, op, a, b, def) {
   // Ortak tanımlarda firma/iş yeri yoksa filtreyi geç
   if ((def?.key === 'company_id' || def?.key === 'plant_id')
     && (cell === null || cell === undefined || cell === '')) {
     return true;
   }
+  if (op === 'filtresiz') return true;
+  if (op === 'bos') return isBlankCell(cell);
+  if (op === 'bos_degil') return !isBlankCell(cell);
+
   const cellN = norm(cell);
   const aN = norm(a);
   const bN = norm(b);
@@ -7792,11 +7812,20 @@ function compareValues(cell, op, a, b, def) {
   return true;
 }
 
+function filterStateIsActive(st) {
+  if (!st) return false;
+  const op = st.op || 'icerir';
+  if (op === 'filtresiz') return false;
+  if (op === 'bos' || op === 'bos_degil') return true;
+  if (op === 'arasinda') return Boolean(norm(st.a) || norm(st.b));
+  return Boolean(norm(st.a));
+}
+
 function applyFilters(rows, screen) {
   const active = screen.filters
     .filter((f) => !f.queryParam) // sunucu filtreleri satır alanı değil
     .map((f) => ({ def: f, st: state.filterState[f.key] || { op: 'icerir', a: '', b: '' } }))
-    .filter(({ st }) => (st.op === 'arasinda' ? Boolean(norm(st.a) || norm(st.b)) : Boolean(norm(st.a))));
+    .filter(({ st }) => filterStateIsActive(st));
   if (!active.length) return rows.slice();
   return rows.filter((row) =>
     active.every(({ def, st }) =>
@@ -8918,13 +8947,19 @@ function buildListEndpoint(screen) {
     if (!f.queryParam) return;
     const st = state.filterState?.[f.key];
     if (!st) return;
+    if (st.op === 'filtresiz') return;
     if (f.type === 'checkbox') {
+      if (st.op === 'bos' || st.op === 'bos_degil') return;
       const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
+      if (st.op === 'esit' && !on && String(st.a || '').trim() === '') return;
       extras.push(`${encodeURIComponent(f.key)}=${on ? '1' : '0'}`);
       return;
     }
     if (st.a != null && String(st.a).trim() !== '') {
       extras.push(`${encodeURIComponent(f.key)}=${encodeURIComponent(st.a)}`);
+    }
+    if (st.op === 'arasinda' && st.b != null && String(st.b).trim() !== '') {
+      extras.push(`${encodeURIComponent(f.key + '_max')}=${encodeURIComponent(st.b)}`);
     }
   });
   if (!extras.length) return url;
@@ -9427,10 +9462,26 @@ function syncBetweenInputs(screen) {
     const opEl = document.querySelector(`[data-filter-op="${f.key}"]`);
     const wrap = document.querySelector(`[data-filter-values="${f.key}"]`);
     if (!opEl || !wrap) return;
-    const arasinda = opEl.value === 'arasinda';
+    const op = opEl.value;
+    const arasinda = filterOpNeedsBetween(op);
+    const hideVals = filterOpHidesValues(op);
     wrap.classList.toggle('split', arasinda);
-    const b = wrap.querySelector(`[data-filter-b="${f.key}"]`);
-    if (b) b.hidden = !arasinda;
+    wrap.classList.toggle('filter-values--hidden', hideVals);
+    wrap.hidden = hideVals;
+    const field = wrap.closest('.filter-field');
+    if (field) field.classList.toggle('filter-field--noval', hideVals);
+    // a/b görünürlüğü
+    wrap.querySelectorAll(`[data-filter-a="${f.key}"]`).forEach((el) => {
+      const widget = el.closest('.lookup-widget');
+      if (widget) widget.hidden = hideVals;
+      else el.hidden = hideVals;
+    });
+    wrap.querySelectorAll(`[data-filter-b="${f.key}"]`).forEach((el) => {
+      const widget = el.closest('.lookup-widget');
+      const showB = arasinda && !hideVals;
+      if (widget) widget.hidden = !showB;
+      else el.hidden = !showB;
+    });
   });
 }
 
@@ -9454,7 +9505,38 @@ function partitionFilters(filters) {
   };
 }
 
+function buildFilterSelectOptions(rows, f, selectedVal) {
+  const vk = f.valueKey || 'id';
+  const lk = f.labelKey || 'adi';
+  const ck = f.codeKey;
+  const seen = new Set();
+  const opts = [`<option value="">— seçin —</option>`];
+  let curLabel = '';
+  (rows || []).forEach((r) => {
+    const val = r[vk];
+    if (val == null || val === '') return;
+    const sig = String(val);
+    if (seen.has(sig)) return;
+    seen.add(sig);
+    const code = ck ? (r[ck] || '') : '';
+    const name = r[lk] || '';
+    let label = code || name || String(val);
+    if (code && name && String(val) !== code) {
+      const short = name.length > 28 ? `${name.slice(0, 26)}…` : name;
+      label = `${code} — ${short}`;
+    } else if (!code && name) {
+      label = name;
+    }
+    const title = code && name ? `${code} — ${name}` : (name || code || String(val));
+    if (String(selectedVal) === String(val)) curLabel = title;
+    opts.push(`<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(selectedVal) === String(val) ? 'selected' : ''}>${label}</option>`);
+  });
+  return { optsHtml: opts.join(''), curLabel };
+}
+
 function filterValueControl(f, st) {
+  const arasinda = filterOpNeedsBetween(st.op);
+  const hideVals = filterOpHidesValues(st.op);
   if (f.type === 'lookup') {
     let rows = state.lookupCache[f.lookup];
     if (!Array.isArray(rows) || !rows.length) {
@@ -9462,47 +9544,36 @@ function filterValueControl(f, st) {
       else if (f.lookup === 'is-yerleri') rows = state.isYerleri;
     }
     rows = Array.isArray(rows) ? rows : [];
-    // Aynı görünen first_name tekrarlanmasın (stage_name ile filtrelerken)
-    const vk = f.valueKey || 'id';
-    const lk = f.labelKey || 'adi';
-    const ck = f.codeKey;
-    const seen = new Set();
-    const opts = [`<option value="">— seçin —</option>`];
-    let curLabel = '';
-    rows.forEach((r) => {
-      const val = r[vk];
-      if (val == null || val === '') return;
-      const sig = String(val);
-      if (seen.has(sig)) return;
-      seen.add(sig);
-      const code = ck ? (r[ck] || '') : '';
-      const name = r[lk] || '';
-      let label = code || name || String(val);
-      if (code && name && String(val) !== code) {
-        const short = name.length > 28 ? `${name.slice(0, 26)}…` : name;
-        label = `${code} — ${short}`;
-      } else if (!code && name) {
-        label = name;
-      }
-      const title = code && name ? `${code} — ${name}` : (name || code || String(val));
-      if (String(st.a) === String(val)) curLabel = title;
-      opts.push(`<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`);
-    });
-    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${opts.join('')}</select>`, curLabel, false)}
-      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+    const a = buildFilterSelectOptions(rows, f, st.a);
+    const b = buildFilterSelectOptions(rows, f, st.b);
+    const aHtml = wrapLookupCombobox(
+      `<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${a.optsHtml}</select>`,
+      a.curLabel,
+      false,
+    );
+    let bHtml = wrapLookupCombobox(
+      `<select class="lookup-pick lookup-combo-select" data-filter-b="${f.key}">${b.optsHtml}</select>`,
+      b.curLabel,
+      false,
+    );
+    if (!arasinda) bHtml = bHtml.replace('class="lookup-widget lookup-combobox"', 'class="lookup-widget lookup-combobox" hidden');
+    return `${aHtml}${bHtml}`;
   }
   if (f.type === 'select' || (Array.isArray(f.options) && f.options.length)) {
     const opts = f.options || [];
-    const cur = st.a == null || st.a === '' ? '' : String(st.a);
-    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">
+    const optHtml = (selected) => `
       <option value="">— seçin —</option>
       ${opts.map((o) => {
         const v = typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o;
         const l = typeof o === 'object' ? (o.label ?? o.adi ?? o.l ?? v) : o;
-        return `<option value="${escAttr(v)}" ${String(st.a) === String(v) ? 'selected' : ''}>${l}</option>`;
-      }).join('')}
-    </select>`, cur, false)}
-      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+        return `<option value="${escAttr(v)}" ${String(selected) === String(v) ? 'selected' : ''}>${l}</option>`;
+      }).join('')}`;
+    const curA = st.a == null || st.a === '' ? '' : String(st.a);
+    const curB = st.b == null || st.b === '' ? '' : String(st.b);
+    const aHtml = wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${optHtml(curA)}</select>`, curA, false);
+    let bHtml = wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-b="${f.key}">${optHtml(curB)}</select>`, curB, false);
+    if (!arasinda) bHtml = bHtml.replace('class="lookup-widget lookup-combobox"', 'class="lookup-widget lookup-combobox" hidden');
+    return `${aHtml}${bHtml}`;
   }
   if (f.type === 'checkbox') {
     const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
@@ -9518,27 +9589,32 @@ function filterValueControl(f, st) {
       <option value="">—</option>
       ${opts.map((o) => `<option value="${o.v}" ${norm(st.a) === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}
     </select>
-      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+      <select data-filter-b="${f.key}" ${arasinda ? '' : 'hidden'}>
+        <option value="">—</option>
+        ${opts.map((o) => `<option value="${o.v}" ${norm(st.b) === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}
+      </select>`;
   }
   const isDate = f.type === 'date' || /tarih|_date$/i.test(f.key || '');
   if (isDate) {
     return `
-      <input type="date" data-filter-a="${f.key}" value="${escAttr(String(st.a || '').slice(0, 10))}" />
-      <input type="date" data-filter-b="${f.key}" value="${escAttr(String(st.b || '').slice(0, 10))}" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
+      <input type="date" data-filter-a="${f.key}" value="${escAttr(String(st.a || '').slice(0, 10))}" ${hideVals ? 'hidden' : ''} />
+      <input type="date" data-filter-b="${f.key}" value="${escAttr(String(st.b || '').slice(0, 10))}" ${arasinda && !hideVals ? '' : 'hidden'} />`;
   }
   return `
-    <input type="text" data-filter-a="${f.key}" value="${escAttr(st.a || '')}" placeholder="…" />
-    <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="…" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
+    <input type="text" data-filter-a="${f.key}" value="${escAttr(st.a || '')}" placeholder="…" ${hideVals ? 'hidden' : ''} />
+    <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="…" ${arasinda && !hideVals ? '' : 'hidden'} />`;
 }
 
 function filterOperatorsFor(f) {
-  // Açılır liste / bool: yazma yok → eşit / eşit değil yeterli
   if (f.type === 'checkbox') {
-    return OPERATORS.filter((o) => o.id === 'esit');
+    return OPERATORS.filter((o) => o.id === 'filtresiz' || o.id === 'esit');
   }
+  // Açılır liste / bool: filtresiz + eşit/eşit değil + arasında + boş
   if (f.type === 'lookup' || f.type === 'select' || f.type === 'bool'
       || f.key === 'is_active' || (Array.isArray(f.options) && f.options.length)) {
-    return OPERATORS.filter((o) => o.id === 'esit' || o.id === 'esit_degil');
+    return OPERATORS.filter((o) =>
+      o.id === 'filtresiz' || o.id === 'esit' || o.id === 'esit_degil'
+      || o.id === 'arasinda' || o.id === 'bos' || o.id === 'bos_degil');
   }
   return OPERATORS;
 }
@@ -9547,26 +9623,32 @@ function renderFilterField(f) {
   const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
   const bucket = filterBucket(f);
   if (f.type === 'checkbox') {
+    const ops = filterOperatorsFor(f);
+    const op = ops.some((o) => o.id === st.op) ? st.op : 'esit';
     return `
     <div class="filter-field filter-field--${bucket} filter-field--check" data-filter-key="${f.key}">
       <label>${f.label}</label>
       <div class="filter-controls">
-        <div class="filter-values" data-filter-values="${f.key}">
-          ${filterValueControl(f, { ...st, op: 'esit' })}
+        <select class="filter-op" data-filter-op="${f.key}" title="Operatör">
+          ${ops.map((o) => `<option value="${o.id}" ${op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
+        </select>
+        <div class="filter-values${filterOpHidesValues(op) ? ' filter-values--hidden' : ''}" data-filter-values="${f.key}" ${filterOpHidesValues(op) ? 'hidden' : ''}>
+          ${filterValueControl(f, { ...st, op })}
         </div>
       </div>
     </div>`;
   }
   const ops = filterOperatorsFor(f);
   const op = ops.some((o) => o.id === st.op) ? st.op : (ops[0]?.id || 'esit');
+  const hideVals = filterOpHidesValues(op);
   return `
-    <div class="filter-field filter-field--${bucket}" data-filter-key="${f.key}">
+    <div class="filter-field filter-field--${bucket}${hideVals ? ' filter-field--noval' : ''}" data-filter-key="${f.key}">
       <label>${f.label}</label>
       <div class="filter-controls">
         <select class="filter-op" data-filter-op="${f.key}" title="Operatör">
           ${ops.map((o) => `<option value="${o.id}" ${op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
         </select>
-        <div class="filter-values${op === 'arasinda' ? ' split' : ''}" data-filter-values="${f.key}">
+        <div class="filter-values${op === 'arasinda' ? ' split' : ''}${hideVals ? ' filter-values--hidden' : ''}" data-filter-values="${f.key}" ${hideVals ? 'hidden' : ''}>
           ${filterValueControl(f, { ...st, op })}
         </div>
       </div>
