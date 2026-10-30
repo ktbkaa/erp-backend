@@ -229,6 +229,13 @@ const MODULES = [
           { key: 'district_name', label: 'İlçe adı', required: true },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
+        // Satır Kaydet / Sil → /districts API (üst Kaydet beklemeden)
+        detailPersist: {
+          districts: {
+            endpoint: '/districts',
+            parentFields: { city_code: 'city_code' },
+          },
+        },
         defaults: { is_active: true, districts: [] },
       },
       {
@@ -8522,6 +8529,49 @@ async function readExcelFileToObjects(cols, file) {
   return mapExcelRowsToObjects(cols, aoa);
 }
 
+/**
+ * Detay satırını hemen API’ye yazar (detailPersist tanımlıysa).
+ * @returns {Promise<object|null>} kaydedilen satır (id’li) veya null (persist yok)
+ */
+async function persistGridRowImmediately(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint) return null;
+  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const body = { ...row };
+  delete body._satir_kayitli;
+  delete body._satir_duzenleniyor;
+  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
+    const v = master[masterKey];
+    if (v != null && v !== '') body[bodyKey] = v;
+  });
+  // Şehir kartı: city_code zorunlu (FK)
+  const missingParent = Object.entries(cfg.parentFields || {})
+    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
+    .map(([, masterKey]) => masterKey);
+  if (missingParent.length) {
+    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
+  }
+  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
+  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
+    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
+  }
+  if (gridKey === 'districts' && !body.district_code && body.district_name) {
+    body.district_code = districtCodeFromName(body.city_code, body.district_name);
+  }
+  const base = screenApiBase(cfg.endpoint);
+  if (row.id != null && row.id !== '') {
+    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
+  }
+  return api(base, { method: 'POST', body: JSON.stringify(body) });
+}
+
+async function deletePersistedGridRow(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint || row?.id == null || row.id === '') return false;
+  await api(`${screenApiBase(cfg.endpoint)}/${row.id}`, { method: 'DELETE' });
+  return true;
+}
+
 async function importExcelIntoList(ctx) {
   const screen = findScreen(ctx?.screenId || state.screenId);
   if (!screen) return;
@@ -12521,12 +12571,19 @@ function renderCompactMasterBar(screen, rec) {
 
 function renderGridToolbar(tabKey, { canEdit }) {
   if (!canEdit) {
-    return `<div class="inline-toolbar erp-grid-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın</span></div>`;
+    return `<div class="inline-toolbar erp-grid-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın · sağ tık: Excel</span></div>`;
   }
+  const screen = findScreen(state.screenId);
+  const persist = Boolean(screen?.detailPersist?.[tabKey]);
+  const hint = persist
+    ? 'Satırda ✓ Kaydet veritabanına yazar'
+    : 'Satırda ✓ Kaydet satırı onaylar · belge üstteki Kaydet ile yazılır';
   return `<div class="inline-toolbar erp-grid-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}" title="Yeni satır">＋ Satır</button>
     <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}" title="Seçili satırı sil">✕ Sil</button>
-    <span class="toolbar-hint">Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır</span>
+    <button type="button" class="btn action ghost" data-excel-act="sablon" data-grid-key="${tabKey}" title="Excel şablon indir">Excel şablon</button>
+    <button type="button" class="btn action ghost" data-excel-act="al" data-grid-key="${tabKey}" title="Excel’den veri al">Excel’den al</button>
+    <span class="toolbar-hint">${hint} · sağ tık menüsü de var</span>
   </div>`;
 }
 
@@ -12554,9 +12611,12 @@ function renderDynamicGrid(tab, rec) {
   const selIdx = state.gridSel.key === key ? state.gridSel.idx : null;
 
   if (!rows.length) {
+    const persistHint = findScreen(state.screenId)?.detailPersist?.[key]
+      ? 'Yeni ile ekleyin; satırda ✓ Kaydet veritabanına yazar. Sağ tık / Excel düğmeleri ile toplu yükleyin.'
+      : 'Yeni ile ekleyin; satırda Kaydet onaylar. Sağ tık / Excel düğmeleri ile şablon alın.';
     return `
       ${renderGridToolbar(key, { canEdit })}
-      <div class="detail-empty">Henüz satır yok. ${canEdit ? 'Yeni ile ekleyin; satırda Kaydet onaylar, belge üstteki Kaydet ile yazılır.' : ''}</div>`;
+      <div class="detail-empty" data-grid-list="${key}">Henüz satır yok. ${canEdit ? persistHint : ''}</div>`;
   }
 
   return `
@@ -12584,7 +12644,7 @@ function renderDynamicGrid(tab, rec) {
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
-                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>
+                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="${escAttr(findScreen(state.screenId)?.detailPersist?.[key] ? 'Satırı veritabanına kaydet' : 'Satırı onayla')}">✓</button>
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">⧉</button>
                     <button type="button" class="btn action ghost sm danger" data-row-act="sil" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı sil">✕</button>
                   </div>
@@ -15214,6 +15274,22 @@ function bindCascadeLookups(_screen) {
       }
     }
 
+    // Şehir kodu değişince ilçe kodlarını yeniden üret
+    if (masterKey === 'city_code' && scr.id === 'sehir-tanimi' && state.formMode !== 'incele') {
+      const cityCode = String(el.value || '').trim();
+      document.querySelectorAll('[data-detail="district_name"][data-grid="districts"]').forEach((nameEl) => {
+        const didx = nameEl.getAttribute('data-didx');
+        const kod = districtCodeFromName(cityCode, nameEl.value);
+        const codeEl = document.querySelector(
+          `[data-detail="district_code"][data-didx="${didx}"][data-grid="districts"]`
+        );
+        if (codeEl && kod) codeEl.value = kod;
+        if (state.formRecord?.districts?.[Number(didx)]) {
+          state.formRecord.districts[Number(didx)].district_code = kod;
+        }
+      });
+    }
+
     // autoFillName: lookup seçilince bağlı ad alanını doldur (ekran kodu → ekran adı vb.)
     if (el instanceof HTMLSelectElement && fieldKey) {
       const fDef = collectTabFields(scr).find((x) => x.key === fieldKey)
@@ -17107,27 +17183,29 @@ function bindEvents() {
     });
   }
 
-  // Form içi detay/grid listeleri — Excel şablon/import
+  // Form içi detay/grid listeleri — Excel şablon/import (input üstünde de çalışır)
   const viewFormForExcel = $('#viewForm');
   if (viewFormForExcel && !viewFormForExcel.dataset.excelCtxBound) {
     viewFormForExcel.dataset.excelCtxBound = '1';
     viewFormForExcel.addEventListener('contextmenu', (e) => {
-      const wrap = e.target.closest('.detail-table-wrap, .detail-empty, [data-grid-toolbar], .erp-grid-toolbar');
+      const wrap = e.target.closest(
+        '.detail-table-wrap, .detail-empty, [data-grid-toolbar], .erp-grid-toolbar, tr[data-grid-row]'
+      );
       if (!wrap) return;
-      if (e.target.closest('input, textarea, select, button, a, .lookup-panel')) return;
       const screen = findScreen(state.screenId);
       if (!screen || !state.formMode) return;
-      const listWrap = e.target.closest('.detail-table-wrap');
+      const listWrap = e.target.closest('.detail-table-wrap, .detail-empty');
       const gridKey = listWrap?.getAttribute('data-grid-list')
         || e.target.closest('[data-grid-toolbar]')?.getAttribute('data-grid-toolbar')
         || e.target.closest('[data-grid-key]')?.getAttribute('data-grid-key')
+        || e.target.closest('tr[data-grid-row]')?.getAttribute('data-grid-row')
         || resolveFirstGridKey(screen);
       if (!gridKey) return;
       e.preventDefault();
       e.stopPropagation();
       state.excelCtx = { kind: 'grid', screenId: screen.id, gridKey };
       showListContextMenu(screen, e.clientX, e.clientY);
-    });
+    }, true);
   }
 
   const tabCtx = $('#tabCtxMenu');
@@ -17151,7 +17229,7 @@ function bindEvents() {
   // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır (contextmenu sonrası click menüyü düşürmesin)
   document.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('#tabCtxMenu')) return;
+    if (e.target.closest('#tabCtxMenu, #listCtxMenu, #formCtxMenu')) return;
     hideTabContextMenu();
   }, true);
 
@@ -17465,6 +17543,8 @@ function bindEvents() {
   const viewFormEl = $('#viewForm');
   viewFormEl?.addEventListener('contextmenu', (e) => {
     if (!state.formMode) return;
+    // Detay listesi Excel menüsüne bırak
+    if (e.target.closest('.detail-table-wrap, .detail-empty, [data-grid-toolbar], .erp-grid-toolbar, tr[data-grid-row]')) return;
     // Input/lookup içinde tarayıcı menüsü kalsın
     if (e.target.closest('input, textarea, select, button, a, .lookup-panel, .tab-ctx-menu')) return;
     e.preventDefault();
@@ -17761,6 +17841,22 @@ function bindEvents() {
       return;
     }
 
+    // Detay grid Excel düğmeleri
+    const excelActBtn = e.target.closest('[data-excel-act]');
+    if (excelActBtn && screen) {
+      e.preventDefault();
+      e.stopPropagation();
+      const gridKey = excelActBtn.getAttribute('data-grid-key') || resolveFirstGridKey(screen);
+      const act = excelActBtn.getAttribute('data-excel-act');
+      state.excelCtx = { kind: 'grid', screenId: screen.id, gridKey };
+      if (act === 'sablon') {
+        downloadExcelTemplate(state.excelCtx).catch((err) => toast(err.message));
+      } else if (act === 'al') {
+        importExcelIntoList(state.excelCtx).catch((err) => toast(err.message));
+      }
+      return;
+    }
+
     // --- Detay grid: seç / Yeni / Düzelt / Sil ---
     const gridAct = e.target.closest('[data-grid-act]');
     if (gridAct && screen) {
@@ -17843,13 +17939,23 @@ function bindEvents() {
       }
       if (act === 'sil') {
         if (!rows[idx]) return;
-        rows.splice(idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = rows.length
-          ? { key, idx: Math.min(idx, rows.length - 1) }
-          : { key: null, idx: null };
-        renderForm(screen);
-        toast('Satır silindi.');
+        const doomed = rows[idx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) {
+              await deletePersistedGridRow(screen, key, doomed);
+            }
+            rows.splice(idx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = rows.length
+              ? { key, idx: Math.min(idx, rows.length - 1) }
+              : { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
         return;
       }
       if (act === 'kopyala') {
@@ -17863,25 +17969,44 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — Kaydet ile onaylayın.');
+        toast(screen.detailPersist?.[key]
+          ? 'Satır kopyalandı — ✓ ile kaydedin.'
+          : 'Satır kopyalandı — Kaydet ile onaylayın.');
         return;
       }
       if (act === 'kaydet') {
-        // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
-        if (rows[idx]) {
-          const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
-          if (missing?.length) {
-            toast(`Satır eksik: ${missing.map((f) => f.label || f.key).join(', ')}`);
-            return;
-          }
-          row._satir_kayitli = true;
-          row._satir_duzenleniyor = false;
-          rows[idx] = row;
+        if (!rows[idx]) return;
+        const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
+        if (missing?.length) {
+          toast(`Satır eksik: ${missing.map((f) => f.label || f.key).join(', ')}`);
+          return;
         }
-        state.formRecord[key] = rows;
-        state.gridSel = { key, idx };
-        renderForm(screen);
-        toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+        (async () => {
+          try {
+            let saved = row;
+            if (screen.detailPersist?.[key]) {
+              const apiRow = await persistGridRowImmediately(screen, key, row);
+              if (apiRow) {
+                saved = { ...row, ...apiRow };
+              }
+            }
+            saved._satir_kayitli = true;
+            saved._satir_duzenleniyor = false;
+            rows[idx] = saved;
+            state.formRecord[key] = rows;
+            state.gridSel = { key, idx };
+            // Lookup cache (ilçe) taze
+            if (key === 'districts') delete state.lookupCache.districts;
+            renderForm(screen);
+            if (saved.id != null) {
+              toast(`Satır kaydedildi · ID ${saved.id}`);
+            } else {
+              toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+            }
+          } catch (err) {
+            toast(err.message || 'Satır kaydedilemedi');
+          }
+        })();
         return;
       }
     }

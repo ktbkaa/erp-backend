@@ -83,22 +83,30 @@ router.put('/:id', async (req, res) => {
     try {
         const district_name = trimOrNull(req.body.district_name);
         if (!district_name) return res.status(400).json({ hata: 'district_name zorunludur.' });
+        const city_code = trimOrNull(req.body.city_code);
+        let district_code = trimOrNull(req.body.district_code);
+        if (!district_code && city_code) {
+            district_code = districtCodeFrom(city_code, district_name);
+        }
         const upd = await pool.query(
             `UPDATE districts SET
                 district_name = $2,
                 city_code = COALESCE($3, city_code),
-                is_active = COALESCE($4, is_active)
+                is_active = COALESCE($4, is_active),
+                district_code = COALESCE($5, district_code)
              WHERE id = $1 RETURNING *`,
             [
                 req.params.id,
                 district_name,
-                trimOrNull(req.body.city_code),
+                city_code,
                 typeof req.body.is_active === 'boolean' ? req.body.is_active : null,
+                district_code,
             ]
         );
         if (!upd.rows[0]) return res.status(404).json({ hata: 'İlçe bulunamadı.' });
         res.json(upd.rows[0]);
     } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'İlçe kodu zaten var.' });
         res.status(500).json({ hata: err.message });
     }
 });
