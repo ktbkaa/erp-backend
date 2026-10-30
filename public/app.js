@@ -1,16 +1,14 @@
 const OPERATORS = [
-  { id: 'filtresiz', label: 'Filtresiz' },
+  { id: '', label: '' }, // boş satır = filtresiz (alan uygulanmaz)
   { id: 'icerir', label: 'İçerir' },
   { id: 'esit', label: 'Eşit' },
   { id: 'esit_degil', label: 'Eşit değil' },
   { id: 'arasinda', label: 'Arasında' },
-  { id: 'bos', label: 'Boş' },
-  { id: 'bos_degil', label: 'Boş değil' },
 ];
 
-/** Değer girişi gerektirmeyen / gizlenen operatörler */
+/** Boş operatör satırı = filtresiz; değer kutusu gizlenir */
 function filterOpHidesValues(op) {
-  return op === 'filtresiz' || op === 'bos' || op === 'bos_degil';
+  return !op;
 }
 
 function filterOpNeedsBetween(op) {
@@ -7782,25 +7780,20 @@ function resolveFilterCell(row, def, screen) {
   return row[def.key];
 }
 
-function isBlankCell(cell) {
-  return cell === null || cell === undefined || String(cell).trim() === '';
-}
-
 function compareValues(cell, op, a, b, def) {
   // Ortak tanımlarda firma/iş yeri yoksa filtreyi geç
   if ((def?.key === 'company_id' || def?.key === 'plant_id')
     && (cell === null || cell === undefined || cell === '')) {
     return true;
   }
-  if (op === 'filtresiz') return true;
-  if (op === 'bos') return isBlankCell(cell);
-  if (op === 'bos_degil') return !isBlankCell(cell);
+  // Boş operatör satırı = filtresiz
+  if (!op) return true;
 
   const cellN = norm(cell);
   const aN = norm(a);
   const bN = norm(b);
   // Varsayılan: LIKE '%değer%' (büyük/küçük harf TR locale ile)
-  if (op === 'icerir' || !op) return !aN || cellN.includes(aN);
+  if (op === 'icerir') return !aN || cellN.includes(aN);
   if (op === 'esit') return !aN || cellN === aN;
   if (op === 'esit_degil') return !aN || cellN !== aN;
   if (op === 'arasinda') {
@@ -7814,9 +7807,8 @@ function compareValues(cell, op, a, b, def) {
 
 function filterStateIsActive(st) {
   if (!st) return false;
-  const op = st.op || 'icerir';
-  if (op === 'filtresiz') return false;
-  if (op === 'bos' || op === 'bos_degil') return true;
+  const op = st.op || '';
+  if (!op) return false; // boş satır = filtresiz
   if (op === 'arasinda') return Boolean(norm(st.a) || norm(st.b));
   return Boolean(norm(st.a));
 }
@@ -8930,10 +8922,10 @@ function buildDefaultFilterState(screen) {
     } else if (f.key === 'plant_id' && state.activeIsYeriId) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
-      // Açılır listeler: varsayılan eşit, değer boş (= tümü)
-      fs[f.key] = { op: 'esit', a: '', b: '' };
+      // Açılır listeler: boş operatör satırı = filtresiz
+      fs[f.key] = { op: '', a: '', b: '' };
     } else {
-      fs[f.key] = { op: 'icerir', a: '', b: '' };
+      fs[f.key] = { op: '', a: '', b: '' };
     }
   });
   return fs;
@@ -8947,9 +8939,8 @@ function buildListEndpoint(screen) {
     if (!f.queryParam) return;
     const st = state.filterState?.[f.key];
     if (!st) return;
-    if (st.op === 'filtresiz') return;
+    if (!st.op) return; // boş operatör = filtresiz
     if (f.type === 'checkbox') {
-      if (st.op === 'bos' || st.op === 'bos_degil') return;
       const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
       if (st.op === 'esit' && !on && String(st.a || '').trim() === '') return;
       extras.push(`${encodeURIComponent(f.key)}=${on ? '1' : '0'}`);
@@ -9449,7 +9440,7 @@ function readFilterState(screen) {
       else a = aEl.value || '';
     }
     next[f.key] = {
-      op: document.querySelector(`[data-filter-op="${f.key}"]`)?.value || 'esit',
+      op: document.querySelector(`[data-filter-op="${f.key}"]`)?.value || '',
       a,
       b: document.querySelector(`[data-filter-b="${f.key}"]`)?.value || '',
     };
@@ -9607,14 +9598,13 @@ function filterValueControl(f, st) {
 
 function filterOperatorsFor(f) {
   if (f.type === 'checkbox') {
-    return OPERATORS.filter((o) => o.id === 'filtresiz' || o.id === 'esit');
+    return OPERATORS.filter((o) => o.id === '' || o.id === 'esit');
   }
-  // Açılır liste / bool: filtresiz + eşit/eşit değil + arasında + boş
+  // Açılır liste / bool: boş satır (filtresiz) + eşit/eşit değil + arasında
   if (f.type === 'lookup' || f.type === 'select' || f.type === 'bool'
       || f.key === 'is_active' || (Array.isArray(f.options) && f.options.length)) {
     return OPERATORS.filter((o) =>
-      o.id === 'filtresiz' || o.id === 'esit' || o.id === 'esit_degil'
-      || o.id === 'arasinda' || o.id === 'bos' || o.id === 'bos_degil');
+      o.id === '' || o.id === 'esit' || o.id === 'esit_degil' || o.id === 'arasinda');
   }
   return OPERATORS;
 }
@@ -9629,8 +9619,8 @@ function renderFilterField(f) {
     <div class="filter-field filter-field--${bucket} filter-field--check" data-filter-key="${f.key}">
       <label>${f.label}</label>
       <div class="filter-controls">
-        <select class="filter-op" data-filter-op="${f.key}" title="Operatör">
-          ${ops.map((o) => `<option value="${o.id}" ${op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
+        <select class="filter-op" data-filter-op="${f.key}" title="Operatör (boş = filtresiz)">
+          ${ops.map((o) => `<option value="${escAttr(o.id)}" ${op === o.id ? 'selected' : ''}>${o.label === '' ? '\u00A0' : o.label}</option>`).join('')}
         </select>
         <div class="filter-values${filterOpHidesValues(op) ? ' filter-values--hidden' : ''}" data-filter-values="${f.key}" ${filterOpHidesValues(op) ? 'hidden' : ''}>
           ${filterValueControl(f, { ...st, op })}
@@ -9639,14 +9629,16 @@ function renderFilterField(f) {
     </div>`;
   }
   const ops = filterOperatorsFor(f);
-  const op = ops.some((o) => o.id === st.op) ? st.op : (ops[0]?.id || 'esit');
+  // Eski filtresiz/bos değerlerini boş satıra taşı
+  const rawOp = (st.op === 'filtresiz' || st.op === 'bos' || st.op === 'bos_degil') ? '' : (st.op || '');
+  const op = ops.some((o) => o.id === rawOp) ? rawOp : '';
   const hideVals = filterOpHidesValues(op);
   return `
     <div class="filter-field filter-field--${bucket}${hideVals ? ' filter-field--noval' : ''}" data-filter-key="${f.key}">
       <label>${f.label}</label>
       <div class="filter-controls">
-        <select class="filter-op" data-filter-op="${f.key}" title="Operatör">
-          ${ops.map((o) => `<option value="${o.id}" ${op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
+        <select class="filter-op" data-filter-op="${f.key}" title="Operatör (boş = filtresiz)">
+          ${ops.map((o) => `<option value="${escAttr(o.id)}" ${op === o.id ? 'selected' : ''}>${o.label === '' ? '\u00A0' : o.label}</option>`).join('')}
         </select>
         <div class="filter-values${op === 'arasinda' ? ' split' : ''}${hideVals ? ' filter-values--hidden' : ''}" data-filter-values="${f.key}" ${hideVals ? 'hidden' : ''}>
           ${filterValueControl(f, { ...st, op })}
@@ -9668,6 +9660,7 @@ function renderFilterPane(screen) {
   grid.querySelectorAll('[data-filter-op]').forEach((el) => {
     el.addEventListener('change', () => syncBetweenInputs(screen));
   });
+  syncBetweenInputs(screen);
 }
 
 /** Tüm listelerde ilk sütun: satır ID (ekran kolonlarında yoksa eklenir). */
