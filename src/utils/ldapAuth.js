@@ -85,13 +85,17 @@ async function authenticateLdap(pool, username, password) {
   }
 
   const cfg = await ldapConfig(pool);
+  // Giriş ekranı LDAP anahtarı açıkken doğrulama istenir; admin kill-switch LDAP_ENABLED=Hayir
   if (!cfg.enabled) {
-    return { ok: false, hata: 'LDAP kapalı. Sistem parametresinde LDAP_ENABLED=Evet yapın.' };
+    return {
+      ok: false,
+      hata: 'LDAP yönetici tarafından kapalı (LDAP_ENABLED). Sistem Parametreleri’nden Evet yapın.',
+    };
   }
   if (!cfg.configured) {
     return {
       ok: false,
-      hata: 'LDAP yapılandırılmamış (LDAP_URL + UPN / DN şablonu / arama ayarları).',
+      hata: 'LDAP sunucu ayarı eksik: LDAP_URL ve LDAP_UPN_SUFFIX (veya DN şablonu) girin.',
     };
   }
 
@@ -162,9 +166,9 @@ async function ldapStatus(pool) {
     url: cfg.url ? cfg.url.replace(/\/\/.*@/, '//***@') : '',
     mode: cfg.userDnTemplate ? 'dn_template' : (cfg.upnSuffix ? 'upn' : (cfg.baseDn ? 'search' : 'none')),
     message: !cfg.enabled
-      ? 'LDAP kapalı'
+      ? 'LDAP kapalı — Sistem Parametreleri’nde LDAP_ENABLED=Evet yapın'
       : (!cfg.configured
-        ? 'LDAP açık ama URL / UPN / DN ayarları eksik'
+        ? 'LDAP etkin; LDAP_URL ve LDAP_UPN_SUFFIX (veya DN) girilmeli'
         : 'LDAP hazır — bilgisayar/domain şifresi ile giriş'),
   };
 }

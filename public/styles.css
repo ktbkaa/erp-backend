@@ -2981,6 +2981,24 @@ tr.selected td { background: var(--accent-soft); }
 .login-pass-toggle[aria-pressed="true"] {
   color: var(--accent);
 }
+/* Tek göz: gizli → kapalı göz; görünür → açık göz */
+.login-pass-toggle .login-eye-open,
+.login-pass-toggle .login-eye-closed {
+  display: none !important;
+  grid-area: 1 / 1;
+}
+.login-pass-toggle[aria-pressed="false"] .login-eye-closed {
+  display: block !important;
+}
+.login-pass-toggle[aria-pressed="true"] .login-eye-open {
+  display: block !important;
+}
+.login-ldap-switch.is-unavailable {
+  opacity: 0.72;
+}
+.login-ldap-switch.is-unavailable .login-ldap-label {
+  color: var(--muted);
+}
 
 .login-remember {
   display: inline-flex;

@@ -1,7 +1,7 @@
 -- LDAP / Active Directory giriş parametreleri
 INSERT INTO system_parameters (parametre_code, parametre_name, value, module, description)
 VALUES
-  ('LDAP_ENABLED', 'LDAP açık', 'Hayir', 'SYS', 'Evet ise giriş ekranında LDAP ile domain/bilgisayar şifresi doğrulanabilir'),
+  ('LDAP_ENABLED', 'LDAP açık', 'Evet', 'SYS', 'Evet ise giriş ekranında LDAP anahtarı kullanılabilir; Hayir = tamamen kapalı'),
   ('LDAP_URL', 'LDAP sunucu URL', '', 'SYS', 'örn. ldap://dc.ornek.com:389 veya ldaps://dc.ornek.com:636'),
   ('LDAP_BASE_DN', 'LDAP Base DN', '', 'SYS', 'Arama kökü, örn. DC=ornek,DC=com'),
   ('LDAP_BIND_DN', 'LDAP servis bind DN', '', 'SYS', 'Kullanıcı aramak için servis hesabı (opsiyonel)'),

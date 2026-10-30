@@ -8768,17 +8768,24 @@ function setLoginLdapMode(on) {
   const wrap = btn?.closest('.login-ldap-switch');
   const view = $('#viewLogin');
   const sub = $('#loginCardSub');
-  const checked = Boolean(on);
+  const available = btn?.dataset.ldapAvailable === '1';
+  // Hazır değilse anahtar açık kalamaz — çelişkili «LDAP açık» metni olmasın
+  const checked = Boolean(on) && available;
   if (btn) {
     btn.setAttribute('aria-checked', checked ? 'true' : 'false');
   }
   wrap?.classList.toggle('is-on', checked);
+  wrap?.classList.toggle('is-unavailable', !available);
   view?.classList.toggle('is-ldap', checked);
   localStorage.setItem('ktb_ldap_login', checked ? '1' : '0');
   if (sub) {
-    sub.textContent = checked
-      ? 'LDAP açık — domain / bilgisayar şifrenizle oturum açın.'
-      : 'Kullanıcı adı ve şifrenizle oturum açın.';
+    if (checked) {
+      sub.textContent = 'LDAP açık — domain / bilgisayar şifrenizle oturum açın.';
+    } else if (!available && btn?.dataset.ldapMessage) {
+      sub.textContent = btn.dataset.ldapMessage;
+    } else {
+      sub.textContent = 'Kullanıcı adı ve şifrenizle oturum açın.';
+    }
   }
 }
 
@@ -8792,23 +8799,26 @@ async function refreshLoginLdapStatus() {
   btn.dataset.ldapAvailable = status.available ? '1' : '0';
   btn.dataset.ldapMessage = status.message || '';
   btn.title = status.message || 'LDAP girişi';
-  // Tercih: kayıtlı anahtar; LDAP hiç yapılandırılmamışsa kapalı bırak
   const pref = localStorage.getItem('ktb_ldap_login') === '1';
-  setLoginLdapMode(pref && (status.available || status.enabled));
+  setLoginLdapMode(pref && status.available);
+}
+
+/** Şifre gizli → kapalı göz; görünür → açık göz (CSS aria-pressed ile). */
+function syncLoginPassEye() {
+  const pass = $('#loginPass');
+  const btn = $('#loginPassToggle');
+  if (!pass || !btn) return;
+  const visible = pass.type === 'text';
+  btn.setAttribute('aria-pressed', visible ? 'true' : 'false');
+  btn.setAttribute('aria-label', visible ? 'Şifreyi gizle' : 'Şifreyi göster');
+  btn.title = visible ? 'Şifreyi gizle' : 'Şifreyi göster';
 }
 
 function toggleLoginPasswordVisibility() {
   const pass = $('#loginPass');
-  const btn = $('#loginPassToggle');
-  if (!pass || !btn) return;
-  const show = pass.type === 'password';
-  pass.type = show ? 'text' : 'password';
-  btn.setAttribute('aria-pressed', show ? 'true' : 'false');
-  btn.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
-  const open = btn.querySelector('.login-eye-open');
-  const closed = btn.querySelector('.login-eye-closed');
-  if (open) open.hidden = show;
-  if (closed) closed.hidden = !show;
+  if (!pass) return;
+  pass.type = pass.type === 'password' ? 'text' : 'password';
+  syncLoginPassEye();
 }
 
 function showLoginView() {
@@ -8827,15 +8837,7 @@ function showLoginView() {
     pass.value = '';
     pass.type = 'password';
   }
-  const eye = $('#loginPassToggle');
-  if (eye) {
-    eye.setAttribute('aria-pressed', 'false');
-    eye.setAttribute('aria-label', 'Şifreyi göster');
-    const open = eye.querySelector('.login-eye-open');
-    const closed = eye.querySelector('.login-eye-closed');
-    if (open) open.hidden = false;
-    if (closed) closed.hidden = true;
-  }
+  syncLoginPassEye();
   // Odak: varsa kullanıcı adı doluysa şifre, değilse kullanıcı adı
   requestAnimationFrame(() => {
     if (user && !user.value) user.focus();
@@ -8922,7 +8924,14 @@ async function submitLoginForm(e) {
   const username = ($('#loginUser')?.value || '').trim();
   const sifre = ($('#loginPass')?.value || '').trim();
   const btn = $('#loginSubmit');
-  const ldap = isLoginLdapOn();
+  let ldap = isLoginLdapOn();
+  if (ldap && $('#loginLdapToggle')?.dataset.ldapAvailable !== '1') {
+    setLoginLdapMode(false);
+    ldap = false;
+    setLoginError($('#loginLdapToggle')?.dataset.ldapMessage
+      || 'LDAP hazır değil. Anahtar kapatıldı — yerel şifre ile deneyin veya LDAP ayarlarını tamamlayın.');
+    return;
+  }
   if (!username) {
     setLoginError('Kullanıcı adı gerekli.');
     $('#loginUser')?.focus();
@@ -16581,16 +16590,18 @@ function bindEvents() {
       const btn = $('#loginLdapToggle');
       if (!btn || btn.disabled) return;
       const next = btn.getAttribute('aria-checked') !== 'true';
-      if (next && btn.dataset.ldapAvailable === '0') {
+      if (next && btn.dataset.ldapAvailable !== '1') {
         setLoginError(btn.dataset.ldapMessage
-          || 'LDAP yapılandırılmamış. LDAP_ENABLED ve LDAP_URL / UPN ayarlarını kontrol edin.');
-      } else {
-        setLoginError('');
+          || 'LDAP kullanılamıyor. Sistem Parametreleri’nde LDAP_ENABLED=Evet ve LDAP_URL / UPN ayarlayın.');
+        setLoginLdapMode(false);
+        return;
       }
+      setLoginError('');
       setLoginLdapMode(next);
     });
     applyLoginRememberUi();
     refreshLoginLdapStatus().catch(() => {});
+    syncLoginPassEye();
   }
 
   $('#btnMenu').addEventListener('click', () => {
