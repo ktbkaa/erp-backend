@@ -7243,12 +7243,12 @@ const MODE_LABELS_EN = {
 const MODE_LABELS = { ...MODE_LABELS_TR };
 
 const UI_THEME_DEFS = [
-  { id: 'blue', nameTr: 'Mavi (varsayılan)', nameEn: 'Blue (default)', swatchA: '#3f87f5', swatchB: '#9bb7ef', hintTr: 'Mevcut tema', hintEn: 'Current theme' },
-  { id: 'green', nameTr: 'Yeşil', nameEn: 'Green', swatchA: '#1b8f78', swatchB: '#7ecfbc', hintTr: 'İlk marka teması', hintEn: 'Original brand theme' },
-  { id: 'red', nameTr: 'Kırmızı', nameEn: 'Red', swatchA: '#e04545', swatchB: '#ef9a9a', hintTr: 'Mavi temanın kırmızı tonu', hintEn: 'Red tint of blue theme' },
-  { id: 'orange', nameTr: 'Turuncu', nameEn: 'Orange', swatchA: '#e67e22', swatchB: '#f5c18a', hintTr: 'Mavi temanın turuncu tonu', hintEn: 'Orange tint of blue theme' },
-  { id: 'purple', nameTr: 'Mor', nameEn: 'Purple', swatchA: '#7c5cfc', swatchB: '#b8a6ff', hintTr: 'Mavi temanın mor tonu', hintEn: 'Purple tint of blue theme' },
-  { id: 'yellow', nameTr: 'Sarı', nameEn: 'Yellow', swatchA: '#c9a227', swatchB: '#e6d089', hintTr: 'Mavi temanın sarı tonu', hintEn: 'Yellow tint of blue theme' },
+  { id: 'blue', nameTr: 'Sümbül', nameEn: 'Hyacinth', swatchA: '#3f87f5', swatchB: '#9bb7ef', hintTr: 'Varsayılan', hintEn: 'Default' },
+  { id: 'green', nameTr: 'Zamia', nameEn: 'Zamia', swatchA: '#1b8f78', swatchB: '#7ecfbc', hintTr: 'Yeşil', hintEn: 'Green' },
+  { id: 'red', nameTr: 'Gül', nameEn: 'Rose', swatchA: '#e04545', swatchB: '#ef9a9a', hintTr: 'Kırmızı', hintEn: 'Red' },
+  { id: 'orange', nameTr: 'Kalanşo', nameEn: 'Kalanchoe', swatchA: '#e67e22', swatchB: '#f5c18a', hintTr: 'Turuncu', hintEn: 'Orange' },
+  { id: 'purple', nameTr: 'Menekşe', nameEn: 'Violet', swatchA: '#7c5cfc', swatchB: '#b8a6ff', hintTr: 'Mor', hintEn: 'Purple' },
+  { id: 'yellow', nameTr: 'Ayçiçeği', nameEn: 'Sunflower', swatchA: '#c9a227', swatchB: '#e6d089', hintTr: 'Sarı', hintEn: 'Yellow' },
 ];
 
 const MODULE_TITLE_EN = {
@@ -9455,8 +9455,8 @@ function renderUserChip() {
   if (!chip || !nameEl || !titleEl || !avatarEl) return;
   const s = state.session;
   if (!s) {
-    nameEl.textContent = 'Oturum yok';
-    titleEl.textContent = 'Sağ tık → Giriş';
+    nameEl.textContent = L('Oturum yok');
+    titleEl.textContent = state.uiLang === 'en' ? 'Right-click → Sign in' : 'Sağ tık → Giriş';
     avatarEl.innerHTML = '<span class="user-avatar-initials">?</span>';
     avatarEl.classList.remove('has-img');
   } else {
