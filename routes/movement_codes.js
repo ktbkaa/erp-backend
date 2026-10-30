@@ -1,37 +1,141 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { HAREKET_BELGE_TIPI } = require('../src/utils/belgeOmurga');
 
-const BELGE_TIPLERI = [
+/** Eski seed / UI PascalCase anahtarları (geriye uyumluluk) */
+const LEGACY_BELGE_TIPLERI = [
     'SatisTeklif', 'SatisSiparis', 'SevkEmri', 'SatisIrsaliye', 'SatisFatura',
     'SatinAlmaTalep', 'SatinAlmaSiparis', 'MalKabul', 'AlisFatura',
     'UretimEmri', 'UretimGiris', 'UretimTuketim', 'Transfer', 'Sayim', 'Fire', 'Duzeltme',
     'StokGiris', 'StokCikis',
 ];
 
-router.get('/belge-tipleri', (req, res) => {
-    res.json(BELGE_TIPLERI.map((id) => ({
-        id,
-        document_type: id,
-        label: {
-            SatisTeklif: 'Satış Teklifi',
-            SatisSiparis: 'Satış Siparişi',
-            SevkEmri: 'Sevk Emri',
-            SatisIrsaliye: 'Satış İrsaliyesi',
-            SatisFatura: 'Satış Faturası',
-            SatinAlmaTalep: 'Satınalma Talebi',
-            SatinAlmaSiparis: 'Satınalma Siparişi',
-            MalKabul: 'Mal Kabul',
-            AlisFatura: 'Alış Faturası',
-            UretimEmri: 'Üretim Emri',
-            UretimGiris: 'Üretim Girişi',
-            UretimTuketim: 'Üretim Tüketim',
-            Transfer: 'Transfer',
-            Sayim: 'Sayım',
-            Fire: 'Fire / Sarf',
-            Duzeltme: 'Stok Düzeltme',
-        }[id] || id,
-    })));
+const LEGACY_LABELS = {
+    SatisTeklif: 'Satış Teklifi',
+    SatisSiparis: 'Satış Siparişi',
+    SevkEmri: 'Sevk Emri',
+    SatisIrsaliye: 'Satış İrsaliyesi',
+    SatisFatura: 'Satış Faturası',
+    SatinAlmaTalep: 'Satınalma Talebi',
+    SatinAlmaSiparis: 'Satınalma Siparişi',
+    MalKabul: 'Mal Kabul',
+    AlisFatura: 'Alış Faturası',
+    UretimEmri: 'Üretim Emri',
+    UretimGiris: 'Üretim Girişi',
+    UretimTuketim: 'Üretim Tüketim',
+    Transfer: 'Transfer',
+    Sayim: 'Sayım',
+    Fire: 'Fire / Sarf',
+    Duzeltme: 'Stok Düzeltme',
+    StokGiris: 'Stok Giriş',
+    StokCikis: 'Stok Çıkış',
+};
+
+/**
+ * Belge tipi → hareket_kodlari.document_type değeri.
+ * Eşleme yoksa document_type_code olduğu gibi kullanılır (SATIS_IADE vb.).
+ */
+function hareketBelgeKey(documentTypeCode) {
+    const code = String(documentTypeCode || '').trim();
+    if (!code) return '';
+    return HAREKET_BELGE_TIPI[code] || code;
+}
+
+/** UI / validasyon için belge tipi listesi (DB + legacy) */
+async function loadBelgeTipiOptions(client = pool) {
+    const byKey = new Map();
+
+    const docs = await client.query(
+        `SELECT document_type_code, document_type_name, module, stock_etkisi, is_active
+         FROM document_types
+         WHERE is_active IS DISTINCT FROM FALSE
+         ORDER BY module, document_type_name, document_type_code`
+    );
+    for (const row of docs.rows) {
+        let key = hareketBelgeKey(row.document_type_code);
+        if (!key) continue;
+        // Çakışmada stok etkili / kendi kodunu koru
+        const prev = byKey.get(key);
+        if (prev && prev.document_type_code && prev.document_type_code !== row.document_type_code) {
+            key = row.document_type_code;
+        }
+        byKey.set(key, {
+            id: key,
+            document_type: key,
+            label: row.document_type_name || key,
+            document_type_code: row.document_type_code,
+            module: row.module || null,
+            stock_etkisi: Boolean(row.stock_etkisi),
+            source: 'document_types',
+        });
+    }
+
+    // Eski sabitler + DB’de kullanılan document_type değerleri
+    for (const id of LEGACY_BELGE_TIPLERI) {
+        if (byKey.has(id)) continue;
+        byKey.set(id, {
+            id,
+            document_type: id,
+            label: LEGACY_LABELS[id] || id,
+            document_type_code: null,
+            module: null,
+            stock_etkisi: null,
+            source: 'legacy',
+        });
+    }
+
+    const used = await client.query(
+        `SELECT DISTINCT document_type FROM movement_codes WHERE document_type IS NOT NULL ORDER BY 1`
+    );
+    for (const row of used.rows) {
+        const id = String(row.document_type || '').trim();
+        if (!id || byKey.has(id)) continue;
+        byKey.set(id, {
+            id,
+            document_type: id,
+            label: LEGACY_LABELS[id] || id,
+            document_type_code: null,
+            module: null,
+            stock_etkisi: null,
+            source: 'movement_codes',
+        });
+    }
+
+    return [...byKey.values()].sort((a, b) =>
+        String(a.label).localeCompare(String(b.label), 'tr')
+        || String(a.id).localeCompare(String(b.id), 'tr')
+    );
+}
+
+async function assertValidDocumentType(document_type) {
+    const tip = String(document_type || '').trim();
+    if (!tip) return { ok: false, hata: 'document_type zorunlu.' };
+    const opts = await loadBelgeTipiOptions();
+    if (opts.some((o) => o.id === tip)) return { ok: true, tip };
+    // Doğrudan document_types kodu (eşlemesiz) da kabul
+    const doc = await pool.query(
+        `SELECT document_type_code FROM document_types
+         WHERE document_type_code = $1 AND is_active IS DISTINCT FROM FALSE`,
+        [tip]
+    );
+    if (doc.rows[0]) return { ok: true, tip };
+    return {
+        ok: false,
+        hata: `Geçersiz document_type: ${tip}. Belge Tipleri tanımından seçin.`,
+    };
+}
+
+router.get('/belge-tipleri', async (req, res) => {
+    try {
+        let rows = await loadBelgeTipiOptions();
+        if (req.query.stock_etkisi === 'true') {
+            rows = rows.filter((r) => r.stock_etkisi === true || r.stock_etkisi == null);
+        }
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
 });
 
 router.get('/', async (req, res) => {
@@ -46,7 +150,7 @@ router.get('/', async (req, res) => {
         if (is_active === 'true') where.push('is_active = TRUE');
         if (stock_etkisi === 'true') where.push('stock_etkisi = TRUE');
         if (grup === 'inv') {
-            where.push(`document_type IN ('StokGiris','StokCikis','Transfer','Sayim','Fire','Duzeltme')`);
+            where.push(`document_type IN ('StokGiris','StokCikis','Transfer','Sayim','Fire','Duzeltme','STOK_GIRIS','STOK_CIKIS','STOK_HAREKET','TRANSFER','SAYIM')`);
         }
         const sql = `
             SELECT * FROM movement_codes
@@ -79,9 +183,8 @@ router.post('/', async (req, res) => {
         if (!movement_code || !movement_name || !document_type) {
             return res.status(400).json({ hata: 'movement_code, movement_name, document_type zorunlu.' });
         }
-        if (!BELGE_TIPLERI.includes(document_type)) {
-            return res.status(400).json({ hata: `Geçersiz document_type. İzin: ${BELGE_TIPLERI.join(', ')}` });
-        }
+        const check = await assertValidDocumentType(document_type);
+        if (!check.ok) return res.status(400).json({ hata: check.hata });
         const type = direction || 'Bilgi';
         if (!['Giris', 'Cikis', 'Transfer', 'Bilgi'].includes(type)) {
             return res.status(400).json({ hata: 'Geçersiz direction.' });
@@ -96,7 +199,7 @@ router.post('/', async (req, res) => {
             RETURNING *
             `,
             [
-                movement_code, movement_name, document_type, type, stock_etkisi, partner_zorunlu,
+                movement_code, movement_name, check.tip, type, stock_etkisi, partner_zorunlu,
                 warehouse_zorunlu, eksi_balance_izin, gl_account_code || null, description || null, is_active,
             ]
         );
@@ -112,8 +215,11 @@ router.put('/:id', async (req, res) => {
             movement_name, document_type, direction, stock_etkisi, partner_zorunlu,
             warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
         } = req.body;
-        if (document_type && !BELGE_TIPLERI.includes(document_type)) {
-            return res.status(400).json({ hata: 'Geçersiz document_type.' });
+        let tip = document_type;
+        if (document_type) {
+            const check = await assertValidDocumentType(document_type);
+            if (!check.ok) return res.status(400).json({ hata: check.hata });
+            tip = check.tip;
         }
         if (direction && !['Giris', 'Cikis', 'Transfer', 'Bilgi'].includes(direction)) {
             return res.status(400).json({ hata: 'Geçersiz direction.' });
@@ -134,7 +240,7 @@ router.put('/:id', async (req, res) => {
             WHERE id=$1 RETURNING *
             `,
             [
-                req.params.id, movement_name, document_type, direction, stock_etkisi, partner_zorunlu,
+                req.params.id, movement_name, tip, direction, stock_etkisi, partner_zorunlu,
                 warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
             ]
         );
@@ -156,4 +262,6 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-module.exports.BELGE_TIPLERI = BELGE_TIPLERI;
+module.exports.BELGE_TIPLERI = LEGACY_BELGE_TIPLERI;
+module.exports.loadBelgeTipiOptions = loadBelgeTipiOptions;
+module.exports.hareketBelgeKey = hareketBelgeKey;

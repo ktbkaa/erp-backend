@@ -5,12 +5,15 @@ const pool = require('../db');
 router.get('/', async (req, res) => {
   try {
     const onlyActive = req.query.is_active === 'true';
-    const r = await pool.query(
-      `SELECT * FROM document_types
-       WHERE ($1::boolean IS NOT TRUE OR is_active IS DISTINCT FROM FALSE)
-       ORDER BY module, document_type_code`,
-      [onlyActive || null],
-    );
+    const stockOnly = req.query.stock_etkisi === 'true';
+    const where = [];
+    const params = [];
+    if (onlyActive) where.push('is_active IS DISTINCT FROM FALSE');
+    if (stockOnly) where.push('stock_etkisi IS TRUE');
+    const sql = `SELECT * FROM document_types
+       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       ORDER BY module, document_type_code`;
+    const r = await pool.query(sql, params);
     res.json(r.rows);
   } catch (err) {
     res.status(500).json({ hata: err.message });

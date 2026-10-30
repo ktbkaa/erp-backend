@@ -441,29 +441,23 @@ const MODULES = [
         codeField: 'movement_code',
         nameField: 'movement_name',
         numeratorSeri: null,
-        listCategories: [
-          { id: 'SatisTeklif', label: 'Satış Teklifi' },
-          { id: 'SatisSiparis', label: 'Satış Siparişi' },
-          { id: 'SevkEmri', label: 'Sevk Emri' },
-          { id: 'SatisIrsaliye', label: 'Satış İrsaliyesi' },
-          { id: 'SatisFatura', label: 'Satış Faturası' },
-          { id: 'SatinAlmaTalep', label: 'Satınalma Talebi' },
-          { id: 'SatinAlmaSiparis', label: 'Satınalma Siparişi' },
-          { id: 'MalKabul', label: 'Mal Kabul' },
-          { id: 'AlisFatura', label: 'Alış Faturası' },
-          { id: 'UretimEmri', label: 'Üretim Emri' },
-          { id: 'UretimGiris', label: 'Üretim Girişi' },
-          { id: 'UretimTuketim', label: 'Üretim Tüketim' },
-          { id: 'Transfer', label: 'Transfer' },
-          { id: 'Sayim', label: 'Sayım' },
-          { id: 'Fire', label: 'Fire / Sarf' },
-          { id: 'Duzeltme', label: 'Stok Düzeltme' },
-        ],
-        categoryKey: 'document_type',
+        // Sol kategori yerine tepe filtre (Belge Tipleri + stok etkili yeni tipler)
+        listCategories: null,
+        categoryKey: null,
         filters: [
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+          },
           { key: 'movement_code', label: 'Hareket kodu' },
           { key: 'movement_name', label: 'Hareket adı' },
-          { key: 'document_type', label: 'Belge tipi' },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'] },
+          { key: 'stock_etkisi', label: 'Stok etkisi', type: 'bool' },
         ],
         columns: [
           { key: 'movement_code', label: 'Kod', mono: true },
@@ -476,8 +470,17 @@ const MODULES = [
         masterFields: [
           { key: 'movement_code', label: 'Hareket kodu', code: true, editableOnNew: true, required: true },
           { key: 'movement_name', label: 'Hareket adı', name: true, required: true },
-          { key: 'document_type', label: 'Belge tipi', type: 'select', options: ['SatisTeklif','SatisSiparis','SevkEmri','SatisIrsaliye','SatisFatura','SatinAlmaTalep','SatinAlmaSiparis','MalKabul','AlisFatura','UretimEmri','UretimGiris','UretimTuketim','Transfer','Sayim','Fire','Duzeltme'], required: true },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris','Cikis','Transfer','Bilgi'], required: true },
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+            required: true,
+          },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'], required: true },
         ],
         detailFields: [
           { key: 'stock_etkisi', label: 'Stok etkisi', type: 'checkbox' },
@@ -9422,8 +9425,8 @@ function buildDefaultFilterState(screen) {
     } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
-      // Açılır listeler: boş operatör satırı = filtresiz (İçerir bu alanlarda yok)
-      fs[f.key] = { op: '', a: '', b: '' };
+      // Açılır listeler: Eşit + boş değer = filtresiz (değer kutusu görünür)
+      fs[f.key] = { op: 'esit', a: '', b: '' };
     } else {
       // Metin alanları: varsayılan İçerir (değer boşken filtre uygulanmaz)
       fs[f.key] = { op: 'icerir', a: '', b: '' };
@@ -10766,6 +10769,7 @@ const LOOKUP_ENDPOINTS = {
   'sevk-emirleri': '/sevk-emirleri',
   delivery_notes: '/delivery_notes',
   'hareket-kodlari': '/hareket-kodlari?is_active=true',
+  'hareket-belge-tipleri': '/hareket-kodlari/belge-tipleri',
   'hareket-kodlari-teklif': '/hareket-kodlari?document_type=SatisTeklif&is_active=true',
   'hareket-kodlari-siparis': '/hareket-kodlari?document_type=SatisSiparis&is_active=true',
   'hareket-kodlari-sevk': '/hareket-kodlari?document_type=SevkEmri&is_active=true',
@@ -10819,6 +10823,7 @@ const SCREEN_LOOKUP_EXTRAS = {
     'kategoriler-sektor', 'kategoriler-region',
   ],
   'hareket-kodlari': [
+    'hareket-belge-tipleri',
     'hareket-kodlari', 'hareket-kodlari-teklif', 'hareket-kodlari-siparis',
     'hareket-kodlari-sevk', 'hareket-kodlari-irsaliye', 'hareket-kodlari-fatura', 'hareket-kodlari-stok',
   ],
