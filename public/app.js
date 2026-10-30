@@ -34,11 +34,11 @@ const MODULES = [
         filters: [
           { key: 'series_code', label: 'Seri kodu' },
           { key: 'screen_name', label: 'Ekran adı' },
-          { key: 'onek', label: 'Önek' },
+          { key: 'onek', label: 'Ön ek' },
         ],
         columns: [
           { key: 'series_code', label: 'Seri', mono: true },
-          { key: 'onek', label: 'Önek', mono: true },
+          { key: 'onek', label: 'Ön ek', mono: true },
           { key: 'description', label: 'Açıklama' },
           { key: 'screen_name', label: 'Ekran' },
           { key: 'son_numara', label: 'Son no' },
@@ -46,7 +46,7 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'series_code', label: 'Seri kodu', code: true, editableOnNew: true, required: true },
-          { key: 'onek', label: 'Önek' },
+          { key: 'onek', label: 'Ön ek', required: true, maxLength: 4 },
           { key: 'description', label: 'Açıklama', name: true, required: true },
         ],
         detailFields: [
@@ -10570,7 +10570,10 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const dv = v ? String(v).slice(0, 10) : '';
     return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
   }
-  return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
+  const maxLen = Number(field.maxLength) > 0
+    ? ` maxlength="${Number(field.maxLength)}"`
+    : '';
+  return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req}${maxLen} />`;
 }
 
 function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
@@ -15997,6 +16000,16 @@ async function saveForm({ after = 'stay' } = {}) {
   try {
     let saved = { ...master };
     if (screen.id === 'numarator-tanimi') {
+      const onek = String(master.onek || '').trim().toUpperCase();
+      master.onek = onek;
+      if (!onek) {
+        toast('Ön ek zorunludur.');
+        return;
+      }
+      if (onek.length > 4) {
+        toast('Ön ek en fazla 4 karakter olabilir.');
+        return;
+      }
       if (state.formMode === 'duzelt') {
         await api(`/kod-serileri/${encodeURIComponent(master.series_code)}`, {
           method: 'PUT',

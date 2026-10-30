@@ -64,9 +64,27 @@ router.post('/:seriKodu/ayir', async (req, res) => {
     }
 });
 
+function normalizeOnek(raw) {
+    return String(raw || '').trim().toUpperCase();
+}
+
+/** Ön ek: 1–4 karakter (DB VARCHAR(10); uygulama limiti 4) */
+function validateOnek(raw) {
+    const onek = normalizeOnek(raw);
+    if (!onek) return { hata: 'Ön ek zorunludur.' };
+    if (onek.length > 4) return { hata: 'Ön ek en fazla 4 karakter olabilir.' };
+    return { onek };
+}
+
 router.put('/:seriKodu', async (req, res) => {
     try {
         const { description, screen_code, screen_name, is_active, son_numara, onek } = req.body;
+        let onekVal = null;
+        if (onek != null && String(onek).trim() !== '') {
+            const checked = validateOnek(onek);
+            if (checked.hata) return res.status(400).json({ hata: checked.hata });
+            onekVal = checked.onek;
+        }
         const result = await pool.query(
             `
             UPDATE number_series SET
@@ -86,7 +104,7 @@ router.put('/:seriKodu', async (req, res) => {
                 screen_name ?? null,
                 typeof is_active === 'boolean' ? is_active : null,
                 Number.isFinite(Number(son_numara)) ? Number(son_numara) : null,
-                onek ?? null,
+                onekVal,
             ]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Numaratör bulunamadı.' });
@@ -100,19 +118,18 @@ router.put('/:seriKodu', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { series_code, onek, description, screen_code, screen_name, son_numara } = req.body;
-        if (!series_code || !onek || !description) {
-            return res.status(400).json({ hata: 'series_code, onek ve description zorunludur.' });
+        if (!series_code || !description) {
+            return res.status(400).json({ hata: 'Seri kodu ve açıklama zorunludur.' });
         }
-        if (String(onek).length !== 1) {
-            return res.status(400).json({ hata: 'onek tek karakter olmalı.' });
-        }
+        const checked = validateOnek(onek);
+        if (checked.hata) return res.status(400).json({ hata: checked.hata });
         const result = await pool.query(
             `
             INSERT INTO number_series (series_code, onek, description, son_numara, screen_code, screen_name, is_active)
             VALUES ($1, $2, $3, COALESCE($4, 0), $5, $6, TRUE)
             RETURNING series_code AS id, series_code, onek, description, son_numara, screen_code, screen_name, is_active, created_at
             `,
-            [series_code, String(onek).toUpperCase(), description, son_numara ?? 0, screen_code || null, screen_name || null]
+            [series_code, checked.onek, description, son_numara ?? 0, screen_code || null, screen_name || null]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
