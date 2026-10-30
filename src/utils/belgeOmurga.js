@@ -14,11 +14,15 @@ const BELGE_TIPI = Object.freeze({
     URETIM_EMRI: 'URETIM_EMRI',
     URETIM_GIRIS: 'URETIM_GIRIS',
     STOK_HAREKET: 'STOK_HAREKET',
+    STOK_GIRIS: 'STOK_GIRIS',
+    STOK_CIKIS: 'STOK_CIKIS',
     TRANSFER: 'TRANSFER',
     SAYIM: 'SAYIM',
+    SATIS_IADE: 'SATIS_IADE',
+    ALIS_IADE: 'ALIS_IADE',
 });
 
-/** movement_codes.document_type eşlemesi */
+/** movement_codes.document_type eşlemesi (eski PascalCase seed + yeni kodlar) */
 const HAREKET_BELGE_TIPI = Object.freeze({
     [BELGE_TIPI.SATIS_TEKLIF]: 'SatisTeklif',
     [BELGE_TIPI.SATIS_SIPARIS]: 'SatisSiparis',
@@ -31,7 +35,12 @@ const HAREKET_BELGE_TIPI = Object.freeze({
     [BELGE_TIPI.URETIM_GIRIS]: 'UretimGiris',
     [BELGE_TIPI.TRANSFER]: 'Transfer',
     [BELGE_TIPI.SAYIM]: 'Sayim',
-    [BELGE_TIPI.STOK_HAREKET]: 'StokGiris',
+    // Stok / iade — kendi kodlarıyla hareket kodu tanımında görünsün
+    [BELGE_TIPI.STOK_HAREKET]: 'STOK_HAREKET',
+    [BELGE_TIPI.STOK_GIRIS]: 'StokGiris',
+    [BELGE_TIPI.STOK_CIKIS]: 'StokCikis',
+    [BELGE_TIPI.SATIS_IADE]: 'SATIS_IADE',
+    [BELGE_TIPI.ALIS_IADE]: 'ALIS_IADE',
     STOK_GIRIS: 'StokGiris',
     STOK_CIKIS: 'StokCikis',
 });
@@ -45,11 +54,18 @@ async function hareketKoduBul(client, belgeTipiKod, verilenId = null) {
         if (r.rows[0]) return r.rows[0];
     }
     const hkBelge = HAREKET_BELGE_TIPI[belgeTipiKod] || belgeTipiKod;
+    const candidates = [hkBelge, belgeTipiKod];
+    // Stok hareket eski seed: StokGiris / StokCikis
+    if (belgeTipiKod === 'STOK_HAREKET' || belgeTipiKod === 'STOK_GIRIS') {
+        candidates.push('StokGiris', 'STOK_GIRIS');
+    }
+    if (belgeTipiKod === 'STOK_CIKIS') candidates.push('StokCikis', 'STOK_CIKIS');
+    const uniq = [...new Set(candidates.filter(Boolean))];
     const r = await client.query(
         `SELECT * FROM movement_codes
-         WHERE document_type=$1 AND is_active
+         WHERE document_type = ANY($1::text[]) AND is_active
          ORDER BY id LIMIT 1`,
-        [hkBelge]
+        [uniq]
     );
     return r.rows[0] || null;
 }

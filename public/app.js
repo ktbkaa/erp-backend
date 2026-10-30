@@ -441,29 +441,23 @@ const MODULES = [
         codeField: 'movement_code',
         nameField: 'movement_name',
         numeratorSeri: null,
-        listCategories: [
-          { id: 'SatisTeklif', label: 'Satış Teklifi' },
-          { id: 'SatisSiparis', label: 'Satış Siparişi' },
-          { id: 'SevkEmri', label: 'Sevk Emri' },
-          { id: 'SatisIrsaliye', label: 'Satış İrsaliyesi' },
-          { id: 'SatisFatura', label: 'Satış Faturası' },
-          { id: 'SatinAlmaTalep', label: 'Satınalma Talebi' },
-          { id: 'SatinAlmaSiparis', label: 'Satınalma Siparişi' },
-          { id: 'MalKabul', label: 'Mal Kabul' },
-          { id: 'AlisFatura', label: 'Alış Faturası' },
-          { id: 'UretimEmri', label: 'Üretim Emri' },
-          { id: 'UretimGiris', label: 'Üretim Girişi' },
-          { id: 'UretimTuketim', label: 'Üretim Tüketim' },
-          { id: 'Transfer', label: 'Transfer' },
-          { id: 'Sayim', label: 'Sayım' },
-          { id: 'Fire', label: 'Fire / Sarf' },
-          { id: 'Duzeltme', label: 'Stok Düzeltme' },
-        ],
-        categoryKey: 'document_type',
+        // Sol kategori yerine tepe filtre (Belge Tipleri + stok etkili yeni tipler)
+        listCategories: null,
+        categoryKey: null,
         filters: [
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+          },
           { key: 'movement_code', label: 'Hareket kodu' },
           { key: 'movement_name', label: 'Hareket adı' },
-          { key: 'document_type', label: 'Belge tipi' },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'] },
+          { key: 'stock_etkisi', label: 'Stok etkisi', type: 'bool' },
         ],
         columns: [
           { key: 'movement_code', label: 'Kod', mono: true },
@@ -471,13 +465,24 @@ const MODULES = [
           { key: 'document_type', label: 'Belge tipi' },
           { key: 'direction', label: 'Yön' },
           { key: 'stock_etkisi', label: 'Stok' },
+          { key: 'gkk_emri_olussun', label: 'GKK' },
+          { key: 'ckk_emri_olussun', label: 'CKK' },
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
           { key: 'movement_code', label: 'Hareket kodu', code: true, editableOnNew: true, required: true },
           { key: 'movement_name', label: 'Hareket adı', name: true, required: true },
-          { key: 'document_type', label: 'Belge tipi', type: 'select', options: ['SatisTeklif','SatisSiparis','SevkEmri','SatisIrsaliye','SatisFatura','SatinAlmaTalep','SatinAlmaSiparis','MalKabul','AlisFatura','UretimEmri','UretimGiris','UretimTuketim','Transfer','Sayim','Fire','Duzeltme'], required: true },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris','Cikis','Transfer','Bilgi'], required: true },
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+            required: true,
+          },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'], required: true },
         ],
         detailFields: [
           { key: 'stock_etkisi', label: 'Stok etkisi', type: 'checkbox' },
@@ -486,8 +491,19 @@ const MODULES = [
           { key: 'eksi_balance_izin', label: 'Eksi bakiye izin', type: 'checkbox' },
           { key: 'gl_account_code', label: 'Muhasebe hesap kodu' },
           { key: 'description', label: 'Açıklama' },
+          { key: 'gkk_emri_olussun', label: 'Giriş kalite emri oluşsun', type: 'checkbox' },
+          { key: 'ckk_emri_olussun', label: 'Çıkış kalite emri oluşsun', type: 'checkbox' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
+        defaults: {
+          is_active: true,
+          stock_etkisi: true,
+          warehouse_zorunlu: true,
+          partner_zorunlu: false,
+          eksi_balance_izin: false,
+          gkk_emri_olussun: false,
+          ckk_emri_olussun: false,
+        },
         detailKey: null,
         detailAsFields: true,
       },
@@ -9422,8 +9438,8 @@ function buildDefaultFilterState(screen) {
     } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
-      // Açılır listeler: boş operatör satırı = filtresiz (İçerir bu alanlarda yok)
-      fs[f.key] = { op: '', a: '', b: '' };
+      // Açılır listeler: Eşit + boş değer = filtresiz (değer kutusu görünür)
+      fs[f.key] = { op: 'esit', a: '', b: '' };
     } else {
       // Metin alanları: varsayılan İçerir (değer boşken filtre uygulanmaz)
       fs[f.key] = { op: 'icerir', a: '', b: '' };
@@ -10367,6 +10383,12 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
+  } else if (col.key === 'document_type' && val != null && val !== '') {
+    const tips = state.lookupCache?.['hareket-belge-tipleri'];
+    if (Array.isArray(tips)) {
+      const hit = tips.find((t) => String(t.id) === String(val) || String(t.document_type) === String(val));
+      if (hit?.label) val = hit.label;
+    }
   }
   if (val === null || val === undefined || val === '') val = '—';
   return col.mono ? `<span class="mono">${val}</span>` : String(val);
@@ -10766,6 +10788,7 @@ const LOOKUP_ENDPOINTS = {
   'sevk-emirleri': '/sevk-emirleri',
   delivery_notes: '/delivery_notes',
   'hareket-kodlari': '/hareket-kodlari?is_active=true',
+  'hareket-belge-tipleri': '/hareket-kodlari/belge-tipleri',
   'hareket-kodlari-teklif': '/hareket-kodlari?document_type=SatisTeklif&is_active=true',
   'hareket-kodlari-siparis': '/hareket-kodlari?document_type=SatisSiparis&is_active=true',
   'hareket-kodlari-sevk': '/hareket-kodlari?document_type=SevkEmri&is_active=true',
@@ -10819,6 +10842,7 @@ const SCREEN_LOOKUP_EXTRAS = {
     'kategoriler-sektor', 'kategoriler-region',
   ],
   'hareket-kodlari': [
+    'hareket-belge-tipleri',
     'hareket-kodlari', 'hareket-kodlari-teklif', 'hareket-kodlari-siparis',
     'hareket-kodlari-sevk', 'hareket-kodlari-irsaliye', 'hareket-kodlari-fatura', 'hareket-kodlari-stok',
   ],
@@ -11695,7 +11719,7 @@ const FIELD_GROUP_DEFS = [
   { id: 'address', title: 'Adres', re: /^(country|il$|district|sehir|posta_|address|bill_address|fatura_adres|sevk_|enlem|boylam|mensei)/i },
   { id: 'iletisim', title: 'İletişim', re: /^(telefon|cep_|mobile_|email|website|fax|yetkili)/i },
   { id: 'finans', title: 'Finans', re: /^(currency_code|exchange_rate$|odeme_|payment_|vade|iban|banka_|swift|hesap_|risk_|nakit_|kur_deger|sermaye|grand_total|iskonto|kdv_|unit_price|sales_price|varsayilan_vat|tax_|beklenen_gelir|muhasebe_|delivery_term)/i },
-  { id: 'status', title: 'Durum / notlar', re: /^(status|is_active|is_inactive|silindi|description|notlar|not_|priority|source|onayli|yayinlandi|is_printed|is_started|acik_kapali|product_girisi|planli_kesin)/i },
+  { id: 'status', title: 'Durum / notlar', re: /^(status|is_active|is_inactive|silindi|description|notlar|not_|priority|source|onayli|yayinlandi|is_printed|is_started|acik_kapali|product_girisi|planli_kesin|gkk_emri_olussun|ckk_emri_olussun)/i },
 ];
 const FIELD_GROUP_ORDER = FIELD_GROUP_DEFS.map((g) => g.id).concat(['diger']);
 
@@ -16343,12 +16367,19 @@ async function openForm(mode, opts = {}) {
   const seedFields = () => {
     collectTabFields(screen).forEach((f) => {
       if (f.type === 'checkbox') {
-        // is_active varsayılan true → Pasif kutusu boş
-        record[f.key] = f.key === 'is_inactive' ? false : true;
-      } else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
-      else if (f.key === 'company_id' && getActiveFirmaId()) record[f.key] = getActiveFirmaId();
-      else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
-      else if (record[f.key] === undefined) record[f.key] = '';
+        // screen.defaults verilmişse koru
+        if (Object.prototype.hasOwnProperty.call(record, f.key)) return;
+        // is_active varsayılan true → Pasif kutusu boş; diğer tikler kapalı
+        if (f.key === 'is_inactive') record[f.key] = false;
+        else if (f.key === 'is_active') record[f.key] = true;
+        else record[f.key] = false;
+      } else if (f.type === 'select') {
+        if (record[f.key] === undefined) record[f.key] = f.options?.[0] || '';
+      } else if (f.key === 'company_id' && getActiveFirmaId()) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = getActiveFirmaId();
+      } else if (f.key === 'plant_id' && state.activeIsYeriId) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = state.activeIsYeriId;
+      } else if (record[f.key] === undefined) record[f.key] = '';
     });
   };
 
