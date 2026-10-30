@@ -7265,6 +7265,7 @@ const MODULE_TITLE_EN = {
   finans: 'Finance',
   muhasebe: 'Accounting',
   onay: 'Approvals',
+  'insan-kaynaklari': 'Human Resources',
   hr: 'HR',
   ik: 'HR',
 };
@@ -7364,6 +7365,9 @@ const UI_EN = {
   'Hareket Kodları': 'Movement Codes',
   'Belge Tipleri': 'Document Types',
   'Sabit Tanımlar': 'Fixed Definitions',
+  'Onay Yönetimi': 'Approvals',
+  'İnsan Kaynakları': 'Human Resources',
+  'Firma seçin': 'Select company',
 };
 
 function titleFromBusinessEn(name) {
@@ -9755,7 +9759,11 @@ function renderFirmaPicker() {
   const nameEl = $('#firmaPickerName');
   const menu = $('#firmaPickerMenu');
   const labelEl = $('#firmaProfileLabel');
-  if (labelEl) labelEl.textContent = 'Firma profil alanı';
+  if (labelEl) labelEl.textContent = L('Firma profil alanı');
+  const pickerBtn = $('#firmaPickerBtn');
+  if (pickerBtn) pickerBtn.setAttribute('aria-label', L('Firma profil alanı'));
+  const picker = $('#firmaPicker');
+  if (picker) picker.title = L('Firma profil alanı');
   if (!nameEl || !menu) return;
   const list = allowedFirmalar();
   // Oturum firma kısıtı varsa is_active firmayı listeye çek
@@ -9769,7 +9777,7 @@ function renderFirmaPicker() {
     ? (yer && state.isYerleri.length > 1
       ? `${is_active.company_name} · ${yer.plant_code || yer.plant_name}`
       : is_active.company_name)
-    : 'Firma seçin';
+    : L('Firma seçin');
   menu.innerHTML = list.map((f) => `
     <li role="option">
       <button type="button" class="firma-picker-item ${Number(f.id) === Number(state.activeFirmaId) ? 'active' : ''}"
