@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -43,23 +41,21 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
+        const city_code = trimOrNull(req.body.city_code);
         const city_name = trimOrNull(req.body.city_name);
+        if (!city_code) return res.status(400).json({ hata: 'city_code zorunludur.' });
         if (!city_name) return res.status(400).json({ hata: 'city_name zorunludur.' });
-        const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.city_code) || (await sonrakiKod(client, 'SEHIR'));
-            const ins = await client.query(
-                `INSERT INTO cities (city_code, city_name, country_code, is_active)
-                 VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
-                [
-                    kod,
-                    city_name,
-                    trimOrNull(req.body.country_code) || 'TR',
-                    typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
-                ]
-            );
-            return ins.rows[0];
-        });
-        res.status(201).json(row);
+        const ins = await pool.query(
+            `INSERT INTO cities (city_code, city_name, country_code, is_active)
+             VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
+            [
+                city_code,
+                city_name,
+                trimOrNull(req.body.country_code) || 'TR',
+                typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
+            ]
+        );
+        res.status(201).json(ins.rows[0]);
     } catch (err) {
         if (err.code === '23505') return res.status(409).json({ hata: 'Şehir kodu zaten var.' });
         res.status(500).json({ hata: err.message });

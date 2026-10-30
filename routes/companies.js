@@ -1,8 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+
+function trimOrNull(v) {
+    if (v === undefined || v === null) return null;
+    if (typeof v === 'string') {
+        const t = v.trim();
+        return t === '' ? null : t;
+    }
+    return v;
+}
 
 router.get('/', async (req, res) => {
     try {
@@ -25,21 +32,18 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { company_code, company_name } = req.body;
-        if (!company_name) {
-            return res.status(400).json({ hata: 'company_name zorunludur. company_code boşsa numaratörden üretilir.' });
-        }
+        const company_code = trimOrNull(req.body.company_code);
+        const company_name = trimOrNull(req.body.company_name);
+        if (!company_code) return res.status(400).json({ hata: 'company_code zorunludur.' });
+        if (!company_name) return res.status(400).json({ hata: 'company_name zorunludur.' });
 
-        const row = await withTransaction(pool, async (client) => {
-            const kod = company_code || (await sonrakiKod(client, 'FIRMA'));
-            const result = await client.query(
-                `INSERT INTO companies (company_code, company_name) VALUES ($1, $2) RETURNING *`,
-                [kod, company_name]
-            );
-            return result.rows[0];
-        });
-        res.status(201).json(row);
+        const result = await pool.query(
+            `INSERT INTO companies (company_code, company_name) VALUES ($1, $2) RETURNING *`,
+            [company_code, company_name]
+        );
+        res.status(201).json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'Firma kodu zaten var.' });
         res.status(500).json({ hata: err.message });
     }
 });

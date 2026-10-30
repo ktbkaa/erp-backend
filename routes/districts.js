@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -47,23 +45,21 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
+        const district_code = trimOrNull(req.body.district_code);
         const district_name = trimOrNull(req.body.district_name);
+        if (!district_code) return res.status(400).json({ hata: 'district_code zorunludur.' });
         if (!district_name) return res.status(400).json({ hata: 'district_name zorunludur.' });
-        const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.district_code) || (await sonrakiKod(client, 'ILCE'));
-            const ins = await client.query(
-                `INSERT INTO districts (district_code, district_name, city_code, is_active)
-                 VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
-                [
-                    kod,
-                    district_name,
-                    trimOrNull(req.body.city_code),
-                    typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
-                ]
-            );
-            return ins.rows[0];
-        });
-        res.status(201).json(row);
+        const ins = await pool.query(
+            `INSERT INTO districts (district_code, district_name, city_code, is_active)
+             VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
+            [
+                district_code,
+                district_name,
+                trimOrNull(req.body.city_code),
+                typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
+            ]
+        );
+        res.status(201).json(ins.rows[0]);
     } catch (err) {
         if (err.code === '23505') return res.status(409).json({ hata: 'İlçe kodu zaten var.' });
         res.status(500).json({ hata: err.message });

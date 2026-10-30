@@ -35,8 +35,9 @@ router.post('/banka-hesaplari', async (req, res, next) => {
   try {
     const firmaId = firmaIdFromReq(req);
     const { account_code, account_name, bank_id, iban, currency_code, gl_account_id } = req.body || {};
+    const kod = typeof account_code === 'string' ? account_code.trim() : account_code;
+    if (!kod) return res.status(400).json({ hata: 'account_code zorunlu.' });
     if (!account_name) return res.status(400).json({ hata: 'account_name zorunlu.' });
-    const kod = account_code || (await withTransaction(pool, (c) => sonrakiBelgeNo(c, 'FIN_BANKA_HESAP')));
     const r = await pool.query(
       `
       INSERT INTO fin_bank_accounts
@@ -47,6 +48,7 @@ router.post('/banka-hesaplari', async (req, res, next) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ hata: 'Hesap kodu zaten var.' });
     next(err);
   }
 });
@@ -74,8 +76,9 @@ router.post('/kasa-hesaplari', async (req, res, next) => {
   try {
     const firmaId = firmaIdFromReq(req);
     const { cash_code, cash_name, currency_code, gl_account_id } = req.body || {};
+    const kod = typeof cash_code === 'string' ? cash_code.trim() : cash_code;
+    if (!kod) return res.status(400).json({ hata: 'cash_code zorunlu.' });
     if (!cash_name) return res.status(400).json({ hata: 'cash_name zorunlu.' });
-    const kod = cash_code || (await withTransaction(pool, (c) => sonrakiBelgeNo(c, 'FIN_KASA')));
     const r = await pool.query(
       `
       INSERT INTO fin_cash_accounts (company_id, cash_code, cash_name, currency_code, gl_account_id)
@@ -85,6 +88,7 @@ router.post('/kasa-hesaplari', async (req, res, next) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ hata: 'Kasa kodu zaten var.' });
     next(err);
   }
 });

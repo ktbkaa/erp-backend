@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -38,25 +36,23 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
+        const currency_code = trimOrNull(req.body.currency_code);
         const currency_name = trimOrNull(req.body.currency_name);
+        if (!currency_code) return res.status(400).json({ hata: 'currency_code zorunludur.' });
         if (!currency_name) return res.status(400).json({ hata: 'currency_name zorunludur.' });
-        const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.currency_code) || (await sonrakiKod(client, 'PARA_BIRIM'));
-            // Sembol boşsa para birimi kodu kullanılır
-            const sembol = trimOrNull(req.body.sembol) || kod;
-            const ins = await client.query(
-                `INSERT INTO currencies (currency_code, currency_name, sembol, is_active)
-                 VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
-                [
-                    kod,
-                    currency_name,
-                    sembol,
-                    typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
-                ]
-            );
-            return ins.rows[0];
-        });
-        res.status(201).json(row);
+        // Sembol boşsa para birimi kodu kullanılır
+        const sembol = trimOrNull(req.body.sembol) || currency_code;
+        const ins = await pool.query(
+            `INSERT INTO currencies (currency_code, currency_name, sembol, is_active)
+             VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
+            [
+                currency_code,
+                currency_name,
+                sembol,
+                typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
+            ]
+        );
+        res.status(201).json(ins.rows[0]);
     } catch (err) {
         if (err.code === '23505') return res.status(409).json({ hata: 'Para birimi kodu zaten var.' });
         res.status(500).json({ hata: err.message });

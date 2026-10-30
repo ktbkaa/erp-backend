@@ -3,7 +3,6 @@ const router = express.Router();
 const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 async function istasyonGetir(id) {
   const r = await pool.query(
@@ -71,11 +70,14 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { work_center_id, station_code, station_name, is_active } = req.body || {};
+    const kod = typeof station_code === 'string' ? station_code.trim() : station_code;
     if (!work_center_id || !station_name) {
       return res.status(400).json({ hata: 'work_center_id ve station_name zorunlu.' });
     }
+    if (!kod) {
+      return res.status(400).json({ hata: 'station_code zorunlu.' });
+    }
     const id = await withTransaction(pool, async (client) => {
-      const kod = station_code || (await sonrakiKod(client, 'IS_ISTASYONU'));
       const ins = await client.query(
         `INSERT INTO work_stations (work_center_id, station_code, station_name, is_active)
          VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING id`,
@@ -85,6 +87,7 @@ router.post('/', async (req, res) => {
     });
     res.status(201).json(await istasyonGetir(id));
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ hata: 'İş istasyonu kodu zaten var.' });
     res.status(500).json({ hata: err.message });
   }
 });

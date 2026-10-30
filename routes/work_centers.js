@@ -3,7 +3,6 @@ const router = express.Router();
 const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 async function merkezGetir(id) {
     const result = await pool.query(
@@ -57,11 +56,14 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { plant_id, center_code, center_name } = req.body;
+        const kod = typeof center_code === 'string' ? center_code.trim() : center_code;
         if (!plant_id || !center_name) {
             return res.status(400).json({ hata: 'plant_id ve center_name zorunlu.' });
         }
+        if (!kod) {
+            return res.status(400).json({ hata: 'center_code zorunlu.' });
+        }
         const id = await withTransaction(pool, async (client) => {
-            const kod = center_code || (await sonrakiKod(client, 'IS_MERKEZI'));
             const result = await client.query(
                 `INSERT INTO work_centers (plant_id, center_code, center_name)
                  VALUES ($1,$2,$3) RETURNING id`,
@@ -71,6 +73,7 @@ router.post('/', async (req, res) => {
         });
         res.status(201).json(await merkezGetir(id));
     } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'İş merkezi kodu zaten var.' });
         res.status(500).json({ hata: err.message });
     }
 });
