@@ -729,6 +729,9 @@ const MODULES = [
         title: 'Firmalar',
         endpoint: '/companies',
         crud: true,
+        // Org tanımı: aktif firma izolasyonu listede uygulanmaz
+        scopeFirma: false,
+        scopeIsYeri: false,
         codeField: 'company_code',
         nameField: 'company_name',
         numeratorSeri: 'FIRMA',
@@ -754,6 +757,8 @@ const MODULES = [
         title: 'İş Yerleri',
         endpoint: '/is-yerleri',
         crud: true,
+        scopeFirma: false,
+        scopeIsYeri: false,
         codeField: 'plant_code',
         nameField: 'plant_name',
         numeratorSeri: 'ISYERI',
@@ -786,6 +791,8 @@ const MODULES = [
         title: 'Depolar',
         endpoint: '/warehouses',
         crud: true,
+        scopeFirma: false,
+        scopeIsYeri: false,
         codeField: 'warehouse_code',
         nameField: 'warehouse_name',
         numeratorSeri: 'DEPO',
@@ -7539,14 +7546,18 @@ async function api(path, options = {}) {
     const kullaniciKodu = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_kullanici_kodu')) || '';
     const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_access_token')) || '';
     const firmaId = getActiveFirmaId();
-    const { headers: optHeaders, ...restOpts } = options;
+    const { headers: optHeaders, skipFirma = false, ...restOpts } = options;
+    // skipFirma / boş X-Firma-Id → org tanım listelerinde tüm firmalar
+    const headerFirma = optHeaders && Object.prototype.hasOwnProperty.call(optHeaders, 'X-Firma-Id')
+      ? null
+      : (skipFirma ? null : firmaId);
     res = await fetch(path, {
       ...restOpts,
       headers: {
         'Content-Type': 'application/json',
         ...(kullaniciKodu ? { 'X-Kullanici-Kodu': kullaniciKodu } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        ...(firmaId ? { 'X-Firma-Id': String(firmaId) } : {}),
+        ...(headerFirma ? { 'X-Firma-Id': String(headerFirma) } : {}),
         ...(optHeaders || {}),
       },
     });
@@ -7816,7 +7827,7 @@ function filterStateIsActive(st) {
 function applyFilters(rows, screen) {
   const active = screen.filters
     .filter((f) => !f.queryParam) // sunucu filtreleri satır alanı değil
-    .map((f) => ({ def: f, st: state.filterState[f.key] || { op: 'icerir', a: '', b: '' } }))
+    .map((f) => ({ def: f, st: state.filterState[f.key] || { op: '', a: '', b: '' } }))
     .filter(({ st }) => filterStateIsActive(st));
   if (!active.length) return rows.slice();
   return rows.filter((row) =>
@@ -8917,9 +8928,9 @@ function buildDefaultFilterState(screen) {
       fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
     } else if (f.key === 'is_active' || f.type === 'bool') {
       fs[f.key] = { op: 'esit', a: 'evet', b: '' };
-    } else if (f.key === 'company_id' && getActiveFirmaId()) {
+    } else if (f.key === 'company_id' && getActiveFirmaId() && screen.scopeFirma !== false) {
       fs[f.key] = { op: 'esit', a: String(getActiveFirmaId()), b: '' };
-    } else if (f.key === 'plant_id' && state.activeIsYeriId) {
+    } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
       // Açılır listeler: boş operatör satırı = filtresiz
@@ -9610,11 +9621,12 @@ function filterOperatorsFor(f) {
 }
 
 function renderFilterField(f) {
-  const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
+  const st = state.filterState[f.key] || { op: '', a: '', b: '' };
   const bucket = filterBucket(f);
   if (f.type === 'checkbox') {
     const ops = filterOperatorsFor(f);
-    const op = ops.some((o) => o.id === st.op) ? st.op : 'esit';
+    const rawCk = (st.op === 'filtresiz' || st.op === 'bos' || st.op === 'bos_degil') ? '' : (st.op || '');
+    const op = ops.some((o) => o.id === rawCk) ? rawCk : '';
     return `
     <div class="filter-field filter-field--${bucket} filter-field--check" data-filter-key="${f.key}">
       <label>${f.label}</label>
@@ -9971,7 +9983,10 @@ async function openScreen(id, opts = {}) {
         banner.textContent = `${screen.title} · çalışma #${calismaId} · UI build 20261017u`;
       }
     } else {
-      data = await api(buildListEndpoint(screen));
+      data = await api(
+        buildListEndpoint(screen),
+        screen.scopeFirma === false ? { skipFirma: true } : {},
+      );
     }
     if (state.screenId !== screen.id) return;
     let rows = Array.isArray(data) ? data : [];
@@ -10107,6 +10122,9 @@ const LOOKUP_ENDPOINTS = {
 
 /** Ekran kaydı → ek lookup anahtarları (endpoint eşleşmesi yetmezse / alias) */
 const SCREEN_LOOKUP_EXTRAS = {
+  companies: ['companies'],
+  'is-yerleri': ['is-yerleri', 'companies'],
+  warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
@@ -10172,7 +10190,7 @@ function lookupsFedByScreen(screen) {
 function invalidateLookupsForScreen(screen) {
   const keys = lookupsFedByScreen(screen);
   if (keys.length) invalidateLookups(...keys);
-  else invalidateLookups(); // bilinmeyen ekran → tüm cache
+  // Bilinmeyen ekranda tüm cache’i silme — gereksiz yavaşlık + liste boşalması
 }
 
 /** Lookup anahtarı → API yolu. LOOKUP_ENDPOINTS yoksa ekran id / endpoint’ten çöz. */
@@ -10199,7 +10217,10 @@ async function fetchLookupKey(key) {
     return state.lookupCache[key];
   }
   try {
-    const rows = await api(ep);
+    // Firmalar her zaman tam liste (backend zaten izolasyonsuz).
+    // İş yeri/depo lookup’ı aktif firmaya bağlı kalsın — org liste ekranları
+    // openScreen’de skipFirma ile ayrı yüklenir; cache karışmasın.
+    const rows = await api(ep, key === 'companies' ? { skipFirma: true } : {});
     state.lookupCache[key] = Array.isArray(rows) ? rows : [];
     if (key === 'companies') state.companies = state.lookupCache[key];
     if (key === 'is-yerleri') state.isYerleri = state.lookupCache[key];
@@ -15490,6 +15511,42 @@ function playNestedEnterAnimation() {
   playNestedEnterAnimation._t = setTimeout(() => view.classList.remove('nested-enter'), 420);
 }
 
+/**
+ * Firma / iş yeri kaydından sonra aktif firma bağlamını güncelle.
+ * Yoksa yenilemede X-Firma-Id eski firmada kalır, yeni kayıtlar listede görünmez.
+ * Not: setActiveFirma tüm cache/sekmeleri siler — burada hafif güncelleme yapılır.
+ */
+async function syncActiveFirmaAfterOrgSave(screen, saved) {
+  if (!saved) return;
+  let nextFirmaId = null;
+  if (screen.id === 'companies' && saved.id) {
+    nextFirmaId = Number(saved.id);
+    if (!state.companies?.some((c) => Number(c.id) === nextFirmaId)) {
+      state.companies = [saved, ...(state.companies || [])];
+      state.lookupCache.companies = state.companies;
+    }
+  } else if (screen.id === 'is-yerleri' && saved.company_id) {
+    nextFirmaId = Number(saved.company_id);
+  } else if (screen.id === 'warehouses' && saved.plant_id) {
+    const plant = (state.lookupCache['is-yerleri'] || state.isYerleri || [])
+      .find((p) => Number(p.id) === Number(saved.plant_id));
+    if (plant?.company_id) nextFirmaId = Number(plant.company_id);
+  }
+  if (!nextFirmaId || Number(getActiveFirmaId()) === nextFirmaId) {
+    renderFirmaPicker();
+    return;
+  }
+  state.activeFirmaId = nextFirmaId;
+  localStorage.setItem('ktb_firma_id', String(nextFirmaId));
+  // Org lookup’larını taze tut; diğer cache’e dokunma
+  delete state.lookupCache['is-yerleri'];
+  delete state.lookupCache.warehouses;
+  try {
+    await loadIsYerleriForActiveFirma();
+  } catch (_) { /* ignore */ }
+  renderFirmaPicker();
+}
+
 /** Kayıt sonrası: stay = formda kal, close = listeye dön, new = yeni form */
 async function finishSaveForm(screen, saved, after = 'stay') {
   const listScreenId = (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri')
@@ -15505,7 +15562,7 @@ async function finishSaveForm(screen, saved, after = 'stay') {
     } else {
       state.rows = state.rows.map((r) => (String(r.id) === String(id) ? { ...r, ...(saved || {}) } : r));
     }
-    state.filtered = state.rows;
+    state.filtered = applyFilters(state.rows, screen);
     // Aynı sekmede Düzelt’e geç — yeni sekme açma
     let record = { ...(saved || {}), id };
     try {
@@ -15671,6 +15728,7 @@ async function saveForm({ after = 'stay' } = {}) {
       saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
       toast('Kaydedildi.');
       invalidateLookupsForScreen(screen);
+      await syncActiveFirmaAfterOrgSave(screen, saved);
       await finishSaveForm(screen, saved, after);
       return;
     }
@@ -15703,6 +15761,7 @@ async function saveForm({ after = 'stay' } = {}) {
       toast('Kaydedildi.');
     }
     saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
+    await syncActiveFirmaAfterOrgSave(screen, saved);
     // Toplu / sipariş→İE oluşturma: formda kalmak anlamsız → kapat
     const effectiveAfter = (screen.id === 'toplu-is-emri' || screen.id === 'siparis-is-emri')
       ? (after === 'new' ? 'new' : 'close')
