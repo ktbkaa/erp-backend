@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/', async (_req, res) => {
     try {
@@ -37,6 +38,15 @@ router.put('/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
+});
+
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'qc_rejection_reasons',
+  notFound: 'Ret nedeni bulunamadı.',
+  skipGet: true,
+  skipPut: true,
+  softDelete: true,
 });
 
 module.exports = router;

@@ -119,4 +119,22 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const cur = await pool.query(`SELECT id, status FROM vendor_delivery_notes WHERE id=$1`, [req.params.id]);
+    if (!cur.rows[0]) return res.status(404).json({ hata: 'Tedarikçi irsaliyesi bulunamadı.' });
+    if (cur.rows[0].status && !['Taslak', 'Iptal'].includes(cur.rows[0].status)) {
+      return res.status(409).json({ hata: `Bu durumda silinemez (${cur.rows[0].status}).` });
+    }
+    await pool.query(`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id=$1`, [req.params.id]);
+    await pool.query(`DELETE FROM vendor_delivery_notes WHERE id=$1`, [req.params.id]);
+    res.json({ silindi: true, id: Number(req.params.id) });
+  } catch (err) {
+    if (err.code === '23503') {
+      return res.status(409).json({ hata: 'Bağlı kayıtlar nedeniyle silinemedi.' });
+    }
+    res.status(500).json({ hata: err.message });
+  }
+});
+
 module.exports = router;

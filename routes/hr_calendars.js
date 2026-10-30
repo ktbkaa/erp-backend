@@ -4,6 +4,7 @@ const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/takvimler', async (req, res) => {
   try {
@@ -371,6 +372,16 @@ router.delete('/tatiller/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '/takvimler',
+  table: 'hr_work_calendars',
+  notFound: 'Takvim bulunamadı.',
+  skipGet: true,
+  skipPut: true,
+  softDelete: true,
+  softCol: 'is_active',
 });
 
 module.exports = router;

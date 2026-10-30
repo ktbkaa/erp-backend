@@ -6,6 +6,7 @@ const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { reqKullaniciKodu } = require('../src/utils/yetki');
 const { fisOlustur, hesapIdCoz } = require('../src/services/muhasebeMotorService');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 async function bankaListe(firmaId) {
   const r = await pool.query(
@@ -196,6 +197,28 @@ router.post('/hareketler', async (req, res, next) => {
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '/banka-hesaplari',
+  table: 'fin_bank_accounts',
+  notFound: 'Banka hesabı bulunamadı.',
+  updatable: ['account_name', 'bank_id', 'iban', 'currency_code', 'gl_account_id'],
+});
+registerIdCrud(router, pool, {
+  path: '/kasa-hesaplari',
+  table: 'fin_cash_accounts',
+  notFound: 'Kasa hesabı bulunamadı.',
+  updatable: ['cash_name', 'currency_code', 'gl_account_id'],
+});
+registerIdCrud(router, pool, {
+  path: '/hareketler',
+  table: 'fin_cash_movements',
+  notFound: 'Nakit hareket bulunamadı.',
+  canDelete: async (row) => {
+    if (row.gl_document_id) return 'Muhasebeleşmiş nakit hareket silinemez.';
+    return true;
+  },
 });
 
 module.exports = router;
