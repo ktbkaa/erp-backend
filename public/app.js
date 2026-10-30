@@ -8608,7 +8608,10 @@ async function importExcelIntoList(ctx) {
     state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
     const cityCode = state.formRecord.city_code || masterSnap.city_code || '';
     const existing = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-    rows.forEach((raw) => {
+    const canPersist = Boolean(screen.detailPersist?.[key] && state.formRecord?.id);
+    let ok = 0;
+    let fail = 0;
+    for (const raw of rows) {
       const blank = emptyRowFromFields(tab.fields);
       Object.assign(blank, raw);
       if (key === 'districts') {
@@ -8617,14 +8620,35 @@ async function importExcelIntoList(ctx) {
         }
         if (typeof blank.is_active !== 'boolean') blank.is_active = true;
       }
-      blank._satir_kayitli = false;
-      blank._satir_duzenleniyor = true;
-      existing.push(blank);
-    });
+      if (canPersist) {
+        try {
+          const saved = await persistGridRowImmediately(screen, key, blank);
+          const merged = { ...blank, ...(saved || {}), _satir_kayitli: true, _satir_duzenleniyor: false };
+          existing.push(merged);
+          ok += 1;
+        } catch (_) {
+          blank._satir_kayitli = false;
+          blank._satir_duzenleniyor = true;
+          existing.push(blank);
+          fail += 1;
+        }
+      } else {
+        blank._satir_kayitli = false;
+        blank._satir_duzenleniyor = true;
+        existing.push(blank);
+      }
+    }
     state.formRecord[key] = existing;
     state.gridSel = { key, idx: existing.length - 1 };
+    if (key === 'districts') delete state.lookupCache.districts;
     renderForm(screen);
-    toast(`${rows.length} satır Excel’den eklendi (henüz kaydedilmedi).`);
+    if (canPersist) {
+      toast(fail
+        ? `${ok} satır kaydedildi, ${fail} hatalı.`
+        : `${ok} satır Excel’den kaydedildi.`);
+    } else {
+      toast(`${rows.length} satır Excel’den eklendi — satırda ✓ veya üst Kaydet ile yazın.`);
+    }
     return;
   }
 
