@@ -471,14 +471,14 @@ const MODULES = [
           { key: 'document_type_code', label: 'Kod', mono: true },
           { key: 'document_type_name', label: 'Ad' },
           { key: 'module', label: 'Modül' },
-          { key: 'item_etkisi', label: 'Stok etkisi' },
+          { key: 'stock_etkisi', label: 'Stok etkisi' },
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
           { key: 'document_type_code', label: 'Belge tipi kodu', code: true, required: true, editableOnNew: true },
           { key: 'document_type_name', label: 'Belge tipi adı', name: true, required: true },
           { key: 'module', label: 'Modül' },
-          { key: 'item_etkisi', label: 'Stok etkisi', type: 'checkbox' },
+          { key: 'stock_etkisi', label: 'Stok etkisi', type: 'checkbox' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
         defaults: { is_active: true },
@@ -5591,7 +5591,7 @@ const MODULES = [
         masterFields: [
           { key: 'invoice_id', label: 'Alış faturası', type: 'lookup', lookup: 'alis-faturalari', valueKey: 'id', labelKey: 'invoice_no' },
           { key: 'goods_receipt_id', label: 'Mal kabul', type: 'lookup', lookup: 'mal-kabuller', valueKey: 'id', labelKey: 'receipt_no' },
-          { key: 'sales_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no' },
+          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no' },
           { key: 'invoice_no', label: 'Fatura no', code: true },
           { key: 'receipt_no', label: 'Mal kabul no' },
           { key: 'order_no', label: 'Sipariş no' },
@@ -7304,7 +7304,7 @@ function buildLinkedPrefill(link, sourceRec, extra = {}) {
       partner_id: sourceRec.partner_id || null,
       invoice_type: 'Alis',
       goods_receipt_id: sourceRec.id,
-      sales_order_id: sourceRec.sales_order_id || null,
+      sales_order_id: sourceRec.purchase_order_id || sourceRec.sales_order_id || null,
       currency_code: sourceRec.currency_code || 'TRY',
       exchange_rate: 1,
       rate_type: 'TCMB-ALIS',
@@ -7810,6 +7810,7 @@ const SCREEN_ALIASES = {
   'satis-faturalari': 'fatura-yonetimi',
   'alis-faturalari': 'fatura-yonetimi',
   'belge-yonetimi': 'fatura-yonetimi',
+  sales_orders: 'satis-siparisleri',
 };
 
 function resolveScreenId(id) {
@@ -9322,7 +9323,9 @@ async function fillLinesFromSource(kind, sourceId) {
       const mk = await api(`/mal-kabuller/${sourceId}`);
       if (!mk) return;
       state.formRecord.goods_receipt_id = Number(sourceId);
-      if (mk.sales_order_id && !state.formRecord.sales_order_id) state.formRecord.sales_order_id = mk.sales_order_id;
+      if ((mk.purchase_order_id || mk.sales_order_id) && !state.formRecord.sales_order_id) {
+        state.formRecord.sales_order_id = mk.purchase_order_id || mk.sales_order_id;
+      }
       if (mk.partner_id && !state.formRecord.partner_id) state.formRecord.partner_id = mk.partner_id;
       if (!state.formRecord.invoice_type) state.formRecord.invoice_type = 'Alis';
       state.formRecord[detailKey] = (mk.satirlar || []).map((s) => ({
