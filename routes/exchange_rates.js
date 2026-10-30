@@ -2,11 +2,97 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { trimOrNull } = require('../src/utils/tanimCrud');
+const {
+  syncTcmbRates,
+  resolveFetchUrl,
+  fetchXml,
+  parseTcmbXml,
+  DEFAULT_TODAY_URL,
+  readParam,
+} = require('../src/services/tcmbKurService');
 
 function num(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : null;
 }
+
+/** TCMB kaynak URL / otomatik ayar özeti */
+router.get('/tcmb-durum', async (req, res, next) => {
+  try {
+    const url = await resolveFetchUrl(pool, {});
+    const auto = await readParam(pool, 'TCMB_KUR_AUTO', 'true');
+    const last = await pool.query(
+      `SELECT rate_date, COUNT(*)::int AS n, MAX(created_at) AS last_at
+       FROM exchange_rates WHERE source = 'TCMB'
+       GROUP BY rate_date ORDER BY rate_date DESC LIMIT 5`
+    );
+    res.json({
+      url,
+      default_url: DEFAULT_TODAY_URL,
+      auto: /^(1|true|evet|yes|on)$/i.test(String(auto || '')),
+      son_tcmb_gunleri: last.rows,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /doviz-kurlari/tcmb-cek
+ * body/query: { tarih?, url?, target_pb? }
+ * Tanımlı para birimleri için TCMB kurlarını çeker ve kaydeder.
+ */
+router.post('/tcmb-cek', async (req, res, next) => {
+  try {
+    const tarih = trimOrNull(req.body?.tarih) || trimOrNull(req.query.tarih);
+    const url = trimOrNull(req.body?.url) || trimOrNull(req.query.url);
+    const targetPb = trimOrNull(req.body?.target_pb) || trimOrNull(req.query.target_pb) || 'TRY';
+    const result = await syncTcmbRates(pool, { tarih, url, targetPb });
+    res.status(201).json(result);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
+    next(err);
+  }
+});
+
+/**
+ * GET /doviz-kurlari/tcmb-onizleme?source_pb=USD&target_pb=TRY&tarih=
+ * Tek çift için TCMB kurunu döner (DB’ye yazmaz).
+ */
+router.get('/tcmb-onizleme', async (req, res, next) => {
+  try {
+    const source = trimOrNull(req.query.source_pb);
+    const hedef = trimOrNull(req.query.target_pb) || 'TRY';
+    if (!source) return res.status(400).json({ hata: 'source_pb zorunlu.' });
+    if (source === hedef) {
+      return res.json({ source_pb: source, target_pb: hedef, buy_rate: 1, sell_rate: 1 });
+    }
+    const url = await resolveFetchUrl(pool, {
+      tarih: trimOrNull(req.query.tarih),
+      url: trimOrNull(req.query.url),
+    });
+    const parsed = parseTcmbXml(await fetchXml(url));
+    const hit = parsed.rates.find((r) => r.currency_code === String(source).toUpperCase());
+    if (!hit || hit.buy_rate == null || hit.sell_rate == null) {
+      return res.status(404).json({ hata: `${source} için TCMB kuru yok veya sistemde eşleşmedi.` });
+    }
+    res.json({
+      url,
+      rate_date: parsed.bulletinDate,
+      bulletin_no: parsed.bulletinNo,
+      source_pb: hit.currency_code,
+      target_pb: String(hedef).toUpperCase(),
+      buy_rate: hit.buy_rate,
+      sell_rate: hit.sell_rate,
+      effective_buy_rate: hit.effective_buy_rate,
+      effective_sell_rate: hit.effective_sell_rate,
+      source: 'TCMB',
+    });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
+    next(err);
+  }
+});
 
 router.get('/', async (req, res, next) => {
   try {

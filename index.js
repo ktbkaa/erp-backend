@@ -178,4 +178,11 @@ const listenOpts = host === '::'
 server.listen(listenOpts, () => {
     console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
+    // TCMB günlük kur — günde 1 kez (parametre: TCMB_KUR_AUTO)
+    try {
+      const { startTcmbScheduler } = require('./src/services/tcmbKurService');
+      startTcmbScheduler(pool, console);
+    } catch (err) {
+      console.error('[tcmb] zamanlayıcı başlatılamadı:', err.message);
+    }
 });

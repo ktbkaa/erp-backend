@@ -384,17 +384,19 @@ const MODULES = [
         crud: true,
         codeField: 'source_pb',
         nameField: 'target_pb',
+        tcmbCekAction: true,
         filters: [
           { key: 'source_pb', label: 'Kaynak PB' },
           { key: 'target_pb', label: 'Hedef PB' },
+          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel', 'Seed'] },
         ],
         columns: [
           { key: 'rate_date', label: 'Tarih' },
-          { key: 'source_pb', label: 'Kaynak', mono: true },
-          { key: 'target_pb', label: 'Hedef', mono: true },
+          { key: 'source_pb', label: 'Kaynak PB', mono: true },
+          { key: 'target_pb', label: 'Hedef PB', mono: true },
           { key: 'buy_rate', label: 'Alış' },
           { key: 'sell_rate', label: 'Satış' },
-          { key: 'source', label: 'Kaynak' },
+          { key: 'source', label: 'Kur kaynağı' },
         ],
         masterFields: [
           { key: 'rate_date', label: 'Kur tarihi', type: 'date', required: true },
@@ -406,10 +408,17 @@ const MODULES = [
         detailFields: [
           { key: 'effective_buy_rate', label: 'Efektif alış', type: 'number' },
           { key: 'effective_sell_rate', label: 'Efektif satış', type: 'number' },
-          { key: 'source', label: 'Kaynak' },
+          {
+            key: 'source',
+            label: 'Kur kaynağı',
+            type: 'select',
+            options: ['TCMB', 'Manuel'],
+            // TCMB seçilince alış/satış TCMB XML’den doldurulur (bağlantı: Sistem Parametreleri TCMB_KUR_URL)
+          },
         ],
         detailKey: null,
         detailAsFields: true,
+        defaults: { target_pb: 'TRY', source: 'Manuel', rate_date: null },
       },
 
       {
@@ -9143,6 +9152,47 @@ async function applyKurForParaBirimi(pbKod, kurEl, { force = false } = {}) {
   }
 }
 
+/** Döviz kuru formu: Kur kaynağı=TCMB iken alış/satış/efektif TCMB XML’den */
+async function fillDovizFromTcmbIfNeeded() {
+  if (state.screenId !== 'doviz-exchange_rate-tanimi') return;
+  if (state.formMode === 'incele') return;
+  const sourceEl = document.querySelector('[data-master="source"], [data-detail="source"]');
+  const source = String(sourceEl?.value || state.formRecord?.source || '').trim();
+  if (source.toUpperCase() !== 'TCMB') return;
+  const sourcePb = document.querySelector('[data-master="source_pb"]')?.value
+    || state.formRecord?.source_pb;
+  const targetPb = document.querySelector('[data-master="target_pb"]')?.value
+    || state.formRecord?.target_pb
+    || 'TRY';
+  if (!sourcePb) return;
+  const tarih = document.querySelector('[data-master="rate_date"]')?.value
+    || state.formRecord?.rate_date
+    || '';
+  try {
+    const q = new URLSearchParams({
+      source_pb: sourcePb,
+      target_pb: targetPb || 'TRY',
+    });
+    if (tarih) q.set('tarih', String(tarih).slice(0, 10));
+    const r = await api(`/doviz-kurlari/tcmb-onizleme?${q}`);
+    const setVal = (key, val) => {
+      if (val == null) return;
+      const el = document.querySelector(`[data-master="${key}"], [data-detail="${key}"]`);
+      if (el) el.value = String(val);
+      if (state.formRecord) state.formRecord[key] = val;
+    };
+    setVal('buy_rate', r.buy_rate);
+    setVal('sell_rate', r.sell_rate);
+    setVal('effective_buy_rate', r.effective_buy_rate);
+    setVal('effective_sell_rate', r.effective_sell_rate);
+    if (r.rate_date) setVal('rate_date', r.rate_date);
+    setVal('source', 'TCMB');
+    toast(`TCMB ${r.bulletin_no || r.rate_date || ''}: ${sourcePb}/${targetPb} dolduruldu`);
+  } catch (err) {
+    toast(err.message || 'TCMB önizleme alınamadı');
+  }
+}
+
 /**
  * Cari seçilince sevk adresini Adres sekmesine doldur.
  * Öncelik: varsayılan sevk adresi → fatura_adres* → address.
@@ -9947,7 +9997,7 @@ function ekranYetkisi(screenId, action = null) {
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
-  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir') {
+  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir' || action === 'tcmb-cek') {
     return Boolean(row.incele || row.duzelt || row.yeni);
   }
   return Boolean(row[action]);
@@ -9988,6 +10038,9 @@ function updateActionButtons(screen) {
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
+    } else if (act === 'tcmb-cek') {
+      btn.hidden = !screen.tcmbCekAction;
+      btn.disabled = !ekranYetkisi(screen.id, 'tcmb-cek');
     } else btn.disabled = !hasSel || !ekranYetkisi(screen.id, act);
   });
   const mrpBtn = $('#btnMrpTalep');
@@ -9996,6 +10049,8 @@ function updateActionButtons(screen) {
   if (mrpUe) mrpUe.hidden = !screen.mrpUretimAction;
   const mrpRun = $('#btnMrpCalistir');
   if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
+  const tcmbBtn = $('#btnTcmbCek');
+  if (tcmbBtn) tcmbBtn.hidden = !screen.tcmbCekAction;
 }
 
 async function openScreen(id, opts = {}) {
@@ -14774,6 +14829,12 @@ function bindCascadeLookups(_screen) {
       }
     }
 
+    // Döviz kuru formu: Kur kaynağı = TCMB → alış/satış TCMB XML’den
+    if (scr.id === 'doviz-exchange_rate-tanimi'
+      && ['source', 'source_pb', 'target_pb', 'rate_date'].includes(fieldKey)) {
+      await fillDovizFromTcmbIfNeeded();
+    }
+
     // fillFrom: teklif / talep / sipariş / sevk / irsaliye / mal-kabul satır doldurma
     if (masterKey && el instanceof HTMLSelectElement) {
       const f = collectTabFields(scr).find((x) => x.key === masterKey)
@@ -15784,6 +15845,12 @@ async function openForm(mode, opts = {}) {
     record.series_code = '';
   }
 
+  if (screen.id === 'doviz-exchange_rate-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
+    if (!record.rate_date) record.rate_date = new Date().toISOString().slice(0, 10);
+    if (!record.target_pb) record.target_pb = 'TRY';
+    if (!record.source) record.source = 'Manuel';
+  }
+
   if (screen.id === 'stok-karti') {
     hydrateStokFirmaIsYeri(record);
   }
@@ -16588,6 +16655,7 @@ function bindEvents() {
       else if (act === 'mrp-talep') mrpTalepOlustur().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') mrpUretimOlustur().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') mrpCalistirKaydet().catch((err) => toast(err.message));
+      else if (act === 'tcmb-cek') tcmbKurCek().catch((err) => toast(err.message));
       else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
@@ -16934,6 +17002,32 @@ function bindEvents() {
     const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
     toast(`${result.olusan || 0} üretim emri oluştu`);
     openScreen('uretim-emirleri');
+  }
+
+  /** Döviz Kurları listesi: TCMB today.xml → tanımlı PB’ler için upsert */
+  async function tcmbKurCek() {
+    const screen = findScreen(state.screenId);
+    if (!screen?.tcmbCekAction) return;
+    if (!ekranYetkisi(screen.id, 'tcmb-cek')) {
+      toast('Bu işlem için yetkiniz yok.');
+      return;
+    }
+    toast('TCMB kurları çekiliyor…');
+    try {
+      const result = await api('/doviz-kurlari/tcmb-cek', {
+        method: 'POST',
+        body: JSON.stringify({ target_pb: 'TRY' }),
+      });
+      const skip = (result.skipped_currencies || []).length
+        ? ` (tanımsız atlanan: ${result.skipped_currencies.slice(0, 8).join(', ')}${result.skipped_currencies.length > 8 ? '…' : ''})`
+        : '';
+      toast(
+        `TCMB ${result.bulletin_no || ''} · ${result.rate_date}: ${result.upserted_count} kur yazıldı${skip}`
+      );
+      await openScreen(screen.id);
+    } catch (err) {
+      toast(err.message || 'TCMB kurları alınamadı');
+    }
   }
 
   async function mrpCalistirKaydet() {
