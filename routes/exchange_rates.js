@@ -134,7 +134,27 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/** GET /doviz-kurlari/cevir?quantity=&source_pb=&target_pb=&tarih=&type=satis|alis */
+/** type → exchange_rates kolonu (alış / satış / efektif) */
+function resolveRateColumn(typeRaw) {
+  const t = String(typeRaw || 'satis').toLowerCase().replace(/_/g, '-');
+  if (t === 'alis' || t === 'tcmb-alis' || t === 'buy' || t === 'forex-buying') return 'buy_rate';
+  if (t === 'efektif-alis' || t === 'efkt-alis' || t === 'banknote-buying') return 'effective_buy_rate';
+  if (t === 'efektif-satis' || t === 'efkt-satis' || t === 'banknote-selling') return 'effective_sell_rate';
+  return 'sell_rate';
+}
+
+function pickRateValue(row, col) {
+  if (!row) return null;
+  let v = num(row[col]);
+  // Efektif boşsa döviz alış/satışa düş
+  if (v == null || v <= 0) {
+    if (col === 'effective_buy_rate') v = num(row.buy_rate);
+    if (col === 'effective_sell_rate') v = num(row.sell_rate);
+  }
+  return v != null && v > 0 ? v : null;
+}
+
+/** GET /doviz-kurlari/cevir?quantity=&source_pb=&target_pb=&tarih=&type=satis|alis|efektif-alis|efektif-satis */
 router.get('/cevir', async (req, res, next) => {
   try {
     const quantity = num(req.query.quantity);
@@ -146,7 +166,7 @@ router.get('/cevir', async (req, res, next) => {
     if (source === hedef) {
       return res.json({ quantity, result: quantity, exchange_rate: 1, source_pb: source, target_pb: hedef });
     }
-    const type = String(req.query.type || 'satis').toLowerCase() === 'alis' ? 'buy_rate' : 'sell_rate';
+    const col = resolveRateColumn(req.query.type || req.query.rate_type || 'satis');
     const params = [source, hedef];
     let sql = `SELECT * FROM exchange_rates WHERE source_pb=$1 AND target_pb=$2`;
     if (req.query.tarih) {
@@ -163,18 +183,20 @@ router.get('/cevir', async (req, res, next) => {
         [hedef, source]
       );
       if (rev.rows[0]) {
-        const k = Number(rev.rows[0][type]);
+        const k = pickRateValue(rev.rows[0], col);
+        if (k == null) return res.status(404).json({ hata: 'Kur bulunamadı.' });
         const result = quantity / k;
         return res.json({
-          quantity, result, exchange_rate: 1 / k, ters: true,
+          quantity, result, exchange_rate: 1 / k, ters: true, rate_column: col,
           source_pb: source, target_pb: hedef, kur_kaydi: rev.rows[0],
         });
       }
       return res.status(404).json({ hata: 'Kur bulunamadı.' });
     }
-    const exchange_rate = Number(r.rows[0][type]);
+    const exchange_rate = pickRateValue(r.rows[0], col);
+    if (exchange_rate == null) return res.status(404).json({ hata: 'Kur bulunamadı.' });
     res.json({
-      quantity, result: quantity * exchange_rate, exchange_rate,
+      quantity, result: quantity * exchange_rate, exchange_rate, rate_column: col,
       source_pb: source, target_pb: hedef, kur_kaydi: r.rows[0],
     });
   } catch (err) {

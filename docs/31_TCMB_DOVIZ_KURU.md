@@ -59,9 +59,29 @@ Hedef para birimi varsayılanı **TRY** (TCMB bülteni TRY karşılığıdır).
 4. Alış / satış / efektif alanlar TCMB XML’den otomatik dolar (bağlantı sistem parametresinden gelir).
 5. Kaydedin.
 
-### C) Otomatik (günde bir)
+### C) Otomatik (günde bir) — evet, TCMB kayıtları güncellenir
 
-Sunucu ayaktayken saatlik kontrol çalışır. `TCMB_KUR_AUTO=true` ise ve bülten günü için henüz TCMB kaydı yoksa bir kez çeker. Hafta sonu `today.xml` son iş gününü verdiği için kayıt bülten tarihine yazılır (çift çekim engellenir).
+Sunucu ayaktayken **saatlik kontrol** çalışır. `TCMB_KUR_AUTO=true` (varsayılan) ise:
+
+1. `today.xml` okunur, bülten tarihi alınır.
+2. O gün için henüz `source=TCMB` kaydı yoksa çekilir ve yazılır.
+3. Aynı bülten günü tekrar çekilmez (çift kayıt yok).
+4. Ertesi iş günü yeni bülten gelince yeni satırlar oluşur (önceki günler arşivde kalır).
+
+Hafta sonu / tatilde `today.xml` son iş gününü verdiği için o güne yazılmış kayıt varsa atlanır.
+
+**Manuel** satırlar otomatik üzerine yazılmaz; yalnızca `source=TCMB` upsert edilir (aynı gün + aynı PB çifti).
+
+### Belge ekranlarında kur tipi
+
+Satış / satınalma vb. belgede:
+
+| Para birimi | Kur tipi | Kur alanı |
+| --- | --- | --- |
+| TRY | kilitli | `1`, disabled |
+| USD/EUR… | Alış / Satış / Efektif alış / Efektif satış / Serbest | tip seçimine göre DB’den dolar; Serbest’te elle girilir |
+
+Kur tipi değerleri: `TCMB-ALIS`, `TCMB-SATIS`, `EFKT-ALIS`, `EFKT-SATIS`, `Serbest`.
 
 ## Sistem parametreleri
 
@@ -116,6 +136,10 @@ curl -X POST http://localhost:3000/doviz-kurlari/tcmb-cek \
 - TCMB bültenindeki başlıca kodlar (örnek): USD, EUR, GBP, CHF, JPY, AUD, CAD, SAR, … — tam liste `today.xml` içindedir; MXN yoktur.
 - Ağ çıkışı yoksa (firewall) `TCMB_KUR_URL` erişilemez; sunucunun `tcmb.gov.tr`’ye HTTP GET yapabilmesi gerekir.
 - Bu kurlar **gösterge** niteliğindedir; banka satış/alış politikanız farklıysa Manuel veya efektif alanları kullanın.
+
+## Döviz Kurları alan bilgi butonları (i)
+
+Alış / satış / efektif alış / efektif satış / kur kaynağı alanlarının **sağ üstünde** küçük **i** butonu vardır. Tıklanınca manuel tanımda neye göre doldurmanız gerektiği (kaydi vs nakit, alış vs satış bakış açısı) açıklanır.
 
 ## “TCMB kuru yok” ekranda ne olur?
 

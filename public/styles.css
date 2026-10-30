@@ -2174,6 +2174,9 @@ tr.selected td { background: var(--accent-soft); }
   align-items: center;
   min-width: 0;
 }
+.field {
+  position: relative;
+}
 .field label {
   font-size: 0.8rem;
   font-weight: 500;
@@ -2184,6 +2187,40 @@ tr.selected td { background: var(--accent-soft); }
   overflow: visible;
   text-overflow: unset;
   padding-right: 0.1rem;
+}
+/* Alan sağ üst bilgi (i) — döviz kuru açıklamaları vb. */
+.field-info-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line, #c5ced8);
+  background: #fff;
+  color: #3d5a80;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: none;
+}
+.field-info-btn:hover {
+  background: var(--accent-soft, #e8f1fb);
+  border-color: var(--accent, #2f6fed);
+  color: var(--accent, #2f6fed);
+}
+.meta-help-lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #2a3340;
 }
 /* Zorunlu / eksik: kırmızı * + etiket */
 .field.required label {
