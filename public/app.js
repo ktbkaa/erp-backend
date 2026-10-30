@@ -104,7 +104,7 @@ const MODULES = [
         crud: true,
         codeField: 'category_code',
         nameField: 'category_name',
-        numeratorSeri: 'KATEGORI',
+        numeratorSeri: null,
         filters: [
           { key: 'category_code', label: 'Kategori kodu' },
           { key: 'category_name', label: 'Kategori adı' },
@@ -117,7 +117,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'category_code', label: 'Kategori kodu', code: true, required: true },
+          { key: 'category_code', label: 'Kategori kodu', code: true, editableOnNew: true, required: true },
           { key: 'category_name', label: 'Kategori adı', name: true, required: true },
           { key: 'category_type', label: 'Kategori tipi', type: 'select', options: ['ABC', 'Marka', 'TeminSekli', 'Sektor', 'Bolge'], required: true },
         ],
@@ -137,7 +137,7 @@ const MODULES = [
         crud: true,
         codeField: 'country_code',
         nameField: 'country_name',
-        numeratorSeri: 'ULKE',
+        numeratorSeri: null,
         filters: [
           { key: 'country_code', label: 'Ülke kodu' },
           { key: 'country_name', label: 'Ülke adı' },
@@ -148,7 +148,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'country_code', label: 'Ülke kodu', code: true, required: true },
+          { key: 'country_code', label: 'Ülke kodu', code: true, editableOnNew: true, required: true },
           { key: 'country_name', label: 'Ülke adı', name: true, required: true },
         ],
         detailFields: [
@@ -166,7 +166,7 @@ const MODULES = [
         crud: true,
         codeField: 'currency_code',
         nameField: 'currency_name',
-        numeratorSeri: 'PARA_BIRIM',
+        numeratorSeri: null,
         filters: [
           { key: 'currency_code', label: 'PB kodu' },
           { key: 'currency_name', label: 'PB adı' },
@@ -196,7 +196,7 @@ const MODULES = [
         crud: true,
         codeField: 'city_code',
         nameField: 'city_name',
-        numeratorSeri: 'SEHIR',
+        numeratorSeri: null,
         filters: [
           { key: 'city_code', label: 'Şehir kodu' },
           { key: 'city_name', label: 'Şehir adı' },
@@ -228,7 +228,7 @@ const MODULES = [
         crud: true,
         codeField: 'district_code',
         nameField: 'district_name',
-        numeratorSeri: 'ILCE',
+        numeratorSeri: null,
         filters: [
           { key: 'district_code', label: 'İlçe kodu' },
           { key: 'district_name', label: 'İlçe adı' },
@@ -260,7 +260,7 @@ const MODULES = [
         crud: true,
         codeField: 'term_code',
         nameField: 'term_name',
-        numeratorSeri: 'ODEME_KOSUL',
+        numeratorSeri: null,
         filters: [
           { key: 'term_code', label: 'Kod' },
           { key: 'term_name', label: 'Ad' },
@@ -292,7 +292,7 @@ const MODULES = [
         crud: true,
         codeField: 'term_code',
         nameField: 'term_name',
-        numeratorSeri: 'TESLIMAT_KOSUL',
+        numeratorSeri: null,
         filters: [
           { key: 'term_code', label: 'Kod' },
           { key: 'term_name', label: 'Ad' },
@@ -322,7 +322,7 @@ const MODULES = [
         crud: true,
         codeField: 'dil_code',
         nameField: 'dil_name',
-        numeratorSeri: 'DIL',
+        numeratorSeri: null,
         filters: [
           { key: 'dil_code', label: 'Kod' },
           { key: 'dil_name', label: 'Ad' },
@@ -351,7 +351,7 @@ const MODULES = [
         crud: true,
         codeField: 'bank_code',
         nameField: 'bank_name',
-        numeratorSeri: 'BANKA',
+        numeratorSeri: null,
         filters: [
           { key: 'bank_code', label: 'Kod' },
           { key: 'bank_name', label: 'Ad' },
@@ -452,7 +452,7 @@ const MODULES = [
         crud: true,
         codeField: 'movement_code',
         nameField: 'movement_name',
-        numeratorSeri: 'HAREKET_KOD',
+        numeratorSeri: null,
         listCategories: [
           { id: 'SatisTeklif', label: 'Satış Teklifi' },
           { id: 'SatisSiparis', label: 'Satış Siparişi' },
@@ -486,7 +486,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'movement_code', label: 'Hareket kodu', code: true, required: true },
+          { key: 'movement_code', label: 'Hareket kodu', code: true, editableOnNew: true, required: true },
           { key: 'movement_name', label: 'Hareket adı', name: true, required: true },
           { key: 'document_type', label: 'Belge tipi', type: 'select', options: ['SatisTeklif','SatisSiparis','SevkEmri','SatisIrsaliye','SatisFatura','SatinAlmaTalep','SatinAlmaSiparis','MalKabul','AlisFatura','UretimEmri','UretimGiris','UretimTuketim','Transfer','Sayim','Fire','Duzeltme'], required: true },
           { key: 'direction', label: 'Yön', type: 'select', options: ['Giris','Cikis','Transfer','Bilgi'], required: true },
@@ -615,7 +615,7 @@ const MODULES = [
         crud: true,
         codeField: 'group_code',
         nameField: 'group_name',
-        numeratorSeri: 'KULLANICI_GRUP',
+        numeratorSeri: null,
         filters: [
           { key: 'group_code', label: 'Grup kodu' },
           { key: 'group_name', label: 'Grup adı' },
@@ -628,7 +628,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'group_code', label: 'Grup kodu', code: true, required: true },
+          { key: 'group_code', label: 'Grup kodu', code: true, editableOnNew: true, required: true },
           { key: 'group_name', label: 'Grup adı', name: true, required: true },
         ],
         detailFields: [
@@ -773,7 +773,7 @@ const MODULES = [
         scopeIsYeri: false,
         codeField: 'company_code',
         nameField: 'company_name',
-        numeratorSeri: 'FIRMA',
+        numeratorSeri: null,
         filters: [
           { key: 'company_code', label: 'Firma kodu' },
           { key: 'company_name', label: 'Firma adı' },
@@ -783,7 +783,7 @@ const MODULES = [
           { key: 'company_name', label: 'Ad' },
         ],
         masterFields: [
-          { key: 'company_code', label: 'Firma kodu', code: true, required: true },
+          { key: 'company_code', label: 'Firma kodu', code: true, editableOnNew: true, required: true },
           { key: 'company_name', label: 'Firma adı', name: true, required: true },
         ],
         detailFields: [],
@@ -800,7 +800,7 @@ const MODULES = [
         scopeIsYeri: false,
         codeField: 'plant_code',
         nameField: 'plant_name',
-        numeratorSeri: 'ISYERI',
+        numeratorSeri: null,
         filters: [
           { key: 'company_name', label: 'Firma' },
           { key: 'plant_code', label: 'İş yeri kodu' },
@@ -813,7 +813,7 @@ const MODULES = [
           { key: 'address', label: 'Adres' },
         ],
         masterFields: [
-          { key: 'plant_code', label: 'İş yeri kodu', code: true, required: true },
+          { key: 'plant_code', label: 'İş yeri kodu', code: true, editableOnNew: true, required: true },
           { key: 'plant_name', label: 'İş yeri adı', name: true, required: true },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
         ],
@@ -834,7 +834,7 @@ const MODULES = [
         scopeIsYeri: false,
         codeField: 'warehouse_code',
         nameField: 'warehouse_name',
-        numeratorSeri: 'DEPO',
+        numeratorSeri: null,
         filters: [
           { key: 'company_code', label: 'Firma' },
           { key: 'plant_code', label: 'İş yeri' },
@@ -849,7 +849,7 @@ const MODULES = [
           { key: 'varsayilan', label: 'Varsayılan' },
         ],
         masterFields: [
-          { key: 'warehouse_code', label: 'Depo kodu', code: true, required: true },
+          { key: 'warehouse_code', label: 'Depo kodu', code: true, editableOnNew: true, required: true },
           { key: 'warehouse_name', label: 'Depo adı', name: true, required: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
         ],
@@ -2058,7 +2058,7 @@ const MODULES = [
         crud: true,
         codeField: 'class_code',
         nameField: 'class_name',
-        numeratorSeri: 'STOK_SINIF',
+        numeratorSeri: null,
         filters: [
           { key: 'class_code', label: 'Sınıf kodu' },
           { key: 'class_name', label: 'Sınıf adı' },
@@ -2070,7 +2070,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'class_code', label: 'Sınıf kodu', code: true, required: true },
+          { key: 'class_code', label: 'Sınıf kodu', code: true, editableOnNew: true, required: true },
           { key: 'class_name', label: 'Sınıf adı', name: true, required: true },
           { key: 'parent_class_code', label: 'Üst sınıf kodu' },
         ],
@@ -2088,7 +2088,7 @@ const MODULES = [
         title: 'İş Merkezleri',
         endpoint: '/is-merkezleri',
         crud: true,
-        numeratorSeri: 'IS_MERKEZI',
+        numeratorSeri: null,
         codeField: 'center_code',
         nameField: 'center_name',
         filters: [
@@ -2102,8 +2102,8 @@ const MODULES = [
           { key: 'plant_name', label: 'İş yeri' },
         ],
         masterFields: [
-          { key: 'center_code', label: 'Kod', code: true },
-          { key: 'center_name', label: 'Ad', name: true },
+          { key: 'center_code', label: 'Kod', code: true, editableOnNew: true, required: true },
+          { key: 'center_name', label: 'Ad', name: true, required: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
         ],
         detailFields: [],
@@ -2115,7 +2115,7 @@ const MODULES = [
         title: 'İş İstasyonları',
         endpoint: '/is-istasyonlari',
         crud: true,
-        numeratorSeri: 'IS_ISTASYONU',
+        numeratorSeri: null,
         codeField: 'station_code',
         nameField: 'station_name',
         filters: [
@@ -2131,7 +2131,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'station_code', label: 'Kod', code: true },
+          { key: 'station_code', label: 'Kod', code: true, editableOnNew: true, required: true },
           { key: 'station_name', label: 'Ad', name: true, required: true },
           { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', required: true },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -2307,7 +2307,7 @@ const MODULES = [
         title: 'Üretim Emri Tipleri',
         endpoint: '/uretim-emri-tipleri',
         crud: true,
-        numeratorSeri: 'URETIM_EMRI_TIP',
+        numeratorSeri: null,
         codeField: 'type_code',
         nameField: 'type_name',
         filters: [
@@ -2322,7 +2322,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'type_code', label: 'Tip kodu', code: true, required: true },
+          { key: 'type_code', label: 'Tip kodu', code: true, editableOnNew: true, required: true },
           { key: 'type_name', label: 'Tip adı', name: true, required: true },
           { key: 'planli_kesin', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], required: true },
         ],
@@ -5362,7 +5362,7 @@ const MODULES = [
         crud: true,
         codeField: 'account_code',
         nameField: 'account_name',
-        numeratorSeri: 'FIN_BANKA_HESAP',
+        numeratorSeri: null,
         filters: [
           { key: 'account_code', label: 'Kod' },
           { key: 'account_name', label: 'Ad' },
@@ -5376,7 +5376,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'account_code', label: 'Hesap kodu', code: true },
+          { key: 'account_code', label: 'Hesap kodu', code: true, editableOnNew: true, required: true },
           { key: 'account_name', label: 'Hesap adı', name: true, required: true },
           { key: 'bank_id', label: 'Banka', type: 'lookup', lookup: 'banks', valueKey: 'id', labelKey: 'bank_name', codeKey: 'bank_code' },
           { key: 'iban', label: 'IBAN' },
@@ -5398,7 +5398,7 @@ const MODULES = [
         crud: true,
         codeField: 'cash_code',
         nameField: 'cash_name',
-        numeratorSeri: 'FIN_KASA',
+        numeratorSeri: null,
         filters: [
           { key: 'cash_code', label: 'Kod' },
           { key: 'cash_name', label: 'Ad' },
@@ -5410,7 +5410,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'cash_code', label: 'Kasa kodu', code: true },
+          { key: 'cash_code', label: 'Kasa kodu', code: true, editableOnNew: true, required: true },
           { key: 'cash_name', label: 'Kasa adı', name: true, required: true },
           { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
           { key: 'gl_account_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code' },
@@ -5766,7 +5766,7 @@ const MODULES = [
         title: 'Departmanlar',
         endpoint: '/hr-org/departmanlar',
         crud: true,
-        numeratorSeri: 'HR_DEPT',
+        numeratorSeri: null,
         codeField: 'department_code',
         nameField: 'department_name',
         columns: [
@@ -5777,7 +5777,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'department_code', label: 'Kod', code: true },
+          { key: 'department_code', label: 'Kod', code: true, editableOnNew: true, required: true },
           { key: 'department_name', label: 'Ad', name: true, required: true },
           { key: 'parent_id', label: 'Üst departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
           { key: 'cost_center_code', label: 'Maliyet merkezi' },
@@ -5793,7 +5793,7 @@ const MODULES = [
         title: 'Pozisyonlar',
         endpoint: '/hr-org/pozisyonlar',
         crud: true,
-        numeratorSeri: 'HR_POS',
+        numeratorSeri: null,
         codeField: 'position_code',
         nameField: 'position_name',
         columns: [
@@ -5803,7 +5803,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'position_code', label: 'Kod', code: true },
+          { key: 'position_code', label: 'Kod', code: true, editableOnNew: true, required: true },
           { key: 'position_name', label: 'Ad', name: true, required: true },
           { key: 'department_id', label: 'Departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -5817,7 +5817,7 @@ const MODULES = [
         title: 'Çalışma Takvimleri',
         endpoint: '/hr-takvim/takvimler',
         crud: true,
-        numeratorSeri: 'HR_CAL',
+        numeratorSeri: null,
         codeField: 'calendar_code',
         nameField: 'calendar_name',
         columns: [
@@ -5830,7 +5830,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'calendar_code', label: 'Kod', code: true },
+          { key: 'calendar_code', label: 'Kod', code: true, editableOnNew: true, required: true },
           { key: 'calendar_name', label: 'Ad', name: true, required: true },
           { key: 'country_code', label: 'Ülke' },
           { key: 'work_days_per_week', label: 'Çalışma günü/hafta', type: 'number' },
@@ -5851,7 +5851,7 @@ const MODULES = [
         title: 'Vardiyalar',
         endpoint: '/hr-takvim/vardiyalar',
         crud: true,
-        numeratorSeri: 'HR_SHIFT',
+        numeratorSeri: null,
         codeField: 'shift_code',
         nameField: 'shift_name',
         columns: [
@@ -5864,7 +5864,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'shift_code', label: 'Kod', code: true },
+          { key: 'shift_code', label: 'Kod', code: true, editableOnNew: true, required: true },
           { key: 'shift_name', label: 'Ad', name: true, required: true },
           { key: 'start_time', label: 'Başlangıç', required: true },
           { key: 'end_time', label: 'Bitiş', required: true },
@@ -10290,8 +10290,13 @@ async function openScreen(id, opts = {}) {
     }
     ensureSidebarPath(screen);
 
-    if (location.hash !== `#${screen.id}`) {
-      history.pushState({ screenId: screen.id }, '', `#${screen.id}`);
+    {
+      // Liste: form id’sini adres çubuğundan temizle
+      const listUrl = `${location.pathname}#${encodeURIComponent(screen.id)}`;
+      const cur = `${location.pathname}${location.search}${location.hash}`;
+      if (cur !== listUrl) {
+        history.pushState({ screenId: screen.id }, '', listUrl);
+      }
     }
 
     if (!opts.skipTab) addListTab(screen);
@@ -13012,7 +13017,10 @@ function renderForm(screen) {
     const codeKey = screen.codeField;
     const codeVal = codeKey ? rec?.[codeKey] : null;
     const statusVal = rec?.status;
+    const rid = rec?.id != null && rec.id !== '' ? rec.id : null;
     const parts = [];
+    // Arka plan SERIAL id — form alanında yok; tepede / listede görünür
+    if (rid != null) parts.push(`ID ${rid}`);
     if (codeVal) parts.push(String(codeVal));
     if (statusVal) parts.push(String(statusVal));
     if (parts.length) {
@@ -13023,6 +13031,7 @@ function renderForm(screen) {
       chip.textContent = '';
     }
   }
+  syncFormBrowserUrl(screen);
   const saveHidden = readonly;
   ['btnFormSave', 'btnFormSaveClose', 'btnFormSaveNew'].forEach((id) => {
     const el = document.getElementById(id);
@@ -15741,6 +15750,29 @@ function parseFormSoloQuery() {
   } catch (_) {
     return null;
   }
+}
+
+/** Form açıkken kayıt id’sini adres çubuğunda göster (tepedeki link). */
+function syncFormBrowserUrl(screen) {
+  if (!screen || state.formSolo) return;
+  try {
+    const params = new URLSearchParams(location.search || '');
+    // form-solo / screen-open query’lerini bozma
+    if (params.get('view') === 'form' || params.get('view') === 'screen') return;
+    const rid = state.formRecord?.id;
+    if (state.formMode && rid != null && rid !== '') {
+      params.set('id', String(rid));
+    } else {
+      params.delete('id');
+    }
+    const qs = params.toString();
+    const hash = `#${encodeURIComponent(screen.id)}`;
+    const next = `${location.pathname}${qs ? `?${qs}` : ''}${hash}`;
+    const cur = `${location.pathname}${location.search}${location.hash}`;
+    if (cur !== next) {
+      history.replaceState({ screenId: screen.id, formId: rid || null }, '', next);
+    }
+  } catch (_) { /* ignore */ }
 }
 
 function applyFormSoloChrome() {

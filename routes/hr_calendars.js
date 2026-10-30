@@ -3,7 +3,6 @@ const router = express.Router();
 const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/takvimler', async (req, res) => {
@@ -35,11 +34,14 @@ router.post('/takvimler', async (req, res) => {
   try {
     const b = req.body || {};
     const firmaId = firmaIdFromReq(req) || b.company_id;
+    const kod = typeof b.calendar_code === 'string' ? b.calendar_code.trim() : b.calendar_code;
     if (!firmaId || !b.calendar_name) {
       return res.status(400).json({ hata: 'company_id ve calendar_name zorunlu.' });
     }
+    if (!kod) {
+      return res.status(400).json({ hata: 'calendar_code zorunlu.' });
+    }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.calendar_code || (await sonrakiKod(client, 'HR_CAL'));
       const ver = await client.query(
         `SELECT COALESCE(MAX(version_no),0)+1 AS v FROM hr_work_calendars WHERE company_id=$1 AND calendar_code=$2`,
         [firmaId, kod],
@@ -132,11 +134,14 @@ router.post('/vardiyalar', async (req, res) => {
   try {
     const b = req.body || {};
     const firmaId = firmaIdFromReq(req) || b.company_id;
+    const kod = typeof b.shift_code === 'string' ? b.shift_code.trim() : b.shift_code;
     if (!firmaId || !b.shift_name || !b.start_time || !b.end_time) {
       return res.status(400).json({ hata: 'company_id, shift_name, start_time, end_time zorunlu.' });
     }
+    if (!kod) {
+      return res.status(400).json({ hata: 'shift_code zorunlu.' });
+    }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.shift_code || (await sonrakiKod(client, 'HR_SHIFT'));
       const ins = await client.query(
         `INSERT INTO hr_shifts (
            company_id, shift_code, shift_name, start_time, end_time, break_minutes,

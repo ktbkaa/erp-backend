@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 // Tüm depoları listele (firma + iş yeri bilgisiyle)
@@ -82,10 +81,14 @@ router.post('/', async (req, res) => {
     try {
         const { plant_id, warehouse_code, warehouse_name, is_active, varsayilan, raf_code, konum_code, warehouse_rolu } = req.body;
 
+        const kod = typeof warehouse_code === 'string' ? warehouse_code.trim() : warehouse_code;
         if (!plant_id || !warehouse_name) {
             return res.status(400).json({
-                hata: 'plant_id ve warehouse_name zorunludur. warehouse_code boşsa otomatik üretilir (D00001).',
+                hata: 'plant_id ve warehouse_name zorunludur.',
             });
+        }
+        if (!kod) {
+            return res.status(400).json({ hata: 'warehouse_code zorunludur.' });
         }
 
         const yeniDepo = await withTransaction(pool, async (client) => {
@@ -116,8 +119,6 @@ router.post('/', async (req, res) => {
                     [plant_id]
                 );
             }
-
-            const kod = warehouse_code || (await sonrakiKod(client, 'DEPO'));
 
             const result = await client.query(
                 `

@@ -3,7 +3,15 @@ const router = express.Router();
 const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+
+function trimOrNull(v) {
+    if (v === undefined || v === null) return null;
+    if (typeof v === 'string') {
+        const t = v.trim();
+        return t === '' ? null : t;
+    }
+    return v;
+}
 
 async function isYeriGetir(id) {
     const result = await pool.query(
@@ -45,25 +53,30 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { company_id, plant_code, plant_name, address } = req.body;
+        const { company_id, address } = req.body;
+        const plant_code = trimOrNull(req.body.plant_code);
+        const plant_name = trimOrNull(req.body.plant_name);
         if (!company_id || !plant_name) {
             return res.status(400).json({ hata: 'company_id ve plant_name zorunludur.' });
         }
+        if (!plant_code) {
+            return res.status(400).json({ hata: 'plant_code zorunludur.' });
+        }
 
         const id = await withTransaction(pool, async (client) => {
-            const kod = plant_code || (await sonrakiKod(client, 'ISYERI'));
             const result = await client.query(
                 `
                 INSERT INTO plants (company_id, plant_code, plant_name, address)
                 VALUES ($1, $2, $3, $4)
                 RETURNING id
                 `,
-                [company_id, kod, plant_name, address || null]
+                [company_id, plant_code, plant_name, address || null]
             );
             return result.rows[0].id;
         });
         res.status(201).json(await isYeriGetir(id));
     } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'İş yeri kodu zaten var.' });
         res.status(500).json({ hata: err.message });
     }
 });
