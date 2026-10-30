@@ -42,13 +42,15 @@ router.post('/', async (req, res) => {
         if (!currency_name) return res.status(400).json({ hata: 'currency_name zorunludur.' });
         const row = await withTransaction(pool, async (client) => {
             const kod = trimOrNull(req.body.currency_code) || (await sonrakiKod(client, 'PARA_BIRIM'));
+            // Sembol boşsa para birimi kodu kullanılır
+            const sembol = trimOrNull(req.body.sembol) || kod;
             const ins = await client.query(
                 `INSERT INTO currencies (currency_code, currency_name, sembol, is_active)
                  VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
                 [
                     kod,
                     currency_name,
-                    trimOrNull(req.body.sembol),
+                    sembol,
                     typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
                 ]
             );
@@ -65,6 +67,16 @@ router.put('/:id', async (req, res) => {
     try {
         const currency_name = trimOrNull(req.body.currency_name);
         if (!currency_name) return res.status(400).json({ hata: 'currency_name zorunludur.' });
+        const existing = await pool.query(
+            'SELECT currency_code FROM currencies WHERE id = $1',
+            [req.params.id]
+        );
+        if (!existing.rows[0]) return res.status(404).json({ hata: 'Para birimi bulunamadı.' });
+        const kod = trimOrNull(req.body.currency_code) || existing.rows[0].currency_code;
+        // Sembol boş/gönderilmediyse kod; açıkça gönderildiyse o değer
+        const sembol = Object.prototype.hasOwnProperty.call(req.body, 'sembol')
+            ? (trimOrNull(req.body.sembol) || kod)
+            : null;
         const upd = await pool.query(
             `UPDATE currencies SET
                 currency_name = $2,
@@ -74,7 +86,7 @@ router.put('/:id', async (req, res) => {
             [
                 req.params.id,
                 currency_name,
-                trimOrNull(req.body.sembol),
+                sembol,
                 typeof req.body.is_active === 'boolean' ? req.body.is_active : null,
             ]
         );

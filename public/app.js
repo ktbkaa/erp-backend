@@ -174,13 +174,12 @@ const MODULES = [
         columns: [
           { key: 'currency_code', label: 'Kod', mono: true },
           { key: 'currency_name', label: 'Ad' },
-          { key: 'sembol', label: 'Sembol' },
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'currency_code', label: 'Para birimi kodu', code: true, editableOnNew: true, required: true },
+          { key: 'currency_code', label: 'Para birimi kodu', code: true, editableOnNew: true, required: true, maxLength: 10 },
           { key: 'currency_name', label: 'Para birimi adı', name: true, required: true },
-          { key: 'sembol', label: 'Sembol' },
+          { key: 'sembol', label: 'Sembol', maxLength: 10 },
         ],
         detailFields: [
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -7080,9 +7079,18 @@ function lookupNameOnly(field, value) {
 }
 
 function upgradeTanimLookups(screen) {
+  const ownCode = screen?.codeField;
   const mapFields = (arr) => {
     if (!Array.isArray(arr)) return;
-    for (let i = 0; i < arr.length; i += 1) arr[i] = applyTanimLookup(arr[i]);
+    for (let i = 0; i < arr.length; i += 1) {
+      const f = arr[i];
+      // Tanım ekranının kendi kod alanı / code:true alanlar manuel kalır
+      // (para birimi tanımında currency_code'u kendi tablosundan lookup yapma)
+      if (f && (f.code === true || (ownCode && f.key === ownCode) || f.noTanimLookup)) {
+        continue;
+      }
+      arr[i] = applyTanimLookup(f);
+    }
   };
   mapFields(screen.masterFields);
   mapFields(screen.detailFields);
@@ -15995,6 +16003,15 @@ async function saveForm({ after = 'stay' } = {}) {
       return;
     }
     delete master._sablon_rota_id;
+  }
+
+  // Para birimi: sembol boşsa kodun aynısı
+  if (screen.id === 'para-birimi-tanimi') {
+    const kod = String(master.currency_code || '').trim();
+    if (kod) master.currency_code = kod.toUpperCase();
+    if (!String(master.sembol || '').trim() && master.currency_code) {
+      master.sembol = master.currency_code;
+    }
   }
 
   try {
