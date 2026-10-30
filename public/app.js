@@ -222,13 +222,21 @@ const MODULES = [
           {
             key: 'district_code',
             label: 'İlçe kodu',
+            code: true,
             mono: true,
             size: 'short',
             // Ad yazılınca şehirKodu+ünsüzler ile dolar; elle de düzeltilebilir
           },
-          { key: 'district_name', label: 'İlçe adı', required: true },
+          { key: 'district_name', label: 'İlçe adı', name: true, required: true },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
+        // Satır Kaydet / Sil → /districts API (üst Kaydet beklemeden)
+        detailPersist: {
+          districts: {
+            endpoint: '/districts',
+            parentFields: { city_code: 'city_code' },
+          },
+        },
         defaults: { is_active: true, districts: [] },
       },
       {
@@ -8522,6 +8530,66 @@ async function readExcelFileToObjects(cols, file) {
   return mapExcelRowsToObjects(cols, aoa);
 }
 
+/**
+ * Detay satırını hemen API’ye yazar (detailPersist tanımlıysa).
+ * @returns {Promise<object|null>} kaydedilen satır (id’li) veya null (persist yok)
+ */
+async function persistGridRowImmediately(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint) return null;
+  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const body = { ...row };
+  delete body._satir_kayitli;
+  delete body._satir_duzenleniyor;
+  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
+    const v = master[masterKey];
+    if (v != null && v !== '') body[bodyKey] = v;
+  });
+  // Şehir kartı: city_code zorunlu (FK)
+  const missingParent = Object.entries(cfg.parentFields || {})
+    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
+    .map(([, masterKey]) => masterKey);
+  if (missingParent.length) {
+    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
+  }
+  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
+  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
+    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
+  }
+  if (gridKey === 'districts' && !body.district_code && body.district_name) {
+    body.district_code = districtCodeFromName(body.city_code, body.district_name);
+  }
+  const base = screenApiBase(cfg.endpoint);
+  if (row.id != null && row.id !== '') {
+    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
+  }
+  try {
+    return await api(base, { method: 'POST', body: JSON.stringify(body) });
+  } catch (err) {
+    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
+    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
+      const list = await api(
+        `${base}?city_code=${encodeURIComponent(body.city_code)}`
+      );
+      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
+      const hit = (Array.isArray(list) ? list : []).find(
+        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
+      );
+      if (hit?.id != null) {
+        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
+      }
+    }
+    throw err;
+  }
+}
+
+async function deletePersistedGridRow(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint || row?.id == null || row.id === '') return false;
+  await api(`${screenApiBase(cfg.endpoint)}/${row.id}`, { method: 'DELETE' });
+  return true;
+}
+
 async function importExcelIntoList(ctx) {
   const screen = findScreen(ctx?.screenId || state.screenId);
   if (!screen) return;
@@ -8558,7 +8626,10 @@ async function importExcelIntoList(ctx) {
     state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
     const cityCode = state.formRecord.city_code || masterSnap.city_code || '';
     const existing = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-    rows.forEach((raw) => {
+    const canPersist = Boolean(screen.detailPersist?.[key] && state.formRecord?.id);
+    let ok = 0;
+    let fail = 0;
+    for (const raw of rows) {
       const blank = emptyRowFromFields(tab.fields);
       Object.assign(blank, raw);
       if (key === 'districts') {
@@ -8567,14 +8638,35 @@ async function importExcelIntoList(ctx) {
         }
         if (typeof blank.is_active !== 'boolean') blank.is_active = true;
       }
-      blank._satir_kayitli = false;
-      blank._satir_duzenleniyor = true;
-      existing.push(blank);
-    });
+      if (canPersist) {
+        try {
+          const saved = await persistGridRowImmediately(screen, key, blank);
+          const merged = { ...blank, ...(saved || {}), _satir_kayitli: true, _satir_duzenleniyor: false };
+          existing.push(merged);
+          ok += 1;
+        } catch (_) {
+          blank._satir_kayitli = false;
+          blank._satir_duzenleniyor = true;
+          existing.push(blank);
+          fail += 1;
+        }
+      } else {
+        blank._satir_kayitli = false;
+        blank._satir_duzenleniyor = true;
+        existing.push(blank);
+      }
+    }
     state.formRecord[key] = existing;
     state.gridSel = { key, idx: existing.length - 1 };
+    if (key === 'districts') delete state.lookupCache.districts;
     renderForm(screen);
-    toast(`${rows.length} satır Excel’den eklendi (henüz kaydedilmedi).`);
+    if (canPersist) {
+      toast(fail
+        ? `${ok} satır kaydedildi, ${fail} hatalı.`
+        : `${ok} satır Excel’den kaydedildi.`);
+    } else {
+      toast(`${rows.length} satır Excel’den eklendi — satırda ✓ veya üst Kaydet ile yazın.`);
+    }
     return;
   }
 
@@ -9330,10 +9422,11 @@ function buildDefaultFilterState(screen) {
     } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
-      // Açılır listeler: boş operatör satırı = filtresiz
+      // Açılır listeler: boş operatör satırı = filtresiz (İçerir bu alanlarda yok)
       fs[f.key] = { op: '', a: '', b: '' };
     } else {
-      fs[f.key] = { op: '', a: '', b: '' };
+      // Metin alanları: varsayılan İçerir (değer boşken filtre uygulanmaz)
+      fs[f.key] = { op: 'icerir', a: '', b: '' };
     }
   });
   return fs;
@@ -10198,8 +10291,14 @@ function filterOperatorsFor(f) {
   return OPERATORS;
 }
 
+function defaultTextFilterOp(f) {
+  const ops = filterOperatorsFor(f);
+  if (ops.some((o) => o.id === 'icerir')) return 'icerir';
+  return '';
+}
+
 function renderFilterField(f) {
-  const st = state.filterState[f.key] || { op: '', a: '', b: '' };
+  const st = state.filterState[f.key] || { op: defaultTextFilterOp(f), a: '', b: '' };
   const bucket = filterBucket(f);
   if (f.type === 'checkbox') {
     const ops = filterOperatorsFor(f);
@@ -11054,6 +11153,30 @@ function emptyRowFromFields(fields) {
     else row[f.key] = '';
   });
   return row;
+}
+
+/** Kod / ad / unique alanlar kopyalanmaz (çakışma önlenir). */
+function isNonCopyableField(f) {
+  if (!f || !f.key) return false;
+  if (f.code || f.name || f.unique || f.noCopy) return true;
+  const k = String(f.key);
+  if (/(_code|^code|^kod)$/i.test(k)) return true;
+  if (/(_name|^name|^adi)$/i.test(k)) return true;
+  return false;
+}
+
+/** Satır kopyasında id + benzersiz alanları temizle. */
+function stripNonCopyableOnRowCopy(fields, src) {
+  const out = { ...(src || {}) };
+  delete out.id;
+  (fields || []).forEach((f) => {
+    if (!isNonCopyableField(f)) return;
+    if (f.type === 'checkbox') out[f.key] = false;
+    else out[f.key] = '';
+  });
+  out._satir_kayitli = false;
+  out._satir_duzenleniyor = true;
+  return out;
 }
 
 /** Ürün ağacı boş satır — önceki satırın stok/quantity/görünüm alanlarını asla taşıma */
@@ -12521,12 +12644,19 @@ function renderCompactMasterBar(screen, rec) {
 
 function renderGridToolbar(tabKey, { canEdit }) {
   if (!canEdit) {
-    return `<div class="inline-toolbar erp-grid-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın</span></div>`;
+    return `<div class="inline-toolbar erp-grid-toolbar"><span class="toolbar-hint">İnceleme — satıra tıklayarak bakın · sağ tık: Excel</span></div>`;
   }
+  const screen = findScreen(state.screenId);
+  const persist = Boolean(screen?.detailPersist?.[tabKey]);
+  const hint = persist
+    ? 'Satırda ✓ Kaydet veritabanına yazar'
+    : 'Satırda ✓ Kaydet satırı onaylar · belge üstteki Kaydet ile yazılır';
   return `<div class="inline-toolbar erp-grid-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}" title="Yeni satır">＋ Satır</button>
     <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}" title="Seçili satırı sil">✕ Sil</button>
-    <span class="toolbar-hint">Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır</span>
+    <button type="button" class="btn action ghost" data-excel-act="sablon" data-grid-key="${tabKey}" title="Excel şablon indir">Excel şablon</button>
+    <button type="button" class="btn action ghost" data-excel-act="al" data-grid-key="${tabKey}" title="Excel’den veri al">Excel’den al</button>
+    <span class="toolbar-hint">${hint} · sağ tık menüsü de var</span>
   </div>`;
 }
 
@@ -12554,9 +12684,12 @@ function renderDynamicGrid(tab, rec) {
   const selIdx = state.gridSel.key === key ? state.gridSel.idx : null;
 
   if (!rows.length) {
+    const persistHint = findScreen(state.screenId)?.detailPersist?.[key]
+      ? 'Yeni ile ekleyin; satırda ✓ Kaydet veritabanına yazar. Sağ tık / Excel düğmeleri ile toplu yükleyin.'
+      : 'Yeni ile ekleyin; satırda Kaydet onaylar. Sağ tık / Excel düğmeleri ile şablon alın.';
     return `
       ${renderGridToolbar(key, { canEdit })}
-      <div class="detail-empty">Henüz satır yok. ${canEdit ? 'Yeni ile ekleyin; satırda Kaydet onaylar, belge üstteki Kaydet ile yazılır.' : ''}</div>`;
+      <div class="detail-empty" data-grid-list="${key}">Henüz satır yok. ${canEdit ? persistHint : ''}</div>`;
   }
 
   return `
@@ -12584,7 +12717,7 @@ function renderDynamicGrid(tab, rec) {
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
-                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı onayla (belgeyi kaydetmez)">✓</button>
+                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="${escAttr(findScreen(state.screenId)?.detailPersist?.[key] ? 'Satırı veritabanına kaydet' : 'Satırı onayla')}">✓</button>
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">⧉</button>
                     <button type="button" class="btn action ghost sm danger" data-row-act="sil" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı sil">✕</button>
                   </div>
@@ -15214,6 +15347,22 @@ function bindCascadeLookups(_screen) {
       }
     }
 
+    // Şehir kodu değişince ilçe kodlarını yeniden üret
+    if (masterKey === 'city_code' && scr.id === 'sehir-tanimi' && state.formMode !== 'incele') {
+      const cityCode = String(el.value || '').trim();
+      document.querySelectorAll('[data-detail="district_name"][data-grid="districts"]').forEach((nameEl) => {
+        const didx = nameEl.getAttribute('data-didx');
+        const kod = districtCodeFromName(cityCode, nameEl.value);
+        const codeEl = document.querySelector(
+          `[data-detail="district_code"][data-didx="${didx}"][data-grid="districts"]`
+        );
+        if (codeEl && kod) codeEl.value = kod;
+        if (state.formRecord?.districts?.[Number(didx)]) {
+          state.formRecord.districts[Number(didx)].district_code = kod;
+        }
+      });
+    }
+
     // autoFillName: lookup seçilince bağlı ad alanını doldur (ekran kodu → ekran adı vb.)
     if (el instanceof HTMLSelectElement && fieldKey) {
       const fDef = collectTabFields(scr).find((x) => x.key === fieldKey)
@@ -16205,16 +16354,22 @@ async function openForm(mode, opts = {}) {
 
   function initSpecialTabs(src) {
     const stripIds = mode === 'kopyala' || mode === 'yeni';
-    const keepOrStrip = (row) => {
+    const keepOrStrip = (row, fields) => {
       if (!row || typeof row !== 'object') return row;
       if (!stripIds) return { ...row };
+      if (mode === 'kopyala') return stripNonCopyableOnRowCopy(fields || [], row);
       const { id, ...rest } = row;
       return rest;
     };
     (screen.formTabs || []).forEach((tab) => {
       if (tab.kind === 'grid') {
-        const raw = Array.isArray(src[tab.key]) ? src[tab.key] : [];
-        record[tab.key] = normalizeGridRows(tab, raw.map(keepOrStrip));
+        // detailPersist listeler satır bazlı yazılır — form kopyasında boş başla
+        if (mode === 'kopyala' && screen.detailPersist?.[tab.key]) {
+          record[tab.key] = [];
+        } else {
+          const raw = Array.isArray(src[tab.key]) ? src[tab.key] : [];
+          record[tab.key] = normalizeGridRows(tab, raw.map((r) => keepOrStrip(r, tab.fields)));
+        }
       }
       if (tab.kind === 'master-grid') {
         const gkey = tab.grid?.key || tab.key || '_detail';
@@ -16224,8 +16379,12 @@ async function openForm(mode, opts = {}) {
           fields: tab.grid?.fields || tab.detailFields || [],
           slots: tab.grid?.slots,
         };
-        const raw = Array.isArray(src[gkey]) ? src[gkey] : [];
-        record[gkey] = normalizeGridRows(gtab, raw.map(keepOrStrip));
+        if (mode === 'kopyala' && screen.detailPersist?.[gkey]) {
+          record[gkey] = [];
+        } else {
+          const raw = Array.isArray(src[gkey]) ? src[gkey] : [];
+          record[gkey] = normalizeGridRows(gtab, raw.map((r) => keepOrStrip(r, gtab.fields)));
+        }
       }
       if (tab.kind === 'bom-tree' || tab.kind === 'bom-workspace') {
         record.satirlar = Array.isArray(src.agac) && src.agac.length
@@ -16286,16 +16445,29 @@ async function openForm(mode, opts = {}) {
     const full = await loadRecord(row.id);
     record = { ...full };
     delete record.id;
+    // Kod ve ad kopyalanmaz (benzersiz); numaratör varsa yeni kod ayrılır
     if (screen.nameField) record[screen.nameField] = '';
     const seri = resolveNumeratorSeri(screen, record);
     if (seri && screen.codeField) {
       try {
         record[screen.codeField] = await ayirKod(seri);
         state.formNumeratorSeri = seri;
-      } catch (err) { toast(err.message); }
+      } catch (err) {
+        toast(err.message);
+        record[screen.codeField] = '';
+        state.formNumeratorSeri = null;
+      }
     } else {
+      if (screen.codeField) record[screen.codeField] = '';
       state.formNumeratorSeri = null;
     }
+    // Master alanlarda code/name işaretlileri de temizle
+    (screen.masterFields || []).forEach((f) => {
+      if (!isNonCopyableField(f)) return;
+      if (screen.codeField && f.key === screen.codeField && seri) return;
+      if (f.type === 'checkbox') record[f.key] = false;
+      else record[f.key] = '';
+    });
     initSpecialTabs(full);
   } else {
     const full = await loadRecord(row.id);
@@ -16545,6 +16717,15 @@ async function saveForm({ after = 'stay' } = {}) {
     if (!String(master.sembol || '').trim() && master.currency_code) {
       master.sembol = master.currency_code;
     }
+  }
+
+  // detailPersist listeleri satır ✓ / Sil ile yazılır — üst Kaydet ile sync edilirse
+  // formda olmayan (veya toolbar’dan yalnızca UI’dan silinen) satırlar DB’de kaybolur/orphan kalır.
+  // Master kaydında bu grid’leri gönderme; kayıt sonrası GET tam listeyi getirir.
+  if (screen.detailPersist) {
+    Object.keys(screen.detailPersist).forEach((k) => {
+      delete master[k];
+    });
   }
 
   try {
@@ -17107,27 +17288,29 @@ function bindEvents() {
     });
   }
 
-  // Form içi detay/grid listeleri — Excel şablon/import
+  // Form içi detay/grid listeleri — Excel şablon/import (input üstünde de çalışır)
   const viewFormForExcel = $('#viewForm');
   if (viewFormForExcel && !viewFormForExcel.dataset.excelCtxBound) {
     viewFormForExcel.dataset.excelCtxBound = '1';
     viewFormForExcel.addEventListener('contextmenu', (e) => {
-      const wrap = e.target.closest('.detail-table-wrap, .detail-empty, [data-grid-toolbar], .erp-grid-toolbar');
+      const wrap = e.target.closest(
+        '.detail-table-wrap, .detail-empty, [data-grid-toolbar], .erp-grid-toolbar, tr[data-grid-row]'
+      );
       if (!wrap) return;
-      if (e.target.closest('input, textarea, select, button, a, .lookup-panel')) return;
       const screen = findScreen(state.screenId);
       if (!screen || !state.formMode) return;
-      const listWrap = e.target.closest('.detail-table-wrap');
+      const listWrap = e.target.closest('.detail-table-wrap, .detail-empty');
       const gridKey = listWrap?.getAttribute('data-grid-list')
         || e.target.closest('[data-grid-toolbar]')?.getAttribute('data-grid-toolbar')
         || e.target.closest('[data-grid-key]')?.getAttribute('data-grid-key')
+        || e.target.closest('tr[data-grid-row]')?.getAttribute('data-grid-row')
         || resolveFirstGridKey(screen);
       if (!gridKey) return;
       e.preventDefault();
       e.stopPropagation();
       state.excelCtx = { kind: 'grid', screenId: screen.id, gridKey };
       showListContextMenu(screen, e.clientX, e.clientY);
-    });
+    }, true);
   }
 
   const tabCtx = $('#tabCtxMenu');
@@ -17151,7 +17334,7 @@ function bindEvents() {
   // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır (contextmenu sonrası click menüyü düşürmesin)
   document.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('#tabCtxMenu')) return;
+    if (e.target.closest('#tabCtxMenu, #listCtxMenu, #formCtxMenu')) return;
     hideTabContextMenu();
   }, true);
 
@@ -17465,6 +17648,8 @@ function bindEvents() {
   const viewFormEl = $('#viewForm');
   viewFormEl?.addEventListener('contextmenu', (e) => {
     if (!state.formMode) return;
+    // Detay listesi Excel menüsüne bırak
+    if (e.target.closest('.detail-table-wrap, .detail-empty, [data-grid-toolbar], .erp-grid-toolbar, tr[data-grid-row]')) return;
     // Input/lookup içinde tarayıcı menüsü kalsın
     if (e.target.closest('input, textarea, select, button, a, .lookup-panel, .tab-ctx-menu')) return;
     e.preventDefault();
@@ -17761,6 +17946,22 @@ function bindEvents() {
       return;
     }
 
+    // Detay grid Excel düğmeleri
+    const excelActBtn = e.target.closest('[data-excel-act]');
+    if (excelActBtn && screen) {
+      e.preventDefault();
+      e.stopPropagation();
+      const gridKey = excelActBtn.getAttribute('data-grid-key') || resolveFirstGridKey(screen);
+      const act = excelActBtn.getAttribute('data-excel-act');
+      state.excelCtx = { kind: 'grid', screenId: screen.id, gridKey };
+      if (act === 'sablon') {
+        downloadExcelTemplate(state.excelCtx).catch((err) => toast(err.message));
+      } else if (act === 'al') {
+        importExcelIntoList(state.excelCtx).catch((err) => toast(err.message));
+      }
+      return;
+    }
+
     // --- Detay grid: seç / Yeni / Düzelt / Sil ---
     const gridAct = e.target.closest('[data-grid-act]');
     if (gridAct && screen) {
@@ -17802,9 +18003,23 @@ function bindEvents() {
           toast('Silmek için önce bir satır seçin.');
           return;
         }
-        rows.splice(state.gridSel.idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = { key: null, idx: null };
+        const doomedIdx = state.gridSel.idx;
+        const doomed = rows[doomedIdx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) {
+              await deletePersistedGridRow(screen, key, doomed);
+            }
+            rows.splice(doomedIdx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
+        return;
       }
       renderForm(screen);
       return;
@@ -17843,45 +18058,113 @@ function bindEvents() {
       }
       if (act === 'sil') {
         if (!rows[idx]) return;
-        rows.splice(idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = rows.length
-          ? { key, idx: Math.min(idx, rows.length - 1) }
-          : { key: null, idx: null };
-        renderForm(screen);
-        toast('Satır silindi.');
+        const doomed = rows[idx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) {
+              await deletePersistedGridRow(screen, key, doomed);
+            }
+            rows.splice(idx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = rows.length
+              ? { key, idx: Math.min(idx, rows.length - 1) }
+              : { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
         return;
       }
       if (act === 'kopyala') {
         if (!rows[idx]) return;
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
-        const copy = { ...rows[idx] };
-        delete copy.id;
-        copy._satir_kayitli = false;
-        copy._satir_duzenleniyor = true;
+        // Kod / ad / benzersiz alanlar kopyalanmaz
+        const copy = stripNonCopyableOnRowCopy(tab.fields, rows[idx]);
+        if (key === 'districts') copy.is_active = true;
         rows.splice(idx + 1, 0, copy);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — Kaydet ile onaylayın.');
+        toast(screen.detailPersist?.[key]
+          ? 'Satır kopyalandı — kod/ad boş; ✓ ile kaydedin.'
+          : 'Satır kopyalandı — kod/ad boş; Kaydet ile onaylayın.');
         return;
       }
       if (act === 'kaydet') {
-        // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
-        if (rows[idx]) {
-          const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
-          if (missing?.length) {
-            toast(`Satır eksik: ${missing.map((f) => f.label || f.key).join(', ')}`);
-            return;
-          }
-          row._satir_kayitli = true;
-          row._satir_duzenleniyor = false;
-          rows[idx] = row;
+        if (!rows[idx]) return;
+        const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
+        if (missing?.length) {
+          toast(`Satır eksik: ${missing.map((f) => f.label || f.key).join(', ')}`);
+          return;
         }
-        state.formRecord[key] = rows;
-        state.gridSel = { key, idx };
-        renderForm(screen);
-        toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+        (async () => {
+          try {
+            let saved = row;
+            if (screen.detailPersist?.[key]) {
+              const apiRow = await persistGridRowImmediately(screen, key, row);
+              if (apiRow) {
+                saved = { ...row, ...apiRow };
+              }
+            }
+            saved._satir_kayitli = true;
+            saved._satir_duzenleniyor = false;
+            // Aynı kod/id başka satırda kaldıysa (orphan/çift) temizle
+            rows.splice(idx, 1);
+            if (saved.id != null || saved.district_code) {
+              const sid = saved.id != null ? String(saved.id) : null;
+              const skod = saved.district_code
+                ? String(saved.district_code).toLocaleUpperCase('tr-TR')
+                : null;
+              for (let i = rows.length - 1; i >= 0; i -= 1) {
+                const r = rows[i];
+                if (!r) continue;
+                if (sid && r.id != null && String(r.id) === sid) {
+                  rows.splice(i, 1);
+                  continue;
+                }
+                if (
+                  key === 'districts'
+                  && skod
+                  && r.district_code
+                  && String(r.district_code).toLocaleUpperCase('tr-TR') === skod
+                ) {
+                  rows.splice(i, 1);
+                }
+              }
+            }
+            // Kaydedilen satır alta; en üste boş yeni satır
+            rows.push(saved);
+            const blank = emptyRowFromFields(tab.fields);
+            blank._satir_kayitli = false;
+            blank._satir_duzenleniyor = true;
+            if (key === 'districts') blank.is_active = true;
+            rows.unshift(blank);
+            state.formRecord[key] = rows;
+            state.gridSel = { key, idx: 0 };
+            if (key === 'districts') delete state.lookupCache.districts;
+            renderForm(screen);
+            // Yeni satırın ilk yazılabilir alanına odak
+            requestAnimationFrame(() => {
+              const first = document.querySelector(
+                `tr[data-grid-row="${key}"][data-grid-idx="0"] input:not([disabled]):not([type="checkbox"]), `
+                + `tr[data-grid-row="${key}"][data-grid-idx="0"] select:not([disabled])`
+              );
+              if (first) {
+                first.focus();
+                if (typeof first.select === 'function') first.select();
+              }
+            });
+            if (saved.id != null) {
+              toast(`Satır kaydedildi · ID ${saved.id}`);
+            } else {
+              toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+            }
+          } catch (err) {
+            toast(err.message || 'Satır kaydedilemedi');
+          }
+        })();
         return;
       }
     }

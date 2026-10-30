@@ -62,19 +62,41 @@ router.post('/', async (req, res) => {
         const district_code = trimOrNull(req.body.district_code)
             || districtCodeFrom(city_code, district_name);
         if (!district_code) return res.status(400).json({ hata: 'district_code üretilemedi.' });
-        const ins = await pool.query(
-            `INSERT INTO districts (district_code, district_name, city_code, is_active)
-             VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
-            [
-                district_code,
-                district_name,
-                city_code,
-                typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
-            ]
-        );
-        res.status(201).json(ins.rows[0]);
+        const is_active = typeof req.body.is_active === 'boolean' ? req.body.is_active : true;
+        try {
+            const ins = await pool.query(
+                `INSERT INTO districts (district_code, district_name, city_code, is_active)
+                 VALUES ($1,$2,$3,$4) RETURNING *`,
+                [district_code, district_name, city_code, is_active]
+            );
+            return res.status(201).json(ins.rows[0]);
+        } catch (err) {
+            if (err.code !== '23505') throw err;
+            // Aynı şehirde kod zaten varsa: mevcut kaydı güncelle (formda “kayıp” orphan satır)
+            const existing = await pool.query(
+                `SELECT * FROM districts WHERE lower(district_code) = lower($1)`,
+                [district_code]
+            );
+            const hit = existing.rows[0];
+            if (hit && String(hit.city_code) === String(city_code)) {
+                const upd = await pool.query(
+                    `UPDATE districts SET
+                        district_name = $2,
+                        city_code = $3,
+                        is_active = $4,
+                        district_code = $5
+                     WHERE id = $1 RETURNING *`,
+                    [hit.id, district_name, city_code, is_active, district_code]
+                );
+                return res.json(upd.rows[0]);
+            }
+            return res.status(409).json({
+                hata: 'İlçe kodu zaten var.',
+                existing_id: hit?.id || null,
+                city_code: hit?.city_code || null,
+            });
+        }
     } catch (err) {
-        if (err.code === '23505') return res.status(409).json({ hata: 'İlçe kodu zaten var.' });
         res.status(500).json({ hata: err.message });
     }
 });
@@ -83,22 +105,30 @@ router.put('/:id', async (req, res) => {
     try {
         const district_name = trimOrNull(req.body.district_name);
         if (!district_name) return res.status(400).json({ hata: 'district_name zorunludur.' });
+        const city_code = trimOrNull(req.body.city_code);
+        let district_code = trimOrNull(req.body.district_code);
+        if (!district_code && city_code) {
+            district_code = districtCodeFrom(city_code, district_name);
+        }
         const upd = await pool.query(
             `UPDATE districts SET
                 district_name = $2,
                 city_code = COALESCE($3, city_code),
-                is_active = COALESCE($4, is_active)
+                is_active = COALESCE($4, is_active),
+                district_code = COALESCE($5, district_code)
              WHERE id = $1 RETURNING *`,
             [
                 req.params.id,
                 district_name,
-                trimOrNull(req.body.city_code),
+                city_code,
                 typeof req.body.is_active === 'boolean' ? req.body.is_active : null,
+                district_code,
             ]
         );
         if (!upd.rows[0]) return res.status(404).json({ hata: 'İlçe bulunamadı.' });
         res.json(upd.rows[0]);
     } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'İlçe kodu zaten var.' });
         res.status(500).json({ hata: err.message });
     }
 });
