@@ -36,7 +36,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261030satirust" />
+  <link rel="stylesheet" href="/styles.css?v=20261030ayarlar2" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ktb_ui_theme') || 'blue';
+        var l = localStorage.getItem('ktb_ui_lang') || 'tr';
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.setAttribute('lang', l === 'en' ? 'en' : 'tr');
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
   <script src="/vendor/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -172,8 +182,44 @@
             autocomplete="off"
           />
           <div id="searchResults" class="search-results" hidden></div>
+          <div class="settings-wrap" id="settingsWrap">
+            <button type="button" class="icon-btn settings-btn" id="btnSettings"
+              aria-haspopup="true" aria-expanded="false" aria-label="Ayarlar" title="Ayarlar">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
+            <div class="settings-menu" id="settingsMenu" role="menu" hidden>
+              <div class="settings-menu-section">
+                <div class="settings-menu-label" data-i18n="settings.language">Sistem dili</div>
+                <button type="button" class="settings-menu-item" role="menuitemradio" data-set-lang="tr" aria-checked="true">
+                  <span>Türkçe</span><span class="settings-check" aria-hidden="true">✓</span>
+                </button>
+                <button type="button" class="settings-menu-item" role="menuitemradio" data-set-lang="en" aria-checked="false">
+                  <span>English</span><span class="settings-check" aria-hidden="true">✓</span>
+                </button>
+              </div>
+              <div class="settings-menu-sep" role="separator"></div>
+              <button type="button" class="settings-menu-item settings-menu-item--action" role="menuitem" id="btnOpenThemes" data-i18n="settings.themes">
+                Temalar…
+              </button>
+            </div>
+          </div>
         </div>
       </header>
+
+      <div class="theme-modal" id="themeModal" hidden>
+        <div class="theme-modal-backdrop" data-theme-close></div>
+        <div class="theme-modal-card" role="dialog" aria-labelledby="themeModalTitle">
+          <div class="theme-modal-head">
+            <strong id="themeModalTitle" data-i18n="settings.themesTitle">Tema seçin</strong>
+            <button type="button" class="btn tiny ghost" data-theme-close aria-label="Kapat">✕</button>
+          </div>
+          <div class="theme-grid" id="themeGrid"></div>
+        </div>
+      </div>
 
       <div class="tab-ctx-menu" id="tabCtxMenu" role="menu" hidden>
         <button type="button" role="menuitem" data-tab-ctx="close">Kapat</button>
@@ -475,7 +521,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261030hkdefault"></script>
+  <script src="/app.js?v=20261030ayarlar2"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {
