@@ -212,44 +212,24 @@ const MODULES = [
           { key: 'city_code', label: 'Şehir kodu', code: true, editableOnNew: true, required: true },
           { key: 'city_name', label: 'Şehir adı', name: true, required: true },
           { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
-        ],
-        detailFields: [
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'district-tanimi',
-        techId: 'MDM-DIST-SCR-001',
-        businessNameEn: 'DistrictDefinitionScreen',
-        title: 'İlçe Tanımı',
-        endpoint: '/districts',
-        crud: true,
-        codeField: 'district_code',
-        nameField: 'district_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'district_code', label: 'İlçe kodu' },
-          { key: 'district_name', label: 'İlçe adı' },
-          { key: 'city_code', label: 'Şehir' },
-        ],
-        columns: [
-          { key: 'district_code', label: 'Kod', mono: true },
-          { key: 'district_name', label: 'Ad' },
-          { key: 'city_code', label: 'Şehir' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'district_code', label: 'İlçe kodu', code: true, editableOnNew: true, required: true },
-          { key: 'district_name', label: 'İlçe adı', name: true, required: true },
-          { key: 'city_code', label: 'Şehir', type: 'lookup', lookup: 'cities', valueKey: 'city_code', labelKey: 'city_name' },
-        ],
+        // İlçeler şehir kartının altında liste (ayrı İlçe Tanımı ekranı yok)
+        detailKey: 'districts',
+        detailSlots: 3,
+        detailAsFields: false,
         detailFields: [
+          {
+            key: 'district_code',
+            label: 'İlçe kodu',
+            mono: true,
+            size: 'short',
+            // Ad yazılınca şehirKodu+ünsüzler ile dolar; elle de düzeltilebilir
+          },
+          { key: 'district_name', label: 'İlçe adı', required: true },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
-        detailKey: null,
-        detailAsFields: true,
+        defaults: { is_active: true, districts: [] },
       },
       {
         id: 'odeme-kosulu-tanimi',
@@ -7250,6 +7230,7 @@ const state = {
   lookupCache: {},
   formSeq: 0,
   gridSel: { key: null, idx: null },
+  excelCtx: null, // { kind: 'list'|'grid', screenId, gridKey? }
   treeSel: null,
   treeExpanded: {},
   flowSel: null,
@@ -8410,10 +8391,237 @@ async function formCrudAction(act) {
   }
 }
 
-function showListContextMenu(screen, clientX, clientY) {
+/** İlçe kodu: şehirKodu + ilçe adındaki ünsüz harfler (TR). */
+function districtCodeFromName(cityCode, districtName) {
+  const vowels = new Set('aeıioöuüâêîôûAEIİOÖUÜÂÊÎÔÛ'.split(''));
+  const cons = String(districtName || '')
+    .split('')
+    .filter((ch) => /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(ch) && !vowels.has(ch))
+    .map((ch) => ch.toLocaleUpperCase('tr-TR'))
+    .join('');
+  return `${String(cityCode || '').trim()}${cons}`;
+}
+
+function resolveFirstGridKey(screen) {
+  if (!screen) return null;
+  if (screen.detailKey) return screen.detailKey;
+  for (const tab of screen.formTabs || []) {
+    if (tab.kind === 'grid' && tab.key) return tab.key;
+    if (tab.kind === 'master-grid' && (tab.grid?.key || tab.key)) return tab.grid?.key || tab.key;
+  }
+  return null;
+}
+
+function excelColumnsForCtx(ctx) {
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  if (!screen) return [];
+  if (ctx?.kind === 'grid') {
+    const tab = resolveGridTab(screen, ctx.gridKey);
+    return (tab?.fields || []).filter((f) => f && f.type !== 'static').map((f) => ({
+      key: f.key,
+      label: f.label || f.key,
+      type: f.type,
+    }));
+  }
+  const cols = (typeof listColumns === 'function' ? listColumns(screen) : screen.columns) || [];
+  return cols.map((c) => ({ key: c.key, label: c.label || c.key }));
+}
+
+function ensureXlsxLib() {
+  if (typeof XLSX !== 'undefined') return XLSX;
+  throw new Error('Excel kütüphanesi yüklenemedi (xlsx). Sayfayı yenileyin.');
+}
+
+async function downloadExcelTemplate(ctx) {
+  const XLSXlib = ensureXlsxLib();
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  const cols = excelColumnsForCtx(ctx);
+  if (!cols.length) {
+    toast('Şablon için kolon tanımı yok.');
+    return;
+  }
+  const header = cols.map((c) => c.label);
+  const sample = cols.map((c) => {
+    if (c.key === 'is_active') return 'Evet';
+    if (c.type === 'checkbox') return 'Hayır';
+    if (c.key === 'district_name') return 'Örnek İlçe';
+    if (c.key === 'district_code') return '';
+    return '';
+  });
+  const ws = XLSXlib.utils.aoa_to_sheet([header, sample]);
+  const wb = XLSXlib.utils.book_new();
+  const sheetName = ctx?.kind === 'grid' ? (ctx.gridKey || 'Liste') : (screen?.id || 'Liste');
+  XLSXlib.utils.book_append_sheet(wb, ws, String(sheetName).slice(0, 31));
+  const fileBase = ctx?.kind === 'grid'
+    ? `${screen?.id || 'form'}-${ctx.gridKey || 'grid'}-sablon`
+    : `${screen?.id || 'liste'}-sablon`;
+  XLSXlib.writeFile(wb, `${fileBase}.xlsx`);
+  toast('Excel şablon indirildi.');
+}
+
+function parseExcelActive(val) {
+  if (typeof val === 'boolean') return val;
+  const s = String(val ?? '').trim().toLocaleLowerCase('tr-TR');
+  if (!s) return true;
+  if (['hayır', 'hayir', 'false', '0', 'pasif', 'no'].includes(s)) return false;
+  if (['evet', 'true', '1', 'aktif', 'yes'].includes(s)) return true;
+  return Boolean(val);
+}
+
+function mapExcelRowsToObjects(cols, aoa) {
+  if (!aoa?.length) return [];
+  const header = (aoa[0] || []).map((h) => String(h ?? '').trim());
+  const idx = {};
+  cols.forEach((c) => {
+    const hi = header.findIndex((h) => h.toLocaleLowerCase('tr-TR') === String(c.label).toLocaleLowerCase('tr-TR')
+      || h.toLocaleLowerCase('tr-TR') === String(c.key).toLocaleLowerCase('tr-TR'));
+    if (hi >= 0) idx[c.key] = hi;
+  });
+  const out = [];
+  for (let r = 1; r < aoa.length; r += 1) {
+    const line = aoa[r] || [];
+    if (!line.some((cell) => cell != null && String(cell).trim() !== '')) continue;
+    const obj = {};
+    cols.forEach((c) => {
+      const i = idx[c.key];
+      if (i == null) return;
+      let v = line[i];
+      if (c.key === 'is_active' || c.type === 'checkbox') v = parseExcelActive(v);
+      else if (v == null) v = '';
+      else v = String(v).trim();
+      obj[c.key] = v;
+    });
+    out.push(obj);
+  }
+  return out;
+}
+
+function pickExcelFile() {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      document.body.removeChild(input);
+      if (!file) reject(new Error('Dosya seçilmedi.'));
+      else resolve(file);
+    }, { once: true });
+    input.click();
+  });
+}
+
+async function readExcelFileToObjects(cols, file) {
+  const XLSXlib = ensureXlsxLib();
+  const buf = await file.arrayBuffer();
+  const wb = XLSXlib.read(buf, { type: 'array' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const aoa = XLSXlib.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+  return mapExcelRowsToObjects(cols, aoa);
+}
+
+async function importExcelIntoList(ctx) {
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  if (!screen) return;
+  if (state.formMode === 'incele' && ctx?.kind === 'grid') {
+    toast('İnceleme modunda Excel içe aktarılamaz.');
+    return;
+  }
+  const cols = excelColumnsForCtx(ctx);
+  if (!cols.length) {
+    toast('İçe aktarım için kolon tanımı yok.');
+    return;
+  }
+  let file;
+  try {
+    file = await pickExcelFile();
+  } catch (err) {
+    toast(err.message);
+    return;
+  }
+  const rows = await readExcelFileToObjects(cols, file);
+  if (!rows.length) {
+    toast('Excel’de aktarılacak satır bulunamadı.');
+    return;
+  }
+
+  if (ctx?.kind === 'grid') {
+    const key = ctx.gridKey;
+    const tab = resolveGridTab(screen, key);
+    if (!tab) {
+      toast('Liste alanı bulunamadı.');
+      return;
+    }
+    const masterSnap = readMasterFromForm(screen);
+    state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
+    const cityCode = state.formRecord.city_code || masterSnap.city_code || '';
+    const existing = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
+    rows.forEach((raw) => {
+      const blank = emptyRowFromFields(tab.fields);
+      Object.assign(blank, raw);
+      if (key === 'districts') {
+        if (!blank.district_code && blank.district_name) {
+          blank.district_code = districtCodeFromName(cityCode, blank.district_name);
+        }
+        if (typeof blank.is_active !== 'boolean') blank.is_active = true;
+      }
+      blank._satir_kayitli = false;
+      blank._satir_duzenleniyor = true;
+      existing.push(blank);
+    });
+    state.formRecord[key] = existing;
+    state.gridSel = { key, idx: existing.length - 1 };
+    renderForm(screen);
+    toast(`${rows.length} satır Excel’den eklendi (henüz kaydedilmedi).`);
+    return;
+  }
+
+  if (!screen.crud || screen.readOnly) {
+    toast('Bu listeye Excel ile kayıt eklenemez.');
+    return;
+  }
+  let ok = 0;
+  let fail = 0;
+  for (const raw of rows) {
+    try {
+      const body = { ...raw };
+      delete body.id;
+      if (screen.defaults) {
+        Object.keys(screen.defaults).forEach((k) => {
+          if (k === 'districts') return;
+          if (body[k] === undefined || body[k] === '') body[k] = screen.defaults[k];
+        });
+      }
+      await api(screenApiBase(screen.endpoint), { method: 'POST', body: JSON.stringify(body) });
+      ok += 1;
+    } catch (_) {
+      fail += 1;
+    }
+  }
+  invalidateLookups();
+  await openScreen(screen.id, { skipTab: true });
+  toast(fail ? `${ok} kayıt eklendi, ${fail} hatalı.` : `${ok} kayıt Excel’den eklendi.`);
+}
+
+function showListContextMenu(screen, clientX, clientY, extraItems = []) {
   const menu = $('#listCtxMenu');
-  if (!menu || !screen?.contextMenu?.length) return;
-  menu.innerHTML = screen.contextMenu.map((item) => `
+  if (!menu) return;
+  const items = [
+    ...(screen?.contextMenu || []),
+    ...extraItems,
+    { id: 'excel-sablon', label: 'Excel şablon indir' },
+    { id: 'excel-al', label: 'Excel’den veri al' },
+  ];
+  // Yinelenen id’leri tekilleştir (ekstra + varsayılan)
+  const seen = new Set();
+  const uniq = items.filter((it) => {
+    if (!it?.id || seen.has(it.id)) return false;
+    seen.add(it.id);
+    return true;
+  });
+  menu.innerHTML = uniq.map((item) => `
     <button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
       data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(item.label)}</button>
   `).join('');
@@ -8434,9 +8642,18 @@ function showListContextMenu(screen, clientX, clientY) {
       if (!btn) return;
       e.preventDefault();
       menu.hidden = true;
+      const act = btn.getAttribute('data-list-ctx');
+      if (act === 'excel-sablon') {
+        downloadExcelTemplate(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'excel-al') {
+        importExcelIntoList(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
+        return;
+      }
       const openId = btn.getAttribute('data-open-screen');
       const item = (findScreen(state.screenId)?.contextMenu || [])
-        .find((x) => x.id === btn.getAttribute('data-list-ctx'));
+        .find((x) => x.id === act);
       const row = selectedRow();
       if (openId) {
         // Hedef ekrana filtre/query geçir
@@ -13778,7 +13995,7 @@ const LOOKUP_TO_SCREEN = {
   'olcu-birimleri': 'olcu-birimleri',
   countries: 'country-tanimi',
   cities: 'sehir-tanimi',
-  districts: 'district-tanimi',
+  districts: 'sehir-tanimi',
   'para-birimleri': 'para-birimi-tanimi',
   'odeme-kosullari': 'odeme-kosulu-tanimi',
   'teslimat-kosullari': 'teslimat-kosulu-tanimi',
@@ -14929,7 +15146,9 @@ function bindCascadeLookups(_screen) {
       return;
     }
 
-    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && fieldKey === 'dil_code')) {
+    const isDistrictName = fieldKey === 'district_name' && el.getAttribute('data-grid') === 'districts';
+    if (!(el instanceof HTMLSelectElement)
+      && !(el instanceof HTMLInputElement && (fieldKey === 'dil_code' || isDistrictName))) {
       if (!(el instanceof HTMLSelectElement)) return;
     }
     if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')
@@ -14971,6 +15190,26 @@ function bindCascadeLookups(_screen) {
             `[data-detail="dil_name"][data-didx="${didx}"][data-grid="${grid}"]`
           );
           if (nameEl) nameEl.value = adi;
+        }
+      }
+    }
+
+    // İlçe adı → ilçe kodu (şehirKodu + ünsüzler)
+    if (isDistrictName && detailKey === 'district_name') {
+      const didx = el.getAttribute('data-didx');
+      const grid = el.getAttribute('data-grid');
+      const cityCode = document.querySelector('[data-master="city_code"]')?.value
+        || state.formRecord?.city_code
+        || '';
+      const kod = districtCodeFromName(cityCode, el.value);
+      const codeEl = document.querySelector(
+        `[data-detail="district_code"][data-didx="${didx}"][data-grid="${grid}"]`
+      );
+      if (codeEl && kod) {
+        codeEl.value = kod;
+        if (state.formRecord?.districts?.[Number(didx)]) {
+          state.formRecord.districts[Number(didx)].district_name = el.value;
+          state.formRecord.districts[Number(didx)].district_code = kod;
         }
       }
     }
@@ -16847,21 +17086,46 @@ function bindEvents() {
     });
   }
 
-  // Liste satırı sağ tık — ekran contextMenu (depo bakiye → stok hareketleri)
+  // Liste alanı sağ tık — Excel şablon/import (+ isteğe bağlı ekran contextMenu)
   const dataBody = $('#dataBody');
   if (dataBody && !dataBody.dataset.ctxBound) {
     dataBody.dataset.ctxBound = '1';
     dataBody.addEventListener('contextmenu', (e) => {
-      const tr = e.target.closest('tr[data-id]');
-      if (!tr) return;
       const screen = findScreen(state.screenId);
-      if (!screen?.contextMenu?.length) return;
+      if (!screen) return;
+      const tr = e.target.closest('tr[data-id]');
       e.preventDefault();
       e.stopPropagation();
-      state.selectedId = tr.getAttribute('data-id');
-      document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
-      tr.classList.add('selected');
-      updateActionButtons(screen);
+      if (tr) {
+        state.selectedId = tr.getAttribute('data-id');
+        document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
+        tr.classList.add('selected');
+        updateActionButtons(screen);
+      }
+      state.excelCtx = { kind: 'list', screenId: screen.id };
+      showListContextMenu(screen, e.clientX, e.clientY);
+    });
+  }
+
+  // Form içi detay/grid listeleri — Excel şablon/import
+  const viewFormForExcel = $('#viewForm');
+  if (viewFormForExcel && !viewFormForExcel.dataset.excelCtxBound) {
+    viewFormForExcel.dataset.excelCtxBound = '1';
+    viewFormForExcel.addEventListener('contextmenu', (e) => {
+      const wrap = e.target.closest('.detail-table-wrap, .detail-empty, [data-grid-toolbar], .erp-grid-toolbar');
+      if (!wrap) return;
+      if (e.target.closest('input, textarea, select, button, a, .lookup-panel')) return;
+      const screen = findScreen(state.screenId);
+      if (!screen || !state.formMode) return;
+      const listWrap = e.target.closest('.detail-table-wrap');
+      const gridKey = listWrap?.getAttribute('data-grid-list')
+        || e.target.closest('[data-grid-toolbar]')?.getAttribute('data-grid-toolbar')
+        || e.target.closest('[data-grid-key]')?.getAttribute('data-grid-key')
+        || resolveFirstGridKey(screen);
+      if (!gridKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      state.excelCtx = { kind: 'grid', screenId: screen.id, gridKey };
       showListContextMenu(screen, e.clientX, e.clientY);
     });
   }
@@ -17519,6 +17783,7 @@ function bindEvents() {
         const blank = emptyRowFromFields(tab.fields);
         blank._satir_kayitli = false;
         blank._satir_duzenleniyor = true;
+        if (key === 'districts') blank.is_active = true;
         rows.push(blank);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: rows.length - 1 };
