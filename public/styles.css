@@ -1232,16 +1232,23 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 }
 .filter-controls {
   display: grid;
-  grid-template-columns: 3.05rem minmax(0, 1fr);
+  grid-template-columns: 5.4rem minmax(0, 1fr);
   gap: 0.22rem;
   min-width: 0;
+  align-items: start;
+}
+.filter-field.filter-field--noval .filter-controls {
+  grid-template-columns: minmax(0, 1fr);
 }
 .filter-field .filter-op {
-  font-size: 0.62rem;
-  padding: 0.15rem 0.08rem;
+  font-size: 0.68rem;
+  padding: 0.15rem 0.12rem;
   min-width: 0;
   height: 1.7rem;
   line-height: 1.1;
+}
+.filter-values--hidden {
+  display: none !important;
 }
 .filter-field select, .filter-field input {
   width: 100%;

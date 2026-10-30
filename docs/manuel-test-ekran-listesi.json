@@ -1,0 +1,477 @@
+{
+  "generatedAt": "2026-10-30T15:42:51.879286+03:00",
+  "stepCount": 57,
+  "phases": [
+    {
+      "phase": "A — Giriş ve firma iskeleti",
+      "intro": "Önce sisteme girip firmayı / iş yerini / depoyu hazırlayın.",
+      "steps": [
+        {
+          "no": 1,
+          "title": "Uygulamayı açıp giriş yapın",
+          "screen": "# (login)",
+          "action": "Admin (veya yetkili) kullanıcı ile oturum açın.",
+          "expected": "Ana menü ve modüller görünür."
+        },
+        {
+          "no": 2,
+          "title": "Aktif firmayı seçin / oluşturun",
+          "screen": "#companies",
+          "action": "TEKS (veya yeni firma) kartını açın; yoksa Yeni ile firma kodu + unvan kaydedin.",
+          "expected": "Firma listede; üst barda aktif firma doğru."
+        },
+        {
+          "no": 3,
+          "title": "İş yeri (plant) tanımlayın",
+          "screen": "#is-yerleri",
+          "action": "Firmaya bağlı en az bir iş yeri ekleyin (kod, ad, şehir).",
+          "expected": "İş yeri kaydı oluştu; firmaya bağlı."
+        },
+        {
+          "no": 4,
+          "title": "Depo tanımlayın",
+          "screen": "#warehouses",
+          "action": "İş yerine bağlı ana depo + gerekirse hammadde/mamul depo ekleyin.",
+          "expected": "Depolar listelenir; varsayılan depo seçilebilir."
+        },
+        {
+          "no": 5,
+          "title": "Kullanıcı–firma yetkisi",
+          "screen": "#kullanicilar",
+          "action": "Test kullanıcısının bu firmaya erişimi olduğundan emin olun.",
+          "expected": "Firma değiştirince ekranlar dolu / boş doğru davranır."
+        }
+      ]
+    },
+    {
+      "phase": "B — Sabit tanımlar (bir kez)",
+      "intro": "Belge ve kartlar için ortak parametreler. Eksikse sonraki adımlarda lookup boş kalır.",
+      "steps": [
+        {
+          "no": 6,
+          "title": "Numaratörler",
+          "screen": "#numarator-tanimi",
+          "action": "Stok, cari, sipariş, irsaliye, fatura, iş emri serilerinin aktif olduğunu kontrol edin.",
+          "expected": "Yeni kayıtta kod otomatik gelir."
+        },
+        {
+          "no": 7,
+          "title": "Ölçü birimleri",
+          "screen": "#olcu-birimleri",
+          "action": "AD, KG, MT, LT vb. temel birimleri ekleyin / doğrulayın.",
+          "expected": "Stok kartında birim seçilebilir."
+        },
+        {
+          "no": 8,
+          "title": "Para birimi ve döviz kuru",
+          "screen": "#para-birimi-tanimi → #doviz-exchange_rate-tanimi",
+          "action": "TRY (ve gerekirse USD/EUR) + güncel kur girin.",
+          "expected": "Belgelerde PB ve kur doluyor."
+        },
+        {
+          "no": 9,
+          "title": "Ülke / şehir / ilçe",
+          "screen": "#country-tanimi → #sehir-tanimi → #district-tanimi",
+          "action": "TR ve ilgili şehirleri tamamlayın.",
+          "expected": "Cari adres lookup’ları dolu."
+        },
+        {
+          "no": 10,
+          "title": "Ödeme ve teslimat koşulları",
+          "screen": "#odeme-kosulu-tanimi → #teslimat-kosulu-tanimi",
+          "action": "Peşin, 30 gün vb. ve teslimat şartlarını ekleyin.",
+          "expected": "Sipariş / faturada seçilebiliyor."
+        },
+        {
+          "no": 11,
+          "title": "Hareket kodları ve belge tipleri",
+          "screen": "#hareket-kodlari → #belge-tipleri",
+          "action": "Stok giriş/çıkış kodları ve belge tiplerini kontrol edin (stok etkisi).",
+          "expected": "Mal kabul / irsaliye onayında stok hareketi oluşur."
+        },
+        {
+          "no": 12,
+          "title": "Kategori / dil / banka (isteğe bağlı)",
+          "screen": "#kategori-tanimi, #dil-tanimi, #banka-tanimi",
+          "action": "İhtiyaç kadar tanımlayın.",
+          "expected": "Lookup’larda görünür."
+        }
+      ]
+    },
+    {
+      "phase": "C — Ana kartlar (stok + cari)",
+      "intro": "İş süreçlerinin dayandığı kartlar. Önce hammadde/mamul, sonra tedarikçi/müşteri.",
+      "steps": [
+        {
+          "no": 13,
+          "title": "Hammadde stok kartları",
+          "screen": "#stok-karti",
+          "action": "En az 2–3 hammadde: kod, ad, birim, takip birimi, tip=Hammadde.",
+          "expected": "Liste ve detay kayıtlı; lookup’ta çıkar."
+        },
+        {
+          "no": 14,
+          "title": "Mamul stok kartı",
+          "screen": "#stok-karti",
+          "action": "1 mamul kartı açın (tip=Mamul), birim ve fiyat alanlarını doldurun.",
+          "expected": "Mamul kartı kaydedildi."
+        },
+        {
+          "no": 15,
+          "title": "Stok–depo / iş yeri bağlantısı",
+          "screen": "#stok-depo (veya stok kartı altı)",
+          "action": "Kartların depo/iş yeri ilişkilerini doğrulayın.",
+          "expected": "Bakiye ekranında stok görünür (miktar 0 olabilir)."
+        },
+        {
+          "no": 16,
+          "title": "Tedarikçi cari",
+          "screen": "#cari-kartlari",
+          "action": "En az 1 tedarikçi: kod, unvan, tip, ödeme koşulu, PB.",
+          "expected": "Satınalma belgelerinde cari seçilir."
+        },
+        {
+          "no": 17,
+          "title": "Müşteri cari",
+          "screen": "#cari-kartlari",
+          "action": "En az 1 müşteri cari açın.",
+          "expected": "Satış belgelerinde cari seçilir."
+        }
+      ]
+    },
+    {
+      "phase": "D — Üretim tanımı (BOM + rota)",
+      "intro": "Mamulü üretmek için ağaç ve operasyon sırası.",
+      "steps": [
+        {
+          "no": 18,
+          "title": "İş merkezi ve iş istasyonu",
+          "screen": "#is-merkezleri → #is-istasyonlari",
+          "action": "En az bir iş merkezi + istasyon tanımlayın.",
+          "expected": "Rotada seçilebilir."
+        },
+        {
+          "no": 19,
+          "title": "Ürün ağacı (BOM)",
+          "screen": "#urun-agaci",
+          "action": "Mamul altına hammaddeleri miktarlarıyla bağlayın; kaydedin / patlatmayı deneyin.",
+          "expected": "BOM satırları doğru; patlatma / seviye listesi çalışır."
+        },
+        {
+          "no": 20,
+          "title": "Rota (operasyonlar)",
+          "screen": "#routings",
+          "action": "OP10, OP20… sırasıyla operasyon ekleyin; iş merkezi bağlayın.",
+          "expected": "İş emrine rota uygulanabiliyor."
+        },
+        {
+          "no": 21,
+          "title": "Üretim emri tipi (varsa)",
+          "screen": "#uretim-emri-tipleri",
+          "action": "Standart tipi kontrol edin.",
+          "expected": "İş emri formunda tip seçilir."
+        }
+      ]
+    },
+    {
+      "phase": "E — Satınalma döngüsü (alış)",
+      "intro": "Hammaddeyi tedarikçiden alıp depoya sokun.",
+      "steps": [
+        {
+          "no": 22,
+          "title": "Satınalma talebi",
+          "screen": "#satin-alma-talepleri",
+          "action": "Hammadde satırlarıyla talep oluşturun; kaydedin.",
+          "expected": "Talep numarası üretildi, durum uygun."
+        },
+        {
+          "no": 23,
+          "title": "Teklif isteği / satınalma teklifi (isteğe bağlı)",
+          "screen": "#satin-alma-teklif-istekleri → #satin-alma-teklifleri",
+          "action": "Talepten teklife ilerleyin veya doğrudan teklif girin.",
+          "expected": "Teklif satırları ve tedarikçi bağlı."
+        },
+        {
+          "no": 24,
+          "title": "Satınalma siparişi",
+          "screen": "#satin-alma-siparisleri",
+          "action": "Tekliften veya sıfırdan SA siparişi oluşturun; onaylayın (onay varsa).",
+          "expected": "Sipariş Onaylı / açık durumda."
+        },
+        {
+          "no": 25,
+          "title": "Mal kabul",
+          "screen": "#mal-kabuller",
+          "action": "SA siparişinden mal kabul oluşturun; miktarları kabul edin; onaylayın.",
+          "expected": "Stok bakiyesi arttı; hareket oluştu."
+        },
+        {
+          "no": 26,
+          "title": "Tedarikçi irsaliyesi (varsa)",
+          "screen": "#tedarikci-irsaliyeleri",
+          "action": "Gelen irsaliyeyi kaydedin / ilişkilendirin.",
+          "expected": "Belge listede görünür."
+        },
+        {
+          "no": 27,
+          "title": "Alış faturası",
+          "screen": "#fatura-yonetimi",
+          "action": "Tür=Alış; mal kabulden fatura oluşturun; kaydedin / muhasebeleştirin.",
+          "expected": "Fatura oluştu; 3-way ekranında eşleşme görülebilir."
+        },
+        {
+          "no": 28,
+          "title": "Fatura kontrolü (3-way)",
+          "screen": "#fatura-kontrolleri",
+          "action": "Sipariş–mal kabul–fatura eşlemesini kontrol edin.",
+          "expected": "Sonuç Bekliyor değilse tutarlı / fark açıklanabilir."
+        }
+      ]
+    },
+    {
+      "phase": "F — Üretim döngüsü",
+      "intro": "Depodaki hammadde ile mamul üretin.",
+      "steps": [
+        {
+          "no": 29,
+          "title": "Üretim planı (isteğe bağlı)",
+          "screen": "#uretim-planlari",
+          "action": "Plan kaydı açın veya doğrudan iş emrine geçin.",
+          "expected": "Plan görünür veya atlandı."
+        },
+        {
+          "no": 30,
+          "title": "İş emri oluştur",
+          "screen": "#uretim-emirleri",
+          "action": "Mamul + miktar; BOM/rota uygula; kaydet.",
+          "expected": "Bileşen ve operasyon satırları doldu."
+        },
+        {
+          "no": 31,
+          "title": "İş emrini yürüt / üretim girişi",
+          "screen": "#uretim-emirleri → #uretim-girisleri",
+          "action": "Operasyonları tamamlayın; mamul girişini onaylayın.",
+          "expected": "Mamul stok bakiyesi arttı; hammadde düştü (tüketim varsa)."
+        },
+        {
+          "no": 32,
+          "title": "Depo bakiyesi kontrolü",
+          "screen": "#depo-bakiye",
+          "action": "Hammadde ve mamul bakiyelerini doğrulayın.",
+          "expected": "Miktarlar beklenenle uyumlu."
+        }
+      ]
+    },
+    {
+      "phase": "G — Satış döngüsü",
+      "intro": "Mamulü müşteriye sevk edip faturalayın.",
+      "steps": [
+        {
+          "no": 33,
+          "title": "Satış teklifi",
+          "screen": "#satis-teklifleri",
+          "action": "Müşteri + mamul satırı ile teklif oluşturun.",
+          "expected": "Teklif kaydı ve tutar doğru."
+        },
+        {
+          "no": 34,
+          "title": "Satış siparişi",
+          "screen": "#satis-siparisleri",
+          "action": "Tekliften siparişe çevirin veya yeni sipariş açın; onaylayın.",
+          "expected": "Sipariş açık/onaylı."
+        },
+        {
+          "no": 35,
+          "title": "Sevk emri",
+          "screen": "#sevk-emirleri",
+          "action": "Siparişten sevk oluşturun; depo seçin.",
+          "expected": "Sevk satırları dolu."
+        },
+        {
+          "no": 36,
+          "title": "Satış irsaliyesi",
+          "screen": "#irsaliye-yonetimi",
+          "action": "Sevkten irsaliye; onayla (stok çıkış).",
+          "expected": "Mamul bakiyesi azaldı; e-belge durumu (simülasyon) güncellendi."
+        },
+        {
+          "no": 37,
+          "title": "Satış faturası",
+          "screen": "#fatura-yonetimi",
+          "action": "Tür=Satış; irsaliyeden fatura oluşturun; kaydedin.",
+          "expected": "Fatura ve cari borç / muhasebe etkisi oluştu."
+        },
+        {
+          "no": 38,
+          "title": "Cari ekstre",
+          "screen": "#cari-ekstre",
+          "action": "Müşteri ve tedarikçi hareketlerini kontrol edin.",
+          "expected": "Alış/satış faturaları ekstrede görünür."
+        }
+      ]
+    },
+    {
+      "phase": "H — Kalite (örnek)",
+      "intro": "Mal kabul veya üretim sonrası kalite emri.",
+      "steps": [
+        {
+          "no": 39,
+          "title": "Kontrol planı / ret nedeni",
+          "screen": "#kk-kontrol-planlari → #kk-ret-nedenleri",
+          "action": "Temel tanımları doğrulayın.",
+          "expected": "Emir formunda seçilebilir."
+        },
+        {
+          "no": 40,
+          "title": "Giriş kalite emri (GKK)",
+          "screen": "#kk-emirleri-gkk",
+          "action": "Mal kabule bağlı veya bağımsız GKK emri açın; sonuç girin.",
+          "expected": "Emir kapandı / uygunluk kaydı var."
+        },
+        {
+          "no": 41,
+          "title": "Çıkış kalite (CKK) — isteğe bağlı",
+          "screen": "#kk-emirleri-ckk",
+          "action": "Sevk öncesi örnek kontrol.",
+          "expected": "Kayıt oluştu."
+        }
+      ]
+    },
+    {
+      "phase": "I — CRM (isteğe bağlı)",
+      "intro": "Satış öncesi pipeline.",
+      "steps": [
+        {
+          "no": 42,
+          "title": "Aday → kontak → fırsat",
+          "screen": "#crm-adaylar → #crm-kontaklar → #crm-firsatlar",
+          "action": "Bir fırsat oluşturup aşama ilerletin; teklife bağlayın.",
+          "expected": "Fırsat teklife dönüştürülebilir."
+        },
+        {
+          "no": 43,
+          "title": "Faaliyet / görev / ajanda",
+          "screen": "#crm-faaliyetler → #crm-gorevler → #crm-ajanda",
+          "action": "Bir görüşme veya görev kaydı girin.",
+          "expected": "Ajandada görünür."
+        }
+      ]
+    },
+    {
+      "phase": "J — Onay ve finans iskeleti",
+      "intro": "Onay rotaları ve muhasebe temel tanımları.",
+      "steps": [
+        {
+          "no": 44,
+          "title": "Onay rol / kural / rota",
+          "screen": "#onay-role-tanim → #onay-kural-tanim → #onay-rota-tanim",
+          "action": "SA siparişi veya fatura için basit rota tanımlayın.",
+          "expected": "Belgede Onayla akışı çalışır; #onaylarim’da görünür."
+        },
+        {
+          "no": 45,
+          "title": "Hesap planı + mali yıl + dönem",
+          "screen": "#hesap-plani → #mali-yillar → #muhasebe-donemleri",
+          "action": "Temel hesaplar, açık mali yıl ve dönemler.",
+          "expected": "Fiş / fatura muhasebeleştirmesi dönem açıkken çalışır."
+        },
+        {
+          "no": 46,
+          "title": "Vergi kodu / ülke paketi (TR)",
+          "screen": "#finans-vergi-kodlari → #finans-ulke-paketleri",
+          "action": "KDV kodlarını ve TR paketini doğrulayın.",
+          "expected": "Faturada vergi hesaplanır."
+        },
+        {
+          "no": 47,
+          "title": "Banka / kasa",
+          "screen": "#finans-banka-hesaplari → #finans-kasa-hesaplari",
+          "action": "Bir banka ve bir kasa hesabı açın.",
+          "expected": "Nakit hareketinde seçilir."
+        },
+        {
+          "no": 48,
+          "title": "Tahsilat / ödeme örneği",
+          "screen": "#tahsilat-odemeler veya #finans-nakit-hareketleri",
+          "action": "Müşteriden tahsilat veya tedarikçiye ödeme girin.",
+          "expected": "Cari bakiye ve kasa/banka güncellendi."
+        },
+        {
+          "no": 49,
+          "title": "Mizan / yevmiye özeti",
+          "screen": "#mizan → #finans-yevmiye",
+          "action": "Dönem aralığı ile rapor alın.",
+          "expected": "Hareketli hesaplar listelenir."
+        }
+      ]
+    },
+    {
+      "phase": "K — İnsan kaynakları (temel)",
+      "intro": "Firma için İK iskeleti.",
+      "steps": [
+        {
+          "no": 50,
+          "title": "Departman ve pozisyon",
+          "screen": "#hr-departmanlar → #hr-pozisyonlar",
+          "action": "Organizasyon ağacını kurun.",
+          "expected": "Personel kartında seçilir."
+        },
+        {
+          "no": 51,
+          "title": "Çalışma takvimi / vardiya / tatil",
+          "screen": "#hr-calisma-takvimleri → #hr-vardiyalar → #hr-resmi-tatiller",
+          "action": "Standart takvim ve bir vardiya tanımlayın.",
+          "expected": "Personelde atanabilir."
+        },
+        {
+          "no": 52,
+          "title": "Personel kartı",
+          "screen": "#hr-personel",
+          "action": "En az 1 personel: sicil, ad soyad, işe giriş, departman.",
+          "expected": "Kart kaydedildi."
+        },
+        {
+          "no": 53,
+          "title": "İzin türü + izin talebi (örnek)",
+          "screen": "#hr-izin-turleri → #hr-izin-talepleri",
+          "action": "Yıllık izin türü ve bir talep oluşturun; gönder/onayla.",
+          "expected": "Bakiye / talep durumu güncellendi."
+        }
+      ]
+    },
+    {
+      "phase": "L — Sistem kontrolü ve kapanış",
+      "intro": "Kurulumun tutarlı olduğunu doğrulayın.",
+      "steps": [
+        {
+          "no": 54,
+          "title": "Kokpit",
+          "screen": "#kokpit",
+          "action": "Açık sipariş, sevk, kalite özetine bakın.",
+          "expected": "TEKS verisi özetlerde görünür."
+        },
+        {
+          "no": 55,
+          "title": "Audit log",
+          "screen": "#audit-log",
+          "action": "Son oluşturduğunuz belgelerden birinin logunu filtreleyin.",
+          "expected": "Kullanıcı + tablo + kayıt izi var."
+        },
+        {
+          "no": 56,
+          "title": "Tablo Bilgileri",
+          "screen": "#tablo-bilgileri",
+          "action": "İnsan Kaynakları ve Finans gruplarının listelendiğini kontrol edin.",
+          "expected": "Ekran → ana tablo eşlemesi açılıyor."
+        },
+        {
+          "no": 57,
+          "title": "Firma izolasyonu",
+          "screen": "Firma seçici",
+          "action": "Başka firmaya geçip TEKS kayıtlarının görünmediğini doğrulayın; geri dönün.",
+          "expected": "Veri firmalar arası karışmaz."
+        }
+      ]
+    }
+  ]
+}

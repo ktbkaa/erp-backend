@@ -87,7 +87,7 @@ router.get('/', async (req, res) => {
           ti.status,
           0::numeric AS amount,
           NULL::varchar AS currency_code,
-          ti.sales_order_id AS kaynak_siparis_id,
+          ti.purchase_order_id AS kaynak_siparis_id,
           NULL::int AS goods_receipt_id,
           'vendor_delivery_notes'::text AS kaynak_tablo
         FROM vendor_delivery_notes ti
@@ -111,9 +111,7 @@ router.get('/', async (req, res) => {
       record_id: row.id,
     })));
   } catch (err) {
-    if (/does not exist|relation/i.test(err.message)) {
-      return res.json([]);
-    }
+    // Kolon/tablo hatalarını boş listeye yutma — istemci gerçek hatayı görsün
     res.status(500).json({ hata: err.message });
   }
 });

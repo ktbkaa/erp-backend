@@ -1,9 +1,19 @@
 const OPERATORS = [
+  { id: '', label: '' }, // boş satır = filtresiz (alan uygulanmaz)
   { id: 'icerir', label: 'İçerir' },
   { id: 'esit', label: 'Eşit' },
   { id: 'esit_degil', label: 'Eşit değil' },
   { id: 'arasinda', label: 'Arasında' },
 ];
+
+/** Boş operatör satırı = filtresiz; değer kutusu gizlenir */
+function filterOpHidesValues(op) {
+  return !op;
+}
+
+function filterOpNeedsBetween(op) {
+  return op === 'arasinda';
+}
 
 const MODULES = [
   {
@@ -471,14 +481,14 @@ const MODULES = [
           { key: 'document_type_code', label: 'Kod', mono: true },
           { key: 'document_type_name', label: 'Ad' },
           { key: 'module', label: 'Modül' },
-          { key: 'item_etkisi', label: 'Stok etkisi' },
+          { key: 'stock_etkisi', label: 'Stok etkisi' },
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
           { key: 'document_type_code', label: 'Belge tipi kodu', code: true, required: true, editableOnNew: true },
           { key: 'document_type_name', label: 'Belge tipi adı', name: true, required: true },
           { key: 'module', label: 'Modül' },
-          { key: 'item_etkisi', label: 'Stok etkisi', type: 'checkbox' },
+          { key: 'stock_etkisi', label: 'Stok etkisi', type: 'checkbox' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
         defaults: { is_active: true },
@@ -719,6 +729,9 @@ const MODULES = [
         title: 'Firmalar',
         endpoint: '/companies',
         crud: true,
+        // Org tanımı: aktif firma izolasyonu listede uygulanmaz
+        scopeFirma: false,
+        scopeIsYeri: false,
         codeField: 'company_code',
         nameField: 'company_name',
         numeratorSeri: 'FIRMA',
@@ -744,6 +757,8 @@ const MODULES = [
         title: 'İş Yerleri',
         endpoint: '/is-yerleri',
         crud: true,
+        scopeFirma: false,
+        scopeIsYeri: false,
         codeField: 'plant_code',
         nameField: 'plant_name',
         numeratorSeri: 'ISYERI',
@@ -776,6 +791,8 @@ const MODULES = [
         title: 'Depolar',
         endpoint: '/warehouses',
         crud: true,
+        scopeFirma: false,
+        scopeIsYeri: false,
         codeField: 'warehouse_code',
         nameField: 'warehouse_name',
         numeratorSeri: 'DEPO',
@@ -5591,7 +5608,7 @@ const MODULES = [
         masterFields: [
           { key: 'invoice_id', label: 'Alış faturası', type: 'lookup', lookup: 'alis-faturalari', valueKey: 'id', labelKey: 'invoice_no' },
           { key: 'goods_receipt_id', label: 'Mal kabul', type: 'lookup', lookup: 'mal-kabuller', valueKey: 'id', labelKey: 'receipt_no' },
-          { key: 'sales_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no' },
+          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no' },
           { key: 'invoice_no', label: 'Fatura no', code: true },
           { key: 'receipt_no', label: 'Mal kabul no' },
           { key: 'order_no', label: 'Sipariş no' },
@@ -7304,7 +7321,7 @@ function buildLinkedPrefill(link, sourceRec, extra = {}) {
       partner_id: sourceRec.partner_id || null,
       invoice_type: 'Alis',
       goods_receipt_id: sourceRec.id,
-      sales_order_id: sourceRec.sales_order_id || null,
+      sales_order_id: sourceRec.purchase_order_id || sourceRec.sales_order_id || null,
       currency_code: sourceRec.currency_code || 'TRY',
       exchange_rate: 1,
       rate_type: 'TCMB-ALIS',
@@ -7529,14 +7546,18 @@ async function api(path, options = {}) {
     const kullaniciKodu = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_kullanici_kodu')) || '';
     const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_access_token')) || '';
     const firmaId = getActiveFirmaId();
-    const { headers: optHeaders, ...restOpts } = options;
+    const { headers: optHeaders, skipFirma = false, ...restOpts } = options;
+    // skipFirma / boş X-Firma-Id → org tanım listelerinde tüm firmalar
+    const headerFirma = optHeaders && Object.prototype.hasOwnProperty.call(optHeaders, 'X-Firma-Id')
+      ? null
+      : (skipFirma ? null : firmaId);
     res = await fetch(path, {
       ...restOpts,
       headers: {
         'Content-Type': 'application/json',
         ...(kullaniciKodu ? { 'X-Kullanici-Kodu': kullaniciKodu } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        ...(firmaId ? { 'X-Firma-Id': String(firmaId) } : {}),
+        ...(headerFirma ? { 'X-Firma-Id': String(headerFirma) } : {}),
         ...(optHeaders || {}),
       },
     });
@@ -7776,11 +7797,14 @@ function compareValues(cell, op, a, b, def) {
     && (cell === null || cell === undefined || cell === '')) {
     return true;
   }
+  // Boş operatör satırı = filtresiz
+  if (!op) return true;
+
   const cellN = norm(cell);
   const aN = norm(a);
   const bN = norm(b);
   // Varsayılan: LIKE '%değer%' (büyük/küçük harf TR locale ile)
-  if (op === 'icerir' || !op) return !aN || cellN.includes(aN);
+  if (op === 'icerir') return !aN || cellN.includes(aN);
   if (op === 'esit') return !aN || cellN === aN;
   if (op === 'esit_degil') return !aN || cellN !== aN;
   if (op === 'arasinda') {
@@ -7792,11 +7816,19 @@ function compareValues(cell, op, a, b, def) {
   return true;
 }
 
+function filterStateIsActive(st) {
+  if (!st) return false;
+  const op = st.op || '';
+  if (!op) return false; // boş satır = filtresiz
+  if (op === 'arasinda') return Boolean(norm(st.a) || norm(st.b));
+  return Boolean(norm(st.a));
+}
+
 function applyFilters(rows, screen) {
   const active = screen.filters
     .filter((f) => !f.queryParam) // sunucu filtreleri satır alanı değil
-    .map((f) => ({ def: f, st: state.filterState[f.key] || { op: 'icerir', a: '', b: '' } }))
-    .filter(({ st }) => (st.op === 'arasinda' ? Boolean(norm(st.a) || norm(st.b)) : Boolean(norm(st.a))));
+    .map((f) => ({ def: f, st: state.filterState[f.key] || { op: '', a: '', b: '' } }))
+    .filter(({ st }) => filterStateIsActive(st));
   if (!active.length) return rows.slice();
   return rows.filter((row) =>
     active.every(({ def, st }) =>
@@ -7810,6 +7842,7 @@ const SCREEN_ALIASES = {
   'satis-faturalari': 'fatura-yonetimi',
   'alis-faturalari': 'fatura-yonetimi',
   'belge-yonetimi': 'fatura-yonetimi',
+  sales_orders: 'satis-siparisleri',
 };
 
 function resolveScreenId(id) {
@@ -8895,15 +8928,15 @@ function buildDefaultFilterState(screen) {
       fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
     } else if (f.key === 'is_active' || f.type === 'bool') {
       fs[f.key] = { op: 'esit', a: 'evet', b: '' };
-    } else if (f.key === 'company_id' && getActiveFirmaId()) {
+    } else if (f.key === 'company_id' && getActiveFirmaId() && screen.scopeFirma !== false) {
       fs[f.key] = { op: 'esit', a: String(getActiveFirmaId()), b: '' };
-    } else if (f.key === 'plant_id' && state.activeIsYeriId) {
+    } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
-      // Açılır listeler: varsayılan eşit, değer boş (= tümü)
-      fs[f.key] = { op: 'esit', a: '', b: '' };
+      // Açılır listeler: boş operatör satırı = filtresiz
+      fs[f.key] = { op: '', a: '', b: '' };
     } else {
-      fs[f.key] = { op: 'icerir', a: '', b: '' };
+      fs[f.key] = { op: '', a: '', b: '' };
     }
   });
   return fs;
@@ -8917,13 +8950,18 @@ function buildListEndpoint(screen) {
     if (!f.queryParam) return;
     const st = state.filterState?.[f.key];
     if (!st) return;
+    if (!st.op) return; // boş operatör = filtresiz
     if (f.type === 'checkbox') {
       const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
+      if (st.op === 'esit' && !on && String(st.a || '').trim() === '') return;
       extras.push(`${encodeURIComponent(f.key)}=${on ? '1' : '0'}`);
       return;
     }
     if (st.a != null && String(st.a).trim() !== '') {
       extras.push(`${encodeURIComponent(f.key)}=${encodeURIComponent(st.a)}`);
+    }
+    if (st.op === 'arasinda' && st.b != null && String(st.b).trim() !== '') {
+      extras.push(`${encodeURIComponent(f.key + '_max')}=${encodeURIComponent(st.b)}`);
     }
   });
   if (!extras.length) return url;
@@ -9322,7 +9360,9 @@ async function fillLinesFromSource(kind, sourceId) {
       const mk = await api(`/mal-kabuller/${sourceId}`);
       if (!mk) return;
       state.formRecord.goods_receipt_id = Number(sourceId);
-      if (mk.sales_order_id && !state.formRecord.sales_order_id) state.formRecord.sales_order_id = mk.sales_order_id;
+      if ((mk.purchase_order_id || mk.sales_order_id) && !state.formRecord.sales_order_id) {
+        state.formRecord.sales_order_id = mk.purchase_order_id || mk.sales_order_id;
+      }
       if (mk.partner_id && !state.formRecord.partner_id) state.formRecord.partner_id = mk.partner_id;
       if (!state.formRecord.invoice_type) state.formRecord.invoice_type = 'Alis';
       state.formRecord[detailKey] = (mk.satirlar || []).map((s) => ({
@@ -9411,7 +9451,7 @@ function readFilterState(screen) {
       else a = aEl.value || '';
     }
     next[f.key] = {
-      op: document.querySelector(`[data-filter-op="${f.key}"]`)?.value || 'esit',
+      op: document.querySelector(`[data-filter-op="${f.key}"]`)?.value || '',
       a,
       b: document.querySelector(`[data-filter-b="${f.key}"]`)?.value || '',
     };
@@ -9424,10 +9464,26 @@ function syncBetweenInputs(screen) {
     const opEl = document.querySelector(`[data-filter-op="${f.key}"]`);
     const wrap = document.querySelector(`[data-filter-values="${f.key}"]`);
     if (!opEl || !wrap) return;
-    const arasinda = opEl.value === 'arasinda';
+    const op = opEl.value;
+    const arasinda = filterOpNeedsBetween(op);
+    const hideVals = filterOpHidesValues(op);
     wrap.classList.toggle('split', arasinda);
-    const b = wrap.querySelector(`[data-filter-b="${f.key}"]`);
-    if (b) b.hidden = !arasinda;
+    wrap.classList.toggle('filter-values--hidden', hideVals);
+    wrap.hidden = hideVals;
+    const field = wrap.closest('.filter-field');
+    if (field) field.classList.toggle('filter-field--noval', hideVals);
+    // a/b görünürlüğü
+    wrap.querySelectorAll(`[data-filter-a="${f.key}"]`).forEach((el) => {
+      const widget = el.closest('.lookup-widget');
+      if (widget) widget.hidden = hideVals;
+      else el.hidden = hideVals;
+    });
+    wrap.querySelectorAll(`[data-filter-b="${f.key}"]`).forEach((el) => {
+      const widget = el.closest('.lookup-widget');
+      const showB = arasinda && !hideVals;
+      if (widget) widget.hidden = !showB;
+      else el.hidden = !showB;
+    });
   });
 }
 
@@ -9451,7 +9507,38 @@ function partitionFilters(filters) {
   };
 }
 
+function buildFilterSelectOptions(rows, f, selectedVal) {
+  const vk = f.valueKey || 'id';
+  const lk = f.labelKey || 'adi';
+  const ck = f.codeKey;
+  const seen = new Set();
+  const opts = [`<option value="">— seçin —</option>`];
+  let curLabel = '';
+  (rows || []).forEach((r) => {
+    const val = r[vk];
+    if (val == null || val === '') return;
+    const sig = String(val);
+    if (seen.has(sig)) return;
+    seen.add(sig);
+    const code = ck ? (r[ck] || '') : '';
+    const name = r[lk] || '';
+    let label = code || name || String(val);
+    if (code && name && String(val) !== code) {
+      const short = name.length > 28 ? `${name.slice(0, 26)}…` : name;
+      label = `${code} — ${short}`;
+    } else if (!code && name) {
+      label = name;
+    }
+    const title = code && name ? `${code} — ${name}` : (name || code || String(val));
+    if (String(selectedVal) === String(val)) curLabel = title;
+    opts.push(`<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(selectedVal) === String(val) ? 'selected' : ''}>${label}</option>`);
+  });
+  return { optsHtml: opts.join(''), curLabel };
+}
+
 function filterValueControl(f, st) {
+  const arasinda = filterOpNeedsBetween(st.op);
+  const hideVals = filterOpHidesValues(st.op);
   if (f.type === 'lookup') {
     let rows = state.lookupCache[f.lookup];
     if (!Array.isArray(rows) || !rows.length) {
@@ -9459,47 +9546,36 @@ function filterValueControl(f, st) {
       else if (f.lookup === 'is-yerleri') rows = state.isYerleri;
     }
     rows = Array.isArray(rows) ? rows : [];
-    // Aynı görünen first_name tekrarlanmasın (stage_name ile filtrelerken)
-    const vk = f.valueKey || 'id';
-    const lk = f.labelKey || 'adi';
-    const ck = f.codeKey;
-    const seen = new Set();
-    const opts = [`<option value="">— seçin —</option>`];
-    let curLabel = '';
-    rows.forEach((r) => {
-      const val = r[vk];
-      if (val == null || val === '') return;
-      const sig = String(val);
-      if (seen.has(sig)) return;
-      seen.add(sig);
-      const code = ck ? (r[ck] || '') : '';
-      const name = r[lk] || '';
-      let label = code || name || String(val);
-      if (code && name && String(val) !== code) {
-        const short = name.length > 28 ? `${name.slice(0, 26)}…` : name;
-        label = `${code} — ${short}`;
-      } else if (!code && name) {
-        label = name;
-      }
-      const title = code && name ? `${code} — ${name}` : (name || code || String(val));
-      if (String(st.a) === String(val)) curLabel = title;
-      opts.push(`<option value="${escAttr(val)}" title="${escAttr(title)}" ${String(st.a) === String(val) ? 'selected' : ''}>${label}</option>`);
-    });
-    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${opts.join('')}</select>`, curLabel, false)}
-      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+    const a = buildFilterSelectOptions(rows, f, st.a);
+    const b = buildFilterSelectOptions(rows, f, st.b);
+    const aHtml = wrapLookupCombobox(
+      `<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${a.optsHtml}</select>`,
+      a.curLabel,
+      false,
+    );
+    let bHtml = wrapLookupCombobox(
+      `<select class="lookup-pick lookup-combo-select" data-filter-b="${f.key}">${b.optsHtml}</select>`,
+      b.curLabel,
+      false,
+    );
+    if (!arasinda) bHtml = bHtml.replace('class="lookup-widget lookup-combobox"', 'class="lookup-widget lookup-combobox" hidden');
+    return `${aHtml}${bHtml}`;
   }
   if (f.type === 'select' || (Array.isArray(f.options) && f.options.length)) {
     const opts = f.options || [];
-    const cur = st.a == null || st.a === '' ? '' : String(st.a);
-    return `${wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">
+    const optHtml = (selected) => `
       <option value="">— seçin —</option>
       ${opts.map((o) => {
         const v = typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o;
         const l = typeof o === 'object' ? (o.label ?? o.adi ?? o.l ?? v) : o;
-        return `<option value="${escAttr(v)}" ${String(st.a) === String(v) ? 'selected' : ''}>${l}</option>`;
-      }).join('')}
-    </select>`, cur, false)}
-      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+        return `<option value="${escAttr(v)}" ${String(selected) === String(v) ? 'selected' : ''}>${l}</option>`;
+      }).join('')}`;
+    const curA = st.a == null || st.a === '' ? '' : String(st.a);
+    const curB = st.b == null || st.b === '' ? '' : String(st.b);
+    const aHtml = wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-a="${f.key}">${optHtml(curA)}</select>`, curA, false);
+    let bHtml = wrapLookupCombobox(`<select class="lookup-pick lookup-combo-select" data-filter-b="${f.key}">${optHtml(curB)}</select>`, curB, false);
+    if (!arasinda) bHtml = bHtml.replace('class="lookup-widget lookup-combobox"', 'class="lookup-widget lookup-combobox" hidden');
+    return `${aHtml}${bHtml}`;
   }
   if (f.type === 'checkbox') {
     const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
@@ -9515,55 +9591,68 @@ function filterValueControl(f, st) {
       <option value="">—</option>
       ${opts.map((o) => `<option value="${o.v}" ${norm(st.a) === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}
     </select>
-      <input type="text" data-filter-b="${f.key}" value="" hidden />`;
+      <select data-filter-b="${f.key}" ${arasinda ? '' : 'hidden'}>
+        <option value="">—</option>
+        ${opts.map((o) => `<option value="${o.v}" ${norm(st.b) === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}
+      </select>`;
   }
   const isDate = f.type === 'date' || /tarih|_date$/i.test(f.key || '');
   if (isDate) {
     return `
-      <input type="date" data-filter-a="${f.key}" value="${escAttr(String(st.a || '').slice(0, 10))}" />
-      <input type="date" data-filter-b="${f.key}" value="${escAttr(String(st.b || '').slice(0, 10))}" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
+      <input type="date" data-filter-a="${f.key}" value="${escAttr(String(st.a || '').slice(0, 10))}" ${hideVals ? 'hidden' : ''} />
+      <input type="date" data-filter-b="${f.key}" value="${escAttr(String(st.b || '').slice(0, 10))}" ${arasinda && !hideVals ? '' : 'hidden'} />`;
   }
   return `
-    <input type="text" data-filter-a="${f.key}" value="${escAttr(st.a || '')}" placeholder="…" />
-    <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="…" ${st.op === 'arasinda' ? '' : 'hidden'} />`;
+    <input type="text" data-filter-a="${f.key}" value="${escAttr(st.a || '')}" placeholder="…" ${hideVals ? 'hidden' : ''} />
+    <input type="text" data-filter-b="${f.key}" value="${escAttr(st.b || '')}" placeholder="…" ${arasinda && !hideVals ? '' : 'hidden'} />`;
 }
 
 function filterOperatorsFor(f) {
-  // Açılır liste / bool: yazma yok → eşit / eşit değil yeterli
   if (f.type === 'checkbox') {
-    return OPERATORS.filter((o) => o.id === 'esit');
+    return OPERATORS.filter((o) => o.id === '' || o.id === 'esit');
   }
+  // Açılır liste / bool: boş satır (filtresiz) + eşit/eşit değil + arasında
   if (f.type === 'lookup' || f.type === 'select' || f.type === 'bool'
       || f.key === 'is_active' || (Array.isArray(f.options) && f.options.length)) {
-    return OPERATORS.filter((o) => o.id === 'esit' || o.id === 'esit_degil');
+    return OPERATORS.filter((o) =>
+      o.id === '' || o.id === 'esit' || o.id === 'esit_degil' || o.id === 'arasinda');
   }
   return OPERATORS;
 }
 
 function renderFilterField(f) {
-  const st = state.filterState[f.key] || { op: 'icerir', a: '', b: '' };
+  const st = state.filterState[f.key] || { op: '', a: '', b: '' };
   const bucket = filterBucket(f);
   if (f.type === 'checkbox') {
+    const ops = filterOperatorsFor(f);
+    const rawCk = (st.op === 'filtresiz' || st.op === 'bos' || st.op === 'bos_degil') ? '' : (st.op || '');
+    const op = ops.some((o) => o.id === rawCk) ? rawCk : '';
     return `
     <div class="filter-field filter-field--${bucket} filter-field--check" data-filter-key="${f.key}">
       <label>${f.label}</label>
       <div class="filter-controls">
-        <div class="filter-values" data-filter-values="${f.key}">
-          ${filterValueControl(f, { ...st, op: 'esit' })}
+        <select class="filter-op" data-filter-op="${f.key}" title="Operatör (boş = filtresiz)">
+          ${ops.map((o) => `<option value="${escAttr(o.id)}" ${op === o.id ? 'selected' : ''}>${o.label === '' ? '\u00A0' : o.label}</option>`).join('')}
+        </select>
+        <div class="filter-values${filterOpHidesValues(op) ? ' filter-values--hidden' : ''}" data-filter-values="${f.key}" ${filterOpHidesValues(op) ? 'hidden' : ''}>
+          ${filterValueControl(f, { ...st, op })}
         </div>
       </div>
     </div>`;
   }
   const ops = filterOperatorsFor(f);
-  const op = ops.some((o) => o.id === st.op) ? st.op : (ops[0]?.id || 'esit');
+  // Eski filtresiz/bos değerlerini boş satıra taşı
+  const rawOp = (st.op === 'filtresiz' || st.op === 'bos' || st.op === 'bos_degil') ? '' : (st.op || '');
+  const op = ops.some((o) => o.id === rawOp) ? rawOp : '';
+  const hideVals = filterOpHidesValues(op);
   return `
-    <div class="filter-field filter-field--${bucket}" data-filter-key="${f.key}">
+    <div class="filter-field filter-field--${bucket}${hideVals ? ' filter-field--noval' : ''}" data-filter-key="${f.key}">
       <label>${f.label}</label>
       <div class="filter-controls">
-        <select class="filter-op" data-filter-op="${f.key}" title="Operatör">
-          ${ops.map((o) => `<option value="${o.id}" ${op === o.id ? 'selected' : ''}>${o.label}</option>`).join('')}
+        <select class="filter-op" data-filter-op="${f.key}" title="Operatör (boş = filtresiz)">
+          ${ops.map((o) => `<option value="${escAttr(o.id)}" ${op === o.id ? 'selected' : ''}>${o.label === '' ? '\u00A0' : o.label}</option>`).join('')}
         </select>
-        <div class="filter-values${op === 'arasinda' ? ' split' : ''}" data-filter-values="${f.key}">
+        <div class="filter-values${op === 'arasinda' ? ' split' : ''}${hideVals ? ' filter-values--hidden' : ''}" data-filter-values="${f.key}" ${hideVals ? 'hidden' : ''}>
           ${filterValueControl(f, { ...st, op })}
         </div>
       </div>
@@ -9583,6 +9672,7 @@ function renderFilterPane(screen) {
   grid.querySelectorAll('[data-filter-op]').forEach((el) => {
     el.addEventListener('change', () => syncBetweenInputs(screen));
   });
+  syncBetweenInputs(screen);
 }
 
 /** Tüm listelerde ilk sütun: satır ID (ekran kolonlarında yoksa eklenir). */
@@ -9893,7 +9983,10 @@ async function openScreen(id, opts = {}) {
         banner.textContent = `${screen.title} · çalışma #${calismaId} · UI build 20261017u`;
       }
     } else {
-      data = await api(buildListEndpoint(screen));
+      data = await api(
+        buildListEndpoint(screen),
+        screen.scopeFirma === false ? { skipFirma: true } : {},
+      );
     }
     if (state.screenId !== screen.id) return;
     let rows = Array.isArray(data) ? data : [];
@@ -10029,6 +10122,9 @@ const LOOKUP_ENDPOINTS = {
 
 /** Ekran kaydı → ek lookup anahtarları (endpoint eşleşmesi yetmezse / alias) */
 const SCREEN_LOOKUP_EXTRAS = {
+  companies: ['companies'],
+  'is-yerleri': ['is-yerleri', 'companies'],
+  warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
@@ -10094,7 +10190,7 @@ function lookupsFedByScreen(screen) {
 function invalidateLookupsForScreen(screen) {
   const keys = lookupsFedByScreen(screen);
   if (keys.length) invalidateLookups(...keys);
-  else invalidateLookups(); // bilinmeyen ekran → tüm cache
+  // Bilinmeyen ekranda tüm cache’i silme — gereksiz yavaşlık + liste boşalması
 }
 
 /** Lookup anahtarı → API yolu. LOOKUP_ENDPOINTS yoksa ekran id / endpoint’ten çöz. */
@@ -10121,7 +10217,10 @@ async function fetchLookupKey(key) {
     return state.lookupCache[key];
   }
   try {
-    const rows = await api(ep);
+    // Firmalar her zaman tam liste (backend zaten izolasyonsuz).
+    // İş yeri/depo lookup’ı aktif firmaya bağlı kalsın — org liste ekranları
+    // openScreen’de skipFirma ile ayrı yüklenir; cache karışmasın.
+    const rows = await api(ep, key === 'companies' ? { skipFirma: true } : {});
     state.lookupCache[key] = Array.isArray(rows) ? rows : [];
     if (key === 'companies') state.companies = state.lookupCache[key];
     if (key === 'is-yerleri') state.isYerleri = state.lookupCache[key];
@@ -15412,6 +15511,42 @@ function playNestedEnterAnimation() {
   playNestedEnterAnimation._t = setTimeout(() => view.classList.remove('nested-enter'), 420);
 }
 
+/**
+ * Firma / iş yeri kaydından sonra aktif firma bağlamını güncelle.
+ * Yoksa yenilemede X-Firma-Id eski firmada kalır, yeni kayıtlar listede görünmez.
+ * Not: setActiveFirma tüm cache/sekmeleri siler — burada hafif güncelleme yapılır.
+ */
+async function syncActiveFirmaAfterOrgSave(screen, saved) {
+  if (!saved) return;
+  let nextFirmaId = null;
+  if (screen.id === 'companies' && saved.id) {
+    nextFirmaId = Number(saved.id);
+    if (!state.companies?.some((c) => Number(c.id) === nextFirmaId)) {
+      state.companies = [saved, ...(state.companies || [])];
+      state.lookupCache.companies = state.companies;
+    }
+  } else if (screen.id === 'is-yerleri' && saved.company_id) {
+    nextFirmaId = Number(saved.company_id);
+  } else if (screen.id === 'warehouses' && saved.plant_id) {
+    const plant = (state.lookupCache['is-yerleri'] || state.isYerleri || [])
+      .find((p) => Number(p.id) === Number(saved.plant_id));
+    if (plant?.company_id) nextFirmaId = Number(plant.company_id);
+  }
+  if (!nextFirmaId || Number(getActiveFirmaId()) === nextFirmaId) {
+    renderFirmaPicker();
+    return;
+  }
+  state.activeFirmaId = nextFirmaId;
+  localStorage.setItem('ktb_firma_id', String(nextFirmaId));
+  // Org lookup’larını taze tut; diğer cache’e dokunma
+  delete state.lookupCache['is-yerleri'];
+  delete state.lookupCache.warehouses;
+  try {
+    await loadIsYerleriForActiveFirma();
+  } catch (_) { /* ignore */ }
+  renderFirmaPicker();
+}
+
 /** Kayıt sonrası: stay = formda kal, close = listeye dön, new = yeni form */
 async function finishSaveForm(screen, saved, after = 'stay') {
   const listScreenId = (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri')
@@ -15427,7 +15562,7 @@ async function finishSaveForm(screen, saved, after = 'stay') {
     } else {
       state.rows = state.rows.map((r) => (String(r.id) === String(id) ? { ...r, ...(saved || {}) } : r));
     }
-    state.filtered = state.rows;
+    state.filtered = applyFilters(state.rows, screen);
     // Aynı sekmede Düzelt’e geç — yeni sekme açma
     let record = { ...(saved || {}), id };
     try {
@@ -15593,6 +15728,7 @@ async function saveForm({ after = 'stay' } = {}) {
       saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
       toast('Kaydedildi.');
       invalidateLookupsForScreen(screen);
+      await syncActiveFirmaAfterOrgSave(screen, saved);
       await finishSaveForm(screen, saved, after);
       return;
     }
@@ -15625,6 +15761,7 @@ async function saveForm({ after = 'stay' } = {}) {
       toast('Kaydedildi.');
     }
     saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
+    await syncActiveFirmaAfterOrgSave(screen, saved);
     // Toplu / sipariş→İE oluşturma: formda kalmak anlamsız → kapat
     const effectiveAfter = (screen.id === 'toplu-is-emri' || screen.id === 'siparis-is-emri')
       ? (after === 'new' ? 'new' : 'close')
