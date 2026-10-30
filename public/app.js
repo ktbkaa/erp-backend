@@ -8562,7 +8562,24 @@ async function persistGridRowImmediately(screen, gridKey, row) {
   if (row.id != null && row.id !== '') {
     return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
   }
-  return api(base, { method: 'POST', body: JSON.stringify(body) });
+  try {
+    return await api(base, { method: 'POST', body: JSON.stringify(body) });
+  } catch (err) {
+    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
+    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
+      const list = await api(
+        `${base}?city_code=${encodeURIComponent(body.city_code)}`
+      );
+      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
+      const hit = (Array.isArray(list) ? list : []).find(
+        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
+      );
+      if (hit?.id != null) {
+        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
+      }
+    }
+    throw err;
+  }
 }
 
 async function deletePersistedGridRow(screen, gridKey, row) {
@@ -16647,6 +16664,15 @@ async function saveForm({ after = 'stay' } = {}) {
     }
   }
 
+  // detailPersist listeleri satır ✓ / Sil ile yazılır — üst Kaydet ile sync edilirse
+  // formda olmayan (veya toolbar’dan yalnızca UI’dan silinen) satırlar DB’de kaybolur/orphan kalır.
+  // Master kaydında bu grid’leri gönderme; kayıt sonrası GET tam listeyi getirir.
+  if (screen.detailPersist) {
+    Object.keys(screen.detailPersist).forEach((k) => {
+      delete master[k];
+    });
+  }
+
   try {
     let saved = { ...master };
     if (screen.id === 'numarator-tanimi') {
@@ -17922,9 +17948,23 @@ function bindEvents() {
           toast('Silmek için önce bir satır seçin.');
           return;
         }
-        rows.splice(state.gridSel.idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = { key: null, idx: null };
+        const doomedIdx = state.gridSel.idx;
+        const doomed = rows[doomedIdx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) {
+              await deletePersistedGridRow(screen, key, doomed);
+            }
+            rows.splice(doomedIdx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
+        return;
       }
       renderForm(screen);
       return;
@@ -18016,8 +18056,31 @@ function bindEvents() {
             }
             saved._satir_kayitli = true;
             saved._satir_duzenleniyor = false;
-            // Kaydedilen satır alta; en üste boş yeni satır
+            // Aynı kod/id başka satırda kaldıysa (orphan/çift) temizle
             rows.splice(idx, 1);
+            if (saved.id != null || saved.district_code) {
+              const sid = saved.id != null ? String(saved.id) : null;
+              const skod = saved.district_code
+                ? String(saved.district_code).toLocaleUpperCase('tr-TR')
+                : null;
+              for (let i = rows.length - 1; i >= 0; i -= 1) {
+                const r = rows[i];
+                if (!r) continue;
+                if (sid && r.id != null && String(r.id) === sid) {
+                  rows.splice(i, 1);
+                  continue;
+                }
+                if (
+                  key === 'districts'
+                  && skod
+                  && r.district_code
+                  && String(r.district_code).toLocaleUpperCase('tr-TR') === skod
+                ) {
+                  rows.splice(i, 1);
+                }
+              }
+            }
+            // Kaydedilen satır alta; en üste boş yeni satır
             rows.push(saved);
             const blank = emptyRowFromFields(tab.fields);
             blank._satir_kayitli = false;
