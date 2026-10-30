@@ -48,6 +48,8 @@
   --zebra: #fafbfd;
   --accent-border: #9bb7ef;
   --shadow-ink: rgba(42, 42, 42, 0.06);
+  /* Logo PNG renk kaydırma — Sümbül orijinal; diğer temalarda hue-rotate */
+  --logo-filter: brightness(1);
   /* legacy aliases (önceki pastel palet referansları) */
   --palette-main: var(--accent-soft);
   --palette-cyan: var(--page);
@@ -118,12 +120,60 @@ body.is-login {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  padding: 1.05rem 1rem;
+  padding: 0.85rem 0.95rem;
   cursor: pointer;
   border-bottom: 1px solid var(--line);
   min-height: 4.1rem;
   background: #fff;
 }
+.ktb-logo {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  user-select: none;
+}
+.ktb-logo-img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  filter: var(--logo-filter);
+}
+.ktb-logo--sidebar {
+  width: 100%;
+}
+.ktb-logo--sidebar .ktb-logo-img {
+  width: min(100%, 11.5rem);
+  height: 2.35rem;
+  object-fit: contain;
+  object-position: left center;
+}
+.ktb-logo--login {
+  justify-content: center;
+  margin-bottom: 0.35rem;
+}
+.ktb-logo--login .ktb-logo-img {
+  width: min(100%, 18rem);
+  height: auto;
+}
+/* Ana sayfa: şeffaf maske ile zemine baskı / damga (beyaz PNG zemini yok) */
+.ktb-logo--hero {
+  pointer-events: none;
+  width: min(68vw, 26rem);
+  aspect-ratio: 650 / 150;
+  background: color-mix(in srgb, var(--accent) 35%, var(--ink) 65%);
+  opacity: 0.11;
+  -webkit-mask-image: url("/assets/ktb-logo-clear.png");
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-image: url("/assets/ktb-logo-clear.png");
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+/* legacy brand tokens (eski marka kutusu) */
 .brand-mark {
   width: 2.15rem;
   height: 2.15rem;
@@ -136,7 +186,7 @@ body.is-login {
   font-weight: 700;
   font-size: 0.72rem;
   letter-spacing: 0.02em;
-  box-shadow: 0 6px 14px rgba(63, 135, 245, 0.28);
+  box-shadow: 0 6px 14px var(--accent-glow);
 }
 .brand-name {
   font-family: var(--display);
@@ -1126,20 +1176,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   min-height: 0;
 }
 .ktb-emboss {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(7rem, 22vw, 14rem);
-  letter-spacing: 0.12em;
-  color: transparent;
-  background: linear-gradient(180deg, rgba(180, 188, 196, 0.55), rgba(150, 160, 170, 0.28));
-  -webkit-background-clip: text;
-  background-clip: text;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35),
-    0 -1px 0 rgba(26, 35, 48, 0.06);
-  opacity: 0.32;
-  user-select: none;
-  pointer-events: none;
+  /* geriye dönük: eski KTB damgası — hero logo tercih edilir */
+  display: none;
 }
 
 .screen-view {
@@ -3090,31 +3128,13 @@ tr.selected td { background: var(--accent-soft); }
   animation: loginBrandIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .login-brand-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 3.35rem;
-  height: 3.35rem;
-  margin-bottom: 0.85rem;
-  border-radius: 0.65rem;
-  background: var(--accent);
-  color: #fff;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  box-shadow: 0 12px 28px rgba(63, 135, 245, 0.28);
+  display: none;
 }
 .login-brand-name {
-  margin: 0;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: clamp(2.15rem, 6vw, 2.75rem);
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  color: var(--ink);
+  display: none;
 }
 .login-brand-lead {
-  margin: 0.65rem auto 0;
+  margin: 0.85rem auto 0;
   max-width: 22rem;
   font-size: 0.98rem;
   line-height: 1.45;
@@ -4918,6 +4938,7 @@ body.sql-splitting iframe { pointer-events: none; }
   color: var(--accent);
   opacity: 0.55;
 }
+.sidebar-brand:hover .ktb-logo-img { filter: var(--logo-filter) brightness(1.03); }
 .sidebar-brand:hover .brand-name { color: var(--accent); }
 .doc-tabs {
   background: #fff;
@@ -4930,6 +4951,206 @@ body.doc-tabs-open .doc-tabs-dock {
   border-radius: 0.55rem !important;
   box-shadow: 0 8px 18px rgba(63, 135, 245, 0.28);
 }
-.login-brand-mark {
-  background: var(--accent) !important;
+
+/* ========== UI prefs: themes + settings ========== */
+html[data-theme="blue"] {
+  --logo-filter: brightness(1);
+}
+html[data-theme="green"] {
+  --ink: #1a2e2a;
+  --muted: #5a726c;
+  --line: #c5ddd6;
+  --panel: #e1f7fa;
+  --page: #e8f6f2;
+  --sidebar: #ffffff;
+  --sidebar-ink: #243832;
+  --sidebar-muted: #7a928a;
+  --accent: #1b8f78;
+  --accent-hover: #157a66;
+  --accent-soft: #e1faf1;
+  --accent-glow: rgba(27, 143, 120, 0.22);
+  --cyan: #00c9a7;
+  --cyan-soft: rgba(0, 201, 167, 0.12);
+  --sidebar-active: #e1faf1;
+  --sidebar-ring: #7ecfbc;
+  --danger: #b3486a;
+  --danger-soft: #fae1ea;
+  --success: #52c41a;
+  --success-soft: #e1fae5;
+  --warning: #faad14;
+  --warning-soft: rgba(250, 173, 20, 0.12);
+  --info-soft: rgba(27, 143, 120, 0.08);
+  --erp-form-bg: var(--page);
+  --erp-readonly-bg: #e1fae5;
+  --surface-3: var(--accent-soft);
+  --hover-row: rgba(27, 143, 120, 0.08);
+  --zebra: #f5fcfa;
+  --accent-border: #7ecfbc;
+  --logo-filter: hue-rotate(-55deg) saturate(0.95);
+}
+html[data-theme="red"] {
+  --accent: #e04545;
+  --accent-hover: #c93636;
+  --accent-soft: rgba(224, 69, 69, 0.12);
+  --accent-glow: rgba(224, 69, 69, 0.22);
+  --sidebar-active: rgba(224, 69, 69, 0.1);
+  --sidebar-ring: #e04545;
+  --info-soft: rgba(224, 69, 69, 0.08);
+  --hover-row: rgba(224, 69, 69, 0.06);
+  --accent-border: #ef9a9a;
+  --cyan: #f07167;
+  --cyan-soft: rgba(240, 113, 103, 0.12);
+  --logo-filter: hue-rotate(150deg) saturate(1.1);
+}
+html[data-theme="orange"] {
+  --accent: #e67e22;
+  --accent-hover: #d35400;
+  --accent-soft: rgba(230, 126, 34, 0.14);
+  --accent-glow: rgba(230, 126, 34, 0.24);
+  --sidebar-active: rgba(230, 126, 34, 0.1);
+  --sidebar-ring: #e67e22;
+  --info-soft: rgba(230, 126, 34, 0.08);
+  --hover-row: rgba(230, 126, 34, 0.06);
+  --accent-border: #f5c18a;
+  --cyan: #f39c12;
+  --cyan-soft: rgba(243, 156, 18, 0.12);
+  --logo-filter: hue-rotate(175deg) saturate(1.08);
+}
+html[data-theme="purple"] {
+  --accent: #7c5cfc;
+  --accent-hover: #6545e8;
+  --accent-soft: rgba(124, 92, 252, 0.12);
+  --accent-glow: rgba(124, 92, 252, 0.22);
+  --sidebar-active: rgba(124, 92, 252, 0.1);
+  --sidebar-ring: #7c5cfc;
+  --info-soft: rgba(124, 92, 252, 0.08);
+  --hover-row: rgba(124, 92, 252, 0.06);
+  --accent-border: #b8a6ff;
+  --cyan: #9b7bff;
+  --cyan-soft: rgba(155, 123, 255, 0.12);
+  --logo-filter: hue-rotate(45deg) saturate(1.05);
+}
+html[data-theme="yellow"] {
+  --accent: #c9a227;
+  --accent-hover: #b08d1c;
+  --accent-soft: rgba(201, 162, 39, 0.16);
+  --accent-glow: rgba(201, 162, 39, 0.26);
+  --sidebar-active: rgba(201, 162, 39, 0.12);
+  --sidebar-ring: #c9a227;
+  --info-soft: rgba(201, 162, 39, 0.1);
+  --hover-row: rgba(201, 162, 39, 0.08);
+  --accent-border: #e6d089;
+  --cyan: #d4af37;
+  --cyan-soft: rgba(212, 175, 55, 0.14);
+  --logo-filter: hue-rotate(195deg) saturate(1.05) brightness(1.04);
+}
+
+.settings-wrap { position: relative; flex: 0 0 auto; }
+.settings-btn { color: var(--muted); }
+.settings-btn:hover, .settings-btn[aria-expanded="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.settings-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  min-width: 13.5rem;
+  padding: 0.4rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  z-index: 80;
+}
+.settings-menu-section { display: flex; flex-direction: column; gap: 0.15rem; }
+.settings-menu-label {
+  padding: 0.35rem 0.55rem 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.settings-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.4rem;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.settings-menu-item:hover { background: var(--accent-soft); }
+.settings-menu-item .settings-check {
+  opacity: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+.settings-menu-item[aria-checked="true"] .settings-check { opacity: 1; }
+.settings-menu-item--action { font-weight: 600; color: var(--accent); }
+.settings-menu-sep {
+  height: 1px;
+  background: var(--line);
+  margin: 0.35rem 0.25rem;
+}
+.theme-modal[hidden] { display: none !important; }
+.theme-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: grid; place-items: center;
+}
+.theme-modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(20, 28, 40, 0.35);
+}
+.theme-modal-card {
+  position: relative;
+  width: min(34rem, calc(100vw - 2rem));
+  background: #fff;
+  border-radius: 0.85rem;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 48px rgba(20, 28, 40, 0.18);
+  padding: 1rem 1.1rem 1.15rem;
+}
+.theme-modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.theme-card {
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  padding: 0.65rem;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.theme-card:hover { border-color: var(--accent-border); box-shadow: var(--shadow-soft); }
+.theme-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.theme-swatch {
+  height: 2.4rem;
+  border-radius: 0.45rem;
+  margin-bottom: 0.45rem;
+  background: linear-gradient(135deg, var(--swatch-a) 0%, var(--swatch-b) 100%);
+}
+.theme-card-name { display: block; font-weight: 600; font-size: 0.88rem; color: var(--ink); }
+.theme-card-hint { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+@media (max-width: 640px) {
+  .theme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
