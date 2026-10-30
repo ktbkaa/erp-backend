@@ -497,7 +497,10 @@ const MODULES = [
         ],
         defaults: {
           is_active: true,
-          stock_etkisi: false,
+          stock_etkisi: true,
+          warehouse_zorunlu: true,
+          partner_zorunlu: false,
+          eksi_balance_izin: false,
           gkk_emri_olussun: false,
           ckk_emri_olussun: false,
         },
@@ -16364,12 +16367,19 @@ async function openForm(mode, opts = {}) {
   const seedFields = () => {
     collectTabFields(screen).forEach((f) => {
       if (f.type === 'checkbox') {
-        // is_active varsayılan true → Pasif kutusu boş
-        record[f.key] = f.key === 'is_inactive' ? false : true;
-      } else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
-      else if (f.key === 'company_id' && getActiveFirmaId()) record[f.key] = getActiveFirmaId();
-      else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
-      else if (record[f.key] === undefined) record[f.key] = '';
+        // screen.defaults verilmişse koru
+        if (Object.prototype.hasOwnProperty.call(record, f.key)) return;
+        // is_active varsayılan true → Pasif kutusu boş; diğer tikler kapalı
+        if (f.key === 'is_inactive') record[f.key] = false;
+        else if (f.key === 'is_active') record[f.key] = true;
+        else record[f.key] = false;
+      } else if (f.type === 'select') {
+        if (record[f.key] === undefined) record[f.key] = f.options?.[0] || '';
+      } else if (f.key === 'company_id' && getActiveFirmaId()) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = getActiveFirmaId();
+      } else if (f.key === 'plant_id' && state.activeIsYeriId) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = state.activeIsYeriId;
+      } else if (record[f.key] === undefined) record[f.key] = '';
     });
   };
 
