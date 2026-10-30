@@ -68,4 +68,17 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.delete('/:id', async (req, res) => {
+    try {
+        const r = await pool.query(`DELETE FROM production_receipts WHERE id=$1 RETURNING id`, [req.params.id]);
+        if (!r.rows[0]) return res.status(404).json({ hata: 'Üretim girişi bulunamadı.' });
+        res.json({ silindi: true, id: Number(r.rows[0].id) });
+    } catch (err) {
+        if (err.code === '23503') {
+            return res.status(409).json({ hata: 'Bağlı stok hareketleri nedeniyle silinemedi.' });
+        }
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 module.exports = router;

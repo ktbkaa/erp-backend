@@ -5,6 +5,7 @@ const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
 const { kullaniciGetir, reqKullaniciKodu } = require('../src/utils/yetki');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 function gunFarki(start, end) {
   const a = new Date(start);
@@ -383,6 +384,20 @@ router.post('/bakiyeler/accrue', async (req, res) => {
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '/talepler',
+  table: 'hr_leave_requests',
+  notFound: 'İzin talebi bulunamadı.',
+  skipGet: true, // zaten GET /talepler/:id var
+  updatable: ['start_date', 'end_date', 'quantity', 'description', 'leave_type_id'],
+  canDelete: async (row) => {
+    if (!['Taslak', 'Reddedildi'].includes(row.status)) {
+      return `Onay sürecindeki izin talebi silinemez (${row.status}).`;
+    }
+    return true;
+  },
 });
 
 module.exports = router;

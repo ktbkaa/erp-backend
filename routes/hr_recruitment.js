@@ -5,6 +5,7 @@ const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
 const { annualLeaveEntitlementDays } = require('../src/services/hrPayrollService');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 // ---- İş ilanları ----
 router.get('/ilanlar', async (req, res) => {
@@ -517,6 +518,87 @@ router.delete('/cikis-nedenleri/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
+});
+
+// ---- GET/PUT/DELETE (UI Sil / Düzelt) ----
+registerIdCrud(router, pool, {
+  path: '/ilanlar',
+  table: 'hr_job_requisitions',
+  notFound: 'İş ilanı bulunamadı.',
+  getSql: `SELECT j.*, d.department_name, p.position_name
+           FROM hr_job_requisitions j
+           LEFT JOIN hr_departments d ON d.id = j.department_id
+           LEFT JOIN hr_positions p ON p.id = j.position_id
+           WHERE j.id=$1`,
+  updatable: ['title', 'department_id', 'position_id', 'status', 'headcount', 'description'],
+  canDelete: async (row) => {
+    const used = await pool.query(
+      `SELECT 1 FROM hr_candidates WHERE requisition_id=$1 LIMIT 1`,
+      [row.id],
+    );
+    if (used.rows[0]) return 'İlana bağlı aday var; önce adayları silin veya ilanı kapatın.';
+    return true;
+  },
+});
+
+registerIdCrud(router, pool, {
+  path: '/adaylar',
+  table: 'hr_candidates',
+  notFound: 'Aday bulunamadı.',
+  getSql: `SELECT c.*, j.title AS requisition_title, e.employee_no
+           FROM hr_candidates c
+           LEFT JOIN hr_job_requisitions j ON j.id = c.requisition_id
+           LEFT JOIN hr_employees e ON e.id = c.employee_id
+           WHERE c.id=$1`,
+  updatable: [
+    'first_name', 'last_name', 'email', 'phone', 'requisition_id', 'status', 'description',
+  ],
+  canDelete: async (row) => {
+    if (row.employee_id) return 'Personele dönüştürülmüş aday silinemez.';
+    return true;
+  },
+});
+
+registerIdCrud(router, pool, {
+  path: '/onboarding',
+  table: 'hr_onboarding_tasks',
+  notFound: 'Onboarding görevi bulunamadı.',
+  getSql: `SELECT t.*, e.employee_no, e.first_name, e.last_name
+           FROM hr_onboarding_tasks t
+           JOIN hr_employees e ON e.id = t.employee_id
+           WHERE t.id=$1`,
+  updatable: ['task_name', 'status', 'due_date', 'assignee_user_id', 'description'],
+});
+
+registerIdCrud(router, pool, {
+  path: '/zimmetler',
+  table: 'hr_asset_assignments',
+  notFound: 'Zimmet bulunamadı.',
+  getSql: `SELECT a.*, e.employee_no, e.first_name, e.last_name
+           FROM hr_asset_assignments a
+           JOIN hr_employees e ON e.id = a.employee_id
+           WHERE a.id=$1`,
+  updatable: ['asset_code', 'asset_name', 'assigned_at', 'returned_at', 'status', 'description'],
+});
+
+registerIdCrud(router, pool, {
+  path: '/cikislar',
+  table: 'hr_terminations',
+  notFound: 'İşten çıkış kaydı bulunamadı.',
+  getSql: `SELECT t.*, e.employee_no, e.first_name, e.last_name, e.hire_date
+           FROM hr_terminations t
+           JOIN hr_employees e ON e.id = t.employee_id
+           WHERE t.id=$1`,
+  updatable: [
+    'notice_date', 'last_work_date', 'termination_date', 'reason_code', 'reason_name',
+    'unused_leave_days', 'other_amount', 'deduction_amount', 'description', 'status',
+  ],
+  canDelete: async (row) => {
+    if (!['Taslak', 'Kontrol'].includes(row.status)) {
+      return `Onaylı çıkış silinemez (durum: ${row.status}).`;
+    }
+    return true;
+  },
 });
 
 module.exports = router;

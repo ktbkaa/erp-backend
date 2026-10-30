@@ -98,4 +98,13 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'qc_capa',
+  notFound: 'CAPA bulunamadı.',
+  skipGet: true,
+  skipPut: true,
+});
+
 module.exports = router;
