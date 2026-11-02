@@ -1125,7 +1125,13 @@ const MODULES = [
         title: 'Stok Hareketleri',
         endpoint: '/stok-hareketleri',
         crud: true,
-        numeratorSeri: 'STOK_HAREKET',
+        // Hareket no hareket koduna göre: STC-01-00001 (numeratorSeri yok — kod seçilince ayrılır)
+        numeratorSeri: null,
+        numeratorFromMovementCode: {
+          field: 'movement_code_id',
+          lookup: 'hareket-kodlari-stok',
+          codeKey: 'movement_code',
+        },
         codeField: 'movement_no',
         nameField: 'movement_type',
         categoryKey: 'movement_type',
@@ -1159,20 +1165,40 @@ const MODULES = [
           { key: 'movement_no', label: 'Hareket no', code: true },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-stok', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', required: true },
           { key: 'warehouse_id', label: 'Depo (source)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'target_warehouse_id', label: 'Hedef depo (transfer)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          {
+            key: 'target_warehouse_id',
+            label: 'Hedef depo (transfer)',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            // Transfer değilse disable — syncStokHareketTransferFields
+            transferOnly: true,
+          },
           { key: 'movement_date', label: 'Tarih', type: 'date' },
           { key: 'description', label: 'Açıklama' },
         ],
+        // Barkod sütunu varsayılan kapalı; toolbar tik ile açılır
+        barkodScanToggle: true,
+        barkodScanField: {
+          key: 'barkod',
+          label: 'Barkod',
+          hint: 'Okut: aynı stok → miktar +1, farklı → yeni satır',
+        },
         detailFields: [
-          { key: 'barkod', label: 'Barkod', hint: 'Okutunca stok eşleşir' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
           { key: 'raf_code', label: 'Raf' },
           { key: 'konum_code', label: 'Konum' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
+        defaults: {
+          movement_date: new Date().toISOString().slice(0, 10),
+          satirlar: [],
+        },
       },
       {
         id: 'transfer-emirleri',
@@ -7636,6 +7662,7 @@ const state = {
   formMode: null,
   formRecord: null,
   formNumeratorSeri: null,
+  stokHareketBarkodMod: false,
   detailRows: [],
   openTabs: [],
   activeTabKey: null,
@@ -8356,8 +8383,12 @@ async function refreshCodeFromNumeratorField(force = false) {
 }
 
 function bindNumeratorFieldListener(screen) {
-  if (!screen?.numeratorFromField) return;
   if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
+  if (screen?.numeratorFromMovementCode) {
+    bindStokHareketNumerator(screen);
+    return;
+  }
+  if (!screen?.numeratorFromField) return;
   const tipKey = screen.numeratorFromField.field;
   const tipControls = [
     ...document.querySelectorAll(`input[type="radio"][data-master="${tipKey}"]`),
@@ -8368,6 +8399,220 @@ function bindNumeratorFieldListener(screen) {
   const onChange = () => { refreshCodeFromNumeratorField(true); };
   if (tipControls.length) tipControls.forEach((r) => r.addEventListener('change', onChange));
   else tipEl.addEventListener('change', onChange);
+}
+
+function hareketKoduRowById(id) {
+  if (id == null || id === '') return null;
+  const rows = state.lookupCache?.['hareket-kodlari-stok']
+    || state.lookupCache?.['hareket-kodlari']
+    || [];
+  return rows.find((r) => String(r.id) === String(id)) || null;
+}
+
+function isTransferHareketKodu(hk) {
+  if (!hk) return false;
+  const tip = String(hk.document_type || '');
+  const yon = String(hk.direction || '');
+  return tip === 'Transfer' || yon === 'Transfer' || /^TRF/i.test(String(hk.movement_code || ''));
+}
+
+async function ayirStokHareketNo(movementCode) {
+  const data = await api('/kod-serileri/stok-hareket/ayir', {
+    method: 'POST',
+    body: JSON.stringify({ movement_code: movementCode }),
+  });
+  return data.kod;
+}
+
+async function refreshStokHareketNo(force = false) {
+  const screen = findScreen(state.screenId);
+  if (!screen?.numeratorFromMovementCode || screen.id !== 'stok-hareketleri') return;
+  if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
+  const tipKey = screen.numeratorFromMovementCode.field || 'movement_code_id';
+  const tipEl = findAttrControl('data-master', tipKey);
+  const tipVal = tipEl ? tipEl.value : state.formRecord?.[tipKey];
+  if (tipVal == null || tipVal === '') {
+    if (state.formRecord) state.formRecord[screen.codeField] = '';
+    const codeEl = findAttrControl('data-master', screen.codeField);
+    if (codeEl) codeEl.value = '';
+    state.formNumeratorSeri = null;
+    return;
+  }
+  await fetchLookupKey(screen.numeratorFromMovementCode.lookup || 'hareket-kodlari-stok').catch(() => null);
+  const hk = hareketKoduRowById(tipVal);
+  const code = hk?.[screen.numeratorFromMovementCode.codeKey || 'movement_code'];
+  if (!code) return;
+  const seri = `STOK_HAREKET__${String(code).toUpperCase()}`;
+  if (!force && state.formNumeratorSeri === seri && state.formRecord?.[screen.codeField]) return;
+  try {
+    const kod = await ayirStokHareketNo(code);
+    if (!state.formRecord) state.formRecord = {};
+    state.formRecord[screen.codeField] = kod;
+    state.formRecord[tipKey] = tipVal;
+    state.formNumeratorSeri = seri;
+    const codeEl = findAttrControl('data-master', screen.codeField);
+    if (codeEl) codeEl.value = kod;
+  } catch (err) {
+    toast(err.message || String(err));
+  }
+}
+
+function bindStokHareketNumerator(screen) {
+  const tipKey = screen.numeratorFromMovementCode.field || 'movement_code_id';
+  const tipEl = findAttrControl('data-master', tipKey);
+  if (!tipEl || tipEl.dataset.numeratorBound === '1') return;
+  tipEl.dataset.numeratorBound = '1';
+  tipEl.addEventListener('change', () => {
+    refreshStokHareketNo(true);
+    syncStokHareketTransferFields();
+  });
+}
+
+/** Hedef depo: yalnız transfer hareket kodunda aktif + zorunlu */
+function syncStokHareketTransferFields() {
+  const screen = findScreen(state.screenId);
+  if (!screen || screen.id !== 'stok-hareketleri') return;
+  const hkId = findAttrControl('data-master', 'movement_code_id')?.value
+    || state.formRecord?.movement_code_id;
+  const hk = hareketKoduRowById(hkId);
+  const transfer = isTransferHareketKodu(hk);
+  const hedefSel = findAttrControl('data-master', 'target_warehouse_id');
+  if (!hedefSel) return;
+  const widget = hedefSel.closest('.lookup-widget') || hedefSel.closest('.field');
+  hedefSel.disabled = !transfer || state.formMode === 'incele';
+  hedefSel.toggleAttribute('required', transfer);
+  const ta = widget?.querySelector?.('.lookup-typeahead');
+  if (ta) {
+    ta.disabled = hedefSel.disabled;
+    ta.placeholder = transfer ? 'Yazarak ara (%...%)' : 'Transfer için hareket kodu seçin';
+  }
+  widget?.querySelectorAll?.('.lookup-browse-btn, .lookup-clear-btn, button').forEach((b) => {
+    b.disabled = hedefSel.disabled;
+  });
+  const fieldShellEl = hedefSel.closest('.field');
+  if (fieldShellEl) {
+    fieldShellEl.classList.toggle('is-disabled', !transfer);
+    fieldShellEl.classList.toggle('is-required', transfer);
+    const lab = fieldShellEl.querySelector('label');
+    if (lab) lab.classList.toggle('required', transfer);
+  }
+  if (!transfer) {
+    hedefSel.value = '';
+    if (ta) ta.value = '';
+    if (state.formRecord) state.formRecord.target_warehouse_id = null;
+    syncLookupNameRo(hedefSel);
+  }
+}
+
+function bindStokHareketBarkodToggle() {
+  const screen = findScreen(state.screenId);
+  if (!screen?.barkodScanToggle) return;
+  const chk = document.getElementById('stokHareketBarkodMod');
+  if (!chk || chk.dataset.bound === '1') return;
+  chk.dataset.bound = '1';
+  chk.addEventListener('change', () => {
+    state.stokHareketBarkodMod = Boolean(chk.checked);
+    // Grid’i yeniden çiz; master değerleri koru
+    const scr = findScreen(state.screenId);
+    if (!scr) return;
+    const payload = readTabbedPayload(scr);
+    state.formRecord = { ...(state.formRecord || {}), ...payload };
+    renderForm(scr);
+    persistActiveFormTab();
+  });
+}
+
+/**
+ * Barkod okutma: aynı stok → miktar +1; farklı → yeni satır.
+ * Parti/seri izleri satır barkod_okumalar dizisinde (kaydınca API yazar).
+ */
+async function handleStokHareketBarkodScan(el) {
+  const kod = String(el.value || '').trim();
+  if (!kod) return;
+  const didx = Number(el.getAttribute('data-didx'));
+  const grid = el.getAttribute('data-grid') || 'satirlar';
+  try {
+    const items = state.lookupCache.items || await api('/items?is_active=true');
+    state.lookupCache.items = items;
+    let hit = null;
+    for (const s of items) {
+      if (String(s.barkod || '') === kod) { hit = s; break; }
+      const bars = Array.isArray(s.barkodlar) ? s.barkodlar : [];
+      if (bars.some((b) => String(b.barkod) === kod)) { hit = s; break; }
+    }
+    if (!hit) {
+      toast(`Barkod bulunamadı: ${kod}`);
+      el.select?.();
+      return;
+    }
+
+    const scr = findScreen(state.screenId);
+    const tab = (scr?.formTabs || []).find((t) => t.kind === 'master-grid' || t.kind === 'grid')
+      || { key: grid, fields: scr?.detailFields || [] };
+    const gkey = tab.grid?.key || tab.key || grid;
+    // Mevcut satırları DOM’dan oku
+    const rows = readGridFromForm({
+      kind: 'grid',
+      key: gkey,
+      fields: effectiveGridFields({
+        fields: tab.grid?.fields || tab.detailFields || tab.fields || scr.detailFields || [],
+      }),
+    });
+
+    const pushOkuma = (row) => {
+      const list = Array.isArray(row.barkod_okumalar) ? row.barkod_okumalar : [];
+      list.push({ barkod: kod, quantity: 1, scanned_at: new Date().toISOString() });
+      row.barkod_okumalar = list;
+      row.barkod = kod;
+      // Seri/parti politikası: barkodu arka plan alanına yaz (ekranda kolon yok)
+      if (/zorunlu|istege/i.test(String(hit.series_politika || ''))) row.serial_no = kod;
+      if (/zorunlu|istege/i.test(String(hit.lot_politika || '')) && !row.lot_no) row.lot_no = kod;
+    };
+
+    let targetIdx = rows.findIndex((r) => Number(r.item_id) === Number(hit.id));
+    if (targetIdx < 0) {
+      // Farklı / yeni stok → mevcut boş satırı doldur veya yeni satır
+      const cur = rows[didx];
+      if (cur && !cur.item_id) {
+        targetIdx = didx;
+        cur.item_id = hit.id;
+        cur.quantity = 1;
+        cur.uom_code = hit.uom_code || cur.uom_code || '';
+        pushOkuma(cur);
+      } else {
+        const blank = emptyRowFromFields(effectiveGridFields({
+          fields: tab.grid?.fields || tab.detailFields || tab.fields || scr.detailFields || [],
+        }));
+        blank.item_id = hit.id;
+        blank.quantity = 1;
+        blank.uom_code = hit.uom_code || '';
+        pushOkuma(blank);
+        rows.push(blank);
+        targetIdx = rows.length - 1;
+      }
+    } else {
+      const row = rows[targetIdx];
+      row.quantity = Number(row.quantity || 0) + 1;
+      if (!row.uom_code) row.uom_code = hit.uom_code || '';
+      pushOkuma(row);
+    }
+
+    const masterSnap = readMasterFromForm(scr);
+    state.formRecord = { ...(state.formRecord || {}), ...masterSnap, [gkey]: rows };
+    el.value = '';
+    renderForm(scr);
+    persistActiveFormTab();
+    toast(`Barkod → ${hit.item_code} (satır ${targetIdx + 1}, miktar ${rows[targetIdx].quantity})`);
+    // Odak: barkod sütunu açıksa yeni/aktif satır barkod alanı
+    requestAnimationFrame(() => {
+      const next = document.querySelector(
+        `input[data-detail="barkod"][data-grid="${gkey}"][data-didx="${targetIdx}"]`
+      );
+      next?.focus?.();
+    });
+  } catch (err) {
+    toast(err.message || 'Barkod çözülemedi');
+  }
 }
 
 function showView(name) {
@@ -11483,9 +11728,15 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     return `<span class="field-static" aria-hidden="true">${escAttr(field.label || '=')}</span>`;
   }
   const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
-  const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly;
+  let transferLocked = false;
+  if (field.transferOnly) {
+    const hkId = (ctx && ctx.movement_code_id) || state.formRecord?.movement_code_id
+      || findAttrControl('data-master', 'movement_code_id')?.value;
+    transferLocked = !isTransferHareketKodu(hareketKoduRowById(hkId));
+  }
+  const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly || transferLocked;
   const dis = forceDisabled ? 'disabled' : '';
-  const req = field.required ? 'aria-required="true"' : '';
+  const req = (field.required || (field.transferOnly && !transferLocked)) ? 'aria-required="true"' : '';
   const v = value ?? '';
   const name = `${attrName}="${field.key}" ${extraAttrs}`.trim();
   if (field.type === 'checkbox') {
@@ -13696,13 +13947,30 @@ function renderGridToolbar(tabKey, { canEdit }) {
   const hint = persist
     ? 'Satırda ✓ Kaydet veritabanına yazar'
     : 'Satırda ✓ Kaydet satırı onaylar · belge üstteki Kaydet ile yazılır';
+  const barkodToggle = screen?.barkodScanToggle
+    ? `<label class="toolbar-check" title="Barkod sütununu aç / kapat">
+        <input type="checkbox" id="stokHareketBarkodMod" ${state.stokHareketBarkodMod ? 'checked' : ''} />
+        <span>Barkod okunacak mı?</span>
+      </label>`
+    : '';
   return `<div class="inline-toolbar erp-grid-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}" title="Yeni satır">＋ Satır</button>
     <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}" title="Seçili satırı sil">✕ Sil</button>
     <button type="button" class="btn action ghost" data-excel-act="sablon" data-grid-key="${tabKey}" title="Excel şablon indir">Excel şablon</button>
     <button type="button" class="btn action ghost" data-excel-act="al" data-grid-key="${tabKey}" title="Excel’den veri al">Excel’den al</button>
+    ${barkodToggle}
     <span class="toolbar-hint">${hint} · sağ tık menüsü de var</span>
   </div>`;
+}
+
+/** Stok hareket: barkod sütunu yalnızca tik açıksa */
+function effectiveGridFields(tab) {
+  const base = Array.isArray(tab?.fields) ? [...tab.fields] : [];
+  const screen = findScreen(state.screenId);
+  if (!screen?.barkodScanToggle || !screen.barkodScanField) return base;
+  const without = base.filter((f) => f.key !== 'barkod');
+  if (!state.stokHareketBarkodMod) return without;
+  return [screen.barkodScanField, ...without];
 }
 
 function renderDetailCell(field, row, idx, gridKey, canEdit) {
@@ -13722,8 +13990,8 @@ function renderDetailCell(field, row, idx, gridKey, canEdit) {
 
 function renderDynamicGrid(tab, rec) {
   const key = tab.key;
-  const fields = tab.fields || [];
-  const rows = normalizeGridRows(tab, Array.isArray(rec[key]) ? rec[key] : []);
+  const fields = effectiveGridFields(tab);
+  const rows = normalizeGridRows({ ...tab, fields }, Array.isArray(rec[key]) ? rec[key] : []);
   rec[key] = rows;
   const canEdit = state.formMode !== 'incele';
   const selIdx = state.gridSel.key === key ? state.gridSel.idx : null;
@@ -14761,6 +15029,12 @@ function renderForm(screen) {
   if ((screen.formTabs || []).some((t) => t.kind === 'stok-depolar')) {
     bindStokDepoYetkiEvents();
   }
+  if (screen.id === 'stok-hareketleri') {
+    bindStokHareketBarkodToggle();
+    fetchLookupKey('hareket-kodlari-stok').then(() => {
+      syncStokHareketTransferFields();
+    }).catch(() => { syncStokHareketTransferFields(); });
+  }
   // TRY → kur kilitli; diğer PB → kur tipine göre doldur
   if (findAttrControl('data-master', 'exchange_rate') || findAttrControl('data-master', 'currency_code')) {
     syncDocumentKurFields(false).catch(() => {});
@@ -15736,6 +16010,17 @@ function bindLookupBrowseUi() {
     if (!ta.value) paintLookupSuggest(widget, sel, '');
   });
   document.addEventListener('keydown', (e) => {
+    // Stok hareket barkod okutma (Enter)
+    if (e.key === 'Enter' && e.target?.matches?.('input[data-detail="barkod"]')) {
+      e.preventDefault();
+      const scr = findScreen(state.screenId);
+      if (scr?.id === 'stok-hareketleri') {
+        handleStokHareketBarkodScan(e.target).catch((err) => toast(err.message || String(err)));
+      } else {
+        e.target.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      return;
+    }
     const ta = e.target?.closest?.('.lookup-typeahead');
     if (!ta) return;
     const widget = ta.closest('.lookup-widget');
@@ -15885,7 +16170,11 @@ function cascadeScopeContext(el) {
   const didx = el.getAttribute('data-didx');
   const grid = el.getAttribute('data-grid');
   if (didx != null && grid) {
-    const ctx = {};
+    // Satır + master (depo miktarı / bağımlı lookup için warehouse_id vb.)
+    const ctx = { ...(state.formRecord || {}) };
+    document.querySelectorAll('[data-master]').forEach((sib) => {
+      assignControlInto(ctx, sib.getAttribute('data-master'), sib);
+    });
     document.querySelectorAll(`[data-detail][data-didx="${didx}"][data-grid="${grid}"]`).forEach((sib) => {
       assignControlInto(ctx, sib.getAttribute('data-detail'), sib);
     });
@@ -16381,6 +16670,10 @@ function bindCascadeLookups(_screen) {
 
     // Barkod → stok eşleştirme (yanlış malzeme engeli)
     if (fieldKey === 'barkod' && el instanceof HTMLInputElement && el.value.trim()) {
+      if (scr.id === 'stok-hareketleri') {
+        await handleStokHareketBarkodScan(el);
+        return;
+      }
       const kod = el.value.trim();
       try {
         const items = state.lookupCache.items || await api('/items?is_active=true');
@@ -16392,7 +16685,6 @@ function bindCascadeLookups(_screen) {
           if (bars.some((b) => String(b.barkod) === kod)) { hit = s; break; }
         }
         if (!hit) {
-          // nested barkod endpoint yoksa stok listesinde ara
           toast(`Barkod bulunamadı: ${kod}`);
           return;
         }
@@ -16627,11 +16919,17 @@ function readGridFromForm(tab) {
     existing.length,
     document.querySelectorAll(`[data-grid-row="${tab.key}"]`).length
   );
+  const fields = effectiveGridFields(tab);
+  const tabEff = { ...tab, fields };
   const rows = [];
   for (let idx = 0; idx < count; idx += 1) {
-    const { row, any } = syncGridRowFromDom(tab, idx, existing[idx] || {});
+    const { row, any } = syncGridRowFromDom(tabEff, idx, existing[idx] || {});
+    // Barkod okuma geçmişini satırda tut (API arka plan kaydı)
+    if (Array.isArray(existing[idx]?.barkod_okumalar)) {
+      row.barkod_okumalar = existing[idx].barkod_okumalar;
+    }
     const hasContent = any || Object.keys(row).some((k) => {
-      if (k === 'bilesenler' || k === 'alt_satirlar' || k.startsWith('_')) return false;
+      if (k === 'bilesenler' || k === 'alt_satirlar' || k === 'barkod_okumalar' || k.startsWith('_')) return false;
       // Varsayılan katsayı 1 boş satır sayılmaz
       if (k === 'katsayi' || k === 'source_katsayi') return false;
       const v = row[k];
@@ -17791,6 +18089,54 @@ async function saveForm({ after = 'stay' } = {}) {
       if (tax && tax.rate != null && tax.rate !== '') {
         master.varsayilan_vat_rate = Number(tax.rate);
       }
+    }
+  }
+
+  // Stok hareketleri: satır doğrulama + transfer hedef depo + boş satır temizliği
+  if (screen.id === 'stok-hareketleri') {
+    const hk = hareketKoduRowById(master.movement_code_id);
+    if (isTransferHareketKodu(hk) && !Number(master.target_warehouse_id)) {
+      toast('Transfer için hedef depo zorunlu.');
+      return;
+    }
+    if (!isTransferHareketKodu(hk)) {
+      master.target_warehouse_id = null;
+    }
+    const raw = Array.isArray(master.satirlar) ? master.satirlar : [];
+    const clean = [];
+    for (let i = 0; i < raw.length; i += 1) {
+      const s = raw[i] || {};
+      const itemId = Number(s.item_id);
+      const qty = Number(s.quantity);
+      const totallyEmpty = (!Number.isFinite(itemId) || !itemId)
+        && (s.quantity == null || s.quantity === '' || !Number.isFinite(qty) || qty === 0)
+        && !String(s.barkod || '').trim()
+        && !String(s.raf_code || '').trim()
+        && !String(s.konum_code || '').trim();
+      if (totallyEmpty) continue;
+      if (!Number.isFinite(itemId) || !itemId) {
+        toast(`Satır ${i + 1}: listeden stok seçin (yazmak yeterli değil).`);
+        return;
+      }
+      if (!Number.isFinite(qty) || qty <= 0) {
+        toast(`Satır ${i + 1}: miktar 0'dan büyük olmalı.`);
+        return;
+      }
+      if (!s.uom_code) {
+        const st = stokLookupById(itemId);
+        if (st?.uom_code) s.uom_code = st.uom_code;
+      }
+      clean.push(s);
+    }
+    if (!clean.length) {
+      toast('En az bir satırda stok ve miktar girin.');
+      return;
+    }
+    master.satirlar = clean;
+    // Hareket no yoksa (kod seçilmeden kayıt) — engelle
+    if (!String(master.movement_no || '').trim()) {
+      toast('Önce hareket kodu seçin (hareket no üretilir).');
+      return;
     }
   }
 

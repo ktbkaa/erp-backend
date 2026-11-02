@@ -53,6 +53,130 @@ function satirYon(hareketTipi, hareketKodu) {
     return 1;
 }
 
+async function withSavepoint(client, name, fn) {
+    const sp = String(name || 'sp').replace(/[^a-zA-Z0-9_]/g, '_');
+    await client.query(`SAVEPOINT ${sp}`);
+    try {
+        const out = await fn();
+        await client.query(`RELEASE SAVEPOINT ${sp}`);
+        return out;
+    } catch (_) {
+        await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+        await client.query(`RELEASE SAVEPOINT ${sp}`).catch(() => {});
+        return null;
+    }
+}
+
+/**
+ * Barkod okutma izi + parti/seri arka plan kayıtları (ekranda görünmez; rapor için).
+ */
+async function kaydetBarkodOkumalar(client, {
+    hareket,
+    satirlar,
+    kaynakSatirlar,
+    depoId,
+    movementType,
+    kullanici,
+    firmaId,
+}) {
+    if (!hareket?.id || !Array.isArray(satirlar) || !Array.isArray(kaynakSatirlar)) return;
+    for (let i = 0; i < kaynakSatirlar.length; i += 1) {
+        const src = kaynakSatirlar[i];
+        const line = satirlar[i];
+        if (!src || !line) continue;
+        const okumalar = Array.isArray(src.barkod_okumalar) && src.barkod_okumalar.length
+            ? src.barkod_okumalar
+            : (src.barkod ? [{ barkod: src.barkod, quantity: 1 }] : []);
+        for (const o of okumalar) {
+            const barkod = String(o?.barkod || '').trim();
+            if (!barkod) continue;
+            const qty = Number(o.quantity);
+            await withSavepoint(client, 'barkod_scan', async () => {
+                await client.query(
+                    `
+                    INSERT INTO item_barcode_scans (
+                        company_id, movement_id, movement_line_id, barkod, item_id,
+                        warehouse_id, quantity, movement_type, result, message, okuyan_user
+                    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Ok',NULL,$9)
+                    `,
+                    [
+                        firmaId || hareket.company_id || null,
+                        hareket.id,
+                        line.id,
+                        barkod,
+                        line.item_id,
+                        depoId || hareket.warehouse_id || null,
+                        Number.isFinite(qty) && qty > 0 ? qty : 1,
+                        movementType || hareket.movement_type || null,
+                        kullanici || null,
+                    ]
+                );
+            });
+
+            await withSavepoint(client, 'barkod_seri_parti', async () => {
+                const st = await client.query(
+                    `SELECT series_politika, lot_politika FROM items WHERE id=$1`,
+                    [line.item_id]
+                );
+                const pol = st.rows[0] || {};
+                if (/zorunlu|istege/i.test(String(pol.series_politika || ''))) {
+                    const mevcut = await client.query(
+                        `SELECT id FROM item_serials WHERE item_id=$1 AND serial_no=$2`,
+                        [line.item_id, barkod]
+                    );
+                    let sid = mevcut.rows[0]?.id || null;
+                    if (!sid) {
+                        const ins = await client.query(
+                            `
+                            INSERT INTO item_serials (serial_no, item_id, lot_id, warehouse_id, status, son_movement_id)
+                            VALUES ($1,$2,$3,$4,'Depoda',$5) RETURNING id
+                            `,
+                            [barkod, line.item_id, line.lot_id || null, depoId || null, hareket.id]
+                        );
+                        sid = ins.rows[0]?.id || null;
+                    } else {
+                        await client.query(
+                            `UPDATE item_serials SET warehouse_id=COALESCE($2, warehouse_id),
+                                lot_id=COALESCE($3, lot_id), son_movement_id=$4, status='Depoda'
+                             WHERE id=$1`,
+                            [sid, depoId || null, line.lot_id || null, hareket.id]
+                        );
+                    }
+                    if (sid && !line.series_id) {
+                        await client.query(
+                            `UPDATE stock_movement_lines SET series_id=$2, serial_no=COALESCE(serial_no,$3) WHERE id=$1`,
+                            [line.id, sid, barkod]
+                        );
+                    }
+                }
+                if (/zorunlu|istege/i.test(String(pol.lot_politika || '')) && !line.lot_id) {
+                    const lot = await client.query(
+                        `SELECT id FROM item_lots WHERE item_id=$1 AND lot_no=$2`,
+                        [line.item_id, barkod]
+                    );
+                    let lid = lot.rows[0]?.id || null;
+                    if (!lid) {
+                        const ins = await client.query(
+                            `
+                            INSERT INTO item_lots (item_id, lot_no, source_type, source_id)
+                            VALUES ($1,$2,'STOK_HAREKET',$3) RETURNING id
+                            `,
+                            [line.item_id, barkod, hareket.id]
+                        );
+                        lid = ins.rows[0]?.id || null;
+                    }
+                    if (lid) {
+                        await client.query(
+                            `UPDATE stock_movement_lines SET lot_id=$2 WHERE id=$1`,
+                            [line.id, lid]
+                        );
+                    }
+                }
+            });
+        }
+    }
+}
+
 router.get('/', async (req, res) => {
     try {
         const { type, warehouse_id } = req.query;
@@ -140,7 +264,7 @@ router.post('/', async (req, res) => {
 
             const type = mapHareketTipi(hareketKodu);
             if (type === 'TRANSFER' && !body.target_warehouse_id) {
-                throw new Error('Transfer için target_warehouse_id zorunlu.');
+                throw new Error('Transfer için hedef depo zorunlu.');
             }
             if (type === 'TRANSFER' && Number(body.target_warehouse_id) === Number(body.warehouse_id)) {
                 throw new Error('Kaynak ve hedef depo aynı olamaz.');
@@ -148,17 +272,41 @@ router.post('/', async (req, res) => {
 
             const yonCikis = -1;
             const yonGiris = 1;
-            const satirHazir = satirlar.map((s) => {
-                if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
-                return {
-                    item_id: s.item_id,
-                    quantity: Number(s.quantity),
+            const satirHazir = [];
+            for (let i = 0; i < satirlar.length; i += 1) {
+                const s = satirlar[i] || {};
+                const itemId = Number(s.item_id);
+                const qty = Number(s.quantity);
+                const empty = (!Number.isFinite(itemId) || !itemId)
+                    && (s.quantity == null || s.quantity === '' || !Number.isFinite(qty) || qty === 0)
+                    && !String(s.barkod || '').trim()
+                    && !String(s.raf_code || '').trim()
+                    && !String(s.konum_code || '').trim();
+                if (empty) continue;
+                if (!Number.isFinite(itemId) || !itemId) {
+                    throw new Error(`Satır ${i + 1}: stok seçimi zorunlu.`);
+                }
+                if (!Number.isFinite(qty) || qty <= 0) {
+                    throw new Error(`Satır ${i + 1}: miktar 0'dan büyük olmalı.`);
+                }
+                satirHazir.push({
+                    item_id: itemId,
+                    quantity: qty,
                     uom_code: s.uom_code || null,
                     raf_code: s.raf_code || body.raf_code || null,
                     konum_code: s.konum_code || body.konum_code || null,
                     lot_id: s.lot_id || null,
-                };
-            });
+                    lot_no: s.lot_no || null,
+                    serial_no: s.serial_no || null,
+                    barkod_okumalar: Array.isArray(s.barkod_okumalar) ? s.barkod_okumalar : null,
+                    barkod: s.barkod || null,
+                });
+            }
+            if (!satirHazir.length) {
+                throw new Error('En az bir satırda stok ve miktar girin.');
+            }
+
+            const hareketNoOpt = String(body.movement_no || '').trim() || null;
 
             if (type === 'TRANSFER') {
                 const cikis = await stokHareketOlustur(client, {
@@ -167,6 +315,7 @@ router.post('/', async (req, res) => {
                     belgeTipi: 'TRANSFER',
                     description: body.description || `Transfer → depo ${body.target_warehouse_id}`,
                     hareketKoduId: hareketKodu.id,
+                    hareketNo: hareketNoOpt,
                     satirlar: satirHazir.map((s) => ({ ...s, direction: yonCikis })),
                 });
                 await client.query(
@@ -190,6 +339,15 @@ router.post('/', async (req, res) => {
                     `UPDATE stock_movements SET bagli_movement_id=$2 WHERE id=$1`,
                     [giris.hareket.id, cikis.hareket.id]
                 );
+                await kaydetBarkodOkumalar(client, {
+                    hareket: cikis.hareket,
+                    satirlar: cikis.satirlar || [],
+                    kaynakSatirlar: satirHazir,
+                    depoId: body.warehouse_id,
+                    movementType: type,
+                    kullanici: body.user_code || req.user?.username || req.user?.user_code || null,
+                    firmaId: cikis.hareket.company_id || null,
+                });
                 return cikis.hareket.id;
             }
 
@@ -200,7 +358,17 @@ router.post('/', async (req, res) => {
                 belgeTipi: type,
                 description: body.description || `${hareketKodu.movement_name}`,
                 hareketKoduId: hareketKodu.id,
+                hareketNo: hareketNoOpt,
                 satirlar: satirHazir.map((s) => ({ ...s, direction })),
+            });
+            await kaydetBarkodOkumalar(client, {
+                hareket: hareket.hareket,
+                satirlar: hareket.satirlar || [],
+                kaynakSatirlar: satirHazir,
+                depoId: body.warehouse_id,
+                movementType: type,
+                kullanici: body.user_code || req.user?.username || req.user?.user_code || null,
+                firmaId: hareket.hareket.company_id || null,
             });
             // Hareket kodu bayrakları: giriş/çıkış kalite emri
             if (hareketKodu.gkk_emri_olussun || hareketKodu.ckk_emri_olussun) {

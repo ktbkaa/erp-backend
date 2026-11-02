@@ -4928,6 +4928,26 @@ body.sql-splitting iframe { pointer-events: none; }
   font-size: 0.72rem;
   color: var(--muted);
 }
+.erp-grid-toolbar .toolbar-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink, #2a2a2a);
+  margin-left: 0.25rem;
+  user-select: none;
+  cursor: pointer;
+}
+.erp-grid-toolbar .toolbar-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent, #3f87f5);
+}
+.field.is-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
 .form-view.erp-form--document .detail-table {
   width: max(100%, 860px);
   font-size: 0.78rem;

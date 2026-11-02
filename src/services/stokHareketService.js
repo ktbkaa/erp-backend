@@ -1,4 +1,4 @@
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
+const { sonrakiBelgeNo, sonrakiStokHareketNo } = require('../utils/belgeNo');
 const { stokNegatifIzinliMi, onerilenDepolar } = require('../utils/belgeOmurga');
 const { parametreAl } = require('../utils/yetki');
 const { partiCozumle } = require('./partiService');
@@ -20,6 +20,7 @@ async function stokHareketOlustur(client, {
     belgeId = null,
     description = null,
     hareketKoduId = null,
+    hareketNo: hareketNoOpt = null,
     satirlar,
     bagliHareketId = null,
     depoZorunluAtla = false,
@@ -45,7 +46,20 @@ async function stokHareketOlustur(client, {
     const depoZorunlu = !depoZorunluAtla
         && String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
 
-    const hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
+    let hareketNo = String(hareketNoOpt || '').trim() || null;
+    if (hareketNo) {
+        const clash = await client.query(
+            `SELECT id FROM stock_movements WHERE movement_no = $1 LIMIT 1`,
+            [hareketNo]
+        );
+        if (clash.rows[0]) hareketNo = null;
+    }
+    if (!hareketNo && hareketKodu?.movement_code) {
+        hareketNo = await sonrakiStokHareketNo(client, hareketKodu.movement_code);
+    }
+    if (!hareketNo) {
+        hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
+    }
 
     const cols = ['movement_no', 'movement_type', 'plant_id', 'warehouse_id', 'document_type', 'document_id', 'description', 'movement_code_id'];
     const vals = [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, description, hareketKoduId || null];
@@ -109,6 +123,33 @@ async function stokHareketOlustur(client, {
             if (!p.rows[0]) throw new Error(`Çıkış partisi stok ile uyuşmuyor: ${partiId}`);
         }
 
+        // Seri takibi: satırda serial_no varsa arka planda item_serials'a yaz / bağla
+        let seriesId = s.series_id || null;
+        const serialNo = String(s.serial_no || '').trim() || null;
+        if (serialNo && Number(s.direction) === 1) {
+            const mevcut = await client.query(
+                `SELECT id FROM item_serials WHERE item_id=$1 AND serial_no=$2`,
+                [s.item_id, serialNo]
+            );
+            if (mevcut.rows[0]) {
+                seriesId = mevcut.rows[0].id;
+                await client.query(
+                    `UPDATE item_serials SET warehouse_id=$2, lot_id=COALESCE($3, lot_id), status='Depoda'
+                     WHERE id=$1`,
+                    [seriesId, depoId, partiId]
+                );
+            } else {
+                const ins = await client.query(
+                    `
+                    INSERT INTO item_serials (serial_no, item_id, lot_id, warehouse_id, status)
+                    VALUES ($1,$2,$3,$4,'Depoda') RETURNING id
+                    `,
+                    [serialNo, s.item_id, partiId, depoId]
+                );
+                seriesId = ins.rows[0].id;
+            }
+        }
+
         // Çıkış: yalnızca Kullanilabilir (veya açıkça verilen statü bakiyesi)
         const cikisStatu = s.stock_status || 'Kullanilabilir';
         if (Number(s.direction) === -1) {
@@ -139,17 +180,26 @@ async function stokHareketOlustur(client, {
         const satirRes = await client.query(
             `
             INSERT INTO stock_movement_lines
-                (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status, raf_code, konum_code)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status,
+                 raf_code, konum_code, series_id, serial_no)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
             RETURNING *;
             `,
             [
                 hareket.id, s.item_id, s.quantity, s.direction, s.uom_code || null, partiId,
                 Number(s.direction) === -1 ? cikisStatu : statu,
                 s.raf_code || null, s.konum_code || null,
+                seriesId, serialNo,
             ]
         );
-        eklenen.push(satirRes.rows[0]);
+        const satirRow = satirRes.rows[0];
+        if (seriesId) {
+            await client.query(
+                `UPDATE item_serials SET son_movement_id=$2 WHERE id=$1`,
+                [seriesId, hareket.id]
+            ).catch(() => {});
+        }
+        eklenen.push(satirRow);
 
         // Ortalama maliyet (INV-011) — girişte uom_cost verilirse
         if (Number(s.direction) === 1 && s.uom_cost != null) {
