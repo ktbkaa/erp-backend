@@ -2,10 +2,12 @@
 
 Bu proje **ayrı** bir uygulama: Windows bilgisayarınızda çalışır, ERP klasörünüze bağlanır, haftalık `git pull → npm install → migrate → yedek` yapar.
 
-## 1) Zip’i açın
+## 1) Zip’i açın (güncel sürüm)
 
-`erp-local-panel.zip` dosyasını istediğiniz yere açın  
+Eski klasörü silin veya üzerine yazın. Güncel zip: `erp-local-panel.zip`  
 (örnek: `C:\Users\...\Documents\erp-local-panel`).
+
+> Not: İlk sürümde Windows PowerShell Türkçe karakter hatası vardı; güncel scriptler düzeltilmiştir.
 
 ## 2) `KUR.bat` dosyasına çift tıklayın
 
