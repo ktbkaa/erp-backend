@@ -284,19 +284,22 @@ async function saveChildren(client, stokId, body) {
 
     if (Array.isArray(body.firma_parametreleri)) {
         await client.query('DELETE FROM item_company_params WHERE item_id = $1', [stokId]);
+        // Aynı firma altında birden fazla iş yeri; anahtar = firma:işyeri (veya taslak)
         const seen = new Set();
         for (const d of body.firma_parametreleri) {
             if (d && d.is_active === false) continue;
             const firmaId = Number(d.company_id);
-            if (!Number.isFinite(firmaId) || !firmaId || seen.has(firmaId)) continue;
-            seen.add(firmaId);
+            if (!Number.isFinite(firmaId) || !firmaId) continue;
+            const plantId = Number(d.plant_id) || null;
+            const dedupeKey = plantId ? `${firmaId}:${plantId}` : `${firmaId}:draft`;
+            if (seen.has(dedupeKey)) continue;
+            seen.add(dedupeKey);
             const firmaChk = await client.query('SELECT id FROM companies WHERE id = $1', [firmaId]);
             if (!firmaChk.rows[0]) {
                 const err = new Error(`Firma bulunamadı (${firmaId}).`);
                 err.status = 400;
                 throw err;
             }
-            const plantId = Number(d.plant_id) || null;
             if (plantId) {
                 const pChk = await client.query(
                     'SELECT id FROM plants WHERE id = $1 AND company_id = $2',
@@ -328,30 +331,7 @@ async function saveChildren(client, stokId, body) {
                     $18,$19,
                     $20,$21,
                     COALESCE($22,'Takipsiz'),COALESCE($23,'Takipsiz'),NOW()
-                 )
-                 ON CONFLICT (item_id, company_id) DO UPDATE SET
-                    plant_id = EXCLUDED.plant_id,
-                    is_active = EXCLUDED.is_active,
-                    sales_price = EXCLUDED.sales_price,
-                    purchase_uom = EXCLUDED.purchase_uom,
-                    sales_uom = EXCLUDED.sales_uom,
-                    sa_tolerans_min_yuzde = EXCLUDED.sa_tolerans_min_yuzde,
-                    sa_tolerans_max_yuzde = EXCLUDED.sa_tolerans_max_yuzde,
-                    temin_suresi_days = EXCLUDED.temin_suresi_days,
-                    cikis_type = EXCLUDED.cikis_type,
-                    default_tax_code_id = EXCLUDED.default_tax_code_id,
-                    varsayilan_vat_rate = EXCLUDED.varsayilan_vat_rate,
-                    safety_stock = EXCLUDED.safety_stock,
-                    min_stock = EXCLUDED.min_stock,
-                    max_stock = EXCLUDED.max_stock,
-                    reorder_level = EXCLUDED.reorder_level,
-                    fixed_order_quantity = EXCLUDED.fixed_order_quantity,
-                    optimum_order_quantity = EXCLUDED.optimum_order_quantity,
-                    varsayilan_giris_warehouse_id = EXCLUDED.varsayilan_giris_warehouse_id,
-                    varsayilan_cikis_warehouse_id = EXCLUDED.varsayilan_cikis_warehouse_id,
-                    lot_politika = EXCLUDED.lot_politika,
-                    series_politika = EXCLUDED.series_politika,
-                    updated_at = NOW()`,
+                 )`,
                 [
                     stokId, firmaId, plantId,
                     d.is_active === false ? false : true,

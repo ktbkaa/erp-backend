@@ -10016,10 +10016,17 @@ function hideFormSoloLoader() {
  * Soft oturum (kendi PC) veya giriş. Boş kabuk / boş menü yok.
  */
 function ensureSidebarVisible() {
+  // Yeni sekme form boot: yükleme animasyonu bitsin — erken kill etme
+  if (isFormSoloUrl() && (
+    state.formSolo
+    || document.documentElement.classList.contains('form-solo-boot')
+    || document.body.classList.contains('form-solo-booting')
+  )) {
+    return;
+  }
   if (!isFormSoloUrl()) {
     state.formSolo = false;
   }
-  if (state.formSolo && isFormSoloUrl()) return;
 
   hideFormSoloLoader();
 
@@ -12975,10 +12982,10 @@ function renderKullaniciProfilBlok(rec) {
     </section>`;
 }
 
-function emptyStokFirmaParam(companyId) {
+function emptyStokFirmaParam(companyId, plantId = null) {
   return {
     company_id: Number(companyId),
-    plant_id: null,
+    plant_id: plantId != null && plantId !== '' ? Number(plantId) : null,
     is_active: true,
     sales_price: null,
     purchase_uom: null,
@@ -13002,84 +13009,169 @@ function emptyStokFirmaParam(companyId) {
   };
 }
 
-function stokFirmaParamMap(rec) {
-  const map = new Map();
-  (Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : []).forEach((p) => {
-    const id = Number(p.company_id);
-    if (id) map.set(id, { ...p, company_id: id });
-  });
-  return map;
+/** Satır anahtarı: firma + iş yeri (çoklu iş yeri / firma) */
+function stokFirmaRowKey(companyId, plantId, draftIdx = 0) {
+  const cid = Number(companyId) || 0;
+  const pid = Number(plantId);
+  if (Number.isFinite(pid) && pid) return `${cid}:${pid}`;
+  return `${cid}:draft:${draftIdx}`;
+}
+
+function stokFirmaActiveParams(rec) {
+  return (Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [])
+    .filter((p) => p && p.is_active !== false && Number(p.company_id));
+}
+
+function stokFirmaSelectedCompanyIds(rec) {
+  return [...new Set(stokFirmaActiveParams(rec).map((p) => Number(p.company_id)))];
+}
+
+function stokFirmaParamsForCompany(rec, companyId) {
+  const cid = Number(companyId);
+  return stokFirmaActiveParams(rec).filter((p) => Number(p.company_id) === cid);
 }
 
 function ensureStokFirmaParamsSeed(rec) {
   if (!rec) return;
-  const list = Array.isArray(rec.firma_parametreleri) ? [...rec.firma_parametreleri] : [];
-  if (list.length) {
-    rec.firma_parametreleri = list;
-    return;
+  let list = Array.isArray(rec.firma_parametreleri) ? [...rec.firma_parametreleri] : [];
+  const plants = state.lookupCache?.['is-yerleri'] || state.isYerleri || [];
+  const bags = Array.isArray(rec.is_yeri_baglari) ? rec.is_yeri_baglari : [];
+
+  // İş yeri bağlarından eksik (firma, iş yeri) satırlarını tamamla
+  bags.forEach((b) => {
+    const pid = Number(b.plant_id);
+    if (!pid) return;
+    const plant = plants.find((p) => Number(p.id) === pid);
+    const cid = Number(plant?.company_id) || Number(rec.company_id);
+    if (!cid) return;
+    const hit = list.some((p) => Number(p.company_id) === cid
+      && Number(p.plant_id) === pid
+      && p.is_active !== false);
+    if (!hit) list.push(emptyStokFirmaParam(cid, pid));
+  });
+
+  if (!list.length) {
+    const cid = Number(rec.company_id) || getActiveFirmaId() || null;
+    if (!cid) {
+      rec.firma_parametreleri = [];
+      return;
+    }
+    list = [{
+      ...emptyStokFirmaParam(cid, rec.plant_id || null),
+      sales_price: rec.sales_price ?? null,
+      purchase_uom: rec.purchase_uom || null,
+      sales_uom: rec.sales_uom || null,
+      sa_tolerans_min_yuzde: rec.sa_tolerans_min_yuzde ?? 0,
+      sa_tolerans_max_yuzde: rec.sa_tolerans_max_yuzde ?? 0,
+      temin_suresi_days: rec.temin_suresi_days ?? 0,
+      cikis_type: rec.cikis_type || 'Manuel',
+      default_tax_code_id: rec.default_tax_code_id || null,
+      varsayilan_vat_rate: rec.varsayilan_vat_rate ?? 20,
+      safety_stock: rec.safety_stock ?? null,
+      min_stock: rec.min_stock ?? 0,
+      max_stock: rec.max_stock ?? null,
+      reorder_level: rec.reorder_level ?? 0,
+      fixed_order_quantity: rec.fixed_order_quantity ?? null,
+      optimum_order_quantity: rec.optimum_order_quantity ?? null,
+      varsayilan_giris_warehouse_id: rec.varsayilan_giris_warehouse_id || null,
+      varsayilan_cikis_warehouse_id: rec.varsayilan_cikis_warehouse_id || null,
+      lot_politika: rec.lot_politika || 'Takipsiz',
+      series_politika: rec.series_politika || 'Takipsiz',
+    }];
   }
-  // Eski kayıt: master alanlardan tek satır üret
-  const cid = Number(rec.company_id) || getActiveFirmaId() || null;
-  if (!cid) {
-    rec.firma_parametreleri = [];
-    return;
+
+  // Seçili firmada hiç satır yoksa boş iş yeri satırı ekle
+  const selected = stokFirmaSelectedCompanyIds({ firma_parametreleri: list });
+  if (!selected.length) {
+    const aid = getActiveFirmaId();
+    if (aid) list.push(emptyStokFirmaParam(aid));
   }
-  rec.firma_parametreleri = [{
-    ...emptyStokFirmaParam(cid),
-    plant_id: rec.plant_id || null,
-    sales_price: rec.sales_price ?? null,
-    purchase_uom: rec.purchase_uom || null,
-    sales_uom: rec.sales_uom || null,
-    sa_tolerans_min_yuzde: rec.sa_tolerans_min_yuzde ?? 0,
-    sa_tolerans_max_yuzde: rec.sa_tolerans_max_yuzde ?? 0,
-    temin_suresi_days: rec.temin_suresi_days ?? 0,
-    cikis_type: rec.cikis_type || 'Manuel',
-    default_tax_code_id: rec.default_tax_code_id || null,
-    varsayilan_vat_rate: rec.varsayilan_vat_rate ?? 20,
-    safety_stock: rec.safety_stock ?? null,
-    min_stock: rec.min_stock ?? 0,
-    max_stock: rec.max_stock ?? null,
-    reorder_level: rec.reorder_level ?? 0,
-    fixed_order_quantity: rec.fixed_order_quantity ?? null,
-    optimum_order_quantity: rec.optimum_order_quantity ?? null,
-    varsayilan_giris_warehouse_id: rec.varsayilan_giris_warehouse_id || null,
-    varsayilan_cikis_warehouse_id: rec.varsayilan_cikis_warehouse_id || null,
-    lot_politika: rec.lot_politika || 'Takipsiz',
-    series_politika: rec.series_politika || 'Takipsiz',
-  }];
+
+  rec.firma_parametreleri = list;
 }
 
-function renderStokFirmaParamField(field, param, companyId) {
-  const readonly = state.formMode === 'incele' || field.readOnly;
+function renderStokFirmaParamField(field, param, companyId, rowKey, { locked = false } = {}) {
+  const readonly = state.formMode === 'incele' || field.readOnly || locked;
+  const f = readonly && !field.readOnly ? { ...field, readOnly: true } : field;
   const ctx = {
     ...(param || {}),
     company_id: companyId,
-    // depo/iş yeri lookup filtreleri için
   };
-  const extra = `data-stok-firma-id="${escAttr(companyId)}" data-stok-firma-field="${escAttr(field.key)}"`;
-  const control = fieldControl(field, param?.[field.key], 'data-stok-firma', extra, ctx);
-  return fieldShell(field, control, param?.[field.key]);
+  const extra = `data-stok-firma-id="${escAttr(companyId)}" data-stok-firma-row="${escAttr(rowKey)}" data-stok-firma-field="${escAttr(field.key)}"`;
+  const control = fieldControl(f, param?.[field.key], 'data-stok-firma', extra, ctx);
+  return fieldShell(f, control, param?.[field.key]);
 }
 
-function renderStokFirmaParamCard(company, param, open) {
+/** Tek (firma × iş yeri) parametre bloğu — iş yeri seçilmeden detaylar kapalı */
+function renderStokFirmaPlantBlock(company, param, rowKey, draftIdx, canRemove) {
+  const readonly = state.formMode === 'incele';
+  const cid = Number(company.id);
+  const plantOk = Boolean(Number(param?.plant_id));
+  const orgSec = STOK_FIRMA_PARAM_SECTIONS.find((s) => s.id === 'organizasyon');
+  const detailSecs = STOK_FIRMA_PARAM_SECTIONS.filter((s) => s.id !== 'organizasyon');
+  const orgHtml = orgSec
+    ? `<section class="stok-firma-section" data-firma-sec="organizasyon">
+        <h4 class="erp-section-title">${escapeHtml(orgSec.title)}</h4>
+        <p class="hint">Önce bu firmanın iş yerini seçin. Detaylar iş yeri seçilince açılır.</p>
+        <div class="erp-section-grid erp-section-grid--pairs">
+          ${orgSec.fields.map((f) => renderStokFirmaParamField(f, param, cid, rowKey)).join('')}
+        </div>
+      </section>`
+    : '';
+  const detailsHtml = detailSecs.map((sec) => `
+    <section class="stok-firma-section stok-firma-details ${plantOk ? '' : 'is-gated'}" data-firma-sec="${escAttr(sec.id)}">
+      <h4 class="erp-section-title">${escapeHtml(sec.title)}</h4>
+      ${plantOk ? '' : '<p class="hint stok-firma-gate-hint">İş yeri seçilmeden bu alanlar kapalıdır.</p>'}
+      <fieldset class="stok-firma-fieldset" ${plantOk && !readonly ? '' : 'disabled'}>
+        <div class="erp-section-grid erp-section-grid--pairs">
+          ${sec.fields.map((f) => renderStokFirmaParamField(f, param, cid, rowKey, { locked: !plantOk })).join('')}
+        </div>
+      </fieldset>
+    </section>`).join('');
+  const plantLabel = (() => {
+    if (!plantOk) return 'İş yeri seçin';
+    const rows = state.lookupCache?.['is-yerleri'] || [];
+    const p = rows.find((r) => Number(r.id) === Number(param.plant_id));
+    return p ? `${p.plant_code || ''} — ${p.plant_name || ''}`.trim() : `İş yeri #${param.plant_id}`;
+  })();
+  return `
+    <div class="stok-firma-plant-block ${plantOk ? 'has-plant' : 'needs-plant'}"
+         data-stok-firma-plant-block="${escAttr(rowKey)}"
+         data-stok-firma-id="${escAttr(cid)}"
+         data-stok-firma-row="${escAttr(rowKey)}"
+         data-draft-idx="${escAttr(draftIdx)}">
+      <div class="stok-firma-plant-head">
+        <span class="stok-firma-plant-label">${escapeHtml(plantLabel)}</span>
+        ${readonly || !canRemove ? '' : `<button type="button" class="btn ghost danger" data-stok-firma-remove-plant="${escAttr(rowKey)}">İş yerini kaldır</button>`}
+      </div>
+      ${orgHtml}
+      ${detailsHtml}
+    </div>`;
+}
+
+function renderStokFirmaParamCard(company, params, open) {
   const readonly = state.formMode === 'incele';
   const cid = Number(company.id);
   const title = `${company.company_code || ''} · ${company.company_name || ''}`.trim();
-  const sections = STOK_FIRMA_PARAM_SECTIONS.map((sec) => `
-    <section class="stok-firma-section" data-firma-sec="${escAttr(sec.id)}">
-      <h4 class="erp-section-title">${escapeHtml(sec.title)}</h4>
-      <div class="erp-section-grid erp-section-grid--pairs">
-        ${sec.fields.map((f) => renderStokFirmaParamField(f, param, cid)).join('')}
-      </div>
-    </section>`).join('');
+  const list = (params && params.length) ? params : [emptyStokFirmaParam(cid)];
+  let draftIdx = 0;
+  const blocks = list.map((param) => {
+    const dIdx = Number(param.plant_id) ? 0 : draftIdx++;
+    const rowKey = stokFirmaRowKey(cid, param.plant_id, dIdx);
+    return renderStokFirmaPlantBlock(company, param, rowKey, dIdx, list.length > 1);
+  }).join('');
   return `
     <details class="stok-firma-card" data-stok-firma-card="${escAttr(cid)}" ${open ? 'open' : ''} ${readonly ? 'data-readonly="1"' : ''}>
       <summary class="stok-firma-card-sum">
         <span class="mono">${escapeHtml(company.company_code || '')}</span>
         <span>${escapeHtml(company.company_name || '')}</span>
+        <span class="stok-firma-card-count">${list.length} iş yeri</span>
       </summary>
       <div class="stok-firma-card-body" aria-label="${escAttr(title)} parametreleri">
-        ${sections}
+        ${blocks}
+        ${readonly ? '' : `<div class="stok-firma-plant-actions">
+          <button type="button" class="btn ghost" data-stok-firma-add-plant="${escAttr(cid)}">+ İş yeri ekle</button>
+        </div>`}
       </div>
     </details>`;
 }
@@ -13089,9 +13181,7 @@ function renderStokFirmalarPane(rec) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const companies = Array.isArray(state.companies) ? state.companies : (state.lookupCache?.companies || []);
-  const paramMap = stokFirmaParamMap(rec);
-  const selected = new Set([...paramMap.keys()].filter((id) => paramMap.get(id)?.is_active !== false));
-  // Yeni kayıtta aktif firma işaretli gelsin
+  let selected = new Set(stokFirmaSelectedCompanyIds(rec));
   if (!selected.size) {
     const aid = getActiveFirmaId();
     if (aid) selected.add(Number(aid));
@@ -13111,8 +13201,8 @@ function renderStokFirmalarPane(rec) {
   const cards = companies
     .filter((f) => selected.has(Number(f.id)))
     .map((f) => {
-      const param = paramMap.get(Number(f.id)) || emptyStokFirmaParam(f.id);
-      return renderStokFirmaParamCard(f, param, Number(f.id) === Number(openFirst));
+      const params = stokFirmaParamsForCompany(rec, f.id);
+      return renderStokFirmaParamCard(f, params.length ? params : [emptyStokFirmaParam(f.id)], Number(f.id) === Number(openFirst));
     })
     .join('');
 
@@ -13126,7 +13216,7 @@ function renderStokFirmalarPane(rec) {
             <button type="button" class="btn ghost" id="stokFirmaClearAll">Temizle</button>
           </div>
         </div>
-        <p class="hint yetki-hint">Stokun geçerli olacağı firmaları işaretleyin. Her firma için iş yeri, satış/satınalma, vergi, depo ve MRP parametreleri aşağıda açılır.</p>
+        <p class="hint yetki-hint">Firmaları işaretleyin → her firma için bir veya daha fazla iş yeri seçin → iş yeri seçilince satış/vergi/depo/MRP detayları açılır. Aynı stok farklı firmaların iş yerlerinde ve bir firmanın birden fazla iş yerinde tanımlanabilir.</p>
         <div class="firma-yetki-scroll">
           <table class="yetki-table" id="stokFirmaYetkiTable">
             <thead>
@@ -13151,68 +13241,103 @@ function renderStokFirmalarPane(rec) {
     </div>`;
 }
 
+function refreshStokFirmalarPane() {
+  const screen = findScreen(state.screenId);
+  if (!screen || screen.id !== 'stok-karti') return;
+  const cur = readStokFirmaParamsFromDom(state.formRecord || {});
+  state.formRecord = { ...(state.formRecord || {}), firma_parametreleri: cur };
+  const panel = document.querySelector('[data-tab-panel="firmalar"]');
+  if (!panel) return;
+  panel.innerHTML = renderStokFirmalarPane(state.formRecord);
+  const fresh = panel.querySelector('.stok-firma-yetki-pane');
+  if (fresh) delete fresh.dataset.bound;
+  const params = panel.querySelector('#stokFirmaParams');
+  if (params) delete params.dataset.bound;
+  bindStokFirmaYetkiEvents();
+  bindCascadeLookups(screen);
+}
+
 function bindStokFirmaYetkiEvents() {
   const box = document.querySelector('.stok-firma-yetki-pane');
-  if (!box || box.dataset.bound === '1') return;
-  box.dataset.bound = '1';
-  const syncHead = () => {
-    const checks = [...box.querySelectorAll('[data-stok-firma-check]')];
-    const head = box.querySelector('[data-stok-firma-head="hepsi"]');
-    if (!head || !checks.length) return;
-    head.checked = checks.every((c) => c.checked);
-    head.indeterminate = !head.checked && checks.some((c) => c.checked);
-  };
-  const refreshCards = () => {
-    const screen = findScreen(state.screenId);
-    if (!screen || screen.id !== 'stok-karti') return;
-    // DOM’daki mevcut paramları kaydet, sonra paneli yeniden çiz
-    const cur = readStokFirmaParamsFromDom(state.formRecord || {});
-    state.formRecord = { ...(state.formRecord || {}), firma_parametreleri: cur };
-    const panel = document.querySelector('[data-tab-panel="firmalar"]');
-    if (!panel) return;
-    panel.innerHTML = renderStokFirmalarPane(state.formRecord);
-    // yeniden bind (dataset.bound silindi)
-    const fresh = panel.querySelector('.stok-firma-yetki-pane');
-    if (fresh) delete fresh.dataset.bound;
-    bindStokFirmaYetkiEvents();
-    bindCascadeLookups(screen);
-  };
-  box.addEventListener('change', (e) => {
-    const t = e.target;
-    if (!(t instanceof HTMLInputElement)) return;
-    if (t.matches('[data-stok-firma-head="hepsi"]')) {
-      box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = t.checked; });
-      syncHead();
-      refreshCards();
-      return;
+  const paramsRoot = document.getElementById('stokFirmaParams');
+  if (box && box.dataset.bound !== '1') {
+    box.dataset.bound = '1';
+    const syncHead = () => {
+      const checks = [...box.querySelectorAll('[data-stok-firma-check]')];
+      const head = box.querySelector('[data-stok-firma-head="hepsi"]');
+      if (!head || !checks.length) return;
+      head.checked = checks.every((c) => c.checked);
+      head.indeterminate = !head.checked && checks.some((c) => c.checked);
+    };
+    box.addEventListener('change', (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.matches('[data-stok-firma-head="hepsi"]')) {
+        box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = t.checked; });
+        syncHead();
+        refreshStokFirmalarPane();
+        return;
+      }
+      if (t.matches('[data-stok-firma-check]')) {
+        syncHead();
+        refreshStokFirmalarPane();
+      }
+    });
+    const allBtn = document.getElementById('stokFirmaSelectAll');
+    const clearBtn = document.getElementById('stokFirmaClearAll');
+    if (allBtn) {
+      allBtn.addEventListener('click', () => {
+        box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = true; });
+        syncHead();
+        refreshStokFirmalarPane();
+      });
     }
-    if (t.matches('[data-stok-firma-check]')) {
-      syncHead();
-      refreshCards();
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = false; });
+        syncHead();
+        refreshStokFirmalarPane();
+      });
     }
-  });
-  const allBtn = document.getElementById('stokFirmaSelectAll');
-  const clearBtn = document.getElementById('stokFirmaClearAll');
-  if (allBtn) {
-    allBtn.addEventListener('click', () => {
-      box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = true; });
-      syncHead();
-      refreshCards();
+    syncHead();
+  }
+
+  if (paramsRoot && paramsRoot.dataset.bound !== '1') {
+    paramsRoot.dataset.bound = '1';
+    paramsRoot.addEventListener('change', (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+      // İş yeri seçilince detayları aç (pane’i yeniden çiz)
+      if (t.getAttribute('data-stok-firma') === 'plant_id') {
+        refreshStokFirmalarPane();
+      }
+    });
+    paramsRoot.addEventListener('click', (e) => {
+      const addBtn = e.target.closest?.('[data-stok-firma-add-plant]');
+      if (addBtn) {
+        e.preventDefault();
+        const cid = Number(addBtn.getAttribute('data-stok-firma-add-plant'));
+        const cur = readStokFirmaParamsFromDom(state.formRecord || {});
+        cur.push(emptyStokFirmaParam(cid));
+        state.formRecord = { ...(state.formRecord || {}), firma_parametreleri: cur };
+        refreshStokFirmalarPane();
+        return;
+      }
+      const rmBtn = e.target.closest?.('[data-stok-firma-remove-plant]');
+      if (rmBtn) {
+        e.preventDefault();
+        const rowKey = rmBtn.getAttribute('data-stok-firma-remove-plant');
+        const block = paramsRoot.querySelector(`[data-stok-firma-plant-block="${CSS.escape(rowKey)}"]`);
+        if (block) block.remove();
+        refreshStokFirmalarPane();
+      }
     });
   }
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = false; });
-      syncHead();
-      refreshCards();
-    });
-  }
-  syncHead();
 }
 
 function readStokFirmaParamsFromDom(rec) {
   const box = document.querySelector('.stok-firma-yetki-pane');
-  const prevMap = stokFirmaParamMap(rec);
+  const prev = Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [];
   const selectedIds = [];
   if (box) {
     box.querySelectorAll('tr[data-stok-firma-yetki]').forEach((tr) => {
@@ -13222,34 +13347,50 @@ function readStokFirmaParamsFromDom(rec) {
       if (Number.isFinite(id) && id) selectedIds.push(id);
     });
   } else {
-    return Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [];
+    return prev;
   }
+
   const out = [];
-  const seen = new Set();
+  const seenKeys = new Set();
   selectedIds.forEach((cid) => {
-    const base = prevMap.get(cid) || emptyStokFirmaParam(cid);
-    const row = { ...base, company_id: cid, is_active: true };
-    STOK_FIRMA_PARAM_SECTIONS.forEach((sec) => {
-      sec.fields.forEach((f) => {
-        // fieldControl: data-stok-firma="key" + data-stok-firma-id
-        const control = findAttrControl('data-stok-firma', f.key, document, `[data-stok-firma-id="${cid}"]`);
-        if (!control) return;
-        row[f.key] = readFieldValue(control, f);
-      });
-    });
-    // Vergi oranını lookup cache’ten senkronla
-    if (row.default_tax_code_id) {
-      const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
-      const tax = taxRows.find((t) => Number(t.id) === Number(row.default_tax_code_id));
-      if (tax && tax.rate != null && tax.rate !== '') row.varsayilan_vat_rate = Number(tax.rate);
+    const blocks = [...document.querySelectorAll(
+      `#stokFirmaParams [data-stok-firma-plant-block][data-stok-firma-id="${cid}"]`
+    )];
+    if (!blocks.length) {
+      out.push(emptyStokFirmaParam(cid));
+      return;
     }
-    seen.add(cid);
-    out.push(row);
+    blocks.forEach((block, idx) => {
+      const rowKey = block.getAttribute('data-stok-firma-row') || stokFirmaRowKey(cid, null, idx);
+      const row = { ...emptyStokFirmaParam(cid), is_active: true };
+      STOK_FIRMA_PARAM_SECTIONS.forEach((sec) => {
+        sec.fields.forEach((f) => {
+          const control = findAttrControl(
+            'data-stok-firma',
+            f.key,
+            block,
+            `[data-stok-firma-row="${rowKey}"]`
+          ) || findAttrControl('data-stok-firma', f.key, block);
+          if (!control) return;
+          row[f.key] = readFieldValue(control, f);
+        });
+      });
+      if (row.default_tax_code_id) {
+        const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+        const tax = taxRows.find((t) => Number(t.id) === Number(row.default_tax_code_id));
+        if (tax && tax.rate != null && tax.rate !== '') row.varsayilan_vat_rate = Number(tax.rate);
+      }
+      const key = stokFirmaRowKey(cid, row.plant_id, idx);
+      seenKeys.add(key);
+      out.push(row);
+    });
   });
-  // İşareti kaldırılan firmaların değerlerini sakla (yeniden tiklenince kaybolmasın)
-  prevMap.forEach((p, id) => {
-    if (seen.has(id)) return;
-    out.push({ ...p, company_id: id, is_active: false });
+
+  // İşareti kalkan firma satırlarını pasif sakla
+  prev.forEach((p) => {
+    const cid = Number(p.company_id);
+    if (!cid || selectedIds.includes(cid)) return;
+    out.push({ ...p, company_id: cid, is_active: false });
   });
   return out;
 }
@@ -13259,7 +13400,11 @@ function applyPrimaryStokFirmaToMaster(master) {
   const active = list.filter((p) => p && p.is_active !== false && Number(p.company_id));
   if (!active.length) return;
   const prefer = Number(getActiveFirmaId());
-  const primary = active.find((p) => Number(p.company_id) === prefer) || active[0];
+  const withPlant = active.filter((p) => Number(p.plant_id));
+  const primary = withPlant.find((p) => Number(p.company_id) === prefer)
+    || active.find((p) => Number(p.company_id) === prefer)
+    || withPlant[0]
+    || active[0];
   master.company_id = Number(primary.company_id);
   master.plant_id = primary.plant_id != null ? Number(primary.plant_id) : null;
   master.sales_price = primary.sales_price ?? master.sales_price;
@@ -13281,7 +13426,7 @@ function applyPrimaryStokFirmaToMaster(master) {
   master.varsayilan_cikis_warehouse_id = primary.varsayilan_cikis_warehouse_id ?? master.varsayilan_cikis_warehouse_id;
   master.lot_politika = primary.lot_politika || master.lot_politika;
   master.series_politika = primary.series_politika || master.series_politika;
-  // İş yeri bağları: her firmanın plant_id’si
+  // Tüm seçili iş yerleri → item_plants
   const bags = [];
   active.forEach((p) => {
     const pid = Number(p.plant_id);
@@ -16349,14 +16494,24 @@ function cascadeScopeContext(el) {
   }
   if (el.hasAttribute('data-stok-firma')) {
     const firmaId = el.getAttribute('data-stok-firma-id');
+    const rowKey = el.getAttribute('data-stok-firma-row');
     const ctx = { ...(state.formRecord || {}), company_id: firmaId ? Number(firmaId) : null };
-    if (firmaId) {
-      document.querySelectorAll(`[data-stok-firma][data-stok-firma-id="${firmaId}"]`).forEach((sib) => {
+    const scopeSel = rowKey
+      ? `[data-stok-firma][data-stok-firma-row="${rowKey}"]`
+      : (firmaId ? `[data-stok-firma][data-stok-firma-id="${firmaId}"]` : null);
+    if (scopeSel) {
+      document.querySelectorAll(scopeSel).forEach((sib) => {
         assignControlInto(ctx, sib.getAttribute('data-stok-firma'), sib);
       });
-      ctx.company_id = Number(firmaId);
     }
-    return { ctx, isDetail: false, isStokFirma: true, stokFirmaId: firmaId };
+    if (firmaId) ctx.company_id = Number(firmaId);
+    return {
+      ctx,
+      isDetail: false,
+      isStokFirma: true,
+      stokFirmaId: firmaId,
+      stokFirmaRow: rowKey,
+    };
   }
   const ctx = { ...(state.formRecord || {}) };
   document.querySelectorAll('[data-master]').forEach((sib) => {
@@ -16506,7 +16661,7 @@ function isInboundWarehouseScreen(screen) {
   return /satin-alma|mal-kabul|tedarikci-irsaliye|alis|purchase/i.test(id);
 }
 
-function findLinkedTargetEl(targetKey, { isDetail, didx, grid, isBomField, isFlowComp, stokFirmaId }) {
+function findLinkedTargetEl(targetKey, { isDetail, didx, grid, isBomField, isFlowComp, stokFirmaId, stokFirmaRow }) {
   if (isBomField) {
     return document.querySelector(
       `select[data-bom-field="${targetKey}"], input[data-bom-field="${targetKey}"]`
@@ -16515,6 +16670,12 @@ function findLinkedTargetEl(targetKey, { isDetail, didx, grid, isBomField, isFlo
   if (isFlowComp) {
     return document.querySelector(
       `select[data-flow-comp-field="${targetKey}"], input[data-flow-comp-field="${targetKey}"]`
+    );
+  }
+  if (stokFirmaRow) {
+    return document.querySelector(
+      `select[data-stok-firma="${targetKey}"][data-stok-firma-row="${stokFirmaRow}"], `
+      + `input[data-stok-firma="${targetKey}"][data-stok-firma-row="${stokFirmaRow}"]`
     );
   }
   if (stokFirmaId) {
@@ -16545,9 +16706,10 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
   const isBomField = changedEl.hasAttribute('data-bom-field');
   const isFlowComp = changedEl.hasAttribute('data-flow-comp-field');
   const stokFirmaId = changedEl.getAttribute('data-stok-firma-id');
+  const stokFirmaRow = changedEl.getAttribute('data-stok-firma-row');
   const didx = changedEl.getAttribute('data-didx');
   const grid = changedEl.getAttribute('data-grid');
-  const scope = { isDetail, didx, grid, isBomField, isFlowComp, stokFirmaId };
+  const scope = { isDetail, didx, grid, isBomField, isFlowComp, stokFirmaId, stokFirmaRow };
 
   const stokChanged = ['item_id', 'component_item_id', 'finished_good_item_id'].includes(changedKey);
   const whFrom = isInboundWarehouseScreen(screen)
@@ -18225,8 +18387,18 @@ async function saveForm({ after = 'stay' } = {}) {
     }
     const missingPlant = master.firma_parametreleri.find((p) => !Number(p.plant_id));
     if (missingPlant) {
-      toast('İşaretli her firma için iş yeri seçin.');
+      toast('Her firma satırında iş yeri seçin; detaylar iş yeri sonrası açılır.');
       return;
+    }
+    // Aynı firma+iş yeri tekrarı engelle
+    const pairKeys = new Set();
+    for (const p of master.firma_parametreleri) {
+      const k = `${Number(p.company_id)}:${Number(p.plant_id)}`;
+      if (pairKeys.has(k)) {
+        toast('Aynı firma / iş yeri birden fazla tanımlanamaz.');
+        return;
+      }
+      pairKeys.add(k);
     }
     applyPrimaryStokFirmaToMaster(master);
     syncStokFirmaIsYeriForSave(master);
@@ -20820,12 +20992,18 @@ async function bootIntoApp() {
     return;
   }
 
+  // Form-solo: chrome’u enterApp/ensureSidebarVisible’dan ÖNCE kur (loader kalsın)
+  const soloEarly = parseFormSoloQuery();
+  if (soloEarly && findScreen(soloEarly.screenId)) {
+    applyFormSoloChrome();
+  }
+
   enterApp();
   await loadFirmalar().catch(() => {});
   renderFirmaPicker();
   renderSidebar();
 
-  const solo = parseFormSoloQuery();
+  const solo = soloEarly || parseFormSoloQuery();
   if (solo && findScreen(solo.screenId)) {
     applyFormSoloChrome();
     state.screenId = solo.screenId;

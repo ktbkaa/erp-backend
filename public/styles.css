@@ -4685,6 +4685,52 @@ body.sql-splitting iframe { pointer-events: none; }
 .stok-firma-section .erp-section-title {
   margin-bottom: 0.45rem;
 }
+.stok-firma-card-count {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted, #6b7280);
+}
+.stok-firma-plant-block {
+  border: 1px solid var(--line, #e5eaf2);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem 0.75rem;
+  background: var(--page, #f8fafc);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.stok-firma-plant-block + .stok-firma-plant-block {
+  margin-top: 0.55rem;
+}
+.stok-firma-plant-block.needs-plant {
+  border-style: dashed;
+}
+.stok-firma-plant-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.25rem;
+}
+.stok-firma-plant-label {
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+.stok-firma-plant-actions {
+  margin-top: 0.55rem;
+}
+.stok-firma-details.is-gated {
+  opacity: 0.55;
+}
+.stok-firma-details.is-gated .stok-firma-gate-hint {
+  margin: 0 0 0.45rem;
+}
+.stok-firma-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
 .stok-depo-section .erp-section-title {
   margin-bottom: 0.35rem;
 }
