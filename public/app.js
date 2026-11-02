@@ -9889,16 +9889,41 @@ function isFormSoloUrl() {
   }
 }
 
-/** Normal kabukta sol menüyü her zaman geri getir (?view=form hariç). */
+function hideFormSoloLoader() {
+  document.documentElement.classList.remove('form-solo-boot');
+  document.body.classList.remove('form-solo-booting');
+  const loader = $('#formSoloLoader');
+  if (loader) {
+    loader.hidden = true;
+    loader.setAttribute('aria-busy', 'false');
+    loader.style.display = 'none';
+  }
+}
+
+/**
+ * Normal kabukta sol menüyü geri getir (?view=form hariç).
+ * Oturum yokken giriş ekranına yönlendirir — boş kabuk göstermez.
+ */
 function ensureSidebarVisible() {
-  // Takılı formSolo: URL solo değilse state’i de temizle (menü kaybolmasın)
   if (!isFormSoloUrl()) {
     state.formSolo = false;
   }
   if (state.formSolo && isFormSoloUrl()) return;
 
-  document.documentElement.classList.remove('form-solo-boot');
+  hideFormSoloLoader();
+
+  // Oturum yok: boş menülü kabuk yerine giriş
+  if (!state.session) {
+    document.body.classList.remove('form-solo');
+    const shell = $('#appShell');
+    if (shell) shell.classList.remove('form-solo', 'sidebar-collapsed');
+    showLoginView();
+    return;
+  }
+
   document.body.classList.remove('form-solo', 'form-solo-booting', 'is-login');
+  const login = $('#viewLogin');
+  if (login) login.hidden = true;
   const shell = $('#appShell');
   const sidebar = $('#sidebar');
   if (shell) {
@@ -9910,22 +9935,24 @@ function ensureSidebarVisible() {
   }
   if (sidebar) {
     sidebar.hidden = false;
-    sidebar.classList.add('open'); // mobil off-canvas için
-    sidebar.style.cssText = ''; // inline display:none vb. temizle
+    sidebar.classList.add('open');
+    sidebar.style.cssText = '';
     sidebar.removeAttribute('hidden');
   }
-  const loader = $('#formSoloLoader');
-  if (loader) {
-    loader.hidden = true;
-    loader.setAttribute('aria-busy', 'false');
-    loader.style.display = 'none';
-  }
-  // Menü butonu form-solo CSS ile gizlenmiş olabilir
   const btnMenu = $('#btnMenu');
   if (btnMenu) btnMenu.style.display = '';
+  // Menü içeriği boş kaldıysa yeniden çiz
+  const nav = $('#sidebarNav');
+  if (nav && !nav.querySelector('.mod-group')) {
+    renderSidebar();
+  }
 }
 
 function enterApp() {
+  if (!state.session) {
+    showLoginView();
+    return;
+  }
   const login = $('#viewLogin');
   const shell = $('#appShell');
   if (login) login.hidden = true;
@@ -20724,11 +20751,18 @@ async function sqlRun() {
   }
 }
 
-/** Uygulamayı aç; giriş ekranı yalnızca çıkış / «Giriş yap» ile manuel açılır. */
+/** Oturumlu kabuğu aç. Oturum yoksa giriş ekranı. */
 async function bootIntoApp() {
+  if (!state.session) {
+    hideFormSoloLoader();
+    showLoginView();
+    return;
+  }
+
   enterApp();
   await loadFirmalar().catch(() => {});
   renderFirmaPicker();
+  renderSidebar();
 
   const solo = parseFormSoloQuery();
   if (solo && findScreen(solo.screenId)) {
@@ -20760,6 +20794,7 @@ async function bootIntoApp() {
   // Normal açılış — boot / form-solo / collapsed artıkları temizle; sol menü görünsün
   revealFormSoloReady();
   ensureSidebarVisible();
+  renderSidebar();
 
   const screenOpen = parseScreenOpenQuery();
   if (screenOpen && findScreen(screenOpen.screenId)) {
@@ -20780,7 +20815,6 @@ async function bootIntoApp() {
       const banner = $('#screenBanner') || $('#metaBanner');
       if (banner) banner.textContent = screenOpen.banner;
     }
-    // URL’yi sadeleştir (yenilemede tekrar localStorage aramasın)
     try {
       history.replaceState(
         { screenId: screenOpen.screenId },
@@ -20800,8 +20834,18 @@ function bootFromHash() {
   initUiPrefs();
   bindEvents();
   restoreSession()
-    .then(() => bootIntoApp())
-    .catch(() => bootIntoApp());
+    .then((ok) => {
+      if (ok && state.session) return bootIntoApp();
+      hideFormSoloLoader();
+      showLoginView();
+      return null;
+    })
+    .catch(() => {
+      if (softSessionFromStorage() && state.session) return bootIntoApp();
+      hideFormSoloLoader();
+      showLoginView();
+      return null;
+    });
 }
 
 bootFromHash();
