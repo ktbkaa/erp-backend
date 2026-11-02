@@ -4578,6 +4578,49 @@ body.sql-splitting iframe { pointer-events: none; }
   gap: 0.85rem 1.2rem;
   align-items: flex-start;
 }
+.erp-section-grid--pairs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1.2rem;
+}
+.erp-section-grid--pairs .field,
+.erp-section-grid--pairs .field-span-pair,
+.erp-section-grid--pairs .field-span-1,
+.erp-section-grid--pairs .field-span--compact {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+.erp-balanced--pairs {
+  max-width: 52rem;
+}
+.stok-depolar-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  width: 100%;
+}
+.stok-depo-section .erp-section-title {
+  margin-bottom: 0.35rem;
+}
+.stok-depo-policies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+}
+.stok-depo-policies .field--check {
+  margin: 0;
+}
+.stok-depo-yetki-pane {
+  margin-top: 0.25rem;
+}
+@media (max-width: 720px) {
+  .erp-section-grid--pairs {
+    grid-template-columns: 1fr;
+  }
+}
 .erp-section-grid .field {
   display: flex !important;
   flex-direction: column;

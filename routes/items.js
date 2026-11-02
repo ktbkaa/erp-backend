@@ -88,7 +88,7 @@ async function stokGetir(id) {
         [id]
     );
     if (!stokRes.rows[0]) return null;
-    const [detaylar, birimler, isyerleri, barkodlar, languages] = await Promise.all([
+    const [detaylar, birimler, isyerleri, barkodlar, languages, depolar] = await Promise.all([
         pool.query('SELECT * FROM item_details WHERE item_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM item_uom_conversions WHERE item_id = $1 ORDER BY line_no, id', [id]),
         pool.query(
@@ -100,6 +100,15 @@ async function stokGetir(id) {
         ),
         pool.query('SELECT * FROM item_barcodes WHERE item_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM item_languages WHERE item_id = $1 ORDER BY id', [id]),
+        pool.query(
+            `SELECT sd.*, d.warehouse_code, d.warehouse_name, iy.plant_code, iy.plant_name
+             FROM item_warehouses sd
+             JOIN warehouses d ON d.id = sd.warehouse_id
+             LEFT JOIN plants iy ON iy.id = sd.plant_id
+             WHERE sd.item_id = $1
+             ORDER BY d.warehouse_code, sd.id`,
+            [id]
+        ),
     ]);
     const row = stokRes.rows[0];
     const bags = isyerleri.rows;
@@ -115,6 +124,7 @@ async function stokGetir(id) {
         is_yeri_baglari: bags,
         barkodlar: barkodlar.rows,
         dil_tanimlari: languages.rows,
+        depo_baglari: depolar.rows,
     };
 }
 
@@ -223,6 +233,72 @@ async function saveChildren(client, stokId, body) {
             );
         }
     }
+
+    if (Array.isArray(body.depo_baglari)) {
+        await client.query('DELETE FROM item_warehouses WHERE item_id = $1', [stokId]);
+        const seen = new Set();
+        for (const d of body.depo_baglari) {
+            const wid = Number(d.warehouse_id);
+            if (!Number.isFinite(wid) || !wid || seen.has(wid)) continue;
+            seen.add(wid);
+            const chk = await client.query('SELECT id, plant_id FROM warehouses WHERE id = $1', [wid]);
+            if (!chk.rows[0]) {
+                const err = new Error(`Depo bulunamadı (${wid}).`);
+                err.status = 400;
+                throw err;
+            }
+            const plantId = Number(d.plant_id) || Number(chk.rows[0].plant_id) || null;
+            const isActive = d.is_active === false ? false : true;
+            await client.query(
+                `INSERT INTO item_warehouses (
+                    item_id, warehouse_id, plant_id, is_active, varsayilan_giris, varsayilan_cikis
+                 ) VALUES ($1,$2,$3,$4,COALESCE($5,FALSE),COALESCE($6,FALSE))
+                 ON CONFLICT (item_id, warehouse_id) DO UPDATE SET
+                    plant_id = EXCLUDED.plant_id,
+                    is_active = EXCLUDED.is_active,
+                    varsayilan_giris = EXCLUDED.varsayilan_giris,
+                    varsayilan_cikis = EXCLUDED.varsayilan_cikis`,
+                [
+                    stokId,
+                    wid,
+                    plantId,
+                    isActive,
+                    Boolean(d.varsayilan_giris),
+                    Boolean(d.varsayilan_cikis),
+                ]
+            );
+        }
+    }
+}
+
+async function resolveTaxCodeId(client, m) {
+    const raw = m.default_tax_code_id;
+    if (raw === undefined) return undefined;
+    if (raw === null || raw === '') return null;
+    const id = Number(raw);
+    if (!Number.isFinite(id) || !id) return null;
+    const r = await client.query('SELECT id, tax_code FROM fin_tax_codes WHERE id = $1', [id]);
+    if (!r.rows[0]) {
+        const err = new Error(`Vergi kodu bulunamadı (${id}).`);
+        err.status = 400;
+        err.alan = 'default_tax_code_id';
+        throw err;
+    }
+    return id;
+}
+
+async function syncVatRateFromTax(client, taxId, fallbackRate) {
+    if (!taxId) return fallbackRate ?? null;
+    const r = await client.query(
+        `SELECT rate FROM fin_tax_rates
+         WHERE tax_code_id = $1
+           AND valid_from <= CURRENT_DATE
+           AND (valid_to IS NULL OR valid_to >= CURRENT_DATE)
+         ORDER BY valid_from DESC LIMIT 1`,
+        [taxId]
+    );
+    if (r.rows[0] && r.rows[0].rate != null) return Number(r.rows[0].rate);
+    return fallbackRate ?? null;
 }
 
 router.get('/', async (req, res) => {
@@ -320,6 +396,24 @@ router.post('/', async (req, res) => {
                 throw err;
             }
 
+            const taxCodeId = await resolveTaxCodeId(client, m);
+            const vatRate = await syncVatRateFromTax(
+                client,
+                taxCodeId,
+                m.varsayilan_vat_rate ?? 20
+            );
+            // Varsayılan depolar seçiliyse depo_baglari'na ekle
+            if (Array.isArray(m.depo_baglari)) {
+                const seen = new Set(m.depo_baglari.map((b) => Number(b.warehouse_id)).filter(Boolean));
+                for (const wid of [m.varsayilan_giris_warehouse_id, m.varsayilan_cikis_warehouse_id]) {
+                    const idn = Number(wid);
+                    if (idn && !seen.has(idn)) {
+                        m.depo_baglari.push({ warehouse_id: idn, plant_id: isYeriId, is_active: true });
+                        seen.add(idn);
+                    }
+                }
+            }
+
             const stokSonuc = await client.query(
                 `
                 INSERT INTO items (
@@ -335,7 +429,7 @@ router.post('/', async (req, res) => {
                     sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, varsayilan_vat_rate,
                     min_stock, optimum_order_quantity, net_agirlik, brut_agirlik,
                     series_politika, class_code, temin_suresi_days, reorder_level, fixed_order_quantity,
-                    cikis_type, silindi
+                    cikis_type, silindi, default_tax_code_id
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,COALESCE($10,'Satinalma'),COALESCE($11,TRUE),
@@ -349,7 +443,7 @@ router.post('/', async (req, res) => {
                     COALESCE($42,0),COALESCE($43,0),COALESCE($44,20),
                     COALESCE($45,0),$46,$47,$48,
                     COALESCE($49,'Takipsiz'),$50,COALESCE($51,0),COALESCE($52,0),$53,
-                    COALESCE($54,'Manuel'),COALESCE($55,FALSE)
+                    COALESCE($54,'Manuel'),COALESCE($55,FALSE),$56
                 )
                 RETURNING id
                 `,
@@ -371,12 +465,13 @@ router.post('/', async (req, res) => {
                     firmaId,
                     trimOrNull(m.purchase_uom), trimOrNull(m.sales_uom), trimOrNull(m.gtip_code),
                     trimOrNull(m.uretici_code), trimOrNull(m.old_item_code), trimOrNull(m.original_code),
-                    m.sa_tolerans_min_yuzde ?? 0, m.sa_tolerans_max_yuzde ?? 0, m.varsayilan_vat_rate ?? 20,
+                    m.sa_tolerans_min_yuzde ?? 0, m.sa_tolerans_max_yuzde ?? 0, vatRate ?? 20,
                     m.min_stock ?? 0, m.optimum_order_quantity ?? null, m.net_agirlik ?? null, m.brut_agirlik ?? null,
                     trimOrNull(m.series_politika) || 'Takipsiz', trimOrNull(m.class_code),
                     m.temin_suresi_days ?? 0, m.reorder_level ?? 0, m.fixed_order_quantity ?? null,
                     trimOrNull(m.cikis_type) || 'Manuel',
                     typeof m.silindi === 'boolean' ? m.silindi : false,
+                    taxCodeId ?? null,
                 ]
             );
             const stokId = stokSonuc.rows[0].id;
@@ -447,6 +542,26 @@ router.put('/:id', async (req, res) => {
                 ? (await assertBirim(client, m.stock_takip_uom, 'Stok takip birimi'))
                 : undefined;
 
+            const taxCodeId = await resolveTaxCodeId(client, m);
+            let vatRate = m.varsayilan_vat_rate ?? null;
+            if (taxCodeId !== undefined) {
+                vatRate = await syncVatRateFromTax(client, taxCodeId, vatRate);
+            }
+            if (Array.isArray(m.depo_baglari)) {
+                const seen = new Set(m.depo_baglari.map((b) => Number(b.warehouse_id)).filter(Boolean));
+                for (const wid of [m.varsayilan_giris_warehouse_id, m.varsayilan_cikis_warehouse_id]) {
+                    const idn = Number(wid);
+                    if (idn && !seen.has(idn)) {
+                        m.depo_baglari.push({
+                            warehouse_id: idn,
+                            plant_id: isYeriId,
+                            is_active: true,
+                        });
+                        seen.add(idn);
+                    }
+                }
+            }
+
             const upd = await client.query(
                 `
                 UPDATE items SET
@@ -503,7 +618,8 @@ router.put('/:id', async (req, res) => {
                     series_politika = COALESCE($52, series_politika),
                     class_code = COALESCE($53, class_code),
                     cikis_type = COALESCE($54, cikis_type),
-                    silindi = COALESCE($55, silindi)
+                    silindi = COALESCE($55, silindi),
+                    default_tax_code_id = CASE WHEN $57::boolean THEN $56 ELSE default_tax_code_id END
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -554,7 +670,7 @@ router.put('/:id', async (req, res) => {
                     trimOrNull(m.original_code),
                     m.sa_tolerans_min_yuzde ?? null,
                     m.sa_tolerans_max_yuzde ?? null,
-                    m.varsayilan_vat_rate ?? null,
+                    vatRate,
                     m.min_stock ?? null,
                     m.optimum_order_quantity ?? null,
                     m.net_agirlik ?? null,
@@ -563,6 +679,8 @@ router.put('/:id', async (req, res) => {
                     trimOrNull(m.class_code),
                     trimOrNull(m.cikis_type),
                     typeof m.silindi === 'boolean' ? m.silindi : null,
+                    taxCodeId === undefined ? null : taxCodeId,
+                    taxCodeId !== undefined,
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });
