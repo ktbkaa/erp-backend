@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod, sonrakiPrefixedKod, sonrakiStokHareketNo } = require('../src/utils/kodUretici');
+const { sonrakiKod, sonrakiPrefixedKod, sonrakiStokHareketNo, peekStokHareketNo } = require('../src/utils/kodUretici');
 
 router.get('/', async (req, res) => {
     try {
@@ -45,9 +45,45 @@ router.get('/:seriKodu', async (req, res) => {
 });
 
 /**
- * Stok hareket no: hareket koduna göre STC-01-00001.
- * Body: { movement_code: 'STC-01' }
+ * Stok hareket no önizleme (sayacı artırmaz): STC-01-00001.
+ * Query/body: movement_code=STC-01
  * Not: /:seriKodu/ayir'dan ÖNCE tanımlanmalı.
+ */
+router.get('/stok-hareket/peek', async (req, res) => {
+    try {
+        const movementCode = String(req.query?.movement_code || '').trim().toUpperCase();
+        if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
+        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        res.json({
+            series_code: `STOK_HAREKET__${movementCode}`,
+            movement_code: movementCode,
+            kod,
+            peek: true,
+        });
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+router.post('/stok-hareket/peek', async (req, res) => {
+    try {
+        const movementCode = String(req.body?.movement_code || req.query?.movement_code || '').trim().toUpperCase();
+        if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
+        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        res.json({
+            series_code: `STOK_HAREKET__${movementCode}`,
+            movement_code: movementCode,
+            kod,
+            peek: true,
+        });
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+/**
+ * Stok hareket no ayır (sayacı artırır): STC-01-00001.
+ * Body: { movement_code: 'STC-01' }
  */
 router.post('/stok-hareket/ayir', async (req, res) => {
     try {

@@ -306,7 +306,9 @@ router.post('/', async (req, res) => {
                 throw new Error('En az bir satırda stok ve miktar girin.');
             }
 
-            const hareketNoOpt = String(body.movement_no || '').trim() || null;
+            // Hareket no her zaman sunucuda hareket koduna göre ayrılır (STC-01-00001).
+            // İstemci önizlemesi sayacı artırmaz; kayıt anında sonrakiStokHareketNo çalışır.
+            const hareketNoOpt = null;
 
             if (type === 'TRANSFER') {
                 const cikis = await stokHareketOlustur(client, {

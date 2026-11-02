@@ -1162,7 +1162,7 @@ const MODULES = [
           { key: 'onay_status', label: 'Onay' },
         ],
         masterFields: [
-          { key: 'movement_no', label: 'Hareket no', code: true },
+          { key: 'movement_no', label: 'Hareket no', code: true, readOnly: true, hint: 'Hareket koduna göre (ör. STC-01-00001)' },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-stok', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', required: true },
           { key: 'warehouse_id', label: 'Depo (source)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
           {
@@ -8416,11 +8416,10 @@ function isTransferHareketKodu(hk) {
   return tip === 'Transfer' || yon === 'Transfer' || /^TRF/i.test(String(hk.movement_code || ''));
 }
 
-async function ayirStokHareketNo(movementCode) {
-  const data = await api('/kod-serileri/stok-hareket/ayir', {
-    method: 'POST',
-    body: JSON.stringify({ movement_code: movementCode }),
-  });
+/** Önizleme — sayacı artırmaz; gerçek no kayıtta sunucuda ayrılır. */
+async function peekStokHareketNo(movementCode) {
+  const q = encodeURIComponent(movementCode);
+  const data = await api(`/kod-serileri/stok-hareket/peek?movement_code=${q}`);
   return data.kod;
 }
 
@@ -8445,13 +8444,16 @@ async function refreshStokHareketNo(force = false) {
   const seri = `STOK_HAREKET__${String(code).toUpperCase()}`;
   if (!force && state.formNumeratorSeri === seri && state.formRecord?.[screen.codeField]) return;
   try {
-    const kod = await ayirStokHareketNo(code);
+    const kod = await peekStokHareketNo(code);
     if (!state.formRecord) state.formRecord = {};
     state.formRecord[screen.codeField] = kod;
     state.formRecord[tipKey] = tipVal;
     state.formNumeratorSeri = seri;
     const codeEl = findAttrControl('data-master', screen.codeField);
-    if (codeEl) codeEl.value = kod;
+    if (codeEl) {
+      codeEl.value = kod;
+      codeEl.readOnly = true;
+    }
   } catch (err) {
     toast(err.message || String(err));
   }
@@ -15664,19 +15666,29 @@ function resolveSelectFieldDef(sel) {
 async function enrichLookupRowsWithQty(field, rows, ctx) {
   const isStok = field?.lookup === 'items' || field?.lookup === 'items-mamul';
   if (!isStok) return { rows, qtyCol: null };
-  const wh = warehouseIdFromCtx(ctx || {});
-  if (!wh) return { rows, qtyCol: null };
+  let wh = warehouseIdFromCtx(ctx || {});
+  // Stok hareket: master depo DOM’dan
+  if (!wh && findScreen(state.screenId)?.id === 'stok-hareketleri') {
+    wh = findAttrControl('data-master', 'warehouse_id')?.value
+      || state.formRecord?.warehouse_id
+      || null;
+  }
+  if (!wh) {
+    // Depo seçilmeden de sütun göster (boş) — kullanıcı miktarı bekler
+    const withEmpty = rows.map((r) => ({ ...r, _depo_miktar: '' }));
+    return { rows: withEmpty, qtyCol: { key: '_depo_miktar', label: 'Miktar', num: true } };
+  }
   try {
     const bak = await api(`/stok-bakiyeleri?warehouse_id=${encodeURIComponent(wh)}&yalnizca_stokta=0`);
     const map = new Map((Array.isArray(bak) ? bak : []).map((b) => [String(b.item_id), b]));
     const enriched = rows.map((r) => {
       const b = map.get(String(r.id));
-      const qty = b == null ? '' : (b.kullanilabilir != null ? b.kullanilabilir : b.bakiye);
+      const qty = b == null ? 0 : (b.kullanilabilir != null ? b.kullanilabilir : b.bakiye);
       return { ...r, _depo_miktar: qty };
     });
     return { rows: enriched, qtyCol: { key: '_depo_miktar', label: 'Miktar', num: true } };
   } catch (_) {
-    return { rows, qtyCol: null };
+    return { rows, qtyCol: { key: '_depo_miktar', label: 'Miktar', num: true } };
   }
 }
 
@@ -18120,6 +18132,10 @@ async function saveForm({ after = 'stay' } = {}) {
   // Stok hareketleri: satır doğrulama + transfer hedef depo + boş satır temizliği
   if (screen.id === 'stok-hareketleri') {
     const hk = hareketKoduRowById(master.movement_code_id);
+    if (!hk && !master.movement_code_id) {
+      toast('Önce hareket kodu seçin.');
+      return;
+    }
     if (isTransferHareketKodu(hk) && !Number(master.target_warehouse_id)) {
       toast('Transfer için hedef depo zorunlu.');
       return;
@@ -18130,8 +18146,24 @@ async function saveForm({ after = 'stay' } = {}) {
     const raw = Array.isArray(master.satirlar) ? master.satirlar : [];
     const clean = [];
     for (let i = 0; i < raw.length; i += 1) {
-      const s = raw[i] || {};
-      const itemId = Number(s.item_id);
+      const s = { ...(raw[i] || {}) };
+      // Typeahead’e yazılmış kod/id varsa select boş kalsa bile çöz
+      if (!s.item_id) {
+        const ta = document.querySelector(
+          `tr[data-grid-row="satirlar"][data-grid-idx="${i}"] .lookup-typeahead`
+        );
+        const typed = String(ta?.value || '').trim();
+        if (typed) {
+          const pools = [
+            ...(state.lookupCache.items || []),
+            ...(state.lookupCache['items-mamul'] || []),
+          ];
+          const hit = pools.find((r) => String(r.id) === typed
+            || String(r.item_code || '').toLocaleLowerCase('tr') === typed.toLocaleLowerCase('tr'));
+          if (hit) s.item_id = hit.id;
+        }
+      }
+      let itemId = Number(s.item_id);
       const qty = Number(s.quantity);
       const totallyEmpty = (!Number.isFinite(itemId) || !itemId)
         && (s.quantity == null || s.quantity === '' || !Number.isFinite(qty) || qty === 0)
@@ -18139,8 +18171,9 @@ async function saveForm({ after = 'stay' } = {}) {
         && !String(s.raf_code || '').trim()
         && !String(s.konum_code || '').trim();
       if (totallyEmpty) continue;
+      // Miktar yazılmış ama stok seçilmemiş → bu satırı atla (eski “item_id ve quantity zorunlu” hatası)
       if (!Number.isFinite(itemId) || !itemId) {
-        toast(`Satır ${i + 1}: listeden stok seçin (yazmak yeterli değil).`);
+        toast(`Satır ${i + 1}: stok seçilmedi — yuvarlak simge veya alt ok ile listeden seçin.`);
         return;
       }
       if (!Number.isFinite(qty) || qty <= 0) {
@@ -18158,8 +18191,8 @@ async function saveForm({ after = 'stay' } = {}) {
       return;
     }
     master.satirlar = clean;
-    // Hareket no yoksa (kod seçilmeden kayıt) — engelle
-    if (!String(master.movement_no || '').trim()) {
+    // Önizleme no sunucuda yeniden ayrılır; hareket kodu zorunlu
+    if (!master.movement_code_id) {
       toast('Önce hareket kodu seçin (hareket no üretilir).');
       return;
     }
