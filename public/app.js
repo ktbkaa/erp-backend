@@ -1193,6 +1193,12 @@ const MODULES = [
           { key: 'raf_code', label: 'Raf' },
           { key: 'konum_code', label: 'Konum' },
         ],
+        // Stok seçilince satır birimi stok kartından (applyFormLinkages detailStokRules + formLinks)
+        formLinks: {
+          item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+          ],
+        },
         detailKey: 'satirlar',
         detailSlots: 5,
         defaults: {
@@ -16419,26 +16425,35 @@ function syncLookupNameRo(sel) {
   nameRo.value = sel.value ? (first_name || '—') : '—';
 }
 
-/** Select değerini seçenek yoksa ekleyerek yazar; name-ro + formRecord günceller. */
+/** Select değerini seçenek yoksa ekleyerek yazar; name-ro + typeahead + formRecord günceller. */
 function setLinkedSelectValue(sel, value, fieldKey) {
   if (!sel || sel.disabled) return false;
   const str = value == null || value === '' ? '' : String(value);
+  const ta = sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead');
+  const prevVal = String(sel.value || '');
+  const prevTa = ta ? String(ta.value || '') : '';
   if (str && ![...sel.options].some((o) => String(o.value) === str)) {
     const opt = document.createElement('option');
     opt.value = str;
-    opt.textContent = str;
+    // Ölçü birimi vb. lookup etiketini mümkünse göster
+    const uomRows = state.lookupCache['olcu-birimleri'] || [];
+    const u = uomRows.find((r) => String(r.uom_code) === str);
+    const label = u
+      ? `${u.uom_code} — ${u.uom_name || u.uom_code}`
+      : str;
+    opt.textContent = label;
+    opt.setAttribute('title', label);
     sel.appendChild(opt);
-  }
-  if (String(sel.value) === str) {
-    syncLookupNameRo(sel);
-    return false;
   }
   sel.value = str;
   syncLookupNameRo(sel);
+  syncLookupTypeaheadFromSelect(sel);
   if (sel.hasAttribute('data-master') && state.formRecord && fieldKey) {
     state.formRecord[fieldKey] = str;
   }
-  return true;
+  const nextTa = ta ? String(ta.value || '') : '';
+  // Değer veya görünen typeahead değiştiyse «dolduruldu» say
+  return prevVal !== str || prevTa !== nextTa;
 }
 
 function resolveFormLinkValue(rule, ctx) {
@@ -16457,6 +16472,10 @@ function resolveFormLinkValue(rule, ctx) {
     const st = stokLookupById(itemId);
     if (!st) return '';
     let v = st[rule.fromItem];
+    // Baz birim yoksa stok takip birimine düş
+    if ((v == null || v === '') && rule.fromItem === 'uom_code') {
+      v = st.stock_takip_uom || st.base_uom || '';
+    }
     if (rule.asName && rule.fromItem === 'item_name' && v) {
       // Ürün ağacı adı: «Malzeme Adı Ağacı» — kullanıcı boş bırakmışsa
       const cur = ctx.bom_name;
@@ -16549,13 +16568,14 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
 
   _formLinking = true;
   try {
-    // BOM/rota listeleri güncel olsun
+    // BOM/rota / stok / birim listeleri güncel olsun
     if (['item_id', 'finished_good_item_id', 'product_bom_id', 'component_item_id'].includes(changedKey)) {
       await Promise.all([
         fetchLookupKey('urun-agaclari'),
         fetchLookupKey('routings'),
         fetchLookupKey('items'),
         fetchLookupKey('items-mamul'),
+        fetchLookupKey('olcu-birimleri'),
       ]);
     }
     // formLinks fromLookup kaynakları
