@@ -9902,7 +9902,7 @@ function hideFormSoloLoader() {
 
 /**
  * Normal kabukta sol menüyü geri getir (?view=form hariç).
- * Oturum yokken giriş ekranına yönlendirir — boş kabuk göstermez.
+ * Yerel cihazda soft oturum; aksi halde giriş. Boş kabuk yok.
  */
 function ensureSidebarVisible() {
   if (!isFormSoloUrl()) {
@@ -9912,7 +9912,10 @@ function ensureSidebarVisible() {
 
   hideFormSoloLoader();
 
-  // Oturum yok: boş menülü kabuk yerine giriş
+  if (!state.session) {
+    // Kendi PC / localhost: kullanıcı sormadan soft oturum
+    if (isTrustedLocalDevice()) softSessionFromStorage();
+  }
   if (!state.session) {
     document.body.classList.remove('form-solo');
     const shell = $('#appShell');
@@ -9941,7 +9944,6 @@ function ensureSidebarVisible() {
   }
   const btnMenu = $('#btnMenu');
   if (btnMenu) btnMenu.style.display = '';
-  // Menü içeriği boş kaldıysa yeniden çiz
   const nav = $('#sidebarNav');
   if (nav && !nav.querySelector('.mod-group')) {
     renderSidebar();
@@ -9949,6 +9951,7 @@ function ensureSidebarVisible() {
 }
 
 function enterApp() {
+  if (!state.session && isTrustedLocalDevice()) softSessionFromStorage();
   if (!state.session) {
     showLoginView();
     return;
@@ -9975,9 +9978,34 @@ function applySession(ses, username) {
   localStorage.setItem('ktb_cihaz_oturum', '1');
 }
 
+/** Bu PC / localhost — kullanıcı/şifre sormadan soft oturum. */
+function isTrustedLocalDevice() {
+  if (localStorage.getItem('ktb_cihaz_oturum') === '1') return true;
+  try {
+    const h = String(location.hostname || '').toLowerCase();
+    return h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h.endsWith('.local');
+  } catch (_) {
+    return false;
+  }
+}
+
+function resolveLocalUserKod() {
+  return localStorage.getItem('ktb_kullanici_kodu')
+    || localStorage.getItem('ktb_remember_user')
+    || 'ADMIN';
+}
+
 function softSessionFromStorage() {
-  const kod = localStorage.getItem('ktb_kullanici_kodu');
+  // Yerel/güvenilir cihazda kod yoksa varsayılan ADMIN ile aç (kullanıcı sorma)
+  let kod = localStorage.getItem('ktb_kullanici_kodu')
+    || localStorage.getItem('ktb_remember_user')
+    || null;
+  if (!kod && isTrustedLocalDevice()) kod = resolveLocalUserKod();
   if (!kod) return false;
+  try {
+    localStorage.setItem('ktb_kullanici_kodu', kod);
+    localStorage.setItem('ktb_cihaz_oturum', '1');
+  } catch (_) { /* ignore */ }
   if (!state.session) {
     // Soft oturum: token yokken ekranları kilitleme (_soft → tam erişim)
     state.session = {
@@ -20270,10 +20298,11 @@ async function tryRefreshAccessToken() {
 
 async function restoreSession() {
   try {
-    const kod = localStorage.getItem('ktb_kullanici_kodu');
+    const kod = localStorage.getItem('ktb_kullanici_kodu')
+      || localStorage.getItem('ktb_remember_user');
     const token = localStorage.getItem('ktb_access_token');
-    const cihaz = localStorage.getItem('ktb_cihaz_oturum') === '1';
-    if (!kod && !token && !cihaz) return false;
+    const trusted = isTrustedLocalDevice();
+    if (!kod && !token && !trusted) return false;
 
     if (token) {
       try {
@@ -20303,17 +20332,18 @@ async function restoreSession() {
       } catch (_) { /* parola zorunlu — yine de bu cihaz oturumunu koru */ }
     }
 
-    // Bu cihazdan daha önce giriş yapıldıysa token olmasa da uygulamayı aç
-    if (kod || cihaz) {
-      softSessionFromStorage();
-      if (kod && $('#loginUser') && !$('#loginUser').value) {
-        $('#loginUser').value = kod;
+    // Kendi bilgisayar / daha önce giriş yapılan cihaz: kullanıcı sormadan soft oturum
+    if (trusted || kod) {
+      const ok = softSessionFromStorage();
+      const kullanici = localStorage.getItem('ktb_kullanici_kodu');
+      if (kullanici && $('#loginUser') && !$('#loginUser').value) {
+        $('#loginUser').value = kullanici;
       }
-      return true;
+      return ok && Boolean(state.session);
     }
     return false;
   } catch (_) {
-    return softSessionFromStorage();
+    return softSessionFromStorage() && Boolean(state.session);
   } finally {
     renderUserChip();
   }
@@ -20835,13 +20865,17 @@ function bootFromHash() {
   bindEvents();
   restoreSession()
     .then((ok) => {
-      if (ok && state.session) return bootIntoApp();
+      if (!state.session && isTrustedLocalDevice()) softSessionFromStorage();
+      if (state.session) return bootIntoApp();
+      // Yalnız yabancı / ilk kurulum cihazında giriş sor
       hideFormSoloLoader();
       showLoginView();
       return null;
     })
     .catch(() => {
-      if (softSessionFromStorage() && state.session) return bootIntoApp();
+      if (isTrustedLocalDevice()) softSessionFromStorage();
+      else softSessionFromStorage();
+      if (state.session) return bootIntoApp();
       hideFormSoloLoader();
       showLoginView();
       return null;
