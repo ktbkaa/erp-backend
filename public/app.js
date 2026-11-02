@@ -9684,6 +9684,7 @@ function showHome() {
   state.selectedId = null;
   state.formMode = null;
   state.formRecord = null;
+  ensureSidebarVisible();
   if (location.hash && location.hash !== '#') {
     history.pushState({ screenId: null }, '', location.pathname);
   }
@@ -9880,9 +9881,22 @@ function showLoginView() {
   });
 }
 
-/** Normal kabukta sol menüyü her zaman geri getir (form-solo hariç). */
+function isFormSoloUrl() {
+  try {
+    return new URLSearchParams(location.search || '').get('view') === 'form';
+  } catch (_) {
+    return false;
+  }
+}
+
+/** Normal kabukta sol menüyü her zaman geri getir (?view=form hariç). */
 function ensureSidebarVisible() {
-  if (state.formSolo) return;
+  // Takılı formSolo: URL solo değilse state’i de temizle (menü kaybolmasın)
+  if (!isFormSoloUrl()) {
+    state.formSolo = false;
+  }
+  if (state.formSolo && isFormSoloUrl()) return;
+
   document.documentElement.classList.remove('form-solo-boot');
   document.body.classList.remove('form-solo', 'form-solo-booting', 'is-login');
   const shell = $('#appShell');
@@ -9892,16 +9906,23 @@ function ensureSidebarVisible() {
     shell.classList.remove('form-solo', 'sidebar-collapsed');
     shell.style.opacity = '';
     shell.style.pointerEvents = '';
+    shell.style.display = '';
   }
   if (sidebar) {
+    sidebar.hidden = false;
     sidebar.classList.add('open'); // mobil off-canvas için
-    sidebar.style.display = '';
+    sidebar.style.cssText = ''; // inline display:none vb. temizle
+    sidebar.removeAttribute('hidden');
   }
   const loader = $('#formSoloLoader');
   if (loader) {
     loader.hidden = true;
     loader.setAttribute('aria-busy', 'false');
+    loader.style.display = 'none';
   }
+  // Menü butonu form-solo CSS ile gizlenmiş olabilir
+  const btnMenu = $('#btnMenu');
+  if (btnMenu) btnMenu.style.display = '';
 }
 
 function enterApp() {
@@ -11226,6 +11247,7 @@ function updateActionButtons(screen) {
 
 async function openScreen(id, opts = {}) {
   try {
+    ensureSidebarVisible();
     const screen = findScreen(id);
     if (!screen) {
       toast(`Ekran bulunamadı: ${id || '?'}`);
@@ -17783,11 +17805,16 @@ async function openForm(mode, opts = {}) {
 
   // Liste ekranından: formu tarayıcıda yeni sekmede aç (sol menüsüz tam ekran)
   if (!state.formSolo && !opts.inPlace) {
-    openFormInNewBrowserTab(screen, mode, {
+    const opened = openFormInNewBrowserTab(screen, mode, {
       rowId: needsRow ? row.id : null,
       prefill: adayPrefill,
     });
-    return;
+    // Popup engellendiyse aynı pencerede aç — ana kabukta menü kalsın
+    if (opened) {
+      ensureSidebarVisible();
+      return;
+    }
+    opts = { ...opts, inPlace: true };
   }
 
   // Liste sekmesi yerinde kalsın; form yan (yeni) sekme olarak açılsın
@@ -19155,14 +19182,32 @@ function bindEvents() {
   }
 
   $('#btnMenu').addEventListener('click', () => {
+    // form-solo artığı (yanlışlıkla menü gizlenmiş) → önce geri getir
+    const stuckSolo = !isFormSoloUrl() && (
+      state.formSolo
+      || document.body.classList.contains('form-solo')
+      || document.documentElement.classList.contains('form-solo-boot')
+    );
+    if (stuckSolo) {
+      ensureSidebarVisible();
+      return;
+    }
     const shell = $('#appShell');
     const sidebar = $('#sidebar');
+    if (!shell || !sidebar) return;
     if (window.matchMedia('(max-width: 900px)').matches) {
       sidebar.classList.toggle('open');
     } else {
       shell.classList.toggle('sidebar-collapsed');
     }
   });
+
+  // Sekme geri gelince / bfcache: sol menü kaybolduysa toparla
+  window.addEventListener('pageshow', () => { ensureSidebarVisible(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') ensureSidebarVisible();
+  });
+  window.addEventListener('focus', () => { ensureSidebarVisible(); });
 
   $('#btnSidebarLocate')?.addEventListener('click', (e) => {
     e.preventDefault();

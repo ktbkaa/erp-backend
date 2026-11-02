@@ -3908,6 +3908,24 @@ select.lookup-pick::-ms-expand { display: none; }
   padding-right: 0.15rem;
 }
 
+/* Normal kabuk: form-solo değilse menü sütunu her zaman dursun */
+body:not(.form-solo) .app-shell:not(.sidebar-collapsed) {
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) !important;
+}
+body:not(.form-solo) .app-shell:not(.sidebar-collapsed) .sidebar {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  min-width: var(--sidebar-w) !important;
+  max-width: var(--sidebar-w) !important;
+  width: 100% !important;
+  overflow: hidden;
+}
+body:not(.form-solo) #formSoloLoader[hidden],
+body:not(.form-solo) #formSoloLoader {
+  display: none !important;
+}
+
 /* Form solo: Yeni/Düzelt/İncele/Kopya — yeni sekme, sol menü yok */
 body.form-solo .sidebar,
 .app-shell.form-solo .sidebar {
