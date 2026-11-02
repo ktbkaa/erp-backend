@@ -9878,12 +9878,37 @@ function showLoginView() {
   });
 }
 
+/** Normal kabukta sol menüyü her zaman geri getir (form-solo hariç). */
+function ensureSidebarVisible() {
+  if (state.formSolo) return;
+  document.documentElement.classList.remove('form-solo-boot');
+  document.body.classList.remove('form-solo', 'form-solo-booting', 'is-login');
+  const shell = $('#appShell');
+  const sidebar = $('#sidebar');
+  if (shell) {
+    shell.hidden = false;
+    shell.classList.remove('form-solo', 'sidebar-collapsed');
+    shell.style.opacity = '';
+    shell.style.pointerEvents = '';
+  }
+  if (sidebar) {
+    sidebar.classList.add('open'); // mobil off-canvas için
+    sidebar.style.display = '';
+  }
+  const loader = $('#formSoloLoader');
+  if (loader) {
+    loader.hidden = true;
+    loader.setAttribute('aria-busy', 'false');
+  }
+}
+
 function enterApp() {
   const login = $('#viewLogin');
   const shell = $('#appShell');
   if (login) login.hidden = true;
   if (shell) shell.hidden = false;
   document.body.classList.remove('is-login');
+  ensureSidebarVisible();
   ensureSearchBarVisible();
   renderUserChip();
   renderSidebar();
@@ -20654,8 +20679,9 @@ async function bootIntoApp() {
     return;
   }
 
-  // Normal açılış — boot sınıfı kalmışsa temizle
+  // Normal açılış — boot / form-solo / collapsed artıkları temizle; sol menü görünsün
   revealFormSoloReady();
+  ensureSidebarVisible();
 
   const screenOpen = parseScreenOpenQuery();
   if (screenOpen && findScreen(screenOpen.screenId)) {
