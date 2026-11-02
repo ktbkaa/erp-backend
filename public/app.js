@@ -20781,8 +20781,9 @@ async function sqlRun() {
   }
 }
 
-/** Oturumlu kabuğu aç. Oturum yoksa giriş ekranı. */
+/** Oturumlu kabuğu aç. Yerel cihazda soft oturum; aksi halde giriş. */
 async function bootIntoApp() {
+  if (!state.session && isTrustedLocalDevice()) softSessionFromStorage();
   if (!state.session) {
     hideFormSoloLoader();
     showLoginView();
@@ -20863,23 +20864,17 @@ async function bootIntoApp() {
 function bootFromHash() {
   initUiPrefs();
   bindEvents();
+  const afterRestore = () => {
+    if (!state.session && isTrustedLocalDevice()) softSessionFromStorage();
+    if (state.session) return bootIntoApp();
+    // Yalnız yabancı / ilk kurulum cihazında giriş sor
+    hideFormSoloLoader();
+    showLoginView();
+    return null;
+  };
   restoreSession()
-    .then((ok) => {
-      if (!state.session && isTrustedLocalDevice()) softSessionFromStorage();
-      if (state.session) return bootIntoApp();
-      // Yalnız yabancı / ilk kurulum cihazında giriş sor
-      hideFormSoloLoader();
-      showLoginView();
-      return null;
-    })
-    .catch(() => {
-      if (isTrustedLocalDevice()) softSessionFromStorage();
-      else softSessionFromStorage();
-      if (state.session) return bootIntoApp();
-      hideFormSoloLoader();
-      showLoginView();
-      return null;
-    });
+    .then(() => afterRestore())
+    .catch(() => afterRestore());
 }
 
 bootFromHash();
