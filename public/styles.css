@@ -124,13 +124,14 @@ body.is-login {
   cursor: pointer;
   border-bottom: 1px solid var(--line);
   min-height: 4.1rem;
-  background: #fff;
+  background: var(--sidebar);
 }
 .ktb-logo {
   display: inline-flex;
   align-items: center;
   min-width: 0;
   user-select: none;
+  background: transparent;
 }
 .ktb-logo-img {
   display: block;
@@ -138,6 +139,7 @@ body.is-login {
   height: auto;
   max-width: 100%;
   object-fit: contain;
+  background: transparent;
   filter: var(--logo-filter);
 }
 .ktb-logo--sidebar {
