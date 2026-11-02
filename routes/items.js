@@ -88,11 +88,11 @@ async function stokGetir(id) {
         [id]
     );
     if (!stokRes.rows[0]) return null;
-    const [detaylar, birimler, isyerleri, barkodlar, languages, depolar] = await Promise.all([
+    const [detaylar, birimler, isyerleri, barkodlar, languages, depolar, firmaParams] = await Promise.all([
         pool.query('SELECT * FROM item_details WHERE item_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM item_uom_conversions WHERE item_id = $1 ORDER BY line_no, id', [id]),
         pool.query(
-            `SELECT siy.*, i.plant_code, i.plant_name
+            `SELECT siy.*, i.plant_code, i.plant_name, i.company_id
              FROM item_plants siy
              JOIN plants i ON i.id = siy.plant_id
              WHERE siy.item_id = $1 ORDER BY siy.id`,
@@ -109,6 +109,17 @@ async function stokGetir(id) {
              ORDER BY d.warehouse_code, sd.id`,
             [id]
         ),
+        pool.query(
+            `SELECT fp.*,
+                    f.company_code, f.company_name,
+                    i.plant_code, i.plant_name
+             FROM item_company_params fp
+             JOIN companies f ON f.id = fp.company_id
+             LEFT JOIN plants i ON i.id = fp.plant_id
+             WHERE fp.item_id = $1
+             ORDER BY f.company_code, fp.id`,
+            [id]
+        ).catch(() => ({ rows: [] })),
     ]);
     const row = stokRes.rows[0];
     const bags = isyerleri.rows;
@@ -125,6 +136,7 @@ async function stokGetir(id) {
         barkodlar: barkodlar.rows,
         dil_tanimlari: languages.rows,
         depo_baglari: depolar.rows,
+        firma_parametreleri: firmaParams.rows,
     };
 }
 
@@ -265,6 +277,95 @@ async function saveChildren(client, stokId, body) {
                     isActive,
                     Boolean(d.varsayilan_giris),
                     Boolean(d.varsayilan_cikis),
+                ]
+            );
+        }
+    }
+
+    if (Array.isArray(body.firma_parametreleri)) {
+        await client.query('DELETE FROM item_company_params WHERE item_id = $1', [stokId]);
+        const seen = new Set();
+        for (const d of body.firma_parametreleri) {
+            if (d && d.is_active === false) continue;
+            const firmaId = Number(d.company_id);
+            if (!Number.isFinite(firmaId) || !firmaId || seen.has(firmaId)) continue;
+            seen.add(firmaId);
+            const firmaChk = await client.query('SELECT id FROM companies WHERE id = $1', [firmaId]);
+            if (!firmaChk.rows[0]) {
+                const err = new Error(`Firma bulunamadı (${firmaId}).`);
+                err.status = 400;
+                throw err;
+            }
+            const plantId = Number(d.plant_id) || null;
+            if (plantId) {
+                const pChk = await client.query(
+                    'SELECT id FROM plants WHERE id = $1 AND company_id = $2',
+                    [plantId, firmaId]
+                );
+                if (!pChk.rows[0]) {
+                    const err = new Error(`İş yeri firma ile uyuşmuyor (${plantId}).`);
+                    err.status = 400;
+                    err.alan = 'plant_id';
+                    throw err;
+                }
+            }
+            await client.query(
+                `INSERT INTO item_company_params (
+                    item_id, company_id, plant_id, is_active,
+                    sales_price, purchase_uom, sales_uom,
+                    sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, temin_suresi_days, cikis_type,
+                    default_tax_code_id, varsayilan_vat_rate,
+                    safety_stock, min_stock, max_stock, reorder_level,
+                    fixed_order_quantity, optimum_order_quantity,
+                    varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id,
+                    lot_politika, series_politika, updated_at
+                 ) VALUES (
+                    $1,$2,$3,COALESCE($4,TRUE),
+                    $5,$6,$7,
+                    $8,$9,$10,$11,
+                    $12,$13,
+                    $14,$15,$16,$17,
+                    $18,$19,
+                    $20,$21,
+                    COALESCE($22,'Takipsiz'),COALESCE($23,'Takipsiz'),NOW()
+                 )
+                 ON CONFLICT (item_id, company_id) DO UPDATE SET
+                    plant_id = EXCLUDED.plant_id,
+                    is_active = EXCLUDED.is_active,
+                    sales_price = EXCLUDED.sales_price,
+                    purchase_uom = EXCLUDED.purchase_uom,
+                    sales_uom = EXCLUDED.sales_uom,
+                    sa_tolerans_min_yuzde = EXCLUDED.sa_tolerans_min_yuzde,
+                    sa_tolerans_max_yuzde = EXCLUDED.sa_tolerans_max_yuzde,
+                    temin_suresi_days = EXCLUDED.temin_suresi_days,
+                    cikis_type = EXCLUDED.cikis_type,
+                    default_tax_code_id = EXCLUDED.default_tax_code_id,
+                    varsayilan_vat_rate = EXCLUDED.varsayilan_vat_rate,
+                    safety_stock = EXCLUDED.safety_stock,
+                    min_stock = EXCLUDED.min_stock,
+                    max_stock = EXCLUDED.max_stock,
+                    reorder_level = EXCLUDED.reorder_level,
+                    fixed_order_quantity = EXCLUDED.fixed_order_quantity,
+                    optimum_order_quantity = EXCLUDED.optimum_order_quantity,
+                    varsayilan_giris_warehouse_id = EXCLUDED.varsayilan_giris_warehouse_id,
+                    varsayilan_cikis_warehouse_id = EXCLUDED.varsayilan_cikis_warehouse_id,
+                    lot_politika = EXCLUDED.lot_politika,
+                    series_politika = EXCLUDED.series_politika,
+                    updated_at = NOW()`,
+                [
+                    stokId, firmaId, plantId,
+                    d.is_active === false ? false : true,
+                    d.sales_price ?? null, trimOrNull(d.purchase_uom), trimOrNull(d.sales_uom),
+                    d.sa_tolerans_min_yuzde ?? null, d.sa_tolerans_max_yuzde ?? null,
+                    d.temin_suresi_days ?? null, trimOrNull(d.cikis_type),
+                    d.default_tax_code_id ? Number(d.default_tax_code_id) : null,
+                    d.varsayilan_vat_rate ?? null,
+                    d.safety_stock ?? null, d.min_stock ?? null, d.max_stock ?? null, d.reorder_level ?? null,
+                    d.fixed_order_quantity ?? null, d.optimum_order_quantity ?? null,
+                    d.varsayilan_giris_warehouse_id ? Number(d.varsayilan_giris_warehouse_id) : null,
+                    d.varsayilan_cikis_warehouse_id ? Number(d.varsayilan_cikis_warehouse_id) : null,
+                    trimOrNull(d.lot_politika) || 'Takipsiz',
+                    trimOrNull(d.series_politika) || 'Takipsiz',
                 ]
             );
         }

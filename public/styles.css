@@ -4600,11 +4600,56 @@ body.sql-splitting iframe { pointer-events: none; }
 .erp-balanced--pairs {
   max-width: 52rem;
 }
-.stok-depolar-pane {
+.stok-depolar-pane,
+.stok-firmalar-pane {
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
   width: 100%;
+}
+.stok-firma-params {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.stok-firma-card {
+  border: 1px solid var(--line, #edf2f9);
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+.stok-firma-card-sum {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 650;
+  color: var(--ink, #2a2a2a);
+  background: var(--palette-cyan, var(--page));
+}
+.stok-firma-card-sum::-webkit-details-marker { display: none; }
+.stok-firma-card-sum::before {
+  content: '▸';
+  color: var(--accent);
+  font-size: 0.75rem;
+}
+.stok-firma-card[open] > .stok-firma-card-sum::before { content: '▾'; }
+.stok-firma-card-body {
+  padding: 0.35rem 0.85rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.stok-firma-section {
+  padding: 0.55rem 0 0.65rem;
+}
+.stok-firma-section + .stok-firma-section {
+  border-top: 1px solid var(--palette-cyan, var(--line));
+}
+.stok-firma-section .erp-section-title {
+  margin-bottom: 0.45rem;
 }
 .stok-depo-section .erp-section-title {
   margin-bottom: 0.35rem;
