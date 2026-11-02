@@ -279,10 +279,10 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const { firmaIdFromReq, assertFirmaKayit } = require('../src/utils/firmaScope');
+        const { firmaIdFromReq, assertCariFirmaKayit } = require('../src/utils/firmaScope');
         const firmaId = firmaIdFromReq(req);
         if (firmaId) {
-            const ok = await assertFirmaKayit(pool, 'partners', req.params.id, firmaId);
+            const ok = await assertCariFirmaKayit(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         }
         const cari = await cariGetir(req.params.id);

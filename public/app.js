@@ -18080,10 +18080,25 @@ async function openForm(mode, opts = {}) {
   let record = {};
 
   async function loadRecord(id) {
+    const path = `${screenApiBase(screen.endpoint)}/${encodeURIComponent(id)}`;
     try {
-      return await api(`${screenApiBase(screen.endpoint)}/${id}`);
-    } catch (_) {
-      return { ...row };
+      return await api(path);
+    } catch (err) {
+      // Firma bağlamı liste ile uyuşmuyorsa (çoklu firma/iş yeri) filtresiz dene
+      if (err.status === 404 || err.status === 403) {
+        try {
+          const full = await api(path, { skipFirma: true });
+          if (full && full.company_id != null && Number(full.company_id) !== Number(getActiveFirmaId())) {
+            state.activeFirmaId = Number(full.company_id);
+            try { localStorage.setItem('ktb_firma_id', String(full.company_id)); } catch (_) { /* ignore */ }
+            renderFirmaPicker();
+          }
+          return full;
+        } catch (err2) {
+          throw err2.status ? err2 : err;
+        }
+      }
+      throw err;
     }
   }
 
@@ -18198,7 +18213,19 @@ async function openForm(mode, opts = {}) {
     }
     initSpecialTabs(adayPrefill && screen.id === 'toplu-is-emri' ? { kalemler: record.kalemler } : {});
   } else if (mode === 'kopyala') {
-    const full = await loadRecord(row.id);
+    let full;
+    try {
+      full = await loadRecord(row.id);
+    } catch (err) {
+      toast(err.message || 'Kayıt yüklenemedi.');
+      state.formMode = null;
+      return;
+    }
+    if (!full || (full.id == null && !Object.keys(full).some((k) => k !== 'id' && full[k] != null && full[k] !== ''))) {
+      toast('Kayıt bulunamadı veya boş döndü.');
+      state.formMode = null;
+      return;
+    }
     record = { ...full };
     delete record.id;
     // Kod ve ad kopyalanmaz (benzersiz); numaratör varsa yeni kod ayrılır
@@ -18226,7 +18253,31 @@ async function openForm(mode, opts = {}) {
     });
     initSpecialTabs(full);
   } else {
-    const full = await loadRecord(row.id);
+    // incele / duzelt — API başarısızsa boş form çizme
+    let full;
+    try {
+      full = await loadRecord(row.id);
+    } catch (err) {
+      toast(err.message || 'Kayıt yüklenemedi.');
+      state.formMode = null;
+      return;
+    }
+    if (!full || typeof full !== 'object') {
+      toast('Kayıt bulunamadı.');
+      state.formMode = null;
+      return;
+    }
+    // Sadece {id} geldiyse (eski sessiz fallback) boş form gösterme
+    const meaningful = Object.keys(full).some((k) => {
+      if (k === 'id') return false;
+      const v = full[k];
+      return v != null && v !== '' && !(Array.isArray(v) && !v.length);
+    });
+    if (!meaningful) {
+      toast('Kayıt detayı yüklenemedi (firma bağlamı / yetki).');
+      state.formMode = null;
+      return;
+    }
     record = { ...full };
     state.formNumeratorSeri = null;
     initSpecialTabs(full);

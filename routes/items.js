@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod, stokSeriKodundanTip } = require('../src/utils/kodUretici');
-const { firmaIdFromReq, andStokFirma, assertFirmaKayit } = require('../src/utils/firmaScope');
+const { firmaIdFromReq, andStokFirma, assertStokFirmaKayit } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -418,7 +418,8 @@ router.get('/:id', async (req, res) => {
     try {
         const firmaId = firmaIdFromReq(req);
         if (firmaId) {
-            const ok = await assertFirmaKayit(pool, 'items', req.params.id, firmaId);
+            // Liste (andStokFirma) ile aynı kapsam — aksi halde Düzelt boş form
+            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         }
         const stok = await stokGetir(req.params.id);
