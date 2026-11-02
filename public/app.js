@@ -15217,10 +15217,9 @@ async function openLookupBrowserForSelect(sel) {
   if (!dlg) return;
   const screenTitle = targetScreen?.title || field.label || 'Kayıt';
   if (title) title.textContent = `${screenTitle}`;
-  // Typeahead’teki metni arama kutusuna taşı (LIKE %…%)
-  const typed = sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead')?.value || '';
+  // Yuvarlak liste: arama kutusu boş açılsın (alan değeri filtreye taşınmasın)
   if (search) {
-    search.value = typed.trim();
+    search.value = '';
     search.placeholder = 'Ara — LIKE %metin% …';
   }
   paintLookupBrowser();
