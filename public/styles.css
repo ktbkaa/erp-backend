@@ -1936,8 +1936,8 @@ tr.selected td { background: var(--accent-soft); }
   display: flex;
   flex-direction: column;
 }
-/* Kullanıcı kartı: gövde ile birlikte kayar */
-.form-tab-panel--md.form-tab-panel--scrollable {
+/* Kullanıcı kartı / stok depolar: gövde ile birlikte kayar — hidden’ı ezme */
+.form-tab-panel--md.form-tab-panel--scrollable:not([hidden]) {
   overflow: visible !important;
   padding: 0.85rem 1.1rem 1.5rem;
   display: block !important;
@@ -1946,7 +1946,10 @@ tr.selected td { background: var(--accent-soft); }
   flex: 0 0 auto;
   min-height: 0;
 }
-.form-tab-body:has(.form-tab-panel--scrollable) {
+.form-tab-panel--md.form-tab-panel--scrollable[hidden] {
+  display: none !important;
+}
+.form-tab-body:has(.form-tab-panel--scrollable:not([hidden])) {
   overflow: auto;
   display: flex;
   flex-direction: column;

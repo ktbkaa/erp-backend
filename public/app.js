@@ -14383,7 +14383,8 @@ function renderForm(screen) {
       </div>`;
     }
     if (tab.kind === 'stok-depolar') {
-      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+      // Yalnızca Depolar sekmesinde; scrollable+hidden çakışmasın diye aktifken kaydırılabilir
+      return `<div class="form-tab-panel form-tab-panel--md${active ? ' form-tab-panel--scrollable' : ''}" data-tab-panel="${tab.id}" ${hide}>
         ${renderStokDepolarPane(tab, rec)}
       </div>`;
     }
