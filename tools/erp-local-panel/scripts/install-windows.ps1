@@ -1,19 +1,19 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  ERP Yerel Panel — Windows kurulumu (tek tık).
+  ERP Yerel Panel - Windows kurulumu (tek tik).
 
 .DESCRIPTION
-  - Node.js yoksa winget ile kurmayı dener
-  - Panel klasörüne npm install
-  - ERP klasörünü bulur / sorar → config.json + .env yazar
-  - Haftalık Görev Zamanlayıcı kaydı (Pazar 17:00)
-  - Oturum açılışında paneli başlatır
-  - Tarayıcıda paneli açar
+  - Node.js yoksa winget ile kurmayi dener
+  - Panel klasorune npm install
+  - ERP klasorunu bulur / sorar -> config.json + .env yazar
+  - Haftalik Gorev Zamanlayici kaydi (Pazar 17:00)
+  - Oturum acilisinda paneli baslatir
+  - Tarayicida paneli acar
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1
-  powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -ErpRoot "C:\Users\ktbkt\OneDrive\Masaüstü\erp-backend"
+  powershell -ExecutionPolicy Bypass -File .\scripts\install-windows.ps1 -ErpRoot "C:\Users\ktbkt\OneDrive\Masaustu\erp-backend"
 #>
 [CmdletBinding()]
 param(
@@ -26,7 +26,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
 function Write-Step([string]$msg) { Write-Host ""; Write-Host "==> $msg" -ForegroundColor Cyan }
 function Write-Ok([string]$msg) { Write-Host "  OK  $msg" -ForegroundColor Green }
@@ -36,7 +36,6 @@ function Write-Fail([string]$msg) { Write-Host "  XX  $msg" -ForegroundColor Red
 $PanelRoot = if ($InstallDir) {
   [System.IO.Path]::GetFullPath($InstallDir)
 } else {
-  # scripts\ → panel kökü
   Split-Path -Parent $PSScriptRoot
 }
 
@@ -44,7 +43,7 @@ Write-Host "ERP Yerel Panel kurulumu" -ForegroundColor White
 Write-Host "Panel: $PanelRoot"
 
 if (-not (Test-Path (Join-Path $PanelRoot "package.json"))) {
-  Write-Fail "package.json bulunamadı. Bu scripti panel klasöründen çalıştırın."
+  Write-Fail "package.json bulunamadi. Bu scripti panel klasorunden calistirin."
   exit 1
 }
 
@@ -55,7 +54,7 @@ if (-not $node) {
   Write-Warn "Node.js yok. winget ile kuruluyor..."
   $winget = Get-Command winget -ErrorAction SilentlyContinue
   if (-not $winget) {
-    Write-Fail "winget yok. https://nodejs.org adresinden LTS kurun, sonra bu scripti tekrar çalıştırın."
+    Write-Fail "winget yok. https://nodejs.org adresinden LTS kurun, sonra bu scripti tekrar calistirin."
     exit 1
   }
   & winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements
@@ -63,7 +62,7 @@ if (-not $node) {
               [System.Environment]::GetEnvironmentVariable("Path", "User")
   $node = Get-Command node -ErrorAction SilentlyContinue
   if (-not $node) {
-    Write-Fail "Node kuruldu ama PATH henüz güncel değil. PowerShell'i kapatıp açın, scripti tekrar çalıştırın."
+    Write-Fail "Node kuruldu ama PATH henuz guncel degil. PowerShell'i kapatip acin, scripti tekrar calistirin."
     exit 1
   }
 }
@@ -71,7 +70,7 @@ $nodeVer = (& node -v)
 Write-Ok "Node $nodeVer"
 
 # --- npm install (panel) ---
-Write-Step "Panel bağımlılıkları (npm install)"
+Write-Step "Panel bagimliliklari (npm install)"
 Push-Location $PanelRoot
 try {
   & npm.cmd install --omit=dev
@@ -81,14 +80,14 @@ try {
   Pop-Location
 }
 
-# --- ERP kökü bul ---
-Write-Step "ERP klasörü"
+# --- ERP kokuu bul ---
+Write-Step "ERP klasoru"
 function Test-ErpRoot([string]$path) {
   if (-not $path) { return $false }
   $pkg = Join-Path $path "package.json"
   if (-not (Test-Path $pkg)) { return $false }
   try {
-    $j = Get-Content $pkg -Raw | ConvertFrom-Json
+    $j = Get-Content $pkg -Raw -Encoding UTF8 | ConvertFrom-Json
     return ($null -ne $j.scripts.migrate)
   } catch { return $false }
 }
@@ -96,12 +95,31 @@ function Test-ErpRoot([string]$path) {
 $candidates = @()
 if ($ErpRoot) { $candidates += $ErpRoot }
 $candidates += @(
-  (Join-Path $env:USERPROFILE "OneDrive\Masaüstü\erp-backend"),
+  (Join-Path $env:USERPROFILE "OneDrive\Masaustu\erp-backend"),
+  (Join-Path $env:USERPROFILE "OneDrive\Masaustu\erp-backend"),
   (Join-Path $env:USERPROFILE "Desktop\erp-backend"),
   (Join-Path $env:USERPROFILE "OneDrive\Desktop\erp-backend"),
   (Join-Path $env:USERPROFILE "Documents\erp-backend"),
   "C:\erp-backend",
   (Join-Path (Split-Path $PanelRoot -Parent) "erp-backend")
+# OneDrive / masaustu altinda erp-backend ara
+try {
+  $od = Join-Path $env:USERPROFILE "OneDrive"
+  if (Test-Path $od) {
+    Get-ChildItem $od -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+      $c = Join-Path $_.FullName "erp-backend"
+      if (Test-Path $c) { $candidates += $c }
+    }
+  }
+} catch {}
+try {
+  Get-ChildItem $env:USERPROFILE -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match '^(Desktop|Masa)' } |
+    ForEach-Object {
+      $c = Join-Path $_.FullName "erp-backend"
+      if (Test-Path $c) { $candidates += $c }
+    }
+} catch {}
 )
 
 $found = $null
@@ -113,11 +131,11 @@ foreach ($c in $candidates) {
 }
 
 if (-not $found) {
-  Write-Warn "ERP klasörü otomatik bulunamadı (migrate script'li package.json aranıyor)."
-  Write-Host "Örnek: C:\Users\$env:USERNAME\OneDrive\Masaüstü\erp-backend"
-  $manual = Read-Host "ERP klasörünün tam yolu"
+  Write-Warn "ERP klasoru otomatik bulunamadi (migrate script'li package.json araniyor)."
+  Write-Host "Ornek: C:\Users\$env:USERNAME\OneDrive\Masaustu\erp-backend"
+  $manual = Read-Host "ERP klasorunun tam yolu"
   if (-not (Test-ErpRoot $manual)) {
-    Write-Fail "Geçersiz ERP klasörü veya migrate script yok. Doğru branch'i klonladığınızdan emin olun."
+    Write-Fail "Gecersiz ERP klasoru veya migrate script yok. Dogru branch'i klonladiginizdan emin olun."
     exit 1
   }
   $found = [System.IO.Path]::GetFullPath($manual)
@@ -125,7 +143,7 @@ if (-not $found) {
 Write-Ok "ERP: $found"
 
 # --- config.json + .env ---
-Write-Step "config.json ve .env yazılıyor"
+Write-Step "config.json ve .env yaziliyor"
 $config = @{
   port = $Port
   erpRoot = $found
@@ -144,14 +162,14 @@ $config = @{
   backupDir = (Join-Path $found "backups")
 }
 $configPath = Join-Path $PanelRoot "config.json"
-$config | ConvertTo-Json -Depth 6 | Set-Content -Path $configPath -Encoding UTF8
+($config | ConvertTo-Json -Depth 6) | Out-File -FilePath $configPath -Encoding utf8
 Write-Ok "config.json"
 
 $envLines = @(
   "PORT=$Port",
   "ERP_ROOT=$found"
 )
-# pg_dump otomatik yol
+
 $pgCandidates = @(
   "C:\Program Files\PostgreSQL\17\bin\pg_dump.exe",
   "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe",
@@ -176,28 +194,28 @@ if ($pgFound) {
   $envLines += "PG_DUMP_PATH=$pgFound"
   Write-Ok "pg_dump: $pgFound"
 } else {
-  Write-Warn "pg_dump bulunamadı — yedek için pgAdmin Backup veya PostgreSQL Command Line Tools gerekir."
+  Write-Warn "pg_dump bulunamadi - yedek icin pgAdmin Backup veya PostgreSQL Command Line Tools gerekir."
 }
 
 $envPath = Join-Path $PanelRoot ".env"
-$envLines -join "`r`n" | Set-Content -Path $envPath -Encoding UTF8
+($envLines -join "`r`n") | Out-File -FilePath $envPath -Encoding utf8
 Write-Ok ".env"
 
-# --- Haftalık görev ---
+# --- Haftalik gorev ---
 if (-not $SkipTask) {
-  Write-Step "Haftalık Görev Zamanlayıcı (Pazar 17:00)"
+  Write-Step "Haftalik Gorev Zamanlayici (Pazar 17:00)"
   $reg = Join-Path $PSScriptRoot "register-weekly-task.ps1"
   & powershell -NoProfile -ExecutionPolicy Bypass -File $reg -PanelRoot $PanelRoot
   if ($LASTEXITCODE -ne 0) {
-    Write-Warn "Görev kaydı başarısız olabilir (yönetici gerekebilir). Manuel: scripts\register-weekly-task.ps1"
+    Write-Warn "Gorev kaydi basarisiz olabilir (yonetici gerekebilir). Manuel: scripts\register-weekly-task.ps1"
   } else {
-    Write-Ok "Görev: ERP-Local-Weekly-Sync"
+    Write-Ok "Gorev: ERP-Local-Weekly-Sync"
   }
 }
 
 # --- Startup ---
 if (-not $SkipStartup) {
-  Write-Step "Oturum açılışında panel"
+  Write-Step "Oturum acilisinda panel"
   $startup = [Environment]::GetFolderPath("Startup")
   $cmdPath = Join-Path $startup "ERP-Yerel-Panel.cmd"
   $startPs1 = Join-Path $PSScriptRoot "start-panel.ps1"
@@ -206,8 +224,8 @@ if (-not $SkipStartup) {
   Write-Ok "Startup: $cmdPath"
 }
 
-# --- Masaüstü kısayolu ---
-Write-Step "Masaüstü kısayolu"
+# --- Masaustu kisayolu ---
+Write-Step "Masaustu kisayolu"
 try {
   $desktop = [Environment]::GetFolderPath("Desktop")
   $lnkPath = Join-Path $desktop "ERP Yerel Panel.lnk"
@@ -220,11 +238,11 @@ try {
   $lnk.Save()
   Write-Ok $lnkPath
 } catch {
-  Write-Warn "Kısayol oluşturulamadı: $_"
+  Write-Warn "Kisayol olusturulamadi: $_"
 }
 
-# --- Paneli başlat ---
-Write-Step "Panel başlatılıyor"
+# --- Paneli baslat ---
+Write-Step "Panel baslatiliyor"
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "start-panel.ps1") -PanelRoot $PanelRoot
 Start-Sleep -Seconds 2
 
@@ -235,5 +253,5 @@ if (-not $NoBrowser) {
 Write-Host ""
 Write-Host "Kurulum bitti." -ForegroundColor Green
 Write-Host "Panel: http://127.0.0.1:$Port/"
-Write-Host "Tam senkron butonu veya Pazar 17:00 otomatik çalışır."
+Write-Host "Tam senkron butonu veya Pazar 17:00 otomatik calisir."
 Write-Host ""

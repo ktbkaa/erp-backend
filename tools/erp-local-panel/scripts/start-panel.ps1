@@ -1,7 +1,7 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  ERP Yerel Panel'i arka planda başlatır (zaten açıksa yeniden başlatmaz).
+  ERP Yerel Panel'i arka planda baslatir (zaten aciksa yeniden baslatmaz).
 #>
 [CmdletBinding()]
 param(
@@ -26,13 +26,13 @@ $port = 3920
 $configPath = Join-Path $PanelRoot "config.json"
 if (Test-Path $configPath) {
   try {
-    $cfg = Get-Content $configPath -Raw | ConvertFrom-Json
+    $cfg = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($cfg.port) { $port = [int]$cfg.port }
-  } catch { }
+  } catch {}
 }
 $envFile = Join-Path $PanelRoot ".env"
 if (Test-Path $envFile) {
-  Get-Content $envFile | ForEach-Object {
+  Get-Content $envFile -Encoding UTF8 | ForEach-Object {
     if ($_ -match '^\s*PORT\s*=\s*(\d+)') { $port = [int]$Matches[1] }
   }
 }
@@ -65,7 +65,7 @@ if ($ForceRestart) {
 }
 
 if (Test-PanelUp) {
-  Write-Host "Panel zaten çalışıyor: http://127.0.0.1:$port/"
+  Write-Host "Panel zaten calisiyor: http://127.0.0.1:$port/"
   if ($OpenBrowser) { Start-Process "http://127.0.0.1:$port/" }
   exit 0
 }
@@ -90,10 +90,10 @@ for ($i = 0; $i -lt 25; $i++) {
 }
 
 if ($ok) {
-  Write-Host "Panel açıldı: http://127.0.0.1:$port/"
+  Write-Host "Panel acildi: http://127.0.0.1:$port/"
   if ($OpenBrowser) { Start-Process "http://127.0.0.1:$port/" }
   exit 0
 }
 
-Write-Error "Panel başlamadı. logs\server.err.log dosyasına bakın."
+Write-Error "Panel baslamadi. logs\server.err.log dosyasina bakin."
 exit 1

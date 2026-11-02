@@ -1,7 +1,7 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  Windows Görev Zamanlayıcı'ya haftalık senkron kaydı (Pazar 17:00 Europe/Istanbul duvar saati).
+  Windows Gorev Zamanlayici'ya haftalik senkron kaydi (Pazar 17:00).
 #>
 [CmdletBinding()]
 param(
@@ -22,18 +22,16 @@ if (-not (Test-Path $runScript)) {
   exit 1
 }
 
-# Eski görev varsa kaldır
 schtasks /Delete /TN $TaskName /F 2>$null | Out-Null
 
 $psArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$runScript`" -PanelRoot `"$PanelRoot`""
-# /SC WEEKLY /D SUN /ST 17:00 — yerel saat (Windows saat dilimi Europe/Istanbul olmalı)
 $create = schtasks /Create /TN $TaskName /TR "powershell.exe $psArgs" /SC WEEKLY /D SUN /ST $Time /RL LIMITED /F
 if ($LASTEXITCODE -ne 0) {
-  Write-Error "schtasks başarısız (exit $LASTEXITCODE). Yönetici PowerShell deneyin.`n$create"
+  Write-Error "schtasks basarisiz (exit $LASTEXITCODE). Yonetici PowerShell deneyin.`n$create"
   exit 1
 }
 
-Write-Host "Görev kaydedildi: $TaskName"
+Write-Host "Gorev kaydedildi: $TaskName"
 Write-Host "  Zaman: her Pazar $Time (Windows yerel saati)"
 Write-Host "  Komut: powershell.exe $psArgs"
 Write-Host "  Test:  schtasks /Run /TN $TaskName"

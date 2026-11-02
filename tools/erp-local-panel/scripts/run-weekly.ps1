@@ -1,8 +1,8 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  Haftalık senkron (Task Scheduler tarafından çağrılır).
-  Panel kapalı olsa bile CLI üzerinden sync çalıştırır.
+  Haftalik senkron (Task Scheduler tarafindan cagrilir).
+  Panel kapali olsa bile CLI uzerinden sync calistirir.
 #>
 [CmdletBinding()]
 param(
@@ -28,7 +28,7 @@ function Log([string]$msg) {
   Write-Host $line
 }
 
-Log "Haftalık senkron başladı — $PanelRoot"
+Log "Haftalik senkron basladi - $PanelRoot"
 
 Push-Location $PanelRoot
 try {
