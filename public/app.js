@@ -7175,6 +7175,111 @@ function upgradeTanimLookups(screen) {
   });
 }
 
+/** Stok kartı — Firmalar sekmesi: yetki benzeri firma tikleri + başlıklı firma parametreleri */
+const STOK_FIRMA_PARAM_SECTIONS = [
+  {
+    id: 'organizasyon',
+    title: 'Organizasyon',
+    fields: [
+      {
+        key: 'plant_id',
+        label: 'İş yeri',
+        type: 'lookup',
+        lookup: 'is-yerleri',
+        valueKey: 'id',
+        labelKey: 'plant_name',
+        codeKey: 'plant_code',
+        required: true,
+        dependsOn: 'company_id',
+        filterKey: 'company_id',
+      },
+    ],
+  },
+  {
+    id: 'satis-sa',
+    title: 'Satış / Satınalma',
+    fields: [
+      { key: 'sales_price', label: 'Satış fiyatı', type: 'number' },
+      { key: 'purchase_uom', label: 'Satınalma birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+      { key: 'sales_uom', label: 'Satış birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+      { key: 'sa_tolerans_min_yuzde', label: 'SA tolerans min %', type: 'number' },
+      { key: 'sa_tolerans_max_yuzde', label: 'SA tolerans max %', type: 'number' },
+      { key: 'temin_suresi_days', label: 'Temin süresi (gün)', type: 'number' },
+      { key: 'cikis_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'] },
+    ],
+  },
+  {
+    id: 'vergi',
+    title: 'Vergi',
+    fields: [
+      {
+        key: 'default_tax_code_id',
+        label: 'Vergi tipi',
+        type: 'lookup',
+        lookup: 'vergi-kodlari',
+        valueKey: 'id',
+        labelKey: 'tax_name',
+        codeKey: 'tax_code',
+      },
+      { key: 'varsayilan_vat_rate', label: 'Oran %', type: 'number', readOnly: true },
+    ],
+  },
+  {
+    id: 'depo',
+    title: 'Depo politikaları',
+    fields: [
+      {
+        key: 'lot_politika',
+        label: 'Parti politikası',
+        type: 'checkbox',
+        checkValue: 'Zorunlu',
+        uncheckValue: 'Takipsiz',
+      },
+      {
+        key: 'series_politika',
+        label: 'Seri politikası',
+        type: 'checkbox',
+        checkValue: 'Zorunlu',
+        uncheckValue: 'Takipsiz',
+      },
+      {
+        key: 'varsayilan_giris_warehouse_id',
+        label: 'Varsayılan giriş depo',
+        type: 'lookup',
+        lookup: 'warehouses',
+        valueKey: 'id',
+        labelKey: 'warehouse_name',
+        codeKey: 'warehouse_code',
+        dependsOn: 'plant_id',
+        filterKey: 'plant_id',
+      },
+      {
+        key: 'varsayilan_cikis_warehouse_id',
+        label: 'Varsayılan çıkış depo',
+        type: 'lookup',
+        lookup: 'warehouses',
+        valueKey: 'id',
+        labelKey: 'warehouse_name',
+        codeKey: 'warehouse_code',
+        dependsOn: 'plant_id',
+        filterKey: 'plant_id',
+      },
+    ],
+  },
+  {
+    id: 'mrp',
+    title: 'MRP',
+    fields: [
+      { key: 'safety_stock', label: 'Emniyet stok', type: 'number' },
+      { key: 'min_stock', label: 'Minimum stok', type: 'number' },
+      { key: 'reorder_level', label: 'Yeniden sipariş seviyesi', type: 'number' },
+      { key: 'fixed_order_quantity', label: 'Sabit sipariş miktarı', type: 'number' },
+      { key: 'optimum_order_quantity', label: 'Optimum sipariş miktarı', type: 'number' },
+      { key: 'max_stock', label: 'Maksimum stok', type: 'number' },
+    ],
+  },
+];
+
 /** Ekrandaki tüm form alanlarını topla */
 function collectScreenFormFields(screen) {
   const out = [];
@@ -12863,111 +12968,6 @@ function renderKullaniciProfilBlok(rec) {
       </div>
     </section>`;
 }
-
-/** Stok kartı — Firmalar sekmesi: yetki benzeri firma tikleri + başlıklı firma parametreleri */
-const STOK_FIRMA_PARAM_SECTIONS = [
-  {
-    id: 'organizasyon',
-    title: 'Organizasyon',
-    fields: [
-      {
-        key: 'plant_id',
-        label: 'İş yeri',
-        type: 'lookup',
-        lookup: 'is-yerleri',
-        valueKey: 'id',
-        labelKey: 'plant_name',
-        codeKey: 'plant_code',
-        required: true,
-        dependsOn: 'company_id',
-        filterKey: 'company_id',
-      },
-    ],
-  },
-  {
-    id: 'satis-sa',
-    title: 'Satış / Satınalma',
-    fields: [
-      { key: 'sales_price', label: 'Satış fiyatı', type: 'number' },
-      { key: 'purchase_uom', label: 'Satınalma birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-      { key: 'sales_uom', label: 'Satış birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-      { key: 'sa_tolerans_min_yuzde', label: 'SA tolerans min %', type: 'number' },
-      { key: 'sa_tolerans_max_yuzde', label: 'SA tolerans max %', type: 'number' },
-      { key: 'temin_suresi_days', label: 'Temin süresi (gün)', type: 'number' },
-      { key: 'cikis_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'] },
-    ],
-  },
-  {
-    id: 'vergi',
-    title: 'Vergi',
-    fields: [
-      {
-        key: 'default_tax_code_id',
-        label: 'Vergi tipi',
-        type: 'lookup',
-        lookup: 'vergi-kodlari',
-        valueKey: 'id',
-        labelKey: 'tax_name',
-        codeKey: 'tax_code',
-      },
-      { key: 'varsayilan_vat_rate', label: 'Oran %', type: 'number', readOnly: true },
-    ],
-  },
-  {
-    id: 'depo',
-    title: 'Depo politikaları',
-    fields: [
-      {
-        key: 'lot_politika',
-        label: 'Parti politikası',
-        type: 'checkbox',
-        checkValue: 'Zorunlu',
-        uncheckValue: 'Takipsiz',
-      },
-      {
-        key: 'series_politika',
-        label: 'Seri politikası',
-        type: 'checkbox',
-        checkValue: 'Zorunlu',
-        uncheckValue: 'Takipsiz',
-      },
-      {
-        key: 'varsayilan_giris_warehouse_id',
-        label: 'Varsayılan giriş depo',
-        type: 'lookup',
-        lookup: 'warehouses',
-        valueKey: 'id',
-        labelKey: 'warehouse_name',
-        codeKey: 'warehouse_code',
-        dependsOn: 'plant_id',
-        filterKey: 'plant_id',
-      },
-      {
-        key: 'varsayilan_cikis_warehouse_id',
-        label: 'Varsayılan çıkış depo',
-        type: 'lookup',
-        lookup: 'warehouses',
-        valueKey: 'id',
-        labelKey: 'warehouse_name',
-        codeKey: 'warehouse_code',
-        dependsOn: 'plant_id',
-        filterKey: 'plant_id',
-      },
-    ],
-  },
-  {
-    id: 'mrp',
-    title: 'MRP',
-    fields: [
-      { key: 'safety_stock', label: 'Emniyet stok', type: 'number' },
-      { key: 'min_stock', label: 'Minimum stok', type: 'number' },
-      { key: 'reorder_level', label: 'Yeniden sipariş seviyesi', type: 'number' },
-      { key: 'fixed_order_quantity', label: 'Sabit sipariş miktarı', type: 'number' },
-      { key: 'optimum_order_quantity', label: 'Optimum sipariş miktarı', type: 'number' },
-      { key: 'max_stock', label: 'Maksimum stok', type: 'number' },
-    ],
-  },
-];
 
 function emptyStokFirmaParam(companyId) {
   return {
