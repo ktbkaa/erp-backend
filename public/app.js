@@ -1091,17 +1091,40 @@ const MODULES = [
         crud: false,
         readOnly: true,
         hideActions: true,
+        // Sağ kolon: Firma/İş yeri gibi dikey yığın
+        filterMainStack: true,
         contextMenu: [
           { id: 'stok-hareketleri', label: 'Stok Hareketleri', openScreen: 'stok-hareketleri', passFilters: ['item_code', 'warehouse_code', 'item_id', 'warehouse_id'] },
         ],
         filters: [
-          { key: 'warehouse_code', label: 'Depo kodu' },
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'item_name', label: 'Stok adı' },
-          { key: 'item_type', label: 'Stok tipi' },
-          { key: 'stock_status', label: 'Stok statü' },
-          { key: 'lot_no', label: 'Parti no' },
-          { key: 'yalnizca_stokta', label: 'Yalnızca stokta olanları göster', type: 'checkbox', default: true, queryParam: true },
+          {
+            key: 'warehouse_code',
+            label: 'Depo kodu',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'warehouse_code',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            queryParam: true,
+          },
+          {
+            key: 'item_code',
+            label: 'Stok kodu',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'item_code',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            queryParam: true,
+          },
+          {
+            key: 'yalnizca_stokta',
+            label: 'Yalnızca stokta olanlar',
+            type: 'checkbox',
+            default: true,
+            queryParam: true,
+            simpleCheck: true,
+          },
         ],
         columns: [
           { key: 'warehouse_code', label: 'Depo', mono: true },
@@ -10482,6 +10505,11 @@ function buildListEndpoint(screen) {
     if (!st.op) return; // boş operatör = filtresiz
     if (f.type === 'checkbox') {
       const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true;
+      // simpleCheck: tik açık/kapalı her zaman query’ye gider (filtresiz bırakılmaz)
+      if (f.simpleCheck) {
+        extras.push(`${encodeURIComponent(f.key)}=${on ? '1' : '0'}`);
+        return;
+      }
       if (st.op === 'esit' && !on && String(st.a || '').trim() === '') return;
       extras.push(`${encodeURIComponent(f.key)}=${on ? '1' : '0'}`);
       return;
@@ -11340,6 +11368,19 @@ function defaultTextFilterOp(f) {
 function renderFilterField(f) {
   const st = state.filterState[f.key] || { op: defaultTextFilterOp(f), a: '', b: '' };
   const bucket = filterBucket(f);
+  if (f.type === 'checkbox' && f.simpleCheck) {
+    const on = String(st.a || '').toLowerCase() === 'evet' || st.a === '1' || st.a === true
+      || (st.a == null && (f.default === true || f.default === 'true' || f.default === 1));
+    return `
+    <div class="filter-field filter-field--${bucket} filter-field--check filter-field--simple-check" data-filter-key="${f.key}">
+      <label class="filter-check filter-check--solo">
+        <input type="checkbox" data-filter-a="${f.key}" value="evet" ${on ? 'checked' : ''} />
+        ${escapeHtml(L(f.label))}
+      </label>
+      <input type="hidden" data-filter-op="${f.key}" value="esit" />
+      <input type="text" data-filter-b="${f.key}" value="" hidden />
+    </div>`;
+  }
   if (f.type === 'checkbox') {
     const ops = filterOperatorsFor(f);
     const rawCk = (st.op === 'filtresiz' || st.op === 'bos' || st.op === 'bos_degil') ? '' : (st.op || '');
@@ -11379,11 +11420,14 @@ function renderFilterField(f) {
 function renderFilterPane(screen) {
   const grid = $('#filterGrid');
   const { left, right } = partitionFilters(screen.filters || []);
+  const mainColClass = screen.filterMainStack
+    ? 'filter-col filter-col--main filter-col--stack'
+    : 'filter-col filter-col--main';
   grid.innerHTML = `
     <div class="filter-col filter-col--scope">
       ${left.map(renderFilterField).join('') || '<div class="filter-col-empty"></div>'}
     </div>
-    <div class="filter-col filter-col--main">
+    <div class="${mainColClass}">
       ${right.map(renderFilterField).join('') || '<div class="filter-col-empty"></div>'}
     </div>`;
   grid.querySelectorAll('[data-filter-op]').forEach((el) => {
@@ -11880,6 +11924,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari'],
   'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
+  'depo-bakiye': ['warehouses', 'items', 'items-mamul', 'is-yerleri', 'companies'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
     'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',

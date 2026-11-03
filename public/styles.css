@@ -1315,6 +1315,41 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   gap: 0.4rem 0.75rem;
   align-items: center;
 }
+/* Firma / İş yeri ile aynı dikey yığın (ör. Depo Bakiye: depo + stok + tik) */
+.filter-col--stack {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 17.5rem;
+  max-width: 22rem;
+}
+.filter-col--stack .filter-field {
+  grid-template-columns: 5.2rem minmax(0, 1fr);
+}
+.filter-col--stack .filter-field--simple-check {
+  grid-template-columns: 1fr;
+  margin-top: 0.15rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--line);
+}
+.filter-field--simple-check .filter-check--solo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink, #1a2332);
+  cursor: pointer;
+  user-select: none;
+}
+.filter-field--simple-check .filter-check--solo input {
+  width: auto;
+  height: auto;
+  margin: 0;
+  accent-color: var(--palette-cyan, #3f87f5);
+}
 .filter-col-empty { display: none; }
 
 /* Tek satır: etiket | op | değer — yüksek form yok */
