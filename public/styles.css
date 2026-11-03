@@ -1277,15 +1277,16 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 .filter-actions .btn { padding: 0.32rem 0.7rem; font-size: 0.82rem; }
 
 /*
-  Tek yatay bant — aşağı şişmez.
-  Sol: Firma / İş yeri / Aktif (tek satır kontroller)
-  Sağ: kod, ad, cari… yan yana
+  Filtre paneli (tüm listeler):
+  Sol: Firma / İş yeri / Aktif — dikey yığın
+  Sağ: diğer filtreler — Depo Bakiye formatı (geniş dikey);
+       çok alanlı ekranlarda biraz daha kısa + alta 2. satır
 */
 .filter-grid {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0 1rem;
-  align-items: center;
+  align-items: start;
 }
 .filter-col {
   display: flex;
@@ -1314,6 +1315,69 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 0.4rem 0.75rem;
   align-items: center;
+}
+/* Ortak dikey/stack davranış */
+.filter-col--stack {
+  align-items: stretch;
+  gap: 0.35rem;
+}
+.filter-col--stack .filter-field {
+  grid-template-columns: 5.2rem minmax(0, 1fr);
+}
+.filter-col--stack .filter-field--simple-check {
+  grid-template-columns: 1fr;
+  margin-top: 0.15rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--line);
+}
+/* Az alan (1–3): tek kolon, yatayda uzun */
+.filter-col--stack-wide {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  min-width: 28rem;
+  max-width: 36rem;
+  width: min(36rem, 100%);
+}
+/* Orta (4–5): biraz daha kısa, 2 sütun / alta kırılım */
+.filter-col--stack-mid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(14rem, 1fr));
+  gap: 0.4rem 0.85rem;
+  min-width: 0;
+  max-width: 40rem;
+  width: min(40rem, 100%);
+}
+.filter-col--stack-mid .filter-field {
+  grid-template-columns: 4.6rem minmax(0, 1fr);
+}
+/* Çok alan (6+): daha yoğun, alta satır */
+.filter-col--stack-dense {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.35rem 0.7rem;
+  min-width: 0;
+  max-width: 48rem;
+  width: min(48rem, 100%);
+}
+.filter-col--stack-dense .filter-field {
+  grid-template-columns: 4.2rem minmax(0, 1fr);
+}
+.filter-field--simple-check .filter-check--solo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink, #1a2332);
+  cursor: pointer;
+  user-select: none;
+}
+.filter-field--simple-check .filter-check--solo input {
+  width: auto;
+  height: auto;
+  margin: 0;
+  accent-color: var(--palette-cyan, #3f87f5);
 }
 .filter-col-empty { display: none; }
 
@@ -3463,7 +3527,7 @@ body.col-resizing iframe { pointer-events: none; }
 .detail-table .col--s { width: 5.5rem; }
 .detail-table .col--m { width: 7.5rem; }
 .detail-table .col--l { width: 12rem; }
-.detail-table .col--xl { width: 16rem; }
+.detail-table .col--xl { width: 20rem; min-width: 18rem; }
 .detail-table .col--num { text-align: right; }
 .detail-table td input,
 .detail-table td select,
