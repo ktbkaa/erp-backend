@@ -15,7 +15,8 @@
     "demo:mrp": "node scripts/demo-mrp-ornek.js",
     "demo:elek-dongu": "node scripts/demo-elek-tam-dongu.js",
     "demo:gida-dongu": "node scripts/demo-gida-tam-dongu.js",
-    "demo:mobil-dongu": "node scripts/demo-mobil-sandalye-dongu.js"
+    "demo:mobil-dongu": "node scripts/demo-mobil-sandalye-dongu.js",
+    "demo:kilif-dongu": "node scripts/demo-kilif-dongu.js"
   },
   "keywords": [
     "erp",
