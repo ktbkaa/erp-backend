@@ -7080,6 +7080,16 @@ function bomScopeStokIds(agacId, { includeRoot = false } = {}) {
   return ids;
 }
 
+/** Aktif firma profili seçiliyken UI’da gösterilecek companies (org ekranları hariç). */
+function companiesForActiveScope(allRows) {
+  const all = Array.isArray(allRows) ? allRows : [];
+  const aid = getActiveFirmaId();
+  if (!aid) return all;
+  const screen = findScreen(state.screenId);
+  if (screen && screen.scopeFirma === false) return all;
+  return all.filter((r) => Number(r.id) === Number(aid));
+}
+
 function lookupRowsForField(field, ctx = {}) {
   const all = state.lookupCache[field.lookup] || [];
   let rows = all;
@@ -7090,6 +7100,11 @@ function lookupRowsForField(field, ctx = {}) {
     if (bomId == null || bomId === '') return [];
     const ids = bomScopeStokIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
     rows = all.filter((r) => ids && ids.has(Number(r.id)));
+  }
+
+  // Tepedeki firma profili seçiliyken diğer firmalar lookup’ta görünmesin
+  if (field.lookup === 'companies' && !field.ignoreFirmaScope) {
+    rows = companiesForActiveScope(rows);
   }
 
   if (!field.dependsOn || !field.filterKey) return rows;
@@ -11104,6 +11119,7 @@ function filterValueControl(f, st) {
       else if (f.lookup === 'is-yerleri') rows = state.isYerleri;
     }
     rows = Array.isArray(rows) ? rows : [];
+    if (f.lookup === 'companies') rows = companiesForActiveScope(rows);
     const a = buildFilterSelectOptions(rows, f, st.a);
     const b = buildFilterSelectOptions(rows, f, st.b);
     const aHtml = wrapLookupCombobox(
@@ -12591,14 +12607,21 @@ function syncStokFirmaIsYeriForSave(master) {
       is_active: true,
     }));
   } else if (bags.length) {
-    master.is_yeri_baglari = bags.map((b) => ({
-      plant_id: Number(b.plant_id),
-      company_id: firmaId || Number(b.company_id) || null,
-      is_active: b.is_active !== false,
-    }));
+    const plants = state.lookupCache?.['is-yerleri'] || state.isYerleri || [];
+    master.is_yeri_baglari = bags.map((b) => {
+      const pid = Number(b.plant_id);
+      const plant = plants.find((p) => Number(p.id) === pid);
+      const bagFirma = Number(b.company_id) || Number(plant?.company_id) || firmaId || null;
+      return {
+        plant_id: pid,
+        company_id: bagFirma,
+        is_active: b.is_active !== false,
+      };
+    });
   }
   if (!master.plant_id && master.is_yeri_baglari?.[0]?.plant_id) {
-    master.plant_id = Number(master.is_yeri_baglari[0].plant_id);
+    const own = master.is_yeri_baglari.find((b) => !firmaId || Number(b.company_id) === Number(firmaId));
+    master.plant_id = Number((own || master.is_yeri_baglari[0]).plant_id);
   }
 }
 
@@ -13268,17 +13291,26 @@ function renderStokFirmalarPane(rec) {
   ensureStokFirmaParamsSeed(rec);
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
-  const companies = Array.isArray(state.companies) ? state.companies : (state.lookupCache?.companies || []);
-  let selected = new Set(stokFirmaSelectedCompanyIds(rec));
-  if (!selected.size) {
-    const aid = getActiveFirmaId();
-    if (aid) selected.add(Number(aid));
-  }
+  const aid = getActiveFirmaId();
+  const allCompanies = Array.isArray(state.companies) ? state.companies : (state.lookupCache?.companies || []);
+  // Tepedeki firma profili seçiliyse yalnız o firma — diğer firmaların bilgisi gelmez
+  const companies = aid
+    ? allCompanies.filter((f) => Number(f.id) === Number(aid))
+    : allCompanies;
+  const selected = new Set(
+    aid
+      ? [Number(aid)]
+      : (stokFirmaSelectedCompanyIds(rec).length
+        ? stokFirmaSelectedCompanyIds(rec)
+        : [])
+  );
+  if (!selected.size && companies[0]) selected.add(Number(companies[0].id));
+
   const rows = companies.length
     ? companies.map((f) => `
       <tr data-stok-firma-yetki="${escAttr(f.id)}">
         <td class="yetki-erisim">
-          <input type="checkbox" data-stok-firma-check="1" ${selected.has(Number(f.id)) ? 'checked' : ''} ${dis} />
+          <input type="checkbox" data-stok-firma-check="1" ${selected.has(Number(f.id)) ? 'checked' : ''} ${dis || aid ? 'disabled' : ''} />
         </td>
         <td class="yetki-ekran mono">${escapeHtml(f.company_code || '')}</td>
         <td>${escapeHtml(f.company_name || '')}</td>
@@ -13290,7 +13322,8 @@ function renderStokFirmalarPane(rec) {
   const cards = companies
     .filter((f) => selected.has(Number(f.id)))
     .map((f) => {
-      const params = stokFirmaParamsForCompany(rec, f.id);
+      const params = stokFirmaParamsForCompany(rec, f.id)
+        .filter((p) => !aid || Number(p.company_id) === Number(aid));
       const firmaBags = bags.filter((b) => {
         if (Number(b.company_id) === Number(f.id)) return true;
         const plant = (state.lookupCache?.['is-yerleri'] || []).find((p) => Number(p.id) === Number(b.plant_id));
@@ -13305,25 +13338,29 @@ function renderStokFirmalarPane(rec) {
     })
     .join('');
 
+  const scopeHint = aid
+    ? 'Firma profilindeki aktif firmaya bağlısınız; diğer firmaların parametreleri bu ekranda görünmez. Bu firmanın tüm iş yerleri varsayılan tanımlıdır; kapsamı daraltmak veya iş yeri istisnası eklemek isteğe bağlıdır.'
+    : 'Firma zorunludur. Seçilen firmanın tüm iş yerlerinde stok varsayılan tanımlıdır; kapsamı daraltmak veya iş yerine özel parametre (istisna) eklemek isteğe bağlıdır.';
+
   return `
     <div class="stok-firmalar-pane erp-master-panel">
       <section class="firma-yetki-pane stok-firma-yetki-pane" aria-label="Stok firma tanımları">
         <div class="yetki-pane-head">
-          <div class="section-label">Firma seçimi</div>
-          <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <div class="section-label">${aid ? 'Aktif firma' : 'Firma seçimi'}</div>
+          <div class="yetki-pane-actions"${readonly || aid ? ' hidden' : ''}>
             <button type="button" class="btn ghost" id="stokFirmaSelectAll">Hepsi</button>
             <button type="button" class="btn ghost" id="stokFirmaClearAll">Temizle</button>
           </div>
         </div>
-        <p class="hint yetki-hint">Firma zorunludur. Seçilen firmanın tüm iş yerlerinde stok varsayılan tanımlıdır; kapsamı daraltmak veya iş yerine özel parametre (istisna) eklemek isteğe bağlıdır.</p>
+        <p class="hint yetki-hint">${escapeHtml(scopeHint)}</p>
         <div class="firma-yetki-scroll">
           <table class="yetki-table" id="stokFirmaYetkiTable">
             <thead>
               <tr>
                 <th class="yetki-erisim">
-                  <label class="yetki-th-hepsi" title="Tüm firmalar">
-                    <input type="checkbox" data-stok-firma-head="hepsi" ${dis} />
-                    <span>Hepsi</span>
+                  <label class="yetki-th-hepsi" title="${aid ? 'Aktif firma' : 'Tüm firmalar'}">
+                    <input type="checkbox" data-stok-firma-head="hepsi" ${dis || aid ? 'disabled' : ''} ${aid ? 'checked' : ''} />
+                    <span>${aid ? 'Profil' : 'Hepsi'}</span>
                   </label>
                 </th>
                 <th class="yetki-ekran">Kod</th>
@@ -13335,7 +13372,7 @@ function renderStokFirmalarPane(rec) {
         </div>
       </section>
       <div class="stok-firma-params" id="stokFirmaParams">
-        ${cards || '<div class="detail-empty">Parametre görmek için en az bir firma işaretleyin.</div>'}
+        ${cards || '<div class="detail-empty">Parametre görmek için üstten firma profili seçin.</div>'}
       </div>
     </div>`;
 }
@@ -13523,10 +13560,17 @@ function readStokFirmaParamsFromDom(rec) {
     });
   });
 
-  // İşareti kalkan firma satırlarını pasif sakla
+  // İşareti kalkan firma satırlarını pasif sakla.
+  // Aktif firma profili kapsamında: diğer firmaların satırlarını olduğu gibi koru
+  // (görünmeyen firmayı kayıttta silme / pasifleştirme).
+  const aid = getActiveFirmaId();
   prev.forEach((p) => {
     const cid = Number(p.company_id);
     if (!cid || selectedIds.includes(cid)) return;
+    if (aid && Number(cid) !== Number(aid)) {
+      out.push({ ...p, company_id: cid });
+      return;
+    }
     out.push({ ...p, company_id: cid, is_active: false });
   });
   return out;
@@ -18601,7 +18645,24 @@ async function saveForm({ after = 'stay' } = {}) {
     // İş yeri kapsamı tikleri (yoksa sync tüm iş yerlerini doldurur)
     const scopeBags = readStokFirmaIsYeriBaglariFromDom();
     if (scopeBags.length) {
-      master.is_yeri_baglari = scopeBags;
+      const aidScope = getActiveFirmaId();
+      if (aidScope) {
+        // Diğer firmaların mevcut iş yeri bağlarını koru
+        const prevBags = Array.isArray(state.formRecord?.is_yeri_baglari)
+          ? state.formRecord.is_yeri_baglari
+          : (Array.isArray(master.is_yeri_baglari) ? master.is_yeri_baglari : []);
+        const plants = state.lookupCache?.['is-yerleri'] || state.isYerleri || [];
+        const otherBags = prevBags.filter((b) => {
+          const pid = Number(b.plant_id);
+          if (!pid) return false;
+          const plant = plants.find((p) => Number(p.id) === pid);
+          const cid = Number(b.company_id) || Number(plant?.company_id);
+          return cid && Number(cid) !== Number(aidScope);
+        });
+        master.is_yeri_baglari = [...otherBags, ...scopeBags];
+      } else {
+        master.is_yeri_baglari = scopeBags;
+      }
     } else if (document.querySelector('[data-stok-firma-plant-check]')) {
       toast('Seçili firma için en az bir iş yeri işaretleyin.');
       return;
