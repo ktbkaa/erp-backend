@@ -3527,7 +3527,7 @@ body.col-resizing iframe { pointer-events: none; }
 .detail-table .col--s { width: 5.5rem; }
 .detail-table .col--m { width: 7.5rem; }
 .detail-table .col--l { width: 12rem; }
-.detail-table .col--xl { width: 16rem; }
+.detail-table .col--xl { width: 20rem; min-width: 18rem; }
 .detail-table .col--num { text-align: right; }
 .detail-table td input,
 .detail-table td select,
