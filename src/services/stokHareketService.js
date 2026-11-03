@@ -1,4 +1,4 @@
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
+const { sonrakiBelgeNo, sonrakiStokHareketNo } = require('../utils/belgeNo');
 const { stokNegatifIzinliMi, onerilenDepolar } = require('../utils/belgeOmurga');
 const { parametreAl } = require('../utils/yetki');
 const { partiCozumle } = require('./partiService');
@@ -20,6 +20,7 @@ async function stokHareketOlustur(client, {
     belgeId = null,
     description = null,
     hareketKoduId = null,
+    hareketNo: hareketNoOpt = null,
     satirlar,
     bagliHareketId = null,
     depoZorunluAtla = false,
@@ -45,7 +46,20 @@ async function stokHareketOlustur(client, {
     const depoZorunlu = !depoZorunluAtla
         && String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
 
-    const hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
+    let hareketNo = String(hareketNoOpt || '').trim() || null;
+    if (hareketNo) {
+        const clash = await client.query(
+            `SELECT id FROM stock_movements WHERE movement_no = $1 LIMIT 1`,
+            [hareketNo]
+        );
+        if (clash.rows[0]) hareketNo = null;
+    }
+    if (!hareketNo && hareketKodu?.movement_code) {
+        hareketNo = await sonrakiStokHareketNo(client, hareketKodu.movement_code);
+    }
+    if (!hareketNo) {
+        hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
+    }
 
     const cols = ['movement_no', 'movement_type', 'plant_id', 'warehouse_id', 'document_type', 'document_id', 'description', 'movement_code_id'];
     const vals = [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, description, hareketKoduId || null];
@@ -109,6 +123,33 @@ async function stokHareketOlustur(client, {
             if (!p.rows[0]) throw new Error(`Çıkış partisi stok ile uyuşmuyor: ${partiId}`);
         }
 
+        // Seri takibi: satırda serial_no varsa arka planda item_serials'a yaz / bağla
+        let seriesId = s.series_id || null;
+        const serialNo = String(s.serial_no || '').trim() || null;
+        if (serialNo && Number(s.direction) === 1) {
+            const mevcut = await client.query(
+                `SELECT id FROM item_serials WHERE item_id=$1 AND serial_no=$2`,
+                [s.item_id, serialNo]
+            );
+            if (mevcut.rows[0]) {
+                seriesId = mevcut.rows[0].id;
+                await client.query(
+                    `UPDATE item_serials SET warehouse_id=$2, lot_id=COALESCE($3, lot_id), status='Depoda'
+                     WHERE id=$1`,
+                    [seriesId, depoId, partiId]
+                );
+            } else {
+                const ins = await client.query(
+                    `
+                    INSERT INTO item_serials (serial_no, item_id, lot_id, warehouse_id, status)
+                    VALUES ($1,$2,$3,$4,'Depoda') RETURNING id
+                    `,
+                    [serialNo, s.item_id, partiId, depoId]
+                );
+                seriesId = ins.rows[0].id;
+            }
+        }
+
         // Çıkış: yalnızca Kullanilabilir (veya açıkça verilen statü bakiyesi)
         const cikisStatu = s.stock_status || 'Kullanilabilir';
         if (Number(s.direction) === -1) {
@@ -136,34 +177,108 @@ async function stokHareketOlustur(client, {
             }
         }
 
+        const unitPrice = s.unit_price != null && s.unit_price !== ''
+            ? Number(s.unit_price)
+            : (s.uom_cost != null ? Number(s.uom_cost) : 0);
+        const safeUnit = Number.isFinite(unitPrice) ? unitPrice : 0;
+        const amountCost = Number((Number(s.quantity) * safeUnit).toFixed(2));
+        const currencyCode = String(s.currency_code || 'TRY').trim().toUpperCase() || 'TRY';
+        const rateType = String(s.rate_type || 'TCMB-ALIS').trim() || 'TCMB-ALIS';
+        const exchangeRate = Number(s.exchange_rate);
+        const safeRate = Number.isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate : 1;
+        let safeVat = Number(s.vat_rate);
+        if (!Number.isFinite(safeVat)) safeVat = 0;
+        const taxCodeId = s.tax_code_id ? Number(s.tax_code_id) : null;
+        if (taxCodeId) {
+            const tax = await client.query(
+                `
+                SELECT r.rate
+                FROM fin_tax_rates r
+                WHERE r.tax_code_id = $1
+                ORDER BY r.valid_from DESC NULLS LAST, r.id DESC
+                LIMIT 1
+                `,
+                [taxCodeId]
+            ).catch(() => ({ rows: [] }));
+            if (tax.rows[0]?.rate != null && tax.rows[0].rate !== '') {
+                safeVat = Number(tax.rows[0].rate);
+            }
+        }
+        const lotNo = String(s.lot_no || '').trim() || null;
+
         const satirRes = await client.query(
             `
             INSERT INTO stock_movement_lines
-                (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status, raf_code, konum_code)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status,
+                 raf_code, konum_code, series_id, serial_no,
+                 uom_cost, amount_cost, unit_price, currency_code, rate_type, exchange_rate, vat_rate, lot_no,
+                 tax_code_id)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
             RETURNING *;
             `,
             [
                 hareket.id, s.item_id, s.quantity, s.direction, s.uom_code || null, partiId,
                 Number(s.direction) === -1 ? cikisStatu : statu,
                 s.raf_code || null, s.konum_code || null,
+                seriesId, serialNo,
+                safeUnit, amountCost, safeUnit, currencyCode, rateType, safeRate, safeVat, lotNo,
+                taxCodeId,
             ]
         );
-        eklenen.push(satirRes.rows[0]);
+        const satirRow = satirRes.rows[0];
+        if (seriesId) {
+            await client.query(
+                `UPDATE item_serials SET son_movement_id=$2 WHERE id=$1`,
+                [seriesId, hareket.id]
+            ).catch(() => {});
+        }
+        eklenen.push(satirRow);
 
-        // Ortalama maliyet (INV-011) — girişte uom_cost verilirse
-        if (Number(s.direction) === 1 && s.uom_cost != null) {
+        // Ortalama maliyet (INV-011) — girişte birim fiyat verilirse
+        if (Number(s.direction) === 1 && safeUnit > 0) {
             try {
                 const { maliyetGuncelleGiris } = require('./maliyetService');
                 await maliyetGuncelleGiris(client, {
                     stokId: s.item_id,
                     quantity: s.quantity,
-                    birimMaliyet: s.uom_cost,
+                    birimMaliyet: safeUnit,
                     hareketId: hareket.id,
                 });
             } catch (_) { /* maliyet tablosu yoksa sessiz */ }
         }
     }
+
+    // Belge başlığı: maliyet + mal/KDV/genel toplam
+    let goods = 0;
+    let tax = 0;
+    let cost = 0;
+    let headerPb = null;
+    for (const row of eklenen) {
+        const mal = Number(row.amount_cost) || (Number(row.quantity) * Number(row.unit_price || 0)) || 0;
+        const kdv = mal * ((Number(row.vat_rate) || 0) / 100);
+        goods += mal;
+        tax += kdv;
+        cost += mal;
+        if (!headerPb && row.currency_code) headerPb = row.currency_code;
+    }
+    const grand = goods + tax;
+    await client.query(
+        `
+        UPDATE stock_movements
+           SET cost_total = $2,
+               goods_amount = $3,
+               tax_amount = $4,
+               grand_total = $5,
+               currency_code = COALESCE($6, currency_code)
+         WHERE id = $1
+        `,
+        [hareket.id, Number(cost.toFixed(2)), Number(goods.toFixed(2)), Number(tax.toFixed(2)), Number(grand.toFixed(2)), headerPb]
+    );
+    hareket.cost_total = Number(cost.toFixed(2));
+    hareket.goods_amount = Number(goods.toFixed(2));
+    hareket.tax_amount = Number(tax.toFixed(2));
+    hareket.grand_total = Number(grand.toFixed(2));
+    if (headerPb) hareket.currency_code = headerPb;
 
     return { hareket, satirlar: eklenen };
 }

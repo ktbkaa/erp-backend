@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -13,7 +14,11 @@ function trimOrNull(v) {
 
 router.get('/', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM companies ORDER BY id DESC');
+        // X-Firma-Id varsa yalnız o firma; boş/yoksa tüm liste (profil seçici / org ekranı)
+        const firmaId = firmaIdFromReq(req);
+        const result = firmaId
+            ? await pool.query('SELECT * FROM companies WHERE id = $1 ORDER BY id DESC', [firmaId])
+            : await pool.query('SELECT * FROM companies ORDER BY id DESC');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ hata: 'Firmaları çekerken bir pürüz çıktı.' });

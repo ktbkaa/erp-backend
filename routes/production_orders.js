@@ -777,12 +777,14 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 tuketimHareketId = h.hareket.id;
             }
 
-            // Üretim çıktısı her zaman Çıkış Kalite (CKK) deposuna; onay sonrası Mamul/YarıMamul
+            // Üretim çıktısı: operasyonda output_item_id yoksa son operasyonda emir mamulünü kullan
             let mamulHareketId = null;
-            if (op.output_item_id) {
+            const outputItemId = op.output_item_id
+                || ((!op.sonraki_line_no && Number(emir.item_id)) ? Number(emir.item_id) : null);
+            if (outputItemId) {
                 const cikti = await client.query(
                     'SELECT id, uom_code, item_type, kalite_control_gerekli FROM items WHERE id=$1',
-                    [op.output_item_id]
+                    [outputItemId]
                 );
                 const ckk = await ckkDepoCozumle(client, emir.plant_id);
                 if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
@@ -795,7 +797,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                          SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
                            SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
                          )`,
-                        [op.output_item_id, wid, emir.plant_id]
+                        [outputItemId, wid, emir.plant_id]
                     );
                 }
                 const h = await stokHareketOlustur(client, {
@@ -807,7 +809,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                     description: `${emir.order_no} / ${op.operation_code} çıktı → Çıkış Kalite`,
                     depoZorunluAtla: true,
                     satirlar: [{
-                        item_id: op.output_item_id,
+                        item_id: outputItemId,
                         quantity,
                         direction: 1,
                         uom_code: cikti.rows[0].uom_code,
@@ -817,7 +819,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 mamulHareketId = h.hareket.id;
                 await kkEmriOlustur(client, {
                     direction: 'CKK',
-                    stokId: op.output_item_id,
+                    stokId: outputItemId,
                     partiId: h.satirlar[0]?.lot_id || null,
                     depoId: ciktiDepo,
                     hedefDepoId: hedefDepo?.id || null,
@@ -850,7 +852,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
             }
 
             // Tüm ops tamamsa emri kapat; mamul miktarını güncelle
-            if (op.output_item_id === emir.item_id) {
+            if (outputItemId && Number(outputItemId) === Number(emir.item_id)) {
                 await client.query(
                     `UPDATE production_orders
                      SET produced_quantity = produced_quantity + $1, status='Uretimde'

@@ -120,6 +120,40 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+router.put('/:id', async (req, res, next) => {
+  try {
+    const { baslik, start_at, end_at, type, partner_id, lead_id, firsat_id, user_code, description } = req.body || {};
+    if (!baslik || !start_at) {
+      return res.status(400).json({ hata: 'baslik ve start_at zorunlu.' });
+    }
+    const r = await pool.query(
+      `
+      UPDATE crm_calendar_entries SET
+        baslik = $2,
+        start_at = $3,
+        end_at = $4,
+        type = COALESCE($5, type),
+        partner_id = $6,
+        lead_id = $7,
+        firsat_id = $8,
+        user_code = COALESCE($9, user_code),
+        description = $10
+      WHERE id = $1
+      RETURNING *
+      `,
+      [
+        req.params.id, baslik, start_at, end_at || null, type || null,
+        partner_id || null, lead_id || null, firsat_id || null,
+        user_code || null, description || null,
+      ]
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query(`DELETE FROM crm_calendar_entries WHERE id=$1 RETURNING id`, [req.params.id]);

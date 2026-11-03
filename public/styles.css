@@ -81,28 +81,27 @@ body.is-login {
   max-height: 100%;
   overflow: hidden;
 }
-.app-shell.sidebar-collapsed { grid-template-columns: 0 minmax(0, 1fr); }
-.app-shell.sidebar-collapsed .sidebar {
-  background: var(--sidebar);
-  color: var(--sidebar-ink);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  align-self: stretch;
-  min-height: 0;
-  height: 100%;
-  max-height: 100%;
-  width: 100%;
-  z-index: 30;
-  border-right: 1px solid var(--line);
-  box-shadow: none;
-  overflow: hidden;
+/* Menü kapalı (☰): sütunu gerçekten sıfırla — içerik taşmasın */
+.app-shell.sidebar-collapsed:not(.form-solo) {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+.app-shell.sidebar-collapsed:not(.form-solo) .sidebar {
+  min-width: 0 !important;
+  max-width: 0 !important;
+  width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  pointer-events: none;
+  opacity: 0;
 }
 
 .sidebar {
   background: var(--sidebar);
   color: var(--sidebar-ink);
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   /* Akışta kalır — grid hücresi kadar yükseklik; alt araç barı margin-top:auto ile sabit */
   position: relative;
@@ -111,10 +110,13 @@ body.is-login {
   height: 100%;
   max-height: 100%;
   width: 100%;
+  min-width: var(--sidebar-w);
+  max-width: var(--sidebar-w);
   z-index: 30;
   border-right: 1px solid var(--line);
   box-shadow: 2px 0 18px rgba(26, 35, 48, 0.04);
   overflow: hidden;
+  opacity: 1;
 }
 .sidebar-brand {
   display: flex;
@@ -2750,10 +2752,15 @@ tr.selected td { background: var(--accent-soft); }
 
 @media (max-width: 900px) {
   .app-shell { grid-template-columns: 1fr; }
+  .app-shell.sidebar-collapsed:not(.form-solo) {
+    grid-template-columns: 1fr;
+  }
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
     width: min(84vw, var(--sidebar-w));
+    min-width: min(84vw, var(--sidebar-w));
+    max-width: min(84vw, var(--sidebar-w));
     height: 100vh;
     height: 100dvh;
     max-height: none;
@@ -2761,11 +2768,20 @@ tr.selected td { background: var(--accent-soft); }
     transition: transform 0.2s ease;
     z-index: 40;
     pointer-events: auto;
+    opacity: 1;
   }
-  .sidebar.open { transform: none; }
-  .app-shell.sidebar-collapsed .sidebar {
+  .sidebar.open { transform: none; pointer-events: auto; opacity: 1; }
+  .app-shell.sidebar-collapsed:not(.form-solo) .sidebar {
     width: min(84vw, var(--sidebar-w));
+    min-width: min(84vw, var(--sidebar-w));
+    max-width: min(84vw, var(--sidebar-w));
     pointer-events: auto;
+    opacity: 1;
+    /* mobilde collapsed yine off-canvas; .open ile açılır */
+    transform: translateX(-105%);
+  }
+  .app-shell.sidebar-collapsed:not(.form-solo) .sidebar.open {
+    transform: none;
   }
   .workspace-bar { flex-wrap: wrap; }
   .bar-center { max-width: none; order: 2; }
@@ -3674,6 +3690,50 @@ select.lookup-pick::-ms-expand { display: none; }
 .lookup-browser-actionbar .btn.action {
   min-width: 4.6rem;
 }
+.lookup-browser-multi {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.lookup-browser-multi[hidden] { display: none !important; }
+.lookup-browser-multi-count {
+  font-size: 0.78rem;
+  color: var(--muted, #6a7a88);
+  min-width: 4rem;
+  text-align: right;
+}
+.lookup-browser-check {
+  width: 2.2rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.lookup-browser-check input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+.qty-plus { color: #0a7a3e; font-weight: 600; }
+.qty-minus { color: #b42318; font-weight: 600; }
+.stok-hareket-onizle-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.stok-hareket-onizle-table th,
+.stok-hareket-onizle-table td {
+  border-bottom: 1px solid var(--line, #dde3ea);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+.stok-hareket-onizle-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted, #6a7a88); }
+.stok-hareket-onizle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
 .lookup-browser-foot {
   display: flex;
   justify-content: flex-end;
@@ -3890,6 +3950,24 @@ select.lookup-pick::-ms-expand { display: none; }
   text-align: center;
   padding-left: 0.15rem;
   padding-right: 0.15rem;
+}
+
+/* Normal kabuk: form-solo değilse menü sütunu her zaman dursun */
+body:not(.form-solo) .app-shell:not(.sidebar-collapsed) {
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) !important;
+}
+body:not(.form-solo) .app-shell:not(.sidebar-collapsed) .sidebar {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  min-width: var(--sidebar-w) !important;
+  max-width: var(--sidebar-w) !important;
+  width: 100% !important;
+  overflow: hidden;
+}
+body:not(.form-solo) #formSoloLoader[hidden],
+body:not(.form-solo) #formSoloLoader {
+  display: none !important;
 }
 
 /* Form solo: Yeni/Düzelt/İncele/Kopya — yeni sekme, sol menü yok */
@@ -4651,6 +4729,65 @@ body.sql-splitting iframe { pointer-events: none; }
 .stok-firma-section .erp-section-title {
   margin-bottom: 0.45rem;
 }
+.stok-firma-card-count {
+  margin-left: auto;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted, #6b7280);
+}
+.stok-firma-plant-block {
+  border: 1px solid var(--line, #e5eaf2);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem 0.75rem;
+  background: var(--page, #f8fafc);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.stok-firma-plant-block + .stok-firma-plant-block {
+  margin-top: 0.55rem;
+}
+.stok-firma-plant-block.is-firma-genel {
+  border-color: var(--accent-line, #c5d4e8);
+  background: var(--surface, #fff);
+}
+.stok-firma-plant-block.needs-plant {
+  border-style: dashed;
+}
+.stok-firma-plant-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.25rem;
+}
+.stok-firma-plant-label {
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+.stok-firma-plant-actions {
+  margin-top: 0.55rem;
+}
+.stok-firma-plant-scope {
+  margin-bottom: 0.75rem;
+}
+.stok-firma-plant-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.9rem;
+}
+.stok-firma-plant-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.stok-firma-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
 .stok-depo-section .erp-section-title {
   margin-bottom: 0.35rem;
 }
@@ -4927,6 +5064,26 @@ body.sql-splitting iframe { pointer-events: none; }
 .erp-grid-toolbar .toolbar-hint {
   font-size: 0.72rem;
   color: var(--muted);
+}
+.erp-grid-toolbar .toolbar-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink, #2a2a2a);
+  margin-left: 0.25rem;
+  user-select: none;
+  cursor: pointer;
+}
+.erp-grid-toolbar .toolbar-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent, #3f87f5);
+}
+.field.is-disabled {
+  opacity: 0.55;
+  pointer-events: none;
 }
 .form-view.erp-form--document .detail-table {
   width: max(100%, 860px);

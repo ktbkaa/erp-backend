@@ -68,6 +68,13 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    // Üretim girişi stok hareketi üretir; yerinde düzeltme desteklenmez
+    return res.status(409).json({
+        hata: 'Üretim girişi düzeltilemez. Kaydı silip yeniden oluşturun.',
+    });
+});
+
 router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query(`DELETE FROM production_receipts WHERE id=$1 RETURNING id`, [req.params.id]);

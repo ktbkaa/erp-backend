@@ -97,6 +97,52 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+router.put('/:id', async (req, res, next) => {
+  try {
+    const mevcut = await getir(req.params.id);
+    if (!mevcut) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    if (mevcut.status === 'Onayli') {
+      return res.status(409).json({ hata: 'Onaylı tahsilat/ödeme düzeltilemez. İptal edip yeniden oluşturun.' });
+    }
+    const {
+      type, partner_id, amount, currency_code, payment_method, invoice_id, description, document_date, status,
+    } = req.body || {};
+    if (type && !['Tahsilat', 'Odeme'].includes(type)) {
+      return res.status(400).json({ hata: 'type Tahsilat veya Odeme olmalı.' });
+    }
+    await pool.query(
+      `
+      UPDATE receipts_payments SET
+        type = COALESCE($2, type),
+        partner_id = COALESCE($3, partner_id),
+        amount = COALESCE($4, amount),
+        currency_code = COALESCE($5, currency_code),
+        payment_method = COALESCE($6, payment_method),
+        invoice_id = COALESCE($7, invoice_id),
+        status = COALESCE($8, status),
+        description = COALESCE($9, description),
+        document_date = COALESCE($10::date, document_date)
+      WHERE id = $1
+      `,
+      [
+        req.params.id,
+        type || null,
+        partner_id || null,
+        amount != null ? Number(amount) : null,
+        currency_code || null,
+        payment_method || null,
+        invoice_id || null,
+        status || null,
+        description || null,
+        document_date || null,
+      ]
+    );
+    res.json(await getir(req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/:id/onayla', async (req, res, next) => {
   try {
     const row = await getir(req.params.id);

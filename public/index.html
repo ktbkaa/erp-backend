@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261102firma2" />
+  <link rel="stylesheet" href="/styles.css?v=20261103stokhareket3" />
   <script>
     (function () {
       try {
@@ -122,6 +122,7 @@
         <span class="ktb-logo ktb-logo--sidebar">
           <img class="ktb-logo-img" src="/assets/ktb-logo.png?v=20261102clear" alt="KTB ERP" width="650" height="150" decoding="async" />
         </span>
+        <!-- UI build 20261102duzelt1 -->
       </div>
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot" aria-label="Menü araçları">
@@ -510,6 +511,11 @@
         <button type="button" class="btn action ghost" data-lb-act="duzelt">Düzelt</button>
         <button type="button" class="btn action ghost" data-lb-act="kopyala">Kopyala</button>
         <button type="button" class="btn action danger" data-lb-act="sil">Sil</button>
+        <div class="lookup-browser-multi" id="lookupBrowserMultiBar" hidden>
+          <span class="lookup-browser-multi-count" data-lb-multi-count></span>
+          <button type="button" class="btn action ghost" data-lb-select-all="1">Tümünü seç</button>
+          <button type="button" class="btn action ghost" data-lb-select-all="0">Temizle</button>
+        </div>
       </div>
       <div class="lookup-browser-toolbar">
         <input type="search" id="lookupBrowserSearch" class="lookup-browser-search" placeholder="Ara — LIKE %metin% (kod / ad)…" autocomplete="off" />
@@ -523,7 +529,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261102firma2"></script>
+  <script src="/app.js?v=20261103stokhareket4"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

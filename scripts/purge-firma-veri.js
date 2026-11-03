@@ -231,11 +231,11 @@ async function purgeFirma(client, companyId, tables, log) {
   await deleteWhere(client, 'hr_leave_balance_movements',
     `balance_id IN (SELECT id FROM hr_leave_balances WHERE company_id=$1)`, p, log);
 
+  // Org tablolarını company_id turundan her zaman ayır (FK: warehouses → plants)
   const skipOrg = new Set(['plants', 'warehouses', 'companies']);
-  // company_id tabloları (birkaç tur — FK sırası için)
   for (let pass = 0; pass < 3; pass++) {
     for (const t of tables) {
-      if (!alsoOrg && skipOrg.has(t)) continue;
+      if (skipOrg.has(t)) continue;
       await deleteWhere(client, t, 'company_id = $1', p, log);
     }
   }
@@ -253,11 +253,21 @@ async function resolveCompany(client, code) {
     [code]
   );
   if (f.rows[0]) return f.rows[0];
+  // Yalnızca TEKS/tekstil alias’ları için isim fallback (rastgele firmaya yazmasın)
+  const upper = String(code || '').toUpperCase();
+  if (['TEKS', 'TELSTIL', 'TELSTİL', 'TEKSTIL', 'TEKSTİL', 'DENIM'].includes(upper)) {
+    f = await client.query(
+      `SELECT id, company_code, company_name FROM companies
+       WHERE company_name ILIKE '%tekstil%' OR company_name ILIKE '%denim%' OR company_code ILIKE 'TEKS%'
+       ORDER BY id LIMIT 1`
+    );
+    return f.rows[0] || null;
+  }
   f = await client.query(
     `SELECT id, company_code, company_name FROM companies
-     WHERE company_name ILIKE $1 OR company_name ILIKE $2
+     WHERE company_name ILIKE $1
      ORDER BY id LIMIT 1`,
-    [`%${code}%`, '%tekstil%']
+    [`%${code}%`]
   );
   return f.rows[0] || null;
 }
