@@ -16,7 +16,8 @@ router.get('/', async (req, res) => {
         }
         let result = await pool.query(
             `
-            SELECT d.*, i.plant_code, i.plant_name, f.company_code, f.company_name
+            SELECT d.*, i.plant_code, i.plant_name,
+                   f.id AS company_id, f.company_code, f.company_name
             FROM warehouses d
             JOIN plants i ON d.plant_id = i.id
             JOIN companies f ON i.company_id = f.id

@@ -7205,7 +7205,25 @@ const STOK_FIRMA_PARAM_SECTIONS = [
     title: 'Satış / Satınalma',
     fields: [
       { key: 'sales_price', label: 'Satış fiyatı', type: 'number' },
+      {
+        key: 'currency_code',
+        label: 'Satış para birimi',
+        type: 'lookup',
+        lookup: 'para-birimleri',
+        valueKey: 'currency_code',
+        labelKey: 'currency_name',
+        codeKey: 'currency_code',
+      },
       { key: 'purchase_uom', label: 'Satınalma birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+      {
+        key: 'purchase_currency_code',
+        label: 'Satınalma para birimi',
+        type: 'lookup',
+        lookup: 'para-birimleri',
+        valueKey: 'currency_code',
+        labelKey: 'currency_name',
+        codeKey: 'currency_code',
+      },
       { key: 'sales_uom', label: 'Satış birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
       { key: 'sa_tolerans_min_yuzde', label: 'SA tolerans min %', type: 'number' },
       { key: 'sa_tolerans_max_yuzde', label: 'SA tolerans max %', type: 'number' },
@@ -9108,7 +9126,7 @@ function ensureFormRecordId(screen, rec) {
   return rec;
 }
 
-/** Form üst çubuğu: İncele → Yeni/Düzelt/Kopyala/Sil; Düzelt → Yeni/Kopyala/Sil */
+/** Form üst çubuğu: İncele → Yeni/Düzelt/Kopyala/Sil; Düzelt → Yeni/Kopyala/Sil (+Kaydet grubu) */
 function updateFormCrudButtons(screen) {
   const mode = state.formMode;
   if (screen && state.formRecord) ensureFormRecordId(screen, state.formRecord);
@@ -11730,7 +11748,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   companies: ['companies'],
   'is-yerleri': ['is-yerleri', 'companies'],
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
-  'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'vergi-kodlari', 'finans-vergi-kodlari'],
+  'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
     'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',
@@ -13048,6 +13066,8 @@ function emptyStokFirmaParam(companyId, plantId = null) {
     plant_id: plantId != null && plantId !== '' ? Number(plantId) : null,
     is_active: true,
     sales_price: null,
+    currency_code: 'TRY',
+    purchase_currency_code: 'TRY',
     purchase_uom: null,
     sales_uom: null,
     sa_tolerans_min_yuzde: 0,
@@ -13105,6 +13125,8 @@ function ensureStokFirmaParamsSeed(rec) {
     list = [{
       ...emptyStokFirmaParam(cid, null),
       sales_price: rec.sales_price ?? null,
+      currency_code: rec.currency_code || 'TRY',
+      purchase_currency_code: rec.purchase_currency_code || rec.currency_code || 'TRY',
       purchase_uom: rec.purchase_uom || null,
       sales_uom: rec.sales_uom || null,
       sa_tolerans_min_yuzde: rec.sa_tolerans_min_yuzde ?? 0,
@@ -13599,6 +13621,8 @@ function applyPrimaryStokFirmaToMaster(master) {
   master.sales_price = primary.sales_price ?? master.sales_price;
   master.purchase_uom = primary.purchase_uom ?? master.purchase_uom;
   master.sales_uom = primary.sales_uom ?? master.sales_uom;
+  master.currency_code = primary.currency_code || master.currency_code || 'TRY';
+  master.purchase_currency_code = primary.purchase_currency_code || master.purchase_currency_code || 'TRY';
   master.sa_tolerans_min_yuzde = primary.sa_tolerans_min_yuzde ?? master.sa_tolerans_min_yuzde;
   master.sa_tolerans_max_yuzde = primary.sa_tolerans_max_yuzde ?? master.sa_tolerans_max_yuzde;
   master.temin_suresi_days = primary.temin_suresi_days ?? master.temin_suresi_days;
@@ -13653,16 +13677,33 @@ function stokDepoWarehouseList(rec) {
     : (Array.isArray(state.warehouses) ? state.warehouses : []);
   const plantId = Number(rec?.plant_id) || null;
   const firmaId = Number(rec?.company_id) || getActiveFirmaId() || null;
+  const firma = (Array.isArray(state.companies) ? state.companies : [])
+    .find((c) => Number(c.id) === Number(firmaId));
+  const firmaCode = firma?.company_code || null;
   const plants = Array.isArray(state.lookupCache?.['is-yerleri'])
     ? state.lookupCache['is-yerleri']
     : (Array.isArray(state.isYerleri) ? state.isYerleri : []);
   const firmaPlantIds = firmaId
     ? new Set(plants.filter((p) => Number(p.company_id) === firmaId).map((p) => Number(p.id)))
     : null;
+  // Firmalar sekmesinden seçili iş yeri kapsamı (işaretli plant’ler)
+  const bagPlantIds = new Set(
+    (Array.isArray(rec?.is_yeri_baglari) ? rec.is_yeri_baglari : [])
+      .filter((b) => b && b.is_active !== false && Number(b.plant_id))
+      .map((b) => Number(b.plant_id))
+  );
   const filtered = all.filter((w) => {
     if (!w || w.is_active === false) return false;
-    // Firma kapsamı: o firmadaki iş yerlerine bağlı depolar
-    if (firmaPlantIds && w.plant_id != null && !firmaPlantIds.has(Number(w.plant_id))) {
+    // API company_code / company_id ile doğrudan eşleş
+    if (firmaId && w.company_id != null && Number(w.company_id) !== Number(firmaId)) return false;
+    if (firmaCode && w.company_code && String(w.company_code) !== String(firmaCode)) return false;
+    // Plants cache doluysa iş yeri kapsamında filtrele; boşsa (lookup henüz yok) kesme
+    if (firmaPlantIds && firmaPlantIds.size > 0 && w.plant_id != null
+      && !firmaPlantIds.has(Number(w.plant_id))) {
+      return false;
+    }
+    // Kullanıcı iş yeri kapsamını daralttıysa yalnız o depolar
+    if (bagPlantIds.size > 0 && w.plant_id != null && !bagPlantIds.has(Number(w.plant_id))) {
       return false;
     }
     return true;
@@ -18540,7 +18581,7 @@ async function syncActiveFirmaAfterOrgSave(screen, saved) {
   renderFirmaPicker();
 }
 
-/** Kayıt sonrası: stay = formda kal, close = listeye dön, new = yeni form */
+/** Kayıt sonrası: stay = incele modu + Düzelt, close = ana ekran, new = boş yeni form */
 async function finishSaveForm(screen, saved, after = 'stay') {
   const listScreenId = (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri')
     ? 'uretim-emirleri'
@@ -18556,17 +18597,17 @@ async function finishSaveForm(screen, saved, after = 'stay') {
       state.rows = state.rows.map((r) => (String(r.id) === String(id) ? { ...r, ...(saved || {}) } : r));
     }
     state.filtered = applyFilters(state.rows, screen);
-    // Aynı sekmede Düzelt’e geç — yeni sekme açma
+    // Kaydet → incele: Kaydet grubu kalkar, Düzelt görünür
     let record = { ...(saved || {}), id };
     try {
       record = await api(`${screenApiBase(screen.endpoint)}/${id}`);
     } catch (_) { /* kaydedilen haliyle devam */ }
-    state.formMode = 'duzelt';
+    state.formMode = 'incele';
     state.formRecord = record;
     state.formActiveTab = state.formActiveTab || screen.formTabs?.[0]?.id || null;
     const tab = state.openTabs.find((t) => t.key === formKey);
     if (tab) {
-      tab.formMode = 'duzelt';
+      tab.formMode = 'incele';
       tab.formRecord = record;
       const code = record?.[screen.codeField] || '';
       tab.title = code ? `${screen.title} · ${code}` : screen.title;
@@ -18574,7 +18615,7 @@ async function finishSaveForm(screen, saved, after = 'stay') {
     showView('form');
     ensureSearchBarVisible();
     const titleEl = $('#screenTitle');
-    if (titleEl) titleEl.textContent = `${screen.title} · ${MODE_LABELS.duzelt}`;
+    if (titleEl) titleEl.textContent = `${screen.title} · ${MODE_LABELS.incele}`;
     renderForm(screen);
     renderTabBar();
     return;
@@ -18586,6 +18627,7 @@ async function finishSaveForm(screen, saved, after = 'stay') {
 
   if (after === 'new') {
     if (leaveFormSolo(listScreenId)) return;
+    // Kaydet yeni → boş yeni kayıt formu (liste sekmesi arka planda kalsın)
     if (listScreenId !== screen.id) {
       await openScreen(listScreenId);
     } else {
@@ -18596,9 +18638,9 @@ async function finishSaveForm(screen, saved, after = 'stay') {
     return;
   }
 
-  // close → liste
-  if (leaveFormSolo(listScreenId)) return;
-  await openScreen(listScreenId);
+  // Kaydet kapat → ana ekran (form sekmesi kapanır)
+  if (leaveFormSolo(null)) return;
+  showHome();
 }
 
 async function saveForm({ after = 'stay' } = {}) {

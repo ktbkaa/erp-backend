@@ -327,6 +327,7 @@ async function saveChildren(client, stokId, body) {
                 `INSERT INTO item_company_params (
                     item_id, company_id, plant_id, is_active,
                     sales_price, purchase_uom, sales_uom,
+                    currency_code, purchase_currency_code,
                     sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, temin_suresi_days, cikis_type,
                     default_tax_code_id, varsayilan_vat_rate,
                     safety_stock, min_stock, max_stock, reorder_level,
@@ -336,17 +337,20 @@ async function saveChildren(client, stokId, body) {
                  ) VALUES (
                     $1,$2,$3,COALESCE($4,TRUE),
                     $5,$6,$7,
-                    $8,$9,$10,$11,
-                    $12,$13,
-                    $14,$15,$16,$17,
-                    $18,$19,
+                    $8,$9,
+                    $10,$11,$12,$13,
+                    $14,$15,
+                    $16,$17,$18,$19,
                     $20,$21,
-                    COALESCE($22,'Takipsiz'),COALESCE($23,'Takipsiz'),NOW()
+                    $22,$23,
+                    COALESCE($24,'Takipsiz'),COALESCE($25,'Takipsiz'),NOW()
                  )`,
                 [
                     stokId, firmaId, plantId,
                     d.is_active === false ? false : true,
                     d.sales_price ?? null, trimOrNull(d.purchase_uom), trimOrNull(d.sales_uom),
+                    trimOrNull(d.currency_code) || 'TRY',
+                    trimOrNull(d.purchase_currency_code) || trimOrNull(d.currency_code) || 'TRY',
                     d.sa_tolerans_min_yuzde ?? null, d.sa_tolerans_max_yuzde ?? null,
                     d.temin_suresi_days ?? null, trimOrNull(d.cikis_type),
                     d.default_tax_code_id ? Number(d.default_tax_code_id) : null,
@@ -531,7 +535,8 @@ router.post('/', async (req, res) => {
                     sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, varsayilan_vat_rate,
                     min_stock, optimum_order_quantity, net_agirlik, brut_agirlik,
                     series_politika, class_code, temin_suresi_days, reorder_level, fixed_order_quantity,
-                    cikis_type, silindi, default_tax_code_id
+                    cikis_type, silindi, default_tax_code_id,
+                    currency_code, purchase_currency_code
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,COALESCE($10,'Satinalma'),COALESCE($11,TRUE),
@@ -545,7 +550,8 @@ router.post('/', async (req, res) => {
                     COALESCE($42,0),COALESCE($43,0),COALESCE($44,20),
                     COALESCE($45,0),$46,$47,$48,
                     COALESCE($49,'Takipsiz'),$50,COALESCE($51,0),COALESCE($52,0),$53,
-                    COALESCE($54,'Manuel'),COALESCE($55,FALSE),$56
+                    COALESCE($54,'Manuel'),COALESCE($55,FALSE),$56,
+                    COALESCE($57,'TRY'),COALESCE($58,'TRY')
                 )
                 RETURNING id
                 `,
@@ -574,6 +580,8 @@ router.post('/', async (req, res) => {
                     trimOrNull(m.cikis_type) || 'Manuel',
                     typeof m.silindi === 'boolean' ? m.silindi : false,
                     taxCodeId ?? null,
+                    trimOrNull(m.currency_code) || 'TRY',
+                    trimOrNull(m.purchase_currency_code) || trimOrNull(m.currency_code) || 'TRY',
                 ]
             );
             const stokId = stokSonuc.rows[0].id;
@@ -736,7 +744,9 @@ router.put('/:id', async (req, res) => {
                     class_code = COALESCE($53, class_code),
                     cikis_type = COALESCE($54, cikis_type),
                     silindi = COALESCE($55, silindi),
-                    default_tax_code_id = CASE WHEN $57::boolean THEN $56 ELSE default_tax_code_id END
+                    default_tax_code_id = CASE WHEN $57::boolean THEN $56 ELSE default_tax_code_id END,
+                    currency_code = COALESCE($58, currency_code, 'TRY'),
+                    purchase_currency_code = COALESCE($59, purchase_currency_code, 'TRY')
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -798,6 +808,8 @@ router.put('/:id', async (req, res) => {
                     typeof m.silindi === 'boolean' ? m.silindi : null,
                     taxCodeId === undefined ? null : taxCodeId,
                     taxCodeId !== undefined,
+                    trimOrNull(m.currency_code) || 'TRY',
+                    trimOrNull(m.purchase_currency_code) || trimOrNull(m.currency_code) || 'TRY',
                 ]
             );
             if (!upd.rows[0]) throw Object.assign(new Error('Stok bulunamadı.'), { status: 404 });
