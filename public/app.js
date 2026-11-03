@@ -1202,16 +1202,30 @@ const MODULES = [
           { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
           { key: 'lot_no', label: 'Parti' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
+          {
+            key: 'tax_code_id',
+            label: 'KDV %',
+            type: 'lookup',
+            lookup: 'vergi-kodlari',
+            valueKey: 'id',
+            labelKey: 'tax_name',
+            codeKey: 'tax_code',
+            size: 'short',
+          },
+          { key: 'vat_rate', label: 'Oran %', type: 'number', size: 'short', readOnly: true },
           { key: 'raf_code', label: 'Raf' },
           { key: 'konum_code', label: 'Konum' },
         ],
-        // Stok seçilince satır birimi / vergi stok kartından
+        // Stok seçilince satır birimi / vergi stok kartından; KDV tanımından oran
         formLinks: {
           item_id: [
             { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'tax_code_id', fromItem: 'default_tax_code_id' },
             { field: 'vat_rate', fromItem: 'varsayilan_vat_rate' },
             { field: 'currency_code', fromItem: 'currency_code' },
+          ],
+          tax_code_id: [
+            { field: 'vat_rate', fromLookup: 'vergi-kodlari', parentKey: 'tax_code_id', prop: 'rate' },
           ],
         },
         detailKey: 'satirlar',
@@ -11865,7 +11879,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   'is-yerleri': ['is-yerleri', 'companies'],
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari'],
-  'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok'],
+  'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
     'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',
@@ -12574,6 +12588,17 @@ function isFooterNoteField(f) {
     || /^not_/i.test(k);
 }
 
+/** Satır KDV oranı: vergi tanımı (tax_code_id) seçildiyse tanımdan, yoksa vat_rate. */
+function resolveRowVatRate(row) {
+  if (row?.tax_code_id) {
+    const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+    const tax = taxRows.find((t) => Number(t.id) === Number(row.tax_code_id));
+    if (tax && tax.rate != null && tax.rate !== '') return Number(tax.rate);
+  }
+  const n = Number(row?.vat_rate);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /** Belge satırlarından ara / KDV / genel toplam (çoklu isk + KDV dahil/hariç + ÖTV + tevkifat). */
 function computeDocumentTotals(rows, fields) {
   const list = Array.isArray(rows) ? rows : [];
@@ -12595,7 +12620,7 @@ function computeDocumentTotals(rows, fields) {
     const isk1 = Number(row.discount_rate) || 0;
     const isk2 = Number(row.discount_rate_2) || 0;
     const isk3 = Number(row.discount_rate_3) || 0;
-    const kdvOran = Number(row.vat_rate) || 0;
+    const kdvOran = resolveRowVatRate(row);
     const otvOran = Number(row.excise_rate) || 0;
     const tevOran = Number(row.withholding_rate) || 0;
     const bandOran = Number(row.bandrol_rate) || 0;
@@ -16606,7 +16631,13 @@ function applyLookupBrowserMultiSelect() {
     blank.quantity = ''; // miktar zorunlu — kullanıcı doldurmadan kaydedilmez
     blank.currency_code = hit.currency_code || masterSnap.currency_code || 'TRY';
     blank.rate_type = 'TCMB-ALIS';
+    blank.tax_code_id = hit.default_tax_code_id || null;
     blank.vat_rate = hit.varsayilan_vat_rate != null ? hit.varsayilan_vat_rate : '';
+    if (blank.tax_code_id) {
+      const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+      const tax = taxRows.find((t) => Number(t.id) === Number(blank.tax_code_id));
+      if (tax && tax.rate != null && tax.rate !== '') blank.vat_rate = Number(tax.rate);
+    }
     blank.unit_price = '';
     blank.lot_no = '';
     blank._satir_kayitli = false;
@@ -19069,6 +19100,14 @@ async function saveForm({ after = 'stay' } = {}) {
       if (!s.uom_code) {
         const st = stokLookupById(itemId);
         if (st?.uom_code) s.uom_code = st.uom_code;
+      }
+      // KDV tanımdan oran senkronu
+      if (s.tax_code_id) {
+        const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+        const tax = taxRows.find((t) => Number(t.id) === Number(s.tax_code_id));
+        if (tax && tax.rate != null && tax.rate !== '') s.vat_rate = Number(tax.rate);
+      } else if (s.vat_rate == null || s.vat_rate === '') {
+        s.vat_rate = 0;
       }
       clean.push(s);
     }

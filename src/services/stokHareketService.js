@@ -186,8 +186,24 @@ async function stokHareketOlustur(client, {
         const rateType = String(s.rate_type || 'TCMB-ALIS').trim() || 'TCMB-ALIS';
         const exchangeRate = Number(s.exchange_rate);
         const safeRate = Number.isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate : 1;
-        const vatRate = Number(s.vat_rate);
-        const safeVat = Number.isFinite(vatRate) ? vatRate : 0;
+        let safeVat = Number(s.vat_rate);
+        if (!Number.isFinite(safeVat)) safeVat = 0;
+        const taxCodeId = s.tax_code_id ? Number(s.tax_code_id) : null;
+        if (taxCodeId) {
+            const tax = await client.query(
+                `
+                SELECT r.rate
+                FROM fin_tax_rates r
+                WHERE r.tax_code_id = $1
+                ORDER BY r.valid_from DESC NULLS LAST, r.id DESC
+                LIMIT 1
+                `,
+                [taxCodeId]
+            ).catch(() => ({ rows: [] }));
+            if (tax.rows[0]?.rate != null && tax.rows[0].rate !== '') {
+                safeVat = Number(tax.rows[0].rate);
+            }
+        }
         const lotNo = String(s.lot_no || '').trim() || null;
 
         const satirRes = await client.query(
@@ -195,8 +211,9 @@ async function stokHareketOlustur(client, {
             INSERT INTO stock_movement_lines
                 (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status,
                  raf_code, konum_code, series_id, serial_no,
-                 uom_cost, amount_cost, unit_price, currency_code, rate_type, exchange_rate, vat_rate, lot_no)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+                 uom_cost, amount_cost, unit_price, currency_code, rate_type, exchange_rate, vat_rate, lot_no,
+                 tax_code_id)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
             RETURNING *;
             `,
             [
@@ -205,6 +222,7 @@ async function stokHareketOlustur(client, {
                 s.raf_code || null, s.konum_code || null,
                 seriesId, serialNo,
                 safeUnit, amountCost, safeUnit, currencyCode, rateType, safeRate, safeVat, lotNo,
+                taxCodeId,
             ]
         );
         const satirRow = satirRes.rows[0];

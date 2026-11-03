@@ -119,11 +119,75 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.put('/:id', async (req, res) => {
+  try {
+    const cur = await pool.query(
+      `SELECT id, status FROM vendor_delivery_notes WHERE id=$1`,
+      [req.params.id]
+    );
+    if (!cur.rows[0]) return res.status(404).json({ hata: 'Tedarikçi irsaliyesi bulunamadı.' });
+    if (!['Acik', 'Taslak'].includes(String(cur.rows[0].status || 'Acik'))) {
+      return res.status(409).json({ hata: `Bu durumda düzeltilemez (${cur.rows[0].status}).` });
+    }
+    const accepted = await pool.query(
+      `SELECT 1 FROM vendor_delivery_note_lines
+       WHERE delivery_note_id=$1 AND COALESCE(accepted_flag,0) > 0 LIMIT 1`,
+      [req.params.id]
+    );
+    if (accepted.rows[0]) {
+      return res.status(409).json({ hata: 'Kısmen kabul edilmiş irsaliye düzeltilemez.' });
+    }
+    const {
+      partner_id, purchase_order_id, delivery_date, description, satirlar, plant_id,
+    } = req.body || {};
+    await withTransaction(pool, async (client) => {
+      await client.query(
+        `
+        UPDATE vendor_delivery_notes SET
+          partner_id = COALESCE($2, partner_id),
+          purchase_order_id = COALESCE($3, purchase_order_id),
+          delivery_date = COALESCE($4::date, delivery_date),
+          description = COALESCE($5, description),
+          plant_id = COALESCE($6, plant_id)
+        WHERE id = $1
+        `,
+        [
+          req.params.id,
+          partner_id || null,
+          purchase_order_id || null,
+          delivery_date || null,
+          description || null,
+          plant_id || null,
+        ]
+      );
+      if (Array.isArray(satirlar)) {
+        if (!satirlar.length) throw Object.assign(new Error('satirlar zorunlu.'), { status: 400 });
+        await client.query(`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id=$1`, [req.params.id]);
+        for (const s of satirlar) {
+          if (!s.item_id || s.quantity == null) continue;
+          await client.query(
+            `INSERT INTO vendor_delivery_note_lines
+              (delivery_note_id, order_line_id, item_id, quantity, uom_code, unit_price, line_description)
+             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+            [
+              req.params.id, s.order_line_id || null, s.item_id, s.quantity,
+              s.uom_code || null, s.unit_price ?? 0, s.line_description || null,
+            ]
+          );
+        }
+      }
+    });
+    res.json(await getir(req.params.id));
+  } catch (err) {
+    res.status(err.status || 400).json({ hata: err.message });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
     const cur = await pool.query(`SELECT id, status FROM vendor_delivery_notes WHERE id=$1`, [req.params.id]);
     if (!cur.rows[0]) return res.status(404).json({ hata: 'Tedarikçi irsaliyesi bulunamadı.' });
-    if (cur.rows[0].status && !['Taslak', 'Iptal'].includes(cur.rows[0].status)) {
+    if (cur.rows[0].status && !['Taslak', 'Iptal', 'Acik'].includes(cur.rows[0].status)) {
       return res.status(409).json({ hata: `Bu durumda silinemez (${cur.rows[0].status}).` });
     }
     await pool.query(`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id=$1`, [req.params.id]);

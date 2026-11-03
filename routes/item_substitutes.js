@@ -52,6 +52,34 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+router.put('/:id', async (req, res, next) => {
+  try {
+    const { item_id, ikame_item_id, priority, description } = req.body || {};
+    if (!item_id || !ikame_item_id) {
+      return res.status(400).json({ hata: 'item_id ve ikame_item_id zorunlu.' });
+    }
+    if (Number(item_id) === Number(ikame_item_id)) {
+      return res.status(400).json({ hata: 'Stok kendi ikamesi olamaz.' });
+    }
+    const r = await pool.query(
+      `
+      UPDATE item_substitutes SET
+        item_id = $2,
+        ikame_item_id = $3,
+        priority = COALESCE($4, priority),
+        description = $5
+      WHERE id = $1
+      RETURNING *
+      `,
+      [req.params.id, item_id, ikame_item_id, priority, description || null]
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query(`DELETE FROM item_substitutes WHERE id=$1 RETURNING id`, [req.params.id]);

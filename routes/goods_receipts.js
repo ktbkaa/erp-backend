@@ -406,6 +406,13 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+router.put('/:id', async (req, res) => {
+    // Mal kabul stok hareketi üretir; yerinde düzeltme desteklenmez
+    return res.status(409).json({
+        hata: 'Mal kabul düzeltilemez. Kaydı silip yeniden oluşturun.',
+    });
+});
+
 router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query(`DELETE FROM goods_receipts WHERE id=$1 RETURNING id`, [req.params.id]);
