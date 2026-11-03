@@ -1091,8 +1091,6 @@ const MODULES = [
         crud: false,
         readOnly: true,
         hideActions: true,
-        // Sağ kolon: Firma/İş yeri gibi dikey yığın
-        filterMainStack: true,
         contextMenu: [
           { id: 'stok-hareketleri', label: 'Stok Hareketleri', openScreen: 'stok-hareketleri', passFilters: ['item_code', 'warehouse_code', 'item_id', 'warehouse_id'] },
         ],
@@ -11417,12 +11415,21 @@ function renderFilterField(f) {
     </div>`;
 }
 
+/** Sağ filtre kolonu yoğunluğu: az alan → geniş dikey; çok alan → daha kısa + alta kırılım */
+function filterMainDensityClass(rightCount, screen) {
+  // Eski yan yana ızgara (nadir opt-out)
+  if (screen?.filterMainStack === false) return '';
+  const n = Number(rightCount) || 0;
+  if (n >= 6) return 'filter-col--stack filter-col--stack-dense';
+  if (n >= 4) return 'filter-col--stack filter-col--stack-mid';
+  return 'filter-col--stack filter-col--stack-wide';
+}
+
 function renderFilterPane(screen) {
   const grid = $('#filterGrid');
   const { left, right } = partitionFilters(screen.filters || []);
-  const mainColClass = screen.filterMainStack
-    ? 'filter-col filter-col--main filter-col--stack'
-    : 'filter-col filter-col--main';
+  const density = filterMainDensityClass(right.length, screen);
+  const mainColClass = ['filter-col', 'filter-col--main', density].filter(Boolean).join(' ');
   grid.innerHTML = `
     <div class="filter-col filter-col--scope">
       ${left.map(renderFilterField).join('') || '<div class="filter-col-empty"></div>'}
