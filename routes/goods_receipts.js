@@ -5,8 +5,17 @@ const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { stokHareketOlustur, assertStokDepoIzin } = require('../src/services/stokHareketService');
-const { girisDepoCozumle, gkkDepoCozumle } = require('../src/services/kaliteService');
+const { girisDepoCozumle, gkkDepoCozumle, depoBulKodVeyaRol } = require('../src/services/kaliteService');
 const { parametreAl } = require('../src/utils/yetki');
+
+/** Sarf / kalite-kapalı stoklar mal kabulde GKK zincirine girmez */
+function stokKaliteGerekliMi(stokRow, bodyGkk) {
+    if (bodyGkk === false) return false;
+    if (!stokRow) return true;
+    if (String(stokRow.item_type || '') === 'Sarf') return false;
+    if (stokRow.kalite_control_gerekli === false) return false;
+    return true;
+}
 
 async function kabulGetir(id) {
     const k = await pool.query(`
@@ -127,12 +136,14 @@ router.post('/', async (req, res) => {
             const islenen = [];
             const plantId = siparis.rows[0].plant_id || null;
             const girisDepo = await girisDepoCozumle(client, plantId);
-            if (!girisDepo) {
-                throw new Error('Giriş deposu tanımlı değil (GIRIS_DEPO_KODU / warehouse_rolu=Giris).');
-            }
-            // Mal kabul her zaman Giriş Depo'ya düşer; miktar kontrolü → GKK → Hammadde
-            const hedefDepoId = girisDepo.id;
+            const hammaddeDepo = await depoBulKodVeyaRol(client, {
+                kodParam: 'HAMMADDE_DEPO_KODU', role: 'Hammadde', plantId,
+            });
+            const normalDepo = await depoBulKodVeyaRol(client, {
+                kodParam: 'NORMAL_DEPO_KODU', role: 'Normal', plantId,
+            });
             const depoZorunlu = String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
+            let herhangiQc = false;
 
             for (const ks of kabulSatirlari) {
                 const satir = siparisSatirlari.rows.find((x) => x.id === Number(ks.order_line_id));
@@ -146,11 +157,32 @@ router.post('/', async (req, res) => {
 
                 const stok = await client.query(
                     `SELECT id, uom_code, kalite_control_gerekli, varsayilan_giris_warehouse_id, lot_politika,
-                            item_code, item_name
+                            item_code, item_name, item_type
                      FROM items WHERE id=$1`,
                     [satir.item_id]
                 );
                 if (!stok.rows[0]) throw new Error(`Stok yok: ${satir.item_id}`);
+
+                const needsQc = stokKaliteGerekliMi(stok.rows[0], gkk_gerekli);
+                let hedefDepoId;
+                if (needsQc) {
+                    if (!girisDepo) {
+                        throw new Error('Giriş deposu tanımlı değil (GIRIS_DEPO_KODU / warehouse_rolu=Giris).');
+                    }
+                    hedefDepoId = girisDepo.id;
+                    herhangiQc = true;
+                } else {
+                    // Sarf / QC kapalı: doğrudan kullanılabilir depoya
+                    hedefDepoId = stok.rows[0].varsayilan_giris_warehouse_id
+                        || (String(stok.rows[0].item_type) === 'Sarf'
+                            ? (normalDepo?.id || hammaddeDepo?.id)
+                            : (hammaddeDepo?.id || normalDepo?.id))
+                        || warehouse_id
+                        || null;
+                    if (!hedefDepoId) {
+                        throw new Error('Sarf/kalite-muaf kabul için hedef depo bulunamadı (Normal/Hammadde).');
+                    }
+                }
 
                 if (depoZorunlu) {
                     try {
@@ -194,17 +226,24 @@ router.post('/', async (req, res) => {
                     item_code: satir.item_code || stok.rows[0].item_code,
                     item_name: satir.item_name || stok.rows[0].item_name,
                     uom_code: satir.uom_code || stok.rows[0].uom_code,
+                    needs_qc: needsQc,
                 });
             }
+
+            const primaryDepoId = herhangiQc
+                ? (girisDepo?.id || hareketSatirlari[0]?.warehouse_id)
+                : (hareketSatirlari[0]?.warehouse_id);
 
             const { hareketKoduBul, BELGE_TIPI } = require('../src/utils/belgeOmurga');
             const hk = await hareketKoduBul(client, BELGE_TIPI.MAL_KABUL);
             const hareket = await stokHareketOlustur(client, {
                 hareketTipi: 'SATINALMA_GIRIS',
                 isYeriId: plantId,
-                depoId: hedefDepoId,
+                depoId: primaryDepoId,
                 belgeTipi: 'MAL_KABUL',
-                description: `SAS ${siparis.rows[0].order_no} mal kabul → Giriş Depo`,
+                description: herhangiQc
+                    ? `SAS ${siparis.rows[0].order_no} mal kabul → Giriş Depo`
+                    : `SAS ${siparis.rows[0].order_no} mal kabul (kalite muaf / sarf)`,
                 hareketKoduId: hk?.id || null,
                 satirlar: hareketSatirlari,
             });
@@ -216,7 +255,7 @@ router.post('/', async (req, res) => {
                 const pf = await client.query(`SELECT company_id FROM plants WHERE id=$1`, [plantId]);
                 firmaId = pf.rows[0]?.company_id || null;
             }
-            const gkkDepo = await gkkDepoCozumle(client, plantId);
+            const gkkDepo = herhangiQc ? await gkkDepoCozumle(client, plantId) : null;
             const kabul = await client.query(
                 `INSERT INTO goods_receipts (
                     receipt_no, purchase_order_id, warehouse_id, item_movement_id, company_id, plant_id,
@@ -226,10 +265,10 @@ router.post('/', async (req, res) => {
                  ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,CURRENT_DATE),$11,$12,$13,$14,COALESCE($15,'Onayli'),$16)
                  RETURNING id`,
                 [
-                    kabulNo, purchase_order_id, hedefDepoId, anaHareketId, firmaId, plantId,
+                    kabulNo, purchase_order_id, primaryDepoId, anaHareketId, firmaId, plantId,
                     vendor_delivery_note_no || null, delivery_date || null, vendor_invoice_no || null,
                     receipt_date || null, description || null, internal_note || null,
-                    true,
+                    herhangiQc,
                     received_by || null, kabulDurum || 'Onayli',
                     vendor_delivery_note_id || null,
                 ]
@@ -298,34 +337,37 @@ router.post('/', async (req, res) => {
                 );
             }
 
-            // Giriş kontrol belgesi: miktar/ürün doğrulaması sonrası GKK'ya aktarım
-            const inspNo = await sonrakiBelgeNo(client, 'GIRIS_KONTROL');
-            const insp = await client.query(
-                `INSERT INTO incoming_inspections (
-                    inspection_no, company_id, plant_id, purchase_order_id, goods_receipt_id,
-                    source_warehouse_id, target_warehouse_id, status, description
-                 ) VALUES ($1,$2,$3,$4,$5,$6,$7,'Acik',$8) RETURNING id`,
-                [
-                    inspNo, firmaId, plantId, purchase_order_id, kabulId,
-                    hedefDepoId, gkkDepo?.id || null,
-                    `Mal kabul ${kabulNo} giriş kontrolü`,
-                ]
-            );
-            let lineNo = 1;
-            for (const s of receiptLineIds) {
-                const matchOk = Math.abs(Number(s.ordered_quantity) - Number(s.quantity)) < 1e-9;
-                await client.query(
-                    `INSERT INTO incoming_inspection_lines (
-                        inspection_id, line_no, order_line_id, receipt_line_id, item_id,
-                        ordered_quantity, received_quantity, accepted_quantity, rejected_quantity,
-                        uom_code, match_ok, item_code, item_name
-                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10,$11,$12)`,
+            // Giriş kontrol yalnızca kalite gerektiren satırlar için
+            const qcLines = receiptLineIds.filter((s) => s.needs_qc);
+            if (qcLines.length) {
+                const inspNo = await sonrakiBelgeNo(client, 'GIRIS_KONTROL');
+                const insp = await client.query(
+                    `INSERT INTO incoming_inspections (
+                        inspection_no, company_id, plant_id, purchase_order_id, goods_receipt_id,
+                        source_warehouse_id, target_warehouse_id, status, description
+                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,'Acik',$8) RETURNING id`,
                     [
-                        insp.rows[0].id, lineNo++, s.order_line_id, s.receipt_line_id, s.item_id,
-                        s.ordered_quantity, s.quantity, s.quantity,
-                        s.uom_code || null, matchOk, s.item_code || null, s.item_name || null,
+                        inspNo, firmaId, plantId, purchase_order_id, kabulId,
+                        girisDepo?.id || primaryDepoId, gkkDepo?.id || null,
+                        `Mal kabul ${kabulNo} giriş kontrolü`,
                     ]
                 );
+                let lineNo = 1;
+                for (const s of qcLines) {
+                    const matchOk = Math.abs(Number(s.ordered_quantity) - Number(s.quantity)) < 1e-9;
+                    await client.query(
+                        `INSERT INTO incoming_inspection_lines (
+                            inspection_id, line_no, order_line_id, receipt_line_id, item_id,
+                            ordered_quantity, received_quantity, accepted_quantity, rejected_quantity,
+                            uom_code, match_ok, item_code, item_name
+                         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10,$11,$12)`,
+                        [
+                            insp.rows[0].id, lineNo++, s.order_line_id, s.receipt_line_id, s.item_id,
+                            s.ordered_quantity, s.quantity, s.quantity,
+                            s.uom_code || null, matchOk, s.item_code || null, s.item_name || null,
+                        ]
+                    );
+                }
             }
 
             // Sipariş durumu

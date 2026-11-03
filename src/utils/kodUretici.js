@@ -165,6 +165,8 @@ function stokSeriKodundanTip(stokTipi) {
             return 'TICARI';
         case 'Hizmet':
             return 'TICARI';
+        case 'Sarf':
+            return 'TICARI';
         default:
             return 'TICARI';
     }

@@ -943,6 +943,7 @@ const MODULES = [
           Mamul: 'MAMUL',
           Ticari: 'TICARI',
           Hizmet: 'TICARI',
+          Sarf: 'TICARI',
         } },
         filters: [
           { key: 'company_code', label: 'Firma' },
@@ -961,7 +962,7 @@ const MODULES = [
           { key: 'sales_price', label: 'Fiyat' },
         ],
         masterFields: [
-          { key: 'item_type', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true, lead: true },
+          { key: 'item_type', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet', 'Sarf'], required: true, lead: true },
           { key: 'item_code', label: 'Stok kodu', code: true, required: true },
           { key: 'item_name', label: 'Stok adı', name: true, required: true },
           { key: 'description', label: 'Açıklama' },
@@ -986,7 +987,7 @@ const MODULES = [
           {
             id: 'ana', label: 'Stok Kart', kind: 'master-detail',
             masterFields: [
-              { key: 'item_type', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet'], required: true, lead: true, group: 'kimlik' },
+              { key: 'item_type', label: 'Stok tipi', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Hizmet', 'Sarf'], required: true, lead: true, group: 'kimlik' },
               { key: 'item_code', label: 'Stok kodu', code: true, required: true, group: 'kimlik' },
               { key: 'item_name', label: 'Stok adı', name: true, required: true, group: 'kimlik' },
               { key: 'item_name_2', label: 'Stok adı 2', group: 'kimlik' },

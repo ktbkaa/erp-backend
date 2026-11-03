@@ -101,7 +101,11 @@ router.get('/', async (req, res) => {
         }
         // Varsayılan: satış siparişleri (satınalma ayrı ekranda)
         if (!order_type && req.query.kapsam !== 'hepsi') {
-            where.push(`(order_type ILIKE '%satis%' OR order_type ILIKE '%satış%' OR order_type = 'SatisSiparis' OR order_type = 'AlinanSiparis')`);
+            where.push(`(
+              order_type ILIKE '%satis%' OR order_type ILIKE '%satış%'
+              OR order_type IN ('SatisSiparis','AlinanSiparis','Standart','Standard','Normal')
+              OR order_type IS NULL
+            )`);
         }
         const sql = `
             SELECT id FROM sales_orders
