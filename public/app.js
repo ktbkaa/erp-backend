@@ -11932,6 +11932,9 @@ async function ensureFilterLookups(screen) {
  */
 async function ensureLookups(screen) {
   const needed = collectScreenLookupKeys(screen);
+  // Ekran özel lookup’ları (ör. stok-karti → warehouses / is-yerleri / para-birimleri)
+  // collectScreenLookupKeys yalnız field.lookup tarar; sekme custom pane’leri kaçırır.
+  (SCREEN_LOOKUP_EXTRAS[screen?.id] || []).forEach((k) => needed.add(k));
   await Promise.all([...needed].map((key) => fetchLookupKey(key)));
 }
 
@@ -12581,24 +12584,16 @@ function plantsForCompany(companyId) {
   return plants.filter((p) => Number(p.company_id) === cid);
 }
 
-/** Stok kartı: firma zorunlu; iş yeri bağları yoksa firmanın tüm iş yerleri */
+/** Stok kartı: firma zorunlu; iş yeri bağları yoksa firmanın tüm iş yerleri (zorunlu değil) */
 function hydrateStokFirmaIsYeri(rec) {
   if (!rec) return;
   if (!rec.company_id && getActiveFirmaId()) {
     rec.company_id = getActiveFirmaId();
   }
-  // Yalnızca alan hiç gelmemişse (yeni kart) tüm iş yerlerini doldur; boş dizi bilinçli daraltma olabilir
-  if (!Array.isArray(rec.is_yeri_baglari) && rec.company_id) {
-    rec.is_yeri_baglari = plantsForCompany(rec.company_id).map((p) => ({
-      plant_id: Number(p.id),
-      company_id: Number(rec.company_id),
-      is_active: true,
-    }));
-  } else if (Array.isArray(rec.is_yeri_baglari)
-    && !rec.is_yeri_baglari.some((b) => Number(b.plant_id))
-    && rec.company_id
-    && !rec.id) {
-    // Yeni kayıt + boş bağ → default tüm iş yerleri
+  const hasActivePlantBag = Array.isArray(rec.is_yeri_baglari)
+    && rec.is_yeri_baglari.some((b) => b && b.is_active !== false && Number(b.plant_id));
+  // Firma seçili + aktif iş yeri bağı yok → tüm iş yerleri seçilmiş kabul edilir
+  if (rec.company_id && !hasActivePlantBag) {
     rec.is_yeri_baglari = plantsForCompany(rec.company_id).map((p) => ({
       plant_id: Number(p.id),
       company_id: Number(rec.company_id),
@@ -13686,29 +13681,33 @@ function stokDepoWarehouseList(rec) {
   const firmaPlantIds = firmaId
     ? new Set(plants.filter((p) => Number(p.company_id) === firmaId).map((p) => Number(p.id)))
     : null;
-  // Firmalar sekmesinden seçili iş yeri kapsamı (işaretli plant’ler)
-  const bagPlantIds = new Set(
-    (Array.isArray(rec?.is_yeri_baglari) ? rec.is_yeri_baglari : [])
-      .filter((b) => b && b.is_active !== false && Number(b.plant_id))
-      .map((b) => Number(b.plant_id))
+  // Firmalar sekmesi: işaretli iş yerleri. Hepsi işaretli / bağ yok → daraltma yok (firma geneli)
+  const activeBags = (Array.isArray(rec?.is_yeri_baglari) ? rec.is_yeri_baglari : [])
+    .filter((b) => b && b.is_active !== false && Number(b.plant_id));
+  const bagPlantIds = new Set(activeBags.map((b) => Number(b.plant_id)));
+  const allFirmaPlantsCovered = Boolean(
+    firmaPlantIds && firmaPlantIds.size > 0
+    && bagPlantIds.size > 0
+    && [...firmaPlantIds].every((id) => bagPlantIds.has(id))
   );
+  const narrowByBags = bagPlantIds.size > 0 && !allFirmaPlantsCovered;
   const filtered = all.filter((w) => {
     if (!w || w.is_active === false) return false;
-    // API company_code / company_id ile doğrudan eşleş
+    // API company_code / company_id ile doğrudan eşleş — iş yeri seçimi zorunlu değil
     if (firmaId && w.company_id != null && Number(w.company_id) !== Number(firmaId)) return false;
     if (firmaCode && w.company_code && String(w.company_code) !== String(firmaCode)) return false;
-    // Plants cache doluysa iş yeri kapsamında filtrele; boşsa (lookup henüz yok) kesme
+    // Plants cache doluysa firmanın dışındaki depoları kes; boşsa (lookup henüz yok) kesme
     if (firmaPlantIds && firmaPlantIds.size > 0 && w.plant_id != null
       && !firmaPlantIds.has(Number(w.plant_id))) {
       return false;
     }
-    // Kullanıcı iş yeri kapsamını daralttıysa yalnız o depolar
-    if (bagPlantIds.size > 0 && w.plant_id != null && !bagPlantIds.has(Number(w.plant_id))) {
+    // Kullanıcı iş yeri kapsamını bilerek daralttıysa yalnız o depolar
+    if (narrowByBags && w.plant_id != null && !bagPlantIds.has(Number(w.plant_id))) {
       return false;
     }
     return true;
   });
-  // Seçili iş yeri depolarını üste al
+  // Seçili iş yeri depolarını üste al (bilgi; zorunlu filtre değil)
   if (!plantId) return filtered;
   return filtered.slice().sort((a, b) => {
     const ap = Number(a.plant_id) === plantId ? 0 : 1;
@@ -13729,17 +13728,23 @@ function renderStokDepoYetkiPane(rec) {
       .map((b) => Number(b.warehouse_id ?? b.id))
       .filter(Boolean)
   );
+  // Bağ yoksa (yeni kart / henüz kaydedilmemiş) firma depolarının hepsi varsayılan işaretli
+  const defaultAll = !selected.size;
   const rows = warehouses.length
     ? warehouses.map((w) => `
-      <tr data-stok-depo-yetki="${escAttr(w.id)}">
+      <tr data-stok-depo-yetki="${escAttr(w.id)}" data-stok-depo-plant="${escAttr(w.plant_id || '')}">
         <td class="yetki-erisim">
-          <input type="checkbox" data-stok-depo-check="1" ${selected.has(Number(w.id)) ? 'checked' : ''} ${dis} />
+          <input type="checkbox" data-stok-depo-check="1" ${defaultAll || selected.has(Number(w.id)) ? 'checked' : ''} ${dis} />
         </td>
         <td class="yetki-ekran mono">${escapeHtml(w.warehouse_code || '')}</td>
         <td>${escapeHtml(w.warehouse_name || '')}</td>
         <td class="mono">${escapeHtml(w.plant_code || '')}</td>
       </tr>`).join('')
-    : '<tr><td colspan="4" class="detail-empty">Depo listesi yok. Önce iş yeri / depo tanımlayın.</td></tr>';
+    : `<tr><td colspan="4" class="detail-empty">${
+      (Number(rec?.company_id) || getActiveFirmaId())
+        ? 'Bu firmaya bağlı aktif depo bulunamadı. Depo Tanımları ekranından ekleyin.'
+        : 'Önce firma seçin; firmanın tüm iş yeri depoları burada listelenir.'
+    }</td></tr>`;
 
   return `
     <section class="firma-yetki-pane stok-depo-yetki-pane" aria-label="Stok depo tanımları">
@@ -13815,16 +13820,17 @@ function readStokDepoBaglariFromDom(rec) {
   if (!box) {
     return Array.isArray(rec?.depo_baglari) ? rec.depo_baglari : [];
   }
-  const plantId = Number(rec?.plant_id) || null;
+  const fallbackPlant = Number(rec?.plant_id) || null;
   const out = [];
   box.querySelectorAll('tr[data-stok-depo-yetki]').forEach((tr) => {
     const chk = tr.querySelector('[data-stok-depo-check]');
     if (!chk?.checked) return;
     const warehouseId = Number(tr.getAttribute('data-stok-depo-yetki'));
     if (!Number.isFinite(warehouseId)) return;
+    const rowPlant = Number(tr.getAttribute('data-stok-depo-plant')) || fallbackPlant || null;
     out.push({
       warehouse_id: warehouseId,
-      plant_id: plantId,
+      plant_id: rowPlant,
       is_active: true,
     });
   });
@@ -18684,10 +18690,10 @@ async function saveForm({ after = 'stay' } = {}) {
       const { _isOverride, ...rest } = p;
       return rest;
     });
-    // İş yeri kapsamı tikleri (yoksa sync tüm iş yerlerini doldurur)
+    // İş yeri kapsamı tikleri — boşsa (hiç işaret yok / DOM yok) firmanın tüm iş yerleri
     const scopeBags = readStokFirmaIsYeriBaglariFromDom();
+    const aidScope = getActiveFirmaId();
     if (scopeBags.length) {
-      const aidScope = getActiveFirmaId();
       if (aidScope) {
         // Diğer firmaların mevcut iş yeri bağlarını koru
         const prevBags = Array.isArray(state.formRecord?.is_yeri_baglari)
@@ -18705,9 +18711,9 @@ async function saveForm({ after = 'stay' } = {}) {
       } else {
         master.is_yeri_baglari = scopeBags;
       }
-    } else if (document.querySelector('[data-stok-firma-plant-check]')) {
-      toast('Seçili firma için en az bir iş yeri işaretleyin.');
-      return;
+    } else {
+      // İş yeri zorunluluğu yok: firma seçiliyse tüm iş yerleri seçilmiş kabul edilir
+      master.is_yeri_baglari = [];
     }
     applyPrimaryStokFirmaToMaster(master);
     syncStokFirmaIsYeriForSave(master);
