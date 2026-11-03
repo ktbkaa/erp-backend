@@ -1288,12 +1288,17 @@ const MODULES = [
           { key: 'planlanan_date', label: 'Planlanan', type: 'date' },
         ],
         detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'uom_code', label: 'Birim' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
           { key: 'raf_code', label: 'Raf' },
           { key: 'description', label: 'Açıklama' },
         ],
+        formLinks: {
+          item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+          ],
+        },
         detailKey: 'satirlar',
         detailSlots: 5,
       },
@@ -1498,22 +1503,99 @@ const MODULES = [
         businessNameEn: 'StockReservationScreen',
         title: 'Stok Rezervasyonları',
         endpoint: '/stok-rezervasyonlari',
-        crud: false,
-        readOnly: true,
+        crud: true,
+        // Liste kaydı tek rezervasyon; Yeni formu siparişten çoklu satır oluşturur
+        codeField: 'rezervasyon_no',
+        nameField: 'item_name',
+        // Rezervasyon no sunucuda satır başına üretilir
+        numeratorSeri: null,
+        approveAction: {
+          label: 'İptal Et',
+          path: '/stok-rezervasyonlari/{id}/iptal',
+        },
         filters: [
           { key: 'rezervasyon_no', label: 'Rezervasyon' },
           { key: 'item_code', label: 'Stok' },
-          { key: 'status', label: 'Durum' },
+          { key: 'order_no', label: 'Sipariş' },
+          { key: 'warehouse_code', label: 'Depo' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Aktif', 'Tuketildi', 'Iptal', 'SuresiDoldu'] },
         ],
         columns: [
           { key: 'rezervasyon_no', label: 'No', mono: true },
           { key: 'order_no', label: 'Sipariş', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
           { key: 'item_name', label: 'Ad' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
           { key: 'quantity', label: 'Miktar' },
           { key: 'remaining_quantity', label: 'Kalan' },
           { key: 'status', label: 'Durum' },
+          { key: 'created_at', label: 'Kayıt' },
         ],
+        masterFields: [
+          {
+            key: 'sales_order_id',
+            label: 'Satış siparişi',
+            type: 'lookup',
+            lookup: 'sales_orders',
+            valueKey: 'id',
+            labelKey: 'order_no',
+            codeKey: 'order_no',
+            required: true,
+            lead: true,
+            fillFrom: 'rezervasyon-siparis-kalemler',
+          },
+          {
+            key: 'warehouse_id',
+            label: 'Varsayılan depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            required: true,
+            lead: true,
+          },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            required: true,
+          },
+          { key: 'sales_order_line_id', label: 'Sip. satır', type: 'number', readOnly: true, size: 'short' },
+          { key: 'siparis_miktar', label: 'Sipariş miktar', type: 'number', readOnly: true, size: 'short' },
+          { key: 'mevcut_rezerve', label: 'Mevcut rezerve', type: 'number', readOnly: true, size: 'short' },
+          { key: 'kalan_rezerve', label: 'Kalan (max)', type: 'number', readOnly: true, size: 'short' },
+          { key: 'quantity', label: 'Rezerve miktar', type: 'number', required: true, size: 'short' },
+          {
+            key: 'warehouse_id',
+            label: 'Depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            required: true,
+          },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+        ],
+        formLinks: {
+          item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+          ],
+          warehouse_id: [
+            // master varsayılan depo → boş satır depoları (applyFormLinkages master→detail özel değil; save’de doldurulur)
+          ],
+        },
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { satirlar: [] },
       },
       {
         id: 'stok-serileri',
@@ -11034,6 +11116,45 @@ async function fillLinesFromSource(kind, sourceId) {
         });
       toast(`Sipariş ${sip.order_no || sourceId} kalan kalemleri yüklendi`);
       renderForm(screen);
+    } else if (kind === 'rezervasyon-siparis-kalemler') {
+      const sip = await api(`/sales_orders/${sourceId}`);
+      if (!sip) return;
+      state.formRecord.sales_order_id = Number(sourceId);
+      if (sip.warehouse_id && !state.formRecord.warehouse_id) {
+        state.formRecord.warehouse_id = sip.warehouse_id;
+      }
+      if (sip.company_id && !state.formRecord.company_id) state.formRecord.company_id = sip.company_id;
+      if (sip.plant_id && !state.formRecord.plant_id) state.formRecord.plant_id = sip.plant_id;
+      const defWh = state.formRecord.warehouse_id || sip.warehouse_id || null;
+      const lines = sip.kalemler || sip.satirlar || [];
+      state.formRecord[detailKey] = lines
+        .map((s) => {
+          const sipQty = Number(s.quantity) || 0;
+          const rez = Number(s.rezerve_quantity || 0);
+          const sevk = Number(s.shipped_quantity || 0);
+          const kalan = Math.max(0, sipQty - rez - sevk);
+          return {
+            sales_order_line_id: s.id,
+            item_id: s.item_id,
+            item_code: s.item_code,
+            item_name: s.item_name,
+            uom_code: s.uom_code || s.stock_uom || '',
+            siparis_miktar: sipQty,
+            mevcut_rezerve: rez,
+            kalan_rezerve: kalan,
+            quantity: kalan > 0 ? kalan : '',
+            warehouse_id: s.warehouse_id || defWh || null,
+            _satir_kayitli: false,
+            _satir_duzenleniyor: true,
+          };
+        })
+        .filter((s) => s.item_id && Number(s.kalan_rezerve) > 0);
+      if (!state.formRecord[detailKey].length) {
+        toast('Bu siparişte rezerve edilecek kalan stok yok.');
+      } else {
+        toast(`Sipariş ${sip.order_no || sourceId}: ${state.formRecord[detailKey].length} kalem yüklendi — depo/miktar seçin.`);
+      }
+      renderForm(screen);
     } else if (kind === 'sevk-satirlar') {
       const sevk = await api(`/sevk-emirleri/${sourceId}`);
       if (!sevk) return;
@@ -11932,6 +12053,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari'],
   'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
   'depo-bakiye': ['warehouses', 'items', 'items-mamul', 'is-yerleri', 'companies'],
+  'stok-rezervasyonlari': ['sales_orders', 'warehouses', 'items', 'items-mamul', 'olcu-birimleri'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
     'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',
@@ -12864,6 +12986,10 @@ function detailColClass(f) {
   if (f?.type === 'static') return 'col--eq';
   const size = inferFieldSizeClass(f).replace('field--', '');
   if (size === 'short' || f?.type === 'number' || f?.type === 'checkbox' || f?.code) return 'col--s';
+  // Stok seçim — kod+ad yanlamasına görünsün (çoklu seç listesi de burada)
+  if (f?.type === 'lookup' && (f.lookup === 'items' || f.lookup === 'items-mamul' || f.key === 'item_id')) {
+    return 'col--xl';
+  }
   if (size === 'wide' || f?.name || f?.type === 'lookup') return 'col--l';
   if (/quantity|fiyat|amount|rate|exchange_rate/i.test(f?.key || '')) return 'col--m col--num';
   return 'col--m';
@@ -15490,6 +15616,9 @@ function renderForm(screen) {
     }
     if (screen.id === 'crm-faaliyet-planlari') {
       show = Boolean(screen.convertAction && ['Planlandi', 'Devam'].includes(rec.status));
+    }
+    if (screen.id === 'stok-rezervasyonlari') {
+      show = Boolean(screen.approveAction && rec.id && rec.status === 'Aktif' && state.formMode !== 'yeni');
     }
     if (screen.id === 'satin-alma-talepleri') {
       show = Boolean(screen.approveAction && rec.status === 'Acik');
@@ -18933,6 +19062,21 @@ async function openForm(mode, opts = {}) {
     hydrateStokFirmaIsYeri(record);
   }
 
+  // Mevcut tek rezervasyon kaydı → satır grid’ine yansıt (incele/iptal)
+  if (screen.id === 'stok-rezervasyonlari' && record.id && !Array.isArray(record.satirlar)) {
+    record.satirlar = [{
+      item_id: record.item_id,
+      sales_order_line_id: record.sales_order_line_id || null,
+      siparis_miktar: record.quantity,
+      mevcut_rezerve: record.quantity,
+      kalan_rezerve: record.remaining_quantity,
+      quantity: record.quantity,
+      warehouse_id: record.warehouse_id,
+      uom_code: record.stok_birim || record.uom_code || '',
+      _satir_kayitli: true,
+    }];
+  }
+
   // İncele/Düzelt: API’de id yoksa codeField’dan kimlik (numaratör series_code vb.)
   // Yeni/Kopyala’da id ekleme — kayıt henüz kaydedilmedi
   if (mode === 'incele' || mode === 'duzelt') {
@@ -19134,6 +19278,57 @@ async function saveForm({ after = 'stay' } = {}) {
         master.varsayilan_vat_rate = Number(tax.rate);
       }
     }
+  }
+
+  // Stok rezervasyon: sipariş + seçili stoklar → depolara rezerve
+  if (screen.id === 'stok-rezervasyonlari') {
+    if (state.formMode === 'duzelt') {
+      toast('Rezervasyon düzeltilemez. İptal edip yeniden oluşturun.');
+      return;
+    }
+    if (!Number(master.sales_order_id)) {
+      toast('Satış siparişi seçin.');
+      return;
+    }
+    const defWh = Number(master.warehouse_id) || null;
+    const raw = Array.isArray(master.satirlar) ? master.satirlar : [];
+    const clean = [];
+    for (let i = 0; i < raw.length; i += 1) {
+      const s = { ...(raw[i] || {}) };
+      const itemId = Number(s.item_id);
+      const qty = Number(s.quantity);
+      const wh = Number(s.warehouse_id) || defWh;
+      if (!itemId && !(qty > 0)) continue;
+      if (!itemId) {
+        toast(`Satır ${i + 1}: stok seçin.`);
+        return;
+      }
+      if (!Number.isFinite(qty) || qty <= 0) {
+        toast(`Satır ${i + 1}: rezerve miktar girin.`);
+        return;
+      }
+      if (!wh) {
+        toast(`Satır ${i + 1}: depo seçin (veya varsayılan depo).`);
+        return;
+      }
+      const maxKalan = s.kalan_rezerve != null && s.kalan_rezerve !== '' ? Number(s.kalan_rezerve) : null;
+      if (maxKalan != null && Number.isFinite(maxKalan) && qty > maxKalan + 1e-9) {
+        toast(`Satır ${i + 1}: miktar kalanı aşıyor (max ${maxKalan}).`);
+        return;
+      }
+      clean.push({
+        sales_order_line_id: s.sales_order_line_id ? Number(s.sales_order_line_id) : null,
+        item_id: itemId,
+        warehouse_id: wh,
+        quantity: qty,
+      });
+    }
+    if (!clean.length) {
+      toast('En az bir stok satırı rezerve edilmeli.');
+      return;
+    }
+    master.satirlar = clean;
+    master.warehouse_id = defWh;
   }
 
   // Stok hareketleri: satır doğrulama + transfer hedef depo + boş satır temizliği

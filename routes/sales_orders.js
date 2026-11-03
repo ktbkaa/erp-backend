@@ -348,9 +348,11 @@ router.put('/:id', async (req, res) => {
 /** POST /sales_orders/:id/rezerve — stok rezervasyonu (INV-004) */
 router.post('/:id/rezerve', async (req, res) => {
   try {
+    const body = req.body || {};
     const olusan = await withTransaction(pool, async (client) => {
       return siparisRezerveEt(client, Number(req.params.id), {
-        depoId: req.body.warehouse_id ? Number(req.body.warehouse_id) : null,
+        depoId: body.warehouse_id ? Number(body.warehouse_id) : null,
+        satirlar: Array.isArray(body.satirlar) ? body.satirlar : null,
       });
     });
     const siparis = await siparisGetir(req.params.id);
