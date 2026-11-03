@@ -199,10 +199,21 @@ async function saveChildren(client, stokId, body) {
         for (const d of body.is_yeri_baglari) {
             const iy = Number(d.plant_id);
             if (!Number.isFinite(iy)) continue;
-            const chk = await client.query('SELECT id FROM plants WHERE id = $1', [iy]);
+            const chk = await client.query(
+                'SELECT id, company_id FROM plants WHERE id = $1',
+                [iy]
+            );
             if (!chk.rows[0]) {
                 const err = new Error(`İş yeri bulunamadı (${iy}).`);
                 err.status = 400;
+                throw err;
+            }
+            // Parametre satırındaki firma ile iş yeri firması uyuşmalı (varsa)
+            const bagFirma = Number(d.company_id) || null;
+            if (bagFirma && Number(chk.rows[0].company_id) !== bagFirma) {
+                const err = new Error(`İş yeri firma ile uyuşmuyor (${iy}).`);
+                err.status = 400;
+                err.alan = 'plant_id';
                 throw err;
             }
             await client.query(
@@ -577,6 +588,11 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
+        }
         const item_name = trimOrNull(req.body.item_name);
         if (!item_name) {
             return res.status(400).json({
@@ -780,6 +796,11 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
+        }
         const result = await pool.query(`DELETE FROM items WHERE id = $1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         res.json({ silindi: true, id: Number(req.params.id) });

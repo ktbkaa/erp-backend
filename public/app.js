@@ -11456,6 +11456,8 @@ async function openScreen(id, opts = {}) {
       }
       ensureSidebarPath(screen);
       showView('meta');
+      const titleEl = $('#screenTitle');
+      if (titleEl) titleEl.textContent = screenDisplayTitle(screen);
       const banner = $('#metaBanner');
       if (banner) {
         banner.textContent = screen.techId
@@ -11480,6 +11482,8 @@ async function openScreen(id, opts = {}) {
       }
       ensureSidebarPath(screen);
       showView('sql');
+      const titleEl = $('#screenTitle');
+      if (titleEl) titleEl.textContent = screenDisplayTitle(screen);
       const banner = $('#sqlBanner');
       if (banner) {
         banner.textContent = screen.techId

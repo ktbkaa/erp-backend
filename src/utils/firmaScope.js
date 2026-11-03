@@ -31,7 +31,7 @@ function andFirmaViaIsYeri(isYeriExpr, firmaId, params) {
   return ` AND ${isYeriExpr} IN (SELECT id FROM plants WHERE company_id = $${params.length})`;
 }
 
-/** Stok: doğrudan company_id veya item_plants → plants */
+/** Stok: company_id VEYA item_plants→plants VEYA item_company_params (assert ile aynı) */
 function andStokFirma(stokAlias, firmaId, params) {
   if (!firmaId) return '';
   params.push(firmaId);
@@ -42,6 +42,12 @@ function andStokFirma(stokAlias, firmaId, params) {
       SELECT 1 FROM item_plants siy
       JOIN plants iy ON iy.id = siy.plant_id
       WHERE siy.item_id = ${stokAlias}.id AND iy.company_id = ${p}
+    )
+    OR EXISTS (
+      SELECT 1 FROM item_company_params fp
+      WHERE fp.item_id = ${stokAlias}.id
+        AND fp.company_id = ${p}
+        AND fp.is_active IS DISTINCT FROM FALSE
     )
   )`;
 }
