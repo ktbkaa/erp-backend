@@ -177,12 +177,26 @@ async function stokHareketOlustur(client, {
             }
         }
 
+        const unitPrice = s.unit_price != null && s.unit_price !== ''
+            ? Number(s.unit_price)
+            : (s.uom_cost != null ? Number(s.uom_cost) : 0);
+        const safeUnit = Number.isFinite(unitPrice) ? unitPrice : 0;
+        const amountCost = Number((Number(s.quantity) * safeUnit).toFixed(2));
+        const currencyCode = String(s.currency_code || 'TRY').trim().toUpperCase() || 'TRY';
+        const rateType = String(s.rate_type || 'TCMB-ALIS').trim() || 'TCMB-ALIS';
+        const exchangeRate = Number(s.exchange_rate);
+        const safeRate = Number.isFinite(exchangeRate) && exchangeRate > 0 ? exchangeRate : 1;
+        const vatRate = Number(s.vat_rate);
+        const safeVat = Number.isFinite(vatRate) ? vatRate : 0;
+        const lotNo = String(s.lot_no || '').trim() || null;
+
         const satirRes = await client.query(
             `
             INSERT INTO stock_movement_lines
                 (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status,
-                 raf_code, konum_code, series_id, serial_no)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+                 raf_code, konum_code, series_id, serial_no,
+                 uom_cost, amount_cost, unit_price, currency_code, rate_type, exchange_rate, vat_rate, lot_no)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
             RETURNING *;
             `,
             [
@@ -190,6 +204,7 @@ async function stokHareketOlustur(client, {
                 Number(s.direction) === -1 ? cikisStatu : statu,
                 s.raf_code || null, s.konum_code || null,
                 seriesId, serialNo,
+                safeUnit, amountCost, safeUnit, currencyCode, rateType, safeRate, safeVat, lotNo,
             ]
         );
         const satirRow = satirRes.rows[0];
@@ -201,19 +216,51 @@ async function stokHareketOlustur(client, {
         }
         eklenen.push(satirRow);
 
-        // Ortalama maliyet (INV-011) — girişte uom_cost verilirse
-        if (Number(s.direction) === 1 && s.uom_cost != null) {
+        // Ortalama maliyet (INV-011) — girişte birim fiyat verilirse
+        if (Number(s.direction) === 1 && safeUnit > 0) {
             try {
                 const { maliyetGuncelleGiris } = require('./maliyetService');
                 await maliyetGuncelleGiris(client, {
                     stokId: s.item_id,
                     quantity: s.quantity,
-                    birimMaliyet: s.uom_cost,
+                    birimMaliyet: safeUnit,
                     hareketId: hareket.id,
                 });
             } catch (_) { /* maliyet tablosu yoksa sessiz */ }
         }
     }
+
+    // Belge başlığı: maliyet + mal/KDV/genel toplam
+    let goods = 0;
+    let tax = 0;
+    let cost = 0;
+    let headerPb = null;
+    for (const row of eklenen) {
+        const mal = Number(row.amount_cost) || (Number(row.quantity) * Number(row.unit_price || 0)) || 0;
+        const kdv = mal * ((Number(row.vat_rate) || 0) / 100);
+        goods += mal;
+        tax += kdv;
+        cost += mal;
+        if (!headerPb && row.currency_code) headerPb = row.currency_code;
+    }
+    const grand = goods + tax;
+    await client.query(
+        `
+        UPDATE stock_movements
+           SET cost_total = $2,
+               goods_amount = $3,
+               tax_amount = $4,
+               grand_total = $5,
+               currency_code = COALESCE($6, currency_code)
+         WHERE id = $1
+        `,
+        [hareket.id, Number(cost.toFixed(2)), Number(goods.toFixed(2)), Number(tax.toFixed(2)), Number(grand.toFixed(2)), headerPb]
+    );
+    hareket.cost_total = Number(cost.toFixed(2));
+    hareket.goods_amount = Number(goods.toFixed(2));
+    hareket.tax_amount = Number(tax.toFixed(2));
+    hareket.grand_total = Number(grand.toFixed(2));
+    if (headerPb) hareket.currency_code = headerPb;
 
     return { hareket, satirlar: eklenen };
 }

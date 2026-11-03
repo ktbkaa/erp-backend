@@ -1155,12 +1155,19 @@ const MODULES = [
           { key: 'movement_code', label: 'Kod', mono: true },
           { key: 'movement_type', label: 'Tip' },
           { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'quantity_signed', label: 'Toplam hareket', mono: true, signed: true },
           { key: 'ref_no', label: 'Referans', mono: true },
           { key: 'fiziksel_date', label: 'Fiziksel' },
           { key: 'fiscal_date', label: 'Mali' },
-          { key: 'cost_total', label: 'Maliyet' },
+          { key: 'goods_amount', label: 'Mal tutarı', mono: true },
+          { key: 'tax_amount', label: 'KDV', mono: true },
+          { key: 'cost_total', label: 'Maliyet', mono: true },
+          { key: 'grand_total', label: 'Genel toplam', mono: true },
           { key: 'user_code', label: 'Kullanıcı' },
           { key: 'onay_status', label: 'Onay' },
+        ],
+        contextMenu: [
+          { id: 'onizle', label: 'Önizle' },
         ],
         masterFields: [
           { key: 'movement_no', label: 'Hareket no', code: true, readOnly: true, hint: 'Hareket koduna göre (ör. STC-01-00001)' },
@@ -1191,19 +1198,27 @@ const MODULES = [
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
           { key: 'quantity', label: 'Miktar', type: 'number', required: true },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
+          { key: 'lot_no', label: 'Parti' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
           { key: 'raf_code', label: 'Raf' },
           { key: 'konum_code', label: 'Konum' },
         ],
-        // Stok seçilince satır birimi stok kartından (applyFormLinkages detailStokRules + formLinks)
+        // Stok seçilince satır birimi / vergi stok kartından
         formLinks: {
           item_id: [
             { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'vat_rate', fromItem: 'varsayilan_vat_rate' },
+            { field: 'currency_code', fromItem: 'currency_code' },
           ],
         },
         detailKey: 'satirlar',
         detailSlots: 5,
         defaults: {
           movement_date: new Date().toISOString().slice(0, 10),
+          currency_code: 'TRY',
           satirlar: [],
         },
       },
@@ -9494,6 +9509,92 @@ async function importExcelIntoList(ctx) {
   toast(fail ? `${ok} kayıt eklendi, ${fail} hatalı.` : `${ok} kayıt Excel’den eklendi.`);
 }
 
+async function showStokHareketOnizle(row) {
+  if (!row?.id) {
+    toast('Önce bir stok hareketi seçin.');
+    return;
+  }
+  let rec = row;
+  try {
+    rec = await api(`/stok-hareketleri/${row.id}`);
+  } catch (err) {
+    toast(err.message || 'Önizleme yüklenemedi');
+    return;
+  }
+  const lines = Array.isArray(rec.satirlar) ? rec.satirlar : (Array.isArray(rec.kalemler) ? rec.kalemler : []);
+  const kaynak = `${rec.warehouse_code || '—'} ${rec.warehouse_name ? `· ${rec.warehouse_name}` : ''}`.trim();
+  const hedef = rec.hedef_depo_kodu
+    ? `${rec.hedef_depo_kodu}${rec.hedef_depo_adi ? ` · ${rec.hedef_depo_adi}` : ''}`
+    : '—';
+  const bodyRows = lines.length
+    ? lines.map((s) => {
+      const giren = Number(s.quantity_in) || (Number(s.direction) > 0 ? Number(s.quantity) || 0 : 0);
+      const cikan = Number(s.quantity_out) || (Number(s.direction) < 0 ? Number(s.quantity) || 0 : 0);
+      // Çıkış: kaynak depo; giriş: hedef (transfer) veya kaynak
+      const depoTxt = Number(s.direction) < 0
+        ? (s.warehouse_code || rec.warehouse_code || '—')
+        : (rec.movement_type === 'TRANSFER'
+          ? (rec.hedef_depo_kodu || s.warehouse_code || rec.warehouse_code || '—')
+          : (s.warehouse_code || rec.warehouse_code || '—'));
+      return `<tr>
+        <td class="mono">${escapeHtml(s.item_code || '')}</td>
+        <td>${escapeHtml(s.item_name || '')}</td>
+        <td class="mono">${escapeHtml(depoTxt)}</td>
+        <td class="mono qty-plus">${giren ? `+${giren}` : '—'}</td>
+        <td class="mono qty-minus">${cikan ? `−${cikan}` : '—'}</td>
+        <td class="mono">${escapeHtml(s.lot_no || '—')}</td>
+        <td class="mono">${escapeHtml(formatTotalAmount(s.line_goods_amount ?? ((Number(s.quantity) || 0) * (Number(s.unit_price) || 0))))}</td>
+      </tr>`;
+    }).join('')
+    : '<tr><td colspan="7" class="detail-empty">Satır yok.</td></tr>';
+  const signed = rec.quantity_signed != null
+    ? rec.quantity_signed
+    : (Number(rec.quantity_net) > 0 ? `+${rec.quantity_net}` : String(rec.quantity_net ?? 0));
+  const html = `
+    <div class="cvt-overlay" id="stokHareketOnizleDlg" role="presentation">
+      <div class="cvt-dialog lookup-browser-dialog" role="dialog" aria-modal="true" style="max-width:48rem">
+        <header class="cvt-head">
+          <h2>Önizle · ${escapeHtml(rec.movement_no || '')}</h2>
+          <button type="button" class="icon-btn" data-onizle-close="1" aria-label="Kapat">×</button>
+        </header>
+        <div class="cvt-body">
+          <div class="stok-hareket-onizle-meta">
+            <span><strong>Kod</strong> ${escapeHtml(rec.movement_code || '—')}</span>
+            <span><strong>Tip</strong> ${escapeHtml(rec.movement_type || '—')}</span>
+            <span><strong>Kaynak depo</strong> ${escapeHtml(kaynak)}</span>
+            <span><strong>Hedef depo</strong> ${escapeHtml(hedef)}</span>
+            <span><strong>Toplam hareket</strong> <span class="mono">${escapeHtml(String(signed))}</span></span>
+            <span><strong>Mal tutarı</strong> ${escapeHtml(formatTotalAmount(rec.goods_amount))}</span>
+            <span><strong>Maliyet</strong> ${escapeHtml(formatTotalAmount(rec.cost_total))}</span>
+          </div>
+          <table class="stok-hareket-onizle-table">
+            <thead>
+              <tr>
+                <th>Stok kodu</th>
+                <th>Stok adı</th>
+                <th>Depo</th>
+                <th>Giren</th>
+                <th>Çıkan</th>
+                <th>Parti</th>
+                <th>Tutar</th>
+              </tr>
+            </thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+        <footer class="cvt-foot">
+          <button type="button" class="btn action" data-onizle-close="1">Kapat</button>
+        </footer>
+      </div>
+    </div>`;
+  document.getElementById('stokHareketOnizleDlg')?.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+  const dlg = document.getElementById('stokHareketOnizleDlg');
+  dlg?.addEventListener('click', (e) => {
+    if (e.target === dlg || e.target.closest?.('[data-onizle-close]')) dlg.remove();
+  });
+}
+
 function showListContextMenu(screen, clientX, clientY, extraItems = []) {
   const menu = $('#listCtxMenu');
   if (!menu) return;
@@ -9532,6 +9633,10 @@ function showListContextMenu(screen, clientX, clientY, extraItems = []) {
       e.preventDefault();
       menu.hidden = true;
       const act = btn.getAttribute('data-list-ctx');
+      if (act === 'onizle') {
+        showStokHareketOnizle(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
       if (act === 'excel-sablon') {
         downloadExcelTemplate(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
         return;
@@ -11294,9 +11399,20 @@ function cellHtml(col, row, index = 0) {
       const hit = tips.find((t) => String(t.id) === String(val) || String(t.document_type) === String(val));
       if (hit?.label) val = hit.label;
     }
+  } else if (col.signed && val != null && val !== '') {
+    const n = Number(String(val).replace(/^\+/, ''));
+    if (Number.isFinite(n)) {
+      const txt = n > 0 ? `+${n}` : String(n);
+      const cls = n > 0 ? 'qty-plus' : (n < 0 ? 'qty-minus' : '');
+      return `<span class="mono ${cls}">${escapeHtml(txt)}</span>`;
+    }
+  } else if (col.key === 'goods_amount' || col.key === 'tax_amount' || col.key === 'cost_total' || col.key === 'grand_total') {
+    if (val != null && val !== '' && Number.isFinite(Number(val))) {
+      val = Number(val).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
   }
   if (val === null || val === undefined || val === '') val = '—';
-  return col.mono ? `<span class="mono">${val}</span>` : String(val);
+  return col.mono ? `<span class="mono">${escapeHtml(String(val))}</span>` : escapeHtml(String(val));
 }
 
 function renderListSideNav(screen) {
@@ -11749,6 +11865,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   'is-yerleri': ['is-yerleri', 'companies'],
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari'],
+  'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
     'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',
@@ -16078,6 +16195,16 @@ function closeLookupBrowser() {
   _lookupBrowserState = null;
   const selBtn = $('#lookupBrowserSelect');
   if (selBtn) selBtn.disabled = true;
+  const multiBar = $('#lookupBrowserMultiBar');
+  if (multiBar) multiBar.hidden = true;
+}
+
+/** Stok hareket kalem lookup’ında çoklu seç (yuvarlak simge listesi) */
+function lookupBrowserSupportsMulti(field, sel) {
+  if (!field || !sel) return false;
+  if (findScreen(state.screenId)?.id !== 'stok-hareketleri') return false;
+  if (!(field.lookup === 'items' || field.lookup === 'items-mamul')) return false;
+  return sel.hasAttribute('data-detail') || sel.closest('tr[data-grid-row]') != null;
 }
 
 function resolveSelectFieldDef(sel) {
@@ -16163,15 +16290,23 @@ function lookupBrowserRowValue(row, valueKey) {
   return row[valueKey];
 }
 
-function renderLookupBrowserTable(rows, cols, selectedVal, valueKey) {
+function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = false, checkedIds = null) {
   if (!rows.length) {
     return '<div class="lookup-browser-empty">Kayıt bulunamadı.</div>';
   }
-  const head = cols.map((c) => `<th class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(c.label)}</th>`).join('');
+  const checked = checkedIds instanceof Set ? checkedIds : new Set();
+  const checkHead = multi
+    ? `<th class="lookup-browser-check"><span class="sr-only">Seç</span></th>`
+    : '';
+  const head = checkHead + cols.map((c) => `<th class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(c.label)}</th>`).join('');
   const body = rows.map((r, idx) => {
     const val = lookupBrowserRowValue(r, valueKey);
-    const sel = String(val) === String(selectedVal) ? ' is-selected' : '';
-    const rid = r.id != null ? String(r.id) : '';
+    const rid = r.id != null ? String(r.id) : String(val ?? '');
+    const isChecked = multi && checked.has(String(rid));
+    const sel = (!multi && String(val) === String(selectedVal)) || isChecked ? ' is-selected' : '';
+    const checkCell = multi
+      ? `<td class="lookup-browser-check"><input type="checkbox" data-lookup-check="1" data-lookup-id="${escAttr(rid)}" ${isChecked ? 'checked' : ''} /></td>`
+      : '';
     const cells = cols.map((c) => {
       let raw = r[c.key];
       if (c.key === '_opt') raw = r._opt;
@@ -16181,7 +16316,7 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey) {
       }
       return `<td class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(String(raw))}</td>`;
     }).join('');
-    return `<tr class="lookup-browser-row${sel}" data-lookup-val="${escAttr(val)}" data-lookup-id="${escAttr(rid)}" data-lookup-idx="${idx}" tabindex="0">${cells}</tr>`;
+    return `<tr class="lookup-browser-row${sel}" data-lookup-val="${escAttr(val)}" data-lookup-id="${escAttr(rid)}" data-lookup-idx="${idx}" tabindex="0">${checkCell}${cells}</tr>`;
   }).join('');
   return `<div class="lookup-browser-table-wrap"><table class="lookup-browser-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
@@ -16200,15 +16335,17 @@ function updateLookupBrowserActionButtons() {
   const st = _lookupBrowserState;
   const bar = $('#lookupBrowserActions');
   const selBtn = $('#lookupBrowserSelect');
+  const multiBar = $('#lookupBrowserMultiBar');
   if (!st) {
     if (bar) bar.hidden = true;
     if (selBtn) selBtn.disabled = true;
+    if (multiBar) multiBar.hidden = true;
     return;
   }
   const screen = st.targetScreen;
   const canCrud = Boolean(screen && screen.crud !== false && !screen.readOnly && !screen.hideActions);
   if (bar) {
-    bar.hidden = !canCrud;
+    bar.hidden = !canCrud && !st.multi;
     if (canCrud) {
       const hasId = st.selectedRow?.id != null && st.selectedRow?.id !== '';
       bar.querySelectorAll('[data-lb-act]').forEach((btn) => {
@@ -16223,9 +16360,23 @@ function updateLookupBrowserActionButtons() {
       });
     }
   }
+  if (multiBar) {
+    multiBar.hidden = !st.multi;
+    const n = st.checkedIds?.size || 0;
+    const lab = multiBar.querySelector('[data-lb-multi-count]');
+    if (lab) lab.textContent = n ? `${n} seçili` : '';
+  }
   if (selBtn) {
-    const hasPick = st.selectedVal != null && String(st.selectedVal) !== '';
-    selBtn.disabled = !hasPick;
+    if (st.multi) {
+      selBtn.disabled = !(st.checkedIds && st.checkedIds.size);
+      selBtn.textContent = (st.checkedIds?.size)
+        ? `Seç (${st.checkedIds.size})`
+        : 'Seç';
+    } else {
+      const hasPick = st.selectedVal != null && String(st.selectedVal) !== '';
+      selBtn.disabled = !hasPick;
+      selBtn.textContent = 'Seç';
+    }
   }
 }
 
@@ -16244,6 +16395,8 @@ function paintLookupBrowser() {
     st.cols,
     st.selectedVal,
     st.valueKey,
+    Boolean(st.multi),
+    st.checkedIds,
   );
   updateLookupBrowserActionButtons();
 }
@@ -16321,6 +16474,9 @@ async function openLookupBrowserForSelect(sel) {
   const targetScreen = field.lookup ? screenForLookupKey(field.lookup) : null;
   const initialVal = sel.value || '';
   const initialRow = rows.find((r) => String(lookupBrowserRowValue(r, valueKey)) === String(initialVal)) || null;
+  const multi = lookupBrowserSupportsMulti(field, sel);
+  const checkedIds = new Set();
+  if (multi && initialRow?.id != null) checkedIds.add(String(initialRow.id));
 
   _lookupBrowserState = {
     sel,
@@ -16332,6 +16488,8 @@ async function openLookupBrowserForSelect(sel) {
     selectedVal: initialVal,
     selectedRow: initialRow,
     targetScreen,
+    multi,
+    checkedIds,
   };
 
   const dlg = $('#lookupBrowserDialog');
@@ -16339,7 +16497,7 @@ async function openLookupBrowserForSelect(sel) {
   const search = $('#lookupBrowserSearch');
   if (!dlg) return;
   const screenTitle = targetScreen?.title || field.label || 'Kayıt';
-  if (title) title.textContent = `${screenTitle}`;
+  if (title) title.textContent = multi ? `${screenTitle} · çoklu seç` : `${screenTitle}`;
   // Yuvarlak liste: arama kutusu boş açılsın (alan değeri filtreye taşınmasın)
   if (search) {
     search.value = '';
@@ -16369,6 +16527,10 @@ async function openLookupBrowserForSelect(sel) {
 function applyLookupBrowserValue(val) {
   const st = _lookupBrowserState;
   if (!st?.sel) return;
+  if (st.multi && st.checkedIds?.size) {
+    applyLookupBrowserMultiSelect();
+    return;
+  }
   const sel = st.sel;
   const str = String(val ?? '');
   if (str && st.field?.type === 'lookup' && st.field.lookup) {
@@ -16395,6 +16557,107 @@ function applyLookupBrowserValue(val) {
   closeLookupBrowser();
   const ta = sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead');
   (ta || sel).focus();
+}
+
+/** Stok hareket: seçili stokları kalem satırı olarak topluca ekle (miktar boş — kayıt öncesi zorunlu) */
+function applyLookupBrowserMultiSelect() {
+  const st = _lookupBrowserState;
+  if (!st?.multi || !st.checkedIds?.size) {
+    toast('Önce listeden stok işaretleyin.');
+    return;
+  }
+  const screen = findScreen(state.screenId);
+  if (!screen || screen.id !== 'stok-hareketleri') {
+    toast('Çoklu seç yalnız stok hareketlerinde.');
+    return;
+  }
+  const gkey = screen.detailKey || 'satirlar';
+  const tab = resolveGridTab(screen, gkey)
+    || { key: gkey, fields: effectiveGridFields({ fields: screen.detailFields || [] }) };
+  const fields = effectiveGridFields(tab);
+  const masterSnap = readMasterFromForm(screen);
+  let rows = Array.isArray(state.formRecord?.[gkey]) ? [...state.formRecord[gkey]] : [];
+  // Mevcut satırları DOM’dan senkronla
+  if (tab) {
+    rows = rows.map((r, i) => {
+      try {
+        const { row } = syncGridRowFromDom(tab, i, r || {});
+        return row;
+      } catch (_) {
+        return r;
+      }
+    });
+  }
+  const picked = [...st.checkedIds].map((id) => (
+    st.allRows.find((r) => String(r.id) === String(id))
+    || st.allRows.find((r) => String(lookupBrowserRowValue(r, st.valueKey)) === String(id))
+  )).filter(Boolean);
+  if (!picked.length) {
+    toast('Seçili stok bulunamadı.');
+    return;
+  }
+  // İlk boş satırı doldur; kalanlar yeni satır
+  let firstEmpty = rows.findIndex((r) => !Number(r?.item_id) && !(Number(r?.quantity) > 0));
+  let added = 0;
+  picked.forEach((hit, i) => {
+    const blank = emptyRowFromFields(fields);
+    blank.item_id = hit.id;
+    blank.uom_code = hit.uom_code || '';
+    blank.quantity = ''; // miktar zorunlu — kullanıcı doldurmadan kaydedilmez
+    blank.currency_code = hit.currency_code || masterSnap.currency_code || 'TRY';
+    blank.rate_type = 'TCMB-ALIS';
+    blank.vat_rate = hit.varsayilan_vat_rate != null ? hit.varsayilan_vat_rate : '';
+    blank.unit_price = '';
+    blank.lot_no = '';
+    blank._satir_kayitli = false;
+    blank._satir_duzenleniyor = true;
+    if (i === 0 && firstEmpty >= 0) {
+      rows[firstEmpty] = { ...rows[firstEmpty], ...blank };
+    } else {
+      rows.push(blank);
+    }
+    added += 1;
+  });
+  state.formRecord = { ...(state.formRecord || {}), ...masterSnap, [gkey]: rows };
+  state.gridSel = { key: gkey, idx: firstEmpty >= 0 ? firstEmpty : rows.length - added };
+  closeLookupBrowser();
+  renderForm(screen);
+  persistActiveFormTab();
+  toast(`${added} stok kaleme eklendi — miktar zorunlu.`);
+  requestAnimationFrame(() => {
+    const idx = state.gridSel?.idx ?? 0;
+    const qty = document.querySelector(
+      `tr[data-grid-row="${gkey}"][data-grid-idx="${idx}"] [data-detail="quantity"]`
+    );
+    if (qty) {
+      qty.focus();
+      if (typeof qty.select === 'function') qty.select();
+    }
+  });
+}
+
+function toggleLookupBrowserCheck(rowId, force) {
+  const st = _lookupBrowserState;
+  if (!st?.multi || rowId == null || rowId === '') return;
+  const id = String(rowId);
+  if (!st.checkedIds) st.checkedIds = new Set();
+  const on = force == null ? !st.checkedIds.has(id) : Boolean(force);
+  if (on) st.checkedIds.add(id);
+  else st.checkedIds.delete(id);
+  paintLookupBrowser();
+}
+
+function lookupBrowserSelectAllVisible(on) {
+  const st = _lookupBrowserState;
+  if (!st?.multi) return;
+  if (!st.checkedIds) st.checkedIds = new Set();
+  (st.filteredRows || []).forEach((r) => {
+    const id = r.id != null ? String(r.id) : String(lookupBrowserRowValue(r, st.valueKey) ?? '');
+    if (!id) return;
+    if (on) st.checkedIds.add(id);
+    else st.checkedIds.delete(id);
+  });
+  paintLookupBrowser();
 }
 
 async function lookupBrowserCrudAction(act) {
@@ -16588,7 +16851,9 @@ function bindLookupBrowseUi() {
 
     if (e.target.id === 'lookupBrowserSelect') {
       e.preventDefault();
-      if (_lookupBrowserState?.selectedVal != null && String(_lookupBrowserState.selectedVal) !== '') {
+      if (_lookupBrowserState?.multi) {
+        applyLookupBrowserMultiSelect();
+      } else if (_lookupBrowserState?.selectedVal != null && String(_lookupBrowserState.selectedVal) !== '') {
         applyLookupBrowserValue(_lookupBrowserState.selectedVal);
       } else {
         toast('Önce listeden bir satır seçin.');
@@ -16596,14 +16861,35 @@ function bindLookupBrowseUi() {
       return;
     }
 
+    const selectAllBtn = e.target.closest?.('[data-lb-select-all]');
+    if (selectAllBtn) {
+      e.preventDefault();
+      const mode = selectAllBtn.getAttribute('data-lb-select-all');
+      lookupBrowserSelectAllVisible(mode !== '0');
+      return;
+    }
+
+    const check = e.target.closest?.('[data-lookup-check]');
+    if (check && _lookupBrowserState?.multi) {
+      e.stopPropagation();
+      const id = check.getAttribute('data-lookup-id');
+      toggleLookupBrowserCheck(id, check.checked);
+      return;
+    }
+
     const row = e.target.closest?.('.lookup-browser-row');
     if (row) {
       e.preventDefault();
       const val = row.getAttribute('data-lookup-val');
+      const rid = row.getAttribute('data-lookup-id');
       const idx = Number(row.getAttribute('data-lookup-idx'));
       const filtered = _lookupBrowserState?.filteredRows || [];
       const hit = Number.isFinite(idx) ? filtered[idx] : null;
-      setLookupBrowserSelection(val, hit);
+      if (_lookupBrowserState?.multi) {
+        toggleLookupBrowserCheck(rid || val);
+      } else {
+        setLookupBrowserSelection(val, hit);
+      }
       return;
     }
 

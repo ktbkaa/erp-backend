@@ -3690,6 +3690,50 @@ select.lookup-pick::-ms-expand { display: none; }
 .lookup-browser-actionbar .btn.action {
   min-width: 4.6rem;
 }
+.lookup-browser-multi {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.lookup-browser-multi[hidden] { display: none !important; }
+.lookup-browser-multi-count {
+  font-size: 0.78rem;
+  color: var(--muted, #6a7a88);
+  min-width: 4rem;
+  text-align: right;
+}
+.lookup-browser-check {
+  width: 2.2rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.lookup-browser-check input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+.qty-plus { color: #0a7a3e; font-weight: 600; }
+.qty-minus { color: #b42318; font-weight: 600; }
+.stok-hareket-onizle-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.stok-hareket-onizle-table th,
+.stok-hareket-onizle-table td {
+  border-bottom: 1px solid var(--line, #dde3ea);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+.stok-hareket-onizle-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted, #6a7a88); }
+.stok-hareket-onizle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
 .lookup-browser-foot {
   display: flex;
   justify-content: flex-end;

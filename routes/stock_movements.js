@@ -24,15 +24,55 @@ async function hareketGetir(id) {
     if (!h.rows[0]) return null;
     const satirlar = await pool.query(
         `
-        SELECT s.*, st.item_code, st.item_name, st.uom_code AS stok_birim
+        SELECT s.*, st.item_code, st.item_name, st.uom_code AS stok_birim,
+               COALESCE(s.lot_no, p.lot_no) AS lot_no
         FROM stock_movement_lines s
         JOIN items st ON s.item_id = st.id
+        LEFT JOIN item_lots p ON p.id = s.lot_id
         WHERE s.movement_id = $1
         ORDER BY s.id
         `,
         [id]
     );
-    return { ...h.rows[0], satirlar: satirlar.rows, kalemler: satirlar.rows };
+    const lines = satirlar.rows.map((s) => {
+        const qty = Number(s.quantity) || 0;
+        const yon = Number(s.direction) || 1;
+        const unit = Number(s.unit_price != null ? s.unit_price : s.uom_cost) || 0;
+        const mal = Number(s.amount_cost) || Number((qty * unit).toFixed(2));
+        const kdv = Number((mal * ((Number(s.vat_rate) || 0) / 100)).toFixed(2));
+        return {
+            ...s,
+            quantity_in: yon > 0 ? qty : 0,
+            quantity_out: yon < 0 ? qty : 0,
+            line_goods_amount: mal,
+            line_tax_amount: kdv,
+            warehouse_code: h.rows[0].warehouse_code,
+            warehouse_name: h.rows[0].warehouse_name,
+            hedef_depo_kodu: h.rows[0].hedef_depo_kodu,
+            hedef_depo_adi: h.rows[0].hedef_depo_adi,
+        };
+    });
+    const qtyNet = lines.reduce((a, s) => a + (Number(s.quantity) || 0) * (Number(s.direction) || 1), 0);
+    const qtyIn = lines.reduce((a, s) => a + (Number(s.quantity_in) || 0), 0);
+    const qtyOut = lines.reduce((a, s) => a + (Number(s.quantity_out) || 0), 0);
+    const goods = Number(h.rows[0].goods_amount) || lines.reduce((a, s) => a + (Number(s.line_goods_amount) || 0), 0);
+    const tax = Number(h.rows[0].tax_amount) || lines.reduce((a, s) => a + (Number(s.line_tax_amount) || 0), 0);
+    const cost = Number(h.rows[0].cost_total) || goods;
+    const grand = Number(h.rows[0].grand_total) || (goods + tax);
+    const signedLabel = qtyNet > 0 ? `+${qtyNet}` : String(qtyNet);
+    return {
+        ...h.rows[0],
+        satirlar: lines,
+        kalemler: lines,
+        quantity_net: qtyNet,
+        quantity_signed: signedLabel,
+        quantity_in: qtyIn,
+        quantity_out: qtyOut,
+        goods_amount: Number(goods.toFixed?.(2) ?? goods),
+        tax_amount: Number(tax.toFixed?.(2) ?? tax),
+        cost_total: Number(cost.toFixed?.(2) ?? cost),
+        grand_total: Number(grand.toFixed?.(2) ?? grand),
+    };
 }
 
 function mapHareketTipi(hareketKodu) {
@@ -289,6 +329,7 @@ router.post('/', async (req, res) => {
                 if (!Number.isFinite(qty) || qty <= 0) {
                     throw new Error(`Satır ${i + 1}: miktar 0'dan büyük olmalı.`);
                 }
+                const unitPrice = s.unit_price != null && s.unit_price !== '' ? Number(s.unit_price) : 0;
                 satirHazir.push({
                     item_id: itemId,
                     quantity: qty,
@@ -300,6 +341,12 @@ router.post('/', async (req, res) => {
                     serial_no: s.serial_no || null,
                     barkod_okumalar: Array.isArray(s.barkod_okumalar) ? s.barkod_okumalar : null,
                     barkod: s.barkod || null,
+                    unit_price: Number.isFinite(unitPrice) ? unitPrice : 0,
+                    uom_cost: Number.isFinite(unitPrice) ? unitPrice : 0,
+                    currency_code: s.currency_code || body.currency_code || 'TRY',
+                    rate_type: s.rate_type || body.rate_type || 'TCMB-ALIS',
+                    exchange_rate: s.exchange_rate != null && s.exchange_rate !== '' ? Number(s.exchange_rate) : 1,
+                    vat_rate: s.vat_rate != null && s.vat_rate !== '' ? Number(s.vat_rate) : 0,
                 });
             }
             if (!satirHazir.length) {
