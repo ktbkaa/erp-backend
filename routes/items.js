@@ -452,30 +452,39 @@ router.post('/', async (req, res) => {
         }
         const type = trimOrNull(req.body.item_type) || 'Ticari';
         const m = req.body;
-        // Master’daki firma / iş yeri — olmazsa olmaz
+        // Firma zorunlu; iş yeri bağları boşsa firmanın tüm iş yerleri default
         const firmaId = Number(m.company_id) || firmaIdFromReq(req) || null;
-        const isYeriId = Number(m.plant_id)
-          || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.plant_id))
-          || null;
         if (!firmaId) {
             return res.status(400).json({
                 hata: 'Firma zorunludur.',
                 hatalar: [{ alan: 'company_id', hata: 'Firma zorunludur.' }],
             });
         }
-        if (!isYeriId) {
-            return res.status(400).json({
-                hata: 'İş yeri zorunludur.',
-                hatalar: [{ alan: 'plant_id', hata: 'İş yeri zorunludur.' }],
-            });
+        const hasBags = Array.isArray(m.is_yeri_baglari)
+            && m.is_yeri_baglari.some((b) => Number(b.plant_id));
+        if (!hasBags) {
+            // Seçili firmaların (parametre + master) tüm iş yerleri default
+            const firmaIds = new Set([firmaId]);
+            if (Array.isArray(m.firma_parametreleri)) {
+                m.firma_parametreleri.forEach((p) => {
+                    if (p && p.is_active !== false && Number(p.company_id)) {
+                        firmaIds.add(Number(p.company_id));
+                    }
+                });
+            }
+            const plants = await pool.query(
+                `SELECT id, company_id FROM plants WHERE company_id = ANY($1::int[]) ORDER BY company_id, id`,
+                [[...firmaIds]]
+            );
+            m.is_yeri_baglari = plants.rows.map((p) => ({
+                plant_id: p.id,
+                company_id: p.company_id,
+                is_active: true,
+            }));
         }
-        // Master iş yeri → item_plants bağları
-        if (!Array.isArray(m.is_yeri_baglari) || !m.is_yeri_baglari.some((b) => Number(b.plant_id) === isYeriId)) {
-            m.is_yeri_baglari = [
-                { plant_id: isYeriId, is_active: true },
-                ...((Array.isArray(m.is_yeri_baglari) ? m.is_yeri_baglari : [])),
-            ];
-        }
+        const isYeriId = Number(m.plant_id)
+            || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.plant_id))
+            || null;
 
         const sonucId = await withTransaction(pool, async (client) => {
             const kod = trimOrNull(m.item_code) || (await sonrakiKod(client, stokSeriKodundanTip(type)));
@@ -608,29 +617,39 @@ router.put('/:id', async (req, res) => {
                 hatalar: [{ alan: 'abc_code', hata: "ABC kodu 'A', 'B' veya 'C' olmalı." }],
             });
         }
-        const isYeriId = Number(m.plant_id)
-          || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.plant_id))
-          || null;
+        const putFirmaId = Number(m.company_id) || firmaIdFromReq(req) || null;
         if (m.company_id !== undefined && m.company_id !== null && m.company_id !== '' && !Number(m.company_id) && !firmaIdFromReq(req)) {
             return res.status(400).json({
                 hata: 'Firma zorunludur.',
                 hatalar: [{ alan: 'company_id', hata: 'Firma zorunludur.' }],
             });
         }
-        if (m.plant_id !== undefined || Array.isArray(m.is_yeri_baglari)) {
-            if (!isYeriId) {
-                return res.status(400).json({
-                    hata: 'İş yeri zorunludur.',
-                    hatalar: [{ alan: 'plant_id', hata: 'İş yeri zorunludur.' }],
+        // İş yeri bağları boş gönderildiyse seçili firmaların tüm iş yerlerini doldur
+        if (Array.isArray(m.is_yeri_baglari) && !m.is_yeri_baglari.some((b) => Number(b.plant_id))) {
+            const firmaIds = new Set();
+            if (putFirmaId) firmaIds.add(putFirmaId);
+            if (Array.isArray(m.firma_parametreleri)) {
+                m.firma_parametreleri.forEach((p) => {
+                    if (p && p.is_active !== false && Number(p.company_id)) {
+                        firmaIds.add(Number(p.company_id));
+                    }
                 });
             }
-            if (!Array.isArray(m.is_yeri_baglari) || !m.is_yeri_baglari.some((b) => Number(b.plant_id) === isYeriId)) {
-                m.is_yeri_baglari = [
-                    { plant_id: isYeriId, is_active: true },
-                    ...((Array.isArray(m.is_yeri_baglari) ? m.is_yeri_baglari : [])),
-                ];
+            if (firmaIds.size) {
+                const plants = await pool.query(
+                    `SELECT id, company_id FROM plants WHERE company_id = ANY($1::int[]) ORDER BY company_id, id`,
+                    [[...firmaIds]]
+                );
+                m.is_yeri_baglari = plants.rows.map((p) => ({
+                    plant_id: p.id,
+                    company_id: p.company_id,
+                    is_active: true,
+                }));
             }
         }
+        const isYeriId = Number(m.plant_id)
+            || Number((Array.isArray(m.is_yeri_baglari) && m.is_yeri_baglari[0]?.plant_id))
+            || null;
 
         await withTransaction(pool, async (client) => {
             const uom_code = Object.prototype.hasOwnProperty.call(m, 'uom_code')

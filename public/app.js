@@ -7183,25 +7183,8 @@ function upgradeTanimLookups(screen) {
 }
 
 /** Stok kartı — Firmalar sekmesi: yetki benzeri firma tikleri + başlıklı firma parametreleri */
+/** Firma düzeyinde parametreler (iş yeri zorunlu değil). plant_id yalnız isteğe bağlı istisna satırında. */
 const STOK_FIRMA_PARAM_SECTIONS = [
-  {
-    id: 'organizasyon',
-    title: 'Organizasyon',
-    fields: [
-      {
-        key: 'plant_id',
-        label: 'İş yeri',
-        type: 'lookup',
-        lookup: 'is-yerleri',
-        valueKey: 'id',
-        labelKey: 'plant_name',
-        codeKey: 'plant_code',
-        required: true,
-        dependsOn: 'company_id',
-        filterKey: 'company_id',
-      },
-    ],
-  },
   {
     id: 'satis-sa',
     title: 'Satış / Satınalma',
@@ -7257,8 +7240,8 @@ const STOK_FIRMA_PARAM_SECTIONS = [
         valueKey: 'id',
         labelKey: 'warehouse_name',
         codeKey: 'warehouse_code',
-        dependsOn: 'plant_id',
-        filterKey: 'plant_id',
+        dependsOn: 'company_id',
+        filterKey: 'company_id',
       },
       {
         key: 'varsayilan_cikis_warehouse_id',
@@ -7268,8 +7251,8 @@ const STOK_FIRMA_PARAM_SECTIONS = [
         valueKey: 'id',
         labelKey: 'warehouse_name',
         codeKey: 'warehouse_code',
-        dependsOn: 'plant_id',
-        filterKey: 'plant_id',
+        dependsOn: 'company_id',
+        filterKey: 'company_id',
       },
     ],
   },
@@ -7286,6 +7269,19 @@ const STOK_FIRMA_PARAM_SECTIONS = [
     ],
   },
 ];
+
+/** İş yerine özel satırda gösterilen alan (opsiyonel istisna) */
+const STOK_FIRMA_PLANT_OVERRIDE_FIELD = {
+  key: 'plant_id',
+  label: 'İş yeri (istisna)',
+  type: 'lookup',
+  lookup: 'is-yerleri',
+  valueKey: 'id',
+  labelKey: 'plant_name',
+  codeKey: 'plant_code',
+  dependsOn: 'company_id',
+  filterKey: 'company_id',
+};
 
 /** Ekrandaki tüm form alanlarını topla */
 function collectScreenFormFields(screen) {
@@ -12543,30 +12539,66 @@ function masterFieldScore(f) {
   return s;
 }
 
-/** Stok kartı: master firma/iş yeri ↔ is_yeri_baglari senkronu */
+/** Firmanın tüm iş yerleri (lookup cache) */
+function plantsForCompany(companyId) {
+  const cid = Number(companyId);
+  if (!cid) return [];
+  const plants = state.lookupCache?.['is-yerleri'] || state.isYerleri || [];
+  return plants.filter((p) => Number(p.company_id) === cid);
+}
+
+/** Stok kartı: firma zorunlu; iş yeri bağları yoksa firmanın tüm iş yerleri */
 function hydrateStokFirmaIsYeri(rec) {
   if (!rec) return;
-  const bags = Array.isArray(rec.is_yeri_baglari) ? rec.is_yeri_baglari : [];
-  if (!rec.plant_id && bags.length) {
-    const first = bags.find((b) => b.plant_id) || bags[0];
-    if (first?.plant_id) rec.plant_id = Number(first.plant_id);
-  }
   if (!rec.company_id && getActiveFirmaId()) {
     rec.company_id = getActiveFirmaId();
+  }
+  // Yalnızca alan hiç gelmemişse (yeni kart) tüm iş yerlerini doldur; boş dizi bilinçli daraltma olabilir
+  if (!Array.isArray(rec.is_yeri_baglari) && rec.company_id) {
+    rec.is_yeri_baglari = plantsForCompany(rec.company_id).map((p) => ({
+      plant_id: Number(p.id),
+      company_id: Number(rec.company_id),
+      is_active: true,
+    }));
+  } else if (Array.isArray(rec.is_yeri_baglari)
+    && !rec.is_yeri_baglari.some((b) => Number(b.plant_id))
+    && rec.company_id
+    && !rec.id) {
+    // Yeni kayıt + boş bağ → default tüm iş yerleri
+    rec.is_yeri_baglari = plantsForCompany(rec.company_id).map((p) => ({
+      plant_id: Number(p.id),
+      company_id: Number(rec.company_id),
+      is_active: true,
+    }));
+  }
+  // plant_id master’da zorunlu değil — yalnızca bilgilendirme / ilk bağ
+  if (!rec.plant_id && Array.isArray(rec.is_yeri_baglari) && rec.is_yeri_baglari[0]?.plant_id) {
+    rec.plant_id = Number(rec.is_yeri_baglari[0].plant_id);
   }
   ensureStokFirmaParamsSeed(rec);
 }
 
 function syncStokFirmaIsYeriForSave(master) {
   const firmaId = Number(master.company_id) || getActiveFirmaId() || null;
-  const iyId = Number(master.plant_id) || null;
   if (firmaId) master.company_id = firmaId;
-  if (iyId) {
-    master.plant_id = iyId;
-    const bags = Array.isArray(master.is_yeri_baglari) ? [...master.is_yeri_baglari] : [];
-    const has = bags.some((b) => Number(b.plant_id) === iyId);
-    if (!has) bags.unshift({ plant_id: iyId, is_active: true });
-    master.is_yeri_baglari = bags;
+  const bags = Array.isArray(master.is_yeri_baglari)
+    ? master.is_yeri_baglari.filter((b) => Number(b.plant_id))
+    : [];
+  if (firmaId && !bags.length) {
+    master.is_yeri_baglari = plantsForCompany(firmaId).map((p) => ({
+      plant_id: Number(p.id),
+      company_id: firmaId,
+      is_active: true,
+    }));
+  } else if (bags.length) {
+    master.is_yeri_baglari = bags.map((b) => ({
+      plant_id: Number(b.plant_id),
+      company_id: firmaId || Number(b.company_id) || null,
+      is_active: b.is_active !== false,
+    }));
+  }
+  if (!master.plant_id && master.is_yeri_baglari?.[0]?.plant_id) {
+    master.plant_id = Number(master.is_yeri_baglari[0].plant_id);
   }
 }
 
@@ -13039,21 +13071,6 @@ function stokFirmaParamsForCompany(rec, companyId) {
 function ensureStokFirmaParamsSeed(rec) {
   if (!rec) return;
   let list = Array.isArray(rec.firma_parametreleri) ? [...rec.firma_parametreleri] : [];
-  const plants = state.lookupCache?.['is-yerleri'] || state.isYerleri || [];
-  const bags = Array.isArray(rec.is_yeri_baglari) ? rec.is_yeri_baglari : [];
-
-  // İş yeri bağlarından eksik (firma, iş yeri) satırlarını tamamla
-  bags.forEach((b) => {
-    const pid = Number(b.plant_id);
-    if (!pid) return;
-    const plant = plants.find((p) => Number(p.id) === pid);
-    const cid = Number(plant?.company_id) || Number(rec.company_id);
-    if (!cid) return;
-    const hit = list.some((p) => Number(p.company_id) === cid
-      && Number(p.plant_id) === pid
-      && p.is_active !== false);
-    if (!hit) list.push(emptyStokFirmaParam(cid, pid));
-  });
 
   if (!list.length) {
     const cid = Number(rec.company_id) || getActiveFirmaId() || null;
@@ -13061,8 +13078,9 @@ function ensureStokFirmaParamsSeed(rec) {
       rec.firma_parametreleri = [];
       return;
     }
+    // Firma geneli (plant_id null) — master alanlarından kopya
     list = [{
-      ...emptyStokFirmaParam(cid, rec.plant_id || null),
+      ...emptyStokFirmaParam(cid, null),
       sales_price: rec.sales_price ?? null,
       purchase_uom: rec.purchase_uom || null,
       sales_uom: rec.sales_uom || null,
@@ -13085,11 +13103,30 @@ function ensureStokFirmaParamsSeed(rec) {
     }];
   }
 
-  // Seçili firmada hiç satır yoksa boş iş yeri satırı ekle
-  const selected = stokFirmaSelectedCompanyIds({ firma_parametreleri: list });
+  // Seçili firmada hiç satır yoksa firma geneli boş satır
+  let selected = stokFirmaSelectedCompanyIds({ firma_parametreleri: list });
   if (!selected.length) {
-    const aid = getActiveFirmaId();
-    if (aid) list.push(emptyStokFirmaParam(aid));
+    const aid = Number(rec.company_id) || getActiveFirmaId();
+    if (aid) selected = [aid];
+  }
+  selected.forEach((cid) => {
+    const hasAny = list.some((p) => Number(p.company_id) === cid && p.is_active !== false);
+    if (!hasAny) list.push(emptyStokFirmaParam(cid, null));
+  });
+
+  // Yeni / tanımsız bağlarda seçili firmaların tüm iş yerleri
+  if (!Array.isArray(rec.is_yeri_baglari) && selected.length) {
+    const all = [];
+    selected.forEach((cid) => {
+      plantsForCompany(cid).forEach((p) => {
+        all.push({
+          plant_id: Number(p.id),
+          company_id: cid,
+          is_active: true,
+        });
+      });
+    });
+    if (all.length) rec.is_yeri_baglari = all;
   }
 
   rec.firma_parametreleri = list;
@@ -13107,75 +13144,121 @@ function renderStokFirmaParamField(field, param, companyId, rowKey, { locked = f
   return fieldShell(f, control, param?.[field.key]);
 }
 
-/** Tek (firma × iş yeri) parametre bloğu — iş yeri seçilmeden detaylar kapalı */
-function renderStokFirmaPlantBlock(company, param, rowKey, draftIdx, canRemove) {
+function isStokFirmaOverrideParam(param) {
+  return Boolean(param?._isOverride) || Boolean(Number(param?.plant_id));
+}
+
+/** Firma geneli veya iş yeri istisna parametre bloğu — detaylar her zaman açık */
+function renderStokFirmaPlantBlock(company, param, rowKey, draftIdx, canRemove, isOverride) {
   const readonly = state.formMode === 'incele';
   const cid = Number(company.id);
   const plantOk = Boolean(Number(param?.plant_id));
-  const orgSec = STOK_FIRMA_PARAM_SECTIONS.find((s) => s.id === 'organizasyon');
-  const detailSecs = STOK_FIRMA_PARAM_SECTIONS.filter((s) => s.id !== 'organizasyon');
-  const orgHtml = orgSec
-    ? `<section class="stok-firma-section" data-firma-sec="organizasyon">
-        <h4 class="erp-section-title">${escapeHtml(orgSec.title)}</h4>
-        <p class="hint">Önce bu firmanın iş yerini seçin. Detaylar iş yeri seçilince açılır.</p>
+  const overrideFieldHtml = isOverride
+    ? `<section class="stok-firma-section" data-firma-sec="istisna">
+        <h4 class="erp-section-title">İş yeri istisnası</h4>
+        <p class="hint">Bu satır yalnızca seçilen iş yerinde firma genelinin üzerine yazar.</p>
         <div class="erp-section-grid erp-section-grid--pairs">
-          ${orgSec.fields.map((f) => renderStokFirmaParamField(f, param, cid, rowKey)).join('')}
+          ${renderStokFirmaParamField(STOK_FIRMA_PLANT_OVERRIDE_FIELD, param, cid, rowKey)}
         </div>
       </section>`
     : '';
-  const detailsHtml = detailSecs.map((sec) => `
-    <section class="stok-firma-section stok-firma-details ${plantOk ? '' : 'is-gated'}" data-firma-sec="${escAttr(sec.id)}">
+  const detailsHtml = STOK_FIRMA_PARAM_SECTIONS.map((sec) => `
+    <section class="stok-firma-section stok-firma-details" data-firma-sec="${escAttr(sec.id)}">
       <h4 class="erp-section-title">${escapeHtml(sec.title)}</h4>
-      ${plantOk ? '' : '<p class="hint stok-firma-gate-hint">İş yeri seçilmeden bu alanlar kapalıdır.</p>'}
-      <fieldset class="stok-firma-fieldset" ${plantOk && !readonly ? '' : 'disabled'}>
+      <fieldset class="stok-firma-fieldset" ${readonly ? 'disabled' : ''}>
         <div class="erp-section-grid erp-section-grid--pairs">
-          ${sec.fields.map((f) => renderStokFirmaParamField(f, param, cid, rowKey, { locked: !plantOk })).join('')}
+          ${sec.fields.map((f) => renderStokFirmaParamField(f, param, cid, rowKey)).join('')}
         </div>
       </fieldset>
     </section>`).join('');
   const plantLabel = (() => {
-    if (!plantOk) return 'İş yeri seçin';
+    if (!isOverride) return 'Firma geneli';
+    if (!plantOk) return 'İş yeri seçin (istisna)';
     const rows = state.lookupCache?.['is-yerleri'] || [];
     const p = rows.find((r) => Number(r.id) === Number(param.plant_id));
     return p ? `${p.plant_code || ''} — ${p.plant_name || ''}`.trim() : `İş yeri #${param.plant_id}`;
   })();
   return `
-    <div class="stok-firma-plant-block ${plantOk ? 'has-plant' : 'needs-plant'}"
+    <div class="stok-firma-plant-block ${isOverride ? (plantOk ? 'has-plant' : 'needs-plant') : 'is-firma-genel'}"
          data-stok-firma-plant-block="${escAttr(rowKey)}"
          data-stok-firma-id="${escAttr(cid)}"
          data-stok-firma-row="${escAttr(rowKey)}"
+         data-stok-firma-override="${isOverride ? '1' : '0'}"
          data-draft-idx="${escAttr(draftIdx)}">
       <div class="stok-firma-plant-head">
         <span class="stok-firma-plant-label">${escapeHtml(plantLabel)}</span>
-        ${readonly || !canRemove ? '' : `<button type="button" class="btn ghost danger" data-stok-firma-remove-plant="${escAttr(rowKey)}">İş yerini kaldır</button>`}
+        ${readonly || !canRemove ? '' : `<button type="button" class="btn ghost danger" data-stok-firma-remove-plant="${escAttr(rowKey)}">İstisnayı kaldır</button>`}
       </div>
-      ${orgHtml}
+      ${overrideFieldHtml}
       ${detailsHtml}
     </div>`;
 }
 
-function renderStokFirmaParamCard(company, params, open) {
+function renderStokFirmaPlantChecks(companyId, bags) {
+  const readonly = state.formMode === 'incele';
+  const dis = readonly ? 'disabled' : '';
+  const plants = plantsForCompany(companyId);
+  if (!plants.length) {
+    return '<p class="hint">Bu firmaya bağlı iş yeri yok.</p>';
+  }
+  const bagSet = new Set(
+    (Array.isArray(bags) ? bags : [])
+      .filter((b) => b && b.is_active !== false && Number(b.plant_id))
+      .map((b) => Number(b.plant_id))
+  );
+  // Bağ yoksa hepsi default işaretli
+  const defaultAll = !bagSet.size;
+  const checks = plants.map((p) => {
+    const pid = Number(p.id);
+    const on = defaultAll || bagSet.has(pid);
+    const label = `${p.plant_code || ''} — ${p.plant_name || ''}`.trim() || `#${pid}`;
+    return `
+      <label class="stok-firma-plant-check">
+        <input type="checkbox"
+          data-stok-firma-plant-check="${escAttr(pid)}"
+          data-stok-firma-id="${escAttr(companyId)}"
+          ${on ? 'checked' : ''} ${dis} />
+        <span>${escapeHtml(label)}</span>
+      </label>`;
+  }).join('');
+  return `
+    <section class="stok-firma-plant-scope" aria-label="İş yeri kapsamı">
+      <h4 class="erp-section-title">İş yeri kapsamı</h4>
+      <p class="hint">Firma seçilince tüm iş yerleri varsayılan işaretlidir. Kapsamı daraltmak için işareti kaldırın.</p>
+      <div class="stok-firma-plant-checks">${checks}</div>
+    </section>`;
+}
+
+function renderStokFirmaParamCard(company, params, open, bags) {
   const readonly = state.formMode === 'incele';
   const cid = Number(company.id);
   const title = `${company.company_code || ''} · ${company.company_name || ''}`.trim();
   const list = (params && params.length) ? params : [emptyStokFirmaParam(cid)];
+  const wide = list.filter((p) => !isStokFirmaOverrideParam(p));
+  const overrides = list.filter((p) => isStokFirmaOverrideParam(p));
+  const wideRow = wide[0] || emptyStokFirmaParam(cid, null);
   let draftIdx = 0;
-  const blocks = list.map((param) => {
-    const dIdx = Number(param.plant_id) ? 0 : draftIdx++;
+  const wideKey = stokFirmaRowKey(cid, null, 0);
+  const wideBlock = renderStokFirmaPlantBlock(company, wideRow, wideKey, 0, false, false);
+  const overrideBlocks = overrides.map((param) => {
+    const dIdx = Number(param.plant_id) ? 0 : (++draftIdx);
     const rowKey = stokFirmaRowKey(cid, param.plant_id, dIdx);
-    return renderStokFirmaPlantBlock(company, param, rowKey, dIdx, list.length > 1);
+    return renderStokFirmaPlantBlock(company, param, rowKey, dIdx, true, true);
   }).join('');
+  const plantCount = plantsForCompany(cid).length;
   return `
     <details class="stok-firma-card" data-stok-firma-card="${escAttr(cid)}" ${open ? 'open' : ''} ${readonly ? 'data-readonly="1"' : ''}>
       <summary class="stok-firma-card-sum">
         <span class="mono">${escapeHtml(company.company_code || '')}</span>
         <span>${escapeHtml(company.company_name || '')}</span>
-        <span class="stok-firma-card-count">${list.length} iş yeri</span>
+        <span class="stok-firma-card-count">${plantCount} iş yeri · ${overrides.length ? `${overrides.length} istisna` : 'firma geneli'}</span>
       </summary>
       <div class="stok-firma-card-body" aria-label="${escAttr(title)} parametreleri">
-        ${blocks}
+        ${renderStokFirmaPlantChecks(cid, bags)}
+        ${wideBlock}
+        ${overrideBlocks}
         ${readonly ? '' : `<div class="stok-firma-plant-actions">
-          <button type="button" class="btn ghost" data-stok-firma-add-plant="${escAttr(cid)}">+ İş yeri ekle</button>
+          <button type="button" class="btn ghost" data-stok-firma-add-plant="${escAttr(cid)}">+ İş yeri istisnası</button>
         </div>`}
       </div>
     </details>`;
@@ -13203,11 +13286,22 @@ function renderStokFirmalarPane(rec) {
     : '<tr><td colspan="3" class="detail-empty">Firma listesi yok.</td></tr>';
 
   const openFirst = [...selected][0] || null;
+  const bags = Array.isArray(rec?.is_yeri_baglari) ? rec.is_yeri_baglari : [];
   const cards = companies
     .filter((f) => selected.has(Number(f.id)))
     .map((f) => {
       const params = stokFirmaParamsForCompany(rec, f.id);
-      return renderStokFirmaParamCard(f, params.length ? params : [emptyStokFirmaParam(f.id)], Number(f.id) === Number(openFirst));
+      const firmaBags = bags.filter((b) => {
+        if (Number(b.company_id) === Number(f.id)) return true;
+        const plant = (state.lookupCache?.['is-yerleri'] || []).find((p) => Number(p.id) === Number(b.plant_id));
+        return Number(plant?.company_id) === Number(f.id);
+      });
+      return renderStokFirmaParamCard(
+        f,
+        params.length ? params : [emptyStokFirmaParam(f.id)],
+        Number(f.id) === Number(openFirst),
+        firmaBags
+      );
     })
     .join('');
 
@@ -13221,7 +13315,7 @@ function renderStokFirmalarPane(rec) {
             <button type="button" class="btn ghost" id="stokFirmaClearAll">Temizle</button>
           </div>
         </div>
-        <p class="hint yetki-hint">Firmaları işaretleyin → her firma için bir veya daha fazla iş yeri seçin → iş yeri seçilince satış/vergi/depo/MRP detayları açılır. Aynı stok farklı firmaların iş yerlerinde ve bir firmanın birden fazla iş yerinde tanımlanabilir.</p>
+        <p class="hint yetki-hint">Firma zorunludur. Seçilen firmanın tüm iş yerlerinde stok varsayılan tanımlıdır; kapsamı daraltmak veya iş yerine özel parametre (istisna) eklemek isteğe bağlıdır.</p>
         <div class="firma-yetki-scroll">
           <table class="yetki-table" id="stokFirmaYetkiTable">
             <thead>
@@ -13250,7 +13344,14 @@ function refreshStokFirmalarPane() {
   const screen = findScreen(state.screenId);
   if (!screen || screen.id !== 'stok-karti') return;
   const cur = readStokFirmaParamsFromDom(state.formRecord || {});
-  state.formRecord = { ...(state.formRecord || {}), firma_parametreleri: cur };
+  const bags = readStokFirmaIsYeriBaglariFromDom();
+  state.formRecord = {
+    ...(state.formRecord || {}),
+    firma_parametreleri: cur,
+    ...(bags.length || document.querySelector('[data-stok-firma-plant-check]')
+      ? { is_yeri_baglari: bags }
+      : {}),
+  };
   const panel = document.querySelector('[data-tab-panel="firmalar"]');
   if (!panel) return;
   panel.innerHTML = renderStokFirmalarPane(state.formRecord);
@@ -13312,7 +13413,7 @@ function bindStokFirmaYetkiEvents() {
     paramsRoot.addEventListener('change', (e) => {
       const t = e.target;
       if (!(t instanceof HTMLElement)) return;
-      // İş yeri seçilince detayları aç (pane’i yeniden çiz)
+      // İstisna iş yeri seçilince etiket yenile
       if (t.getAttribute('data-stok-firma') === 'plant_id') {
         refreshStokFirmalarPane();
       }
@@ -13323,8 +13424,13 @@ function bindStokFirmaYetkiEvents() {
         e.preventDefault();
         const cid = Number(addBtn.getAttribute('data-stok-firma-add-plant'));
         const cur = readStokFirmaParamsFromDom(state.formRecord || {});
-        cur.push(emptyStokFirmaParam(cid));
-        state.formRecord = { ...(state.formRecord || {}), firma_parametreleri: cur };
+        cur.push({ ...emptyStokFirmaParam(cid), _isOverride: true });
+        const bags = readStokFirmaIsYeriBaglariFromDom();
+        state.formRecord = {
+          ...(state.formRecord || {}),
+          firma_parametreleri: cur,
+          ...(bags.length ? { is_yeri_baglari: bags } : {}),
+        };
         refreshStokFirmalarPane();
         return;
       }
@@ -13338,6 +13444,21 @@ function bindStokFirmaYetkiEvents() {
       }
     });
   }
+}
+
+/** Firmalar sekmesindeki iş yeri kapsamı tikleri → item_plants */
+function readStokFirmaIsYeriBaglariFromDom() {
+  const bags = [];
+  const seen = new Set();
+  document.querySelectorAll('[data-stok-firma-plant-check]').forEach((chk) => {
+    if (!(chk instanceof HTMLInputElement) || !chk.checked) return;
+    const pid = Number(chk.getAttribute('data-stok-firma-plant-check'));
+    const cid = Number(chk.getAttribute('data-stok-firma-id')) || null;
+    if (!pid || seen.has(pid)) return;
+    seen.add(pid);
+    bags.push({ plant_id: pid, company_id: cid, is_active: true });
+  });
+  return bags;
 }
 
 function readStokFirmaParamsFromDom(rec) {
@@ -13356,7 +13477,6 @@ function readStokFirmaParamsFromDom(rec) {
   }
 
   const out = [];
-  const seenKeys = new Set();
   selectedIds.forEach((cid) => {
     const blocks = [...document.querySelectorAll(
       `#stokFirmaParams [data-stok-firma-plant-block][data-stok-firma-id="${cid}"]`
@@ -13367,7 +13487,21 @@ function readStokFirmaParamsFromDom(rec) {
     }
     blocks.forEach((block, idx) => {
       const rowKey = block.getAttribute('data-stok-firma-row') || stokFirmaRowKey(cid, null, idx);
+      const isOverride = block.getAttribute('data-stok-firma-override') === '1';
       const row = { ...emptyStokFirmaParam(cid), is_active: true };
+      if (isOverride) row._isOverride = true;
+      // İstisna satırında plant_id
+      if (isOverride) {
+        const plantCtrl = findAttrControl(
+          'data-stok-firma',
+          'plant_id',
+          block,
+          `[data-stok-firma-row="${rowKey}"]`
+        ) || findAttrControl('data-stok-firma', 'plant_id', block);
+        if (plantCtrl) row.plant_id = readFieldValue(plantCtrl, STOK_FIRMA_PLANT_OVERRIDE_FIELD);
+      } else {
+        row.plant_id = null;
+      }
       STOK_FIRMA_PARAM_SECTIONS.forEach((sec) => {
         sec.fields.forEach((f) => {
           const control = findAttrControl(
@@ -13385,8 +13519,6 @@ function readStokFirmaParamsFromDom(rec) {
         const tax = taxRows.find((t) => Number(t.id) === Number(row.default_tax_code_id));
         if (tax && tax.rate != null && tax.rate !== '') row.varsayilan_vat_rate = Number(tax.rate);
       }
-      const key = stokFirmaRowKey(cid, row.plant_id, idx);
-      seenKeys.add(key);
       out.push(row);
     });
   });
@@ -13405,13 +13537,21 @@ function applyPrimaryStokFirmaToMaster(master) {
   const active = list.filter((p) => p && p.is_active !== false && Number(p.company_id));
   if (!active.length) return;
   const prefer = Number(getActiveFirmaId());
-  const withPlant = active.filter((p) => Number(p.plant_id));
-  const primary = withPlant.find((p) => Number(p.company_id) === prefer)
+  // Öncelik: firma geneli (plant_id null), sonra aktif firma, sonra ilk satır
+  const companyWide = active.filter((p) => !Number(p.plant_id));
+  const primary = companyWide.find((p) => Number(p.company_id) === prefer)
     || active.find((p) => Number(p.company_id) === prefer)
-    || withPlant[0]
+    || companyWide[0]
     || active[0];
   master.company_id = Number(primary.company_id);
-  master.plant_id = primary.plant_id != null ? Number(primary.plant_id) : null;
+  // Master plant_id bilgilendirme: kapsamın ilk iş yeri (zorunlu değil)
+  if (!Number(master.plant_id) && Array.isArray(master.is_yeri_baglari)) {
+    const firstBag = master.is_yeri_baglari.find((b) => Number(b.plant_id));
+    if (firstBag) master.plant_id = Number(firstBag.plant_id);
+  }
+  if (!Number(master.plant_id) && Number(primary.plant_id)) {
+    master.plant_id = Number(primary.plant_id);
+  }
   master.sales_price = primary.sales_price ?? master.sales_price;
   master.purchase_uom = primary.purchase_uom ?? master.purchase_uom;
   master.sales_uom = primary.sales_uom ?? master.sales_uom;
@@ -13431,16 +13571,6 @@ function applyPrimaryStokFirmaToMaster(master) {
   master.varsayilan_cikis_warehouse_id = primary.varsayilan_cikis_warehouse_id ?? master.varsayilan_cikis_warehouse_id;
   master.lot_politika = primary.lot_politika || master.lot_politika;
   master.series_politika = primary.series_politika || master.series_politika;
-  // Tüm seçili iş yerleri → item_plants
-  const bags = [];
-  active.forEach((p) => {
-    const pid = Number(p.plant_id);
-    if (!pid) return;
-    if (!bags.some((b) => Number(b.plant_id) === pid)) {
-      bags.push({ plant_id: pid, is_active: true });
-    }
-  });
-  if (bags.length) master.is_yeri_baglari = bags;
 }
 
 /** Stok kartı — Depolar sekmesi: depo tanımlama (politikalar Firmalar’da) */
@@ -18441,20 +18571,40 @@ async function saveForm({ after = 'stay' } = {}) {
       toast('En az bir firma işaretleyin.');
       return;
     }
-    const missingPlant = master.firma_parametreleri.find((p) => !Number(p.plant_id));
-    if (missingPlant) {
-      toast('Her firma satırında iş yeri seçin; detaylar iş yeri sonrası açılır.');
+    // İstisna satırlarında iş yeri zorunlu; firma geneli plant_id null olabilir
+    const missingOverridePlant = master.firma_parametreleri.find(
+      (p) => (p._isOverride || false) && !Number(p.plant_id)
+    );
+    if (missingOverridePlant) {
+      toast('İş yeri istisnasında iş yeri seçin.');
       return;
     }
-    // Aynı firma+iş yeri tekrarı engelle
+    // Aynı firma geneli / firma+iş yeri tekrarı engelle
     const pairKeys = new Set();
     for (const p of master.firma_parametreleri) {
-      const k = `${Number(p.company_id)}:${Number(p.plant_id)}`;
+      const k = Number(p.plant_id)
+        ? `${Number(p.company_id)}:${Number(p.plant_id)}`
+        : `${Number(p.company_id)}:firma`;
       if (pairKeys.has(k)) {
-        toast('Aynı firma / iş yeri birden fazla tanımlanamaz.');
+        toast(Number(p.plant_id)
+          ? 'Aynı firma / iş yeri istisnası birden fazla tanımlanamaz.'
+          : 'Firma geneli parametre satırı tek olmalıdır.');
         return;
       }
       pairKeys.add(k);
+    }
+    // UI işaretlerinden _isOverride temizle (API’ye gitmesin)
+    master.firma_parametreleri = master.firma_parametreleri.map((p) => {
+      const { _isOverride, ...rest } = p;
+      return rest;
+    });
+    // İş yeri kapsamı tikleri (yoksa sync tüm iş yerlerini doldurur)
+    const scopeBags = readStokFirmaIsYeriBaglariFromDom();
+    if (scopeBags.length) {
+      master.is_yeri_baglari = scopeBags;
+    } else if (document.querySelector('[data-stok-firma-plant-check]')) {
+      toast('Seçili firma için en az bir iş yeri işaretleyin.');
+      return;
     }
     applyPrimaryStokFirmaToMaster(master);
     syncStokFirmaIsYeriForSave(master);
