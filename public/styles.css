@@ -5513,3 +5513,93 @@ html[data-theme="yellow"] {
 @media (max-width: 640px) {
   .theme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* —— MRP Konsol —— */
+.mrp-console { display: flex; flex-direction: column; gap: 0.85rem; padding: 0.35rem 0.15rem 1rem; }
+.mrp-console-head {
+  display: flex; flex-wrap: wrap; gap: 0.65rem 0.85rem; align-items: flex-end;
+  padding-bottom: 0.65rem; border-bottom: 1px solid var(--line);
+}
+.mrp-console-actions { display: flex; gap: 0.45rem; align-items: center; margin-left: auto; }
+.mrp-field { display: flex; flex-direction: column; gap: 0.2rem; min-width: 9.5rem; }
+.mrp-field > span { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.mrp-field input, .mrp-field select, .mrp-field textarea {
+  border: 1px solid var(--line); border-radius: 6px; padding: 0.4rem 0.5rem;
+  background: #fffef6; color: var(--ink); font: inherit; min-height: 2rem;
+}
+.mrp-field input[readonly], .mrp-field textarea[readonly] { background: var(--erp-readonly-bg); }
+.mrp-field--grow { flex: 1 1 14rem; min-width: 12rem; }
+.mrp-field--notes { flex: 1 1 16rem; min-width: 12rem; }
+.mrp-section {
+  border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 0.35rem 0.75rem 0.7rem;
+}
+.mrp-section > summary {
+  cursor: pointer; font-weight: 650; font-size: 0.88rem; color: var(--ink);
+  padding: 0.45rem 0; list-style: none;
+}
+.mrp-section > summary::-webkit-details-marker { display: none; }
+.mrp-section > summary::before {
+  content: '▸'; display: inline-block; width: 1rem; color: var(--accent); transition: transform 0.12s ease;
+}
+.mrp-section[open] > summary::before { transform: rotate(90deg); }
+.mrp-toggle-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.35rem 1rem;
+  padding: 0.2rem 0 0.35rem;
+}
+.mrp-toggle {
+  display: flex; align-items: center; gap: 0.55rem; font-size: 0.82rem; color: var(--ink);
+  cursor: pointer; user-select: none; padding: 0.2rem 0;
+}
+.mrp-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.mrp-toggle-ui {
+  width: 2rem; height: 1.1rem; border-radius: 999px; background: #d7dde8; position: relative; flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.mrp-toggle-ui::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 0.85rem; height: 0.85rem;
+  border-radius: 50%; background: #fff; transition: left 0.15s ease;
+}
+.mrp-toggle.is-on .mrp-toggle-ui,
+.mrp-toggle:has(input:checked) .mrp-toggle-ui { background: var(--accent); }
+.mrp-toggle.is-on .mrp-toggle-ui::after,
+.mrp-toggle:has(input:checked) .mrp-toggle-ui::after { left: 0.95rem; }
+.mrp-field-row { display: flex; flex-wrap: wrap; gap: 0.65rem 0.85rem; padding-top: 0.35rem; }
+.mrp-scope-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;
+}
+@media (max-width: 1100px) {
+  .mrp-scope-grid { grid-template-columns: 1fr; }
+}
+.mrp-scope-card {
+  border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden;
+  display: flex; flex-direction: column; min-height: 11rem;
+}
+.mrp-scope-head {
+  background: var(--accent-soft); color: var(--ink); font-weight: 650; font-size: 0.82rem;
+  padding: 0.45rem 0.65rem; border-bottom: 1px solid var(--line);
+}
+.mrp-scope-hint { margin: 0.35rem 0.65rem 0; font-size: 0.72rem; }
+.mrp-scope-scroll { overflow: auto; max-height: 14rem; }
+.mrp-scope-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.mrp-scope-table th, .mrp-scope-table td {
+  padding: 0.32rem 0.55rem; border-bottom: 1px solid var(--line); text-align: left;
+}
+.mrp-scope-table tr:hover td { background: var(--accent-soft); }
+.mrp-scope-check { width: 3.2rem; text-align: center !important; }
+.mrp-log-box {
+  border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden;
+}
+.mrp-log-title {
+  padding: 0.45rem 0.7rem; font-weight: 650; font-size: 0.82rem; color: var(--accent);
+  border-bottom: 1px solid var(--line); background: var(--accent-soft);
+}
+.mrp-log-body { max-height: 10rem; overflow: auto; padding: 0.45rem 0.7rem; font-size: 0.78rem; }
+.mrp-log-line { padding: 0.15rem 0; color: #9f2d2d; }
+.mrp-log-line.mrp-log-info { color: var(--ink); }
+.mrp-log-line.mrp-log-warn { color: #9f2d2d; }
+.mrp-log-line.mrp-log-error { color: #7a1212; font-weight: 600; }
+.mrp-result-scroll { overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.mrp-result-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.mrp-result-table th, .mrp-result-table td { padding: 0.35rem 0.55rem; border-bottom: 1px solid var(--line); }
+.mrp-result-table th { background: #f7f9fc; position: sticky; top: 0; }
+.mrp-result-table .num { text-align: right; font-variant-numeric: tabular-nums; }

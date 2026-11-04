@@ -1419,11 +1419,15 @@ const MODULES = [
         id: 'mrp-calisma',
         techId: 'MFG-MRP-SCR-001',
         businessNameEn: 'MrpRunScreen',
-        title: 'MRP Çalıştır',
+        title: 'MRP Konsol',
         endpoint: '/mrp/calismalar',
-        crud: false,
-        readOnly: true,
+        crud: true,
+        readOnly: false,
+        mrpKonsol: true,
         mrpCalistirAction: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        codeField: 'run_no',
         filters: [
           { key: 'run_no', label: 'Çalışma no' },
           { key: 'status', label: 'Durum' },
@@ -1431,11 +1435,25 @@ const MODULES = [
         columns: [
           { key: 'run_no', label: 'No', mono: true },
           { key: 'status', label: 'Durum' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
           { key: 'start_ts', label: 'Başlangıç' },
           { key: 'end_ts', label: 'Bitiş' },
           { key: 'line_sayisi', label: 'Satır' },
           { key: 'net_pozitif', label: 'Net>0' },
           { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'status', label: 'Durum', readonly: true },
+        ],
+        formTabs: [
+          { id: 'param', label: 'Malzeme İhtiyaç Planlama', kind: 'mrp-parametre' },
+          { id: 'kapsam', label: 'Depo, İş Emirleri, Siparişler, MPS, Satış Tahminleri', kind: 'mrp-kapsam' },
+          { id: 'sonuc', label: 'MRP Sonuçları', kind: 'mrp-sonuc' },
         ],
         nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
       },
@@ -14209,6 +14227,475 @@ function renderStokDepoYetkiPane(rec) {
     </section>`;
 }
 
+/** —— MRP Konsol —— */
+function defaultMrpParametreClient(partial = {}) {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const start = partial.start_date || `${yyyy}-${mm}-${dd}`;
+  const endBase = new Date(`${start}T12:00:00`);
+  endBase.setDate(endBase.getDate() + 90);
+  const end = partial.end_date || endBase.toISOString().slice(0, 10);
+  return {
+    start_date: start,
+    end_date: end,
+    notes: partial.notes || '',
+    include_order_level_items: !!partial.include_order_level_items,
+    ignore_safety_when_no_demand: partial.ignore_safety_when_no_demand !== false,
+    negative_stock_as_zero: partial.negative_stock_as_zero !== false,
+    include_passive_items: !!partial.include_passive_items,
+    supply_in_period_as_available: partial.supply_in_period_as_available !== false,
+    safety_stock_date_type: partial.safety_stock_date_type || 'ihtiyac',
+    item_mrp_param_control: partial.item_mrp_param_control || 'durdur',
+    consider_po: partial.consider_po !== false,
+    open_po_as_on_hand: partial.open_po_as_on_hand !== false,
+    ignore_frozen_po: !!partial.ignore_frozen_po,
+    consider_pr: !!partial.consider_pr,
+    ignore_po_without_delivery_date: partial.ignore_po_without_delivery_date !== false,
+    check_po_approval: !!partial.check_po_approval,
+    check_pr_approval: !!partial.check_pr_approval,
+    ignore_so_without_ship_date: !!partial.ignore_so_without_ship_date,
+    check_so_approval: !!partial.check_so_approval,
+    so_forecast_mode: partial.so_forecast_mode || 'sales_orders',
+    open_wo_as_on_hand: partial.open_wo_as_on_hand !== false,
+    ignore_frozen_production: !!partial.ignore_frozen_production,
+    ignore_min_production_qty: !!partial.ignore_min_production_qty,
+    wo_program_mode: partial.wo_program_mode || 'isemri',
+    bulk_explode_warning: partial.bulk_explode_warning || 'uyar',
+    planned_wo_mode: partial.planned_wo_mode || 'dahil',
+    po_cutoff_date: partial.po_cutoff_date || end,
+    so_cutoff_date: partial.so_cutoff_date || end,
+    wo_cutoff_date: partial.wo_cutoff_date || end,
+    warehouse_ids: Array.isArray(partial.warehouse_ids) ? partial.warehouse_ids.map(Number) : [],
+    wo_type_ids: Array.isArray(partial.wo_type_ids) ? partial.wo_type_ids.map(Number) : [],
+    so_order_types: Array.isArray(partial.so_order_types) ? partial.so_order_types : [],
+    po_movement_code_ids: Array.isArray(partial.po_movement_code_ids) ? partial.po_movement_code_ids.map(Number) : [],
+    pr_movement_code_ids: Array.isArray(partial.pr_movement_code_ids) ? partial.pr_movement_code_ids.map(Number) : [],
+    mps_rows: Array.isArray(partial.mps_rows) ? partial.mps_rows : [],
+    forecast_rows: Array.isArray(partial.forecast_rows) ? partial.forecast_rows : [],
+  };
+}
+
+function ensureMrpFormParametre(rec) {
+  if (!rec) return defaultMrpParametreClient();
+  const base = rec.parametre && typeof rec.parametre === 'object'
+    ? rec.parametre
+    : (rec.parametre_json && typeof rec.parametre_json === 'object' ? rec.parametre_json : {});
+  rec.parametre = defaultMrpParametreClient({
+    ...base,
+    start_date: rec.start_date || base.start_date,
+    end_date: rec.end_date || base.end_date,
+    notes: rec.notes != null ? rec.notes : base.notes,
+  });
+  if (!Array.isArray(rec.messages)) rec.messages = [];
+  if (!Array.isArray(rec.sonuclar)) rec.sonuclar = [];
+  return rec.parametre;
+}
+
+function mrpToggle(key, label, on, readonly) {
+  return `<label class="mrp-toggle ${on ? 'is-on' : ''}">
+    <input type="checkbox" data-mrp-param="${escapeHtml(key)}" ${on ? 'checked' : ''} ${readonly ? 'disabled' : ''} />
+    <span class="mrp-toggle-ui" aria-hidden="true"></span>
+    <span class="mrp-toggle-label">${escapeHtml(label)}</span>
+  </label>`;
+}
+
+function mrpSelect(key, label, value, options, readonly) {
+  const opts = options.map((o) => {
+    const v = typeof o === 'string' ? o : o.value;
+    const t = typeof o === 'string' ? o : o.label;
+    return `<option value="${escapeHtml(v)}" ${String(v) === String(value) ? 'selected' : ''}>${escapeHtml(t)}</option>`;
+  }).join('');
+  return `<label class="mrp-field">
+    <span>${escapeHtml(label)}</span>
+    <select data-mrp-param="${escapeHtml(key)}" ${readonly ? 'disabled' : ''}>${opts}</select>
+  </label>`;
+}
+
+function mrpDate(key, label, value, readonly) {
+  return `<label class="mrp-field">
+    <span>${escapeHtml(label)}</span>
+    <input type="date" data-mrp-param="${escapeHtml(key)}" value="${escapeHtml(value || '')}" ${readonly ? 'readonly' : ''} />
+  </label>`;
+}
+
+function renderMrpParametrePane(rec) {
+  const p = ensureMrpFormParametre(rec);
+  const readonly = state.formMode === 'incele';
+  const disRun = readonly ? 'disabled' : '';
+  return `
+  <section class="mrp-console" data-mrp-pane="param">
+    <div class="mrp-console-head">
+      ${mrpDate('start_date', 'Başlangıç tarihi', p.start_date, readonly)}
+      ${mrpDate('end_date', 'Bitiş tarihi', p.end_date, readonly)}
+      <label class="mrp-field mrp-field--grow">
+        <span>Açıklama</span>
+        <input type="text" data-mrp-head="description" value="${escapeHtml(rec?.description || '')}" ${readonly ? 'readonly' : ''} />
+      </label>
+      <label class="mrp-field mrp-field--notes">
+        <span>Not</span>
+        <textarea data-mrp-param="notes" rows="2" ${readonly ? 'readonly' : ''}>${escapeHtml(p.notes || '')}</textarea>
+      </label>
+      <div class="mrp-console-actions">
+        <button type="button" class="btn primary" id="btnMrpKonsolCalistir" ${disRun}>MRP Çalıştır</button>
+      </div>
+    </div>
+
+    <details class="mrp-section" open>
+      <summary>Stok parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('include_order_level_items', 'Sipariş seviyesine göre takip edilen stoklar dahil', p.include_order_level_items, readonly)}
+        ${mrpToggle('ignore_safety_when_no_demand', 'Talebi olmayan kalemde emniyet stoğu yoksay', p.ignore_safety_when_no_demand, readonly)}
+        ${mrpToggle('negative_stock_as_zero', 'Negatif stok sıfır kabul edilsin', p.negative_stock_as_zero, readonly)}
+        ${mrpToggle('include_passive_items', 'Pasif stoklar dahil edilsin', p.include_passive_items, readonly)}
+        ${mrpToggle('supply_in_period_as_available', 'Dönem içi arz eldeki sayılsın', p.supply_in_period_as_available, readonly)}
+      </div>
+      <div class="mrp-field-row">
+        ${mrpSelect('safety_stock_date_type', 'Emniyet stok ihtiyaç tarih tipi', p.safety_stock_date_type, [
+          { value: 'ihtiyac', label: 'İhtiyaç tarihine aç' },
+          { value: 'baslangic', label: 'Ufuk başına aç' },
+        ], readonly)}
+        ${mrpSelect('item_mrp_param_control', 'Stok kartı MRP prm. kontrol', p.item_mrp_param_control, [
+          { value: 'durdur', label: 'Durdur' },
+          { value: 'uyar', label: 'Uyar' },
+          { value: 'yoksay', label: 'Yoksay' },
+        ], readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Satınalma parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('consider_po', 'Satınalma siparişleri dikkate alınsın', p.consider_po, readonly)}
+        ${mrpToggle('open_po_as_on_hand', 'Açık SA sipariş miktarı eldeki sayılsın', p.open_po_as_on_hand, readonly)}
+        ${mrpToggle('ignore_frozen_po', 'Donuk dönem parametreleri yoksayılsın', p.ignore_frozen_po, readonly)}
+        ${mrpToggle('consider_pr', 'Satınalma talepleri dikkate alınsın', p.consider_pr, readonly)}
+        ${mrpToggle('ignore_po_without_delivery_date', 'Teslimatsız SA siparişleri atla', p.ignore_po_without_delivery_date, readonly)}
+        ${mrpToggle('check_po_approval', 'SA siparişlerinde onaya bakılsın', p.check_po_approval, readonly)}
+        ${mrpToggle('check_pr_approval', 'SA taleplerinde onaya bakılsın', p.check_pr_approval, readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Satış parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('ignore_so_without_ship_date', 'Teslimatsız satış siparişleri atla', p.ignore_so_without_ship_date, readonly)}
+        ${mrpToggle('check_so_approval', 'Satış siparişlerinde onaya bakılsın', p.check_so_approval, readonly)}
+      </div>
+      <div class="mrp-field-row">
+        ${mrpSelect('so_forecast_mode', 'Satış siparişleri — tahmin çalışma tipi', p.so_forecast_mode, [
+          { value: 'sales_orders', label: 'Satış Siparişleri' },
+          { value: 'forecasts', label: 'Satış Tahminleri' },
+          { value: 'both', label: 'İkisi birlikte' },
+        ], readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Üretim parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('open_wo_as_on_hand', 'Açık iş emri miktarı eldeki sayılsın', p.open_wo_as_on_hand, readonly)}
+        ${mrpToggle('ignore_frozen_production', 'Üretim donuk dönemleri yoksayılsın', p.ignore_frozen_production, readonly)}
+        ${mrpToggle('ignore_min_production_qty', 'Minimum üretim miktarı yoksayılsın', p.ignore_min_production_qty, readonly)}
+      </div>
+      <div class="mrp-field-row">
+        ${mrpSelect('wo_program_mode', 'İş emri — üretim programı tipi', p.wo_program_mode, [
+          { value: 'isemri', label: 'İş emri' },
+          { value: 'program', label: 'Üretim programı' },
+        ], readonly)}
+        ${mrpSelect('bulk_explode_warning', 'Toplu patlatma uyarı tipi', p.bulk_explode_warning, [
+          { value: 'uyar', label: 'Uyar' },
+          { value: 'sessiz', label: 'Sessiz' },
+          { value: 'durdur', label: 'Durdur' },
+        ], readonly)}
+        ${mrpSelect('planned_wo_mode', 'Planlı iş emirleri', p.planned_wo_mode, [
+          { value: 'dahil', label: 'Dahil' },
+          { value: 'kesin', label: 'Yalnızca kesin' },
+        ], readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Modül tarihleri</summary>
+      <div class="mrp-field-row">
+        ${mrpDate('po_cutoff_date', 'Satınalma sip. son tarih', p.po_cutoff_date, readonly)}
+        ${mrpDate('so_cutoff_date', 'Satış sip. son tarih', p.so_cutoff_date, readonly)}
+        ${mrpDate('wo_cutoff_date', 'İş emri son tarih', p.wo_cutoff_date, readonly)}
+      </div>
+    </details>
+  </section>`;
+}
+
+function mrpScopeTable(title, rowsHtml, hint) {
+  return `<div class="mrp-scope-card">
+    <div class="mrp-scope-head">${escapeHtml(title)}</div>
+    ${hint ? `<p class="hint mrp-scope-hint">${escapeHtml(hint)}</p>` : ''}
+    <div class="mrp-scope-scroll"><table class="mrp-scope-table"><thead><tr>
+      <th class="mrp-scope-check">Dahil</th><th>Kod</th><th>Ad</th>
+    </tr></thead><tbody>${rowsHtml}</tbody></table></div>
+  </div>`;
+}
+
+function renderMrpKapsamPane(rec) {
+  const p = ensureMrpFormParametre(rec);
+  const readonly = state.formMode === 'incele';
+  const cache = state.mrpKapsamCache || {};
+  const wh = cache.warehouses || [];
+  const wot = cache.woTypes || [];
+  const soTypes = cache.soTypes || ['SatisSiparis', 'AlinanSiparis'];
+  const poCodes = cache.poCodes || [];
+  const prCodes = cache.prCodes || [];
+
+  const row = (idAttr, id, code, name, selected) => `<tr>
+    <td class="mrp-scope-check"><input type="checkbox" data-mrp-scope="${idAttr}" value="${escapeHtml(String(id))}" ${selected ? 'checked' : ''} ${readonly ? 'disabled' : ''} /></td>
+    <td class="mono">${escapeHtml(code || '')}</td>
+    <td>${escapeHtml(name || '')}</td>
+  </tr>`;
+
+  const whRows = wh.length
+    ? wh.map((w) => row('warehouse_ids', w.id, w.warehouse_code, w.warehouse_name, !p.warehouse_ids.length || p.warehouse_ids.includes(Number(w.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">Depo listesi yükleniyor…</td></tr>';
+  const wotRows = wot.length
+    ? wot.map((t) => row('wo_type_ids', t.id, t.type_code, t.type_name, !p.wo_type_ids.length || p.wo_type_ids.includes(Number(t.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">İş emri tipi yok</td></tr>';
+  const soRows = soTypes.map((t) => row('so_order_types', t, t, t, !p.so_order_types.length || p.so_order_types.includes(t))).join('');
+  const poRows = poCodes.length
+    ? poCodes.map((c) => row('po_movement_code_ids', c.id, c.movement_code, c.movement_name, !p.po_movement_code_ids.length || p.po_movement_code_ids.includes(Number(c.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">SA hareket kodu yok</td></tr>';
+  const prRows = prCodes.length
+    ? prCodes.map((c) => row('pr_movement_code_ids', c.id, c.movement_code, c.movement_name, !p.pr_movement_code_ids.length || p.pr_movement_code_ids.includes(Number(c.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">Talep hareket kodu yok</td></tr>';
+
+  const mpsHint = 'MPS master henüz yok — iskelet. İleride üretim planlarından doldurulacak.';
+  const fcHint = 'Satış tahmin master henüz yok — iskelet. BI kaynak=Tahmin veya bu grid ile beslenecek.';
+
+  return `
+  <section class="mrp-console" data-mrp-pane="kapsam">
+    <p class="hint">Boş bırakılan grup = tümü dahil. İşaretleri kaldırarak kapsamı daraltın.</p>
+    <div class="mrp-scope-grid">
+      ${mrpScopeTable('Depolar', whRows)}
+      ${mrpScopeTable('İş emri tipleri', wotRows)}
+      ${mrpScopeTable('Satış sipariş tipleri', soRows)}
+      ${mrpScopeTable('Satınalma siparişleri (hareket kodu)', poRows)}
+      ${mrpScopeTable('Satınalma talepleri (hareket kodu)', prRows)}
+      ${mrpScopeTable('MPS', '<tr><td colspan="3" class="detail-empty">Yeni kayıt için tıklayınız (iskelet)</td></tr>', mpsHint)}
+      ${mrpScopeTable('Satış tahminleri', '<tr><td colspan="3" class="detail-empty">Yeni kayıt için tıklayınız (iskelet)</td></tr>', fcHint)}
+    </div>
+  </section>`;
+}
+
+function renderMrpSonucPane(rec) {
+  ensureMrpFormParametre(rec);
+  const messages = Array.isArray(rec?.messages) ? rec.messages : [];
+  const sonuclar = Array.isArray(rec?.sonuclar) ? rec.sonuclar : [];
+  const runNo = rec?.run_no || '—';
+  const msgHtml = messages.length
+    ? messages.map((m) => `<div class="mrp-log-line mrp-log-${escapeHtml(String(m.level || 'INFO').toLowerCase())}">${escapeHtml(m.message || '')}</div>`).join('')
+    : '<div class="detail-empty">Henüz mesaj yok. MRP Çalıştır sonrası burada listelenir.</div>';
+  const rows = sonuclar.length
+    ? sonuclar.map((r) => `<tr>
+        <td class="mono">${escapeHtml(r.item_code || '')}</td>
+        <td>${escapeHtml(r.item_name || '')}</td>
+        <td class="num">${escapeHtml(String(r.bagimsiz_ihtiyac ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.bagimli_ihtiyac ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.available_stock ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.net_ihtiyac ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.onerilen_quantity ?? ''))}</td>
+        <td>${escapeHtml(r.oneri || '')}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" class="detail-empty">Sonuç satırı yok.</td></tr>';
+
+  return `
+  <section class="mrp-console" data-mrp-pane="sonuc">
+    <div class="mrp-console-head">
+      <label class="mrp-field">
+        <span>MRP çalışma no</span>
+        <input type="text" value="${escapeHtml(runNo)}" readonly />
+      </label>
+      <div class="mrp-console-actions">
+        <button type="button" class="btn ghost" id="btnMrpSonucTalep">SA Talep</button>
+        <button type="button" class="btn ghost" id="btnMrpSonucUretim">Üretim Emri</button>
+      </div>
+    </div>
+    <div class="mrp-log-box">
+      <div class="mrp-log-title">${escapeHtml(runNo)} çalıştırmasına ait mesajlar</div>
+      <div class="mrp-log-body">${msgHtml}</div>
+    </div>
+    <div class="mrp-result-scroll">
+      <table class="data-table mrp-result-table">
+        <thead><tr>
+          <th>Stok</th><th>Ad</th><th>Bağımsız</th><th>Bağımlı</th><th>Eldeki</th><th>Net</th><th>Öneri qty</th><th>Öneri</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </section>`;
+}
+
+function collectMrpParametreFromDom() {
+  const rec = state.formRecord || {};
+  const p = ensureMrpFormParametre(rec);
+  document.querySelectorAll('[data-mrp-param]').forEach((el) => {
+    const key = el.getAttribute('data-mrp-param');
+    if (!key) return;
+    if (el.type === 'checkbox') p[key] = !!el.checked;
+    else p[key] = el.value;
+  });
+  const desc = document.querySelector('[data-mrp-head="description"]');
+  if (desc) rec.description = desc.value;
+  rec.start_date = p.start_date;
+  rec.end_date = p.end_date;
+  rec.notes = p.notes;
+
+  const scopeKeys = ['warehouse_ids', 'wo_type_ids', 'so_order_types', 'po_movement_code_ids', 'pr_movement_code_ids'];
+  for (const key of scopeKeys) {
+    const boxes = [...document.querySelectorAll(`[data-mrp-scope="${key}"]`)];
+    if (!boxes.length) continue;
+    const checked = boxes.filter((b) => b.checked).map((b) => b.value);
+    // Hepsi seçiliyse boş dizi = filtre yok
+    p[key] = checked.length === boxes.length
+      ? []
+      : (key === 'so_order_types' ? checked : checked.map(Number).filter((n) => Number.isFinite(n)));
+  }
+  rec.parametre = p;
+  return p;
+}
+
+async function ensureMrpKapsamCache() {
+  if (state.mrpKapsamCache?.loaded) return state.mrpKapsamCache;
+  try {
+    const [warehouses, woTypes, hareket] = await Promise.all([
+      api('/warehouses').catch(() => []),
+      api('/uretim-emri-tipleri?is_active=true').catch(() => []),
+      api('/hareket-kodlari').catch(() => []),
+    ]);
+    const list = Array.isArray(warehouses) ? warehouses : (warehouses?.rows || []);
+    const wot = Array.isArray(woTypes) ? woTypes : (woTypes?.rows || []);
+    const hk = Array.isArray(hareket) ? hareket : (hareket?.rows || []);
+    state.mrpKapsamCache = {
+      loaded: true,
+      warehouses: list,
+      woTypes: wot,
+      soTypes: ['SatisSiparis', 'AlinanSiparis'],
+      poCodes: hk.filter((h) => String(h.document_type || '') === 'SatinAlmaSiparis'),
+      prCodes: hk.filter((h) => String(h.document_type || '') === 'SatinAlmaTalep'),
+    };
+  } catch (_) {
+    state.mrpKapsamCache = { loaded: true, warehouses: [], woTypes: [], soTypes: ['SatisSiparis'], poCodes: [], prCodes: [] };
+  }
+  return state.mrpKapsamCache;
+}
+
+async function mrpTalepOlustur() {
+  const screen = findScreen(state.screenId);
+  const sel = selectedRow();
+  const body = {};
+  if (sel?.item_id) body.stok_idler = [sel.item_id];
+  const runId = state.mrpCalismaId || state.formRecord?.id;
+  if ((screen?.mrpSonucMode || screen?.mrpKonsol) && runId) body.run_id = runId;
+  if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+  if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
+  const result = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
+  toast(`SA talep oluştu: ${result.requisition_no || result.id}`);
+  openScreen('satin-alma-talepleri');
+}
+
+async function mrpUretimOlustur() {
+  const screen = findScreen(state.screenId);
+  const sel = selectedRow();
+  const body = {};
+  if (sel?.item_id) body.stok_idler = [sel.item_id];
+  const runId = state.mrpCalismaId || state.formRecord?.id;
+  if ((screen?.mrpSonucMode || screen?.mrpKonsol) && runId) body.run_id = runId;
+  if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+  if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
+  const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
+  toast(`${result.olusan || 0} üretim emri oluştu`);
+  openScreen('uretim-emirleri');
+}
+
+async function mrpCalistirKaydet() {
+  const konsol = findScreen('mrp-calisma');
+  const formOpen = state.screenId === 'mrp-calisma'
+    && state.formMode
+    && $('#viewForm') && !$('#viewForm').hidden;
+
+  // Liste / başka ekrandan: önce konsol formunu aç
+  if (!formOpen) {
+    state.screenId = 'mrp-calisma';
+    await openForm('yeni', { inPlace: true });
+    toast('Parametreleri ayarlayıp «MRP Çalıştır»a basın.');
+    return;
+  }
+
+  collectMrpParametreFromDom();
+  const rec = state.formRecord || {};
+  const parametre = ensureMrpFormParametre(rec);
+  const body = {
+    description: rec.description || 'UI MRP çalışması',
+    company_id: rec.company_id || getActiveFirmaId() || null,
+    plant_id: rec.plant_id || state.activeIsYeriId || null,
+    start_date: parametre.start_date,
+    end_date: parametre.end_date,
+    notes: parametre.notes || null,
+    parametre,
+  };
+  toast('MRP çalışıyor…');
+  const result = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
+  state.mrpCalismaId = result.calisma?.id || null;
+  state.formMode = 'incele';
+  state.formRecord = {
+    ...(result.calisma || {}),
+    parametre: result.parametre || parametre,
+    messages: result.messages || [],
+    sonuclar: result.sonuclar || [],
+  };
+  state.formActiveTab = 'sonuc';
+  toast(`MRP tamam: ${result.calisma?.run_no || ''} · net>0: ${result.calisma?.net_pozitif ?? '?'}`);
+  renderForm(konsol);
+  const tab = state.openTabs?.find((t) => t.screenId === 'mrp-calisma' && t.kind === 'form');
+  if (tab) {
+    tab.formMode = 'incele';
+    tab.formRecord = state.formRecord;
+    tab.formActiveTab = 'sonuc';
+    tab.title = `MRP Konsol · ${result.calisma?.run_no || ''}`;
+    renderTabBar();
+  }
+}
+
+async function bindMrpKonsolEvents() {
+  const screen = findScreen(state.screenId);
+  if (!screen?.mrpKonsol) return;
+  await ensureMrpKapsamCache();
+  // Kapsam sekmesi ilk boyamada boş kalmasın
+  if (state.formActiveTab === 'kapsam') {
+    const pane = document.querySelector('[data-tab-panel="kapsam"]');
+    if (pane) pane.innerHTML = renderMrpKapsamPane(state.formRecord || {});
+  }
+  $('#btnMrpKonsolCalistir')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mrpCalistirKaydet().catch((err) => toast(err.message || 'MRP çalıştırılamadı'));
+  });
+  $('#btnMrpSonucTalep')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mrpTalepOlustur().catch((err) => toast(err.message));
+  });
+  $('#btnMrpSonucUretim')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mrpUretimOlustur().catch((err) => toast(err.message));
+  });
+  document.querySelector('[data-mrp-pane="param"]')?.addEventListener('change', () => {
+    collectMrpParametreFromDom();
+  });
+  document.querySelector('[data-mrp-pane="kapsam"]')?.addEventListener('change', () => {
+    collectMrpParametreFromDom();
+  });
+}
+
 function bindStokDepoYetkiEvents() {
   const box = document.querySelector('.stok-depo-yetki-pane');
   if (!box || box.dataset.bound === '1') return;
@@ -15917,6 +16404,21 @@ function renderForm(screen) {
         ${renderStokDepolarPane(tab, rec)}
       </div>`;
     }
+    if (tab.kind === 'mrp-parametre') {
+      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMrpParametrePane(rec)}
+      </div>`;
+    }
+    if (tab.kind === 'mrp-kapsam') {
+      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMrpKapsamPane(rec)}
+      </div>`;
+    }
+    if (tab.kind === 'mrp-sonuc') {
+      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMrpSonucPane(rec)}
+      </div>`;
+    }
     const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart'
       || tab.id === 'baslik' || tab.id === 'bilgiler';
     const tabFields = tab.fields || [];
@@ -15955,6 +16457,17 @@ function renderForm(screen) {
   }
   if ((screen.formTabs || []).some((t) => t.kind === 'stok-depolar')) {
     bindStokDepoYetkiEvents();
+  }
+  if (screen.mrpKonsol) {
+    // Kaydet yerine MRP Çalıştır kullanılır
+    ['btnFormSave', 'btnFormSaveClose', 'btnFormSaveNew'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.hidden = true;
+    });
+    const saveGroup = $('#formSaveGroup');
+    if (saveGroup) saveGroup.hidden = true;
+    ensureMrpFormParametre(rec);
+    bindMrpKonsolEvents().catch(() => {});
   }
   if (screen.id === 'stok-hareketleri') {
     bindStokHareketBarkodToggle();
@@ -19058,34 +19571,48 @@ async function openForm(mode, opts = {}) {
       record[screen.categoryKey] = state.listCategory;
     }
     seedFields();
-    if (adayPrefill && screen.id === 'siparis-is-emri') {
-      Object.assign(record, {
-        sales_order_id: adayPrefill.sales_order_id,
-        item_id: adayPrefill.item_id,
-        product_bom_id: adayPrefill.onerilen_agac_id || '',
-        route_id: adayPrefill.onerilen_rota_id || '',
-        planlanan_quantity: adayPrefill.remaining_quantity || adayPrefill.siparis_miktar || '',
-      });
-    }
-    if (adayPrefill && screen.id === 'toplu-is-emri') {
-      record.kalemler = [{
-        sales_order_id: adayPrefill.sales_order_id,
-        item_id: adayPrefill.item_id,
-        product_bom_id: adayPrefill.onerilen_agac_id || '',
-        route_id: adayPrefill.onerilen_rota_id || '',
-        planlanan_quantity: adayPrefill.remaining_quantity || adayPrefill.siparis_miktar || '',
-      }];
-    }
-    const seri = resolveNumeratorSeri(screen, record);
-    if (seri && screen.codeField) {
-      try {
-        record[screen.codeField] = await ayirKod(seri);
-        state.formNumeratorSeri = seri;
-      } catch (err) { toast(err.message); }
-    } else {
+    if (screen.mrpKonsol) {
+      record.company_id = getActiveFirmaId() || record.company_id || null;
+      record.plant_id = state.activeIsYeriId || record.plant_id || null;
+      record.description = record.description || '';
+      record.parametre = defaultMrpParametreClient({});
+      record.start_date = record.parametre.start_date;
+      record.end_date = record.parametre.end_date;
+      record.messages = [];
+      record.sonuclar = [];
+      record.run_no = '';
       state.formNumeratorSeri = null;
+      initSpecialTabs({});
+    } else {
+      if (adayPrefill && screen.id === 'siparis-is-emri') {
+        Object.assign(record, {
+          sales_order_id: adayPrefill.sales_order_id,
+          item_id: adayPrefill.item_id,
+          product_bom_id: adayPrefill.onerilen_agac_id || '',
+          route_id: adayPrefill.onerilen_rota_id || '',
+          planlanan_quantity: adayPrefill.remaining_quantity || adayPrefill.siparis_miktar || '',
+        });
+      }
+      if (adayPrefill && screen.id === 'toplu-is-emri') {
+        record.kalemler = [{
+          sales_order_id: adayPrefill.sales_order_id,
+          item_id: adayPrefill.item_id,
+          product_bom_id: adayPrefill.onerilen_agac_id || '',
+          route_id: adayPrefill.onerilen_rota_id || '',
+          planlanan_quantity: adayPrefill.remaining_quantity || adayPrefill.siparis_miktar || '',
+        }];
+      }
+      const seri = resolveNumeratorSeri(screen, record);
+      if (seri && screen.codeField) {
+        try {
+          record[screen.codeField] = await ayirKod(seri);
+          state.formNumeratorSeri = seri;
+        } catch (err) { toast(err.message); }
+      } else {
+        state.formNumeratorSeri = null;
+      }
+      initSpecialTabs(adayPrefill && screen.id === 'toplu-is-emri' ? { kalemler: record.kalemler } : {});
     }
-    initSpecialTabs(adayPrefill && screen.id === 'toplu-is-emri' ? { kalemler: record.kalemler } : {});
   } else if (mode === 'kopyala') {
     let full;
     try {
@@ -19187,6 +19714,14 @@ async function openForm(mode, opts = {}) {
       uom_code: record.stok_birim || record.uom_code || '',
       _satir_kayitli: true,
     }];
+  }
+
+  if (screen.mrpKonsol) {
+    ensureMrpFormParametre(record);
+    if (!Array.isArray(record.messages)) record.messages = [];
+    if (!Array.isArray(record.sonuclar)) record.sonuclar = [];
+    if (record.id) state.mrpCalismaId = record.id;
+    if (mode === 'incele' || mode === 'duzelt') state.formActiveTab = state.formActiveTab || 'sonuc';
   }
 
   // İncele/Düzelt: API’de id yoksa codeField’dan kimlik (numaratör series_code vb.)
@@ -20321,13 +20856,7 @@ function bindEvents() {
       else if (act === 'mrp-uretim') mrpUretimOlustur().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') mrpCalistirKaydet().catch((err) => toast(err.message));
       else if (act === 'tcmb-cek') tcmbKurCek().catch((err) => toast(err.message));
-      else if (act === 'incele' && state.screenId === 'mrp-calisma') {
-        const sel = selectedRow();
-        if (sel?.id) {
-          state.mrpCalismaId = sel.id;
-          openScreen('mrp-sonuclar');
-        } else toast('Önce bir MRP çalışması seçin.');
-      } else openForm(act).catch((err) => toast(err.message));
+      else openForm(act).catch((err) => toast(err.message));
       return;
     }
 
@@ -20343,12 +20872,8 @@ function bindEvents() {
         if (screen) updateActionButtons(screen);
       }
       if (e.detail >= 2) {
-        if (screen?.id === 'mrp-calisma') {
-          state.mrpCalismaId = Number(row.dataset.id) || row.dataset.id;
-          openScreen('mrp-sonuclar');
-        } else {
-          openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
-        }
+        if (screen?.mrpKonsol) state.mrpCalismaId = Number(row.dataset.id) || row.dataset.id;
+        openForm(screen?.readOnly ? 'incele' : (screen?.mrpKonsol ? 'incele' : 'duzelt')).catch((err) => toast(err.message));
       }
       return;
     }
@@ -20664,32 +21189,6 @@ function bindEvents() {
     toast('CSV indirildi.');
   }
 
-  async function mrpTalepOlustur() {
-    const screen = findScreen(state.screenId);
-    const sel = selectedRow();
-    const body = {};
-    if (sel?.item_id) body.stok_idler = [sel.item_id];
-    if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
-    if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
-    const result = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
-    toast(`SA talep oluştu: ${result.requisition_no || result.id}`);
-    openScreen('satin-alma-talepleri');
-  }
-
-  async function mrpUretimOlustur() {
-    const screen = findScreen(state.screenId);
-    const sel = selectedRow();
-    const body = {};
-    if (sel?.item_id) body.stok_idler = [sel.item_id];
-    if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
-    if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
-    const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
-    toast(`${result.olusan || 0} üretim emri oluştu`);
-    openScreen('uretim-emirleri');
-  }
-
   /** Döviz Kurları listesi: TCMB today.xml → tanımlı PB’ler için upsert */
   async function tcmbKurCek() {
     const screen = findScreen(state.screenId);
@@ -20714,18 +21213,6 @@ function bindEvents() {
     } catch (err) {
       toast(err.message || 'TCMB kurları alınamadı');
     }
-  }
-
-  async function mrpCalistirKaydet() {
-    const body = {
-      description: 'UI MRP çalışması',
-      company_id: getActiveFirmaId() || null,
-      plant_id: state.activeIsYeriId || null,
-    };
-    const result = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
-    state.mrpCalismaId = result.calisma?.id || null;
-    toast(`MRP tamam: ${result.calisma?.run_no || ''} · net>0: ${result.calisma?.net_pozitif ?? '?'}`);
-    openScreen('mrp-sonuclar');
   }
 
   const btnSecondary = $('#btnFormSecondary');
@@ -21504,6 +21991,7 @@ function bindEvents() {
     if (screen.formTabs.length) {
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
     }
+    if (screen.mrpKonsol) collectMrpParametreFromDom();
     state.formActiveTab = tabBtn.getAttribute('data-form-tab');
     renderForm(screen);
   });

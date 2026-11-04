@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { mrpHesapla, mrpCalistir } = require('../src/services/mrpService');
+const { mrpHesapla, mrpCalistir, defaultMrpParametre } = require('../src/services/mrpService');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { sonrakiKod } = require('../src/utils/kodUretici');
@@ -192,7 +192,18 @@ router.get('/calismalar/:id', async (req, res, next) => {
              ORDER BY ms.net_ihtiyac DESC, st.item_code`,
             [req.params.id]
         );
-        res.json({ ...c.rows[0], sonuclar: s.rows });
+        const msgs = await pool.query(
+            `SELECT * FROM mrp_run_messages WHERE run_id=$1 ORDER BY id`,
+            [req.params.id]
+        ).catch(() => ({ rows: [] }));
+        const row = c.rows[0];
+        const parametre = defaultMrpParametre(row.parametre_json || {});
+        res.json({
+            ...row,
+            parametre,
+            messages: msgs.rows,
+            sonuclar: s.rows,
+        });
     } catch (err) {
         next(err);
     }
@@ -216,15 +227,40 @@ router.get('/calismalar/:id/sonuclar', async (req, res, next) => {
     }
 });
 
+router.get('/calismalar/:id/mesajlar', async (req, res, next) => {
+    try {
+        const msgs = await pool.query(
+            `SELECT * FROM mrp_run_messages WHERE run_id=$1 ORDER BY id`,
+            [req.params.id]
+        );
+        res.json(msgs.rows);
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** Varsayılan parametre şablonu (UI bootstrap) */
+router.get('/parametre-varsayilan', async (_req, res) => {
+    res.json(defaultMrpParametre({}));
+});
+
 /** MRP çalıştır ve kaydet */
 router.post('/calistir', async (req, res, next) => {
     try {
+        const bodyParam = req.body.parametre && typeof req.body.parametre === 'object'
+            ? req.body.parametre
+            : {};
+        // Üst seviye ufuk alanlarını parametreye taşı
+        if (req.body.start_date) bodyParam.start_date = req.body.start_date;
+        if (req.body.end_date) bodyParam.end_date = req.body.end_date;
+        if (req.body.notes != null) bodyParam.notes = req.body.notes;
         const result = await withTransaction(pool, async (client) => mrpCalistir(client, {
             firmaId: num(req.body.company_id) || (req.headers['x-firma-id'] ? Number(req.headers['x-firma-id']) : null),
             isYeriId: num(req.body.plant_id),
             description: trimOrNull(req.body.description),
             created_by: trimOrNull(req.headers['x-kullanici-kodu']) || trimOrNull(req.body.created_by),
-            parametre: req.body.parametre || {},
+            parametre: bodyParam,
+            notes: trimOrNull(req.body.notes),
         }));
         res.status(201).json(result);
     } catch (err) {
