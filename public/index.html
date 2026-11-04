@@ -36,7 +36,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261103coklustok1" />
+  <link rel="stylesheet" href="/styles.css?v=20261104sidebar1" />
+  <script>
+    /* Menü genişliğini ilk boyamada uygula — flash önlemi */
+    (function () {
+      try {
+        var w = localStorage.getItem('ktb_sidebar_w');
+        if (!w) return;
+        var n = Math.min(480, Math.max(200, Math.round(Number(w))));
+        if (Number.isFinite(n)) document.documentElement.style.setProperty('--sidebar-w', n + 'px');
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
   <script>
     (function () {
       try {
@@ -144,6 +155,15 @@
           </button>
         </div>
       </div>
+      <div
+        class="sidebar-resizer"
+        id="sidebarResizer"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Menü genişliğini ayarla"
+        title="Sürükleyerek menü genişliğini ayarla"
+        tabindex="0"
+      ></div>
     </aside>
 
     <div class="workspace">
@@ -529,7 +549,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261103rezerv1"></script>
+  <script src="/app.js?v=20261104sidebar1"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {
