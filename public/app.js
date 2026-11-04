@@ -10267,6 +10267,118 @@ function hideFormSoloLoader() {
  * Normal kabukta sol menüyü geri getir (?view=form hariç).
  * Soft oturum (kendi PC) veya giriş. Boş kabuk / boş menü yok.
  */
+const SIDEBAR_W_KEY = 'ktb_sidebar_w';
+const SIDEBAR_W_DEFAULT = 280;
+const SIDEBAR_W_MIN = 200;
+const SIDEBAR_W_MAX = 480;
+
+function clampSidebarWidth(px) {
+  const n = Number(px);
+  if (!Number.isFinite(n)) return SIDEBAR_W_DEFAULT;
+  return Math.min(SIDEBAR_W_MAX, Math.max(SIDEBAR_W_MIN, Math.round(n)));
+}
+
+function applySidebarWidth(px, { persist = false } = {}) {
+  const w = clampSidebarWidth(px);
+  document.documentElement.style.setProperty('--sidebar-w', `${w}px`);
+  const handle = document.getElementById('sidebarResizer');
+  if (handle) {
+    handle.setAttribute('aria-valuenow', String(w));
+    handle.setAttribute('aria-valuemin', String(SIDEBAR_W_MIN));
+    handle.setAttribute('aria-valuemax', String(SIDEBAR_W_MAX));
+  }
+  if (persist) {
+    try { localStorage.setItem(SIDEBAR_W_KEY, String(w)); } catch (_) { /* ignore */ }
+  }
+  return w;
+}
+
+function restoreSidebarWidth() {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_W_KEY);
+    if (saved != null && saved !== '') applySidebarWidth(saved);
+  } catch (_) { /* ignore */ }
+}
+
+/** Sol menü sağ kenarından sürükleyerek genişlik ayarı */
+function initSidebarResize() {
+  restoreSidebarWidth();
+  const handle = document.getElementById('sidebarResizer');
+  if (!handle || handle.dataset.bound === '1') return;
+  handle.dataset.bound = '1';
+  handle.setAttribute('aria-valuemin', String(SIDEBAR_W_MIN));
+  handle.setAttribute('aria-valuemax', String(SIDEBAR_W_MAX));
+  const current = clampSidebarWidth(
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+  );
+  handle.setAttribute('aria-valuenow', String(current));
+
+  let dragging = false;
+
+  const onMove = (clientX) => {
+    if (!dragging) return;
+    applySidebarWidth(clientX);
+  };
+
+  const stopDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('sidebar-resizing');
+    const w = clampSidebarWidth(
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+    );
+    applySidebarWidth(w, { persist: true });
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+  };
+
+  const onPointerMove = (e) => onMove(e.clientX);
+  const onPointerUp = () => stopDrag();
+
+  handle.addEventListener('pointerdown', (e) => {
+    if (e.button != null && e.button !== 0) return;
+    const shell = document.getElementById('appShell');
+    if (shell?.classList.contains('sidebar-collapsed') || shell?.classList.contains('form-solo')) return;
+    e.preventDefault();
+    dragging = true;
+    document.body.classList.add('sidebar-resizing');
+    try { handle.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+    onMove(e.clientX);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  });
+
+  handle.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    applySidebarWidth(SIDEBAR_W_DEFAULT, { persist: true });
+  });
+
+  handle.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 24 : 12;
+    const cur = clampSidebarWidth(
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+    );
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      applySidebarWidth(cur - step, { persist: true });
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      applySidebarWidth(cur + step, { persist: true });
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_MIN, { persist: true });
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_MAX, { persist: true });
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_DEFAULT, { persist: true });
+    }
+  });
+}
+
 function ensureSidebarVisible() {
   // Yeni sekme form boot: yükleme animasyonu bitsin — erken kill etme
   if (isFormSoloUrl() && (
@@ -20404,6 +20516,7 @@ function bindEvents() {
     e.preventDefault();
     sidebarCollapseAll();
   });
+  initSidebarResize();
   $('#btnOpenTabs')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();

@@ -26,6 +26,8 @@
   --font: "Instrument Sans", sans-serif;
   --display: "Instrument Sans", sans-serif;
   --sidebar-w: 280px;
+  --sidebar-w-min: 200px;
+  --sidebar-w-max: 480px;
   --radius: 0.65rem;
   --radius-sm: 0.45rem;
   --shadow-card: 0 1px 2px rgba(42, 42, 42, 0.04), 0 6px 18px rgba(42, 42, 42, 0.04);
@@ -117,6 +119,49 @@ body.is-login {
   box-shadow: 2px 0 18px rgba(26, 35, 48, 0.04);
   overflow: hidden;
   opacity: 1;
+}
+/* Sağ kenar: sürükleyerek menü genişliği */
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 40;
+  touch-action: none;
+  background: transparent;
+}
+.sidebar-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  background: transparent;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.sidebar-resizer:hover::after,
+.sidebar-resizer:focus-visible::after,
+body.sidebar-resizing .sidebar-resizer::after {
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(63, 135, 245, 0.25);
+}
+.sidebar-resizer:focus-visible {
+  outline: none;
+}
+body.sidebar-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+body.sidebar-resizing iframe,
+body.sidebar-resizing .workspace {
+  pointer-events: none;
+}
+.app-shell.sidebar-collapsed .sidebar-resizer,
+.app-shell.form-solo .sidebar-resizer {
+  display: none;
 }
 .sidebar-brand {
   display: flex;
