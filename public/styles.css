@@ -460,7 +460,7 @@ body.sidebar-resizing .workspace {
   z-index: 5;
 }
 .sidebar-tabs-toggle {
-  --tabs-toggle-bg: #f7f9fc;
+  --tabs-toggle-bg: var(--surface-2, #f7f9fc);
   --tabs-toggle-fg: var(--accent);
   flex: 0 0 auto;
   display: grid;
@@ -499,7 +499,7 @@ body.doc-tabs-open .sidebar-tabs-toggle {
   place-items: center;
   height: 2.15rem;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface-1);
   color: var(--muted);
   border-radius: 0.5rem;
   cursor: pointer;
@@ -508,7 +508,7 @@ body.doc-tabs-open .sidebar-tabs-toggle {
 .sidebar-tool-btn:hover {
   background: var(--accent-soft);
   color: var(--accent);
-  border-color: #c9daf9;
+  border-color: var(--accent-border);
 }
 .sidebar-tool-btn:active {
   transform: translateY(1px);
@@ -596,7 +596,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   height: 1.75rem;
   border: 1px solid var(--line);
   border-bottom: 0;
-  background: #f7f9fc;
+  background: var(--surface-2, #f7f9fc);
   color: var(--ink);
   font: inherit;
   font-size: 0.74rem;
@@ -612,12 +612,12 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   place-items: center;
   width: 0.95rem;
   height: 0.95rem;
-  color: #5a6a76;
+  color: var(--muted);
   opacity: 0.9;
 }
 .doc-tabs .tab-item .tab-glyph svg { display: block; }
 .doc-tabs .tab-item.active {
-  background: #fff;
+  background: var(--surface-1);
   color: var(--accent);
   border-color: var(--line);
   box-shadow: 0 -1px 0 var(--accent) inset;
@@ -645,18 +645,18 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   line-height: 1.2;
 }
 .doc-tabs .tab-item.tab-form {
-  background: #fff8e8;
-  border-color: #e0c86a;
+  background: var(--warning-soft, #fff8e8);
+  border-color: var(--warning, #e0c86a);
 }
 .doc-tabs .tab-item.active {
-  background: #fff;
+  background: var(--surface-1);
   color: var(--ink);
   box-shadow: 0 2px 0 var(--accent) inset;
   z-index: 1;
 }
 .doc-tabs .tab-item.tab-form .tab-kind {
-  background: #fff1c2;
-  color: #8a6a00;
+  background: var(--warning-soft, #fff1c2);
+  color: var(--warning, #8a6a00);
 }
 .doc-tabs .tab-item .tab-close {
   display: inline-grid;
@@ -666,7 +666,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   border: none;
   border-radius: 999px;
   background: rgba(26, 35, 48, 0.1);
-  color: #5a6572;
+  color: var(--muted);
   font-size: 0.78rem;
   line-height: 1;
   cursor: pointer;
@@ -678,6 +678,12 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 .doc-tabs .tab-item.active .tab-close {
   background: rgba(26, 35, 48, 0.14);
 }
+html[data-appearance="dark"] .doc-tabs .tab-item .tab-close,
+html[data-appearance="dark"] .doc-tabs .tab-item:hover .tab-close,
+html[data-appearance="dark"] .doc-tabs .tab-item.active .tab-close {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+}
 .doc-tabs .tab-close:hover { background: #9f2d2d; color: #fff; }
 
 .tab-ctx-menu {
@@ -686,7 +692,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   min-width: 11.5rem;
   padding: 0.3rem;
   margin: 0;
-  background: #fff;
+  background: var(--surface-1);
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 0.45rem;
   box-shadow: 0 8px 24px rgba(26, 35, 48, 0.14);
@@ -2928,7 +2935,7 @@ tr.selected td { background: var(--accent-soft); }
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  background: #fff;
+  background: var(--page);
 }
 .list-work .list-pane {
   min-width: 0;
@@ -5415,6 +5422,7 @@ html[data-appearance="dark"] .screen-banner,
 html[data-appearance="dark"] .action-bar,
 html[data-appearance="dark"] .filter-pane,
 html[data-appearance="dark"] .list-pane,
+html[data-appearance="dark"] .list-work,
 html[data-appearance="dark"] .master-pane,
 html[data-appearance="dark"] .detail-pane,
 html[data-appearance="dark"] .form-card,
@@ -5431,11 +5439,53 @@ html[data-appearance="dark"] .search-results,
 html[data-appearance="dark"] .lookup-popup,
 html[data-appearance="dark"] .modal-card,
 html[data-appearance="dark"] .user-chip,
-html[data-appearance="dark"] .icon-btn {
+html[data-appearance="dark"] .user-chip-menu,
+html[data-appearance="dark"] .icon-btn,
+html[data-appearance="dark"] .sidebar-tool-btn {
   background: var(--surface-1) !important;
   color: var(--ink);
   border-color: var(--line) !important;
   box-shadow: var(--shadow-card);
+}
+html[data-appearance="dark"] .list-work {
+  background: var(--page) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .list-side-nav {
+  background: var(--surface-0) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .doc-tabs,
+html[data-appearance="dark"] body.doc-tabs-open .doc-tabs-dock {
+  background: var(--surface-0) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .sidebar-tabs-toggle {
+  --tabs-toggle-bg: var(--surface-2);
+  --tabs-toggle-fg: var(--accent);
+  background: var(--tabs-toggle-bg) !important;
+  color: var(--tabs-toggle-fg) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .doc-tabs .tab-item,
+html[data-appearance="dark"] .doc-tabs.doc-tabs--bottom .tab-item {
+  background: var(--surface-2) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .doc-tabs .tab-item.active {
+  background: var(--surface-1) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 2px 0 var(--accent) inset;
+}
+html[data-appearance="dark"] .doc-tabs .tab-item.tab-form {
+  background: rgba(250, 173, 20, 0.14) !important;
+  border-color: rgba(250, 173, 20, 0.35) !important;
+}
+html[data-appearance="dark"] .sidebar-tool-btn:hover {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent-border) !important;
 }
 html[data-appearance="dark"] .btn.ghost,
 html[data-appearance="dark"] .btn.action.ghost,
