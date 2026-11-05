@@ -805,7 +805,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   padding: 0.35rem;
   list-style: none;
   min-width: 9.5rem;
-  background: #fff;
+  background: var(--surface-1);
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 0.45rem;
   box-shadow: 0 8px 24px rgba(15, 40, 55, 0.12);
