@@ -437,7 +437,7 @@ body.sidebar-resizing .workspace {
   border-top: 1px solid var(--line);
   flex: 0 0 auto;
   margin-top: auto; /* her zaman menünün en altına yapışır */
-  background: #fff;
+  background: var(--sidebar);
   z-index: 2;
   box-shadow: 0 -4px 12px rgba(42, 42, 42, 0.03);
 }
@@ -553,7 +553,7 @@ body.doc-tabs-open .sidebar-tabs-toggle {
   min-height: 0;
   height: 1.85rem;
   padding: 0 0.45rem 0 0.2rem;
-  background: #fff;
+  background: var(--surface-1);
   border-top: 1px solid var(--line);
   border-bottom: 0;
   overflow-x: auto;
@@ -570,7 +570,7 @@ body:not(.doc-tabs-open) .doc-tabs:not(:empty) {
   display: none !important;
 }
 body.doc-tabs-open .doc-tabs-dock {
-  background: #fff;
+  background: var(--surface-1);
   border-top: 1px solid var(--line);
 }
 body:not(.doc-tabs-open) .doc-tabs-dock {
@@ -723,7 +723,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   gap: 1rem;
   padding: 0.85rem 1.25rem;
   min-height: 4.25rem;
-  background: #fff;
+  background: var(--surface-1);
   border-bottom: 1px solid var(--line);
   z-index: 6;
 }
@@ -1050,7 +1050,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface-1);
   border-radius: 0.4rem;
   width: 2.2rem;
   height: 2.2rem;
@@ -1173,7 +1173,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   border-radius: 0.55rem;
   padding: 0.65rem 0.85rem;
   font: inherit;
-  background: #fff;
+  background: var(--surface-1);
+  color: var(--ink);
 }
 .search-label {
   position: absolute;
@@ -1185,7 +1186,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   position: absolute;
   top: calc(100% + 0.35rem);
   right: 0; left: 0;
-  background: #fff;
+  background: var(--surface-1);
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 0.55rem;
   box-shadow: 0 12px 30px rgba(26, 35, 48, 0.12);
@@ -1242,7 +1244,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 .screen-banner {
   margin: 0.65rem 0.85rem 0;
   padding: 0.7rem 1.05rem;
-  background: #fff;
+  background: var(--surface-1);
   color: var(--ink);
   font-weight: 650;
   font-size: 0.95rem;
@@ -1257,7 +1259,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   gap: 0.45rem;
   margin: 0.65rem 0.85rem 0;
   padding: 0.65rem 1rem;
-  background: #fff;
+  background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
   box-shadow: var(--shadow-card);
@@ -1273,13 +1275,13 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   cursor: pointer;
 }
 .btn.ghost, .btn.action.ghost {
-  background: #fff;
+  background: var(--surface-1);
   color: var(--ink);
   border: 1px solid var(--line);
 }
 .btn.action { min-width: 5.2rem; }
 .btn.danger {
-  background: #fff;
+  background: var(--surface-1);
   color: var(--danger);
   border: 1px solid #e8b0c0;
 }
@@ -1298,7 +1300,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   margin: 0.65rem 0.85rem 0;
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
-  background: #fff;
+  background: var(--surface-1);
   box-shadow: var(--shadow-card);
   padding: 0.65rem 1rem 0.7rem;
   overflow: visible;
@@ -1530,7 +1532,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   flex-direction: column;
   margin: 0.65rem 0.85rem 0.85rem;
   padding: 0.75rem 1rem 0.95rem;
-  background: #fff;
+  background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
   box-shadow: var(--shadow-card);
@@ -1543,7 +1545,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
-  background: #fff;
+  background: var(--surface-1);
 }
 #dataTable {
   width: 100%;
@@ -1567,7 +1569,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 #dataTable th {
   position: sticky;
   top: 0;
-  background: #fafbfd !important;
+  background: var(--palette-cyan, #fafbfd) !important;
   font-size: 0.75rem !important;
   font-weight: 600;
   color: var(--muted);
@@ -1577,6 +1579,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   padding: 0.4rem 0.55rem !important;
 }
 #dataTable tbody tr { height: 1.95rem; }
+#dataTable tbody tr:nth-child(odd) td { background: var(--surface-1); }
 #dataTable tbody tr:nth-child(even) td { background: var(--zebra); }
 #dataTable tr:hover td { background: var(--hover-row) !important; }
 #dataTable tr.selected td { background: var(--accent-soft) !important; }
@@ -3403,7 +3406,7 @@ tr.selected td { background: var(--accent-soft); }
 .action-bar {
   position: sticky;
   z-index: 4;
-  background: #fff;
+  background: var(--surface-1);
 }
 .screen-banner { top: 0; }
 .action-bar { top: 0; }
@@ -3418,7 +3421,7 @@ tr.selected td { background: var(--accent-soft); }
   border: 1px solid var(--line);
   border-radius: 0.55rem;
   overflow: auto;
-  background: #fff;
+  background: var(--surface-1);
   max-height: 100%;
   box-shadow: var(--shadow-soft);
 }
@@ -3432,7 +3435,7 @@ tr.selected td { background: var(--accent-soft); }
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #f7f9fc;
+  background: var(--palette-cyan, #f7f9fc);
   color: var(--sidebar-ink);
   font-weight: 650;
   font-size: 0.72rem;
@@ -5267,7 +5270,7 @@ body.sql-splitting iframe { pointer-events: none; }
 }
 .icon-btn {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface-1);
   color: var(--muted);
   border-radius: 0.5rem;
   width: 2.15rem;
@@ -5317,92 +5320,211 @@ html[data-theme="blue"] {
   --logo-filter: brightness(1);
 }
 
-/* Koyu görünüm — renk teması (data-theme) accent’lerini korur, yüzeyleri karartır */
+/*
+ * Koyu görünüm — AllurUI / Luna tarzı tek aile tonları:
+ * page (en koyu) < sidebar ≈ surface-0 < card/surface-1 < elevated/surface-2
+ * Beyaz/siyah zebra yok; satırlar aynı koyu ailenin hafif ton farkı.
+ */
 html[data-appearance="dark"] {
   color-scheme: dark;
-  --ink: #e8eaed;
-  --muted: #9aa3b2;
-  --line: #2a3140;
-  --panel: #1a1f2b;
-  --page: #12151c;
-  --sidebar: #161a24;
-  --sidebar-ink: #d7dbe3;
-  --sidebar-muted: #8b93a3;
-  --accent-soft: rgba(99, 149, 245, 0.18);
-  --accent-glow: rgba(99, 149, 245, 0.28);
-  --sidebar-active: rgba(99, 149, 245, 0.16);
-  --danger-soft: rgba(222, 68, 54, 0.18);
+  --ink: #f2f4f8;
+  --muted: #9aa3b5;
+  --line: #32364a;
+  --page: #1b1d2a;
+  --panel: #222536;
+  --sidebar: #171925;
+  --sidebar-ink: #e4e7ef;
+  --sidebar-muted: #8f97ab;
+  --accent-soft: rgba(99, 149, 245, 0.2);
+  --accent-glow: rgba(99, 149, 245, 0.32);
+  --sidebar-active: rgba(99, 149, 245, 0.18);
+  --cyan-soft: rgba(77, 255, 243, 0.1);
+  --danger-soft: rgba(255, 75, 126, 0.16);
   --success-soft: rgba(82, 196, 26, 0.16);
   --warning-soft: rgba(250, 173, 20, 0.16);
   --info-soft: rgba(99, 149, 245, 0.12);
   --erp-form-bg: var(--page);
-  --erp-card-bg: #1c2230;
+  --erp-card-bg: #252836;
   --erp-card-border: var(--line);
-  --erp-readonly-bg: #232937;
-  --surface-1: #1c2230;
-  --surface-2: var(--page);
+  --erp-readonly-bg: #2a2d3d;
+  --surface-0: #1f2230;
+  --surface-1: #252836;
+  --surface-2: #2c303e;
   --surface-3: var(--accent-soft);
-  --hover-row: rgba(255, 255, 255, 0.04);
-  --zebra: #171b26;
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 22px rgba(0, 0, 0, 0.28);
-  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.3);
-  --shadow-ink: rgba(0, 0, 0, 0.35);
-  --logo-filter: brightness(1.15) saturate(1.05);
+  --surface-4: var(--cyan-soft);
+  --hover-row: rgba(255, 255, 255, 0.045);
+  --zebra: #212433;
+  --palette-cyan: #2a2d3d;
+  --palette-main: #2a2d3d;
+  --palette-green: rgba(82, 196, 26, 0.12);
+  --palette-pink: rgba(255, 75, 126, 0.12);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.28), 0 10px 28px rgba(0, 0, 0, 0.22);
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-ink: rgba(0, 0, 0, 0.4);
+  --logo-filter: brightness(1.2) saturate(1.05);
+  --tabs-toggle-bg: var(--surface-2);
+  --tabs-toggle-fg: var(--accent);
 }
 html[data-appearance="dark"][data-theme="green"] {
-  --accent-soft: rgba(27, 143, 120, 0.2);
-  --sidebar-active: rgba(27, 143, 120, 0.18);
-  --hover-row: rgba(27, 143, 120, 0.1);
+  --accent-soft: rgba(27, 143, 120, 0.22);
+  --sidebar-active: rgba(27, 143, 120, 0.2);
+  --hover-row: rgba(27, 143, 120, 0.12);
 }
 html[data-appearance="dark"][data-theme="red"] {
-  --accent-soft: rgba(224, 69, 69, 0.2);
-  --sidebar-active: rgba(224, 69, 69, 0.18);
-  --hover-row: rgba(224, 69, 69, 0.1);
+  --accent-soft: rgba(224, 69, 69, 0.22);
+  --sidebar-active: rgba(224, 69, 69, 0.2);
+  --hover-row: rgba(224, 69, 69, 0.12);
 }
 html[data-appearance="dark"][data-theme="orange"] {
-  --accent-soft: rgba(230, 126, 34, 0.2);
-  --sidebar-active: rgba(230, 126, 34, 0.18);
-  --hover-row: rgba(230, 126, 34, 0.1);
+  --accent-soft: rgba(245, 166, 35, 0.22);
+  --sidebar-active: rgba(245, 166, 35, 0.2);
+  --hover-row: rgba(245, 166, 35, 0.12);
 }
 html[data-appearance="dark"][data-theme="purple"] {
-  --accent-soft: rgba(124, 92, 252, 0.2);
-  --sidebar-active: rgba(124, 92, 252, 0.18);
-  --hover-row: rgba(124, 92, 252, 0.1);
+  --accent-soft: rgba(124, 92, 252, 0.22);
+  --sidebar-active: rgba(124, 92, 252, 0.2);
+  --hover-row: rgba(124, 92, 252, 0.12);
 }
 html[data-appearance="dark"][data-theme="yellow"] {
-  --accent-soft: rgba(201, 162, 39, 0.22);
-  --sidebar-active: rgba(201, 162, 39, 0.18);
-  --hover-row: rgba(201, 162, 39, 0.1);
+  --accent-soft: rgba(201, 162, 39, 0.24);
+  --sidebar-active: rgba(201, 162, 39, 0.2);
+  --hover-row: rgba(201, 162, 39, 0.12);
 }
-html[data-appearance="dark"] .firma-picker-menu,
+
+/* Kabuk: aynı koyu ailenin katmanları */
+html[data-appearance="dark"] body,
+html[data-appearance="dark"] .workspace,
+html[data-appearance="dark"] .workspace-main {
+  background: var(--page);
+  color: var(--ink);
+}
+html[data-appearance="dark"] .sidebar {
+  background: var(--sidebar);
+  color: var(--sidebar-ink);
+  border-color: var(--line);
+}
+html[data-appearance="dark"] .sidebar-foot,
+html[data-appearance="dark"] .sidebar-brand {
+  background: var(--sidebar) !important;
+  border-color: var(--line);
+  box-shadow: none;
+}
+html[data-appearance="dark"] .workspace-bar,
+html[data-appearance="dark"] .screen-banner,
+html[data-appearance="dark"] .action-bar,
 html[data-appearance="dark"] .filter-pane,
 html[data-appearance="dark"] .list-pane,
 html[data-appearance="dark"] .master-pane,
 html[data-appearance="dark"] .detail-pane,
 html[data-appearance="dark"] .form-card,
+html[data-appearance="dark"] .form-topbar,
 html[data-appearance="dark"] .erp-master-panel,
+html[data-appearance="dark"] .table-scroll,
+html[data-appearance="dark"] .detail-table-wrap,
+html[data-appearance="dark"] .firma-picker-menu,
+html[data-appearance="dark"] .settings-menu,
+html[data-appearance="dark"] .theme-modal-card,
+html[data-appearance="dark"] .theme-card,
 html[data-appearance="dark"] .tab-ctx-menu,
 html[data-appearance="dark"] .search-results,
 html[data-appearance="dark"] .lookup-popup,
-html[data-appearance="dark"] .modal-card {
-  background: var(--surface-1);
+html[data-appearance="dark"] .modal-card,
+html[data-appearance="dark"] .user-chip,
+html[data-appearance="dark"] .icon-btn {
+  background: var(--surface-1) !important;
   color: var(--ink);
-  border-color: var(--line);
+  border-color: var(--line) !important;
+  box-shadow: var(--shadow-card);
+}
+html[data-appearance="dark"] .btn.ghost,
+html[data-appearance="dark"] .btn.action.ghost,
+html[data-appearance="dark"] .btn.danger {
+  background: var(--surface-2) !important;
+  color: var(--ink);
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .btn.danger {
+  color: #ff8fa3;
+  border-color: rgba(255, 75, 126, 0.35) !important;
 }
 html[data-appearance="dark"] input,
 html[data-appearance="dark"] select,
-html[data-appearance="dark"] textarea {
-  background: #171b26;
+html[data-appearance="dark"] textarea,
+html[data-appearance="dark"] .lookup-typeahead,
+html[data-appearance="dark"] .filter-field input,
+html[data-appearance="dark"] .filter-field select {
+  background: var(--surface-0) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  caret-color: var(--ink);
+}
+html[data-appearance="dark"] input::placeholder,
+html[data-appearance="dark"] textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+/* Tablo: ton farkı zebra — beyaz satır yok */
+html[data-appearance="dark"] #dataTable,
+html[data-appearance="dark"] .detail-table,
+html[data-appearance="dark"] table {
+  color: var(--ink);
+  background: var(--surface-1);
+}
+html[data-appearance="dark"] #dataTable th,
+html[data-appearance="dark"] .detail-table thead th,
+html[data-appearance="dark"] table thead th,
+html[data-appearance="dark"] .data-table th,
+html[data-appearance="dark"] table.list-table th {
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] #dataTable tbody tr td,
+html[data-appearance="dark"] .detail-table tbody td,
+html[data-appearance="dark"] table tbody td {
+  background: var(--surface-1) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] #dataTable tbody tr:nth-child(even) td,
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even) td,
+html[data-appearance="dark"] table tbody tr:nth-child(even) td {
+  background: var(--zebra) !important;
+}
+html[data-appearance="dark"] #dataTable tr:hover td,
+html[data-appearance="dark"] .detail-table tr:hover td,
+html[data-appearance="dark"] table tr:hover td {
+  background: var(--hover-row) !important;
+}
+html[data-appearance="dark"] #dataTable tr.selected td,
+html[data-appearance="dark"] table tr.selected td {
+  background: var(--accent-soft) !important;
+}
+html[data-appearance="dark"] .detail-table tbody .col-seq {
+  background: var(--surface-2) !important;
+}
+
+html[data-appearance="dark"] .mod-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+}
+html[data-appearance="dark"] .mod-item.active {
+  background: var(--sidebar-active);
+  color: var(--accent);
+}
+html[data-appearance="dark"] .theme-modal-backdrop {
+  background: rgba(10, 12, 20, 0.62);
+}
+html[data-appearance="dark"] .doc-tabs,
+html[data-appearance="dark"] .doc-tab {
+  background: var(--surface-0);
   color: var(--ink);
   border-color: var(--line);
 }
-html[data-appearance="dark"] .data-table th,
-html[data-appearance="dark"] table.list-table th {
-  background: #1c2230;
+html[data-appearance="dark"] .doc-tab.active {
+  background: var(--surface-2);
   color: var(--ink);
-}
-html[data-appearance="dark"] .theme-modal-backdrop {
-  background: rgba(0, 0, 0, 0.55);
 }
 html[data-theme="green"] {
   --ink: #1a2e2a;
