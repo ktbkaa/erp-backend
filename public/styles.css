@@ -43,6 +43,7 @@
   --erp-readonly-bg: #f7f9fc;
   --surface-0: #f5f8fc;
   --surface-1: #ffffff;
+  --surface: var(--surface-1);
   --surface-2: var(--page);
   --surface-3: var(--accent-soft);
   --surface-4: var(--cyan-soft);
@@ -2012,7 +2013,7 @@ tr.selected td { background: var(--accent-soft); }
   font: inherit;
   font-size: 0.78rem;
   font-weight: 500;
-  color: #3a4553;
+  color: var(--ink);
   cursor: pointer;
   line-height: 1.25;
 }
@@ -2022,8 +2023,8 @@ tr.selected td { background: var(--accent-soft); }
   color: #fff;
   font-weight: 600;
 }
-.form-tab-btn.stub { color: var(--sidebar-muted); font-weight: 400; }
-.form-tab-btn.stub.active { background: #6b7c8c; }
+.form-tab-btn.stub { color: var(--muted); font-weight: 400; }
+.form-tab-btn.stub.active { background: #6b7c8c; color: #fff; }
 
 /* Form gövdesi: tek kaydırma — başlık + kalemler + footer bir bütün */
 .form-tab-body {
@@ -2210,7 +2211,7 @@ tr.selected td { background: var(--accent-soft); }
   gap: 0.65rem 1.1rem;
   padding: 0.55rem 0.85rem 0.65rem;
   border-top: 1px solid var(--line);
-  background: #fafbfd;
+  background: var(--surface-0, #fafbfd);
 }
 .md-footer-notes {
   display: flex;
@@ -2241,15 +2242,15 @@ tr.selected td { background: var(--accent-soft); }
 .md-total-row label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #3a4553;
+  color: var(--ink);
   text-align: right;
 }
 .md-total-row input {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  background: #f5f8fc;
-  border: 1px solid #c5d0de;
+  background: var(--surface-0, #f5f8fc);
+  border: 1px solid var(--line, #c5d0de);
   color: var(--ink);
   padding: 0.28rem 0.45rem;
   min-height: 1.75rem;
@@ -4480,10 +4481,10 @@ body.form-solo .form-tab-nav .form-tab-btn {
 }
 .sql-sheet-tab:hover { color: var(--ink); background: var(--palette-cyan); }
 .sql-sheet-tab.active {
-  background: #fff;
+  background: var(--surface-1, #fff);
   color: var(--ink);
   border-color: var(--line);
-  box-shadow: 0 1px 0 #fff;
+  box-shadow: 0 1px 0 var(--surface-1, #fff);
   position: relative;
   z-index: 1;
   margin-bottom: -1px;
@@ -4557,7 +4558,7 @@ body.sql-splitting iframe { pointer-events: none; }
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 80px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface-1, #fff);
 }
 .sql-highlight,
 .sql-editor {
@@ -4603,7 +4604,7 @@ body.sql-splitting iframe { pointer-events: none; }
 .sql-result-scroll {
   min-height: 0;
   overflow: auto;
-  background: #fff;
+  background: var(--surface-1, #fff);
 }
 .sql-result-table {
   width: 100%;
@@ -4867,7 +4868,8 @@ body.sql-splitting iframe { pointer-events: none; }
   border: 1px solid var(--line, #e5eaf2);
   border-radius: 8px;
   padding: 0.55rem 0.75rem 0.75rem;
-  background: var(--page, #f8fafc);
+  background: var(--surface-0, var(--page, #f8fafc));
+  color: var(--ink);
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -4876,8 +4878,8 @@ body.sql-splitting iframe { pointer-events: none; }
   margin-top: 0.55rem;
 }
 .stok-firma-plant-block.is-firma-genel {
-  border-color: var(--accent-line, #c5d4e8);
-  background: var(--surface, #fff);
+  border-color: var(--accent-border, #c5d4e8);
+  background: var(--surface-1, #fff);
 }
 .stok-firma-plant-block.needs-plant {
   border-style: dashed;
@@ -5054,7 +5056,8 @@ body.sql-splitting iframe { pointer-events: none; }
 .erp-master-notes {
   margin-top: 0.55rem;
   padding: 0.55rem 0.75rem;
-  background: #fff;
+  background: var(--surface-1, #fff);
+  color: var(--ink);
   border: 1px solid var(--erp-card-border, var(--line));
   border-radius: 8px;
 }
@@ -5115,7 +5118,7 @@ body.sql-splitting iframe { pointer-events: none; }
 .field--readonly textarea,
 .field--readonly .lookup-name-ro {
   background: var(--erp-readonly-bg) !important;
-  color: #3a4553;
+  color: var(--ink);
 }
 .field .req-mark {
   color: var(--accent);
@@ -5152,7 +5155,7 @@ body.sql-splitting iframe { pointer-events: none; }
   margin-bottom: 0.35rem;
 }
 .form-view.erp-form--document .md-detail {
-  background: #fff;
+  background: var(--surface-1, #fff);
   border-top: 1px solid var(--line);
 }
 .form-view.erp-form--document .md-detail-head {
@@ -5364,6 +5367,7 @@ html[data-appearance="dark"] {
   --erp-readonly-bg: #2a2d3d;
   --surface-0: #1f2230;
   --surface-1: #252836;
+  --surface: var(--surface-1);
   --surface-2: #2c303e;
   --surface-3: var(--accent-soft);
   --surface-4: var(--cyan-soft);
@@ -5613,6 +5617,162 @@ html[data-appearance="dark"] .detail-table tbody .col-seq {
   background: var(--surface-2) !important;
 }
 
+/* Form içi sekmeler — koyu zeminde okunaklı etiket */
+html[data-appearance="dark"] .form-tab-nav,
+html[data-appearance="dark"] body.form-solo .form-tab-nav,
+html[data-appearance="dark"] .form-view.erp-form--master .form-tab-nav {
+  background: var(--surface-0) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .form-tab-btn {
+  color: #e8ecf4 !important;
+  opacity: 0.92;
+}
+html[data-appearance="dark"] .form-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #fff !important;
+  opacity: 1;
+}
+html[data-appearance="dark"] .form-tab-btn.active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  opacity: 1;
+}
+html[data-appearance="dark"] .form-tab-btn.stub {
+  color: var(--muted) !important;
+  opacity: 0.85;
+}
+html[data-appearance="dark"] .form-tab-btn.stub.active {
+  background: #6b7c8c !important;
+  color: #fff !important;
+}
+
+/*
+ * Kalan beyaz / açık paneller — tüm ekranlar:
+ * hardcoded #fff / #faf / tanımsız --surface fallback’leri.
+ */
+html[data-appearance="dark"] .stok-firma-plant-block,
+html[data-appearance="dark"] .stok-firma-plant-block.is-firma-genel,
+html[data-appearance="dark"] .stok-firma-card-body,
+html[data-appearance="dark"] .stok-firma-params,
+html[data-appearance="dark"] .stok-firmalar-pane,
+html[data-appearance="dark"] .stok-depolar-pane,
+html[data-appearance="dark"] .stok-firma-section,
+html[data-appearance="dark"] .erp-master-notes,
+html[data-appearance="dark"] .md-footer,
+html[data-appearance="dark"] .form-view.erp-form--document .md-detail,
+html[data-appearance="dark"] .form-view.erp-form--document .md-footer,
+html[data-appearance="dark"] .form-view.erp-form--document .md-detail-head,
+html[data-appearance="dark"] .mrp-section,
+html[data-appearance="dark"] .mrp-scope-card,
+html[data-appearance="dark"] .mrp-log-box,
+html[data-appearance="dark"] .mrp-result-scroll,
+html[data-appearance="dark"] .mrp-result-table th,
+html[data-appearance="dark"] .cvt-dialog,
+html[data-appearance="dark"] .cvt-body,
+html[data-appearance="dark"] .cvt-foot,
+html[data-appearance="dark"] .login-card,
+html[data-appearance="dark"] .meta-table-card,
+html[data-appearance="dark"] .meta-nav,
+html[data-appearance="dark"] .meta-hint kbd,
+html[data-appearance="dark"] .info-menu,
+html[data-appearance="dark"] .sql-layout,
+html[data-appearance="dark"] .sql-toolbar,
+html[data-appearance="dark"] .sql-result-pane,
+html[data-appearance="dark"] .sql-result-scroll,
+html[data-appearance="dark"] .sql-sheet-tab.active,
+html[data-appearance="dark"] .sql-db-modal-card,
+html[data-appearance="dark"] .sql-field input,
+html[data-appearance="dark"] .sql-field select,
+html[data-appearance="dark"] .lookup-suggest,
+html[data-appearance="dark"] .lookup-browse-btn,
+html[data-appearance="dark"] .bom-inline-editor,
+html[data-appearance="dark"] .form-info-btn,
+html[data-appearance="dark"] .field-info-btn,
+html[data-appearance="dark"] .yetki-mod-caret,
+html[data-appearance="dark"] .zincir-strip span,
+html[data-appearance="dark"] .detail-table tbody tr,
+html[data-appearance="dark"] .detail-table tbody .col-acts,
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even),
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even) .col-acts,
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even) .col-seq {
+  background: var(--surface-1) !important;
+  color: var(--ink);
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .sql-sheet-tab.active {
+  box-shadow: 0 1px 0 var(--surface-1);
+}
+html[data-appearance="dark"] .stok-firma-plant-block.is-firma-genel {
+  background: var(--surface-0) !important;
+  border-color: rgba(99, 149, 245, 0.35) !important;
+}
+html[data-appearance="dark"] .stok-firma-card-sum,
+html[data-appearance="dark"] .mrp-scope-head,
+html[data-appearance="dark"] .mrp-log-title,
+html[data-appearance="dark"] .cvt-head {
+  background: var(--surface-2) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .md-total-row input,
+html[data-appearance="dark"] .mrp-field input,
+html[data-appearance="dark"] .mrp-field select,
+html[data-appearance="dark"] .mrp-field textarea,
+html[data-appearance="dark"] .cvt-body select,
+html[data-appearance="dark"] .cvt-body input,
+html[data-appearance="dark"] .lookup-typeahead,
+html[data-appearance="dark"] .lookup-typeahead:hover,
+html[data-appearance="dark"] .lookup-typeahead:focus,
+html[data-appearance="dark"] .field.lookup input,
+html[data-appearance="dark"] .field.lookup select {
+  background: var(--surface-0) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .form-info-btn,
+html[data-appearance="dark"] .field-info-btn,
+html[data-appearance="dark"] .md-total-row label,
+html[data-appearance="dark"] .meta-help-lead,
+html[data-appearance="dark"] .stok-firma-plant-label,
+html[data-appearance="dark"] .stok-firma-plant-check,
+html[data-appearance="dark"] .erp-section-title {
+  color: var(--ink) !important;
+}
+html[data-appearance="dark"] .field.field--critical {
+  background: rgba(250, 173, 20, 0.12) !important;
+  border-color: rgba(250, 173, 20, 0.4) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .field.field--critical label,
+html[data-appearance="dark"] .field-critical-hint {
+  color: #f0c36a !important;
+}
+html[data-appearance="dark"] .field.field--critical input,
+html[data-appearance="dark"] .field.field--critical select,
+html[data-appearance="dark"] .field.field--critical textarea {
+  background: var(--surface-0) !important;
+  color: var(--ink) !important;
+  border-color: rgba(250, 173, 20, 0.45) !important;
+}
+html[data-appearance="dark"] .field-critical-hint {
+  background: rgba(250, 173, 20, 0.2) !important;
+}
+html[data-appearance="dark"] .cvt-warn,
+html[data-appearance="dark"] .sql-tx-wrap {
+  background: rgba(250, 173, 20, 0.12) !important;
+  border-color: rgba(250, 173, 20, 0.35) !important;
+  color: #f0c36a !important;
+}
+html[data-appearance="dark"] .sql-tx-label {
+  color: #f0c36a !important;
+}
+html[data-appearance="dark"] .mrp-result-table th {
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+}
+
 html[data-appearance="dark"] .mod-item:hover {
   background: rgba(255, 255, 255, 0.04);
   color: var(--ink);
@@ -5847,13 +6007,13 @@ html[data-theme="yellow"] {
 .mrp-field > span { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
 .mrp-field input, .mrp-field select, .mrp-field textarea {
   border: 1px solid var(--line); border-radius: 6px; padding: 0.4rem 0.5rem;
-  background: #fffef6; color: var(--ink); font: inherit; min-height: 2rem;
+  background: var(--surface-0, #fffef6); color: var(--ink); font: inherit; min-height: 2rem;
 }
 .mrp-field input[readonly], .mrp-field textarea[readonly] { background: var(--erp-readonly-bg); }
 .mrp-field--grow { flex: 1 1 14rem; min-width: 12rem; }
 .mrp-field--notes { flex: 1 1 16rem; min-width: 12rem; }
 .mrp-section {
-  border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 0.35rem 0.75rem 0.7rem;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface-1, #fff); color: var(--ink); padding: 0.35rem 0.75rem 0.7rem;
 }
 .mrp-section > summary {
   cursor: pointer; font-weight: 650; font-size: 0.88rem; color: var(--ink);
@@ -5893,7 +6053,7 @@ html[data-theme="yellow"] {
   .mrp-scope-grid { grid-template-columns: 1fr; }
 }
 .mrp-scope-card {
-  border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface-1, #fff); color: var(--ink); overflow: hidden;
   display: flex; flex-direction: column; min-height: 11rem;
 }
 .mrp-scope-head {
@@ -5909,7 +6069,7 @@ html[data-theme="yellow"] {
 .mrp-scope-table tr:hover td { background: var(--accent-soft); }
 .mrp-scope-check { width: 3.2rem; text-align: center !important; }
 .mrp-log-box {
-  border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface-1, #fff); color: var(--ink); overflow: hidden;
 }
 .mrp-log-title {
   padding: 0.45rem 0.7rem; font-weight: 650; font-size: 0.82rem; color: var(--accent);
@@ -5920,8 +6080,8 @@ html[data-theme="yellow"] {
 .mrp-log-line.mrp-log-info { color: var(--ink); }
 .mrp-log-line.mrp-log-warn { color: #9f2d2d; }
 .mrp-log-line.mrp-log-error { color: #7a1212; font-weight: 600; }
-.mrp-result-scroll { overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.mrp-result-scroll { overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-1, #fff); color: var(--ink); }
 .mrp-result-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
 .mrp-result-table th, .mrp-result-table td { padding: 0.35rem 0.55rem; border-bottom: 1px solid var(--line); }
-.mrp-result-table th { background: #f7f9fc; position: sticky; top: 0; }
+.mrp-result-table th { background: var(--surface-0, #f7f9fc); color: var(--muted); position: sticky; top: 0; }
 .mrp-result-table .num { text-align: right; font-variant-numeric: tabular-nums; }
