@@ -831,15 +831,24 @@ const MODULES = [
         filters: [
           { key: 'company_code', label: 'Firma kodu' },
           { key: 'company_name', label: 'Firma adı' },
+          { key: 'is_profile', label: 'Profil', type: 'checkbox' },
         ],
         columns: [
           { key: 'company_code', label: 'Kod', mono: true },
           { key: 'company_name', label: 'Ad' },
+          { key: 'is_profile', label: 'Profil', type: 'checkbox' },
         ],
         masterFields: [
           { key: 'company_code', label: 'Firma kodu', code: true, editableOnNew: true, required: true },
           { key: 'company_name', label: 'Firma adı', name: true, required: true },
+          {
+            key: 'is_profile',
+            label: 'Profil',
+            type: 'checkbox',
+            hint: 'İşaretliyse üst bardaki Firma Profil Alanı seçicisinde görünür.',
+          },
         ],
+        defaults: { is_profile: false },
         detailFields: [],
         detailKey: null,
       },
@@ -10617,13 +10626,22 @@ function promptLogin() {
   showLoginView();
 }
 
+function isFirmaProfil(f) {
+  if (!f) return false;
+  const v = f.is_profile;
+  return v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+}
+
+/** Üst bar Firma Profil Alanı: yalnız is_profile=true firmalar (+ varsa kullanıcı firma yetkisi kesişimi). */
 function allowedFirmalar() {
   const all = Array.isArray(state.companies) ? state.companies : [];
+  const profiles = all.filter(isFirmaProfil);
   const fy = state.session?.firma_yetkileri;
-  if (!Array.isArray(fy) || !fy.length) return all;
+  if (!Array.isArray(fy) || !fy.length) return profiles;
   const ids = new Set(fy.map((f) => Number(f.company_id ?? f.id)).filter(Boolean));
-  const filtered = all.filter((f) => ids.has(Number(f.id)));
-  return filtered.length ? filtered : all;
+  const filtered = profiles.filter((f) => ids.has(Number(f.id)));
+  // Yetki kaydı var ama hiçbiri profil değilse profil listesini göster (tanım ekranından açılabilsin)
+  return filtered.length ? filtered : profiles;
 }
 
 function renderFirmaPicker() {
@@ -11419,8 +11437,11 @@ async function loadFirmalar() {
     state.companies = [];
   }
   const stored = Number(localStorage.getItem('ktb_firma_id') || 0);
-  const prefer = state.companies.find((f) => Number(f.id) === stored)
-    || state.companies.find((f) => f.company_code === 'ELEK')
+  const pickable = allowedFirmalar();
+  const prefer = pickable.find((f) => Number(f.id) === stored)
+    || pickable.find((f) => f.company_code === 'GIDA')
+    || pickable.find((f) => f.company_code === 'ELEK')
+    || pickable[0]
     || state.companies[0];
   state.activeFirmaId = prefer ? Number(prefer.id) : null;
   if (state.activeFirmaId) localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
@@ -19759,9 +19780,20 @@ async function syncActiveFirmaAfterOrgSave(screen, saved) {
   let nextFirmaId = null;
   if (screen.id === 'companies' && saved.id) {
     nextFirmaId = Number(saved.id);
-    if (!state.companies?.some((c) => Number(c.id) === nextFirmaId)) {
-      state.companies = [saved, ...(state.companies || [])];
-      state.lookupCache.companies = state.companies;
+    const idx = (state.companies || []).findIndex((c) => Number(c.id) === nextFirmaId);
+    if (idx >= 0) state.companies[idx] = { ...state.companies[idx], ...saved };
+    else state.companies = [saved, ...(state.companies || [])];
+    state.lookupCache.companies = state.companies;
+    // Profil tiki kapatıldıysa aktif firmayı listedeki bir profile kaydır
+    if (!isFirmaProfil(saved) && Number(state.activeFirmaId) === nextFirmaId) {
+      const next = allowedFirmalar().find((f) => Number(f.id) !== nextFirmaId) || null;
+      state.activeFirmaId = next ? Number(next.id) : null;
+      if (state.activeFirmaId) localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
+      else localStorage.removeItem('ktb_firma_id');
+      nextFirmaId = state.activeFirmaId;
+    } else if (isFirmaProfil(saved)) {
+      // Yeni/güncel profil firmayı seçicide hemen göster; aktif yapma zorunlu değil
+      renderFirmaPicker();
     }
   } else if (screen.id === 'is-yerleri' && saved.company_id) {
     nextFirmaId = Number(saved.company_id);
