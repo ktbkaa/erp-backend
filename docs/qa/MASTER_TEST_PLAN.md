@@ -52,3 +52,4 @@ npm test
 - 2026-11-05 14:10 TR: Envanter 132 ekran; API smoke 129/129 pass (3 skip duplicate); DB audit P0/P1=0.
 - 2026-11-05: sql-console GET `/` eklendi (404 düzeltmesi). Smoke login username/password hizalandı.
 - 2026-11-05: GIDA org + owner; `demo:gida-dongu` MAN OK; finance seed (36 GL) → FA00009/MB00001; QA dashboard + PDF; skor 78/100.
+- 2026-11-05 akşam: QA standardı yazıldı; `demo:4-firma` EN; lot-aware stok wipe; DOKUM MAN+MRP tam döngü; skor 83/100; P1=0.

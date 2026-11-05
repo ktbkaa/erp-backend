@@ -19,6 +19,9 @@
 | MRP → UE | E00010 yedek | PARTIAL | otomatik değil |
 | MRP sevkiyat → irsaliye onay | IR00010 | FAIL | yetersiz bakiye |
 
-## Özet
+## Özet (GIDA turu)
 - MAN zinciri: 10/10 kritik adım yeşil (muhasebe seed sonrası)
-- MRP zinciri: 2/5 tam, 1 kısmi, 2 fail
+- MRP zinciri: 2/5 tam, 1 kısmi, 2 fail (sonraki DOKUM turunda MRP düzeltildi)
+
+## DOKUM (2026-11-05)
+Ayrıntı: `07b-dokum-end-to-end.md` — MAN+MRP talep/PO/UE/irsaliye/fatura yeşil.

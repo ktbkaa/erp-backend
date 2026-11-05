@@ -5,6 +5,9 @@
 | Suite | Komut | Sonuç |
 |---|---|---|
 | Unit/API mevcut | `npm test` | **33/33 pass** (ödeme koşulu testine `term_code` eklendi) |
+| demo:4-firma EN | `npm run demo:4-firma` | ELEK/TEKS/META/GIDA/DOKUM org OK |
+| DOKUM E2E | `npm run demo:dokum-dongu` | MAN+MRP faturalara kadar OK |
+| Yetki matrisi | `npm run qa:roles` | Geçersiz JWT + GL + firma |
 | Ekran envanteri | `node scripts/qa/extract-screen-inventory.mjs` | 132 |
 | API smoke | `node scripts/qa/api-smoke.mjs` | 129 pass / 0 fail / 3 skip |
 | DB integrity | `node scripts/qa/db-integrity-audit.mjs` | P0=0 P1=0 |

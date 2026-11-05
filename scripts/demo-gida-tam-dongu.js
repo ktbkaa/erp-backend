@@ -1261,34 +1261,41 @@ async function seedMrp(client, org, base) {
   const today = new Date().toISOString().slice(0, 10);
   const qty = 50;
 
-  // MAN açılış stokunu düşür ki MRP net ihtiyaç üretsin
-  const { depoBakiyeListesi } = require('../src/services/stokHareketService');
-  const hedefStoklar = new Set([base.hmPcb.id, base.hmCap.id, base.hmCoil.id, base.hmCase.id, base.fg.id].map(Number));
-  const bakiyeler = (await depoBakiyeListesi(client)).filter(
-    (b) => hedefStoklar.has(Number(b.item_id))
-      && Number(b.bakiye) > 0
-      && String(b.stock_status || 'Kullanilabilir') === 'Kullanilabilir'
-  );
-  for (const b of bakiyeler) {
-    try {
-      await stokHareketOlustur(client, {
-        hareketTipi: 'STOK_CIKIS',
-        isYeriId: plant.id,
-        depoId: b.warehouse_id,
-        belgeTipi: 'Sayim',
-        description: `[${tag}] Stok sıfırlama — MRP öncesi`,
-        firmaId: firma.id,
-        satirlar: [{
-          item_id: b.item_id,
-          quantity: Number(b.bakiye),
-          direction: -1,
-          stock_status: b.stock_status || 'Kullanilabilir',
-        }],
-      });
-    } catch (err) {
-      log(`  stok sıfır ${b.item_code}: ${err.message}`);
-    }
-  }
+  // MAN açılış stokunu gerçek kullanılabilir bakiye ile düşür (liste/gerçek sapması yok)
+  const { wipeUsableStock, repairNegativeStock } = require('./qa/lib/stokWipe');
+  const mrpItems = [base.hmPcb.id, base.hmCap.id, base.hmCoil.id, base.hmCase.id, base.fg.id];
+  await wipeUsableStock(client, {
+    firmaId: firma.id,
+    plantId: plant.id,
+    itemIds: mrpItems,
+    warehouseIds: [wh.hmd.id, wh.mam.id, wh.ym?.id, wh.ana?.id, wh.svk?.id, wh.gir?.id].filter(Boolean),
+    excludeRoles: ['Bloke'],
+    description: `[${tag}] Stok sıfırlama — MRP öncesi`,
+    log,
+  });
+  await repairNegativeStock(client, {
+    firmaId: firma.id,
+    plantId: plant.id,
+    itemIds: mrpItems,
+    description: `[${tag}] Negatif bakiye onarımı — MRP öncesi`,
+    log,
+  });
+  await wipeUsableStock(client, {
+    firmaId: firma.id,
+    plantId: plant.id,
+    itemIds: mrpItems,
+    warehouseIds: [wh.hmd.id, wh.mam.id, wh.ym?.id, wh.ana?.id, wh.svk?.id, wh.gir?.id].filter(Boolean),
+    excludeRoles: ['Bloke'],
+    description: `[${tag}] Stok sıfırlama (2. tur)`,
+    log,
+  });
+  await repairNegativeStock(client, {
+    firmaId: firma.id,
+    plantId: plant.id,
+    itemIds: mrpItems,
+    description: `[${tag}] Negatif bakiye onarımı (2. tur)`,
+    log,
+  });
 
   // Düşük açılış → net ihtiyaç
   await stokHareketOlustur(client, {
