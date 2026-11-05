@@ -1,6 +1,6 @@
 # Veritabanı Bütünlük Denetimi
 
-Tarih: 2026-11-05T11:16:15.450Z
+Tarih: 2026-11-05T15:58:21.387Z
 
 Tablolar: 181 · FK: 483
 
@@ -21,7 +21,7 @@ Tablolar: 181 · FK: 483
 | ok | `DUP_ITEM` | Mükerrer stok kodu | 0 grup |
 | ok | `SOFTDEL_ACTIVE_SO` | Soft-delete ama aktif status SO | 0 |
 | ok | `CROSS_COMPANY_STOCK` | Hareket-stok firma uyumsuzluğu | 0 satır |
-| ok | `MRP_MSG_TABLE` | mrp_run_messages tablosu | 19 mesaj |
+| ok | `MRP_MSG_TABLE` | mrp_run_messages tablosu | 25 mesaj |
 
 ## Özet
 

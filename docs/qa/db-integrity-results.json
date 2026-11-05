@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-05T11:16:15.450Z",
+  "generatedAt": "2026-11-05T15:58:21.387Z",
   "summary": {
     "tables": 181,
     "fkCount": 483,
@@ -119,7 +119,7 @@
       "severity": "ok",
       "code": "MRP_MSG_TABLE",
       "title": "mrp_run_messages tablosu",
-      "detail": "19 mesaj",
+      "detail": "25 mesaj",
       "count": null
     }
   ],
