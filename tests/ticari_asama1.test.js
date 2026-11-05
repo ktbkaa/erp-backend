@@ -18,7 +18,7 @@ describe('ticari asama1', () => {
     assert.equal(list.status, 200);
     assert.ok(list.json.length >= 3);
     const post = await request(app, 'POST', '/odeme-kosullari', {
-      body: { term_name: 'Test Koşul 7 gün', due_days: 7 },
+      body: { term_code: `T-QA-${Date.now()}`, term_name: 'Test Koşul 7 gün', due_days: 7 },
     });
     assert.equal(post.status, 201);
     const id = post.json.id;

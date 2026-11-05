@@ -16,7 +16,16 @@
     "demo:elek-dongu": "node scripts/demo-elek-tam-dongu.js",
     "demo:gida-dongu": "node scripts/demo-gida-tam-dongu.js",
     "demo:mobil-dongu": "node scripts/demo-mobil-sandalye-dongu.js",
-    "demo:kilif-dongu": "node scripts/demo-kilif-dongu.js"
+    "demo:kilif-dongu": "node scripts/demo-kilif-dongu.js",
+    "qa:inventory": "node scripts/qa/extract-screen-inventory.mjs",
+    "qa:smoke": "node scripts/qa/api-smoke.mjs",
+    "qa:db": "node scripts/qa/db-integrity-audit.mjs",
+    "qa:finance-seed": "node scripts/qa/ensure-finance-seed.js",
+    "qa:gida-org": "node scripts/qa/ensure-gida-org.js",
+    "qa:capture": "node scripts/qa/capture-ui-evidence.mjs",
+    "qa:dashboard": "node scripts/qa/build-qa-dashboard.mjs",
+    "qa:pdf": "node scripts/qa/build-qa-pdf.mjs",
+    "qa:all": "npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:dashboard && npm run qa:pdf"
   },
   "keywords": [
     "erp",
