@@ -7626,6 +7626,10 @@ const UI_EN = {
   'Sistem dili': 'System language',
   'Temalar…': 'Themes…',
   'Tema seçin': 'Choose a theme',
+  Görünüm: 'Appearance',
+  Açık: 'Light',
+  Koyu: 'Dark',
+  'Koyu tema': 'Dark theme',
   Filtre: 'Filter',
   Temizle: 'Clear',
   Uygula: 'Apply',
@@ -7779,13 +7783,26 @@ function applyUiTheme(themeId, { persist = true } = {}) {
   syncSettingsMenu();
 }
 
+function applyUiAppearance(mode, { persist = true } = {}) {
+  const appearance = mode === 'dark' ? 'dark' : 'light';
+  state.uiAppearance = appearance;
+  document.documentElement.setAttribute('data-appearance', appearance);
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_appearance', appearance); } catch (_) { /* ignore */ }
+  }
+  syncSettingsMenu();
+}
+
 function syncStaticChromeLabels() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     const map = {
       'settings.language': L('Sistem dili'),
+      'settings.appearance': L('Görünüm'),
       'settings.themes': L('Temalar…'),
       'settings.themesTitle': L('Tema seçin'),
+      'settings.light': L('Açık'),
+      'settings.dark': L('Koyu'),
     };
     if (map[key]) el.textContent = map[key];
   });
@@ -7904,6 +7921,11 @@ function syncSettingsMenu() {
     const on = btn.getAttribute('data-set-lang') === state.uiLang;
     btn.setAttribute('aria-checked', on ? 'true' : 'false');
   });
+  const appearance = state.uiAppearance === 'dark' ? 'dark' : 'light';
+  document.querySelectorAll('[data-set-appearance]').forEach((btn) => {
+    const on = btn.getAttribute('data-set-appearance') === appearance;
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
 }
 
 function renderThemeGrid() {
@@ -7943,17 +7965,21 @@ function openThemeModal(show = true) {
 function initUiPrefs() {
   let theme = 'blue';
   let lang = 'tr';
+  let appearance = 'light';
   try {
     theme = localStorage.getItem('ktb_ui_theme') || 'blue';
     lang = localStorage.getItem('ktb_ui_lang') || 'tr';
+    appearance = localStorage.getItem('ktb_ui_appearance') || 'light';
   } catch (_) { /* ignore */ }
   applyUiTheme(theme, { persist: false });
+  applyUiAppearance(appearance, { persist: false });
   applyUiLanguage(lang, { persist: false, refresh: false });
 }
 
 const state = {
   uiLang: 'tr',
   uiTheme: 'blue',
+  uiAppearance: 'light',
   screenId: null,
   rows: [],
   filtered: [],
@@ -10632,16 +10658,13 @@ function isFirmaProfil(f) {
   return v === true || v === 1 || v === '1' || v === 't' || v === 'true';
 }
 
-/** Üst bar Firma Profil Alanı: yalnız is_profile=true firmalar (+ varsa kullanıcı firma yetkisi kesişimi). */
+/**
+ * Üst bar Firma Profil Alanı: yalnız is_profile=true firmalar.
+ * Kullanıcı firma yetkisi burayı kısıtlamaz — tik, seçicide görünürlüğün tek kaynağıdır.
+ */
 function allowedFirmalar() {
   const all = Array.isArray(state.companies) ? state.companies : [];
-  const profiles = all.filter(isFirmaProfil);
-  const fy = state.session?.firma_yetkileri;
-  if (!Array.isArray(fy) || !fy.length) return profiles;
-  const ids = new Set(fy.map((f) => Number(f.company_id ?? f.id)).filter(Boolean));
-  const filtered = profiles.filter((f) => ids.has(Number(f.id)));
-  // Yetki kaydı var ama hiçbiri profil değilse profil listesini göster (tanım ekranından açılabilsin)
-  return filtered.length ? filtered : profiles;
+  return all.filter(isFirmaProfil);
 }
 
 function renderFirmaPicker() {
@@ -20704,6 +20727,14 @@ function bindUiPrefsEvents() {
         e.preventDefault();
         e.stopPropagation();
         applyUiLanguage(langBtn.getAttribute('data-set-lang'));
+        toggleSettingsMenu(false);
+        return;
+      }
+      const appearanceBtn = e.target.closest('[data-set-appearance]');
+      if (appearanceBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyUiAppearance(appearanceBtn.getAttribute('data-set-appearance'));
         toggleSettingsMenu(false);
         return;
       }

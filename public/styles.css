@@ -1129,7 +1129,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   list-style: none;
   min-width: 16rem;
   max-width: min(28rem, 90vw);
-  background: #fff;
+  background: var(--surface-1, #fff);
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: 0.45rem;
   box-shadow: 0 8px 24px rgba(15, 40, 55, 0.12);
@@ -5315,6 +5316,94 @@ body.doc-tabs-open .doc-tabs-dock {
 html[data-theme="blue"] {
   --logo-filter: brightness(1);
 }
+
+/* Koyu görünüm — renk teması (data-theme) accent’lerini korur, yüzeyleri karartır */
+html[data-appearance="dark"] {
+  color-scheme: dark;
+  --ink: #e8eaed;
+  --muted: #9aa3b2;
+  --line: #2a3140;
+  --panel: #1a1f2b;
+  --page: #12151c;
+  --sidebar: #161a24;
+  --sidebar-ink: #d7dbe3;
+  --sidebar-muted: #8b93a3;
+  --accent-soft: rgba(99, 149, 245, 0.18);
+  --accent-glow: rgba(99, 149, 245, 0.28);
+  --sidebar-active: rgba(99, 149, 245, 0.16);
+  --danger-soft: rgba(222, 68, 54, 0.18);
+  --success-soft: rgba(82, 196, 26, 0.16);
+  --warning-soft: rgba(250, 173, 20, 0.16);
+  --info-soft: rgba(99, 149, 245, 0.12);
+  --erp-form-bg: var(--page);
+  --erp-card-bg: #1c2230;
+  --erp-card-border: var(--line);
+  --erp-readonly-bg: #232937;
+  --surface-1: #1c2230;
+  --surface-2: var(--page);
+  --surface-3: var(--accent-soft);
+  --hover-row: rgba(255, 255, 255, 0.04);
+  --zebra: #171b26;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 22px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --shadow-ink: rgba(0, 0, 0, 0.35);
+  --logo-filter: brightness(1.15) saturate(1.05);
+}
+html[data-appearance="dark"][data-theme="green"] {
+  --accent-soft: rgba(27, 143, 120, 0.2);
+  --sidebar-active: rgba(27, 143, 120, 0.18);
+  --hover-row: rgba(27, 143, 120, 0.1);
+}
+html[data-appearance="dark"][data-theme="red"] {
+  --accent-soft: rgba(224, 69, 69, 0.2);
+  --sidebar-active: rgba(224, 69, 69, 0.18);
+  --hover-row: rgba(224, 69, 69, 0.1);
+}
+html[data-appearance="dark"][data-theme="orange"] {
+  --accent-soft: rgba(230, 126, 34, 0.2);
+  --sidebar-active: rgba(230, 126, 34, 0.18);
+  --hover-row: rgba(230, 126, 34, 0.1);
+}
+html[data-appearance="dark"][data-theme="purple"] {
+  --accent-soft: rgba(124, 92, 252, 0.2);
+  --sidebar-active: rgba(124, 92, 252, 0.18);
+  --hover-row: rgba(124, 92, 252, 0.1);
+}
+html[data-appearance="dark"][data-theme="yellow"] {
+  --accent-soft: rgba(201, 162, 39, 0.22);
+  --sidebar-active: rgba(201, 162, 39, 0.18);
+  --hover-row: rgba(201, 162, 39, 0.1);
+}
+html[data-appearance="dark"] .firma-picker-menu,
+html[data-appearance="dark"] .filter-pane,
+html[data-appearance="dark"] .list-pane,
+html[data-appearance="dark"] .master-pane,
+html[data-appearance="dark"] .detail-pane,
+html[data-appearance="dark"] .form-card,
+html[data-appearance="dark"] .erp-master-panel,
+html[data-appearance="dark"] .tab-ctx-menu,
+html[data-appearance="dark"] .search-results,
+html[data-appearance="dark"] .lookup-popup,
+html[data-appearance="dark"] .modal-card {
+  background: var(--surface-1);
+  color: var(--ink);
+  border-color: var(--line);
+}
+html[data-appearance="dark"] input,
+html[data-appearance="dark"] select,
+html[data-appearance="dark"] textarea {
+  background: #171b26;
+  color: var(--ink);
+  border-color: var(--line);
+}
+html[data-appearance="dark"] .data-table th,
+html[data-appearance="dark"] table.list-table th {
+  background: #1c2230;
+  color: var(--ink);
+}
+html[data-appearance="dark"] .theme-modal-backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
 html[data-theme="green"] {
   --ink: #1a2e2a;
   --muted: #5a726c;
@@ -5416,7 +5505,8 @@ html[data-theme="yellow"] {
   right: 0;
   min-width: 13.5rem;
   padding: 0.4rem;
-  background: #fff;
+  background: var(--surface-1, #fff);
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-card);
@@ -5472,7 +5562,8 @@ html[data-theme="yellow"] {
 .theme-modal-card {
   position: relative;
   width: min(34rem, calc(100vw - 2rem));
-  background: #fff;
+  background: var(--surface-1, #fff);
+  color: var(--ink);
   border-radius: 0.85rem;
   border: 1px solid var(--line);
   box-shadow: 0 18px 48px rgba(20, 28, 40, 0.18);
@@ -5491,7 +5582,8 @@ html[data-theme="yellow"] {
   border: 1px solid var(--line);
   border-radius: 0.7rem;
   padding: 0.65rem;
-  background: #fff;
+  background: var(--surface-1, #fff);
+  color: var(--ink);
   cursor: pointer;
   text-align: left;
   font: inherit;
