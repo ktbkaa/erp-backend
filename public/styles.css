@@ -5591,19 +5591,23 @@ html[data-appearance="dark"] table tbody td {
   color: var(--ink) !important;
   border-color: var(--line) !important;
 }
-html[data-appearance="dark"] #dataTable tbody tr:nth-child(even) td,
-html[data-appearance="dark"] .detail-table tbody tr:nth-child(even) td,
-html[data-appearance="dark"] table tbody tr:nth-child(even) td {
+/* Zebra yalnız nötr satırlarda; :hover / .selected daha spesifik olmalı
+   (aksi halde even satırda !important zebra seçimi görünmez kılar). */
+html[data-appearance="dark"] #dataTable tbody tr:nth-child(even):not(:hover):not(.selected) td,
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even):not(:hover):not(.selected) td,
+html[data-appearance="dark"] table tbody tr:nth-child(even):not(:hover):not(.selected) td {
   background: var(--zebra) !important;
 }
-html[data-appearance="dark"] #dataTable tr:hover td,
-html[data-appearance="dark"] .detail-table tr:hover td,
-html[data-appearance="dark"] table tr:hover td {
+html[data-appearance="dark"] #dataTable tbody tr:hover td,
+html[data-appearance="dark"] .detail-table tbody tr:hover td,
+html[data-appearance="dark"] table tbody tr:hover td {
   background: var(--hover-row) !important;
 }
-html[data-appearance="dark"] #dataTable tr.selected td,
-html[data-appearance="dark"] table tr.selected td {
+html[data-appearance="dark"] #dataTable tbody tr.selected td,
+html[data-appearance="dark"] .detail-table tbody tr.selected td,
+html[data-appearance="dark"] table tbody tr.selected td {
   background: var(--accent-soft) !important;
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 html[data-appearance="dark"] .detail-table tbody .col-seq {
   background: var(--surface-2) !important;
