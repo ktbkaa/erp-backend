@@ -831,15 +831,24 @@ const MODULES = [
         filters: [
           { key: 'company_code', label: 'Firma kodu' },
           { key: 'company_name', label: 'Firma adı' },
+          { key: 'is_profile', label: 'Profil', type: 'checkbox' },
         ],
         columns: [
           { key: 'company_code', label: 'Kod', mono: true },
           { key: 'company_name', label: 'Ad' },
+          { key: 'is_profile', label: 'Profil', type: 'checkbox' },
         ],
         masterFields: [
           { key: 'company_code', label: 'Firma kodu', code: true, editableOnNew: true, required: true },
           { key: 'company_name', label: 'Firma adı', name: true, required: true },
+          {
+            key: 'is_profile',
+            label: 'Profil',
+            type: 'checkbox',
+            hint: 'İşaretliyse üst bardaki Firma Profil Alanı seçicisinde görünür.',
+          },
         ],
+        defaults: { is_profile: false },
         detailFields: [],
         detailKey: null,
       },
@@ -7617,6 +7626,10 @@ const UI_EN = {
   'Sistem dili': 'System language',
   'Temalar…': 'Themes…',
   'Tema seçin': 'Choose a theme',
+  Görünüm: 'Appearance',
+  Açık: 'Light',
+  Koyu: 'Dark',
+  'Koyu tema': 'Dark theme',
   Filtre: 'Filter',
   Temizle: 'Clear',
   Uygula: 'Apply',
@@ -7770,13 +7783,26 @@ function applyUiTheme(themeId, { persist = true } = {}) {
   syncSettingsMenu();
 }
 
+function applyUiAppearance(mode, { persist = true } = {}) {
+  const appearance = mode === 'dark' ? 'dark' : 'light';
+  state.uiAppearance = appearance;
+  document.documentElement.setAttribute('data-appearance', appearance);
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_appearance', appearance); } catch (_) { /* ignore */ }
+  }
+  syncSettingsMenu();
+}
+
 function syncStaticChromeLabels() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     const map = {
       'settings.language': L('Sistem dili'),
+      'settings.appearance': L('Görünüm'),
       'settings.themes': L('Temalar…'),
       'settings.themesTitle': L('Tema seçin'),
+      'settings.light': L('Açık'),
+      'settings.dark': L('Koyu'),
     };
     if (map[key]) el.textContent = map[key];
   });
@@ -7895,6 +7921,11 @@ function syncSettingsMenu() {
     const on = btn.getAttribute('data-set-lang') === state.uiLang;
     btn.setAttribute('aria-checked', on ? 'true' : 'false');
   });
+  const appearance = state.uiAppearance === 'dark' ? 'dark' : 'light';
+  document.querySelectorAll('[data-set-appearance]').forEach((btn) => {
+    const on = btn.getAttribute('data-set-appearance') === appearance;
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
 }
 
 function renderThemeGrid() {
@@ -7934,17 +7965,21 @@ function openThemeModal(show = true) {
 function initUiPrefs() {
   let theme = 'blue';
   let lang = 'tr';
+  let appearance = 'light';
   try {
     theme = localStorage.getItem('ktb_ui_theme') || 'blue';
     lang = localStorage.getItem('ktb_ui_lang') || 'tr';
+    appearance = localStorage.getItem('ktb_ui_appearance') || 'light';
   } catch (_) { /* ignore */ }
   applyUiTheme(theme, { persist: false });
+  applyUiAppearance(appearance, { persist: false });
   applyUiLanguage(lang, { persist: false, refresh: false });
 }
 
 const state = {
   uiLang: 'tr',
   uiTheme: 'blue',
+  uiAppearance: 'light',
   screenId: null,
   rows: [],
   filtered: [],
@@ -10617,13 +10652,19 @@ function promptLogin() {
   showLoginView();
 }
 
+function isFirmaProfil(f) {
+  if (!f) return false;
+  const v = f.is_profile;
+  return v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+}
+
+/**
+ * Üst bar Firma Profil Alanı: yalnız is_profile=true firmalar.
+ * Kullanıcı firma yetkisi burayı kısıtlamaz — tik, seçicide görünürlüğün tek kaynağıdır.
+ */
 function allowedFirmalar() {
   const all = Array.isArray(state.companies) ? state.companies : [];
-  const fy = state.session?.firma_yetkileri;
-  if (!Array.isArray(fy) || !fy.length) return all;
-  const ids = new Set(fy.map((f) => Number(f.company_id ?? f.id)).filter(Boolean));
-  const filtered = all.filter((f) => ids.has(Number(f.id)));
-  return filtered.length ? filtered : all;
+  return all.filter(isFirmaProfil);
 }
 
 function renderFirmaPicker() {
@@ -11419,8 +11460,11 @@ async function loadFirmalar() {
     state.companies = [];
   }
   const stored = Number(localStorage.getItem('ktb_firma_id') || 0);
-  const prefer = state.companies.find((f) => Number(f.id) === stored)
-    || state.companies.find((f) => f.company_code === 'ELEK')
+  const pickable = allowedFirmalar();
+  const prefer = pickable.find((f) => Number(f.id) === stored)
+    || pickable.find((f) => f.company_code === 'GIDA')
+    || pickable.find((f) => f.company_code === 'ELEK')
+    || pickable[0]
     || state.companies[0];
   state.activeFirmaId = prefer ? Number(prefer.id) : null;
   if (state.activeFirmaId) localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
@@ -19759,9 +19803,20 @@ async function syncActiveFirmaAfterOrgSave(screen, saved) {
   let nextFirmaId = null;
   if (screen.id === 'companies' && saved.id) {
     nextFirmaId = Number(saved.id);
-    if (!state.companies?.some((c) => Number(c.id) === nextFirmaId)) {
-      state.companies = [saved, ...(state.companies || [])];
-      state.lookupCache.companies = state.companies;
+    const idx = (state.companies || []).findIndex((c) => Number(c.id) === nextFirmaId);
+    if (idx >= 0) state.companies[idx] = { ...state.companies[idx], ...saved };
+    else state.companies = [saved, ...(state.companies || [])];
+    state.lookupCache.companies = state.companies;
+    // Profil tiki kapatıldıysa aktif firmayı listedeki bir profile kaydır
+    if (!isFirmaProfil(saved) && Number(state.activeFirmaId) === nextFirmaId) {
+      const next = allowedFirmalar().find((f) => Number(f.id) !== nextFirmaId) || null;
+      state.activeFirmaId = next ? Number(next.id) : null;
+      if (state.activeFirmaId) localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
+      else localStorage.removeItem('ktb_firma_id');
+      nextFirmaId = state.activeFirmaId;
+    } else if (isFirmaProfil(saved)) {
+      // Yeni/güncel profil firmayı seçicide hemen göster; aktif yapma zorunlu değil
+      renderFirmaPicker();
     }
   } else if (screen.id === 'is-yerleri' && saved.company_id) {
     nextFirmaId = Number(saved.company_id);
@@ -20672,6 +20727,14 @@ function bindUiPrefsEvents() {
         e.preventDefault();
         e.stopPropagation();
         applyUiLanguage(langBtn.getAttribute('data-set-lang'));
+        toggleSettingsMenu(false);
+        return;
+      }
+      const appearanceBtn = e.target.closest('[data-set-appearance]');
+      if (appearanceBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyUiAppearance(appearanceBtn.getAttribute('data-set-appearance'));
         toggleSettingsMenu(false);
         return;
       }

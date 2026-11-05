@@ -166,10 +166,16 @@ async function ensureOrg(client, def) {
   let firma = (await client.query(`SELECT * FROM companies WHERE company_code=$1`, [def.code])).rows[0];
   if (!firma) {
     firma = (await client.query(
-      `INSERT INTO companies (company_code, company_name, tax_id, address, email)
-       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      `INSERT INTO companies (company_code, company_name, tax_id, address, email, is_profile)
+       VALUES ($1,$2,$3,$4,$5,TRUE) RETURNING *`,
       [def.code, `Anadolu ${def.sectorName} A.Ş.`, '1112223330', `${def.city} OSB`, `info@${def.code.toLowerCase()}.ornek.local`]
     )).rows[0];
+  } else {
+    await client.query(
+      `UPDATE companies SET is_profile = TRUE WHERE id = $1 AND is_profile IS DISTINCT FROM TRUE`,
+      [firma.id]
+    );
+    firma.is_profile = true;
   }
   let plant = (await client.query(`SELECT * FROM plants WHERE company_id=$1 ORDER BY id LIMIT 1`, [firma.id])).rows[0];
   if (!plant) {

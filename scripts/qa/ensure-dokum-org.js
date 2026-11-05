@@ -10,10 +10,16 @@ async function main() {
     let firma = (await client.query(`SELECT * FROM companies WHERE company_code='DOKUM'`)).rows[0];
     if (!firma) {
       firma = (await client.query(
-        `INSERT INTO companies (company_code, company_name, tax_id, address, email)
-         VALUES ('DOKUM','Anadolu Döküm Sanayi A.Ş.','9876543210','Kayseri Organize Sanayi','info@dokum-test.local')
+        `INSERT INTO companies (company_code, company_name, tax_id, address, email, is_profile)
+         VALUES ('DOKUM','Anadolu Döküm Sanayi A.Ş.','9876543210','Kayseri Organize Sanayi','info@dokum-test.local',TRUE)
          RETURNING *`
       )).rows[0];
+    } else {
+      await client.query(
+        `UPDATE companies SET is_profile = TRUE WHERE id = $1 AND is_profile IS DISTINCT FROM TRUE`,
+        [firma.id]
+      );
+      firma.is_profile = true;
     }
     let plant = (await client.query(
       `SELECT * FROM plants WHERE company_id=$1 ORDER BY id LIMIT 1`, [firma.id]
