@@ -67,6 +67,8 @@ app.use('/users', require('./routes/users'));
 app.use('/kullanicilar', require('./routes/users'));
 app.use('/kullanici-gruplari', require('./routes/user_groups'));
 app.use('/sistem-parametreleri', require('./routes/system_parameters'));
+app.use('/mesaj-tanimlari', require('./routes/message_definitions'));
+app.use('/zorunlu-alan-tanimlari', require('./routes/required_field_defs'));
 app.use('/sales_orders', require('./routes/sales_orders'));
 app.use('/satis-teklifleri', require('./routes/sales_quotations'));
 app.use('/sevk-emirleri', require('./routes/shipment_orders'));
