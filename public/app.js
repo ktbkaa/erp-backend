@@ -7234,6 +7234,10 @@ const SECTION_TITLE_EN = {
 const UI_EN = {
   Ayarlar: 'Settings',
   'Sistem dili': 'System language',
+  Görünüm: 'Appearance',
+  Açık: 'Light',
+  Koyu: 'Dark',
+  'Koyu tema': 'Dark theme',
   'Temalar…': 'Themes…',
   'Tema seçin': 'Choose a theme',
   Filtre: 'Filter',
@@ -7327,13 +7331,26 @@ function applyUiTheme(themeId, { persist = true } = {}) {
   syncSettingsMenu();
 }
 
+function applyUiAppearance(mode, { persist = true } = {}) {
+  const appearance = mode === 'dark' ? 'dark' : 'light';
+  state.uiAppearance = appearance;
+  document.documentElement.setAttribute('data-appearance', appearance);
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_appearance', appearance); } catch (_) { /* ignore */ }
+  }
+  syncSettingsMenu();
+}
+
 function syncStaticChromeLabels() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     const map = {
       'settings.language': L('Sistem dili'),
+      'settings.appearance': L('Görünüm'),
       'settings.themes': L('Temalar…'),
       'settings.themesTitle': L('Tema seçin'),
+      'settings.light': L('Açık'),
+      'settings.dark': L('Koyu'),
     };
     if (map[key]) el.textContent = map[key];
   });
@@ -7452,6 +7469,11 @@ function syncSettingsMenu() {
     const on = btn.getAttribute('data-set-lang') === state.uiLang;
     btn.setAttribute('aria-checked', on ? 'true' : 'false');
   });
+  const appearance = state.uiAppearance === 'dark' ? 'dark' : 'light';
+  document.querySelectorAll('[data-set-appearance]').forEach((btn) => {
+    const on = btn.getAttribute('data-set-appearance') === appearance;
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
 }
 
 function renderThemeGrid() {
@@ -7491,11 +7513,14 @@ function openThemeModal(show = true) {
 function initUiPrefs() {
   let theme = 'blue';
   let lang = 'tr';
+  let appearance = 'light';
   try {
     theme = localStorage.getItem('ktb_ui_theme') || 'blue';
     lang = localStorage.getItem('ktb_ui_lang') || 'tr';
+    appearance = localStorage.getItem('ktb_ui_appearance') || 'light';
   } catch (_) { /* ignore */ }
   applyUiTheme(theme, { persist: false });
+  applyUiAppearance(appearance, { persist: false });
   applyUiLanguage(lang, { persist: false, refresh: false });
 }
 
@@ -7505,6 +7530,7 @@ const LIST_PAGE_SIZE = 15;
 const state = {
   uiLang: 'tr',
   uiTheme: 'blue',
+  uiAppearance: 'light',
   screenId: null,
   rows: [],
   filtered: [],
@@ -16590,6 +16616,14 @@ function bindUiPrefsEvents() {
         e.preventDefault();
         e.stopPropagation();
         applyUiLanguage(langBtn.getAttribute('data-set-lang'));
+        toggleSettingsMenu(false);
+        return;
+      }
+      const appearanceBtn = e.target.closest('[data-set-appearance]');
+      if (appearanceBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyUiAppearance(appearanceBtn.getAttribute('data-set-appearance'));
         toggleSettingsMenu(false);
         return;
       }

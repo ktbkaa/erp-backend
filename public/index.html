@@ -36,13 +36,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261106ayarlar" />
+  <link rel="stylesheet" href="/styles.css?v=20261106koyu" />
   <script>
     (function () {
       try {
         var t = localStorage.getItem('ktb_ui_theme') || 'blue';
         var l = localStorage.getItem('ktb_ui_lang') || 'tr';
+        var a = localStorage.getItem('ktb_ui_appearance') || 'light';
         document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.setAttribute('data-appearance', a === 'dark' ? 'dark' : 'light');
         document.documentElement.setAttribute('lang', l === 'en' ? 'en' : 'tr');
       } catch (e) { /* ignore */ }
     })();
@@ -173,6 +175,16 @@
                 </button>
                 <button type="button" class="settings-menu-item" role="menuitemradio" data-set-lang="en" aria-checked="false">
                   <span>English</span><span class="settings-check" aria-hidden="true">✓</span>
+                </button>
+              </div>
+              <div class="settings-menu-sep" role="separator"></div>
+              <div class="settings-menu-section">
+                <div class="settings-menu-label" data-i18n="settings.appearance">Görünüm</div>
+                <button type="button" class="settings-menu-item" role="menuitemradio" data-set-appearance="light" aria-checked="true">
+                  <span data-i18n="settings.light">Açık</span><span class="settings-check" aria-hidden="true">✓</span>
+                </button>
+                <button type="button" class="settings-menu-item" role="menuitemradio" data-set-appearance="dark" aria-checked="false">
+                  <span data-i18n="settings.dark">Koyu</span><span class="settings-check" aria-hidden="true">✓</span>
                 </button>
               </div>
               <div class="settings-menu-sep" role="separator"></div>
@@ -495,7 +507,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261106ayarlar"></script>
+  <script src="/app.js?v=20261106koyu"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

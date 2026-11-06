@@ -4802,6 +4802,463 @@ body.doc-tabs-open .doc-tabs-dock {
 html[data-theme="blue"] {
   --logo-filter: brightness(1);
 }
+
+/*
+ * Koyu görünüm — AllurUI / Luna tarzı tek aile tonları:
+ * page (en koyu) < sidebar ≈ surface-0 < card/surface-1 < elevated/surface-2
+ * Beyaz/siyah zebra yok; satırlar aynı koyu ailenin hafif ton farkı.
+ */
+html[data-appearance="dark"] {
+  color-scheme: dark;
+  --ink: #f2f4f8;
+  --muted: #9aa3b5;
+  --line: #32364a;
+  --page: #1b1d2a;
+  --panel: #222536;
+  --sidebar: #171925;
+  --sidebar-ink: #e4e7ef;
+  --sidebar-muted: #8f97ab;
+  --accent-soft: rgba(99, 149, 245, 0.2);
+  --accent-glow: rgba(99, 149, 245, 0.32);
+  --sidebar-active: rgba(99, 149, 245, 0.18);
+  --cyan-soft: rgba(77, 255, 243, 0.1);
+  --danger-soft: rgba(255, 75, 126, 0.16);
+  --success-soft: rgba(82, 196, 26, 0.16);
+  --warning-soft: rgba(250, 173, 20, 0.16);
+  --info-soft: rgba(99, 149, 245, 0.12);
+  --erp-form-bg: var(--page);
+  --erp-card-bg: #252836;
+  --erp-card-border: var(--line);
+  --erp-readonly-bg: #2a2d3d;
+  --surface-0: #1f2230;
+  --surface-1: #252836;
+  --surface: var(--surface-1);
+  --surface-2: #2c303e;
+  --surface-3: var(--accent-soft);
+  --surface-4: var(--cyan-soft);
+  --hover-row: rgba(255, 255, 255, 0.045);
+  --zebra: #212433;
+  --palette-cyan: #2a2d3d;
+  --palette-main: #2a2d3d;
+  --palette-green: rgba(82, 196, 26, 0.12);
+  --palette-pink: rgba(255, 75, 126, 0.12);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.28), 0 10px 28px rgba(0, 0, 0, 0.22);
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-ink: rgba(0, 0, 0, 0.4);
+  --logo-filter: brightness(1.2) saturate(1.05);
+  --tabs-toggle-bg: var(--surface-2);
+  --tabs-toggle-fg: var(--accent);
+}
+html[data-appearance="dark"][data-theme="green"] {
+  --accent-soft: rgba(27, 143, 120, 0.22);
+  --sidebar-active: rgba(27, 143, 120, 0.2);
+  --hover-row: rgba(27, 143, 120, 0.12);
+}
+html[data-appearance="dark"][data-theme="red"] {
+  --accent-soft: rgba(224, 69, 69, 0.22);
+  --sidebar-active: rgba(224, 69, 69, 0.2);
+  --hover-row: rgba(224, 69, 69, 0.12);
+}
+html[data-appearance="dark"][data-theme="orange"] {
+  --accent-soft: rgba(245, 166, 35, 0.22);
+  --sidebar-active: rgba(245, 166, 35, 0.2);
+  --hover-row: rgba(245, 166, 35, 0.12);
+}
+html[data-appearance="dark"][data-theme="purple"] {
+  --accent-soft: rgba(124, 92, 252, 0.22);
+  --sidebar-active: rgba(124, 92, 252, 0.2);
+  --hover-row: rgba(124, 92, 252, 0.12);
+}
+html[data-appearance="dark"][data-theme="yellow"] {
+  --accent-soft: rgba(201, 162, 39, 0.24);
+  --sidebar-active: rgba(201, 162, 39, 0.2);
+  --hover-row: rgba(201, 162, 39, 0.12);
+}
+
+/* Kabuk: aynı koyu ailenin katmanları */
+html[data-appearance="dark"] body,
+html[data-appearance="dark"] .workspace,
+html[data-appearance="dark"] .workspace-main {
+  background: var(--page);
+  color: var(--ink);
+}
+html[data-appearance="dark"] .sidebar {
+  background: var(--sidebar);
+  color: var(--sidebar-ink);
+  border-color: var(--line);
+}
+html[data-appearance="dark"] .sidebar-foot,
+html[data-appearance="dark"] .sidebar-brand {
+  background: var(--sidebar) !important;
+  border-color: var(--line);
+  box-shadow: none;
+}
+html[data-appearance="dark"] .workspace-bar,
+html[data-appearance="dark"] .screen-banner,
+html[data-appearance="dark"] .action-bar,
+html[data-appearance="dark"] .filter-pane,
+html[data-appearance="dark"] .list-pane,
+html[data-appearance="dark"] .list-work,
+html[data-appearance="dark"] .master-pane,
+html[data-appearance="dark"] .detail-pane,
+html[data-appearance="dark"] .form-card,
+html[data-appearance="dark"] .form-view,
+html[data-appearance="dark"] .form-topbar,
+html[data-appearance="dark"] .erp-master-panel,
+html[data-appearance="dark"] .erp-balanced,
+html[data-appearance="dark"] .md-detail,
+html[data-appearance="dark"] .md-master,
+html[data-appearance="dark"] .md-head,
+html[data-appearance="dark"] .md-footer,
+html[data-appearance="dark"] .sql-yetki-pane .sql-yetki-checks,
+html[data-appearance="dark"] .firma-yetki-scroll,
+html[data-appearance="dark"] .yetki-scroll,
+html[data-appearance="dark"] .stok-firma-card,
+html[data-appearance="dark"] .table-scroll,
+html[data-appearance="dark"] .detail-table-wrap,
+html[data-appearance="dark"] .firma-picker-menu,
+html[data-appearance="dark"] .settings-menu,
+html[data-appearance="dark"] .theme-modal-card,
+html[data-appearance="dark"] .theme-card,
+html[data-appearance="dark"] .tab-ctx-menu,
+html[data-appearance="dark"] .search-results,
+html[data-appearance="dark"] .lookup-popup,
+html[data-appearance="dark"] .modal-card,
+html[data-appearance="dark"] .user-chip,
+html[data-appearance="dark"] .user-chip-menu,
+html[data-appearance="dark"] .icon-btn,
+html[data-appearance="dark"] .sidebar-tool-btn {
+  background: var(--surface-1) !important;
+  color: var(--ink);
+  border-color: var(--line) !important;
+  box-shadow: var(--shadow-card);
+}
+html[data-appearance="dark"] .form-view,
+html[data-appearance="dark"] .form-view.erp-form--master,
+html[data-appearance="dark"] .form-view.erp-form--document,
+html[data-appearance="dark"] .form-tab-body {
+  background: var(--page) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .field label,
+html[data-appearance="dark"] .erp-section-title,
+html[data-appearance="dark"] .field-group-title,
+html[data-appearance="dark"] .sql-yetki-opt,
+html[data-appearance="dark"] .section-label {
+  color: var(--ink) !important;
+  opacity: 0.92;
+}
+html[data-appearance="dark"] .field input,
+html[data-appearance="dark"] .field select,
+html[data-appearance="dark"] .field textarea,
+html[data-appearance="dark"] .detail-scroll input,
+html[data-appearance="dark"] .field input:hover,
+html[data-appearance="dark"] .field select:hover,
+html[data-appearance="dark"] .field textarea:hover,
+html[data-appearance="dark"] .field input:focus,
+html[data-appearance="dark"] .field select:focus,
+html[data-appearance="dark"] .field textarea:focus {
+  background: var(--surface-0) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .field input:focus,
+html[data-appearance="dark"] .field select:focus,
+html[data-appearance="dark"] .field textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-soft) !important;
+}
+html[data-appearance="dark"] .list-work {
+  background: var(--page) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .list-side-nav {
+  background: var(--surface-0) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .doc-tabs,
+html[data-appearance="dark"] body.doc-tabs-open .doc-tabs-dock {
+  background: var(--surface-0) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .sidebar-tabs-toggle {
+  --tabs-toggle-bg: var(--surface-2);
+  --tabs-toggle-fg: var(--accent);
+  background: var(--tabs-toggle-bg) !important;
+  color: var(--tabs-toggle-fg) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .doc-tabs .tab-item,
+html[data-appearance="dark"] .doc-tabs.doc-tabs--bottom .tab-item {
+  background: var(--surface-2) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .doc-tabs .tab-item.active {
+  background: var(--surface-1) !important;
+  color: var(--ink) !important;
+  box-shadow: 0 2px 0 var(--accent) inset;
+}
+html[data-appearance="dark"] .doc-tabs .tab-item.tab-form {
+  background: rgba(250, 173, 20, 0.14) !important;
+  border-color: rgba(250, 173, 20, 0.35) !important;
+}
+html[data-appearance="dark"] .sidebar-tool-btn:hover {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent-border) !important;
+}
+html[data-appearance="dark"] .btn.ghost,
+html[data-appearance="dark"] .btn.action.ghost,
+html[data-appearance="dark"] .btn.danger {
+  background: var(--surface-2) !important;
+  color: var(--ink);
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .btn.danger {
+  color: #ff8fa3;
+  border-color: rgba(255, 75, 126, 0.35) !important;
+}
+html[data-appearance="dark"] input,
+html[data-appearance="dark"] select,
+html[data-appearance="dark"] textarea,
+html[data-appearance="dark"] .lookup-typeahead,
+html[data-appearance="dark"] .filter-field input,
+html[data-appearance="dark"] .filter-field select {
+  background: var(--surface-0) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  caret-color: var(--ink);
+}
+html[data-appearance="dark"] input::placeholder,
+html[data-appearance="dark"] textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+/* Tablo: ton farkı zebra — beyaz satır yok */
+html[data-appearance="dark"] #dataTable,
+html[data-appearance="dark"] .detail-table,
+html[data-appearance="dark"] table {
+  color: var(--ink);
+  background: var(--surface-1);
+}
+html[data-appearance="dark"] #dataTable th,
+html[data-appearance="dark"] .detail-table thead th,
+html[data-appearance="dark"] table thead th,
+html[data-appearance="dark"] .data-table th,
+html[data-appearance="dark"] table.list-table th {
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] #dataTable tbody tr td,
+html[data-appearance="dark"] .detail-table tbody td,
+html[data-appearance="dark"] table tbody td {
+  background: var(--surface-1) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+/* Zebra yalnız nötr satırlarda; :hover / .selected daha spesifik olmalı
+   (aksi halde even satırda !important zebra seçimi görünmez kılar). */
+html[data-appearance="dark"] #dataTable tbody tr:nth-child(even):not(:hover):not(.selected) td,
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even):not(:hover):not(.selected) td,
+html[data-appearance="dark"] table tbody tr:nth-child(even):not(:hover):not(.selected) td {
+  background: var(--zebra) !important;
+}
+html[data-appearance="dark"] #dataTable tbody tr:hover td,
+html[data-appearance="dark"] .detail-table tbody tr:hover td,
+html[data-appearance="dark"] table tbody tr:hover td {
+  background: var(--hover-row) !important;
+}
+html[data-appearance="dark"] #dataTable tbody tr.selected td,
+html[data-appearance="dark"] .detail-table tbody tr.selected td,
+html[data-appearance="dark"] table tbody tr.selected td {
+  background: var(--accent-soft) !important;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+html[data-appearance="dark"] .detail-table tbody .col-seq {
+  background: var(--surface-2) !important;
+}
+
+/* Form içi sekmeler — koyu zeminde okunaklı etiket */
+html[data-appearance="dark"] .form-tab-nav,
+html[data-appearance="dark"] body.form-solo .form-tab-nav,
+html[data-appearance="dark"] .form-view.erp-form--master .form-tab-nav {
+  background: var(--surface-0) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .form-tab-btn {
+  color: #e8ecf4 !important;
+  opacity: 0.92;
+}
+html[data-appearance="dark"] .form-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #fff !important;
+  opacity: 1;
+}
+html[data-appearance="dark"] .form-tab-btn.active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  opacity: 1;
+}
+html[data-appearance="dark"] .form-tab-btn.stub {
+  color: var(--muted) !important;
+  opacity: 0.85;
+}
+html[data-appearance="dark"] .form-tab-btn.stub.active {
+  background: #6b7c8c !important;
+  color: #fff !important;
+}
+
+ * Kalan beyaz / açık paneller — tüm ekranlar:
+ * hardcoded #fff / #faf / tanımsız --surface fallback’leri.
+ */
+html[data-appearance="dark"] .stok-firma-plant-block,
+html[data-appearance="dark"] .stok-firma-plant-block.is-firma-genel,
+html[data-appearance="dark"] .stok-firma-card-body,
+html[data-appearance="dark"] .stok-firma-params,
+html[data-appearance="dark"] .stok-firmalar-pane,
+html[data-appearance="dark"] .stok-depolar-pane,
+html[data-appearance="dark"] .stok-firma-section,
+html[data-appearance="dark"] .erp-master-notes,
+html[data-appearance="dark"] .md-footer,
+html[data-appearance="dark"] .form-view.erp-form--document .md-detail,
+html[data-appearance="dark"] .form-view.erp-form--document .md-footer,
+html[data-appearance="dark"] .form-view.erp-form--document .md-detail-head,
+html[data-appearance="dark"] .mrp-section,
+html[data-appearance="dark"] .mrp-scope-card,
+html[data-appearance="dark"] .mrp-log-box,
+html[data-appearance="dark"] .mrp-result-scroll,
+html[data-appearance="dark"] .mrp-result-table th,
+html[data-appearance="dark"] .cvt-dialog,
+html[data-appearance="dark"] .cvt-body,
+html[data-appearance="dark"] .cvt-foot,
+html[data-appearance="dark"] .login-card,
+html[data-appearance="dark"] .meta-table-card,
+html[data-appearance="dark"] .meta-nav,
+html[data-appearance="dark"] .meta-hint kbd,
+html[data-appearance="dark"] .info-menu,
+html[data-appearance="dark"] .sql-layout,
+html[data-appearance="dark"] .sql-toolbar,
+html[data-appearance="dark"] .sql-result-pane,
+html[data-appearance="dark"] .sql-result-scroll,
+html[data-appearance="dark"] .sql-sheet-tab.active,
+html[data-appearance="dark"] .sql-db-modal-card,
+html[data-appearance="dark"] .sql-field input,
+html[data-appearance="dark"] .sql-field select,
+html[data-appearance="dark"] .lookup-suggest,
+html[data-appearance="dark"] .lookup-browse-btn,
+html[data-appearance="dark"] .bom-inline-editor,
+html[data-appearance="dark"] .form-info-btn,
+html[data-appearance="dark"] .field-info-btn,
+html[data-appearance="dark"] .yetki-mod-caret,
+html[data-appearance="dark"] .zincir-strip span,
+html[data-appearance="dark"] .detail-table tbody tr,
+html[data-appearance="dark"] .detail-table tbody .col-acts,
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even),
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even) .col-acts,
+html[data-appearance="dark"] .detail-table tbody tr:nth-child(even) .col-seq {
+  background: var(--surface-1) !important;
+  color: var(--ink);
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .sql-sheet-tab.active {
+  box-shadow: 0 1px 0 var(--surface-1);
+}
+html[data-appearance="dark"] .stok-firma-plant-block.is-firma-genel {
+  background: var(--surface-0) !important;
+  border-color: rgba(99, 149, 245, 0.35) !important;
+}
+html[data-appearance="dark"] .stok-firma-card-sum,
+html[data-appearance="dark"] .mrp-scope-head,
+html[data-appearance="dark"] .mrp-log-title,
+html[data-appearance="dark"] .cvt-head {
+  background: var(--surface-2) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-appearance="dark"] .md-total-row input,
+html[data-appearance="dark"] .mrp-field input,
+html[data-appearance="dark"] .mrp-field select,
+html[data-appearance="dark"] .mrp-field textarea,
+html[data-appearance="dark"] .cvt-body select,
+html[data-appearance="dark"] .cvt-body input,
+html[data-appearance="dark"] .lookup-typeahead,
+html[data-appearance="dark"] .lookup-typeahead:hover,
+html[data-appearance="dark"] .lookup-typeahead:focus,
+html[data-appearance="dark"] .field.lookup input,
+html[data-appearance="dark"] .field.lookup select {
+  background: var(--surface-0) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .form-info-btn,
+html[data-appearance="dark"] .field-info-btn,
+html[data-appearance="dark"] .md-total-row label,
+html[data-appearance="dark"] .meta-help-lead,
+html[data-appearance="dark"] .stok-firma-plant-label,
+html[data-appearance="dark"] .stok-firma-plant-check,
+html[data-appearance="dark"] .erp-section-title {
+  color: var(--ink) !important;
+}
+html[data-appearance="dark"] .field.field--critical {
+  background: rgba(250, 173, 20, 0.12) !important;
+  border-color: rgba(250, 173, 20, 0.4) !important;
+  box-shadow: none;
+}
+html[data-appearance="dark"] .field.field--critical label,
+html[data-appearance="dark"] .field-critical-hint {
+  color: #f0c36a !important;
+}
+html[data-appearance="dark"] .field.field--critical input,
+html[data-appearance="dark"] .field.field--critical select,
+html[data-appearance="dark"] .field.field--critical textarea {
+  background: var(--surface-0) !important;
+  color: var(--ink) !important;
+  border-color: rgba(250, 173, 20, 0.45) !important;
+}
+html[data-appearance="dark"] .field-critical-hint {
+  background: rgba(250, 173, 20, 0.2) !important;
+}
+html[data-appearance="dark"] .cvt-warn,
+html[data-appearance="dark"] .sql-tx-wrap {
+  background: rgba(250, 173, 20, 0.12) !important;
+  border-color: rgba(250, 173, 20, 0.35) !important;
+  color: #f0c36a !important;
+}
+html[data-appearance="dark"] .sql-tx-label {
+  color: #f0c36a !important;
+}
+html[data-appearance="dark"] .mrp-result-table th {
+  background: var(--surface-2) !important;
+  color: var(--muted) !important;
+}
+
+html[data-appearance="dark"] .mod-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+}
+html[data-appearance="dark"] .mod-item.active {
+  background: var(--sidebar-active);
+  color: var(--accent);
+}
+html[data-appearance="dark"] .theme-modal-backdrop {
+  background: rgba(10, 12, 20, 0.62);
+}
+html[data-appearance="dark"] .doc-tabs,
+html[data-appearance="dark"] .doc-tab {
+  background: var(--surface-0);
+  color: var(--ink);
+  border-color: var(--line);
+}
+html[data-appearance="dark"] .doc-tab.active {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
 html[data-theme="green"] {
   --ink: #1a2e2a;
   --muted: #5a726c;
