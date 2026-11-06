@@ -5,6 +5,7 @@ const { signAccess, signRefresh, verifyToken, hashToken } = require('../src/util
 const { parametreAl } = require('../src/utils/yetki');
 const { parseJsonArr } = require('../src/middleware/authJwt');
 const { hashParola, dogrulaParola } = require('../src/utils/parola');
+const { authenticateLdap, ldapStatus } = require('../src/utils/ldapAuth');
 
 async function loadEkranYetkileri(kisiId) {
   if (!kisiId) return [];
@@ -68,19 +69,40 @@ async function kullaniciYukle(kod) {
   return r.rows[0] || null;
 }
 
+/** GET /auth/ldap-status — giriş ekranı LDAP anahtarı */
+router.get('/ldap-status', async (req, res, next) => {
+  try {
+    res.json(await ldapStatus(pool));
+  } catch (err) {
+    next(err);
+  }
+});
+
 /** POST /auth/login */
 router.post('/login', async (req, res, next) => {
   try {
     const body = req.body || {};
     const user_code = body.user_code || body.username || body.username;
     const parola = body.parola || body.sifre || body.password;
+    const useLdap = Boolean(body.ldap || body.use_ldap || body.ldapMode);
     if (!user_code) {
       return res.status(400).json({ hata: 'username (veya user_code) zorunlu.' });
     }
     const u = await kullaniciYukle(user_code);
-    if (!u || u.is_active === false) return res.status(401).json({ hata: 'Kullanıcı bulunamadı veya is_inactive.' });
+    if (!u || u.is_active === false) {
+      return res.status(401).json({
+        hata: useLdap
+          ? 'LDAP doğrulaması için önce ERP’de aynı kullanıcı adı ile kullanıcı kartı olmalı.'
+          : 'Kullanıcı bulunamadı veya is_inactive.',
+      });
+    }
 
-    if (u.parola_hash) {
+    if (useLdap) {
+      const ldap = await authenticateLdap(pool, user_code, parola);
+      if (!ldap.ok) {
+        return res.status(401).json({ hata: ldap.hata || 'LDAP giriş başarısız.' });
+      }
+    } else if (u.parola_hash) {
       if (!parola || !dogrulaParola(parola, u.parola_hash)) {
         return res.status(401).json({ hata: 'Parola hatalı.' });
       }
@@ -105,6 +127,7 @@ router.post('/login', async (req, res, next) => {
       refresh_token,
       token_tipi: 'Bearer',
       expires_in_dk: ttl,
+      auth_method: useLdap ? 'ldap' : 'local',
       not: 'Authorization: Bearer <access_token> veya X-Kullanici-Kodu',
     });
   } catch (err) {

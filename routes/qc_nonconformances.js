@@ -66,4 +66,12 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'qc_nonconformances',
+  notFound: 'Uygunsuzluk bulunamadı.',
+  skipPut: true,
+});
+
 module.exports = router;

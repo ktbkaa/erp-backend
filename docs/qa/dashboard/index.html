@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<title>KTB ERP — QA Merkezi</title>
+<style>
+  :root { --bg:#0f1419; --card:#1a222c; --line:#2a3542; --ok:#3d9a6a; --warn:#c9a227; --bad:#c44; --txt:#e8eef4; --muted:#8a9aab; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: linear-gradient(160deg,#0f1419,#152028 40%,#0f1419); color:var(--txt); min-height:100vh; }
+  header { padding:28px 32px 12px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:1.6rem; letter-spacing:.02em; }
+  header p { margin:6px 0 0; color:var(--muted); font-size:.92rem; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; padding:24px 32px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+  .card .k { color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.06em; }
+  .card .v { font-size:1.8rem; font-weight:600; margin-top:6px; }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+  section { padding:8px 32px 32px; }
+  h2 { font-size:1.05rem; margin:18px 0 10px; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th,td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--line); font-size:.9rem; }
+  th { color:var(--muted); font-weight:500; background:#151c24; }
+  .bar { height:8px; background:#243040; border-radius:4px; overflow:hidden; margin-top:8px; }
+  .bar > i { display:block; height:100%; background:linear-gradient(90deg,#2d8f62,#5ecf95); }
+  a { color:#7ec8ff; }
+  ul.links { columns:2; gap:24px; }
+  ul.links li { margin:4px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>KTB ERP — QA Merkezi</h1>
+  <p>Son güncelleme: 05.11.2026 18:58:21 (Europe/Istanbul) · Skor <strong class="ok">83/100</strong> · Ticari hazır: hayır (P1 açık)</p>
+</header>
+<div class="grid">
+  <div class="card"><div class="k">Ekran envanteri</div><div class="v">132</div></div>
+  <div class="card"><div class="k">API smoke pass</div><div class="v ok">129</div><div class="k">fail 0 · skip 3</div></div>
+  <div class="card"><div class="k">DB P0 / P1</div><div class="v ok">0 / 0</div></div>
+  <div class="card"><div class="k">Açık bug P0/P1/P2</div><div class="v"><span class="ok">0</span> / <span class="warn">0</span> / <span class="warn">2</span></div></div>
+  <div class="card"><div class="k">GIDA MAN</div><div class="v ok">OK</div><div class="k">MRP kısmi</div></div>
+  <div class="card"><div class="k">Kalite skoru</div><div class="v">83</div><div class="bar"><i style="width:83%"></i></div></div>
+</div>
+<section>
+  <h2>Modül ekran dağılımı</h2>
+  <table>
+    <thead><tr><th>Modül</th><th>Ekran</th></tr></thead>
+    <tbody>
+      <tr><td>Diğer</td><td>132</td></tr>
+    </tbody>
+  </table>
+  <h2>GIDA özet</h2>
+  <table>
+    <tbody>
+      <tr><td>Firma</td><td>GIDA — Anadolu Süt ve Süt Ürünleri A.Ş.</td></tr>
+      <tr><td>MAN satış sipariş</td><td>B00010</td></tr>
+      <tr><td>MAN fatura</td><td>FA00009</td></tr>
+      <tr><td>MRP run</td><td>MR00006</td></tr>
+    </tbody>
+  </table>
+  <h2>Dokümanlar</h2>
+  <ul class="links">
+    <li><a href="../MASTER_TEST_PLAN.md">MASTER_TEST_PLAN</a></li>
+    <li><a href="../01-screen-inventory.md">01 Screen inventory</a></li>
+    <li><a href="../02-database-integrity-audit.md">02 DB integrity</a></li>
+    <li><a href="../03-functional-test-results.md">03 Functional</a></li>
+    <li><a href="../04-integration-test-results.md">04 Integration</a></li>
+    <li><a href="../05-security-test-results.md">05 Security</a></li>
+    <li><a href="../06-performance-test-results.md">06 Performance</a></li>
+    <li><a href="../07-end-to-end-simulation.md">07 E2E</a></li>
+    <li><a href="../08-bug-tracker.md">08 Bugs</a></li>
+    <li><a href="../09-regression-results.md">09 Regression</a></li>
+    <li><a href="../10-final-assessment.md">10 Assessment</a></li>
+    <li><a href="../KTB_ERP_FULL_SYSTEM_QA_REPORT.pdf">PDF Rapor</a></li>
+  </ul>
+</section>
+</body>
+</html>

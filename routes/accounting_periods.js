@@ -5,6 +5,7 @@ const { withTransaction } = require('../src/utils/withTransaction');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { reqKullaniciKodu } = require('../src/utils/yetki');
 const { donemKapat, donemYenidenAc } = require('../src/services/muhasebeMotorService');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/mali-yillar', async (req, res, next) => {
   try {
@@ -132,6 +133,19 @@ router.post('/:id/yeniden-ac', async (req, res, next) => {
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '/mali-yillar',
+  table: 'fiscal_years',
+  notFound: 'Mali yıl bulunamadı.',
+  skipGet: true,
+  skipPut: true,
+  canDelete: async (row) => {
+    const used = await pool.query('SELECT 1 FROM accounting_periods WHERE fiscal_year_id=$1 LIMIT 1', [row.id]);
+    if (used.rows[0]) return 'Mali yıla bağlı dönemler var; silinemez.';
+    return true;
+  },
 });
 
 module.exports = router;

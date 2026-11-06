@@ -6,6 +6,7 @@ const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { reqKullaniciKodu } = require('../src/utils/yetki');
 const { fisOlustur, hesapIdCoz } = require('../src/services/muhasebeMotorService');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 async function bankaListe(firmaId) {
   const r = await pool.query(
@@ -34,8 +35,9 @@ router.post('/banka-hesaplari', async (req, res, next) => {
   try {
     const firmaId = firmaIdFromReq(req);
     const { account_code, account_name, bank_id, iban, currency_code, gl_account_id } = req.body || {};
+    const kod = typeof account_code === 'string' ? account_code.trim() : account_code;
+    if (!kod) return res.status(400).json({ hata: 'account_code zorunlu.' });
     if (!account_name) return res.status(400).json({ hata: 'account_name zorunlu.' });
-    const kod = account_code || (await withTransaction(pool, (c) => sonrakiBelgeNo(c, 'FIN_BANKA_HESAP')));
     const r = await pool.query(
       `
       INSERT INTO fin_bank_accounts
@@ -46,6 +48,7 @@ router.post('/banka-hesaplari', async (req, res, next) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ hata: 'Hesap kodu zaten var.' });
     next(err);
   }
 });
@@ -73,8 +76,9 @@ router.post('/kasa-hesaplari', async (req, res, next) => {
   try {
     const firmaId = firmaIdFromReq(req);
     const { cash_code, cash_name, currency_code, gl_account_id } = req.body || {};
+    const kod = typeof cash_code === 'string' ? cash_code.trim() : cash_code;
+    if (!kod) return res.status(400).json({ hata: 'cash_code zorunlu.' });
     if (!cash_name) return res.status(400).json({ hata: 'cash_name zorunlu.' });
-    const kod = cash_code || (await withTransaction(pool, (c) => sonrakiBelgeNo(c, 'FIN_KASA')));
     const r = await pool.query(
       `
       INSERT INTO fin_cash_accounts (company_id, cash_code, cash_name, currency_code, gl_account_id)
@@ -84,6 +88,7 @@ router.post('/kasa-hesaplari', async (req, res, next) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ hata: 'Kasa kodu zaten var.' });
     next(err);
   }
 });
@@ -196,6 +201,28 @@ router.post('/hareketler', async (req, res, next) => {
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '/banka-hesaplari',
+  table: 'fin_bank_accounts',
+  notFound: 'Banka hesabı bulunamadı.',
+  updatable: ['account_name', 'bank_id', 'iban', 'currency_code', 'gl_account_id'],
+});
+registerIdCrud(router, pool, {
+  path: '/kasa-hesaplari',
+  table: 'fin_cash_accounts',
+  notFound: 'Kasa hesabı bulunamadı.',
+  updatable: ['cash_name', 'currency_code', 'gl_account_id'],
+});
+registerIdCrud(router, pool, {
+  path: '/hareketler',
+  table: 'fin_cash_movements',
+  notFound: 'Nakit hareket bulunamadı.',
+  canDelete: async (row) => {
+    if (row.gl_document_id) return 'Muhasebeleşmiş nakit hareket silinemez.';
+    return true;
+  },
 });
 
 module.exports = router;

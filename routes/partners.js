@@ -8,6 +8,7 @@ const {
     cariTedarikciMi,
     cariMusteriMi,
 } = require('../src/utils/kodUretici');
+const { firmaIdFromReq, assertCariFirmaKayit } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -279,10 +280,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const { firmaIdFromReq, assertFirmaKayit } = require('../src/utils/firmaScope');
         const firmaId = firmaIdFromReq(req);
         if (firmaId) {
-            const ok = await assertFirmaKayit(pool, 'partners', req.params.id, firmaId);
+            const ok = await assertCariFirmaKayit(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         }
         const cari = await cariGetir(req.params.id);
@@ -396,6 +396,11 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
+        const scopeFirma = firmaIdFromReq(req);
+        if (scopeFirma) {
+            const ok = await assertCariFirmaKayit(pool, req.params.id, scopeFirma);
+            if (!ok) return res.status(404).json({ hata: 'Cari bulunamadı.' });
+        }
         const partner_name = trimOrNull(req.body.partner_name);
         if (!partner_name) {
             return res.status(400).json({
@@ -534,6 +539,11 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
+        const scopeFirma = firmaIdFromReq(req);
+        if (scopeFirma) {
+            const ok = await assertCariFirmaKayit(pool, req.params.id, scopeFirma);
+            if (!ok) return res.status(404).json({ hata: 'Cari bulunamadı.' });
+        }
         const result = await pool.query(`DELETE FROM partners WHERE id = $1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         res.json({ silindi: true, id: Number(req.params.id) });

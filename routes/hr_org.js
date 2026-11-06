@@ -3,8 +3,6 @@ const router = express.Router();
 const pool = require('../db');
 const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-
 // ---- Departmanlar ----
 router.get('/departmanlar', async (req, res) => {
   try {
@@ -43,14 +41,17 @@ router.post('/departmanlar', async (req, res) => {
   try {
     const b = req.body || {};
     const firmaId = firmaIdFromReq(req) || b.company_id;
+    const kod = typeof b.department_code === 'string' ? b.department_code.trim() : b.department_code;
     if (!firmaId || !b.department_name) {
       return res.status(400).json({ hata: 'company_id ve department_name zorunlu.' });
+    }
+    if (!kod) {
+      return res.status(400).json({ hata: 'department_code zorunlu.' });
     }
     if (b.parent_id && Number(b.parent_id) === Number(b.id)) {
       return res.status(400).json({ hata: 'Departman kendi üstü olamaz.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.department_code || (await sonrakiKod(client, 'HR_DEPT'));
       const ins = await client.query(
         `INSERT INTO hr_departments (
            company_id, department_code, department_name, parent_id, cost_center_code, manager_employee_id, description
@@ -62,6 +63,7 @@ router.post('/departmanlar', async (req, res) => {
     const row = await pool.query(`SELECT * FROM hr_departments WHERE id=$1`, [id]);
     res.status(201).json(row.rows[0]);
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ hata: 'Departman kodu zaten var.' });
     res.status(500).json({ hata: err.message });
   }
 });
@@ -143,11 +145,14 @@ router.post('/pozisyonlar', async (req, res) => {
   try {
     const b = req.body || {};
     const firmaId = firmaIdFromReq(req) || b.company_id;
+    const kod = typeof b.position_code === 'string' ? b.position_code.trim() : b.position_code;
     if (!firmaId || !b.position_name) {
       return res.status(400).json({ hata: 'company_id ve position_name zorunlu.' });
     }
+    if (!kod) {
+      return res.status(400).json({ hata: 'position_code zorunlu.' });
+    }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.position_code || (await sonrakiKod(client, 'HR_POS'));
       const ins = await client.query(
         `INSERT INTO hr_positions (company_id, position_code, position_name, department_id, description)
          VALUES ($1,$2,$3,$4,$5) RETURNING id`,
@@ -158,6 +163,7 @@ router.post('/pozisyonlar', async (req, res) => {
     const row = await pool.query(`SELECT * FROM hr_positions WHERE id=$1`, [id]);
     res.status(201).json(row.rows[0]);
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ hata: 'Pozisyon kodu zaten var.' });
     res.status(500).json({ hata: err.message });
   }
 });

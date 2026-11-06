@@ -12,6 +12,7 @@ const {
 const {
   pickFields,
   appendInsert,
+  buildUpdateSets,
   SIPARIS_BASLIK,
   SIPARIS_SATIR,
 } = require('../src/utils/belgeAlanlari');
@@ -101,7 +102,11 @@ router.get('/', async (req, res) => {
         }
         // Varsayılan: satış siparişleri (satınalma ayrı ekranda)
         if (!order_type && req.query.kapsam !== 'hepsi') {
-            where.push(`(order_type ILIKE '%satis%' OR order_type ILIKE '%satış%' OR order_type = 'SatisSiparis' OR order_type = 'AlinanSiparis')`);
+            where.push(`(
+              order_type ILIKE '%satis%' OR order_type ILIKE '%satış%'
+              OR order_type IN ('SatisSiparis','AlinanSiparis','Standart','Standard','Normal')
+              OR order_type IS NULL
+            )`);
         }
         const sql = `
             SELECT id FROM sales_orders
@@ -215,10 +220,22 @@ router.post('/', async (req, res) => {
                 atpUyari = await atpKontrol(client, islenmis, { depoId: req.body.warehouse_id || null });
             }
 
-            const no = order_no || (await sonrakiBelgeNo(client, belgeTipi));
+            // Formda numaratörden ayrılan no varsa ona sadık kal — yeniden ayırma
+            const reserved = order_no != null && String(order_no).trim() !== ''
+              ? String(order_no).trim()
+              : null;
+            const no = reserved || (await sonrakiBelgeNo(client, belgeTipi));
             const extras = pickFields(req.body, SIPARIS_BASLIK);
             if (extras.subtotal == null) extras.subtotal = toplam;
             if (extras.grand_total == null) extras.grand_total = toplam;
+            if (extras.tax_amount == null && req.body.tax_amount != null) {
+              extras.tax_amount = Number(req.body.tax_amount) || 0;
+            }
+            // Firma bağlamı: body yoksa header
+            if (extras.company_id == null) {
+              const fid = firmaIdFromReq(req);
+              if (fid) extras.company_id = Number(fid);
+            }
             const baslik = appendInsert(
                 ['order_no', 'partner_id', 'partner_code', 'partner_name', 'order_date', 'order_type', 'total_amount', 'status'],
                 [no, cari.id, cari.partner_code, cari.partner_name, order_date || new Date(), order_type, toplam, status || 'Taslak'],
@@ -290,48 +307,55 @@ router.put('/:id', async (req, res) => {
             }
 
             let toplam = mevcut.rows[0].total_amount;
+            const bodySatirlar = Array.isArray(kalemler) ? kalemler : [];
             if (Array.isArray(kalemler)) {
                 const resolved = await resolveKalemler(client, kalemler);
                 toplam = resolved.toplam;
                 await client.query('DELETE FROM sales_order_lines WHERE sales_order_id=$1', [req.params.id]);
-                for (const ik of resolved.islenmis) {
+                for (let i = 0; i < resolved.islenmis.length; i++) {
+                    const ik = resolved.islenmis[i];
+                    const raw = bodySatirlar[i] || {};
+                    const satirEx = pickFields(raw, SIPARIS_SATIR);
+                    if (satirEx.amount_ex_tax == null) satirEx.amount_ex_tax = ik.total_amount;
+                    if (satirEx.net_unit_price == null) satirEx.net_unit_price = ik.unit_price;
+                    if (satirEx.line_no == null) satirEx.line_no = i + 1;
+                    const sat = appendInsert(
+                        ['sales_order_id', 'item_id', 'item_code', 'item_name', 'stock_uom', 'quantity', 'unit_price', 'total_amount'],
+                        [req.params.id, ik.item_id, ik.item_code, ik.item_name, ik.stock_uom, ik.quantity, ik.unit_price, ik.total_amount],
+                        satirEx
+                    );
                     await client.query(
-                        `
-                        INSERT INTO sales_order_lines
-                            (sales_order_id, item_id, item_code, item_name, stock_uom, quantity, unit_price, total_amount)
-                        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-                        `,
-                        [
-                            req.params.id, ik.item_id, ik.item_code, ik.item_name,
-                            ik.stock_uom, ik.quantity, ik.unit_price, ik.total_amount,
-                        ]
+                        `INSERT INTO sales_order_lines (${sat.cols.join(',')}) VALUES (${sat.placeholders})`,
+                        sat.vals
                     );
                 }
             }
 
-            await client.query(
-                `
-                UPDATE sales_orders SET
-                    partner_id = $2,
-                    partner_code = $3,
-                    partner_name = $4,
-                    order_date = COALESCE($5, order_date),
-                    order_type = COALESCE($6, order_type),
-                    status = COALESCE($7, status),
-                    total_amount = $8
-                WHERE id = $1
-                `,
-                [
-                    req.params.id,
-                    cari.id,
-                    cari.partner_code,
-                    cari.partner_name,
-                    order_date || null,
-                    order_type || null,
-                    status || null,
-                    toplam,
-                ]
-            );
+            // Tüm başlık alanlarını yaz (teslim, müş. sip. no, ödeme, address…)
+            const extras = pickFields(req.body, SIPARIS_BASLIK);
+            extras.partner_id = cari.id;
+            extras.partner_code = cari.partner_code;
+            extras.partner_name = cari.partner_name;
+            extras.total_amount = toplam;
+            if (order_date != null && order_date !== '') extras.order_date = order_date;
+            if (order_type != null && order_type !== '') extras.order_type = order_type;
+            if (status != null && status !== '') extras.status = status;
+            if (extras.subtotal == null && Array.isArray(kalemler)) extras.subtotal = toplam;
+            if (extras.grand_total == null && Array.isArray(kalemler)) extras.grand_total = toplam;
+            if (extras.company_id == null) {
+                const fid = firmaIdFromReq(req);
+                if (fid) extras.company_id = Number(fid);
+            }
+            // order_no numaratörden gelir — PUT ile değiştirilmez
+            delete extras.order_no;
+
+            const { sets, params } = buildUpdateSets(extras, 2);
+            if (sets.length) {
+                await client.query(
+                    `UPDATE sales_orders SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $1`,
+                    [req.params.id, ...params]
+                );
+            }
             return Number(req.params.id);
         });
 
@@ -344,9 +368,11 @@ router.put('/:id', async (req, res) => {
 /** POST /sales_orders/:id/rezerve — stok rezervasyonu (INV-004) */
 router.post('/:id/rezerve', async (req, res) => {
   try {
+    const body = req.body || {};
     const olusan = await withTransaction(pool, async (client) => {
       return siparisRezerveEt(client, Number(req.params.id), {
-        depoId: req.body.warehouse_id ? Number(req.body.warehouse_id) : null,
+        depoId: body.warehouse_id ? Number(body.warehouse_id) : null,
+        satirlar: Array.isArray(body.satirlar) ? body.satirlar : null,
       });
     });
     const siparis = await siparisGetir(req.params.id);
