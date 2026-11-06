@@ -3709,6 +3709,7 @@ const MODULES = [
           { key: 'customer_order_no', label: 'Müş. sip. no' },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
           { key: 'payment_term_code', label: 'Ödeme koşulu', lead: true },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'], lead: true },
           { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', lead: true },
           // Alt şerit (Belge notu alanı)
           { key: 'public_note', label: 'Müşteri notu' },
