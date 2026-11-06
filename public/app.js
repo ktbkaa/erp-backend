@@ -7183,10 +7183,14 @@ const MODE_LABELS = {
   kopyala: 'Kopyala',
 };
 
+/** Liste sayfa boyutu — tüm ekranlar */
+const LIST_PAGE_SIZE = 15;
+
 const state = {
   screenId: null,
   rows: [],
   filtered: [],
+  listPage: 1,
   filterState: {},
   selectedId: null,
   formMode: null,
@@ -9737,17 +9741,68 @@ function ensureRowIds(rows) {
   });
 }
 
+function listPageCount(total, pageSize = LIST_PAGE_SIZE) {
+  return Math.max(1, Math.ceil(Math.max(0, total) / pageSize));
+}
+
+function clampListPage(total) {
+  const pages = listPageCount(total);
+  let p = Number(state.listPage) || 1;
+  if (p < 1) p = 1;
+  if (p > pages) p = pages;
+  state.listPage = p;
+  return { page: p, pages, pageSize: LIST_PAGE_SIZE };
+}
+
+/** Sayfa sekmeleri (1 2 3 …) — çok sayfada pencere */
+function renderListPager(total) {
+  const nav = $('#listPager');
+  if (!nav) return;
+  const { page, pages, pageSize } = clampListPage(total);
+  if (!total) {
+    nav.hidden = true;
+    nav.innerHTML = '';
+    return;
+  }
+  nav.hidden = false;
+  const startIdx = (page - 1) * pageSize + 1;
+  const endIdx = Math.min(total, page * pageSize);
+  const windowSize = 7;
+  let from = Math.max(1, page - Math.floor(windowSize / 2));
+  let to = Math.min(pages, from + windowSize - 1);
+  from = Math.max(1, to - windowSize + 1);
+  const tabs = [];
+  for (let i = from; i <= to; i += 1) {
+    tabs.push(`<button type="button" class="list-page-btn${i === page ? ' active' : ''}" data-list-page="${i}" aria-current="${i === page ? 'page' : 'false'}">${i}</button>`);
+  }
+  nav.innerHTML = `
+    <div class="list-pager-info">${startIdx}–${endIdx} / ${total}</div>
+    <div class="list-pager-tabs" role="navigation" aria-label="Liste sayfaları">
+      <button type="button" class="list-page-btn" data-list-page="prev" ${page <= 1 ? 'disabled' : ''} title="Önceki">‹</button>
+      ${from > 1 ? `<button type="button" class="list-page-btn" data-list-page="1">1</button><span class="list-page-ellipsis">…</span>` : ''}
+      ${tabs.join('')}
+      ${to < pages ? `<span class="list-page-ellipsis">…</span><button type="button" class="list-page-btn" data-list-page="${pages}">${pages}</button>` : ''}
+      <button type="button" class="list-page-btn" data-list-page="next" ${page >= pages ? 'disabled' : ''} title="Sonraki">›</button>
+    </div>`;
+}
+
 function renderList(screen) {
   const head = $('#dataHead');
   const body = $('#dataBody');
   const cols = listColumns(screen);
   renderListSideNav(screen);
   state.filtered = rowsForList(screen);
+  const total = state.filtered.length;
+  const { page, pageSize } = clampListPage(total);
+  const start = (page - 1) * pageSize;
+  const pageRows = state.filtered.slice(start, start + pageSize);
+
   head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
-  if (!state.filtered.length) {
+  if (!total) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
-    body.innerHTML = state.filtered.map((row, index) => {
+    body.innerHTML = pageRows.map((row, i) => {
+      const index = start + i;
       const key = rowKey(row, index);
       const selected = state.selectedId != null && String(key) === String(state.selectedId);
       return `
@@ -9759,7 +9814,8 @@ function renderList(screen) {
   const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
     ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
     : (state.rows || []).length;
-  $('#listMeta').textContent = `${state.filtered.length} / ${baseCount} kayıt`;
+  $('#listMeta').textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa`;
+  renderListPager(total);
   updateActionButtons(screen);
 }
 
@@ -9946,12 +10002,15 @@ async function openScreen(id, opts = {}) {
         : `${screen.title} açık${screen.techId ? ' · ' + screen.techId : ''} · UI build 20261017v`;
     }
     $('#searchResults').hidden = true;
+    state.listPage = 1;
     $('#listMeta').textContent = 'Yükleniyor…';
     {
       const cols = listColumns(screen);
       const head = $('#dataHead');
       if (head) head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
       $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${cols.length || 1}">Yükleniyor…</td></tr>`;
+      const pager = $('#listPager');
+      if (pager) { pager.hidden = true; pager.innerHTML = ''; }
     }
 
     // Zorunlu: ana alan gerçekten görünür mü?
@@ -16435,6 +16494,7 @@ function bindEvents() {
         state.rows = ensureRowIds(Array.isArray(data) ? data : []);
         state.filtered = applyFilters(state.rows, screen);
         state.selectedId = null;
+        state.listPage = 1;
         renderList(screen);
       } catch (err) {
         toast(err.message || 'Filtre uygulanamadı');
@@ -16461,6 +16521,7 @@ function bindEvents() {
           ? state.rows.filter((r) => String(r.item_code || '').toLocaleLowerCase('tr').includes(stokQ))
           : state.rows.slice();
         state.selectedId = null;
+        state.listPage = 1;
         renderList(screen);
         const banner = $('#screenBanner');
         if (banner) {
@@ -16474,6 +16535,7 @@ function bindEvents() {
     }
     state.filtered = applyFilters(state.rows, screen);
     state.selectedId = null;
+    state.listPage = 1;
     renderList(screen);
   });
 
@@ -16492,7 +16554,29 @@ function bindEvents() {
     }
     state.filtered = applyFilters(state.rows, screen);
     state.selectedId = null;
+    state.listPage = 1;
     renderList(screen);
+  });
+
+  $('#listPager')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-list-page]');
+    if (!btn || btn.disabled) return;
+    const screen = findScreen(state.screenId);
+    if (!screen) return;
+    const total = (state.filtered || []).length;
+    const pages = listPageCount(total);
+    const raw = btn.getAttribute('data-list-page');
+    let next = state.listPage || 1;
+    if (raw === 'prev') next -= 1;
+    else if (raw === 'next') next += 1;
+    else next = Number(raw) || 1;
+    if (next < 1) next = 1;
+    if (next > pages) next = pages;
+    if (next === state.listPage) return;
+    state.listPage = next;
+    renderList(screen);
+    const scroller = $('#listTableScroll');
+    if (scroller) scroller.scrollTop = 0;
   });
 
   $('#btnFormCancel').addEventListener('click', (e) => {
@@ -16792,6 +16876,7 @@ function bindEvents() {
       e.preventDefault();
       state.listCategory = listCat.getAttribute('data-list-cat');
       state.selectedId = null;
+      state.listPage = 1;
       // Yeni kayıtta belge tipini önceden seçili kategoriye bağla
       renderList(screen);
       return;

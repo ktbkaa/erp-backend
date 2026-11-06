@@ -1329,18 +1329,74 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
   box-shadow: var(--shadow-card);
+  max-height: calc(100vh - 13.5rem);
 }
-.list-pane-head { margin-bottom: 0.4rem; }
+.list-pane-head { margin-bottom: 0.4rem; flex: 0 0 auto; }
 .list-meta { color: var(--muted); font-size: 0.8rem; }
-/* Dikey kaydırma ekranda; tabloda yalnız yatay taşma */
+/* Liste alanı kendi içinde kayar (15 satır/sayfa + taşma) */
+.list-pane .table-scroll,
 .table-scroll {
-  flex: 0 0 auto;
-  min-height: 0;
-  overflow-x: auto;
-  overflow-y: visible;
+  flex: 1 1 auto;
+  min-height: 10rem;
+  overflow: auto;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   background: #fff;
+  scrollbar-gutter: stable;
+}
+.list-pager {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 1rem;
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line);
+}
+.list-pager[hidden] { display: none !important; }
+.list-pager-info {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.list-pager-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.28rem;
+}
+.list-page-btn {
+  min-width: 2rem;
+  height: 1.85rem;
+  padding: 0 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.list-page-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--sidebar-ring);
+}
+.list-page-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.list-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.list-page-ellipsis {
+  color: var(--muted);
+  padding: 0 0.15rem;
+  user-select: none;
 }
 #dataTable {
   width: 100%;
@@ -2669,11 +2725,16 @@ tr.selected td { background: var(--accent-soft); }
   min-height: 0;
   min-width: 0;
   height: auto;
-  overflow: visible;
+  max-height: calc(100vh - 12.5rem);
+  overflow: hidden;
   background: #fff;
 }
 .list-work .list-pane {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: none;
+  margin-bottom: 0.85rem;
 }
 .list-work:not(:has(.list-side-nav:not([hidden]))) {
   grid-template-columns: 1fr;
