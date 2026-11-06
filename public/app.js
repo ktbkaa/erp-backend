@@ -9528,6 +9528,7 @@ async function persistGridRowImmediately(screen, gridKey, row) {
   const body = { ...row };
   delete body._satir_kayitli;
   delete body._satir_duzenleniyor;
+  delete body._satir_toplu;
   Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
     const v = master[masterKey];
     if (v != null && v !== '') body[bodyKey] = v;
@@ -9628,18 +9629,26 @@ async function importExcelIntoList(ctx) {
       if (canPersist) {
         try {
           const saved = await persistGridRowImmediately(screen, key, blank);
-          const merged = { ...blank, ...(saved || {}), _satir_kayitli: true, _satir_duzenleniyor: false };
+          const merged = {
+            ...blank,
+            ...(saved || {}),
+            _satir_kayitli: true,
+            _satir_duzenleniyor: false,
+            _satir_toplu: true,
+          };
           existing.push(merged);
           ok += 1;
         } catch (_) {
           blank._satir_kayitli = false;
           blank._satir_duzenleniyor = true;
+          blank._satir_toplu = true;
           existing.push(blank);
           fail += 1;
         }
       } else {
         blank._satir_kayitli = false;
         blank._satir_duzenleniyor = true;
+        blank._satir_toplu = true;
         existing.push(blank);
       }
     }
@@ -11414,6 +11423,21 @@ async function fillLinesFromSource(kind, sourceId) {
       toast(`Mal kabul ${mk.receipt_no || sourceId} satırları yüklendi`);
       renderForm(screen);
     }
+    // Bağlı belge / kaynak satırları toplu gelir — satır ✓ sonrası boş satır açılmaz
+    const sourceKinds = new Set([
+      'talep-satirlar', 'siparis-satirlar', 'tedarikci-irsaliye-satirlar',
+      'teklif-satirlar', 'sa-teklif-satirlar', 'siparis-kalemler',
+      'rezervasyon-siparis-kalemler', 'sevk-satirlar', 'irsaliye-satirlar',
+      'mal-kabul-satirlar',
+    ]);
+    if (sourceKinds.has(kind)) {
+      const loaded = state.formRecord?.[detailKey];
+      if (Array.isArray(loaded)) {
+        loaded.forEach((r) => {
+          if (r) r._satir_toplu = true;
+        });
+      }
+    }
   } catch (err) {
     toast(err.message || 'Kaynak satırlar yüklenemedi');
   }
@@ -12751,6 +12775,7 @@ function stripNonCopyableOnRowCopy(fields, src) {
   });
   out._satir_kayitli = false;
   out._satir_duzenleniyor = true;
+  delete out._satir_toplu; // kopya = teker teker giriş; ✓ sonrası boş satır açılır
   return out;
 }
 
@@ -15682,16 +15707,20 @@ function renderDynamicGrid(tab, rec) {
           ${rows.map((row, idx) => {
             const selected = selIdx === idx;
             const saved = row._satir_kayitli === true || row.id != null;
-            // Manuel yazma: form düzenlenebilirse satır alanları doğrudan yazılabilir
-            const rowFieldsEditable = canEdit;
+            // Kayıtlı satır: yalnız ✎ Düzelt ile açılır; taslak / düzenlenen satır yazılabilir
+            const rowFieldsEditable = canEdit && (!saved || row._satir_duzenleniyor === true);
             const rowIdText = (row.id != null && row.id !== '') ? String(row.id) : '—';
+            const persist = Boolean(findScreen(state.screenId)?.detailPersist?.[key]);
+            const primaryAct = saved && row._satir_duzenleniyor !== true
+              ? `<button type="button" class="btn action ghost sm" data-row-act="duzelt" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı düzelt">✎</button>`
+              : `<button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="${escAttr(persist ? 'Satırı veritabanına kaydet' : 'Satırı onayla')}">✓</button>`;
             return `
-              <tr class="${selected ? 'selected' : ''} ${saved ? 'detail-row--saved' : 'detail-row--draft'}"
+              <tr class="${selected ? 'selected' : ''} ${saved ? 'detail-row--saved' : 'detail-row--draft'}${rowFieldsEditable ? ' detail-row--editing' : ''}"
                   data-grid-row="${key}" data-grid-idx="${idx}" data-grid-pick="${key}">
                 ${canEdit ? `
                 <td class="col-acts">
                   <div class="detail-row-actions" role="group" aria-label="Satır işlemleri">
-                    <button type="button" class="btn action ghost sm" data-row-act="kaydet" data-grid-key="${key}" data-grid-idx="${idx}" title="${escAttr(findScreen(state.screenId)?.detailPersist?.[key] ? 'Satırı veritabanına kaydet' : 'Satırı onayla')}">✓</button>
+                    ${primaryAct}
                     <button type="button" class="btn action ghost sm" data-row-act="kopyala" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı kopyala">⧉</button>
                     <button type="button" class="btn action ghost sm danger" data-row-act="sil" data-grid-key="${key}" data-grid-idx="${idx}" title="Satırı sil">✕</button>
                   </div>
@@ -15700,7 +15729,7 @@ function renderDynamicGrid(tab, rec) {
                 ${fields.map((f) => {
                   const need = Boolean(f.required || (f.requiredOnNew && state.formMode === 'yeni'));
                   const empty = row[f.key] === undefined || row[f.key] === null || row[f.key] === '';
-                  const tdCls = `${detailColClass(f)}${need ? ' td-required' : ''}${need && empty && canEdit ? ' is-required-empty' : ''}`;
+                  const tdCls = `${detailColClass(f)}${need ? ' td-required' : ''}${need && empty && rowFieldsEditable ? ' is-required-empty' : ''}`;
                   return `<td class="${tdCls}">${renderDetailCell(f, row, idx, key, rowFieldsEditable)}</td>`;
                 }).join('')}
                 <td class="col-id"><span class="mono cell-ro">${escAttr(rowIdText)}</span></td>
@@ -17750,6 +17779,7 @@ function applyLookupBrowserMultiSelect() {
     if (fieldKeys.has('lot_no')) blank.lot_no = '';
     blank._satir_kayitli = false;
     blank._satir_duzenleniyor = true;
+    blank._satir_toplu = true; // stok seçerek toplu ekleme — ✓ sonrası boş satır açılmaz
     if (i === 0 && firstEmpty >= 0) {
       rows[firstEmpty] = { ...rows[firstEmpty], ...blank };
     } else {
@@ -18933,6 +18963,7 @@ function readGridFromForm(tab) {
       delete row._esittir;
       delete row._satir_kayitli;
       delete row._satir_duzenleniyor;
+      delete row._satir_toplu;
       rows.push(row);
     }
   }
@@ -21894,6 +21925,7 @@ function bindEvents() {
         const blank = emptyRowFromFields(tab.fields);
         blank._satir_kayitli = false;
         blank._satir_duzenleniyor = true;
+        delete blank._satir_toplu; // manuel satır — ✓ sonrası yeni boş satır
         if (key === 'districts') blank.is_active = true;
         rows.push(blank);
         state.formRecord[key] = rows;
@@ -22020,6 +22052,9 @@ function bindEvents() {
             }
             saved._satir_kayitli = true;
             saved._satir_duzenleniyor = false;
+            const wasBulk = Boolean(row._satir_toplu);
+            if (wasBulk) saved._satir_toplu = true;
+            else delete saved._satir_toplu;
             // Aynı kod/id başka satırda kaldıysa (orphan/çift) temizle
             rows.splice(idx, 1);
             if (saved.id != null || saved.district_code) {
@@ -22044,28 +22079,35 @@ function bindEvents() {
                 }
               }
             }
-            // Kaydedilen satır alta; en üste boş yeni satır
+            // Kaydedilen satır alta
             rows.push(saved);
-            const blank = emptyRowFromFields(tab.fields);
-            blank._satir_kayitli = false;
-            blank._satir_duzenleniyor = true;
-            if (key === 'districts') blank.is_active = true;
-            rows.unshift(blank);
+            // Boş satır yalnız teker teker (manuel) girişte açılır; toplu/bağlı satırda açılmaz
+            if (!wasBulk) {
+              const blank = emptyRowFromFields(tab.fields);
+              blank._satir_kayitli = false;
+              blank._satir_duzenleniyor = true;
+              if (key === 'districts') blank.is_active = true;
+              rows.unshift(blank);
+              state.gridSel = { key, idx: 0 };
+            } else {
+              state.gridSel = { key, idx: rows.length - 1 };
+            }
             state.formRecord[key] = rows;
-            state.gridSel = { key, idx: 0 };
             if (key === 'districts') delete state.lookupCache.districts;
             renderForm(screen);
-            // Yeni satırın ilk yazılabilir alanına odak
-            requestAnimationFrame(() => {
-              const first = document.querySelector(
-                `tr[data-grid-row="${key}"][data-grid-idx="0"] input:not([disabled]):not([type="checkbox"]), `
-                + `tr[data-grid-row="${key}"][data-grid-idx="0"] select:not([disabled])`
-              );
-              if (first) {
-                first.focus();
-                if (typeof first.select === 'function') first.select();
-              }
-            });
+            if (!wasBulk) {
+              // Yeni satırın ilk yazılabilir alanına odak
+              requestAnimationFrame(() => {
+                const first = document.querySelector(
+                  `tr[data-grid-row="${key}"][data-grid-idx="0"] input:not([disabled]):not([type="checkbox"]), `
+                  + `tr[data-grid-row="${key}"][data-grid-idx="0"] select:not([disabled])`
+                );
+                if (first) {
+                  first.focus();
+                  if (typeof first.select === 'function') first.select();
+                }
+              });
+            }
             if (saved.id != null) {
               toast(`Satır kaydedildi · ID ${saved.id}`);
             } else {
