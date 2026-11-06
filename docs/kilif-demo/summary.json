@@ -1,0 +1,132 @@
+{
+  "firma": {
+    "id": 7,
+    "code": "KILIF",
+    "name": "CaseForm Silikon & Plastik Kılıf A.Ş."
+  },
+  "plants": {
+    "gm": {
+      "id": 13,
+      "code": "KILIF-GM",
+      "name": "Genel Merkez / Satış"
+    },
+    "fb": {
+      "id": 14,
+      "code": "KILIF-FB",
+      "name": "Kılıf Fabrikası"
+    }
+  },
+  "warehouses": {
+    "gmSarf": "GM-SARF",
+    "fbGiris": "FB-GIRIS",
+    "fbGkk": "FB-GKK",
+    "fbHmd": "FB-HMD",
+    "fbMam": "FB-MAM",
+    "fbCkk": "FB-CKK"
+  },
+  "partners": {
+    "tedSilikon": "T00019",
+    "tedPlastik": "T00020",
+    "tedAmbalaj": "T00021",
+    "musTekno": "M00019",
+    "musExport": "M00020"
+  },
+  "items": {
+    "hmSilikon": "H00049",
+    "hmTpu": "H00050",
+    "hmMurekkep": "H00051",
+    "hmPoşet": "H00052",
+    "fgSilikon": "U00009",
+    "fgPlastik": "U00010",
+    "sarfEtiket": "S00018",
+    "sarfTemizlik": "S00019"
+  },
+  "bom": {
+    "silikon": {
+      "id": 8,
+      "code": "A00008"
+    },
+    "plastik": {
+      "id": 9,
+      "code": "A00009"
+    }
+  },
+  "routing": {
+    "silikon": {
+      "id": 8,
+      "code": "O00008"
+    },
+    "plastik": {
+      "id": 9,
+      "code": "O00009"
+    }
+  },
+  "crm": {
+    "price_list": "FL-KILIF",
+    "lead": "AD00002",
+    "contact": "KK00001",
+    "opportunity": "FS00001"
+  },
+  "processA": {
+    "mode": "MRP_SIZ",
+    "product": "U00010",
+    "qty": 200,
+    "quotation": "ST00002",
+    "sales_order": "B00007",
+    "purchase_order": "P00017",
+    "goods_receipt": "R00016",
+    "gkk": true,
+    "sarf_po": "P00018",
+    "production_order": "E00006",
+    "shipment": "SE00006",
+    "delivery_note": "IR00007",
+    "invoice": "FA00007"
+  },
+  "processB": {
+    "mode": "MRP_LI",
+    "product": "U00009",
+    "qty": 500,
+    "sales_order": "B00008",
+    "independent_requirement": "BI00002",
+    "mrp_run": "MR00001",
+    "mrp_lines": 8,
+    "mrp_net_positive": 6,
+    "purchase_requisition": "L00001",
+    "purchase_order": "P00019",
+    "goods_receipt": "R00018",
+    "production_order": "E00007",
+    "shipment": "SE00007",
+    "delivery_note": "IR00008",
+    "invoice": "FA00008"
+  },
+  "screensTouched": [
+    "companies",
+    "is-yerleri",
+    "warehouses",
+    "is-merkezleri",
+    "cari-kartlari",
+    "stok-karti",
+    "urun-agaci",
+    "routings",
+    "fiyat-listeleri",
+    "crm-adaylar",
+    "crm-kontaklar",
+    "crm-firsatlar",
+    "crm-faaliyetler",
+    "satis-teklifleri",
+    "satis-siparisleri",
+    "satin-alma-siparisleri",
+    "mal-kabuller",
+    "giris-kontrolleri",
+    "kk-emirleri",
+    "uretim-emirleri",
+    "sevk-emirleri",
+    "irsaliyeler",
+    "satis-faturalari",
+    "mrp-bagimsiz-ihtiyac",
+    "mrp-sonuclari",
+    "satin-alma-talepleri"
+  ],
+  "notes": [],
+  "generatedAt": "2026-11-03T10:52:56.969Z"
+}

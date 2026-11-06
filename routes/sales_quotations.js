@@ -36,7 +36,7 @@ async function teklifGetir(id) {
 }
 
 function hazirSatirlar(raw) {
-    return raw.map((k, i) => {
+    return (raw || []).map((k, i) => {
         const h = satirHesapla(k);
         return {
             line_no: k.line_no || i + 1,
@@ -44,14 +44,72 @@ function hazirSatirlar(raw) {
             quantity: k.quantity,
             uom_code: k.uom_code || null,
             unit_price: k.unit_price,
+            line_type: k.line_type || 'S',
+            line_description: k.line_description || null,
+            currency_code: k.currency_code || null,
+            rate_type: k.rate_type || null,
+            exchange_rate: k.exchange_rate != null ? Number(k.exchange_rate) : null,
+            warehouse_id: k.warehouse_id || null,
+            project_code: k.project_code || null,
+            region: k.region || null,
+            delivery_date: k.delivery_date || null,
             ...h,
         };
-    });
+    }).filter((s) => s.item_id && Number(s.quantity) > 0);
+}
+
+function resolveCompanyId(req, body = {}) {
+    const fromBody = body.company_id != null && body.company_id !== ''
+        ? Number(body.company_id)
+        : null;
+    if (Number.isFinite(fromBody) && fromBody > 0) return fromBody;
+    const fromHdr = firmaIdFromReq(req);
+    if (Number.isFinite(Number(fromHdr)) && Number(fromHdr) > 0) return Number(fromHdr);
+    return null;
+}
+
+async function insertSatirlar(client, quotationId, satirlar) {
+    for (const s of satirlar) {
+        await client.query(
+            `
+            INSERT INTO sales_quotation_lines
+                (quotation_id, line_no, item_id, quantity, uom_code, unit_price,
+                 discount_rate, discount_rate_2, discount_rate_3,
+                 discount_amount, discount_tutari2, discount_tutari3,
+                 vat_rate, vat_amount, vat_mode,
+                 goods_service_amount, amount_ex_tax, amount_ttc,
+                 line_type, line_description, currency_code, rate_type, exchange_rate,
+                 warehouse_id, project_code, region, delivery_date)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
+            `,
+            [
+                quotationId, s.line_no, s.item_id, s.quantity, s.uom_code, s.unit_price,
+                s.discount_rate ?? 0, s.discount_rate_2 ?? 0, s.discount_rate_3 ?? 0,
+                s.discount_amount ?? 0, s.discount_tutari2 ?? 0, s.discount_tutari3 ?? 0,
+                s.vat_rate ?? 0, s.vat_amount ?? 0, s.vat_mode || 'Haric',
+                s.goods_service_amount ?? 0, s.amount_ex_tax ?? s.goods_service_amount ?? 0,
+                s.amount_ttc ?? s.satir_toplam ?? 0,
+                s.line_type || 'S', s.line_description || null,
+                s.currency_code || null, s.rate_type || null, s.exchange_rate,
+                s.warehouse_id || null, s.project_code || null, s.region || null,
+                s.delivery_date || null,
+            ]
+        );
+    }
 }
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM sales_quotations'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        const firmaId = firmaIdFromReq(req);
+        const params = [];
+        let sql = 'SELECT id FROM sales_quotations';
+        if (firmaId) {
+            params.push(firmaId);
+            // Aktif firma + (eski) company_id boş kayıtlar — kayıp liste olmasın
+            sql += ` WHERE (company_id = $${params.length} OR company_id IS NULL)`;
+        }
+        sql += ' ORDER BY id DESC';
+        const liste = await pool.query(sql, params);
         const result = [];
         for (const r of liste.rows) result.push(await teklifGetir(r.id));
         res.json(result);
@@ -72,15 +130,23 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
+        const body = req.body || {};
         const {
             partner_id, quotation_date, valid_date, currency_code, description,
             movement_code_id, status, firsat_id, lead_id, source_document_type, source_document_id,
-        } = req.body;
-        const raw = req.body.satirlar || req.body.kalemler;
+            plant_id, payment_term_code, payment_method, delivery_term_code,
+            exchange_rate, discount_rate, project_code,
+            public_note, internal_note, customer_quotation_no, price_list_id, delivery_date,
+        } = body;
+        const raw = body.satirlar || body.kalemler;
         if (!partner_id) return res.status(400).json({ hata: 'partner_id zorunlu.' });
         if (!Array.isArray(raw) || !raw.length) return res.status(400).json({ hata: 'satirlar zorunlu.' });
         const satirlar = hazirSatirlar(raw);
+        if (!satirlar.length) {
+            return res.status(400).json({ hata: 'En az bir stok satırı (miktar > 0) gerekli.' });
+        }
         const top = belgelerToplam(satirlar);
+        const company_id = resolveCompanyId(req, body);
 
         const id = await withTransaction(pool, async (client) => {
             const no = await sonrakiBelgeNo(client, 'SATIS_TEKLIF');
@@ -96,9 +162,16 @@ router.post('/', async (req, res) => {
                 INSERT INTO sales_quotations
                     (quotation_no, partner_id, quotation_date, valid_date, currency_code,
                      status, movement_code_id, description, total_amount,
-                     firsat_id, lead_id, source_document_type, source_document_id)
+                     firsat_id, lead_id, source_document_type, source_document_id,
+                     company_id, plant_id, payment_term_code, payment_method,
+                     delivery_term_code, exchange_rate, discount_rate,
+                     project_code, public_note, internal_note,
+                     customer_quotation_no, price_list_id, delivery_date,
+                     subtotal, tax_amount, grand_total)
                 VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,COALESCE($5,'TRY'),
-                        COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13)
+                        COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13,
+                        $14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,
+                        $27,$28,$29)
                 RETURNING id
                 `,
                 [
@@ -107,23 +180,17 @@ router.post('/', async (req, res) => {
                     firsat_id || null, lead_id || null,
                     source_document_type || (firsat_id ? 'CRM_FIRSAT' : null),
                     source_document_id || firsat_id || null,
+                    company_id, plant_id || null,
+                    payment_term_code || null, payment_method || null, delivery_term_code || null,
+                    exchange_rate != null ? Number(exchange_rate) : null,
+                    discount_rate != null ? Number(discount_rate) : null,
+                    project_code || null, public_note || null, internal_note || null,
+                    customer_quotation_no || null, price_list_id || null, delivery_date || null,
+                    top.subtotal, top.tax_amount, top.grand_total,
                 ]
             );
             const tid = baslik.rows[0].id;
-            for (const s of satirlar) {
-                await client.query(
-                    `
-                    INSERT INTO sales_quotation_lines
-                        (quotation_id, line_no, item_id, quantity, uom_code, unit_price,
-                         discount_rate, discount_amount, vat_rate, vat_amount, goods_service_amount)
-                    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-                    `,
-                    [
-                        tid, s.line_no, s.item_id, s.quantity, s.uom_code, s.unit_price,
-                        s.discount_rate, s.discount_amount, s.vat_rate, s.vat_amount, s.goods_service_amount,
-                    ]
-                );
-            }
+            await insertSatirlar(client, tid, satirlar);
             return tid;
         });
         res.status(201).json(await teklifGetir(id));
@@ -134,16 +201,21 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
+        const body = req.body || {};
         const {
             partner_id, quotation_date, valid_date, currency_code, description,
             movement_code_id, status, firsat_id, lead_id,
-        } = req.body;
-        const raw = req.body.satirlar || req.body.kalemler;
+            plant_id, payment_term_code, payment_method, delivery_term_code,
+            exchange_rate, discount_rate, project_code,
+            public_note, internal_note, customer_quotation_no, price_list_id, delivery_date,
+        } = body;
+        const raw = body.satirlar || body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'];
         if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz status.' });
+        const company_id = resolveCompanyId(req, body);
 
         const id = await withTransaction(pool, async (client) => {
-            const mevcut = await client.query('SELECT id, status FROM sales_quotations WHERE id=$1 FOR UPDATE', [req.params.id]);
+            const mevcut = await client.query('SELECT id, status, company_id FROM sales_quotations WHERE id=$1 FOR UPDATE', [req.params.id]);
             if (!mevcut.rows[0]) {
                 const e = new Error('Teklif bulunamadı.');
                 e.status = 404;
@@ -151,9 +223,11 @@ router.put('/:id', async (req, res) => {
             }
             let toplam = null;
             let satirlar = null;
+            let top = null;
             if (Array.isArray(raw)) {
                 satirlar = hazirSatirlar(raw);
-                toplam = belgelerToplam(satirlar).total_amount;
+                top = belgelerToplam(satirlar);
+                toplam = top.total_amount;
             }
             await client.query(
                 `
@@ -167,31 +241,43 @@ router.put('/:id', async (req, res) => {
                     description = COALESCE($8, description),
                     total_amount = COALESCE($9, total_amount),
                     firsat_id = COALESCE($10, firsat_id),
-                    lead_id = COALESCE($11, lead_id)
+                    lead_id = COALESCE($11, lead_id),
+                    company_id = COALESCE($12, company_id),
+                    plant_id = COALESCE($13, plant_id),
+                    payment_term_code = COALESCE($14, payment_term_code),
+                    payment_method = COALESCE($15, payment_method),
+                    delivery_term_code = COALESCE($16, delivery_term_code),
+                    exchange_rate = COALESCE($17, exchange_rate),
+                    discount_rate = COALESCE($18, discount_rate),
+                    project_code = COALESCE($19, project_code),
+                    public_note = COALESCE($20, public_note),
+                    internal_note = COALESCE($21, internal_note),
+                    customer_quotation_no = COALESCE($22, customer_quotation_no),
+                    price_list_id = COALESCE($23, price_list_id),
+                    delivery_date = COALESCE($24::date, delivery_date),
+                    subtotal = COALESCE($25, subtotal),
+                    tax_amount = COALESCE($26, tax_amount),
+                    grand_total = COALESCE($27, grand_total),
+                    updated_at = NOW()
                 WHERE id=$1
                 `,
                 [
                     req.params.id, partner_id || null, quotation_date || null, valid_date || null,
                     currency_code || null, status || null, movement_code_id || null, description ?? null, toplam,
                     firsat_id || null, lead_id || null,
+                    company_id || mevcut.rows[0].company_id || null,
+                    plant_id || null, payment_term_code || null, payment_method || null,
+                    delivery_term_code || null,
+                    exchange_rate != null ? Number(exchange_rate) : null,
+                    discount_rate != null ? Number(discount_rate) : null,
+                    project_code || null, public_note ?? null, internal_note ?? null,
+                    customer_quotation_no || null, price_list_id || null, delivery_date || null,
+                    top ? top.subtotal : null, top ? top.tax_amount : null, top ? top.grand_total : null,
                 ]
             );
             if (satirlar) {
                 await client.query('DELETE FROM sales_quotation_lines WHERE quotation_id=$1', [req.params.id]);
-                for (const s of satirlar) {
-                    await client.query(
-                        `
-                        INSERT INTO sales_quotation_lines
-                            (quotation_id, line_no, item_id, quantity, uom_code, unit_price,
-                             discount_rate, discount_amount, vat_rate, vat_amount, goods_service_amount)
-                        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-                        `,
-                        [
-                            req.params.id, s.line_no, s.item_id, s.quantity, s.uom_code, s.unit_price,
-                            s.discount_rate, s.discount_amount, s.vat_rate, s.vat_amount, s.goods_service_amount,
-                        ]
-                    );
-                }
+                await insertSatirlar(client, Number(req.params.id), satirlar);
             }
             return Number(req.params.id);
         });
@@ -220,8 +306,8 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                 INSERT INTO sales_orders
                     (order_no, partner_id, partner_code, partner_name, order_date, order_type,
                      total_amount, status, quotation_id, movement_code_id, currency_code, description,
-                     source_document_type, source_document_id)
-                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9,$10,$11)
+                     source_document_type, source_document_id, company_id)
+                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9,$10,$11,$12)
                 RETURNING id
                 `,
                 [
@@ -229,6 +315,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                     teklif.id, hk?.id || null, teklif.currency_code || 'TRY',
                     `Teklif ${teklif.quotation_no} dönüşümü`,
                     BELGE_TIPI.SATIS_TEKLIF, teklif.id,
+                    teklif.company_id || resolveCompanyId(req, req.body) || null,
                 ]
             );
             const sid = sip.rows[0].id;

@@ -1,11 +1,11 @@
 /**
  * Soft-delete destekli basit tanım CRUD router fabrikası.
  * DELETE → is_active=false (TANIM_SOFT_DELETE=Evet, varsayılan).
+ * Kod alanları manuel yazılır; numaratör kullanılmaz. Kimlik: SERIAL id.
  */
 const express = require('express');
 const pool = require('../../db');
 const { withTransaction } = require('./withTransaction');
-const { sonrakiKod } = require('./kodUretici');
 const { parametreAl } = require('./yetki');
 
 function trimOrNull(v) {
@@ -22,7 +22,7 @@ function trimOrNull(v) {
  * @param {string} opts.table
  * @param {string} opts.codeCol
  * @param {string} opts.nameCol
- * @param {string} opts.seriKodu - number_series.series_code
+ * @param {string} [opts.seriKodu] - artık kullanılmaz (geriye dönük uyumluluk)
  * @param {string[]} [opts.extraCols] - insert/update extra columns
  * @param {string} [opts.orderBy]
  * @param {string} [opts.notFound]
@@ -32,7 +32,6 @@ function createTanimRouter(opts) {
     table,
     codeCol,
     nameCol,
-    seriKodu,
     extraCols = [],
     orderBy = codeCol,
     notFound = 'Kayıt bulunamadı.',
@@ -72,10 +71,11 @@ function createTanimRouter(opts) {
 
   router.post('/', async (req, res, next) => {
     try {
+      const kod = trimOrNull(req.body[codeCol]);
       const name = trimOrNull(req.body[nameCol]);
+      if (!kod) return res.status(400).json({ hata: `${codeCol} zorunlu.` });
       if (!name) return res.status(400).json({ hata: `${nameCol} zorunlu.` });
       const row = await withTransaction(pool, async (client) => {
-        const kod = trimOrNull(req.body[codeCol]) || (await sonrakiKod(client, seriKodu));
         const cols = [codeCol, nameCol, ...extraCols, 'is_active'];
         const vals = [
           kod,

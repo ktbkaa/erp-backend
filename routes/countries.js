@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -38,18 +36,16 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
+        const country_code = trimOrNull(req.body.country_code);
         const country_name = trimOrNull(req.body.country_name);
+        if (!country_code) return res.status(400).json({ hata: 'country_code zorunludur.' });
         if (!country_name) return res.status(400).json({ hata: 'country_name zorunludur.' });
-        const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.country_code) || (await sonrakiKod(client, 'ULKE'));
-            const ins = await client.query(
-                `INSERT INTO countries (country_code, country_name, is_active)
-                 VALUES ($1,$2,COALESCE($3,TRUE)) RETURNING *`,
-                [kod, country_name, typeof req.body.is_active === 'boolean' ? req.body.is_active : true]
-            );
-            return ins.rows[0];
-        });
-        res.status(201).json(row);
+        const ins = await pool.query(
+            `INSERT INTO countries (country_code, country_name, is_active)
+             VALUES ($1,$2,COALESCE($3,TRUE)) RETURNING *`,
+            [country_code, country_name, typeof req.body.is_active === 'boolean' ? req.body.is_active : true]
+        );
+        res.status(201).json(ins.rows[0]);
     } catch (err) {
         if (err.code === '23505') return res.status(409).json({ hata: 'Ülke kodu zaten var.' });
         res.status(500).json({ hata: err.message });

@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 async function tipGetir(id) {
     const result = await pool.query('SELECT * FROM production_order_types WHERE id=$1', [id]);
@@ -38,12 +37,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { type_code, type_name, planli_kesin, description, is_active } = req.body;
+        const kod = typeof type_code === 'string' ? type_code.trim() : type_code;
+        if (!kod) return res.status(400).json({ hata: 'type_code zorunlu.' });
         if (!type_name) return res.status(400).json({ hata: 'type_name zorunlu.' });
         if (planli_kesin && !['Planli', 'Kesin'].includes(planli_kesin)) {
             return res.status(400).json({ hata: "planli_kesin 'Planli' veya 'Kesin' olmalı." });
         }
         const id = await withTransaction(pool, async (client) => {
-            const kod = type_code || (await sonrakiKod(client, 'URETIM_EMRI_TIP'));
             const result = await client.query(
                 `
                 INSERT INTO production_order_types (type_code, type_name, planli_kesin, description, is_active)
@@ -56,6 +56,7 @@ router.post('/', async (req, res) => {
         });
         res.status(201).json(await tipGetir(id));
     } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'Tip kodu zaten var.' });
         res.status(500).json({ hata: err.message });
     }
 });

@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/', async (req, res, next) => {
   try {
@@ -95,6 +96,13 @@ router.post('/toplu', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'item_serials',
+  notFound: 'Seri bulunamadı.',
+  skipPut: true,
 });
 
 module.exports = router;

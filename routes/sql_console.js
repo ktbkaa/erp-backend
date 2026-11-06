@@ -120,6 +120,37 @@ function analyzeSql(sql) {
   return { sql: raw.replace(/;\s*$/, ''), verb, writeKind, isSelect: Boolean(isSelect && !writeKind) };
 }
 
+/** Liste/smoke uyumu — meta özeti (ekran endpoint: /sql-console) */
+router.get('/', async (req, res) => {
+  try {
+    const { pool, meta, override } = getActivePool(req);
+    const perms = await loadSqlPerms(defaultPool._primary || defaultPool, req.user?.id);
+    if (isAdmin(req)) {
+      perms.can_select = true;
+      perms.can_insert = true;
+      perms.can_update = true;
+      perms.can_delete = true;
+    }
+    const tables = await pool.query(`
+      SELECT c.relname AS table_name,
+             COALESCE(obj_description(c.oid), '') AS comment
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public' AND c.relkind = 'r'
+      ORDER BY c.relname
+    `).catch(() => ({ rows: [] }));
+    res.json({
+      connection: { ...meta, override, password_set: false },
+      permissions: perms,
+      is_admin: isAdmin(req),
+      tables: tables.rows,
+      screen: 'sql-sorgu',
+    });
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
 router.get('/meta', async (req, res) => {
   try {
     const { pool, meta, override } = getActivePool(req);

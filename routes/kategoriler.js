@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
 
 const TIPLER = ['ABC', 'Marka', 'TeminSekli'];
 
@@ -65,27 +63,29 @@ router.post('/', async (req, res) => {
             });
         }
 
-        const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.category_code)
-                || (await sonrakiKod(client, 'KATEGORI'));
-            const ins = await client.query(
-                `
-                INSERT INTO categories
-                    (category_code, category_name, category_type, is_active, description)
-                VALUES ($1, $2, $3, COALESCE($4, TRUE), $5)
-                RETURNING *
-                `,
-                [
-                    kod,
-                    category_name,
-                    category_type,
-                    typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
-                    trimOrNull(req.body.description),
-                ]
-            );
-            return ins.rows[0];
-        });
-        res.status(201).json(row);
+        const kod = trimOrNull(req.body.category_code);
+        if (!kod) {
+            return res.status(400).json({
+                hata: 'Kategori kodu zorunludur.',
+                hatalar: [{ alan: 'category_code', hata: 'Kategori kodu zorunludur.' }],
+            });
+        }
+        const ins = await pool.query(
+            `
+            INSERT INTO categories
+                (category_code, category_name, category_type, is_active, description)
+            VALUES ($1, $2, $3, COALESCE($4, TRUE), $5)
+            RETURNING *
+            `,
+            [
+                kod,
+                category_name,
+                category_type,
+                typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
+                trimOrNull(req.body.description),
+            ]
+        );
+        res.status(201).json(ins.rows[0]);
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu kategori kodu zaten var.', alan: 'category_code' });
