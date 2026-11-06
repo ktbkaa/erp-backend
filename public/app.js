@@ -19308,6 +19308,48 @@ function validateRequired(screen, payload) {
       return `${f.label} zorunlu.`;
     }
   }
+
+  // Detay grid zorunlu alanları (kalem satırları)
+  const gridTabs = [];
+  (screen.formTabs || []).forEach((t) => {
+    if (t.kind === 'master-grid' && t.grid?.fields?.length) {
+      gridTabs.push({ key: t.grid.key || screen.detailKey || '_detail', fields: t.grid.fields });
+    } else if (t.kind === 'grid' && (t.fields || []).length) {
+      gridTabs.push({ key: t.key, fields: t.fields });
+    }
+  });
+  if (!gridTabs.length && (screen.detailFields || []).length) {
+    gridTabs.push({ key: screen.detailKey || 'satirlar', fields: screen.detailFields });
+  }
+  for (const gt of gridTabs) {
+    const reqFields = (gt.fields || []).filter((f) => f.required || (f.requiredOnNew && state.formMode === 'yeni'));
+    if (!reqFields.length) continue;
+    const rows = Array.isArray(payload?.[gt.key]) ? payload[gt.key] : [];
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i] || {};
+      const hasAny = (gt.fields || []).some((f) => {
+        if (f.type === 'static' || f.type === 'checkbox') return false;
+        const v = row[f.key];
+        return v !== undefined && v !== null && String(v).trim() !== '';
+      });
+      if (!hasAny) continue; // tamamen boş satır — kaydetmede zaten filtrelenir
+      for (const f of reqFields) {
+        const v = row[f.key];
+        if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
+          const tr = document.querySelector(
+            `tr[data-grid-row="${CSS.escape(gt.key)}"][data-grid-idx="${i}"]`
+          );
+          const ctrl = tr?.querySelector(`[data-detail="${CSS.escape(f.key)}"]`);
+          const td = ctrl?.closest('td') || tr?.querySelector('td.td-required');
+          if (td) {
+            td.classList.add('is-required-empty', 'is-required-miss');
+            try { td.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) { /* ignore */ }
+          }
+          return `Satır ${i + 1}: ${f.label} zorunlu.`;
+        }
+      }
+    }
+  }
   return null;
 }
 
