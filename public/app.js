@@ -9786,6 +9786,43 @@ function renderListPager(total) {
     </div>`;
 }
 
+/**
+ * Liste (#listTableScroll) ile ekran (#viewScreen) bağımsız kayar.
+ * Fare listede → liste; uçta (üst/alt) kaydırmaya devam → ekran.
+ * Fare diğer alanlardayken tekerlek doğrudan ekranı kaydırır.
+ */
+function bindNestedListScroll() {
+  const listEl = $('#listTableScroll');
+  const screenEl = $('#viewScreen');
+  if (!listEl || !screenEl || listEl.dataset.nestedScrollBound === '1') return;
+  listEl.dataset.nestedScrollBound = '1';
+  listEl.addEventListener(
+    'wheel',
+    (e) => {
+      const dy = e.deltaY;
+      if (!dy) return;
+      const maxScroll = Math.max(0, listEl.scrollHeight - listEl.clientHeight);
+      const atTop = listEl.scrollTop <= 0.5;
+      const atBottom = listEl.scrollTop >= maxScroll - 0.5;
+      const wantDown = dy > 0;
+      const wantUp = dy < 0;
+      const listCantScroll = maxScroll <= 0;
+      const atEdge = (wantDown && atBottom) || (wantUp && atTop) || listCantScroll;
+      if (atEdge) {
+        e.preventDefault();
+        e.stopPropagation();
+        screenEl.scrollTop += dy;
+        return;
+      }
+      /* Ortada: listeyi elle kaydır (bazı ortamlarda native wheel yetersiz) */
+      e.preventDefault();
+      e.stopPropagation();
+      listEl.scrollTop += dy;
+    },
+    { passive: false },
+  );
+}
+
 function renderList(screen) {
   const head = $('#dataHead');
   const body = $('#dataBody');
@@ -16578,6 +16615,9 @@ function bindEvents() {
     const scroller = $('#listTableScroll');
     if (scroller) scroller.scrollTop = 0;
   });
+
+  /* İç içe kaydırma: liste üzerindeyken liste; uçta devam → ekran (#viewScreen) */
+  bindNestedListScroll();
 
   $('#btnFormCancel').addEventListener('click', (e) => {
     e.preventDefault();

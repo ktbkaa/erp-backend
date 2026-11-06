@@ -1081,8 +1081,9 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 
 .screen-view {
   display: grid;
-  /* banner | aksiyon | filtre | liste — içerik kadar uzar; ekranın kendisi kayar */
-  grid-template-rows: auto auto auto auto;
+  /* banner | aksiyon | filtre | liste — içerik kadar uzar; sıkıştırmadan taşır → ekran kayar */
+  grid-template-rows: max-content max-content max-content max-content;
+  grid-auto-rows: max-content;
   align-content: start;
   height: 100%;
   min-height: 0;
@@ -1090,8 +1091,14 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   gap: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  /* body’ye değil; liste→ekran zincirine izin */
+  overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
+  padding-bottom: max(1.5rem, 3vh);
+}
+.screen-view > * {
+  /* min-height:0 grid sıkıştırmasını engelle — satırlar içerik boyunda kalsın */
+  min-height: min-content;
 }
 /* Liste view’ı: kabuk değil ekranın sağındaki ana scrollbar */
 .view.screen-view:not([hidden]) {
@@ -1161,7 +1168,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   box-shadow: var(--shadow-card);
   padding: 0.65rem 1rem 0.7rem;
   overflow: visible;
-  min-height: 0;
+  min-height: min-content;
   flex: 0 0 auto;
 }
 .filter-pane-head, .list-pane-head, .detail-head, .form-topbar {
@@ -1320,7 +1327,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 }
 
 .list-pane {
-  min-height: 0;
+  min-height: min-content;
   display: flex;
   flex-direction: column;
   margin: 0.65rem 0.85rem 0.85rem;
@@ -1329,20 +1336,30 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
   box-shadow: var(--shadow-card);
-  max-height: calc(100vh - 13.5rem);
+  /* viewport’u doldurmasın — sayfa da kayabilsin */
+  max-height: none;
 }
 .list-pane-head { margin-bottom: 0.4rem; flex: 0 0 auto; }
 .list-meta { color: var(--muted); font-size: 0.8rem; }
-/* Liste alanı kendi içinde kayar (15 satır/sayfa + taşma) */
+/* Liste tablosu: sınırlı yükseklik + kendi scrollbar; uçta ekrana zincirlenir.
+   Yükseklik, filtre+aksiyon ile birlikte viewport’u aşacak kadar — sayfa da kayar. */
 .list-pane .table-scroll,
-.table-scroll {
-  flex: 1 1 auto;
+#listTableScroll.table-scroll {
+  flex: 0 0 auto;
+  height: min(28rem, 52vh);
   min-height: 10rem;
+  max-height: min(28rem, 52vh);
   overflow: auto;
+  overscroll-behavior-y: auto;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   background: #fff;
   scrollbar-gutter: stable;
+}
+/* Diğer table-scroll kullanımları (meta vb.) */
+.table-scroll:not(#listTableScroll) {
+  overflow: auto;
+  min-height: 0;
 }
 .list-pager {
   flex: 0 0 auto;
@@ -2722,17 +2739,17 @@ tr.selected td { background: var(--accent-soft); }
   display: grid;
   grid-template-columns: 108px 1fr;
   gap: 0;
-  min-height: 0;
+  min-height: min-content;
   min-width: 0;
   height: auto;
-  max-height: calc(100vh - 12.5rem);
-  overflow: hidden;
-  background: #fff;
+  max-height: none;
+  overflow: visible;
+  background: transparent;
 }
 .list-work .list-pane {
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  height: auto;
   max-height: none;
   margin-bottom: 0.85rem;
 }
