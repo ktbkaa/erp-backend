@@ -15,6 +15,116 @@ function filterOpNeedsBetween(op) {
   return op === 'arasinda';
 }
 
+/** Stok kartı — parametre alanları (sekmelere dağıtılır; kayıtta seçili firmalara yazılır) */
+const STOK_FIRMA_GENEL_FIELDS = [
+  { key: 'sales_price', label: 'Satış fiyatı', type: 'number', group: 'firma-geneli', groupLabel: 'Firma geneli' },
+  {
+    key: 'currency_code',
+    label: 'Satış para birimi',
+    type: 'lookup',
+    lookup: 'para-birimleri',
+    valueKey: 'currency_code',
+    labelKey: 'currency_name',
+    codeKey: 'currency_code',
+    group: 'firma-geneli',
+    groupLabel: 'Firma geneli',
+  },
+  { key: 'purchase_uom', label: 'Satınalma birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'firma-geneli', groupLabel: 'Firma geneli' },
+  {
+    key: 'purchase_currency_code',
+    label: 'Satınalma para birimi',
+    type: 'lookup',
+    lookup: 'para-birimleri',
+    valueKey: 'currency_code',
+    labelKey: 'currency_name',
+    codeKey: 'currency_code',
+    group: 'firma-geneli',
+    groupLabel: 'Firma geneli',
+  },
+  { key: 'sales_uom', label: 'Satış birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'firma-geneli', groupLabel: 'Firma geneli' },
+  { key: 'sa_tolerans_min_yuzde', label: 'SA tolerans min %', type: 'number', group: 'firma-geneli', groupLabel: 'Firma geneli' },
+  { key: 'sa_tolerans_max_yuzde', label: 'SA tolerans max %', type: 'number', group: 'firma-geneli', groupLabel: 'Firma geneli' },
+  { key: 'temin_suresi_days', label: 'Temin süresi (gün)', type: 'number', group: 'firma-geneli', groupLabel: 'Firma geneli' },
+  { key: 'cikis_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'firma-geneli', groupLabel: 'Firma geneli' },
+];
+
+const STOK_VERGI_FIELDS = [
+  {
+    key: 'default_tax_code_id',
+    label: 'Vergi tipi',
+    type: 'lookup',
+    lookup: 'vergi-kodlari',
+    valueKey: 'id',
+    labelKey: 'tax_name',
+    codeKey: 'tax_code',
+    group: 'vergi',
+    groupLabel: 'Vergi',
+  },
+  { key: 'varsayilan_vat_rate', label: 'Oran %', type: 'number', readOnly: true, group: 'vergi', groupLabel: 'Vergi' },
+];
+
+const STOK_DEPO_POLITIKA_FIELDS = [
+  {
+    key: 'lot_politika',
+    label: 'Parti politikası',
+    type: 'checkbox',
+    checkValue: 'Zorunlu',
+    uncheckValue: 'Takipsiz',
+    group: 'depo',
+  },
+  {
+    key: 'series_politika',
+    label: 'Seri politikası',
+    type: 'checkbox',
+    checkValue: 'Zorunlu',
+    uncheckValue: 'Takipsiz',
+    group: 'depo',
+  },
+  {
+    key: 'varsayilan_giris_warehouse_id',
+    label: 'Varsayılan giriş depo',
+    type: 'lookup',
+    lookup: 'warehouses',
+    valueKey: 'id',
+    labelKey: 'warehouse_name',
+    codeKey: 'warehouse_code',
+    dependsOn: 'company_id',
+    filterKey: 'company_id',
+    group: 'depo',
+  },
+  {
+    key: 'varsayilan_cikis_warehouse_id',
+    label: 'Varsayılan çıkış depo',
+    type: 'lookup',
+    lookup: 'warehouses',
+    valueKey: 'id',
+    labelKey: 'warehouse_name',
+    codeKey: 'warehouse_code',
+    dependsOn: 'company_id',
+    filterKey: 'company_id',
+    group: 'depo',
+  },
+];
+
+const STOK_MRP_FIELDS = [
+  { key: 'safety_stock', label: 'Emniyet stok', type: 'number', group: 'planlama' },
+  { key: 'min_stock', label: 'Minimum stok', type: 'number', group: 'planlama' },
+  { key: 'reorder_level', label: 'Yeniden sipariş seviyesi', type: 'number', group: 'planlama' },
+  { key: 'fixed_order_quantity', label: 'Sabit sipariş miktarı', type: 'number', group: 'planlama' },
+  { key: 'optimum_order_quantity', label: 'Optimum sipariş miktarı', type: 'number', group: 'planlama' },
+  { key: 'max_stock', label: 'Maksimum stok', type: 'number', group: 'planlama' },
+];
+
+/** Eski yapı uyumu — alan toplama / seed */
+const STOK_FIRMA_PARAM_SECTIONS = [
+  { id: 'satis-sa', title: 'Firma geneli', fields: STOK_FIRMA_GENEL_FIELDS },
+  { id: 'vergi', title: 'Vergi', fields: STOK_VERGI_FIELDS },
+  { id: 'depo', title: 'Depo politikası', fields: STOK_DEPO_POLITIKA_FIELDS },
+  { id: 'mrp', title: 'MRP', fields: STOK_MRP_FIELDS },
+];
+
+const STOK_FIRMA_PARAM_FIELD_KEYS = STOK_FIRMA_PARAM_SECTIONS.flatMap((s) => s.fields.map((f) => f.key));
+
 const MODULES = [
   {
     id: 'fixed-tanimlar',
@@ -1009,13 +1119,16 @@ const MODULES = [
               { key: 'country_mensei', label: 'Ülke menşei', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name', group: 'address' },
               { key: 'gtip_code', label: 'GTİP / gümrük kodu', group: 'kimlik' },
               { key: 'description', label: 'Açıklama', group: 'status' },
+              // Firma geneli + Vergi — Stok Kart sekmesinin altı (seçili firmalara kaydedilir)
+              ...STOK_FIRMA_GENEL_FIELDS,
+              ...STOK_VERGI_FIELDS,
             ],
           },
           {
             id: 'firmalar',
             label: 'Firmalar',
             kind: 'stok-firmalar',
-            // Firma tik + başlıklı firmaya özgü parametreler (UI renderStokFirmalarPane)
+            // Yalnızca firma çoklu seçimi (parametreler diğer sekmelerde)
           },
           {
             id: 'ek-bilgiler', label: 'Ek Bilgiler', kind: 'fields',
@@ -1061,9 +1174,12 @@ const MODULES = [
             ],
           },
           {
-            // Parti/seri + varsayılan depo firmaya özgü → Firmalar sekmesi
             id: 'depolar', label: 'Depolar', kind: 'stok-depolar',
-            fields: [],
+            fields: [...STOK_DEPO_POLITIKA_FIELDS],
+          },
+          {
+            id: 'mrp', label: 'MRP', kind: 'fields',
+            fields: [...STOK_MRP_FIELDS],
           },
           {
             id: 'kategori', label: 'Kategoriler', kind: 'fields',
@@ -7357,112 +7473,6 @@ function upgradeTanimLookups(screen) {
   });
 }
 
-/** Stok kartı — Firmalar sekmesi: yetki benzeri firma tikleri + başlıklı firma parametreleri */
-/** Firma düzeyinde parametreler (iş yeri zorunlu değil). plant_id yalnız isteğe bağlı istisna satırında. */
-const STOK_FIRMA_PARAM_SECTIONS = [
-  {
-    id: 'satis-sa',
-    title: 'Satış / Satınalma',
-    fields: [
-      { key: 'sales_price', label: 'Satış fiyatı', type: 'number' },
-      {
-        key: 'currency_code',
-        label: 'Satış para birimi',
-        type: 'lookup',
-        lookup: 'para-birimleri',
-        valueKey: 'currency_code',
-        labelKey: 'currency_name',
-        codeKey: 'currency_code',
-      },
-      { key: 'purchase_uom', label: 'Satınalma birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-      {
-        key: 'purchase_currency_code',
-        label: 'Satınalma para birimi',
-        type: 'lookup',
-        lookup: 'para-birimleri',
-        valueKey: 'currency_code',
-        labelKey: 'currency_name',
-        codeKey: 'currency_code',
-      },
-      { key: 'sales_uom', label: 'Satış birimi', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-      { key: 'sa_tolerans_min_yuzde', label: 'SA tolerans min %', type: 'number' },
-      { key: 'sa_tolerans_max_yuzde', label: 'SA tolerans max %', type: 'number' },
-      { key: 'temin_suresi_days', label: 'Temin süresi (gün)', type: 'number' },
-      { key: 'cikis_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'] },
-    ],
-  },
-  {
-    id: 'vergi',
-    title: 'Vergi',
-    fields: [
-      {
-        key: 'default_tax_code_id',
-        label: 'Vergi tipi',
-        type: 'lookup',
-        lookup: 'vergi-kodlari',
-        valueKey: 'id',
-        labelKey: 'tax_name',
-        codeKey: 'tax_code',
-      },
-      { key: 'varsayilan_vat_rate', label: 'Oran %', type: 'number', readOnly: true },
-    ],
-  },
-  {
-    id: 'depo',
-    title: 'Depo politikaları',
-    fields: [
-      {
-        key: 'lot_politika',
-        label: 'Parti politikası',
-        type: 'checkbox',
-        checkValue: 'Zorunlu',
-        uncheckValue: 'Takipsiz',
-      },
-      {
-        key: 'series_politika',
-        label: 'Seri politikası',
-        type: 'checkbox',
-        checkValue: 'Zorunlu',
-        uncheckValue: 'Takipsiz',
-      },
-      {
-        key: 'varsayilan_giris_warehouse_id',
-        label: 'Varsayılan giriş depo',
-        type: 'lookup',
-        lookup: 'warehouses',
-        valueKey: 'id',
-        labelKey: 'warehouse_name',
-        codeKey: 'warehouse_code',
-        dependsOn: 'company_id',
-        filterKey: 'company_id',
-      },
-      {
-        key: 'varsayilan_cikis_warehouse_id',
-        label: 'Varsayılan çıkış depo',
-        type: 'lookup',
-        lookup: 'warehouses',
-        valueKey: 'id',
-        labelKey: 'warehouse_name',
-        codeKey: 'warehouse_code',
-        dependsOn: 'company_id',
-        filterKey: 'company_id',
-      },
-    ],
-  },
-  {
-    id: 'mrp',
-    title: 'MRP',
-    fields: [
-      { key: 'safety_stock', label: 'Emniyet stok', type: 'number' },
-      { key: 'min_stock', label: 'Minimum stok', type: 'number' },
-      { key: 'reorder_level', label: 'Yeniden sipariş seviyesi', type: 'number' },
-      { key: 'fixed_order_quantity', label: 'Sabit sipariş miktarı', type: 'number' },
-      { key: 'optimum_order_quantity', label: 'Optimum sipariş miktarı', type: 'number' },
-      { key: 'max_stock', label: 'Maksimum stok', type: 'number' },
-    ],
-  },
-];
-
 /** İş yerine özel satırda gösterilen alan (opsiyonel istisna) */
 const STOK_FIRMA_PLANT_OVERRIDE_FIELD = {
   key: 'plant_id',
@@ -7490,9 +7500,6 @@ function collectScreenFormFields(screen) {
     push(tab.grid?.fields);
     push(tab.componentFields);
     push(tab.equipmentFields);
-    if (tab.kind === 'stok-firmalar') {
-      STOK_FIRMA_PARAM_SECTIONS.forEach((sec) => push(sec.fields));
-    }
   });
   return out;
 }
@@ -13997,76 +14004,46 @@ function renderStokFirmalarPane(rec) {
   ensureStokFirmaParamsSeed(rec);
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
-  const aid = getActiveFirmaId();
-  const allCompanies = Array.isArray(state.companies) ? state.companies : (state.lookupCache?.companies || []);
-  // Tepedeki firma profili seçiliyse yalnız o firma — diğer firmaların bilgisi gelmez
-  const companies = aid
-    ? allCompanies.filter((f) => Number(f.id) === Number(aid))
-    : allCompanies;
-  const selected = new Set(
-    aid
-      ? [Number(aid)]
-      : (stokFirmaSelectedCompanyIds(rec).length
-        ? stokFirmaSelectedCompanyIds(rec)
-        : [])
-  );
-  if (!selected.size && companies[0]) selected.add(Number(companies[0].id));
+  const companies = Array.isArray(state.companies) && state.companies.length
+    ? state.companies
+    : (state.lookupCache?.companies || []);
+  const selected = new Set(stokFirmaSelectedCompanyIds(rec));
+  if (!selected.size) {
+    const aid = Number(rec?.company_id) || getActiveFirmaId();
+    if (aid) selected.add(Number(aid));
+    else if (companies[0]) selected.add(Number(companies[0].id));
+  }
 
   const rows = companies.length
     ? companies.map((f) => `
       <tr data-stok-firma-yetki="${escAttr(f.id)}">
         <td class="yetki-erisim">
-          <input type="checkbox" data-stok-firma-check="1" ${selected.has(Number(f.id)) ? 'checked' : ''} ${dis || aid ? 'disabled' : ''} />
+          <input type="checkbox" data-stok-firma-check="1" ${selected.has(Number(f.id)) ? 'checked' : ''} ${dis} />
         </td>
         <td class="yetki-ekran mono">${escapeHtml(f.company_code || '')}</td>
         <td>${escapeHtml(f.company_name || '')}</td>
       </tr>`).join('')
     : '<tr><td colspan="3" class="detail-empty">Firma listesi yok.</td></tr>';
 
-  const openFirst = [...selected][0] || null;
-  const bags = Array.isArray(rec?.is_yeri_baglari) ? rec.is_yeri_baglari : [];
-  const cards = companies
-    .filter((f) => selected.has(Number(f.id)))
-    .map((f) => {
-      const params = stokFirmaParamsForCompany(rec, f.id)
-        .filter((p) => !aid || Number(p.company_id) === Number(aid));
-      const firmaBags = bags.filter((b) => {
-        if (Number(b.company_id) === Number(f.id)) return true;
-        const plant = (state.lookupCache?.['is-yerleri'] || []).find((p) => Number(p.id) === Number(b.plant_id));
-        return Number(plant?.company_id) === Number(f.id);
-      });
-      return renderStokFirmaParamCard(
-        f,
-        params.length ? params : [emptyStokFirmaParam(f.id)],
-        Number(f.id) === Number(openFirst),
-        firmaBags
-      );
-    })
-    .join('');
-
-  const scopeHint = aid
-    ? 'Firma profilindeki aktif firmaya bağlısınız; diğer firmaların parametreleri bu ekranda görünmez. Bu firmanın tüm iş yerleri varsayılan tanımlıdır; kapsamı daraltmak veya iş yeri istisnası eklemek isteğe bağlıdır.'
-    : 'Firma zorunludur. Seçilen firmanın tüm iş yerlerinde stok varsayılan tanımlıdır; kapsamı daraltmak veya iş yerine özel parametre (istisna) eklemek isteğe bağlıdır.';
-
   return `
     <div class="stok-firmalar-pane erp-master-panel">
       <section class="firma-yetki-pane stok-firma-yetki-pane" aria-label="Stok firma tanımları">
         <div class="yetki-pane-head">
-          <div class="section-label">${aid ? 'Aktif firma' : 'Firma seçimi'}</div>
-          <div class="yetki-pane-actions"${readonly || aid ? ' hidden' : ''}>
+          <div class="section-label">Firma seçimi</div>
+          <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
             <button type="button" class="btn ghost" id="stokFirmaSelectAll">Hepsi</button>
             <button type="button" class="btn ghost" id="stokFirmaClearAll">Temizle</button>
           </div>
         </div>
-        <p class="hint yetki-hint">${escapeHtml(scopeHint)}</p>
+        <p class="hint yetki-hint">Stok kartının geçerli olacağı firmaları işaretleyin. Ortak parametreler diğer sekmelerde düzenlenir; kayıtta seçili firmalara yazılır.</p>
         <div class="firma-yetki-scroll">
           <table class="yetki-table" id="stokFirmaYetkiTable">
             <thead>
               <tr>
                 <th class="yetki-erisim">
-                  <label class="yetki-th-hepsi" title="${aid ? 'Aktif firma' : 'Tüm firmalar'}">
-                    <input type="checkbox" data-stok-firma-head="hepsi" ${dis || aid ? 'disabled' : ''} ${aid ? 'checked' : ''} />
-                    <span>${aid ? 'Profil' : 'Hepsi'}</span>
+                  <label class="yetki-th-hepsi" title="Tüm firmalar">
+                    <input type="checkbox" data-stok-firma-head="hepsi" ${dis} />
+                    <span>Hepsi</span>
                   </label>
                 </th>
                 <th class="yetki-ekran">Kod</th>
@@ -14077,116 +14054,45 @@ function renderStokFirmalarPane(rec) {
           </table>
         </div>
       </section>
-      <div class="stok-firma-params" id="stokFirmaParams">
-        ${cards || '<div class="detail-empty">Parametre görmek için üstten firma profili seçin.</div>'}
-      </div>
     </div>`;
-}
-
-function refreshStokFirmalarPane() {
-  const screen = findScreen(state.screenId);
-  if (!screen || screen.id !== 'stok-karti') return;
-  const cur = readStokFirmaParamsFromDom(state.formRecord || {});
-  const bags = readStokFirmaIsYeriBaglariFromDom();
-  state.formRecord = {
-    ...(state.formRecord || {}),
-    firma_parametreleri: cur,
-    ...(bags.length || document.querySelector('[data-stok-firma-plant-check]')
-      ? { is_yeri_baglari: bags }
-      : {}),
-  };
-  const panel = document.querySelector('[data-tab-panel="firmalar"]');
-  if (!panel) return;
-  panel.innerHTML = renderStokFirmalarPane(state.formRecord);
-  const fresh = panel.querySelector('.stok-firma-yetki-pane');
-  if (fresh) delete fresh.dataset.bound;
-  const params = panel.querySelector('#stokFirmaParams');
-  if (params) delete params.dataset.bound;
-  bindStokFirmaYetkiEvents();
-  bindCascadeLookups(screen);
 }
 
 function bindStokFirmaYetkiEvents() {
   const box = document.querySelector('.stok-firma-yetki-pane');
-  const paramsRoot = document.getElementById('stokFirmaParams');
-  if (box && box.dataset.bound !== '1') {
-    box.dataset.bound = '1';
-    const syncHead = () => {
-      const checks = [...box.querySelectorAll('[data-stok-firma-check]')];
-      const head = box.querySelector('[data-stok-firma-head="hepsi"]');
-      if (!head || !checks.length) return;
-      head.checked = checks.every((c) => c.checked);
-      head.indeterminate = !head.checked && checks.some((c) => c.checked);
-    };
-    box.addEventListener('change', (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLInputElement)) return;
-      if (t.matches('[data-stok-firma-head="hepsi"]')) {
-        box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = t.checked; });
-        syncHead();
-        refreshStokFirmalarPane();
-        return;
-      }
-      if (t.matches('[data-stok-firma-check]')) {
-        syncHead();
-        refreshStokFirmalarPane();
-      }
-    });
-    const allBtn = document.getElementById('stokFirmaSelectAll');
-    const clearBtn = document.getElementById('stokFirmaClearAll');
-    if (allBtn) {
-      allBtn.addEventListener('click', () => {
-        box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = true; });
-        syncHead();
-        refreshStokFirmalarPane();
-      });
+  if (!box || box.dataset.bound === '1') return;
+  box.dataset.bound = '1';
+  const syncHead = () => {
+    const checks = [...box.querySelectorAll('[data-stok-firma-check]')];
+    const head = box.querySelector('[data-stok-firma-head="hepsi"]');
+    if (!head || !checks.length) return;
+    head.checked = checks.every((c) => c.checked);
+    head.indeterminate = !head.checked && checks.some((c) => c.checked);
+  };
+  box.addEventListener('change', (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.matches('[data-stok-firma-head="hepsi"]')) {
+      box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = t.checked; });
+      syncHead();
+      return;
     }
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = false; });
-        syncHead();
-        refreshStokFirmalarPane();
-      });
-    }
-    syncHead();
-  }
-
-  if (paramsRoot && paramsRoot.dataset.bound !== '1') {
-    paramsRoot.dataset.bound = '1';
-    paramsRoot.addEventListener('change', (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-      // İstisna iş yeri seçilince etiket yenile
-      if (t.getAttribute('data-stok-firma') === 'plant_id') {
-        refreshStokFirmalarPane();
-      }
-    });
-    paramsRoot.addEventListener('click', (e) => {
-      const addBtn = e.target.closest?.('[data-stok-firma-add-plant]');
-      if (addBtn) {
-        e.preventDefault();
-        const cid = Number(addBtn.getAttribute('data-stok-firma-add-plant'));
-        const cur = readStokFirmaParamsFromDom(state.formRecord || {});
-        cur.push({ ...emptyStokFirmaParam(cid), _isOverride: true });
-        const bags = readStokFirmaIsYeriBaglariFromDom();
-        state.formRecord = {
-          ...(state.formRecord || {}),
-          firma_parametreleri: cur,
-          ...(bags.length ? { is_yeri_baglari: bags } : {}),
-        };
-        refreshStokFirmalarPane();
-        return;
-      }
-      const rmBtn = e.target.closest?.('[data-stok-firma-remove-plant]');
-      if (rmBtn) {
-        e.preventDefault();
-        const rowKey = rmBtn.getAttribute('data-stok-firma-remove-plant');
-        const block = paramsRoot.querySelector(`[data-stok-firma-plant-block="${CSS.escape(rowKey)}"]`);
-        if (block) block.remove();
-        refreshStokFirmalarPane();
-      }
+    if (t.matches('[data-stok-firma-check]')) syncHead();
+  });
+  const allBtn = document.getElementById('stokFirmaSelectAll');
+  const clearBtn = document.getElementById('stokFirmaClearAll');
+  if (allBtn) {
+    allBtn.addEventListener('click', () => {
+      box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = true; });
+      syncHead();
     });
   }
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      box.querySelectorAll('[data-stok-firma-check]').forEach((c) => { c.checked = false; });
+      syncHead();
+    });
+  }
+  syncHead();
 }
 
 /** Firmalar sekmesindeki iş yeri kapsamı tikleri → item_plants */
@@ -14202,6 +14108,20 @@ function readStokFirmaIsYeriBaglariFromDom() {
     bags.push({ plant_id: pid, company_id: cid, is_active: true });
   });
   return bags;
+}
+
+/** Master (Stok Kart / Depolar / MRP) alanlarından firma geneli satırı üret */
+function stokFirmaParamFromMaster(companyId, master) {
+  const row = { ...emptyStokFirmaParam(companyId), plant_id: null, is_active: true };
+  STOK_FIRMA_PARAM_FIELD_KEYS.forEach((key) => {
+    if (master && master[key] !== undefined) row[key] = master[key];
+  });
+  if (row.default_tax_code_id) {
+    const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+    const tax = taxRows.find((t) => Number(t.id) === Number(row.default_tax_code_id));
+    if (tax && tax.rate != null && tax.rate !== '') row.varsayilan_vat_rate = Number(tax.rate);
+  }
+  return row;
 }
 
 function readStokFirmaParamsFromDom(rec) {
@@ -14221,62 +14141,17 @@ function readStokFirmaParamsFromDom(rec) {
 
   const out = [];
   selectedIds.forEach((cid) => {
-    const blocks = [...document.querySelectorAll(
-      `#stokFirmaParams [data-stok-firma-plant-block][data-stok-firma-id="${cid}"]`
-    )];
-    if (!blocks.length) {
-      out.push(emptyStokFirmaParam(cid));
-      return;
-    }
-    blocks.forEach((block, idx) => {
-      const rowKey = block.getAttribute('data-stok-firma-row') || stokFirmaRowKey(cid, null, idx);
-      const isOverride = block.getAttribute('data-stok-firma-override') === '1';
-      const row = { ...emptyStokFirmaParam(cid), is_active: true };
-      if (isOverride) row._isOverride = true;
-      // İstisna satırında plant_id
-      if (isOverride) {
-        const plantCtrl = findAttrControl(
-          'data-stok-firma',
-          'plant_id',
-          block,
-          `[data-stok-firma-row="${rowKey}"]`
-        ) || findAttrControl('data-stok-firma', 'plant_id', block);
-        if (plantCtrl) row.plant_id = readFieldValue(plantCtrl, STOK_FIRMA_PLANT_OVERRIDE_FIELD);
-      } else {
-        row.plant_id = null;
-      }
-      STOK_FIRMA_PARAM_SECTIONS.forEach((sec) => {
-        sec.fields.forEach((f) => {
-          const control = findAttrControl(
-            'data-stok-firma',
-            f.key,
-            block,
-            `[data-stok-firma-row="${rowKey}"]`
-          ) || findAttrControl('data-stok-firma', f.key, block);
-          if (!control) return;
-          row[f.key] = readFieldValue(control, f);
-        });
-      });
-      if (row.default_tax_code_id) {
-        const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
-        const tax = taxRows.find((t) => Number(t.id) === Number(row.default_tax_code_id));
-        if (tax && tax.rate != null && tax.rate !== '') row.varsayilan_vat_rate = Number(tax.rate);
-      }
-      out.push(row);
-    });
+    // Firma geneli: Stok Kart / Depolar / MRP master alanlarından
+    out.push(stokFirmaParamFromMaster(cid, rec || {}));
+    // Eski iş yeri istisna satırlarını koru (UI kaldırıldı; veri kaybı olmasın)
+    prev.filter((p) => Number(p.company_id) === cid && isStokFirmaOverrideParam(p) && p.is_active !== false)
+      .forEach((p) => out.push({ ...p, company_id: cid, is_active: true }));
   });
 
-  // İşareti kalkan firma satırlarını pasif sakla.
-  // Aktif firma profili kapsamında: diğer firmaların satırlarını olduğu gibi koru
-  // (görünmeyen firmayı kayıttta silme / pasifleştirme).
-  const aid = getActiveFirmaId();
+  // İşareti kalkan firma satırlarını pasif sakla
   prev.forEach((p) => {
     const cid = Number(p.company_id);
     if (!cid || selectedIds.includes(cid)) return;
-    if (aid && Number(cid) !== Number(aid)) {
-      out.push({ ...p, company_id: cid });
-      return;
-    }
     out.push({ ...p, company_id: cid, is_active: false });
   });
   return out;
@@ -14325,32 +14200,28 @@ function applyPrimaryStokFirmaToMaster(master) {
   master.series_politika = primary.series_politika || master.series_politika;
 }
 
-/** Stok kartı — Depolar sekmesi: depo tanımlama (politikalar Firmalar’da) */
+/** Stok kartı — Depolar sekmesi: depo politikası + depo tanımları */
 function renderStokDepolarPane(tab, rec) {
   const fields = tab.fields || [];
   const policyFields = fields.filter((f) => f.type === 'checkbox');
   const lookupFields = fields.filter((f) => f.type !== 'checkbox');
-  const policyHtml = policyFields.length
-    ? `<section class="stok-depo-section" aria-label="Depo politikaları">
-        <h3 class="erp-section-title">Politikalar</h3>
-        <p class="hint yetki-hint">Parti / seri takibi açık (zorunlu) veya kapalı (takipsiz).</p>
+  const policyHtml = policyFields.length || lookupFields.length
+    ? `<section class="stok-depo-section" aria-label="Depo politikası">
+        <h3 class="erp-section-title">Depo politikası</h3>
+        <p class="hint yetki-hint">Parti / seri takibi ve varsayılan giriş-çıkış depoları.</p>
         <div class="stok-depo-policies">${policyFields.map((f) => fieldShell(
           f,
           fieldControl(f, rec?.[f.key], 'data-master', '', rec || {}),
           rec?.[f.key],
         )).join('')}</div>
-      </section>`
-    : '';
-  const lookupHtml = lookupFields.length
-    ? `<section class="stok-depo-section" aria-label="Varsayılan depolar">
-        <h3 class="erp-section-title">Varsayılan depolar</h3>
-        ${renderGroupedFieldCards(lookupFields, rec, 'data-master', { pairs: true })}
+        ${lookupFields.length
+          ? renderGroupedFieldCards(lookupFields, rec, 'data-master', { pairs: true })
+          : ''}
       </section>`
     : '';
   return `
     <div class="stok-depolar-pane erp-master-panel">
       ${policyHtml}
-      ${lookupHtml}
       ${renderStokDepoYetkiPane(rec)}
     </div>`;
 }
@@ -16967,9 +16838,6 @@ function collectLookupFieldDefs(screen) {
     push(tab.grid?.fields);
     push(tab.componentFields);
     push(tab.equipmentFields);
-    if (tab.kind === 'stok-firmalar') {
-      STOK_FIRMA_PARAM_SECTIONS.forEach((sec) => push(sec.fields));
-    }
   });
   return out;
 }
@@ -20048,6 +19916,7 @@ async function openForm(mode, opts = {}) {
 
   if (screen.id === 'stok-karti') {
     hydrateStokFirmaIsYeri(record);
+    applyPrimaryStokFirmaToMaster(record);
   }
 
   // Mevcut tek rezervasyon kaydı → satır grid’ine yansıt (incele/iptal)
