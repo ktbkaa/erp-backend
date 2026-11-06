@@ -44,9 +44,9 @@ function createTanimRouter(opts) {
       const where = [];
       if (req.query.is_active === 'true') where.push('is_active = TRUE');
       if (req.query.is_active === 'false') where.push('is_active = FALSE');
-      // cascade filtreleri (country_code vb.)
+      // cascade / tip filtreleri (country_code, message_type vb.)
       const params = [];
-      for (const col of ['country_code', 'source_pb', 'target_pb']) {
+      for (const col of ['country_code', 'source_pb', 'target_pb', 'message_type']) {
         if (req.query[col] && extraCols.includes(col)) {
           params.push(req.query[col]);
           where.push(`${col} = $${params.length}`);

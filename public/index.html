@@ -328,6 +328,25 @@
           </div>
         </section>
 
+        <section id="viewPageQuery" class="view meta-view page-query-view" hidden>
+          <div class="screen-banner" id="pageQueryBanner">Sayfa Sorgu</div>
+          <div class="page-query-filter" id="pageQueryFilterBar">
+            <label for="pageQueryScreenFilter">Ekran</label>
+            <select id="pageQueryScreenFilter" aria-label="Ekran filtresi">
+              <option value="">— Ekran seçin —</option>
+            </select>
+            <input type="search" id="pageQueryNavSearch" placeholder="Ekran ara / filtrele…" autocomplete="off" />
+          </div>
+          <div class="meta-layout">
+            <aside class="meta-nav" id="pageQueryNav" aria-label="Ekran listesi">
+              <div class="meta-nav-body" id="pageQueryNavBody"></div>
+            </aside>
+            <div class="meta-detail" id="pageQueryDetail">
+              <div class="meta-empty">Üstten veya soldan bir ekran seçin. Arka plandaki sorgular burada görünür.</div>
+            </div>
+          </div>
+        </section>
+
         <section id="viewSql" class="view sql-view" hidden>
           <div class="sql-layout">
             <div class="sql-main">
