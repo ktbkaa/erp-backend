@@ -2391,20 +2391,88 @@ tr.selected td { background: var(--accent-soft); }
   color: #2a3340;
 }
 /* Zorunlu / eksik: kırmızı * + etiket */
+.field.required {
+  position: relative;
+}
 .field.required label {
   font-weight: 600;
 }
-.field.required .req-star {
+.field.required .req-star,
+.field.required .req-mark {
   color: #c62828;
   font-weight: 700;
   margin-right: 0.2rem;
   font-size: 0.95em;
   line-height: 1;
 }
+/* Zorunlu alan: sağ üst kırmızı üçgen — tüm form ekranları */
+.field.required .req-triangle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0.72rem 0.72rem 0;
+  border-color: transparent #e53935 transparent transparent;
+  pointer-events: none;
+}
+.field.required.is-required-empty .req-triangle,
+.field.required:has(.req-star) .req-triangle {
+  border-color: transparent #c62828 transparent transparent;
+  filter: drop-shadow(0 0 1px rgba(198, 40, 40, 0.35));
+}
 .field.required:has(.req-star) input,
 .field.required:has(.req-star) select,
-.field.required:has(.req-star) textarea {
+.field.required:has(.req-star) textarea,
+.field.required.is-required-empty input,
+.field.required.is-required-empty select,
+.field.required.is-required-empty textarea {
   border-color: #e57373;
+}
+/* Detail grid zorunlu hücre / başlık — sağ üst kırmızı üçgen */
+.detail-table th.th-required,
+.detail-table td.td-required,
+.detail-table td .field.required,
+.detail-table td:has([aria-required="true"]) {
+  position: relative;
+}
+.detail-table th.th-required .req-triangle,
+.detail-table td.td-required > .req-triangle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0.55rem 0.55rem 0;
+  border-color: transparent #e53935 transparent transparent;
+  pointer-events: none;
+}
+.detail-table td.td-required.is-required-empty .req-triangle,
+.detail-table td.td-required.is-required-miss .req-triangle {
+  border-color: transparent #c62828 transparent transparent;
+  filter: drop-shadow(0 0 1px rgba(198, 40, 40, 0.35));
+}
+.detail-table td:has(input[aria-required="true"]):not(:has(.req-triangle))::after,
+.detail-table td:has(select[aria-required="true"]):not(:has(.req-triangle))::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0.55rem 0.55rem 0;
+  border-color: transparent #e53935 transparent transparent;
+  pointer-events: none;
+  z-index: 2;
+}
+.field.required.is-required-miss .req-triangle {
+  border-color: transparent #b71c1c transparent transparent;
+  filter: drop-shadow(0 0 2px rgba(183, 28, 28, 0.45));
 }
 .field.required input,
 .field.required select,
