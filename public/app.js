@@ -9681,18 +9681,54 @@ function listColumns(screen) {
   return [{ key: 'id', label: 'ID', mono: true }, ...cols];
 }
 
-function cellHtml(col, row, index = 0) {
-  let val = col.key === 'id' ? rowKey(row, index) : row[col.key];
-  // Aktif kolonu Pasif olarak gösterilir: tik/Evet = is_inactive (is_active=false)
-  if (col.key === 'is_active' && typeof val === 'boolean') {
-    val = val ? 'Hayır' : 'Evet';
-  } else if (col.key === 'parola_var') {
-    val = val ? 'Var' : 'Yok';
-  } else if (typeof val === 'boolean') {
-    val = val ? 'Evet' : 'Hayır';
+/** Liste / hücre: ISO tarih → gg.aa.yyyy (tüm ekranlar). */
+function formatListCellValue(col, raw) {
+  let val = raw;
+  if (col?.key === 'is_active' && typeof val === 'boolean') {
+    return val ? 'Hayır' : 'Evet';
   }
-  if (val === null || val === undefined || val === '') val = '—';
-  return col.mono ? `<span class="mono">${val}</span>` : String(val);
+  if (col?.key === 'parola_var') return val ? 'Var' : 'Yok';
+  if (typeof val === 'boolean') return val ? 'Evet' : 'Hayır';
+  if (val === null || val === undefined || val === '') return '—';
+
+  const key = String(col?.key || '');
+  const looksDateKey = col?.type === 'date'
+    || /(_date$|tarih|_at$)/i.test(key)
+    || key === 'teslim'
+    || key === 'gecerlilik';
+  if (looksDateKey || (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val))) {
+    const d = parseListDate(val);
+    if (d) return formatListDate(d);
+  }
+  if (col?.num && !Number.isNaN(Number(val))) {
+    return Number(val).toLocaleString('tr-TR', { maximumFractionDigits: 4 });
+  }
+  return String(val);
+}
+
+function parseListDate(val) {
+  if (val instanceof Date && !Number.isNaN(val.getTime())) return val;
+  if (typeof val !== 'string' && typeof val !== 'number') return null;
+  const s = String(val).trim();
+  if (!s) return null;
+  // YYYY-MM-DD or ISO — UTC gece yarısı kaymasını önlemek için tarih kısmını al
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function formatListDate(d) {
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+}
+
+function cellHtml(col, row, index = 0) {
+  const raw = col.key === 'id' ? rowKey(row, index) : row[col.key];
+  const val = formatListCellValue(col, raw);
+  return col.mono ? `<span class="mono">${escAttr(val)}</span>` : escAttr(val);
 }
 
 function renderListSideNav(screen) {
@@ -11799,13 +11835,15 @@ function renderCompactMasterBar(screen, rec) {
     ? Number(screen.masterPrimaryMax)
     : MASTER_PRIMARY_MAX;
   const fields = screen.masterFields || [];
-  const { primary } = partitionMasterFields(fields, maxPrimary);
+  // Notlar alt şeritte kalır; primary+extras’ın tamamı DOM’da olsun (kayıtta kaybolmasın)
+  const { primary, extras } = partitionMasterFields(fields, maxPrimary);
+  const headFields = [...primary, ...extras];
   el.hidden = false;
   el.innerHTML = `
     <div class="erp-doc-header" aria-label="Belge üst bilgileri">
       <div class="erp-doc-header-label">Belge üst bilgileri</div>
       <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact">
-        ${renderFieldGrid(primary, rec || {})}
+        ${renderFieldGrid(headFields, rec || {})}
       </div>
     </div>`;
 }
@@ -14485,6 +14523,8 @@ function bindCascadeLookups(_screen) {
       const f = collectTabFields(scr).find((x) => x.key === masterKey)
         || (scr.masterFields || []).find((x) => x.key === masterKey);
       if (f?.fillFrom && el.value) {
+        // DOM’daki başlık değerlerini kaybetmeden satır doldur (teslim / ödeme vb.)
+        state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
         await fillLinesFromSource(f.fillFrom, el.value);
         return;
       }
@@ -15614,6 +15654,31 @@ async function saveForm({ after = 'stay' } = {}) {
 
   const master = readTabbedPayload(screen);
 
+  // Numaratör kodu: formda ayrılan numaraya sadık kal (disabled input / DOM kaçsa bile)
+  if (screen.codeField) {
+    const reserved = state.formRecord?.[screen.codeField] || master[screen.codeField];
+    if (reserved != null && String(reserved).trim() !== '') {
+      master[screen.codeField] = String(reserved).trim();
+    }
+  }
+  // Belge toplamlarını satırlardan türet (liste kolonları boş kalmasın)
+  const detailKey = screen.detailKey
+    || (screen.formTabs || []).find((t) => t.kind === 'master-grid' || t.kind === 'grid')?.grid?.key
+    || (screen.formTabs || []).find((t) => t.kind === 'grid')?.key;
+  if (detailKey && Array.isArray(master[detailKey]) && typeof computeDocumentTotals === 'function') {
+    const gridFields = (screen.formTabs || []).find((t) => t.kind === 'master-grid')?.grid?.fields
+      || screen.detailFields
+      || [];
+    const tot = computeDocumentTotals(master[detailKey], gridFields);
+    if (tot.subtotal != null) {
+      if (master.subtotal == null || master.subtotal === '') master.subtotal = tot.subtotal;
+      if (master.tax_amount == null || master.tax_amount === '') master.tax_amount = tot.tax_amount;
+      if (master.grand_total == null || master.grand_total === '') master.grand_total = tot.grand_total;
+      if (master.total_amount == null || master.total_amount === '') master.total_amount = tot.grand_total;
+      if (master.discount_amount == null && tot.total_discount) master.discount_amount = tot.total_discount;
+    }
+  }
+
   // Stok kartı: master’daki firma / iş yeri zorunlu bağ
   if (screen.id === 'stok-karti') {
     syncStokFirmaIsYeriForSave(master);
@@ -16545,8 +16610,8 @@ function bindEvents() {
     const lines = [
       cols.map((c) => esc(c.label)).join(';'),
       ...rows.map((r, i) => cols.map((c) => {
-        const key = c.key === 'id' ? (typeof rowKey === 'function' ? rowKey(r, i) : r.id) : r[c.key];
-        return esc(key);
+        const raw = c.key === 'id' ? (typeof rowKey === 'function' ? rowKey(r, i) : r.id) : r[c.key];
+        return esc(formatListCellValue(c, raw));
       }).join(';')),
     ];
     const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
