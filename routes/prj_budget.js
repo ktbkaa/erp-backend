@@ -171,14 +171,29 @@ router.post('/:projectId/costs', async (req, res, next) => {
       sum.rows[0].t,
     ]);
 
+    let approvalMeta = null;
     if (Number(sum.rows[0].t) > Number(p.rows[0].planned_budget || 0) && Number(p.rows[0].planned_budget) > 0) {
       await runAutomation(
         'BUDGET_OVERRUN',
         { project_id: req.params.projectId, actual: sum.rows[0].t, planned: p.rows[0].planned_budget },
         { eventKey: `budget_overrun:${req.params.projectId}:${Math.floor(Number(sum.rows[0].t))}` }
       );
+      try {
+        const { withTransaction } = require('../src/utils/withTransaction');
+        const { notifyBudgetOverrun } = require('../src/services/prjNotifyService');
+        approvalMeta = await withTransaction(pool, async (client) =>
+          notifyBudgetOverrun(client, {
+            project: p.rows[0],
+            actual: sum.rows[0].t,
+            planned: p.rows[0].planned_budget,
+            userId: req.user?.id || null,
+          })
+        );
+      } catch (err) {
+        approvalMeta = { hata: err.message };
+      }
     }
-    res.status(201).json(r.rows[0]);
+    res.status(201).json({ ...r.rows[0], approval_meta: approvalMeta });
   } catch (err) {
     next(err);
   }

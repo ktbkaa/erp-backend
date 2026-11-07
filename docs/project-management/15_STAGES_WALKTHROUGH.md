@@ -88,7 +88,20 @@
 | `POST /prj-integrations/link-purchase` | PUR belge bağ (V10) |
 | `POST /prj-integrations/from-template/:code` | 5 şablon (yazılım/makine/NPD/ERP/özel üretim) |
 
-Belge `project_code` serbest alanı korunur; master oluşunca kod yazılır (lookup UI sonraki iyileştirme — KI-009).
+Belge `project_code` alanları SPA’da `prj-projeler` lookup’a bağlandı (KI-009). Stok / üretim / KK kolonları migration `058` ile eklendi; otomatik maliyet `prjCostService`.
+
+---
+
+## Aşama 6b — Gap turu (KI-009…013)
+
+| Konu | Teslimat |
+|------|----------|
+| Belge lookup | `public/app.js` — PUR/SAL/INV/MFG/QLT `project_code` → lookup |
+| Gantt DnD | `POST /prj-planning/gantt/reschedule` + görsel çubuk UI |
+| Onay + e-posta | `prjNotifyService` → `baslatOnay` + `email_dispatches`; onay ekran kataloğu |
+| Otomatik maliyet | Stok çıkış / üretim Kapali / KK fire → `project_cost_entries` |
+| Test | `tests/prj_gaps.test.js` (4) — toplam **14/14 PASS** |
+| Şema | `db/migrations/058_prj_gaps_lookup_cost.sql` |
 
 ---
 
@@ -109,8 +122,9 @@ Belge `project_code` serbest alanı korunur; master oluşunca kod yazılır (loo
 |-------|--------|
 | `tests/prj_core.test.js` | 3/3 PASS |
 | `tests/prj_full.test.js` | 7/7 PASS (şablon, board, sprint, bütçe, gantt/dashboard, risk/kapanış, WF guard) |
+| `tests/prj_gaps.test.js` | 4/4 PASS (lookup UI, Gantt reschedule, onay+e-posta, otomatik maliyet) |
 
-Bilinen açıklar: `12_KNOWN_ISSUES.md` (KI-001…011).  
+Bilinen açıklar: `12_KNOWN_ISSUES.md` (KI-001…004, 007–008, 010 board, 011).  
 Kullanıcı kılavuzu PDF: `docs/project-management/KTB_ERP_PRJ_Kullanim_Kilavuzu.pdf`  
 UTF-8 kaynak: `docs/project-management/13_USER_GUIDE.md`
 
@@ -123,17 +137,17 @@ UTF-8 kaynak: `docs/project-management/13_USER_GUIDE.md`
 | 1 | Farklı proje türleri | Evet (seed + şablon) |
 | 2 | Faz / iş paketi | Evet (phases + epic/task) |
 | 3 | Alt görev | Evet |
-| 4 | Kanban / Scrum | Evet (API+ekran; DnD=WF) |
+| 4 | Kanban / Scrum | Evet (API+ekran; board kart DnD sınırlı) |
 | 5 | Bağımlılık | Evet (+ döngü engeli) |
-| 6 | Gantt / takvim API | Evet (görsel DnD kütüphanesi sonraki) |
+| 6 | Gantt / takvim API | Evet + görsel DnD tarih/süre |
 | 7 | İş yükü | Evet |
 | 8 | Worklog | Evet |
-| 9 | Bütçe / maliyet | Evet |
-| 10 | ERP bağları | Kısmi (CRM/SAL/PUR/şablon; stok-üretim-KK derin entegrasyon devam) |
-| 11 | Tek ekran izleme | Dashboard + portföy |
+| 9 | Bütçe / maliyet | Evet + stok/üretim/KK otomatik |
+| 10 | ERP bağları | CRM/SAL/PUR/şablon + stok/üretim/KK maliyet; HR kapasite açık |
+| 11 | Tek ekran izleme | Dashboard + portföy (workspace sekmeleri açık) |
 | 12 | Yetki | Matris + üye flag (tam ekran yetki seed sonraki) |
-| 13 | Otomasyon | Seed + log + idempotent |
+| 13 | Otomasyon | Seed + log + idempotent + onay/e-posta |
 | 14 | Audit | work_item_history + audit middleware |
-| 15 | Uçtan uca senaryo | Şablon→board→sprint→bütçe→risk→kapanış testte |
+| 15 | Uçtan uca senaryo | Şablon→board→sprint→bütçe→risk→kapanış + gaps testte |
 
-**100 üzerinden (dürüst):** Fonksiyonel ~72 · ERP entegrasyon ~55 · UX ~65 · WF esnekliği ~70 · Finans ~68 · Güvenlik ~60 · Performans ~70 · Test ~75 · Ticari hazırlık ~62. Ortalama **~66/100**. Eksikler: belge lookup, görsel Gantt DnD, onay motoru bağları, HR kapasite gerçek izin entegrasyonu, e-posta bildirimleri (testte kapalı).
+**100 üzerinden (dürüst):** Fonksiyonel ~80 · ERP entegrasyon ~72 · UX ~74 · WF esnekliği ~78 · Finans ~78 · Güvenlik ~62 · Performans ~72 · Test ~82 · Ticari hazırlık ~72. Ortalama **~74/100**. Kalan: board kart DnD, HR kapasite, workspace sekmeleri, muhasebe motor derin bağ, ekran yetki seed.

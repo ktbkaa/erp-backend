@@ -4706,3 +4706,82 @@ body.doc-tabs-open .doc-tabs-dock {
 .login-brand-mark {
   background: var(--accent) !important;
 }
+
+/* PRJ Gantt görsel DnD */
+.prj-gantt-visual {
+  margin-top: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: linear-gradient(180deg, #fafbfd 0%, #f3f6fa 100%);
+  padding: 0.6rem 0.75rem 0.85rem;
+}
+.prj-gantt-head {
+  font-size: 0.78rem;
+  color: var(--muted, #667);
+  margin-bottom: 0.45rem;
+}
+.prj-gantt-track { display: flex; flex-direction: column; gap: 0.28rem; }
+.prj-gantt-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 0.4rem;
+  align-items: center;
+  min-height: 1.55rem;
+}
+.prj-gantt-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.prj-gantt-bar-wrap {
+  position: relative;
+  height: 1.35rem;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(63, 135, 245, 0.06) 0,
+    rgba(63, 135, 245, 0.06) 1px,
+    transparent 1px,
+    transparent 24px
+  );
+  border-radius: 0.3rem;
+}
+.prj-gantt-bar {
+  position: absolute;
+  top: 0.15rem;
+  height: 1.05rem;
+  background: linear-gradient(90deg, #3f87f5, #2f6fd6);
+  border-radius: 0.28rem;
+  color: #fff;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.35rem;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 2px rgba(20, 40, 80, 0.18);
+}
+.prj-gantt-bar:active { cursor: grabbing; }
+.prj-gantt-bar-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  pointer-events: none;
+}
+.prj-gantt-resize {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 0.45rem;
+  height: 100%;
+  cursor: ew-resize;
+  background: rgba(255,255,255,0.35);
+  border-radius: 0 0.28rem 0.28rem 0;
+}
+.prj-gantt-empty {
+  font-size: 0.8rem;
+  color: var(--muted, #667);
+  padding: 0.5rem;
+}

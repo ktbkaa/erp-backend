@@ -290,12 +290,22 @@ router.post('/projects/:id/close', async (req, res, next) => {
       { project_id: req.params.id, to: '80' },
       { eventKey: `project_close:${req.params.id}` }
     );
+    let approvalMeta = null;
+    try {
+      const { notifyProjectClose } = require('../src/services/prjNotifyService');
+      approvalMeta = await withTransaction(pool, async (client) => {
+        const proj = await client.query(`SELECT * FROM projects WHERE id=$1`, [req.params.id]);
+        return notifyProjectClose(client, { project: proj.rows[0], userId: req.user?.id || null });
+      });
+    } catch (err) {
+      approvalMeta = { hata: err.message };
+    }
     const full = await pool.query(`SELECT * FROM projects WHERE id=$1`, [req.params.id]);
     const cl = await pool.query(
       `SELECT * FROM project_close_checklists WHERE project_id=$1 ORDER BY line_no`,
       [req.params.id]
     );
-    res.json({ project: full.rows[0], checklist: cl.rows });
+    res.json({ project: full.rows[0], checklist: cl.rows, approval_meta: approvalMeta });
   } catch (err) {
     if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);

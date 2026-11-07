@@ -1,6 +1,6 @@
 # KTB ERP — Proje Yönetimi (PRJ) Modülü Kullanım Kılavuzu
 
-**Sürüm:** 1.0  
+**Sürüm:** 1.1  
 **Kodlama:** UTF-8  
 **Tarih:** 7 Kasım 2026 (Europe/Istanbul)  
 **Hedef kitle:** Proje yöneticileri, ekip üyeleri, finans sorumluları, sistem yöneticileri
@@ -100,8 +100,15 @@ Aynı kullanıcının çakışan saat aralığı **reddedilir**.
 ## 6. Planlama
 
 - **Gantt / Zaman Çizelgesi:** plan tarihleri, bağımlılıklar, milestone  
+- **Görsel Gantt DnD:** çubuğu sürükleyerek tarihi kaydırın; sağ kenardan genişleterek süreyi güncelleyin (`POST /prj-planning/gantt/reschedule`)  
 - **Kaynak İş Yükü:** kullanıcı bazlı açık iş ve saat; 160 saati aşım uyarısı  
 - Bağımlılık türleri: Blocks, Depends on, Relates … (döngü engelli)  
+
+---
+
+## 6.1 Belge ↔ proje bağlama
+
+Satış / satınalma / irsaliye / fatura / stok hareketi / üretim emri / KK emri formlarında **Proje** alanı `prj-projeler` lookup’tır; seçilen değer `project_code` olarak saklanır (serbest metin yok).
 
 ---
 
@@ -110,9 +117,10 @@ Aynı kullanıcının çakışan saat aralığı **reddedilir**.
 1. Bütçe satırı ekleyin (kategori, miktar, birim fiyat, PB/kur)  
 2. Gerçekleşen maliyeti **kaynaklı** girin (`source_module/table/id`) — çift sayım engeli  
 3. Özet: plan, gerçekleşen, sapma, brüt sonuç (gelir − maliyet)  
-4. Aşımda `BUDGET_OVERRUN` otomasyonu loglanır  
+4. Aşımda `BUDGET_OVERRUN` otomasyonu loglanır; **onay kaydı** (`prj-butce`) + e-posta kuyruğu açılır  
+5. Otomatik maliyet: stok **çıkış** → `MALZEME`; üretim emri **kapalı** → `URETIM`; KK **fire** → `KALITE` (`project_code` doluysa)
 
-**Not:** Satın alma siparişi varsayılan olarak **taahhüt**; fatura/stok çıkış **gerçekleşen** olarak tasarlanmıştır.
+**Not:** Satın alma siparişi varsayılan olarak **taahhüt**; fatura/stok çıkış **gerçekleşen** olarak tasarlanmıştır. SMTP yoksa e-posta `email_dispatches` içinde Bekliyor/Başarısız kalır (`PRJ_EMAIL_NOTIFY=Evet`).
 
 ---
 
@@ -129,6 +137,7 @@ Olasılık × Etki → skor. Yüksek riskte otomasyon tetiklenir. Önlem ve acil
 - Açık iş varsa `force=true` gerekir  
 - Durum **Tamamlandı (80)**  
 - Kapanış checklist otomasyonu satırları oluşturur  
+- Onay rotası `prj-projeler` + yöneticiye e-posta kuyruğu  
 
 ---
 

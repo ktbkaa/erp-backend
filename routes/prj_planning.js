@@ -2,6 +2,52 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
+/** Gantt sürükle-bırak: tarih / süre güncelle */
+router.post('/gantt/reschedule', async (req, res, next) => {
+  try {
+    const { work_item_id, plan_start_date, plan_end_date, duration_days } = req.body || {};
+    if (!work_item_id) return res.status(400).json({ hata: 'work_item_id zorunlu.' });
+
+    const wi = await pool.query(`SELECT * FROM work_items WHERE id=$1`, [work_item_id]);
+    if (!wi.rows[0]) return res.status(404).json({ hata: 'İş bulunamadı.' });
+
+    let start = plan_start_date || wi.rows[0].plan_start_date;
+    let end = plan_end_date || wi.rows[0].plan_end_date;
+
+    if (duration_days != null && start) {
+      const s = new Date(start);
+      if (!Number.isNaN(s.getTime())) {
+        const e = new Date(s);
+        e.setUTCDate(e.getUTCDate() + Math.max(0, Number(duration_days) - 1));
+        end = e.toISOString().slice(0, 10);
+      }
+    }
+    if (start && end) {
+      const s = new Date(start);
+      const e = new Date(end);
+      if (!Number.isNaN(s.getTime()) && !Number.isNaN(e.getTime()) && e < s) {
+        return res.status(400).json({ hata: 'Bitiş başlangıçtan önce olamaz.' });
+      }
+    }
+
+    const r = await pool.query(
+      `
+      UPDATE work_items
+      SET plan_start_date = COALESCE($2::date, plan_start_date),
+          plan_end_date = COALESCE($3::date, plan_end_date),
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id=$1
+      RETURNING id, work_item_no, title, plan_start_date AS start, plan_end_date AS "end",
+                percent_complete AS progress
+      `,
+      [work_item_id, start || null, end || null]
+    );
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
 /** Gantt / timeline veri seti */
 router.get('/gantt', async (req, res, next) => {
   try {

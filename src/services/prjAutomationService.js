@@ -75,9 +75,18 @@ async function runAutomation(triggerCode, payload = {}, { eventKey } = {}) {
 
 async function notifyAssigneeOnAssign(workItemId, assigneeUserId) {
   if (!assigneeUserId) return [];
-  return runAutomation('WI_ASSIGNED', { work_item_id: workItemId, assignee_user_id: assigneeUserId }, {
+  const auto = await runAutomation('WI_ASSIGNED', { work_item_id: workItemId, assignee_user_id: assigneeUserId }, {
     eventKey: `assign:${workItemId}:${assigneeUserId}`,
   });
+  try {
+    const { withTransaction } = require('../utils/withTransaction');
+    const { notifyAssignment } = require('./prjNotifyService');
+    await withTransaction(pool, async (client) => {
+      const wi = await client.query(`SELECT * FROM work_items WHERE id=$1`, [workItemId]);
+      if (wi.rows[0]) await notifyAssignment(client, { workItem: wi.rows[0], assigneeUserId });
+    });
+  } catch (_) { /* e-posta opsiyonel */ }
+  return auto;
 }
 
 module.exports = { runAutomation, notifyAssigneeOnAssign };

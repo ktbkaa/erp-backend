@@ -118,6 +118,22 @@ async function transitionWorkItem(pool, { workItemId, transitionCode, toStatusId
     { work_item_id: result.wi_id, to_status_id: result.to_status_id },
     { eventKey: `status:${result.wi_id}:${result.transition_code}:${Date.now()}` }
   );
+
+  // APPROVAL durumuna geçişte onay + e-posta
+  const st = await pool.query(
+    `SELECT status_code FROM prj_work_item_statuses WHERE id=$1`,
+    [result.to_status_id]
+  );
+  if (st.rows[0]?.status_code === 'APPROVAL') {
+    try {
+      const { withTransaction } = require('../utils/withTransaction');
+      const { notifyWorkApproval } = require('./prjNotifyService');
+      await withTransaction(pool, async (client) => {
+        const wi = await client.query(`SELECT * FROM work_items WHERE id=$1`, [result.wi_id]);
+        await notifyWorkApproval(client, { workItem: wi.rows[0], userId: null });
+      });
+    } catch (_) { /* onay/SMTP yoksa sessiz */ }
+  }
   return result;
 }
 

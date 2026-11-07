@@ -1110,6 +1110,7 @@ const MODULES = [
           { key: 'target_warehouse_id', label: 'Hedef depo (transfer)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'movement_date', label: 'Tarih', type: 'date' },
           { key: 'description', label: 'Açıklama' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
         ],
         detailFields: [
           { key: 'barkod', label: 'Barkod', hint: 'Okutunca stok eşleşir' },
@@ -2402,6 +2403,7 @@ const MODULES = [
           { key: 'planlanan_quantity', label: 'Planlanan quantity', type: 'number', required: true, group: 'kimlik' },
           { key: 'produced_quantity', label: 'Üretilen quantity', type: 'number', readOnly: true, group: 'kimlik' },
           { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', group: 'kimlik' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'kimlik' },
           // 3) Depolar — stok kartı varsayılan giriş/çıkış
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
@@ -2764,7 +2766,7 @@ const MODULES = [
           { key: 'exchange_rate', label: 'Kur', type: 'number' },
           { key: 'valid_date', label: 'Geçerlilik', type: 'date' },
           { key: 'payment_term_code', label: 'Ödeme koşulu' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'] },
           { key: 'description', label: 'Açıklama', name: true },
@@ -2786,7 +2788,7 @@ const MODULES = [
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
           { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'line_description', label: 'Açıklama' },
         ],
@@ -2866,7 +2868,7 @@ const MODULES = [
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'supplier_partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
           { key: 'target_delivery_date', label: 'Hedef teslim', type: 'date' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
@@ -2889,7 +2891,7 @@ const MODULES = [
           { key: 'discount_rate', label: 'İsk %', type: 'number', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'supplier_item_code', label: 'Ted. stok kodu' },
           { key: 'supplier_item_name', label: 'Ted. stok adı' },
@@ -2952,7 +2954,7 @@ const MODULES = [
           { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', group: 'planlama' },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
-          { key: 'project_code', label: 'Proje kodu', group: 'organizasyon' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'organizasyon' },
           { key: 'region', label: 'Bölge', group: 'organizasyon' },
           { key: 'description', label: 'Açıklama', group: 'status' },
           { key: 'public_note', label: 'Tedarikçi notu', group: 'status' },
@@ -2978,7 +2980,7 @@ const MODULES = [
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short', group: 'planlama' },
           { key: 'ship_date', label: 'Sevk', type: 'date', size: 'short', group: 'planlama' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
-          { key: 'project_code', label: 'Proje', size: 'short', group: 'organizasyon' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short', group: 'organizasyon' },
           { key: 'region', label: 'Bölge', size: 'short', group: 'organizasyon' },
           { key: 'supplier_item_code', label: 'Ted. stok kodu', group: 'kimlik' },
           { key: 'supplier_item_name', label: 'Ted. stok adı', group: 'kimlik' },
@@ -4092,6 +4094,8 @@ const MODULES = [
         businessNameEn: 'ProjectGanttScreen',
         title: 'Gantt / Zaman Çizelgesi',
         endpoint: '/prj-planning/gantt',
+        listResponseKey: 'tasks',
+        visualGantt: true,
         crud: false,
         codeField: 'code',
         nameField: 'name',
@@ -4306,7 +4310,7 @@ const MODULES = [
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'] },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-teklif', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code' },
@@ -4331,7 +4335,7 @@ const MODULES = [
           { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
         ],
         detailKey: 'satirlar',
@@ -4428,7 +4432,7 @@ const MODULES = [
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
           { key: 'valid_date', label: 'Geçerlilik', type: 'date', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'shipped_quantity', label: 'Sevk edilen', type: 'number', size: 'short' },
           { key: 'invoiced_quantity', label: 'Fatura edilen', type: 'number', size: 'short' },
@@ -4509,7 +4513,7 @@ const MODULES = [
           { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'IrsaliyeDonustu', 'Iptal', 'Kapali'] },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'ship_to_address', label: 'Sevk adresi' },
           { key: 'ship_city', label: 'İl' },
@@ -4611,7 +4615,7 @@ const MODULES = [
           { key: 'carrier_company', label: 'Nakliye şirketi' },
           { key: 'carrier', label: 'Nakliyeci' },
           { key: 'sales_rep', label: 'Satış temsilcisi' },
-          { key: 'project_code', label: 'Proje' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'invoice_status', label: 'Fatura durumu', type: 'select', options: ['Irsaliye', 'Kismi', 'Faturalandi'] },
           { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox' },
@@ -4868,7 +4872,7 @@ const MODULES = [
           { key: 'payment_status', label: 'Ödeme durumu', type: 'select', options: ['Odenmedi', 'Kismi', 'Odendi', 'Iptal'] },
           { key: 'delivery_term_code', label: 'Teslim şekli', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
           { key: 'sales_rep', label: 'Satış temsilcisi' },
-          { key: 'project_code', label: 'Proje' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
@@ -4914,7 +4918,7 @@ const MODULES = [
           { key: 'due_days', label: 'Vade gün', type: 'number', size: 'short' },
           { key: 'customer_ref_code', label: 'Müş. ref' },
           { key: 'unit_cost', label: 'Maliyet', type: 'number', size: 'short' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'serial_no', label: 'Seri no', size: 'short' },
           { key: 'order_no', label: 'Sipariş no', size: 'short' },
           { key: 'amount_ex_tax', label: 'Tutar', type: 'number', size: 'short', readOnly: true },
@@ -5054,6 +5058,7 @@ const MODULES = [
           { key: 'accepted_quantity', label: 'Uygun quantity', type: 'number' },
           { key: 'rejected_quantity', label: 'Uygunsuz quantity', type: 'number' },
           { key: 'status', label: 'Durum' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'description', label: 'Açıklama' },
         ],
         detailFields: [],
@@ -5094,6 +5099,7 @@ const MODULES = [
           { key: 'accepted_quantity', label: 'Uygun quantity', type: 'number' },
           { key: 'rejected_quantity', label: 'Uygunsuz quantity', type: 'number' },
           { key: 'status', label: 'Durum' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'description', label: 'Açıklama' },
         ],
         detailFields: [],
@@ -10690,7 +10696,12 @@ async function openScreen(id, opts = {}) {
       rows = rows.map((r) => ({ ...r, id: r.series_code }));
     }
     state.rows = ensureRowIds(rows);
+    if (screen.visualGantt && data && typeof data === 'object' && !Array.isArray(data)) {
+      state.ganttMeta = data;
+    }
     renderList(screen);
+    if (screen.visualGantt) renderVisualGantt(screen, state.rows, state.ganttMeta || data);
+    else clearVisualGantt();
     renderTabBar();
   } catch (err) {
     console.error(err);
@@ -10707,7 +10718,179 @@ async function openScreen(id, opts = {}) {
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${cols.length || 1}">${msg}</td></tr>`;
     $('#listMeta').textContent = 'Hata';
     updateActionButtons(screen);
+    clearVisualGantt();
   }
+}
+
+function clearVisualGantt() {
+  const el = document.getElementById('prjGanttVisual');
+  if (el) el.remove();
+}
+
+function dayMs() { return 86400000; }
+
+function parseYmd(v) {
+  if (!v) return null;
+  const d = new Date(String(v).slice(0, 10) + 'T00:00:00Z');
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function fmtYmd(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Görsel Gantt — sürükle-bırak ile tarih/süre güncelleme (vanilla DnD) */
+function renderVisualGantt(screen, rows, meta) {
+  clearVisualGantt();
+  const pane = document.getElementById('listPane');
+  if (!pane) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'prjGanttVisual';
+  wrap.className = 'prj-gantt-visual';
+  wrap.innerHTML = `<div class="prj-gantt-head">Gantt zaman çizelgesi — çubuğu sürükleyin (tarih) veya sağ kenardan genişletin (süre)</div><div class="prj-gantt-track" id="prjGanttTrack"></div>`;
+  pane.appendChild(wrap);
+
+  const tasks = (rows || []).filter((r) => r.start || r.end);
+  if (!tasks.length) {
+    wrap.querySelector('#prjGanttTrack').innerHTML = '<div class="prj-gantt-empty">Plan tarihi olan iş yok.</div>';
+    return;
+  }
+
+  let min = null;
+  let max = null;
+  tasks.forEach((t) => {
+    const s = parseYmd(t.start) || parseYmd(t.end);
+    const e = parseYmd(t.end) || parseYmd(t.start);
+    if (s && (!min || s < min)) min = s;
+    if (e && (!max || e > max)) max = e;
+  });
+  if (!min || !max) return;
+  // padding
+  min = new Date(min.getTime() - dayMs() * 2);
+  max = new Date(max.getTime() + dayMs() * 5);
+  const span = Math.max(1, (max - min) / dayMs());
+
+  const track = wrap.querySelector('#prjGanttTrack');
+  track.innerHTML = tasks.map((t) => {
+    const s = parseYmd(t.start) || parseYmd(t.end) || min;
+    const e = parseYmd(t.end) || parseYmd(t.start) || s;
+    const left = ((s - min) / dayMs()) / span * 100;
+    const width = Math.max(1.5, ((e - s) / dayMs() + 1) / span * 100);
+    const label = escapeHtml(String(t.code || t.work_item_no || t.id));
+    const title = escapeHtml(String(t.name || t.title || ''));
+    return `<div class="prj-gantt-row" data-id="${escapeAttr(t.id)}">
+      <div class="prj-gantt-label" title="${title}">${label}</div>
+      <div class="prj-gantt-bar-wrap">
+        <div class="prj-gantt-bar" draggable="true" data-id="${escapeAttr(t.id)}"
+             data-start="${escapeAttr(fmtYmd(s))}" data-end="${escapeAttr(fmtYmd(e))}"
+             style="left:${left}%;width:${width}%;" title="${label}: ${fmtYmd(s)} → ${fmtYmd(e)}">
+          <span class="prj-gantt-bar-text">${title}</span>
+          <span class="prj-gantt-resize" data-resize="1" title="Süreyi uzat/kısalt"></span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  let drag = null;
+  track.addEventListener('dragstart', (ev) => {
+    const bar = ev.target.closest('.prj-gantt-bar');
+    if (!bar || ev.target.closest('[data-resize]')) {
+      ev.preventDefault();
+      return;
+    }
+    drag = {
+      id: bar.dataset.id,
+      startX: ev.clientX,
+      mode: 'move',
+      start: bar.dataset.start,
+      end: bar.dataset.end,
+      bar,
+    };
+    ev.dataTransfer.setData('text/plain', String(bar.dataset.id));
+    ev.dataTransfer.effectAllowed = 'move';
+  });
+
+  track.addEventListener('mousedown', (ev) => {
+    const handle = ev.target.closest('[data-resize]');
+    if (!handle) return;
+    const bar = handle.closest('.prj-gantt-bar');
+    if (!bar) return;
+    ev.preventDefault();
+    drag = {
+      id: bar.dataset.id,
+      startX: ev.clientX,
+      mode: 'resize',
+      start: bar.dataset.start,
+      end: bar.dataset.end,
+      bar,
+    };
+    const onMove = (e2) => {
+      if (!drag || drag.mode !== 'resize') return;
+      const dx = e2.clientX - drag.startX;
+      const daysDelta = Math.round(dx / Math.max(8, track.querySelector('.prj-gantt-bar-wrap')?.clientWidth / span || 20));
+      const s = parseYmd(drag.start);
+      const e = parseYmd(drag.end);
+      if (!s || !e) return;
+      const ne = new Date(e.getTime() + daysDelta * dayMs());
+      if (ne < s) return;
+      const left = ((s - min) / dayMs()) / span * 100;
+      const width = Math.max(1.5, ((ne - s) / dayMs() + 1) / span * 100);
+      drag.bar.style.left = `${left}%`;
+      drag.bar.style.width = `${width}%`;
+      drag.bar.dataset.end = fmtYmd(ne);
+      drag.bar.title = `${drag.bar.dataset.start} → ${fmtYmd(ne)}`;
+    };
+    const onUp = async () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      if (!drag) return;
+      const payload = {
+        work_item_id: Number(drag.id),
+        plan_start_date: drag.bar.dataset.start,
+        plan_end_date: drag.bar.dataset.end,
+      };
+      drag = null;
+      try {
+        await api('/prj-planning/gantt/reschedule', { method: 'POST', body: payload });
+        toast('Gantt süresi güncellendi');
+        await openScreen(screen.id);
+      } catch (err) {
+        toast(err.message || 'Gantt güncellenemedi');
+      }
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  track.addEventListener('dragover', (ev) => {
+    if (!drag || drag.mode !== 'move') return;
+    ev.preventDefault();
+  });
+
+  track.addEventListener('drop', async (ev) => {
+    ev.preventDefault();
+    if (!drag || drag.mode !== 'move') return;
+    const id = Number(drag.id || ev.dataTransfer.getData('text/plain'));
+    const dx = ev.clientX - drag.startX;
+    const wrapEl = drag.bar.closest('.prj-gantt-bar-wrap');
+    const daysDelta = Math.round(dx / Math.max(8, (wrapEl?.clientWidth || 400) / span));
+    const s = parseYmd(drag.start);
+    const e = parseYmd(drag.end);
+    drag = null;
+    if (!id || !s || !e || !daysDelta) return;
+    const ns = new Date(s.getTime() + daysDelta * dayMs());
+    const ne = new Date(e.getTime() + daysDelta * dayMs());
+    try {
+      await api('/prj-planning/gantt/reschedule', {
+        method: 'POST',
+        body: { work_item_id: id, plan_start_date: fmtYmd(ns), plan_end_date: fmtYmd(ne) },
+      });
+      toast('Gantt tarihi güncellendi');
+      await openScreen(screen.id);
+    } catch (err) {
+      toast(err.message || 'Gantt güncellenemedi');
+    }
+  });
 }
 
 const LOOKUP_ENDPOINTS = {

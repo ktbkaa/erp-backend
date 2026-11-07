@@ -16,8 +16,13 @@
 | | gantt/backlog/workload/dashboard | PASS |
 | | risk + kapanış checklist | PASS |
 | | alt açıkken Done engeli | PASS |
+| `tests/prj_gaps.test.js` | KI-009 belge lookup UI | PASS |
+| | KI-010 Gantt reschedule + DnD işaretleri | PASS |
+| | KI-012 onay + e-posta kuyruğu | PASS |
+| | KI-013 stok/üretim/KK maliyet (çift sayım yok) | PASS |
 
-**Toplam: 10/10 PASS** (`node --test tests/prj_core.test.js tests/prj_full.test.js`)
+**Toplam: 14/14 PASS**  
+(`node --test tests/prj_core.test.js tests/prj_full.test.js tests/prj_gaps.test.js`)
 
 ## Henüz yok
 
