@@ -20,12 +20,12 @@ Bu belge Aşama 1 çıktısıdır: mevcut sistem analizi, bağlanacak noktalar, 
 | Kapı | Koşul | Durum |
 |------|--------|--------|
 | G0 | Mevcut KTB ERP mimarisi incelendi | **Tamam** — bu paket |
-| G1 | Canias **PRJ** eğitim videolarının tamamı ekran/süreç bazında analiz edildi | **Bekliyor** — kullanıcı videoları sağlayacak; mevcut YouTube envanterinde ayrı PRJ playlist yok |
+| G1 | Canias **PRJ - TR - Kullanıcı Seviyesi** (19 video) süreç/TX/UI analizi | **Tamam (kanıt sınırlı)** — playlist `PLItkgPiGskZxM2nXsGEO9YJTkC7qKI_uu`; mid-frame UI + başlıklar; tam altyazı/IP engeli notu `01_…` |
 | G2 | Jira özellik → KTB gereksinim dönüşümü | **Tamam** — `02_JIRA_FEATURE_ANALYSIS.md` |
-| G3 | Fonksiyonel tasarım + veri modeli + ekran envanteri (Aşama 2) | Bekliyor (G1 sonrası) |
-| G4 | İlk migration / MODULES / route kodu (Aşama 3+) | **Yasak** ta ki G1+G3 kapanana kadar |
+| G3 | Fonksiyonel tasarım + veri modeli + ekran/WF/entegrasyon/yetki/otomasyon | **Taslaklar hazır** — `04`–`09`; FR freeze + zayıf-frame alan tamamlaması ile kilitlenecek |
+| G4 | İlk migration / MODULES / route kodu (Aşama 3+) | **Yasak** ta ki G3 kilitlenene kadar |
 
-**Kural (kullanıcı talimatı):** Videoların tamamı analiz edilmeden ve mevcut sistem incelenmeden modül koduna geçilmez.
+**Kural (kullanıcı talimatı):** Videolar analiz edilmeden ve mevcut sistem incelenmeden modül **uygulama koduna** geçilmez.
 
 ---
 
@@ -119,8 +119,8 @@ Kullanıcı §17’deki 15 soru + 100 üzerinden skor kartı `14_FINAL_ASSESSMEN
 
 ---
 
-## 9. Sonraki adım (insan)
+## 9. Sonraki adım
 
-1. Canias **PRJ** eğitim videolarını / playlist’i bu ortama veya erişilebilir URL listesi olarak ilet.
-2. Analiz ajanı her video için alan/buton/iş kuralı çıkarımını `01_…` içine sınıflandırılmış şekilde işler (gözlemlendi / çıkarıldı / ERP önerisi / araştırılacak).
-3. G1 kapanınca Aşama 2 tasarımına geçilir; **o zamana kadar PRJ uygulama kodu yazılmaz**.
+1. ~~PRJ playlist~~ → **yapıldı** (19/19 envanter + UI still analizi).
+2. Aşama 2 kilidi: yetki matrisi (`08`), otomasyon (`09`), FR kesinleştirme; isteğe bağlı yerel MP4 ile eksik frame’li videoların alan tamamlaması.
+3. G3 kapanınca Aşama 3 kod (056+ migration, MODULES `proje`) — **şimdilik kod yok**.

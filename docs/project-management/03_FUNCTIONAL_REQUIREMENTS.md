@@ -1,7 +1,7 @@
 # Fonksiyonel Gereksinimler (Taslak)
 
-**Durum:** Aşama 1 taslağı — Canias PRJ video analizi (G1) sonrası kilitlenecek.  
-**Kaynaklar:** Kullanıcı brief’i §2–§10, mevcut KTB analizi, `02_JIRA_FEATURE_ANALYSIS.md`, `01_CANIAS_…` (kısmi).
+**Durum:** Aşama 2 taslağı — G1 playlist analizi tamam; G3 kilidi (08/09 + FR freeze) bekleniyor.  
+**Kaynaklar:** Brief §2–§10 · `01_CANIAS_PRJ_VIDEO_ANALYSIS.md` (19 video) · `02_JIRA_FEATURE_ANALYSIS.md` · KTB mevcut mimari.
 
 Gereksinim kimliği: `PRJ-FR-NNN`. Öncelik: P0/P1/P2/P3.
 
@@ -28,14 +28,22 @@ Gereksinim kimliği: `PRJ-FR-NNN`. Öncelik: P0/P1/P2/P3.
 
 | ID | Gereksinim | Öncelik | Kaynak |
 |----|------------|---------|--------|
-| PRJ-FR-020 | Proje listesi: kod, ad, müşteri, yönetici, durum, öncelik, tarihler, %, bütçe, gerçekleşen | P0 | Brief 7.1 |
-| PRJ-FR-021 | Proje kartı alanları (tür, kategori, sponsor, PB, gelir/maliyet, açıklama, ek) | P0 | Brief 2.1 |
-| PRJ-FR-022 | Proje türleri yapılandırılabilir; türe göre alan/süreç | P1 | Brief |
-| PRJ-FR-023 | Ekip, faz, iş paketi, milestone, takvim, bağımlılık, kapanış, arşiv | P0–P1 | Brief |
-| PRJ-FR-024 | Çalışma alanı sekmeleri (genel, görev, board, backlog, sprint, timeline, bütçe…) şablona göre gizlenebilir | P1 | Brief 7.2 |
-| PRJ-FR-025 | Proje dashboard (ilerleme, geciken, bütçe sapması, risk, aktivite) | P1 | Brief 7.3 |
+| PRJ-FR-020 | Proje listesi: kod, ad, müşteri, yönetici, durum, öncelik, tarihler, %, bütçe, gerçekleşen | P0 | Brief 7.1 · Canias PRJT30 |
+| PRJ-FR-021 | Proje kartı (Genel + WBS/Operasyon/Gantt/Ekip-Bütçe/Maliyet sekmeleri) | P0 | Brief 2.1 · PRJT05 V01 |
+| PRJ-FR-022 | Proje türleri yapılandırılabilir; türe göre alan/süreç | P1 | Brief · PRJT05 Tip |
+| PRJ-FR-023 | Ekip, faz/WBS, aktivite, milestone, takvim, bağımlılık, kapanış, arşiv | P0–P1 | Brief · PRJT05 |
+| PRJ-FR-024 | Çalışma alanı sekmeleri şablona göre gizlenebilir (+ Agile sekmeleri Jira) | P1 | Brief 7.2 · V01 sekmeler |
+| PRJ-FR-025 | Proje dashboard (ilerleme, geciken, bütçe sapması, risk, aktivite) | P1 | Brief 7.3 · PRJT30 |
 | PRJ-FR-026 | Şablondan oluşturma (yazılım, makine, NPD, ERP, özel üretim) | P0 | Brief §9 |
-| PRJ-FR-027 | CRM fırsatından / kabul tekliften proje oluşturma | P1 | Brief 3.1–3.2 |
+| PRJ-FR-027 | CRM fırsat / kabul teklif / **satış siparişi veya kaleminden** proje | P0 | Brief 3.1–3.2 · SALT01 V02–03 |
+| PRJ-FR-028 | Aktiviteye rol + malzeme/bileşen; plan tipi aktivite | P0 | PRJT05 V04–06 |
+| PRJ-FR-029 | Proje fon / finansman satırları + fon faturalandırma | P1 | PRJT05 V08–09 |
+| PRJ-FR-030 | Bileşen plan vs güncel maliyet görünümü | P0 | PRJT05 V07 · PRJT09 |
+| PRJ-FR-031 | Proje üzerinden satınalma malzemesi / talep bağlama | P0 | PRJT05 V10 |
+| PRJ-FR-032 | Operasyon onayı (confirmation) + kullanıcı bazlı onay kuyruğu | P0 | PRJT06/12 |
+| PRJ-FR-033 | Kaynak atama (çoklu) operasyonlara | P0 | PRJT17–18 |
+| PRJ-FR-034 | Proje fiyatlama / onay maliyetlendirme | P1 | PRJT14–15 |
+| PRJ-FR-035 | Rapor hiyerarşisi (WBS/aktivite ağacı) | P1 | PRJT10 |
 
 ---
 
@@ -109,19 +117,20 @@ Brief §10 (CRM → teklif → proje → WBS → PUR → stok → kurulum → KK
 
 ---
 
-## 9. Bilinçli ertelemeler (Aşama 1)
+## 9. Bilinçli ertelemeler
 
 | Konu | Neden |
 |------|--------|
-| Canias PRJ ekran alan envanteri | Video paketi yok (G1) |
-| Kesin tablo adları / migration DDL | Aşama 2 |
-| Gantt kütüphanesi seçimi | Aşama 2/5 (vanilla SPA kısıtı) |
-| Tam DMS | `DMS` rezerve; PRJ önce HR-benzeri storage_key |
+| V03/05/06/08/09/12/13 tam alan listesi | Mid-frame zayıf (PRJ-KI-002); yerel MP4 ile tamamlanır |
+| Kesin migration DDL (CREATE TABLE) | Aşama 2 sonu / Aşama 3 başı — `05` mantıksal model hazır |
+| Gantt/Kanban DnD kütüphanesi | Aşama 5 (vanilla SPA) |
+| Tam DMS | PRJ önce `storage_key`; DMS ayrı |
+| Scrum/Kanban Canias kanıtı | Bu playlist’te yok — yalnızca Jira brief |
 
 ---
 
 ## 10. Sonraki kilitleme
 
-1. G1 Canias video analizi  
-2. Aşama 2: `04_SCREEN_INVENTORY`, `05_DATABASE_DESIGN`, `06_WORKFLOW_DESIGN`, `07_ERP_INTEGRATION_MAP`, `08_PERMISSION_MATRIX`  
-3. Ancak ondan sonra Aşama 3 kod
+1. ~~G1 Canias playlist~~ ✓  
+2. `08_PERMISSION_MATRIX` + `09_AUTOMATION_RULES` + FR freeze → G3 kapat  
+3. Aşama 3 kod (migration 056+, MODULES `proje`)

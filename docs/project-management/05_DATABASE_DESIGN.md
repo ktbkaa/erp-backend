@@ -1,73 +1,65 @@
-# Veritabanı Tasarımı (Taslak — DDL yok)
+# Veritabanı Tasarımı (Aşama 2 taslak)
 
-**Durum:** Aşama 1 varlık taslağı. **Migration / CREATE TABLE yazılmadı** (G1+G3 sonrası 056+).  
-**Kural:** Mevcut `project_code` VARCHAR alanları silinmez; master ile hizalanır.
-
----
-
-## 1. Mevcut şema ile ilişki
-
-| Mevcut | Kullanım |
-|--------|----------|
-| Belgelerde `project_code` | Geçici etiket; ileride `projects.project_code` lookup |
-| `hr_employees`, izin, takvim | Kaynak / worklog maliyeti |
-| `approval_*` | Proje/bütçe/CR onayları |
-| `audit_logs` | Otomatik |
-| `email_dispatches` | Bildirim kuyruğu |
-| `crm_opportunities` | Kaynak fırsat FK (opsiyonel) |
-| YE satır `project_code` | Proje maliyet/mizan |
-
-Son migration (bu dal): `055_*.sql` → PRJ: `056_prj_core.sql` (plan).
+**DDL yazılmadı.** Sonraki migration adayı: `056_prj_core.sql` (+ rollback).  
+**Kaynak:** Canias 19 video UI + mevcut KTB şema.
 
 ---
 
-## 2. Önerilen varlık grupları (isimler kesin değil)
+## 1. İlkeler
 
-### Çekirdek
-- `projects` — company_id, project_code (UK), name, type_id, category_id, status_id, priority_id, customer_partner_id, manager_user_id, sponsor_user_id, dates, currency, budget/cost/revenue totals (denormalize veya view), % complete, template_id, approach (classic/scrum/kanban), crm_opportunity_id, archive flags, audit columns  
-- `project_types`, `project_categories`, `project_statuses`, `project_priorities`  
-- `project_members` — project_id, user_id/employee_id, role_id  
-- `project_roles`  
-- `project_phases`, `project_milestones`  
-- `project_templates` (+ template child snapshots)
-
-### İş
-- `work_item_types` (config + field schema ref)  
-- `work_items` — project_id, type_id, parent_id, number, title, description, status_id, priority_id, assignee, reporter, dates, estimates, story_points, %  
-- `work_item_statuses`, `work_item_priorities`, `work_item_labels`, `work_item_label_links`  
-- `work_item_relations` — from_id, to_id, relation_type (UK + cycle check app-side)  
-- `work_item_comments`, `work_item_attachments` (storage_key), `work_item_history`, `work_item_watchers`
-
-### WF / Agile
-- `prj_workflows`, `prj_workflow_statuses`, `prj_workflow_transitions` (guards JSON)  
-- `prj_boards`, `prj_board_columns` (WIP)  
-- `prj_sprints`, `prj_sprint_items`, `prj_sprint_scope_log`  
-- `work_logs`
-
-### Finans / risk / otomasyon
-- `project_budgets`, `project_budget_lines`  
-- `project_cost_entries` — source_module, source_table, source_id, amount (tek kaynak politikası)  
-- `project_revenues`  
-- `project_risks`  
-- `prj_automations`, `prj_automation_logs`
-
-### Kaynak
-- `prj_teams`, `prj_team_members`, `resource_allocations`
+- İngilizce tablo adları; `company_id`; soft archive; finans bağlı kayıtlarda `ON DELETE RESTRICT`.
+- Mevcut `project_code` VARCHAR korunur → `projects.project_code` ile hizalanır.
+- Canias “Operasyon/Aktivite” ≈ `work_items` (+ tür); malzeme/kaynak çocuk tablolar.
+- Maliyet: `project_cost_entries` tek kaynak; PO+fatura çift sayılmaz.
 
 ---
 
-## 3. Tasarım kararları (taslak)
+## 2. Çekirdek tablolar
 
-1. Tablo adları İngilizce (`042` rename politikası).  
-2. Soft archive: `is_active` / `archived_at`; hard delete yasak finans bağlıysa.  
-3. `project_cost_entries` fatura ile PO’yu aynı anda “gerçekleşen” saymaz — kaynak öncelik matrisi Aşama 2’de.  
-4. FK’ler `ON DELETE RESTRICT` veya SET NULL; CASCADE yalnızca saf çocuk meta için.  
-5. İndeksler: (company_id, project_code), (project_id, status_id), (assignee, status), work_log (user, date).
+| Tablo | Amaç | Canias izi |
+|-------|------|------------|
+| `projects` | Proje master | PRJT05 Genel |
+| `project_types/categories/statuses/priorities` | Tanımlar | Tip/Kategori/Durum |
+| `project_members` + `project_roles` | Ekip | Ekip sekmesi / rol |
+| `project_phases` | WBS faz | WBS |
+| `project_milestones` | Kilometre taşı | Milestone |
+| `project_templates` | Şablon | Brief §9 |
+| `work_item_types/statuses/priorities` | Yapılandırılabilir türler | Operasyon tipleri + Jira |
+| `work_items` | İş/aktivite/operasyon | Operasyonlar |
+| `work_item_relations` | Bağımlılık | Gantt connectors / bağımlılık göster |
+| `work_item_materials` | Aktivite malzemesi | V04/V06 |
+| `work_item_resources` | Kaynak atama | PRJT17/18 |
+| `work_confirmations` | Operasyon teyidi/onay | PRJT06 |
+| `work_logs` | Zaman (Jira worklog uyumu) | Teyit süreleri |
+| `project_budgets` / `project_budget_lines` | Bütçe | Bütçe sekmesi |
+| `project_cost_entries` | Gerçekleşen maliyet satırı | V07 |
+| `project_revenues` / funds | Gelir/fon | V08–09 |
+| `project_price_lines` | Proje satış fiyatı | PRJT14 |
+| `project_purchase_links` | PUR belge bağ | V10 |
+| `project_sales_links` | SAL belge/kalem bağ | SALT01 |
+| `prj_workflows` + transitions | WF | Jira + durum kodları |
+| `prj_boards` / `sprints` | Agile | Jira (Canias’ta yok) |
+| `project_risks` | Risk | Brief |
+| `work_item_comments/attachments/history` | Sosyal/audit | Doküman/Log |
+| `prj_automations` / logs | Otomasyon | Jira |
 
 ---
 
-## 4. Açık sorular (video / Aşama 2)
+## 3. Kritik alanlar (`projects`)
 
-- Canias PRJ’de maliyet toplama tabloları nasıl?  
-- WBS ayrı tablo mu yoksa `work_items` + phase_id yeterli mi?  
-- Portföy/program ayrı entity mi yoksa project.type mi?
+`company_id`, `project_code` UK, `name`, `description`, `type_id`, `category_id`, `status_id`, `priority_id`, `partner_id` (müşteri), `manager_user_id`, `department_code`, `plan_start/end`, `actual_start/end`, `currency_code`, `percent_complete`, `crm_opportunity_id`, `approach` (classic|scrum|kanban), `portfolio_code`, `is_archived`, audit kolonları.
+
+---
+
+## 4. Maliyet politikası (çift sayım)
+
+Öncelik sırası (taslak): Fatura (kesin) > Stok çıkış değeri > Onaylı worklog×tarif > PO (taahhüt, gerçekleşen değil).  
+`project_cost_entries.source_module/table/id` zorunlu; drill-down.
+
+---
+
+## 5. Açık sorular
+
+- EPS ayrı tablo mu yoksa `portfolio_code` yeterli mi?
+- Canias “Ağ Yapısı / Network” = ayrı entity mi yoksa phase+work_item mi?
+- Fon = revenue subtype mi ayrı tablo mu?
