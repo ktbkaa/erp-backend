@@ -180,6 +180,16 @@ app.use('/projects', require('./routes/projects'));
 app.use('/prj-projeler', require('./routes/projects'));
 app.use('/work-items', require('./routes/work_items'));
 app.use('/prj-isler', require('./routes/work_items'));
+app.use('/prj-workflows', require('./routes/prj_workflows'));
+app.use('/prj-board', require('./routes/prj_boards'));
+app.use('/prj-sprintler', require('./routes/prj_sprints'));
+app.use('/prj-budget', require('./routes/prj_budget'));
+app.use('/prj-planning', require('./routes/prj_planning'));
+app.use('/prj-dashboard', require('./routes/prj_dashboard'));
+app.use('/prj-integrations', require('./routes/prj_integrations'));
+app.use('/prj-sablonlar', require('./routes/prj_templates'));
+app.use('/prj-automations', require('./routes/prj_automations'));
+app.use('/prj-riskler', require('./routes/prj_risks'));
 
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 app.use(notFoundHandler);

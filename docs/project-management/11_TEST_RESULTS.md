@@ -1,20 +1,29 @@
 # Test Sonuçları
 
-**Son güncelleme:** 2026-11-07 (Europe/Istanbul)
+**Son güncelleme:** 7 Kasım 2026 (Europe/Istanbul)
 
-## Aşama 3 çekirdek (`tests/prj_core.test.js`)
+## Otomatik suite
 
-| Test | Sonuç |
-|------|--------|
-| Proje türleri seed listelenir | PASS |
-| TEST_ proje + iş + alt iş + worklog + çakışma + tarih validasyonu | PASS |
-| Döngüsel parent engeli | PASS |
+| Dosya | Test | Sonuç |
+|-------|------|--------|
+| `tests/prj_core.test.js` | tür seed | PASS |
+| | proje + iş + worklog + çakışma + tarih | PASS |
+| | döngüsel parent engeli | PASS |
+| `tests/prj_full.test.js` | şablondan işler | PASS |
+| | board + transition | PASS |
+| | sprint yaşam döngüsü | PASS |
+| | bütçe + maliyet + aşım | PASS |
+| | gantt/backlog/workload/dashboard | PASS |
+| | risk + kapanış checklist | PASS |
+| | alt açıkken Done engeli | PASS |
 
-Komut: `node --test tests/prj_core.test.js` → 3/3 pass.
+**Toplam: 10/10 PASS** (`node --test tests/prj_core.test.js tests/prj_full.test.js`)
 
 ## Henüz yok
 
-- UI tarayıcı testleri (Aşama 8)
-- Entegrasyon CRM/SAL/PUR (Aşama 6)
-- Kanban/Sprint/Gantt (Aşama 4–5)
-- Regresyon tam suite bu turda koşturulmadı (yalnız PRJ çekirdek)
+- Tarayıcı UI E2E (Aşama 8 genişletme)  
+- Tam regresyon suite tüm ERP modülleri  
+
+## P0/P1 açık hatalar
+
+Yok (testlerde yakalananlar düzeltildi). Bilinen ürün boşlukları: `12_KNOWN_ISSUES.md`.

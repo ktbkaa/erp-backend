@@ -22,4 +22,8 @@
 
 **Playlist:** `https://www.youtube.com/playlist?list=PLItkgPiGskZxM2nXsGEO9YJTkC7qKI_uu`  
 **Envanter:** `docs/canias_youtube/PRJ_videos.json`  
-**Aşama 3 çekirdek:** migration `056_prj_core`, MODULES `proje`, API `/prj-projeler` + `/prj-isler` + tanımlar. Agile/Gantt/ERP bağları sonraki aşamalar.
+
+**Uygulama:** migrations `056`+`057` · MODULES `proje` · API `/prj-*`  
+**Aşama özeti:** [15_STAGES_WALKTHROUGH.md](./15_STAGES_WALKTHROUGH.md)  
+**Kullanım kılavuzu (UTF-8):** [13_USER_GUIDE.md](./13_USER_GUIDE.md) · [PDF](./KTB_ERP_PRJ_Kullanim_Kilavuzu.pdf) · [TXT](./KTB_ERP_PRJ_Kullanim_Kilavuzu.utf8.txt)  
+**Test:** 10/10 PASS (`prj_core` + `prj_full`)

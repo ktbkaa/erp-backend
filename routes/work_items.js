@@ -4,6 +4,7 @@ const pool = require('../db');
 const { firmaIdFromReq, andFirma } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { notifyAssigneeOnAssign } = require('../src/services/prjAutomationService');
 
 function trimOrNull(v) {
   if (v === undefined || v === null) return null;
@@ -240,10 +241,11 @@ router.post('/', async (req, res, next) => {
           req.user?.id || null,
         ]
       );
-      return ins.rows[0].id;
+      return { id: ins.rows[0].id, assignee: req.body.assignee_user_id || null };
     });
 
-    res.status(201).json(await workItemDetail(id));
+    if (id.assignee) await notifyAssigneeOnAssign(id.id, id.assignee);
+    res.status(201).json(await workItemDetail(id.id));
   } catch (err) {
     if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
@@ -321,7 +323,16 @@ router.put('/:id', async (req, res, next) => {
           [cur.id, req.user?.id || null, String(oldStatus), String(newStatus)]
         );
       }
+      return { newAssignee: pick('assignee_user_id'), oldAssignee: cur.assignee_user_id };
     });
+
+    if (
+      Object.prototype.hasOwnProperty.call(req.body, 'assignee_user_id') &&
+      req.body.assignee_user_id &&
+      Number(req.body.assignee_user_id) !== Number(cur.assignee_user_id)
+    ) {
+      await notifyAssigneeOnAssign(cur.id, req.body.assignee_user_id);
+    }
 
     res.json(await workItemDetail(req.params.id));
   } catch (err) {

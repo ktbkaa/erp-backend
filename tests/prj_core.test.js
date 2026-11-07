@@ -66,11 +66,12 @@ describe('prj core', () => {
     });
     assert.equal(child.status, 201, JSON.stringify(child.json));
 
+    const day = `2026-03-${String(10 + (Date.now() % 18)).padStart(2, '0')}`;
     const log = await request(app, 'POST', `/prj-isler/${wi.json.id}/work-logs`, {
       headers,
       body: {
         user_id: userId,
-        work_date: '2026-01-05',
+        work_date: day,
         hours_spent: 3.5,
         description: 'TEST_ keşif notu',
         start_time: '09:00',
@@ -83,7 +84,7 @@ describe('prj core', () => {
       headers,
       body: {
         user_id: userId,
-        work_date: '2026-01-05',
+        work_date: day,
         hours_spent: 1,
         start_time: '11:00',
         end_time: '12:00',
