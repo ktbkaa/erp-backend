@@ -22,4 +22,4 @@
 
 **Playlist:** `https://www.youtube.com/playlist?list=PLItkgPiGskZxM2nXsGEO9YJTkC7qKI_uu`  
 **Envanter:** `docs/canias_youtube/PRJ_videos.json`  
-**Kod yasağı:** Aşama 3’e kadar PRJ uygulama kodu / migration yok (G3 kilidi).
+**Aşama 3 çekirdek:** migration `056_prj_core`, MODULES `proje`, API `/prj-projeler` + `/prj-isler` + tanımlar. Agile/Gantt/ERP bağları sonraki aşamalar.

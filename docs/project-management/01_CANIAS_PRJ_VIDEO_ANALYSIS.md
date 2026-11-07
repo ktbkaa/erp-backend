@@ -271,7 +271,7 @@ Bunlar playlist still’lerinde doğrulanmayan ekstra TX’ler için yalnızca `
 | Her videoda eksiksiz alan envanteri | **Kısmi** — güçlü frame’ler V01,02,04,07,10,11,14–19; V03,05,06,08,09,12,13 sınırlı |
 | Tam altyazı/oynatma | **Engelli** (YouTube bot/IP) |
 
-**Karar:** Modül **uygulama koduna** geçilmez; Aşama 2 tasarım dokümanları bu kanıtla doldurulur. Kullanıcı MP4 / yerel kopya verirse alan envanteri tamamlanır.
+**Karar (güncel):** G1 playlist analizi + Aşama 2 taslaklar tamam → Aşama 3 çekirdek kod açıldı (`056_prj_core`). Zayıf frame’li videoların alan envanteri MP4 ile sonradan tamamlanır; uydurma alan yok.
 
 ---
 

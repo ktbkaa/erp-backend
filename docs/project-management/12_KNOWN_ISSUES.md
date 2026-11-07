@@ -10,3 +10,6 @@
 | PRJ-KI-006 | P2 | Dokümandaki React hedefi vs fiili SPA — karar: SPA | Kapandı (karar) |
 | PRJ-KI-007 | P3 | Bakım/demirbaş entegrasyonu ürün olgunluğu düşük | Bilgi |
 | PRJ-KI-008 | P2 | Canias Scrum/Kanban bu playlist’te yok; Agile yalnızca Jira kaynağı | Bilgi |
+| PRJ-KI-009 | P1 | Belge `project_code` henüz `projects` lookup değil | Açık (Aşama 6) |
+| PRJ-KI-010 | P1 | Board/Sprint/Gantt/bütçe UI API’si henüz yok | Açık (Aşama 4–5) |
+| PRJ-KI-011 | P2 | Proje workspace sekmeli tek ekran henüz yok (ayrı liste/form) | Açık |

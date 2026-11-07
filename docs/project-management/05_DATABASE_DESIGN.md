@@ -1,6 +1,6 @@
 # Veritabanı Tasarımı (Aşama 2 taslak)
 
-**DDL yazılmadı.** Sonraki migration adayı: `056_prj_core.sql` (+ rollback).  
+**DDL:** `db/migrations/056_prj_core.sql` uygulandı. Rollback: `db/rollbacks/056_prj_core.sql`.  
 **Kaynak:** Canias 19 video UI + mevcut KTB şema.
 
 ---

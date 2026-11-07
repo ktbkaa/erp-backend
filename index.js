@@ -165,6 +165,22 @@ app.use('/hr-puantaj', require('./routes/hr_attendance'));
 app.use('/hr-bordro', require('./routes/hr_payroll'));
 app.use('/hr-ise-alim', require('./routes/hr_recruitment'));
 
+// PRJ — Proje Yönetimi
+const { createPrjDefRouter } = require('./routes/prj_defs');
+app.use('/prj-project-types', createPrjDefRouter('project-types'));
+app.use('/prj-project-categories', createPrjDefRouter('project-categories'));
+app.use('/prj-project-statuses', createPrjDefRouter('project-statuses'));
+app.use('/prj-project-priorities', createPrjDefRouter('project-priorities'));
+app.use('/prj-project-roles', createPrjDefRouter('project-roles'));
+app.use('/prj-work-item-types', createPrjDefRouter('work-item-types'));
+app.use('/prj-work-item-statuses', createPrjDefRouter('work-item-statuses'));
+app.use('/prj-work-item-priorities', createPrjDefRouter('work-item-priorities'));
+app.use('/prj-relation-types', createPrjDefRouter('relation-types'));
+app.use('/projects', require('./routes/projects'));
+app.use('/prj-projeler', require('./routes/projects'));
+app.use('/work-items', require('./routes/work_items'));
+app.use('/prj-isler', require('./routes/work_items'));
+
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 app.use(notFoundHandler);
 app.use(errorHandler);

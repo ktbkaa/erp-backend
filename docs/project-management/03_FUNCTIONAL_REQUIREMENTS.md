@@ -1,6 +1,6 @@
 # Fonksiyonel Gereksinimler (Taslak)
 
-**Durum:** Aşama 2 taslağı — G1 playlist analizi tamam; G3 kilidi (08/09 + FR freeze) bekleniyor.  
+**Durum:** **G3 kilitli (taslak)** — Aşama 3 çekirdek uygulamaya geçildi; eksik video alanları KI-002 ile izlenir.  
 **Kaynaklar:** Brief §2–§10 · `01_CANIAS_PRJ_VIDEO_ANALYSIS.md` (19 video) · `02_JIRA_FEATURE_ANALYSIS.md` · KTB mevcut mimari.
 
 Gereksinim kimliği: `PRJ-FR-NNN`. Öncelik: P0/P1/P2/P3.

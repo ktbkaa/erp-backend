@@ -22,10 +22,10 @@ Bu belge Aşama 1 çıktısıdır: mevcut sistem analizi, bağlanacak noktalar, 
 | G0 | Mevcut KTB ERP mimarisi incelendi | **Tamam** — bu paket |
 | G1 | Canias **PRJ - TR - Kullanıcı Seviyesi** (19 video) süreç/TX/UI analizi | **Tamam (kanıt sınırlı)** — playlist `PLItkgPiGskZxM2nXsGEO9YJTkC7qKI_uu`; mid-frame UI + başlıklar; tam altyazı/IP engeli notu `01_…` |
 | G2 | Jira özellik → KTB gereksinim dönüşümü | **Tamam** — `02_JIRA_FEATURE_ANALYSIS.md` |
-| G3 | Fonksiyonel tasarım + veri modeli + ekran/WF/entegrasyon/yetki/otomasyon | **Taslaklar hazır** — `04`–`09`; FR freeze + zayıf-frame alan tamamlaması ile kilitlenecek |
-| G4 | İlk migration / MODULES / route kodu (Aşama 3+) | **Yasak** ta ki G3 kilitlenene kadar |
+| G3 | Fonksiyonel tasarım + veri modeli + ekran/WF/entegrasyon/yetki/otomasyon | **Kilitli (taslak)** — `04`–`09` + FR; zayıf-frame alanlar açık (KI-002) |
+| G4 | İlk migration / MODULES / route kodu (Aşama 3+) | **Açık** — `056_prj_core`, MODULES `proje`, `/prj-*` API |
 
-**Kural (kullanıcı talimatı):** Videolar analiz edilmeden ve mevcut sistem incelenmeden modül **uygulama koduna** geçilmez.
+**Kural:** G1 playlist analizi olmadan kod yoktu; G1+G3 sonrası Aşama 3 çekirdek başladı.
 
 ---
 
