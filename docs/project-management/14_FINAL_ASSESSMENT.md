@@ -1,7 +1,7 @@
 # Nihai Değerlendirme — PRJ Modülü
 
-**Tarih:** 7 Kasım 2026 (Europe/Istanbul)  
-**Sürüm notu:** PR #80 gap turu (KI-009…013) sonrası güncellendi.
+**Tarih:** 8 Kasım 2026 (Europe/Istanbul)  
+**Sürüm notu:** Aşama 1–8 + gap turu (KI-009…013) doğrulandı; kılavuz v1.2.
 
 ## Puanlama (/100)
 
