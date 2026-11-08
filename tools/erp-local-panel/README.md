@@ -7,7 +7,7 @@ Windows’ta çalışan basit yerel senkron paneli. Ayrı proje; ERP backend’d
 1. `git fetch` + `git pull --ff-only`
 2. `npm install`
 3. `npm run migrate`
-4. `pg_dump` ile `.dump` + `.sql` yedek
+4. Yedek: `pg_dump` (varsa) veya **Node SQL** alternatifi (pg_dump zorunlu değil)
 
 **Ne zaman**
 

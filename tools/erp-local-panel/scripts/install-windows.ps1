@@ -192,9 +192,11 @@ if (-not $pgFound) {
 }
 if ($pgFound) {
   $envLines += "PG_DUMP_PATH=$pgFound"
+  $config.pgDumpPath = $pgFound
+  ($config | ConvertTo-Json -Depth 6) | Out-File -FilePath $configPath -Encoding utf8
   Write-Ok "pg_dump: $pgFound"
 } else {
-  Write-Warn "pg_dump bulunamadi - yedek icin pgAdmin Backup veya PostgreSQL Command Line Tools gerekir."
+  Write-Warn "pg_dump bulunamadi - sorun degil: Tam senkron Node SQL yedek alternatifini kullanir."
 }
 
 $envPath = Join-Path $PanelRoot ".env"

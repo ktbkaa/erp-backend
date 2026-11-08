@@ -3,6 +3,7 @@ const path = require('path');
 const { getConfig } = require('../util/config');
 const { run } = require('../util/run');
 const { resolvePgDump } = require('../util/pgdump');
+const { nodeSqlBackup } = require('../util/nodeBackup');
 const logger = require('../util/logger');
 
 function assertErpRoot(cfg) {
@@ -54,21 +55,17 @@ async function stepMigrate(cfg) {
   return { ok: true };
 }
 
-async function stepBackup(cfg) {
-  fs.mkdirSync(cfg.backupDir, { recursive: true });
-  const pgDump = resolvePgDump(cfg.pgDumpPath);
-  if (!pgDump) {
-    const hint = process.platform === 'win32'
-      ? 'pg_dump bulunamadı. pgAdmin → postgres sağ tık → Backup… ile yedek alın veya PostgreSQL Command Line Tools kurun.'
-      : 'pg_dump PATH\'te yok. postgresql-client kurun.';
-    throw new Error(hint);
-  }
-
-  const stamp = new Date()
+function stampNow() {
+  return new Date()
     .toISOString()
     .replace(/[-:]/g, '')
     .replace(/\.\d+Z$/, 'Z')
     .slice(0, 13);
+}
+
+async function stepBackupPgDump(cfg, pgDump) {
+  fs.mkdirSync(cfg.backupDir, { recursive: true });
+  const stamp = stampNow();
   const base = path.join(cfg.backupDir, `erp-${stamp}`);
   const dumpFile = `${base}.dump`;
   const sqlFile = `${base}.sql`;
@@ -89,7 +86,80 @@ async function stepBackup(cfg) {
     env,
   });
 
-  return { ok: true, dumpFile, sqlFile, pgDump };
+  return { ok: true, method: 'pg_dump', dumpFile, sqlFile, pgDump };
+}
+
+async function stepBackupNode(cfg) {
+  fs.mkdirSync(cfg.backupDir, { recursive: true });
+  const stamp = stampNow();
+  const sqlFile = path.join(cfg.backupDir, `erp-${stamp}-node.sql`);
+  logger.append({
+    level: 'warn',
+    message: 'pg_dump yok — Node SQL yedek alternatifine geçiliyor',
+  });
+  const result = await nodeSqlBackup({
+    db: cfg.db,
+    sqlFile,
+    erpRoot: cfg.erpRoot,
+  });
+  // küçük işaret dosyası: custom dump yok
+  const note = path.join(cfg.backupDir, `erp-${stamp}-node.txt`);
+  fs.writeFileSync(
+    note,
+    [
+      'Bu yedek pg_dump olmadan Node ile alındı.',
+      'Geri yükleme: psql -f dosya.sql  (veya pgAdmin Query Tool).',
+      `SQL: ${sqlFile}`,
+      `Boyut: ${result.bytes} bayt`,
+    ].join('\n'),
+    'utf8'
+  );
+  return { ...result, noteFile: note };
+}
+
+async function stepBackup(cfg) {
+  fs.mkdirSync(cfg.backupDir, { recursive: true });
+  const pgDump = resolvePgDump(cfg.pgDumpPath);
+
+  if (pgDump) {
+    try {
+      return await stepBackupPgDump(cfg, pgDump);
+    } catch (err) {
+      logger.append({
+        level: 'warn',
+        message: `pg_dump başarısız, Node yedeğe düşülüyor: ${err.message}`,
+      });
+    }
+  }
+
+  // ERP npm run db:backup (gelişmiş script varsa)
+  const backupJs = path.join(cfg.erpRoot, 'scripts', 'db-backup.js');
+  if (fs.existsSync(backupJs)) {
+    try {
+      run(process.execPath, [backupJs], {
+        cwd: cfg.erpRoot,
+        label: 'node scripts/db-backup.js',
+        env: {
+          ...process.env,
+          DB_HOST: String(cfg.db.host),
+          DB_PORT: String(cfg.db.port),
+          DB_USER: String(cfg.db.user),
+          DB_NAME: String(cfg.db.database),
+          DB_PASSWORD: String(cfg.db.password || ''),
+          PG_DUMP_PATH: cfg.pgDumpPath || '',
+          BACKUP_DIR: cfg.backupDir,
+        },
+      });
+      return { ok: true, method: 'erp-db-backup-script', backupDir: cfg.backupDir };
+    } catch (err) {
+      logger.append({
+        level: 'warn',
+        message: `ERP db-backup script başarısız: ${err.message}`,
+      });
+    }
+  }
+
+  return stepBackupNode(cfg);
 }
 
 async function runSync(opts = {}) {
@@ -133,13 +203,20 @@ async function getStatus() {
   const gitOk = Boolean(erpOk && fs.existsSync(path.join(cfg.erpRoot, '.git')));
   let migrateScript = false;
   let backupScript = false;
+  let pgModule = false;
   if (erpOk) {
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(cfg.erpRoot, 'package.json'), 'utf8'));
       migrateScript = Boolean(pkg.scripts?.migrate);
       backupScript = Boolean(pkg.scripts?.['db:backup']);
     } catch { /* ignore */ }
+    pgModule = fs.existsSync(path.join(cfg.erpRoot, 'node_modules', 'pg'));
   }
+  try {
+    require.resolve('pg');
+    pgModule = true;
+  } catch { /* ignore */ }
+
   return {
     erpRoot: cfg.erpRoot || null,
     erpOk,
@@ -148,6 +225,7 @@ async function getStatus() {
     backupScript,
     pgDump,
     pgDumpOk: Boolean(pgDump),
+    nodeBackupOk: pgModule,
     backupDir: cfg.backupDir,
     schedule: cfg.schedule,
     db: {

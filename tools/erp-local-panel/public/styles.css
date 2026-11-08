@@ -74,6 +74,7 @@ h1 { margin: 0; font-size: 1.65rem; font-weight: 700; }
 .status dd { margin: 0; font-size: 0.9rem; word-break: break-all; }
 .status .ok { color: var(--ok); font-weight: 650; }
 .status .bad { color: var(--bad); font-weight: 650; }
+.status .warn { color: var(--warn); font-weight: 650; }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .btn {
   border: 1px solid var(--line);
