@@ -12,54 +12,109 @@
   "base": {
     "tag": "ELEK-BASE",
     "partners": {
-      "ted1": "T00048",
-      "ted2": "T00049",
-      "mus1": "M00047",
-      "mus2": "M00048"
+      "ted1": "T00052",
+      "ted2": "T00053",
+      "mus1": "M00051",
+      "mus2": "M00052"
     },
     "items": {
-      "hmPcb": "H00078",
-      "hmCap": "H00079",
-      "hmCoil": "H00080",
-      "hmCase": "H00081",
-      "fg": "U00014"
+      "hmPcb": "H00086",
+      "hmCap": "H00087",
+      "hmCoil": "H00088",
+      "hmCase": "H00089",
+      "fg": "U00016"
     },
-    "bom": "A00023",
-    "route": "O00023",
-    "price_list": "EL-SAT-12-1794151509932"
+    "bom": "A00025",
+    "route": "O00025",
+    "price_list": "EL-SAT-12-1794155937149"
   },
   "man": {
     "tag": "ELEK-MAN",
-    "sales_quotation": "ST00028",
-    "sales_order": "B00092",
-    "purchase_requisition": "L00025",
-    "purchase_order": "P00071",
-    "goods_receipt": "R00070",
-    "production_order": "E00079",
-    "shipment": "SE00050",
-    "delivery_note": "IR00051",
-    "purchase_invoice": "AF00048",
-    "sales_invoice": "FA00028"
+    "sales_quotation": "ST00030",
+    "sales_order": "B00096",
+    "purchase_requisition": "L00029",
+    "purchase_order": "P00075",
+    "goods_receipt": "R00074",
+    "production_order": "E00085",
+    "shipment": "SE00054",
+    "delivery_note": "IR00055",
+    "purchase_invoice": "AF00052",
+    "sales_invoice": "FA00032"
   },
   "mrp": {
     "tag": "ELEK-MRP",
-    "sales_order": "B00093",
-    "independent_requirement": "BI00016",
-    "mrp_run": "MR00019",
-    "mrp_net_positive": 5,
-    "purchase_requisition": "L00026",
-    "purchase_order": "P00072",
-    "goods_receipt": "R00071",
-    "purchase_invoice": "AF00049",
+    "sales_order": "B00097",
+    "independent_requirement": "BI00018",
+    "mrp_run": "MR00021",
+    "mrp_net_positive": 9,
+    "purchase_requisition": "L00030",
+    "purchase_order": "P00076",
+    "goods_receipt": "R00075",
+    "purchase_invoice": "AF00053",
     "production_from_mrp": [
-      "E00081"
+      "E00087"
     ],
-    "shipment": "SE00051",
-    "delivery_note": "IR00052",
-    "sales_invoice": "FA00029"
+    "shipment": "SE00055",
+    "delivery_note": "IR00056",
+    "sales_invoice": "FA00033"
   },
   "how_to_filter": {
     "ui": "Üst bardan firma = ELEK seçin. Listelerde project_code / açıklama alanına ELEK-MAN veya ELEK-MRP yazın.",
     "sql": "WHERE company_id = <ELEK> AND (project_code IN ('ELEK-MAN','ELEK-MRP') OR description ILIKE '%ELEK-MAN%' OR description ILIKE '%ELEK-MRP%')"
+  },
+  "extended": {
+    "crm": {
+      "lead": {
+        "id": 35,
+        "code": "AD00003"
+      },
+      "firsat_aday": {
+        "id": 28,
+        "code": "FS00002"
+      },
+      "firsat_musteri": {
+        "id": 29,
+        "code": "FS00003"
+      },
+      "plan": "FP00001",
+      "faaliyet": "FY00002",
+      "gorev": "GR00001",
+      "ajanda": 1
+    },
+    "hr": {
+      "departments": [
+        "ELEK Üretim",
+        "ELEK İnsan Kaynakları"
+      ],
+      "employees": [
+        "HE00001",
+        "HE00002"
+      ],
+      "bordro": "BR00001",
+      "ilan": "JP00001",
+      "ise_alinan": "HE00003"
+    },
+    "prj": {
+      "project_code": "ELEK-PRJ-37887",
+      "project_id": 50,
+      "work_items": 10,
+      "sprint": "PJSP00011",
+      "risk": "Tedarik süresi sapması"
+    },
+    "finans": {
+      "kasa": "KS00001",
+      "banka": "BH00001",
+      "tahsilat": "TH00001"
+    },
+    "baglantilar": {
+      "teklif_firsat": {
+        "quotation_id": 32,
+        "firsat_id": 29
+      },
+      "so_prj": {
+        "sales_order_id": 104,
+        "project_code": "ELEK-PRJ"
+      }
+    }
   }
 }

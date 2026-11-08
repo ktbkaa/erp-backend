@@ -1566,6 +1566,48 @@ async function main() {
   }
 
   const outPath = path.join(__dirname, '..', 'docs', 'elek-tam-dongu-ozet.json');
+
+  // Genişletilmiş modüller: CRM + İK + PRJ + Finans (bağlantılı)
+  try {
+    const { seedExtendedModules } = require('./lib/demo-extended-modules');
+    const manSo = summary.man?.sales_order
+      ? (await pool.query(`SELECT id FROM sales_orders WHERE order_no=$1 AND company_id=$2`, [summary.man.sales_order, org.firma.id])).rows[0]
+      : null;
+    const manQt = summary.man?.sales_quotation
+      ? (await pool.query(`SELECT id FROM sales_quotations WHERE quotation_no=$1 AND company_id=$2`, [summary.man.sales_quotation, org.firma.id])).rows[0]
+      : null;
+    const manSi = summary.man?.sales_invoice
+      ? (await pool.query(`SELECT id FROM invoices WHERE invoice_no=$1 AND company_id=$2`, [summary.man.sales_invoice, org.firma.id])).rows[0]
+      : null;
+    const manPi = summary.man?.purchase_invoice
+      ? (await pool.query(`SELECT id FROM invoices WHERE invoice_no=$1 AND company_id=$2`, [summary.man.purchase_invoice, org.firma.id])).rows[0]
+      : null;
+    const manPo = summary.man?.purchase_order
+      ? (await pool.query(`SELECT id FROM purchase_orders WHERE order_no=$1 AND company_id=$2`, [summary.man.purchase_order, org.firma.id])).rows[0]
+      : null;
+    const mrpSo = summary.mrp?.sales_order
+      ? (await pool.query(`SELECT id FROM sales_orders WHERE order_no=$1 AND company_id=$2`, [summary.mrp.sales_order, org.firma.id])).rows[0]
+      : null;
+    summary.extended = await seedExtendedModules({
+      firma: org.firma,
+      plant: org.plant,
+      partners: { mus1: base.mus1, mus2: base.mus2, ted1: base.ted1 },
+      items: { fg: base.fg },
+      tagPrefix: FIRMA_KODU,
+      links: {
+        manSalesOrderId: manSo?.id,
+        manQuotationId: manQt?.id,
+        manSalesInvoiceId: manSi?.id,
+        manPurchaseInvoiceId: manPi?.id,
+        manPurchaseOrderId: manPo?.id,
+        mrpSalesOrderId: mrpSo?.id,
+      },
+    });
+  } catch (err) {
+    log(`  extended modules: ${err.message}`);
+    summary.extended = { hata: err.message };
+  }
+
   fs.writeFileSync(outPath, JSON.stringify(summary, null, 2), 'utf8');
   log(`\nÖzet yazıldı: ${outPath}`);
   log(JSON.stringify(summary, null, 2));

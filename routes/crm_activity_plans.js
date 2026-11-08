@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 async function planGetir(id) {
     const r = await pool.query(
@@ -49,6 +50,11 @@ router.get('/', async (req, res) => {
         if (lead_id) { params.push(Number(lead_id)); where.push(`p.lead_id=$${params.length}`); }
         if (firsat_id) { params.push(Number(firsat_id)); where.push(`p.firsat_id=$${params.length}`); }
         if (status) { params.push(status); where.push(`p.status=$${params.length}`); }
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`p.company_id = $${params.length}`);
+        }
         const liste = await pool.query(
             `
             SELECT p.*,
@@ -108,22 +114,23 @@ router.post('/', async (req, res) => {
                 type = f.rows[0].customer_type;
             }
             const kod = b.plan_code || (await sonrakiKod(client, 'CRM_PLAN'));
+            const firmaId = b.company_id || firmaIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_activity_plans
                     (plan_code, customer_type, partner_id, lead_id, firsat_id, kontak_id,
                      faaliyet_type_id, giren_id, yapacak_id, plant_id,
-                     start_date, end_date, status, konu, description)
+                     start_date, end_date, status, konu, description, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
                         COALESCE($11::timestamp,CURRENT_TIMESTAMP),$12,
-                        COALESCE($13,'Planlandi'),$14,$15)
+                        COALESCE($13,'Planlandi'),$14,$15,$16)
                 RETURNING id
                 `,
                 [
                     kod, type, cariId, adayId, b.firsat_id || null, b.kontak_id || null,
                     b.faaliyet_type_id || null, b.giren_id || null, b.yapacak_id || null,
                     b.plant_id || null, b.start_date || null, b.end_date || null,
-                    b.status || null, b.konu || null, b.description || null,
+                    b.status || null, b.konu || null, b.description || null, firmaId,
                 ]
             );
             return r.rows[0].id;
