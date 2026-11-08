@@ -46,3 +46,5 @@ SELECT COUNT(*) FROM items;
 - `backups/` GitHub’a **gönderilmez** (gitignore) — sadece senin diskinde kalır.
 - Cloud Agent’ın DB’si ayrıdır; senin Postgres asıl kopyandır.
 - Agent yeni migration push ettiyse `git pull` + `npm run migrate` şart.
+- `pg_dump` PATH’te yoksa `npm run db:backup` ve Yerel Panel **Node SQL** yedeğe düşer (`*-node.sql`). pgAdmin Command Line Tools şart değil.
+- Yerel Panel: `tools/erp-local-panel` veya `erp-local-panel.zip` → `KUR.bat` → http://127.0.0.1:3920

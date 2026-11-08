@@ -121,6 +121,15 @@ async function handleApi(req, res) {
     }));
     return sendJson(res, 200, result);
   }
+  if (req.method === 'POST' && p === '/api/find-pgdump') {
+    const { resolvePgDump } = require('./util/pgdump');
+    const cfg = getConfig();
+    const found = resolvePgDump(cfg.pgDumpPath || '');
+    if (found) {
+      saveConfig({ pgDumpPath: found });
+    }
+    return sendJson(res, 200, { ok: true, pgDump: found });
+  }
 
   sendJson(res, 404, { hata: 'API bulunamadı' });
 }

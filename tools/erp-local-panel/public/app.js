@@ -5,7 +5,7 @@ function toast(msg) {
   el.hidden = false;
   el.textContent = msg;
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => { el.hidden = true; }, 4200);
+  toast._t = setTimeout(() => { el.hidden = true; }, 5200);
 }
 
 async function api(path, opts = {}) {
@@ -25,12 +25,21 @@ function flag(ok, yes = 'Tamam', no = 'Eksik') {
 async function refreshStatus() {
   const s = await api('/api/status');
   $('busyPill').hidden = !s.busy;
+  let pgDumpCell;
+  if (s.pgDumpOk) {
+    pgDumpCell = `<span class="ok">${s.pgDump}</span>`;
+  } else if (s.nodeBackupOk) {
+    pgDumpCell = '<span class="warn">Yok — Node SQL yedek kullanılır</span>';
+  } else {
+    pgDumpCell = '<span class="bad">Bulunamadı — Ayarlar’dan yol verin veya npm install</span>';
+  }
   const rows = [
     ['ERP klasörü', s.erpRoot || '—'],
     ['Klasör', flag(s.erpOk)],
     ['Git', flag(s.gitOk, 'Var', 'Yok')],
     ['migrate script', flag(s.migrateScript)],
-    ['pg_dump', s.pgDumpOk ? `<span class="ok">${s.pgDump}</span>` : '<span class="bad">Bulunamadı — pgAdmin Backup kullan</span>'],
+    ['pg_dump', pgDumpCell],
+    ['Node yedek', flag(s.nodeBackupOk, 'Hazır', 'pg yok')],
     ['DB', `${s.db?.database}@${s.db?.host}:${s.db?.port} (${s.db?.passwordSet ? 'şifre var' : 'şifre yok'})`],
     ['Zamanlayıcı', s.schedule?.enabled ? `Açık · ${s.schedule.cron} (${s.schedule.timezone || 'Europe/Istanbul'})` : 'Kapalı'],
     ['Yedek klasörü', s.backupDir || '—'],
@@ -55,8 +64,9 @@ async function refreshLogs() {
 }
 
 function setBusy(on) {
-  ['btnSync', 'btnMigrate', 'btnBackup', 'btnSave'].forEach((id) => {
-    $(id).disabled = on;
+  ['btnSync', 'btnMigrate', 'btnBackup', 'btnSave', 'btnFindPg'].forEach((id) => {
+    const el = $(id);
+    if (el) el.disabled = on;
   });
   $('busyPill').hidden = !on;
 }
@@ -66,7 +76,14 @@ async function runAction(label, path) {
   try {
     toast(`${label} başladı…`);
     const r = await api(path, { method: 'POST', body: '{}' });
-    toast(r.ok === false ? (r.error || 'Hata') : `${label} tamam`);
+    const backup = r.steps?.backup || r;
+    if (backup?.method === 'node-sql') {
+      toast(`${label} tamam (Node SQL yedek)`);
+    } else if (backup?.method === 'pg_dump') {
+      toast(`${label} tamam (pg_dump)`);
+    } else {
+      toast(r.ok === false ? (r.error || 'Hata') : `${label} tamam`);
+    }
   } catch (err) {
     toast(err.message || String(err));
   } finally {
@@ -96,6 +113,31 @@ $('btnSave').addEventListener('click', async () => {
       }),
     });
     toast('Ayarlar kaydedildi');
+    await refreshStatus();
+  } catch (err) {
+    toast(err.message || String(err));
+  } finally {
+    setBusy(false);
+  }
+});
+$('btnFindPg').addEventListener('click', async () => {
+  setBusy(true);
+  try {
+    const r = await api('/api/find-pgdump', { method: 'POST', body: '{}' });
+    if (r.pgDump) {
+      $('pgDumpPath').value = r.pgDump;
+      await api('/api/config', {
+        method: 'POST',
+        body: JSON.stringify({
+          erpRoot: $('erpRoot').value.trim(),
+          pgDumpPath: r.pgDump,
+          schedule: { enabled: $('scheduleEnabled').checked },
+        }),
+      });
+      toast(`pg_dump bulundu: ${r.pgDump}`);
+    } else {
+      toast('pg_dump bulunamadı — Node SQL yedek kullanılacak (sorun değil)');
+    }
     await refreshStatus();
   } catch (err) {
     toast(err.message || String(err));

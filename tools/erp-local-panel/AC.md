@@ -2,14 +2,21 @@
 
 Bu proje **ayrı** bir uygulama: Windows bilgisayarınızda çalışır, ERP klasörünüze bağlanır, haftalık `git pull → npm install → migrate → yedek` yapar.
 
-## 1) Zip’i açın (güncel sürüm)
+## 1) Zip’i açın / güncelleyin
 
-Eski klasörü silin veya üzerine yazın. Güncel zip: `erp-local-panel.zip`  
+`erp-local-panel.zip` dosyasını istediğiniz yere açın  
 (örnek: `C:\Users\...\Documents\erp-local-panel`).
 
-> Not: İlk sürümde Windows PowerShell Türkçe karakter hatası vardı; güncel scriptler düzeltilmiştir.
+Zaten kuruluysa: yeni zip’i üstüne açın veya ERP deposundaki `tools/erp-local-panel` klasörünü kullanın, sonra:
 
-## 2) `KUR.bat` dosyasına çift tıklayın
+```bat
+cd panel-klasoru
+npm install
+```
+
+Paneli yeniden başlatın (Masaüstü kısayolu).
+
+## 2) `KUR.bat` dosyasına çift tıklayın (ilk kurulum)
 
 Script şunları yapar:
 
@@ -20,25 +27,28 @@ Script şunları yapar:
 - Windows açılınca paneli başlatır  
 - Tarayıcıda `http://127.0.0.1:3920` açar  
 
-## 3) Panelde “Tam senkron”a basın (ilk sefer)
+## 3) Panelde “Tam senkron”a basın
 
-Sonra her Pazar 17:00 otomatik çalışır. Panel her zaman açık olmak zorunda değil — haftalık görev paneli kapalıyken de CLI ile senkron çalıştırır.
+`pg_dump` yoksa kırmızı uyarı görebilirsiniz — **yine de senkron tamamlanır**.  
+Yedek `backups\erp-…-node.sql` olarak yazılır. İsterseniz Ayarlar → **pg_dump bul** veya yolu elle girin.
+
+Sonra her Pazar 17:00 otomatik çalışır.
 
 ---
 
-### Gerekli olanlar (zaten varsa dokunmayın)
+### Gerekli olanlar
 
 | Ne | Not |
 |----|-----|
 | ERP klasörü (git + `migrate` script) | `erp-backend` doğru branch |
 | PostgreSQL + `.env` | ERP klasöründeki `.env` |
 | Node.js 18+ | Yoksa kurulum dener |
-| pg_dump (opsiyonel) | Yoksa yedek için pgAdmin Backup |
+| pg_dump | Opsiyonel — yoksa Node SQL yedek |
 
 ### Sorun olursa
 
 - Panel açılmıyor → Masaüstündeki **ERP Yerel Panel** kısayolu  
-- Yedek hata → PostgreSQL Command Line Tools veya panelde `pg_dump` yolu  
+- Eski “pg_dump bulunamadı” hatası → paneli bu sürüme güncelleyin (`npm install` + restart)  
 - Yanlış ERP → Panel → Ayarlar → ERP klasörü → Kaydet  
 
 Kaldırma: `scripts\uninstall-windows.ps1`
