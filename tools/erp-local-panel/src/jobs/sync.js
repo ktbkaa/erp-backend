@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getConfig } = require('../util/config');
-const { run } = require('../util/run');
+const { runAsync } = require('../util/run');
 const { resolvePgDump } = require('../util/pgdump');
 const { nodeSqlBackup } = require('../util/nodeBackup');
 const logger = require('../util/logger');
@@ -32,14 +32,14 @@ async function stepGitPull(cfg) {
     logger.append({ level: 'warn', message: 'Git deposu yok — git pull atlandı' });
     return { skipped: true, reason: 'not-a-git-repo' };
   }
-  run(gitCmd(), ['fetch', 'origin'], { cwd: cfg.erpRoot, label: 'git fetch' });
-  run(gitCmd(), ['pull', '--ff-only'], { cwd: cfg.erpRoot, label: 'git pull' });
+  await runAsync(gitCmd(), ['fetch', 'origin'], { cwd: cfg.erpRoot, label: 'git fetch' });
+  await runAsync(gitCmd(), ['pull', '--ff-only'], { cwd: cfg.erpRoot, label: 'git pull' });
   return { ok: true };
 }
 
 async function stepNpmInstall(cfg) {
   // --no-audit/--no-fund: Windows'ta senkronu yarıda kesen uyarı/exit gürültüsünü azaltır
-  run(npmCmd(), ['install', '--no-audit', '--no-fund'], {
+  await runAsync(npmCmd(), ['install', '--no-audit', '--no-fund'], {
     cwd: cfg.erpRoot,
     label: 'npm install',
     shell: process.platform === 'win32',
@@ -52,7 +52,7 @@ async function stepMigrate(cfg) {
   if (!pkg.scripts || !pkg.scripts.migrate) {
     throw new Error('ERP package.json içinde "migrate" script yok — yanlış klasör/branch olabilir.');
   }
-  run(npmCmd(), ['run', 'migrate'], {
+  await runAsync(npmCmd(), ['run', 'migrate'], {
     cwd: cfg.erpRoot,
     label: 'npm run migrate',
     shell: process.platform === 'win32',
@@ -82,11 +82,11 @@ async function stepBackupPgDump(cfg, pgDump) {
     '-d', String(cfg.db.database),
   ];
 
-  run(pgDump, [...common, '--format=custom', '--file', dumpFile], {
+  await runAsync(pgDump, [...common, '--format=custom', '--file', dumpFile], {
     label: 'pg_dump custom',
     env,
   });
-  run(pgDump, [...common, '--format=plain', '--no-owner', '--no-acl', '--file', sqlFile], {
+  await runAsync(pgDump, [...common, '--format=plain', '--no-owner', '--no-acl', '--file', sqlFile], {
     label: 'pg_dump plain',
     env,
   });
@@ -141,7 +141,7 @@ async function stepBackup(cfg) {
   const backupJs = path.join(cfg.erpRoot, 'scripts', 'db-backup.js');
   if (fs.existsSync(backupJs)) {
     try {
-      run(process.execPath, [backupJs], {
+      await runAsync(process.execPath, [backupJs], {
         cwd: cfg.erpRoot,
         label: 'node scripts/db-backup.js',
         env: {

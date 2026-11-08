@@ -1,6 +1,62 @@
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const logger = require('./logger');
 
+/**
+ * Uzun işler için async spawn — event loop'u kilitlemez (panel yanıt vermeye devam eder).
+ */
+function runAsync(cmd, args, opts = {}) {
+  const label = opts.label || `${cmd} ${args.join(' ')}`;
+  logger.append({ level: 'info', message: `▶ ${label}`, cmd, args });
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, {
+      cwd: opts.cwd,
+      env: { ...process.env, ...(opts.env || {}) },
+      shell: opts.shell === true,
+      windowsHide: true,
+    });
+    let stdout = '';
+    let stderr = '';
+    const max = 20 * 1024 * 1024;
+    const timer = setTimeout(() => {
+      try { child.kill(); } catch { /* ignore */ }
+      reject(new Error(`${label} zaman aşımı`));
+    }, opts.timeout || 15 * 60 * 1000);
+
+    child.stdout.on('data', (d) => {
+      stdout += d.toString('utf8');
+      if (stdout.length > max) stdout = stdout.slice(-max);
+    });
+    child.stderr.on('data', (d) => {
+      stderr += d.toString('utf8');
+      if (stderr.length > max) stderr = stderr.slice(-max);
+    });
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      reject(new Error(`${label} başlatılamadı: ${err.message}`));
+    });
+    child.on('close', (status, signal) => {
+      clearTimeout(timer);
+      const out = stdout.trim();
+      const err = stderr.trim();
+      if (out) logger.append({ level: 'info', message: out.slice(0, 4000) });
+      if (err) logger.append({ level: 'warn', message: err.slice(0, 4000) });
+      if (status !== 0 && status != null) {
+        const e = new Error(`${label} başarısız (exit ${status})`);
+        e.status = status;
+        e.stderr = err;
+        reject(e);
+        return;
+      }
+      if (status == null && signal) {
+        reject(new Error(`${label} sinyal ile bitti: ${signal}`));
+        return;
+      }
+      resolve({ stdout: out, stderr: err, status });
+    });
+  });
+}
+
+/** Kısa işler / which için sync */
 function run(cmd, args, opts = {}) {
   const label = opts.label || `${cmd} ${args.join(' ')}`;
   logger.append({ level: 'info', message: `▶ ${label}`, cmd, args });
@@ -42,4 +98,4 @@ function which(bin) {
   return line || null;
 }
 
-module.exports = { run, which };
+module.exports = { run, runAsync, which };
