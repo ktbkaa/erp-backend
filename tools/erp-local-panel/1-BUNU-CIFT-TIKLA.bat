@@ -62,11 +62,11 @@ if errorlevel 1 (
 )
 
 echo.
-echo  Tamam. Panel aciliyor...
+echo  Eski panel kapatilip yenisi aciliyor...
 
 REM %~dp0 sonunda \ var; tirnak icinde \" bozulmasin diye . ekliyoruz
 set "PANEL_ROOT=%~dp0"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-panel.ps1" -PanelRoot "%PANEL_ROOT%." -OpenBrowser
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-panel.ps1" -PanelRoot "%PANEL_ROOT%." -OpenBrowser -ForceRestart
 if errorlevel 1 (
   echo.
   echo  Panel acilamadi. Asagidaki adresi elle acmayi deneyin:
