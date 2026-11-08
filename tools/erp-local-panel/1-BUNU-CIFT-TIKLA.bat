@@ -1,35 +1,72 @@
 @echo off
-chcp 65001 >nul
+setlocal EnableExtensions
 cd /d "%~dp0"
-title ERP Yerel Panel
+
 echo.
-echo  Kurulum / guncelleme basliyor...
-echo  (Biraz bekleyin, pencereyi kapatmayin)
+echo  Kurulum basliyor. Pencereyi kapatmayin.
 echo.
 
+set "NODE_EXE="
 where node >nul 2>&1
-if errorlevel 1 (
-  echo  Node.js yok. Once https://nodejs.org adresinden LTS kurun,
-  echo  bilgisayari yeniden baslatin, sonra bu dosyaya tekrar cift tiklayin.
+if not errorlevel 1 (
+  for /f "delims=" %%i in ('where node') do (
+    if not defined NODE_EXE set "NODE_EXE=%%i"
+  )
+)
+if not defined NODE_EXE if exist "%ProgramFiles%\nodejs\node.exe" set "NODE_EXE=%ProgramFiles%\nodejs\node.exe"
+if not defined NODE_EXE if exist "%ProgramFiles(x86)%\nodejs\node.exe" set "NODE_EXE=%ProgramFiles(x86)%\nodejs\node.exe"
+if not defined NODE_EXE if exist "%LocalAppData%\Programs\node\node.exe" set "NODE_EXE=%LocalAppData%\Programs\node\node.exe"
+
+if not defined NODE_EXE (
+  echo  Node.js yok. Simdi kuruluyor. Biraz surebilir.
+  echo.
+  where winget >nul 2>&1
+  if errorlevel 1 (
+    echo  Otomatik kurulum yapilamadi.
+    echo  Acilan siteden LTS kurun, bilgisayari yeniden acin,
+    echo  sonra bu dosyaya tekrar cift tiklayin.
+    echo.
+    start "" "https://nodejs.org/en/download"
+    pause
+    exit /b 1
+  )
+  winget install OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements
+  set "PATH=%ProgramFiles%\nodejs;%PATH%"
+  if exist "%ProgramFiles%\nodejs\node.exe" set "NODE_EXE=%ProgramFiles%\nodejs\node.exe"
+)
+
+if not defined NODE_EXE (
+  where node >nul 2>&1
+  if not errorlevel 1 set "NODE_EXE=node"
+)
+
+if not defined NODE_EXE (
+  echo  Node kuruldu ama henuz bulunamadi.
+  echo  Bilgisayari kapatip acin, sonra bu dosyaya tekrar cift tiklayin.
   echo.
   pause
   exit /b 1
 )
 
+echo  Node bulundu.
+echo  Paketler yukleniyor...
+echo.
+
+set "PATH=%ProgramFiles%\nodejs;%PATH%"
 call npm.cmd install --omit=dev
 if errorlevel 1 (
   echo.
-  echo  Kurulum yarida kaldi. Internet baglantinizi kontrol edip tekrar deneyin.
+  echo  Yukleme yarida kaldi. Interneti kontrol edip tekrar deneyin.
   pause
   exit /b 1
 )
 
 echo.
 echo  Tamam. Panel aciliyor...
-start "" powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-panel.ps1" -PanelRoot "%~dp0" -OpenBrowser
-timeout /t 2 /nobreak >nul
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-panel.ps1" -PanelRoot "%~dp0" -OpenBrowser
 echo.
-echo  Tarayicide panel acildiysa "Tam senkron" dugmesine basin.
-echo  Kirmizi yazi gorurseniz sorun degil — senkron yine tamamlanir.
+echo  Tarayicide Tam senkron dugmesine basin.
+echo  Kirmizi yazi cikarsa sorun degil, senkron yine biter.
 echo.
 pause
+endlocal
