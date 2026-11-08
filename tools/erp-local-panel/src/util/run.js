@@ -11,6 +11,7 @@ function run(cmd, args, opts = {}) {
     shell: opts.shell === true,
     windowsHide: true,
     timeout: opts.timeout || 15 * 60 * 1000,
+    maxBuffer: 20 * 1024 * 1024,
   });
   const stdout = (r.stdout || '').trim();
   const stderr = (r.stderr || '').trim();

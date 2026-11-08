@@ -38,7 +38,12 @@ async function stepGitPull(cfg) {
 }
 
 async function stepNpmInstall(cfg) {
-  run(npmCmd(), ['install'], { cwd: cfg.erpRoot, label: 'npm install', shell: process.platform === 'win32' });
+  // --no-audit/--no-fund: Windows'ta senkronu yarıda kesen uyarı/exit gürültüsünü azaltır
+  run(npmCmd(), ['install', '--no-audit', '--no-fund'], {
+    cwd: cfg.erpRoot,
+    label: 'npm install',
+    shell: process.platform === 'win32',
+  });
   return { ok: true };
 }
 
@@ -174,15 +179,20 @@ async function runSync(opts = {}) {
   try {
     if (steps.gitPull !== false) {
       result.steps.gitPull = await stepGitPull(cfg);
+      logger.append({ level: 'info', message: 'Adım tamam: git' });
     }
     if (steps.npmInstall !== false) {
       result.steps.npmInstall = await stepNpmInstall(cfg);
+      logger.append({ level: 'info', message: 'Adım tamam: npm install' });
     }
     if (steps.migrate !== false) {
       result.steps.migrate = await stepMigrate(cfg);
+      logger.append({ level: 'info', message: 'Adım tamam: migrate' });
     }
     if (steps.backup !== false) {
       result.steps.backup = await stepBackup(cfg);
+      const method = result.steps.backup?.method || 'yedek';
+      logger.append({ level: 'info', message: `Adım tamam: yedek (${method})` });
     }
     result.ms = Date.now() - started;
     logger.append({ level: 'info', message: `Senkron tamam (${result.ms} ms)` });
