@@ -210,8 +210,6 @@ async function purgeFirma(client, companyId, tables, log) {
     `quotation_id IN (SELECT id FROM purchase_quotations WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'purchase_order_lines',
     `purchase_order_id IN (SELECT id FROM purchase_orders WHERE company_id=$1)`, p, log);
-  await deleteWhere(client, 'goods_receipt_lines',
-    `receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'vendor_delivery_note_lines',
     `delivery_note_id IN (SELECT id FROM vendor_delivery_notes WHERE company_id=$1)`, p, log);
 
@@ -229,9 +227,16 @@ async function purgeFirma(client, companyId, tables, log) {
   await deleteWhere(client, 'production_plans',
     `company_id=$1 OR production_order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, p, log);
 
-  // İrsaliye / fatura / sayım / transfer satırları + tahsilat
+  // Giriş kontrol → mal kabul satırlarından önce (FK)
   await deleteWhere(client, 'incoming_inspection_lines',
-    `inspection_id IN (SELECT id FROM incoming_inspections WHERE company_id=$1)`, p, log);
+    `inspection_id IN (SELECT id FROM incoming_inspections WHERE company_id=$1
+       OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1))`, p, log);
+  await deleteWhere(client, 'incoming_inspections',
+    `company_id=$1 OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'goods_receipt_lines',
+    `receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, p, log);
+
+  // İrsaliye / fatura / sayım / transfer satırları + tahsilat
   await deleteWhere(client, 'inventory_count_lines',
     `document_id IN (SELECT id FROM inventory_counts WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'transfer_order_lines',

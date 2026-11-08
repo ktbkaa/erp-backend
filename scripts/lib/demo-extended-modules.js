@@ -351,11 +351,22 @@ async function seedExtendedModules(ctx) {
       work_date: workDate,
     }, firma.id).catch((e) => log(`  puantaj: ${e.message}`));
 
-    const period = await api('POST', '/hr-bordro/donemler', {
-      company_id: firma.id,
-      year_no: 2026,
-      month_no: 3,
-    }, firma.id);
+    let period;
+    try {
+      period = await api('POST', '/hr-bordro/donemler', {
+        company_id: firma.id,
+        year_no: 2025,
+        month_no: 3,
+      }, firma.id);
+    } catch (_) {
+      const periods = await api('GET', '/hr-bordro/donemler', null, firma.id).catch(() => []);
+      period = (Array.isArray(periods) ? periods : []).find(
+        (p) => Number(p.year_no) === 2025 && Number(p.month_no) === 3
+      ) || (Array.isArray(periods) ? periods : []).find(
+        (p) => Number(p.year_no) === 2026 && Number(p.month_no) === 3
+      ) || (Array.isArray(periods) ? periods[0] : null);
+      if (!period?.id) throw new Error('Bordro dönemi oluşturulamadı');
+    }
     const run = await api('POST', '/hr-bordro/calismalar', {
       company_id: firma.id,
       period_id: period.id,

@@ -7296,8 +7296,34 @@ function applyCompactBelgeShell(s) {
 
 function normalizeScreen(raw, moduleId, moduleTitle) {
   const s = { ...raw, moduleId, moduleTitle };
-  s.readOnly = s.id === 'depo-bakiye' || s.crud === false;
-  s.crud = s.readOnly ? false : (s.crud !== false);
+  s.hideActions = Boolean(raw.hideActions) || s.id === 'depo-bakiye';
+  const wantsCrud = raw.crud !== false && !s.hideActions;
+  s.crud = wantsCrud;
+  // crud:false + readOnly:false → iş akışı (KK/onay): İncele/Düzelt açık, Yeni/Sil kapalı
+  // crud:false + (readOnly true/undefined) → rapor/özet: yalnızca İncele (form varsa)
+  if (s.hideActions) {
+    s.readOnly = true;
+    s.listActions = [];
+  } else if (!wantsCrud) {
+    if (Array.isArray(raw.listActions)) {
+      s.listActions = raw.listActions;
+    } else {
+      const acts = [];
+      const hasMaster = Array.isArray(raw.masterFields) && raw.masterFields.length > 0;
+      const hasCols = Array.isArray(raw.columns) && raw.columns.length > 0;
+      const hasForm = hasMaster || hasCols;
+      if (hasForm || raw.approveAction || raw.readOnly === false) acts.push('incele');
+      if (raw.readOnly === false || raw.approveAction) acts.push('duzelt');
+      s.listActions = acts;
+    }
+    // Düzelt varsa form düzenlenebilir; yalnızca İncele ise salt okunur
+    s.readOnly = !s.listActions.includes('duzelt') && !s.listActions.includes('yeni');
+  } else {
+    s.readOnly = false;
+    s.listActions = Array.isArray(raw.listActions)
+      ? raw.listActions
+      : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'];
+  }
 
   if (!s.masterFields || !s.masterFields.length) {
     s.masterFields = (s.columns || []).map((c) => ({
@@ -9389,14 +9415,26 @@ function updateFormCrudButtons(screen) {
     sil: $('#btnFormSil'),
   };
   if (!wrap || !map.yeni) return;
-  if (!screen || screen.readOnly || screen.crud === false || screen.hideActions) {
+  if (!screen || screen.hideActions) {
     Object.values(map).forEach((b) => { if (b) { b.hidden = true; b.disabled = true; } });
+    wrap.hidden = true;
     return;
   }
-  const showYeni = mode === 'incele' || mode === 'duzelt';
-  const showDuzelt = mode === 'incele' && hasId;
-  const showKopyala = (mode === 'incele' || mode === 'duzelt') && hasId;
-  const showSil = (mode === 'incele' || mode === 'duzelt') && hasId;
+  const listActs = new Set(
+    Array.isArray(screen.listActions)
+      ? screen.listActions
+      : (screen.crud === false ? ['incele', 'duzelt'] : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'])
+  );
+  // İş akışı (crud:false): formda Yeni/Kopyala/Sil yok; İncele→Düzelt geçişi kalabilir
+  const canYeni = listActs.has('yeni') && screen.crud !== false;
+  const canDuzelt = listActs.has('duzelt') || listActs.has('incele');
+  const canKopyala = listActs.has('kopyala') && screen.crud !== false;
+  const canSil = listActs.has('sil') && screen.crud !== false;
+
+  const showYeni = canYeni && (mode === 'incele' || mode === 'duzelt');
+  const showDuzelt = canDuzelt && mode === 'incele' && hasId;
+  const showKopyala = canKopyala && (mode === 'incele' || mode === 'duzelt') && hasId;
+  const showSil = canSil && (mode === 'incele' || mode === 'duzelt') && hasId;
 
   map.yeni.hidden = !showYeni;
   map.duzelt.hidden = !showDuzelt;
@@ -10913,31 +10951,32 @@ function ekranYetkisi(screenId, action = null) {
 
 function updateActionButtons(screen) {
   const hasSel = Boolean(state.selectedId);
+  const listActs = Array.isArray(screen.listActions)
+    ? screen.listActions
+    : (screen.hideActions ? [] : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil']);
+  const allowedSet = new Set(listActs);
+
   document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
     const act = btn.dataset.action;
-    if (screen.hideActions || (screen.readOnly && screen.crud === false)) {
-      // Salt okunur kontrol ekranı — Yeni/İncele/Düzelt gizle; CSV kalabilir
-      if (['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
-        btn.hidden = true;
+    if (['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
+      const show = allowedSet.has(act);
+      btn.hidden = !show;
+      if (!show) {
         btn.disabled = true;
         return;
       }
-      btn.hidden = false;
-    } else {
-      btn.hidden = false;
-    }
-    if (screen.readOnly && !screen.hideActions) {
-      btn.disabled = act !== 'incele' || !hasSel;
+      if (!ekranYetkisi(screen.id, act)) {
+        btn.disabled = true;
+        return;
+      }
+      if (act === 'yeni') btn.disabled = false;
+      else btn.disabled = !hasSel;
       return;
     }
-    const allowed = ekranYetkisi(screen.id, act === 'export-csv' || act === 'mrp-talep' ? act : act);
-    if (!allowed && ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
-      btn.disabled = true;
-      return;
-    }
-    if (act === 'yeni') btn.disabled = !ekranYetkisi(screen.id, 'yeni');
-    else if (act === 'export-csv') btn.disabled = !ekranYetkisi(screen.id, 'export-csv');
-    else if (act === 'mrp-talep') {
+    btn.hidden = false;
+    if (act === 'export-csv') {
+      btn.disabled = !ekranYetkisi(screen.id, 'export-csv');
+    } else if (act === 'mrp-talep') {
       btn.hidden = !screen.mrpTalepAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-talep');
     } else if (act === 'mrp-uretim') {
@@ -10946,7 +10985,7 @@ function updateActionButtons(screen) {
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
-    } else btn.disabled = !hasSel || !ekranYetkisi(screen.id, act);
+    }
   });
   const mrpBtn = $('#btnMrpTalep');
   if (mrpBtn) mrpBtn.hidden = !screen.mrpTalepAction;

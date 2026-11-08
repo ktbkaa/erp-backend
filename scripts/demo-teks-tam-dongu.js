@@ -111,8 +111,52 @@ async function onaylaKk(firmaId, { sourceId, direction, targetWarehouseId, tag }
   }
 }
 
+/** Mal kabul → Giriş Kontrol onayı → Giriş Kalite (GKK) onayı → Hammadde */
 async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
-  await onaylaKk(firmaId, { sourceId: mkId, direction: 'GKK', targetWarehouseId, tag });
+  const gkRows = (await pool.query(
+    `SELECT * FROM incoming_inspections
+     WHERE goods_receipt_id=$1 AND status NOT IN ('Onayli','Red','Iptal')`,
+    [mkId]
+  )).rows;
+  for (const g of gkRows) {
+    try {
+      await api('POST', `/giris-kontrolleri/${g.id}/onayla`, {
+        description: `[${tag}] Giriş kontrol — ürün/miktar tutuşması`,
+      }, firmaId);
+      log(`  Giriş kontrol onay: ${g.inspection_no || g.id}`);
+    } catch (err) {
+      log(`  Giriş kontrol atlandı ${g.inspection_no || g.id}: ${err.message}`);
+    }
+  }
+  const inspIds = (await pool.query(
+    `SELECT id FROM incoming_inspections WHERE goods_receipt_id=$1`,
+    [mkId]
+  )).rows.map((r) => r.id);
+  const r = await pool.query(
+    `SELECT * FROM qc_orders
+     WHERE direction='GKK' AND status NOT IN ('Onayli','Kapali','Red','Iptal')
+       AND (
+         (source_type='MAL_KABUL' AND source_id=$1)
+         OR (source_type='GIRIS_KONTROL' AND source_id = ANY($2::int[]))
+         OR source_id=$1
+       )`,
+    [mkId, inspIds.length ? inspIds : [0]]
+  );
+  for (const e of r.rows.slice(0, 20)) {
+    try {
+      await api('POST', `/kk-emirleri/${e.id}/onayla`, {
+        onay: true,
+        accepted_quantity: e.quantity || e.accepted_quantity,
+        rejected_quantity: 0,
+        target_warehouse_id: targetWarehouseId,
+        description: `[${tag}] Giriş kalite onay → Hammadde`,
+      }, firmaId);
+      await tagBelge(null, 'qc_orders', e.id, firmaId, tag, { project: false });
+      log(`  GKK onay: ${e.order_no || e.id}`);
+    } catch (err) {
+      log(`  GKK atlandı ${e.order_no || e.id}: ${err.message}`);
+    }
+  }
 }
 
 async function onaylaCkk(firmaId, productionOrderId, targetWarehouseId, tag) {
@@ -487,6 +531,8 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM journal_entry_lines WHERE document_id IN (SELECT id FROM journal_entries WHERE company_id=$1)`, [id], 'journal_entry_lines'],
     [`DELETE FROM journal_entries WHERE company_id=$1`, [id], 'journal_entries'],
     [`DELETE FROM invoice_matches WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)`, [id], 'invoice_matches'],
+    [`DELETE FROM receipts_payments WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)
+        OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'receipts_payments'],
     [`DELETE FROM invoice_lines WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)
         OR invoice_id IN (SELECT id FROM invoices WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1))
         OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'invoice_lines'],
@@ -503,7 +549,13 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM sales_quotation_lines WHERE quotation_id IN (SELECT id FROM sales_quotations WHERE company_id=$1)`, [id], 'sales_quotation_lines'],
     [`DELETE FROM sales_quotations WHERE company_id=$1`, [id], 'sales_quotations'],
     [`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id IN (SELECT id FROM vendor_delivery_notes WHERE company_id=$1)`, [id], 'vdn_lines'],
+    [`DELETE FROM incoming_inspection_lines WHERE inspection_id IN (
+        SELECT id FROM incoming_inspections WHERE company_id=$1
+           OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1))`, [id], 'incoming_insp_lines'],
+    [`DELETE FROM incoming_inspections WHERE company_id=$1
+        OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, [id], 'incoming_inspections'],
     [`DELETE FROM goods_receipt_lines WHERE receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, [id], 'gr_lines'],
+    [`UPDATE goods_receipts SET item_movement_id=NULL WHERE company_id=$1`, [id], 'null gr.sm'],
     [`DELETE FROM goods_receipts WHERE company_id=$1`, [id], 'goods_receipts'],
     [`DELETE FROM vendor_delivery_notes WHERE company_id=$1`, [id], 'vendor_delivery_notes'],
     [`DELETE FROM stock_movement_lines WHERE movement_id IN (SELECT id FROM stock_movements WHERE company_id=$1)`, [id], 'sm_lines'],
@@ -603,6 +655,8 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM partner_details WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'partner_det'],
     [`DELETE FROM partner_ledger_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'partner_ledger'],
     [`DELETE FROM partner_company_params WHERE company_id=$1`, [id], 'partner_params'],
+    [`DELETE FROM crm_calendar_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)
+        OR company_id=$1`, [id], 'crm_calendar'],
     [`DELETE FROM partners WHERE company_id=$1`, [id], 'partners'],
   ];
 
