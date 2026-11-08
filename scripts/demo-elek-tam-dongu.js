@@ -153,6 +153,28 @@ async function ensureAvailableStock(client, {
 /**
  * API belgelerini etiketlendir — ayrı kısa transaction (açık seed txn ile satır kilidi çakışmasın).
  */
+
+async function ensureFirmaYetkileri(client, companyId) {
+  if (!companyId) return;
+  const users = (await client.query(
+    `SELECT id FROM users
+     WHERE COALESCE(is_active, TRUE) = TRUE
+       AND (
+         LOWER(COALESCE(role,'')) IN ('admin','yonetici','administrator')
+         OR UPPER(COALESCE(group_code,'')) = 'ADMIN'
+         OR LOWER(COALESCE(user_code,'')) IN ('owner','admin')
+       )`
+  )).rows;
+  for (const u of users) {
+    await client.query(
+      `INSERT INTO user_company_permissions (kisi_id, company_id)
+       VALUES ($1,$2) ON CONFLICT (kisi_id, company_id) DO NOTHING`,
+      [u.id, companyId]
+    );
+  }
+  log(`  firma yetkisi bağlandı: company_id=${companyId} → ${users.length} kullanıcı`);
+}
+
 async function tagBelge(_clientIgnored, table, id, firmaId, tag, { project = true } = {}) {
   if (!id) return;
   const c = await pool.connect();
@@ -1508,6 +1530,7 @@ async function main() {
   try {
     await client.query('BEGIN');
     org = await ensureOrg(client);
+    await ensureFirmaYetkileri(client, org.firma.id);
     summary.firma = { id: org.firma.id, code: org.firma.company_code, name: org.firma.company_name };
     await purgeElek(client, org.firma.id);
     base = await seedBase(client, org);

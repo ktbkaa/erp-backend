@@ -9967,6 +9967,8 @@ function promptLogin() {
 
 function allowedFirmalar() {
   const all = Array.isArray(state.companies) ? state.companies : [];
+  // ADMIN / Yönetici: tüm firma profilleri görünür (yeni demo firmaları dahil)
+  if (isAdminLikeUser(state.session)) return all;
   const fy = state.session?.firma_yetkileri;
   if (!Array.isArray(fy) || !fy.length) return all;
   const ids = new Set(fy.map((f) => Number(f.company_id ?? f.id)).filter(Boolean));
@@ -12487,7 +12489,8 @@ function allScreensCatalog() {
 function isAdminLikeUser(rec) {
   if (!rec) return false;
   if (rec.group_code === 'ADMIN') return true;
-  return String(rec.role || '').toLowerCase() === 'yonetici';
+  const role = String(rec.role || '').toLowerCase();
+  return role === 'yonetici' || role === 'admin' || role === 'administrator';
 }
 
 /**

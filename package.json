@@ -18,7 +18,8 @@
     "demo:dokum-prj": "node scripts/demo-dokum-prj.js",
     "demo:teks": "node scripts/demo-teks-tam-dongu.js",
     "demo:teks-dongu": "node scripts/demo-teks-tam-dongu.js",
-    "purge:firma": "node scripts/purge-firma-veri.js"
+    "purge:firma": "node scripts/purge-firma-veri.js",
+    "ensure:firma-yetki": "node scripts/ensure-firma-yetkileri.js"
   },
   "keywords": [
     "erp",

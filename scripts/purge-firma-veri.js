@@ -72,7 +72,7 @@ const COMPANY_TABLES = [
   // ana kartlar
   'partners', 'items',
   'partner_company_params',
-  'user_company_permissions',
+  // NOT: user_company_permissions silinmez — yoksa firma profil picker'dan kaybolur
   // PRJ
   'project_cost_entries', 'project_budget_lines', 'project_risks',
   'project_close_checklists', 'project_milestones', 'project_phases',
@@ -129,6 +129,16 @@ const PROTECTED_TABLES = new Set([
   'approval_roles', 'approval_routes', 'approval_route_steps', 'approval_rules',
 ]);
 
+/**
+ * Firma işlem temizliği bunları ASLA silmez (iskelet / yetki / görünürlük).
+ * Özellikle user_company_permissions: silinirse firma profil picker'dan kaybolur.
+ */
+const NEVER_PURGE_TABLES = new Set([
+  'companies', 'plants', 'warehouses',
+  'user_company_permissions', 'user_warehouses',
+  ...PROTECTED_TABLES,
+]);
+
 async function discoverCompanyTables(client) {
   const r = await client.query(
     `SELECT table_name FROM information_schema.columns
@@ -139,12 +149,14 @@ async function discoverCompanyTables(client) {
   const ordered = [];
   const seen = new Set();
   for (const t of COMPANY_TABLES) {
+    if (NEVER_PURGE_TABLES.has(t)) continue;
     if (discovered.includes(t) && !seen.has(t)) {
       ordered.push(t);
       seen.add(t);
     }
   }
   for (const t of discovered) {
+    if (NEVER_PURGE_TABLES.has(t)) continue;
     if (!seen.has(t) && t !== 'companies') {
       ordered.push(t);
       seen.add(t);
