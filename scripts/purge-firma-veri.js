@@ -24,6 +24,11 @@ const CODE_ALIASES = {
   TEKSTIL: 'TEKS',
   TEKSTİL: 'TEKS',
   DENIM: 'TEKS',
+  KOMPANZASYON: 'ELEK',
+  KOMP: 'ELEK',
+  ELEKTRONIK: 'ELEK',
+  DOKÜM: 'DOKUM',
+  DOKUM: 'DOKUM',
 };
 
 const firmaKodu = (CODE_ALIASES[rawArg.toUpperCase()] || rawArg).toUpperCase();
@@ -50,8 +55,11 @@ const COMPANY_TABLES = [
   'journal_entries', 'fin_cash_movements', 'fin_bank_accounts', 'fin_cash_accounts',
   'price_lists', 'gl_accounts', 'fixed_assets',
   'accounting_periods', 'fiscal_years',
-  // onay
-  'approval_records', 'approval_module_usages', 'approval_routes', 'approval_rules', 'approval_roles',
+  // onay (transactional; tanımlar PROTECTED)
+  'approval_records', 'approval_module_usages',
+  // üretim yan tablolar
+  'production_receipts', 'production_plans',
+  'receipts_payments', 'supplier_evaluations',
   // HR
   'hr_payroll_lines', 'hr_payroll_runs', 'hr_payroll_periods',
   'hr_advances', 'hr_employee_salaries', 'hr_attendance_days', 'hr_attendance_raw',
@@ -64,7 +72,15 @@ const COMPANY_TABLES = [
   // ana kartlar
   'partners', 'items',
   'partner_company_params',
-  'user_company_permissions',
+  // NOT: user_company_permissions silinmez — yoksa firma profil picker'dan kaybolur
+  // PRJ
+  'project_cost_entries', 'project_budget_lines', 'project_risks',
+  'project_close_checklists', 'project_milestones', 'project_phases',
+  'project_members', 'project_attachments', 'project_purchase_links', 'project_sales_links',
+  'work_logs', 'work_item_comments', 'work_item_attachments', 'work_item_history',
+  'work_item_materials', 'work_item_resources', 'work_item_relations',
+  'work_items', 'prj_sprint_work_items', 'prj_sprints', 'prj_board_columns',
+  'prj_boards', 'prj_automation_logs', 'projects',
 ];
 
 async function tableExists(client, name) {
@@ -100,6 +116,29 @@ async function deleteWhere(client, table, whereSql, params, log) {
   }
 }
 
+/** Tanım / seed tabloları — firma temizliği bunlara dokunmaz (null company_id dahil). */
+const PROTECTED_TABLES = new Set([
+  'companies',
+  'prj_project_types', 'prj_project_categories', 'prj_project_statuses', 'prj_project_priorities',
+  'prj_project_roles', 'prj_work_item_types', 'prj_work_item_statuses', 'prj_work_item_priorities',
+  'prj_relation_types', 'prj_workflows', 'prj_workflow_transitions',
+  'prj_project_templates', 'prj_project_template_items', 'prj_automations',
+  'number_series', 'system_parameters', 'movement_codes', 'document_types',
+  'uoms', 'countries', 'currencies', 'languages', 'banks',
+  // Onay tanım şablonları (null company_id seed) — kayıtlar company_id ile silinir
+  'approval_roles', 'approval_routes', 'approval_route_steps', 'approval_rules',
+]);
+
+/**
+ * Firma işlem temizliği bunları ASLA silmez (iskelet / yetki / görünürlük).
+ * Özellikle user_company_permissions: silinirse firma profil picker'dan kaybolur.
+ */
+const NEVER_PURGE_TABLES = new Set([
+  'companies', 'plants', 'warehouses',
+  'user_company_permissions', 'user_warehouses',
+  ...PROTECTED_TABLES,
+]);
+
 async function discoverCompanyTables(client) {
   const r = await client.query(
     `SELECT table_name FROM information_schema.columns
@@ -110,12 +149,14 @@ async function discoverCompanyTables(client) {
   const ordered = [];
   const seen = new Set();
   for (const t of COMPANY_TABLES) {
+    if (NEVER_PURGE_TABLES.has(t)) continue;
     if (discovered.includes(t) && !seen.has(t)) {
       ordered.push(t);
       seen.add(t);
     }
   }
   for (const t of discovered) {
+    if (NEVER_PURGE_TABLES.has(t)) continue;
     if (!seen.has(t) && t !== 'companies') {
       ordered.push(t);
       seen.add(t);
@@ -127,6 +168,8 @@ async function discoverCompanyTables(client) {
 async function purgeNullCompany(client, tables, log) {
   log.nullFirma = [];
   for (const t of tables) {
+    // Global seed / tanım tablolarına dokunma (PRJ şablonları vb.)
+    if (PROTECTED_TABLES.has(t)) continue;
     if (!(await hasColumn(client, t, 'company_id'))) continue;
     const n = await deleteWhere(client, t, 'company_id IS NULL', [], log);
     if (n) log.nullFirma.push({ table: t, n });
@@ -167,11 +210,12 @@ async function purgeFirma(client, companyId, tables, log) {
     `quotation_id IN (SELECT id FROM purchase_quotations WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'purchase_order_lines',
     `purchase_order_id IN (SELECT id FROM purchase_orders WHERE company_id=$1)`, p, log);
-  await deleteWhere(client, 'goods_receipt_lines',
-    `receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'vendor_delivery_note_lines',
     `delivery_note_id IN (SELECT id FROM vendor_delivery_notes WHERE company_id=$1)`, p, log);
 
+  // Üretim emri çocukları (FK sırası kritik)
+  await deleteWhere(client, 'production_receipts',
+    `order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'production_order_operation_components',
     `operasyon_id IN (SELECT id FROM production_order_operations WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1))`, p, log);
   await deleteWhere(client, 'production_order_operations',
@@ -180,6 +224,36 @@ async function purgeFirma(client, companyId, tables, log) {
     `order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'production_byproducts',
     `production_order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'production_plans',
+    `company_id=$1 OR production_order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, p, log);
+
+  // Giriş kontrol → mal kabul satırlarından önce (FK)
+  await deleteWhere(client, 'incoming_inspection_lines',
+    `inspection_id IN (SELECT id FROM incoming_inspections WHERE company_id=$1
+       OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1))`, p, log);
+  await deleteWhere(client, 'incoming_inspections',
+    `company_id=$1 OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'goods_receipt_lines',
+    `receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, p, log);
+
+  // İrsaliye / fatura / sayım / transfer satırları + tahsilat
+  await deleteWhere(client, 'inventory_count_lines',
+    `document_id IN (SELECT id FROM inventory_counts WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'transfer_order_lines',
+    `order_id IN (SELECT id FROM transfer_orders WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'purchase_agreement_lines',
+    `anlasma_id IN (SELECT id FROM purchase_agreements WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'rfq_lines',
+    `istek_id IN (SELECT id FROM rfqs WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'receipts_payments',
+    `invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)
+     OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'qc_item_plans',
+    `item_id IN (SELECT id FROM items WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'supplier_evaluations',
+    `partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, p, log);
+  await deleteWhere(client, 'item_company_params',
+    `item_id IN (SELECT id FROM items WHERE company_id=$1)`, p, log);
 
   await deleteWhere(client, 'mrp_results',
     `run_id IN (SELECT id FROM mrp_runs WHERE company_id=$1)
@@ -232,8 +306,8 @@ async function purgeFirma(client, companyId, tables, log) {
     `balance_id IN (SELECT id FROM hr_leave_balances WHERE company_id=$1)`, p, log);
 
   const skipOrg = new Set(['plants', 'warehouses', 'companies']);
-  // company_id tabloları (birkaç tur — FK sırası için)
-  for (let pass = 0; pass < 3; pass++) {
+  // company_id tabloları (çoklu tur — FK sırası için)
+  for (let pass = 0; pass < 6; pass++) {
     for (const t of tables) {
       if (!alsoOrg && skipOrg.has(t)) continue;
       await deleteWhere(client, t, 'company_id = $1', p, log);

@@ -27,6 +27,7 @@ async function stokHareketOlustur(client, {
     cariId = null,
     kullaniciKodu = null,
     referansNo = null,
+    projectCode = null,
 }) {
     if (!depoId) throw new Error('Stok hareketi için warehouse_id zorunludur.');
     if (!Array.isArray(satirlar) || satirlar.length === 0) {
@@ -61,13 +62,14 @@ async function stokHareketOlustur(client, {
         `
         INSERT INTO stock_movements
             (movement_no, movement_type, plant_id, warehouse_id, document_type, document_id, description, movement_code_id,
-             target_warehouse_id, bagli_movement_id, company_id, partner_id, user_code, ref_no)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+             target_warehouse_id, bagli_movement_id, company_id, partner_id, user_code, ref_no, project_code)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
         RETURNING *;
         `,
         [
             ...vals, hedefDepoId || null, bagliHareketId || null,
             resolvedFirmaId, cariId || null, kullaniciKodu || null, referansNo || null,
+            projectCode || null,
         ]
     );
     const hareket = hareketRes.rows[0];
@@ -163,6 +165,22 @@ async function stokHareketOlustur(client, {
                 });
             } catch (_) { /* maliyet tablosu yoksa sessiz */ }
         }
+    }
+
+    // PRJ otomatik maliyet (çıkış → proje)
+    if (hareket.project_code || projectCode) {
+        try {
+            const { fromStockMovement } = require('./prjCostService');
+            await fromStockMovement(client, {
+                hareket,
+                satirlar: eklenen.map((s, i) => ({
+                    ...s,
+                    uom_cost: satirlar[i]?.uom_cost,
+                    unit_price: satirlar[i]?.unit_price,
+                })),
+                projectCode: projectCode || hareket.project_code,
+            });
+        } catch (_) { /* PRJ yoksa sessiz */ }
     }
 
     return { hareket, satirlar: eklenen };

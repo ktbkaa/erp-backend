@@ -82,16 +82,15 @@ function unwrapFatura(data) {
   return data.fatura || data.invoice || data;
 }
 
-async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
-  const kkList = await api('GET', '/kk-emirleri?direction=GKK', null, firmaId).catch(() => []);
+async function onaylaKk(firmaId, { sourceId, direction, targetWarehouseId, tag }) {
+  const kkList = await api('GET', `/kk-emirleri?direction=${direction}`, null, firmaId).catch(() => []);
   const all = Array.isArray(kkList) ? kkList : (kkList?.rows || []);
-  // Firma filtresi company_id null emirleri gizleyebilir — source_id ile de dene
-  let fresh = all.filter((e) => Number(e.source_id) === Number(mkId));
+  let fresh = all.filter((e) => Number(e.source_id) === Number(sourceId));
   if (!fresh.length) {
-    // Doğrudan SQL ile (API firma kapsamı company_id null olanları kaçırabilir)
     const r = await pool.query(
-      `SELECT * FROM qc_orders WHERE source_id=$1 AND direction='GKK' AND status NOT IN ('Onayli','Kapali','Red')`,
-      [mkId]
+      `SELECT * FROM qc_orders
+       WHERE source_id=$1 AND direction=$2 AND status NOT IN ('Onayli','Kapali','Red')`,
+      [sourceId, direction]
     );
     fresh = r.rows;
   }
@@ -102,19 +101,124 @@ async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
         accepted_quantity: e.quantity || e.accepted_quantity,
         rejected_quantity: 0,
         target_warehouse_id: targetWarehouseId,
-        description: `[${tag}] GKK onay`,
+        description: `[${tag}] ${direction} onay`,
       }, firmaId);
       await tagBelge(null, 'qc_orders', e.id, firmaId, tag, { project: false });
-      log(`  KK onay: ${e.order_no || e.id}`);
+      log(`  ${direction} onay: ${e.order_no || e.id}`);
     } catch (err) {
-      log(`  KK atlandı ${e.order_no || e.id}: ${err.message}`);
+      log(`  ${direction} atlandı ${e.order_no || e.id}: ${err.message}`);
     }
+  }
+}
+
+/** Mal kabul → Giriş Kontrol onayı → Giriş Kalite (GKK) onayı → Hammadde */
+async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
+  const gkRows = (await pool.query(
+    `SELECT * FROM incoming_inspections
+     WHERE goods_receipt_id=$1 AND status NOT IN ('Onayli','Red','Iptal')`,
+    [mkId]
+  )).rows;
+  for (const g of gkRows) {
+    try {
+      await api('POST', `/giris-kontrolleri/${g.id}/onayla`, {
+        description: `[${tag}] Giriş kontrol — ürün/miktar tutuşması`,
+      }, firmaId);
+      log(`  Giriş kontrol onay: ${g.inspection_no || g.id}`);
+    } catch (err) {
+      log(`  Giriş kontrol atlandı ${g.inspection_no || g.id}: ${err.message}`);
+    }
+  }
+  const inspIds = (await pool.query(
+    `SELECT id FROM incoming_inspections WHERE goods_receipt_id=$1`,
+    [mkId]
+  )).rows.map((r) => r.id);
+  const r = await pool.query(
+    `SELECT * FROM qc_orders
+     WHERE direction='GKK' AND status NOT IN ('Onayli','Kapali','Red','Iptal')
+       AND (
+         (source_type='MAL_KABUL' AND source_id=$1)
+         OR (source_type='GIRIS_KONTROL' AND source_id = ANY($2::int[]))
+         OR source_id=$1
+       )`,
+    [mkId, inspIds.length ? inspIds : [0]]
+  );
+  for (const e of r.rows.slice(0, 20)) {
+    try {
+      await api('POST', `/kk-emirleri/${e.id}/onayla`, {
+        onay: true,
+        accepted_quantity: e.quantity || e.accepted_quantity,
+        rejected_quantity: 0,
+        target_warehouse_id: targetWarehouseId,
+        description: `[${tag}] Giriş kalite onay → Hammadde`,
+      }, firmaId);
+      await tagBelge(null, 'qc_orders', e.id, firmaId, tag, { project: false });
+      log(`  GKK onay: ${e.order_no || e.id}`);
+    } catch (err) {
+      log(`  GKK atlandı ${e.order_no || e.id}: ${err.message}`);
+    }
+  }
+}
+
+async function onaylaCkk(firmaId, productionOrderId, targetWarehouseId, tag) {
+  await onaylaKk(firmaId, {
+    sourceId: productionOrderId,
+    direction: 'CKK',
+    targetWarehouseId,
+    tag,
+  });
+}
+
+/** Depoda Kullanilabilir bakiye yetersizse açılış girişi ile tamamla (demo sunumu). */
+async function ensureAvailableStock(client, {
+  plantId, warehouseId, itemId, needQty, firmaId, tag, label,
+}) {
+  const { depoBakiyeListesi } = require('../src/services/stokHareketService');
+  const bals = await depoBakiyeListesi(client);
+  const bal = bals
+    .filter((b) => Number(b.item_id) === Number(itemId)
+      && Number(b.warehouse_id) === Number(warehouseId)
+      && String(b.stock_status || 'Kullanilabilir') === 'Kullanilabilir')
+    .reduce((s, b) => s + Number(b.bakiye || 0), 0);
+  const gap = Number(needQty) - bal;
+  if (gap > 0.0001) {
+    await stokHareketOlustur(client, {
+      hareketTipi: 'STOK_GIRIS',
+      isYeriId: plantId,
+      depoId: warehouseId,
+      belgeTipi: 'Acilis',
+      description: `[${tag}] Demo stok tamamlama — ${label || itemId}`,
+      firmaId,
+      satirlar: [{ item_id: itemId, quantity: gap, direction: 1 }],
+    });
+    log(`  stok tamamlandı: ${label || itemId} +${gap} → depo ${warehouseId}`);
   }
 }
 
 /**
  * API belgelerini etiketlendir — ayrı kısa transaction (açık seed txn ile satır kilidi çakışmasın).
  */
+
+async function ensureFirmaYetkileri(client, companyId) {
+  if (!companyId) return;
+  const users = (await client.query(
+    `SELECT id FROM users
+     WHERE COALESCE(is_active, TRUE) = TRUE
+       AND (
+         LOWER(COALESCE(role,'')) IN ('admin','yonetici','administrator')
+         OR UPPER(COALESCE(group_code,'')) = 'ADMIN'
+         OR LOWER(COALESCE(user_code,'')) IN ('owner','admin')
+       )`
+  )).rows;
+  for (const u of users) {
+    await client.query(
+      `INSERT INTO user_company_permissions (kisi_id, company_id)
+       VALUES ($1,$2) ON CONFLICT (kisi_id, company_id) DO NOTHING`,
+      [u.id, companyId]
+    );
+  }
+  log(`  firma yetkisi bağlandı: company_id=${companyId} → ${users.length} kullanıcı`);
+}
+
 async function tagBelge(_clientIgnored, table, id, firmaId, tag, { project = true } = {}) {
   if (!id) return;
   const c = await pool.connect();
@@ -427,6 +531,8 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM journal_entry_lines WHERE document_id IN (SELECT id FROM journal_entries WHERE company_id=$1)`, [id], 'journal_entry_lines'],
     [`DELETE FROM journal_entries WHERE company_id=$1`, [id], 'journal_entries'],
     [`DELETE FROM invoice_matches WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)`, [id], 'invoice_matches'],
+    [`DELETE FROM receipts_payments WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)
+        OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'receipts_payments'],
     [`DELETE FROM invoice_lines WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)
         OR invoice_id IN (SELECT id FROM invoices WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1))
         OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'invoice_lines'],
@@ -443,7 +549,13 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM sales_quotation_lines WHERE quotation_id IN (SELECT id FROM sales_quotations WHERE company_id=$1)`, [id], 'sales_quotation_lines'],
     [`DELETE FROM sales_quotations WHERE company_id=$1`, [id], 'sales_quotations'],
     [`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id IN (SELECT id FROM vendor_delivery_notes WHERE company_id=$1)`, [id], 'vdn_lines'],
+    [`DELETE FROM incoming_inspection_lines WHERE inspection_id IN (
+        SELECT id FROM incoming_inspections WHERE company_id=$1
+           OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1))`, [id], 'incoming_insp_lines'],
+    [`DELETE FROM incoming_inspections WHERE company_id=$1
+        OR goods_receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, [id], 'incoming_inspections'],
     [`DELETE FROM goods_receipt_lines WHERE receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, [id], 'gr_lines'],
+    [`UPDATE goods_receipts SET item_movement_id=NULL WHERE company_id=$1`, [id], 'null gr.sm'],
     [`DELETE FROM goods_receipts WHERE company_id=$1`, [id], 'goods_receipts'],
     [`DELETE FROM vendor_delivery_notes WHERE company_id=$1`, [id], 'vendor_delivery_notes'],
     [`DELETE FROM stock_movement_lines WHERE movement_id IN (SELECT id FROM stock_movements WHERE company_id=$1)`, [id], 'sm_lines'],
@@ -543,6 +655,8 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM partner_details WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'partner_det'],
     [`DELETE FROM partner_ledger_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'partner_ledger'],
     [`DELETE FROM partner_company_params WHERE company_id=$1`, [id], 'partner_params'],
+    [`DELETE FROM crm_calendar_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)
+        OR company_id=$1`, [id], 'crm_calendar'],
     [`DELETE FROM partners WHERE company_id=$1`, [id], 'partners'],
   ];
 
@@ -1016,6 +1130,17 @@ async function seedManuel(client, org, base) {
     }
   }
 
+  // Çıkış kalite (CKK) → mamul depoya Kullanilabilir
+  await client.query('COMMIT');
+  await client.query('BEGIN');
+  await onaylaCkk(firma.id, ue.id, wh.mam.id, tag);
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.mam.id, itemId: base.fg.id,
+    needQty: qty, firmaId: firma.id, tag, label: base.fg.item_code,
+  });
+  await client.query('COMMIT');
+  await client.query('BEGIN');
+
   // 24–26) Sevk → irsaliye → fatura
   const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
     firma, plant, wh, so, tag,
@@ -1374,6 +1499,26 @@ async function seedMrp(client, org, base) {
     }
   }
 
+  // GKK sonrası malzeme ELEK-GIR'de kalabiliyor — HMD'ye tamamla (BOM 1/4/2/1)
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmPcb.id,
+    needQty: qty * 1, firmaId: firma.id, tag, label: base.hmPcb.item_code,
+  });
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmCap.id,
+    needQty: qty * 4, firmaId: firma.id, tag, label: base.hmCap.item_code,
+  });
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmCoil.id,
+    needQty: qty * 2, firmaId: firma.id, tag, label: base.hmCoil.item_code,
+  });
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmCase.id,
+    needQty: qty * 1, firmaId: firma.id, tag, label: base.hmCase.item_code,
+  });
+  await client.query('COMMIT');
+  await client.query('BEGIN');
+
   for (const e of ueRun) {
     try {
       await api('POST', `/uretim-emirleri/${e.id}/onayla`, {}, firma.id).catch(() => null);
@@ -1387,10 +1532,18 @@ async function seedMrp(client, org, base) {
           break;
         }
       }
+      await onaylaCkk(firma.id, e.id, wh.mam.id, tag);
     } catch (err) {
       log(`  MRP UE yürüt: ${err.message}`);
     }
   }
+
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.mam.id, itemId: base.fg.id,
+    needQty: qty, firmaId: firma.id, tag, label: base.fg.item_code,
+  });
+  await client.query('COMMIT');
+  await client.query('BEGIN');
 
   // Sevk → irsaliye → satış fatura
   const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
@@ -1431,6 +1584,7 @@ async function main() {
   try {
     await client.query('BEGIN');
     org = await ensureOrg(client);
+    await ensureFirmaYetkileri(client, org.firma.id);
     summary.firma = { id: org.firma.id, code: org.firma.company_code, name: org.firma.company_name };
     await purgeElek(client, org.firma.id);
     base = await seedBase(client, org);
@@ -1466,6 +1620,48 @@ async function main() {
   }
 
   const outPath = path.join(__dirname, '..', 'docs', 'elek-tam-dongu-ozet.json');
+
+  // Genişletilmiş modüller: CRM + İK + PRJ + Finans (bağlantılı)
+  try {
+    const { seedExtendedModules } = require('./lib/demo-extended-modules');
+    const manSo = summary.man?.sales_order
+      ? (await pool.query(`SELECT id FROM sales_orders WHERE order_no=$1 AND company_id=$2`, [summary.man.sales_order, org.firma.id])).rows[0]
+      : null;
+    const manQt = summary.man?.sales_quotation
+      ? (await pool.query(`SELECT id FROM sales_quotations WHERE quotation_no=$1 AND company_id=$2`, [summary.man.sales_quotation, org.firma.id])).rows[0]
+      : null;
+    const manSi = summary.man?.sales_invoice
+      ? (await pool.query(`SELECT id FROM invoices WHERE invoice_no=$1 AND company_id=$2`, [summary.man.sales_invoice, org.firma.id])).rows[0]
+      : null;
+    const manPi = summary.man?.purchase_invoice
+      ? (await pool.query(`SELECT id FROM invoices WHERE invoice_no=$1 AND company_id=$2`, [summary.man.purchase_invoice, org.firma.id])).rows[0]
+      : null;
+    const manPo = summary.man?.purchase_order
+      ? (await pool.query(`SELECT id FROM purchase_orders WHERE order_no=$1 AND company_id=$2`, [summary.man.purchase_order, org.firma.id])).rows[0]
+      : null;
+    const mrpSo = summary.mrp?.sales_order
+      ? (await pool.query(`SELECT id FROM sales_orders WHERE order_no=$1 AND company_id=$2`, [summary.mrp.sales_order, org.firma.id])).rows[0]
+      : null;
+    summary.extended = await seedExtendedModules({
+      firma: org.firma,
+      plant: org.plant,
+      partners: { mus1: base.mus1, mus2: base.mus2, ted1: base.ted1 },
+      items: { fg: base.fg },
+      tagPrefix: FIRMA_KODU,
+      links: {
+        manSalesOrderId: manSo?.id,
+        manQuotationId: manQt?.id,
+        manSalesInvoiceId: manSi?.id,
+        manPurchaseInvoiceId: manPi?.id,
+        manPurchaseOrderId: manPo?.id,
+        mrpSalesOrderId: mrpSo?.id,
+      },
+    });
+  } catch (err) {
+    log(`  extended modules: ${err.message}`);
+    summary.extended = { hata: err.message };
+  }
+
   fs.writeFileSync(outPath, JSON.stringify(summary, null, 2), 'utf8');
   log(`\nÖzet yazıldı: ${outPath}`);
   log(JSON.stringify(summary, null, 2));

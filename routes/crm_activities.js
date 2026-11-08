@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 async function faaliyetGetir(id) {
     const r = await pool.query(
@@ -47,6 +48,11 @@ router.get('/', async (req, res) => {
         if (lead_id) { params.push(Number(lead_id)); where.push(`fy.lead_id=$${params.length}`); }
         if (firsat_id) { params.push(Number(firsat_id)); where.push(`fy.firsat_id=$${params.length}`); }
         if (status) { params.push(status); where.push(`fy.status=$${params.length}`); }
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`fy.company_id = $${params.length}`);
+        }
         const liste = await pool.query(
             `
             SELECT fy.*,
@@ -116,15 +122,16 @@ router.post('/', async (req, res) => {
                 );
             }
             const kod = b.faaliyet_code || (await sonrakiKod(client, 'CRM_FAALIYET'));
+            const firmaId = b.company_id || firmaIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_activities
                     (faaliyet_code, customer_type, partner_id, lead_id, firsat_id, plan_id, kontak_id,
                      faaliyet_type_id, giren_id, plant_id, start_date, end_date,
-                     harcanan_dk, konu, description, degerlendirme, status)
+                     harcanan_dk, konu, description, degerlendirme, status, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
                         COALESCE($11::timestamp,CURRENT_TIMESTAMP),$12,
-                        COALESCE($13,0),$14,$15,$16,COALESCE($17,'Tamamlandi'))
+                        COALESCE($13,0),$14,$15,$16,COALESCE($17,'Tamamlandi'),$18)
                 RETURNING id
                 `,
                 [
@@ -132,7 +139,7 @@ router.post('/', async (req, res) => {
                     b.kontak_id || null, b.faaliyet_type_id || null, b.giren_id || null,
                     b.plant_id || null, b.start_date || null, b.end_date || null,
                     b.harcanan_dk, b.konu || null, b.description || null, b.degerlendirme || null,
-                    b.status || null,
+                    b.status || null, firmaId,
                 ]
             );
             return r.rows[0].id;

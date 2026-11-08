@@ -182,14 +182,15 @@ router.post('/', async (req, res) => {
             if (!asamaId) throw new Error('Fırsat aşaması tanımlı değil.');
 
             const kod = b.firsat_code || (await sonrakiKod(client, 'CRM_FIRSAT'));
+            const firmaId = b.company_id || firmaIdFromReq(req) || null;
             const ins = await client.query(
                 `
                 INSERT INTO crm_opportunities
                     (firsat_code, firsat_name, konu, customer_type, partner_id, lead_id, stage_id,
                      created_by_user_id, takip_by_id, beklenen_gelir, currency_code, degerlendirme,
-                     target_kapatma_date, country, plant_id, description, status)
+                     target_kapatma_date, country, plant_id, description, status, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),COALESCE($11,'TRY'),$12,
-                        $13,COALESCE($14,'TR'),$15,$16,'Acik')
+                        $13,COALESCE($14,'TR'),$15,$16,'Acik',$17)
                 RETURNING id
                 `,
                 [
@@ -199,7 +200,7 @@ router.post('/', async (req, res) => {
                     asamaId, b.created_by_user_id || b.created_by_id || null, b.takip_by_id || null,
                     b.beklenen_gelir, b.currency_code, b.degerlendirme ?? null,
                     b.target_kapatma_date || null, b.country || null, b.plant_id || null,
-                    b.description || null,
+                    b.description || null, firmaId,
                 ]
             );
             const firsatId = ins.rows[0].id;

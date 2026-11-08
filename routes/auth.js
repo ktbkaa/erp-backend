@@ -29,10 +29,28 @@ async function loadFirmaYetkileri(kisiId) {
   return r.rows;
 }
 
+/** Admin/yönetici: tüm profil firmaları (picker’da ELEK/TEKS vb. kaybolmasın). */
+async function loadFirmaYetkileriForUser(u) {
+  const role = String(u?.role || '').toLowerCase();
+  const isAdmin = u?.group_code === 'ADMIN'
+    || role === 'admin' || role === 'yonetici' || role === 'administrator'
+    || String(u?.user_code || '').toLowerCase() === 'owner';
+  if (isAdmin) {
+    const r = await pool.query(
+      `SELECT id AS company_id, company_code, company_name
+       FROM companies
+       WHERE COALESCE(is_profile, TRUE) = TRUE
+       ORDER BY company_code`
+    );
+    return r.rows;
+  }
+  return loadFirmaYetkileri(u.id);
+}
+
 async function kullaniciPayload(u) {
   const [yetkiler, firma_yetkileri] = await Promise.all([
     loadEkranYetkileri(u.id),
-    loadFirmaYetkileri(u.id),
+    loadFirmaYetkileriForUser(u),
   ]);
   return {
     id: u.id,

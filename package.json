@@ -14,7 +14,12 @@
     "demo:ornek-dongu": "node scripts/ornek-dongu-cn-tr-de.js",
     "demo:mrp": "node scripts/demo-mrp-ornek.js",
     "demo:elek-dongu": "node scripts/demo-elek-tam-dongu.js",
-    "demo:gida-dongu": "node scripts/demo-gida-tam-dongu.js"
+    "demo:gida-dongu": "node scripts/demo-gida-tam-dongu.js",
+    "demo:dokum-prj": "node scripts/demo-dokum-prj.js",
+    "demo:teks": "node scripts/demo-teks-tam-dongu.js",
+    "demo:teks-dongu": "node scripts/demo-teks-tam-dongu.js",
+    "purge:firma": "node scripts/purge-firma-veri.js",
+    "ensure:firma-yetki": "node scripts/ensure-firma-yetkileri.js"
   },
   "keywords": [
     "erp",
