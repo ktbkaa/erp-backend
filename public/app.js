@@ -7875,14 +7875,420 @@ const ALL_SCREENS = MODULES.flatMap((m) =>
   m.screens.map((s) => normalizeScreen(s, m.id, m.title))
 );
 
-const MODE_LABELS = {
+const MODE_LABELS_TR = {
   yeni: 'Yeni',
   incele: 'İncele',
   duzelt: 'Düzelt',
   kopyala: 'Kopyala',
 };
+const MODE_LABELS_EN = {
+  yeni: 'New',
+  incele: 'View',
+  duzelt: 'Edit',
+  kopyala: 'Copy',
+};
+const MODE_LABELS = { ...MODE_LABELS_TR };
+
+const UI_THEME_DEFS = [
+  { id: 'blue', nameTr: 'Sümbül', nameEn: 'Hyacinth', swatchA: '#3f87f5', swatchB: '#9bb7ef', hintTr: 'Varsayılan', hintEn: 'Default' },
+  { id: 'green', nameTr: 'Zamia', nameEn: 'Zamia', swatchA: '#1b8f78', swatchB: '#7ecfbc', hintTr: 'Yeşil', hintEn: 'Green' },
+  { id: 'red', nameTr: 'Gül', nameEn: 'Rose', swatchA: '#e04545', swatchB: '#ef9a9a', hintTr: 'Kırmızı', hintEn: 'Red' },
+  { id: 'orange', nameTr: 'Kalanşo', nameEn: 'Kalanchoe', swatchA: '#e67e22', swatchB: '#f5c18a', hintTr: 'Turuncu', hintEn: 'Orange' },
+  { id: 'purple', nameTr: 'Menekşe', nameEn: 'Violet', swatchA: '#7c5cfc', swatchB: '#b8a6ff', hintTr: 'Mor', hintEn: 'Purple' },
+  { id: 'yellow', nameTr: 'Ayçiçeği', nameEn: 'Sunflower', swatchA: '#c9a227', swatchB: '#e6d089', hintTr: 'Sarı', hintEn: 'Yellow' },
+];
+
+const MODULE_TITLE_EN = {
+  'fixed-tanimlar': 'Master Data (Fixed)',
+  sistem: 'System',
+  'ana-veri': 'Master Data',
+  stok: 'Inventory',
+  cari: 'Partners',
+  uretim: 'Production',
+  'satin-alma': 'Purchasing',
+  crm: 'CRM',
+  satis: 'Sales',
+  kalite: 'Quality',
+  finans: 'Finance',
+  muhasebe: 'Accounting',
+  onay: 'Approvals',
+  'insan-kaynaklari': 'Human Resources',
+  hr: 'HR',
+  ik: 'HR',
+};
+
+const SECTION_TITLE_EN = {
+  Emirler: 'Orders',
+  Tanımlar: 'Definitions',
+  Kullanıcılar: 'Users',
+  Gözlem: 'Observability',
+  İletişim: 'Communications',
+  'Mal Kabul': 'Goods Receipt',
+  Belgeler: 'Documents',
+  Planlama: 'Planning',
+  Operasyon: 'Operations',
+};
+
+/** UI chrome + sık alan etiketleri (TR → EN) */
+const UI_EN = {
+  Ayarlar: 'Settings',
+  'Sistem dili': 'System language',
+  'Temalar…': 'Themes…',
+  'Tema seçin': 'Choose a theme',
+  Görünüm: 'Appearance',
+  Açık: 'Light',
+  Koyu: 'Dark',
+  'Koyu tema': 'Dark theme',
+  Filtre: 'Filter',
+  Temizle: 'Clear',
+  Uygula: 'Apply',
+  Liste: 'List',
+  Yeni: 'New',
+  İncele: 'View',
+  Düzelt: 'Edit',
+  Kopyala: 'Copy',
+  Sil: 'Delete',
+  Kaydet: 'Save',
+  'Kaydet kapat': 'Save & close',
+  'Kaydet yeni': 'Save & new',
+  Vazgeç: 'Cancel',
+  'Ekran ara': 'Search screens',
+  'Ekran adı yazın (en az 3 harf)…': 'Type a screen name (min. 3 letters)…',
+  'Firma profil alanı': 'Company profile',
+  'Firma seçin': 'Select company',
+  'Oturum yok': 'No session',
+  'Giriş yapın': 'Please sign in',
+  'Giriş yap': 'Sign in',
+  'Çıkış yap': 'Sign out',
+  Ekran: 'Screen',
+  'Tablo Bilgileri': 'Table Info',
+  'SQL Sorgu': 'SQL Query',
+  'Durum / notlar': 'Status / notes',
+  Diğer: 'Other',
+  'Genel bilgiler': 'General',
+  Organizasyon: 'Organization',
+  'Ölçü / miktar': 'Measure / qty',
+  'Depo / stok yeri': 'Warehouse',
+  Planlama: 'Planning',
+  Adres: 'Address',
+  İletişim: 'Contact',
+  Finans: 'Finance',
+  Pasif: 'Inactive',
+  Aktif: 'Active',
+  'Stok etkisi': 'Stock effect',
+  'Depo zorunlu': 'Warehouse required',
+  'Cari zorunlu': 'Partner required',
+  'Eksi bakiye izin': 'Allow negative stock',
+  'Giriş kalite emri oluşsun': 'Create incoming QC order',
+  'Çıkış kalite emri oluşsun': 'Create outgoing QC order',
+  'Muhasebe hesap kodu': 'GL account code',
+  Açıklama: 'Description',
+  'Hareket kodu': 'Movement code',
+  'Hareket adı': 'Movement name',
+  'Belge tipi': 'Document type',
+  Yön: 'Direction',
+  Kod: 'Code',
+  Ad: 'Name',
+  İçerir: 'Contains',
+  Eşit: 'Equals',
+  'Eşit değil': 'Not equal',
+  Arasında: 'Between',
+  Kapat: 'Close',
+  Yenile: 'Refresh',
+  'Tümünü kapat': 'Close all',
+  Seç: 'Select',
+  Ara: 'Search',
+  'Menüyü aç/kapat': 'Toggle menu',
+  'Yükleniyor…': 'Loading…',
+  'Kayıt yok.': 'No records.',
+  'Eşleşen ekran yok.': 'No matching screens.',
+  'Numaratör Tanımı': 'Numerator Definition',
+  'Ölçü Birimleri': 'Units of Measure',
+  'Kategori Tanımı': 'Category Definition',
+  'Ülke Tanımı': 'Country Definition',
+  'Para Birimi Tanımı': 'Currency Definition',
+  'Şehir / İlçe': 'City / District',
+  'Ödeme Koşulları': 'Payment Terms',
+  'Teslimat Koşulları': 'Delivery Terms',
+  'Dil Tanımı': 'Language Definition',
+  'Banka Tanımı': 'Bank Definition',
+  'Kur Tanımı': 'Exchange Rate',
+  'Hareket Kodları': 'Movement Codes',
+  'Belge Tipleri': 'Document Types',
+  'Sabit Tanımlar': 'Fixed Definitions',
+  'Onay Yönetimi': 'Approvals',
+  'İnsan Kaynakları': 'Human Resources',
+  'Firma seçin': 'Select company',
+};
+
+function titleFromBusinessEn(name) {
+  return String(name || '')
+    .replace(/Screen$/i, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim();
+}
+
+function L(text) {
+  if (text == null || text === '') return text;
+  if (state.uiLang !== 'en') return text;
+  const s = String(text);
+  if (UI_EN[s]) return UI_EN[s];
+  if (SECTION_TITLE_EN[s]) return SECTION_TITLE_EN[s];
+  // Heuristic for definition screens / field labels
+  let out = s
+    .replace(/ Tanımı$/g, ' Definition')
+    .replace(/ Tanım$/g, ' Definition')
+    .replace(/ kodu$/gi, ' code')
+    .replace(/ adı$/gi, ' name')
+    .replace(/ tarihi$/gi, ' date')
+    .replace(/ durumu$/gi, ' status')
+    .replace(/^Şehir \/ İl/, 'City / Province')
+    .replace(/^Para Birimi/, 'Currency')
+    .replace(/^Ölçü Birimleri$/, 'Units of Measure')
+    .replace(/^Belge Tipleri$/, 'Document Types')
+    .replace(/^Hareket Kodları$/, 'Movement Codes')
+    .replace(/^Sabit Tanımlar$/, 'Fixed Definitions')
+    .replace(/^Satınalma$/, 'Purchasing')
+    .replace(/^Satış$/, 'Sales')
+    .replace(/^Üretim$/, 'Production')
+    .replace(/^Stok$/, 'Inventory')
+    .replace(/^Cari$/, 'Partners')
+    .replace(/^Kalite$/, 'Quality')
+    .replace(/^Sistem$/, 'System')
+    .replace(/^Ana Veri$/, 'Master Data');
+  return out !== s ? out : s;
+}
+
+function screenDisplayTitle(s) {
+  if (!s) return '';
+  if (state.uiLang === 'en') {
+    return s.titleEn || titleFromBusinessEn(s.businessNameEn) || L(s.title) || s.title;
+  }
+  return s.title;
+}
+
+function moduleDisplayTitle(mod) {
+  if (!mod) return '';
+  if (state.uiLang === 'en') return MODULE_TITLE_EN[mod.id] || L(mod.title) || mod.title;
+  return mod.title;
+}
+
+function syncModeLabels() {
+  const src = state.uiLang === 'en' ? MODE_LABELS_EN : MODE_LABELS_TR;
+  Object.keys(MODE_LABELS).forEach((k) => { delete MODE_LABELS[k]; });
+  Object.assign(MODE_LABELS, src);
+}
+
+function applyUiTheme(themeId, { persist = true } = {}) {
+  const id = UI_THEME_DEFS.some((t) => t.id === themeId) ? themeId : 'blue';
+  state.uiTheme = id;
+  document.documentElement.setAttribute('data-theme', id === 'blue' ? 'blue' : id);
+  // blue uses :root defaults; keep attribute for consistency
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_theme', id); } catch (_) { /* ignore */ }
+  }
+  renderThemeGrid();
+  syncSettingsMenu();
+}
+
+function applyUiAppearance(mode, { persist = true } = {}) {
+  const appearance = mode === 'dark' ? 'dark' : 'light';
+  state.uiAppearance = appearance;
+  document.documentElement.setAttribute('data-appearance', appearance);
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_appearance', appearance); } catch (_) { /* ignore */ }
+  }
+  syncSettingsMenu();
+}
+
+function syncStaticChromeLabels() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    const map = {
+      'settings.language': L('Sistem dili'),
+      'settings.appearance': L('Görünüm'),
+      'settings.themes': L('Temalar…'),
+      'settings.themesTitle': L('Tema seçin'),
+      'settings.light': L('Açık'),
+      'settings.dark': L('Koyu'),
+    };
+    if (map[key]) el.textContent = map[key];
+  });
+  const search = $('#screenSearch');
+  if (search) search.placeholder = L('Ekran adı yazın (en az 3 harf)…');
+  const searchLabel = document.querySelector('label.search-label');
+  if (searchLabel) searchLabel.textContent = L('Ekran ara');
+  const firmaLabel = $('#firmaProfileLabel');
+  if (firmaLabel) firmaLabel.textContent = L('Firma profil alanı');
+  const btnSet = $('#btnSettings');
+  if (btnSet) {
+    btnSet.title = L('Ayarlar');
+    btnSet.setAttribute('aria-label', L('Ayarlar'));
+  }
+  const actionMap = {
+    yeni: 'Yeni',
+    incele: 'İncele',
+    duzelt: 'Düzelt',
+    kopyala: 'Kopyala',
+    sil: 'Sil',
+  };
+  document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
+    const key = actionMap[btn.dataset.action];
+    if (key) btn.textContent = L(key);
+  });
+  document.querySelectorAll('#formCrudActions [data-form-act]').forEach((btn) => {
+    const key = actionMap[btn.getAttribute('data-form-act')];
+    if (key) btn.textContent = L(key);
+  });
+  const saveLabels = [
+    ['btnFormSave', 'Kaydet'],
+    ['btnFormSaveClose', 'Kaydet kapat'],
+    ['btnFormSaveNew', 'Kaydet yeni'],
+  ];
+  saveLabels.forEach(([id, tr]) => {
+    const el = document.getElementById(id);
+    const lab = el?.querySelector('.form-save-label');
+    if (lab) lab.textContent = L(tr);
+  });
+  const filterHead = document.querySelector('#filterPane .filter-pane-head h2');
+  if (filterHead) filterHead.textContent = L('Filtre');
+  const btnClear = $('#btnClearFilter');
+  if (btnClear) btnClear.textContent = L('Temizle');
+  const btnApply = $('#btnApplyFilter');
+  if (btnApply) btnApply.textContent = L('Uygula');
+  const listHead = document.querySelector('#listPane .list-pane-head h2');
+  if (listHead) listHead.textContent = L('Liste');
+  const tabCtx = $('#tabCtxMenu');
+  if (tabCtx) {
+    const mapCtx = { close: 'Kapat', refresh: 'Yenile', 'close-all': 'Tümünü kapat' };
+    tabCtx.querySelectorAll('[data-tab-ctx]').forEach((btn) => {
+      const k = mapCtx[btn.getAttribute('data-tab-ctx')];
+      if (k) btn.textContent = L(k);
+    });
+  }
+}
+
+function applyUiLanguage(lang, { persist = true, refresh = true } = {}) {
+  state.uiLang = lang === 'en' ? 'en' : 'tr';
+  document.documentElement.setAttribute('lang', state.uiLang);
+  syncModeLabels();
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_lang', state.uiLang); } catch (_) { /* ignore */ }
+  }
+  syncStaticChromeLabels();
+  syncSettingsMenu();
+  if (refresh) refreshUiAfterLangChange();
+}
+
+function refreshOpenTabTitles() {
+  (state.openTabs || []).forEach((t) => {
+    const screen = findScreen(t.screenId || t.id);
+    if (!screen) return;
+    if (t.kind === 'form') {
+      const code = t.formRecord?.[screen.codeField] || '';
+      const base = screenDisplayTitle(screen);
+      t.title = code ? `${base} · ${code}` : base;
+    } else {
+      t.title = screenDisplayTitle(screen);
+    }
+  });
+}
+
+function refreshUiAfterLangChange() {
+  refreshOpenTabTitles();
+  try { renderSidebar(); } catch (_) { /* ignore */ }
+  try { renderTabBar(); } catch (_) { /* ignore */ }
+  try { renderUserChip(); } catch (_) { /* ignore */ }
+  try { renderFirmaPicker(); } catch (_) { /* ignore */ }
+  const screen = findScreen(state.screenId);
+  if (screen && state.formMode) {
+    const titleEl = $('#screenTitle');
+    if (titleEl && !titleEl.hidden) {
+      titleEl.textContent = `${screenDisplayTitle(screen)} · ${MODE_LABELS[state.formMode] || state.formMode}`;
+    }
+    try { renderForm(screen); } catch (_) { /* ignore */ }
+  } else if (screen) {
+    const titleEl = $('#screenTitle');
+    if (titleEl && !titleEl.hidden) titleEl.textContent = screenDisplayTitle(screen);
+    const banner = $('#screenBanner');
+    if (banner) {
+      banner.textContent = screen.banner
+        ? `${screenDisplayTitle(screen)} — ${L(screen.banner)}${screen.techId ? ' · ' + screen.techId : ''}`
+        : screenDisplayTitle(screen);
+    }
+    try {
+      renderFilterPane(screen);
+      renderList(screen);
+      updateActionButtons(screen);
+    } catch (_) { /* ignore */ }
+  }
+}
+
+function syncSettingsMenu() {
+  document.querySelectorAll('[data-set-lang]').forEach((btn) => {
+    const on = btn.getAttribute('data-set-lang') === state.uiLang;
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+  const appearance = state.uiAppearance === 'dark' ? 'dark' : 'light';
+  document.querySelectorAll('[data-set-appearance]').forEach((btn) => {
+    const on = btn.getAttribute('data-set-appearance') === appearance;
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+}
+
+function renderThemeGrid() {
+  const grid = $('#themeGrid');
+  if (!grid) return;
+  const en = state.uiLang === 'en';
+  grid.innerHTML = UI_THEME_DEFS.map((t) => `
+    <button type="button" class="theme-card${state.uiTheme === t.id ? ' active' : ''}" data-theme-pick="${t.id}">
+      <div class="theme-swatch" style="--swatch-a:${t.swatchA};--swatch-b:${t.swatchB}"></div>
+      <span class="theme-card-name">${en ? t.nameEn : t.nameTr}</span>
+      <span class="theme-card-hint">${en ? t.hintEn : t.hintTr}</span>
+    </button>
+  `).join('');
+}
+
+function toggleSettingsMenu(force) {
+  const menu = $('#settingsMenu');
+  const btn = $('#btnSettings');
+  if (!menu || !btn) return;
+  const shouldOpen = force == null ? menu.hidden : Boolean(force);
+  menu.hidden = !shouldOpen;
+  btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+}
+
+function openThemeModal(show = true) {
+  const modal = $('#themeModal');
+  if (!modal) return;
+  if (show) {
+    renderThemeGrid();
+    modal.hidden = false;
+    toggleSettingsMenu(false);
+  } else {
+    modal.hidden = true;
+  }
+}
+
+function initUiPrefs() {
+  let theme = 'blue';
+  let lang = 'tr';
+  let appearance = 'light';
+  try {
+    theme = localStorage.getItem('ktb_ui_theme') || 'blue';
+    lang = localStorage.getItem('ktb_ui_lang') || 'tr';
+    appearance = localStorage.getItem('ktb_ui_appearance') || 'light';
+  } catch (_) { /* ignore */ }
+  applyUiTheme(theme, { persist: false });
+  applyUiAppearance(appearance, { persist: false });
+  applyUiLanguage(lang, { persist: false, refresh: false });
+}
 
 const state = {
+  uiLang: 'tr',
+  uiTheme: 'blue',
+  uiAppearance: 'light',
   screenId: null,
   rows: [],
   filtered: [],
@@ -17054,7 +17460,80 @@ function bindMetaHelpGlobal() {
   });
 }
 
+function bindUiPrefsEvents() {
+  const wrap = $('#settingsWrap');
+  const btn = $('#btnSettings');
+  const menu = $('#settingsMenu');
+  if (btn && !btn.dataset.bound) {
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSettingsMenu();
+    });
+  }
+  if (menu && !menu.dataset.bound) {
+    menu.dataset.bound = '1';
+    menu.addEventListener('click', (e) => {
+      const langBtn = e.target.closest('[data-set-lang]');
+      if (langBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyUiLanguage(langBtn.getAttribute('data-set-lang'));
+        toggleSettingsMenu(false);
+        return;
+      }
+      const appearanceBtn = e.target.closest('[data-set-appearance]');
+      if (appearanceBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyUiAppearance(appearanceBtn.getAttribute('data-set-appearance'));
+        toggleSettingsMenu(false);
+        return;
+      }
+      if (e.target.closest('#btnOpenThemes')) {
+        e.preventDefault();
+        e.stopPropagation();
+        openThemeModal(true);
+      }
+    });
+  }
+  const themeModal = $('#themeModal');
+  if (themeModal && !themeModal.dataset.bound) {
+    themeModal.dataset.bound = '1';
+    themeModal.addEventListener('click', (e) => {
+      if (e.target.closest('[data-theme-close]')) {
+        e.preventDefault();
+        openThemeModal(false);
+        return;
+      }
+      const pick = e.target.closest('[data-theme-pick]');
+      if (pick) {
+        e.preventDefault();
+        applyUiTheme(pick.getAttribute('data-theme-pick'));
+        openThemeModal(false);
+      }
+    });
+  }
+  if (!document.documentElement.dataset.uiPrefsDocBound) {
+    document.documentElement.dataset.uiPrefsDocBound = '1';
+    document.addEventListener('click', (e) => {
+      if (wrap && !wrap.contains(e.target)) toggleSettingsMenu(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = $('#themeModal');
+      if (modal && !modal.hidden) {
+        openThemeModal(false);
+        return;
+      }
+      toggleSettingsMenu(false);
+    });
+  }
+}
+
 function bindEvents() {
+  bindUiPrefsEvents();
   bindMetaExplorerEvents();
   bindMetaHelpGlobal();
   bindLookupBrowseUi();
@@ -18759,6 +19238,7 @@ async function bootIntoApp() {
 }
 
 function bootFromHash() {
+  initUiPrefs();
   bindEvents();
   restoreSession()
     .then(() => bootIntoApp())

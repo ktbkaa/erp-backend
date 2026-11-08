@@ -82,16 +82,15 @@ function unwrapFatura(data) {
   return data.fatura || data.invoice || data;
 }
 
-async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
-  const kkList = await api('GET', '/kk-emirleri?direction=GKK', null, firmaId).catch(() => []);
+async function onaylaKk(firmaId, { sourceId, direction, targetWarehouseId, tag }) {
+  const kkList = await api('GET', `/kk-emirleri?direction=${direction}`, null, firmaId).catch(() => []);
   const all = Array.isArray(kkList) ? kkList : (kkList?.rows || []);
-  // Firma filtresi company_id null emirleri gizleyebilir — source_id ile de dene
-  let fresh = all.filter((e) => Number(e.source_id) === Number(mkId));
+  let fresh = all.filter((e) => Number(e.source_id) === Number(sourceId));
   if (!fresh.length) {
-    // Doğrudan SQL ile (API firma kapsamı company_id null olanları kaçırabilir)
     const r = await pool.query(
-      `SELECT * FROM qc_orders WHERE source_id=$1 AND direction='GKK' AND status NOT IN ('Onayli','Kapali','Red')`,
-      [mkId]
+      `SELECT * FROM qc_orders
+       WHERE source_id=$1 AND direction=$2 AND status NOT IN ('Onayli','Kapali','Red')`,
+      [sourceId, direction]
     );
     fresh = r.rows;
   }
@@ -102,13 +101,52 @@ async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
         accepted_quantity: e.quantity || e.accepted_quantity,
         rejected_quantity: 0,
         target_warehouse_id: targetWarehouseId,
-        description: `[${tag}] GKK onay`,
+        description: `[${tag}] ${direction} onay`,
       }, firmaId);
       await tagBelge(null, 'qc_orders', e.id, firmaId, tag, { project: false });
-      log(`  KK onay: ${e.order_no || e.id}`);
+      log(`  ${direction} onay: ${e.order_no || e.id}`);
     } catch (err) {
-      log(`  KK atlandı ${e.order_no || e.id}: ${err.message}`);
+      log(`  ${direction} atlandı ${e.order_no || e.id}: ${err.message}`);
     }
+  }
+}
+
+async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
+  await onaylaKk(firmaId, { sourceId: mkId, direction: 'GKK', targetWarehouseId, tag });
+}
+
+async function onaylaCkk(firmaId, productionOrderId, targetWarehouseId, tag) {
+  await onaylaKk(firmaId, {
+    sourceId: productionOrderId,
+    direction: 'CKK',
+    targetWarehouseId,
+    tag,
+  });
+}
+
+/** Depoda Kullanilabilir bakiye yetersizse açılış girişi ile tamamla (demo sunumu). */
+async function ensureAvailableStock(client, {
+  plantId, warehouseId, itemId, needQty, firmaId, tag, label,
+}) {
+  const { depoBakiyeListesi } = require('../src/services/stokHareketService');
+  const bals = await depoBakiyeListesi(client);
+  const bal = bals
+    .filter((b) => Number(b.item_id) === Number(itemId)
+      && Number(b.warehouse_id) === Number(warehouseId)
+      && String(b.stock_status || 'Kullanilabilir') === 'Kullanilabilir')
+    .reduce((s, b) => s + Number(b.bakiye || 0), 0);
+  const gap = Number(needQty) - bal;
+  if (gap > 0.0001) {
+    await stokHareketOlustur(client, {
+      hareketTipi: 'STOK_GIRIS',
+      isYeriId: plantId,
+      depoId: warehouseId,
+      belgeTipi: 'Acilis',
+      description: `[${tag}] Demo stok tamamlama — ${label || itemId}`,
+      firmaId,
+      satirlar: [{ item_id: itemId, quantity: gap, direction: 1 }],
+    });
+    log(`  stok tamamlandı: ${label || itemId} +${gap} → depo ${warehouseId}`);
   }
 }
 
@@ -1016,6 +1054,17 @@ async function seedManuel(client, org, base) {
     }
   }
 
+  // Çıkış kalite (CKK) → mamul depoya Kullanilabilir
+  await client.query('COMMIT');
+  await client.query('BEGIN');
+  await onaylaCkk(firma.id, ue.id, wh.mam.id, tag);
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.mam.id, itemId: base.fg.id,
+    needQty: qty, firmaId: firma.id, tag, label: base.fg.item_code,
+  });
+  await client.query('COMMIT');
+  await client.query('BEGIN');
+
   // 24–26) Sevk → irsaliye → fatura
   const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
     firma, plant, wh, so, tag,
@@ -1374,6 +1423,26 @@ async function seedMrp(client, org, base) {
     }
   }
 
+  // GKK sonrası malzeme ELEK-GIR'de kalabiliyor — HMD'ye tamamla (BOM 1/4/2/1)
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmPcb.id,
+    needQty: qty * 1, firmaId: firma.id, tag, label: base.hmPcb.item_code,
+  });
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmCap.id,
+    needQty: qty * 4, firmaId: firma.id, tag, label: base.hmCap.item_code,
+  });
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmCoil.id,
+    needQty: qty * 2, firmaId: firma.id, tag, label: base.hmCoil.item_code,
+  });
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.hmd.id, itemId: base.hmCase.id,
+    needQty: qty * 1, firmaId: firma.id, tag, label: base.hmCase.item_code,
+  });
+  await client.query('COMMIT');
+  await client.query('BEGIN');
+
   for (const e of ueRun) {
     try {
       await api('POST', `/uretim-emirleri/${e.id}/onayla`, {}, firma.id).catch(() => null);
@@ -1387,10 +1456,18 @@ async function seedMrp(client, org, base) {
           break;
         }
       }
+      await onaylaCkk(firma.id, e.id, wh.mam.id, tag);
     } catch (err) {
       log(`  MRP UE yürüt: ${err.message}`);
     }
   }
+
+  await ensureAvailableStock(client, {
+    plantId: plant.id, warehouseId: wh.mam.id, itemId: base.fg.id,
+    needQty: qty, firmaId: firma.id, tag, label: base.fg.item_code,
+  });
+  await client.query('COMMIT');
+  await client.query('BEGIN');
 
   // Sevk → irsaliye → satış fatura
   const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
