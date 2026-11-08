@@ -63,7 +63,17 @@ if errorlevel 1 (
 
 echo.
 echo  Tamam. Panel aciliyor...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-panel.ps1" -PanelRoot "%~dp0" -OpenBrowser
+
+REM %~dp0 sonunda \ var; tirnak icinde \" bozulmasin diye . ekliyoruz
+set "PANEL_ROOT=%~dp0"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\start-panel.ps1" -PanelRoot "%PANEL_ROOT%." -OpenBrowser
+if errorlevel 1 (
+  echo.
+  echo  Panel acilamadi. Asagidaki adresi elle acmayi deneyin:
+  echo  http://127.0.0.1:3920/
+  start "" "http://127.0.0.1:3920/"
+)
+
 echo.
 echo  Tarayicide Tam senkron dugmesine basin.
 echo  Kirmizi yazi cikarsa sorun degil, senkron yine biter.

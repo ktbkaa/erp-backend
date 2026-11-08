@@ -15,7 +15,25 @@ $ErrorActionPreference = "Stop"
 if (-not $PanelRoot) {
   $PanelRoot = Split-Path -Parent $PSScriptRoot
 }
-$PanelRoot = [System.IO.Path]::GetFullPath($PanelRoot)
+# Bat'tan gelen sondaki \ veya ".\" / gecersiz tirnak kiriklarini temizle
+$PanelRoot = [string]$PanelRoot
+$PanelRoot = $PanelRoot.Trim().Trim('"')
+while ($PanelRoot.EndsWith('\') -or $PanelRoot.EndsWith('/')) {
+  $PanelRoot = $PanelRoot.Substring(0, $PanelRoot.Length - 1)
+}
+if ($PanelRoot.EndsWith('.')) {
+  # "C:\path\." → "C:\path"
+  try { $PanelRoot = [System.IO.Path]::GetFullPath($PanelRoot) } catch { $PanelRoot = $PanelRoot.TrimEnd('.') }
+}
+try {
+  $PanelRoot = [System.IO.Path]::GetFullPath($PanelRoot)
+} catch {
+  if (Test-Path -LiteralPath $PanelRoot) {
+    $PanelRoot = (Resolve-Path -LiteralPath $PanelRoot).Path
+  } else {
+    throw
+  }
+}
 $serverJs = Join-Path $PanelRoot "src\server.js"
 if (-not (Test-Path $serverJs)) {
   Write-Error "server.js yok: $serverJs"
