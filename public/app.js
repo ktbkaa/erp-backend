@@ -125,6 +125,8 @@ const STOK_FIRMA_PARAM_SECTIONS = [
 
 const STOK_FIRMA_PARAM_FIELD_KEYS = STOK_FIRMA_PARAM_SECTIONS.flatMap((s) => s.fields.map((f) => f.key));
 
+/** Ekran sözleşmesi: scripts/screen-contracts.json + npm run test:screens
+ *  Kritik sekmeler/kind/flag kaybını CI ile yakalar (paralel dal sürüklenmesini önler). */
 const MODULES = [
   {
     id: 'fixed-tanimlar',
@@ -523,30 +525,24 @@ const MODULES = [
         crud: true,
         codeField: 'movement_code',
         nameField: 'movement_name',
-        numeratorSeri: 'HAREKET_KOD',
-        listCategories: [
-          { id: 'SatisTeklif', label: 'Satış Teklifi' },
-          { id: 'SatisSiparis', label: 'Satış Siparişi' },
-          { id: 'SevkEmri', label: 'Sevk Emri' },
-          { id: 'SatisIrsaliye', label: 'Satış İrsaliyesi' },
-          { id: 'SatisFatura', label: 'Satış Faturası' },
-          { id: 'SatinAlmaTalep', label: 'Satınalma Talebi' },
-          { id: 'SatinAlmaSiparis', label: 'Satınalma Siparişi' },
-          { id: 'MalKabul', label: 'Mal Kabul' },
-          { id: 'AlisFatura', label: 'Alış Faturası' },
-          { id: 'UretimEmri', label: 'Üretim Emri' },
-          { id: 'UretimGiris', label: 'Üretim Girişi' },
-          { id: 'UretimTuketim', label: 'Üretim Tüketim' },
-          { id: 'Transfer', label: 'Transfer' },
-          { id: 'Sayim', label: 'Sayım' },
-          { id: 'Fire', label: 'Fire / Sarf' },
-          { id: 'Duzeltme', label: 'Stok Düzeltme' },
-        ],
-        categoryKey: 'document_type',
+        numeratorSeri: null,
+        // Sol kategori yerine tepe filtre (Belge Tipleri + stok etkili yeni tipler)
+        listCategories: null,
+        categoryKey: null,
         filters: [
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+          },
           { key: 'movement_code', label: 'Hareket kodu' },
           { key: 'movement_name', label: 'Hareket adı' },
-          { key: 'document_type', label: 'Belge tipi' },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'] },
+          { key: 'stock_etkisi', label: 'Stok etkisi', type: 'bool' },
         ],
         columns: [
           { key: 'movement_code', label: 'Kod', mono: true },
@@ -554,13 +550,24 @@ const MODULES = [
           { key: 'document_type', label: 'Belge tipi' },
           { key: 'direction', label: 'Yön' },
           { key: 'stock_etkisi', label: 'Stok' },
+          { key: 'gkk_emri_olussun', label: 'GKK' },
+          { key: 'ckk_emri_olussun', label: 'CKK' },
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'movement_code', label: 'Hareket kodu', code: true, required: true },
+          { key: 'movement_code', label: 'Hareket kodu', code: true, editableOnNew: true, required: true },
           { key: 'movement_name', label: 'Hareket adı', name: true, required: true },
-          { key: 'document_type', label: 'Belge tipi', type: 'select', options: ['SatisTeklif','SatisSiparis','SevkEmri','SatisIrsaliye','SatisFatura','SatinAlmaTalep','SatinAlmaSiparis','MalKabul','AlisFatura','UretimEmri','UretimGiris','UretimTuketim','Transfer','Sayim','Fire','Duzeltme'], required: true },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris','Cikis','Transfer','Bilgi'], required: true },
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+            required: true,
+          },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'], required: true },
         ],
         detailFields: [
           { key: 'stock_etkisi', label: 'Stok etkisi', type: 'checkbox' },
@@ -569,8 +576,19 @@ const MODULES = [
           { key: 'eksi_balance_izin', label: 'Eksi bakiye izin', type: 'checkbox' },
           { key: 'gl_account_code', label: 'Muhasebe hesap kodu' },
           { key: 'description', label: 'Açıklama' },
+          { key: 'gkk_emri_olussun', label: 'Giriş kalite emri oluşsun', type: 'checkbox' },
+          { key: 'ckk_emri_olussun', label: 'Çıkış kalite emri oluşsun', type: 'checkbox' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
+        defaults: {
+          is_active: true,
+          stock_etkisi: true,
+          warehouse_zorunlu: true,
+          partner_zorunlu: false,
+          eksi_balance_izin: false,
+          gkk_emri_olussun: false,
+          ckk_emri_olussun: false,
+        },
         detailKey: null,
         detailAsFields: true,
       },
@@ -848,15 +866,24 @@ const MODULES = [
         filters: [
           { key: 'company_code', label: 'Firma kodu' },
           { key: 'company_name', label: 'Firma adı' },
+          { key: 'is_profile', label: 'Profil', type: 'checkbox' },
         ],
         columns: [
           { key: 'company_code', label: 'Kod', mono: true },
           { key: 'company_name', label: 'Ad' },
+          { key: 'is_profile', label: 'Profil', type: 'checkbox' },
         ],
         masterFields: [
-          { key: 'company_code', label: 'Firma kodu', code: true, required: true },
+          { key: 'company_code', label: 'Firma kodu', code: true, editableOnNew: true, required: true },
           { key: 'company_name', label: 'Firma adı', name: true, required: true },
+          {
+            key: 'is_profile',
+            label: 'Profil',
+            type: 'checkbox',
+            hint: 'İşaretliyse üst bardaki Firma Profil Alanı seçicisinde görünür.',
+          },
         ],
+        defaults: { is_profile: false },
         detailFields: [],
         detailKey: null,
       },
@@ -1149,7 +1176,13 @@ const MODULES = [
         title: 'Stok Hareketleri',
         endpoint: '/stok-hareketleri',
         crud: true,
-        numeratorSeri: 'STOK_HAREKET',
+        // Hareket no hareket koduna göre: STC-01-00001 (numeratorSeri yok — kod seçilince ayrılır)
+        numeratorSeri: null,
+        numeratorFromMovementCode: {
+          field: 'movement_code_id',
+          lookup: 'hareket-kodlari-stok',
+          codeKey: 'movement_code',
+        },
         codeField: 'movement_no',
         nameField: 'movement_type',
         categoryKey: 'movement_type',
@@ -1172,32 +1205,86 @@ const MODULES = [
           { key: 'movement_code', label: 'Kod', mono: true },
           { key: 'movement_type', label: 'Tip' },
           { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'quantity_signed', label: 'Toplam hareket', mono: true, signed: true },
           { key: 'ref_no', label: 'Referans', mono: true },
           { key: 'fiziksel_date', label: 'Fiziksel' },
           { key: 'fiscal_date', label: 'Mali' },
-          { key: 'cost_total', label: 'Maliyet' },
+          { key: 'goods_amount', label: 'Mal tutarı', mono: true },
+          { key: 'tax_amount', label: 'KDV', mono: true },
+          { key: 'cost_total', label: 'Maliyet', mono: true },
+          { key: 'grand_total', label: 'Genel toplam', mono: true },
           { key: 'user_code', label: 'Kullanıcı' },
           { key: 'onay_status', label: 'Onay' },
         ],
+        contextMenu: [
+          { id: 'onizle', label: 'Önizle' },
+        ],
         masterFields: [
-          { key: 'movement_no', label: 'Hareket no', code: true },
+          { key: 'movement_no', label: 'Hareket no', code: true, readOnly: true, hint: 'Hareket koduna göre (ör. STC-01-00001)' },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-stok', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', required: true },
           { key: 'warehouse_id', label: 'Depo (source)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'target_warehouse_id', label: 'Hedef depo (transfer)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          {
+            key: 'target_warehouse_id',
+            label: 'Hedef depo (transfer)',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            // Transfer değilse disable — syncStokHareketTransferFields
+            transferOnly: true,
+          },
           { key: 'movement_date', label: 'Tarih', type: 'date' },
           { key: 'description', label: 'Açıklama' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
         ],
+        // Barkod sütunu varsayılan kapalı; toolbar tik ile açılır
+        barkodScanToggle: true,
+        barkodScanField: {
+          key: 'barkod',
+          label: 'Barkod',
+          hint: 'Okut: aynı stok → miktar +1, farklı → yeni satır',
+        },
         detailFields: [
-          { key: 'barkod', label: 'Barkod', hint: 'Okutunca stok eşleşir' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
+          { key: 'lot_no', label: 'Parti' },
+          {
+            key: 'tax_code_id',
+            label: 'KDV %',
+            type: 'lookup',
+            lookup: 'vergi-kodlari',
+            valueKey: 'id',
+            labelKey: 'tax_name',
+            codeKey: 'tax_code',
+            size: 'short',
+          },
+          { key: 'vat_rate', label: 'Oran %', type: 'number', size: 'short', readOnly: true },
           { key: 'raf_code', label: 'Raf' },
           { key: 'konum_code', label: 'Konum' },
         ],
+        // Stok seçilince satır birimi / vergi stok kartından; KDV tanımından oran
+        formLinks: {
+          item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'tax_code_id', fromItem: 'default_tax_code_id' },
+            { field: 'vat_rate', fromItem: 'varsayilan_vat_rate' },
+            { field: 'currency_code', fromItem: 'currency_code' },
+          ],
+          tax_code_id: [
+            { field: 'vat_rate', fromLookup: 'vergi-kodlari', parentKey: 'tax_code_id', prop: 'rate' },
+          ],
+        },
         detailKey: 'satirlar',
         detailSlots: 5,
+        defaults: {
+          movement_date: new Date().toISOString().slice(0, 10),
+          currency_code: 'TRY',
+          satirlar: [],
+        },
       },
       {
         id: 'transfer-emirleri',
@@ -1356,11 +1443,15 @@ const MODULES = [
         id: 'mrp-calisma',
         techId: 'MFG-MRP-SCR-001',
         businessNameEn: 'MrpRunScreen',
-        title: 'MRP Çalıştır',
+        title: 'MRP Konsol',
         endpoint: '/mrp/calismalar',
-        crud: false,
-        readOnly: true,
+        crud: true,
+        readOnly: false,
+        mrpKonsol: true,
         mrpCalistirAction: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        codeField: 'run_no',
         filters: [
           { key: 'run_no', label: 'Çalışma no' },
           { key: 'status', label: 'Durum' },
@@ -1368,11 +1459,25 @@ const MODULES = [
         columns: [
           { key: 'run_no', label: 'No', mono: true },
           { key: 'status', label: 'Durum' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
           { key: 'start_ts', label: 'Başlangıç' },
           { key: 'end_ts', label: 'Bitiş' },
           { key: 'line_sayisi', label: 'Satır' },
           { key: 'net_pozitif', label: 'Net>0' },
           { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'status', label: 'Durum', readonly: true },
+        ],
+        formTabs: [
+          { id: 'param', label: 'Malzeme İhtiyaç Planlama', kind: 'mrp-parametre' },
+          { id: 'kapsam', label: 'Depo, İş Emirleri, Siparişler, MPS, Satış Tahminleri', kind: 'mrp-kapsam' },
+          { id: 'sonuc', label: 'MRP Sonuçları', kind: 'mrp-sonuc' },
         ],
         nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
       },
@@ -6037,6 +6142,56 @@ const MODULES = [
         defaults: { country_code: 'TR', tax_type: 'KDV', is_active: true },
       },
       {
+        id: 'vergi-kodlari',
+        techId: 'MDM-TAX-SCR-001',
+        businessNameEn: 'TaxTypeDefinitionScreen',
+        title: 'Vergi Kodları',
+        endpoint: '/finans-vergi-kodlari',
+        crud: true,
+        codeField: 'tax_code',
+        nameField: 'tax_name',
+        filters: [
+          { key: 'country_code', label: 'Ülke', queryParam: true },
+          { key: 'tax_code', label: 'Kod' },
+          { key: 'tax_type', label: 'Tür' },
+        ],
+        columns: [
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'tax_code', label: 'Kod', mono: true },
+          { key: 'tax_name', label: 'Ad' },
+          { key: 'tax_type', label: 'Tür' },
+          { key: 'rate', label: 'Oran %' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
+          { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
+          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
+          { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
+          { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: 'oranlar',
+        detailSlots: 4,
+        formTabs: [
+          {
+            id: 'oranlar',
+            label: 'Oranlar',
+            kind: 'grid',
+            key: 'oranlar',
+            slots: 4,
+            fields: [
+              { key: 'rate', label: 'Oran %', type: 'number', required: true },
+              { key: 'valid_from', label: 'Geçerlilik başı', type: 'date', required: true },
+              { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
+              { key: 'source_note', label: 'Kaynak' },
+            ],
+          },
+        ],
+        defaults: { country_code: 'TR', tax_type: 'KDV', is_active: true },
+      },
+      {
         id: 'finans-ulke-paketleri',
         techId: 'FIN-CPK-SCR-001',
         businessNameEn: 'CountryPackScreen',
@@ -10079,15 +10234,23 @@ function promptLogin() {
   showLoginView();
 }
 
+function isFirmaProfil(f) {
+  if (!f) return false;
+  const v = f.is_profile;
+  return v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+}
+
 function allowedFirmalar() {
   const all = Array.isArray(state.companies) ? state.companies : [];
+  const profiles = all.filter(isFirmaProfil);
+  const base = profiles.length ? profiles : all;
   // ADMIN / Yönetici: tüm firma profilleri görünür (yeni demo firmaları dahil)
-  if (isAdminLikeUser(state.session)) return all;
+  if (isAdminLikeUser(state.session)) return base;
   const fy = state.session?.firma_yetkileri;
-  if (!Array.isArray(fy) || !fy.length) return all;
+  if (!Array.isArray(fy) || !fy.length) return base;
   const ids = new Set(fy.map((f) => Number(f.company_id ?? f.id)).filter(Boolean));
-  const filtered = all.filter((f) => ids.has(Number(f.id)));
-  return filtered.length ? filtered : all;
+  const filtered = base.filter((f) => ids.has(Number(f.id)));
+  return filtered.length ? filtered : base;
 }
 
 function renderFirmaPicker() {
@@ -11525,6 +11688,7 @@ const LOOKUP_ENDPOINTS = {
   // Diğer tanım ekranları
   'belge-tipleri': '/belge-tipleri?is_active=true',
   'finans-vergi-kodlari': '/finans-vergi-kodlari',
+  'hareket-belge-tipleri': '/hareket-kodlari/belge-tipleri',
   'vergi-kodlari': '/finans-vergi-kodlari',
   'finans-ulke-paketleri': '/finans-country/paketler',
   'mali-yillar': '/muhasebe-donemleri/mali-yillar',
@@ -11537,6 +11701,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   'is-yerleri': ['is-yerleri', 'companies'],
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari', 'companies'],
+  'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
   'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
   'kategori-tanimi': [
     'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',
@@ -11545,6 +11710,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   'hareket-kodlari': [
     'hareket-kodlari', 'hareket-kodlari-teklif', 'hareket-kodlari-siparis',
     'hareket-kodlari-sevk', 'hareket-kodlari-irsaliye', 'hareket-kodlari-fatura', 'hareket-kodlari-stok',
+    'hareket-belge-tipleri',
   ],
   kullanicilar: ['users'],
   'satis-siparisleri': ['sales_orders'],
@@ -11753,9 +11919,17 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     return `<span class="field-static" aria-hidden="true">${escAttr(field.label || '=')}</span>`;
   }
   const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
-  const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly;
+  let transferLocked = false;
+  if (field.transferOnly) {
+    const hkId = state.formRecord?.movement_code_id
+      || document.querySelector('[data-master="movement_code_id"]')?.value;
+    transferLocked = typeof isTransferHareketKodu === 'function'
+      ? !isTransferHareketKodu(hareketKoduRowById(hkId))
+      : false;
+  }
+  const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly || transferLocked;
   const dis = forceDisabled ? 'disabled' : '';
-  const req = field.required ? 'aria-required="true"' : '';
+  const req = (field.required || (field.transferOnly && !transferLocked)) ? 'aria-required="true"' : '';
   const v = value ?? '';
   const name = `${attrName}="${field.key}" ${extraAttrs}`.trim();
   if (field.type === 'checkbox') {
@@ -13015,6 +13189,516 @@ function ensureDefaultWarehousesInDepoBaglari(master) {
 }
 
 /** Kalabalık master listesini birincil + ek + alt şerit notlarına böler. */
+function isTransferHareketKodu(hk) {
+  if (!hk) return false;
+  const tip = String(hk.document_type || '');
+  const yon = String(hk.direction || '');
+  return tip === 'Transfer' || yon === 'Transfer' || /^TRF/i.test(String(hk.movement_code || ''));
+}
+
+function hareketKoduRowById(id) {
+  if (id == null || id === '') return null;
+  const rows = state.lookupCache?.['hareket-kodlari-stok']
+    || state.lookupCache?.['hareket-kodlari']
+    || [];
+  return rows.find((r) => String(r.id) === String(id)) || null;
+}
+
+function bindStokHareketNumerator(screen) {
+  const tipKey = screen.numeratorFromMovementCode.field || 'movement_code_id';
+  const tipEl = findAttrControl('data-master', tipKey);
+  if (!tipEl || tipEl.dataset.numeratorBound === '1') return;
+  tipEl.dataset.numeratorBound = '1';
+  tipEl.addEventListener('change', () => {
+    refreshStokHareketNo(true);
+    syncStokHareketTransferFields();
+  });
+}
+
+function syncStokHareketTransferFields() {
+  const screen = findScreen(state.screenId);
+  if (!screen || screen.id !== 'stok-hareketleri') return;
+  const hkId = findAttrControl('data-master', 'movement_code_id')?.value
+    || state.formRecord?.movement_code_id;
+  const hk = hareketKoduRowById(hkId);
+  const transfer = isTransferHareketKodu(hk);
+  const hedefSel = findAttrControl('data-master', 'target_warehouse_id');
+  if (!hedefSel) return;
+  const widget = hedefSel.closest('.lookup-widget') || hedefSel.closest('.field');
+  hedefSel.disabled = !transfer || state.formMode === 'incele';
+  hedefSel.toggleAttribute('required', transfer);
+  const ta = widget?.querySelector?.('.lookup-typeahead');
+  if (ta) {
+    ta.disabled = hedefSel.disabled;
+    ta.placeholder = transfer ? 'Yazarak ara (%...%)' : 'Transfer için hareket kodu seçin';
+  }
+  widget?.querySelectorAll?.('.lookup-browse-btn, .lookup-clear-btn, button').forEach((b) => {
+    b.disabled = hedefSel.disabled;
+  });
+  const fieldShellEl = hedefSel.closest('.field');
+  if (fieldShellEl) {
+    fieldShellEl.classList.toggle('is-disabled', !transfer);
+    fieldShellEl.classList.toggle('is-required', transfer);
+    const lab = fieldShellEl.querySelector('label');
+    if (lab) lab.classList.toggle('required', transfer);
+  }
+  if (!transfer) {
+    hedefSel.value = '';
+    if (ta) ta.value = '';
+    if (state.formRecord) state.formRecord.target_warehouse_id = null;
+    syncLookupNameRo(hedefSel);
+  }
+}
+
+function bindStokHareketBarkodToggle() {
+  const screen = findScreen(state.screenId);
+  if (!screen?.barkodScanToggle) return;
+  const chk = document.getElementById('stokHareketBarkodMod');
+  if (!chk || chk.dataset.bound === '1') return;
+  chk.dataset.bound = '1';
+  chk.addEventListener('change', () => {
+    state.stokHareketBarkodMod = Boolean(chk.checked);
+    // Grid’i yeniden çiz; master değerleri koru
+    const scr = findScreen(state.screenId);
+    if (!scr) return;
+    const payload = readTabbedPayload(scr);
+    state.formRecord = { ...(state.formRecord || {}), ...payload };
+    renderForm(scr);
+    persistActiveFormTab();
+  });
+}
+
+function defaultMrpParametreClient(partial = {}) {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const start = partial.start_date || `${yyyy}-${mm}-${dd}`;
+  const endBase = new Date(`${start}T12:00:00`);
+  endBase.setDate(endBase.getDate() + 90);
+  const end = partial.end_date || endBase.toISOString().slice(0, 10);
+  return {
+    start_date: start,
+    end_date: end,
+    notes: partial.notes || '',
+    include_order_level_items: !!partial.include_order_level_items,
+    ignore_safety_when_no_demand: partial.ignore_safety_when_no_demand !== false,
+    negative_stock_as_zero: partial.negative_stock_as_zero !== false,
+    include_passive_items: !!partial.include_passive_items,
+    supply_in_period_as_available: partial.supply_in_period_as_available !== false,
+    safety_stock_date_type: partial.safety_stock_date_type || 'ihtiyac',
+    item_mrp_param_control: partial.item_mrp_param_control || 'durdur',
+    consider_po: partial.consider_po !== false,
+    open_po_as_on_hand: partial.open_po_as_on_hand !== false,
+    ignore_frozen_po: !!partial.ignore_frozen_po,
+    consider_pr: !!partial.consider_pr,
+    ignore_po_without_delivery_date: partial.ignore_po_without_delivery_date !== false,
+    check_po_approval: !!partial.check_po_approval,
+    check_pr_approval: !!partial.check_pr_approval,
+    ignore_so_without_ship_date: !!partial.ignore_so_without_ship_date,
+    check_so_approval: !!partial.check_so_approval,
+    so_forecast_mode: partial.so_forecast_mode || 'sales_orders',
+    open_wo_as_on_hand: partial.open_wo_as_on_hand !== false,
+    ignore_frozen_production: !!partial.ignore_frozen_production,
+    ignore_min_production_qty: !!partial.ignore_min_production_qty,
+    wo_program_mode: partial.wo_program_mode || 'isemri',
+    bulk_explode_warning: partial.bulk_explode_warning || 'uyar',
+    planned_wo_mode: partial.planned_wo_mode || 'dahil',
+    po_cutoff_date: partial.po_cutoff_date || end,
+    so_cutoff_date: partial.so_cutoff_date || end,
+    wo_cutoff_date: partial.wo_cutoff_date || end,
+    warehouse_ids: Array.isArray(partial.warehouse_ids) ? partial.warehouse_ids.map(Number) : [],
+    wo_type_ids: Array.isArray(partial.wo_type_ids) ? partial.wo_type_ids.map(Number) : [],
+    so_order_types: Array.isArray(partial.so_order_types) ? partial.so_order_types : [],
+    po_movement_code_ids: Array.isArray(partial.po_movement_code_ids) ? partial.po_movement_code_ids.map(Number) : [],
+    pr_movement_code_ids: Array.isArray(partial.pr_movement_code_ids) ? partial.pr_movement_code_ids.map(Number) : [],
+    mps_rows: Array.isArray(partial.mps_rows) ? partial.mps_rows : [],
+    forecast_rows: Array.isArray(partial.forecast_rows) ? partial.forecast_rows : [],
+  };
+}
+
+function ensureMrpFormParametre(rec) {
+  if (!rec) return defaultMrpParametreClient();
+  const base = rec.parametre && typeof rec.parametre === 'object'
+    ? rec.parametre
+    : (rec.parametre_json && typeof rec.parametre_json === 'object' ? rec.parametre_json : {});
+  rec.parametre = defaultMrpParametreClient({
+    ...base,
+    start_date: rec.start_date || base.start_date,
+    end_date: rec.end_date || base.end_date,
+    notes: rec.notes != null ? rec.notes : base.notes,
+  });
+  if (!Array.isArray(rec.messages)) rec.messages = [];
+  if (!Array.isArray(rec.sonuclar)) rec.sonuclar = [];
+  return rec.parametre;
+}
+
+function collectMrpParametreFromDom() {
+  const rec = state.formRecord || {};
+  const p = ensureMrpFormParametre(rec);
+  document.querySelectorAll('[data-mrp-param]').forEach((el) => {
+    const key = el.getAttribute('data-mrp-param');
+    if (!key) return;
+    if (el.type === 'checkbox') p[key] = !!el.checked;
+    else p[key] = el.value;
+  });
+  const desc = document.querySelector('[data-mrp-head="description"]');
+  if (desc) rec.description = desc.value;
+  rec.start_date = p.start_date;
+  rec.end_date = p.end_date;
+  rec.notes = p.notes;
+
+  const scopeKeys = ['warehouse_ids', 'wo_type_ids', 'so_order_types', 'po_movement_code_ids', 'pr_movement_code_ids'];
+  for (const key of scopeKeys) {
+    const boxes = [...document.querySelectorAll(`[data-mrp-scope="${key}"]`)];
+    if (!boxes.length) continue;
+    const checked = boxes.filter((b) => b.checked).map((b) => b.value);
+    // Hepsi seçiliyse boş dizi = filtre yok
+    p[key] = checked.length === boxes.length
+      ? []
+      : (key === 'so_order_types' ? checked : checked.map(Number).filter((n) => Number.isFinite(n)));
+  }
+  rec.parametre = p;
+  return p;
+}
+
+function renderMrpParametrePane(rec) {
+  const p = ensureMrpFormParametre(rec);
+  const readonly = state.formMode === 'incele';
+  const disRun = readonly ? 'disabled' : '';
+  return `
+  <section class="mrp-console" data-mrp-pane="param">
+    <div class="mrp-console-head">
+      ${mrpDate('start_date', 'Başlangıç tarihi', p.start_date, readonly)}
+      ${mrpDate('end_date', 'Bitiş tarihi', p.end_date, readonly)}
+      <label class="mrp-field mrp-field--grow">
+        <span>Açıklama</span>
+        <input type="text" data-mrp-head="description" value="${escapeHtml(rec?.description || '')}" ${readonly ? 'readonly' : ''} />
+      </label>
+      <label class="mrp-field mrp-field--notes">
+        <span>Not</span>
+        <textarea data-mrp-param="notes" rows="2" ${readonly ? 'readonly' : ''}>${escapeHtml(p.notes || '')}</textarea>
+      </label>
+      <div class="mrp-console-actions">
+        <button type="button" class="btn primary" id="btnMrpKonsolCalistir" ${disRun}>MRP Çalıştır</button>
+      </div>
+    </div>
+
+    <details class="mrp-section" open>
+      <summary>Stok parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('include_order_level_items', 'Sipariş seviyesine göre takip edilen stoklar dahil', p.include_order_level_items, readonly)}
+        ${mrpToggle('ignore_safety_when_no_demand', 'Talebi olmayan kalemde emniyet stoğu yoksay', p.ignore_safety_when_no_demand, readonly)}
+        ${mrpToggle('negative_stock_as_zero', 'Negatif stok sıfır kabul edilsin', p.negative_stock_as_zero, readonly)}
+        ${mrpToggle('include_passive_items', 'Pasif stoklar dahil edilsin', p.include_passive_items, readonly)}
+        ${mrpToggle('supply_in_period_as_available', 'Dönem içi arz eldeki sayılsın', p.supply_in_period_as_available, readonly)}
+      </div>
+      <div class="mrp-field-row">
+        ${mrpSelect('safety_stock_date_type', 'Emniyet stok ihtiyaç tarih tipi', p.safety_stock_date_type, [
+          { value: 'ihtiyac', label: 'İhtiyaç tarihine aç' },
+          { value: 'baslangic', label: 'Ufuk başına aç' },
+        ], readonly)}
+        ${mrpSelect('item_mrp_param_control', 'Stok kartı MRP prm. kontrol', p.item_mrp_param_control, [
+          { value: 'durdur', label: 'Durdur' },
+          { value: 'uyar', label: 'Uyar' },
+          { value: 'yoksay', label: 'Yoksay' },
+        ], readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Satınalma parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('consider_po', 'Satınalma siparişleri dikkate alınsın', p.consider_po, readonly)}
+        ${mrpToggle('open_po_as_on_hand', 'Açık SA sipariş miktarı eldeki sayılsın', p.open_po_as_on_hand, readonly)}
+        ${mrpToggle('ignore_frozen_po', 'Donuk dönem parametreleri yoksayılsın', p.ignore_frozen_po, readonly)}
+        ${mrpToggle('consider_pr', 'Satınalma talepleri dikkate alınsın', p.consider_pr, readonly)}
+        ${mrpToggle('ignore_po_without_delivery_date', 'Teslimatsız SA siparişleri atla', p.ignore_po_without_delivery_date, readonly)}
+        ${mrpToggle('check_po_approval', 'SA siparişlerinde onaya bakılsın', p.check_po_approval, readonly)}
+        ${mrpToggle('check_pr_approval', 'SA taleplerinde onaya bakılsın', p.check_pr_approval, readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Satış parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('ignore_so_without_ship_date', 'Teslimatsız satış siparişleri atla', p.ignore_so_without_ship_date, readonly)}
+        ${mrpToggle('check_so_approval', 'Satış siparişlerinde onaya bakılsın', p.check_so_approval, readonly)}
+      </div>
+      <div class="mrp-field-row">
+        ${mrpSelect('so_forecast_mode', 'Satış siparişleri — tahmin çalışma tipi', p.so_forecast_mode, [
+          { value: 'sales_orders', label: 'Satış Siparişleri' },
+          { value: 'forecasts', label: 'Satış Tahminleri' },
+          { value: 'both', label: 'İkisi birlikte' },
+        ], readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Üretim parametreleri</summary>
+      <div class="mrp-toggle-grid">
+        ${mrpToggle('open_wo_as_on_hand', 'Açık iş emri miktarı eldeki sayılsın', p.open_wo_as_on_hand, readonly)}
+        ${mrpToggle('ignore_frozen_production', 'Üretim donuk dönemleri yoksayılsın', p.ignore_frozen_production, readonly)}
+        ${mrpToggle('ignore_min_production_qty', 'Minimum üretim miktarı yoksayılsın', p.ignore_min_production_qty, readonly)}
+      </div>
+      <div class="mrp-field-row">
+        ${mrpSelect('wo_program_mode', 'İş emri — üretim programı tipi', p.wo_program_mode, [
+          { value: 'isemri', label: 'İş emri' },
+          { value: 'program', label: 'Üretim programı' },
+        ], readonly)}
+        ${mrpSelect('bulk_explode_warning', 'Toplu patlatma uyarı tipi', p.bulk_explode_warning, [
+          { value: 'uyar', label: 'Uyar' },
+          { value: 'sessiz', label: 'Sessiz' },
+          { value: 'durdur', label: 'Durdur' },
+        ], readonly)}
+        ${mrpSelect('planned_wo_mode', 'Planlı iş emirleri', p.planned_wo_mode, [
+          { value: 'dahil', label: 'Dahil' },
+          { value: 'kesin', label: 'Yalnızca kesin' },
+        ], readonly)}
+      </div>
+    </details>
+
+    <details class="mrp-section" open>
+      <summary>Modül tarihleri</summary>
+      <div class="mrp-field-row">
+        ${mrpDate('po_cutoff_date', 'Satınalma sip. son tarih', p.po_cutoff_date, readonly)}
+        ${mrpDate('so_cutoff_date', 'Satış sip. son tarih', p.so_cutoff_date, readonly)}
+        ${mrpDate('wo_cutoff_date', 'İş emri son tarih', p.wo_cutoff_date, readonly)}
+      </div>
+    </details>
+  </section>`;
+}
+
+function renderMrpKapsamPane(rec) {
+  const p = ensureMrpFormParametre(rec);
+  const readonly = state.formMode === 'incele';
+  const cache = state.mrpKapsamCache || {};
+  const wh = cache.warehouses || [];
+  const wot = cache.woTypes || [];
+  const soTypes = cache.soTypes || ['SatisSiparis', 'AlinanSiparis'];
+  const poCodes = cache.poCodes || [];
+  const prCodes = cache.prCodes || [];
+
+  const row = (idAttr, id, code, name, selected) => `<tr>
+    <td class="mrp-scope-check"><input type="checkbox" data-mrp-scope="${idAttr}" value="${escapeHtml(String(id))}" ${selected ? 'checked' : ''} ${readonly ? 'disabled' : ''} /></td>
+    <td class="mono">${escapeHtml(code || '')}</td>
+    <td>${escapeHtml(name || '')}</td>
+  </tr>`;
+
+  const whRows = wh.length
+    ? wh.map((w) => row('warehouse_ids', w.id, w.warehouse_code, w.warehouse_name, !p.warehouse_ids.length || p.warehouse_ids.includes(Number(w.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">Depo listesi yükleniyor…</td></tr>';
+  const wotRows = wot.length
+    ? wot.map((t) => row('wo_type_ids', t.id, t.type_code, t.type_name, !p.wo_type_ids.length || p.wo_type_ids.includes(Number(t.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">İş emri tipi yok</td></tr>';
+  const soRows = soTypes.map((t) => row('so_order_types', t, t, t, !p.so_order_types.length || p.so_order_types.includes(t))).join('');
+  const poRows = poCodes.length
+    ? poCodes.map((c) => row('po_movement_code_ids', c.id, c.movement_code, c.movement_name, !p.po_movement_code_ids.length || p.po_movement_code_ids.includes(Number(c.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">SA hareket kodu yok</td></tr>';
+  const prRows = prCodes.length
+    ? prCodes.map((c) => row('pr_movement_code_ids', c.id, c.movement_code, c.movement_name, !p.pr_movement_code_ids.length || p.pr_movement_code_ids.includes(Number(c.id)))).join('')
+    : '<tr><td colspan="3" class="detail-empty">Talep hareket kodu yok</td></tr>';
+
+  const mpsHint = 'MPS master henüz yok — iskelet. İleride üretim planlarından doldurulacak.';
+  const fcHint = 'Satış tahmin master henüz yok — iskelet. BI kaynak=Tahmin veya bu grid ile beslenecek.';
+
+  return `
+  <section class="mrp-console" data-mrp-pane="kapsam">
+    <p class="hint">Boş bırakılan grup = tümü dahil. İşaretleri kaldırarak kapsamı daraltın.</p>
+    <div class="mrp-scope-grid">
+      ${mrpScopeTable('Depolar', whRows)}
+      ${mrpScopeTable('İş emri tipleri', wotRows)}
+      ${mrpScopeTable('Satış sipariş tipleri', soRows)}
+      ${mrpScopeTable('Satınalma siparişleri (hareket kodu)', poRows)}
+      ${mrpScopeTable('Satınalma talepleri (hareket kodu)', prRows)}
+      ${mrpScopeTable('MPS', '<tr><td colspan="3" class="detail-empty">Yeni kayıt için tıklayınız (iskelet)</td></tr>', mpsHint)}
+      ${mrpScopeTable('Satış tahminleri', '<tr><td colspan="3" class="detail-empty">Yeni kayıt için tıklayınız (iskelet)</td></tr>', fcHint)}
+    </div>
+  </section>`;
+}
+
+function renderMrpSonucPane(rec) {
+  ensureMrpFormParametre(rec);
+  const messages = Array.isArray(rec?.messages) ? rec.messages : [];
+  const sonuclar = Array.isArray(rec?.sonuclar) ? rec.sonuclar : [];
+  const runNo = rec?.run_no || '—';
+  const msgHtml = messages.length
+    ? messages.map((m) => `<div class="mrp-log-line mrp-log-${escapeHtml(String(m.level || 'INFO').toLowerCase())}">${escapeHtml(m.message || '')}</div>`).join('')
+    : '<div class="detail-empty">Henüz mesaj yok. MRP Çalıştır sonrası burada listelenir.</div>';
+  const rows = sonuclar.length
+    ? sonuclar.map((r) => `<tr>
+        <td class="mono">${escapeHtml(r.item_code || '')}</td>
+        <td>${escapeHtml(r.item_name || '')}</td>
+        <td class="num">${escapeHtml(String(r.bagimsiz_ihtiyac ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.bagimli_ihtiyac ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.available_stock ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.net_ihtiyac ?? ''))}</td>
+        <td class="num">${escapeHtml(String(r.onerilen_quantity ?? ''))}</td>
+        <td>${escapeHtml(r.oneri || '')}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" class="detail-empty">Sonuç satırı yok.</td></tr>';
+
+  return `
+  <section class="mrp-console" data-mrp-pane="sonuc">
+    <div class="mrp-console-head">
+      <label class="mrp-field">
+        <span>MRP çalışma no</span>
+        <input type="text" value="${escapeHtml(runNo)}" readonly />
+      </label>
+      <div class="mrp-console-actions">
+        <button type="button" class="btn ghost" id="btnMrpSonucTalep">SA Talep</button>
+        <button type="button" class="btn ghost" id="btnMrpSonucUretim">Üretim Emri</button>
+      </div>
+    </div>
+    <div class="mrp-log-box">
+      <div class="mrp-log-title">${escapeHtml(runNo)} çalıştırmasına ait mesajlar</div>
+      <div class="mrp-log-body">${msgHtml}</div>
+    </div>
+    <div class="mrp-result-scroll">
+      <table class="data-table mrp-result-table">
+        <thead><tr>
+          <th>Stok</th><th>Ad</th><th>Bağımsız</th><th>Bağımlı</th><th>Eldeki</th><th>Net</th><th>Öneri qty</th><th>Öneri</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </section>`;
+}
+
+async function ensureMrpKapsamCache() {
+  if (state.mrpKapsamCache?.loaded) return state.mrpKapsamCache;
+  try {
+    const [warehouses, woTypes, hareket] = await Promise.all([
+      api('/warehouses').catch(() => []),
+      api('/uretim-emri-tipleri?is_active=true').catch(() => []),
+      api('/hareket-kodlari').catch(() => []),
+    ]);
+    const list = Array.isArray(warehouses) ? warehouses : (warehouses?.rows || []);
+    const wot = Array.isArray(woTypes) ? woTypes : (woTypes?.rows || []);
+    const hk = Array.isArray(hareket) ? hareket : (hareket?.rows || []);
+    state.mrpKapsamCache = {
+      loaded: true,
+      warehouses: list,
+      woTypes: wot,
+      soTypes: ['SatisSiparis', 'AlinanSiparis'],
+      poCodes: hk.filter((h) => String(h.document_type || '') === 'SatinAlmaSiparis'),
+      prCodes: hk.filter((h) => String(h.document_type || '') === 'SatinAlmaTalep'),
+    };
+  } catch (_) {
+    state.mrpKapsamCache = { loaded: true, warehouses: [], woTypes: [], soTypes: ['SatisSiparis'], poCodes: [], prCodes: [] };
+  }
+  return state.mrpKapsamCache;
+}
+
+async function bindMrpKonsolEvents() {
+  const screen = findScreen(state.screenId);
+  if (!screen?.mrpKonsol) return;
+  await ensureMrpKapsamCache();
+  // Kapsam sekmesi ilk boyamada boş kalmasın
+  if (state.formActiveTab === 'kapsam') {
+    const pane = document.querySelector('[data-tab-panel="kapsam"]');
+    if (pane) pane.innerHTML = renderMrpKapsamPane(state.formRecord || {});
+  }
+  $('#btnMrpKonsolCalistir')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mrpCalistirKaydet().catch((err) => toast(err.message || 'MRP çalıştırılamadı'));
+  });
+  $('#btnMrpSonucTalep')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mrpTalepOlustur().catch((err) => toast(err.message));
+  });
+  $('#btnMrpSonucUretim')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    mrpUretimOlustur().catch((err) => toast(err.message));
+  });
+  document.querySelector('[data-mrp-pane="param"]')?.addEventListener('change', () => {
+    collectMrpParametreFromDom();
+  });
+  document.querySelector('[data-mrp-pane="kapsam"]')?.addEventListener('change', () => {
+    collectMrpParametreFromDom();
+  });
+}
+
+async function mrpCalistirKaydet() {
+  const konsol = findScreen('mrp-calisma');
+  const formOpen = state.screenId === 'mrp-calisma'
+    && state.formMode
+    && $('#viewForm') && !$('#viewForm').hidden;
+
+  // Liste / başka ekrandan: önce konsol formunu aç
+  if (!formOpen) {
+    state.screenId = 'mrp-calisma';
+    await openForm('yeni', { inPlace: true });
+    toast('Parametreleri ayarlayıp «MRP Çalıştır»a basın.');
+    return;
+  }
+
+  collectMrpParametreFromDom();
+  const rec = state.formRecord || {};
+  const parametre = ensureMrpFormParametre(rec);
+  const body = {
+    description: rec.description || 'UI MRP çalışması',
+    company_id: rec.company_id || getActiveFirmaId() || null,
+    plant_id: rec.plant_id || state.activeIsYeriId || null,
+    start_date: parametre.start_date,
+    end_date: parametre.end_date,
+    notes: parametre.notes || null,
+    parametre,
+  };
+  toast('MRP çalışıyor…');
+  const result = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
+  state.mrpCalismaId = result.calisma?.id || null;
+  state.formMode = 'incele';
+  state.formRecord = {
+    ...(result.calisma || {}),
+    parametre: result.parametre || parametre,
+    messages: result.messages || [],
+    sonuclar: result.sonuclar || [],
+  };
+  state.formActiveTab = 'sonuc';
+  toast(`MRP tamam: ${result.calisma?.run_no || ''} · net>0: ${result.calisma?.net_pozitif ?? '?'}`);
+  renderForm(konsol);
+  const tab = state.openTabs?.find((t) => t.screenId === 'mrp-calisma' && t.kind === 'form');
+  if (tab) {
+    tab.formMode = 'incele';
+    tab.formRecord = state.formRecord;
+    tab.formActiveTab = 'sonuc';
+    tab.title = `MRP Konsol · ${result.calisma?.run_no || ''}`;
+    renderTabBar();
+  }
+}
+
+async function mrpTalepOlustur() {
+  const screen = findScreen(state.screenId);
+  const sel = selectedRow();
+  const body = {};
+  if (sel?.item_id) body.stok_idler = [sel.item_id];
+  const runId = state.mrpCalismaId || state.formRecord?.id;
+  if ((screen?.mrpSonucMode || screen?.mrpKonsol) && runId) body.run_id = runId;
+  if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+  if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
+  const result = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
+  toast(`SA talep oluştu: ${result.requisition_no || result.id}`);
+  openScreen('satin-alma-talepleri');
+}
+
+async function mrpUretimOlustur() {
+  const screen = findScreen(state.screenId);
+  const sel = selectedRow();
+  const body = {};
+  if (sel?.item_id) body.stok_idler = [sel.item_id];
+  const runId = state.mrpCalismaId || state.formRecord?.id;
+  if ((screen?.mrpSonucMode || screen?.mrpKonsol) && runId) body.run_id = runId;
+  if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+  if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
+  const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
+  toast(`${result.olusan || 0} üretim emri oluştu`);
+  openScreen('uretim-emirleri');
+}
+
 function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
   const raw = Array.isArray(fields) ? fields : [];
   const footerNotes = raw.filter((f) => isFooterNoteField(f));
@@ -14958,6 +15642,21 @@ function renderForm(screen) {
         ${renderStokDepolarPane(tab, rec)}
       </div>`;
     }
+    if (tab.kind === 'mrp-parametre') {
+      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMrpParametrePane(rec)}
+      </div>`;
+    }
+    if (tab.kind === 'mrp-kapsam') {
+      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMrpKapsamPane(rec)}
+      </div>`;
+    }
+    if (tab.kind === 'mrp-sonuc') {
+      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMrpSonucPane(rec)}
+      </div>`;
+    }
     const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart'
       || tab.id === 'baslik' || tab.id === 'bilgiler';
     const tabFields = tab.fields || [];
@@ -14996,6 +15695,23 @@ function renderForm(screen) {
   }
   if ((screen.formTabs || []).some((t) => t.kind === 'stok-depolar')) {
     bindStokDepoYetkiEvents();
+  }
+  if (screen.mrpKonsol) {
+    ['btnFormSave', 'btnFormSaveClose', 'btnFormSaveNew'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.hidden = true;
+    });
+    const saveGroup = document.getElementById('formSaveGroup') || document.querySelector('#formSaveGroup');
+    if (saveGroup) saveGroup.hidden = true;
+    ensureMrpFormParametre(state.formRecord || {});
+    bindMrpKonsolEvents().catch(() => {});
+  }
+  if (screen.id === 'stok-hareketleri') {
+    bindStokHareketBarkodToggle();
+    bindStokHareketNumerator(screen);
+    fetchLookupKey('hareket-kodlari-stok').then(() => {
+      syncStokHareketTransferFields();
+    }).catch(() => { syncStokHareketTransferFields(); });
   }
 }
 

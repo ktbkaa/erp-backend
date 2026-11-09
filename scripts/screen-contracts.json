@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "description": "Kritik ERP ekran sözleşmeleri. Tabs/kinds/flags/alanlar kaybolursa check-screen-contracts.js CI'yi kırar. Paralel dal kayıplarını önlemek için sabit sözleşme.",
+    "source": "public/app.js MODULES"
+  },
+  "screens": {
+    "stok-karti": {
+      "title": "Stok Kartı",
+      "requiredTabs": ["ana", "firmalar", "ek-bilgiler", "depolar", "olcu", "mrp"],
+      "requiredKinds": ["master-detail", "stok-firmalar", "stok-depolar", "fields", "grid"],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": [],
+      "requiredText": [
+        "firma_parametreleri",
+        "depo_baglari",
+        "STOK_FIRMA_GENEL_FIELDS",
+        "STOK_VERGI_FIELDS",
+        "STOK_DEPO_POLITIKA_FIELDS",
+        "kind: 'stok-firmalar'",
+        "kind: 'stok-depolar'"
+      ]
+    },
+    "companies": {
+      "title": "Firmalar",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": ["is_profile", "company_code", "company_name"]
+    },
+    "stok-hareketleri": {
+      "title": "Stok Hareketleri",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": {
+        "crud": true,
+        "barkodScanToggle": true,
+        "numeratorFromMovementCode": true
+      },
+      "requiredFieldKeys": ["unit_price", "tax_code_id", "currency_code", "lot_no"]
+    },
+    "hareket-kodlari": {
+      "title": "Hareket Kodları",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": ["gkk_emri_olussun", "ckk_emri_olussun", "movement_code", "document_type"]
+    },
+    "mrp-calisma": {
+      "title": "MRP Konsol",
+      "requiredTabs": ["param", "kapsam", "sonuc"],
+      "requiredKinds": ["mrp-parametre", "mrp-kapsam", "mrp-sonuc"],
+      "requiredFlags": { "mrpKonsol": true, "crud": true },
+      "requiredFieldKeys": []
+    },
+    "cari-kartlari": {
+      "title": "Cari Kartları",
+      "requiredTabs": [],
+      "requiredKinds": ["master-detail", "grid"],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": []
+    },
+    "finans-vergi-kodlari": {
+      "title": "Vergi Kodları",
+      "requiredTabs": ["oranlar"],
+      "requiredKinds": ["grid"],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": ["tax_code"]
+    },
+    "vergi-kodlari": {
+      "title": "Vergi Kodları",
+      "requiredTabs": ["oranlar"],
+      "requiredKinds": ["grid"],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": ["tax_code"]
+    },
+    "kullanicilar": {
+      "title": "Kullanıcılar",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "crud": true, "kullaniciYetkiPaneli": true },
+      "requiredFieldKeys": []
+    }
+  }
+}
