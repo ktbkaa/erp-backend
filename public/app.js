@@ -483,44 +483,25 @@ const MODULES = [
           { key: 'city_code', label: 'Şehir kodu', code: true, editableOnNew: true, required: true },
           { key: 'city_name', label: 'Şehir adı', name: true, required: true },
           { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
-        ],
-        detailFields: [
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'district-tanimi',
-        techId: 'MDM-DIST-SCR-001',
-        businessNameEn: 'DistrictDefinitionScreen',
-        title: 'İlçe Tanımı',
-        endpoint: '/districts',
-        crud: true,
-        codeField: 'district_code',
-        nameField: 'district_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'district_code', label: 'İlçe kodu' },
-          { key: 'district_name', label: 'İlçe adı' },
-          { key: 'city_code', label: 'Şehir' },
-        ],
-        columns: [
-          { key: 'district_code', label: 'Kod', mono: true },
-          { key: 'district_name', label: 'Ad' },
-          { key: 'city_code', label: 'Şehir' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'district_code', label: 'İlçe kodu', code: true, editableOnNew: true, required: true },
+        // Districts live under the city card (no standalone district screen)
+        detailKey: 'districts',
+        detailSlots: 3,
+        detailAsFields: false,
+        detailFields: [
+          { key: 'district_code', label: 'İlçe kodu', code: true, mono: true, size: 'short' },
           { key: 'district_name', label: 'İlçe adı', name: true, required: true },
-          { key: 'city_code', label: 'Şehir', type: 'lookup', lookup: 'cities', valueKey: 'city_code', labelKey: 'city_name' },
-        ],
-        detailFields: [
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
-        detailKey: null,
-        detailAsFields: true,
+        // Row ✓ / Sil writes to /districts right away
+        detailPersist: {
+          districts: {
+            endpoint: '/districts',
+            parentFields: { city_code: 'city_code' },
+          },
+        },
+        defaults: { is_active: true, districts: [] },
       },
       {
         id: 'odeme-kosulu-tanimi',
@@ -10551,55 +10532,6 @@ async function formCrudAction(act) {
   }
 }
 
-async function persistGridRowImmediately(screen, gridKey, row) {
-  const cfg = screen?.detailPersist?.[gridKey];
-  if (!cfg?.endpoint) return null;
-  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
-  const body = { ...row };
-  delete body._satir_kayitli;
-  delete body._satir_duzenleniyor;
-  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
-    const v = master[masterKey];
-    if (v != null && v !== '') body[bodyKey] = v;
-  });
-  // Şehir kartı: city_code zorunlu (FK)
-  const missingParent = Object.entries(cfg.parentFields || {})
-    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
-    .map(([, masterKey]) => masterKey);
-  if (missingParent.length) {
-    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
-  }
-  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
-  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
-    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
-  }
-  if (gridKey === 'districts' && !body.district_code && body.district_name) {
-    body.district_code = districtCodeFromName(body.city_code, body.district_name);
-  }
-  const base = screenApiBase(cfg.endpoint);
-  if (row.id != null && row.id !== '') {
-    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
-  }
-  try {
-    return await api(base, { method: 'POST', body: JSON.stringify(body) });
-  } catch (err) {
-    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
-    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
-      const list = await api(
-        `${base}?city_code=${encodeURIComponent(body.city_code)}`
-      );
-      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
-      const hit = (Array.isArray(list) ? list : []).find(
-        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
-      );
-      if (hit?.id != null) {
-        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
-      }
-    }
-    throw err;
-  }
-}
-
 function districtCodeFromName(cityCode, districtName) {
   const vowels = new Set('aeıioöuüâêîôûAEIİOÖUÜÂÊÎÔÛ'.split(''));
   const cons = String(districtName || '')
@@ -17004,7 +16936,9 @@ function renderGridToolbar(tabKey, { canEdit }) {
   return `<div class="inline-toolbar erp-grid-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}" title="Yeni satır">＋ Satır</button>
     <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}" title="Seçili satırı sil">✕ Sil</button>
-    <span class="toolbar-hint">Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır</span>
+    <span class="toolbar-hint">${findScreen(state.screenId)?.detailPersist?.[tabKey]
+    ? 'Satırda ✓ Kaydet veritabanına yazar'
+    : 'Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır'}</span>
   </div>`;
 }
 
@@ -18573,7 +18507,7 @@ const LOOKUP_TO_SCREEN = {
   'olcu-birimleri': 'olcu-birimleri',
   countries: 'country-tanimi',
   cities: 'sehir-tanimi',
-  districts: 'district-tanimi',
+  districts: 'sehir-tanimi',
   'para-birimleri': 'para-birimi-tanimi',
   'odeme-kosullari': 'odeme-kosulu-tanimi',
   'teslimat-kosullari': 'teslimat-kosulu-tanimi',
@@ -21013,7 +20947,9 @@ async function openForm(mode, opts = {}) {
     };
     (screen.formTabs || []).forEach((tab) => {
       if (tab.kind === 'grid') {
-        const raw = Array.isArray(src[tab.key]) ? src[tab.key] : [];
+        const raw = mode === 'kopyala' && screen.detailPersist?.[tab.key]
+          ? []
+          : (Array.isArray(src[tab.key]) ? src[tab.key] : []);
         record[tab.key] = normalizeGridRows(tab, raw.map(keepOrStrip));
       }
       if (tab.kind === 'master-grid') {
@@ -21024,7 +20960,9 @@ async function openForm(mode, opts = {}) {
           fields: tab.grid?.fields || tab.detailFields || [],
           slots: tab.grid?.slots,
         };
-        const raw = Array.isArray(src[gkey]) ? src[gkey] : [];
+        const raw = mode === 'kopyala' && screen.detailPersist?.[gkey]
+          ? []
+          : (Array.isArray(src[gkey]) ? src[gkey] : []);
         record[gkey] = normalizeGridRows(gtab, raw.map(keepOrStrip));
       }
       if (tab.kind === 'bom-tree' || tab.kind === 'bom-workspace') {
@@ -21489,6 +21427,11 @@ async function saveForm({ after = 'stay' } = {}) {
       return;
     }
     delete master._sablon_rota_id;
+  }
+  // detailPersist lists are written row by row; sending them on update would
+  // make the server sync drop rows that only exist in the database.
+  if (screen.detailPersist && state.formRecord?.id) {
+    Object.keys(screen.detailPersist).forEach((k) => { delete master[k]; });
   }
 
   try {
@@ -22993,6 +22936,7 @@ function bindEvents() {
         blank._satir_kayitli = false;
         blank._satir_duzenleniyor = true;
         delete blank._satir_toplu; // manuel satır — ✓ sonrası yeni boş satır
+        if (key === 'districts') blank.is_active = true;
         rows.push(blank);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: rows.length - 1 };
@@ -23011,9 +22955,21 @@ function bindEvents() {
           toast('Silmek için önce bir satır seçin.');
           return;
         }
-        rows.splice(state.gridSel.idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = { key: null, idx: null };
+        const doomedIdx = state.gridSel.idx;
+        const doomed = rows[doomedIdx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) await deletePersistedGridRow(screen, key, doomed);
+            rows.splice(doomedIdx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
+        return;
       }
       renderForm(screen);
       return;
@@ -23052,13 +23008,21 @@ function bindEvents() {
       }
       if (act === 'sil') {
         if (!rows[idx]) return;
-        rows.splice(idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = rows.length
-          ? { key, idx: Math.min(idx, rows.length - 1) }
-          : { key: null, idx: null };
-        renderForm(screen);
-        toast('Satır silindi.');
+        const doomed = rows[idx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) await deletePersistedGridRow(screen, key, doomed);
+            rows.splice(idx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = rows.length
+              ? { key, idx: Math.min(idx, rows.length - 1) }
+              : { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
         return;
       }
       if (act === 'kopyala') {
@@ -23069,6 +23033,11 @@ function bindEvents() {
         copy._satir_kayitli = false;
         copy._satir_duzenleniyor = true;
         delete copy._satir_toplu; // kopya = teker teker; ✓ sonrası boş satır
+        if (key === 'districts') {
+          copy.district_code = '';
+          copy.district_name = '';
+          copy.is_active = true;
+        }
         rows.splice(idx + 1, 0, copy);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
@@ -23079,10 +23048,34 @@ function bindEvents() {
       if (act === 'kaydet') {
         // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
         if (rows[idx]) {
-          const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
+          const { row: domRow, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
           if (missing?.length) {
             toast(`Satır eksik: ${missing.map((f) => f.label || f.key).join(', ')}`);
             return;
+          }
+          let row = domRow;
+          if (screen.detailPersist?.[key]) {
+            // detailPersist rows are written to the API right away, then re-run this branch.
+            if (!row._persisted_now) {
+              (async () => {
+                try {
+                  const apiRow = await persistGridRowImmediately(screen, key, row);
+                  rows[idx] = { ...row, ...(apiRow || {}), _persisted_now: true };
+                  state.formRecord[key] = rows;
+                  if (key === 'districts') delete state.lookupCache.districts;
+                  renderForm(screen);
+                  const again = document.querySelector(
+                    `[data-row-act="kaydet"][data-grid-key="${key}"][data-grid-idx="${idx}"]`
+                  );
+                  if (again) again.click();
+                } catch (err) {
+                  toast(err.message || 'Satır kaydedilemedi');
+                }
+              })();
+              return;
+            }
+            row = { ...row };
+            delete row._persisted_now;
           }
           const wasBulk = Boolean(row._satir_toplu);
           row._satir_kayitli = true;
@@ -23116,7 +23109,9 @@ function bindEvents() {
               }
             });
           }
-          toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+          toast(screen.detailPersist?.[key]
+            ? 'Satır veritabanına kaydedildi.'
+            : 'Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
           return;
         }
         state.formRecord[key] = rows;

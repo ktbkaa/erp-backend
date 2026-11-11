@@ -128,7 +128,7 @@ router.delete('/:id', async (req, res) => {
     }
     await pool.query(`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id=$1`, [req.params.id]);
     await pool.query(`DELETE FROM vendor_delivery_notes WHERE id=$1`, [req.params.id]);
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     if (err.code === '23503') {
       return res.status(409).json({ hata: 'Bağlı kayıtlar nedeniyle silinemedi.' });

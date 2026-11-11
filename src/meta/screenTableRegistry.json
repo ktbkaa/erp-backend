@@ -80,20 +80,10 @@
       {
         "name": "cities",
         "role": "master"
-      }
-    ]
-  },
-  "district-tanimi": {
-    "screenId": "district-tanimi",
-    "title": "İlçe Tanımı",
-    "techId": "MDM-DIST-SCR-001",
-    "endpoint": "/districts",
-    "auditTablo": "districts",
-    "primaryTable": "districts",
-    "tables": [
+      },
       {
         "name": "districts",
-        "role": "master"
+        "role": "detail"
       }
     ]
   },

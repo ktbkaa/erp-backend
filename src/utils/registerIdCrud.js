@@ -85,10 +85,10 @@ function registerIdCrud(router, pool, opts) {
             `UPDATE ${table} SET ${softCol}=FALSE WHERE id=$1 RETURNING id`,
             [req.params.id],
           );
-          return res.json({ silindi: true, soft: true, id: Number(r.rows[0].id) });
+          return res.json({ is_deleted: true, soft: true, id: Number(r.rows[0].id) });
         }
         const r = await pool.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [req.params.id]);
-        res.json({ silindi: true, soft: false, id: Number(r.rows[0].id) });
+        res.json({ is_deleted: true, soft: false, id: Number(r.rows[0].id) });
       } catch (err) {
         if (err.code === '23503') {
           return res.status(409).json({
