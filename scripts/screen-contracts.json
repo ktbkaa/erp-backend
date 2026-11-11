@@ -59,8 +59,21 @@
       "title": "MRP Konsol",
       "requiredTabs": ["param", "kapsam", "sonuc"],
       "requiredKinds": ["mrp-parametre", "mrp-kapsam", "mrp-sonuc"],
-      "requiredFlags": { "mrpKonsol": true, "crud": true },
-      "requiredFieldKeys": []
+      "requiredFlags": { "mrpKonsol": true, "crud": true, "mrpCalistirAction": true },
+      "requiredFieldKeys": [],
+      "requiredText": [
+        "mrpToggle",
+        "mrpSelect",
+        "mrpDate",
+        "mrpScopeTable",
+        "renderMrpParametrePane",
+        "renderMrpKapsamPane",
+        "renderMrpSonucPane",
+        "MRP 2 Parametreleri",
+        "btnMrpSonucRapor",
+        "hedef_ortalama",
+        "sistem geneli"
+      ]
     },
     "cari-kartlari": {
       "title": "Cari Kartları",
