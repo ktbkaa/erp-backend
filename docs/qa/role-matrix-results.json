@@ -1,0 +1,64 @@
+{
+  "generatedAt": "2026-11-05T15:58:43.011Z",
+  "summary": {
+    "pass": 7,
+    "fail": 0,
+    "total": 7
+  },
+  "cases": [
+    {
+      "id": "R1",
+      "title": "ADMIN login",
+      "expected": 200,
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "id": "R2",
+      "title": "Auth gate (soft veya sıkı)",
+      "expected": "soft-200",
+      "actual": 200,
+      "pass": true,
+      "noTokenStatus": 200,
+      "mode": "soft-auth"
+    },
+    {
+      "id": "R3",
+      "title": "ADMIN companies list",
+      "expected": "200+",
+      "actual": 200,
+      "pass": true,
+      "count": 7
+    },
+    {
+      "id": "R4",
+      "title": "ADMIN + GIDA items",
+      "expected": "200",
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "id": "R5",
+      "title": "ADMIN + DOKUM partners",
+      "expected": "200",
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "id": "R6",
+      "title": "GIDA context’te diğer firma SO sızıntısı yok",
+      "expected": false,
+      "actual": false,
+      "pass": true,
+      "status": 200
+    },
+    {
+      "id": "R7",
+      "title": "GL hesap planı dolu",
+      "expected": ">0",
+      "actual": 36,
+      "pass": true,
+      "status": 200
+    }
+  ]
+}
