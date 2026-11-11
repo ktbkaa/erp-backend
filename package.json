@@ -38,7 +38,8 @@
     "qa:capture": "node scripts/qa/capture-ui-evidence.mjs",
     "qa:dashboard": "node scripts/qa/build-qa-dashboard.mjs",
     "qa:pdf": "node scripts/qa/build-qa-pdf.mjs",
-    "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf"
+    "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf",
+    "db:restore-demo": "node scripts/db-restore-demo.js"
   },
   "keywords": [
     "erp",
