@@ -81,9 +81,10 @@ async function stepHeal(cfg) {
     logger.append({ level: 'warn', message: 'local:heal script yok — atlandı (eski branch?)' });
     return { skipped: true, reason: 'no-local-heal-script' };
   }
-  await runAsync(npmCmd(), ['run', 'local:heal', '--', '--seed-ornek'], {
+  // local:heal eksik OG veri varsa otomatik seed eder (silmez)
+  await runAsync(npmCmd(), ['run', 'local:heal'], {
     cwd: cfg.erpRoot,
-    label: 'npm run local:heal -- --seed-ornek',
+    label: 'npm run local:heal',
     shell: process.platform === 'win32',
   });
   return { ok: true };

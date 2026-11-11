@@ -11,7 +11,7 @@ const path = require('path');
 const pool = require('../db');
 
 const DEMO_CODES = ['GIDA', 'DOKUM', 'ELEK', 'TEKS', 'META', 'KILIF', 'MOBIL'];
-const wantSeed = process.argv.includes('--seed-ornek');
+const forceSeed = process.argv.includes('--seed-ornek');
 
 function runNpm(script) {
   const r = spawnSync(
@@ -111,9 +111,13 @@ async function main() {
 
     runNpm('ensure:firma-yetki');
 
-    if (wantSeed || before.rowCount === 0) {
-      console.log('Örnek veri (idempotent, silmez)…');
+    const og = await pool.query(`SELECT count(*)::int AS n FROM items WHERE item_code LIKE 'OG-%'`);
+    const needSeed = forceSeed || before.rowCount === 0 || Number(og.rows[0]?.n || 0) < 5;
+    if (needSeed) {
+      console.log('Örnek veri eksik — qa:ornek-gida (idempotent, silmez)…');
       runNpm('qa:ornek-gida');
+    } else {
+      console.log(`Örnek veri mevcut (OG stok: ${og.rows[0].n})`);
     }
 
     const fin = await pool.query(

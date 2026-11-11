@@ -215,16 +215,22 @@ server.listen(listenOpts, () => {
         console.error('[tcmb] zamanlayıcı başlatılamadı:', err.message);
       }
     }
-    // Demo firma profilleri + kullanıcı yetkileri (veri silmez)
+    // Demo firma + örnek veri (veri silmez). Haftalık senkron / yeniden açılışta yeter.
     if (process.env.NODE_ENV !== 'test') {
-      setImmediate(() => {
-        const { ensureDemoFirms } = require('./src/bootstrap/ensureDemoFirms');
-        ensureDemoFirms(pool)
-          .then((r) => {
-            if (r?.skipped) return;
-            console.log(`[heal] firma profilleri: ${r.count} · yeni: ${(r.created || []).join(',') || '—'} · yetki+${r.grants || 0}`);
-          })
-          .catch((err) => console.error('[heal] ensureDemoFirms:', err.message));
+      setImmediate(async () => {
+        try {
+          const { ensureDemoFirms } = require('./src/bootstrap/ensureDemoFirms');
+          const { ensureDemoData } = require('./src/bootstrap/ensureDemoData');
+          const firms = await ensureDemoFirms(pool);
+          if (!firms?.skipped) {
+            console.log(`[heal] firma profilleri: ${firms.count} · yeni: ${(firms.created || []).join(',') || '—'} · yetki+${firms.grants || 0}`);
+          }
+          const data = await ensureDemoData(pool);
+          if (data?.seeded) console.log(`[heal] GIDA örnek veri yüklendi · OG stok: ${data.n}`);
+          else if (data?.n != null) console.log(`[heal] örnek veri mevcut · OG stok: ${data.n}`);
+        } catch (err) {
+          console.error('[heal]', err.message);
+        }
       });
     }
 });
