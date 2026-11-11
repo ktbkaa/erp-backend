@@ -1,7 +1,7 @@
 /**
  * 3-yönlü kontrol: alış faturası ↔ sipariş fiyatı ↔ mal kabul miktarı
  */
-async function faturaEslestir(client, faturaId) {
+async function matchInvoice(client, faturaId) {
   const f = await client.query(`SELECT * FROM invoices WHERE id=$1`, [faturaId]);
   if (!f.rows[0]) throw Object.assign(new Error('Fatura bulunamadı.'), { status: 404 });
   const fatura = f.rows[0];
@@ -63,4 +63,4 @@ async function faturaEslestir(client, faturaId) {
   return row.rows[0];
 }
 
-module.exports = { faturaEslestir };
+module.exports = { matchInvoice };

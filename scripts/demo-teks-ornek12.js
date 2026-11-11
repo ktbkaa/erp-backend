@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod, stokSeriKodundanTip, cariSeriKodundanTur } = require('../src/utils/kodUretici');
+const { nextSequenceCode, itemTypeFromSeriesCode, partnerTypeFromSeriesCode } = require('../src/utils/kodUretici');
 const { mrpCalistir } = require('../src/services/mrpService');
 
 const TAG1 = 'ORNEK1';
@@ -28,7 +28,7 @@ const plusDays = (n) => {
 };
 
 async function kod(client, seri, fb) {
-  try { return await sonrakiKod(client, seri); }
+  try { return await nextSequenceCode(client, seri); }
   catch (_) { return fb; }
 }
 
@@ -98,7 +98,7 @@ async function loadOrg(client) {
   return { firma, isYeri, depolar };
 }
 
-async function ensureBirim(client, kodu, adi) {
+async function ensureUom(client, kodu, adi) {
   await client.query(
     `INSERT INTO olcu_birimleri (birim_kodu, birim_adi, aktif) VALUES ($1,$2,TRUE)
      ON CONFLICT (birim_kodu) DO NOTHING`,
@@ -106,10 +106,10 @@ async function ensureBirim(client, kodu, adi) {
   );
 }
 
-async function createCari(client, {
+async function createPartner(client, {
   adi, turu, firmaId, isYeriId, tag, sehir = 'Gaziantep', ilce = 'Şehitkamil',
 }) {
-  const cariKodu = await kod(client, cariSeriKodundanTur(turu), `C-${Date.now()}`);
+  const cariKodu = await kod(client, partnerTypeFromSeriesCode(turu), `C-${Date.now()}`);
   const c = (await client.query(
     `INSERT INTO cariler (
        cari_kodu, cari_adi, cari_adi_2, cari_turu, telefon, telefon2, cep_tel, fax, email, website,
@@ -169,10 +169,10 @@ async function createCari(client, {
   return c;
 }
 
-async function createStok(client, {
+async function createItem(client, {
   adi, tip, birim, fiyat, firmaId, isYeriId, girisDepo, cikisDepo, tag, ekstra = {},
 }) {
-  const stokKodu = await kod(client, stokSeriKodundanTip(tip), `S-${Date.now()}`);
+  const stokKodu = await kod(client, itemTypeFromSeriesCode(tip), `S-${Date.now()}`);
   const s = (await client.query(
     `INSERT INTO stoklar (
        stok_kodu, stok_adi, stok_adi_2, uzun_stok_kodu, birim, satin_birimi, satis_birimi,
@@ -232,7 +232,7 @@ async function createStok(client, {
   return s;
 }
 
-async function stokGiris(client, {
+async function stockReceipt(client, {
   stokId, depoId, miktar, birim, firmaId, isYeriId, tag, aciklama,
 }) {
   const hareketNo = await kod(client, 'STOK_HAREKET', `SH-${Date.now()}`);
@@ -256,26 +256,26 @@ async function stokGiris(client, {
 async function seedMaster(client, org) {
   const { firma, isYeri, depolar } = org;
   for (const [k, a] of [['AD', 'Adet'], ['MT', 'Metre'], ['KG', 'Kilogram'], ['PK', 'Paket']]) {
-    await ensureBirim(client, k, a);
+    await ensureUom(client, k, a);
   }
 
   const tag = 'TEKS-MASTER';
   const tedarikciler = [
-    await createCari(client, {
+    await createPartner(client, {
       adi: 'Ege Denim Kumaş A.Ş.', turu: 'Tedarikci',
       firmaId: firma.id, isYeriId: isYeri.id, tag, sehir: 'İzmir', ilce: 'Bornova',
     }),
-    await createCari(client, {
+    await createPartner(client, {
       adi: 'Aksesuar Moda Ltd.', turu: 'Tedarikci',
       firmaId: firma.id, isYeriId: isYeri.id, tag, sehir: 'İstanbul', ilce: 'Bağcılar',
     }),
   ];
   const musteriler = [
-    await createCari(client, {
+    await createPartner(client, {
       adi: 'Moda Perakende Zinciri A.Ş.', turu: 'Musteri',
       firmaId: firma.id, isYeriId: isYeri.id, tag, sehir: 'İstanbul', ilce: 'Şişli',
     }),
-    await createCari(client, {
+    await createPartner(client, {
       adi: 'Jeans Outlet TR Ltd.', turu: 'Musteri',
       firmaId: firma.id, isYeriId: isYeri.id, tag, sehir: 'Ankara', ilce: 'Çankaya',
     }),
@@ -289,7 +289,7 @@ async function seedMaster(client, org) {
   ];
   const hammaddeler = [];
   for (const h of hammaddelerDef) {
-    const s = await createStok(client, {
+    const s = await createItem(client, {
       adi: h.adi, tip: h.tip, birim: h.birim, fiyat: h.fiyat,
       firmaId: firma.id, isYeriId: isYeri.id,
       girisDepo: depolar.HMD.id, cikisDepo: depolar.HMD.id, tag,
@@ -297,7 +297,7 @@ async function seedMaster(client, org) {
     hammaddeler.push({ ...s, bomMiktar: h.miktar, maliyet: h.fiyat });
   }
 
-  const mamul = await createStok(client, {
+  const mamul = await createItem(client, {
     adi: 'Kot Pantolon Slim 32', tip: 'Mamul', birim: 'AD', fiyat: 890,
     firmaId: firma.id, isYeriId: isYeri.id,
     girisDepo: depolar.MAM.id, cikisDepo: depolar.SVK.id, tag,
@@ -305,7 +305,7 @@ async function seedMaster(client, org) {
   });
 
   // Yarı mamul (kesilmiş panel) — ağacı zenginleştir
-  const yari = await createStok(client, {
+  const yari = await createItem(client, {
     adi: 'Kesilmiş Denim Panel Seti', tip: 'YariMamul', birim: 'AD', fiyat: 220,
     firmaId: firma.id, isYeriId: isYeri.id,
     girisDepo: depolar.ANA.id, cikisDepo: depolar.ANA.id, tag,
@@ -654,7 +654,7 @@ async function seedOrnek1(client, org, master) {
        VALUES ($1,$2,$3,$4,$5,$4)`,
       [mk.id, row.id, row.h.id, row.miktar, row.h.birim]
     );
-    await stokGiris(client, {
+    await stockReceipt(client, {
       stokId: row.h.id, depoId: depolar.HMD.id, miktar: row.miktar, birim: row.h.birim,
       firmaId: firma.id, isYeriId: isYeri.id, tag,
       aciklama: `${tag} mal kabul stok giriş — ${row.h.stok_kodu}`,
@@ -691,7 +691,7 @@ async function seedOrnek1(client, org, master) {
     [ueNo, mamul.id, qty, isYeri.id, firma.id, depolar.MAM.id, depolar.HMD.id, agac.id, rota.id, sip.id]
   )).rows[0];
 
-  await stokGiris(client, {
+  await stockReceipt(client, {
     stokId: mamul.id, depoId: depolar.MAM.id, miktar: qty, birim: 'AD',
     firmaId: firma.id, isYeriId: isYeri.id, tag,
     aciklama: `${tag} üretim çıktısı mamul giriş`,
@@ -1009,7 +1009,7 @@ async function finishOrnek2AfterMrp(pool, org, master, o2, mrpSonuc) {
          VALUES ($1,$2,$3,$4,$5) RETURNING id`,
         [sa.id, ts.stok_id, ts.miktar, h?.maliyet || 10, ts.birim]
       )).rows[0];
-      await stokGiris(client, {
+      await stockReceipt(client, {
         stokId: ts.stok_id, depoId: depolar.HMD.id, miktar: ts.miktar, birim: ts.birim,
         firmaId: firma.id, isYeriId: isYeri.id, tag,
         aciklama: `${tag} MRP SA stok giriş`,
@@ -1038,7 +1038,7 @@ async function finishOrnek2AfterMrp(pool, org, master, o2, mrpSonuc) {
         ]
       )).rows[0];
       ueNos.push(ue.emir_no);
-      await stokGiris(client, {
+      await stockReceipt(client, {
         stokId: mamul.id, depoId: depolar.MAM.id, miktar: u.net_ihtiyac || o2.qty, birim: 'AD',
         firmaId: firma.id, isYeriId: isYeri.id, tag,
         aciklama: `${tag} MRP üretim çıktısı`,

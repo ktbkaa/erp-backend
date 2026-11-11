@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { cariTedarikciMi } = require('../src/utils/kodUretici');
-const { satirHesapla, belgelerToplam } = require('../src/utils/kalemHesap');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { isPartnerSupplier } = require('../src/utils/kodUretici');
+const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
 
-async function siparisGetir(id) {
+async function getOrder(id) {
   const s = await pool.query(`
     SELECT sas.*, c.partner_code, c.partner_name, t.requisition_no
     FROM purchase_orders sas
@@ -36,7 +36,7 @@ async function assertTedarikci(client, partner_id) {
   );
   if (!cari.rows[0]) throw new Error('Cari bulunamadı.');
   if (cari.rows[0].is_active === false) throw new Error('Cari is_inactive; satınalma yapılamaz.');
-  if (!cariTedarikciMi(cari.rows[0].partner_type)) {
+  if (!isPartnerSupplier(cari.rows[0].partner_type)) {
     throw new Error(
       `Satınalma siparişi yalnızca tedarikçiye açılır. Seçilen cari (${cari.rows[0].partner_code}) türü: ${cari.rows[0].partner_type}`
     );
@@ -44,7 +44,7 @@ async function assertTedarikci(client, partner_id) {
   return cari.rows[0];
 }
 
-async function insertSiparisSatir(client, siparisId, s, sira, baslikKur) {
+async function insertOrderLine(client, siparisId, s, sira, baslikKur) {
   const stok = await client.query(
     `SELECT id, uom_code, purchase_uom, item_code, item_name, varsayilan_vat_rate
      FROM items WHERE id=$1`,
@@ -53,7 +53,7 @@ async function insertSiparisSatir(client, siparisId, s, sira, baslikKur) {
   if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
   const st = stok.rows[0];
   const exchange_rate = Number(s.exchange_rate ?? baslikKur ?? 1) || 1;
-  const hes = satirHesapla({
+  const hes = calculateLine({
     quantity: s.quantity,
     unit_price: s.unit_price,
     discount_rate: s.discount_rate,
@@ -102,13 +102,13 @@ async function insertSiparisSatir(client, siparisId, s, sira, baslikKur) {
   return { ...hes, quantity: s.quantity, unit_price: Number(s.unit_price || 0) };
 }
 
-async function replaceSiparisSatirlar(client, siparisId, satirlar, baslikKur) {
+async function replaceOrderLines(client, siparisId, satirlar, baslikKur) {
   await client.query('DELETE FROM purchase_order_lines WHERE purchase_order_id=$1', [siparisId]);
   const hesapli = [];
   let sira = 1;
   for (const s of satirlar || []) {
     if (!s.item_id || s.quantity == null) continue;
-    const h = await insertSiparisSatir(client, siparisId, s, s.line_no || sira, baslikKur);
+    const h = await insertOrderLine(client, siparisId, s, s.line_no || sira, baslikKur);
     hesapli.push(h);
     sira += 1;
   }
@@ -124,7 +124,7 @@ async function replaceSiparisSatirlar(client, siparisId, satirlar, baslikKur) {
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     let sql = 'SELECT id FROM purchase_orders';
     if (firmaId) {
@@ -134,7 +134,7 @@ router.get('/', async (req, res) => {
     sql += ' ORDER BY id DESC';
     const liste = await pool.query(sql, params);
     const result = [];
-    for (const r of liste.rows) result.push(await siparisGetir(r.id));
+    for (const r of liste.rows) result.push(await getOrder(r.id));
     res.json(result);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -143,7 +143,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const siparis = await siparisGetir(req.params.id);
+    const siparis = await getOrder(req.params.id);
     if (!siparis) return res.status(404).json({ hata: 'Satınalma siparişi bulunamadı.' });
     res.json(siparis);
   } catch (err) {
@@ -159,11 +159,11 @@ router.post('/', async (req, res) => {
     if (!Array.isArray(satirlar) || satirlar.length === 0) {
       return res.status(400).json({ hata: 'satirlar zorunlu.' });
     }
-    const firmaId = b.company_id || firmaIdFromReq(req) || null;
+    const firmaId = b.company_id || companyIdFromReq(req) || null;
 
     const id = await withTransaction(pool, async (client) => {
       await assertTedarikci(client, partner_id);
-      const no = await sonrakiBelgeNo(client, 'SATINALMA_SIPARIS');
+      const no = await nextDocumentNo(client, 'SATINALMA_SIPARIS');
       const siparis = await client.query(
         `INSERT INTO purchase_orders
             (order_no, partner_id, plant_id, requisition_id, status, total_amount,
@@ -183,11 +183,11 @@ router.post('/', async (req, res) => {
         ]
       );
       const siparisId = siparis.rows[0].id;
-      await replaceSiparisSatirlar(client, siparisId, satirlar, b.exchange_rate ?? 1);
+      await replaceOrderLines(client, siparisId, satirlar, b.exchange_rate ?? 1);
       return siparisId;
     });
 
-    res.status(201).json(await siparisGetir(id));
+    res.status(201).json(await getOrder(id));
   } catch (err) {
     res.status(400).json({ hata: err.message });
   }
@@ -213,10 +213,10 @@ router.post('/talep-donustur', async (req, res) => {
       if (satirlar.rows.length === 0) throw new Error('Talep satırı yok.');
       await assertTedarikci(client, partner_id);
 
-      const no = await sonrakiBelgeNo(client, 'SATINALMA_SIPARIS');
+      const no = await nextDocumentNo(client, 'SATINALMA_SIPARIS');
       const fiyatMap = birim_fiyatlar || {};
       const t = talep.rows[0];
-      const firmaId = t.company_id || firmaIdFromReq(req) || null;
+      const firmaId = t.company_id || companyIdFromReq(req) || null;
       const siparis = await client.query(
         `INSERT INTO purchase_orders
             (order_no, partner_id, plant_id, requisition_id, status, total_amount, company_id,
@@ -244,12 +244,12 @@ router.post('/talep-donustur', async (req, res) => {
         region: sat.region || t.region,
         delivery_date: sat.delivery_date || t.target_delivery_date,
       }));
-      await replaceSiparisSatirlar(client, siparisId, mapped, t.exchange_rate ?? 1);
+      await replaceOrderLines(client, siparisId, mapped, t.exchange_rate ?? 1);
       await client.query(`UPDATE purchase_requisitions SET status = 'SipariseDonustu' WHERE id = $1`, [requisition_id]);
       return siparisId;
     });
 
-    res.status(201).json(await siparisGetir(id));
+    res.status(201).json(await getOrder(id));
   } catch (err) {
     res.status(400).json({ hata: err.message });
   }
@@ -313,12 +313,12 @@ router.put('/:id', async (req, res) => {
 
       if (Array.isArray(b.satirlar)) {
         const exchange_rate = b.exchange_rate ?? mevcut.rows[0].exchange_rate ?? 1;
-        await replaceSiparisSatirlar(client, Number(req.params.id), b.satirlar, exchange_rate);
+        await replaceOrderLines(client, Number(req.params.id), b.satirlar, exchange_rate);
       }
       return Number(req.params.id);
     });
 
-    res.json(await siparisGetir(id));
+    res.json(await getOrder(id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -326,9 +326,9 @@ router.put('/:id', async (req, res) => {
 
 router.post('/:id/onayla', async (req, res) => {
   try {
-    const { baslatOnay } = require('../src/services/onayService');
-    const { kullaniciGetir, reqKullaniciKodu } = require('../src/utils/yetki');
-    const kullanici = await kullaniciGetir(pool, reqKullaniciKodu(req) || 'owner');
+    const { startApproval } = require('../src/services/onayService');
+    const { getUser, reqUserCode } = require('../src/utils/yetki');
+    const kullanici = await getUser(pool, reqUserCode(req) || 'owner');
 
     const result = await withTransaction(pool, async (client) => {
       const upd = await client.query(
@@ -344,7 +344,7 @@ router.post('/:id/onayla', async (req, res) => {
       const po = upd.rows[0];
       let onayKayit = null;
       try {
-        onayKayit = await baslatOnay(client, {
+        onayKayit = await startApproval(client, {
           company_id: po.company_id,
           plant_id: po.plant_id,
           screen_id: 'satin-alma-siparisleri',
@@ -366,7 +366,7 @@ router.post('/:id/onayla', async (req, res) => {
       return { id: po.id, onayKayit };
     });
 
-    const siparis = await siparisGetir(result.id);
+    const siparis = await getOrder(result.id);
     res.json({ ...siparis, onay_kayit: result.onayKayit || null });
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });

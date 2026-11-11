@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { faturaEslestir } = require('../src/services/faturaEslestirmeService');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
-const { belgeHtml } = require('../src/services/belgePdfService');
-const { reqKullaniciKodu } = require('../src/utils/yetki');
+const { documentHtml } = require('../src/services/belgePdfService');
+const { reqUserCode } = require('../src/utils/yetki');
 const {
   pickFields,
   appendInsert,
@@ -25,11 +25,11 @@ const EBELGE_ALANLAR = [
 ];
 
 /** Başlık güncellemesi: e-belge + FATURA_BASLIK birleşik */
-function baslikUpdateParams(body) {
+function headerUpdateParams(body) {
   return pickFields({ ...ebelgeParams(body), ...body }, FATURA_BASLIK);
 }
 
-async function faturaGetir(id, clientOrPool = pool) {
+async function getInvoice(id, clientOrPool = pool) {
   const f = await clientOrPool.query(
     `
     SELECT f.*, c.partner_code, c.partner_name
@@ -78,7 +78,7 @@ router.get('/', async (req, res, next) => {
       params.push(status);
       where.push(`f.status = $${params.length}`);
     }
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`f.company_id = $${params.length}`);
@@ -103,7 +103,7 @@ router.get('/', async (req, res, next) => {
       return res.json(liste.rows.map((r) => ({ ...r, kalemler: [], satirlar: [] })));
     }
     const invoices = [];
-    for (const r of liste.rows) invoices.push(await faturaGetir(r.id));
+    for (const r of liste.rows) invoices.push(await getInvoice(r.id));
     res.json(invoices);
   } catch (err) {
     next(err);
@@ -112,7 +112,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const fatura = await faturaGetir(req.params.id);
+    const fatura = await getInvoice(req.params.id);
     if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
     res.json(fatura);
   } catch (err) {
@@ -128,12 +128,12 @@ router.post('/', async (req, res, next) => {
     if (!Array.isArray(kalemler) || kalemler.length === 0) {
       return res.status(400).json({ hata: 'En az bir fatura kalemi gerekli.' });
     }
-    const ekstra = baslikUpdateParams(req.body);
+    const ekstra = headerUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
       const tur = invoice_type || ekstra.invoice_category || 'Satis';
       const seri = String(tur).toLowerCase().includes('alis') ? 'ALIS_FATURA' : 'FATURA';
-      const no = invoice_no || (await sonrakiBelgeNo(client, seri));
+      const no = invoice_no || (await nextDocumentNo(client, seri));
 
       let total_amount = 0;
       let tax_amount = 0;
@@ -188,7 +188,7 @@ router.post('/', async (req, res, next) => {
       return faturaId;
     });
 
-    res.status(201).json(await faturaGetir(id));
+    res.status(201).json(await getInvoice(id));
   } catch (err) {
     next(err);
   }
@@ -198,7 +198,7 @@ router.put('/:id', async (req, res, next) => {
   try {
     const { invoice_type, partner_id } = req.body;
     const kalemler = req.body.kalemler || req.body.satirlar;
-    const ekstra = baslikUpdateParams(req.body);
+    const ekstra = headerUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
       const mevcut = await client.query('SELECT id FROM invoices WHERE id=$1 FOR UPDATE', [req.params.id]);
@@ -273,7 +273,7 @@ router.put('/:id', async (req, res, next) => {
       }
       return Number(req.params.id);
     });
-    res.json(await faturaGetir(id));
+    res.json(await getInvoice(id));
   } catch (err) {
     next(err);
   }
@@ -282,7 +282,7 @@ router.put('/:id', async (req, res, next) => {
 /** POST /invoices/:id/eslestir — 3-way match (PUR-007) */
 router.post('/:id/eslestir', async (req, res, next) => {
   try {
-    const row = await withTransaction(pool, (client) => faturaEslestir(client, Number(req.params.id)));
+    const row = await withTransaction(pool, (client) => matchInvoice(client, Number(req.params.id)));
     res.status(201).json(row);
   } catch (err) {
     next(err);
@@ -299,7 +299,7 @@ router.post('/:id/eslestirme-onay', async (req, res, next) => {
       [req.params.id]
     );
     if (!r.rows[0]) {
-      const created = await withTransaction(pool, (client) => faturaEslestir(client, Number(req.params.id)));
+      const created = await withTransaction(pool, (client) => matchInvoice(client, Number(req.params.id)));
       await pool.query(`UPDATE invoice_matches SET result='Uyumlu' WHERE id=$1`, [created.id]);
       return res.json({ ...created, result: 'Uyumlu' });
     }
@@ -314,7 +314,7 @@ router.post('/:id/muhasebelestir', async (req, res, next) => {
   try {
     const result = await withTransaction(pool, (client) =>
       faturadanMuhasebe(client, Number(req.params.id), {
-        kullaniciKodu: reqKullaniciKodu(req),
+        kullaniciKodu: reqUserCode(req),
       })
     );
     // Durumu Onayli yap
@@ -322,7 +322,7 @@ router.post('/:id/muhasebelestir', async (req, res, next) => {
       `UPDATE invoices SET status='Onayli' WHERE id=$1 AND COALESCE(status,'') <> 'Onayli'`,
       [req.params.id]
     ).catch(() => {});
-    res.status(201).json({ ...result, fatura: await faturaGetir(req.params.id) });
+    res.status(201).json({ ...result, fatura: await getInvoice(req.params.id) });
   } catch (err) {
     next(err);
   }
@@ -331,9 +331,9 @@ router.post('/:id/muhasebelestir', async (req, res, next) => {
 /** GET yazdır / pdf */
 router.get('/:id/yazdir', async (req, res, next) => {
   try {
-    const f = await faturaGetir(req.params.id);
+    const f = await getInvoice(req.params.id);
     if (!f) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
-    const html = belgeHtml({
+    const html = documentHtml({
       baslik: String(f.invoice_type || '').toLowerCase().includes('alis') ? 'Alış Faturası' : 'Satış Faturası',
       belgeNo: f.invoice_no,
       tarih: f.invoice_date || f.created_at,
@@ -357,13 +357,13 @@ router.get('/:id/pdf', (req, res) => res.redirect(302, `/invoices/${req.params.i
 /** POST /invoices/:id/iade — iade faturası (ters amount) */
 router.post('/:id/iade', async (req, res, next) => {
   try {
-    const source = await faturaGetir(req.params.id);
+    const source = await getInvoice(req.params.id);
     if (!source) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
     const id = await withTransaction(pool, async (client) => {
       const alis = String(source.invoice_type || '').toLowerCase().includes('alis');
       const tur = alis ? 'AlisIade' : 'SatisIade';
       const seri = alis ? 'ALIS_FATURA' : 'FATURA';
-      const no = await sonrakiBelgeNo(client, seri);
+      const no = await nextDocumentNo(client, seri);
       const r = await client.query(
         `
         INSERT INTO invoices
@@ -402,7 +402,7 @@ router.post('/:id/iade', async (req, res, next) => {
       }
       return iadeId;
     });
-    res.status(201).json(await faturaGetir(id));
+    res.status(201).json(await getInvoice(id));
   } catch (err) {
     next(err);
   }

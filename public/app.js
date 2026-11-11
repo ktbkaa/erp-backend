@@ -79,7 +79,7 @@ const STOK_VERGI_GRID_FIELDS = [
   },
 ];
 
-function defaultStokVergiTanimlari() {
+function defaultItemTaxDefinitions() {
   return STOK_VERGI_RATE_TYPES.map((rate_type) => ({
     rate_type,
     tax_code_id: null,
@@ -1289,7 +1289,7 @@ const MODULES = [
           series_politika: 'Takipsiz',
           depo_baglari: [],
           firma_parametreleri: [],
-          vergi_tanimlari: defaultStokVergiTanimlari(),
+          vergi_tanimlari: defaultItemTaxDefinitions(),
           varsayilan_vat_rate: 20,
         },
         formLinks: {
@@ -7788,7 +7788,7 @@ function dedupeMasterAgainstGrid(screen) {
  * Belge ekranı mı? (başlık + kalem satırları — stok kartı / BOM / rota hariç)
  * Satış siparişi kompakt kabuğu bu ekranlara uygulanır.
  */
-function isCompactBelgeScreen(s) {
+function isCompactDocumentScreen(s) {
   if (!s || s.compactMaster === false) return false;
   if (s.detailAsFields) return false;
   if (!Array.isArray(s.detailFields) || !s.detailFields.length) return false;
@@ -7820,8 +7820,8 @@ const COMPACT_HEADER_LEAD_RE = /^(company_id|plant_id|partner_id|supplier_partne
  * Satış siparişi düzeni: kompakt başlık + Kalemler (+ Adres) + not alt şerit.
  * Finans/geçerlilik/fiyat listesi → kalem; sevk adresi → Adres sekmesi.
  */
-function applyCompactBelgeShell(s) {
-  if (!isCompactBelgeScreen(s)) return;
+function applyCompactDocumentShell(s) {
+  if (!isCompactDocumentScreen(s)) return;
 
   // Mevcut formTabs’taki address / not / başlık alanlarını da topla (elle tanımlı kabuklar)
   const fromTabs = [];
@@ -7990,7 +7990,7 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
   }
 
   // Satış siparişi kompakt kabuğu → tüm accepted belge ekranları
-  applyCompactBelgeShell(s);
+  applyCompactDocumentShell(s);
 
   // Elle tanımlı master-grid: master/grid boşsa ekran alanlarından kopyala
   (s.formTabs || []).forEach((tab) => {
@@ -8068,20 +8068,20 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
   });
 
   // Aktif checkbox → Pasif (DB is_active kalır; tik = is_inactive)
-  const remapAktifToPasif = (fields) => {
+  const remapActiveToInactive = (fields) => {
     (fields || []).forEach((f) => {
       if (f && f.key === 'is_active' && f.type === 'checkbox' && f.label === 'Aktif') {
         f.label = 'Pasif';
       }
     });
   };
-  remapAktifToPasif(s.masterFields);
-  remapAktifToPasif(s.detailFields);
+  remapActiveToInactive(s.masterFields);
+  remapActiveToInactive(s.detailFields);
   (s.formTabs || []).forEach((tab) => {
-    remapAktifToPasif(tab.fields);
-    remapAktifToPasif(tab.masterFields);
-    remapAktifToPasif(tab.detailFields);
-    remapAktifToPasif(tab.grid?.fields);
+    remapActiveToInactive(tab.fields);
+    remapActiveToInactive(tab.masterFields);
+    remapActiveToInactive(tab.detailFields);
+    remapActiveToInactive(tab.grid?.fields);
   });
   (s.columns || []).forEach((c) => {
     if (c.key === 'is_active' && c.label === 'Aktif') c.label = 'Pasif';
@@ -8132,7 +8132,7 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
   }
 
   // Serbest metin tanım alanlarını Sabit Tanımlar lookup'ına çevir (tüm ekranlar)
-  upgradeTanimLookups(s);
+  upgradeDefinitionLookups(s);
 
   // Filtreleri form alanlarından zenginleştir (select/lookup → açılır liste)
   enrichFiltersFromForm(s);
@@ -8251,7 +8251,7 @@ const TANIM_LOOKUP_BY_KEY = {
   },
 };
 
-function applyTanimLookup(field) {
+function applyDefinitionLookup(field) {
   if (!field || !field.key) return field;
   const def = TANIM_LOOKUP_BY_KEY[field.key];
   if (!def) return field;
@@ -8306,7 +8306,7 @@ function resolveCascadeParentValue(field, parentRaw) {
 }
 
 /** Seçili ürün ağacındaki bileşen (ve isteğe bağlı kök) stok id seti */
-function bomScopeStokIds(agacId, { includeRoot = false } = {}) {
+function bomScopeItemIds(agacId, { includeRoot = false } = {}) {
   if (agacId == null || agacId === '') return null;
   const agac = (state.lookupCache['urun-agaclari'] || [])
     .find((a) => String(a.id) === String(agacId));
@@ -8337,7 +8337,7 @@ function lookupRowsForField(field, ctx = {}) {
     const bomId = ctx[field.filterByBomKey]
       ?? state.formRecord?.[field.filterByBomKey];
     if (bomId == null || bomId === '') return [];
-    const ids = bomScopeStokIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
+    const ids = bomScopeItemIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
     rows = all.filter((r) => ids && ids.has(Number(r.id)));
   }
 
@@ -8404,10 +8404,10 @@ function lookupNameOnly(field, value) {
   return String(hit[lk] || '');
 }
 
-function upgradeTanimLookups(screen) {
+function upgradeDefinitionLookups(screen) {
   const mapFields = (arr) => {
     if (!Array.isArray(arr)) return;
-    for (let i = 0; i < arr.length; i += 1) arr[i] = applyTanimLookup(arr[i]);
+    for (let i = 0; i < arr.length; i += 1) arr[i] = applyDefinitionLookup(arr[i]);
   };
   mapFields(screen.masterFields);
   mapFields(screen.detailFields);
@@ -8842,7 +8842,7 @@ function refreshUiAfterLangChange() {
   try { renderSidebar(); } catch (_) { /* ignore */ }
   try { renderTabBar(); } catch (_) { /* ignore */ }
   try { renderUserChip(); } catch (_) { /* ignore */ }
-  try { renderFirmaPicker(); } catch (_) { /* ignore */ }
+  try { renderCompanyPicker(); } catch (_) { /* ignore */ }
   const screen = findScreen(state.screenId);
   if (screen && state.formMode) {
     const titleEl = $('#screenTitle');
@@ -9317,7 +9317,7 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
     if (record[f.key] !== undefined) return;
     if (f.type === 'checkbox') record[f.key] = f.key === 'is_inactive' ? false : true;
     else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
-    else if (f.key === 'company_id' && getActiveFirmaId()) record[f.key] = getActiveFirmaId();
+    else if (f.key === 'company_id' && getActiveCompanyId()) record[f.key] = getActiveCompanyId();
     else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
     else record[f.key] = '';
   });
@@ -9325,10 +9325,10 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
     record.customer_type = record.customer_type || 'Aday';
     if (!record.stage_id) record.stage_id = resolveDefaultFirsatStageId();
   }
-  const seri = resolveNumeratorSeri(target, record);
+  const seri = resolveNumeratorSeries(target, record);
   if (seri && target.codeField) {
     try {
-      record[target.codeField] = await ayirKod(seri);
+      record[target.codeField] = await reserveCode(seri);
       state.formNumeratorSeri = seri;
     } catch (err) { toast(err.message); }
   } else {
@@ -9477,7 +9477,7 @@ function screenApiBase(endpoint) {
   return q >= 0 ? endpoint.slice(0, q) : endpoint;
 }
 
-function getActiveFirmaId() {
+function getActiveCompanyId() {
   if (state.activeFirmaId) return state.activeFirmaId;
   const stored = Number(localStorage.getItem('ktb_firma_id') || 0);
   return stored > 0 ? stored : null;
@@ -9488,7 +9488,7 @@ async function api(path, options = {}) {
   try {
     const kullaniciKodu = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_kullanici_kodu')) || '';
     const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_access_token')) || '';
-    const firmaId = getActiveFirmaId();
+    const firmaId = getActiveCompanyId();
     const { headers: optHeaders, skipFirma = false, ...restOpts } = options;
     // skipFirma / boş X-Firma-Id → org tanım listelerinde tüm firmalar
     const headerFirma = optHeaders && Object.prototype.hasOwnProperty.call(optHeaders, 'X-Firma-Id')
@@ -9679,7 +9679,7 @@ async function openConvertDialog(act, rec, kind) {
 
   if (dialog === 'fatura-olustur') {
     try {
-      const kod = await ayirKod('FATURA');
+      const kod = await reserveCode('FATURA');
       const inp = $('#cvtFaturaNo');
       if (inp) inp.value = kod;
       body.querySelector('p') && (body.querySelector('p').textContent =
@@ -9839,12 +9839,12 @@ function findScreen(id) {
   return ALL_SCREENS.find((s) => s.id === resolved) || null;
 }
 
-function isIrsaliyeYonetimiScreen(screenOrId) {
+function isDeliveryNoteManagementScreen(screenOrId) {
   const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
   return resolveScreenId(id) === 'irsaliye-yonetimi';
 }
 
-function isFaturaYonetimiScreen(screenOrId) {
+function isInvoiceManagementScreen(screenOrId) {
   const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
   return resolveScreenId(id) === 'fatura-yonetimi';
 }
@@ -9853,7 +9853,7 @@ function selectedRow() {
   return state.filtered.find((r, i) => String(rowKey(r, i)) === String(state.selectedId)) || null;
 }
 
-function resolveNumeratorSeri(screen, record = {}) {
+function resolveNumeratorSeries(screen, record = {}) {
   if (screen.numeratorFromField) {
     const val = record[screen.numeratorFromField.field];
     if (val == null || val === '') return null;
@@ -9862,7 +9862,7 @@ function resolveNumeratorSeri(screen, record = {}) {
   return screen.numeratorSeri;
 }
 
-async function ayirKod(seriKodu) {
+async function reserveCode(seriKodu) {
   if (!seriKodu) throw new Error('Bu ekran için numaratör bağlı değil.');
   const data = await api(`/kod-serileri/${encodeURIComponent(seriKodu)}/ayir`, { method: 'POST' });
   return data.kod;
@@ -9878,11 +9878,11 @@ async function refreshCodeFromNumeratorField(force = false) {
   const tipVal = tipEl ? tipEl.value : state.formRecord?.[tipKey];
   if (tipVal == null || tipVal === '') return;
   if (state.formRecord) state.formRecord[tipKey] = tipVal;
-  const seri = resolveNumeratorSeri(screen, { ...(state.formRecord || {}), [tipKey]: tipVal });
+  const seri = resolveNumeratorSeries(screen, { ...(state.formRecord || {}), [tipKey]: tipVal });
   if (!seri) return;
   if (!force && state.formNumeratorSeri === seri && state.formRecord?.[screen.codeField]) return;
   try {
-    const kod = await ayirKod(seri);
+    const kod = await reserveCode(seri);
     if (!state.formRecord) state.formRecord = {};
     state.formRecord[screen.codeField] = kod;
     state.formNumeratorSeri = seri;
@@ -10254,7 +10254,7 @@ const BELGE_BAGLANTI = {
   },
 };
 
-function getBelgeBaglanti(screen) {
+function getDocumentLinks(screen) {
   if (!screen) return { kaynaklar: [], sonrakiler: [] };
   const base = BELGE_BAGLANTI[screen.id] || { kaynaklar: [], sonrakiler: [] };
   // Ekran özel override
@@ -10291,7 +10291,7 @@ async function findLinkedRecord(link, rec) {
 }
 
 async function buildFormBaglantiMenuItems(screen, rec) {
-  const cfg = getBelgeBaglanti(screen);
+  const cfg = getDocumentLinks(screen);
   const items = [];
   if (cfg.kaynaklar.length) {
     items.push({ type: 'heading', label: 'Kaynak belge' });
@@ -10424,10 +10424,10 @@ function updateFormCrudButtons(screen) {
   map.kopyala.hidden = !showKopyala;
   map.sil.hidden = !showSil;
 
-  map.yeni.disabled = showYeni ? !ekranYetkisi(screen.id, 'yeni') : true;
-  map.duzelt.disabled = showDuzelt ? !ekranYetkisi(screen.id, 'duzelt') : true;
-  map.kopyala.disabled = showKopyala ? !ekranYetkisi(screen.id, 'kopyala') : true;
-  map.sil.disabled = showSil ? !ekranYetkisi(screen.id, 'sil') : true;
+  map.yeni.disabled = showYeni ? !screenPermission(screen.id, 'yeni') : true;
+  map.duzelt.disabled = showDuzelt ? !screenPermission(screen.id, 'duzelt') : true;
+  map.kopyala.disabled = showKopyala ? !screenPermission(screen.id, 'kopyala') : true;
+  map.sil.disabled = showSil ? !screenPermission(screen.id, 'sil') : true;
 
   wrap.hidden = !(showYeni || showDuzelt || showKopyala || showSil);
 }
@@ -11003,7 +11003,7 @@ function collectSidebarKeys() {
     mods.push(mod.id);
     moduleMenuSections(mod).forEach((sec) => {
       if (sec.title == null) return;
-      if (!sec.screens.some((s) => ekranMenuGorunurMu(s.id))) return;
+      if (!sec.screens.some((s) => isScreenVisibleInMenu(s.id))) return;
       sections.push(`${mod.id}:${sec.id}`);
     });
   });
@@ -11059,15 +11059,15 @@ function modulYetkiliMi(modId) {
     // Ekran yetkisi tanımlıysa modülde en az bir ekran erişimi olmalı
     const mod = MODULES.find((m) => m.id === modId);
     if (!mod) return false;
-    return (mod.screens || []).some((sc) => ekranYetkisi(sc.id));
+    return (mod.screens || []).some((sc) => screenPermission(sc.id));
   }
   const mods = s.module_permissions;
   if (!mods || !mods.length || mods.includes('*')) return true;
   return mods.includes(modId);
 }
 
-function ekranMenuGorunurMu(screenId) {
-  return ekranYetkisi(screenId);
+function isScreenVisibleInMenu(screenId) {
+  return screenPermission(screenId);
 }
 
 function renderSidebar() {
@@ -11087,7 +11087,7 @@ function renderSidebar() {
     const itemsHtml = sections.map((sec) => {
       const secKey = `${mod.id}:${sec.id}`;
       if (sec.title == null) {
-        const visible = sec.screens.filter((s) => ekranMenuGorunurMu(s.id));
+        const visible = sec.screens.filter((s) => isScreenVisibleInMenu(s.id));
         if (!visible.length) return '';
         const screensHtml = visible.map((s) => `
           <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
@@ -11099,7 +11099,7 @@ function renderSidebar() {
         state.sidebarSectionOpen[secKey] = true;
       }
       const isOpen = Boolean(state.sidebarSectionOpen[secKey]);
-      const visible = sec.screens.filter((s) => ekranMenuGorunurMu(s.id));
+      const visible = sec.screens.filter((s) => isScreenVisibleInMenu(s.id));
       if (!visible.length) return '';
       const screensHtml = visible.map((s) => `
           <button type="button" class="mod-item${state.screenId === s.id ? ' active' : ''}" data-screen="${s.id}">
@@ -11248,7 +11248,7 @@ function enterApp() {
   ensureSearchBarVisible();
   renderUserChip();
   renderSidebar();
-  renderFirmaPicker();
+  renderCompanyPicker();
 }
 
 function applySession(ses, username) {
@@ -11412,7 +11412,7 @@ async function submitLoginForm(e) {
     applySession(ses, username);
     enterApp();
     await loadFirmalar().catch(() => {});
-    renderFirmaPicker();
+    renderCompanyPicker();
     showHome();
     toast(`Hoş geldiniz, ${ses.username || ses.first_name || ''}`);
   } catch (err) {
@@ -11428,7 +11428,7 @@ function promptLogin() {
   showLoginView();
 }
 
-function isFirmaProfil(f) {
+function isCompanyProfile(f) {
   if (!f) return false;
   const v = f.is_profile;
   return v === true || v === 1 || v === '1' || v === 't' || v === 'true';
@@ -11436,7 +11436,7 @@ function isFirmaProfil(f) {
 
 function allowedFirmalar() {
   const all = Array.isArray(state.companies) ? state.companies : [];
-  const profiles = all.filter(isFirmaProfil);
+  const profiles = all.filter(isCompanyProfile);
   const base = profiles.length ? profiles : all;
   // ADMIN / Yönetici: tüm firma profilleri görünür (yeni demo firmaları dahil)
   if (isAdminLikeUser(state.session)) return base;
@@ -11447,7 +11447,7 @@ function allowedFirmalar() {
   return filtered.length ? filtered : base;
 }
 
-function renderFirmaPicker() {
+function renderCompanyPicker() {
   const nameEl = $('#firmaPickerName');
   const menu = $('#firmaPickerMenu');
   const labelEl = $('#firmaProfileLabel');
@@ -11476,8 +11476,8 @@ function renderFirmaPicker() {
     </li>`).join('');
 }
 
-async function loadIsYerleriForActiveFirma() {
-  const firmaId = getActiveFirmaId();
+async function loadPlantsForActiveCompany() {
+  const firmaId = getActiveCompanyId();
   try {
     const rows = await api('/is-yerleri');
     state.isYerleri = Array.isArray(rows) ? rows : [];
@@ -11506,8 +11506,8 @@ function buildDefaultFilterState(screen) {
       fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
     } else if (f.key === 'is_active' || f.type === 'bool') {
       fs[f.key] = { op: 'esit', a: 'evet', b: '' };
-    } else if (f.key === 'company_id' && getActiveFirmaId() && screen.scopeFirma !== false) {
-      fs[f.key] = { op: 'esit', a: String(getActiveFirmaId()), b: '' };
+    } else if (f.key === 'company_id' && getActiveCompanyId() && screen.scopeFirma !== false) {
+      fs[f.key] = { op: 'esit', a: String(getActiveCompanyId()), b: '' };
     } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
@@ -11552,7 +11552,7 @@ const DIL_AD_MAP = {
   NL: 'Nederlands', PT: 'Português', ZH: '中文', JA: '日本語',
 };
 
-async function applyKurForParaBirimi(pbKod, kurEl, { force = false } = {}) {
+async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false } = {}) {
   if (!kurEl) return;
   const pb = String(pbKod || 'TRY').toUpperCase();
   if (pb === 'TRY' || pb === 'TL') {
@@ -11577,7 +11577,7 @@ async function applyKurForParaBirimi(pbKod, kurEl, { force = false } = {}) {
  * Öncelik: varsayılan sevk adresi → fatura_adres* → address.
  * Ödeme / PB alanları da boşsa cari kartından alınır.
  */
-async function fillAdresFromCari(cariId, { force = false } = {}) {
+async function fillAddressFromPartner(cariId, { force = false } = {}) {
   if (!cariId || !state.formRecord) return;
   try {
     const cari = await api(`/partners/${cariId}`);
@@ -12020,31 +12020,31 @@ async function fillLinesFromSource(kind, sourceId) {
   }
 }
 
-function closeFirmaPicker() {
+function closeCompanyPicker() {
   const menu = $('#firmaPickerMenu');
   const btn = $('#firmaPickerBtn');
   if (menu) menu.hidden = true;
   if (btn) btn.setAttribute('aria-expanded', 'false');
 }
 
-async function setActiveFirma(firmaId, { reload = true } = {}) {
+async function setActiveCompany(firmaId, { reload = true } = {}) {
   const id = Number(firmaId);
   if (!id || Number(state.activeFirmaId) === id) {
-    closeFirmaPicker();
+    closeCompanyPicker();
     return;
   }
   state.activeFirmaId = id;
   localStorage.setItem('ktb_firma_id', String(id));
   state.lookupCache = {};
   state.activeIsYeriId = null;
-  await loadIsYerleriForActiveFirma();
+  await loadPlantsForActiveCompany();
   // Açık form sekmelerini kapat — yanlış firmada işlem riski
   state.openTabs = state.openTabs.filter((t) => t.kind === 'list');
   state.activeTabKey = state.openTabs[0]?.key || null;
   state.formMode = null;
   state.formRecord = null;
-  closeFirmaPicker();
-  renderFirmaPicker();
+  closeCompanyPicker();
+  renderCompanyPicker();
   renderTabBar();
   if (!reload) return;
   if (state.screenId) {
@@ -12071,8 +12071,8 @@ async function loadFirmalar() {
     || state.companies[0];
   state.activeFirmaId = prefer ? Number(prefer.id) : null;
   if (state.activeFirmaId) localStorage.setItem('ktb_firma_id', String(state.activeFirmaId));
-  await loadIsYerleriForActiveFirma();
-  renderFirmaPicker();
+  await loadPlantsForActiveCompany();
+  renderCompanyPicker();
 }
 
 function readFilterState(screen) {
@@ -12502,7 +12502,7 @@ function isSessionTamYetkili() {
  * ADMIN / Yönetici / soft oturum → her zaman tam erişim.
  * Kısıtlı kullanıcıda yalnızca yetki satırları geçerlidir.
  */
-function ekranYetkisi(screenId, action = null) {
+function screenPermission(screenId, action = null) {
   const s = state.session;
   if (!s) return true;
   // Önce tam yetki — kısmi yetki satırları ADMIN'i engellemesin
@@ -12543,7 +12543,7 @@ function updateActionButtons(screen) {
         btn.disabled = true;
         return;
       }
-      if (!ekranYetkisi(screen.id, act)) {
+      if (!screenPermission(screen.id, act)) {
         btn.disabled = true;
         return;
       }
@@ -12553,16 +12553,16 @@ function updateActionButtons(screen) {
     }
     btn.hidden = false;
     if (act === 'export-csv') {
-      btn.disabled = !ekranYetkisi(screen.id, 'export-csv');
+      btn.disabled = !screenPermission(screen.id, 'export-csv');
     } else if (act === 'mrp-talep') {
       btn.hidden = !screen.mrpTalepAction;
-      btn.disabled = !ekranYetkisi(screen.id, 'mrp-talep');
+      btn.disabled = !screenPermission(screen.id, 'mrp-talep');
     } else if (act === 'mrp-uretim') {
       btn.hidden = !screen.mrpUretimAction;
-      btn.disabled = !ekranYetkisi(screen.id, 'mrp-uretim');
+      btn.disabled = !screenPermission(screen.id, 'mrp-uretim');
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
-      btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
+      btn.disabled = !screenPermission(screen.id, 'mrp-calistir');
     } else if (act === 'report-pdf') {
       btn.hidden = !screen.reportPdfAction;
       btn.disabled = !screen.reportPdfAction;
@@ -12585,7 +12585,7 @@ async function openScreen(id, opts = {}) {
       toast(`Ekran bulunamadı: ${id || '?'}`);
       return;
     }
-    if (!ekranYetkisi(screen.id)) {
+    if (!screenPermission(screen.id)) {
       toast('Bu ekrana erişim yetkiniz yok.');
       return;
     }
@@ -12666,8 +12666,8 @@ async function openScreen(id, opts = {}) {
     state.selectedId = null;
     state.formMode = null;
     state.listCategory = screen.listCategories?.[0]?.id || null;
-    if (!state.isYerleri.length && getActiveFirmaId()) {
-      await loadIsYerleriForActiveFirma();
+    if (!state.isYerleri.length && getActiveCompanyId()) {
+      await loadPlantsForActiveCompany();
     }
     // Filtre lookup'larını yükle (firma / iş yeri seçicileri)
     await ensureFilterLookups(screen);
@@ -13165,7 +13165,7 @@ function resolveLookupEndpoint(key) {
   return null;
 }
 
-function buildEkranLookupRows() {
+function buildScreenLookupRows() {
   return (ALL_SCREENS || []).map((s) => ({
     id: s.id,
     screen_code: s.id,
@@ -13192,7 +13192,7 @@ async function fetchLookupKey(key) {
         }
       } catch (_) { /* fallback */ }
     }
-    state.lookupCache[key] = buildEkranLookupRows();
+    state.lookupCache[key] = buildScreenLookupRows();
     return state.lookupCache[key];
   }
   const ep = resolveLookupEndpoint(key);
@@ -13329,8 +13329,8 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
   if (field.transferOnly) {
     const hkId = state.formRecord?.movement_code_id
       || document.querySelector('[data-master="movement_code_id"]')?.value;
-    transferLocked = typeof isTransferHareketKodu === 'function'
-      ? !isTransferHareketKodu(hareketKoduRowById(hkId))
+    transferLocked = typeof isTransferMovementCode === 'function'
+      ? !isTransferMovementCode(movementCodeRowById(hkId))
       : false;
   }
   const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly || transferLocked;
@@ -13553,7 +13553,7 @@ function lookupDisplay(field, value) {
   return ck ? `${hit[ck] || ''} — ${hit[lk] || ''}` : `${hit[lk] || hit[vk]}`;
 }
 
-function stokLookupById(id) {
+function itemLookupById(id) {
   if (id == null || id === '') return null;
   const pools = [
     state.lookupCache.items,
@@ -13882,10 +13882,10 @@ function plantsForCompany(companyId) {
   return plants.filter((p) => Number(p.company_id) === cid);
 }
 
-function hydrateStokFirmaIsYeri(rec) {
+function hydrateItemCompanyPlant(rec) {
   if (!rec) return;
-  if (!rec.company_id && getActiveFirmaId()) {
-    rec.company_id = getActiveFirmaId();
+  if (!rec.company_id && getActiveCompanyId()) {
+    rec.company_id = getActiveCompanyId();
   }
   const hasActivePlantBag = Array.isArray(rec.is_yeri_baglari)
     && rec.is_yeri_baglari.some((b) => b && b.is_active !== false && Number(b.plant_id));
@@ -13901,12 +13901,12 @@ function hydrateStokFirmaIsYeri(rec) {
   if (!rec.plant_id && Array.isArray(rec.is_yeri_baglari) && rec.is_yeri_baglari[0]?.plant_id) {
     rec.plant_id = Number(rec.is_yeri_baglari[0].plant_id);
   }
-  ensureStokVergiTanimlariSeed(rec);
-  ensureStokFirmaParamsSeed(rec);
+  ensureItemTaxDefinitionsSeed(rec);
+  ensureItemCompanyParamsSeed(rec);
 }
 
 /** Vergi sekmesi: 4 tip satırı (Alış/Satış/Efektif) eksikse tamamla */
-function ensureStokVergiTanimlariSeed(rec) {
+function ensureItemTaxDefinitionsSeed(rec) {
   if (!rec) return;
   let list = Array.isArray(rec.vergi_tanimlari) ? [...rec.vergi_tanimlari] : [];
   const byType = new Map(
@@ -13931,7 +13931,7 @@ function ensureStokVergiTanimlariSeed(rec) {
 }
 
 /** Vergi grid → master default_tax (Satış) — firma parametrelerine yazılır */
-function syncStokVergiFromGrid(master) {
+function syncItemTaxFromGrid(master) {
   const rows = Array.isArray(master.vergi_tanimlari) ? master.vergi_tanimlari : [];
   const clean = [];
   const seen = new Set();
@@ -13967,8 +13967,8 @@ function syncStokVergiFromGrid(master) {
   }
 }
 
-function syncStokFirmaIsYeriForSave(master) {
-  const firmaId = Number(master.company_id) || getActiveFirmaId() || null;
+function syncItemCompanyPlantForSave(master) {
+  const firmaId = Number(master.company_id) || getActiveCompanyId() || null;
   if (firmaId) master.company_id = firmaId;
   const bags = Array.isArray(master.is_yeri_baglari)
     ? master.is_yeri_baglari.filter((b) => Number(b.plant_id))
@@ -14001,28 +14001,28 @@ function syncStokFirmaIsYeriForSave(master) {
 
 
 
-function stokFirmaRowKey(companyId, plantId, draftIdx = 0) {
+function itemCompanyRowKey(companyId, plantId, draftIdx = 0) {
   const cid = Number(companyId) || 0;
   const pid = Number(plantId);
   if (Number.isFinite(pid) && pid) return `${cid}:${pid}`;
   return `${cid}:draft:${draftIdx}`;
 }
 
-function stokFirmaActiveParams(rec) {
+function itemCompanyActiveParams(rec) {
   return (Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [])
     .filter((p) => p && p.is_active !== false && Number(p.company_id));
 }
 
-function stokFirmaSelectedCompanyIds(rec) {
-  return [...new Set(stokFirmaActiveParams(rec).map((p) => Number(p.company_id)))];
+function itemCompanySelectedCompanyIds(rec) {
+  return [...new Set(itemCompanyActiveParams(rec).map((p) => Number(p.company_id)))];
 }
 
-function stokFirmaParamsForCompany(rec, companyId) {
+function itemCompanyParamsForCompany(rec, companyId) {
   const cid = Number(companyId);
-  return stokFirmaActiveParams(rec).filter((p) => Number(p.company_id) === cid);
+  return itemCompanyActiveParams(rec).filter((p) => Number(p.company_id) === cid);
 }
 
-function emptyStokFirmaParam(companyId, plantId = null) {
+function emptyItemCompanyParam(companyId, plantId = null) {
   return {
     company_id: Number(companyId),
     plant_id: plantId != null && plantId !== '' ? Number(plantId) : null,
@@ -14051,19 +14051,19 @@ function emptyStokFirmaParam(companyId, plantId = null) {
   };
 }
 
-function ensureStokFirmaParamsSeed(rec) {
+function ensureItemCompanyParamsSeed(rec) {
   if (!rec) return;
   let list = Array.isArray(rec.firma_parametreleri) ? [...rec.firma_parametreleri] : [];
 
   if (!list.length) {
-    const cid = Number(rec.company_id) || getActiveFirmaId() || null;
+    const cid = Number(rec.company_id) || getActiveCompanyId() || null;
     if (!cid) {
       rec.firma_parametreleri = [];
       return;
     }
     // Firma geneli (plant_id null) — master alanlarından kopya
     list = [{
-      ...emptyStokFirmaParam(cid, null),
+      ...emptyItemCompanyParam(cid, null),
       sales_price: rec.sales_price ?? null,
       currency_code: rec.currency_code || 'TRY',
       purchase_currency_code: rec.purchase_currency_code || rec.currency_code || 'TRY',
@@ -14089,14 +14089,14 @@ function ensureStokFirmaParamsSeed(rec) {
   }
 
   // Seçili firmada hiç satır yoksa firma geneli boş satır
-  let selected = stokFirmaSelectedCompanyIds({ firma_parametreleri: list });
+  let selected = itemCompanySelectedCompanyIds({ firma_parametreleri: list });
   if (!selected.length) {
-    const aid = Number(rec.company_id) || getActiveFirmaId();
+    const aid = Number(rec.company_id) || getActiveCompanyId();
     if (aid) selected = [aid];
   }
   selected.forEach((cid) => {
     const hasAny = list.some((p) => Number(p.company_id) === cid && p.is_active !== false);
-    if (!hasAny) list.push(emptyStokFirmaParam(cid, null));
+    if (!hasAny) list.push(emptyItemCompanyParam(cid, null));
   });
 
   // Yeni / tanımsız bağlarda seçili firmaların tüm iş yerleri
@@ -14117,7 +14117,7 @@ function ensureStokFirmaParamsSeed(rec) {
   rec.firma_parametreleri = list;
 }
 
-function renderStokFirmaParamField(field, param, companyId, rowKey, { locked = false } = {}) {
+function renderItemCompanyParamField(field, param, companyId, rowKey, { locked = false } = {}) {
   const readonly = state.formMode === 'incele' || field.readOnly || locked;
   const f = readonly && !field.readOnly ? { ...field, readOnly: true } : field;
   const ctx = {
@@ -14129,7 +14129,7 @@ function renderStokFirmaParamField(field, param, companyId, rowKey, { locked = f
   return fieldShell(f, control, param?.[field.key]);
 }
 
-function renderStokFirmaPlantBlock(company, param, rowKey, draftIdx, canRemove, isOverride) {
+function renderItemCompanyPlantBlock(company, param, rowKey, draftIdx, canRemove, isOverride) {
   const readonly = state.formMode === 'incele';
   const cid = Number(company.id);
   const plantOk = Boolean(Number(param?.plant_id));
@@ -14138,7 +14138,7 @@ function renderStokFirmaPlantBlock(company, param, rowKey, draftIdx, canRemove, 
         <h4 class="erp-section-title">İş yeri istisnası</h4>
         <p class="hint">Bu satır yalnızca seçilen iş yerinde firma genelinin üzerine yazar.</p>
         <div class="erp-section-grid erp-section-grid--pairs">
-          ${renderStokFirmaParamField(STOK_FIRMA_PLANT_OVERRIDE_FIELD, param, cid, rowKey)}
+          ${renderItemCompanyParamField(STOK_FIRMA_PLANT_OVERRIDE_FIELD, param, cid, rowKey)}
         </div>
       </section>`
     : '';
@@ -14147,7 +14147,7 @@ function renderStokFirmaPlantBlock(company, param, rowKey, draftIdx, canRemove, 
       <h4 class="erp-section-title">${escapeHtml(sec.title)}</h4>
       <fieldset class="stok-firma-fieldset" ${readonly ? 'disabled' : ''}>
         <div class="erp-section-grid erp-section-grid--pairs">
-          ${sec.fields.map((f) => renderStokFirmaParamField(f, param, cid, rowKey)).join('')}
+          ${sec.fields.map((f) => renderItemCompanyParamField(f, param, cid, rowKey)).join('')}
         </div>
       </fieldset>
     </section>`).join('');
@@ -14174,7 +14174,7 @@ function renderStokFirmaPlantBlock(company, param, rowKey, draftIdx, canRemove, 
     </div>`;
 }
 
-function renderStokFirmaPlantChecks(companyId, bags) {
+function renderItemCompanyPlantChecks(companyId, bags) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const plants = plantsForCompany(companyId);
@@ -14209,25 +14209,25 @@ function renderStokFirmaPlantChecks(companyId, bags) {
     </section>`;
 }
 
-function isStokFirmaOverrideParam(param) {
+function isItemCompanyOverrideParam(param) {
   return Boolean(param?._isOverride) || Boolean(Number(param?.plant_id));
 }
 
-function renderStokFirmaParamCard(company, params, open, bags) {
+function renderItemCompanyParamCard(company, params, open, bags) {
   const readonly = state.formMode === 'incele';
   const cid = Number(company.id);
   const title = `${company.company_code || ''} · ${company.company_name || ''}`.trim();
-  const list = (params && params.length) ? params : [emptyStokFirmaParam(cid)];
-  const wide = list.filter((p) => !isStokFirmaOverrideParam(p));
-  const overrides = list.filter((p) => isStokFirmaOverrideParam(p));
-  const wideRow = wide[0] || emptyStokFirmaParam(cid, null);
+  const list = (params && params.length) ? params : [emptyItemCompanyParam(cid)];
+  const wide = list.filter((p) => !isItemCompanyOverrideParam(p));
+  const overrides = list.filter((p) => isItemCompanyOverrideParam(p));
+  const wideRow = wide[0] || emptyItemCompanyParam(cid, null);
   let draftIdx = 0;
-  const wideKey = stokFirmaRowKey(cid, null, 0);
-  const wideBlock = renderStokFirmaPlantBlock(company, wideRow, wideKey, 0, false, false);
+  const wideKey = itemCompanyRowKey(cid, null, 0);
+  const wideBlock = renderItemCompanyPlantBlock(company, wideRow, wideKey, 0, false, false);
   const overrideBlocks = overrides.map((param) => {
     const dIdx = Number(param.plant_id) ? 0 : (++draftIdx);
-    const rowKey = stokFirmaRowKey(cid, param.plant_id, dIdx);
-    return renderStokFirmaPlantBlock(company, param, rowKey, dIdx, true, true);
+    const rowKey = itemCompanyRowKey(cid, param.plant_id, dIdx);
+    return renderItemCompanyPlantBlock(company, param, rowKey, dIdx, true, true);
   }).join('');
   const plantCount = plantsForCompany(cid).length;
   return `
@@ -14238,7 +14238,7 @@ function renderStokFirmaParamCard(company, params, open, bags) {
         <span class="stok-firma-card-count">${plantCount} iş yeri · ${overrides.length ? `${overrides.length} istisna` : 'firma geneli'}</span>
       </summary>
       <div class="stok-firma-card-body" aria-label="${escAttr(title)} parametreleri">
-        ${renderStokFirmaPlantChecks(cid, bags)}
+        ${renderItemCompanyPlantChecks(cid, bags)}
         ${wideBlock}
         ${overrideBlocks}
         ${readonly ? '' : `<div class="stok-firma-plant-actions">
@@ -14248,16 +14248,16 @@ function renderStokFirmaParamCard(company, params, open, bags) {
     </details>`;
 }
 
-function renderStokFirmalarPane(rec) {
-  ensureStokFirmaParamsSeed(rec);
+function renderItemCompaniesPane(rec) {
+  ensureItemCompanyParamsSeed(rec);
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const companies = Array.isArray(state.companies) && state.companies.length
     ? state.companies
     : (state.lookupCache?.companies || []);
-  const selected = new Set(stokFirmaSelectedCompanyIds(rec));
+  const selected = new Set(itemCompanySelectedCompanyIds(rec));
   if (!selected.size) {
-    const aid = Number(rec?.company_id) || getActiveFirmaId();
+    const aid = Number(rec?.company_id) || getActiveCompanyId();
     if (aid) selected.add(Number(aid));
     else if (companies[0]) selected.add(Number(companies[0].id));
   }
@@ -14305,7 +14305,7 @@ function renderStokFirmalarPane(rec) {
     </div>`;
 }
 
-function bindStokFirmaYetkiEvents() {
+function bindItemCompanyPermissionEvents() {
   const box = document.querySelector('.stok-firma-yetki-pane');
   if (!box || box.dataset.bound === '1') return;
   box.dataset.bound = '1';
@@ -14343,7 +14343,7 @@ function bindStokFirmaYetkiEvents() {
   syncHead();
 }
 
-function readStokFirmaIsYeriBaglariFromDom() {
+function readItemCompanyPlantLinksFromDom() {
   const bags = [];
   const seen = new Set();
   document.querySelectorAll('[data-stok-firma-plant-check]').forEach((chk) => {
@@ -14357,8 +14357,8 @@ function readStokFirmaIsYeriBaglariFromDom() {
   return bags;
 }
 
-function stokFirmaParamFromMaster(companyId, master) {
-  const row = { ...emptyStokFirmaParam(companyId), plant_id: null, is_active: true };
+function itemCompanyParamFromMaster(companyId, master) {
+  const row = { ...emptyItemCompanyParam(companyId), plant_id: null, is_active: true };
   STOK_FIRMA_PARAM_FIELD_KEYS.forEach((key) => {
     if (master && master[key] !== undefined) row[key] = master[key];
   });
@@ -14370,7 +14370,7 @@ function stokFirmaParamFromMaster(companyId, master) {
   return row;
 }
 
-function readStokFirmaParamsFromDom(rec) {
+function readItemCompanyParamsFromDom(rec) {
   const box = document.querySelector('.stok-firma-yetki-pane');
   const prev = Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [];
   const selectedIds = [];
@@ -14388,9 +14388,9 @@ function readStokFirmaParamsFromDom(rec) {
   const out = [];
   selectedIds.forEach((cid) => {
     // Firma geneli: Stok Kart / Depolar / MRP master alanlarından
-    out.push(stokFirmaParamFromMaster(cid, rec || {}));
+    out.push(itemCompanyParamFromMaster(cid, rec || {}));
     // Eski iş yeri istisna satırlarını koru (UI kaldırıldı; veri kaybı olmasın)
-    prev.filter((p) => Number(p.company_id) === cid && isStokFirmaOverrideParam(p) && p.is_active !== false)
+    prev.filter((p) => Number(p.company_id) === cid && isItemCompanyOverrideParam(p) && p.is_active !== false)
       .forEach((p) => out.push({ ...p, company_id: cid, is_active: true }));
   });
 
@@ -14403,11 +14403,11 @@ function readStokFirmaParamsFromDom(rec) {
   return out;
 }
 
-function applyPrimaryStokFirmaToMaster(master) {
+function applyPrimaryItemCompanyToMaster(master) {
   const list = Array.isArray(master.firma_parametreleri) ? master.firma_parametreleri : [];
   const active = list.filter((p) => p && p.is_active !== false && Number(p.company_id));
   if (!active.length) return;
-  const prefer = Number(getActiveFirmaId());
+  const prefer = Number(getActiveCompanyId());
   // Öncelik: firma geneli (plant_id null), sonra aktif firma, sonra ilk satır
   const companyWide = active.filter((p) => !Number(p.plant_id));
   const primary = companyWide.find((p) => Number(p.company_id) === prefer)
@@ -14446,7 +14446,7 @@ function applyPrimaryStokFirmaToMaster(master) {
   master.series_politika = primary.series_politika || master.series_politika;
 }
 
-function emptyCariFirmaParam(companyId) {
+function emptyPartnerCompanyParam(companyId) {
   return {
     company_id: Number(companyId),
     plant_id: null,
@@ -14462,17 +14462,17 @@ function emptyCariFirmaParam(companyId) {
   };
 }
 
-function ensureCariFirmaParamsSeed(rec) {
+function ensurePartnerCompanyParamsSeed(rec) {
   if (!rec) return;
   let list = Array.isArray(rec.firma_parametreleri) ? [...rec.firma_parametreleri] : [];
   if (!list.length) {
-    const cid = Number(rec.company_id) || getActiveFirmaId() || null;
+    const cid = Number(rec.company_id) || getActiveCompanyId() || null;
     if (!cid) {
       rec.firma_parametreleri = [];
       return;
     }
     list = [{
-      ...emptyCariFirmaParam(cid),
+      ...emptyPartnerCompanyParam(cid),
       currency_code: rec.currency_code || 'TRY',
       partner_type: rec.partner_type || null,
       payment_due_days: rec.payment_due_days ?? null,
@@ -14485,15 +14485,15 @@ function ensureCariFirmaParamsSeed(rec) {
   }
   const selected = [...new Set(list.filter((p) => p && p.is_active !== false && Number(p.company_id)).map((p) => Number(p.company_id)))];
   if (!selected.length) {
-    const aid = Number(rec.company_id) || getActiveFirmaId();
+    const aid = Number(rec.company_id) || getActiveCompanyId();
     if (aid) {
-      list.push(emptyCariFirmaParam(aid));
+      list.push(emptyPartnerCompanyParam(aid));
     }
   }
   rec.firma_parametreleri = list;
 }
 
-function renderCariFirmaParamField(field, param, companyId) {
+function renderPartnerCompanyParamField(field, param, companyId) {
   const readonly = state.formMode === 'incele' || field.readOnly;
   const f = readonly && !field.readOnly ? { ...field, readOnly: true } : field;
   const extra = `data-cari-firma-id="${escAttr(companyId)}" data-cari-firma-field="${escAttr(field.key)}"`;
@@ -14501,11 +14501,11 @@ function renderCariFirmaParamField(field, param, companyId) {
   return fieldShell(f, control, param?.[field.key]);
 }
 
-function renderCariFirmaParamCard(company, param, open) {
+function renderPartnerCompanyParamCard(company, param, open) {
   const readonly = state.formMode === 'incele';
   const cid = Number(company.id);
   const title = `${company.company_code || ''} · ${company.company_name || ''}`.trim();
-  const row = param || emptyCariFirmaParam(cid);
+  const row = param || emptyPartnerCompanyParam(cid);
   return `
     <details class="stok-firma-card cari-firma-card" data-cari-firma-card="${escAttr(cid)}" ${open ? 'open' : ''} ${readonly ? 'data-readonly="1"' : ''}>
       <summary class="stok-firma-card-sum">
@@ -14516,15 +14516,15 @@ function renderCariFirmaParamCard(company, param, open) {
       <div class="stok-firma-card-body" aria-label="${escAttr(title)} parametreleri">
         <fieldset class="stok-firma-fieldset" ${readonly ? 'disabled' : ''}>
           <div class="erp-section-grid erp-section-grid--pairs">
-            ${CARI_FIRMA_PARAM_FIELDS.map((f) => renderCariFirmaParamField(f, row, cid)).join('')}
+            ${CARI_FIRMA_PARAM_FIELDS.map((f) => renderPartnerCompanyParamField(f, row, cid)).join('')}
           </div>
         </fieldset>
       </div>
     </details>`;
 }
 
-function renderCariFirmalarPane(rec) {
-  ensureCariFirmaParamsSeed(rec);
+function renderPartnerCompaniesPane(rec) {
+  ensurePartnerCompanyParamsSeed(rec);
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const companies = Array.isArray(state.companies) && state.companies.length
@@ -14536,11 +14536,11 @@ function renderCariFirmalarPane(rec) {
       .map((p) => Number(p.company_id))
   );
   if (!selected.size) {
-    const aid = Number(rec?.company_id) || getActiveFirmaId();
+    const aid = Number(rec?.company_id) || getActiveCompanyId();
     if (aid) selected.add(Number(aid));
     else if (companies[0]) selected.add(Number(companies[0].id));
   }
-  const prefer = Number(getActiveFirmaId());
+  const prefer = Number(getActiveCompanyId());
   const rows = companies.length
     ? companies.map((f) => `
       <tr data-cari-firma-yetki="${escAttr(f.id)}">
@@ -14555,9 +14555,9 @@ function renderCariFirmalarPane(rec) {
     .filter((f) => selected.has(Number(f.id)))
     .map((f) => {
       const param = (rec.firma_parametreleri || []).find((p) => Number(p.company_id) === Number(f.id) && p.is_active !== false)
-        || emptyCariFirmaParam(f.id);
+        || emptyPartnerCompanyParam(f.id);
       const open = Number(f.id) === prefer || selected.size === 1;
-      return renderCariFirmaParamCard(f, param, open);
+      return renderPartnerCompanyParamCard(f, param, open);
     })
     .join('');
   return `
@@ -14593,7 +14593,7 @@ function renderCariFirmalarPane(rec) {
     </div>`;
 }
 
-function bindCariFirmaYetkiEvents() {
+function bindPartnerCompanyPermissionEvents() {
   const box = document.querySelector('.cari-firma-yetki-pane');
   if (!box || box.dataset.bound === '1') return;
   box.dataset.bound = '1';
@@ -14608,13 +14608,13 @@ function bindCariFirmaYetkiEvents() {
     const pane = document.querySelector('.cari-firmalar-pane');
     if (!pane || !state.formRecord) return;
     // Mevcut DOM değerlerini kaydet, sonra kartları yenile
-    state.formRecord.firma_parametreleri = readCariFirmaParamsFromDom(state.formRecord);
+    state.formRecord.firma_parametreleri = readPartnerCompanyParamsFromDom(state.formRecord);
     const panel = document.querySelector('[data-tab-panel="firma-param"]');
     if (panel) {
-      panel.innerHTML = renderCariFirmalarPane(state.formRecord);
+      panel.innerHTML = renderPartnerCompaniesPane(state.formRecord);
       const fresh = panel.querySelector('.cari-firma-yetki-pane');
       if (fresh) delete fresh.dataset.bound;
-      bindCariFirmaYetkiEvents();
+      bindPartnerCompanyPermissionEvents();
     }
   };
   box.addEventListener('change', (e) => {
@@ -14650,7 +14650,7 @@ function bindCariFirmaYetkiEvents() {
   syncHead();
 }
 
-function readCariFirmaParamsFromDom(rec) {
+function readPartnerCompanyParamsFromDom(rec) {
   const box = document.querySelector('.cari-firma-yetki-pane');
   const prev = Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [];
   const selectedIds = [];
@@ -14666,7 +14666,7 @@ function readCariFirmaParamsFromDom(rec) {
   }
   const out = [];
   selectedIds.forEach((cid) => {
-    const prevRow = prev.find((p) => Number(p.company_id) === cid) || emptyCariFirmaParam(cid);
+    const prevRow = prev.find((p) => Number(p.company_id) === cid) || emptyPartnerCompanyParam(cid);
     const row = { ...prevRow, company_id: cid, is_active: true };
     CARI_FIRMA_PARAM_FIELDS.forEach((f) => {
       const el = document.querySelector(`[data-cari-firma="${f.key}"][data-cari-firma-id="${cid}"]`)
@@ -14684,11 +14684,11 @@ function readCariFirmaParamsFromDom(rec) {
   return out;
 }
 
-function applyPrimaryCariFirmaToMaster(master) {
+function applyPrimaryPartnerCompanyToMaster(master) {
   const list = Array.isArray(master.firma_parametreleri) ? master.firma_parametreleri : [];
   const active = list.filter((p) => p && p.is_active !== false && Number(p.company_id));
   if (!active.length) return;
-  const prefer = Number(getActiveFirmaId());
+  const prefer = Number(getActiveCompanyId());
   const primary = active.find((p) => Number(p.company_id) === prefer) || active[0];
   if (!Number(master.company_id)) master.company_id = Number(primary.company_id);
   if (primary.currency_code) master.currency_code = primary.currency_code;
@@ -14696,7 +14696,7 @@ function applyPrimaryCariFirmaToMaster(master) {
   if (primary.partner_type) master.partner_type = master.partner_type || primary.partner_type;
 }
 
-function renderStokDepolarPane(tab, rec) {
+function renderItemWarehousesPane(tab, rec) {
   const fields = tab.fields || [];
   const policyFields = fields.filter((f) => f.type === 'checkbox');
   const lookupFields = fields.filter((f) => f.type !== 'checkbox');
@@ -14717,16 +14717,16 @@ function renderStokDepolarPane(tab, rec) {
   return `
     <div class="stok-depolar-pane erp-master-panel">
       ${policyHtml}
-      ${renderStokDepoYetkiPane(rec)}
+      ${renderItemWarehousePermissionPane(rec)}
     </div>`;
 }
 
-function stokDepoWarehouseList(rec) {
+function itemWarehouseList(rec) {
   const all = Array.isArray(state.lookupCache?.warehouses)
     ? state.lookupCache.warehouses
     : (Array.isArray(state.warehouses) ? state.warehouses : []);
   const plantId = Number(rec?.plant_id) || null;
-  const firmaId = Number(rec?.company_id) || getActiveFirmaId() || null;
+  const firmaId = Number(rec?.company_id) || getActiveCompanyId() || null;
   const firma = (Array.isArray(state.companies) ? state.companies : [])
     .find((c) => Number(c.id) === Number(firmaId));
   const firmaCode = firma?.company_code || null;
@@ -14772,10 +14772,10 @@ function stokDepoWarehouseList(rec) {
   });
 }
 
-function renderStokDepoYetkiPane(rec) {
+function renderItemWarehousePermissionPane(rec) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
-  const warehouses = stokDepoWarehouseList(rec);
+  const warehouses = itemWarehouseList(rec);
   const bags = Array.isArray(rec?.depo_baglari) ? rec.depo_baglari : [];
   const selected = new Set(
     bags
@@ -14796,7 +14796,7 @@ function renderStokDepoYetkiPane(rec) {
         <td class="mono">${escapeHtml(w.plant_code || '')}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" class="detail-empty">${
-      (Number(rec?.company_id) || getActiveFirmaId())
+      (Number(rec?.company_id) || getActiveCompanyId())
         ? 'Bu firmaya bağlı aktif depo bulunamadı. Depo Tanımları ekranından ekleyin.'
         : 'Önce firma seçin; firmanın tüm iş yeri depoları burada listelenir.'
     }</td></tr>`;
@@ -14832,7 +14832,7 @@ function renderStokDepoYetkiPane(rec) {
     </section>`;
 }
 
-function bindStokDepoYetkiEvents() {
+function bindItemWarehousePermissionEvents() {
   const box = document.querySelector('.stok-depo-yetki-pane');
   if (!box || box.dataset.bound === '1') return;
   box.dataset.bound = '1';
@@ -14870,7 +14870,7 @@ function bindStokDepoYetkiEvents() {
   syncHead();
 }
 
-function readStokDepoBaglariFromDom(rec) {
+function readItemWarehouseLinksFromDom(rec) {
   const box = document.querySelector('.stok-depo-yetki-pane');
   if (!box) {
     return Array.isArray(rec?.depo_baglari) ? rec.depo_baglari : [];
@@ -14892,7 +14892,7 @@ function readStokDepoBaglariFromDom(rec) {
   return out;
 }
 
-function ensureDefaultWarehousesInDepoBaglari(master) {
+function ensureDefaultWarehousesInWarehouseLinks(master) {
   const bags = Array.isArray(master.depo_baglari) ? [...master.depo_baglari] : [];
   const plantId = Number(master.plant_id) || null;
   const ensure = (wid) => {
@@ -14907,14 +14907,14 @@ function ensureDefaultWarehousesInDepoBaglari(master) {
 }
 
 /** Kalabalık master listesini birincil + ek + alt şerit notlarına böler. */
-function isTransferHareketKodu(hk) {
+function isTransferMovementCode(hk) {
   if (!hk) return false;
   const tip = String(hk.document_type || '');
   const yon = String(hk.direction || '');
   return tip === 'Transfer' || yon === 'Transfer' || /^TRF/i.test(String(hk.movement_code || ''));
 }
 
-function hareketKoduRowById(id) {
+function movementCodeRowById(id) {
   if (id == null || id === '') return null;
   const rows = state.lookupCache?.['hareket-kodlari-stok']
     || state.lookupCache?.['hareket-kodlari']
@@ -14923,13 +14923,13 @@ function hareketKoduRowById(id) {
 }
 
 /** Önizleme — sayacı artırmaz; gerçek no kayıtta sunucuda ayrılır. */
-async function peekStokHareketNo(movementCode) {
+async function peekStockMovementNo(movementCode) {
   const q = encodeURIComponent(movementCode);
   const data = await api(`/kod-serileri/stok-hareket/peek?movement_code=${q}`);
   return data.kod;
 }
 
-async function refreshStokHareketNo(force = false) {
+async function refreshStockMovementNo(force = false) {
   const screen = findScreen(state.screenId);
   if (!screen?.numeratorFromMovementCode || screen.id !== 'stok-hareketleri') return;
   if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
@@ -14944,13 +14944,13 @@ async function refreshStokHareketNo(force = false) {
     return;
   }
   await fetchLookupKey(screen.numeratorFromMovementCode.lookup || 'hareket-kodlari-stok').catch(() => null);
-  const hk = hareketKoduRowById(tipVal);
+  const hk = movementCodeRowById(tipVal);
   const code = hk?.[screen.numeratorFromMovementCode.codeKey || 'movement_code'];
   if (!code) return;
   const seri = `STOK_HAREKET__${String(code).toUpperCase()}`;
   if (!force && state.formNumeratorSeri === seri && state.formRecord?.[screen.codeField]) return;
   try {
-    const kod = await peekStokHareketNo(code);
+    const kod = await peekStockMovementNo(code);
     if (!state.formRecord) state.formRecord = {};
     state.formRecord[screen.codeField] = kod;
     state.formRecord[tipKey] = tipVal;
@@ -14965,24 +14965,24 @@ async function refreshStokHareketNo(force = false) {
   }
 }
 
-function bindStokHareketNumerator(screen) {
+function bindStockMovementNumerator(screen) {
   const tipKey = screen.numeratorFromMovementCode.field || 'movement_code_id';
   const tipEl = findAttrControl('data-master', tipKey);
   if (!tipEl || tipEl.dataset.numeratorBound === '1') return;
   tipEl.dataset.numeratorBound = '1';
   tipEl.addEventListener('change', () => {
-    refreshStokHareketNo(true);
-    syncStokHareketTransferFields();
+    refreshStockMovementNo(true);
+    syncStockMovementTransferFields();
   });
 }
 
-function syncStokHareketTransferFields() {
+function syncStockMovementTransferFields() {
   const screen = findScreen(state.screenId);
   if (!screen || screen.id !== 'stok-hareketleri') return;
   const hkId = findAttrControl('data-master', 'movement_code_id')?.value
     || state.formRecord?.movement_code_id;
-  const hk = hareketKoduRowById(hkId);
-  const transfer = isTransferHareketKodu(hk);
+  const hk = movementCodeRowById(hkId);
+  const transfer = isTransferMovementCode(hk);
   const hedefSel = findAttrControl('data-master', 'target_warehouse_id');
   if (!hedefSel) return;
   const widget = hedefSel.closest('.lookup-widget') || hedefSel.closest('.field');
@@ -15011,7 +15011,7 @@ function syncStokHareketTransferFields() {
   }
 }
 
-function bindStokHareketBarkodToggle() {
+function bindStockMovementBarcodeToggle() {
   const screen = findScreen(state.screenId);
   if (!screen?.barkodScanToggle) return;
   const chk = document.getElementById('stokHareketBarkodMod');
@@ -15199,7 +15199,7 @@ function renderMrpParametrePane(rec) {
   const p = ensureMrpFormParametre(rec);
   const readonly = state.formMode === 'incele';
   const disRun = readonly ? 'disabled' : '';
-  const firmaId = rec?.company_id || getActiveFirmaId() || '';
+  const firmaId = rec?.company_id || getActiveCompanyId() || '';
   const firmaRows = state.lookupCache?.companies || state.firmalar || [];
   const firma = firmaRows.find((f) => Number(f.id) === Number(firmaId));
   const plantId = rec?.plant_id || state.activeIsYeriId || '';
@@ -15519,17 +15519,17 @@ async function bindMrpKonsolEvents() {
   $('#btnMrpKonsolCalistir')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    mrpCalistirKaydet().catch((err) => toast(err.message || 'MRP çalıştırılamadı'));
+    runAndSaveMrp().catch((err) => toast(err.message || 'MRP çalıştırılamadı'));
   });
   $('#btnMrpSonucTalep')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    mrpTalepOlustur().catch((err) => toast(err.message));
+    createMrpRequisitions().catch((err) => toast(err.message));
   });
   $('#btnMrpSonucUretim')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    mrpUretimOlustur().catch((err) => toast(err.message));
+    createMrpProductionOrders().catch((err) => toast(err.message));
   });
   $('#btnMrpSonucRapor')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -15584,7 +15584,7 @@ async function openMrpRaporWindow() {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       'X-Kullanici-Kodu': state.user?.user_code || state.auth?.user_code || 'owner',
-      ...(getActiveFirmaId() ? { 'X-Firma-Id': String(getActiveFirmaId()) } : {}),
+      ...(getActiveCompanyId() ? { 'X-Firma-Id': String(getActiveCompanyId()) } : {}),
     },
   });
   if (!res.ok) {
@@ -15598,7 +15598,7 @@ async function openMrpRaporWindow() {
   w.document.close();
 }
 
-async function mrpCalistirKaydet() {
+async function runAndSaveMrp() {
   const konsol = findScreen('mrp-calisma');
   const formOpen = state.screenId === 'mrp-calisma'
     && state.formMode
@@ -15617,7 +15617,7 @@ async function mrpCalistirKaydet() {
   const parametre = ensureMrpFormParametre(rec);
   const body = {
     description: rec.description || 'UI MRP çalışması',
-    company_id: rec.company_id || getActiveFirmaId() || null,
+    company_id: rec.company_id || getActiveCompanyId() || null,
     plant_id: rec.plant_id || state.activeIsYeriId || null,
     start_date: parametre.start_date,
     end_date: parametre.end_date,
@@ -15647,28 +15647,28 @@ async function mrpCalistirKaydet() {
   }
 }
 
-async function mrpTalepOlustur() {
+async function createMrpRequisitions() {
   const screen = findScreen(state.screenId);
   const sel = selectedRow();
   const body = {};
   if (sel?.item_id) body.stok_idler = [sel.item_id];
   const runId = state.mrpCalismaId || state.formRecord?.id;
   if ((screen?.mrpSonucMode || screen?.mrpKonsol) && runId) body.run_id = runId;
-  if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+  if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
   if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
   const result = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
   toast(`SA talep oluştu: ${result.requisition_no || result.id}`);
   openScreen('satin-alma-talepleri');
 }
 
-async function mrpUretimOlustur() {
+async function createMrpProductionOrders() {
   const screen = findScreen(state.screenId);
   const sel = selectedRow();
   const body = {};
   if (sel?.item_id) body.stok_idler = [sel.item_id];
   const runId = state.mrpCalismaId || state.formRecord?.id;
   if ((screen?.mrpSonucMode || screen?.mrpKonsol) && runId) body.run_id = runId;
-  if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+  if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
   if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
   const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
   toast(`${result.olusan || 0} üretim emri oluştu`);
@@ -15993,7 +15993,7 @@ function isAdminLikeUser(rec) {
  * ADMIN / Yönetici + boş yetki listesi = tüm ekranlar (gelecekte eklenenler dahil).
  * Formda görsel olarak hepsi işaretli gösterilir.
  */
-function yetkiMapFromRecord(rec) {
+function permissionMapFromRecord(rec) {
   const map = {};
   const list = rec?.yetkiler || [];
   if (!list.length && isAdminLikeUser(rec)) {
@@ -16069,7 +16069,7 @@ function resizeImageToDataUrl(file, maxSide = 256, quality = 0.72) {
   });
 }
 
-function renderKullaniciProfilBlok(rec) {
+function renderUserProfileBlock(rec) {
   const src = rec.profile_image || '';
   const readonly = state.formMode === 'incele';
   return `
@@ -16093,7 +16093,7 @@ function renderKullaniciProfilBlok(rec) {
     </section>`;
 }
 
-function renderFirmaYetkiPane(rec) {
+function renderCompanyPermissionPane(rec) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const companies = Array.isArray(state.companies) ? state.companies : [];
@@ -16145,8 +16145,8 @@ function renderFirmaYetkiPane(rec) {
     </section>`;
 }
 
-function renderYetkiGrid(rec) {
-  const map = yetkiMapFromRecord(rec);
+function renderPermissionGrid(rec) {
+  const map = permissionMapFromRecord(rec);
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const rows = allScreensCatalog();
@@ -16249,7 +16249,7 @@ function renderYetkiGrid(rec) {
     </section>`;
 }
 
-function readYetkiGridFromDom() {
+function readPermissionGridFromDom() {
   const rows = [];
   document.querySelectorAll('#yetkiTable tbody tr[data-yetki-ekran]').forEach((tr) => {
     const erisim = tr.querySelector('[data-yetki="erisim"]')?.checked;
@@ -16264,7 +16264,7 @@ function readYetkiGridFromDom() {
   return rows;
 }
 
-function readFirmaYetkiFromDom() {
+function readCompanyPermissionsFromDom() {
   const out = [];
   document.querySelectorAll('#firmaYetkiTable tbody tr[data-firma-yetki]').forEach((tr) => {
     if (!tr.querySelector('[data-firma-check]')?.checked) return;
@@ -16274,7 +16274,7 @@ function readFirmaYetkiFromDom() {
   return out;
 }
 
-function setYetkiModOpen(modId, open) {
+function setPermissionModuleOpen(modId, open) {
   if (!state.yetkiModOpen) state.yetkiModOpen = {};
   state.yetkiModOpen[modId] = Boolean(open);
   const table = $('#yetkiTable');
@@ -16288,7 +16288,7 @@ function setYetkiModOpen(modId, open) {
   });
 }
 
-function bindYetkiGridEvents() {
+function bindPermissionGridEvents() {
   const table = $('#yetkiTable');
   if (!table) return;
 
@@ -16299,17 +16299,17 @@ function bindYetkiGridEvents() {
     const modId = toggle.getAttribute('data-yetki-mod-toggle');
     if (!modId) return;
     const open = toggle.getAttribute('aria-expanded') !== 'true';
-    setYetkiModOpen(modId, open);
+    setPermissionModuleOpen(modId, open);
   });
 
   $('#yetkiExpandAllMods')?.addEventListener('click', () => {
     table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
-      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), true);
+      setPermissionModuleOpen(tr.getAttribute('data-yetki-mod'), true);
     });
   });
   $('#yetkiCollapseAllMods')?.addEventListener('click', () => {
     table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
-      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), false);
+      setPermissionModuleOpen(tr.getAttribute('data-yetki-mod'), false);
     });
   });
 
@@ -16331,7 +16331,7 @@ function bindYetkiGridEvents() {
     if (hepsi) hepsi.checked = acts.every((el) => el?.checked);
     // Erişim açılınca satırın modülü kapalıysa aç — Yeni/Düzelt görünsün
     const modId = tr.getAttribute('data-yetki-mod-of');
-    if (modId && tr.classList.contains('is-collapsed')) setYetkiModOpen(modId, true);
+    if (modId && tr.classList.contains('is-collapsed')) setPermissionModuleOpen(modId, true);
   };
 
   const syncHeadChecks = () => {
@@ -16438,7 +16438,7 @@ function bindYetkiGridEvents() {
   syncHeadChecks();
 }
 
-function bindFirmaYetkiEvents() {
+function bindCompanyPermissionEvents() {
   const table = $('#firmaYetkiTable');
   if (!table || state.formMode === 'incele') return;
 
@@ -16561,14 +16561,14 @@ function renderMasterDetailPanel(tab, rec) {
   return `
     <div class="kullanici-form-stack">
       ${shell}
-      ${renderKullaniciProfilBlok(rec)}
-      ${renderFirmaYetkiPane(rec)}
-      ${renderSqlYetkiPane(rec)}
-      ${renderYetkiGrid(rec)}
+      ${renderUserProfileBlock(rec)}
+      ${renderCompanyPermissionPane(rec)}
+      ${renderSqlPermissionPane(rec)}
+      ${renderPermissionGrid(rec)}
     </div>`;
 }
 
-function renderSqlYetkiPane(rec) {
+function renderSqlPermissionPane(rec) {
   const p = rec?.sql_permissions || {
     can_select: true,
     can_insert: false,
@@ -16597,7 +16597,7 @@ function renderSqlYetkiPane(rec) {
     </section>`;
 }
 
-function readSqlYetkiFromDom() {
+function readSqlPermissionsFromDom() {
   const box = document.querySelector('.sql-yetki-pane');
   if (!box) {
     return { can_select: true, can_insert: false, can_update: false, can_delete: false };
@@ -16777,7 +16777,7 @@ function bomPathCrumbs(nodes, path) {
   for (let i = 0; i < parts.length; i += 1) {
     const n = cur[Number(parts[i])];
     if (!n) break;
-    const st = stokLookupById(n.component_item_id);
+    const st = itemLookupById(n.component_item_id);
     crumbs.push(st?.item_code || n.item_code || '…');
     cur = n.alt_satirlar || [];
   }
@@ -16789,7 +16789,7 @@ function renderBomPreviewTree(agacRec, mamulFallback) {
   if (!agacRec) {
     return '<div class="detail-empty">Ürün ağacı seçin — Mamul → Yarı mamul → Hammadde burada görünür.</div>';
   }
-  const mamul = stokLookupById(agacRec.finished_good_item_id) || mamulFallback;
+  const mamul = itemLookupById(agacRec.finished_good_item_id) || mamulFallback;
   const roots = Array.isArray(agacRec.agac) && agacRec.agac.length
     ? agacRec.agac
     : (Array.isArray(agacRec.satirlar) ? (() => {
@@ -16806,7 +16806,7 @@ function renderBomPreviewTree(agacRec, mamulFallback) {
     })() : []);
 
   const walk = (nodes, depth) => (nodes || []).map((n) => {
-    const st = stokLookupById(n.component_item_id) || n;
+    const st = itemLookupById(n.component_item_id) || n;
     const type = n.item_type || st.item_type || '';
     const qty = n.quantity != null ? n.quantity : '';
     const kids = n.alt_satirlar || [];
@@ -16837,7 +16837,7 @@ function renderBomPreviewTree(agacRec, mamulFallback) {
 }
 
 function renderBomNode(node, path, depth, tab, canEdit) {
-  const stok = stokLookupById(node.component_item_id);
+  const stok = itemLookupById(node.component_item_id);
   const kod = node.item_code || stok?.item_code || '';
   const adi = node.item_name || stok?.item_name || '';
   const type = node.item_type || stok?.item_type || '';
@@ -16904,7 +16904,7 @@ function renderBomNode(node, path, depth, tab, canEdit) {
 function renderBomTree(tab, rec) {
   const nodes = ensureBomTree(rec);
   const canEdit = state.formMode !== 'incele';
-  const mamul = stokLookupById(rec.finished_good_item_id);
+  const mamul = itemLookupById(rec.finished_good_item_id);
   const headerFields = tab.headerFields || [];
 
   // Varsayılan: tüm seviyeler açık (mamul → ym → hm görünsün)
@@ -16957,7 +16957,7 @@ function renderBomTree(tab, rec) {
 }
 
 /** Ürün ağacı satırlarından rotaya aktarılacak malzemeler (yaprak / iş emrine giden). */
-function collectBomMaterialsForRota(bomRec) {
+function collectBomMaterialsForRouting(bomRec) {
   if (!bomRec) return [];
   let flat = Array.isArray(bomRec.satirlar) ? bomRec.satirlar.slice() : [];
   if (!flat.length && Array.isArray(bomRec.agac)) {
@@ -17001,7 +17001,7 @@ function collectBomMaterialsForRota(bomRec) {
   return [...byItem.values()];
 }
 
-function emptyRotaOperation(lineNo = 10, seed = {}) {
+function emptyRoutingOperation(lineNo = 10, seed = {}) {
   return {
     line_no: lineNo,
     operation_code: `OP${lineNo}`,
@@ -17022,7 +17022,7 @@ function emptyRotaOperation(lineNo = 10, seed = {}) {
   };
 }
 
-function materialToRotaComp(m) {
+function materialToRoutingComp(m) {
   return {
     item_id: m.item_id,
     quantity: m.quantity,
@@ -17040,7 +17040,7 @@ function distributeBomMaterialsToOps(ops, materials, { replace = true } = {}) {
     bilesenler: Array.isArray(o.bilesenler) ? [...o.bilesenler] : [],
     ekipmanlar: Array.isArray(o.ekipmanlar) ? [...o.ekipmanlar] : [],
   })) : [];
-  if (!list.length) list.push(emptyRotaOperation(10));
+  if (!list.length) list.push(emptyRoutingOperation(10));
   if (replace) list.forEach((op) => { op.bilesenler = []; });
 
   const unassigned = [];
@@ -17052,16 +17052,16 @@ function distributeBomMaterialsToOps(ops, materials, { replace = true } = {}) {
     if (idx < 0 && m.operation_seq != null && m.operation_seq !== '') {
       idx = list.findIndex((o) => Number(o.line_no) === Number(m.operation_seq));
     }
-    if (idx >= 0) list[idx].bilesenler.push(materialToRotaComp(m));
+    if (idx >= 0) list[idx].bilesenler.push(materialToRoutingComp(m));
     else unassigned.push(m);
   });
   if (unassigned.length) {
-    list[0].bilesenler.push(...unassigned.map(materialToRotaComp));
+    list[0].bilesenler.push(...unassigned.map(materialToRoutingComp));
   }
   return list;
 }
 
-async function loadBomRecordForRota(bomId) {
+async function loadBomRecordForRouting(bomId) {
   if (bomId == null || bomId === '') return null;
   let bomRec = (state.lookupCache['urun-agaclari'] || [])
     .find((a) => String(a.id) === String(bomId));
@@ -17082,8 +17082,8 @@ async function loadBomRecordForRota(bomId) {
 }
 
 /** Başlık ürün ağacından seçili operasyona malzeme aktar. */
-async function applyBomMaterialsToRota(screen, { quiet = false, force = false, opIdx = null } = {}) {
-  const tab = findRotaTab(screen);
+async function applyBomMaterialsToRouting(screen, { quiet = false, force = false, opIdx = null } = {}) {
+  const tab = findRoutingTab(screen);
   if (!tab) return false;
   const master = readMasterFromForm(screen);
   state.formRecord = { ...(state.formRecord || {}), ...master };
@@ -17100,8 +17100,8 @@ async function applyBomMaterialsToRota(screen, { quiet = false, force = false, o
     return false;
   }
   const op = { ...ops[idx], bilesenler: Array.isArray(ops[idx].bilesenler) ? [...ops[idx].bilesenler] : [] };
-  const bomRec = await loadBomRecordForRota(bomId);
-  const materials = collectBomMaterialsForRota(bomRec);
+  const bomRec = await loadBomRecordForRouting(bomId);
+  const materials = collectBomMaterialsForRouting(bomRec);
   if (!materials.length) {
     if (!quiet) toast('Ürün ağacında aktarılacak malzeme satırı yok.');
     return false;
@@ -17112,7 +17112,7 @@ async function applyBomMaterialsToRota(screen, { quiet = false, force = false, o
       `Bu operasyonda ${existingCount} malzeme var. Ağaçtan ${materials.length} satır ile değiştirilsin mi?`,
     )) return false;
   }
-  op.bilesenler = materials.map(materialToRotaComp);
+  op.bilesenler = materials.map(materialToRoutingComp);
   ops[idx] = op;
   state.formRecord.operasyonlar = ops;
   state.flowSel = idx;
@@ -17127,7 +17127,7 @@ async function applyBomMaterialsToRota(screen, { quiet = false, force = false, o
 }
 
 /** Operasyon üst alanları düz grid (grup başlıksız) — sıra tanım sırası. */
-function renderRotaPrimaryFields(fields, op, attrName = 'data-flow-field') {
+function renderRoutingPrimaryFields(fields, op, attrName = 'data-flow-field') {
   const list = (fields || []).filter((f) => f && f.type !== 'static');
   if (!list.length) return '';
   const ctx = op || {};
@@ -17141,7 +17141,7 @@ function renderRotaPrimaryFields(fields, op, attrName = 'data-flow-field') {
 }
 
 /** Operasyon üst alanları + Planlama / Gelişmiş accordion. materialsHtml üst alanlardan sonra gömülür. */
-function renderRotaOpFields(tab, op, { materialsHtml = '', headerBomId = '' } = {}) {
+function renderRoutingOpFields(tab, op, { materialsHtml = '', headerBomId = '' } = {}) {
   const all = tab.fields || [];
   const opCtx = { ...op, product_bom_id: op.product_bom_id || headerBomId || '' };
   const primary = all.filter((f) => !f.section);
@@ -17151,7 +17151,7 @@ function renderRotaOpFields(tab, op, { materialsHtml = '', headerBomId = '' } = 
   const showAdv = Boolean(state.rotaShowAdvanced);
   return `
     <div data-flow-editor>
-      ${renderRotaPrimaryFields(primary, opCtx, 'data-flow-field')}
+      ${renderRoutingPrimaryFields(primary, opCtx, 'data-flow-field')}
       ${materialsHtml || ''}
       ${planlama.length ? `
         <details class="rota-advanced" data-rota-section="planlama" ${showPlan ? 'open' : ''}>
@@ -17170,7 +17170,7 @@ function renderRotaOpFields(tab, op, { materialsHtml = '', headerBomId = '' } = 
     </div>`;
 }
 
-function renderRotaFlow(tab, rec) {
+function renderRoutingFlow(tab, rec) {
   const ops = normalizeGridRows(
     { fields: tab.fields },
     Array.isArray(rec.operasyonlar) ? rec.operasyonlar : []
@@ -17192,7 +17192,7 @@ function renderRotaFlow(tab, rec) {
   const bomRec = bomId
     ? (state.lookupCache['urun-agaclari'] || []).find((a) => String(a.id) === String(bomId))
     : null;
-  const headerStok = stokLookupById(rec.item_id);
+  const headerStok = itemLookupById(rec.item_id);
   const headerFields = tab.headerFields || [];
   const equipFields = tab.equipmentFields || [];
   const sablonField = {
@@ -17220,7 +17220,7 @@ function renderRotaFlow(tab, rec) {
           ` : (canEdit ? '<span class="toolbar-hint">Önce rota başlığında ürün ağacı seçin.</span>' : '')}
         </div>
         ${mats.length ? mats.map((b, ci) => {
-    const st = stokLookupById(b.item_id);
+    const st = itemLookupById(b.item_id);
     const picked = state.flowCompSel === ci;
     const qty = (b.quantity !== '' && b.quantity != null) ? b.quantity : '';
     return `
@@ -17293,8 +17293,8 @@ function renderRotaFlow(tab, rec) {
             ${ops.length ? ops.map((op, idx) => {
     const open = sel === idx;
     const hasKod = Boolean(op.operation_code || op.operation_name);
-    const cikti = stokLookupById(op.output_item_id);
-    const opItem = stokLookupById(op.item_id);
+    const cikti = itemLookupById(op.output_item_id);
+    const opItem = itemLookupById(op.item_id);
     const eqCount = (op.ekipmanlar || []).length;
     const matCount = (op.bilesenler || []).length;
     return `
@@ -17306,7 +17306,7 @@ function renderRotaFlow(tab, rec) {
                 </button>
                 ${open ? `
                   <div class="rota-op-body">
-                    ${renderRotaOpFields(tab, op, {
+                    ${renderRoutingOpFields(tab, op, {
     headerBomId: bomId,
     materialsHtml: renderOpMaterials(op),
   })}
@@ -17364,7 +17364,7 @@ function renderZincirStrip(screen, rec) {
     const top = document.querySelector('.form-topbar');
     if (top && top.parentNode) top.parentNode.insertBefore(strip, top.nextSibling);
   }
-  if (!isIrsaliyeYonetimiScreen(screen) || !rec?.id) {
+  if (!isDeliveryNoteManagementScreen(screen) || !rec?.id) {
     strip.hidden = true;
     strip.innerHTML = '';
     return;
@@ -17429,17 +17429,17 @@ function renderForm(screen) {
     const act = screen.convertAction || screen.approveAction;
     // P39: Taslak irsaliyede fatura dönüşümü gösterme — önce onay
     let show = Boolean(act && rec.id && state.formMode !== 'yeni');
-    if (isIrsaliyeYonetimiScreen(screen) && rec.status === 'Taslak') {
+    if (isDeliveryNoteManagementScreen(screen) && rec.status === 'Taslak') {
       show = Boolean(screen.approveAction);
     }
-    if (isIrsaliyeYonetimiScreen(screen) && rec.status === 'Onayli') {
+    if (isDeliveryNoteManagementScreen(screen) && rec.status === 'Onayli') {
       // Fatura Oluştur: yalnızca GİB’e gönderildikten sonra is_active
       show = Boolean(screen.convertAction && String(rec.e_document_status || '') === 'Gonderildi');
     }
-    if (isIrsaliyeYonetimiScreen(screen) && rec.status === 'FaturayaDonustu') {
+    if (isDeliveryNoteManagementScreen(screen) && rec.status === 'FaturayaDonustu') {
       show = false;
     }
-    if (isFaturaYonetimiScreen(screen)) {
+    if (isInvoiceManagementScreen(screen)) {
       const alis = String(rec.invoice_type || '').toLowerCase().includes('alis');
       if (alis && !rec.is_posted) {
         // Alış: 3-way eşleştir (approve) veya muhasebeleştir (convert) — convert birincil
@@ -17510,7 +17510,7 @@ function renderForm(screen) {
         secShow = true;
         secLabel = 'Reddet';
         secBtn.dataset.secKind = 'onay-red';
-      } else if (isFaturaYonetimiScreen(screen) && rec.id && screen.approveAction
+      } else if (isInvoiceManagementScreen(screen) && rec.id && screen.approveAction
         && String(rec.invoice_type || '').toLowerCase().includes('alis')) {
         secShow = true;
         secLabel = screen.approveAction.label;
@@ -17585,7 +17585,7 @@ function renderForm(screen) {
         conv.dataset.convertKind = 'open-cari';
       } else {
         const preferApprove = (screen.approveAction && (
-          (isIrsaliyeYonetimiScreen(screen) && rec.status === 'Taslak')
+          (isDeliveryNoteManagementScreen(screen) && rec.status === 'Taslak')
           || (screen.id === 'muhasebe-belgeleri' && rec.status === 'Taslak')
           || (screen.id === 'muhasebe-donemleri' && ['Acik', 'YenidenAcik'].includes(rec.status))
           || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
@@ -17710,22 +17710,22 @@ function renderForm(screen) {
     }
     if (tab.kind === 'rota-flow' || tab.kind === 'rota-workspace') {
       return `<div class="form-tab-panel form-tab-panel--scroll" data-tab-panel="${tab.id}" ${hide}>
-        ${renderRotaFlow(tab, rec)}
+        ${renderRoutingFlow(tab, rec)}
       </div>`;
     }
     if (tab.kind === 'stok-firmalar') {
       return `<div class="form-tab-panel form-tab-panel--md${active ? ' form-tab-panel--scrollable' : ''}" data-tab-panel="${tab.id}" ${hide}>
-        ${renderStokFirmalarPane(rec)}
+        ${renderItemCompaniesPane(rec)}
       </div>`;
     }
     if (tab.kind === 'cari-firmalar') {
       return `<div class="form-tab-panel form-tab-panel--md${active ? ' form-tab-panel--scrollable' : ''}" data-tab-panel="${tab.id}" ${hide}>
-        ${renderCariFirmalarPane(rec)}
+        ${renderPartnerCompaniesPane(rec)}
       </div>`;
     }
     if (tab.kind === 'stok-depolar') {
       return `<div class="form-tab-panel form-tab-panel--md${active ? ' form-tab-panel--scrollable' : ''}" data-tab-panel="${tab.id}" ${hide}>
-        ${renderStokDepolarPane(tab, rec)}
+        ${renderItemWarehousesPane(tab, rec)}
       </div>`;
     }
     if (tab.kind === 'mrp-parametre') {
@@ -17772,18 +17772,18 @@ function renderForm(screen) {
   bindCascadeLookups(screen);
   enableDetailTableColumnResize(screen);
   if (screen.kullaniciYetkiPaneli) {
-    bindYetkiGridEvents();
-    bindFirmaYetkiEvents();
+    bindPermissionGridEvents();
+    bindCompanyPermissionEvents();
     bindAvatarEvents();
   }
   if ((screen.formTabs || []).some((t) => t.kind === 'stok-firmalar')) {
-    bindStokFirmaYetkiEvents();
+    bindItemCompanyPermissionEvents();
   }
   if ((screen.formTabs || []).some((t) => t.kind === 'cari-firmalar')) {
-    bindCariFirmaYetkiEvents();
+    bindPartnerCompanyPermissionEvents();
   }
   if ((screen.formTabs || []).some((t) => t.kind === 'stok-depolar')) {
-    bindStokDepoYetkiEvents();
+    bindItemWarehousePermissionEvents();
   }
   if (screen.mrpKonsol) {
     ['btnFormSave', 'btnFormSaveClose', 'btnFormSaveNew'].forEach((id) => {
@@ -17796,12 +17796,12 @@ function renderForm(screen) {
     bindMrpKonsolEvents().catch(() => {});
   }
   if (screen.id === 'stok-hareketleri') {
-    bindStokHareketBarkodToggle();
-    bindStokHareketNumerator(screen);
+    bindStockMovementBarcodeToggle();
+    bindStockMovementNumerator(screen);
     fetchLookupKey('hareket-kodlari-stok').then(() => {
-      syncStokHareketTransferFields();
-      refreshStokHareketNo(false);
-    }).catch(() => { syncStokHareketTransferFields(); });
+      syncStockMovementTransferFields();
+      refreshStockMovementNo(false);
+    }).catch(() => { syncStockMovementTransferFields(); });
   }
 }
 
@@ -18042,7 +18042,7 @@ function collectLookupFieldDefs(screen) {
 
 function findFieldDefByKey(screen, key) {
   return collectLookupFieldDefs(screen).find((f) => f.key === key)
-    || (TANIM_LOOKUP_BY_KEY[key] ? applyTanimLookup({ key, label: key }) : null);
+    || (TANIM_LOOKUP_BY_KEY[key] ? applyDefinitionLookup({ key, label: key }) : null);
 }
 
 /** Lookup / select popup: tablo kolonları */
@@ -18376,7 +18376,7 @@ function resolveSelectFieldDef(sel) {
   const filterKey = sel.getAttribute('data-filter-a');
   if (filterKey && screen) {
     const ff = (screen.filters || []).find((f) => f.key === filterKey);
-    if (ff) return applyTanimLookup({ ...ff });
+    if (ff) return applyDefinitionLookup({ ...ff });
   }
   const key = sel.getAttribute('data-master')
     || sel.getAttribute('data-detail')
@@ -18498,11 +18498,11 @@ function updateLookupBrowserActionButtons() {
       bar.querySelectorAll('[data-lb-act]').forEach((btn) => {
         const act = btn.getAttribute('data-lb-act');
         if (act === 'yeni') {
-          btn.disabled = !ekranYetkisi(screen.id, 'yeni');
+          btn.disabled = !screenPermission(screen.id, 'yeni');
         } else if (act === 'sil') {
-          btn.disabled = !hasId || !ekranYetkisi(screen.id, 'sil');
+          btn.disabled = !hasId || !screenPermission(screen.id, 'sil');
         } else {
-          btn.disabled = !hasId || !ekranYetkisi(screen.id, act);
+          btn.disabled = !hasId || !screenPermission(screen.id, act);
         }
       });
     }
@@ -18848,7 +18848,7 @@ async function lookupBrowserCrudAction(act) {
     return;
   }
   if (act === 'sil') {
-    if (!ekranYetkisi(screen.id, 'sil')) {
+    if (!screenPermission(screen.id, 'sil')) {
       toast('Bu ekranda silme yetkiniz yok.');
       return;
     }
@@ -19246,7 +19246,7 @@ function setLinkedSelectValue(sel, value, fieldKey) {
 function resolveFormLinkValue(rule, ctx) {
   const itemId = ctx.item_id || ctx.finished_good_item_id || ctx.component_item_id;
   if (rule.fromItem) {
-    const st = stokLookupById(itemId);
+    const st = itemLookupById(itemId);
     if (!st) return '';
     let v = st[rule.fromItem];
     if (rule.asName && rule.fromItem === 'item_name' && v) {
@@ -19695,7 +19695,7 @@ function bindCascadeLookups(_screen) {
       const pb = el.value;
       if (masterKey) {
         const kurEl = document.querySelector('[data-master="exchange_rate"]');
-        await applyKurForParaBirimi(pb, kurEl, { force: true });
+        await applyExchangeRateForCurrency(pb, kurEl, { force: true });
         if (state.formRecord && kurEl) state.formRecord.exchange_rate = Number(kurEl.value) || 1;
       } else if (detailKey) {
         const didx = el.getAttribute('data-didx');
@@ -19703,7 +19703,7 @@ function bindCascadeLookups(_screen) {
         const kurEl = document.querySelector(
           `[data-detail="exchange_rate"][data-didx="${didx}"][data-grid="${grid}"]`
         );
-        await applyKurForParaBirimi(pb, kurEl, { force: true });
+        await applyExchangeRateForCurrency(pb, kurEl, { force: true });
       }
     }
 
@@ -19718,7 +19718,7 @@ function bindCascadeLookups(_screen) {
       // fillCariAdres: müşteri → Adres sekmesi (sevk_*) otomatik
       if (f?.fillCariAdres && el.value) {
         state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
-        await fillAdresFromCari(el.value, { force: true });
+        await fillAddressFromPartner(el.value, { force: true });
         renderForm(scr);
         toast('Cari address / ödeme bilgileri forma aktarıldı');
         return;
@@ -19730,7 +19730,7 @@ function bindCascadeLookups(_screen) {
         && (scr.id === 'urun-agaci' || scr.id === 'routings')) {
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
       if (masterKey === 'finished_good_item_id' || masterKey === 'item_id') {
-        const st = stokLookupById(state.formRecord[masterKey]);
+        const st = itemLookupById(state.formRecord[masterKey]);
         if (st && scr.id === 'urun-agaci' && !String(state.formRecord.bom_name || '').trim()) {
           state.formRecord.bom_name = `${st.item_name} Ağacı`;
         }
@@ -19818,7 +19818,7 @@ function persistBomEditor(rec, tab) {
   });
   node.alternatifler = altRows;
   syncBomQtyFields(node);
-  const st = stokLookupById(node.component_item_id);
+  const st = itemLookupById(node.component_item_id);
   if (st) {
     node.item_code = st.item_code;
     node.item_name = st.item_name;
@@ -19854,7 +19854,7 @@ function renderBomAltMaterials(node, tab, canEdit) {
 function findBomTab(screen) {
   return (screen.formTabs || []).find((t) => t.kind === 'bom-tree' || t.kind === 'bom-workspace');
 }
-function findRotaTab(screen) {
+function findRoutingTab(screen) {
   return (screen.formTabs || []).find((t) => t.kind === 'rota-flow' || t.kind === 'rota-workspace');
 }
 
@@ -19930,7 +19930,7 @@ async function openBomMultiItemPicker(screen, tab) {
     const nodes = ensureBomTree(state.formRecord);
     const fields = tab.fields || [];
     [...selected].forEach((id) => {
-      const st = stokLookupById(id);
+      const st = itemLookupById(id);
       if (!st) return;
       const row = blankBomRow(fields);
       row.component_item_id = String(st.id);
@@ -19981,7 +19981,7 @@ function applyBomEditorSelection(screen, { addAnother = false } = {}) {
     toast('Miktar 0’dan büyük olmalı.');
     return false;
   }
-  const st = stokLookupById(stokId);
+  const st = itemLookupById(stokId);
   if (st) {
     node.item_code = st.item_code;
     node.item_name = st.item_name;
@@ -20053,8 +20053,8 @@ function persistFlowEditor(rec, tab) {
 }
 
 /** Ekipman satırı uygula */
-function applyRotaEquipSelection(screen, { addAnother = false } = {}) {
-  const tab = findRotaTab(screen);
+function applyRoutingEquipSelection(screen, { addAnother = false } = {}) {
+  const tab = findRoutingTab(screen);
   if (!tab) return false;
   if (state.flowSel == null) {
     toast('Önce operasyon seçin.');
@@ -20094,7 +20094,7 @@ function applyRotaEquipSelection(screen, { addAnother = false } = {}) {
 }
 
 /** Şablon rota operasyonlarını bu forma uygula (kayıtlıysa API, değilse istemci kopyası). */
-async function applyRotaSablon(screen) {
+async function applyRoutingTemplate(screen) {
   const rec = state.formRecord || {};
   const master = readMasterFromForm(screen);
   Object.assign(rec, master);
@@ -20152,8 +20152,8 @@ async function applyRotaSablon(screen) {
 }
 
 /** Sağ panel → akış: operasyon alanlarını sola yaz */
-function applyRotaOpSelection(screen) {
-  const tab = findRotaTab(screen);
+function applyRoutingOpSelection(screen) {
+  const tab = findRoutingTab(screen);
   if (!tab) return false;
   if (state.flowSel == null) {
     toast('Önce soldan bir operasyon seçin veya «Yeni operasyon» ekleyin.');
@@ -20178,8 +20178,8 @@ function applyRotaOpSelection(screen) {
 }
 
 /** Sağ panel → bileşen: stok + quantity zorunlu (ürün ağacı kapsamı) */
-function applyRotaCompSelection(screen, { addAnother = false } = {}) {
-  const tab = findRotaTab(screen);
+function applyRoutingCompSelection(screen, { addAnother = false } = {}) {
+  const tab = findRoutingTab(screen);
   if (!tab) return false;
   if (state.flowSel == null) {
     toast('Önce operasyon seçin.');
@@ -20212,7 +20212,7 @@ function applyRotaCompSelection(screen, { addAnother = false } = {}) {
     toast('Miktar 0’dan büyük olmalı.');
     return false;
   }
-  const st = stokLookupById(stokId);
+  const st = itemLookupById(stokId);
   if (st) {
     b.item_code = st.item_code;
     b.item_name = st.item_name;
@@ -20588,7 +20588,7 @@ async function openForm(mode, opts = {}) {
     toast('Bu ekran yalnızca incelenebilir.');
     return;
   }
-  if (!ekranYetkisi(screen.id, mode)) {
+  if (!screenPermission(screen.id, mode)) {
     toast(`Bu ekranda «${MODE_LABELS[mode] || mode}» yetkiniz yok.`);
     return;
   }
@@ -20653,7 +20653,7 @@ async function openForm(mode, opts = {}) {
         // is_active varsayılan true → Pasif kutusu boş
         record[f.key] = f.key === 'is_inactive' ? false : true;
       } else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
-      else if (f.key === 'company_id' && getActiveFirmaId()) record[f.key] = getActiveFirmaId();
+      else if (f.key === 'company_id' && getActiveCompanyId()) record[f.key] = getActiveCompanyId();
       else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
       else if (record[f.key] === undefined) record[f.key] = '';
     });
@@ -20733,10 +20733,10 @@ async function openForm(mode, opts = {}) {
         planlanan_quantity: adayPrefill.remaining_quantity || adayPrefill.siparis_miktar || '',
       }];
     }
-    const seri = resolveNumeratorSeri(screen, record);
+    const seri = resolveNumeratorSeries(screen, record);
     if (seri && screen.codeField) {
       try {
-        record[screen.codeField] = await ayirKod(seri);
+        record[screen.codeField] = await reserveCode(seri);
         state.formNumeratorSeri = seri;
       } catch (err) { toast(err.message); }
     } else {
@@ -20748,10 +20748,10 @@ async function openForm(mode, opts = {}) {
     record = { ...full };
     delete record.id;
     if (screen.nameField) record[screen.nameField] = '';
-    const seri = resolveNumeratorSeri(screen, record);
+    const seri = resolveNumeratorSeries(screen, record);
     if (seri && screen.codeField) {
       try {
-        record[screen.codeField] = await ayirKod(seri);
+        record[screen.codeField] = await reserveCode(seri);
         state.formNumeratorSeri = seri;
       } catch (err) { toast(err.message); }
     } else {
@@ -20772,7 +20772,7 @@ async function openForm(mode, opts = {}) {
   }
 
   if (screen.id === 'stok-karti') {
-    hydrateStokFirmaIsYeri(record);
+    hydrateItemCompanyPlant(record);
   }
 
   // Mevcut tek rezervasyon kaydı → satır grid’ine yansıt (incele/iptal)
@@ -20818,7 +20818,7 @@ function playNestedEnterAnimation() {
  * Yoksa yenilemede X-Firma-Id eski firmada kalır, yeni kayıtlar listede görünmez.
  * Not: setActiveFirma tüm cache/sekmeleri siler — burada hafif güncelleme yapılır.
  */
-async function syncActiveFirmaAfterOrgSave(screen, saved) {
+async function syncActiveCompanyAfterOrgSave(screen, saved) {
   if (!saved) return;
   let nextFirmaId = null;
   if (screen.id === 'companies' && saved.id) {
@@ -20834,8 +20834,8 @@ async function syncActiveFirmaAfterOrgSave(screen, saved) {
       .find((p) => Number(p.id) === Number(saved.plant_id));
     if (plant?.company_id) nextFirmaId = Number(plant.company_id);
   }
-  if (!nextFirmaId || Number(getActiveFirmaId()) === nextFirmaId) {
-    renderFirmaPicker();
+  if (!nextFirmaId || Number(getActiveCompanyId()) === nextFirmaId) {
+    renderCompanyPicker();
     return;
   }
   state.activeFirmaId = nextFirmaId;
@@ -20844,9 +20844,9 @@ async function syncActiveFirmaAfterOrgSave(screen, saved) {
   delete state.lookupCache['is-yerleri'];
   delete state.lookupCache.warehouses;
   try {
-    await loadIsYerleriForActiveFirma();
+    await loadPlantsForActiveCompany();
   } catch (_) { /* ignore */ }
-  renderFirmaPicker();
+  renderCompanyPicker();
 }
 
 /** Kayıt sonrası: stay = formda kal, close = listeye dön, new = yeni form */
@@ -20928,18 +20928,18 @@ async function saveForm({ after = 'stay' } = {}) {
 
   // Cari kart: firma parametreleri (stok firmalar mantığı)
   if (screen.id === 'cari-kartlari') {
-    master.firma_parametreleri = readCariFirmaParamsFromDom(master)
+    master.firma_parametreleri = readPartnerCompanyParamsFromDom(master)
       .filter((p) => p && p.is_active !== false);
     if (!master.firma_parametreleri.length) {
       toast('En az bir firma işaretleyin (Firma Parametreleri).');
       return;
     }
-    applyPrimaryCariFirmaToMaster(master);
+    applyPrimaryPartnerCompanyToMaster(master);
   }
 
   // Stok kartı: firma tikleri + parametreler + depo tanımları
   if (screen.id === 'stok-karti') {
-    master.firma_parametreleri = readStokFirmaParamsFromDom(master)
+    master.firma_parametreleri = readItemCompanyParamsFromDom(master)
       .filter((p) => p && p.is_active !== false);
     if (!master.firma_parametreleri.length) {
       toast('En az bir firma işaretleyin.');
@@ -20969,8 +20969,8 @@ async function saveForm({ after = 'stay' } = {}) {
       const { _isOverride, ...rest } = p;
       return rest;
     });
-    const scopeBags = readStokFirmaIsYeriBaglariFromDom();
-    const aidScope = getActiveFirmaId();
+    const scopeBags = readItemCompanyPlantLinksFromDom();
+    const aidScope = getActiveCompanyId();
     if (scopeBags.length) {
       if (aidScope) {
         const prevBags = Array.isArray(state.formRecord?.is_yeri_baglari)
@@ -20991,11 +20991,11 @@ async function saveForm({ after = 'stay' } = {}) {
     } else {
       master.is_yeri_baglari = [];
     }
-    syncStokVergiFromGrid(master);
-    applyPrimaryStokFirmaToMaster(master);
-    syncStokFirmaIsYeriForSave(master);
-    master.depo_baglari = readStokDepoBaglariFromDom(master);
-    ensureDefaultWarehousesInDepoBaglari(master);
+    syncItemTaxFromGrid(master);
+    applyPrimaryItemCompanyToMaster(master);
+    syncItemCompanyPlantForSave(master);
+    master.depo_baglari = readItemWarehouseLinksFromDom(master);
+    ensureDefaultWarehousesInWarehouseLinks(master);
     if (master.default_tax_code_id) {
       const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
       const tax = taxRows.find((t) => Number(t.id) === Number(master.default_tax_code_id));
@@ -21071,9 +21071,9 @@ async function saveForm({ after = 'stay' } = {}) {
     delete master.parola_hash;
     delete master.refresh_token_hash;
     delete master.profil_var;
-    master.yetkiler = readYetkiGridFromDom();
-    master.firma_yetkileri = readFirmaYetkiFromDom();
-    master.sql_permissions = readSqlYetkiFromDom();
+    master.yetkiler = readPermissionGridFromDom();
+    master.firma_yetkileri = readCompanyPermissionsFromDom();
+    master.sql_permissions = readSqlPermissionsFromDom();
     compressYetkilerForSave(master);
     if (state.formRecord && Object.prototype.hasOwnProperty.call(state.formRecord, 'profile_image')) {
       master.profile_image = state.formRecord.profile_image;
@@ -21169,7 +21169,7 @@ async function saveForm({ after = 'stay' } = {}) {
       if (screen.id === 'zorunlu-alan-tanimlari') {
         await loadRequiredFieldDefs().catch(() => {});
       }
-      await syncActiveFirmaAfterOrgSave(screen, saved);
+      await syncActiveCompanyAfterOrgSave(screen, saved);
       await finishSaveForm(screen, saved, after);
       return;
     }
@@ -21205,7 +21205,7 @@ async function saveForm({ after = 'stay' } = {}) {
       await loadRequiredFieldDefs().catch(() => {});
     }
     saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
-    await syncActiveFirmaAfterOrgSave(screen, saved);
+    await syncActiveCompanyAfterOrgSave(screen, saved);
     // Toplu / sipariş→İE oluşturma: formda kalmak anlamsız → kapat
     const effectiveAfter = (screen.id === 'toplu-is-emri' || screen.id === 'siparis-is-emri')
       ? (after === 'new' ? 'new' : 'close')
@@ -21223,7 +21223,7 @@ async function deleteSelected() {
     toast('Silmek için satır seçin.');
     return;
   }
-  if (!ekranYetkisi(screen.id, 'sil')) {
+  if (!screenPermission(screen.id, 'sil')) {
     toast('Bu ekranda silme yetkiniz yok.');
     return;
   }
@@ -21255,7 +21255,7 @@ function runSearch(q) {
     return;
   }
   const hits = ALL_SCREENS.filter((s) =>
-    ekranMenuGorunurMu(s.id) && (
+    isScreenVisibleInMenu(s.id) && (
       s.title.toLocaleLowerCase('tr').includes(query) ||
       s.moduleTitle.toLocaleLowerCase('tr').includes(query) ||
       (s.techId && s.techId.toLocaleLowerCase('tr').includes(query)) ||
@@ -22005,9 +22005,9 @@ function bindEvents() {
       if (act === 'sil') deleteSelected();
       else if (act === 'export-csv') exportListCsv();
       else if (act === 'report-pdf') openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
-      else if (act === 'mrp-talep') mrpTalepOlustur().catch((err) => toast(err.message));
-      else if (act === 'mrp-uretim') mrpUretimOlustur().catch((err) => toast(err.message));
-      else if (act === 'mrp-calistir') mrpCalistirKaydet().catch((err) => toast(err.message));
+      else if (act === 'mrp-talep') createMrpRequisitions().catch((err) => toast(err.message));
+      else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
+      else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
       else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
@@ -22092,11 +22092,11 @@ function bindEvents() {
     const btn = e.target.closest('[data-firma-id]');
     if (!btn) return;
     e.preventDefault();
-    setActiveFirma(btn.getAttribute('data-firma-id'));
+    setActiveCompany(btn.getAttribute('data-firma-id'));
   });
   document.addEventListener('click', (e) => {
     const picker = $('#firmaPicker');
-    if (picker && !picker.contains(e.target)) closeFirmaPicker();
+    if (picker && !picker.contains(e.target)) closeCompanyPicker();
     const userArea = $('#userProfileArea');
     if (userArea && !userArea.contains(e.target)) closeUserChipMenu();
   });
@@ -22314,7 +22314,7 @@ function bindEvents() {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         'X-Kullanici-Kodu': state.user?.user_code || state.auth?.user_code || 'owner',
-        ...(getActiveFirmaId() ? { 'X-Firma-Id': String(getActiveFirmaId()) } : {}),
+        ...(getActiveCompanyId() ? { 'X-Firma-Id': String(getActiveCompanyId()) } : {}),
       },
     });
     if (!res.ok) {
@@ -22328,36 +22328,36 @@ function bindEvents() {
     w.document.close();
   }
 
-  async function mrpTalepOlustur() {
+  async function createMrpRequisitions() {
     const screen = findScreen(state.screenId);
     const sel = selectedRow();
     const body = {};
     if (sel?.item_id) body.stok_idler = [sel.item_id];
     if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+    if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
     if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
     const result = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
     toast(`SA talep oluştu: ${result.requisition_no || result.id}`);
     openScreen('satin-alma-talepleri');
   }
 
-  async function mrpUretimOlustur() {
+  async function createMrpProductionOrders() {
     const screen = findScreen(state.screenId);
     const sel = selectedRow();
     const body = {};
     if (sel?.item_id) body.stok_idler = [sel.item_id];
     if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveFirmaId()) body.company_id = getActiveFirmaId();
+    if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
     if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
     const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
     toast(`${result.olusan || 0} üretim emri oluştu`);
     openScreen('uretim-emirleri');
   }
 
-  async function mrpCalistirKaydet() {
+  async function runAndSaveMrp() {
     const body = {
       description: 'UI MRP çalışması',
-      company_id: getActiveFirmaId() || null,
+      company_id: getActiveCompanyId() || null,
       plant_id: state.activeIsYeriId || null,
     };
     const result = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
@@ -22949,26 +22949,26 @@ function bindEvents() {
     if (flowAct && screen) {
       e.preventDefault();
       const act = flowAct.getAttribute('data-flow-act');
-      const tab = findRotaTab(screen);
+      const tab = findRoutingTab(screen);
       if (!tab) return;
       if (act === 'uygula-op') {
-        applyRotaOpSelection(screen);
+        applyRoutingOpSelection(screen);
         return;
       }
       if (act === 'uygula-comp' || act === 'uygula-comp-ve-yeni') {
-        applyRotaCompSelection(screen, { addAnother: act === 'uygula-comp-ve-yeni' });
+        applyRoutingCompSelection(screen, { addAnother: act === 'uygula-comp-ve-yeni' });
         return;
       }
       if (act === 'uygula-eq' || act === 'uygula-eq-ve-yeni') {
-        applyRotaEquipSelection(screen, { addAnother: act === 'uygula-eq-ve-yeni' });
+        applyRoutingEquipSelection(screen, { addAnother: act === 'uygula-eq-ve-yeni' });
         return;
       }
       if (act === 'sablon-uygula') {
-        applyRotaSablon(screen).catch((err) => toast(err.message || String(err)));
+        applyRoutingTemplate(screen).catch((err) => toast(err.message || String(err)));
         return;
       }
       if (act === 'agactan-malzeme') {
-        applyBomMaterialsToRota(screen).catch((err) => toast(err.message || String(err)));
+        applyBomMaterialsToRouting(screen).catch((err) => toast(err.message || String(err)));
         return;
       }
       state.formRecord = { ...state.formRecord, ...readTabbedPayload(screen) };
@@ -22978,7 +22978,7 @@ function bindEvents() {
         const headerItem = state.formRecord?.item_id || '';
         ops.push({
           ...emptyRowFromFields(tab.fields),
-          ...emptyRotaOperation(nextSira, { item_id: headerItem }),
+          ...emptyRoutingOperation(nextSira, { item_id: headerItem }),
           line_no: nextSira,
           operation_code: `OP${nextSira}`,
         });
@@ -23624,7 +23624,7 @@ async function sqlRun() {
 async function bootIntoApp() {
   enterApp();
   await loadFirmalar().catch(() => {});
-  renderFirmaPicker();
+  renderCompanyPicker();
   await loadRequiredFieldDefs().catch(() => {});
 
   const solo = parseFormSoloQuery();

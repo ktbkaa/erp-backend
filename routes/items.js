@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod, stokSeriKodundanTip } = require('../src/utils/kodUretici');
-const { firmaIdFromReq, andStokFirma, assertStokFirmaKayit } = require('../src/utils/firmaScope');
+const { nextSequenceCode, itemTypeFromSeriesCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq, andItemCompany, assertItemCompanyRecord } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -26,7 +26,7 @@ function rowHasContent(row, keys) {
     });
 }
 
-async function assertBirim(client, kod, label) {
+async function assertUom(client, kod, label) {
     const k = trimOrNull(kod);
     if (!k) return null;
     const r = await client.query(
@@ -47,7 +47,7 @@ async function assertBirim(client, kod, label) {
     return k;
 }
 
-async function stokGetir(id) {
+async function getItemById(id) {
     const stokRes = await pool.query(
         `
         SELECT
@@ -181,9 +181,9 @@ async function saveChildren(client, stokId, body) {
         for (const d of body.birim_tanimlari) {
             if (!nonempty(d.uom_code)) continue;
             sira += 1;
-            const uom_code = await assertBirim(client, d.uom_code, 'Birim kodu');
+            const uom_code = await assertUom(client, d.uom_code, 'Birim kodu');
             const cevr = nonempty(d.cevrilecek_uom)
-                ? await assertBirim(client, d.cevrilecek_uom, 'Çevrilecek uom_code')
+                ? await assertUom(client, d.cevrilecek_uom, 'Çevrilecek uom_code')
                 : null;
             const kaynakKatsayi = d.source_katsayi == null || d.source_katsayi === ''
                 ? 1
@@ -482,15 +482,15 @@ router.get('/', async (req, res) => {
         }
         if (is_active === 'true') where.push('is_active IS DISTINCT FROM FALSE');
         if (is_active === 'false') where.push('is_active = FALSE');
-        const firmaId = firmaIdFromReq(req);
-        const firmaClause = andStokFirma('items', firmaId, params);
-        if (firmaClause) where.push(firmaClause.replace(/^\s*AND\s+/i, ''));
+        const firmaId = companyIdFromReq(req);
+        const companyClause = andItemCompany('items', firmaId, params);
+        if (companyClause) where.push(companyClause.replace(/^\s*AND\s+/i, ''));
         const ids = await pool.query(
             `SELECT id FROM items ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY item_code`,
             params
         );
         const items = [];
-        for (const r of ids.rows) items.push(await stokGetir(r.id));
+        for (const r of ids.rows) items.push(await getItemById(r.id));
         res.json(items);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -499,13 +499,13 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             // Liste (andStokFirma) ile aynı kapsam — aksi halde Düzelt boş form
-            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            const ok = await assertItemCompanyRecord(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         }
-        const stok = await stokGetir(req.params.id);
+        const stok = await getItemById(req.params.id);
         if (!stok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         res.json(stok);
     } catch (err) {
@@ -525,7 +525,7 @@ router.post('/', async (req, res) => {
         const type = trimOrNull(req.body.item_type) || 'Ticari';
         const m = req.body;
         // Firma zorunlu; iş yeri bağları boşsa firmanın tüm iş yerleri default
-        const firmaId = Number(m.company_id) || firmaIdFromReq(req) || null;
+        const firmaId = Number(m.company_id) || companyIdFromReq(req) || null;
         if (!firmaId) {
             return res.status(400).json({
                 hata: 'Firma zorunludur.',
@@ -559,9 +559,9 @@ router.post('/', async (req, res) => {
             || null;
 
         const sonucId = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(m.item_code) || (await sonrakiKod(client, stokSeriKodundanTip(type)));
-            const uom_code = await assertBirim(client, m.uom_code || m.stock_takip_uom || 'AD', 'Birim') || 'AD';
-            const takip = await assertBirim(client, m.stock_takip_uom || uom_code, 'Stok takip birimi') || uom_code;
+            const kod = trimOrNull(m.item_code) || (await nextSequenceCode(client, itemTypeFromSeriesCode(type)));
+            const uom_code = await assertUom(client, m.uom_code || m.stock_takip_uom || 'AD', 'Birim') || 'AD';
+            const takip = await assertUom(client, m.stock_takip_uom || uom_code, 'Stok takip birimi') || uom_code;
             const abc = trimOrNull(m.abc_code);
             if (abc && !['A', 'B', 'C'].includes(abc)) {
                 const err = new Error("ABC kodu 'A', 'B' veya 'C' olmalı.");
@@ -662,7 +662,7 @@ router.post('/', async (req, res) => {
             return stokId;
         });
 
-        res.status(201).json(await stokGetir(sonucId));
+        res.status(201).json(await getItemById(sonucId));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu stok kodu zaten kullanılıyor.', alan: 'item_code' });
@@ -673,9 +673,9 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
-            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            const ok = await assertItemCompanyRecord(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         }
         const item_name = trimOrNull(req.body.item_name);
@@ -693,8 +693,8 @@ router.put('/:id', async (req, res) => {
                 hatalar: [{ alan: 'abc_code', hata: "ABC kodu 'A', 'B' veya 'C' olmalı." }],
             });
         }
-        const putFirmaId = Number(m.company_id) || firmaIdFromReq(req) || null;
-        if (m.company_id !== undefined && m.company_id !== null && m.company_id !== '' && !Number(m.company_id) && !firmaIdFromReq(req)) {
+        const putFirmaId = Number(m.company_id) || companyIdFromReq(req) || null;
+        if (m.company_id !== undefined && m.company_id !== null && m.company_id !== '' && !Number(m.company_id) && !companyIdFromReq(req)) {
             return res.status(400).json({
                 hata: 'Firma zorunludur.',
                 hatalar: [{ alan: 'company_id', hata: 'Firma zorunludur.' }],
@@ -729,10 +729,10 @@ router.put('/:id', async (req, res) => {
 
         await withTransaction(pool, async (client) => {
             const uom_code = Object.prototype.hasOwnProperty.call(m, 'uom_code')
-                ? (await assertBirim(client, m.uom_code, 'Birim'))
+                ? (await assertUom(client, m.uom_code, 'Birim'))
                 : undefined;
             const takip = Object.prototype.hasOwnProperty.call(m, 'stock_takip_uom')
-                ? (await assertBirim(client, m.stock_takip_uom, 'Stok takip birimi'))
+                ? (await assertUom(client, m.stock_takip_uom, 'Stok takip birimi'))
                 : undefined;
 
             const taxCodeId = await resolveTaxCodeId(client, m);
@@ -853,7 +853,7 @@ router.put('/:id', async (req, res) => {
                     typeof m.kalite_control_gerekli === 'boolean' ? m.kalite_control_gerekli : null,
                     m.varsayilan_giris_warehouse_id ?? null,
                     m.varsayilan_cikis_warehouse_id ?? null,
-                    Number(m.company_id) || firmaIdFromReq(req) || null,
+                    Number(m.company_id) || companyIdFromReq(req) || null,
                     m.temin_suresi_days ?? null,
                     m.reorder_level ?? null,
                     m.fixed_order_quantity ?? null,
@@ -884,7 +884,7 @@ router.put('/:id', async (req, res) => {
             await saveChildren(client, Number(req.params.id), m);
         });
 
-        res.json(await stokGetir(req.params.id));
+        res.json(await getItemById(req.params.id));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu stok kodu zaten kullanılıyor.', alan: 'item_code' });
@@ -895,9 +895,9 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
-            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            const ok = await assertItemCompanyRecord(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         }
         const result = await pool.query(`DELETE FROM items WHERE id = $1 RETURNING id`, [req.params.id]);

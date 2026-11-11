@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { stokHareketOlustur } = require('../src/services/stokHareketService');
-const { kkEmriOlustur, ckkDepoCozumle, ckkHedefDepoCozumle } = require('../src/services/kaliteService');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { createStockMovement } = require('../src/services/stokHareketService');
+const { createQcOrder, resolveOutgoingQcWarehouse, resolveOutgoingQcTargetWarehouse } = require('../src/services/kaliteService');
 
-async function tipCozumle(client, emirTipiId, siparisId) {
+async function resolveType(client, emirTipiId, siparisId) {
     if (emirTipiId) {
         const t = await client.query(
             'SELECT id, type_code, planli_kesin FROM production_order_types WHERE id=$1 AND is_active=TRUE',
@@ -24,7 +24,7 @@ async function tipCozumle(client, emirTipiId, siparisId) {
     return t.rows[0] || null;
 }
 
-function tarihGun(v) {
+function dateDay(v) {
     if (!v) return null;
     if (v instanceof Date) return v.toISOString().slice(0, 10);
     const s = String(v);
@@ -35,16 +35,16 @@ function tarihGun(v) {
 }
 
 /** BOM / rota geçerlilik + quantity aralığı kontrolü (Uyumsoft uyarlaması) */
-async function bomRotaDogrula(client, { urunAgaciId, rotaId, stokId, quantity, tarih }) {
-    const gun = tarihGun(tarih) || new Date().toISOString().slice(0, 10);
+async function validateBomRouting(client, { urunAgaciId, rotaId, stokId, quantity, tarih }) {
+    const gun = dateDay(tarih) || new Date().toISOString().slice(0, 10);
     const agac = await client.query(
         'SELECT * FROM boms WHERE id=$1 AND finished_good_item_id=$2',
         [urunAgaciId, stokId]
     );
     if (!agac.rows[0]) throw new Error('Ürün ağacı mamul stok ile eşleşmiyor.');
     const a = agac.rows[0];
-    const aBas = tarihGun(a.valid_from);
-    const aBit = tarihGun(a.valid_to);
+    const aBas = dateDay(a.valid_from);
+    const aBit = dateDay(a.valid_to);
     if (aBas && gun < aBas) {
         throw new Error(`Ürün ağacı henüz geçerli değil (başlangıç: ${aBas}).`);
     }
@@ -65,8 +65,8 @@ async function bomRotaDogrula(client, { urunAgaciId, rotaId, stokId, quantity, t
     if (Number(r.item_id) !== Number(stokId) && !r.template) {
         throw new Error('Rota stok ile eşleşmiyor (şablon değil).');
     }
-    const rBas = tarihGun(r.valid_from);
-    const rBit = tarihGun(r.valid_to);
+    const rBas = dateDay(r.valid_from);
+    const rBit = dateDay(r.valid_to);
     if (rBas && gun < rBas) {
         throw new Error(`Rota henüz geçerli değil (başlangıç: ${rBas}).`);
     }
@@ -83,7 +83,7 @@ async function bomRotaDogrula(client, { urunAgaciId, rotaId, stokId, quantity, t
 }
 
 /** BOM satırlarından emir malzemelerini yazar (önce mevcut malzemeleri siler). */
-async function emirMalzemeleriDoldur(client, emirId, { urunAgaciId, planlananMiktar, agacMiktar, hammaddeDepoId }) {
+async function fillOrderMaterials(client, emirId, { urunAgaciId, planlananMiktar, agacMiktar, hammaddeDepoId }) {
     await client.query('DELETE FROM production_order_components WHERE order_id=$1', [emirId]);
     const carpan = Number(planlananMiktar) / Number(agacMiktar || 1);
     const satirlar = await client.query(
@@ -119,7 +119,7 @@ async function emirMalzemeleriDoldur(client, emirId, { urunAgaciId, planlananMik
 }
 
 /** Rota operasyonlarını emre yazar (önce mevcut operasyonları siler). */
-async function emirOperasyonlariDoldur(client, emirId, { rotaOps, planlananMiktar, bilesenCarpan }) {
+async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, bilesenCarpan }) {
     await client.query('DELETE FROM production_order_operations WHERE order_id=$1', [emirId]);
     const plan = Number(planlananMiktar);
     const carpan = Number(bilesenCarpan) > 0 ? Number(bilesenCarpan) : plan;
@@ -166,7 +166,7 @@ async function emirOperasyonlariDoldur(client, emirId, { rotaOps, planlananMikta
     return n;
 }
 
-async function emirDetayDoldurulabilirMi(client, emirId) {
+async function canFillOrderDetails(client, emirId) {
     const emir = await client.query(
         `SELECT id, status, is_started, produced_quantity FROM production_orders WHERE id=$1 FOR UPDATE`,
         [emirId],
@@ -189,7 +189,7 @@ async function emirDetayDoldurulabilirMi(client, emirId) {
     return e;
 }
 
-async function emirOlustur(client, opts) {
+async function createOrder(client, opts) {
     const {
         item_id,
         product_bom_id,
@@ -224,8 +224,8 @@ async function emirOlustur(client, opts) {
         project_code,
     } = opts;
 
-    const type = await tipCozumle(client, order_type_id, sales_order_id);
-    const { agac, rotaOps } = await bomRotaDogrula(client, {
+    const type = await resolveType(client, order_type_id, sales_order_id);
+    const { agac, rotaOps } = await validateBomRouting(client, {
         urunAgaciId: product_bom_id,
         rotaId: route_id,
         stokId: item_id,
@@ -234,7 +234,7 @@ async function emirOlustur(client, opts) {
     });
 
     const stok = await client.query('SELECT uom_code FROM items WHERE id=$1', [item_id]);
-    const no = await sonrakiBelgeNo(client, 'URETIM_EMRI');
+    const no = await nextDocumentNo(client, 'URETIM_EMRI');
     const durumVal = status || (sales_order_id ? 'OnayBekliyor' : 'Acik');
     const emir = await client.query(
         `
@@ -272,11 +272,11 @@ async function emirOlustur(client, opts) {
             typeof silindi === 'boolean' ? silindi : false,
             source_document_type || null,
             source_document_id || null,
-            tarihGun(order_date) || new Date().toISOString().slice(0, 10),
-            tarihGun(order_date) || new Date().toISOString().slice(0, 10),
+            dateDay(order_date) || new Date().toISOString().slice(0, 10),
+            dateDay(order_date) || new Date().toISOString().slice(0, 10),
             plan_start || null,
             plan_end || null,
-            tarihGun(end_date),
+            dateDay(end_date),
             uom_code || stok.rows[0]?.uom_code || null,
             acik_kapali || (durumVal === 'Kapali' || durumVal === 'Iptal' ? 'Kapali' : 'Acik'),
             !!onayli,
@@ -289,12 +289,12 @@ async function emirOlustur(client, opts) {
     );
     const emirId = emir.rows[0].id;
     const carpan = Number(planlanan_quantity) / Number(agac.quantity || 1);
-    await emirOperasyonlariDoldur(client, emirId, {
+    await fillOrderOperations(client, emirId, {
         rotaOps,
         planlananMiktar: planlanan_quantity,
         bilesenCarpan: carpan,
     });
-    await emirMalzemeleriDoldur(client, emirId, {
+    await fillOrderMaterials(client, emirId, {
         urunAgaciId: product_bom_id,
         planlananMiktar: planlanan_quantity,
         agacMiktar: agac.quantity,
@@ -303,7 +303,7 @@ async function emirOlustur(client, opts) {
     return emirId;
 }
 
-async function emirGetir(id) {
+async function getQcOrder(id) {
     const e = await pool.query(
         `
         SELECT ue.*, s.item_code, s.item_name, s.item_type,
@@ -406,9 +406,9 @@ async function emirGetir(id) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM production_orders'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        const liste = await (() => { const firmaId = companyIdFromReq(req); const params = []; let sql = 'SELECT id FROM production_orders'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
         const result = [];
-        for (const r of liste.rows) result.push(await emirGetir(r.id));
+        for (const r of liste.rows) result.push(await getQcOrder(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -512,7 +512,7 @@ router.get('/siparis-adaylari/:id', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const emir = await emirGetir(req.params.id);
+        const emir = await getQcOrder(req.params.id);
         if (!emir) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
         res.json(emir);
     } catch (err) {
@@ -557,7 +557,7 @@ router.post('/satis-siparisinden', async (req, res) => {
         }
 
         const id = await withTransaction(pool, async (client) =>
-            emirOlustur(client, {
+            createOrder(client, {
                 item_id,
                 product_bom_id,
                 route_id,
@@ -572,7 +572,7 @@ router.post('/satis-siparisinden', async (req, res) => {
             })
         );
 
-        res.status(201).json(await emirGetir(id));
+        res.status(201).json(await getQcOrder(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -622,7 +622,7 @@ router.post('/toplu', async (req, res) => {
                     if (!planlanan_quantity || planlanan_quantity <= 0) {
                         throw new Error('planlanan_quantity yok.');
                     }
-                    const id = await emirOlustur(client, {
+                    const id = await createOrder(client, {
                         item_id,
                         product_bom_id,
                         route_id,
@@ -653,7 +653,7 @@ router.post('/toplu', async (req, res) => {
             hata_sayisi: hatalar.length,
             olusturulan,
             hatalar,
-            emirler: await Promise.all(olusturulan.map((o) => emirGetir(o.id))),
+            emirler: await Promise.all(olusturulan.map((o) => getQcOrder(o.id))),
         });
     } catch (err) {
         res.status(400).json({ hata: err.message });
@@ -681,15 +681,15 @@ router.post('/', async (req, res) => {
             });
         }
 
-        const id = await withTransaction(pool, async (client) => emirOlustur(client, b));
+        const id = await withTransaction(pool, async (client) => createOrder(client, b));
 
-        res.status(201).json(await emirGetir(id));
+        res.status(201).json(await getQcOrder(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
 });
 
-function tuketimDepoSec(emir, stokTipi) {
+function pickConsumptionWarehouse(emir, stokTipi) {
     // Hammadde Ana depodan; yarı mamul YM depodan
     if (stokTipi === 'YariMamul') {
         return emir.wip_warehouse_id || emir.component_warehouse_id;
@@ -697,7 +697,7 @@ function tuketimDepoSec(emir, stokTipi) {
     return emir.component_warehouse_id;
 }
 
-function ciktiDepoSec(emir, ciktiStokTipi) {
+function pickOutputWarehouse(emir, ciktiStokTipi) {
     if (ciktiStokTipi === 'Mamul') return emir.fg_warehouse_id;
     if (ciktiStokTipi === 'YariMamul') return emir.wip_warehouse_id || emir.fg_warehouse_id;
     return emir.fg_warehouse_id;
@@ -751,7 +751,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
             // Bileşenleri tipine göre depodan grupla ve tüket
             const depoGrup = new Map();
             for (const b of bilesenler.rows) {
-                const depoId = tuketimDepoSec(emir, b.item_type);
+                const depoId = pickConsumptionWarehouse(emir, b.item_type);
                 if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
                 depoGrup.get(depoId).push({
                     item_id: b.item_id,
@@ -768,7 +768,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
 
             let tuketimHareketId = null;
             for (const [depoId, satirlar] of depoGrup.entries()) {
-                const h = await stokHareketOlustur(client, {
+                const h = await createStockMovement(client, {
                     hareketTipi: 'URETIM_TUKETIM',
                     isYeriId: emir.plant_id,
                     depoId,
@@ -787,10 +787,10 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                     'SELECT id, uom_code, item_type, kalite_control_gerekli FROM items WHERE id=$1',
                     [op.output_item_id]
                 );
-                const ckk = await ckkDepoCozumle(client, emir.plant_id);
+                const ckk = await resolveOutgoingQcWarehouse(client, emir.plant_id);
                 if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
                 const ciktiDepo = ckk.id;
-                const hedefDepo = await ckkHedefDepoCozumle(client, op.output_item_id, emir.plant_id);
+                const hedefDepo = await resolveOutgoingQcTargetWarehouse(client, op.output_item_id, emir.plant_id);
                 // CKK/hedef depo izinlerini otomatik aç (kalite akışı)
                 for (const wid of [ciktiDepo, hedefDepo?.id].filter(Boolean)) {
                     await client.query(
@@ -801,7 +801,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                         [op.output_item_id, wid, emir.plant_id]
                     );
                 }
-                const h = await stokHareketOlustur(client, {
+                const h = await createStockMovement(client, {
                     hareketTipi: 'URETIM_GIRIS',
                     isYeriId: emir.plant_id,
                     depoId: ciktiDepo,
@@ -818,7 +818,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                     }],
                 });
                 mamulHareketId = h.hareket.id;
-                await kkEmriOlustur(client, {
+                await createQcOrder(client, {
                     direction: 'CKK',
                     stokId: op.output_item_id,
                     partiId: h.satirlar[0]?.lot_id || null,
@@ -874,7 +874,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 );
             }
 
-            const girisNo = await sonrakiBelgeNo(client, 'URETIM_GIRIS');
+            const girisNo = await nextDocumentNo(client, 'URETIM_GIRIS');
             await client.query(
                 `
                 INSERT INTO production_receipts
@@ -889,7 +889,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
 
         res.status(201).json({
             tamamlanan: result,
-            emir: await emirGetir(emirId),
+            emir: await getQcOrder(emirId),
         });
     } catch (err) {
         res.status(400).json({ hata: err.message });
@@ -900,7 +900,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
 router.post('/:id/uretim-giris', async (req, res) => {
     try {
         const emirId = Number(req.params.id);
-        let emir = await emirGetir(emirId);
+        let emir = await getQcOrder(emirId);
         if (!emir) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
 
         const adimlar = [];
@@ -951,7 +951,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
 
         const depoGrup = new Map();
         for (const b of bilesenler.rows) {
-            const depoId = tuketimDepoSec(emir, b.item_type);
+            const depoId = pickConsumptionWarehouse(emir, b.item_type);
             if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
             depoGrup.get(depoId).push({
                 item_id: b.item_id,
@@ -968,7 +968,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
 
         let tuketimHareketId = null;
         for (const [depoId, satirlar] of depoGrup.entries()) {
-            const h = await stokHareketOlustur(client, {
+            const h = await createStockMovement(client, {
                 hareketTipi: 'URETIM_TUKETIM',
                 isYeriId: emir.plant_id,
                 depoId,
@@ -986,9 +986,9 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
                 'SELECT id, uom_code, item_type FROM items WHERE id=$1',
                 [op.output_item_id]
             );
-            const ckk = await ckkDepoCozumle(client, emir.plant_id);
+            const ckk = await resolveOutgoingQcWarehouse(client, emir.plant_id);
             if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
-            const hedefDepo = await ckkHedefDepoCozumle(client, op.output_item_id, emir.plant_id);
+            const hedefDepo = await resolveOutgoingQcTargetWarehouse(client, op.output_item_id, emir.plant_id);
             for (const wid of [ckk.id, hedefDepo?.id].filter(Boolean)) {
                 await client.query(
                     `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
@@ -998,7 +998,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
                     [op.output_item_id, wid, emir.plant_id]
                 );
             }
-            const h = await stokHareketOlustur(client, {
+            const h = await createStockMovement(client, {
                 hareketTipi: 'URETIM_GIRIS',
                 isYeriId: emir.plant_id,
                 depoId: ckk.id,
@@ -1015,7 +1015,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
                 }],
             });
             mamulHareketId = h.hareket.id;
-            await kkEmriOlustur(client, {
+            await createQcOrder(client, {
                 direction: 'CKK',
                 stokId: op.output_item_id,
                 partiId: h.satirlar[0]?.lot_id || null,
@@ -1071,7 +1071,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
             }
         }
 
-        const girisNo = await sonrakiBelgeNo(client, 'URETIM_GIRIS');
+        const girisNo = await nextDocumentNo(client, 'URETIM_GIRIS');
         await client.query(
             `
             INSERT INTO production_receipts
@@ -1084,7 +1084,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
         return { operation_code: op.operation_code, quantity };
     });
 
-    return { tamamlanan: result, emir: await emirGetir(emirId) };
+    return { tamamlanan: result, emir: await getQcOrder(emirId) };
 }
 
 router.put('/:id', async (req, res) => {
@@ -1123,7 +1123,7 @@ router.put('/:id', async (req, res) => {
             const yeniMiktar = b.planlanan_quantity != null ? Number(b.planlanan_quantity) : Number(m.planlanan_quantity);
 
             if (b.product_bom_id != null || b.route_id != null || b.item_id != null) {
-                await bomRotaDogrula(client, {
+                await validateBomRouting(client, {
                     urunAgaciId: yeniAgac,
                     rotaId: yeniRota,
                     stokId: yeniStok,
@@ -1194,10 +1194,10 @@ router.put('/:id', async (req, res) => {
                     b.item_id || null,
                     b.product_bom_id || null,
                     b.route_id || null,
-                    tarihGun(b.order_date),
+                    dateDay(b.order_date),
                     b.plan_start || null,
                     b.plan_end || null,
-                    tarihGun(b.end_date),
+                    dateDay(b.end_date),
                     b.uom_code || null,
                     acikKapali,
                     typeof b.onayli === 'boolean' ? b.onayli : null,
@@ -1263,7 +1263,7 @@ router.put('/:id', async (req, res) => {
             return upd.rows[0].id;
         });
 
-        res.json(await emirGetir(id));
+        res.json(await getQcOrder(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -1273,10 +1273,10 @@ router.put('/:id', async (req, res) => {
 router.post('/:id/detaylari-doldur', async (req, res) => {
     try {
         const result = await withTransaction(pool, async (client) => {
-            await emirDetayDoldurulabilirMi(client, req.params.id);
+            await canFillOrderDetails(client, req.params.id);
             const emir = await client.query('SELECT * FROM production_orders WHERE id=$1', [req.params.id]);
             const e = emir.rows[0];
-            const { agac, rotaOps } = await bomRotaDogrula(client, {
+            const { agac, rotaOps } = await validateBomRouting(client, {
                 urunAgaciId: e.product_bom_id,
                 rotaId: e.route_id,
                 stokId: e.item_id,
@@ -1284,12 +1284,12 @@ router.post('/:id/detaylari-doldur', async (req, res) => {
                 tarih: e.order_date,
             });
             const carpan = Number(e.planlanan_quantity) / Number(agac.quantity || 1);
-            const opN = await emirOperasyonlariDoldur(client, e.id, {
+            const opN = await fillOrderOperations(client, e.id, {
                 rotaOps,
                 planlananMiktar: e.planlanan_quantity,
                 bilesenCarpan: carpan,
             });
-            const malN = await emirMalzemeleriDoldur(client, e.id, {
+            const malN = await fillOrderMaterials(client, e.id, {
                 urunAgaciId: e.product_bom_id,
                 planlananMiktar: e.planlanan_quantity,
                 agacMiktar: agac.quantity,
@@ -1297,7 +1297,7 @@ router.post('/:id/detaylari-doldur', async (req, res) => {
             });
             return { operasyon: opN, malzeme: malN };
         });
-        const emir = await emirGetir(req.params.id);
+        const emir = await getQcOrder(req.params.id);
         res.json({ ...emir, _doldurulan: result });
     } catch (err) {
         res.status(400).json({ hata: err.message });
@@ -1315,12 +1315,12 @@ router.post('/:id/bom-rota-degistir', async (req, res) => {
             return res.status(400).json({ hata: 'product_bom_id veya route_id gerekli.' });
         }
         await withTransaction(pool, async (client) => {
-            await emirDetayDoldurulabilirMi(client, req.params.id);
+            await canFillOrderDetails(client, req.params.id);
             const emir = await client.query('SELECT * FROM production_orders WHERE id=$1', [req.params.id]);
             const e = emir.rows[0];
             const yeniAgac = product_bom_id != null ? Number(product_bom_id) : Number(e.product_bom_id);
             const yeniRota = route_id != null ? Number(route_id) : Number(e.route_id);
-            const { agac, rotaOps } = await bomRotaDogrula(client, {
+            const { agac, rotaOps } = await validateBomRouting(client, {
                 urunAgaciId: yeniAgac,
                 rotaId: yeniRota,
                 stokId: e.item_id,
@@ -1333,12 +1333,12 @@ router.post('/:id/bom-rota-degistir', async (req, res) => {
             );
             if (detaylari_doldur) {
                 const carpan = Number(e.planlanan_quantity) / Number(agac.quantity || 1);
-                await emirOperasyonlariDoldur(client, e.id, {
+                await fillOrderOperations(client, e.id, {
                     rotaOps,
                     planlananMiktar: e.planlanan_quantity,
                     bilesenCarpan: carpan,
                 });
-                await emirMalzemeleriDoldur(client, e.id, {
+                await fillOrderMaterials(client, e.id, {
                     urunAgaciId: yeniAgac,
                     planlananMiktar: e.planlanan_quantity,
                     agacMiktar: agac.quantity,
@@ -1346,7 +1346,7 @@ router.post('/:id/bom-rota-degistir', async (req, res) => {
                 });
             }
         });
-        res.json(await emirGetir(req.params.id));
+        res.json(await getQcOrder(req.params.id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -1369,7 +1369,7 @@ router.post('/:id/onayla', async (req, res) => {
                 hata: 'Emir onaylanamadı (bulunamadı veya status Taslak/OnayBekliyor değil).',
             });
         }
-        res.json(await emirGetir(upd.rows[0].id));
+        res.json(await getQcOrder(upd.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -1395,7 +1395,7 @@ router.post('/:id/baslat', async (req, res) => {
                 hata: 'Emir başlatılamadı (bulunamadı, zaten başlatılmış veya status accepted değil).',
             });
         }
-        res.json(await emirGetir(upd.rows[0].id));
+        res.json(await getQcOrder(upd.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

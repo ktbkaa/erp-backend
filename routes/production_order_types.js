@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
-async function tipGetir(id) {
+async function getType(id) {
     const result = await pool.query('SELECT * FROM production_order_types WHERE id=$1', [id]);
     return result.rows[0] || null;
 }
@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await tipGetir(req.params.id);
+        const row = await getType(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Üretim emri tipi bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: "planli_kesin 'Planli' veya 'Kesin' olmalı." });
         }
         const id = await withTransaction(pool, async (client) => {
-            const kod = type_code || (await sonrakiKod(client, 'URETIM_EMRI_TIP'));
+            const kod = type_code || (await nextSequenceCode(client, 'URETIM_EMRI_TIP'));
             const result = await client.query(
                 `
                 INSERT INTO production_order_types (type_code, type_name, planli_kesin, description, is_active)
@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
             );
             return result.rows[0].id;
         });
-        res.status(201).json(await tipGetir(id));
+        res.status(201).json(await getType(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -79,7 +79,7 @@ router.put('/:id', async (req, res) => {
             [req.params.id, type_name || null, planli_kesin || null, description ?? null, is_active]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Üretim emri tipi bulunamadı.' });
-        res.json(await tipGetir(result.rows[0].id));
+        res.json(await getType(result.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

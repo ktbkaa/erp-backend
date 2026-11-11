@@ -3,10 +3,10 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const {
-    sonrakiKod,
-    cariSeriKodundanTur,
-    cariTedarikciMi,
-    cariMusteriMi,
+    nextSequenceCode,
+    partnerTypeFromSeriesCode,
+    isPartnerSupplier,
+    isPartnerCustomer,
 } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
@@ -60,7 +60,7 @@ async function replaceChildRows(client, cariId, table, rows, insertSql, mapRow) 
     }
 }
 
-async function cariGetir(id) {
+async function getPartner(id) {
     const c = await pool.query(
         `
         SELECT c.*,
@@ -92,8 +92,8 @@ async function cariGetir(id) {
     return {
         ...row,
         ...flat,
-        tedarikci_mi: cariTedarikciMi(row.partner_type),
-        musteri_mi: cariMusteriMi(row.partner_type),
+        tedarikci_mi: isPartnerSupplier(row.partner_type),
+        musteri_mi: isPartnerCustomer(row.partner_type),
         partner_details: detaylar.rows,
         banka_bilgileri: banks.rows,
         sevk_adresleri: sevkler.rows,
@@ -288,7 +288,7 @@ async function saveChildren(client, cariId, body) {
     }
 }
 
-function syncFatura(m) {
+function syncInvoice(m) {
     if (!nonempty(m.bill_address_1) && nonempty(m.billing_address)) m.bill_address_1 = m.billing_address;
     if (!nonempty(m.billing_address) && nonempty(m.bill_address_1)) m.billing_address = m.bill_address_1;
     return m;
@@ -297,7 +297,7 @@ function syncFatura(m) {
 router.get('/', async (req, res) => {
     try {
         const { tur, is_active } = req.query;
-        const { firmaIdFromReq, andCariFirma } = require('../src/utils/firmaScope');
+        const { companyIdFromReq, andPartnerCompany } = require('../src/utils/firmaScope');
         const where = [];
         const params = [];
 
@@ -310,8 +310,8 @@ router.get('/', async (req, res) => {
         if (is_active === 'true') where.push('is_active = TRUE');
         if (is_active === 'false') where.push('is_active = FALSE');
 
-        const firmaClause = andCariFirma('partners', firmaIdFromReq(req), params);
-        if (firmaClause) where.push(firmaClause.replace(/^\s*AND\s+/i, ''));
+        const companyClause = andPartnerCompany('partners', companyIdFromReq(req), params);
+        if (companyClause) where.push(companyClause.replace(/^\s*AND\s+/i, ''));
 
         const liste = await pool.query(
             `
@@ -322,7 +322,7 @@ router.get('/', async (req, res) => {
             params
         );
         const result = [];
-        for (const r of liste.rows) result.push(await cariGetir(r.id));
+        for (const r of liste.rows) result.push(await getPartner(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -331,13 +331,13 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const { firmaIdFromReq, assertFirmaKayit } = require('../src/utils/firmaScope');
-        const firmaId = firmaIdFromReq(req);
+        const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
-            const ok = await assertFirmaKayit(pool, 'partners', req.params.id, firmaId);
+            const ok = await assertCompanyRecord(pool, 'partners', req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         }
-        const cari = await cariGetir(req.params.id);
+        const cari = await getPartner(req.params.id);
         if (!cari) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         res.json(cari);
     } catch (err) {
@@ -348,10 +348,10 @@ router.get('/:id', async (req, res) => {
 /** GET /partners/:id/ekstre — cari borç/credit ekstresi (FIN-005) */
 router.get('/:id/ekstre', async (req, res) => {
     try {
-        const { cariEkstre } = require('../src/services/cariHareketService');
-        const cari = await cariGetir(req.params.id);
+        const { partnerStatement } = require('../src/services/cariHareketService');
+        const cari = await getPartner(req.params.id);
         if (!cari) return res.status(404).json({ hata: 'Cari bulunamadı.' });
-        const ekstre = await cariEkstre(pool, Number(req.params.id), {
+        const ekstre = await partnerStatement(pool, Number(req.params.id), {
             baslangic: req.query.baslangic || null,
             bitis: req.query.bitis || null,
         });
@@ -364,7 +364,7 @@ router.get('/:id/ekstre', async (req, res) => {
         const format = String(req.query.format || 'json').toLowerCase();
         if (format === 'html' || format === 'pdf') {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            return res.send(renderCariEkstreHtml(payload));
+            return res.send(renderPartnerStatementHtml(payload));
         }
         res.json(payload);
     } catch (err) {
@@ -380,7 +380,7 @@ function escHtml(s) {
         .replace(/"/g, '&quot;');
 }
 
-function renderCariEkstreHtml(payload) {
+function renderPartnerStatementHtml(payload) {
     const c = payload.cari || {};
     const rows = (payload.hareketler || []).map((h) => `<tr>
       <td class="mono">${escHtml(h.movement_no)}</td>
@@ -439,12 +439,12 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: hatalar[0].hata, hatalar });
         }
 
-        const m = syncFatura({ ...req.body, partner_name, partner_type });
+        const m = syncInvoice({ ...req.body, partner_name, partner_type });
 
         const id = await withTransaction(pool, async (client) => {
             const isYeriId = await assertLookup(client, 'plants', m.plant_id, 'İş yeri');
             const firmaId = await assertLookup(client, 'companies', m.company_id, 'Firma');
-            const kod = partner_code || (await sonrakiKod(client, cariSeriKodundanTur(partner_type)));
+            const kod = partner_code || (await nextSequenceCode(client, partnerTypeFromSeriesCode(partner_type)));
 
             const cariSonuc = await client.query(
                 `
@@ -500,7 +500,7 @@ router.post('/', async (req, res) => {
             return cariId;
         });
 
-        res.status(201).json(await cariGetir(id));
+        res.status(201).json(await getPartner(id));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu cari kodu zaten kullanılıyor.', alan: 'partner_code' });
@@ -526,7 +526,7 @@ router.put('/:id', async (req, res) => {
             });
         }
 
-        const m = syncFatura({ ...req.body, partner_name });
+        const m = syncInvoice({ ...req.body, partner_name });
 
         await withTransaction(pool, async (client) => {
             const isYeriId = Object.prototype.hasOwnProperty.call(req.body, 'plant_id')
@@ -643,7 +643,7 @@ router.put('/:id', async (req, res) => {
             );
         });
 
-        res.json(await cariGetir(req.params.id));
+        res.json(await getPartner(req.params.id));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu cari kodu zaten kullanılıyor.', alan: 'partner_code' });

@@ -4,10 +4,10 @@
 const express = require('express');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-function createBelgeRouter(cfg) {
+function createDocumentRouter(cfg) {
     const router = express.Router();
     const {
         table,
@@ -23,7 +23,7 @@ function createBelgeRouter(cfg) {
         extraFields = [],
     } = cfg;
 
-    async function getir(id) {
+    async function fetchById(id) {
         const baslikSql = requireCari
             ? `SELECT t.*, c.partner_code, c.partner_name FROM ${table} t JOIN partners c ON c.id = t.partner_id WHERE t.id = $1`
             : `SELECT * FROM ${table} WHERE id = $1`;
@@ -46,7 +46,7 @@ function createBelgeRouter(cfg) {
         try {
             const params = [];
             let sql = `SELECT id FROM ${table}`;
-            const firmaId = firmaIdFromReq(req);
+            const firmaId = companyIdFromReq(req);
             if (firmaId) {
                 params.push(firmaId);
                 sql += ` WHERE company_id = $${params.length}`;
@@ -54,7 +54,7 @@ function createBelgeRouter(cfg) {
             sql += ' ORDER BY id DESC';
             const liste = await pool.query(sql, params);
             const result = [];
-            for (const r of liste.rows) result.push(await getir(r.id));
+            for (const r of liste.rows) result.push(await fetchById(r.id));
             res.json(result);
         } catch (err) {
             res.status(500).json({ hata: err.message });
@@ -63,7 +63,7 @@ function createBelgeRouter(cfg) {
 
     router.get('/:id', async (req, res) => {
         try {
-            const row = await getir(req.params.id);
+            const row = await fetchById(req.params.id);
             if (!row) return res.status(404).json({ hata: notFound });
             res.json(row);
         } catch (err) {
@@ -82,7 +82,7 @@ function createBelgeRouter(cfg) {
             }
 
             const id = await withTransaction(pool, async (client) => {
-                const no = await sonrakiBelgeNo(client, seri);
+                const no = await nextDocumentNo(client, seri);
                 const cols = [noField];
                 const vals = [no];
                 if (requireCari) {
@@ -98,9 +98,9 @@ function createBelgeRouter(cfg) {
                     } else if (defaults[f] !== undefined) {
                         cols.push(f);
                         vals.push(defaults[f]);
-                    } else if (f === 'company_id' && firmaIdFromReq(req)) {
+                    } else if (f === 'company_id' && companyIdFromReq(req)) {
                         cols.push(f);
-                        vals.push(firmaIdFromReq(req));
+                        vals.push(companyIdFromReq(req));
                     }
                 }
                 const ph = cols.map((_, i) => `$${i + 1}`).join(',');
@@ -129,7 +129,7 @@ function createBelgeRouter(cfg) {
                 }
                 return docId;
             });
-            res.status(201).json(await getir(id));
+            res.status(201).json(await fetchById(id));
         } catch (err) {
             res.status(500).json({ hata: err.message });
         }
@@ -189,7 +189,7 @@ function createBelgeRouter(cfg) {
                 }
                 return Number(req.params.id);
             });
-            res.json(await getir(id));
+            res.json(await fetchById(id));
         } catch (err) {
             res.status(err.status || 500).json({ hata: err.message });
         }
@@ -208,4 +208,4 @@ function createBelgeRouter(cfg) {
     return router;
 }
 
-module.exports = { createBelgeRouter };
+module.exports = { createDocumentRouter };

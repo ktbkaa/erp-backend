@@ -1,10 +1,10 @@
 /**
  * Merkezi onay motoru (v2 tanım modeli ile).
  */
-const { sonrakiKod } = require('../utils/kodUretici');
+const { nextSequenceCode } = require('../utils/kodUretici');
 const { isTamYetkili } = require('../utils/yetki');
 
-async function kayitGetir(client, id) {
+async function getRecord(client, id) {
   const baslik = await client.query(
     `
     SELECT k.*,
@@ -44,7 +44,7 @@ async function kayitGetir(client, id) {
 }
 
 /** Kullanıcının onay role adları (+ yetki devri) */
-async function kullaniciRolAdlari(client, kisiId, { firmaId = null, isYeriId = null } = {}) {
+async function userRoleNames(client, kisiId, { firmaId = null, isYeriId = null } = {}) {
   if (!kisiId) return [];
   const params = [kisiId];
   let sql = `
@@ -83,7 +83,7 @@ async function kullaniciRolAdlari(client, kisiId, { firmaId = null, isYeriId = n
 }
 
 /** Geriye uyumluluk */
-async function kullaniciRolIdleri(client, kisiId) {
+async function userRoleIds(client, kisiId) {
   if (!kisiId) return [];
   const r = await client.query(
     `SELECT id FROM approval_roles WHERE is_active = TRUE AND kisi_id = $1`,
@@ -92,12 +92,12 @@ async function kullaniciRolIdleri(client, kisiId) {
   return r.rows.map((x) => Number(x.id));
 }
 
-function adimTutarUygun(adim, amount) {
+function isStepAmountInRange(adim, amount) {
   if (adim.min_amount == null) return true;
   return Number(amount || 0) >= Number(adim.min_amount);
 }
 
-function kuralTutarUygun(kural, amount) {
+function isRuleAmountInRange(kural, amount) {
   const t = Number(amount || 0);
   if (kural.term_min_amount != null && t < Number(kural.term_min_amount)) return false;
   if (kural.term_max_amount != null && t > Number(kural.term_max_amount)) return false;
@@ -107,7 +107,7 @@ function kuralTutarUygun(kural, amount) {
 /**
  * Onay sürecini başlatır.
  */
-async function baslatOnay(client, {
+async function startApproval(client, {
   screen_id,
   module_code,
   document_id = null,
@@ -150,7 +150,7 @@ async function baslatOnay(client, {
     const r = await client.query(sql, params);
     // İlk eşleşen kural (koşul süzgeci)
     for (const candidate of r.rows) {
-      if (!kuralTutarUygun(candidate, amount)) continue;
+      if (!isRuleAmountInRange(candidate, amount)) continue;
       if (direction && candidate.term_direction && candidate.term_direction !== 'Hepsi') {
         const y = String(direction).toLowerCase().startsWith('a') ? 'Alis' : 'Satis';
         if (candidate.term_direction !== y) continue;
@@ -223,7 +223,7 @@ async function baslatOnay(client, {
       `,
       [screen_id || kural.screen_id, document_id],
     );
-    if (open.rows[0]) return kayitGetir(client, open.rows[0].id);
+    if (open.rows[0]) return getRecord(client, open.rows[0].id);
   }
 
   const sablonAdimlar = await client.query(
@@ -236,14 +236,14 @@ async function baslatOnay(client, {
     throw err;
   }
 
-  const uygulanacak = sablonAdimlar.rows.filter((a) => adimTutarUygun(a, amount));
+  const uygulanacak = sablonAdimlar.rows.filter((a) => isStepAmountInRange(a, amount));
   if (!uygulanacak.length) {
     return { atlandi: true, neden: 'adim_tutar_filtresi', amount };
   }
 
   let onayNo;
   try {
-    onayNo = await sonrakiKod(client, 'ONAY_KAYIT');
+    onayNo = await nextSequenceCode(client, 'ONAY_KAYIT');
   } catch (_) {
     const n = await client.query(`SELECT COUNT(*)::int + 1 AS n FROM approval_records`);
     onayNo = `NK${String(n.rows[0].n).padStart(5, '0')}`;
@@ -299,7 +299,7 @@ async function baslatOnay(client, {
     );
   }
 
-  return kayitGetir(client, kayitId);
+  return getRecord(client, kayitId);
 }
 
 async function assertAdimYetkisi(client, adim, kullanici, kayit) {
@@ -309,7 +309,7 @@ async function assertAdimYetkisi(client, adim, kullanici, kayit) {
     throw err;
   }
   if (isTamYetkili(kullanici)) return true;
-  const roller = await kullaniciRolAdlari(client, kullanici.id, {
+  const roller = await userRoleNames(client, kullanici.id, {
     firmaId: kayit?.company_id,
   });
   const hedef = adim.role_name || adim.role_code;
@@ -322,7 +322,7 @@ async function assertAdimYetkisi(client, adim, kullanici, kayit) {
 }
 
 async function onaylaAdim(client, kayitId, kullanici, { notlar = null } = {}) {
-  const kayit = await kayitGetir(client, kayitId);
+  const kayit = await getRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
     err.status = 404;
@@ -380,11 +380,11 @@ async function onaylaAdim(client, kayitId, kullanici, { notlar = null } = {}) {
     );
   }
 
-  return kayitGetir(client, kayitId);
+  return getRecord(client, kayitId);
 }
 
 async function reddetAdim(client, kayitId, kullanici, { notlar = null } = {}) {
-  const kayit = await kayitGetir(client, kayitId);
+  const kayit = await getRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
     err.status = 404;
@@ -427,11 +427,11 @@ async function reddetAdim(client, kayitId, kullanici, { notlar = null } = {}) {
     `,
     [kayitId, notlar],
   );
-  return kayitGetir(client, kayitId);
+  return getRecord(client, kayitId);
 }
 
-async function iptalKayit(client, kayitId, kullanici, { notlar = null } = {}) {
-  const kayit = await kayitGetir(client, kayitId);
+async function cancelRecord(client, kayitId, kullanici, { notlar = null } = {}) {
+  const kayit = await getRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
     err.status = 404;
@@ -465,11 +465,11 @@ async function iptalKayit(client, kayitId, kullanici, { notlar = null } = {}) {
     `,
     [kayitId],
   );
-  return kayitGetir(client, kayitId);
+  return getRecord(client, kayitId);
 }
 
 async function benimBekleyenler(client, kisiId, { firmaId = null } = {}) {
-  const roller = await kullaniciRolAdlari(client, kisiId, { firmaId });
+  const roller = await userRoleNames(client, kisiId, { firmaId });
   if (!roller.length) return [];
   const params = [roller];
   let sql = `
@@ -489,17 +489,17 @@ async function benimBekleyenler(client, kisiId, { firmaId = null } = {}) {
   sql += ` ORDER BY k.id DESC`;
   const liste = await client.query(sql, params);
   const out = [];
-  for (const r of liste.rows) out.push(await kayitGetir(client, r.id));
+  for (const r of liste.rows) out.push(await getRecord(client, r.id));
   return out;
 }
 
 module.exports = {
-  kayitGetir,
-  kullaniciRolIdleri,
-  kullaniciRolAdlari,
-  baslatOnay,
+  getRecord,
+  userRoleIds,
+  userRoleNames,
+  startApproval,
   onaylaAdim,
   reddetAdim,
-  iptalKayit,
+  cancelRecord,
   benimBekleyenler,
 };

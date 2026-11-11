@@ -5,12 +5,12 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { stokHareketOlustur, depoBakiyeListesi } = require('../src/services/stokHareketService');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { createStockMovement, listWarehouseBalances } = require('../src/services/stokHareketService');
 const {
-    sonrakiKod,
-    stokSeriKodundanTip,
-    cariSeriKodundanTur,
+    nextSequenceCode,
+    itemTypeFromSeriesCode,
+    partnerTypeFromSeriesCode,
 } = require('../src/utils/kodUretici');
 
 function requiredEnv(name) {
@@ -19,7 +19,7 @@ function requiredEnv(name) {
     return v;
 }
 
-async function ensureStokIsYeri(client, stokId, isYeriId) {
+async function ensureItemPlant(client, stokId, isYeriId) {
     if (!isYeriId) return;
     await client.query(
         `INSERT INTO stok_is_yeri (stok_id, is_yeri_id, aktif)
@@ -29,27 +29,27 @@ async function ensureStokIsYeri(client, stokId, isYeriId) {
     );
 }
 
-async function ensureStok(client, row) {
+async function ensureItem(client, row) {
     const mevcut = await client.query('SELECT id, stok_kodu FROM stoklar WHERE stok_adi = $1', [row.stok_adi]);
     if (mevcut.rows[0]) {
         await client.query(
             `UPDATE stoklar SET birim=$2, satis_fiyati=$3, stok_tipi=$4, tedarik_tipi=$5 WHERE id=$1`,
             [mevcut.rows[0].id, row.birim, row.satis_fiyati, row.stok_tipi, row.tedarik_tipi]
         );
-        await ensureStokIsYeri(client, mevcut.rows[0].id, row.is_yeri_id);
+        await ensureItemPlant(client, mevcut.rows[0].id, row.is_yeri_id);
         return { id: mevcut.rows[0].id, stok_kodu: mevcut.rows[0].stok_kodu };
     }
-    const kod = await sonrakiKod(client, stokSeriKodundanTip(row.stok_tipi));
+    const kod = await nextSequenceCode(client, itemTypeFromSeriesCode(row.stok_tipi));
     const ins = await client.query(
         `INSERT INTO stoklar (stok_kodu, stok_adi, birim, satis_fiyati, stok_tipi, tedarik_tipi)
          VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, stok_kodu`,
         [kod, row.stok_adi, row.birim, row.satis_fiyati, row.stok_tipi, row.tedarik_tipi]
     );
-    await ensureStokIsYeri(client, ins.rows[0].id, row.is_yeri_id);
+    await ensureItemPlant(client, ins.rows[0].id, row.is_yeri_id);
     return ins.rows[0];
 }
 
-async function ensureCari(client, row) {
+async function ensurePartner(client, row) {
     const mevcut = await client.query('SELECT id, cari_kodu FROM cariler WHERE cari_adi = $1', [row.cari_adi]);
     if (mevcut.rows[0]) {
         await client.query(
@@ -66,7 +66,7 @@ async function ensureCari(client, row) {
         );
         return { id: mevcut.rows[0].id, cari_kodu: mevcut.rows[0].cari_kodu };
     }
-    const kod = await sonrakiKod(client, cariSeriKodundanTur(row.cari_turu));
+    const kod = await nextSequenceCode(client, partnerTypeFromSeriesCode(row.cari_turu));
     const ins = await client.query(
         `INSERT INTO cariler (
             cari_kodu, cari_adi, cari_turu, telefon, email, vergi_no, vergi_dairesi,
@@ -83,7 +83,7 @@ async function ensureCari(client, row) {
     return ins.rows[0];
 }
 
-async function ensureDepo(client, isYeriId, adi, varsayilan = false) {
+async function ensureWarehouse(client, isYeriId, adi, varsayilan = false) {
     const m = await client.query(
         'SELECT id, depo_kodu FROM depolar WHERE is_yeri_id=$1 AND depo_adi=$2',
         [isYeriId, adi]
@@ -109,7 +109,7 @@ async function ensureDepo(client, isYeriId, adi, varsayilan = false) {
     if (varsayilan) {
         await client.query('UPDATE depolar SET varsayilan=FALSE WHERE is_yeri_id=$1', [isYeriId]);
     }
-    const kod = await sonrakiKod(client, 'DEPO');
+    const kod = await nextSequenceCode(client, 'DEPO');
     const ins = await client.query(
         `INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, varsayilan)
          VALUES ($1,$2,$3,$4) RETURNING id, depo_kodu`,
@@ -179,7 +179,7 @@ async function ensureMamulBom(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4) {
     return bomId;
 }
 
-async function ensureMamulRota(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4, merkezId) {
+async function ensureFinishedGoodRouting(client, mmId, ym1, ym2, hm1, hm2, hm3, hm4, merkezId) {
     const mevcut = await client.query(
         `SELECT id FROM rotalar WHERE rota_kodu = 'ROT-MAMUL' OR stok_id = $1 ORDER BY id LIMIT 1`,
         [mmId]
@@ -268,7 +268,7 @@ async function tamamlaHazirOperasyon(client, emir, op, miktar) {
 
     let tuketimHareketId = null;
     for (const [depoId, satirlar] of depoGrup.entries()) {
-        const h = await stokHareketOlustur(client, {
+        const h = await createStockMovement(client, {
             hareketTipi: 'URETIM_TUKETIM',
             isYeriId: emir.is_yeri_id,
             depoId,
@@ -286,7 +286,7 @@ async function tamamlaHazirOperasyon(client, emir, op, miktar) {
         const ciktiDepo = cikti.rows[0].stok_tipi === 'Mamul'
             ? emir.mamul_depo_id
             : (emir.yari_mamul_depo_id || emir.mamul_depo_id);
-        const h = await stokHareketOlustur(client, {
+        const h = await createStockMovement(client, {
             hareketTipi: 'URETIM_GIRIS',
             isYeriId: emir.is_yeri_id,
             depoId: ciktiDepo,
@@ -316,7 +316,7 @@ async function tamamlaHazirOperasyon(client, emir, op, miktar) {
         );
     }
 
-    const girisNo = await sonrakiBelgeNo(client, 'URETIM_GIRIS');
+    const girisNo = await nextDocumentNo(client, 'URETIM_GIRIS');
     await client.query(
         `INSERT INTO uretim_girisleri (giris_no, emir_id, miktar, tuketim_hareket_id, mamul_hareket_id)
          VALUES ($1,$2,$3,$4,$5)`,
@@ -360,14 +360,14 @@ async function main() {
         }
         const isYeriId = isYeri.rows[0].id;
 
-        const anaDepo = await ensureDepo(client, isYeriId, 'Ana Depo (Hammadde)', true);
-        const ymDepo = await ensureDepo(client, isYeriId, 'Yarı Mamul Depo', false);
-        const mmDepo = await ensureDepo(client, isYeriId, 'Mamul Depo', false);
+        const anaDepo = await ensureWarehouse(client, isYeriId, 'Ana Depo (Hammadde)', true);
+        const ymDepo = await ensureWarehouse(client, isYeriId, 'Yarı Mamul Depo', false);
+        const mmDepo = await ensureWarehouse(client, isYeriId, 'Mamul Depo', false);
         const anaDepoId = anaDepo.id;
         const ymDepoId = ymDepo.id;
         const mmDepoId = mmDepo.id;
 
-        const tedarikci = await ensureCari(client, {
+        const tedarikci = await ensurePartner(client, {
             cari_adi: 'Demo Tedarikçi A.Ş.',
             cari_turu: 'Tedarikci',
             telefon: '02121234567',
@@ -383,7 +383,7 @@ async function main() {
             is_yeri_id: isYeriId,
             notlar: 'Ana hammadde tedarikçisi',
         });
-        const musteri = await ensureCari(client, {
+        const musteri = await ensurePartner(client, {
             cari_adi: 'Demo Müşteri Ltd.',
             cari_turu: 'Musteri',
             telefon: '02129876543',
@@ -402,13 +402,13 @@ async function main() {
         const cariId = tedarikci.id;
 
         const stokBag = { birim: 'AD', is_yeri_id: isYeriId };
-        const hm1r = await ensureStok(client, { ...stokBag, stok_adi: 'Hammadde 1 - Çelik Sac', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const hm2r = await ensureStok(client, { ...stokBag, stok_adi: 'Hammadde 2 - Vida Seti', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const hm3r = await ensureStok(client, { ...stokBag, stok_adi: 'Hammadde 3 - Plastik Gövde', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const hm4r = await ensureStok(client, { ...stokBag, stok_adi: 'Hammadde 4 - Elektronik Kart', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
-        const ym1r = await ensureStok(client, { ...stokBag, stok_adi: 'Yarı Mamul 1 - Gövde Montajı', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
-        const ym2r = await ensureStok(client, { ...stokBag, stok_adi: 'Yarı Mamul 2 - Elektronik Montaj', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
-        const mm1r = await ensureStok(client, { ...stokBag, stok_adi: 'Mamul - Demo Cihaz', satis_fiyati: 1500, stok_tipi: 'Mamul', tedarik_tipi: 'Uretim' });
+        const hm1r = await ensureItem(client, { ...stokBag, stok_adi: 'Hammadde 1 - Çelik Sac', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const hm2r = await ensureItem(client, { ...stokBag, stok_adi: 'Hammadde 2 - Vida Seti', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const hm3r = await ensureItem(client, { ...stokBag, stok_adi: 'Hammadde 3 - Plastik Gövde', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const hm4r = await ensureItem(client, { ...stokBag, stok_adi: 'Hammadde 4 - Elektronik Kart', satis_fiyati: 0, stok_tipi: 'Hammadde', tedarik_tipi: 'Satinalma' });
+        const ym1r = await ensureItem(client, { ...stokBag, stok_adi: 'Yarı Mamul 1 - Gövde Montajı', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
+        const ym2r = await ensureItem(client, { ...stokBag, stok_adi: 'Yarı Mamul 2 - Elektronik Montaj', satis_fiyati: 0, stok_tipi: 'YariMamul', tedarik_tipi: 'Uretim' });
+        const mm1r = await ensureItem(client, { ...stokBag, stok_adi: 'Mamul - Demo Cihaz', satis_fiyati: 1500, stok_tipi: 'Mamul', tedarik_tipi: 'Uretim' });
         const hm1 = hm1r.id, hm2 = hm2r.id, hm3 = hm3r.id, hm4 = hm4r.id;
         const ym1 = ym1r.id, ym2 = ym2r.id, mm1 = mm1r.id;
 
@@ -426,10 +426,10 @@ async function main() {
             );
         }
         const merkezId = merkez.rows[0].id;
-        const rotaId = await ensureMamulRota(client, mm1, ym1, ym2, hm1, hm2, hm3, hm4, merkezId);
+        const rotaId = await ensureFinishedGoodRouting(client, mm1, ym1, ym2, hm1, hm2, hm3, hm4, merkezId);
 
         // Satınalma talebi + sipariş + mal kabul
-        const talepNo = await sonrakiBelgeNo(client, 'SATINALMA_TALEP');
+        const talepNo = await nextDocumentNo(client, 'SATINALMA_TALEP');
         const talep = await client.query(
             `INSERT INTO satin_alma_talepleri (talep_no, is_yeri_id, aciklama, durum)
              VALUES ($1,$2,'Demo 4 hammadde talebi','Acik') RETURNING id`,
@@ -443,7 +443,7 @@ async function main() {
             );
         }
 
-        const sasNo = await sonrakiBelgeNo(client, 'SATINALMA_SIPARIS');
+        const sasNo = await nextDocumentNo(client, 'SATINALMA_SIPARIS');
         const sas = await client.query(
             `INSERT INTO satin_alma_siparisleri
                 (siparis_no, cari_id, is_yeri_id, talep_id, durum, toplam_tutar)
@@ -469,7 +469,7 @@ async function main() {
             'SELECT * FROM satin_alma_siparis_satirlari WHERE siparis_id=$1',
             [sasId]
         );
-        const hareket = await stokHareketOlustur(client, {
+        const hareket = await createStockMovement(client, {
             hareketTipi: 'SATINALMA_GIRIS',
             isYeriId,
             depoId: anaDepoId,
@@ -482,7 +482,7 @@ async function main() {
                 birim: s.birim,
             })),
         });
-        const mkNo = await sonrakiBelgeNo(client, 'MAL_KABUL');
+        const mkNo = await nextDocumentNo(client, 'MAL_KABUL');
         const mk = await client.query(
             `INSERT INTO mal_kabuller (kabul_no, siparis_id, depo_id, stok_hareket_id)
              VALUES ($1,$2,$3,$4) RETURNING id`,
@@ -504,7 +504,7 @@ async function main() {
 
         // Tek iş emri + operasyonlar
         const miktar = 5;
-        const emirNo = await sonrakiBelgeNo(client, 'URETIM_EMRI');
+        const emirNo = await nextDocumentNo(client, 'URETIM_EMRI');
         const emirIns = await client.query(
             `INSERT INTO uretim_emirleri
                 (emir_no, stok_id, urun_agaci_id, rota_id, is_yeri_id,
@@ -572,7 +572,7 @@ async function main() {
         };
     });
 
-    const bakiyeler = await depoBakiyeListesi(pool);
+    const bakiyeler = await listWarehouseBalances(pool);
     console.log('\n--- Kod sistemi ---');
     console.log('Tedarikçi:', ozet.kodlar.tedarikci, '| Müşteri:', ozet.kodlar.musteri);
     console.log('Stoklar  :', ozet.kodlar.stoklar.join(', '));

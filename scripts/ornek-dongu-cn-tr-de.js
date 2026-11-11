@@ -36,7 +36,7 @@ function logRec(label, obj, fields) {
     console.log(`  ✓ ${label}: ${bits}`);
 }
 
-async function findOrCreateCari(payload) {
+async function findOrCreatePartner(payload) {
     const liste = await api('/cariler');
     const mevcut = liste.find((c) => c.cari_adi === payload.cari_adi);
     if (mevcut) {
@@ -56,7 +56,7 @@ async function findOrCreateCari(payload) {
     });
 }
 
-async function createStok(payload) {
+async function createItem(payload) {
     const tipSeri = {
         Hammadde: 'HAMMADDE',
         YariMamul: 'YARIMAMUL',
@@ -93,7 +93,7 @@ async function main() {
 
     // 2) Cariler
     step(2, 'Cari kartları — tedarikçiler (CN/TR/DE) + müşteri');
-    const tedCn = await findOrCreateCari({
+    const tedCn = await findOrCreatePartner({
         cari_adi: 'Shenzhen Parts Co. (CN)',
         cari_turu: 'Tedarikci',
         ulke: 'CN',
@@ -113,7 +113,7 @@ async function main() {
         }],
         dil_tanimlari: [{ dil_kodu: 'EN', dil_adi: 'English', cari_adi: 'Shenzhen Parts Co.', varsayilan: true }],
     });
-    const tedTr = await findOrCreateCari({
+    const tedTr = await findOrCreatePartner({
         cari_adi: 'Anadolu Metal A.Ş. (TR)',
         cari_turu: 'Tedarikci',
         ulke: 'TR',
@@ -133,7 +133,7 @@ async function main() {
             nakit_akisa_dahil: true,
         }],
     });
-    const tedDe = await findOrCreateCari({
+    const tedDe = await findOrCreatePartner({
         cari_adi: 'Bayerische Antrieb GmbH (DE)',
         cari_turu: 'Tedarikci',
         ulke: 'DE',
@@ -153,7 +153,7 @@ async function main() {
         }],
         dil_tanimlari: [{ dil_kodu: 'DE', dil_adi: 'Deutsch', cari_adi: 'Bayerische Antrieb GmbH', varsayilan: true }],
     });
-    const musteri = await findOrCreateCari({
+    const musteri = await findOrCreatePartner({
         cari_adi: 'Marmara Endüstri Müşteri A.Ş.',
         cari_turu: 'Musteri',
         ulke: 'TR',
@@ -181,7 +181,7 @@ async function main() {
 
     // 3) Stok kartları
     step(3, 'Stok kartları — HM(CN), HM(TR), YM(DE satınalma), Mamul');
-    const hmCn = await createStok({
+    const hmCn = await createItem({
         stok_adi: 'HM Bobin — Çin Menşei',
         stok_tipi: 'Hammadde',
         tedarik_tipi: 'Satinalma',
@@ -196,7 +196,7 @@ async function main() {
         dil_tanimlari: [{ dil_kodu: 'EN', dil_adi: 'English', stok_adi: 'Coil — China Origin', varsayilan: false }],
         birim_tanimlari: [{ birim_kodu: 'AD', katsayi: 1, cevrilecek_birim: 'AD', takip_birimi_mi: true }],
     });
-    const hmTr = await createStok({
+    const hmTr = await createItem({
         stok_adi: 'HM Alüminyum Profil — TR Menşei',
         stok_tipi: 'Hammadde',
         tedarik_tipi: 'Satinalma',
@@ -210,7 +210,7 @@ async function main() {
         barkodlar: [{ barkod: '869TR-PROFIL-01', birim_kodu: 'AD', varsayilan: true }],
         birim_tanimlari: [{ birim_kodu: 'AD', katsayi: 1, cevrilecek_birim: 'AD', takip_birimi_mi: true }],
     });
-    const ymDe = await createStok({
+    const ymDe = await createItem({
         stok_adi: 'YM Motor Ünitesi — Almanya Satınalma',
         stok_tipi: 'YariMamul',
         tedarik_tipi: 'Satinalma',
@@ -225,7 +225,7 @@ async function main() {
         dil_tanimlari: [{ dil_kodu: 'DE', dil_adi: 'Deutsch', stok_adi: 'Motoreinheit — DE', varsayilan: true }],
         birim_tanimlari: [{ birim_kodu: 'AD', katsayi: 1, cevrilecek_birim: 'AD', takip_birimi_mi: true }],
     });
-    const mamul = await createStok({
+    const mamul = await createItem({
         stok_adi: 'Mamul — KTB Kompakt Sürücü',
         stok_tipi: 'Mamul',
         tedarik_tipi: 'Uretim',

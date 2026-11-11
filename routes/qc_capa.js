@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
 
-async function getir(id) {
+async function fetchById(id) {
   const r = await pool.query(
     `
     SELECT c.*, u.id AS uygunsuzluk_no, u.description AS uygunsuzluk_aciklama,
@@ -45,7 +45,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'CAPA bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -58,7 +58,7 @@ router.post('/', async (req, res, next) => {
     const { baslik, description, nonconformance_id, sorumlu_kisi_id, target_date, status } = req.body || {};
     if (!baslik) return res.status(400).json({ hata: 'baslik zorunlu.' });
     const id = await withTransaction(pool, async (client) => {
-      const no = await sonrakiBelgeNo(client, 'CAPA');
+      const no = await nextDocumentNo(client, 'CAPA');
       const r = await client.query(
         `
         INSERT INTO qc_capa (capa_no, nonconformance_id, baslik, description, sorumlu_kisi_id, target_date, status)
@@ -69,7 +69,7 @@ router.post('/', async (req, res, next) => {
       );
       return r.rows[0].id;
     });
-    res.status(201).json(await getir(id));
+    res.status(201).json(await fetchById(id));
   } catch (err) {
     next(err);
   }
@@ -92,7 +92,7 @@ router.put('/:id', async (req, res, next) => {
       params
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'CAPA bulunamadı.' });
-    res.json(await getir(req.params.id));
+    res.json(await fetchById(req.params.id));
   } catch (err) {
     next(err);
   }

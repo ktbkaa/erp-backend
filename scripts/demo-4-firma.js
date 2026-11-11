@@ -6,7 +6,7 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod, stokSeriKodundanTip, cariSeriKodundanTur } = require('../src/utils/kodUretici');
+const { nextSequenceCode, itemTypeFromSeriesCode, partnerTypeFromSeriesCode } = require('../src/utils/kodUretici');
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -83,7 +83,7 @@ const FIRMS = [
   },
 ];
 
-async function ensureBirim(client, kod, adi) {
+async function ensureUom(client, kod, adi) {
   await client.query(
     `INSERT INTO olcu_birimleri (birim_kodu, birim_adi, aktif) VALUES ($1,$2,TRUE)
      ON CONFLICT (birim_kodu) DO NOTHING`,
@@ -91,7 +91,7 @@ async function ensureBirim(client, kod, adi) {
   );
 }
 
-async function createFirma(client, f) {
+async function createCompany(client, f) {
   const firma = (await client.query(
     `INSERT INTO firmalar (firma_kodu, firma_adi, adres, email)
      VALUES ($1,$2,$3,$4) RETURNING *`,
@@ -124,8 +124,8 @@ async function createFirma(client, f) {
   return { firma, isYeri, depolar };
 }
 
-async function createCari(client, { adi, turu, firmaId, isYeriId, sehir }) {
-  const kod = await sonrakiKod(client, cariSeriKodundanTur(turu));
+async function createPartner(client, { adi, turu, firmaId, isYeriId, sehir }) {
+  const kod = await nextSequenceCode(client, partnerTypeFromSeriesCode(turu));
   return (await client.query(
     `INSERT INTO cariler (
        cari_kodu, cari_adi, cari_turu, telefon, email, il, ulke, para_birimi,
@@ -137,8 +137,8 @@ async function createCari(client, { adi, turu, firmaId, isYeriId, sehir }) {
   )).rows[0];
 }
 
-async function createStok(client, { row, firmaId, isYeriId, girisDepo, cikisDepo }) {
-  const kod = await sonrakiKod(client, stokSeriKodundanTip(row.tip));
+async function createItem(client, { row, firmaId, isYeriId, girisDepo, cikisDepo }) {
+  const kod = await nextSequenceCode(client, itemTypeFromSeriesCode(row.tip));
   const s = (await client.query(
     `INSERT INTO stoklar (
        stok_kodu, stok_adi, birim, satis_fiyati, stok_tipi, tedarik_tipi,
@@ -169,9 +169,9 @@ async function createStok(client, { row, firmaId, isYeriId, girisDepo, cikisDepo
   return s;
 }
 
-async function stokGiris(client, { stokId, depoId, miktar, firmaId, isYeriId, belgeNo, birim = 'AD' }) {
+async function stockReceipt(client, { stokId, depoId, miktar, firmaId, isYeriId, belgeNo, birim = 'AD' }) {
   let hareketNo;
-  try { hareketNo = await sonrakiKod(client, 'STOK_HAREKET'); }
+  try { hareketNo = await nextSequenceCode(client, 'STOK_HAREKET'); }
   catch (_) { hareketNo = `SH-${belgeNo}-${Date.now().toString(36).slice(-4)}`; }
   const hk = await client.query(
     `SELECT id FROM hareket_kodlari WHERE yon ILIKE '%gir%' OR hareket_kodu ILIKE '%GIR%' LIMIT 1`
@@ -193,23 +193,23 @@ async function stokGiris(client, { stokId, depoId, miktar, firmaId, isYeriId, be
 }
 
 async function seedFirm(client, def) {
-  const { firma, isYeri, depolar } = await createFirma(client, def);
+  const { firma, isYeri, depolar } = await createCompany(client, def);
   const ctx = { firma, isYeri, depolar, stoklar: {}, cariler: {} };
 
   for (const b of ['AD', 'KG', 'MT', 'LT']) {
-    await ensureBirim(client, b, b);
+    await ensureUom(client, b, b);
   }
 
   // cariler
   ctx.cariler.tedarikciler = [];
   for (const adi of def.tedarikciler) {
-    ctx.cariler.tedarikciler.push(await createCari(client, {
+    ctx.cariler.tedarikciler.push(await createPartner(client, {
       adi, turu: 'Tedarikci', firmaId: firma.id, isYeriId: isYeri.id, sehir: def.sehir,
     }));
   }
   ctx.cariler.musteriler = [];
   for (const adi of def.musteriler) {
-    const c = await createCari(client, {
+    const c = await createPartner(client, {
       adi, turu: 'Musteri', firmaId: firma.id, isYeriId: isYeri.id, sehir: def.sehir,
     });
     if (!c.cari_kodu) {
@@ -223,19 +223,19 @@ async function seedFirm(client, def) {
   // stoklar
   ctx.stoklar.hammaddeler = [];
   for (const h of def.hammaddeler) {
-    const s = await createStok(client, {
+    const s = await createItem(client, {
       row: h, firmaId: firma.id, isYeriId: isYeri.id,
       girisDepo: depolar.HAMMADDE.id, cikisDepo: depolar.HAMMADDE.id,
     });
     ctx.stoklar.hammaddeler.push({ ...s, bomMiktar: h.miktar });
   }
-  ctx.stoklar.mamul = await createStok(client, {
+  ctx.stoklar.mamul = await createItem(client, {
     row: def.mamul, firmaId: firma.id, isYeriId: isYeri.id,
     girisDepo: depolar.MAMUL.id, cikisDepo: depolar.SEVK.id,
   });
 
   // BOM
-  const agacNo = await sonrakiKod(client, 'URUN_AGACI').catch(() => `${def.kod}-BOM-1`);
+  const agacNo = await nextSequenceCode(client, 'URUN_AGACI').catch(() => `${def.kod}-BOM-1`);
   const agac = (await client.query(
     `INSERT INTO urun_agaclari (agac_kodu, agac_adi, mamul_stok_id, miktar, aktif, firma_id)
      VALUES ($1,$2,$3,1,TRUE,$4) RETURNING *`,
@@ -258,7 +258,7 @@ async function seedFirm(client, def) {
     [`${def.kod}-IM1`, `${def.kod} Ana Hat`, isYeri.id]
   )).rows[0];
 
-  const rotaNo = await sonrakiKod(client, 'ROTA').catch(() => `${def.kod}-R1`);
+  const rotaNo = await nextSequenceCode(client, 'ROTA').catch(() => `${def.kod}-R1`);
   const rota = (await client.query(
     `INSERT INTO rotalar (rota_kodu, rota_adi, stok_id, aktif, firma_id, varsayilan)
      VALUES ($1,$2,$3,TRUE,$4,TRUE) RETURNING *`,
@@ -277,14 +277,14 @@ async function seedFirm(client, def) {
 
   // Hammadde stok girişi (satınalma karşılığı)
   for (const h of ctx.stoklar.hammaddeler) {
-    await stokGiris(client, {
+    await stockReceipt(client, {
       stokId: h.id, depoId: depolar.HAMMADDE.id, miktar: Math.max(100, h.bomMiktar * 200),
       firmaId: firma.id, isYeriId: isYeri.id, belgeNo: `${def.kod}-${h.stok_kodu}`, birim: h.birim,
     });
   }
 
   // SA: talep → teklif isteği → teklif (onaylı) → sipariş → mal kabul
-  const talepNo = await sonrakiKod(client, 'SATINALMA_TALEP').catch(() => `${def.kod}-TAL-1`);
+  const talepNo = await nextSequenceCode(client, 'SATINALMA_TALEP').catch(() => `${def.kod}-TAL-1`);
   const talep = (await client.query(
     `INSERT INTO satin_alma_talepleri (talep_no, durum, is_yeri_id, firma_id, aciklama)
      VALUES ($1,'Onayli',$2,$3,$4) RETURNING *`,
@@ -298,7 +298,7 @@ async function seedFirm(client, def) {
     [talep.id, h0.id, 50, h0.birim]
   );
 
-  const istekNo = await sonrakiKod(client, 'SATINALMA_TEKLIF_ISTEK').catch(() => `${def.kod}-TI-1`);
+  const istekNo = await nextSequenceCode(client, 'SATINALMA_TEKLIF_ISTEK').catch(() => `${def.kod}-TI-1`);
   const istek = (await client.query(
     `INSERT INTO satin_alma_teklif_istekleri (istek_no, is_yeri_id, firma_id, durum, aciklama)
      VALUES ($1,$2,$3,'TeklifeDonustu',$4) RETURNING *`,
@@ -310,7 +310,7 @@ async function seedFirm(client, def) {
     [istek.id, h0.id, h0.birim]
   );
 
-  const teklifNo = await sonrakiKod(client, 'SATINALMA_TEKLIF').catch(() => `${def.kod}-TK-1`);
+  const teklifNo = await nextSequenceCode(client, 'SATINALMA_TEKLIF').catch(() => `${def.kod}-TK-1`);
   const teklif = (await client.query(
     `INSERT INTO satin_alma_teklifleri (
        teklif_no, cari_id, istek_id, is_yeri_id, firma_id, durum, gecerlilik_tarihi, aciklama
@@ -330,7 +330,7 @@ async function seedFirm(client, def) {
     [teklif.id, h0.id, h0.satis_fiyati || 10, h0.birim]
   );
 
-  const saNo = await sonrakiKod(client, 'SATINALMA_SIPARIS').catch(() => `${def.kod}-SA-1`);
+  const saNo = await nextSequenceCode(client, 'SATINALMA_SIPARIS').catch(() => `${def.kod}-SA-1`);
   const sa = (await client.query(
     `INSERT INTO satin_alma_siparisleri (
        siparis_no, cari_id, depo_id, durum, firma_id, is_yeri_id, siparis_tarihi,
@@ -344,7 +344,7 @@ async function seedFirm(client, def) {
     [sa.id, h0.id, h0.satis_fiyati || 10, h0.birim]
   )).rows[0];
 
-  const mkNo = await sonrakiKod(client, 'MAL_KABUL').catch(() => `${def.kod}-MK-1`);
+  const mkNo = await nextSequenceCode(client, 'MAL_KABUL').catch(() => `${def.kod}-MK-1`);
   const mk = (await client.query(
     `INSERT INTO mal_kabuller (
        kabul_no, siparis_id, depo_id, durum, firma_id, is_yeri_id, kabul_tarihi
@@ -358,7 +358,7 @@ async function seedFirm(client, def) {
   );
 
   // Üretim emri
-  const ueNo = await sonrakiKod(client, 'URETIM_EMRI').catch(() => `${def.kod}-UE-1`);
+  const ueNo = await nextSequenceCode(client, 'URETIM_EMRI').catch(() => `${def.kod}-UE-1`);
   const ue = (await client.query(
     `INSERT INTO uretim_emirleri (
        emir_no, stok_id, planlanan_miktar, durum, is_yeri_id, firma_id,
@@ -369,13 +369,13 @@ async function seedFirm(client, def) {
   )).rows[0];
 
   // Mamul stok girişi (üretim çıktısı)
-  await stokGiris(client, {
+  await stockReceipt(client, {
     stokId: ctx.stoklar.mamul.id, depoId: depolar.MAMUL.id, miktar: 20,
     firmaId: firma.id, isYeriId: isYeri.id, belgeNo: `${def.kod}-URETIM`, birim: def.mamul.birim,
   });
 
   // CRM fırsat
-  const firsatNo = await sonrakiKod(client, 'CRM_FIRSAT').catch(() => `${def.kod}-FRS-1`);
+  const firsatNo = await nextSequenceCode(client, 'CRM_FIRSAT').catch(() => `${def.kod}-FRS-1`);
   const asamaId = (await client.query(
     `SELECT id FROM crm_firsat_asamalari ORDER BY id LIMIT 1`
   )).rows[0]?.id;
@@ -388,7 +388,7 @@ async function seedFirm(client, def) {
   )).rows[0];
 
   // Satış siparişi
-  const sipNo = await sonrakiKod(client, 'SATIS_SIPARIS').catch(() => `${def.kod}-SP-1`);
+  const sipNo = await nextSequenceCode(client, 'SATIS_SIPARIS').catch(() => `${def.kod}-SP-1`);
   const musteri = ctx.cariler.musteriler[0];
   if (!musteri?.cari_kodu) {
     throw new Error(`Müşteri cari_kodu eksik: ${JSON.stringify(musteri)}`);
@@ -413,7 +413,7 @@ async function seedFirm(client, def) {
   );
 
   // Sevk + irsaliye
-  const sevkNo = await sonrakiKod(client, 'SEVK_EMRI').catch(() => `${def.kod}-SV-1`);
+  const sevkNo = await nextSequenceCode(client, 'SEVK_EMRI').catch(() => `${def.kod}-SV-1`);
   const sevk = (await client.query(
     `INSERT INTO sevk_emirleri (
        sevk_no, siparis_id, depo_id, durum, firma_id, sevk_tarihi, cari_id
@@ -426,7 +426,7 @@ async function seedFirm(client, def) {
     [sevk.id, ctx.stoklar.mamul.id, def.mamul.birim]
   );
 
-  const irsNo = await sonrakiKod(client, 'IRSALIYE').catch(() => `${def.kod}-IR-1`);
+  const irsNo = await nextSequenceCode(client, 'IRSALIYE').catch(() => `${def.kod}-IR-1`);
   const irs = (await client.query(
     `INSERT INTO irsaliyeler (
        irsaliye_no, cari_id, depo_id, durum, firma_id, is_yeri_id,
@@ -441,7 +441,7 @@ async function seedFirm(client, def) {
   );
 
   // Fatura
-  const fatNo = await sonrakiKod(client, 'FATURA').catch(() => `${def.kod}-FAT-1`);
+  const fatNo = await nextSequenceCode(client, 'FATURA').catch(() => `${def.kod}-FAT-1`);
   await client.query(
     `INSERT INTO faturalar (
        fatura_no, cari_id, fatura_turu, durum, firma_id, is_yeri_id,
@@ -451,7 +451,7 @@ async function seedFirm(client, def) {
   );
 
   // KK emri (mamul)
-  const kkNo = await sonrakiKod(client, 'KK_EMIR').catch(() => `${def.kod}-KK-1`);
+  const kkNo = await nextSequenceCode(client, 'KK_EMIR').catch(() => `${def.kod}-KK-1`);
   await client.query(
     `INSERT INTO kk_emirleri (
        emir_no, stok_id, miktar, durum, yon, depo_id, firma_id
@@ -461,7 +461,7 @@ async function seedFirm(client, def) {
 
   // Parti (gıda/metal için)
   if (def.kod === 'GIDA' || def.kod === 'META') {
-    const partiNo = await sonrakiKod(client, 'PARTI').catch(() => `${def.kod}-P1`);
+    const partiNo = await nextSequenceCode(client, 'PARTI').catch(() => `${def.kod}-P1`);
     await client.query(
       `INSERT INTO stok_partileri (parti_no, stok_id, firma_id, son_kullanma_tarihi, aktif)
        VALUES ($1,$2,$3,CURRENT_DATE + INTERVAL '90 days', TRUE)`,

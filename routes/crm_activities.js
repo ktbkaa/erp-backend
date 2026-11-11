@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function faaliyetGetir(id) {
+async function getActivity(id) {
     const r = await pool.query(
         `
         SELECT fy.*,
@@ -33,7 +33,7 @@ async function faaliyetGetir(id) {
     return r.rows[0] || null;
 }
 
-function resolveMusteriTipi(b) {
+function resolveCustomerType(b) {
     if (b.customer_type) return b.customer_type;
     if (b.lead_id && !b.partner_id) return 'Aday';
     return 'Musteri';
@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
         if (lead_id) { params.push(Number(lead_id)); where.push(`fy.lead_id=$${params.length}`); }
         if (firsat_id) { params.push(Number(firsat_id)); where.push(`fy.firsat_id=$${params.length}`); }
         if (status) { params.push(status); where.push(`fy.status=$${params.length}`); }
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`fy.company_id = $${params.length}`);
@@ -78,7 +78,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await faaliyetGetir(req.params.id);
+        const row = await getActivity(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Faaliyet bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
         if (!b.description && !b.konu) {
             return res.status(400).json({ hata: 'konu veya description zorunlu.' });
         }
-        const musteriTipi = resolveMusteriTipi(b);
+        const musteriTipi = resolveCustomerType(b);
         if (musteriTipi === 'Musteri' && !b.partner_id && !b.firsat_id) {
             return res.status(400).json({ hata: 'partner_id veya firsat_id gerekli.' });
         }
@@ -121,8 +121,8 @@ router.post('/', async (req, res) => {
                     [b.plan_id]
                 );
             }
-            const kod = b.faaliyet_code || (await sonrakiKod(client, 'CRM_FAALIYET'));
-            const firmaId = b.company_id || firmaIdFromReq(req) || null;
+            const kod = b.faaliyet_code || (await nextSequenceCode(client, 'CRM_FAALIYET'));
+            const firmaId = b.company_id || companyIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_activities
@@ -144,7 +144,7 @@ router.post('/', async (req, res) => {
             );
             return r.rows[0].id;
         });
-        res.status(201).json(await faaliyetGetir(id));
+        res.status(201).json(await getActivity(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -183,7 +183,7 @@ router.put('/:id', async (req, res) => {
             ]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Faaliyet bulunamadı.' });
-        res.json(await faaliyetGetir(r.rows[0].id));
+        res.json(await getActivity(r.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

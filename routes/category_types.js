@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -62,7 +62,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: `applies_to ${APPLIES.join('|')} olmalı.` });
         }
         const row = await withTransaction(pool, async (client) => {
-            const kod = String(trimOrNull(req.body.type_code) || await sonrakiKod(client, 'KATEGORI_TIPI'))
+            const kod = String(trimOrNull(req.body.type_code) || await nextSequenceCode(client, 'KATEGORI_TIPI'))
                 .replace(/[^A-Za-z0-9_-]/g, '')
                 .slice(0, 40);
             const ins = await client.query(

@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { depoTransfer } = require('../src/services/stokHareketService');
+const { transferBetweenWarehouses } = require('../src/services/stokHareketService');
 const {
-    kkEmriOlustur,
-    gkkDepoCozumle,
-    depoBulKodVeyaRol,
+    createQcOrder,
+    resolveIncomingQcWarehouse,
+    findWarehouseByCodeOrRole,
 } = require('../src/services/kaliteService');
-const { assertYetki, reqKullaniciKodu } = require('../src/utils/yetki');
+const { assertPermission, reqUserCode } = require('../src/utils/yetki');
 
-async function kontrolGetir(id) {
+async function getInspection(id) {
     const k = await pool.query(
         `
         SELECT gk.*,
@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
             params.push(req.query.status);
             where.push(`gk.status = $${params.length}`);
         }
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`(
@@ -83,7 +83,7 @@ router.get('/', async (req, res) => {
             params
         );
         const out = [];
-        for (const r of ids.rows) out.push(await kontrolGetir(r.id));
+        for (const r of ids.rows) out.push(await getInspection(r.id));
         res.json(out);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await kontrolGetir(req.params.id);
+        const row = await getInspection(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Giriş kontrol bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -145,7 +145,7 @@ router.put('/:id', async (req, res) => {
                 }
             }
         });
-        res.json(await kontrolGetir(req.params.id));
+        res.json(await getInspection(req.params.id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -157,9 +157,9 @@ router.put('/:id', async (req, res) => {
  */
 router.post('/:id/onayla', async (req, res) => {
     try {
-        const kullanici = await assertYetki(pool, reqKullaniciKodu(req), 'kalite_control').catch(() => ({
+        const kullanici = await assertPermission(pool, reqUserCode(req), 'kalite_control').catch(() => ({
             id: null,
-            user_code: reqKullaniciKodu(req) || 'system',
+            user_code: reqUserCode(req) || 'system',
         }));
         await withTransaction(pool, async (client) => {
             const bel = await client.query(
@@ -218,10 +218,10 @@ router.post('/:id/onayla', async (req, res) => {
 
             const gkk = belge.target_warehouse_id
                 ? (await client.query(`SELECT * FROM warehouses WHERE id=$1`, [belge.target_warehouse_id])).rows[0]
-                : await gkkDepoCozumle(client, belge.plant_id);
+                : await resolveIncomingQcWarehouse(client, belge.plant_id);
             if (!gkk) throw new Error('Giriş kalite deposu (GKK) tanımlı değil.');
 
-            const hammadde = await depoBulKodVeyaRol(client, {
+            const hammadde = await findWarehouseByCodeOrRole(client, {
                 kodParam: 'HAMMADDE_DEPO_KODU',
                 role: 'Hammadde',
                 plantId: belge.plant_id,
@@ -231,7 +231,7 @@ router.post('/:id/onayla', async (req, res) => {
                 const accepted = Number(s.accepted_quantity);
                 if (accepted <= 0) continue;
 
-                const tr = await depoTransfer(client, {
+                const tr = await transferBetweenWarehouses(client, {
                     kaynakDepoId: belge.source_warehouse_id,
                     hedefDepoId: gkk.id,
                     isYeriId: belge.plant_id,
@@ -251,7 +251,7 @@ router.post('/:id/onayla', async (req, res) => {
                     [tr.giris.hareket.id]
                 );
 
-                await kkEmriOlustur(client, {
+                await createQcOrder(client, {
                     direction: 'GKK',
                     stokId: s.item_id,
                     depoId: gkk.id,
@@ -280,7 +280,7 @@ router.post('/:id/onayla', async (req, res) => {
                 [req.params.id, gkk.id, kullanici?.user_code || req.body?.inspected_by || null]
             );
         });
-        res.json(await kontrolGetir(req.params.id));
+        res.json(await getInspection(req.params.id));
     } catch (err) {
         res.status(err.status || 400).json({ hata: err.message });
     }
@@ -296,7 +296,7 @@ router.post('/:id/reddet', async (req, res) => {
         if (!upd.rows[0]) {
             return res.status(400).json({ hata: 'Reddedilemedi (bulunamadı veya Acik değil).' });
         }
-        res.json(await kontrolGetir(upd.rows[0].id));
+        res.json(await getInspection(upd.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

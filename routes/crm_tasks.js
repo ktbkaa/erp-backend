@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function gorevGetir(id) {
+async function getTask(id) {
     const r = await pool.query(
         `
         SELECT g.*,
@@ -36,7 +36,7 @@ router.get('/', async (req, res) => {
         if (sorumlu_id) { params.push(Number(sorumlu_id)); where.push(`g.sorumlu_id=$${params.length}`); }
         if (firsat_id) { params.push(Number(firsat_id)); where.push(`g.firsat_id=$${params.length}`); }
         if (partner_id) { params.push(Number(partner_id)); where.push(`g.partner_id=$${params.length}`); }
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`g.company_id = $${params.length}`);
@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await gorevGetir(req.params.id);
+        const row = await getTask(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Görev bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -79,8 +79,8 @@ router.post('/', async (req, res) => {
         const b = req.body;
         if (!b.baslik) return res.status(400).json({ hata: 'baslik zorunlu.' });
         const id = await withTransaction(pool, async (client) => {
-            const kod = b.gorev_code || (await sonrakiKod(client, 'CRM_GOREV'));
-            const firmaId = b.company_id || firmaIdFromReq(req) || null;
+            const kod = b.gorev_code || (await nextSequenceCode(client, 'CRM_GOREV'));
+            const firmaId = b.company_id || companyIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_tasks
@@ -97,7 +97,7 @@ router.post('/', async (req, res) => {
             );
             return r.rows[0].id;
         });
-        res.status(201).json(await gorevGetir(id));
+        res.status(201).json(await getTask(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -135,7 +135,7 @@ router.put('/:id', async (req, res) => {
             ]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Görev bulunamadı.' });
-        res.json(await gorevGetir(r.rows[0].id));
+        res.json(await getTask(r.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -155,7 +155,7 @@ router.post('/:id/tamamla', async (req, res) => {
         if (!r.rows[0]) {
             return res.status(400).json({ hata: 'Görev tamamlanamadı (bulunamadı veya accepted değil).' });
         }
-        res.json(await gorevGetir(r.rows[0].id));
+        res.json(await getTask(r.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

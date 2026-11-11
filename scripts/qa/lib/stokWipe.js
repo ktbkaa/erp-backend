@@ -3,9 +3,9 @@
  * Lot’lu giriş + lotsuz çıkış sapmasını önler.
  */
 const {
-  depoBakiyeListesi,
-  depoStokBakiye,
-  stokHareketOlustur,
+  listWarehouseBalances,
+  warehouseItemBalance,
+  createStockMovement,
 } = require('../../../src/services/stokHareketService');
 
 async function wipeUsableStock(client, {
@@ -20,7 +20,7 @@ async function wipeUsableStock(client, {
   const hedef = new Set((itemIds || []).map(Number).filter(Boolean));
   const whSet = warehouseIds ? new Set(warehouseIds.map(Number)) : null;
   const skipRoles = new Set(excludeRoles || []);
-  const bakiyeler = (await depoBakiyeListesi(client)).filter(
+  const bakiyeler = (await listWarehouseBalances(client)).filter(
     (b) => (!hedef.size || hedef.has(Number(b.item_id)))
       && (!whSet || whSet.has(Number(b.warehouse_id)))
       && !skipRoles.has(String(b.warehouse_rolu || ''))
@@ -44,7 +44,7 @@ async function wipeUsableStock(client, {
       });
       continue;
     }
-    const actual = await depoStokBakiye(client, b.warehouse_id, b.item_id, {
+    const actual = await warehouseItemBalance(client, b.warehouse_id, b.item_id, {
       stokStatu: 'Kullanilabilir',
       partiId: b.lot_id || null,
       // partiId yoksa tüm lotlar toplamı — yine de quantity'yi min ile sınırla
@@ -52,7 +52,7 @@ async function wipeUsableStock(client, {
     // lot satırı için partiId ile doğrula; lotsuz satırda listed qty kullan
     let qty;
     if (b.lot_id) {
-      const lotActual = await depoStokBakiye(client, b.warehouse_id, b.item_id, {
+      const lotActual = await warehouseItemBalance(client, b.warehouse_id, b.item_id, {
         stokStatu: 'Kullanilabilir',
         partiId: b.lot_id,
       });
@@ -72,7 +72,7 @@ async function wipeUsableStock(client, {
       continue;
     }
     try {
-      await stokHareketOlustur(client, {
+      await createStockMovement(client, {
         hareketTipi: 'STOK_CIKIS',
         isYeriId: plantId,
         depoId: b.warehouse_id,
@@ -135,7 +135,7 @@ async function repairNegativeStock(client, {
   for (const row of r.rows) {
     const need = Math.abs(Number(row.bakiye));
     if (need <= 1e-9) continue;
-    await stokHareketOlustur(client, {
+    await createStockMovement(client, {
       hareketTipi: 'STOK_GIRIS',
       isYeriId: plantId,
       depoId: row.warehouse_id,

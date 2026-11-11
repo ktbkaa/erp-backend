@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { assertYetki, reqKullaniciKodu } = require('../src/utils/yetki');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { assertPermission, reqUserCode } = require('../src/utils/yetki');
 const { epostaKuyrugaAl, gonderBir } = require('../src/services/epostaService');
 
 const TALEP_BASLIK_KEYS = [
@@ -21,7 +21,7 @@ function pick(body, keys) {
   return out;
 }
 
-async function talepGetir(id) {
+async function getRequisition(id) {
   const t = await pool.query('SELECT * FROM purchase_requisitions WHERE id = $1', [id]);
   if (!t.rows[0]) return null;
   const satirlar = await pool.query(`
@@ -37,7 +37,7 @@ async function talepGetir(id) {
   return { ...t.rows[0], satirlar: satirlar.rows };
 }
 
-async function insertTalepSatir(client, talepId, s, sira) {
+async function insertRequisitionLine(client, talepId, s, sira) {
   const stok = await client.query(
     `SELECT id, uom_code, purchase_uom, item_code, item_name, varsayilan_vat_rate
      FROM items WHERE id = $1`,
@@ -97,7 +97,7 @@ router.get('/', async (req, res) => {
   try {
     const params = [];
     let sql = 'SELECT id FROM purchase_requisitions';
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       sql += ` WHERE company_id = $${params.length}`;
@@ -105,7 +105,7 @@ router.get('/', async (req, res) => {
     sql += ' ORDER BY id DESC';
     const liste = await pool.query(sql, params);
     const result = [];
-    for (const r of liste.rows) result.push(await talepGetir(r.id));
+    for (const r of liste.rows) result.push(await getRequisition(r.id));
     res.json(result);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -114,9 +114,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const talep = await talepGetir(req.params.id);
+    const talep = await getRequisition(req.params.id);
     if (!talep) return res.status(404).json({ hata: 'Talep bulunamadı.' });
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId && talep.company_id != null && Number(talep.company_id) !== Number(firmaId)) {
       return res.status(404).json({ hata: 'Talep bulunamadı.' });
     }
@@ -133,14 +133,14 @@ router.post('/', async (req, res) => {
     if (!Array.isArray(satirlar) || satirlar.length === 0) {
       return res.status(400).json({ hata: 'satirlar zorunlu.' });
     }
-    const kod = reqKullaniciKodu(req);
+    const kod = reqUserCode(req);
     let created_by = null;
-    if (kod) created_by = await assertYetki(pool, kod, 'purchase_requisition_ref');
-    const firmaId = body.company_id || firmaIdFromReq(req) || null;
+    if (kod) created_by = await assertPermission(pool, kod, 'purchase_requisition_ref');
+    const firmaId = body.company_id || companyIdFromReq(req) || null;
     const p = pick(body, TALEP_BASLIK_KEYS);
 
     const id = await withTransaction(pool, async (client) => {
-      const no = await sonrakiBelgeNo(client, 'SATINALMA_TALEP');
+      const no = await nextDocumentNo(client, 'SATINALMA_TALEP');
       const baslik = await client.query(
         `INSERT INTO purchase_requisitions (
             requisition_no, plant_id, description, created_by_user_id, supplier_partner_id, company_id,
@@ -163,13 +163,13 @@ router.post('/', async (req, res) => {
       let sira = 1;
       for (const s of satirlar) {
         if (!s.item_id || s.quantity == null) continue;
-        await insertTalepSatir(client, talepId, s, s.line_no || sira);
+        await insertRequisitionLine(client, talepId, s, s.line_no || sira);
         sira += 1;
       }
       return talepId;
     });
 
-    res.status(201).json(await talepGetir(id));
+    res.status(201).json(await getRequisition(id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -226,7 +226,7 @@ router.put('/:id', async (req, res) => {
         let sira = 1;
         for (const s of satirlar) {
           if (!s.item_id || s.quantity == null) continue;
-          const lineId = await insertTalepSatir(client, Number(req.params.id), s, s.line_no || sira);
+          const lineId = await insertRequisitionLine(client, Number(req.params.id), s, s.line_no || sira);
           if (lineId != null) keepIds.push(lineId);
           sira += 1;
         }
@@ -243,7 +243,7 @@ router.put('/:id', async (req, res) => {
       return Number(req.params.id);
     });
 
-    res.json(await talepGetir(id));
+    res.json(await getRequisition(id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -251,7 +251,7 @@ router.put('/:id', async (req, res) => {
 
 router.post('/:id/onayla', async (req, res) => {
   try {
-    const approved_by = await assertYetki(pool, reqKullaniciKodu(req), 'satinalma_onay');
+    const approved_by = await assertPermission(pool, reqUserCode(req), 'satinalma_onay');
     const epostaGonder = req.body.eposta !== false;
 
     const result = await withTransaction(pool, async (client) => {
@@ -309,7 +309,7 @@ router.post('/:id/onayla', async (req, res) => {
       return { talepId: talep.id, eposta };
     });
 
-    const talep = await talepGetir(result.talepId);
+    const talep = await getRequisition(result.talepId);
     res.json({ ...talep, eposta: result.eposta });
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });

@@ -3,10 +3,10 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const {
-    sonrakiKod,
-    sonrakiPrefixedKod,
-    sonrakiStokHareketNo,
-    peekStokHareketNo,
+    nextSequenceCode,
+    nextPrefixedCode,
+    nextStockMovementNo,
+    peekStockMovementNo,
 } = require('../src/utils/kodUretici');
 
 router.get('/', async (req, res) => {
@@ -43,7 +43,7 @@ router.get('/stok-hareket/peek', async (req, res) => {
     try {
         const movementCode = String(req.query?.movement_code || '').trim().toUpperCase();
         if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
-        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        const kod = await withTransaction(pool, async (client) => peekStockMovementNo(client, movementCode));
         res.json({
             series_code: `STOK_HAREKET__${movementCode}`,
             movement_code: movementCode,
@@ -59,7 +59,7 @@ router.post('/stok-hareket/peek', async (req, res) => {
     try {
         const movementCode = String(req.body?.movement_code || req.query?.movement_code || '').trim().toUpperCase();
         if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
-        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        const kod = await withTransaction(pool, async (client) => peekStockMovementNo(client, movementCode));
         res.json({
             series_code: `STOK_HAREKET__${movementCode}`,
             movement_code: movementCode,
@@ -79,7 +79,7 @@ router.post('/stok-hareket/ayir', async (req, res) => {
     try {
         const movementCode = String(req.body?.movement_code || '').trim().toUpperCase();
         if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
-        const kod = await withTransaction(pool, async (client) => sonrakiStokHareketNo(client, movementCode));
+        const kod = await withTransaction(pool, async (client) => nextStockMovementNo(client, movementCode));
         res.status(201).json({
             series_code: `STOK_HAREKET__${movementCode}`,
             movement_code: movementCode,
@@ -98,7 +98,7 @@ router.post('/ayir-prefixed', async (req, res) => {
         if (!seriesCode || !prefix) {
             return res.status(400).json({ hata: 'series_code ve prefix zorunlu.' });
         }
-        const kod = await withTransaction(pool, async (client) => sonrakiPrefixedKod(client, {
+        const kod = await withTransaction(pool, async (client) => nextPrefixedCode(client, {
             seriesCode,
             prefix,
             pad: Number(req.body?.pad) > 0 ? Number(req.body.pad) : 5,
@@ -140,7 +140,7 @@ router.post('/:seriKodu/ayir', async (req, res) => {
             if (seri.rows[0].is_active === false) {
                 throw Object.assign(new Error('Numaratör is_inactive.'), { status: 400 });
             }
-            return sonrakiKod(client, req.params.seriKodu);
+            return nextSequenceCode(client, req.params.seriKodu);
         });
         res.status(201).json({ series_code: req.params.seriKodu, kod });
     } catch (err) {

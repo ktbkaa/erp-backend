@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { stokHareketOlustur } = require('../src/services/stokHareketService');
-const { hareketKoduBul, BELGE_TIPI } = require('../src/utils/belgeOmurga');
-const { hareketKodundanKkEmirleri } = require('../src/services/kaliteService');
+const { createStockMovement } = require('../src/services/stokHareketService');
+const { findMovementCode, BELGE_TIPI } = require('../src/utils/belgeOmurga');
+const { createQcOrdersFromMovementCode } = require('../src/services/kaliteService');
 
-async function hareketGetir(id) {
+async function getStockMovement(id) {
     const h = await pool.query(
         `
         SELECT h.*, d.warehouse_code, d.warehouse_name,
@@ -77,7 +77,7 @@ async function hareketGetir(id) {
     };
 }
 
-function mapHareketTipi(hareketKodu) {
+function mapMovementType(hareketKodu) {
     const belge = hareketKodu?.document_type || '';
     const direction = hareketKodu?.direction || '';
     if (belge === 'Transfer' || direction === 'Transfer') return 'TRANSFER';
@@ -89,7 +89,7 @@ function mapHareketTipi(hareketKodu) {
     return 'DUZELTME';
 }
 
-function satirYon(hareketTipi, hareketKodu) {
+function lineDirection(hareketTipi, hareketKodu) {
     if (hareketTipi === 'TRANSFER' || hareketTipi === 'STOK_CIKIS' || hareketTipi === 'SATIS_CIKIS') return -1;
     if (hareketKodu?.direction === 'Cikis') return -1;
     return 1;
@@ -112,7 +112,7 @@ async function withSavepoint(client, name, fn) {
 /**
  * Barkod okutma izi + parti/seri arka plan kayıtları (ekranda görünmez; rapor için).
  */
-async function kaydetBarkodOkumalar(client, {
+async function saveBarcodeScans(client, {
     hareket,
     satirlar,
     kaynakSatirlar,
@@ -232,7 +232,7 @@ router.get('/', async (req, res) => {
             params.push(Number(warehouse_id));
             where.push(`h.warehouse_id = $${params.length}`);
         }
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`h.company_id = $${params.length}`);
@@ -246,7 +246,7 @@ router.get('/', async (req, res) => {
         `;
         const liste = await pool.query(sql, params);
         const hareketler = [];
-        for (const r of liste.rows) hareketler.push(await hareketGetir(r.id));
+        for (const r of liste.rows) hareketler.push(await getStockMovement(r.id));
         res.json(hareketler);
     } catch (err) {
         console.error('Stok hareket listeleme hatası:', err);
@@ -259,7 +259,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const hareket = await hareketGetir(req.params.id);
+        const hareket = await getStockMovement(req.params.id);
         if (!hareket) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
         res.json(hareket);
     } catch (err) {
@@ -267,7 +267,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-function satirHazirla(body, satirlar) {
+function prepareLines(body, satirlar) {
     const satirHazir = [];
     for (let i = 0; i < satirlar.length; i += 1) {
         const s = satirlar[i] || {};
@@ -313,8 +313,8 @@ function satirHazirla(body, satirlar) {
     return satirHazir;
 }
 
-async function resolveHareketKodu(client, body) {
-    const hk = await hareketKoduBul(
+async function resolveMovementCode(client, body) {
+    const hk = await findMovementCode(
         client,
         body.belge_tipi_kod || BELGE_TIPI.STOK_HAREKET,
         body.movement_code_id || null
@@ -341,15 +341,15 @@ async function resolveHareketKodu(client, body) {
  * Manuel stok hareketi oluştur (POST / PUT ortak).
  * @param {object} opts.hareketNoOpt — düzeltmede mevcut hareket no korunur
  */
-async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } = {}) {
+async function createManualMovement(client, body, req, { hareketNoOpt = null } = {}) {
     const satirlar = body.satirlar || body.kalemler;
     if (!body.warehouse_id) throw Object.assign(new Error('warehouse_id zorunlu.'), { status: 400 });
     if (!Array.isArray(satirlar) || !satirlar.length) {
         throw Object.assign(new Error('satirlar zorunlu.'), { status: 400 });
     }
 
-    const hareketKodu = await resolveHareketKodu(client, body);
-    const type = mapHareketTipi(hareketKodu);
+    const hareketKodu = await resolveMovementCode(client, body);
+    const type = mapMovementType(hareketKodu);
     if (type === 'TRANSFER' && !body.target_warehouse_id) {
         throw new Error('Transfer için hedef depo zorunlu.');
     }
@@ -359,11 +359,11 @@ async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } =
 
     const yonCikis = -1;
     const yonGiris = 1;
-    const satirHazir = satirHazirla(body, satirlar);
+    const satirHazir = prepareLines(body, satirlar);
     const kullanici = body.user_code || req.user?.username || req.user?.user_code || null;
 
     if (type === 'TRANSFER') {
-        const cikis = await stokHareketOlustur(client, {
+        const cikis = await createStockMovement(client, {
             hareketTipi: 'TRANSFER',
             depoId: body.warehouse_id,
             belgeTipi: 'TRANSFER',
@@ -376,7 +376,7 @@ async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } =
             `UPDATE stock_movements SET target_warehouse_id=$2 WHERE id=$1`,
             [cikis.hareket.id, body.target_warehouse_id]
         );
-        const giris = await stokHareketOlustur(client, {
+        const giris = await createStockMovement(client, {
             hareketTipi: 'TRANSFER',
             depoId: body.target_warehouse_id,
             belgeTipi: 'TRANSFER',
@@ -393,7 +393,7 @@ async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } =
             `UPDATE stock_movements SET bagli_movement_id=$2 WHERE id=$1`,
             [giris.hareket.id, cikis.hareket.id]
         );
-        await kaydetBarkodOkumalar(client, {
+        await saveBarcodeScans(client, {
             hareket: cikis.hareket,
             satirlar: cikis.satirlar || [],
             kaynakSatirlar: satirHazir,
@@ -405,8 +405,8 @@ async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } =
         return cikis.hareket.id;
     }
 
-    const direction = satirYon(type, hareketKodu);
-    const hareket = await stokHareketOlustur(client, {
+    const direction = lineDirection(type, hareketKodu);
+    const hareket = await createStockMovement(client, {
         hareketTipi: type,
         depoId: body.warehouse_id,
         belgeTipi: type,
@@ -415,7 +415,7 @@ async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } =
         hareketNo: hareketNoOpt,
         satirlar: satirHazir.map((s) => ({ ...s, direction })),
     });
-    await kaydetBarkodOkumalar(client, {
+    await saveBarcodeScans(client, {
         hareket: hareket.hareket,
         satirlar: hareket.satirlar || [],
         kaynakSatirlar: satirHazir,
@@ -425,7 +425,7 @@ async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } =
         firmaId: hareket.hareket.company_id || null,
     });
     if (hareketKodu.gkk_emri_olussun || hareketKodu.ckk_emri_olussun) {
-        await hareketKodundanKkEmirleri(client, {
+        await createQcOrdersFromMovementCode(client, {
             hareketKodu,
             hareket: hareket.hareket,
             satirlar: hareket.satirlar || [],
@@ -435,7 +435,7 @@ async function olusturManuelHareket(client, body, req, { hareketNoOpt = null } =
     return hareket.hareket.id;
 }
 
-function belgeBagliMi(row) {
+function isDocumentLinked(row) {
     return Boolean(
         row.document_type
         && ['IRSALIYE', 'MAL_KABUL', 'URETIM_GIRIS'].includes(row.document_type)
@@ -444,7 +444,7 @@ function belgeBagliMi(row) {
 }
 
 /** Silmeden önce FK engellerini temizle (maliyet / seri / kalite) */
-async function temizleHareketBaglari(client, hareketId) {
+async function clearMovementLinks(client, hareketId) {
     const id = Number(hareketId);
     if (!id) return;
     await client.query(`DELETE FROM item_cost_movements WHERE movement_id=$1`, [id]).catch(() => {});
@@ -462,7 +462,7 @@ async function temizleHareketBaglari(client, hareketId) {
     ).catch(() => {});
 }
 
-async function silManuelHareket(client, row) {
+async function deleteManualMovement(client, row) {
     const ids = [row.id];
     if (row.bagli_movement_id) ids.push(row.bagli_movement_id);
     // Çift yön bağını çöz
@@ -471,7 +471,7 @@ async function silManuelHareket(client, row) {
         [ids]
     );
     for (const id of ids) {
-        await temizleHareketBaglari(client, id);
+        await clearMovementLinks(client, id);
     }
     for (const id of ids) {
         await client.query(`DELETE FROM stock_movements WHERE id=$1`, [id]);
@@ -485,11 +485,11 @@ async function silManuelHareket(client, row) {
 router.post('/', async (req, res) => {
     try {
         const body = req.body || {};
-        const id = await withTransaction(pool, async (client) => olusturManuelHareket(client, body, req, {
+        const id = await withTransaction(pool, async (client) => createManualMovement(client, body, req, {
             // Yeni kayıtta no sunucuda üretilir
             hareketNoOpt: null,
         }));
-        res.status(201).json(await hareketGetir(id));
+        res.status(201).json(await getStockMovement(id));
     } catch (err) {
         const status = err.status || 400;
         res.status(status).json({
@@ -512,16 +512,16 @@ router.put('/:id', async (req, res) => {
         );
         if (!mevcut.rows[0]) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
         const row = mevcut.rows[0];
-        if (belgeBagliMi(row)) {
+        if (isDocumentLinked(row)) {
             return res.status(400).json({ hata: 'Belgeye bağlı stok hareketi buradan düzeltilmez.' });
         }
         const body = req.body || {};
         const preservedNo = String(row.movement_no || '').trim() || null;
         const id = await withTransaction(pool, async (client) => {
-            await silManuelHareket(client, row);
-            return olusturManuelHareket(client, body, req, { hareketNoOpt: preservedNo });
+            await deleteManualMovement(client, row);
+            return createManualMovement(client, body, req, { hareketNoOpt: preservedNo });
         });
-        res.json(await hareketGetir(id));
+        res.json(await getStockMovement(id));
     } catch (err) {
         const status = err.status || (err.code === 'YETERSIZ_STOK' ? 400 : 400);
         res.status(status).json({
@@ -542,11 +542,11 @@ router.delete('/:id', async (req, res) => {
         );
         if (!h.rows[0]) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
         const row = h.rows[0];
-        if (belgeBagliMi(row)) {
+        if (isDocumentLinked(row)) {
             return res.status(400).json({ hata: 'Belgeye bağlı stok hareketi buradan silinemez.' });
         }
         await withTransaction(pool, async (client) => {
-            await silManuelHareket(client, row);
+            await deleteManualMovement(client, row);
         });
         res.json({ silindi: true, id: Number(req.params.id) });
     } catch (err) {

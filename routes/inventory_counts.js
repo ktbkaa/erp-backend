@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { stokHareketOlustur, depoBakiyeListesi } = require('../src/services/stokHareketService');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { createStockMovement, listWarehouseBalances } = require('../src/services/stokHareketService');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { trimOrNull } = require('../src/utils/tanimCrud');
 
-async function belgeGetir(id) {
+async function getDocument(id) {
   const b = await pool.query(
     `SELECT sb.*, d.warehouse_code, d.warehouse_name
      FROM inventory_counts sb
@@ -26,14 +26,14 @@ async function belgeGetir(id) {
   return { ...b.rows[0], satirlar: satirlar.rows };
 }
 
-function assertFirma(row, req) {
-  const firmaId = firmaIdFromReq(req);
+function assertCompany(row, req) {
+  const firmaId = companyIdFromReq(req);
   if (firmaId && row.company_id != null && Number(row.company_id) !== Number(firmaId)) return false;
   return true;
 }
 
-async function sistemBakiye(clientOrPool, depoId, stokId) {
-  const bakiyeler = await depoBakiyeListesi(clientOrPool, {
+async function systemBalance(clientOrPool, depoId, stokId) {
+  const bakiyeler = await listWarehouseBalances(clientOrPool, {
     depoId,
     stokId,
     stokStatu: 'Kullanilabilir',
@@ -45,7 +45,7 @@ router.get('/', async (req, res, next) => {
   try {
     const params = [];
     const where = ['1=1'];
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`sb.company_id = $${params.length}`);
@@ -64,7 +64,7 @@ router.get('/', async (req, res, next) => {
       params
     );
     const out = [];
-    for (const r of liste.rows) out.push(await belgeGetir(r.id));
+    for (const r of liste.rows) out.push(await getDocument(r.id));
     res.json(out);
   } catch (err) {
     next(err);
@@ -73,8 +73,8 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const belge = await belgeGetir(req.params.id);
-    if (!belge || !assertFirma(belge, req)) {
+    const belge = await getDocument(req.params.id);
+    if (!belge || !assertCompany(belge, req)) {
       return res.status(404).json({ hata: 'Sayım belgesi bulunamadı.' });
     }
     res.json(belge);
@@ -92,8 +92,8 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ hata: 'satirlar zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const no = await sonrakiBelgeNo(client, 'SAYIM_BELGE');
-      const firmaId = firmaIdFromReq(req) || Number(req.body.company_id) || null;
+      const no = await nextDocumentNo(client, 'SAYIM_BELGE');
+      const firmaId = companyIdFromReq(req) || Number(req.body.company_id) || null;
       const ins = await client.query(
         `INSERT INTO inventory_counts
             (document_no, company_id, plant_id, warehouse_id, sayim_date, description, created_by, status)
@@ -113,7 +113,7 @@ router.post('/', async (req, res, next) => {
         if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
         let sistem = s.sistem_quantity;
         if (sistem == null || sistem === '') {
-          sistem = await sistemBakiye(client, depoId, s.item_id);
+          sistem = await systemBalance(client, depoId, s.item_id);
         }
         const sayilan = s.sayilan_quantity != null ? Number(s.sayilan_quantity) : Number(sistem);
         await client.query(
@@ -129,7 +129,7 @@ router.post('/', async (req, res, next) => {
       }
       return belgeId;
     });
-    res.status(201).json(await belgeGetir(id));
+    res.status(201).json(await getDocument(id));
   } catch (err) {
     next(err);
   }
@@ -137,8 +137,8 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-    const mevcut = await belgeGetir(req.params.id);
-    if (!mevcut || !assertFirma(mevcut, req)) {
+    const mevcut = await getDocument(req.params.id);
+    if (!mevcut || !assertCompany(mevcut, req)) {
       return res.status(404).json({ hata: 'Sayım belgesi bulunamadı.' });
     }
     if (mevcut.status !== 'Taslak') {
@@ -164,7 +164,7 @@ router.put('/:id', async (req, res, next) => {
           if (!s.item_id) throw new Error('Satırda item_id zorunlu.');
           let sistem = s.sistem_quantity;
           if (sistem == null || sistem === '') {
-            sistem = await sistemBakiye(client, mevcut.warehouse_id, s.item_id);
+            sistem = await systemBalance(client, mevcut.warehouse_id, s.item_id);
           }
           const sayilan = s.sayilan_quantity != null ? Number(s.sayilan_quantity) : Number(sistem);
           await client.query(
@@ -180,7 +180,7 @@ router.put('/:id', async (req, res, next) => {
         }
       }
     });
-    res.json(await belgeGetir(req.params.id));
+    res.json(await getDocument(req.params.id));
   } catch (err) {
     next(err);
   }
@@ -220,7 +220,7 @@ router.post('/:id/onayla', async (req, res, next) => {
       }
       let hareketId = null;
       if (farkSatirlar.length) {
-        const hareket = await stokHareketOlustur(client, {
+        const hareket = await createStockMovement(client, {
           hareketTipi: 'SAYIM',
           isYeriId: belge.plant_id,
           depoId: belge.warehouse_id,
@@ -244,7 +244,7 @@ router.post('/:id/onayla', async (req, res, next) => {
       );
       return belge.id;
     });
-    res.json(await belgeGetir(result));
+    res.json(await getDocument(result));
   } catch (err) {
     const status = err.status || (err.code === 'YETERSIZ_STOK' ? 400 : 500);
     res.status(status).json({
@@ -257,15 +257,15 @@ router.post('/:id/onayla', async (req, res, next) => {
 
 router.post('/:id/iptal', async (req, res, next) => {
   try {
-    const mevcut = await belgeGetir(req.params.id);
-    if (!mevcut || !assertFirma(mevcut, req)) {
+    const mevcut = await getDocument(req.params.id);
+    if (!mevcut || !assertCompany(mevcut, req)) {
       return res.status(404).json({ hata: 'Sayım belgesi bulunamadı.' });
     }
     if (mevcut.status !== 'Taslak') {
       return res.status(400).json({ hata: 'Yalnız Taslak belge iptal edilebilir.' });
     }
     await pool.query(`UPDATE inventory_counts SET status='Iptal' WHERE id=$1`, [req.params.id]);
-    res.json(await belgeGetir(req.params.id));
+    res.json(await getDocument(req.params.id));
   } catch (err) {
     next(err);
   }
@@ -273,8 +273,8 @@ router.post('/:id/iptal', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const mevcut = await belgeGetir(req.params.id);
-    if (!mevcut || !assertFirma(mevcut, req)) {
+    const mevcut = await getDocument(req.params.id);
+    if (!mevcut || !assertCompany(mevcut, req)) {
       return res.status(404).json({ hata: 'Sayım belgesi bulunamadı.' });
     }
     if (mevcut.status === 'Onayli') {

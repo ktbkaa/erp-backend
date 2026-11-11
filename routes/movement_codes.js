@@ -36,14 +36,14 @@ const LEGACY_LABELS = {
  * Belge tipi → hareket_kodlari.document_type değeri.
  * Eşleme yoksa document_type_code olduğu gibi kullanılır (SATIS_IADE vb.).
  */
-function hareketBelgeKey(documentTypeCode) {
+function movementDocumentKey(documentTypeCode) {
     const code = String(documentTypeCode || '').trim();
     if (!code) return '';
     return HAREKET_BELGE_TIPI[code] || code;
 }
 
 /** UI / validasyon için belge tipi listesi (DB + legacy) */
-async function loadBelgeTipiOptions(client = pool) {
+async function loadDocumentTypeOptions(client = pool) {
     const byKey = new Map();
 
     const docs = await client.query(
@@ -53,7 +53,7 @@ async function loadBelgeTipiOptions(client = pool) {
          ORDER BY module, document_type_name, document_type_code`
     );
     for (const row of docs.rows) {
-        let key = hareketBelgeKey(row.document_type_code);
+        let key = movementDocumentKey(row.document_type_code);
         if (!key) continue;
         // Çakışmada stok etkili / kendi kodunu koru
         const prev = byKey.get(key);
@@ -111,7 +111,7 @@ async function loadBelgeTipiOptions(client = pool) {
 async function assertValidDocumentType(document_type) {
     const tip = String(document_type || '').trim();
     if (!tip) return { ok: false, hata: 'document_type zorunlu.' };
-    const opts = await loadBelgeTipiOptions();
+    const opts = await loadDocumentTypeOptions();
     if (opts.some((o) => o.id === tip)) return { ok: true, tip };
     // Doğrudan document_types kodu (eşlemesiz) da kabul
     const doc = await pool.query(
@@ -128,7 +128,7 @@ async function assertValidDocumentType(document_type) {
 
 router.get('/belge-tipleri', async (req, res) => {
     try {
-        let rows = await loadBelgeTipiOptions();
+        let rows = await loadDocumentTypeOptions();
         if (req.query.stock_etkisi === 'true') {
             rows = rows.filter((r) => r.stock_etkisi === true || r.stock_etkisi == null);
         }
@@ -282,5 +282,5 @@ router.delete('/:id', async (req, res) => {
 
 module.exports = router;
 module.exports.BELGE_TIPLERI = LEGACY_BELGE_TIPLERI;
-module.exports.loadBelgeTipiOptions = loadBelgeTipiOptions;
-module.exports.hareketBelgeKey = hareketBelgeKey;
+module.exports.loadDocumentTypeOptions = loadDocumentTypeOptions;
+module.exports.movementDocumentKey = movementDocumentKey;

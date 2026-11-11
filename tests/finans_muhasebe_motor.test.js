@@ -6,17 +6,17 @@ const assert = require('node:assert/strict');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const {
-  fisOlustur,
+  createJournalEntry,
   fisKesinlestir,
   fisTersKayit,
   assertLines,
   donemKapat,
   donemYenidenAc,
-  kaynakFisVarMi,
+  hasSourceJournalEntry,
 } = require('../src/services/muhasebeMotorService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 
-async function hesapId(kod) {
+async function accountId(kod) {
   const r = await pool.query(`SELECT id FROM gl_accounts WHERE account_code=$1`, [kod]);
   assert.ok(r.rows[0], `hesap yok: ${kod}`);
   return r.rows[0].id;
@@ -30,9 +30,9 @@ describe('finans muhasebe motor', () => {
   });
 
   it('1) dengeli fiş kaydedilir ve kesinleşir', async () => {
-    const h100 = await hesapId('100.01.001');
-    const h120 = await hesapId('120.01.001');
-    const fis = await withTransaction(pool, (c) => fisOlustur(c, {
+    const h100 = await accountId('100.01.001');
+    const h120 = await accountId('120.01.001');
+    const fis = await withTransaction(pool, (c) => createJournalEntry(c, {
       ulkeKodu: 'TR',
       belgeTarihi: new Date().toISOString().slice(0, 10),
       description: 'test dengeli',
@@ -59,9 +59,9 @@ describe('finans muhasebe motor', () => {
 
   it('3) is_inactive / ana hesapla kesinleştirme engellenir', async () => {
     const ana = await pool.query(`SELECT id FROM gl_accounts WHERE account_type='Ana' LIMIT 1`);
-    const h120 = await hesapId('120.01.001');
+    const h120 = await accountId('120.01.001');
     await assert.rejects(
-      () => withTransaction(pool, (c) => fisOlustur(c, {
+      () => withTransaction(pool, (c) => createJournalEntry(c, {
         lines: [
           { account_id: ana.rows[0].id, debit: 10, credit: 0 },
           { account_id: h120, debit: 0, credit: 10 },
@@ -73,10 +73,10 @@ describe('finans muhasebe motor', () => {
   });
 
   it('4) aynı source belge ikinci kez mükerrer fiş üretmez', async () => {
-    const h100 = await hesapId('100.01.001');
-    const h120 = await hesapId('120.01.001');
+    const h100 = await accountId('100.01.001');
+    const h120 = await accountId('120.01.001');
     const kaynakId = 900001 + Math.floor(Math.random() * 1000);
-    await withTransaction(pool, (c) => fisOlustur(c, {
+    await withTransaction(pool, (c) => createJournalEntry(c, {
       lines: [
         { account_id: h100, debit: 25, credit: 0 },
         { account_id: h120, debit: 0, credit: 25 },
@@ -86,7 +86,7 @@ describe('finans muhasebe motor', () => {
       kesinlestir: true,
     }));
     await assert.rejects(
-      () => withTransaction(pool, (c) => fisOlustur(c, {
+      () => withTransaction(pool, (c) => createJournalEntry(c, {
         lines: [
           { account_id: h100, debit: 25, credit: 0 },
           { account_id: h120, debit: 0, credit: 25 },
@@ -100,9 +100,9 @@ describe('finans muhasebe motor', () => {
   });
 
   it('5) kesinleşmiş fiş PUT ile değiştirilemez — ters kayıt çalışır', async () => {
-    const h100 = await hesapId('100.01.001');
-    const h600 = await hesapId('600.01.001');
-    const fis = await withTransaction(pool, (c) => fisOlustur(c, {
+    const h100 = await accountId('100.01.001');
+    const h600 = await accountId('600.01.001');
+    const fis = await withTransaction(pool, (c) => createJournalEntry(c, {
       lines: [
         { account_id: h100, debit: 80, credit: 0 },
         { account_id: h600, debit: 0, credit: 80 },
@@ -123,10 +123,10 @@ describe('finans muhasebe motor', () => {
     assert.ok(period.rows[0]);
     await withTransaction(pool, (c) => donemKapat(c, period.rows[0].id, { kullaniciKodu: 'test' }));
     const d = await pool.query(`SELECT start_date FROM accounting_periods WHERE id=$1`, [period.rows[0].id]);
-    const h100 = await hesapId('100.01.001');
-    const h120 = await hesapId('120.01.001');
+    const h100 = await accountId('100.01.001');
+    const h120 = await accountId('120.01.001');
     await assert.rejects(
-      () => withTransaction(pool, (c) => fisOlustur(c, {
+      () => withTransaction(pool, (c) => createJournalEntry(c, {
         belgeTarihi: d.rows[0].start_date,
         lines: [
           { account_id: h100, debit: 5, credit: 0 },

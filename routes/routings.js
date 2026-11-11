@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 
 function boolOr(v, def = false) {
@@ -18,7 +18,7 @@ function numOr(v, def = 0) {
   return Number.isFinite(n) ? n : def;
 }
 
-async function rotaGetir(id) {
+async function getRouting(id) {
   const baslik = await pool.query(
     `
     SELECT r.*,
@@ -250,7 +250,7 @@ async function clearOtherDefault(client, itemId, keepId) {
 router.get('/', async (req, res) => {
   try {
     const onlyMamul = req.query.type !== 'hepsi';
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (onlyMamul) where.push(`s.item_type IN ('Mamul','YariMamul')`);
@@ -284,7 +284,7 @@ router.get('/', async (req, res) => {
       params
     );
     const result = [];
-    for (const r of liste.rows) result.push(await rotaGetir(r.id));
+    for (const r of liste.rows) result.push(await getRouting(r.id));
     res.json(result);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -293,7 +293,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const rota = await rotaGetir(req.params.id);
+    const rota = await getRouting(req.params.id);
     if (!rota) return res.status(404).json({ hata: 'Rota bulunamadı.' });
     res.json(rota);
   } catch (err) {
@@ -313,7 +313,7 @@ router.post('/:id/sablon-uygula', async (req, res) => {
         err.status = 404;
         throw err;
       }
-      const sablon = await rotaGetir(templateId);
+      const sablon = await getRouting(templateId);
       if (!sablon) {
         const err = new Error('Şablon rota bulunamadı.');
         err.status = 404;
@@ -329,7 +329,7 @@ router.post('/:id/sablon-uygula', async (req, res) => {
       await client.query('UPDATE routings SET updated_at=NOW() WHERE id=$1', [req.params.id]);
       return Number(req.params.id);
     });
-    res.json(await rotaGetir(kayitId));
+    res.json(await getRouting(kayitId));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -356,7 +356,7 @@ router.post('/', async (req, res) => {
     const headerBomId = headerBomFromOps(h.product_bom_id, operasyonlar);
 
     const id = await withTransaction(pool, async (client) => {
-      let firmaId = firmaIdFromReq(req) || Number(h.company_id) || null;
+      let firmaId = companyIdFromReq(req) || Number(h.company_id) || null;
       if (!firmaId) {
         const st = await client.query('SELECT company_id FROM items WHERE id=$1', [h.item_id]);
         firmaId = st.rows[0]?.company_id || null;
@@ -406,7 +406,7 @@ router.post('/', async (req, res) => {
       return rotaId;
     });
 
-    res.status(201).json(await rotaGetir(id));
+    res.status(201).json(await getRouting(id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -506,7 +506,7 @@ router.put('/:id', async (req, res) => {
       return Number(req.params.id);
     });
 
-    res.json(await rotaGetir(kayitId));
+    res.json(await getRouting(kayitId));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }

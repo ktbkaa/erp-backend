@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { satirHesapla, belgelerToplam } = require('../src/utils/kalemHesap');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
 
-async function teklifGetir(id) {
+async function getQuotation(id) {
     const t = await pool.query(
         `
         SELECT t.*, c.partner_code, c.partner_name, hk.movement_code, hk.movement_name,
@@ -37,7 +37,7 @@ async function teklifGetir(id) {
 
 function hazirSatirlar(raw) {
     return raw.map((k, i) => {
-        const h = satirHesapla(k);
+        const h = calculateLine(k);
         return {
             line_no: k.line_no || i + 1,
             item_id: k.item_id,
@@ -51,9 +51,9 @@ function hazirSatirlar(raw) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM sales_quotations'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        const liste = await (() => { const firmaId = companyIdFromReq(req); const params = []; let sql = 'SELECT id FROM sales_quotations'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
         const result = [];
-        for (const r of liste.rows) result.push(await teklifGetir(r.id));
+        for (const r of liste.rows) result.push(await getQuotation(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await teklifGetir(req.params.id);
+        const row = await getQuotation(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
         const top = belgelerToplam(satirlar);
 
         const id = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'SATIS_TEKLIF');
+            const no = await nextDocumentNo(client, 'SATIS_TEKLIF');
             let hk = movement_code_id || null;
             if (!hk) {
                 const d = await client.query(
@@ -126,7 +126,7 @@ router.post('/', async (req, res) => {
             }
             return tid;
         });
-        res.status(201).json(await teklifGetir(id));
+        res.status(201).json(await getQuotation(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -195,7 +195,7 @@ router.put('/:id', async (req, res) => {
             }
             return Number(req.params.id);
         });
-        res.json(await teklifGetir(id));
+        res.json(await getQuotation(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -204,16 +204,16 @@ router.put('/:id', async (req, res) => {
 /** Teklif → Satış Siparişi (P01 kaynak_belge + satır ref) */
 router.post('/:id/siparise-donustur', async (req, res) => {
     try {
-        const { BELGE_TIPI, hareketKoduBul } = require('../src/utils/belgeOmurga');
-        const teklif = await teklifGetir(req.params.id);
+        const { BELGE_TIPI, findMovementCode } = require('../src/utils/belgeOmurga');
+        const teklif = await getQuotation(req.params.id);
         if (!teklif) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         if (!['Onayli', 'Taslak'].includes(teklif.status)) {
             return res.status(400).json({ hata: `Durum dönüşüme accepted değil: ${teklif.status}` });
         }
 
         const siparisId = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'SATIS_SIPARIS');
-            const hk = await hareketKoduBul(client, BELGE_TIPI.SATIS_SIPARIS);
+            const no = await nextDocumentNo(client, 'SATIS_SIPARIS');
+            const hk = await findMovementCode(client, BELGE_TIPI.SATIS_SIPARIS);
 
             const sip = await client.query(
                 `
@@ -275,7 +275,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
             ok: true,
             sales_order_id: siparisId,
             order_no: siparis.rows[0].order_no,
-            teklif: await teklifGetir(teklif.id),
+            teklif: await getQuotation(teklif.id),
         });
     } catch (err) {
         res.status(500).json({ hata: err.message });

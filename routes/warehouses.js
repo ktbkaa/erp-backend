@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
 // Tüm depoları listele (firma + iş yeri bilgisiyle)
 router.get('/', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         const params = [];
         let firmaWhere = '';
         if (firmaId) {
@@ -119,7 +119,7 @@ router.post('/', async (req, res) => {
                 );
             }
 
-            const kod = warehouse_code || (await sonrakiKod(client, 'DEPO'));
+            const kod = warehouse_code || (await nextSequenceCode(client, 'DEPO'));
 
             const result = await client.query(
                 `

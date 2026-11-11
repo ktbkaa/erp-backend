@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { stokHareketOlustur } = require('../src/services/stokHareketService');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { createStockMovement } = require('../src/services/stokHareketService');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { trimOrNull } = require('../src/utils/tanimCrud');
 
-async function emirGetir(id) {
+async function getQcOrder(id) {
   const e = await pool.query(
     `SELECT te.*,
             kd.warehouse_code AS kaynak_depo_kodu, kd.warehouse_name AS kaynak_depo_adi,
@@ -29,8 +29,8 @@ async function emirGetir(id) {
   return { ...e.rows[0], satirlar: satirlar.rows };
 }
 
-function assertFirma(row, req) {
-  const firmaId = firmaIdFromReq(req);
+function assertCompany(row, req) {
+  const firmaId = companyIdFromReq(req);
   if (firmaId && row.company_id != null && Number(row.company_id) !== Number(firmaId)) {
     return false;
   }
@@ -41,7 +41,7 @@ router.get('/', async (req, res, next) => {
   try {
     const params = [];
     const where = ['1=1'];
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`te.company_id = $${params.length}`);
@@ -56,7 +56,7 @@ router.get('/', async (req, res, next) => {
       params
     );
     const out = [];
-    for (const r of liste.rows) out.push(await emirGetir(r.id));
+    for (const r of liste.rows) out.push(await getQcOrder(r.id));
     res.json(out);
   } catch (err) {
     next(err);
@@ -65,8 +65,8 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const emir = await emirGetir(req.params.id);
-    if (!emir || !assertFirma(emir, req)) {
+    const emir = await getQcOrder(req.params.id);
+    if (!emir || !assertCompany(emir, req)) {
       return res.status(404).json({ hata: 'Transfer emri bulunamadı.' });
     }
     res.json(emir);
@@ -86,8 +86,8 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ hata: 'satirlar zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const no = await sonrakiBelgeNo(client, 'TRANSFER_EMRI');
-      const firmaId = firmaIdFromReq(req) || Number(req.body.company_id) || null;
+      const no = await nextDocumentNo(client, 'TRANSFER_EMRI');
+      const firmaId = companyIdFromReq(req) || Number(req.body.company_id) || null;
       const ins = await client.query(
         `INSERT INTO transfer_orders
             (order_no, company_id, plant_id, source_warehouse_id, target_warehouse_id,
@@ -119,7 +119,7 @@ router.post('/', async (req, res, next) => {
       }
       return emirId;
     });
-    res.status(201).json(await emirGetir(id));
+    res.status(201).json(await getQcOrder(id));
   } catch (err) {
     next(err);
   }
@@ -127,8 +127,8 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-    const mevcut = await emirGetir(req.params.id);
-    if (!mevcut || !assertFirma(mevcut, req)) {
+    const mevcut = await getQcOrder(req.params.id);
+    if (!mevcut || !assertCompany(mevcut, req)) {
       return res.status(404).json({ hata: 'Transfer emri bulunamadı.' });
     }
     if (mevcut.status !== 'Taslak') {
@@ -168,7 +168,7 @@ router.put('/:id', async (req, res, next) => {
         }
       }
     });
-    res.json(await emirGetir(req.params.id));
+    res.json(await getQcOrder(req.params.id));
   } catch (err) {
     next(err);
   }
@@ -206,7 +206,7 @@ router.post('/:id/onayla', async (req, res, next) => {
       }));
 
       // Emir onayında item_warehouses master zorunluluğu kalkar; yetersiz stok yine engellenir
-      const cikis = await stokHareketOlustur(client, {
+      const cikis = await createStockMovement(client, {
         hareketTipi: 'TRANSFER',
         isYeriId: emir.plant_id,
         depoId: emir.source_warehouse_id,
@@ -217,7 +217,7 @@ router.post('/:id/onayla', async (req, res, next) => {
         satirlar: satirHazir.map((s) => ({ ...s, direction: -1 })),
         depoZorunluAtla: true,
       });
-      const giris = await stokHareketOlustur(client, {
+      const giris = await createStockMovement(client, {
         hareketTipi: 'TRANSFER',
         isYeriId: emir.plant_id,
         depoId: emir.target_warehouse_id,
@@ -246,7 +246,7 @@ router.post('/:id/onayla', async (req, res, next) => {
       );
       return emir.id;
     });
-    res.json(await emirGetir(result));
+    res.json(await getQcOrder(result));
   } catch (err) {
     const status = err.status || (err.code === 'YETERSIZ_STOK' ? 400 : 500);
     res.status(status).json({
@@ -259,15 +259,15 @@ router.post('/:id/onayla', async (req, res, next) => {
 
 router.post('/:id/iptal', async (req, res, next) => {
   try {
-    const mevcut = await emirGetir(req.params.id);
-    if (!mevcut || !assertFirma(mevcut, req)) {
+    const mevcut = await getQcOrder(req.params.id);
+    if (!mevcut || !assertCompany(mevcut, req)) {
       return res.status(404).json({ hata: 'Transfer emri bulunamadı.' });
     }
     if (mevcut.status !== 'Taslak') {
       return res.status(400).json({ hata: 'Yalnız Taslak emir iptal edilebilir.' });
     }
     await pool.query(`UPDATE transfer_orders SET status='Iptal' WHERE id=$1`, [req.params.id]);
-    res.json(await emirGetir(req.params.id));
+    res.json(await getQcOrder(req.params.id));
   } catch (err) {
     next(err);
   }
@@ -275,8 +275,8 @@ router.post('/:id/iptal', async (req, res, next) => {
 
 router.delete('/:id', async (req, res, next) => {
   try {
-    const mevcut = await emirGetir(req.params.id);
-    if (!mevcut || !assertFirma(mevcut, req)) {
+    const mevcut = await getQcOrder(req.params.id);
+    if (!mevcut || !assertCompany(mevcut, req)) {
       return res.status(404).json({ hata: 'Transfer emri bulunamadı.' });
     }
     if (mevcut.status !== 'Taslak' && mevcut.status !== 'Iptal') {

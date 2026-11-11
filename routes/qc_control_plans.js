@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
-async function planGetir(id) {
+async function getPlan(id) {
     const p = await pool.query('SELECT * FROM qc_control_plans WHERE id=$1', [id]);
     if (!p.rows[0]) return null;
     const k = await pool.query('SELECT * FROM qc_criteria WHERE plan_id=$1 ORDER BY line_no, id', [id]);
@@ -15,7 +15,7 @@ router.get('/', async (_req, res) => {
     try {
         const liste = await pool.query('SELECT id FROM qc_control_plans ORDER BY plan_code');
         const out = [];
-        for (const r of liste.rows) out.push(await planGetir(r.id));
+        for (const r of liste.rows) out.push(await getPlan(r.id));
         res.json(out);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -24,7 +24,7 @@ router.get('/', async (_req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const p = await planGetir(req.params.id);
+        const p = await getPlan(req.params.id);
         if (!p) return res.status(404).json({ hata: 'Plan bulunamadı.' });
         res.json(p);
     } catch (err) {
@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
         const { plan_code, plan_name, direction, description, kriterler, is_active } = req.body;
         if (!plan_name) return res.status(400).json({ hata: 'plan_name zorunlu.' });
         const id = await withTransaction(pool, async (client) => {
-            const kod = plan_code || (await sonrakiKod(client, 'KK_PLAN'));
+            const kod = plan_code || (await nextSequenceCode(client, 'KK_PLAN'));
             const r = await client.query(
                 `
                 INSERT INTO qc_control_plans (plan_code, plan_name, direction, description, is_active)
@@ -60,7 +60,7 @@ router.post('/', async (req, res) => {
             }
             return planId;
         });
-        res.status(201).json(await planGetir(id));
+        res.status(201).json(await getPlan(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -102,7 +102,7 @@ router.put('/:id', async (req, res) => {
                 }
             }
         });
-        res.json(await planGetir(req.params.id));
+        res.json(await getPlan(req.params.id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }

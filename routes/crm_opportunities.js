@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { satirHesapla, belgelerToplam } = require('../src/utils/kalemHesap');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
 
-async function firsatGetir(id) {
+async function getOpportunity(id) {
     const f = await pool.query(
         `
         SELECT f.*,
@@ -84,7 +84,7 @@ async function firsatGetir(id) {
     };
 }
 
-async function satirKaydet(client, firsatId, satirlar) {
+async function saveLine(client, firsatId, satirlar) {
     await client.query('DELETE FROM crm_opportunity_lines WHERE firsat_id=$1', [firsatId]);
     if (!Array.isArray(satirlar)) return 0;
     let toplam = 0;
@@ -128,7 +128,7 @@ router.get('/', async (req, res) => {
             params.push(Number(lead_id));
             where.push(`f.lead_id = $${params.length}`);
         }
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`f.company_id = $${params.length}`);
@@ -142,7 +142,7 @@ router.get('/', async (req, res) => {
             params
         );
         const result = [];
-        for (const r of liste.rows) result.push(await firsatGetir(r.id));
+        for (const r of liste.rows) result.push(await getOpportunity(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -151,7 +151,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await firsatGetir(req.params.id);
+        const row = await getOpportunity(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Fırsat bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -184,8 +184,8 @@ router.post('/', async (req, res) => {
             }
             if (!asamaId) throw new Error('Fırsat aşaması tanımlı değil.');
 
-            const kod = b.firsat_code || (await sonrakiKod(client, 'CRM_FIRSAT'));
-            const firmaId = b.company_id || firmaIdFromReq(req) || null;
+            const kod = b.firsat_code || (await nextSequenceCode(client, 'CRM_FIRSAT'));
+            const firmaId = b.company_id || companyIdFromReq(req) || null;
             const ins = await client.query(
                 `
                 INSERT INTO crm_opportunities
@@ -207,7 +207,7 @@ router.post('/', async (req, res) => {
                 ]
             );
             const firsatId = ins.rows[0].id;
-            const toplam = await satirKaydet(client, firsatId, b.satirlar || b.kalemler);
+            const toplam = await saveLine(client, firsatId, b.satirlar || b.kalemler);
             if (toplam > 0 && (b.beklenen_gelir == null || b.beklenen_gelir === '')) {
                 await client.query(
                     `UPDATE crm_opportunities SET beklenen_gelir=$2 WHERE id=$1`,
@@ -216,7 +216,7 @@ router.post('/', async (req, res) => {
             }
             return firsatId;
         });
-        res.status(201).json(await firsatGetir(id));
+        res.status(201).json(await getOpportunity(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -273,7 +273,7 @@ router.put('/:id', async (req, res) => {
                 ]
             );
             if (Array.isArray(b.satirlar) || Array.isArray(b.kalemler)) {
-                const toplam = await satirKaydet(client, Number(req.params.id), b.satirlar || b.kalemler);
+                const toplam = await saveLine(client, Number(req.params.id), b.satirlar || b.kalemler);
                 if (b.beklenen_gelir == null) {
                     await client.query(
                         `UPDATE crm_opportunities SET beklenen_gelir=$2 WHERE id=$1`,
@@ -283,7 +283,7 @@ router.put('/:id', async (req, res) => {
             }
             return Number(req.params.id);
         });
-        res.json(await firsatGetir(id));
+        res.json(await getOpportunity(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -318,7 +318,7 @@ router.post('/:id/kapat', async (req, res) => {
             if (!upd.rows[0]) throw new Error('Fırsat kapatılamadı (bulunamadı veya zaten kapalı).');
             return upd.rows[0].id;
         });
-        res.json(await firsatGetir(id));
+        res.json(await getOpportunity(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -330,7 +330,7 @@ router.post('/:id/kapat', async (req, res) => {
  */
 router.post('/:id/teklife-donustur', async (req, res) => {
     try {
-        const firsat = await firsatGetir(req.params.id);
+        const firsat = await getOpportunity(req.params.id);
         if (!firsat) return res.status(404).json({ hata: 'Fırsat bulunamadı.' });
         if (firsat.status !== 'Acik') {
             return res.status(400).json({ hata: `Kapalı fırsattan teklif açılamaz: ${firsat.status}` });
@@ -358,11 +358,11 @@ router.post('/:id/teklife-donustur', async (req, res) => {
                 vat_rate: s.vat_rate != null ? s.vat_rate : 20,
             }));
             const satirlar = raw.map((k, i) => {
-                const h = satirHesapla(k);
+                const h = calculateLine(k);
                 return { line_no: i + 1, item_id: k.item_id, quantity: k.quantity, uom_code: k.uom_code, unit_price: k.unit_price, ...h };
             });
             const top = belgelerToplam(satirlar);
-            const no = await sonrakiBelgeNo(client, 'SATIS_TEKLIF');
+            const no = await nextDocumentNo(client, 'SATIS_TEKLIF');
             let hk = req.body.movement_code_id || null;
             if (!hk) {
                 const d = await client.query(
@@ -425,7 +425,7 @@ router.post('/:id/teklife-donustur', async (req, res) => {
             quotation_id: teklifId,
             quotation_no: teklif.rows[0].quotation_no,
             teklif: teklif.rows[0],
-            firsat: await firsatGetir(firsat.id),
+            firsat: await getOpportunity(firsat.id),
         });
     } catch (err) {
         res.status(400).json({ hata: err.message });

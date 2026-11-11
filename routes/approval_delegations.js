@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
-async function getir(id) {
+async function fetchById(id) {
   const r = await pool.query(
     `
     SELECT d.*,
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
     `;
     const liste = await pool.query(sql, params);
     const out = [];
-    for (const row of liste.rows) out.push(await getir(row.id));
+    for (const row of liste.rows) out.push(await fetchById(row.id));
     res.json(out);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -48,7 +48,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Devir bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -69,7 +69,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ hata: 'Veren ve alan aynı kişi olamaz.' });
     }
     if (!devir_code) {
-      try { devir_code = await sonrakiKod(pool, 'ONAY_DEVIR'); }
+      try { devir_code = await nextSequenceCode(pool, 'ONAY_DEVIR'); }
       catch (_) { devir_code = `OD${Date.now().toString().slice(-5)}`; }
     }
     const ins = await pool.query(
@@ -85,7 +85,7 @@ router.post('/', async (req, res) => {
         start_date || null, end_date || null, is_active, description || null,
       ],
     );
-    res.status(201).json(await getir(ins.rows[0].id));
+    res.status(201).json(await fetchById(ins.rows[0].id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -115,7 +115,7 @@ router.put('/:id', async (req, res) => {
       ],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Devir bulunamadı.' });
-    res.json(await getir(req.params.id));
+    res.json(await fetchById(req.params.id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

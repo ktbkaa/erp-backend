@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
-async function istasyonGetir(id) {
+async function getWorkstation(id) {
   const r = await pool.query(
     `
     SELECT ws.*,
@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
   try {
     const params = [];
     const where = [];
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`i.company_id = $${params.length}`);
@@ -56,9 +56,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await istasyonGetir(req.params.id);
+    const row = await getWorkstation(req.params.id);
     if (!row) return res.status(404).json({ hata: 'İş istasyonu bulunamadı.' });
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId && Number(row.company_id) !== Number(firmaId)) {
       return res.status(404).json({ hata: 'İş istasyonu bulunamadı.' });
     }
@@ -75,7 +75,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ hata: 'work_center_id ve station_name zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const kod = station_code || (await sonrakiKod(client, 'IS_ISTASYONU'));
+      const kod = station_code || (await nextSequenceCode(client, 'IS_ISTASYONU'));
       const ins = await client.query(
         `INSERT INTO work_stations (work_center_id, station_code, station_name, is_active)
          VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING id`,
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
       );
       return ins.rows[0].id;
     });
-    res.status(201).json(await istasyonGetir(id));
+    res.status(201).json(await getWorkstation(id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -101,7 +101,7 @@ router.put('/:id', async (req, res) => {
       [req.params.id, work_center_id || null, station_name || null, is_active]
     );
     if (!result.rows[0]) return res.status(404).json({ hata: 'İş istasyonu bulunamadı.' });
-    res.json(await istasyonGetir(req.params.id));
+    res.json(await getWorkstation(req.params.id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

@@ -176,7 +176,7 @@ async function purgeNullCompany(client, tables, log) {
   }
 }
 
-async function purgeFirma(client, companyId, tables, log) {
+async function purgeCompany(client, companyId, tables, log) {
   const p = [companyId];
 
   // Rota / BOM çocukları
@@ -355,7 +355,7 @@ async function main() {
     const firma = await resolveCompany(client, firmaKodu);
     if (!firma) throw new Error(`Firma bulunamadı: ${rawArg} (çözümlenen kod: ${firmaKodu})`);
     log.firma = firma;
-    await purgeFirma(client, firma.id, tables, log);
+    await purgeCompany(client, firma.id, tables, log);
 
     await client.query('COMMIT');
 

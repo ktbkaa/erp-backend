@@ -1,6 +1,6 @@
-const { createBelgeRouter } = require('./_belgeCrud');
+const { createDocumentRouter } = require('./_belgeCrud');
 
-module.exports = createBelgeRouter({
+module.exports = createDocumentRouter({
     table: 'purchase_agreements',
     lineTable: 'purchase_agreement_lines',
     fk: 'anlasma_id',

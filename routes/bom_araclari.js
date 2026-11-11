@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
 /** Seçili firmaya ait ağaçlar (ua.company_id veya mamul stok firması) */
-function agacFirmaClause(firmaId, params) {
+function bomCompanyClause(firmaId, params) {
     if (!firmaId) return { sql: ' AND FALSE', /* firma seçilmeden veri yok */ params };
     params.push(firmaId);
     const p = `$${params.length}`;
@@ -15,7 +15,7 @@ function agacFirmaClause(firmaId, params) {
     };
 }
 
-async function agacSatirlari(agacId) {
+async function getBomTreeLines(agacId) {
     const result = await pool.query(
         `
         SELECT s.*, st.item_code, st.item_name, st.item_type
@@ -86,7 +86,7 @@ router.get('/patlatma', async (req, res) => {
     try {
         const miktarBaz = Math.max(0, Number(req.query.quantity) || 1);
         const { agac_id, finished_good_item_id, bom_code } = req.query;
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         const crossBom = String(req.query.cross_bom ?? '1') !== '0';
         const maxDepth = Math.min(20, Math.max(1, Number(req.query.max_depth) || 12));
 
@@ -98,7 +98,7 @@ router.get('/patlatma', async (req, res) => {
             WHERE ua.is_active IS DISTINCT FROM FALSE
               AND COALESCE(ua.silindi, FALSE) = FALSE`;
         const params = [];
-        agacSql += agacFirmaClause(firmaId, params).sql;
+        agacSql += bomCompanyClause(firmaId, params).sql;
         if (agac_id) {
             params.push(agac_id);
             agacSql += ` AND ua.id = $${params.length}`;
@@ -118,7 +118,7 @@ router.get('/patlatma', async (req, res) => {
         const bomCache = new Map();
         async function linesForBom(bomId) {
             if (bomCache.has(bomId)) return bomCache.get(bomId);
-            const rows = await agacSatirlari(bomId);
+            const rows = await getBomTreeLines(bomId);
             bomCache.set(bomId, rows);
             return rows;
         }
@@ -225,14 +225,14 @@ router.get('/patlatma', async (req, res) => {
 router.get('/level-listesi', async (req, res) => {
     try {
         const { agac_id } = req.query;
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         const params = [];
         let sql = `
             SELECT ua.*, s.item_code AS mamul_kodu, s.item_name AS mamul_adi
             FROM boms ua
             JOIN items s ON s.id = ua.finished_good_item_id
             WHERE 1=1`;
-        sql += agacFirmaClause(firmaId, params).sql;
+        sql += bomCompanyClause(firmaId, params).sql;
         if (agac_id) {
             params.push(agac_id);
             sql += ` AND ua.id = $${params.length}`;
@@ -241,7 +241,7 @@ router.get('/level-listesi', async (req, res) => {
         const agaclar = await pool.query(sql, params);
         const result = [];
         for (const a of agaclar.rows) {
-            const satirlar = await agacSatirlari(a.id);
+            const satirlar = await getBomTreeLines(a.id);
             const hasParent = satirlar.some((r) => r.parent_line_id != null);
             let levels;
             if (hasParent) {

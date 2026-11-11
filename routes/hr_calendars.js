@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 router.get('/takvimler', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT * FROM hr_work_calendars
        WHERE ($1::int IS NULL OR company_id=$1)
@@ -33,12 +33,12 @@ router.get('/takvimler/:id', async (req, res) => {
 router.post('/takvimler', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.calendar_name) {
       return res.status(400).json({ hata: 'company_id ve calendar_name zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.calendar_code || (await sonrakiKod(client, 'HR_CAL'));
+      const kod = b.calendar_code || (await nextSequenceCode(client, 'HR_CAL'));
       const ver = await client.query(
         `SELECT COALESCE(MAX(version_no),0)+1 AS v FROM hr_work_calendars WHERE company_id=$1 AND calendar_code=$2`,
         [firmaId, kod],
@@ -106,7 +106,7 @@ router.put('/takvimler/:id', async (req, res) => {
 
 router.get('/vardiyalar', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT * FROM hr_shifts WHERE ($1::int IS NULL OR company_id=$1) ORDER BY shift_code`,
       [firmaId || null],
@@ -130,12 +130,12 @@ router.get('/vardiyalar/:id', async (req, res) => {
 router.post('/vardiyalar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.shift_name || !b.start_time || !b.end_time) {
       return res.status(400).json({ hata: 'company_id, shift_name, start_time, end_time zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.shift_code || (await sonrakiKod(client, 'HR_SHIFT'));
+      const kod = b.shift_code || (await nextSequenceCode(client, 'HR_SHIFT'));
       const ins = await client.query(
         `INSERT INTO hr_shifts (
            company_id, shift_code, shift_name, start_time, end_time, break_minutes,
@@ -199,7 +199,7 @@ router.delete('/vardiyalar/:id', async (req, res) => {
 
 router.get('/vardiya-atamalari', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -245,7 +245,7 @@ router.get('/vardiya-atamalari/:id', async (req, res) => {
 router.post('/vardiya-atamalari', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.employee_id || !b.shift_id || !b.start_date) {
       return res.status(400).json({ hata: 'company_id, employee_id, shift_id, start_date zorunlu.' });
     }
@@ -290,7 +290,7 @@ router.delete('/vardiya-atamalari/:id', async (req, res) => {
 
 router.get('/tatiller', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const year = req.query.year ? Number(req.query.year) : null;
     const r = await pool.query(
       `SELECT * FROM hr_public_holidays
@@ -321,7 +321,7 @@ router.post('/tatiller', async (req, res) => {
     if (!b.holiday_date || !b.holiday_name) {
       return res.status(400).json({ hata: 'holiday_date ve holiday_name zorunlu.' });
     }
-    const firmaId = firmaIdFromReq(req) || b.company_id || null;
+    const firmaId = companyIdFromReq(req) || b.company_id || null;
     const year = b.year_no || Number(String(b.holiday_date).slice(0, 4));
     const r = await pool.query(
       `INSERT INTO hr_public_holidays (

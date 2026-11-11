@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function kontakGetir(id) {
+async function getContact(id) {
     const r = await pool.query(
         `
         SELECT k.*,
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
             where.push(`k.lead_id = $${params.length}`);
         }
         if (is_active === 'true') where.push('k.is_active = TRUE');
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`k.company_id = $${params.length}`);
@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await kontakGetir(req.params.id);
+        const row = await getContact(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Kontak bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -77,7 +77,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: 'partner_id veya lead_id zorunlu.' });
         }
         const id = await withTransaction(pool, async (client) => {
-            const kod = b.kontak_code || (await sonrakiKod(client, 'CRM_KONTAK'));
+            const kod = b.kontak_code || (await nextSequenceCode(client, 'CRM_KONTAK'));
             if (b.birincil) {
                 if (b.partner_id) {
                     await client.query(
@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
                     );
                 }
             }
-            const firmaId = b.company_id || firmaIdFromReq(req) || null;
+            const firmaId = b.company_id || companyIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_contacts
@@ -109,7 +109,7 @@ router.post('/', async (req, res) => {
             );
             return r.rows[0].id;
         });
-        res.status(201).json(await kontakGetir(id));
+        res.status(201).json(await getContact(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -141,7 +141,7 @@ router.put('/:id', async (req, res) => {
             ]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Kontak bulunamadı.' });
-        res.json(await kontakGetir(r.rows[0].id));
+        res.json(await getContact(r.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

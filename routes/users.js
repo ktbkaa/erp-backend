@@ -29,7 +29,7 @@ function sanitizeRow(row) {
   return out;
 }
 
-function normYetkiRow(y) {
+function normalizePermissionRow(y) {
   if (!y || !y.screen_id) return null;
   const actions = {};
   YETKI_ACTIONS.forEach((a) => { actions[a] = Boolean(y[a]); });
@@ -58,7 +58,7 @@ async function loadYetkiler(client, kisiId) {
   }));
 }
 
-async function loadFirmaYetkileri(client, kisiId) {
+async function loadCompanyPermissions(client, kisiId) {
   const r = await client.query(
     `SELECT f.id AS company_id, f.company_code, f.company_name
      FROM user_company_permissions k
@@ -74,7 +74,7 @@ async function saveYetkiler(client, kisiId, yetkiler) {
   await client.query(`DELETE FROM user_screen_permissions WHERE kisi_id=$1`, [kisiId]);
   if (!Array.isArray(yetkiler)) return;
   for (const raw of yetkiler) {
-    const y = normYetkiRow(raw);
+    const y = normalizePermissionRow(raw);
     if (!y) continue;
     await client.query(
       `INSERT INTO user_screen_permissions
@@ -89,7 +89,7 @@ async function saveYetkiler(client, kisiId, yetkiler) {
   }
 }
 
-async function saveFirmaYetkileri(client, kisiId, companies) {
+async function saveCompanyPermissions(client, kisiId, companies) {
   await client.query(`DELETE FROM user_company_permissions WHERE kisi_id=$1`, [kisiId]);
   if (!Array.isArray(companies)) return;
   const seen = new Set();
@@ -146,7 +146,7 @@ async function hydrateUser(row) {
   if (!row) return null;
   const out = sanitizeRow(row);
   out.yetkiler = await loadYetkiler(pool, row.id);
-  out.firma_yetkileri = await loadFirmaYetkileri(pool, row.id);
+  out.firma_yetkileri = await loadCompanyPermissions(pool, row.id);
   out.sql_permissions = await loadSqlPermissions(pool, row.id);
   return out;
 }
@@ -240,7 +240,7 @@ router.post('/', async (req, res) => {
     );
     const row = result.rows[0];
     await saveYetkiler(client, row.id, yetkiler);
-    await saveFirmaYetkileri(client, row.id, firmaList);
+    await saveCompanyPermissions(client, row.id, firmaList);
     if (sql_permissions !== undefined) {
       await saveSqlPermissions(client, row.id, sql_permissions);
     }
@@ -312,7 +312,7 @@ router.put('/:id', async (req, res) => {
       await saveYetkiler(client, Number(req.params.id), yetkiler);
     }
     if (firmaList !== undefined) {
-      await saveFirmaYetkileri(client, Number(req.params.id), firmaList);
+      await saveCompanyPermissions(client, Number(req.params.id), firmaList);
     }
     if (sql_permissions !== undefined) {
       await saveSqlPermissions(client, Number(req.params.id), sql_permissions);

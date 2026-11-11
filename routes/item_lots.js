@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 router.get('/', async (req, res) => {
     try {
@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
             where.push(`p.item_id = $${params.length}`);
         }
         if (req.query.is_active === 'true') where.push('p.is_active = TRUE');
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`(p.company_id = $${params.length} OR s.company_id = $${params.length})`);
@@ -44,7 +44,7 @@ router.get('/:id', async (req, res) => {
             [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Parti bulunamadı.' });
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         const rowFirma = r.rows[0].company_id ?? r.rows[0].stok_firma_id;
         if (firmaId && rowFirma != null && Number(rowFirma) !== Number(firmaId)) {
             return res.status(404).json({ hata: 'Parti bulunamadı.' });
@@ -73,7 +73,7 @@ router.post('/', async (req, res) => {
         const { item_id, lot_no, production_date, son_kullanma_date, description } = req.body;
         if (!item_id) return res.status(400).json({ hata: 'item_id zorunlu.' });
         const id = await withTransaction(pool, async (client) => {
-            const no = lot_no || (await sonrakiKod(client, 'PARTI'));
+            const no = lot_no || (await nextSequenceCode(client, 'PARTI'));
             const r = await client.query(
                 `
                 INSERT INTO item_lots (item_id, lot_no, production_date, son_kullanma_date, description)

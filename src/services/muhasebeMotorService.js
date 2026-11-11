@@ -3,7 +3,7 @@
  * Kurallar: denge, dönem kilidi, kesin fiş değişmez, ters kayıt, source idempotency.
  */
 
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
+const { nextDocumentNo } = require('../utils/belgeNo');
 
 const EPS = 0.005;
 
@@ -49,7 +49,7 @@ function assertLines(lines) {
   return { debit, credit };
 }
 
-async function hesapIdCoz(client, { account_id, account_code, country_code }) {
+async function resolveAccountId(client, { account_id, account_code, country_code }) {
   if (account_id) {
     const r = await client.query(
       `SELECT id, account_code, account_type, is_active FROM gl_accounts WHERE id=$1`,
@@ -89,7 +89,7 @@ async function hesapIdCoz(client, { account_id, account_code, country_code }) {
   return r.rows[0].id;
 }
 
-async function donemBul(client, { firmaId, belgeTarihi }) {
+async function findPeriod(client, { firmaId, belgeTarihi }) {
   const t = belgeTarihi || new Date().toISOString().slice(0, 10);
   const r = await client.query(
     `
@@ -105,7 +105,7 @@ async function donemBul(client, { firmaId, belgeTarihi }) {
 }
 
 async function donemAcikMi(client, opts) {
-  const d = await donemBul(client, opts);
+  const d = await findPeriod(client, opts);
   if (!d) {
     throw Object.assign(
       new Error('Belge tarihi için açık muhasebe dönemi tanımlı değil. Önce mali yıl/dönem oluşturun.'),
@@ -124,7 +124,7 @@ async function donemAcikMi(client, opts) {
   return d;
 }
 
-async function kaynakFisVarMi(client, { firmaId, kaynakBelgeTipi, kaynakBelgeId }) {
+async function hasSourceJournalEntry(client, { firmaId, kaynakBelgeTipi, kaynakBelgeId }) {
   if (!kaynakBelgeTipi || kaynakBelgeId == null) return null;
   const r = await client.query(
     `
@@ -142,7 +142,7 @@ async function kaynakFisVarMi(client, { firmaId, kaynakBelgeTipi, kaynakBelgeId 
 /**
  * Taslak veya doğrudan Onayli fiş oluştur.
  */
-async function fisOlustur(client, {
+async function createJournalEntry(client, {
   firmaId = null,
   ulkeKodu = 'TR',
   islemUlkeKodu = null,
@@ -159,7 +159,7 @@ async function fisOlustur(client, {
   kesinlestir = false,
   status = 'Taslak',
 } = {}) {
-  const mevcut = await kaynakFisVarMi(client, { firmaId, kaynakBelgeTipi, kaynakBelgeId });
+  const mevcut = await hasSourceJournalEntry(client, { firmaId, kaynakBelgeTipi, kaynakBelgeId });
   if (mevcut && (kesinlestir || status === 'Onayli')) {
     throw Object.assign(
       new Error(`Bu source belge zaten muhasebeleştirilmiş (fiş ${mevcut.document_no}). Mükerrer fiş oluşturulmaz.`),
@@ -173,10 +173,10 @@ async function fisOlustur(client, {
   if (kesinlestir || status === 'Onayli') {
     period = await donemAcikMi(client, { firmaId, belgeTarihi: tarih });
   } else {
-    period = await donemBul(client, { firmaId, belgeTarihi: tarih });
+    period = await findPeriod(client, { firmaId, belgeTarihi: tarih });
   }
 
-  const no = await sonrakiBelgeNo(client, 'MUHASEBE_BELGE').catch(async () => {
+  const no = await nextDocumentNo(client, 'MUHASEBE_BELGE').catch(async () => {
     const n = await client.query(`SELECT COUNT(*)::int + 1 AS n FROM journal_entries`);
     return `MB${String(n.rows[0].n).padStart(5, '0')}`;
   });
@@ -218,7 +218,7 @@ async function fisOlustur(client, {
 
   let sira = 1;
   for (const k of lines) {
-    const hid = await hesapIdCoz(client, {
+    const hid = await resolveAccountId(client, {
       account_id: k.account_id,
       account_code: k.account_code,
       country_code: ulkeKodu,
@@ -265,14 +265,14 @@ async function fisKesinlestir(client, belgeId, { kullaniciKodu = null, firmaId =
     credit: k.credit,
   })));
   for (const k of kalemler.rows) {
-    await hesapIdCoz(client, { account_id: k.account_id, country_code: bel.country_code });
+    await resolveAccountId(client, { account_id: k.account_id, country_code: bel.country_code });
   }
   const period = await donemAcikMi(client, {
     firmaId: firmaId || bel.company_id,
     belgeTarihi: bel.document_date,
   });
   if (bel.source_document_type && bel.source_document_id) {
-    const muk = await kaynakFisVarMi(client, {
+    const muk = await hasSourceJournalEntry(client, {
       firmaId: bel.company_id,
       kaynakBelgeTipi: bel.source_document_type,
       kaynakBelgeId: bel.source_document_id,
@@ -338,7 +338,7 @@ async function fisTersKayit(client, belgeId, { kullaniciKodu = null, description
     exchange_rate: k.exchange_rate,
     tax_code: k.tax_code,
   }));
-  const ters = await fisOlustur(client, {
+  const ters = await createJournalEntry(client, {
     firmaId: bel.company_id,
     ulkeKodu: bel.country_code || 'TR',
     islemUlkeKodu: bel.transaction_country_code,
@@ -385,11 +385,11 @@ async function donemYenidenAc(client, donemId, { kullaniciKodu = null } = {}) {
 
 module.exports = {
   assertLines,
-  hesapIdCoz,
-  donemBul,
+  resolveAccountId,
+  findPeriod,
   donemAcikMi,
-  kaynakFisVarMi,
-  fisOlustur,
+  hasSourceJournalEntry,
+  createJournalEntry,
   fisKesinlestir,
   fisTersKayit,
   donemKapat,

@@ -2,8 +2,8 @@ const { describe, it, before } = require('node:test');
 const assert = require('node:assert/strict');
 const { createApp } = require('./helpers/app');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { stokHareketOlustur } = require('../src/services/stokHareketService');
-const { hareketKodundanKkEmirleri } = require('../src/services/kaliteService');
+const { createStockMovement } = require('../src/services/stokHareketService');
+const { createQcOrdersFromMovementCode } = require('../src/services/kaliteService');
 
 describe('stok giriş → GKK emri', () => {
   let pool;
@@ -11,8 +11,8 @@ describe('stok giriş → GKK emri', () => {
     ({ pool } = createApp());
   });
 
-  it('hareketKodundanKkEmirleri export edilir', () => {
-    assert.equal(typeof hareketKodundanKkEmirleri, 'function');
+  it('createQcOrdersFromMovementCode export edilir', () => {
+    assert.equal(typeof createQcOrdersFromMovementCode, 'function');
   });
 
   it('GKK tiki açık hareket koduyla stok girişinde kalite emri oluşur', async () => {
@@ -47,7 +47,7 @@ describe('stok giriş → GKK emri', () => {
         );
       }
 
-      const hareket = await stokHareketOlustur(client, {
+      const hareket = await createStockMovement(client, {
         hareketTipi: 'STOK_GIRIS',
         depoId: p.warehouse_id,
         isYeriId: p.plant_id,
@@ -57,7 +57,7 @@ describe('stok giriş → GKK emri', () => {
         satirlar: [{ item_id: p.item_id, quantity: 1, direction: 1 }],
       });
 
-      const emirler = await hareketKodundanKkEmirleri(client, {
+      const emirler = await createQcOrdersFromMovementCode(client, {
         hareketKodu: hk.rows[0],
         hareket: hareket.hareket,
         satirlar: hareket.satirlar || [],

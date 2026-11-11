@@ -6,7 +6,7 @@ const port = Number(process.env.PORT || 3000);
 const pool = require('./db');
 const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
-const { firmaContext } = require('./src/middleware/firmaContext');
+const { companyContext } = require('./src/middleware/firmaContext');
 
 // Profil resmi (base64) + yetki JSON için varsayılan 100kb yetmez
 app.use(express.json({ limit: '5mb' }));
@@ -33,7 +33,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 // JWT / header kimlik + firma bağlamı + audit (health ve static hariç API)
 app.use(authOptional);
 app.use(authRequired);
-app.use(firmaContext);
+app.use(companyContext);
 app.use(auditMiddleware(pool));
 
 app.get('/health', async (req, res) => {

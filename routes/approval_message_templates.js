@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 router.get('/', async (req, res) => {
   try {
@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
     let { template_code, template_name, olay, konu, govde, is_active } = req.body;
     if (!template_name) return res.status(400).json({ hata: 'template_name zorunlu.' });
     if (!template_code) {
-      try { template_code = await sonrakiKod(pool, 'ONAY_SABLON'); }
+      try { template_code = await nextSequenceCode(pool, 'ONAY_SABLON'); }
       catch (_) { template_code = `OS${Date.now().toString().slice(-5)}`; }
     }
     const r = await pool.query(

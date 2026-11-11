@@ -2,7 +2,7 @@
  * PRJ onay + e-posta derin bağ.
  * Gerçek SMTP yoksa kayıt email_dispatches'ta Bekliyor/Basarisiz kalır (test güvenli).
  */
-const { baslatOnay } = require('./onayService');
+const { startApproval } = require('./onayService');
 const { epostaKuyrugaAl } = require('./epostaService');
 const { parametreAl } = require('../utils/yetki');
 
@@ -45,7 +45,7 @@ async function startPrjApproval(client, {
   baslatanKisiId = null,
   description = null,
 }) {
-  return baslatOnay(client, {
+  return startApproval(client, {
     screen_id: screenId,
     module_code: 'proje',
     document_id: documentId,

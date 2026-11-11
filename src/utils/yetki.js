@@ -21,7 +21,7 @@ function isTamYetkili(kullanici) {
     return false;
 }
 
-async function kullaniciGetir(clientOrPool, kullaniciKodu) {
+async function getUser(clientOrPool, kullaniciKodu) {
     if (!kullaniciKodu) return null;
     const r = await clientOrPool.query(
         `SELECT k.*, g.satinalma_onay, g.purchase_requisition_ref, g.kalite_control, g.group_name,
@@ -34,7 +34,7 @@ async function kullaniciGetir(clientOrPool, kullaniciKodu) {
     return r.rows[0] || null;
 }
 
-function reqKullaniciKodu(req) {
+function reqUserCode(req) {
     return (
         req.get?.('x-kullanici-kodu') ||
         req.headers?.['x-kullanici-kodu'] ||
@@ -44,8 +44,8 @@ function reqKullaniciKodu(req) {
     );
 }
 
-async function assertYetki(clientOrPool, kullaniciKodu, alan, message) {
-    const kullanici = await kullaniciGetir(clientOrPool, kullaniciKodu);
+async function assertPermission(clientOrPool, kullaniciKodu, alan, message) {
+    const kullanici = await getUser(clientOrPool, kullaniciKodu);
     if (!kullanici) {
         const err = new Error(message || `Yetkili kullanıcı gerekli (${alan}). X-Kullanici-Kodu gönderin.`);
         err.status = 401;
@@ -85,8 +85,8 @@ async function assertYetki(clientOrPool, kullaniciKodu, alan, message) {
 
 module.exports = {
     parametreAl,
-    kullaniciGetir,
-    reqKullaniciKodu,
-    assertYetki,
+    getUser,
+    reqUserCode,
+    assertPermission,
     isTamYetkili,
 };

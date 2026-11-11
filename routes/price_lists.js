@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { fiyatBul } = require('../src/services/fiyatListeService');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { findPrice } = require('../src/services/fiyatListeService');
 
-async function getir(id) {
+async function fetchById(id) {
   const l = await pool.query(`SELECT * FROM price_lists WHERE id=$1`, [id]);
   if (!l.rows[0]) return null;
   const satirlar = await pool.query(
@@ -26,7 +26,7 @@ router.get('/fiyat', async (req, res, next) => {
   try {
     const stokId = Number(req.query.item_id);
     if (!stokId) return res.status(400).json({ hata: 'item_id zorunlu.' });
-    const fiyat = await fiyatBul(pool, {
+    const fiyat = await findPrice(pool, {
       stokId,
       cariId: req.query.partner_id ? Number(req.query.partner_id) : null,
       quantity: req.query.quantity != null ? Number(req.query.quantity) : 1,
@@ -43,7 +43,7 @@ router.get('/', async (req, res, next) => {
   try {
     const liste = await pool.query(`SELECT id FROM price_lists ORDER BY id DESC`);
     const out = [];
-    for (const r of liste.rows) out.push(await getir(r.id));
+    for (const r of liste.rows) out.push(await fetchById(r.id));
     res.json(out);
   } catch (err) {
     next(err);
@@ -52,7 +52,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Liste bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -66,7 +66,7 @@ router.post('/', async (req, res, next) => {
     const satirlar = req.body.satirlar || req.body.kalemler || [];
     if (!list_name) return res.status(400).json({ hata: 'list_name zorunlu.' });
     const id = await withTransaction(pool, async (client) => {
-      const kod = req.body.list_code || (await sonrakiBelgeNo(client, 'FIYAT_LISTE'));
+      const kod = req.body.list_code || (await nextDocumentNo(client, 'FIYAT_LISTE'));
       const r = await client.query(
         `
         INSERT INTO price_lists (list_code, list_name, currency_code, start_date, end_date, is_active)
@@ -89,7 +89,7 @@ router.post('/', async (req, res, next) => {
       }
       return listeId;
     });
-    res.status(201).json(await getir(id));
+    res.status(201).json(await fetchById(id));
   } catch (err) {
     next(err);
   }
@@ -127,7 +127,7 @@ router.put('/:id', async (req, res, next) => {
         }
       }
     });
-    res.json(await getir(req.params.id));
+    res.json(await fetchById(req.params.id));
   } catch (err) {
     next(err);
   }

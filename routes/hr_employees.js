@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { annualLeaveEntitlementDays } = require('../src/services/hrPayrollService');
 
-async function personelGetir(id) {
+async function getEmployee(id) {
   const r = await pool.query(
     `
     SELECT e.*,
@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
   try {
     const params = [];
     const where = [];
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`e.company_id = $${params.length}`);
@@ -78,9 +78,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await personelGetir(req.params.id);
+    const row = await getEmployee(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Personel bulunamadı.' });
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId && Number(row.company_id) !== Number(firmaId)) {
       return res.status(404).json({ hata: 'Personel bulunamadı.' });
     }
@@ -103,13 +103,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.first_name || !b.last_name || !b.hire_date) {
       return res.status(400).json({ hata: 'company_id, first_name, last_name, hire_date zorunlu.' });
     }
     assertNoManagerCycle(null, b.manager_employee_id);
     const id = await withTransaction(pool, async (client) => {
-      const no = b.employee_no || (await sonrakiKod(client, 'HR_EMPLOYEE'));
+      const no = b.employee_no || (await nextSequenceCode(client, 'HR_EMPLOYEE'));
       const ins = await client.query(
         `
         INSERT INTO hr_employees (
@@ -159,7 +159,7 @@ router.post('/', async (req, res) => {
       }
       return empId;
     });
-    res.status(201).json(await personelGetir(id));
+    res.status(201).json(await getEmployee(id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -168,7 +168,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const b = req.body || {};
-    const mevcut = await personelGetir(req.params.id);
+    const mevcut = await getEmployee(req.params.id);
     if (!mevcut) return res.status(404).json({ hata: 'Personel bulunamadı.' });
     assertNoManagerCycle(mevcut.id, b.manager_employee_id ?? mevcut.manager_employee_id);
 
@@ -259,7 +259,7 @@ router.put('/:id', async (req, res) => {
         );
       }
     });
-    res.json(await personelGetir(mevcut.id));
+    res.json(await getEmployee(mevcut.id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -268,7 +268,7 @@ router.put('/:id', async (req, res) => {
 /** Yıllık izin hak ediş önerisi (4857 md.53) */
 router.get('/:id/izin-hakedis', async (req, res) => {
   try {
-    const row = await personelGetir(req.params.id);
+    const row = await getEmployee(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Personel bulunamadı.' });
     const asOf = req.query.as_of || new Date().toISOString().slice(0, 10);
     const hire = new Date(row.hire_date);

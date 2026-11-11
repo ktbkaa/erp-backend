@@ -1,7 +1,7 @@
-const { sonrakiBelgeNo, sonrakiStokHareketNo } = require('../utils/belgeNo');
-const { stokNegatifIzinliMi, onerilenDepolar } = require('../utils/belgeOmurga');
+const { nextDocumentNo, nextStockMovementNo } = require('../utils/belgeNo');
+const { isNegativeStockAllowed, onerilenDepolar } = require('../utils/belgeOmurga');
 const { parametreAl } = require('../utils/yetki');
-const { partiCozumle } = require('./partiService');
+const { resolveLot } = require('./partiService');
 
 const STATULER = ['Kullanilabilir', 'Kalitede', 'Bloke'];
 
@@ -11,7 +11,7 @@ const STATULER = ['Kullanilabilir', 'Kalitede', 'Bloke'];
  * stock_status: Kullanilabilir | Kalitede | Bloke (çıkışta yalnızca Kullanilabilir)
  * lot_id / lot_no / otomatikParti desteklenir.
  */
-async function stokHareketOlustur(client, {
+async function createStockMovement(client, {
     hareketTipi,
     isYeriId = null,
     depoId,
@@ -42,7 +42,7 @@ async function stokHareketOlustur(client, {
         if (!hareketKodu) throw new Error(`Hareket kodu bulunamadı: id=${hareketKoduId}`);
     }
 
-    const paramNegatif = await stokNegatifIzinliMi(client);
+    const paramNegatif = await isNegativeStockAllowed(client);
     const eksiIzin = Boolean(hareketKodu?.eksi_balance_izin) || paramNegatif;
     const depoZorunlu = !depoZorunluAtla
         && String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
@@ -56,10 +56,10 @@ async function stokHareketOlustur(client, {
         if (clash.rows[0]) hareketNo = null;
     }
     if (!hareketNo && hareketKodu?.movement_code) {
-        hareketNo = await sonrakiStokHareketNo(client, hareketKodu.movement_code);
+        hareketNo = await nextStockMovementNo(client, hareketKodu.movement_code);
     }
     if (!hareketNo) {
-        hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
+        hareketNo = await nextDocumentNo(client, 'STOK_HAREKET');
     }
 
     const cols = ['movement_no', 'movement_type', 'plant_id', 'warehouse_id', 'document_type', 'document_id', 'description', 'movement_code_id'];
@@ -102,13 +102,13 @@ async function stokHareketOlustur(client, {
         }
 
         if (depoZorunlu) {
-            await assertStokDepoIzin(client, s.item_id, depoId);
-            if (hedefDepoId) await assertStokDepoIzin(client, s.item_id, hedefDepoId);
+            await assertItemWarehouseAllowed(client, s.item_id, depoId);
+            if (hedefDepoId) await assertItemWarehouseAllowed(client, s.item_id, hedefDepoId);
         }
 
         let partiId = s.lot_id || null;
         if (Number(s.direction) === 1) {
-            const coz = await partiCozumle(client, {
+            const coz = await resolveLot(client, {
                 stokId: s.item_id,
                 partiId: s.lot_id,
                 partiNo: s.lot_no,
@@ -136,7 +136,7 @@ async function stokHareketOlustur(client, {
                 throw err;
             }
             if (!eksiIzin) {
-                const bakiye = await depoStokBakiye(client, depoId, s.item_id, {
+                const bakiye = await warehouseItemBalance(client, depoId, s.item_id, {
                     stokStatu: cikisStatu,
                     partiId,
                 });
@@ -170,8 +170,8 @@ async function stokHareketOlustur(client, {
         // Ortalama maliyet (INV-011) — girişte uom_cost verilirse
         if (Number(s.direction) === 1 && s.uom_cost != null) {
             try {
-                const { maliyetGuncelleGiris } = require('./maliyetService');
-                await maliyetGuncelleGiris(client, {
+                const { updateCostOnReceipt } = require('./maliyetService');
+                await updateCostOnReceipt(client, {
                     stokId: s.item_id,
                     quantity: s.quantity,
                     birimMaliyet: s.uom_cost,
@@ -200,7 +200,7 @@ async function stokHareketOlustur(client, {
     return { hareket, satirlar: eklenen };
 }
 
-async function assertStokDepoIzin(client, stokId, depoId) {
+async function assertItemWarehouseAllowed(client, stokId, depoId) {
     const r = await client.query(
         `SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2 AND is_active=TRUE`,
         [stokId, depoId]
@@ -216,7 +216,7 @@ async function assertStokDepoIzin(client, stokId, depoId) {
     }
 }
 
-async function depoStokBakiye(clientOrPool, depoId, stokId, { stokStatu = null, partiId = null } = {}) {
+async function warehouseItemBalance(clientOrPool, depoId, stokId, { stokStatu = null, partiId = null } = {}) {
     const params = [depoId, stokId];
     let extra = '';
     if (stokStatu) {
@@ -240,7 +240,7 @@ async function depoStokBakiye(clientOrPool, depoId, stokId, { stokStatu = null, 
     return Number(res.rows[0].bakiye);
 }
 
-async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
+async function listWarehouseBalances(pool, depoIdOrOpts = null) {
     const opts = (depoIdOrOpts && typeof depoIdOrOpts === 'object')
         ? depoIdOrOpts
         : { depoId: depoIdOrOpts };
@@ -338,7 +338,7 @@ async function depoBakiyeListesi(pool, depoIdOrOpts = null) {
  * Statü transferi: aynı depoda Kalitede→Kullanilabilir veya Bloke vb.
  * Çıkış (eski statü -1) + giriş (yeni statü +1) aynı harekette.
  */
-async function stokStatuTransfer(client, {
+async function transferStockStatus(client, {
     depoId,
     isYeriId = null,
     stokId,
@@ -354,7 +354,7 @@ async function stokStatuTransfer(client, {
     if (!STATULER.includes(kaynakStatu) || !STATULER.includes(hedefStatu)) {
         throw new Error('Geçersiz statü transferi.');
     }
-    return stokHareketOlustur(client, {
+    return createStockMovement(client, {
         hareketTipi: 'DUZELTME',
         isYeriId,
         depoId,
@@ -388,7 +388,7 @@ async function stokStatuTransfer(client, {
 /**
  * Depo transferi: source depodan -1, hedef depoya +1 (aynı statü).
  */
-async function depoTransfer(client, {
+async function transferBetweenWarehouses(client, {
     kaynakDepoId,
     hedefDepoId,
     isYeriId = null,
@@ -404,7 +404,7 @@ async function depoTransfer(client, {
     depoZorunluAtla = false,
 }) {
     // Çıkış
-    const cikis = await stokHareketOlustur(client, {
+    const cikis = await createStockMovement(client, {
         hareketTipi: 'TRANSFER',
         isYeriId,
         depoId: kaynakDepoId,
@@ -423,7 +423,7 @@ async function depoTransfer(client, {
             statu_cikis_izin: statuCikisIzin,
         }],
     });
-    const giris = await stokHareketOlustur(client, {
+    const giris = await createStockMovement(client, {
         hareketTipi: 'TRANSFER',
         isYeriId,
         depoId: hedefDepoId,
@@ -446,11 +446,11 @@ async function depoTransfer(client, {
 }
 
 module.exports = {
-    stokHareketOlustur,
-    depoStokBakiye,
-    depoBakiyeListesi,
-    stokStatuTransfer,
-    depoTransfer,
-    assertStokDepoIzin,
+    createStockMovement,
+    warehouseItemBalance,
+    listWarehouseBalances,
+    transferStockStatus,
+    transferBetweenWarehouses,
+    assertItemWarehouseAllowed,
     STATULER,
 };

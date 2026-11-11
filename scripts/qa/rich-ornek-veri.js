@@ -15,11 +15,11 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../../db');
 const { withTransaction } = require('../../src/utils/withTransaction');
-const { sonrakiKod, stokSeriKodundanTip, cariSeriKodundanTur } = require('../../src/utils/kodUretici');
-const { stokHareketOlustur } = require('../../src/services/stokHareketService');
+const { nextSequenceCode, itemTypeFromSeriesCode, partnerTypeFromSeriesCode } = require('../../src/utils/kodUretici');
+const { createStockMovement } = require('../../src/services/stokHareketService');
 
 const BASE_URL = process.env.ERP_BASE || `http://127.0.0.1:${process.env.PORT || 3000}`;
-const argFirma = (process.argv.find((a) => a.startsWith('--firma=')) || '').split('=')[1];
+const argCompany = (process.argv.find((a) => a.startsWith('--firma=')) || '').split('=')[1];
 
 const SECTORS = {
   GIDA: {
@@ -486,7 +486,7 @@ async function seedSector(def) {
     }));
     if (hmLines.length) {
       await safe(client, 'stok-acilis-hm', async () => {
-        await stokHareketOlustur(client, {
+        await createStockMovement(client, {
           hareketTipi: 'STOK_GIRIS',
           isYeriId: org.plant.id,
           depoId: org.wh.hmd.id,
@@ -506,7 +506,7 @@ async function seedSector(def) {
     }));
     if (fgLines.length) {
       await safe(client, 'stok-acilis-mamul', async () => {
-        await stokHareketOlustur(client, {
+        await createStockMovement(client, {
           hareketTipi: 'STOK_GIRIS',
           isYeriId: org.plant.id,
           depoId: org.wh.mam.id,
@@ -1242,7 +1242,7 @@ async function seedSector(def) {
 }
 
 async function main() {
-  const keys = argFirma ? [argFirma.toUpperCase()] : ['GIDA', 'DOKUM'];
+  const keys = argCompany ? [argCompany.toUpperCase()] : ['GIDA', 'DOKUM'];
   const report = { generatedAt: new Date().toISOString(), sectors: [] };
   // finance seed once
   try {

@@ -24,7 +24,7 @@ function round6(n) {
  * @param {number} [p.excise_rate]
  * @param {number} [p.exchange_rate]  belge PB → yerel PB
  */
-function satirHesapla({
+function calculateLine({
   quantity,
   unit_price,
   discount_rate = 0,
@@ -121,4 +121,4 @@ function belgelerToplam(satirlar) {
   };
 }
 
-module.exports = { satirHesapla, belgelerToplam, round2 };
+module.exports = { calculateLine, belgelerToplam, round2 };

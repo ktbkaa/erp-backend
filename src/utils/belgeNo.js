@@ -2,11 +2,11 @@
  * Belge numarası üretici — artık ortak kod sistemini kullanır.
  * Örnek: L00001 (satınalma talebi), P00001 (satınalma siparişi)
  */
-const { sonrakiKod, sonrakiStokHareketNo } = require('./kodUretici');
+const { nextSequenceCode, nextStockMovementNo } = require('./kodUretici');
 
-async function sonrakiBelgeNo(client, belgeTipi) {
+async function nextDocumentNo(client, belgeTipi) {
     // Eski çağrılar aynı anahtarlarla çalışmaya devam eder
-    return sonrakiKod(client, belgeTipi);
+    return nextSequenceCode(client, belgeTipi);
 }
 
-module.exports = { sonrakiBelgeNo, sonrakiStokHareketNo };
+module.exports = { nextDocumentNo, nextStockMovementNo };

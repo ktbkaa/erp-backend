@@ -2,27 +2,27 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
-const { kullaniciGetir, reqKullaniciKodu, isTamYetkili } = require('../src/utils/yetki');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { getUser, reqUserCode, isTamYetkili } = require('../src/utils/yetki');
 const {
-  kayitGetir,
-  baslatOnay,
+  getRecord,
+  startApproval,
   onaylaAdim,
   reddetAdim,
-  iptalKayit,
+  cancelRecord,
   benimBekleyenler,
 } = require('../src/services/onayService');
 
 async function resolveUser(req) {
   if (req.user) return req.user;
-  const kod = reqKullaniciKodu(req);
+  const kod = reqUserCode(req);
   if (!kod) return null;
-  return kullaniciGetir(pool, kod);
+  return getUser(pool, kod);
 }
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const benim = req.query.benim === 'true' || req.query.mod === 'onaylarim';
     const user = await resolveUser(req);
 
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
         sql += ' ORDER BY id DESC';
         const liste = await pool.query(sql, params);
         const out = [];
-        for (const row of liste.rows) out.push(await kayitGetir(pool, row.id));
+        for (const row of liste.rows) out.push(await getRecord(pool, row.id));
         return res.json(out);
       }
       const rows = await benimBekleyenler(pool, user.id, { firmaId });
@@ -79,7 +79,7 @@ router.get('/', async (req, res) => {
     `;
     const liste = await pool.query(sql, params);
     const out = [];
-    for (const row of liste.rows) out.push(await kayitGetir(pool, row.id));
+    for (const row of liste.rows) out.push(await getRecord(pool, row.id));
     res.json(out);
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
@@ -88,7 +88,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await kayitGetir(pool, req.params.id);
+    const row = await getRecord(pool, req.params.id);
     if (!row) return res.status(404).json({ hata: 'Onay kaydı bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -101,9 +101,9 @@ router.post('/baslat', async (req, res) => {
   try {
     const user = await resolveUser(req);
     const body = { ...req.body };
-    if (!body.company_id) body.company_id = firmaIdFromReq(req);
+    if (!body.company_id) body.company_id = companyIdFromReq(req);
     if (!body.baslatan_kisi_id && user) body.baslatan_kisi_id = user.id;
-    const result = await withTransaction(pool, async (client) => baslatOnay(client, body));
+    const result = await withTransaction(pool, async (client) => startApproval(client, body));
     res.status(201).json(result);
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
@@ -138,7 +138,7 @@ router.post('/:id/iptal', async (req, res) => {
   try {
     const user = await resolveUser(req);
     const result = await withTransaction(pool, async (client) =>
-      iptalKayit(client, req.params.id, user, { notlar: req.body?.notlar || req.body?.description || null }),
+      cancelRecord(client, req.params.id, user, { notlar: req.body?.notlar || req.body?.description || null }),
     );
     res.json(result);
   } catch (err) {

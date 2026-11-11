@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-async function girisGetir(id) {
+async function getIncomingInspection(id) {
     const g = await pool.query(
         `
         SELECT ug.*,
@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
     try {
         const liste = await pool.query('SELECT id FROM production_receipts ORDER BY id DESC LIMIT 500');
         const result = [];
-        for (const r of liste.rows) result.push(await girisGetir(r.id));
+        for (const r of liste.rows) result.push(await getIncomingInspection(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const giris = await girisGetir(req.params.id);
+        const giris = await getIncomingInspection(req.params.id);
         if (!giris) return res.status(404).json({ hata: 'Üretim girişi bulunamadı.' });
         res.json(giris);
     } catch (err) {
@@ -60,7 +60,7 @@ router.post('/', async (req, res) => {
             [order_id]
         );
         if (son.rows[0]) {
-            return res.status(201).json(await girisGetir(son.rows[0].id));
+            return res.status(201).json(await getIncomingInspection(son.rows[0].id));
         }
         res.status(201).json(body);
     } catch (err) {

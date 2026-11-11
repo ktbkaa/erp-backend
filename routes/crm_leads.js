@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function adayGetir(id) {
+async function getLead(id) {
     const a = await pool.query(
         `
         SELECT a.*,
@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
         }
         if (is_active === 'true') where.push('a.is_active = TRUE');
         if (is_active === 'false') where.push('a.is_active = FALSE');
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`a.company_id = $${params.length}`);
@@ -91,7 +91,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await adayGetir(req.params.id);
+        const row = await getLead(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Müşteri adayı bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -104,8 +104,8 @@ router.post('/', async (req, res) => {
         const b = req.body;
         if (!b.lead_name) return res.status(400).json({ hata: 'lead_name zorunlu.' });
         const id = await withTransaction(pool, async (client) => {
-            const kod = b.lead_code || (await sonrakiKod(client, 'CRM_ADAY'));
-            const firmaId = b.company_id || firmaIdFromReq(req) || null;
+            const kod = b.lead_code || (await nextSequenceCode(client, 'CRM_ADAY'));
+            const firmaId = b.company_id || companyIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_leads
@@ -128,7 +128,7 @@ router.post('/', async (req, res) => {
             );
             return r.rows[0].id;
         });
-        res.status(201).json(await adayGetir(id));
+        res.status(201).json(await getLead(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -176,7 +176,7 @@ router.put('/:id', async (req, res) => {
             ]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Müşteri adayı bulunamadı.' });
-        res.json(await adayGetir(r.rows[0].id));
+        res.json(await getLead(r.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -188,7 +188,7 @@ router.put('/:id', async (req, res) => {
  */
 router.post('/:id/cariye-donustur', async (req, res) => {
     try {
-        const aday = await adayGetir(req.params.id);
+        const aday = await getLead(req.params.id);
         if (!aday) return res.status(404).json({ hata: 'Müşteri adayı bulunamadı.' });
         if (aday.status === 'Donusturuldu' && aday.partner_id) {
             return res.status(400).json({
@@ -200,7 +200,7 @@ router.post('/:id/cariye-donustur', async (req, res) => {
         // Donusturuldu ama cari yoksa (UI yarım kaldı) — yeniden dene
 
         const result = await withTransaction(pool, async (client) => {
-            const kod = req.body.partner_code || (await sonrakiKod(client, 'MUSTERI'));
+            const kod = req.body.partner_code || (await nextSequenceCode(client, 'MUSTERI'));
             const cari = await client.query(
                 `
                 INSERT INTO partners
@@ -242,7 +242,7 @@ router.post('/:id/cariye-donustur', async (req, res) => {
         res.status(201).json({
             ok: true,
             cari: result,
-            aday: await adayGetir(aday.id),
+            aday: await getLead(aday.id),
         });
     } catch (err) {
         res.status(400).json({ hata: err.message });

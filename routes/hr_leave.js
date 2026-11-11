@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { kullaniciGetir, reqKullaniciKodu } = require('../src/utils/yetki');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { getUser, reqUserCode } = require('../src/utils/yetki');
 
 function gunFarki(start, end) {
   const a = new Date(start);
@@ -14,7 +14,7 @@ function gunFarki(start, end) {
 
 router.get('/turler', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const onlyActive = req.query.is_active === 'true';
     const r = await pool.query(
       `SELECT * FROM hr_leave_types
@@ -42,7 +42,7 @@ router.get('/turler/:id', async (req, res) => {
 router.post('/turler', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id || null;
+    const firmaId = companyIdFromReq(req) || b.company_id || null;
     if (!b.leave_code || !b.leave_name) {
       return res.status(400).json({ hata: 'leave_code ve leave_name zorunlu.' });
     }
@@ -116,7 +116,7 @@ router.get('/talepler', async (req, res) => {
   try {
     const params = [];
     const where = [];
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`r.company_id=$${params.length}`);
@@ -164,7 +164,7 @@ router.get('/talepler/:id', async (req, res) => {
 router.post('/talepler', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.employee_id || !b.leave_type_id || !b.start_date || !b.end_date) {
       return res.status(400).json({ hata: 'company_id, employee_id, leave_type_id, start_date, end_date zorunlu.' });
     }
@@ -172,7 +172,7 @@ router.post('/talepler', async (req, res) => {
       return res.status(400).json({ hata: 'Bitiş tarihi başlangıçtan önce olamaz.' });
     }
     const qty = b.quantity != null ? Number(b.quantity) : gunFarki(b.start_date, b.end_date);
-    const user = await kullaniciGetir(pool, reqKullaniciKodu(req));
+    const user = await getUser(pool, reqUserCode(req));
     const id = await withTransaction(pool, async (client) => {
       // Çakışma kontrolü
       const cakisma = await client.query(
@@ -187,7 +187,7 @@ router.post('/talepler', async (req, res) => {
         err.status = 409;
         throw err;
       }
-      const no = b.request_no || (await sonrakiKod(client, 'HR_LEAVE_REQ'));
+      const no = b.request_no || (await nextSequenceCode(client, 'HR_LEAVE_REQ'));
       const ins = await client.query(
         `INSERT INTO hr_leave_requests (
            company_id, request_no, employee_id, leave_type_id, start_date, end_date,
@@ -224,7 +224,7 @@ router.post('/talepler/:id/gonder', async (req, res) => {
 
 router.post('/talepler/:id/onayla', async (req, res) => {
   try {
-    const user = await kullaniciGetir(pool, reqKullaniciKodu(req));
+    const user = await getUser(pool, reqUserCode(req));
     const out = await withTransaction(pool, async (client) => {
       const cur = await client.query(`SELECT * FROM hr_leave_requests WHERE id=$1 FOR UPDATE`, [req.params.id]);
       const talep = cur.rows[0];
@@ -310,7 +310,7 @@ router.post('/talepler/:id/reddet', async (req, res) => {
 
 router.get('/bakiyeler', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -344,7 +344,7 @@ router.get('/bakiyeler', async (req, res) => {
 router.post('/bakiyeler/accrue', async (req, res) => {
   try {
     const { employee_id, leave_type_id, year_no, accrued, company_id } = req.body || {};
-    const firmaId = firmaIdFromReq(req) || company_id;
+    const firmaId = companyIdFromReq(req) || company_id;
     if (!firmaId || !employee_id || !leave_type_id || !year_no) {
       return res.status(400).json({ hata: 'employee_id, leave_type_id, year_no, company_id zorunlu.' });
     }

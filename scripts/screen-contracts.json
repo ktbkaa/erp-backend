@@ -36,8 +36,8 @@
       },
       "requiredFieldKeys": ["unit_price", "tax_code_id", "currency_code", "lot_no"],
       "requiredText": [
-        "refreshStokHareketNo",
-        "peekStokHareketNo",
+        "refreshStockMovementNo",
+        "peekStockMovementNo",
         "numeratorFromMovementCode"
       ]
     },
@@ -85,8 +85,8 @@
         "CARI_KATEGORI_FIELDS",
         "CARI_EK_ALAN_FIELDS",
         "CARI_FIRMA_PARAM_FIELDS",
-        "renderCariFirmalarPane",
-        "readCariFirmaParamsFromDom",
+        "renderPartnerCompaniesPane",
+        "readPartnerCompanyParamsFromDom",
         "category_01",
         "ek_alan_30"
       ]

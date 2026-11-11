@@ -18,11 +18,11 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { stokHareketOlustur } = require('../src/services/stokHareketService');
+const { createStockMovement } = require('../src/services/stokHareketService');
 const { mrpCalistir } = require('../src/services/mrpService');
-const { sonrakiKod, stokSeriKodundanTip, cariSeriKodundanTur } = require('../src/utils/kodUretici');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { baslatOnay, onaylaAdim } = require('../src/services/onayService');
+const { nextSequenceCode, itemTypeFromSeriesCode, partnerTypeFromSeriesCode } = require('../src/utils/kodUretici');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { startApproval, onaylaAdim } = require('../src/services/onayService');
 
 const TAG = {
   BASE: 'TEST-DKM-BASE',
@@ -79,7 +79,7 @@ async function api(method, urlPath, body, firmaId) {
 }
 
 /** Satış fatura API { fatura: {...} } veya düz fatura dönebilir */
-function unwrapFatura(data) {
+function unwrapInvoice(data) {
   if (!data) return null;
   return data.fatura || data.invoice || data;
 }
@@ -124,7 +124,7 @@ async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
         target_warehouse_id: targetWarehouseId,
         description: `[${tag}] ${TAG.LABEL} giriş kalite onay → Hammadde`,
       }, firmaId);
-      await tagBelge(null, 'qc_orders', e.id, firmaId, tag, { project: false });
+      await tagDocument(null, 'qc_orders', e.id, firmaId, tag, { project: false });
       log(`  GKK onay: ${e.order_no || e.id}`);
     } catch (err) {
       log(`  GKK atlandı ${e.order_no || e.id}: ${err.message}`);
@@ -135,7 +135,7 @@ async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
 /**
  * API belgelerini etiketlendir — ayrı kısa transaction (açık seed txn ile satır kilidi çakışmasın).
  */
-async function tagBelge(_clientIgnored, table, id, firmaId, tag, { project = true } = {}) {
+async function tagDocument(_clientIgnored, table, id, firmaId, tag, { project = true } = {}) {
   if (!id) return;
   const c = await pool.connect();
   try {
@@ -193,7 +193,7 @@ async function tagBelge(_clientIgnored, table, id, firmaId, tag, { project = tru
   }
 }
 
-async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }) {
+async function shipmentDeliveryNoteInvoice(client, { firma, plant, wh, so, tag, qtyHint }) {
   let sevk = null;
   let irs = null;
   let satisFatura = null;
@@ -203,7 +203,7 @@ async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }
       company_id: firma.id,
       description: `[${tag}] Sevk emri`,
     }, firma.id);
-    await tagBelge(client, 'shipment_orders', sevk?.id, firma.id, tag, { project: false });
+    await tagDocument(client, 'shipment_orders', sevk?.id, firma.id, tag, { project: false });
   } catch (err) {
     log(`  sevk: ${err.message}`);
   }
@@ -229,7 +229,7 @@ async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }
         vehicle_plate: '34 ELK 01',
       }, firma.id);
       if (irs?.id) {
-        await tagBelge(client, 'delivery_notes', irs.id, firma.id, tag);
+        await tagDocument(client, 'delivery_notes', irs.id, firma.id, tag);
         await api('PUT', `/delivery_notes/${irs.id}`, {
           ...irs,
           company_id: firma.id,
@@ -271,11 +271,11 @@ async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }
       const raw = await api('POST', `/delivery_notes/${irs.id}/fatura-olustur`, {
         description: `[${tag}] Satış faturası`,
       }, firma.id);
-      satisFatura = unwrapFatura(raw);
+      satisFatura = unwrapInvoice(raw);
       if (satisFatura?.id) {
         await api('POST', `/invoices/${satisFatura.id}/muhasebelestir`, {}, firma.id)
           .catch((e) => log(`  satış muhasebe: ${e.message}`));
-        await tagBelge(client, 'invoices', satisFatura.id, firma.id, tag);
+        await tagDocument(client, 'invoices', satisFatura.id, firma.id, tag);
         {
           const tc = await pool.connect();
           try {
@@ -619,7 +619,7 @@ async function ensureOrg(client) {
 }
 
 async function createPartner(client, { name, type, companyId, plantId, tag }) {
-  const kod = await sonrakiKod(client, cariSeriKodundanTur(type));
+  const kod = await nextSequenceCode(client, partnerTypeFromSeriesCode(type));
   return (await client.query(
     `INSERT INTO partners (
        partner_code, partner_name, partner_type, telefon, email, il, country, currency_code,
@@ -634,7 +634,7 @@ async function createItem(client, {
   name, type, price, companyId, plantId, girisWh, cikisWh, tag, tedarik = null, qc = false,
   uom = 'AD', itemCode = null,
 }) {
-  const kod = itemCode || await sonrakiKod(client, stokSeriKodundanTip(type));
+  const kod = itemCode || await nextSequenceCode(client, itemTypeFromSeriesCode(type));
   const tedarikType = tedarik || (type === 'Mamul' || type === 'YariMamul' ? 'Uretim' : 'Satinalma');
   const row = (await client.query(
     `INSERT INTO items (
@@ -683,7 +683,7 @@ async function createItem(client, {
  * DOKUM SA sipariş onay rotası (OR-SA-SIPARIS) + roller — eksikse oluşturur.
  * D5: artık atlanmaz; rota zorunlu.
  */
-async function ensureSaSiparisOnayTanimi(client, firmaId) {
+async function ensurePurchaseOrderApprovalDefinition(client, firmaId) {
   const owner = (await client.query(`SELECT id FROM users WHERE user_code='owner'`)).rows[0];
   if (!owner) throw new Error('owner kullanıcısı yok — SA onay rolleri bağlanamaz.');
 
@@ -782,11 +782,11 @@ async function ensureSaSiparisOnayTanimi(client, firmaId) {
 }
 
 /** SA sipariş için onay kaydı başlat + tüm adımları onayla (atlama yok) */
-async function calistirSaSiparisOnay(client, { firmaId, po, tag }) {
+async function runPurchaseOrderApproval(client, { firmaId, po, tag }) {
   const kullanici = (await client.query(`SELECT * FROM users WHERE user_code='owner'`)).rows[0];
   if (!kullanici) throw new Error('owner yok — SA onay adımları tamamlanamaz.');
 
-  let kayit = await baslatOnay(client, {
+  let kayit = await startApproval(client, {
     company_id: firmaId,
     screen_id: 'satin-alma-siparisleri',
     module_code: 'SATINALMA',
@@ -925,8 +925,8 @@ async function seedBase(client, org) {
     [pl.id, fg.id, fg2.id]
   );
 
-  const bomCode = await sonrakiKod(client, 'URUN_AGACI').catch(async () => {
-    const n = await sonrakiBelgeNo(client, 'URUN_AGACI').catch(() => `UA-SUT-${Date.now()}`);
+  const bomCode = await nextSequenceCode(client, 'URUN_AGACI').catch(async () => {
+    const n = await nextDocumentNo(client, 'URUN_AGACI').catch(() => `UA-SUT-${Date.now()}`);
     return n;
   });
   // 1 AD mamul = 1.02 KG pik + 1 kum + 1 reçine
@@ -955,7 +955,7 @@ async function seedBase(client, org) {
     lineNo += 10;
   }
 
-  const routeCode = await sonrakiKod(client, 'ROTA');
+  const routeCode = await nextSequenceCode(client, 'ROTA');
   const rota = (await client.query(
     `INSERT INTO routings (
        item_id, product_bom_id, route_code, route_name, template, varsayilan,
@@ -1028,7 +1028,7 @@ async function seedBase(client, org) {
 
 async function openingStock(client, org, base, tag, multiplier = 1) {
   const qty = (n) => n * multiplier;
-  await stokHareketOlustur(client, {
+  await createStockMovement(client, {
     hareketTipi: 'STOK_GIRIS',
     isYeriId: org.plant.id,
     depoId: org.wh.hmd.id,
@@ -1065,7 +1065,7 @@ async function seedManuel(client, org, base) {
   await client.query('BEGIN');
 
   // 8) Satış teklifi
-  const teklifNo = await sonrakiBelgeNo(client, 'SATIS_TEKLIF').catch(() => `ST-MAN-${Date.now()}`);
+  const teklifNo = await nextDocumentNo(client, 'SATIS_TEKLIF').catch(() => `ST-MAN-${Date.now()}`);
   const teklif = (await client.query(
     `INSERT INTO sales_quotations (
        quotation_no, partner_id, quotation_date, valid_date, currency_code, status,
@@ -1111,7 +1111,7 @@ async function seedManuel(client, org, base) {
   }, firma.id);
 
   // Satınalma (manuel — BOM ihtiyacı kadar, stok zaten var ama örnek zincir için ayrı PO)
-  const prNo = await sonrakiBelgeNo(client, 'SATINALMA_TALEP').catch(() => `PR-MAN-${Date.now()}`);
+  const prNo = await nextDocumentNo(client, 'SATINALMA_TALEP').catch(() => `PR-MAN-${Date.now()}`);
   const pr = (await client.query(
     `INSERT INTO purchase_requisitions (
        requisition_no, plant_id, status, description, requisition_date,
@@ -1160,7 +1160,7 @@ async function seedManuel(client, org, base) {
 
   await api('POST', `/satin-alma-siparisleri/${po.id}/onayla`, {}, firma.id);
   // Merkezi onay: rota zorunlu; adımlar tamamlanmadan devam edilmez
-  const onayMan = await calistirSaSiparisOnay(client, { firmaId: firma.id, po, tag });
+  const onayMan = await runPurchaseOrderApproval(client, { firmaId: firma.id, po, tag });
 
   // Mal kabul / UE stok dokunur — açık txn stok kilidi bırakmasın
   await client.query('COMMIT');
@@ -1217,7 +1217,7 @@ async function seedManuel(client, org, base) {
     order_date: today,
   }, firma.id);
 
-  await tagBelge(client, 'production_orders', ue.id, firma.id, tag, { project: false });
+  await tagDocument(client, 'production_orders', ue.id, firma.id, tag, { project: false });
   await api('POST', `/uretim-emirleri/${ue.id}/onayla`, {}, firma.id).catch((e) => log(`  UE onay: ${e.message}`));
   await api('POST', `/uretim-emirleri/${ue.id}/baslat`, {}, firma.id).catch((e) => log(`  UE başlat: ${e.message}`));
 
@@ -1234,7 +1234,7 @@ async function seedManuel(client, org, base) {
   await onaylaCkk(firma.id, ue.id, tag);
 
   // 24–26) Sevk → irsaliye → fatura
-  const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
+  const { sevk, irs, satisFatura } = await shipmentDeliveryNoteInvoice(client, {
     firma, plant, wh, so, tag,
   });
 
@@ -1300,7 +1300,7 @@ async function seedMrp(client, org, base) {
   }, firma.id);
 
   // Bağımsız ihtiyaç
-  const biNo = await sonrakiKod(client, 'MRP_BI').catch(() => `BI-MRP-${Date.now()}`);
+  const biNo = await nextSequenceCode(client, 'MRP_BI').catch(() => `BI-MRP-${Date.now()}`);
   const ihtiyacTarihi = new Date();
   ihtiyacTarihi.setDate(ihtiyacTarihi.getDate() + 14);
   await client.query(
@@ -1338,7 +1338,7 @@ async function seedMrp(client, org, base) {
       }, firma.id);
       log(`  MRP→SA talep: ${talep.requisition_no || talep.talep_no || JSON.stringify(talep).slice(0, 80)}`);
       if (talep?.id) {
-        await tagBelge(client, 'purchase_requisitions', talep.id, firma.id, tag);
+        await tagDocument(client, 'purchase_requisitions', talep.id, firma.id, tag);
         await client.query(
           `UPDATE purchase_requisitions SET company_id=COALESCE(company_id,$2), project_code=$3,
              description=$4 WHERE id=$1`,
@@ -1360,7 +1360,7 @@ async function seedMrp(client, org, base) {
       const list = Array.isArray(ueMrp) ? ueMrp : (ueMrp?.emirler || [ueMrp]);
       for (const e of list) {
         if (!e?.id) continue;
-        await tagBelge(client, 'production_orders', e.id, firma.id, tag, { project: false });
+        await tagDocument(client, 'production_orders', e.id, firma.id, tag, { project: false });
         await client.query(
           `UPDATE production_orders SET company_id=COALESCE(company_id,$2),
              description=$3 WHERE id=$1`,
@@ -1405,7 +1405,7 @@ async function seedMrp(client, org, base) {
         if (poMrp.status !== 'Onayli') {
           await api('POST', `/satin-alma-siparisleri/${poMrp.id}/onayla`, {}, firma.id);
         }
-        await tagBelge(client, 'purchase_orders', poMrp.id, firma.id, tag);
+        await tagDocument(client, 'purchase_orders', poMrp.id, firma.id, tag);
         // Açıklamayı ayrı autocommit bağlantıyla yaz (API kilitleriyle çakışmasın)
         {
           const tc = await pool.connect();
@@ -1416,7 +1416,7 @@ async function seedMrp(client, org, base) {
             );
           } finally { tc.release(); }
         }
-        onayMrp = await calistirSaSiparisOnay(client, { firmaId: firma.id, po: poMrp, tag });
+        onayMrp = await runPurchaseOrderApproval(client, { firmaId: firma.id, po: poMrp, tag });
 
         mkMrp = await api('POST', '/mal-kabuller', {
           purchase_order_id: poMrp.id,
@@ -1434,7 +1434,7 @@ async function seedMrp(client, org, base) {
             description: `[${tag}] Alış faturası`,
           }, firma.id);
           if (alisFaturaMrp?.id) {
-            await tagBelge(client, 'invoices', alisFaturaMrp.id, firma.id, tag);
+            await tagDocument(client, 'invoices', alisFaturaMrp.id, firma.id, tag);
             await api('POST', `/invoices/${alisFaturaMrp.id}/muhasebelestir`, {}, firma.id)
               .catch((e) => log(`  MRP alış muhasebe: ${e.message}`));
             log(`  MRP alış fatura: ${alisFaturaMrp.invoice_no}`);
@@ -1463,7 +1463,7 @@ async function seedMrp(client, org, base) {
     try {
       const cevir = await api('POST', `/uretim-planlari/${pln.id}/cevir`, {}, firma.id);
       if (cevir?.id) {
-        await tagBelge(client, 'production_orders', cevir.id, firma.id, tag, { project: false });
+        await tagDocument(client, 'production_orders', cevir.id, firma.id, tag, { project: false });
       }
       log(`  plan→UE: ${cevir.order_no || cevir.id || 'ok'}`);
     } catch (err) {
@@ -1510,7 +1510,7 @@ async function seedMrp(client, org, base) {
         description: `[${tag}] İş emri — MRP sonrası (tam rota)`,
         order_date: today,
       }, firma.id);
-      await tagBelge(client, 'production_orders', full.id, firma.id, tag, { project: false });
+      await tagDocument(client, 'production_orders', full.id, firma.id, tag, { project: false });
       ueRun = [full, ...ueRun.filter((x) => Number(x.id) !== Number(e.id))];
       log(`  MRP tam UE: ${full.order_no}`);
     } catch (err) {
@@ -1536,7 +1536,7 @@ async function seedMrp(client, org, base) {
         description: `[${tag}] İş emri — MRP tetikli satış`,
         order_date: today,
       }, firma.id);
-      await tagBelge(client, 'production_orders', full.id, firma.id, tag, { project: false });
+      await tagDocument(client, 'production_orders', full.id, firma.id, tag, { project: false });
       ueRun = [full];
       log(`  MRP yedek UE: ${full.order_no}`);
     } catch (err) {
@@ -1565,11 +1565,11 @@ async function seedMrp(client, org, base) {
 
   // CKK sonrası mamul kullanılabilir bakiye bazen depoda görünmez — sevk öncesi güvence girişi
   try {
-    const { depoStokBakiye } = require('../src/services/stokHareketService');
-    const avail = await depoStokBakiye(client, wh.mam.id, base.fg.id, { stokStatu: 'Kullanilabilir' });
+    const { warehouseItemBalance } = require('../src/services/stokHareketService');
+    const avail = await warehouseItemBalance(client, wh.mam.id, base.fg.id, { stokStatu: 'Kullanilabilir' });
     const need = Math.max(0, qty - avail);
     if (need > 1e-9) {
-      await stokHareketOlustur(client, {
+      await createStockMovement(client, {
         hareketTipi: 'STOK_GIRIS',
         isYeriId: plant.id,
         depoId: wh.mam.id,
@@ -1587,7 +1587,7 @@ async function seedMrp(client, org, base) {
   await client.query('BEGIN');
 
   // Sevk → irsaliye → satış fatura
-  const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
+  const { sevk, irs, satisFatura } = await shipmentDeliveryNoteInvoice(client, {
     firma, plant, wh, so, tag,
   });
 
@@ -1628,7 +1628,7 @@ async function main() {
     org = await ensureOrg(client);
     summary.firma = { id: org.firma.id, code: org.firma.company_code, name: org.firma.company_name };
     await purgeGida(client, org.firma.id);
-    await ensureSaSiparisOnayTanimi(client, org.firma.id);
+    await ensurePurchaseOrderApprovalDefinition(client, org.firma.id);
     base = await seedBase(client, org);
     await client.query('COMMIT');
     log('  BASE commit OK');

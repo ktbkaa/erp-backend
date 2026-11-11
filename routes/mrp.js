@@ -2,15 +2,15 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const {
-    mrpHesapla,
+    calculateMrp,
     mrpCalistir,
     defaultMrpParametre,
     buildMrpRapor,
 } = require('../src/services/mrpService');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -29,7 +29,7 @@ function num(v) {
 /** Anlık MRP listesi (çalışma kaydetmeden) */
 router.get('/', async (req, res, next) => {
     try {
-        const liste = await mrpHesapla(pool, {
+        const liste = await calculateMrp(pool, {
             isYeriId: req.query.plant_id ? Number(req.query.plant_id) : null,
             firmaId: req.query.company_id ? Number(req.query.company_id) : null,
             stokId: req.query.item_id ? Number(req.query.item_id) : null,
@@ -93,7 +93,7 @@ router.post('/bagimsiz-ihtiyaclar', async (req, res, next) => {
             return res.status(400).json({ hata: 'item_id ve quantity zorunlu.' });
         }
         const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.ihtiyac_no) || (await sonrakiKod(client, 'MRP_BI'));
+            const kod = trimOrNull(req.body.ihtiyac_no) || (await nextSequenceCode(client, 'MRP_BI'));
             const ins = await client.query(
                 `INSERT INTO mrp_independent_requirements
                     (ihtiyac_no, item_id, quantity, uom_code, ihtiyac_date, source,
@@ -401,7 +401,7 @@ router.post('/talep-olustur', async (req, res, next) => {
             );
             adaylar = r.rows.filter((row) => !filtreIds || filtreIds.includes(Number(row.item_id)));
         } else {
-            const liste = await mrpHesapla(pool, {
+            const liste = await calculateMrp(pool, {
                 isYeriId: num(req.body.plant_id),
                 firmaId: num(req.body.company_id),
             });
@@ -420,13 +420,13 @@ router.post('/talep-olustur', async (req, res, next) => {
         }
 
         const talepId = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'SATINALMA_TALEP');
+            const no = await nextDocumentNo(client, 'SATINALMA_TALEP');
             let isYeriId = num(req.body.plant_id);
             if (!isYeriId) {
                 const iy = await client.query('SELECT id FROM plants ORDER BY id LIMIT 1');
                 isYeriId = iy.rows[0]?.id || null;
             }
-            const firmaId = num(req.body.company_id) || firmaIdFromReq(req) || null;
+            const firmaId = num(req.body.company_id) || companyIdFromReq(req) || null;
             const t = await client.query(
                 `INSERT INTO purchase_requisitions (requisition_no, plant_id, status, description, company_id)
                  VALUES ($1,$2,'Acik',$3,$4) RETURNING id`,
@@ -491,7 +491,7 @@ router.post('/uretim-emri-olustur', async (req, res, next) => {
             );
             adaylar = r.rows.filter((row) => !filtreIds || filtreIds.includes(Number(row.item_id)));
         } else {
-            const liste = await mrpHesapla(pool, {
+            const liste = await calculateMrp(pool, {
                 isYeriId: num(req.body.plant_id),
                 firmaId: num(req.body.company_id),
             });
@@ -548,9 +548,9 @@ router.post('/uretim-emri-olustur', async (req, res, next) => {
                 if (!bom.rows[0] || !rota.rows[0]) {
                     throw new Error(`${a.item_code || a.item_id}: ürün ağacı veya rota yok.`);
                 }
-                const no = await sonrakiBelgeNo(client, 'URETIM_EMRI');
+                const no = await nextDocumentNo(client, 'URETIM_EMRI');
                 const quantity = a.onerilen_quantity || a.net_ihtiyac;
-                const firmaId = num(req.body.company_id) || firmaIdFromReq(req) || null;
+                const firmaId = num(req.body.company_id) || companyIdFromReq(req) || null;
                 const wipDepo = num(req.body.wip_warehouse_id) || null;
                 const emir = await client.query(
                     `INSERT INTO production_orders
@@ -608,7 +608,7 @@ router.get('/:stokId', async (req, res, next) => {
         if (!/^\d+$/.test(String(req.params.stokId))) {
             return res.status(404).json({ hata: 'Endpoint bulunamadı.' });
         }
-        const liste = await mrpHesapla(pool, { stokId: Number(req.params.stokId) });
+        const liste = await calculateMrp(pool, { stokId: Number(req.params.stokId) });
         res.json(liste[0] || null);
     } catch (err) {
         next(err);

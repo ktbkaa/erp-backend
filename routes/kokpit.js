@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function ozetHesapla(firmaId = null) {
+async function calculateSummary(firmaId = null) {
   const q = async (sql, params = []) => {
     try {
       const r = await pool.query(sql, params);
@@ -80,7 +80,7 @@ async function ozetHesapla(firmaId = null) {
 
 router.get('/ozet', async (req, res, next) => {
   try {
-    res.json(await ozetHesapla(firmaIdFromReq(req)));
+    res.json(await calculateSummary(companyIdFromReq(req)));
   } catch (err) {
     next(err);
   }
@@ -89,7 +89,7 @@ router.get('/ozet', async (req, res, next) => {
 /** Liste UI için widget satırları */
 router.get('/', async (req, res, next) => {
   try {
-    const o = await ozetHesapla(firmaIdFromReq(req));
+    const o = await calculateSummary(companyIdFromReq(req));
     res.json([
       { id: 1, metrik: 'Açık satış sipariş', value: o.acik_satis_siparis },
       { id: 2, metrik: 'Geciken sevk', value: o.geciken_sevk },

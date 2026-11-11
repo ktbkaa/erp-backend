@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq, andFirma } = require('../src/utils/firmaScope');
+const { companyIdFromReq, andCompany } = require('../src/utils/firmaScope');
 const { runAutomation } = require('../src/services/prjAutomationService');
 
 /** Liste: proje bütçe özetleri (UI) */
@@ -23,10 +23,10 @@ router.get('/', async (req, res, next) => {
         gross_result: revenue - actual,
       }]);
     }
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     let where = 'WHERE p.is_active=TRUE AND p.is_archived=FALSE';
-    where += andFirma('p.company_id', firmaId, params);
+    where += andCompany('p.company_id', firmaId, params);
     const r = await pool.query(
       `
       SELECT p.id, p.project_code, p.project_name, p.currency_code,

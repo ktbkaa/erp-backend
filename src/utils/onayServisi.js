@@ -4,7 +4,7 @@
  */
 const { withTransaction } = require('./withTransaction');
 
-async function belgeOnayla(pool, {
+async function approveDocument(pool, {
   table,
   id,
   fromDurumlar = ['Taslak', 'Acik', 'OnayBekliyor'],
@@ -48,4 +48,4 @@ async function belgeOnayla(pool, {
   });
 }
 
-module.exports = { belgeOnayla };
+module.exports = { approveDocument };

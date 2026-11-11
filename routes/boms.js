@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 
 const HEADER_COLS = [
@@ -16,7 +16,7 @@ const HEADER_COLS = [
   'wo_change_mode', 'lock_when_used_in_route', 'std_cost', 'precost_amount', 'precost_at',
 ];
 
-function satirAgaciKur(duzSatirlar) {
+function buildLineTree(duzSatirlar) {
   const map = new Map();
   for (const s of duzSatirlar) {
     map.set(s.id, { ...s, alt_satirlar: [], alternatifler: s.alternatifler || [] });
@@ -91,7 +91,7 @@ async function loadAlternatives(lineIds) {
   return map;
 }
 
-async function agacGetir(id) {
+async function getBomTree(id) {
   const baslik = await pool.query(
     `
     SELECT ua.*,
@@ -136,13 +136,13 @@ async function agacGetir(id) {
   return {
     ...baslik.rows[0],
     satirlar: withAlts,
-    agac: satirAgaciKur(withAlts),
+    agac: buildLineTree(withAlts),
   };
 }
 
 function buildListWhere(req) {
   const q = req.query || {};
-  const firmaId = firmaIdFromReq(req);
+  const firmaId = companyIdFromReq(req);
   const params = [];
   const where = [];
 
@@ -207,7 +207,7 @@ router.get('/', async (req, res) => {
       params
     );
     const result = [];
-    for (const a of liste.rows) result.push(await agacGetir(a.id));
+    for (const a of liste.rows) result.push(await getBomTree(a.id));
     res.json(result);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -217,7 +217,7 @@ router.get('/', async (req, res) => {
 /** Ön maliyet — kaydedilmiş ağaç üzerinden stok son_cost * brüt miktar */
 router.get('/:id/on-maliyet', async (req, res) => {
   try {
-    const agac = await agacGetir(req.params.id);
+    const agac = await getBomTree(req.params.id);
     if (!agac) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
     const baz = Math.max(0.000001, Number(agac.quantity) || 1);
     const hedefQty = Math.max(0, Number(req.query.quantity) || baz);
@@ -267,7 +267,7 @@ router.get('/:id/on-maliyet', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const agac = await agacGetir(req.params.id);
+    const agac = await getBomTree(req.params.id);
     if (!agac) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
     res.json(agac);
   } catch (err) {
@@ -412,13 +412,13 @@ async function insertAlternatives(client, bomLineId, alts) {
   }
 }
 
-async function satirEkle(client, urunAgaciId, satir, ustSatirId, siraNo) {
+async function addLine(client, urunAgaciId, satir, ustSatirId, siraNo) {
   const ins = await client.query(LINE_INSERT_SQL, lineValues(satir, urunAgaciId, ustSatirId, siraNo));
   const id = ins.rows[0].id;
   await insertAlternatives(client, id, satir.alternatifler || satir.alternatives || []);
   let altSira = 10;
   for (const alt of satir.alt_satirlar || []) {
-    await satirEkle(client, urunAgaciId, alt, id, altSira);
+    await addLine(client, urunAgaciId, alt, id, altSira);
     altSira += 10;
   }
   return id;
@@ -467,7 +467,7 @@ router.post('/', async (req, res) => {
     const userCode = req.user?.user_code || req.headers['x-kullanici-kodu'] || null;
 
     const kayitId = await withTransaction(pool, async (client) => {
-      let firmaId = firmaIdFromReq(req) || Number(h.company_id) || null;
+      let firmaId = companyIdFromReq(req) || Number(h.company_id) || null;
       if (!firmaId) {
         const st = await client.query('SELECT company_id, uom_code FROM items WHERE id=$1', [h.finished_good_item_id]);
         firmaId = st.rows[0]?.company_id || null;
@@ -546,13 +546,13 @@ router.post('/', async (req, res) => {
       let sira = step;
       for (const s of satirlar) {
         if (!s.component_item_id) continue;
-        await satirEkle(client, uaId, s, null, sira);
+        await addLine(client, uaId, s, null, sira);
         sira += step;
       }
       return uaId;
     });
 
-    res.status(201).json(await agacGetir(kayitId));
+    res.status(201).json(await getBomTree(kayitId));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -686,14 +686,14 @@ router.put('/:id', async (req, res) => {
           if (!s.component_item_id) continue;
           const hasQty = s.quantity != null || s.net_quantity != null || s.gross_quantity != null;
           if (!hasQty) continue;
-          await satirEkle(client, Number(req.params.id), s, null, sira);
+          await addLine(client, Number(req.params.id), s, null, sira);
           sira += step;
         }
       }
       return Number(req.params.id);
     });
 
-    res.json(await agacGetir(kayitId));
+    res.json(await getBomTree(kayitId));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }

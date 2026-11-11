@@ -1,4 +1,4 @@
-const { depoBakiyeListesi } = require('./stokHareketService');
+const { listWarehouseBalances } = require('./stokHareketService');
 
 /**
  * MRP motoru — parametre destekli (konsol):
@@ -182,7 +182,7 @@ async function safeQuery(pool, sql, params = []) {
     }
 }
 
-async function loadStokMap(pool, { stokId = null, firmaId = null, includePassive = false } = {}) {
+async function loadItemMap(pool, { stokId = null, firmaId = null, includePassive = false } = {}) {
     const params = [];
     let where = includePassive ? 'WHERE 1=1' : 'WHERE s.is_active IS DISTINCT FROM FALSE';
     if (stokId) {
@@ -276,7 +276,7 @@ async function loadSupplyMaps(pool, {
     log = null,
 } = {}) {
     const p = defaultMrpParametre(parametre);
-    const bakiyeler = await depoBakiyeListesi(pool, { stokStatu: 'Kullanilabilir', stokId });
+    const bakiyeler = await listWarehouseBalances(pool, { stokStatu: 'Kullanilabilir', stokId });
     const kullanilabilir = new Map();
     let skippedWh = 0;
     for (const b of bakiyeler) {
@@ -566,7 +566,7 @@ function lotSize(net, stok, { ignoreMin = false } = {}) {
     return net;
 }
 
-function isUretim(stok) {
+function isProduction(stok) {
     const t = String(stok?.tedarik_type || '').toLowerCase();
     return t.includes('uret');
 }
@@ -575,7 +575,7 @@ function isUretim(stok) {
  * BOM patlatmalı MRP hesaplaması (bellekte).
  * @returns {Promise<{ results: object[], messages: object[], parametre: object }>}
  */
-async function mrpHesapla(pool, {
+async function calculateMrp(pool, {
     isYeriId = null,
     firmaId = null,
     stokId = null,
@@ -585,7 +585,7 @@ async function mrpHesapla(pool, {
     const log = makeLogger();
     log.info('START', `MRP ufuk ${p.start_date} → ${p.end_date}`);
 
-    const stokMap = await loadStokMap(pool, {
+    const stokMap = await loadItemMap(pool, {
         stokId: null,
         firmaId,
         includePassive: p.include_passive_items,
@@ -636,7 +636,7 @@ async function mrpHesapla(pool, {
     const queue = [];
     independent.forEach((d, k) => {
         const st = stokMap.get(k);
-        if (st && isUretim(st) && d.qty > 0) queue.push({ stokId: k, qty: d.qty, date: d.date, depth: 0 });
+        if (st && isProduction(st) && d.qty > 0) queue.push({ stokId: k, qty: d.qty, date: d.date, depth: 0 });
     });
 
     const visitedExplosion = new Set();
@@ -650,7 +650,7 @@ async function mrpHesapla(pool, {
         const children = bomByParent.get(String(job.stokId)) || [];
         if (!children.length && p.bulk_explode_warning === 'uyar') {
             const st = stokMap.get(String(job.stokId));
-            if (st && isUretim(st)) {
+            if (st && isProduction(st)) {
                 log.warn('BOM_MISSING', `${st.item_code}: üretim tipi ama aktif BOM yok.`);
             }
         }
@@ -669,7 +669,7 @@ async function mrpHesapla(pool, {
                 needDate.set(cid, childDate);
             }
             const childSt = stokMap.get(cid);
-            if (childSt && isUretim(childSt)) {
+            if (childSt && isProduction(childSt)) {
                 queue.push({ stokId: cid, qty: need, date: childDate, depth: job.depth + 1 });
             }
         }
@@ -732,7 +732,7 @@ async function mrpHesapla(pool, {
         const netRaw = Math.max(0, brut + emniyet + Math.max(ropGap, bandGap) - eldeki - siparis - uretim);
         const onerilen = lotSize(netRaw, s, { ignoreMin: p.ignore_min_production_qty });
         let oneri = 'Yeterli';
-        if (onerilen > 0) oneri = isUretim(s) ? 'Üretim emri' : 'Satınalma';
+        if (onerilen > 0) oneri = isProduction(s) ? 'Üretim emri' : 'Satınalma';
 
         let ihtiyacTarihi = needDate.get(id) || null;
         if (!ihtiyacTarihi && (emniyet > 0 || bandGap > 0) && p.safety_stock_date_type === 'ihtiyac') {
@@ -798,8 +798,8 @@ async function mrpHesapla(pool, {
 /**
  * Geriye uyum: eski çağrılar dizi bekliyor olabilir.
  */
-async function mrpHesaplaListe(pool, opts = {}) {
-    const out = await mrpHesapla(pool, opts);
+async function calculateMrpList(pool, opts = {}) {
+    const out = await calculateMrp(pool, opts);
     return out.results;
 }
 
@@ -814,7 +814,7 @@ async function mrpCalistir(client, {
     parametre = {},
     notes = null,
 } = {}) {
-    const { sonrakiKod } = require('../utils/kodUretici');
+    const { nextSequenceCode } = require('../utils/kodUretici');
     const p = defaultMrpParametre(parametre);
     if (notes != null) p.notes = String(notes);
 
@@ -830,7 +830,7 @@ async function mrpCalistir(client, {
         if (!iy.rows[0]) safeIsYeri = null;
     }
 
-    const no = await sonrakiKod(client, 'MRP_CALISMA');
+    const no = await nextSequenceCode(client, 'MRP_CALISMA');
     const ins = await client.query(
         `INSERT INTO mrp_runs
             (run_no, company_id, plant_id, status, parametre_json, description, created_by,
@@ -846,7 +846,7 @@ async function mrpCalistir(client, {
 
     let out;
     try {
-        out = await mrpHesapla(client, { firmaId: safeFirma, isYeriId: safeIsYeri, parametre: p });
+        out = await calculateMrp(client, { firmaId: safeFirma, isYeriId: safeIsYeri, parametre: p });
     } catch (err) {
         await client.query(
             `UPDATE mrp_runs SET status='Hata', end_ts=CURRENT_TIMESTAMP,
@@ -1075,8 +1075,8 @@ async function buildMrpRapor(pool, runId) {
 }
 
 module.exports = {
-    mrpHesapla: mrpHesaplaListe,
-    mrpHesaplaDetay: mrpHesapla,
+    calculateMrp: calculateMrpList,
+    mrpHesaplaDetay: calculateMrp,
     mrpCalistir,
     loadIndependentDemand,
     defaultMrpParametre,

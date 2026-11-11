@@ -5,7 +5,7 @@
 const express = require('express');
 const pool = require('../../db');
 const { withTransaction } = require('./withTransaction');
-const { sonrakiKod } = require('./kodUretici');
+const { nextSequenceCode } = require('./kodUretici');
 const { parametreAl } = require('./yetki');
 
 function trimOrNull(v) {
@@ -27,7 +27,7 @@ function trimOrNull(v) {
  * @param {string} [opts.orderBy]
  * @param {string} [opts.notFound]
  */
-function createTanimRouter(opts) {
+function createDefinitionRouter(opts) {
   const {
     table,
     codeCol,
@@ -75,7 +75,7 @@ function createTanimRouter(opts) {
       const name = trimOrNull(req.body[nameCol]);
       if (!name) return res.status(400).json({ hata: `${nameCol} zorunlu.` });
       const row = await withTransaction(pool, async (client) => {
-        const kod = trimOrNull(req.body[codeCol]) || (await sonrakiKod(client, seriKodu));
+        const kod = trimOrNull(req.body[codeCol]) || (await nextSequenceCode(client, seriKodu));
         const cols = [codeCol, nameCol, ...extraCols, 'is_active'];
         const vals = [
           kod,
@@ -151,4 +151,4 @@ function createTanimRouter(opts) {
   return router;
 }
 
-module.exports = { createTanimRouter, trimOrNull };
+module.exports = { createDefinitionRouter, trimOrNull };

@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function rotaGetir(id) {
+async function getRouting(id) {
   const r = await pool.query(
     `
     SELECT rt.*,
@@ -41,7 +41,7 @@ async function rotaGetir(id) {
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     let sql = 'SELECT id FROM approval_routes';
     const where = [];
@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
     sql += ' ORDER BY route_code, versiyon DESC';
     const liste = await pool.query(sql, params);
     const out = [];
-    for (const row of liste.rows) out.push(await rotaGetir(row.id));
+    for (const row of liste.rows) out.push(await getRouting(row.id));
     res.json(out);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await rotaGetir(req.params.id);
+    const row = await getRouting(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Rota bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -74,7 +74,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-async function kaydetAdimlar(client, rotaId, adimlar) {
+async function saveSteps(client, rotaId, adimlar) {
   await client.query('DELETE FROM approval_route_steps WHERE route_id=$1', [rotaId]);
   if (!Array.isArray(adimlar)) return;
   let sira = 10;
@@ -129,7 +129,7 @@ router.post('/', async (req, res) => {
     const id = await withTransaction(pool, async (client) => {
       let kod = route_code;
       if (!kod) {
-        try { kod = await sonrakiKod(client, 'ONAY_ROTA'); }
+        try { kod = await nextSequenceCode(client, 'ONAY_ROTA'); }
         catch (_) { kod = `NR${Date.now().toString().slice(-5)}`; }
       }
       const ins = await client.query(
@@ -150,10 +150,10 @@ router.post('/', async (req, res) => {
           iptal_role_name || null, ekli_dosya_mail, is_active,
         ],
       );
-      await kaydetAdimlar(client, ins.rows[0].id, adimlar);
+      await saveSteps(client, ins.rows[0].id, adimlar);
       return ins.rows[0].id;
     });
-    res.status(201).json(await rotaGetir(id));
+    res.status(201).json(await getRouting(id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -196,9 +196,9 @@ router.put('/:id', async (req, res) => {
         err.status = 404;
         throw err;
       }
-      if (adimlar !== undefined) await kaydetAdimlar(client, req.params.id, adimlar);
+      if (adimlar !== undefined) await saveSteps(client, req.params.id, adimlar);
     });
-    res.json(await rotaGetir(req.params.id));
+    res.json(await getRouting(req.params.id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }

@@ -5,15 +5,15 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const direction = String(req.query.direction || req.query.alis_satis || '').toLowerCase(); // alis|satis|''
     const tur = String(req.query.belge_turu || '').toLowerCase(); // irsaliye|fatura|''
     const params = [];
-    const firmaClause = (alias) => {
+    const companyClause = (alias) => {
       if (!firmaId) return 'TRUE';
       params.push(firmaId);
       return `${alias}.company_id = $${params.length}`;
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
             'delivery_notes'::text AS kaynak_tablo
           FROM delivery_notes i
           LEFT JOIN partners c ON c.id = i.partner_id
-          WHERE ${firmaClause('i')}
+          WHERE ${companyClause('i')}
         `);
       }
     }
@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
           'invoices'::text AS kaynak_tablo
         FROM invoices f
         LEFT JOIN partners c ON c.id = f.partner_id
-        WHERE ${firmaClause('f')} AND ${yonFilter}
+        WHERE ${companyClause('f')} AND ${yonFilter}
       `);
     }
 
@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
           'vendor_delivery_notes'::text AS kaynak_tablo
         FROM vendor_delivery_notes ti
         LEFT JOIN partners c ON c.id = ti.partner_id
-        WHERE ${firmaClause('ti')}
+        WHERE ${companyClause('ti')}
       `);
     }
 

@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 const {
   getParamSet, loadParams, calculateEmployeePayroll, calculateForEmployee, round2,
 } = require('../src/services/hrPayrollService');
 
-async function parametreSetGetir(id) {
+async function getParameterSet(id) {
   const set = await pool.query(`SELECT * FROM hr_payroll_param_sets WHERE id=$1`, [id]);
   if (!set.rows[0]) return null;
   const vals = await pool.query(
@@ -75,7 +75,7 @@ router.get('/parametreler', async (req, res) => {
 
 router.get('/parametreler/:id', async (req, res) => {
   try {
-    const row = await parametreSetGetir(req.params.id);
+    const row = await getParameterSet(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Parametre seti bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -110,7 +110,7 @@ router.post('/parametreler', async (req, res) => {
       );
       return setId;
     });
-    res.status(201).json(await parametreSetGetir(id));
+    res.status(201).json(await getParameterSet(id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -147,7 +147,7 @@ router.put('/parametreler/:id', async (req, res) => {
       );
       return Number(req.params.id);
     });
-    res.json(await parametreSetGetir(id));
+    res.json(await getParameterSet(id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -196,7 +196,7 @@ router.post('/hesapla-sim', async (req, res) => {
 // ---- Ücretler ----
 router.get('/ucretler', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -224,7 +224,7 @@ router.get('/ucretler', async (req, res) => {
 router.post('/ucretler', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.employee_id || !b.gross_amount || !b.effective_from) {
       return res.status(400).json({ hata: 'company_id, employee_id, gross_amount, effective_from zorunlu.' });
     }
@@ -261,7 +261,7 @@ router.post('/ucretler', async (req, res) => {
 // ---- Avans ----
 router.get('/avanslar', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -290,12 +290,12 @@ router.get('/avanslar', async (req, res) => {
 router.post('/avanslar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.employee_id || b.amount == null) {
       return res.status(400).json({ hata: 'company_id, employee_id, amount zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const no = b.advance_no || (await sonrakiKod(client, 'HR_ADVANCE'));
+      const no = b.advance_no || (await nextSequenceCode(client, 'HR_ADVANCE'));
       const ins = await client.query(
         `INSERT INTO hr_advances (
            company_id, advance_no, employee_id, request_date, amount, currency_code, status, description
@@ -346,7 +346,7 @@ router.post('/avanslar/:id/ode', async (req, res) => {
 // ---- Dönemler ----
 router.get('/donemler', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT * FROM hr_payroll_periods
        WHERE ($1::int IS NULL OR company_id=$1)
@@ -362,7 +362,7 @@ router.get('/donemler', async (req, res) => {
 router.post('/donemler', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.year_no || !b.month_no) {
       return res.status(400).json({ hata: 'company_id, year_no, month_no zorunlu.' });
     }
@@ -388,7 +388,7 @@ router.post('/donemler', async (req, res) => {
 // ---- Bordro çalışmaları ----
 router.get('/calismalar', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT r.*, p.period_code, p.year_no, p.month_no
        FROM hr_payroll_runs r
@@ -430,7 +430,7 @@ router.get('/calismalar/:id', async (req, res) => {
 router.post('/calismalar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.period_id) {
       return res.status(400).json({ hata: 'company_id ve period_id zorunlu.' });
     }
@@ -440,7 +440,7 @@ router.post('/calismalar', async (req, res) => {
       return res.status(409).json({ hata: 'Kesinleşmiş dönem için yeni çalışma açılamaz; düzeltme bordrosu kullanın.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const no = b.run_no || (await sonrakiKod(client, 'HR_PAYROLL_RUN'));
+      const no = b.run_no || (await nextSequenceCode(client, 'HR_PAYROLL_RUN'));
       const ins = await client.query(
         `INSERT INTO hr_payroll_runs (
            company_id, period_id, run_no, status, param_set_id, description

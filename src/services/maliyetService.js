@@ -2,7 +2,7 @@
  * Basit ortalama maliyet güncellemesi (INV-011 MVP).
  * Giriş hareketlerinde (direction=+1) ağırlıklı ortalama.
  */
-async function maliyetGuncelleGiris(client, { stokId, quantity, birimMaliyet, hareketId = null }) {
+async function updateCostOnReceipt(client, { stokId, quantity, birimMaliyet, hareketId = null }) {
   if (!stokId || !quantity || birimMaliyet == null) return null;
   const st = await client.query(
     `SELECT id, son_cost, cost_yontem FROM items WHERE id=$1 FOR UPDATE`,
@@ -40,4 +40,4 @@ async function maliyetGuncelleGiris(client, { stokId, quantity, birimMaliyet, ha
   return { son_cost: yeni };
 }
 
-module.exports = { maliyetGuncelleGiris };
+module.exports = { updateCostOnReceipt };

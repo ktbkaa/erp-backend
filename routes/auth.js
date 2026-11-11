@@ -7,7 +7,7 @@ const { parseJsonArr } = require('../src/middleware/authJwt');
 const { hashParola, dogrulaParola } = require('../src/utils/parola');
 const { authenticateLdap, ldapStatus } = require('../src/utils/ldapAuth');
 
-async function loadEkranYetkileri(kisiId) {
+async function loadScreenPermissions(kisiId) {
   if (!kisiId) return [];
   const r = await pool.query(
     `SELECT screen_id, erisim, can_create AS yeni, incele, duzelt, kopyala, sil
@@ -17,7 +17,7 @@ async function loadEkranYetkileri(kisiId) {
   return r.rows;
 }
 
-async function loadFirmaYetkileri(kisiId) {
+async function loadCompanyPermissions(kisiId) {
   if (!kisiId) return [];
   const r = await pool.query(
     `SELECT f.id AS company_id, f.company_code, f.company_name
@@ -31,7 +31,7 @@ async function loadFirmaYetkileri(kisiId) {
 }
 
 /** Admin/yönetici: tüm profil firmaları (picker’da ELEK/TEKS vb. kaybolmasın). */
-async function loadFirmaYetkileriForUser(u) {
+async function loadCompanyPermissionsForUser(u) {
   const role = String(u?.role || '').toLowerCase();
   const isAdmin = u?.group_code === 'ADMIN'
     || role === 'admin' || role === 'yonetici' || role === 'administrator'
@@ -45,13 +45,13 @@ async function loadFirmaYetkileriForUser(u) {
     );
     return r.rows;
   }
-  return loadFirmaYetkileri(u.id);
+  return loadCompanyPermissions(u.id);
 }
 
-async function kullaniciPayload(u) {
+async function userPayload(u) {
   const [yetkiler, firma_yetkileri] = await Promise.all([
-    loadEkranYetkileri(u.id),
-    loadFirmaYetkileriForUser(u),
+    loadScreenPermissions(u.id),
+    loadCompanyPermissionsForUser(u),
   ]);
   return {
     id: u.id,
@@ -74,7 +74,7 @@ async function kullaniciPayload(u) {
   };
 }
 
-async function kullaniciYukle(kod) {
+async function loadUser(kod) {
   if (!kod) return null;
   const r = await pool.query(
     `SELECT k.*, g.satinalma_onay, g.purchase_requisition_ref, g.kalite_control,
@@ -106,7 +106,7 @@ router.post('/login', async (req, res, next) => {
     if (!user_code) {
       return res.status(400).json({ hata: 'username (veya user_code) zorunlu.' });
     }
-    const u = await kullaniciYukle(user_code);
+    const u = await loadUser(user_code);
     if (!u || u.is_active === false) {
       return res.status(401).json({
         hata: useLdap
@@ -140,7 +140,7 @@ router.post('/login', async (req, res, next) => {
     );
 
     res.json({
-      ...(await kullaniciPayload(u)),
+      ...(await userPayload(u)),
       access_token,
       refresh_token,
       token_tipi: 'Bearer',
@@ -165,7 +165,7 @@ router.post('/refresh', async (req, res, next) => {
       return res.status(401).json({ hata: 'Refresh token geçersiz.' });
     }
     if (payload.typ !== 'refresh') return res.status(401).json({ hata: 'Token tipi hatalı.' });
-    const u = await kullaniciYukle(payload.user_code);
+    const u = await loadUser(payload.user_code);
     if (!u || u.refresh_token_hash !== hashToken(refresh_token)) {
       return res.status(401).json({ hata: 'Refresh token eşleşmedi.' });
     }
@@ -211,9 +211,9 @@ router.get('/me', async (req, res, next) => {
       ? verifyToken(bearer).user_code
       : (req.get('x-kullanici-kodu') || null);
     if (!kod) return res.status(401).json({ hata: 'Kimlik yok.' });
-    const u = await kullaniciYukle(kod);
+    const u = await loadUser(kod);
     if (!u) return res.status(401).json({ hata: 'Kullanıcı yok.' });
-    res.json(await kullaniciPayload(u));
+    res.json(await userPayload(u));
   } catch (err) {
     next(err);
   }

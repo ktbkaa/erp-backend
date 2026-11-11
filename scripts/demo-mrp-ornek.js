@@ -11,7 +11,7 @@ require('dotenv').config();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { mrpCalistir } = require('../src/services/mrpService');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 async function main() {
   const client = await pool.connect();
@@ -29,7 +29,7 @@ async function main() {
     const firmaId = firma.rows[0]?.id || null;
     const isYeriId = isYeri.rows[0]?.id || null;
 
-    const biNo = await sonrakiKod(client, 'MRP_BI');
+    const biNo = await nextSequenceCode(client, 'MRP_BI');
     const ihtiyacTarihi = new Date();
     ihtiyacTarihi.setDate(ihtiyacTarihi.getDate() + 14);
     const bi = await client.query(

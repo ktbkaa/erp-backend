@@ -2,7 +2,7 @@ const { describe, it, before } = require('node:test');
 const assert = require('node:assert/strict');
 const { createApp, request } = require('./helpers/app');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { faturaEslestir } = require('../src/services/faturaEslestirmeService');
+const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 
 describe('fatura 3-way match', () => {
   let app, pool;
@@ -34,7 +34,7 @@ describe('fatura 3-way match', () => {
       return;
     }
 
-    const row = await withTransaction(pool, (client) => faturaEslestir(client, faturaId));
+    const row = await withTransaction(pool, (client) => matchInvoice(client, faturaId));
     assert.ok(row.id);
     assert.ok(['Bekliyor', 'Uyumlu', 'FiyatFark', 'MiktarFark', 'Askida'].includes(row.result));
 
@@ -65,7 +65,7 @@ describe('fatura 3-way match', () => {
 
     let status = 200;
     try {
-      await withTransaction(pool, (client) => faturaEslestir(client, faturaId));
+      await withTransaction(pool, (client) => matchInvoice(client, faturaId));
     } catch (e) {
       status = e.status || 500;
     }

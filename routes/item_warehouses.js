@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-async function bagGetir(id) {
+async function getLink(id) {
     const result = await pool.query(
         `
         SELECT sd.*,
@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await bagGetir(req.params.id);
+        const row = await getLink(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Stok-depo bağı bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -86,7 +86,7 @@ router.post('/', async (req, res) => {
             `,
             [item_id, warehouse_id, plant_id || null, is_active, varsayilan_giris, varsayilan_cikis]
         );
-        res.status(201).json(await bagGetir(result.rows[0].id));
+        res.status(201).json(await getLink(result.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -110,7 +110,7 @@ router.put('/:id', async (req, res) => {
             [req.params.id, item_id || null, warehouse_id || null, plant_id ?? null, is_active, varsayilan_giris, varsayilan_cikis]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Stok-depo bağı bulunamadı.' });
-        res.json(await bagGetir(result.rows[0].id));
+        res.json(await getLink(result.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

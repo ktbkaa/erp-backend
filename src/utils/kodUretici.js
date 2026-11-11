@@ -2,7 +2,7 @@
  * Ana veri / belge kod üretici.
  * Format: 1 harf + 5 rakam  →  M00001, H00001, T00001
  */
-async function sonrakiKod(client, seriKodu) {
+async function nextSequenceCode(client, seriKodu) {
     const result = await client.query(
         `
         SELECT series_code, onek, son_numara
@@ -32,7 +32,7 @@ async function sonrakiKod(client, seriKodu) {
  * Önek + pad numaralı belge no (ör. STC-01-00001).
  * Seri yoksa oluşturur; onek UNIQUE çakışmalarında alternatif dener.
  */
-async function sonrakiPrefixedKod(client, {
+async function nextPrefixedCode(client, {
     seriesCode,
     prefix,
     pad = 5,
@@ -89,10 +89,10 @@ async function sonrakiPrefixedKod(client, {
 }
 
 /** Stok hareket no ayır: STC-01-00001 (sayacı artırır). */
-async function sonrakiStokHareketNo(client, movementCode) {
+async function nextStockMovementNo(client, movementCode) {
     const code = String(movementCode || '').trim().toUpperCase();
     if (!code) throw new Error('Hareket kodu zorunlu.');
-    return sonrakiPrefixedKod(client, {
+    return nextPrefixedCode(client, {
         seriesCode: `STOK_HAREKET__${code}`,
         prefix: code,
         pad: 5,
@@ -107,7 +107,7 @@ async function sonrakiStokHareketNo(client, movementCode) {
  * Önizleme: sayacı artırmadan bir sonraki no’yu gösterir (STC-01-00001).
  * Seri yoksa oluşturur (son_numara=0) ama ayırmaz.
  */
-async function peekStokHareketNo(client, movementCode) {
+async function peekStockMovementNo(client, movementCode) {
     const code = String(movementCode || '').trim().toUpperCase();
     if (!code) throw new Error('Hareket kodu zorunlu.');
     const seriesCode = `STOK_HAREKET__${code}`;
@@ -145,7 +145,7 @@ async function peekStokHareketNo(client, movementCode) {
     return `${code}${separator}${String(next).padStart(pad, '0')}`;
 }
 
-function stokSeriKodundanTip(stokTipi) {
+function itemTypeFromSeriesCode(stokTipi) {
     switch (stokTipi) {
         case 'Hammadde':
             return 'HAMMADDE';
@@ -162,7 +162,7 @@ function stokSeriKodundanTip(stokTipi) {
     }
 }
 
-function cariSeriKodundanTur(cariTuru) {
+function partnerTypeFromSeriesCode(cariTuru) {
     switch (cariTuru) {
         case 'Musteri':
             return 'MUSTERI';
@@ -175,21 +175,21 @@ function cariSeriKodundanTur(cariTuru) {
     }
 }
 
-function cariTedarikciMi(cariTuru) {
+function isPartnerSupplier(cariTuru) {
     return cariTuru === 'Tedarikci' || cariTuru === 'HerIkisi';
 }
 
-function cariMusteriMi(cariTuru) {
+function isPartnerCustomer(cariTuru) {
     return cariTuru === 'Musteri' || cariTuru === 'HerIkisi';
 }
 
 module.exports = {
-    sonrakiKod,
-    sonrakiPrefixedKod,
-    sonrakiStokHareketNo,
-    peekStokHareketNo,
-    stokSeriKodundanTip,
-    cariSeriKodundanTur,
-    cariTedarikciMi,
-    cariMusteriMi,
+    nextSequenceCode,
+    nextPrefixedCode,
+    nextStockMovementNo,
+    peekStockMovementNo,
+    itemTypeFromSeriesCode,
+    partnerTypeFromSeriesCode,
+    isPartnerSupplier,
+    isPartnerCustomer,
 };

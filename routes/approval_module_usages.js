@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function getir(id) {
+async function fetchById(id) {
   const r = await pool.query(
     `
     SELECT k.*,
@@ -24,7 +24,7 @@ async function getir(id) {
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     let sql = 'SELECT id FROM approval_module_usages';
     const where = [];
@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
     sql += ' ORDER BY kullanim_code';
     const liste = await pool.query(sql, params);
     const out = [];
-    for (const row of liste.rows) out.push(await getir(row.id));
+    for (const row of liste.rows) out.push(await fetchById(row.id));
     res.json(out);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Kullanım bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ hata: 'kullanim_name, module_code, screen_id, route_id zorunlu.' });
     }
     if (!kullanim_code) {
-      try { kullanim_code = await sonrakiKod(pool, 'ONAY_KULLANIM'); }
+      try { kullanim_code = await nextSequenceCode(pool, 'ONAY_KULLANIM'); }
       catch (_) { kullanim_code = `OM${Date.now().toString().slice(-5)}`; }
     }
     const ins = await pool.query(
@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
         company_id || null, min_amount, otomatik_gonder, template_id || null, is_active, description || null,
       ],
     );
-    res.status(201).json(await getir(ins.rows[0].id));
+    res.status(201).json(await fetchById(ins.rows[0].id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -113,7 +113,7 @@ router.put('/:id', async (req, res) => {
       ],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kullanım bulunamadı.' });
-    res.json(await getir(req.params.id));
+    res.json(await fetchById(req.params.id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

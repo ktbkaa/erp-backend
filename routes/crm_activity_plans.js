@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function planGetir(id) {
+async function getPlan(id) {
     const r = await pool.query(
         `
         SELECT p.*,
@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
         if (lead_id) { params.push(Number(lead_id)); where.push(`p.lead_id=$${params.length}`); }
         if (firsat_id) { params.push(Number(firsat_id)); where.push(`p.firsat_id=$${params.length}`); }
         if (status) { params.push(status); where.push(`p.status=$${params.length}`); }
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`p.company_id = $${params.length}`);
@@ -80,7 +80,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await planGetir(req.params.id);
+        const row = await getPlan(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Faaliyet planı bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -113,8 +113,8 @@ router.post('/', async (req, res) => {
                 adayId = adayId || f.rows[0].lead_id;
                 type = f.rows[0].customer_type;
             }
-            const kod = b.plan_code || (await sonrakiKod(client, 'CRM_PLAN'));
-            const firmaId = b.company_id || firmaIdFromReq(req) || null;
+            const kod = b.plan_code || (await nextSequenceCode(client, 'CRM_PLAN'));
+            const firmaId = b.company_id || companyIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_activity_plans
@@ -135,7 +135,7 @@ router.post('/', async (req, res) => {
             );
             return r.rows[0].id;
         });
-        res.status(201).json(await planGetir(id));
+        res.status(201).json(await getPlan(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -172,7 +172,7 @@ router.put('/:id', async (req, res) => {
             ]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Faaliyet planı bulunamadı.' });
-        res.json(await planGetir(r.rows[0].id));
+        res.json(await getPlan(r.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -181,11 +181,11 @@ router.put('/:id', async (req, res) => {
 /** Plandan faaliyet oluştur */
 router.post('/:id/faaliyet-olustur', async (req, res) => {
     try {
-        const plan = await planGetir(req.params.id);
+        const plan = await getPlan(req.params.id);
         if (!plan) return res.status(404).json({ hata: 'Faaliyet planı bulunamadı.' });
 
         const id = await withTransaction(pool, async (client) => {
-            const kod = await sonrakiKod(client, 'CRM_FAALIYET');
+            const kod = await nextSequenceCode(client, 'CRM_FAALIYET');
             const r = await client.query(
                 `
                 INSERT INTO crm_activities
@@ -213,7 +213,7 @@ router.post('/:id/faaliyet-olustur', async (req, res) => {
         res.status(201).json({
             ok: true,
             faaliyet: faaliyet.rows[0],
-            plan: await planGetir(plan.id),
+            plan: await getPlan(plan.id),
         });
     } catch (err) {
         res.status(400).json({ hata: err.message });

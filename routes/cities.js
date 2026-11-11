@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -46,7 +46,7 @@ router.post('/', async (req, res) => {
         const city_name = trimOrNull(req.body.city_name);
         if (!city_name) return res.status(400).json({ hata: 'city_name zorunludur.' });
         const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.city_code) || (await sonrakiKod(client, 'SEHIR'));
+            const kod = trimOrNull(req.body.city_code) || (await nextSequenceCode(client, 'SEHIR'));
             const ins = await client.query(
                 `INSERT INTO cities (city_code, city_name, country_code, is_active)
                  VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,

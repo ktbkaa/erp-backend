@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { kullaniciGetir, reqKullaniciKodu } = require('../src/utils/yetki');
+const { getUser, reqUserCode } = require('../src/utils/yetki');
 
 function dakikaFarki(start, end) {
   return Math.round((new Date(end) - new Date(start)) / 60000);
@@ -11,7 +11,7 @@ function dakikaFarki(start, end) {
 
 router.get('/ham', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -39,7 +39,7 @@ router.get('/ham', async (req, res) => {
 router.post('/ham', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.event_time || !b.event_type) {
       return res.status(400).json({ hata: 'company_id, event_time, event_type zorunlu.' });
     }
@@ -72,7 +72,7 @@ router.post('/ham', async (req, res) => {
 
 router.get('/gunluk', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -113,7 +113,7 @@ router.get('/gunluk', async (req, res) => {
 router.post('/isle', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     const employeeId = b.employee_id;
     const workDate = b.work_date;
     if (!firmaId || !employeeId || !workDate) {
@@ -219,7 +219,7 @@ router.post('/isle', async (req, res) => {
 router.post('/gunluk/:id/duzelt', async (req, res) => {
   try {
     const b = req.body || {};
-    const user = await kullaniciGetir(pool, reqKullaniciKodu(req));
+    const user = await getUser(pool, reqUserCode(req));
     const reason = b.correction_reason || b.reason || 'Manuel düzeltme';
     const who = user?.user_code || user?.username || 'sistem';
     const r = await pool.query(

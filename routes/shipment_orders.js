@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
 
-async function sevkGetir(id) {
+async function getShipment(id) {
     const s = await pool.query(
         `
         SELECT se.*, c.partner_code, c.partner_name, sp.order_no,
@@ -35,9 +35,9 @@ async function sevkGetir(id) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM shipment_orders'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        const liste = await (() => { const firmaId = companyIdFromReq(req); const params = []; let sql = 'SELECT id FROM shipment_orders'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
         const result = [];
-        for (const r of liste.rows) result.push(await sevkGetir(r.id));
+        for (const r of liste.rows) result.push(await getShipment(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await sevkGetir(req.params.id);
+        const row = await getShipment(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Sevk emri bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -91,7 +91,7 @@ router.post('/', async (req, res) => {
                 if (!satirlar.length) throw new Error('Siparişte item_id’li kalem yok.');
             }
 
-            const no = await sonrakiBelgeNo(client, 'SEVK_EMRI');
+            const no = await nextDocumentNo(client, 'SEVK_EMRI');
             let hk = movement_code_id || null;
             if (!hk) {
                 const d = await client.query(
@@ -131,7 +131,7 @@ router.post('/', async (req, res) => {
             }
             return sid;
         });
-        res.status(201).json(await sevkGetir(id));
+        res.status(201).json(await getShipment(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -191,7 +191,7 @@ router.put('/:id', async (req, res) => {
             }
             return Number(req.params.id);
         });
-        res.json(await sevkGetir(id));
+        res.json(await getShipment(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -208,4 +208,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-module.exports.sevkGetir = sevkGetir;
+module.exports.getShipment = getShipment;

@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { annualLeaveEntitlementDays } = require('../src/services/hrPayrollService');
 
 // ---- İş ilanları ----
 router.get('/ilanlar', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT j.*, d.department_name, p.position_name
        FROM hr_job_requisitions j
@@ -28,10 +28,10 @@ router.get('/ilanlar', async (req, res) => {
 router.post('/ilanlar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.title) return res.status(400).json({ hata: 'company_id ve title zorunlu.' });
     const id = await withTransaction(pool, async (client) => {
-      const no = b.requisition_no || (await sonrakiKod(client, 'HR_JOB_REQ'));
+      const no = b.requisition_no || (await nextSequenceCode(client, 'HR_JOB_REQ'));
       const ins = await client.query(
         `INSERT INTO hr_job_requisitions (
            company_id, requisition_no, title, department_id, position_id, status, headcount, description
@@ -50,7 +50,7 @@ router.post('/ilanlar', async (req, res) => {
 // ---- Adaylar ----
 router.get('/adaylar', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT c.*, j.title AS requisition_title, e.employee_no
        FROM hr_candidates c
@@ -69,12 +69,12 @@ router.get('/adaylar', async (req, res) => {
 router.post('/adaylar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.first_name || !b.last_name) {
       return res.status(400).json({ hata: 'company_id, first_name, last_name zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const no = b.candidate_no || (await sonrakiKod(client, 'HR_CANDIDATE'));
+      const no = b.candidate_no || (await nextSequenceCode(client, 'HR_CANDIDATE'));
       const ins = await client.query(
         `INSERT INTO hr_candidates (
            company_id, candidate_no, first_name, last_name, email, phone, requisition_id, status, description
@@ -132,7 +132,7 @@ router.post('/adaylar/:id/ise-al', async (req, res) => {
         }
       }
       const hireDate = b.hire_date || new Date().toISOString().slice(0, 10);
-      const empNo = b.employee_no || (await sonrakiKod(client, 'HR_EMPLOYEE'));
+      const empNo = b.employee_no || (await nextSequenceCode(client, 'HR_EMPLOYEE'));
       const emp = await client.query(
         `INSERT INTO hr_employees (
            company_id, employee_no, first_name, last_name, email, phone,
@@ -179,7 +179,7 @@ router.post('/adaylar/:id/ise-al', async (req, res) => {
 // ---- Onboarding ----
 router.get('/onboarding', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -221,7 +221,7 @@ router.post('/onboarding/:id/tamamla', async (req, res) => {
 // ---- Zimmet ----
 router.get('/zimmetler', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (firmaId) {
@@ -249,7 +249,7 @@ router.get('/zimmetler', async (req, res) => {
 router.post('/zimmetler', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.employee_id || !b.asset_code || !b.asset_name) {
       return res.status(400).json({ hata: 'company_id, employee_id, asset_code, asset_name zorunlu.' });
     }
@@ -283,7 +283,7 @@ router.post('/zimmetler/:id/iade', async (req, res) => {
 // ---- İşten çıkış ----
 router.get('/cikislar', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT t.*, e.employee_no, e.first_name, e.last_name, e.hire_date
        FROM hr_terminations t
@@ -301,12 +301,12 @@ router.get('/cikislar', async (req, res) => {
 router.post('/cikislar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.employee_id || !b.termination_date || !b.reason_code) {
       return res.status(400).json({ hata: 'company_id, employee_id, termination_date, reason_code zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const no = b.termination_no || (await sonrakiKod(client, 'HR_TERMINATION'));
+      const no = b.termination_no || (await nextSequenceCode(client, 'HR_TERMINATION'));
       const emp = await client.query(`SELECT * FROM hr_employees WHERE id=$1`, [b.employee_id]);
       if (!emp.rows[0]) {
         const err = new Error('Personel bulunamadı.');
@@ -432,7 +432,7 @@ router.post('/cikislar/:id/onayla', async (req, res) => {
 // ---- Çıkış nedenleri (parametre) ----
 router.get('/cikis-nedenleri', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `SELECT * FROM hr_termination_reasons
        WHERE (company_id IS NULL OR company_id=$1 OR $1 IS NULL)
@@ -458,7 +458,7 @@ router.get('/cikis-nedenleri/:id', async (req, res) => {
 router.post('/cikis-nedenleri', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id || null;
+    const firmaId = companyIdFromReq(req) || b.company_id || null;
     if (!b.reason_code || !b.reason_name) {
       return res.status(400).json({ hata: 'reason_code ve reason_name zorunlu.' });
     }
