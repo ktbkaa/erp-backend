@@ -8433,6 +8433,13 @@ const ALL_SCREENS = MODULES.flatMap((m) =>
   m.screens.map((s) => normalizeScreen(s, m.id, m.title))
 );
 
+const LIST_PAGE_SIZE = 15;
+const SIDEBAR_W_KEY = 'ktb_sidebar_w';
+const SIDEBAR_W_DEFAULT = 280;
+const SIDEBAR_W_MIN = 200;
+const SIDEBAR_W_MAX = 480;
+
+
 const MODE_LABELS_TR = {
   yeni: 'Yeni',
   incele: 'İncele',
@@ -8885,6 +8892,8 @@ const state = {
   activeIsYeriId: null,
   isYerleri: [],
   requiredFieldDefs: [],
+  listPage: 1,
+  excelCtx: null,
   pageQueryOpenMods: {},
   pageQueryFocusScreenId: null,
   pageQueryNavCache: null,
@@ -9822,6 +9831,113 @@ function bindNumeratorFieldListener(screen) {
   else tipEl.addEventListener('change', onChange);
 }
 
+function clampSidebarWidth(px) {
+  const n = Number(px);
+  if (!Number.isFinite(n)) return SIDEBAR_W_DEFAULT;
+  return Math.min(SIDEBAR_W_MAX, Math.max(SIDEBAR_W_MIN, Math.round(n)));
+}
+
+function applySidebarWidth(px, { persist = false } = {}) {
+  const w = clampSidebarWidth(px);
+  document.documentElement.style.setProperty('--sidebar-w', `${w}px`);
+  const handle = document.getElementById('sidebarResizer');
+  if (handle) {
+    handle.setAttribute('aria-valuenow', String(w));
+    handle.setAttribute('aria-valuemin', String(SIDEBAR_W_MIN));
+    handle.setAttribute('aria-valuemax', String(SIDEBAR_W_MAX));
+  }
+  if (persist) {
+    try { localStorage.setItem(SIDEBAR_W_KEY, String(w)); } catch (_) { /* ignore */ }
+  }
+  return w;
+}
+
+function restoreSidebarWidth() {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_W_KEY);
+    if (saved != null && saved !== '') applySidebarWidth(saved);
+  } catch (_) { /* ignore */ }
+}
+
+/** Sol menü sağ kenarından sürükleyerek genişlik ayarı */
+function initSidebarResize() {
+  restoreSidebarWidth();
+  const handle = document.getElementById('sidebarResizer');
+  if (!handle || handle.dataset.bound === '1') return;
+  handle.dataset.bound = '1';
+  handle.setAttribute('aria-valuemin', String(SIDEBAR_W_MIN));
+  handle.setAttribute('aria-valuemax', String(SIDEBAR_W_MAX));
+  const current = clampSidebarWidth(
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+  );
+  handle.setAttribute('aria-valuenow', String(current));
+
+  let dragging = false;
+
+  const onMove = (clientX) => {
+    if (!dragging) return;
+    applySidebarWidth(clientX);
+  };
+
+  const stopDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('sidebar-resizing');
+    const w = clampSidebarWidth(
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+    );
+    applySidebarWidth(w, { persist: true });
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+  };
+
+  const onPointerMove = (e) => onMove(e.clientX);
+  const onPointerUp = () => stopDrag();
+
+  handle.addEventListener('pointerdown', (e) => {
+    if (e.button != null && e.button !== 0) return;
+    const shell = document.getElementById('appShell');
+    if (shell?.classList.contains('sidebar-collapsed') || shell?.classList.contains('form-solo')) return;
+    e.preventDefault();
+    dragging = true;
+    document.body.classList.add('sidebar-resizing');
+    try { handle.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+    onMove(e.clientX);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  });
+
+  handle.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    applySidebarWidth(SIDEBAR_W_DEFAULT, { persist: true });
+  });
+
+  handle.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 24 : 12;
+    const cur = clampSidebarWidth(
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+    );
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      applySidebarWidth(cur - step, { persist: true });
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      applySidebarWidth(cur + step, { persist: true });
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_MIN, { persist: true });
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_MAX, { persist: true });
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_DEFAULT, { persist: true });
+    }
+  });
+}
+
 function showView(name) {
   const home = $('#viewHome');
   const screen = $('#viewScreen');
@@ -10272,6 +10388,343 @@ async function formCrudAction(act) {
   }
 }
 
+async function persistGridRowImmediately(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint) return null;
+  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const body = { ...row };
+  delete body._satir_kayitli;
+  delete body._satir_duzenleniyor;
+  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
+    const v = master[masterKey];
+    if (v != null && v !== '') body[bodyKey] = v;
+  });
+  // Şehir kartı: city_code zorunlu (FK)
+  const missingParent = Object.entries(cfg.parentFields || {})
+    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
+    .map(([, masterKey]) => masterKey);
+  if (missingParent.length) {
+    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
+  }
+  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
+  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
+    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
+  }
+  if (gridKey === 'districts' && !body.district_code && body.district_name) {
+    body.district_code = districtCodeFromName(body.city_code, body.district_name);
+  }
+  const base = screenApiBase(cfg.endpoint);
+  if (row.id != null && row.id !== '') {
+    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
+  }
+  try {
+    return await api(base, { method: 'POST', body: JSON.stringify(body) });
+  } catch (err) {
+    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
+    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
+      const list = await api(
+        `${base}?city_code=${encodeURIComponent(body.city_code)}`
+      );
+      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
+      const hit = (Array.isArray(list) ? list : []).find(
+        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
+      );
+      if (hit?.id != null) {
+        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
+      }
+    }
+    throw err;
+  }
+}
+
+function districtCodeFromName(cityCode, districtName) {
+  const vowels = new Set('aeıioöuüâêîôûAEIİOÖUÜÂÊÎÔÛ'.split(''));
+  const cons = String(districtName || '')
+    .split('')
+    .filter((ch) => /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(ch) && !vowels.has(ch))
+    .map((ch) => ch.toLocaleUpperCase('tr-TR'))
+    .join('');
+  return `${String(cityCode || '').trim()}${cons}`;
+}
+
+function excelColumnsForCtx(ctx) {
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  if (!screen) return [];
+  if (ctx?.kind === 'grid') {
+    const tab = resolveGridTab(screen, ctx.gridKey);
+    return (tab?.fields || []).filter((f) => f && f.type !== 'static').map((f) => ({
+      key: f.key,
+      label: f.label || f.key,
+      type: f.type,
+    }));
+  }
+  const cols = (typeof listColumns === 'function' ? listColumns(screen) : screen.columns) || [];
+  return cols.map((c) => ({ key: c.key, label: c.label || c.key }));
+}
+
+function ensureXlsxLib() {
+  if (typeof XLSX !== 'undefined') return XLSX;
+  throw new Error('Excel kütüphanesi yüklenemedi (xlsx). Sayfayı yenileyin.');
+}
+
+async function downloadExcelTemplate(ctx) {
+  const XLSXlib = ensureXlsxLib();
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  const cols = excelColumnsForCtx(ctx);
+  if (!cols.length) {
+    toast('Şablon için kolon tanımı yok.');
+    return;
+  }
+  const header = cols.map((c) => c.label);
+  const sample = cols.map((c) => {
+    if (c.key === 'is_active') return 'Evet';
+    if (c.type === 'checkbox') return 'Hayır';
+    if (c.key === 'district_name') return 'Örnek İlçe';
+    if (c.key === 'district_code') return '';
+    return '';
+  });
+  const ws = XLSXlib.utils.aoa_to_sheet([header, sample]);
+  const wb = XLSXlib.utils.book_new();
+  const sheetName = ctx?.kind === 'grid' ? (ctx.gridKey || 'Liste') : (screen?.id || 'Liste');
+  XLSXlib.utils.book_append_sheet(wb, ws, String(sheetName).slice(0, 31));
+  const fileBase = ctx?.kind === 'grid'
+    ? `${screen?.id || 'form'}-${ctx.gridKey || 'grid'}-sablon`
+    : `${screen?.id || 'liste'}-sablon`;
+  XLSXlib.writeFile(wb, `${fileBase}.xlsx`);
+  toast('Excel şablon indirildi.');
+}
+
+function parseExcelActive(val) {
+  if (typeof val === 'boolean') return val;
+  const s = String(val ?? '').trim().toLocaleLowerCase('tr-TR');
+  if (!s) return true;
+  if (['hayır', 'hayir', 'false', '0', 'pasif', 'no'].includes(s)) return false;
+  if (['evet', 'true', '1', 'aktif', 'yes'].includes(s)) return true;
+  return Boolean(val);
+}
+
+function mapExcelRowsToObjects(cols, aoa) {
+  if (!aoa?.length) return [];
+  const header = (aoa[0] || []).map((h) => String(h ?? '').trim());
+  const idx = {};
+  cols.forEach((c) => {
+    const hi = header.findIndex((h) => h.toLocaleLowerCase('tr-TR') === String(c.label).toLocaleLowerCase('tr-TR')
+      || h.toLocaleLowerCase('tr-TR') === String(c.key).toLocaleLowerCase('tr-TR'));
+    if (hi >= 0) idx[c.key] = hi;
+  });
+  const out = [];
+  for (let r = 1; r < aoa.length; r += 1) {
+    const line = aoa[r] || [];
+    if (!line.some((cell) => cell != null && String(cell).trim() !== '')) continue;
+    const obj = {};
+    cols.forEach((c) => {
+      const i = idx[c.key];
+      if (i == null) return;
+      let v = line[i];
+      if (c.key === 'is_active' || c.type === 'checkbox') v = parseExcelActive(v);
+      else if (v == null) v = '';
+      else v = String(v).trim();
+      obj[c.key] = v;
+    });
+    out.push(obj);
+  }
+  return out;
+}
+
+function pickExcelFile() {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      document.body.removeChild(input);
+      if (!file) reject(new Error('Dosya seçilmedi.'));
+      else resolve(file);
+    }, { once: true });
+    input.click();
+  });
+}
+
+async function readExcelFileToObjects(cols, file) {
+  const XLSXlib = ensureXlsxLib();
+  const buf = await file.arrayBuffer();
+  const wb = XLSXlib.read(buf, { type: 'array' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const aoa = XLSXlib.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+  return mapExcelRowsToObjects(cols, aoa);
+}
+
+/**
+ * Detay satırını hemen API’ye yazar (detailPersist tanımlıysa).
+ * @returns {Promise<object|null>} kaydedilen satır (id’li) veya null (persist yok)
+ */
+async function persistGridRowImmediately(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint) return null;
+  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const body = { ...row };
+  delete body._satir_kayitli;
+  delete body._satir_duzenleniyor;
+  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
+    const v = master[masterKey];
+    if (v != null && v !== '') body[bodyKey] = v;
+  });
+  // Şehir kartı: city_code zorunlu (FK)
+  const missingParent = Object.entries(cfg.parentFields || {})
+    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
+    .map(([, masterKey]) => masterKey);
+  if (missingParent.length) {
+    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
+  }
+  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
+  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
+    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
+  }
+  if (gridKey === 'districts' && !body.district_code && body.district_name) {
+    body.district_code = districtCodeFromName(body.city_code, body.district_name);
+  }
+  const base = screenApiBase(cfg.endpoint);
+  if (row.id != null && row.id !== '') {
+    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
+  }
+  try {
+    return await api(base, { method: 'POST', body: JSON.stringify(body) });
+  } catch (err) {
+    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
+    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
+      const list = await api(
+        `${base}?city_code=${encodeURIComponent(body.city_code)}`
+      );
+      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
+      const hit = (Array.isArray(list) ? list : []).find(
+        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
+      );
+      if (hit?.id != null) {
+        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
+      }
+    }
+    throw err;
+  }
+}
+
+async function deletePersistedGridRow(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint || row?.id == null || row.id === '') return false;
+  await api(`${screenApiBase(cfg.endpoint)}/${row.id}`, { method: 'DELETE' });
+  return true;
+}
+
+async function importExcelIntoList(ctx) {
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  if (!screen) return;
+  if (state.formMode === 'incele' && ctx?.kind === 'grid') {
+    toast('İnceleme modunda Excel içe aktarılamaz.');
+    return;
+  }
+  const cols = excelColumnsForCtx(ctx);
+  if (!cols.length) {
+    toast('İçe aktarım için kolon tanımı yok.');
+    return;
+  }
+  let file;
+  try {
+    file = await pickExcelFile();
+  } catch (err) {
+    toast(err.message);
+    return;
+  }
+  const rows = await readExcelFileToObjects(cols, file);
+  if (!rows.length) {
+    toast('Excel’de aktarılacak satır bulunamadı.');
+    return;
+  }
+
+  if (ctx?.kind === 'grid') {
+    const key = ctx.gridKey;
+    const tab = resolveGridTab(screen, key);
+    if (!tab) {
+      toast('Liste alanı bulunamadı.');
+      return;
+    }
+    const masterSnap = readMasterFromForm(screen);
+    state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
+    const cityCode = state.formRecord.city_code || masterSnap.city_code || '';
+    const existing = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
+    const canPersist = Boolean(screen.detailPersist?.[key] && state.formRecord?.id);
+    let ok = 0;
+    let fail = 0;
+    for (const raw of rows) {
+      const blank = emptyRowFromFields(tab.fields);
+      Object.assign(blank, raw);
+      if (key === 'districts') {
+        if (!blank.district_code && blank.district_name) {
+          blank.district_code = districtCodeFromName(cityCode, blank.district_name);
+        }
+        if (typeof blank.is_active !== 'boolean') blank.is_active = true;
+      }
+      if (canPersist) {
+        try {
+          const saved = await persistGridRowImmediately(screen, key, blank);
+          const merged = { ...blank, ...(saved || {}), _satir_kayitli: true, _satir_duzenleniyor: false };
+          existing.push(merged);
+          ok += 1;
+        } catch (_) {
+          blank._satir_kayitli = false;
+          blank._satir_duzenleniyor = true;
+          existing.push(blank);
+          fail += 1;
+        }
+      } else {
+        blank._satir_kayitli = false;
+        blank._satir_duzenleniyor = true;
+        existing.push(blank);
+      }
+    }
+    state.formRecord[key] = existing;
+    state.gridSel = { key, idx: existing.length - 1 };
+    if (key === 'districts') delete state.lookupCache.districts;
+    renderForm(screen);
+    if (canPersist) {
+      toast(fail
+        ? `${ok} satır kaydedildi, ${fail} hatalı.`
+        : `${ok} satır Excel’den kaydedildi.`);
+    } else {
+      toast(`${rows.length} satır Excel’den eklendi — satırda ✓ veya üst Kaydet ile yazın.`);
+    }
+    return;
+  }
+
+  if (!screen.crud || screen.readOnly) {
+    toast('Bu listeye Excel ile kayıt eklenemez.');
+    return;
+  }
+  let ok = 0;
+  let fail = 0;
+  for (const raw of rows) {
+    try {
+      const body = { ...raw };
+      delete body.id;
+      if (screen.defaults) {
+        Object.keys(screen.defaults).forEach((k) => {
+          if (k === 'districts') return;
+          if (body[k] === undefined || body[k] === '') body[k] = screen.defaults[k];
+        });
+      }
+      await api(screenApiBase(screen.endpoint), { method: 'POST', body: JSON.stringify(body) });
+      ok += 1;
+    } catch (_) {
+      fail += 1;
+    }
+  }
+  invalidateLookups();
+  await openScreen(screen.id, { skipTab: true });
+  toast(fail ? `${ok} kayıt eklendi, ${fail} hatalı.` : `${ok} kayıt Excel’den eklendi.`);
+}
+
+
 async function showListContextMenu(screen, clientX, clientY) {
   const menu = $('#listCtxMenu');
   if (!menu || !screen) return;
@@ -10305,10 +10758,15 @@ async function showListContextMenu(screen, clientX, clientY) {
       });
     }
   }
+  // Excel — her listede sağ tık
+  if (parts.length) parts.push('<div class="ctx-sep"></div>');
+  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-sablon">Excel şablon indir</button>');
+  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-al">Excel’den veri al</button>');
   if (!parts.length) return;
   menu.innerHTML = parts.join('');
   menu.hidden = false;
   positionCtxMenu(menu, clientX, clientY);
+  state.excelCtx = { kind: 'list', screenId: screen.id };
   if (!menu.dataset.bound) {
     menu.dataset.bound = '1';
     menu.addEventListener('click', (e) => {
@@ -10316,6 +10774,15 @@ async function showListContextMenu(screen, clientX, clientY) {
       if (!btn || btn.disabled) return;
       e.preventDefault();
       menu.hidden = true;
+      const act = btn.getAttribute('data-list-ctx');
+      if (act === 'excel-sablon') {
+        downloadExcelTemplate(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'excel-al') {
+        importExcelIntoList(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
+        return;
+      }
       const openId = btn.getAttribute('data-open-screen');
       const recordId = btn.getAttribute('data-open-id');
       if (openId && recordId) {
@@ -10336,6 +10803,7 @@ async function showListContextMenu(screen, clientX, clientY) {
             state.filterState[k] = { op: 'esit', a: String(sel[k]), b: '' };
           });
           state.filtered = applyFilters(state.rows, target);
+          state.listPage = 1;
           renderList(target);
           renderFilterPane(target);
         });
@@ -10762,12 +11230,91 @@ async function logoutUser() {
   toast('Oturum kapatıldı.');
 }
 
+function isLoginRememberOn() {
+  return Boolean($('#loginRemember')?.checked);
+}
+
+function isLoginLdapOn() {
+  return $('#loginLdapToggle')?.getAttribute('aria-checked') === 'true';
+}
+
+function applyLoginRememberUi() {
+  const remember = $('#loginRemember');
+  const user = $('#loginUser');
+  if (!remember || !user) return;
+  const on = localStorage.getItem('ktb_remember_me') === '1';
+  remember.checked = on;
+  if (on) {
+    const saved = localStorage.getItem('ktb_remember_user') || '';
+    if (saved && !user.value) user.value = saved;
+  }
+}
+
+function persistLoginRemember(username) {
+  if (isLoginRememberOn()) {
+    localStorage.setItem('ktb_remember_me', '1');
+    if (username) localStorage.setItem('ktb_remember_user', username);
+  } else {
+    localStorage.removeItem('ktb_remember_me');
+    localStorage.removeItem('ktb_remember_user');
+  }
+}
+
+function setLoginLdapMode(on) {
+  const btn = $('#loginLdapToggle');
+  const wrap = btn?.closest('.login-ldap-switch');
+  const view = $('#viewLogin');
+  const sub = $('#loginCardSub');
+  const available = btn?.dataset.ldapAvailable === '1';
+  // Hazır değilse anahtar açık kalamaz — çelişkili «LDAP açık» metni olmasın
+  const checked = Boolean(on) && available;
+  if (btn) {
+    btn.setAttribute('aria-checked', checked ? 'true' : 'false');
+  }
+  wrap?.classList.toggle('is-on', checked);
+  wrap?.classList.toggle('is-unavailable', !available);
+  view?.classList.toggle('is-ldap', checked);
+  localStorage.setItem('ktb_ldap_login', checked ? '1' : '0');
+  if (sub) {
+    if (checked) {
+      sub.textContent = 'LDAP açık — domain / bilgisayar şifrenizle oturum açın.';
+    } else if (!available && btn?.dataset.ldapMessage) {
+      sub.textContent = btn.dataset.ldapMessage;
+    } else {
+      sub.textContent = 'Kullanıcı adı ve şifrenizle oturum açın.';
+    }
+  }
+}
+
+async function refreshLoginLdapStatus() {
+  const btn = $('#loginLdapToggle');
+  if (!btn) return;
+  let status = { available: false, enabled: false, configured: false, message: '' };
+  try {
+    status = await api('/auth/ldap-status', { skipFirma: true });
+  } catch (_) { /* sunucu yoksa yerel tercih */ }
+  btn.dataset.ldapAvailable = status.available ? '1' : '0';
+  btn.dataset.ldapMessage = status.message || '';
+  btn.title = status.message || 'LDAP girişi';
+  const pref = localStorage.getItem('ktb_ldap_login') === '1';
+  setLoginLdapMode(pref && status.available);
+}
+
+
 async function submitLoginForm(e) {
   if (e) e.preventDefault();
   closeUserChipMenu();
   const username = ($('#loginUser')?.value || '').trim();
   const sifre = ($('#loginPass')?.value || '').trim();
   const btn = $('#loginSubmit');
+  let ldap = typeof isLoginLdapOn === 'function' ? isLoginLdapOn() : false;
+  if (ldap && $('#loginLdapToggle')?.dataset.ldapAvailable !== '1') {
+    setLoginLdapMode(false);
+    ldap = false;
+    setLoginError($('#loginLdapToggle')?.dataset.ldapMessage
+      || 'LDAP hazır değil. Anahtar kapatıldı — yerel şifre ile deneyin.');
+    return;
+  }
   if (!username) {
     setLoginError('Kullanıcı adı gerekli.');
     $('#loginUser')?.focus();
@@ -10783,7 +11330,7 @@ async function submitLoginForm(e) {
   try {
     const ses = await api('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, sifre }),
+      body: JSON.stringify({ username, sifre, ldap }),
     });
     applySession(ses, username);
     enterApp();
@@ -11706,17 +12253,105 @@ function ensureRowIds(rows) {
   });
 }
 
+function listPageCount(total, pageSize = LIST_PAGE_SIZE) {
+  return Math.max(1, Math.ceil(Math.max(0, total) / pageSize));
+}
+
+function clampListPage(total) {
+  const pages = listPageCount(total);
+  let p = Number(state.listPage) || 1;
+  if (p < 1) p = 1;
+  if (p > pages) p = pages;
+  state.listPage = p;
+  return { page: p, pages, pageSize: LIST_PAGE_SIZE };
+}
+
+/** Sayfa sekmeleri (1 2 3 …) — çok sayfada pencere */
+function renderListPager(total) {
+  const nav = $('#listPager');
+  if (!nav) return;
+  const { page, pages, pageSize } = clampListPage(total);
+  if (!total) {
+    nav.hidden = true;
+    nav.innerHTML = '';
+    return;
+  }
+  nav.hidden = false;
+  const startIdx = (page - 1) * pageSize + 1;
+  const endIdx = Math.min(total, page * pageSize);
+  const windowSize = 7;
+  let from = Math.max(1, page - Math.floor(windowSize / 2));
+  let to = Math.min(pages, from + windowSize - 1);
+  from = Math.max(1, to - windowSize + 1);
+  const tabs = [];
+  for (let i = from; i <= to; i += 1) {
+    tabs.push(`<button type="button" class="list-page-btn${i === page ? ' active' : ''}" data-list-page="${i}" aria-current="${i === page ? 'page' : 'false'}">${i}</button>`);
+  }
+  nav.innerHTML = `
+    <div class="list-pager-info">${startIdx}–${endIdx} / ${total}</div>
+    <div class="list-pager-tabs" role="navigation" aria-label="Liste sayfaları">
+      <button type="button" class="list-page-btn" data-list-page="prev" ${page <= 1 ? 'disabled' : ''} title="Önceki">‹</button>
+      ${from > 1 ? `<button type="button" class="list-page-btn" data-list-page="1">1</button><span class="list-page-ellipsis">…</span>` : ''}
+      ${tabs.join('')}
+      ${to < pages ? `<span class="list-page-ellipsis">…</span><button type="button" class="list-page-btn" data-list-page="${pages}">${pages}</button>` : ''}
+      <button type="button" class="list-page-btn" data-list-page="next" ${page >= pages ? 'disabled' : ''} title="Sonraki">›</button>
+    </div>`;
+}
+
+/**
+ * Liste (#listTableScroll) ile ekran (#viewScreen) bağımsız kayar.
+ * Fare listede → liste; uçta (üst/alt) kaydırmaya devam → ekran.
+ * Fare diğer alanlardayken tekerlek doğrudan ekranı kaydırır.
+ */
+function bindNestedListScroll() {
+  const listEl = $('#listTableScroll');
+  const screenEl = $('#viewScreen');
+  if (!listEl || !screenEl || listEl.dataset.nestedScrollBound === '1') return;
+  listEl.dataset.nestedScrollBound = '1';
+  listEl.addEventListener(
+    'wheel',
+    (e) => {
+      const dy = e.deltaY;
+      if (!dy) return;
+      const maxScroll = Math.max(0, listEl.scrollHeight - listEl.clientHeight);
+      const atTop = listEl.scrollTop <= 0.5;
+      const atBottom = listEl.scrollTop >= maxScroll - 0.5;
+      const wantDown = dy > 0;
+      const wantUp = dy < 0;
+      const listCantScroll = maxScroll <= 0;
+      const atEdge = (wantDown && atBottom) || (wantUp && atTop) || listCantScroll;
+      if (atEdge) {
+        e.preventDefault();
+        e.stopPropagation();
+        screenEl.scrollTop += dy;
+        return;
+      }
+      /* Ortada: listeyi elle kaydır (bazı ortamlarda native wheel yetersiz) */
+      e.preventDefault();
+      e.stopPropagation();
+      listEl.scrollTop += dy;
+    },
+    { passive: false },
+  );
+}
+
+
 function renderList(screen) {
   const head = $('#dataHead');
   const body = $('#dataBody');
   const cols = listColumns(screen);
   renderListSideNav(screen);
   state.filtered = rowsForList(screen);
+  const total = state.filtered.length;
+  const { page, pageSize } = clampListPage(total);
+  const start = (page - 1) * pageSize;
+  const pageRows = state.filtered.slice(start, start + pageSize);
   head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
-  if (!state.filtered.length) {
+  if (!total) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
-    body.innerHTML = state.filtered.map((row, index) => {
+    body.innerHTML = pageRows.map((row, i) => {
+      const index = start + i;
       const key = rowKey(row, index);
       const selected = state.selectedId != null && String(key) === String(state.selectedId);
       return `
@@ -11728,7 +12363,8 @@ function renderList(screen) {
   const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
     ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
     : (state.rows || []).length;
-  $('#listMeta').textContent = `${state.filtered.length} / ${baseCount} kayıt`;
+  $('#listMeta').textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa`;
+  renderListPager(total);
   updateActionButtons(screen);
 }
 
@@ -19459,6 +20095,9 @@ function readTabbedPayload(screen) {
 }
 
 function validateRequired(screen, payload) {
+  document.querySelectorAll('.field.is-required-miss, .td-required.is-required-miss').forEach((el) => {
+    el.classList.remove('is-required-miss');
+  });
   for (const f of collectTabFields(screen)) {
     const need = f.required || (f.requiredOnNew && state.formMode === 'yeni');
     if (!need) continue;
@@ -19467,7 +20106,54 @@ function validateRequired(screen, payload) {
     if (f.type === 'password' && state.formMode === 'duzelt') continue;
     const v = payload[f.key];
     if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
+      const shell = document.querySelector(`.field[data-field-key="${CSS.escape(f.key)}"]`);
+      if (shell) {
+        shell.classList.add('is-required-empty', 'is-required-miss');
+        try { shell.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) { /* ignore */ }
+      }
       return `${f.label} zorunlu.`;
+    }
+  }
+
+  // Detay grid zorunlu alanları (kalem satırları)
+  const gridTabs = [];
+  (screen.formTabs || []).forEach((t) => {
+    if (t.kind === 'master-grid' && t.grid?.fields?.length) {
+      gridTabs.push({ key: t.grid.key || screen.detailKey || '_detail', fields: t.grid.fields });
+    } else if (t.kind === 'grid' && (t.fields || []).length) {
+      gridTabs.push({ key: t.key, fields: t.fields });
+    }
+  });
+  if (!gridTabs.length && (screen.detailFields || []).length) {
+    gridTabs.push({ key: screen.detailKey || 'satirlar', fields: screen.detailFields });
+  }
+  for (const gt of gridTabs) {
+    const reqFields = (gt.fields || []).filter((f) => f.required || (f.requiredOnNew && state.formMode === 'yeni'));
+    if (!reqFields.length) continue;
+    const rows = Array.isArray(payload?.[gt.key]) ? payload[gt.key] : [];
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i] || {};
+      const hasAny = (gt.fields || []).some((f) => {
+        if (f.type === 'static' || f.type === 'checkbox') return false;
+        const v = row[f.key];
+        return v !== undefined && v !== null && String(v).trim() !== '';
+      });
+      if (!hasAny) continue;
+      for (const f of reqFields) {
+        const v = row[f.key];
+        if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
+          const tr = document.querySelector(
+            `tr[data-grid-row="${CSS.escape(gt.key)}"][data-grid-idx="${i}"]`
+          );
+          const ctrl = tr?.querySelector(`[data-detail="${CSS.escape(f.key)}"]`);
+          const td = ctrl?.closest('td') || tr?.querySelector('td.td-required');
+          if (td) {
+            td.classList.add('is-required-empty', 'is-required-miss');
+            try { td.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) { /* ignore */ }
+          }
+          return `Satır ${i + 1}: ${f.label} zorunlu.`;
+        }
+      }
     }
   }
   return null;
@@ -20896,6 +21582,46 @@ function bindUiPrefsEvents() {
 
 function bindEvents() {
   bindUiPrefsEvents();
+  // LDAP anahtar
+  $('#loginLdapToggle')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const btn = $('#loginLdapToggle');
+    if (!btn || btn.disabled) return;
+    const next = btn.getAttribute('aria-checked') !== 'true';
+    if (next && btn.dataset.ldapAvailable !== '1') {
+      setLoginError(btn.dataset.ldapMessage
+        || 'LDAP kullanılamıyor. Sistem Parametreleri’nde LDAP_ENABLED=Evet ve LDAP_URL / UPN ayarlayın.');
+      setLoginLdapMode(false);
+      return;
+    }
+    setLoginError('');
+    setLoginLdapMode(next);
+  });
+  refreshLoginLdapStatus().catch(() => {});
+  initSidebarResize();
+  bindNestedListScroll();
+
+  $('#listPager')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-list-page]');
+    if (!btn || btn.disabled) return;
+    const screen = findScreen(state.screenId);
+    if (!screen) return;
+    const total = (state.filtered || []).length;
+    const pages = listPageCount(total);
+    const raw = btn.getAttribute('data-list-page');
+    let next = state.listPage || 1;
+    if (raw === 'prev') next -= 1;
+    else if (raw === 'next') next += 1;
+    else next = Number(raw) || 1;
+    if (next < 1) next = 1;
+    if (next > pages) next = pages;
+    if (next === state.listPage) return;
+    state.listPage = next;
+    renderList(screen);
+    const scroller = $('#listTableScroll');
+    if (scroller) scroller.scrollTop = 0;
+  });
+
   bindMetaExplorerEvents();
   bindPageQueryExplorerEvents();
   bindMetaHelpGlobal();

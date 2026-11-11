@@ -1,0 +1,22 @@
+{
+  "name": "erp-local-panel",
+  "version": "0.1.0",
+  "description": "Yerel ERP senkron paneli — Windows'ta migrate + yedek + zamanlayıcı",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "sync": "node src/cli.js sync",
+    "backup": "node src/cli.js backup",
+    "migrate": "node src/cli.js migrate",
+    "status": "node src/cli.js status"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "pg": "^8.16.3"
+  }
+}
