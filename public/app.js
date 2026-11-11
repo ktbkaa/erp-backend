@@ -9382,7 +9382,7 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
   let record = { ...(target.defaults || {}), ...prefill };
   collectTabFields(target).forEach((f) => {
     if (record[f.key] !== undefined) return;
-    if (f.type === 'checkbox') record[f.key] = f.key === 'is_inactive' ? false : true;
+    if (f.type === 'checkbox') record[f.key] = f.key === 'is_active';
     else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
     else if (f.key === 'company_id' && getActiveCompanyId()) record[f.key] = getActiveCompanyId();
     else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
@@ -20928,12 +20928,17 @@ async function openForm(mode, opts = {}) {
   const seedFields = () => {
     collectTabFields(screen).forEach((f) => {
       if (f.type === 'checkbox') {
-        // is_active varsayılan true → Pasif kutusu boş
-        record[f.key] = f.key === 'is_inactive' ? false : true;
-      } else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
-      else if (f.key === 'company_id' && getActiveCompanyId()) record[f.key] = getActiveCompanyId();
-      else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
-      else if (record[f.key] === undefined) record[f.key] = '';
+        // screen.defaults wins; otherwise only is_active starts ticked
+        if (Object.prototype.hasOwnProperty.call(record, f.key)) return;
+        record[f.key] = f.key === 'is_active';
+      } else if (f.type === 'select') {
+        const first = f.options?.[0];
+        if (record[f.key] === undefined) record[f.key] = (first && typeof first === 'object' ? first.value : first) || '';
+      } else if (f.key === 'company_id' && getActiveCompanyId()) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = getActiveCompanyId();
+      } else if (f.key === 'plant_id' && state.activeIsYeriId) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = state.activeIsYeriId;
+      } else if (record[f.key] === undefined) record[f.key] = '';
     });
   };
 
