@@ -47,7 +47,7 @@ function nest(rows, parentId = null, level = 1, path = []) {
             item_type: c.item_type,
             quantity: c.quantity,
             uom_code: c.uom_code,
-            yol: nodePath.join(' > '),
+            request_path: nodePath.join(' > '),
         };
         out.push(node);
         out.push(...nest(rows, Number(c.id), level + 1, nodePath));
@@ -65,13 +65,13 @@ async function pickBomForItem(itemId, firmaId) {
         JOIN items s ON s.id = ua.finished_good_item_id
         WHERE ua.finished_good_item_id = $1
           AND ua.is_active IS DISTINCT FROM FALSE
-          AND COALESCE(ua.silindi, FALSE) = FALSE`;
+          AND COALESCE(ua.is_deleted, FALSE) = FALSE`;
     if (firmaId) {
         params.push(firmaId);
         sql += ` AND (ua.company_id = $${params.length} OR s.company_id = $${params.length})`;
     }
     sql += `
-        ORDER BY ua.is_default_for_wo DESC NULLS LAST, ua.alt_no ASC, ua.id DESC
+        ORDER BY ua.is_default_for_wo DESC NULLS LAST, ua.alternative_no ASC, ua.id DESC
         LIMIT 1`;
     const r = await pool.query(sql, params);
     return r.rows[0] || null;
@@ -96,7 +96,7 @@ router.get('/patlatma', async (req, res) => {
             FROM boms ua
             JOIN items s ON s.id = ua.finished_good_item_id
             WHERE ua.is_active IS DISTINCT FROM FALSE
-              AND COALESCE(ua.silindi, FALSE) = FALSE`;
+              AND COALESCE(ua.is_deleted, FALSE) = FALSE`;
         const params = [];
         agacSql += bomCompanyClause(firmaId, params).sql;
         if (agac_id) {
@@ -155,7 +155,7 @@ router.get('/patlatma', async (req, res) => {
                     birim_miktar: birimMiktar,
                     quantity: toplam,
                     uom_code: c.uom_code,
-                    yol: nodePath.join(' > '),
+                    request_path: nodePath.join(' > '),
                     list_code: `${rootAgac.bom_code}-L${level}-${c.id}`,
                     description: `${nodePath.join(' › ')} × ${toplam}`,
                 };
@@ -197,7 +197,7 @@ router.get('/patlatma', async (req, res) => {
                 bom_code: a.bom_code,
                 bom_name: a.bom_name,
                 category: a.category,
-                alt_no: a.alt_no,
+                alternative_no: a.alternative_no,
                 mamul_kodu: a.mamul_kodu,
                 mamul_adi: a.mamul_adi,
                 satir_id: null,
@@ -208,7 +208,7 @@ router.get('/patlatma', async (req, res) => {
                 birim_miktar: bazAgac,
                 quantity: miktarBaz,
                 uom_code: a.uom_code || a.mamul_uom || null,
-                yol: a.mamul_kodu,
+                request_path: a.mamul_kodu,
                 list_code: `${a.bom_code}-KOK`,
                 description: `Mamul ${a.mamul_kodu} × ${miktarBaz}`,
             });
@@ -257,7 +257,7 @@ router.get('/level-listesi', async (req, res) => {
                     item_type: c.item_type,
                     quantity: c.quantity,
                     uom_code: c.uom_code,
-                    yol: `${a.mamul_kodu} > ${c.item_code}`,
+                    request_path: `${a.mamul_kodu} > ${c.item_code}`,
                 }));
             }
             for (const L of levels) {
@@ -267,7 +267,7 @@ router.get('/level-listesi', async (req, res) => {
                     bom_name: a.bom_name,
                     mamul_kodu: a.mamul_kodu,
                     list_code: `${a.bom_code}-${L.satir_id}`,
-                    description: L.yol,
+                    description: L.request_path,
                 });
             }
         }

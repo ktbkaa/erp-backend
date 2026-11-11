@@ -47,7 +47,7 @@ function createDefinitionRouter(opts) {
       if (req.query.is_active === 'false') where.push('is_active = FALSE');
       // cascade filtreleri (country_code vb.)
       const params = [];
-      for (const col of ['country_code', 'source_pb', 'target_pb']) {
+      for (const col of ['country_code', 'source_currency', 'target_currency']) {
         if (req.query[col] && extraCols.includes(col)) {
           params.push(req.query[col]);
           where.push(`${col} = $${params.length}`);
@@ -138,11 +138,11 @@ function createDefinitionRouter(opts) {
           [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: notFound });
-        return res.json({ silindi: true, soft: true, id: Number(req.params.id) });
+        return res.json({ is_deleted: true, soft: true, id: Number(req.params.id) });
       }
       const r = await pool.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [req.params.id]);
       if (!r.rows[0]) return res.status(404).json({ hata: notFound });
-      res.json({ silindi: true, soft: false, id: Number(req.params.id) });
+      res.json({ is_deleted: true, soft: false, id: Number(req.params.id) });
     } catch (err) {
       next(err);
     }

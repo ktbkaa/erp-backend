@@ -157,7 +157,7 @@ router.put('/:id', async (req, res) => {
  */
 router.post('/:id/onayla', async (req, res) => {
     try {
-        const kullanici = await assertPermission(pool, reqUserCode(req), 'kalite_control').catch(() => ({
+        const kullanici = await assertPermission(pool, reqUserCode(req), 'can_quality_control').catch(() => ({
             id: null,
             user_code: reqUserCode(req) || 'system',
         }));

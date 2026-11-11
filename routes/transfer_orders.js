@@ -91,12 +91,12 @@ router.post('/', async (req, res, next) => {
       const ins = await client.query(
         `INSERT INTO transfer_orders
             (order_no, company_id, plant_id, source_warehouse_id, target_warehouse_id,
-             requisition_date, planlanan_date, description, created_by, status)
+             requisition_date, planned_date, description, created_by, status)
          VALUES ($1,$2,$3,$4,$5,COALESCE($6::date,CURRENT_DATE),$7,$8,$9,'Taslak')
          RETURNING id`,
         [
           no, firmaId, req.body.plant_id || null, source, hedef,
-          req.body.requisition_date || null, req.body.planlanan_date || null,
+          req.body.requisition_date || null, req.body.planned_date || null,
           trimOrNull(req.body.description),
           req.headers['x-kullanici-kodu'] || req.body.created_by || null,
         ]
@@ -108,12 +108,12 @@ router.post('/', async (req, res, next) => {
         if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
         await client.query(
           `INSERT INTO transfer_order_lines
-              (order_id, item_id, quantity, uom_code, lot_id, raf_code, description)
+              (order_id, item_id, quantity, uom_code, lot_id, bin_code, description)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
           [
             emirId, s.item_id, Number(s.quantity),
             s.uom_code || stok.rows[0].uom_code, s.lot_id || null,
-            trimOrNull(s.raf_code), trimOrNull(s.description),
+            trimOrNull(s.bin_code), trimOrNull(s.description),
           ]
         );
       }
@@ -140,7 +140,7 @@ router.put('/:id', async (req, res, next) => {
             source_warehouse_id = COALESCE($2, source_warehouse_id),
             target_warehouse_id = COALESCE($3, target_warehouse_id),
             plant_id = COALESCE($4, plant_id),
-            planlanan_date = COALESCE($5::date, planlanan_date),
+            planned_date = COALESCE($5::date, planned_date),
             description = COALESCE($6, description)
          WHERE id=$1`,
         [
@@ -148,7 +148,7 @@ router.put('/:id', async (req, res, next) => {
           req.body.source_warehouse_id || null,
           req.body.target_warehouse_id || null,
           req.body.plant_id || null,
-          req.body.planlanan_date || null,
+          req.body.planned_date || null,
           trimOrNull(req.body.description),
         ]
       );
@@ -158,11 +158,11 @@ router.put('/:id', async (req, res, next) => {
           if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
           await client.query(
             `INSERT INTO transfer_order_lines
-                (order_id, item_id, quantity, uom_code, lot_id, raf_code, description)
+                (order_id, item_id, quantity, uom_code, lot_id, bin_code, description)
              VALUES ($1,$2,$3,$4,$5,$6,$7)`,
             [
               req.params.id, s.item_id, Number(s.quantity), s.uom_code || null,
-              s.lot_id || null, trimOrNull(s.raf_code), trimOrNull(s.description),
+              s.lot_id || null, trimOrNull(s.bin_code), trimOrNull(s.description),
             ]
           );
         }
@@ -202,7 +202,7 @@ router.post('/:id/onayla', async (req, res, next) => {
         quantity: Number(s.quantity),
         uom_code: s.uom_code,
         lot_id: s.lot_id,
-        raf_code: s.raf_code,
+        bin_code: s.bin_code,
       }));
 
       // Emir onayında item_warehouses master zorunluluğu kalkar; yetersiz stok yine engellenir
@@ -229,7 +229,7 @@ router.post('/:id/onayla', async (req, res, next) => {
         depoZorunluAtla: true,
       });
       await client.query(
-        `UPDATE stock_movements SET bagli_movement_id=$2, target_warehouse_id=$3 WHERE id=$1`,
+        `UPDATE stock_movements SET linked_movement_id=$2, target_warehouse_id=$3 WHERE id=$1`,
         [cikis.hareket.id, giris.hareket.id, emir.target_warehouse_id]
       );
 
@@ -237,7 +237,7 @@ router.post('/:id/onayla', async (req, res, next) => {
       await client.query(
         `UPDATE transfer_orders SET
             status='Tamamlandi',
-            onay_date=CURRENT_TIMESTAMP,
+            approved_at=CURRENT_TIMESTAMP,
             approved_by=$2,
             source_movement_id=$3,
             target_movement_id=$4
@@ -283,7 +283,7 @@ router.delete('/:id', async (req, res, next) => {
       return res.status(400).json({ hata: 'Tamamlanmış emir silinemez.' });
     }
     await pool.query('DELETE FROM transfer_orders WHERE id=$1', [req.params.id]);
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

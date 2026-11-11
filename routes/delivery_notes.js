@@ -46,9 +46,9 @@ function lineCalcBundle(s, kurBelge = 1) {
         excise_rate: s.excise_rate,
         exchange_rate: s.exchange_rate != null ? s.exchange_rate : kurBelge,
     });
-    const bandrolOran = Number(s.bandrol_rate) || 0;
-    const bandrol_amount = Math.round(((Number(h.goods_service_amount) || 0) * bandrolOran / 100) * 100) / 100;
-    return { ...h, bandrol_rate: bandrolOran, bandrol_amount };
+    const bandrolOran = Number(s.stamp_tax_rate) || 0;
+    const stamp_tax_amount = Math.round(((Number(h.goods_service_amount) || 0) * bandrolOran / 100) * 100) / 100;
+    return { ...h, stamp_tax_rate: bandrolOran, stamp_tax_amount };
 }
 
 async function writeDeliveryNoteLine(client, irsaliyeId, s, sira, kaynakTip, kaynakId, kurBelge = 1) {
@@ -60,17 +60,17 @@ async function writeDeliveryNoteLine(client, irsaliyeId, s, sira, kaynakTip, kay
              unit_price, price_list_id, currency_code, rate_type, exchange_rate,
              local_unit_price, local_currency_amount,
              discount_rate, discount_rate_2, discount_rate_3,
-             discount_amount, discount_tutari2, discount_tutari3,
+             discount_amount, discount_amount_2, discount_amount_3,
              vat_code, vat_rate, vat_mode, vat_amount,
              withholding_code, withholding_rate, withholding_amount,
              excise_code, excise_rate, excise_amount,
-             bandrol_rate, bandrol_amount, tax_schema,
+             stamp_tax_rate, stamp_tax_amount, tax_schema,
              due_date, due_days,
              line_description, line_description_2, line_description_3, customer_ref_code,
-             lot_id, lot_no, serial_no, stock_status, raf_code, konum_code,
+             lot_id, lot_no, serial_no, stock_status, bin_code, location_code,
              invoiced_quantity, order_no,
              amount_ex_tax, amount_ttc,
-             ship_emri_line_id, sales_order_line_id,
+             shipment_order_line_id, sales_order_line_id,
              source_document_type, source_document_id, source_document_line_id)
         VALUES (
             $1,$2,$3,$4,$5,$6,$7,
@@ -110,8 +110,8 @@ async function writeDeliveryNoteLine(client, irsaliyeId, s, sira, kaynakTip, kay
             h.discount_rate_2,
             h.discount_rate_3,
             h.discount_amount,
-            h.discount_tutari2,
-            h.discount_tutari3,
+            h.discount_amount_2,
+            h.discount_amount_3,
             s.vat_code || null,
             h.vat_rate,
             h.vat_mode,
@@ -122,8 +122,8 @@ async function writeDeliveryNoteLine(client, irsaliyeId, s, sira, kaynakTip, kay
             s.excise_code || null,
             h.excise_rate,
             h.excise_amount,
-            h.bandrol_rate,
-            h.bandrol_amount,
+            h.stamp_tax_rate,
+            h.stamp_tax_amount,
             s.tax_schema || null,
             s.due_date || null,
             nOrNull(s.due_days),
@@ -135,17 +135,17 @@ async function writeDeliveryNoteLine(client, irsaliyeId, s, sira, kaynakTip, kay
             s.lot_no || null,
             s.serial_no || null,
             s.stock_status || 'Kullanilabilir',
-            s.raf_code || null,
-            s.konum_code || null,
+            s.bin_code || null,
+            s.location_code || null,
             s.invoiced_quantity ?? 0,
             s.order_no || null,
             h.amount_ex_tax,
             h.amount_ttc,
-            s.ship_emri_line_id || null,
+            s.shipment_order_line_id || null,
             s.sales_order_line_id || null,
             s.source_document_type || kaynakTip,
             s.source_document_id || kaynakId,
-            s.source_document_line_id || s.ship_emri_line_id || s.sales_order_line_id || null,
+            s.source_document_line_id || s.shipment_order_line_id || s.sales_order_line_id || null,
         ],
     );
     return { ...s, ...h };
@@ -153,7 +153,7 @@ async function writeDeliveryNoteLine(client, irsaliyeId, s, sira, kaynakTip, kay
 
 async function updateDeliveryNoteTotals(client, irsaliyeId, satirHesaplari, altiIskonto = 0) {
     const t = belgelerToplam(satirHesaplari);
-    const bandrol = satirHesaplari.reduce((a, s) => a + (Number(s.bandrol_amount) || 0), 0);
+    const bandrol = satirHesaplari.reduce((a, s) => a + (Number(s.stamp_tax_amount) || 0), 0);
     const alti = Number(altiIskonto) || 0;
     const genel = Math.round(((Number(t.grand_total) || 0) - alti) * 100) / 100;
     await client.query(
@@ -164,7 +164,7 @@ async function updateDeliveryNoteTotals(client, irsaliyeId, satirHesaplari, alti
             tax_amount = $4,
             total_excise = $5,
             total_withholding = $6,
-            total_bandrol = $7,
+            total_stamp_tax = $7,
             delivery_footer_discount = $8,
             grand_total = $9,
             updated_at = CURRENT_TIMESTAMP
@@ -190,7 +190,7 @@ async function getDeliveryNote(id) {
         SELECT ir.*, c.partner_code, c.partner_name,
                COALESCE(ir.tax_id, c.tax_id) AS tax_id,
                COALESCE(ir.tax_office, c.tax_office) AS tax_office,
-               c.email AS cari_email, c.telefon AS cari_telefon,
+               c.email AS cari_email, c.phone AS cari_telefon,
                d.warehouse_code, d.warehouse_name,
                sp.order_no, se.shipment_no,
                hk.movement_code, hk.movement_name,
@@ -362,7 +362,7 @@ function headerSource(body) {
 
 async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip, kaynakId }) {
     const vals = {
-        ozellestirme_no: body.ozellestirme_no || 'TR1.2.1',
+        customization_no: body.customization_no || 'TR1.2.1',
         scenario: body.scenario || 'TEMELIRSALIYE',
         delivery_note_type: body.delivery_note_type || 'SEVK',
         delivery_date: body.delivery_date || null,
@@ -466,14 +466,14 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
         status: body.status || 'Taslak',
         source_document_type: kaynakTip,
         source_document_id: kaynakId,
-        iade_mi: boolOr(body.iade_mi, false),
+        is_return: boolOr(body.is_return, false),
     };
 
     if (!id) {
         const ins = await client.query(
             `
             INSERT INTO delivery_notes (
-                delivery_note_no, ozellestirme_no, scenario, delivery_note_type,
+                delivery_note_no, customization_no, scenario, delivery_note_type,
                 delivery_date, delivery_time, ship_date, ship_time,
                 actual_ship_date, actual_ship_time,
                 partner_id, sales_order_id, shipment_order_id, warehouse_id, movement_code_id,
@@ -496,7 +496,7 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
                 driver_name, driver_last_name, driver_national_id, driver_mobile, cargo_no, vehicle_description,
                 carrier_title, carrier_tax_id,
                 description, description_2, description_3, public_note, internal_note,
-                delivery_footer_discount, status, source_document_type, source_document_id, iade_mi
+                delivery_footer_discount, status, source_document_type, source_document_id, is_return
             ) VALUES (
                 $1,$2,$3,$4,
                 COALESCE($5::date,CURRENT_DATE), COALESCE($6::time,CURRENT_TIME),
@@ -526,7 +526,7 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
             ) RETURNING id
             `,
             [
-                no, vals.ozellestirme_no, vals.scenario, vals.delivery_note_type,
+                no, vals.customization_no, vals.scenario, vals.delivery_note_type,
                 vals.delivery_date, vals.delivery_time, vals.ship_date, vals.ship_time,
                 vals.actual_ship_date, vals.actual_ship_time,
                 vals.partner_id, vals.sales_order_id, vals.shipment_order_id, vals.warehouse_id, vals.movement_code_id,
@@ -549,7 +549,7 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
                 vals.driver_name, vals.driver_last_name, vals.driver_national_id, vals.driver_mobile, vals.cargo_no, vals.vehicle_description,
                 vals.carrier_title, vals.carrier_tax_id,
                 vals.description, vals.description_2, vals.description_3, vals.public_note, vals.internal_note,
-                vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.iade_mi,
+                vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.is_return,
             ],
         );
         return ins.rows[0].id;
@@ -558,7 +558,7 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
     await client.query(
         `
         UPDATE delivery_notes SET
-            ozellestirme_no=COALESCE($2, ozellestirme_no),
+            customization_no=COALESCE($2, customization_no),
             scenario=COALESCE($3, scenario),
             delivery_note_type=COALESCE($4, delivery_note_type),
             delivery_date=COALESCE($5::date, delivery_date),
@@ -602,13 +602,13 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
             status=COALESCE($102, status),
             source_document_type=COALESCE($103, source_document_type),
             source_document_id=COALESCE($104, source_document_id),
-            iade_mi=COALESCE($105, iade_mi),
+            is_return=COALESCE($105, is_return),
             updated_at=CURRENT_TIMESTAMP
         WHERE id=$1
         `,
         [
             id,
-            vals.ozellestirme_no, vals.scenario, vals.delivery_note_type,
+            vals.customization_no, vals.scenario, vals.delivery_note_type,
             vals.delivery_date, vals.delivery_time, vals.ship_date, vals.ship_time,
             vals.actual_ship_date, vals.actual_ship_time,
             vals.partner_id, vals.sales_order_id, vals.shipment_order_id, vals.warehouse_id, vals.movement_code_id,
@@ -633,7 +633,7 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
             vals.driver_name, vals.driver_last_name, vals.driver_national_id, vals.driver_mobile, vals.cargo_no, vals.vehicle_description,
             vals.carrier_title, vals.carrier_tax_id,
             vals.description, vals.description_2, vals.description_3, vals.public_note, vals.internal_note,
-            vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.iade_mi,
+            vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.is_return,
         ],
     );
     return id;
@@ -756,9 +756,9 @@ router.post('/:id/onayla', async (req, res) => {
             // burada erken ve zengin hata dönüyoruz.
             const hk = await findMovementCode(pool, BELGE_TIPI.IRSALIYE, ir.movement_code_id);
             const param = await pool.query(
-                `SELECT value FROM system_parameters WHERE parametre_code='STOK_NEGATIF' LIMIT 1`
+                `SELECT value FROM system_parameters WHERE parameter_code='STOK_NEGATIF' LIMIT 1`
             );
-            const negatifOk = Boolean(hk?.eksi_balance_izin)
+            const negatifOk = Boolean(hk?.allow_negative_balance)
                 || ['evet', 'true', '1', 'yes', 'e'].includes(
                     String(param.rows[0]?.value || '').trim().toLowerCase()
                 );
@@ -893,7 +893,7 @@ router.post('/sevk-emrinden', async (req, res) => {
                 await client.query(
                     `INSERT INTO delivery_note_lines
                         (delivery_note_id, line_no, item_id, quantity, uom_code,
-                         ship_emri_line_id, sales_order_line_id,
+                         shipment_order_line_id, sales_order_line_id,
                          source_document_type, source_document_id, source_document_line_id)
                      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
                     [
@@ -989,13 +989,13 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                 });
             }
             const top = belgelerToplam(kalemler);
-            const bandrol = kalemler.reduce((a, k) => a + (Number(k.bandrol_amount) || 0), 0);
+            const bandrol = kalemler.reduce((a, k) => a + (Number(k.stamp_tax_amount) || 0), 0);
             const vadeGun = ir.due_days != null ? ir.due_days : ir.fin_due_days;
 
             const headerSource = {
                 invoice_category: 'SATIS',
                 scenario: 'TICARIFATURA',
-                ozellestirme_no: 'TR1.2',
+                customization_no: 'TR1.2',
                 invoice_date: req.body.invoice_date || ir.delivery_date
                     || new Date().toISOString().slice(0, 10),
                 currency_code: ir.currency_code || 'TRY',
@@ -1066,7 +1066,7 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                 invoice_footer_discount: ir.delivery_footer_discount ?? 0,
                 total_excise: top.total_excise || 0,
                 total_withholding: top.total_withholding || 0,
-                total_bandrol: bandrol,
+                total_stamp_tax: bandrol,
                 remaining_amount: top.payable_amount,
                 status: 'Taslak',
                 source_document_type: BELGE_TIPI.IRSALIYE,
@@ -1168,7 +1168,7 @@ router.get('/:id/yazdir', async (req, res) => {
         const ir = await getDeliveryNote(req.params.id);
         if (!ir) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         const html = documentHtml({
-            baslik: 'Satış İrsaliyesi',
+            title: 'Satış İrsaliyesi',
             belgeNo: ir.delivery_note_no,
             tarih: ir.delivery_date || ir.created_at,
             cari: ir,
@@ -1281,7 +1281,7 @@ router.delete('/:id', async (req, res) => {
             return res.status(400).json({ hata: 'Onaylı/faturalanmış irsaliye silinemez.' });
         }
         await pool.query('DELETE FROM delivery_notes WHERE id=$1', [req.params.id]);
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

@@ -68,7 +68,7 @@ function remainingQuantity(satir) {
 async function isNegativeStockAllowed(client) {
     const r = await client.query(
         `SELECT value FROM system_parameters
-         WHERE parametre_code='STOK_NEGATIF' AND is_active IS DISTINCT FROM FALSE
+         WHERE parameter_code='STOK_NEGATIF' AND is_active IS DISTINCT FROM FALSE
          LIMIT 1`
     );
     const v = String(r.rows[0]?.value || 'Hayir').trim().toLowerCase();

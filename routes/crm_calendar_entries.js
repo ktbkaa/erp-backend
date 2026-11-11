@@ -40,18 +40,18 @@ router.get('/', async (req, res, next) => {
       const fWhere = [];
       if (bas) {
         fParams.push(bas);
-        fWhere.push(`COALESCE(planlanan_date, created_at) >= $${fParams.length}::date`);
+        fWhere.push(`COALESCE(planned_date, created_at) >= $${fParams.length}::date`);
       }
       if (bit) {
         fParams.push(bit);
-        fWhere.push(`COALESCE(planlanan_date, created_at) <= $${fParams.length}::date`);
+        fWhere.push(`COALESCE(planned_date, created_at) <= $${fParams.length}::date`);
       }
       const fr = await pool.query(
         `
-        SELECT id, konu AS baslik, planlanan_date AS start_at, status, 'faaliyet' AS source
+        SELECT id, subject AS title, planned_date AS start_at, status, 'faaliyet' AS source
         FROM crm_activities
         ${fWhere.length ? `WHERE ${fWhere.join(' AND ')}` : ''}
-        ORDER BY planlanan_date NULLS LAST
+        ORDER BY planned_date NULLS LAST
         LIMIT 200
         `,
         fParams
@@ -64,18 +64,18 @@ router.get('/', async (req, res, next) => {
       const gWhere = [];
       if (bas) {
         gParams.push(bas);
-        gWhere.push(`COALESCE(son_date, created_at) >= $${gParams.length}::date`);
+        gWhere.push(`COALESCE(due_date, created_at) >= $${gParams.length}::date`);
       }
       if (bit) {
         gParams.push(bit);
-        gWhere.push(`COALESCE(son_date, created_at) <= $${gParams.length}::date`);
+        gWhere.push(`COALESCE(due_date, created_at) <= $${gParams.length}::date`);
       }
       const gr = await pool.query(
         `
-        SELECT id, baslik, son_date AS start_at, status, 'gorev' AS source
+        SELECT id, title, due_date AS start_at, status, 'gorev' AS source
         FROM crm_tasks
         ${gWhere.length ? `WHERE ${gWhere.join(' AND ')}` : ''}
-        ORDER BY son_date NULLS LAST
+        ORDER BY due_date NULLS LAST
         LIMIT 200
         `,
         gParams
@@ -101,14 +101,14 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { baslik, start_at, end_at, type, partner_id, lead_id, firsat_id, user_code, description } = req.body || {};
+    const { title: baslik, start_at, end_at, type, partner_id, lead_id, firsat_id, user_code, description } = req.body || {};
     if (!baslik || !start_at) {
       return res.status(400).json({ hata: 'baslik ve start_at zorunlu.' });
     }
     const r = await pool.query(
       `
       INSERT INTO crm_calendar_entries
-        (baslik, start_at, end_at, type, partner_id, lead_id, firsat_id, user_code, description)
+        (title, start_at, end_at, type, partner_id, lead_id, firsat_id, user_code, description)
       VALUES ($1,$2,$3,COALESCE($4,'Toplanti'),$5,$6,$7,$8,$9)
       RETURNING *
       `,
@@ -124,7 +124,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query(`DELETE FROM crm_calendar_entries WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

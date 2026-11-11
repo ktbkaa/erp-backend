@@ -141,7 +141,7 @@ function calculateEmployeePayroll({
 
   return {
     gross_wage: grossN,
-    sgk_employee: sgkEmp,
+    social_security_employee: sgkEmp,
     unemployment_employee: unempEmp,
     income_tax_base: incomeTaxBase,
     cumulative_tax_base: round2(previousCumulativeTaxBase + incomeTaxBase),
@@ -154,7 +154,7 @@ function calculateEmployeePayroll({
     other_deductions: other,
     advance_deduction: adv,
     net_wage: net,
-    sgk_employer: sgkEr,
+    social_security_employer: sgkEr,
     unemployment_employer: unempEr,
     employer_cost: employerCost,
     calc_detail: {

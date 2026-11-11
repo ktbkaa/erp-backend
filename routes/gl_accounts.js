@@ -109,7 +109,7 @@ router.delete('/:id', async (req, res) => {
             });
         }
         const result = await pool.query('DELETE FROM gl_accounts WHERE id=$1 RETURNING id', [req.params.id]);
-        res.json({ silindi: true, id: Number(result.rows[0].id) });
+        res.json({ is_deleted: true, id: Number(result.rows[0].id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

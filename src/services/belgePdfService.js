@@ -17,7 +17,7 @@ function qrSvgPlaceholder(text) {
   </svg>`;
 }
 
-function documentHtml({ baslik, belgeNo, tarih, cari, satirlar = [], toplamlar = {}, ekstra = {} }) {
+function documentHtml({ title: baslik, belgeNo, tarih, cari, satirlar = [], toplamlar = {}, ekstra = {} }) {
   const rows = satirlar
     .map(
       (s, i) => `<tr>

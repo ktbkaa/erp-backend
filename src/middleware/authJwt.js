@@ -61,11 +61,11 @@ function parseJsonArr(v, fallback = ['*']) {
 
 async function assertWarehousePermission(req, depoId) {
   if (!req.user || !depoId) return true;
-  const list = parseJsonArr(req.user.warehouse_yetkileri, ['*']);
+  const list = parseJsonArr(req.user.warehouse_permissions, ['*']);
   if (list.includes('*')) {
     // satır bazlı kullanıcı_depo varsa onu da kontrol et
     const r = await pool.query(
-      `SELECT 1 FROM user_warehouses WHERE kisi_id=$1 LIMIT 1`,
+      `SELECT 1 FROM user_warehouses WHERE user_id=$1 LIMIT 1`,
       [req.user.id]
     );
     if (!r.rows[0]) return true;
@@ -77,7 +77,7 @@ async function assertWarehousePermission(req, depoId) {
     if (list.includes(String(depoId)) || (kod && list.includes(kod))) return true;
   }
   const row = await pool.query(
-    `SELECT 1 FROM user_warehouses WHERE kisi_id=$1 AND warehouse_id=$2`,
+    `SELECT 1 FROM user_warehouses WHERE user_id=$1 AND warehouse_id=$2`,
     [req.user.id, depoId]
   );
   if (row.rows[0]) return true;

@@ -69,7 +69,7 @@ router.post('/', async (req, res) => {
         const id = await withTransaction(pool, async (client) => {
             const sip = await client.query(
                 `SELECT s.*, c.partner_code, c.partner_name,
-                        c.bill_address_1, c.address, c.il, c.district, c.country, c.postal_code
+                        c.bill_address_1, c.address, c.province, c.district, c.country, c.postal_code
                  FROM sales_orders s JOIN partners c ON c.id = s.partner_id WHERE s.id=$1`,
                 [sales_order_id]
             );
@@ -112,7 +112,7 @@ router.post('/', async (req, res) => {
                 [
                     no, sales_order_id, siparis.partner_id, warehouse_id, ship_date || null,
                     ship_to_address || siparis.ship_to_address || siparis.bill_address_1 || siparis.address,
-                    ship_city || siparis.il, ship_district || siparis.district,
+                    ship_city || siparis.province, ship_district || siparis.district,
                     ship_country || siparis.country || 'TR', ship_postal_code || siparis.postal_code,
                     status || 'Taslak', hk, description || `Sipariş ${siparis.order_no}`,
                 ]
@@ -201,7 +201,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM shipment_orders WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Sevk emri bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

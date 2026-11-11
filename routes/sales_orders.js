@@ -442,7 +442,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                 [
                     no, siparis.id, siparis.partner_id, warehouse_id,
                     req.body.ship_to_address || siparis.ship_to_address || c.bill_address_1 || c.address,
-                    req.body.ship_city || c.il, req.body.ship_district || c.district,
+                    req.body.ship_city || c.province, req.body.ship_district || c.district,
                     req.body.ship_country || c.country, req.body.ship_postal_code || c.postal_code,
                     req.body.status || 'Onayli', hk?.id || null,
                     req.body.description || `Sipariş ${siparis.order_no}`,
@@ -514,7 +514,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM sales_orders WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

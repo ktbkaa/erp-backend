@@ -17,7 +17,7 @@ router.get('/', async (req, res, next) => {
              ik.item_code AS ikame_stok_kodu, ik.item_name AS ikame_stok_adi
       FROM item_substitutes i
       JOIN items s ON s.id = i.item_id
-      JOIN items ik ON ik.id = i.ikame_item_id
+      JOIN items ik ON ik.id = i.substitute_item_id
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY i.item_id, i.priority, i.id
       `,
@@ -31,20 +31,20 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { item_id, ikame_item_id, priority, description } = req.body || {};
-    if (!item_id || !ikame_item_id) {
-      return res.status(400).json({ hata: 'item_id ve ikame_item_id zorunlu.' });
+    const { item_id, substitute_item_id, priority, description } = req.body || {};
+    if (!item_id || !substitute_item_id) {
+      return res.status(400).json({ hata: 'item_id ve substitute_item_id zorunlu.' });
     }
-    if (Number(item_id) === Number(ikame_item_id)) {
+    if (Number(item_id) === Number(substitute_item_id)) {
       return res.status(400).json({ hata: 'Stok kendi ikamesi olamaz.' });
     }
     const r = await pool.query(
       `
-      INSERT INTO item_substitutes (item_id, ikame_item_id, priority, description)
+      INSERT INTO item_substitutes (item_id, substitute_item_id, priority, description)
       VALUES ($1,$2,COALESCE($3,1),$4)
       RETURNING *
       `,
-      [item_id, ikame_item_id, priority, description || null]
+      [item_id, substitute_item_id, priority, description || null]
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
@@ -56,7 +56,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query(`DELETE FROM item_substitutes WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

@@ -23,7 +23,7 @@ async function wipeUsableStock(client, {
   const bakiyeler = (await listWarehouseBalances(client)).filter(
     (b) => (!hedef.size || hedef.has(Number(b.item_id)))
       && (!whSet || whSet.has(Number(b.warehouse_id)))
-      && !skipRoles.has(String(b.warehouse_rolu || ''))
+      && !skipRoles.has(String(b.warehouse_role || ''))
       && Number(b.bakiye) > 0
       && String(b.stock_status || 'Kullanilabilir') === 'Kullanilabilir'
   );

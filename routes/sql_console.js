@@ -70,7 +70,7 @@ async function loadSqlPerms(pool, kisiId) {
   }
   const r = await pool.query(
     `SELECT can_select, can_insert, can_update, can_delete
-     FROM user_sql_permissions WHERE kisi_id=$1`,
+     FROM user_sql_permissions WHERE user_id=$1`,
     [kisiId]
   ).catch(() => ({ rows: [] }));
   if (r.rows[0]) {
@@ -327,13 +327,13 @@ router.get('/permissions', async (req, res) => {
     if (!isAdmin(req)) return res.status(403).json({ hata: 'Yetkisiz.' });
     const pool = defaultPool._primary || defaultPool;
     const r = await pool.query(`
-      SELECT u.id AS kisi_id, u.user_code, u.username, u.first_name, u.last_name, u.role,
+      SELECT u.id AS user_id, u.user_code, u.username, u.first_name, u.last_name, u.role,
              COALESCE(p.can_select, FALSE) AS can_select,
              COALESCE(p.can_insert, FALSE) AS can_insert,
              COALESCE(p.can_update, FALSE) AS can_update,
              COALESCE(p.can_delete, FALSE) AS can_delete
       FROM users u
-      LEFT JOIN user_sql_permissions p ON p.kisi_id = u.id
+      LEFT JOIN user_sql_permissions p ON p.user_id = u.id
       WHERE u.is_active IS DISTINCT FROM FALSE
       ORDER BY u.user_code NULLS LAST, u.id
     `);
@@ -351,9 +351,9 @@ router.put('/permissions/:kisiId', async (req, res) => {
     const b = req.body || {};
     const pool = defaultPool._primary || defaultPool;
     await pool.query(
-      `INSERT INTO user_sql_permissions (kisi_id, can_select, can_insert, can_update, can_delete)
+      `INSERT INTO user_sql_permissions (user_id, can_select, can_insert, can_update, can_delete)
        VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (kisi_id) DO UPDATE SET
+       ON CONFLICT (user_id) DO UPDATE SET
          can_select=EXCLUDED.can_select,
          can_insert=EXCLUDED.can_insert,
          can_update=EXCLUDED.can_update,

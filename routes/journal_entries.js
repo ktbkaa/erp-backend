@@ -212,7 +212,7 @@ router.delete('/:id', async (req, res) => {
       });
     }
     await pool.query('DELETE FROM journal_entries WHERE id=$1', [req.params.id]);
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

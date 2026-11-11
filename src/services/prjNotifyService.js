@@ -19,19 +19,19 @@ async function maybeQueueEmail(client, {
 
   let alici = fallbackEmail;
   if (!alici && userId) {
-    const u = await client.query(`SELECT eposta FROM users WHERE id=$1`, [userId]);
-    alici = u.rows[0]?.eposta || null;
+    const u = await client.query(`SELECT email_address FROM users WHERE id=$1`, [userId]);
+    alici = u.rows[0]?.email_address || null;
   }
   if (!alici) {
     // Test/ortam fallback — kuyruk kaydı yine oluşsun
-    alici = 'prj-notify@localhost.test';
+    recipient: alici = 'prj-notify@localhost.test';
   }
   return epostaKuyrugaAl(client, {
     kaynakTipi: sourceType,
     kaynakId: sourceId,
-    alici,
-    konu: subject,
-    govde: body,
+    recipient: alici,
+    subject: subject,
+    body_text: body,
   });
 }
 
@@ -50,10 +50,10 @@ async function startPrjApproval(client, {
     module_code: 'proje',
     document_id: documentId,
     document_no: documentNo,
-    document_ozet: documentOzet,
+    document_summary: documentOzet,
     amount,
     company_id: companyId,
-    baslatan_kisi_id: baslatanKisiId,
+    initiator_user_id: baslatanKisiId,
     description,
   });
 }

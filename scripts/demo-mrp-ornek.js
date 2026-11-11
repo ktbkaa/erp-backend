@@ -34,7 +34,7 @@ async function main() {
     ihtiyacTarihi.setDate(ihtiyacTarihi.getDate() + 14);
     const bi = await client.query(
       `INSERT INTO mrp_bagimsiz_ihtiyaclar
-          (ihtiyac_no, stok_id, miktar, birim, ihtiyac_tarihi, kaynak, firma_id, is_yeri_id, aciklama)
+          (requirement_no, stok_id, miktar, birim, ihtiyac_tarihi, kaynak, firma_id, is_yeri_id, aciklama)
        VALUES ($1,$2,300,'AD',$3,'Manuel',$4,$5,$6)
        RETURNING *`,
       [
@@ -46,10 +46,10 @@ async function main() {
     // Önceki örnek BI'ları kapat (çift sayım olmasın)
     await client.query(
       `UPDATE mrp_bagimsiz_ihtiyaclar SET aktif = FALSE
-       WHERE stok_id = $1 AND ihtiyac_no <> $2 AND aciklama LIKE 'MRP örnek%'`,
+       WHERE stok_id = $1 AND requirement_no <> $2 AND aciklama LIKE 'MRP örnek%'`,
       [stokId, biNo]
     );
-    console.log('BI:', bi.rows[0].ihtiyac_no, '300 x', stok.rows[0].stok_kodu);
+    console.log('BI:', bi.rows[0].requirement_no, '300 x', stok.rows[0].stok_kodu);
 
     await client.query('COMMIT');
 
@@ -62,19 +62,19 @@ async function main() {
 
     console.log('Çalışma:', sonuc.calisma.calisma_no,
       'satır', sonuc.calisma.satir_sayisi,
-      'net>0', sonuc.calisma.net_pozitif);
+      'net>0', sonuc.calisma.net_positive_only);
 
-    const netler = sonuc.sonuclar.filter((r) => r.net_ihtiyac > 0);
+    const netler = sonuc.sonuclar.filter((r) => r.net_requirement > 0);
     console.log('Net ihtiyaçlar:');
     netler.slice(0, 15).forEach((r) => {
-      console.log(`  ${r.stok_kodu.padEnd(8)} net=${r.net_ihtiyac} → ${r.oneri}`);
+      console.log(`  ${r.stok_kodu.padEnd(8)} net=${r.net_requirement} → ${r.suggestion}`);
     });
 
     const port = process.env.PORT || 3000;
     const base = `http://127.0.0.1:${port}`;
 
     // SA talep (satınalma önerileri) — API ile dönüşüm işaretlensin
-    const saAday = netler.filter((r) => r.oneri === 'Satınalma');
+    const saAday = netler.filter((r) => r.suggestion === 'Satınalma');
     if (saAday.length) {
       const talep = await fetch(`${base}/mrp/talep-olustur`, {
         method: 'POST',
@@ -88,7 +88,7 @@ async function main() {
     }
 
     // Üretim emri (üretim önerileri)
-    const ueAday = netler.filter((r) => r.oneri === 'Üretim emri');
+    const ueAday = netler.filter((r) => r.suggestion === 'Üretim emri');
     if (ueAday.length) {
       const r = await fetch(`${base}/mrp/uretim-emri-olustur`, {
         method: 'POST',

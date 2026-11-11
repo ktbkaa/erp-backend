@@ -161,11 +161,11 @@ router.delete('/parametreler/:id', async (req, res) => {
     );
     if (used.rows[0]) {
       await pool.query(`UPDATE hr_payroll_param_sets SET is_active=FALSE WHERE id=$1`, [req.params.id]);
-      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+      return res.json({ is_deleted: false, pasife_alindi: true, id: Number(req.params.id) });
     }
     const r = await pool.query(`DELETE FROM hr_payroll_param_sets WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Parametre seti bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -549,18 +549,18 @@ router.post('/calismalar/:id/hesapla', async (req, res) => {
         await client.query(
           `INSERT INTO hr_payroll_lines (
              run_id, employee_id, company_id,
-             gross_wage, sgk_employee, unemployment_employee, income_tax_base, cumulative_tax_base,
+             gross_wage, social_security_employee, unemployment_employee, income_tax_base, cumulative_tax_base,
              income_tax, income_tax_exemption, stamp_tax, stamp_tax_exemption,
              other_deductions, advance_deduction, net_wage,
-             sgk_employer, unemployment_employer, employer_cost, calc_detail
+             social_security_employer, unemployment_employer, employer_cost, calc_detail
            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
           [
             run.id, emp.id, run.company_id,
-            calc.gross_wage, calc.sgk_employee, calc.unemployment_employee,
+            calc.gross_wage, calc.social_security_employee, calc.unemployment_employee,
             calc.income_tax_base, calc.cumulative_tax_base,
             calc.income_tax, calc.income_tax_exemption, calc.stamp_tax, calc.stamp_tax_exemption,
             calc.other_deductions, calc.advance_deduction, calc.net_wage,
-            calc.sgk_employer, calc.unemployment_employer, calc.employer_cost,
+            calc.social_security_employer, calc.unemployment_employer, calc.employer_cost,
             JSON.stringify(calc.calc_detail),
           ],
         );

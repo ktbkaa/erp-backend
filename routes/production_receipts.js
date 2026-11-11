@@ -6,7 +6,7 @@ async function getIncomingInspection(id) {
     const g = await pool.query(
         `
         SELECT ug.*,
-               ue.order_no, ue.item_id, ue.planlanan_quantity, ue.produced_quantity, ue.status AS emir_durum,
+               ue.order_no, ue.item_id, ue.planned_quantity, ue.produced_quantity, ue.status AS emir_durum,
                s.item_code, s.item_name
         FROM production_receipts ug
         JOIN production_orders ue ON ue.id = ug.order_id

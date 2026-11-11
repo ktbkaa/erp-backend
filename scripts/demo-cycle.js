@@ -54,13 +54,13 @@ async function ensurePartner(client, row) {
     if (mevcut.rows[0]) {
         await client.query(
             `UPDATE cariler SET
-                cari_turu=$2, telefon=$3, email=$4, vergi_no=$5, vergi_dairesi=$6,
-                yetkili_adi=$7, yetkili_telefon=$8, adres=$9, il=$10, ilce=$11,
+                cari_turu=$2, phone=$3, email=$4, vergi_no=$5, vergi_dairesi=$6,
+                yetkili_adi=$7, authorized_phone=$8, adres=$9, province=$10, ilce=$11,
                 odeme_vadesi_gun=$12, aktif=TRUE, is_yeri_id=$13
              WHERE id=$1`,
             [
-                mevcut.rows[0].id, row.cari_turu, row.telefon, row.email, row.vergi_no, row.vergi_dairesi,
-                row.yetkili_adi, row.yetkili_telefon, row.adres, row.il, row.ilce,
+                mevcut.rows[0].id, row.cari_turu, row.phone, row.email, row.vergi_no, row.vergi_dairesi,
+                row.yetkili_adi, row.authorized_phone, row.adres, row.province, row.ilce,
                 row.odeme_vadesi_gun ?? 30, row.is_yeri_id,
             ]
         );
@@ -69,15 +69,15 @@ async function ensurePartner(client, row) {
     const kod = await nextSequenceCode(client, partnerTypeFromSeriesCode(row.cari_turu));
     const ins = await client.query(
         `INSERT INTO cariler (
-            cari_kodu, cari_adi, cari_turu, telefon, email, vergi_no, vergi_dairesi,
-            yetkili_adi, yetkili_telefon, adres, il, ilce, ulke, para_birimi,
-            odeme_vadesi_gun, aktif, is_yeri_id, notlar
+            cari_kodu, cari_adi, cari_turu, phone, email, vergi_no, vergi_dairesi,
+            yetkili_adi, authorized_phone, adres, province, ilce, ulke, para_birimi,
+            odeme_vadesi_gun, aktif, is_yeri_id, notes
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'Türkiye','TRY',$13,TRUE,$14,$15)
          RETURNING id, cari_kodu`,
         [
-            kod, row.cari_adi, row.cari_turu, row.telefon, row.email, row.vergi_no, row.vergi_dairesi,
-            row.yetkili_adi, row.yetkili_telefon, row.adres, row.il, row.ilce,
-            row.odeme_vadesi_gun ?? 30, row.is_yeri_id, row.notlar || null,
+            kod, row.cari_adi, row.cari_turu, row.phone, row.email, row.vergi_no, row.vergi_dairesi,
+            row.yetkili_adi, row.authorized_phone, row.adres, row.province, row.ilce,
+            row.odeme_vadesi_gun ?? 30, row.is_yeri_id, row.notes || null,
         ]
     );
     return ins.rows[0];
@@ -107,11 +107,11 @@ async function ensureWarehouse(client, isYeriId, adi, varsayilan = false) {
     }
 
     if (varsayilan) {
-        await client.query('UPDATE depolar SET varsayilan=FALSE WHERE is_yeri_id=$1', [isYeriId]);
+        await client.query('UPDATE depolar SET is_default=FALSE WHERE is_yeri_id=$1', [isYeriId]);
     }
     const kod = await nextSequenceCode(client, 'DEPO');
     const ins = await client.query(
-        `INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, varsayilan)
+        `INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, is_default)
          VALUES ($1,$2,$3,$4) RETURNING id, depo_kodu`,
         [isYeriId, kod, adi, varsayilan]
     );
@@ -201,36 +201,36 @@ async function ensureFinishedGoodRouting(client, mmId, ym1, ym2, hm1, hm2, hm3, 
 
     const op10 = await client.query(
         `INSERT INTO rota_operasyonlari
-            (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, sure_dk, cikti_stok_id, sonraki_sira_no)
+            (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, duration_minutes, cikti_stok_id, sonraki_sira_no)
          VALUES ($1,10,'OP10','Yarı Mamul 1 Montaj',$2,20,$3,20) RETURNING id`,
         [rotaId, merkezId, ym1]
     );
     await client.query(
-        `INSERT INTO rota_operasyon_bilesenleri (operasyon_id, stok_id, miktar, birim) VALUES
+        `INSERT INTO rota_operasyon_bilesenleri (operation_id, stok_id, miktar, birim) VALUES
          ($1,$2,1,'AD'), ($1,$3,1,'AD')`,
         [op10.rows[0].id, hm1, hm2]
     );
 
     const op20 = await client.query(
         `INSERT INTO rota_operasyonlari
-            (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, sure_dk, cikti_stok_id, sonraki_sira_no)
+            (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, duration_minutes, cikti_stok_id, sonraki_sira_no)
          VALUES ($1,20,'OP20','Yarı Mamul 2 Montaj',$2,20,$3,30) RETURNING id`,
         [rotaId, merkezId, ym2]
     );
     await client.query(
-        `INSERT INTO rota_operasyon_bilesenleri (operasyon_id, stok_id, miktar, birim) VALUES
+        `INSERT INTO rota_operasyon_bilesenleri (operation_id, stok_id, miktar, birim) VALUES
          ($1,$2,1,'AD'), ($1,$3,1,'AD')`,
         [op20.rows[0].id, hm3, hm4]
     );
 
     const op30 = await client.query(
         `INSERT INTO rota_operasyonlari
-            (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, sure_dk, cikti_stok_id, sonraki_sira_no)
+            (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, duration_minutes, cikti_stok_id, sonraki_sira_no)
          VALUES ($1,30,'OP30','Mamul Final Montaj',$2,30,$3,NULL) RETURNING id`,
         [rotaId, merkezId, mmId]
     );
     await client.query(
-        `INSERT INTO rota_operasyon_bilesenleri (operasyon_id, stok_id, miktar, birim) VALUES
+        `INSERT INTO rota_operasyon_bilesenleri (operation_id, stok_id, miktar, birim) VALUES
          ($1,$2,1,'AD'), ($1,$3,1,'AD')`,
         [op30.rows[0].id, ym1, ym2]
     );
@@ -244,7 +244,7 @@ async function tamamlaHazirOperasyon(client, emir, op, miktar) {
         `SELECT b.*, st.stok_tipi, st.birim AS stok_birimi
          FROM uretim_emri_operasyon_bilesenleri b
          JOIN stoklar st ON st.id = b.stok_id
-         WHERE b.operasyon_id=$1 FOR UPDATE`,
+         WHERE b.operation_id=$1 FOR UPDATE`,
         [op.id]
     );
 
@@ -318,7 +318,7 @@ async function tamamlaHazirOperasyon(client, emir, op, miktar) {
 
     const girisNo = await nextDocumentNo(client, 'URETIM_GIRIS');
     await client.query(
-        `INSERT INTO uretim_girisleri (giris_no, emir_id, miktar, tuketim_hareket_id, mamul_hareket_id)
+        `INSERT INTO uretim_girisleri (receipt_no, emir_id, miktar, tuketim_hareket_id, mamul_hareket_id)
          VALUES ($1,$2,$3,$4,$5)`,
         [girisNo, emir.id, miktar, tuketimHareketId, mamulHareketId]
     );
@@ -370,34 +370,34 @@ async function main() {
         const tedarikci = await ensurePartner(client, {
             cari_adi: 'Demo Tedarikçi A.Ş.',
             cari_turu: 'Tedarikci',
-            telefon: '02121234567',
+            phone: '02121234567',
             email: 'satinalma@demotedarikci.com',
             vergi_no: '1234567890',
             vergi_dairesi: 'Kadıköy',
             yetkili_adi: 'Ayşe Tedarik',
-            yetkili_telefon: '05321112233',
+            authorized_phone: '05321112233',
             adres: 'Sanayi Cad. No:10',
-            il: 'İstanbul',
+            province: 'İstanbul',
             ilce: 'Pendik',
             odeme_vadesi_gun: 30,
             is_yeri_id: isYeriId,
-            notlar: 'Ana hammadde tedarikçisi',
+            notes: 'Ana hammadde tedarikçisi',
         });
         const musteri = await ensurePartner(client, {
             cari_adi: 'Demo Müşteri Ltd.',
             cari_turu: 'Musteri',
-            telefon: '02129876543',
+            phone: '02129876543',
             email: 'siparis@demomusteri.com',
             vergi_no: '0987654321',
             vergi_dairesi: 'Beşiktaş',
             yetkili_adi: 'Mehmet Alıcı',
-            yetkili_telefon: '05329876543',
+            authorized_phone: '05329876543',
             adres: 'Bağdat Cad. No:5',
-            il: 'İstanbul',
+            province: 'İstanbul',
             ilce: 'Kadıköy',
             odeme_vadesi_gun: 45,
             is_yeri_id: isYeriId,
-            notlar: 'Satış siparişleri bu cariye açılır',
+            notes: 'Satış siparişleri bu cariye açılır',
         });
         const cariId = tedarikci.id;
 
@@ -533,13 +533,13 @@ async function main() {
             );
             ilk = false;
             const bilesenler = await client.query(
-                'SELECT * FROM rota_operasyon_bilesenleri WHERE operasyon_id=$1',
+                'SELECT * FROM rota_operasyon_bilesenleri WHERE operation_id=$1',
                 [op.id]
             );
             for (const b of bilesenler.rows) {
                 await client.query(
                     `INSERT INTO uretim_emri_operasyon_bilesenleri
-                        (operasyon_id, stok_id, planlanan_miktar, birim)
+                        (operation_id, stok_id, planlanan_miktar, birim)
                      VALUES ($1,$2,$3,$4)`,
                     [opIns.rows[0].id, b.stok_id, Number(b.miktar) * miktar, b.birim]
                 );

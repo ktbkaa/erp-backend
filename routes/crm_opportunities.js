@@ -22,7 +22,7 @@ async function getOpportunity(id) {
         LEFT JOIN partners c ON c.id = f.partner_id
         LEFT JOIN crm_leads a ON a.id = f.lead_id
         LEFT JOIN users o ON o.id = f.created_by_user_id
-        LEFT JOIN users t ON t.id = f.takip_by_id
+        LEFT JOIN users t ON t.id = f.followed_by_id
         LEFT JOIN plants iy ON iy.id = f.plant_id
         WHERE f.id = $1
         `,
@@ -49,26 +49,26 @@ async function getOpportunity(id) {
         ),
         pool.query(
             `
-            SELECT fy.id, fy.faaliyet_code, fy.konu, fy.status, fy.start_date,
+            SELECT fy.id, fy.activity_code, fy.subject, fy.status, fy.start_date,
                    type.type_name AS faaliyet_tipi_adi
             FROM crm_activities fy
-            LEFT JOIN crm_activity_types type ON type.id = fy.faaliyet_type_id
+            LEFT JOIN crm_activity_types type ON type.id = fy.activity_type_id
             WHERE fy.firsat_id=$1 ORDER BY fy.start_date DESC LIMIT 50
             `,
             [id]
         ),
         pool.query(
             `
-            SELECT p.id, p.plan_code, p.konu, p.status, p.start_date,
+            SELECT p.id, p.plan_code, p.subject, p.status, p.start_date,
                    type.type_name AS faaliyet_tipi_adi
             FROM crm_activity_plans p
-            LEFT JOIN crm_activity_types type ON type.id = p.faaliyet_type_id
+            LEFT JOIN crm_activity_types type ON type.id = p.activity_type_id
             WHERE p.firsat_id=$1 ORDER BY p.start_date DESC LIMIT 50
             `,
             [id]
         ),
         pool.query(
-            `SELECT id, gorev_code, baslik, status, priority, son_date
+            `SELECT id, task_code, title, status, priority, due_date
              FROM crm_tasks WHERE firsat_id=$1 ORDER BY id DESC LIMIT 50`,
             [id]
         ),
@@ -189,28 +189,28 @@ router.post('/', async (req, res) => {
             const ins = await client.query(
                 `
                 INSERT INTO crm_opportunities
-                    (firsat_code, firsat_name, konu, customer_type, partner_id, lead_id, stage_id,
-                     created_by_user_id, takip_by_id, beklenen_gelir, currency_code, degerlendirme,
-                     target_kapatma_date, country, plant_id, description, status, company_id)
+                    (firsat_code, firsat_name, subject, customer_type, partner_id, lead_id, stage_id,
+                     created_by_user_id, followed_by_id, expected_revenue, currency_code, rating,
+                     target_close_date, country, plant_id, description, status, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),COALESCE($11,'TRY'),$12,
                         $13,COALESCE($14,'TR'),$15,$16,'Acik',$17)
                 RETURNING id
                 `,
                 [
-                    kod, b.firsat_name, b.konu || null, musteriTipi,
+                    kod, b.firsat_name, b.subject || null, musteriTipi,
                     musteriTipi === 'Musteri' ? b.partner_id : null,
                     musteriTipi === 'Aday' ? b.lead_id : (b.lead_id || null),
-                    asamaId, b.created_by_user_id || b.created_by_id || null, b.takip_by_id || null,
-                    b.beklenen_gelir, b.currency_code, b.degerlendirme ?? null,
-                    b.target_kapatma_date || null, b.country || null, b.plant_id || null,
+                    asamaId, b.created_by_user_id || b.created_by_id || null, b.followed_by_id || null,
+                    b.expected_revenue, b.currency_code, b.rating ?? null,
+                    b.target_close_date || null, b.country || null, b.plant_id || null,
                     b.description || null, firmaId,
                 ]
             );
             const firsatId = ins.rows[0].id;
             const toplam = await saveLine(client, firsatId, b.satirlar || b.kalemler);
-            if (toplam > 0 && (b.beklenen_gelir == null || b.beklenen_gelir === '')) {
+            if (toplam > 0 && (b.expected_revenue == null || b.expected_revenue === '')) {
                 await client.query(
-                    `UPDATE crm_opportunities SET beklenen_gelir=$2 WHERE id=$1`,
+                    `UPDATE crm_opportunities SET expected_revenue=$2 WHERE id=$1`,
                     [firsatId, toplam]
                 );
             }
@@ -246,17 +246,17 @@ router.put('/:id', async (req, res) => {
                 `
                 UPDATE crm_opportunities SET
                     firsat_name = COALESCE($2, firsat_name),
-                    konu = COALESCE($3, konu),
+                    subject = COALESCE($3, subject),
                     customer_type = COALESCE($4, customer_type),
                     partner_id = CASE WHEN $5::boolean THEN $6::int ELSE partner_id END,
                     lead_id = COALESCE($7, lead_id),
                     stage_id = COALESCE($8, stage_id),
                     created_by_user_id = COALESCE($9, created_by_user_id),
-                    takip_by_id = COALESCE($10, takip_by_id),
-                    beklenen_gelir = COALESCE($11, beklenen_gelir),
+                    followed_by_id = COALESCE($10, followed_by_id),
+                    expected_revenue = COALESCE($11, expected_revenue),
                     currency_code = COALESCE($12, currency_code),
-                    degerlendirme = COALESCE($13, degerlendirme),
-                    target_kapatma_date = COALESCE($14::date, target_kapatma_date),
+                    rating = COALESCE($13, rating),
+                    target_close_date = COALESCE($14::date, target_close_date),
                     country = COALESCE($15, country),
                     plant_id = COALESCE($16, plant_id),
                     company_id = COALESCE($17, company_id),
@@ -264,19 +264,19 @@ router.put('/:id', async (req, res) => {
                 WHERE id=$1
                 `,
                 [
-                    req.params.id, b.firsat_name || null, b.konu ?? null, tip,
+                    req.params.id, b.firsat_name || null, b.subject ?? null, tip,
                     touchPartner, partnerId,
                     b.lead_id || null, b.stage_id || null,
-                    b.created_by_user_id || b.created_by_id || null, b.takip_by_id || null, b.beklenen_gelir ?? null,
-                    b.currency_code || null, b.degerlendirme ?? null, b.target_kapatma_date || null,
+                    b.created_by_user_id || b.created_by_id || null, b.followed_by_id || null, b.expected_revenue ?? null,
+                    b.currency_code || null, b.rating ?? null, b.target_close_date || null,
                     b.country ?? null, b.plant_id || null, b.company_id || null, b.description ?? null,
                 ]
             );
             if (Array.isArray(b.satirlar) || Array.isArray(b.kalemler)) {
                 const toplam = await saveLine(client, Number(req.params.id), b.satirlar || b.kalemler);
-                if (b.beklenen_gelir == null) {
+                if (b.expected_revenue == null) {
                     await client.query(
-                        `UPDATE crm_opportunities SET beklenen_gelir=$2 WHERE id=$1`,
+                        `UPDATE crm_opportunities SET expected_revenue=$2 WHERE id=$1`,
                         [req.params.id, toplam]
                     );
                 }
@@ -308,12 +308,12 @@ router.post('/:id/kapat', async (req, res) => {
                 UPDATE crm_opportunities SET
                     status=$2,
                     stage_id=$3,
-                    kapatma_date=CURRENT_DATE,
-                    closed_nedeni=COALESCE($4, closed_nedeni)
+                    close_date=CURRENT_DATE,
+                    close_reason=COALESCE($4, close_reason)
                 WHERE id=$1 AND status='Acik'
                 RETURNING id
                 `,
-                [req.params.id, result, asama.rows[0].id, req.body.closed_nedeni || null]
+                [req.params.id, result, asama.rows[0].id, req.body.close_reason || null]
             );
             if (!upd.rows[0]) throw new Error('Fırsat kapatılamadı (bulunamadı veya zaten kapalı).');
             return upd.rows[0].id;
@@ -436,7 +436,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM crm_opportunities WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Fırsat bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

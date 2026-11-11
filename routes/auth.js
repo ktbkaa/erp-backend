@@ -11,7 +11,7 @@ async function loadScreenPermissions(kisiId) {
   if (!kisiId) return [];
   const r = await pool.query(
     `SELECT screen_id, erisim, can_create AS yeni, incele, duzelt, kopyala, sil
-     FROM user_screen_permissions WHERE kisi_id=$1`,
+     FROM user_screen_permissions WHERE user_id=$1`,
     [kisiId]
   );
   return r.rows;
@@ -23,7 +23,7 @@ async function loadCompanyPermissions(kisiId) {
     `SELECT f.id AS company_id, f.company_code, f.company_name
      FROM user_company_permissions k
      JOIN companies f ON f.id = k.company_id
-     WHERE k.kisi_id=$1
+     WHERE k.user_id=$1
      ORDER BY f.company_code`,
     [kisiId]
   );
@@ -64,11 +64,11 @@ async function userPayload(u) {
     group_code: u.group_code,
     group_name: u.group_name,
     profile_image: u.profile_image || null,
-    satinalma_onay: u.satinalma_onay,
+    can_approve_purchase: u.can_approve_purchase,
     purchase_requisition_ref: u.purchase_requisition_ref,
-    kalite_control: u.kalite_control,
+    can_quality_control: u.can_quality_control,
     module_permissions: parseJsonArr(u.module_permissions, ['*']),
-    warehouse_yetkileri: parseJsonArr(u.warehouse_yetkileri, ['*']),
+    warehouse_permissions: parseJsonArr(u.warehouse_permissions, ['*']),
     yetkiler,
     firma_yetkileri,
   };
@@ -77,8 +77,8 @@ async function userPayload(u) {
 async function loadUser(kod) {
   if (!kod) return null;
   const r = await pool.query(
-    `SELECT k.*, g.satinalma_onay, g.purchase_requisition_ref, g.kalite_control,
-            g.module_permissions, g.warehouse_yetkileri, g.group_name
+    `SELECT k.*, g.can_approve_purchase, g.purchase_requisition_ref, g.can_quality_control,
+            g.module_permissions, g.warehouse_permissions, g.group_name
      FROM users k
      LEFT JOIN user_groups g ON g.group_code = k.group_code AND g.is_active = TRUE
      WHERE k.user_code = $1 OR k.username = $1`,
@@ -120,8 +120,8 @@ router.post('/login', async (req, res, next) => {
       if (!ldap.ok) {
         return res.status(401).json({ hata: ldap.hata || 'LDAP giriş başarısız.' });
       }
-    } else if (u.parola_hash) {
-      if (!parola || !dogrulaParola(parola, u.parola_hash)) {
+    } else if (u.password_hash) {
+      if (!parola || !dogrulaParola(parola, u.password_hash)) {
         return res.status(401).json({ hata: 'Parola hatalı.' });
       }
     } else {
@@ -135,7 +135,7 @@ router.post('/login', async (req, res, next) => {
     const access_token = signAccess({ user_code: u.user_code, id: u.id }, ttl);
     const refresh_token = signRefresh({ user_code: u.user_code, id: u.id });
     await pool.query(
-      `UPDATE users SET son_giris_at = NOW(), refresh_token_hash = $2 WHERE id = $1`,
+      `UPDATE users SET last_login_at = NOW(), refresh_token_hash = $2 WHERE id = $1`,
       [u.id, hashToken(refresh_token)]
     );
 
@@ -227,10 +227,10 @@ router.post('/parola-ayarla', async (req, res, next) => {
     }
     const r = await pool.query(`SELECT * FROM users WHERE user_code=$1`, [user_code]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kullanıcı yok.' });
-    if (r.rows[0].parola_hash && !dogrulaParola(parola || '', r.rows[0].parola_hash)) {
+    if (r.rows[0].password_hash && !dogrulaParola(parola || '', r.rows[0].password_hash)) {
       return res.status(403).json({ hata: 'Mevcut parola hatalı.' });
     }
-    await pool.query(`UPDATE users SET parola_hash=$1 WHERE id=$2`, [hashParola(yeni_parola), r.rows[0].id]);
+    await pool.query(`UPDATE users SET password_hash=$1 WHERE id=$2`, [hashParola(yeni_parola), r.rows[0].id]);
     res.json({ ok: true, user_code });
   } catch (err) {
     next(err);

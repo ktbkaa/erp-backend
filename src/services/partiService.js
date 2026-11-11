@@ -2,7 +2,7 @@ const { nextSequenceCode } = require('../utils/kodUretici');
 
 async function itemLotPolicy(client, stokId) {
     const r = await client.query(
-        `SELECT id, item_code, lot_politika, kalite_control_gerekli, varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id, safety_stock
+        `SELECT id, item_code, lot_policy, quality_control_required, default_receipt_warehouse_id, default_issue_warehouse_id, safety_stock
          FROM items WHERE id=$1`,
         [stokId]
     );
@@ -22,7 +22,7 @@ async function resolveLot(client, {
     kaynakId = null,
 }) {
     const stok = await itemLotPolicy(client, stokId);
-    const politika = stok.lot_politika || 'Takipsiz';
+    const politika = stok.lot_policy || 'Takipsiz';
 
     if (politika === 'Takipsiz') {
         return { partiId: null, stok };

@@ -211,8 +211,8 @@ async function ensureCompanyPermissions(client, companyId) {
   )).rows;
   for (const u of users) {
     await client.query(
-      `INSERT INTO user_company_permissions (kisi_id, company_id)
-       VALUES ($1,$2) ON CONFLICT (kisi_id, company_id) DO NOTHING`,
+      `INSERT INTO user_company_permissions (user_id, company_id)
+       VALUES ($1,$2) ON CONFLICT (user_id, company_id) DO NOTHING`,
       [u.id, companyId]
     );
   }
@@ -425,7 +425,7 @@ async function purgeElek(client, companyId) {
   const nulls = [
     [`UPDATE goods_receipts SET vendor_delivery_note_id=NULL WHERE company_id=$1`, [id], 'null gr.vdn'],
     [`UPDATE purchase_orders SET quotation_id=NULL, requisition_id=NULL WHERE company_id=$1`, [id], 'null po refs'],
-    [`UPDATE purchase_quotations SET istek_id=NULL, requisition_id=NULL WHERE company_id=$1`, [id], 'null pq refs'],
+    [`UPDATE purchase_quotations SET rfq_id=NULL, requisition_id=NULL WHERE company_id=$1`, [id], 'null pq refs'],
     [`UPDATE purchase_agreements SET quotation_id=NULL WHERE company_id=$1`, [id], 'null pa.quot'],
     [`UPDATE production_orders SET product_bom_id=NULL, route_id=NULL, sales_order_id=NULL
        WHERE company_id=$1
@@ -438,7 +438,7 @@ async function purgeElek(client, companyId) {
           OR delivery_line_id IN (SELECT id FROM delivery_note_lines WHERE delivery_note_id IN (${dnScope}))`, [id], 'null inv.line refs'],
     [`UPDATE invoices SET delivery_note_id=NULL, sales_order_id=NULL, goods_receipt_id=NULL, gl_document_id=NULL
        WHERE company_id=$1 OR partner_id IN (${partnerScope}) OR delivery_note_id IN (${dnScope})`, [id], 'null inv refs'],
-    [`UPDATE delivery_note_lines SET ship_emri_line_id=NULL, sales_order_line_id=NULL
+    [`UPDATE delivery_note_lines SET shipment_order_line_id=NULL, sales_order_line_id=NULL
        WHERE delivery_note_id IN (${dnScope})`, [id], 'null dn.line refs'],
     [`UPDATE delivery_notes SET sales_order_id=NULL, shipment_order_id=NULL, item_movement_id=NULL
        WHERE id IN (${dnScope})`, [id], 'null dn refs'],
@@ -568,7 +568,7 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM purchase_quotation_lines WHERE quotation_id IN (
         SELECT id FROM purchase_quotations WHERE company_id=$1 OR partner_id IN (SELECT id FROM partners WHERE company_id=$1))`, [id], 'pq_lines2'],
     [`DELETE FROM purchase_quotations WHERE company_id=$1 OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'purchase_quotations'],
-    [`DELETE FROM rfq_lines WHERE istek_id IN (SELECT id FROM rfqs WHERE company_id=$1)`, [id], 'rfq_lines'],
+    [`DELETE FROM rfq_lines WHERE rfq_id IN (SELECT id FROM rfqs WHERE company_id=$1)`, [id], 'rfq_lines'],
     [`DELETE FROM rfqs WHERE company_id=$1`, [id], 'rfqs'],
     [`DELETE FROM purchase_requisition_lines WHERE requisition_id IN (
         SELECT id FROM purchase_requisitions
@@ -576,18 +576,18 @@ async function purgeElek(client, companyId) {
         OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'pr_lines'],
     [`DELETE FROM purchase_requisitions
        WHERE company_id=$1 OR project_code LIKE 'TEKS%' OR description ILIKE '%TEKS-%'`, [id], 'purchase_requisitions'],
-    [`DELETE FROM purchase_agreement_lines WHERE anlasma_id IN (SELECT id FROM purchase_agreements WHERE company_id=$1)
+    [`DELETE FROM purchase_agreement_lines WHERE agreement_id IN (SELECT id FROM purchase_agreements WHERE company_id=$1)
         OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'pa_lines'],
     [`DELETE FROM purchase_agreements WHERE company_id=$1
         OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'purchase_agreements'],
-    [`DELETE FROM production_order_operation_components WHERE operasyon_id IN (
+    [`DELETE FROM production_order_operation_components WHERE operation_id IN (
         SELECT o.id FROM production_order_operations o
         JOIN production_orders e ON e.id=o.order_id WHERE e.company_id=$1)`, [id], 'pooc'],
     [`DELETE FROM production_order_operations WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_ops'],
     [`DELETE FROM production_order_components WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_comps'],
     [`DELETE FROM production_byproducts WHERE production_order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_by'],
     [`DELETE FROM production_receipts WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_rcpt'],
-    [`DELETE FROM production_order_operation_components WHERE operasyon_id IN (
+    [`DELETE FROM production_order_operation_components WHERE operation_id IN (
         SELECT o.id FROM production_order_operations o
         JOIN production_orders e ON e.id=o.order_id
         WHERE e.item_id IN (SELECT id FROM items WHERE company_id=$1))`, [id], 'pooc2'],
@@ -623,7 +623,7 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM price_lists WHERE company_id=$1`, [id], 'price_lists'],
     [`DELETE FROM routing_operation_equipment WHERE operation_id IN (
         SELECT o.id FROM routing_operations o JOIN routings r ON r.id=o.route_id WHERE r.company_id=$1)`, [id], 'roe'],
-    [`DELETE FROM routing_operation_components WHERE operasyon_id IN (
+    [`DELETE FROM routing_operation_components WHERE operation_id IN (
         SELECT o.id FROM routing_operations o JOIN routings r ON r.id=o.route_id WHERE r.company_id=$1)`, [id], 'roc'],
     [`DELETE FROM routing_operations WHERE route_id IN (SELECT id FROM routings WHERE company_id=$1)`, [id], 'routing_ops'],
     [`DELETE FROM routings WHERE company_id=$1`, [id], 'routings'],
@@ -643,7 +643,7 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM item_languages WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_languages'],
     [`DELETE FROM item_details WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_details'],
     [`DELETE FROM item_substitutes WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)
-        OR ikame_item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_subs'],
+        OR substitute_item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_subs'],
     [`DELETE FROM item_reservations WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_res'],
     [`DELETE FROM item_serials WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_serials'],
     [`DELETE FROM item_cost_movements WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_cost'],
@@ -706,8 +706,8 @@ async function createPartner(client, { name, type, companyId, plantId, tag }) {
   const kod = await nextSequenceCode(client, partnerTypeFromSeriesCode(type));
   return (await client.query(
     `INSERT INTO partners (
-       partner_code, partner_name, partner_type, telefon, email, il, country, currency_code,
-       payment_due_days, is_active, company_id, plant_id, notlar
+       partner_code, partner_name, partner_type, phone, email, province, country, currency_code,
+       payment_due_days, is_active, company_id, plant_id, notes
      ) VALUES ($1,$2,$3,$4,$5,'İstanbul','Türkiye','TRY',30,TRUE,$6,$7,$8)
      RETURNING *`,
     [kod, name, type, '02125550100', `${kod.toLowerCase()}@elek.demo`, companyId, plantId, tag]
@@ -722,8 +722,8 @@ async function createItem(client, {
   const row = (await client.query(
     `INSERT INTO items (
        item_code, item_name, uom_code, sales_price, item_type, tedarik_type,
-       is_active, company_id, varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id,
-       kalite_control_gerekli, description, temin_suresi_days, safety_stock
+       is_active, company_id, default_receipt_warehouse_id, default_issue_warehouse_id,
+       quality_control_required, description, lead_time_days, safety_stock
      ) VALUES ($1,$2,'AD',$3,$4,$5,TRUE,$6,$7,$8,$9,$10,$11,$12)
      RETURNING *`,
     [
@@ -824,7 +824,7 @@ async function seedBase(client, org) {
   const bom = (await client.query(
     `INSERT INTO boms (
        finished_good_item_id, bom_code, bom_name, quantity, uom_code,
-       company_id, plant_id, alt_no, bom_type, bom_status, is_active,
+       company_id, plant_id, alternative_no, bom_type, bom_status, is_active,
        is_default_for_wo, fg_warehouse_id, notes
      ) VALUES ($1,$2,$3,1,'AD',$4,$5,'00','Uretim','Onayli',TRUE,TRUE,$6,$7)
      RETURNING *`,
@@ -849,8 +849,8 @@ async function seedBase(client, org) {
   const routeCode = await nextSequenceCode(client, 'ROTA');
   const rota = (await client.query(
     `INSERT INTO routings (
-       item_id, product_bom_id, route_code, route_name, template, varsayilan,
-       company_id, plant_id, route_type, alt_no, is_active, notes
+       item_id, product_bom_id, route_code, route_name, template, is_default,
+       company_id, plant_id, route_type, alternative_no, is_active, notes
      ) VALUES ($1,$2,$3,$4,FALSE,TRUE,$5,$6,'Uretim','00',TRUE,$7)
      RETURNING *`,
     [fg.id, bom.id, routeCode, `${fg.item_name} Rotası`, firma.id, plant.id, tag]
@@ -867,7 +867,7 @@ async function seedBase(client, org) {
     const ins = await client.query(
       `INSERT INTO routing_operations (
          route_id, line_no, operation_code, operation_name, work_center_id,
-         sure_dk, op_time, op_time_uom, sonraki_line_no, output_item_id,
+         duration_minutes, op_time, op_time_uom, next_line_no, output_item_id,
          include_precost, include_std_cost, include_actual_cost, require_qc
        ) VALUES ($1,$2,$3,$4,$5,$6,$6,'dk',$7,$8,TRUE,TRUE,TRUE,$9)
        RETURNING id`,
@@ -881,7 +881,7 @@ async function seedBase(client, org) {
   }
   // Op malzemeleri: Pamuk İpliği+kond+bobin → OP10/20, gövde → OP40
   await client.query(
-    `INSERT INTO routing_operation_components (operasyon_id, item_id, quantity, uom_code) VALUES
+    `INSERT INTO routing_operation_components (operation_id, item_id, quantity, uom_code) VALUES
      ($1,$2,1,'AD'), ($1,$3,4,'AD'), ($4,$5,2,'AD'), ($6,$7,1,'AD')`,
     [opIds.OP10, hmIplik.id, hmElastan.id, opIds.OP20, hmBoya.id, opIds.OP40, hmAstar.id]
   );
@@ -1006,7 +1006,7 @@ async function seedManuel(client, org, base) {
     const [st, q, p] = prItems[i];
     await client.query(
       `INSERT INTO purchase_requisition_lines (
-         requisition_id, line_no, item_id, quantity, uom_code, tahmini_unit_price, item_code, item_name, project_code
+         requisition_id, line_no, item_id, quantity, uom_code, estimated_unit_price, item_code, item_name, project_code
        ) VALUES ($1,$2,$3,$4,'AD',$5,$6,$7,$8)`,
       [pr.id, (i + 1) * 10, st.id, q, p, st.item_code, st.item_name, tag]
     );
@@ -1048,10 +1048,10 @@ async function seedManuel(client, org, base) {
         module_code: 'SATINALMA',
         document_id: po.id,
         document_no: po.order_no,
-        document_ozet: `[${tag}] SA onay örneği`,
+        document_summary: `[${tag}] SA onay örneği`,
         amount: Number(po.total_amount) || 0,
         currency_code: 'TRY',
-        baslatan_kisi_id: kullanici.id,
+        initiator_user_id: kullanici.id,
         description: `[${tag}] Manuel SA siparişi onay süreci`,
       });
       log('  onay kaydı başlatıldı');
@@ -1069,7 +1069,7 @@ async function seedManuel(client, org, base) {
     warehouse_id: wh.hmd.id,
     company_id: firma.id,
     description: `[${tag}] Mal kabul`,
-    gkk_gerekli: true,
+    incoming_qc_required: true,
     internal_note: tag,
   }, firma.id);
 
@@ -1107,10 +1107,10 @@ async function seedManuel(client, org, base) {
     component_warehouse_id: wh.hmd.id,
     fg_warehouse_id: wh.mam.id,
     wip_warehouse_id: wh.ana.id,
-    planlanan_quantity: qty,
+    planned_quantity: qty,
     order_type_id: 3, // SIP
     sales_order_id: so.id,
-    planli_kesin: 'Kesin',
+    planned_firm: 'Kesin',
     description: `[${tag}] İş emri — satış siparişinden, MRP yok`,
     order_date: today,
   }, firma.id);
@@ -1242,7 +1242,7 @@ async function seedMrp(client, org, base) {
   ihtiyacTarihi.setDate(ihtiyacTarihi.getDate() + 14);
   await client.query(
     `INSERT INTO mrp_independent_requirements
-       (ihtiyac_no, item_id, quantity, uom_code, ihtiyac_date, source, company_id, plant_id, description, is_active, sales_order_id)
+       (requirement_no, item_id, quantity, uom_code, requirement_date, source, company_id, plant_id, description, is_active, sales_order_id)
      VALUES ($1,$2,$3,'AD',$4,'Manuel',$5,$6,$7,TRUE,$8)`,
     [
       biNo, base.fg.id, qty, ihtiyacTarihi.toISOString().slice(0, 10),
@@ -1258,7 +1258,7 @@ async function seedMrp(client, org, base) {
     created_by: 'demo-elek-tam-dongu',
   });
 
-  log(`  MRP: ${sonuc.calisma?.run_no || sonuc.calisma?.calisma_no} satır=${sonuc.calisma?.line_sayisi || sonuc.calisma?.satir_sayisi}`);
+  log(`  MRP: ${sonuc.calisma?.run_no || sonuc.calisma?.calisma_no} satır=${sonuc.calisma?.line_count || sonuc.calisma?.satir_sayisi}`);
 
   const calismaId = sonuc.calisma?.id;
   // API ayrı bağlantı — MRP çalışmasını görmesi için commit
@@ -1362,10 +1362,10 @@ async function seedMrp(client, org, base) {
               module_code: 'SATINALMA',
               document_id: poMrp.id,
               document_no: poMrp.order_no,
-              document_ozet: `[${tag}] MRP SA onay örneği`,
+              document_summary: `[${tag}] MRP SA onay örneği`,
               amount: Number(poMrp.total_amount) || 0,
               currency_code: 'TRY',
-              baslatan_kisi_id: kullanici.id,
+              initiator_user_id: kullanici.id,
               description: `[${tag}] MRP SA siparişi onay süreci`,
             });
           }
@@ -1378,7 +1378,7 @@ async function seedMrp(client, org, base) {
           warehouse_id: wh.hmd.id,
           company_id: firma.id,
           description: `[${tag}] MRP mal kabul`,
-          gkk_gerekli: true,
+          incoming_qc_required: true,
           internal_note: tag,
         }, firma.id);
 
@@ -1458,10 +1458,10 @@ async function seedMrp(client, org, base) {
         component_warehouse_id: wh.hmd.id,
         fg_warehouse_id: wh.mam.id,
         wip_warehouse_id: wh.ana.id,
-        planlanan_quantity: qty,
+        planned_quantity: qty,
         order_type_id: 3,
         sales_order_id: so.id,
-        planli_kesin: 'Kesin',
+        planned_firm: 'Kesin',
         description: `[${tag}] İş emri — MRP sonrası (tam rota)`,
         order_date: today,
       }, firma.id);
@@ -1484,10 +1484,10 @@ async function seedMrp(client, org, base) {
         component_warehouse_id: wh.hmd.id,
         fg_warehouse_id: wh.mam.id,
         wip_warehouse_id: wh.ana.id,
-        planlanan_quantity: qty,
+        planned_quantity: qty,
         order_type_id: 3,
         sales_order_id: so.id,
-        planli_kesin: 'Kesin',
+        planned_firm: 'Kesin',
         description: `[${tag}] İş emri — MRP tetikli satış`,
         order_date: today,
       }, firma.id);
@@ -1556,7 +1556,7 @@ async function seedMrp(client, org, base) {
     sales_order: so.order_no,
     independent_requirement: biNo,
     mrp_run: sonuc.calisma?.run_no || sonuc.calisma?.calisma_no || null,
-    mrp_net_positive: sonuc.calisma?.net_pozitif || null,
+    mrp_net_positive: sonuc.calisma?.net_positive_only || null,
     purchase_requisition: talep?.requisition_no || talep?.talep_no || null,
     purchase_order: poMrp?.order_no || null,
     goods_receipt: mkMrp?.receipt_no || null,

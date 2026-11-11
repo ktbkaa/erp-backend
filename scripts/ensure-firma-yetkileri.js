@@ -50,9 +50,9 @@ async function main() {
     for (const u of users) {
       for (const f of firms) {
         const r = await client.query(
-          `INSERT INTO user_company_permissions (kisi_id, company_id)
+          `INSERT INTO user_company_permissions (user_id, company_id)
            VALUES ($1,$2)
-           ON CONFLICT (kisi_id, company_id) DO NOTHING`,
+           ON CONFLICT (user_id, company_id) DO NOTHING`,
           [u.id, f.id]
         );
         n += r.rowCount || 0;
@@ -62,7 +62,7 @@ async function main() {
     const check = await client.query(
       `SELECT u.user_code, c.company_code
        FROM user_company_permissions p
-       JOIN users u ON u.id = p.kisi_id
+       JOIN users u ON u.id = p.user_id
        JOIN companies c ON c.id = p.company_id
        WHERE c.company_code = ANY($1::text[])
        ORDER BY u.user_code, c.company_code`,

@@ -26,13 +26,13 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { status_code, status_name, line_no, nihai, olumlu, is_active } = req.body;
+    const { status_code, status_name, line_no, is_final: nihai, is_positive: olumlu, is_active } = req.body;
     if (!status_code || !status_name) {
       return res.status(400).json({ hata: 'status_code ve status_name zorunlu.' });
     }
     const r = await pool.query(
       `
-      INSERT INTO approval_statuses (status_code, status_name, line_no, nihai, olumlu, is_active)
+      INSERT INTO approval_statuses (status_code, status_name, line_no, is_final, is_positive, is_active)
       VALUES ($1,$2,COALESCE($3,10),COALESCE($4,FALSE),COALESCE($5,FALSE),COALESCE($6,TRUE))
       RETURNING *
       `,
@@ -46,14 +46,14 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { status_name, line_no, nihai, olumlu, is_active } = req.body;
+    const { status_name, line_no, is_final: nihai, is_positive: olumlu, is_active } = req.body;
     const r = await pool.query(
       `
       UPDATE approval_statuses SET
         status_name = COALESCE($2, status_name),
         line_no = COALESCE($3, line_no),
-        nihai = COALESCE($4, nihai),
-        olumlu = COALESCE($5, olumlu),
+        is_final = COALESCE($4, is_final),
+        is_positive = COALESCE($5, is_positive),
         is_active = COALESCE($6, is_active)
       WHERE id=$1 RETURNING *
       `,
@@ -70,7 +70,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const r = await pool.query('DELETE FROM approval_statuses WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Durum bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

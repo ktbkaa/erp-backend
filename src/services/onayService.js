@@ -17,7 +17,7 @@ async function getRecord(client, id) {
     LEFT JOIN approval_statuses d ON d.status_code = k.status_code
     LEFT JOIN approval_routes r ON r.id = k.route_id
     LEFT JOIN approval_rules ku ON ku.id = k.rule_id
-    LEFT JOIN users b ON b.id = k.baslatan_kisi_id
+    LEFT JOIN users b ON b.id = k.initiator_user_id
     WHERE k.id = $1
     `,
     [id],
@@ -34,7 +34,7 @@ async function getRecord(client, id) {
     FROM approval_record_steps a
     LEFT JOIN approval_roles role ON role.id = a.role_id
     LEFT JOIN approval_statuses d ON d.status_code = a.status_code
-    LEFT JOIN users o ON o.id = a.approved_by_kisi_id
+    LEFT JOIN users o ON o.id = a.approved_by_user_id
     WHERE a.record_id = $1
     ORDER BY a.line_no
     `,
@@ -50,7 +50,7 @@ async function userRoleNames(client, kisiId, { firmaId = null, isYeriId = null }
   let sql = `
     SELECT DISTINCT r.role_name
     FROM approval_roles r
-    WHERE r.is_active = TRUE AND r.kisi_id = $1
+    WHERE r.is_active = TRUE AND r.user_id = $1
   `;
   if (firmaId) {
     params.push(firmaId);
@@ -68,8 +68,8 @@ async function userRoleNames(client, kisiId, { firmaId = null, isYeriId = null }
     SELECT DISTINCT COALESCE(role.role_name, d_rol.role_name) AS role_name
     FROM approval_delegations d
     LEFT JOIN approval_roles role ON role.id = d.role_id
-    LEFT JOIN approval_roles d_rol ON d_rol.kisi_id = d.veren_kisi_id AND d_rol.is_active = TRUE
-    WHERE d.field_kisi_id = $1
+    LEFT JOIN approval_roles d_rol ON d_rol.user_id = d.delegator_user_id AND d_rol.is_active = TRUE
+    WHERE d.delegate_user_id = $1
       AND d.is_active = TRUE
       AND d.start_date <= CURRENT_DATE
       AND (d.end_date IS NULL OR d.end_date >= CURRENT_DATE)
@@ -86,7 +86,7 @@ async function userRoleNames(client, kisiId, { firmaId = null, isYeriId = null }
 async function userRoleIds(client, kisiId) {
   if (!kisiId) return [];
   const r = await client.query(
-    `SELECT id FROM approval_roles WHERE is_active = TRUE AND kisi_id = $1`,
+    `SELECT id FROM approval_roles WHERE is_active = TRUE AND user_id = $1`,
     [kisiId],
   );
   return r.rows.map((x) => Number(x.id));
@@ -112,15 +112,15 @@ async function startApproval(client, {
   module_code,
   document_id = null,
   document_no = null,
-  document_ozet = null,
+  document_summary = null,
   amount = 0,
   currency_code = 'TRY',
   company_id = null,
   plant_id = null,
-  baslatan_kisi_id = null,
+  initiator_user_id = null,
   route_id = null,
   rule_id = null,
-  kullanim_id = null,
+  usage_id = null,
   description = null,
   movement_code = null,
   direction = null,
@@ -174,8 +174,8 @@ async function startApproval(client, {
   }
 
   // Geriye uyum: eski modül kullanımı
-  if (!kural && kullanim_id) {
-    const r = await client.query(`SELECT * FROM approval_module_usages WHERE id=$1`, [kullanim_id]);
+  if (!kural && usage_id) {
+    const r = await client.query(`SELECT * FROM approval_module_usages WHERE id=$1`, [usage_id]);
     if (r.rows[0]) {
       kural = { id: null, screen_id: r.rows[0].screen_id, modul_proxy: r.rows[0] };
     }
@@ -187,7 +187,7 @@ async function startApproval(client, {
       `
       SELECT id FROM approval_routes
       WHERE is_active=TRUE AND (rule_id=$1 OR screen_id=$2)
-      ORDER BY rule_id NULLS LAST, versiyon DESC
+      ORDER BY rule_id NULLS LAST, version_no DESC
       LIMIT 1
       `,
       [kural.id, kural.screen_id || screen_id],
@@ -196,7 +196,7 @@ async function startApproval(client, {
   }
   if (!rotaId && screen_id) {
     const rr = await client.query(
-      `SELECT id FROM approval_routes WHERE is_active=TRUE AND screen_id=$1 ORDER BY versiyon DESC LIMIT 1`,
+      `SELECT id FROM approval_routes WHERE is_active=TRUE AND screen_id=$1 ORDER BY version_no DESC LIMIT 1`,
       [screen_id],
     );
     rotaId = rr.rows[0]?.id;
@@ -210,8 +210,8 @@ async function startApproval(client, {
     throw err;
   }
 
-  if (kural?.otomatik_onay) {
-    return { atlandi: true, neden: 'otomatik_onay', rule_id: kural.id };
+  if (kural?.auto_approve) {
+    return { atlandi: true, neden: 'auto_approve', rule_id: kural.id };
   }
 
   if (document_id && (screen_id || kural?.screen_id)) {
@@ -252,9 +252,9 @@ async function startApproval(client, {
   const kayit = await client.query(
     `
     INSERT INTO approval_records (
-      onay_no, rule_id, route_id, company_id, module_code, screen_id,
-      document_id, document_no, document_ozet, amount, currency_code, status_code,
-      active_step_no, baslatan_kisi_id, description
+      approval_no, rule_id, route_id, company_id, module_code, screen_id,
+      document_id, document_no, document_summary, amount, currency_code, status_code,
+      active_step_no, initiator_user_id, description
     ) VALUES (
       $1,$2,$3,$4,$5,$6,
       $7,$8,$9,$10,$11,'BEKLIYOR',
@@ -270,11 +270,11 @@ async function startApproval(client, {
       screen_id || kural?.screen_id,
       document_id,
       document_no,
-      document_ozet,
+      document_summary,
       amount || 0,
       currency_code || 'TRY',
       uygulanacak[0].line_no,
-      baslatan_kisi_id,
+      initiator_user_id,
       description,
     ],
   );
@@ -284,7 +284,7 @@ async function startApproval(client, {
     await client.query(
       `
       INSERT INTO approval_record_steps (
-        record_id, line_no, step_name, role_id, role_name, status_code, zorunlu
+        record_id, line_no, step_name, role_id, role_name, status_code, is_required
       ) VALUES ($1,$2,$3,$4,$5,$6,$7)
       `,
       [
@@ -294,7 +294,7 @@ async function startApproval(client, {
         a.role_id || null,
         a.role_name || a.step_name,
         a.line_no === uygulanacak[0].line_no ? 'BEKLIYOR' : 'TASLAK',
-        a.zorunlu,
+        a.is_required,
       ],
     );
   }
@@ -321,7 +321,7 @@ async function assertAdimYetkisi(client, adim, kullanici, kayit) {
   return true;
 }
 
-async function onaylaAdim(client, kayitId, kullanici, { notlar = null } = {}) {
+async function onaylaAdim(client, kayitId, kullanici, { notes: notlar = null } = {}) {
   const kayit = await getRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
@@ -349,9 +349,9 @@ async function onaylaAdim(client, kayitId, kullanici, { notlar = null } = {}) {
     `
     UPDATE approval_record_steps SET
       status_code = 'ONAYLANDI',
-      approved_by_kisi_id = $2,
+      approved_by_user_id = $2,
       action_date = CURRENT_TIMESTAMP,
-      notlar = COALESCE($3, notlar)
+      notes = COALESCE($3, notes)
     WHERE id = $1
     `,
     [is_active.id, kullanici.id, notlar],
@@ -383,7 +383,7 @@ async function onaylaAdim(client, kayitId, kullanici, { notlar = null } = {}) {
   return getRecord(client, kayitId);
 }
 
-async function reddetAdim(client, kayitId, kullanici, { notlar = null } = {}) {
+async function reddetAdim(client, kayitId, kullanici, { notes: notlar = null } = {}) {
   const kayit = await getRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
@@ -409,9 +409,9 @@ async function reddetAdim(client, kayitId, kullanici, { notlar = null } = {}) {
     `
     UPDATE approval_record_steps SET
       status_code = 'REDDEDILDI',
-      approved_by_kisi_id = $2,
+      approved_by_user_id = $2,
       action_date = CURRENT_TIMESTAMP,
-      notlar = COALESCE($3, notlar)
+      notes = COALESCE($3, notes)
     WHERE id = $1
     `,
     [is_active.id, kullanici.id, notlar],
@@ -430,7 +430,7 @@ async function reddetAdim(client, kayitId, kullanici, { notlar = null } = {}) {
   return getRecord(client, kayitId);
 }
 
-async function cancelRecord(client, kayitId, kullanici, { notlar = null } = {}) {
+async function cancelRecord(client, kayitId, kullanici, { notes: notlar = null } = {}) {
   const kayit = await getRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
@@ -442,7 +442,7 @@ async function cancelRecord(client, kayitId, kullanici, { notlar = null } = {}) 
     err.status = 409;
     throw err;
   }
-  if (!isTamYetkili(kullanici) && Number(kayit.baslatan_kisi_id) !== Number(kullanici?.id)) {
+  if (!isTamYetkili(kullanici) && Number(kayit.initiator_user_id) !== Number(kullanici?.id)) {
     const err = new Error('Yalnız başlatan veya yönetici iptal edebilir.');
     err.status = 403;
     throw err;

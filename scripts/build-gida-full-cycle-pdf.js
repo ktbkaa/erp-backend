@@ -220,7 +220,7 @@ function imgData(file) {
 }
 
 const balRows = (recon.balances || []).map((r) =>
-  `<tr><td>${esc(r.item_code)}</td><td>${esc(r.item_name)}</td><td>${esc(r.warehouse_code)}</td><td>${esc(r.warehouse_rolu)}</td><td>${esc(r.stock_status)}</td><td class="num">${esc(r.qty)}</td></tr>`
+  `<tr><td>${esc(r.item_code)}</td><td>${esc(r.item_name)}</td><td>${esc(r.warehouse_code)}</td><td>${esc(r.warehouse_role)}</td><td>${esc(r.stock_status)}</td><td class="num">${esc(r.qty)}</td></tr>`
 ).join('');
 
 const jeRows = (recon.journals || []).map((r) =>

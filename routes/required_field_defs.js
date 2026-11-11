@@ -123,7 +123,7 @@ router.delete('/:id', async (req, res, next) => {
       [req.params.id],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Zorunlu alan tanımı bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

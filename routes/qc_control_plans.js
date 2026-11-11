@@ -47,15 +47,15 @@ router.post('/', async (req, res) => {
             );
             const planId = r.rows[0].id;
             for (const [i, k] of (kriterler || []).entries()) {
-                if (!k.kriter_code || !k.kriter_name) continue;
+                if (!k.criterion_code || !k.criterion_name) continue;
                 await client.query(
                     `
                     INSERT INTO qc_criteria
-                        (plan_id, line_no, kriter_code, kriter_name, olcum_type, min_value, max_value, target_value, uom_code, zorunlu)
+                        (plan_id, line_no, criterion_code, criterion_name, measurement_type, min_value, max_value, target_value, uom_code, is_required)
                     VALUES ($1,$2,$3,$4,COALESCE($5,'Sayisal'),$6,$7,$8,$9,COALESCE($10,TRUE))
                     `,
-                    [planId, k.line_no || i + 1, k.kriter_code, k.kriter_name, k.olcum_type,
-                        k.min_value, k.max_value, k.target_value, k.uom_code, k.zorunlu]
+                    [planId, k.line_no || i + 1, k.criterion_code, k.criterion_name, k.measurement_type,
+                        k.min_value, k.max_value, k.target_value, k.uom_code, k.is_required]
                 );
             }
             return planId;
@@ -89,15 +89,15 @@ router.put('/:id', async (req, res) => {
             if (Array.isArray(kriterler)) {
                 await client.query('DELETE FROM qc_criteria WHERE plan_id=$1', [req.params.id]);
                 for (const [i, k] of kriterler.entries()) {
-                    if (!k.kriter_code || !k.kriter_name) continue;
+                    if (!k.criterion_code || !k.criterion_name) continue;
                     await client.query(
                         `
                         INSERT INTO qc_criteria
-                            (plan_id, line_no, kriter_code, kriter_name, olcum_type, min_value, max_value, target_value, uom_code, zorunlu)
+                            (plan_id, line_no, criterion_code, criterion_name, measurement_type, min_value, max_value, target_value, uom_code, is_required)
                         VALUES ($1,$2,$3,$4,COALESCE($5,'Sayisal'),$6,$7,$8,$9,COALESCE($10,TRUE))
                         `,
-                        [req.params.id, k.line_no || i + 1, k.kriter_code, k.kriter_name, k.olcum_type,
-                            k.min_value, k.max_value, k.target_value, k.uom_code, k.zorunlu]
+                        [req.params.id, k.line_no || i + 1, k.criterion_code, k.criterion_name, k.measurement_type,
+                            k.min_value, k.max_value, k.target_value, k.uom_code, k.is_required]
                     );
                 }
             }
@@ -112,7 +112,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM qc_control_plans WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Plan bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

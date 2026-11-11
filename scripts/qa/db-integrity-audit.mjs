@@ -167,7 +167,7 @@ async function main() {
 
   // Silinmiş belgelere bağlı açık satırlar (örnek SO)
   const silindi = await q(`
-    SELECT count(*)::int AS c FROM sales_orders WHERE COALESCE(silindi,false)=true AND status NOT IN ('Iptal','Kapali')
+    SELECT count(*)::int AS c FROM sales_orders WHERE COALESCE(is_deleted,false)=true AND status NOT IN ('Iptal','Kapali')
   `);
   if (silindi.ok) {
     const n = Number(silindi.rows[0]?.c || 0);

@@ -109,7 +109,7 @@ router.post('/', async (req, res) => {
     let {
       rule_code, rule_name, line_no, company_id, plant_id, screen_id, template_id,
       term_direction, term_min_amount, term_max_amount, condition_statuses,
-      otomatik_onay, onaylaninca_is_active, is_active, description, hareketler,
+      auto_approve, activate_on_approval, is_active, description, hareketler,
     } = req.body;
     if (!rule_name || !screen_id) {
       return res.status(400).json({ hata: 'Kural adı ve ekran seçimi zorunlu.' });
@@ -124,7 +124,7 @@ router.post('/', async (req, res) => {
         INSERT INTO approval_rules (
           rule_code, rule_name, line_no, company_id, plant_id, screen_id, template_id,
           term_direction, term_min_amount, term_max_amount, condition_statuses,
-          otomatik_onay, onaylaninca_is_active, is_active, description
+          auto_approve, activate_on_approval, is_active, description
         ) VALUES (
           $1,$2,COALESCE($3,10),$4,$5,$6,$7,
           COALESCE($8,'Hepsi'),$9,$10,$11,
@@ -134,7 +134,7 @@ router.post('/', async (req, res) => {
         [
           rule_code, rule_name, line_no, company_id || null, plant_id || null, screen_id, template_id || null,
           term_direction, term_min_amount ?? null, term_max_amount ?? null, condition_statuses || null,
-          otomatik_onay, onaylaninca_is_active, is_active, description || null,
+          auto_approve, activate_on_approval, is_active, description || null,
         ],
       );
       await saveMovements(client, ins.rows[0].id, hareketler);
@@ -151,7 +151,7 @@ router.put('/:id', async (req, res) => {
     const {
       rule_name, line_no, company_id, plant_id, screen_id, template_id,
       term_direction, term_min_amount, term_max_amount, condition_statuses,
-      otomatik_onay, onaylaninca_is_active, is_active, description, hareketler,
+      auto_approve, activate_on_approval, is_active, description, hareketler,
     } = req.body;
     await withTransaction(pool, async (client) => {
       const r = await client.query(
@@ -167,8 +167,8 @@ router.put('/:id', async (req, res) => {
           term_min_amount = COALESCE($9, term_min_amount),
           term_max_amount = COALESCE($10, term_max_amount),
           condition_statuses = COALESCE($11, condition_statuses),
-          otomatik_onay = COALESCE($12, otomatik_onay),
-          onaylaninca_is_active = COALESCE($13, onaylaninca_is_active),
+          auto_approve = COALESCE($12, auto_approve),
+          activate_on_approval = COALESCE($13, activate_on_approval),
           is_active = COALESCE($14, is_active),
           description = COALESCE($15, description)
         WHERE id=$1 RETURNING id
@@ -176,7 +176,7 @@ router.put('/:id', async (req, res) => {
         [
           req.params.id, rule_name || null, line_no ?? null, company_id, plant_id, screen_id || null, template_id,
           term_direction || null, term_min_amount, term_max_amount, condition_statuses,
-          otomatik_onay, onaylaninca_is_active, is_active, description,
+          auto_approve, activate_on_approval, is_active, description,
         ],
       );
       if (!r.rows[0]) {
@@ -196,7 +196,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const r = await pool.query('DELETE FROM approval_rules WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kural bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

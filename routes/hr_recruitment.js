@@ -513,7 +513,7 @@ router.delete('/cikis-nedenleri/:id', async (req, res) => {
       [req.params.id],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Neden bulunamadı.' });
-    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
+    res.json({ is_deleted: false, pasife_alindi: true, ...r.rows[0] });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

@@ -160,7 +160,7 @@ router.delete('/:id', async (req, res, next) => {
       [req.params.id],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Vergi kodu bulunamadı.' });
-    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
+    res.json({ is_deleted: false, pasife_alindi: true, ...r.rows[0] });
   } catch (err) {
     next(err);
   }

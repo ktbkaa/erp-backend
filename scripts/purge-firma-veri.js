@@ -181,7 +181,7 @@ async function purgeCompany(client, companyId, tables, log) {
 
   // Rota / BOM çocukları
   await deleteWhere(client, 'routing_operation_components',
-    `operasyon_id IN (SELECT id FROM routing_operations WHERE route_id IN (SELECT id FROM routings WHERE company_id=$1))`, p, log);
+    `operation_id IN (SELECT id FROM routing_operations WHERE route_id IN (SELECT id FROM routings WHERE company_id=$1))`, p, log);
   await deleteWhere(client, 'routing_operation_equipment',
     `operation_id IN (SELECT id FROM routing_operations WHERE route_id IN (SELECT id FROM routings WHERE company_id=$1))`, p, log);
   await deleteWhere(client, 'routing_operations',
@@ -217,7 +217,7 @@ async function purgeCompany(client, companyId, tables, log) {
   await deleteWhere(client, 'production_receipts',
     `order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'production_order_operation_components',
-    `operasyon_id IN (SELECT id FROM production_order_operations WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1))`, p, log);
+    `operation_id IN (SELECT id FROM production_order_operations WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1))`, p, log);
   await deleteWhere(client, 'production_order_operations',
     `order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'production_order_components',
@@ -242,9 +242,9 @@ async function purgeCompany(client, companyId, tables, log) {
   await deleteWhere(client, 'transfer_order_lines',
     `order_id IN (SELECT id FROM transfer_orders WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'purchase_agreement_lines',
-    `anlasma_id IN (SELECT id FROM purchase_agreements WHERE company_id=$1)`, p, log);
+    `agreement_id IN (SELECT id FROM purchase_agreements WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'rfq_lines',
-    `istek_id IN (SELECT id FROM rfqs WHERE company_id=$1)`, p, log);
+    `rfq_id IN (SELECT id FROM rfqs WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'receipts_payments',
     `invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)
      OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, p, log);
@@ -277,7 +277,7 @@ async function purgeCompany(client, companyId, tables, log) {
       `item_id IN (SELECT id FROM items WHERE company_id=$1)`, p, log);
   }
   await deleteWhere(client, 'item_substitutes',
-    `ikame_item_id IN (SELECT id FROM items WHERE company_id=$1)`, p, log);
+    `substitute_item_id IN (SELECT id FROM items WHERE company_id=$1)`, p, log);
 
   // İş merkezi (plant üzerinden) — org silinmese bile WC temizlenebilir
   await deleteWhere(client, 'work_stations',

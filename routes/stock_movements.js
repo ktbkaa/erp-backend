@@ -128,17 +128,17 @@ async function saveBarcodeScans(client, {
         if (!src || !line) continue;
         const okumalar = Array.isArray(src.barkod_okumalar) && src.barkod_okumalar.length
             ? src.barkod_okumalar
-            : (src.barkod ? [{ barkod: src.barkod, quantity: 1 }] : []);
+            : (src.barcode ? [{ barcode: src.barcode, quantity: 1 }] : []);
         for (const o of okumalar) {
-            const barkod = String(o?.barkod || '').trim();
+            const barkod = String(o?.barcode || '').trim();
             if (!barkod) continue;
             const qty = Number(o.quantity);
             await withSavepoint(client, 'barkod_scan', async () => {
                 await client.query(
                     `
                     INSERT INTO item_barcode_scans (
-                        company_id, movement_id, movement_line_id, barkod, item_id,
-                        warehouse_id, quantity, movement_type, result, message, okuyan_user
+                        company_id, movement_id, movement_line_id, barcode, item_id,
+                        warehouse_id, quantity, movement_type, result, message, scanned_by
                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Ok',NULL,$9)
                     `,
                     [
@@ -157,11 +157,11 @@ async function saveBarcodeScans(client, {
 
             await withSavepoint(client, 'barkod_seri_parti', async () => {
                 const st = await client.query(
-                    `SELECT series_politika, lot_politika FROM items WHERE id=$1`,
+                    `SELECT serial_policy, lot_policy FROM items WHERE id=$1`,
                     [line.item_id]
                 );
                 const pol = st.rows[0] || {};
-                if (/zorunlu|istege/i.test(String(pol.series_politika || ''))) {
+                if (/zorunlu|istege/i.test(String(pol.serial_policy || ''))) {
                     const mevcut = await client.query(
                         `SELECT id FROM item_serials WHERE item_id=$1 AND serial_no=$2`,
                         [line.item_id, barkod]
@@ -170,7 +170,7 @@ async function saveBarcodeScans(client, {
                     if (!sid) {
                         const ins = await client.query(
                             `
-                            INSERT INTO item_serials (serial_no, item_id, lot_id, warehouse_id, status, son_movement_id)
+                            INSERT INTO item_serials (serial_no, item_id, lot_id, warehouse_id, status, last_movement_id)
                             VALUES ($1,$2,$3,$4,'Depoda',$5) RETURNING id
                             `,
                             [barkod, line.item_id, line.lot_id || null, depoId || null, hareket.id]
@@ -179,7 +179,7 @@ async function saveBarcodeScans(client, {
                     } else {
                         await client.query(
                             `UPDATE item_serials SET warehouse_id=COALESCE($2, warehouse_id),
-                                lot_id=COALESCE($3, lot_id), son_movement_id=$4, status='Depoda'
+                                lot_id=COALESCE($3, lot_id), last_movement_id=$4, status='Depoda'
                              WHERE id=$1`,
                             [sid, depoId || null, line.lot_id || null, hareket.id]
                         );
@@ -191,7 +191,7 @@ async function saveBarcodeScans(client, {
                         );
                     }
                 }
-                if (/zorunlu|istege/i.test(String(pol.lot_politika || '')) && !line.lot_id) {
+                if (/zorunlu|istege/i.test(String(pol.lot_policy || '')) && !line.lot_id) {
                     const lot = await client.query(
                         `SELECT id FROM item_lots WHERE item_id=$1 AND lot_no=$2`,
                         [line.item_id, barkod]
@@ -275,9 +275,9 @@ function prepareLines(body, satirlar) {
         const qty = Number(s.quantity);
         const empty = (!Number.isFinite(itemId) || !itemId)
             && (s.quantity == null || s.quantity === '' || !Number.isFinite(qty) || qty === 0)
-            && !String(s.barkod || '').trim()
-            && !String(s.raf_code || '').trim()
-            && !String(s.konum_code || '').trim();
+            && !String(s.barcode || '').trim()
+            && !String(s.bin_code || '').trim()
+            && !String(s.location_code || '').trim();
         if (empty) continue;
         if (!Number.isFinite(itemId) || !itemId) {
             throw new Error(`Satır ${i + 1}: stok seçimi zorunlu.`);
@@ -291,13 +291,13 @@ function prepareLines(body, satirlar) {
             item_id: itemId,
             quantity: qty,
             uom_code: s.uom_code || null,
-            raf_code: s.raf_code || body.raf_code || null,
-            konum_code: s.konum_code || body.konum_code || null,
+            bin_code: s.bin_code || body.bin_code || null,
+            location_code: s.location_code || body.location_code || null,
             lot_id: s.lot_id || null,
             lot_no: s.lot_no || null,
             serial_no: s.serial_no || null,
             barkod_okumalar: Array.isArray(s.barkod_okumalar) ? s.barkod_okumalar : null,
-            barkod: s.barkod || null,
+            barcode: s.barcode || null,
             unit_price: Number.isFinite(unitPrice) ? unitPrice : 0,
             uom_cost: Number.isFinite(unitPrice) ? unitPrice : 0,
             currency_code: s.currency_code || body.currency_code || 'TRY',
@@ -386,11 +386,11 @@ async function createManualMovement(client, body, req, { hareketNoOpt = null } =
             satirlar: satirHazir.map((s) => ({ ...s, direction: yonGiris })),
         });
         await client.query(
-            `UPDATE stock_movements SET bagli_movement_id=$2, target_warehouse_id=$3 WHERE id=$1`,
+            `UPDATE stock_movements SET linked_movement_id=$2, target_warehouse_id=$3 WHERE id=$1`,
             [cikis.hareket.id, giris.hareket.id, body.target_warehouse_id]
         );
         await client.query(
-            `UPDATE stock_movements SET bagli_movement_id=$2 WHERE id=$1`,
+            `UPDATE stock_movements SET linked_movement_id=$2 WHERE id=$1`,
             [giris.hareket.id, cikis.hareket.id]
         );
         await saveBarcodeScans(client, {
@@ -424,7 +424,7 @@ async function createManualMovement(client, body, req, { hareketNoOpt = null } =
         kullanici,
         firmaId: hareket.hareket.company_id || null,
     });
-    if (hareketKodu.gkk_emri_olussun || hareketKodu.ckk_emri_olussun) {
+    if (hareketKodu.create_incoming_qc_order || hareketKodu.create_outgoing_qc_order) {
         await createQcOrdersFromMovementCode(client, {
             hareketKodu,
             hareket: hareket.hareket,
@@ -449,7 +449,7 @@ async function clearMovementLinks(client, hareketId) {
     if (!id) return;
     await client.query(`DELETE FROM item_cost_movements WHERE movement_id=$1`, [id]).catch(() => {});
     await client.query(
-        `UPDATE item_serials SET son_movement_id=NULL WHERE son_movement_id=$1`,
+        `UPDATE item_serials SET last_movement_id=NULL WHERE last_movement_id=$1`,
         [id]
     ).catch(() => {});
     await client.query(
@@ -464,10 +464,10 @@ async function clearMovementLinks(client, hareketId) {
 
 async function deleteManualMovement(client, row) {
     const ids = [row.id];
-    if (row.bagli_movement_id) ids.push(row.bagli_movement_id);
+    if (row.linked_movement_id) ids.push(row.linked_movement_id);
     // Çift yön bağını çöz
     await client.query(
-        `UPDATE stock_movements SET bagli_movement_id=NULL WHERE id=ANY($1::int[])`,
+        `UPDATE stock_movements SET linked_movement_id=NULL WHERE id=ANY($1::int[])`,
         [ids]
     );
     for (const id of ids) {
@@ -506,7 +506,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const mevcut = await pool.query(
-            `SELECT id, movement_no, document_type, document_id, bagli_movement_id, movement_type, warehouse_id
+            `SELECT id, movement_no, document_type, document_id, linked_movement_id, movement_type, warehouse_id
              FROM stock_movements WHERE id=$1`,
             [req.params.id]
         );
@@ -536,7 +536,7 @@ router.delete('/:id', async (req, res) => {
     try {
         // Manuel hareketler silinebilir; belgeye bağlı (irsaliye/mal kabul) olanlar değil
         const h = await pool.query(
-            `SELECT id, document_type, document_id, bagli_movement_id, movement_type
+            `SELECT id, document_type, document_id, linked_movement_id, movement_type
              FROM stock_movements WHERE id=$1`,
             [req.params.id]
         );
@@ -548,7 +548,7 @@ router.delete('/:id', async (req, res) => {
         await withTransaction(pool, async (client) => {
             await deleteManualMovement(client, row);
         });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

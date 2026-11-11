@@ -118,7 +118,7 @@ router.post('/', async (req, res) => {
           email, phone, mobile_phone, address, emergency_contact_name, emergency_contact_phone,
           department_id, position_id, manager_employee_id, user_id, hire_date, contract_type,
           employment_status, probation_end_date, contract_end_date, work_calendar_id, shift_id,
-          cost_center_code, employee_type, iban, bank_name, sgk_sicil_no, description
+          cost_center_code, employee_type, iban, bank_name, social_security_no, description
         ) VALUES (
           $1,$2,$3,$4,$5,$6,$7,
           COALESCE($8,'TR'),COALESCE($9,'TR'),$10,$11,$12,
@@ -136,7 +136,7 @@ router.post('/', async (req, res) => {
           b.department_id || null, b.position_id || null, b.manager_employee_id || null, b.user_id || null,
           b.hire_date, b.contract_type, b.employment_status, b.probation_end_date || null, b.contract_end_date || null,
           b.work_calendar_id || null, b.shift_id || null, b.cost_center_code || null, b.employee_type,
-          b.iban || null, b.bank_name || null, b.sgk_sicil_no || null, b.description || null,
+          b.iban || null, b.bank_name || null, b.social_security_no || null, b.description || null,
         ],
       );
       const empId = ins.rows[0].id;
@@ -213,7 +213,7 @@ router.put('/:id', async (req, res) => {
           employee_type = COALESCE($22, employee_type),
           iban = COALESCE($23, iban),
           bank_name = COALESCE($24, bank_name),
-          sgk_sicil_no = COALESCE($25, sgk_sicil_no),
+          social_security_no = COALESCE($25, social_security_no),
           description = COALESCE($26, description),
           marital_status = COALESCE($27, marital_status),
           blood_type = COALESCE($28, blood_type),
@@ -226,7 +226,7 @@ router.put('/:id', async (req, res) => {
           b.email, b.phone, b.mobile_phone, b.address, b.emergency_contact_name, b.emergency_contact_phone,
           b.department_id, b.position_id, b.manager_employee_id, b.user_id, b.contract_type,
           b.employment_status, b.work_calendar_id, b.shift_id, b.cost_center_code, b.employee_type,
-          b.iban, b.bank_name, b.sgk_sicil_no, b.description, b.marital_status, b.blood_type,
+          b.iban, b.bank_name, b.social_security_no, b.description, b.marital_status, b.blood_type,
           b.is_active,
         ],
       );
@@ -308,7 +308,7 @@ router.delete('/:id', async (req, res) => {
       [req.params.id],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Personel bulunamadı.' });
-    res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: false, pasife_alindi: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

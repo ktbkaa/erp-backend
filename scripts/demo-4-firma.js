@@ -115,7 +115,7 @@ async function createCompany(client, f) {
   const depolar = {};
   for (const [kod, adi, varsayilan, rol, key] of depoDefs) {
     const d = (await client.query(
-      `INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, aktif, varsayilan, depo_rolu)
+      `INSERT INTO depolar (is_yeri_id, depo_kodu, depo_adi, aktif, is_default, depo_rolu)
        VALUES ($1,$2,$3,TRUE,$4,$5) RETURNING *`,
       [isYeri.id, kod, adi, varsayilan, rol]
     )).rows[0];
@@ -128,8 +128,8 @@ async function createPartner(client, { adi, turu, firmaId, isYeriId, sehir }) {
   const kod = await nextSequenceCode(client, partnerTypeFromSeriesCode(turu));
   return (await client.query(
     `INSERT INTO cariler (
-       cari_kodu, cari_adi, cari_turu, telefon, email, il, ulke, para_birimi,
-       odeme_vadesi_gun, aktif, firma_id, is_yeri_id, notlar
+       cari_kodu, cari_adi, cari_turu, phone, email, province, ulke, para_birimi,
+       odeme_vadesi_gun, aktif, firma_id, is_yeri_id, notes
      ) VALUES ($1,$2,$3,$4,$5,$6,'Türkiye','TRY',30,TRUE,$7,$8,$9)
      RETURNING *`,
     [kod, adi, turu, '0212' + String(1000000 + Math.floor(Math.random() * 8000000)).slice(0, 7),
@@ -260,7 +260,7 @@ async function seedFirm(client, def) {
 
   const rotaNo = await nextSequenceCode(client, 'ROTA').catch(() => `${def.kod}-R1`);
   const rota = (await client.query(
-    `INSERT INTO rotalar (rota_kodu, rota_adi, stok_id, aktif, firma_id, varsayilan)
+    `INSERT INTO rotalar (rota_kodu, rota_adi, stok_id, aktif, firma_id, is_default)
      VALUES ($1,$2,$3,TRUE,$4,TRUE) RETURNING *`,
     [rotaNo, `${def.kod} rota`, ctx.stoklar.mamul.id, firma.id]
   )).rows[0];
@@ -268,7 +268,7 @@ async function seedFirm(client, def) {
   let opSira = 10;
   for (const opAdi of def.operasyonlar) {
     await client.query(
-      `INSERT INTO rota_operasyonlari (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, sure_dk)
+      `INSERT INTO rota_operasyonlari (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, duration_minutes)
        VALUES ($1,$2,$3,$4,$5,$6)`,
       [rota.id, opSira, `OP${opSira}`, opAdi, im.id, 30]
     );
@@ -300,12 +300,12 @@ async function seedFirm(client, def) {
 
   const istekNo = await nextSequenceCode(client, 'SATINALMA_TEKLIF_ISTEK').catch(() => `${def.kod}-TI-1`);
   const istek = (await client.query(
-    `INSERT INTO satin_alma_teklif_istekleri (istek_no, is_yeri_id, firma_id, durum, aciklama)
+    `INSERT INTO satin_alma_teklif_istekleri (rfq_no, is_yeri_id, firma_id, durum, aciklama)
      VALUES ($1,$2,$3,'TeklifeDonustu',$4) RETURNING *`,
     [istekNo, isYeri.id, firma.id, `${def.kod} teklif isteği — ${h0.stok_adi}`]
   )).rows[0];
   await client.query(
-    `INSERT INTO satin_alma_teklif_istek_satirlari (istek_id, stok_id, miktar, birim)
+    `INSERT INTO satin_alma_teklif_istek_satirlari (rfq_id, stok_id, miktar, birim)
      VALUES ($1,$2,50,$3)`,
     [istek.id, h0.id, h0.birim]
   );
@@ -313,7 +313,7 @@ async function seedFirm(client, def) {
   const teklifNo = await nextSequenceCode(client, 'SATINALMA_TEKLIF').catch(() => `${def.kod}-TK-1`);
   const teklif = (await client.query(
     `INSERT INTO satin_alma_teklifleri (
-       teklif_no, cari_id, istek_id, is_yeri_id, firma_id, durum, gecerlilik_tarihi, aciklama
+       teklif_no, cari_id, rfq_id, is_yeri_id, firma_id, durum, gecerlilik_tarihi, aciklama
      ) VALUES ($1,$2,$3,$4,$5,'Onayli',CURRENT_DATE + 30,$6) RETURNING *`,
     [
       teklifNo,
@@ -381,7 +381,7 @@ async function seedFirm(client, def) {
   )).rows[0]?.id;
   const firsat = (await client.query(
     `INSERT INTO crm_firsatlar (
-       firsat_kodu, firsat_adi, musteri_tipi, cari_id, asama_id, durum, firma_id, is_yeri_id, beklenen_gelir, para_birimi
+       firsat_kodu, firsat_adi, musteri_tipi, cari_id, asama_id, durum, firma_id, is_yeri_id, expected_revenue, para_birimi
      ) VALUES ($1,$2,'Musteri',$3,$4,'Acik',$5,$6,$7,'TRY') RETURNING *`,
     [firsatNo, `${def.mamul.adi} fırsatı`, ctx.cariler.musteriler[0].id, asamaId,
       firma.id, isYeri.id, def.mamul.fiyat * 10]

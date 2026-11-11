@@ -10,7 +10,7 @@ const { createQcOrder, resolveOutgoingQcWarehouse, resolveOutgoingQcTargetWareho
 async function resolveType(client, emirTipiId, siparisId) {
     if (emirTipiId) {
         const t = await client.query(
-            'SELECT id, type_code, planli_kesin FROM production_order_types WHERE id=$1 AND is_active=TRUE',
+            'SELECT id, type_code, planned_firm FROM production_order_types WHERE id=$1 AND is_active=TRUE',
             [emirTipiId]
         );
         if (!t.rows[0]) throw new Error('Üretim emri tipi bulunamadı veya is_inactive.');
@@ -18,7 +18,7 @@ async function resolveType(client, emirTipiId, siparisId) {
     }
     const kod = siparisId ? 'SIP' : 'STD';
     const t = await client.query(
-        'SELECT id, type_code, planli_kesin FROM production_order_types WHERE type_code=$1 AND is_active=TRUE',
+        'SELECT id, type_code, planned_firm FROM production_order_types WHERE type_code=$1 AND is_active=TRUE',
         [kod]
     );
     return t.rows[0] || null;
@@ -101,7 +101,7 @@ async function fillOrderMaterials(client, emirId, { urunAgaciId, planlananMiktar
         await client.query(
             `
             INSERT INTO production_order_components
-                (order_id, item_id, planlanan_quantity, tuketilen_quantity, uom_code, line_no, warehouse_id)
+                (order_id, item_id, planned_quantity, consumed_quantity, uom_code, line_no, warehouse_id)
             VALUES ($1,$2,$3,0,$4,$5,$6)
             `,
             [
@@ -130,7 +130,7 @@ async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, b
             `
             INSERT INTO production_order_operations
                 (order_id, line_no, operation_code, operation_name, work_center_id,
-                 output_item_id, sonraki_line_no, planlanan_quantity, status)
+                 output_item_id, next_line_no, planned_quantity, status)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             RETURNING id
             `,
@@ -141,7 +141,7 @@ async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, b
                 op.operation_name,
                 op.work_center_id,
                 op.output_item_id,
-                op.sonraki_line_no,
+                op.next_line_no,
                 plan,
                 ilk ? 'Hazir' : 'Bekliyor',
             ],
@@ -149,14 +149,14 @@ async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, b
         ilk = false;
         n += 1;
         const bilesenler = await client.query(
-            'SELECT * FROM routing_operation_components WHERE operasyon_id=$1',
+            'SELECT * FROM routing_operation_components WHERE operation_id=$1',
             [op.id],
         );
         for (const b of bilesenler.rows) {
             await client.query(
                 `
                 INSERT INTO production_order_operation_components
-                    (operasyon_id, item_id, planlanan_quantity, uom_code)
+                    (operation_id, item_id, planned_quantity, uom_code)
                 VALUES ($1,$2,$3,$4)
                 `,
                 [opIns.rows[0].id, b.item_id, Number(b.quantity) * carpan, b.uom_code],
@@ -180,7 +180,7 @@ async function canFillOrderDetails(client, emirId) {
         throw new Error('Başlatılmış veya üretimi olan emirde detaylar silinip yeniden doldurulamaz.');
     }
     const tuk = await client.query(
-        `SELECT COALESCE(SUM(tuketilen_quantity),0)::numeric AS t FROM production_order_components WHERE order_id=$1`,
+        `SELECT COALESCE(SUM(consumed_quantity),0)::numeric AS t FROM production_order_components WHERE order_id=$1`,
         [emirId],
     );
     if (Number(tuk.rows[0].t) > 0) {
@@ -199,14 +199,14 @@ async function createOrder(client, opts) {
         component_warehouse_id,
         wip_warehouse_id,
         fg_warehouse_id,
-        planlanan_quantity,
+        planned_quantity,
         sales_order_id,
         order_type_id,
         status,
         is_started,
-        cikis_type,
-        giris_type,
-        silindi,
+        issue_type,
+        receipt_type,
+        is_deleted: silindi,
         source_document_type,
         source_document_id,
         order_date,
@@ -214,13 +214,13 @@ async function createOrder(client, opts) {
         plan_end,
         end_date,
         uom_code,
-        acik_kapali,
-        onayli,
-        yayinlandi,
+        is_open,
+        is_approved: onayli,
+        is_released: yayinlandi,
         is_printed,
-        product_girisi_tamamlandi,
+        product_receipt_completed,
         description,
-        planli_kesin,
+        planned_firm,
         project_code,
     } = opts;
 
@@ -229,7 +229,7 @@ async function createOrder(client, opts) {
         urunAgaciId: product_bom_id,
         rotaId: route_id,
         stokId: item_id,
-        quantity: planlanan_quantity,
+        quantity: planned_quantity,
         tarih: order_date,
     });
 
@@ -241,11 +241,11 @@ async function createOrder(client, opts) {
         INSERT INTO production_orders
             (order_no, item_id, product_bom_id, route_id, plant_id, company_id,
              component_warehouse_id, wip_warehouse_id, fg_warehouse_id,
-             planlanan_quantity, status, sales_order_id, order_type_id, planli_kesin,
-             is_started, cikis_type, giris_type, silindi,
+             planned_quantity, status, sales_order_id, order_type_id, planned_firm,
+             is_started, issue_type, receipt_type, is_deleted,
              source_document_type, source_document_id,
              order_date, start_date, plan_start, plan_end, end_date,
-             uom_code, acik_kapali, onayli, yayinlandi, is_printed, product_girisi_tamamlandi, description,
+             uom_code, is_open, is_approved, is_released, is_printed, product_receipt_completed, description,
              project_code)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
                 $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
@@ -261,14 +261,14 @@ async function createOrder(client, opts) {
             component_warehouse_id,
             wip_warehouse_id || null,
             fg_warehouse_id,
-            planlanan_quantity,
+            planned_quantity,
             durumVal,
             sales_order_id || null,
             type?.id || null,
-            planli_kesin || type?.planli_kesin || 'Kesin',
+            planned_firm || type?.planned_firm || 'Kesin',
             typeof is_started === 'boolean' ? is_started : false,
-            cikis_type || 'Manuel',
-            giris_type || 'Manuel',
+            issue_type || 'Manuel',
+            receipt_type || 'Manuel',
             typeof silindi === 'boolean' ? silindi : false,
             source_document_type || null,
             source_document_id || null,
@@ -278,25 +278,25 @@ async function createOrder(client, opts) {
             plan_end || null,
             dateDay(end_date),
             uom_code || stok.rows[0]?.uom_code || null,
-            acik_kapali || (durumVal === 'Kapali' || durumVal === 'Iptal' ? 'Kapali' : 'Acik'),
+            is_open || (durumVal === 'Kapali' || durumVal === 'Iptal' ? 'Kapali' : 'Acik'),
             !!onayli,
             !!yayinlandi,
             !!is_printed,
-            !!product_girisi_tamamlandi,
+            !!product_receipt_completed,
             description || null,
             project_code || null,
         ],
     );
     const emirId = emir.rows[0].id;
-    const carpan = Number(planlanan_quantity) / Number(agac.quantity || 1);
+    const carpan = Number(planned_quantity) / Number(agac.quantity || 1);
     await fillOrderOperations(client, emirId, {
         rotaOps,
-        planlananMiktar: planlanan_quantity,
+        planlananMiktar: planned_quantity,
         bilesenCarpan: carpan,
     });
     await fillOrderMaterials(client, emirId, {
         urunAgaciId: product_bom_id,
-        planlananMiktar: planlanan_quantity,
+        planlananMiktar: planned_quantity,
         agacMiktar: agac.quantity,
         hammaddeDepoId: component_warehouse_id,
     });
@@ -351,12 +351,12 @@ async function getQcOrder(id) {
             SELECT b.*, st.item_code, st.item_name, st.item_type
             FROM production_order_operation_components b
             JOIN items st ON st.id = b.item_id
-            WHERE b.operasyon_id = $1
+            WHERE b.operation_id = $1
             ORDER BY b.id
             `,
             [op.id]
         );
-        const sonraki = ops.rows.find((x) => x.line_no === op.sonraki_line_no);
+        const sonraki = ops.rows.find((x) => x.line_no === op.next_line_no);
         operasyonlar.push({
             ...op,
             bilesenler: bilesenler.rows,
@@ -445,7 +445,7 @@ router.get('/siparis-adaylari', async (req, res) => {
             JOIN items st ON st.id = sd.item_id
             LEFT JOIN partners c ON c.id = s.partner_id
             LEFT JOIN LATERAL (
-                SELECT COALESCE(SUM(ue.planlanan_quantity),0) AS uretim_plan
+                SELECT COALESCE(SUM(ue.planned_quantity),0) AS uretim_plan
                 FROM production_orders ue
                 WHERE ue.sales_order_id = s.id AND ue.item_id = sd.item_id
                   AND ue.status NOT IN ('Iptal')
@@ -464,7 +464,7 @@ router.get('/siparis-adaylari', async (req, res) => {
                 WHERE r2.item_id = sd.item_id
                   AND (r2.valid_from IS NULL OR r2.valid_from <= CURRENT_DATE)
                   AND (r2.valid_to IS NULL OR r2.valid_to >= CURRENT_DATE)
-                ORDER BY r2.varsayilan DESC NULLS LAST, r2.id DESC LIMIT 1
+                ORDER BY r2.is_default DESC NULLS LAST, r2.id DESC LIMIT 1
             ) r ON TRUE
             WHERE s.order_type IN ('SatisSiparis', 'AlinanSiparis')
               AND s.status IN ('Onayli', 'Acik', 'KismiSevk', 'SevkEdildi')
@@ -493,7 +493,7 @@ router.get('/siparis-adaylari/:id', async (req, res) => {
                 st.item_code, st.item_name,
                 sd.quantity AS siparis_miktar,
                 GREATEST(sd.quantity - COALESCE((
-                    SELECT SUM(ue.planlanan_quantity) FROM production_orders ue
+                    SELECT SUM(ue.planned_quantity) FROM production_orders ue
                     WHERE ue.sales_order_id=s.id AND ue.item_id=sd.item_id AND ue.status<>'Iptal'
                 ),0),0) AS remaining_quantity
             FROM sales_order_lines sd
@@ -534,7 +534,7 @@ router.post('/satis-siparisinden', async (req, res) => {
             component_warehouse_id,
             wip_warehouse_id,
             fg_warehouse_id,
-            planlanan_quantity,
+            planned_quantity,
             order_type_id,
         } = req.body;
         if (!sales_order_id || !item_id || !product_bom_id || !route_id || !component_warehouse_id || !fg_warehouse_id) {
@@ -551,9 +551,9 @@ router.post('/satis-siparisinden', async (req, res) => {
             [sales_order_id, item_id]
         );
         if (!siparis.rows[0]) return res.status(404).json({ hata: 'Satış siparişi bulunamadı.' });
-        const quantity = planlanan_quantity || Number(siparis.rows[0].kalem_miktar);
+        const quantity = planned_quantity || Number(siparis.rows[0].kalem_miktar);
         if (!quantity || quantity <= 0) {
-            return res.status(400).json({ hata: 'Sipariş kaleminde quantity yok; planlanan_quantity verin.' });
+            return res.status(400).json({ hata: 'Sipariş kaleminde quantity yok; planned_quantity verin.' });
         }
 
         const id = await withTransaction(pool, async (client) =>
@@ -565,7 +565,7 @@ router.post('/satis-siparisinden', async (req, res) => {
                 component_warehouse_id,
                 wip_warehouse_id,
                 fg_warehouse_id,
-                planlanan_quantity: quantity,
+                planned_quantity: quantity,
                 sales_order_id,
                 order_type_id,
                 status: 'OnayBekliyor',
@@ -605,22 +605,22 @@ router.post('/toplu', async (req, res) => {
                 const wip_warehouse_id = k.wip_warehouse_id || ortak.wip_warehouse_id;
                 const plant_id = k.plant_id || ortak.plant_id;
                 const order_type_id = k.order_type_id || ortak.order_type_id;
-                let planlanan_quantity = k.planlanan_quantity;
+                let planned_quantity = k.planned_quantity;
 
                 try {
                     if (!item_id || !product_bom_id || !route_id || !component_warehouse_id || !fg_warehouse_id) {
                         throw new Error('item_id, product_bom_id, route_id, warehouses zorunlu.');
                     }
-                    if (!planlanan_quantity && sales_order_id) {
+                    if (!planned_quantity && sales_order_id) {
                         const mq = await client.query(
                             `SELECT COALESCE(SUM(quantity),0) AS m FROM sales_order_lines
                              WHERE sales_order_id=$1 AND item_id=$2`,
                             [sales_order_id, item_id]
                         );
-                        planlanan_quantity = Number(mq.rows[0].m);
+                        planned_quantity = Number(mq.rows[0].m);
                     }
-                    if (!planlanan_quantity || planlanan_quantity <= 0) {
-                        throw new Error('planlanan_quantity yok.');
+                    if (!planned_quantity || planned_quantity <= 0) {
+                        throw new Error('planned_quantity yok.');
                     }
                     const id = await createOrder(client, {
                         item_id,
@@ -630,7 +630,7 @@ router.post('/toplu', async (req, res) => {
                         component_warehouse_id,
                         wip_warehouse_id,
                         fg_warehouse_id,
-                        planlanan_quantity,
+                        planned_quantity,
                         sales_order_id: sales_order_id || null,
                         order_type_id,
                         status: sales_order_id ? 'OnayBekliyor' : 'Acik',
@@ -672,12 +672,12 @@ router.post('/', async (req, res) => {
             route_id,
             component_warehouse_id,
             fg_warehouse_id,
-            planlanan_quantity,
+            planned_quantity,
         } = b;
 
-        if (!item_id || !product_bom_id || !route_id || !component_warehouse_id || !fg_warehouse_id || !planlanan_quantity) {
+        if (!item_id || !product_bom_id || !route_id || !component_warehouse_id || !fg_warehouse_id || !planned_quantity) {
             return res.status(400).json({
-                hata: 'item_id, product_bom_id, route_id, component_warehouse_id, fg_warehouse_id, planlanan_quantity zorunlu.',
+                hata: 'item_id, product_bom_id, route_id, component_warehouse_id, fg_warehouse_id, planned_quantity zorunlu.',
             });
         }
 
@@ -732,18 +732,18 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
             const op = opRes.rows[0];
             if (!op) throw new Error('Tamamlanacak Hazir operasyon yok.');
 
-            const quantity = Number(req.body.quantity || op.planlanan_quantity);
+            const quantity = Number(req.body.quantity || op.planned_quantity);
             if (quantity <= 0) throw new Error('quantity > 0 olmalı.');
-            const kalan = Number(op.planlanan_quantity) - Number(op.produced_quantity);
+            const kalan = Number(op.planned_quantity) - Number(op.produced_quantity);
             if (quantity - kalan > 1e-9) throw new Error(`Fazla üretim engellendi. Kalan=${kalan}`);
 
-            const rate = quantity / Number(op.planlanan_quantity);
+            const rate = quantity / Number(op.planned_quantity);
             const bilesenler = await client.query(
                 `
                 SELECT b.*, st.item_type, st.uom_code AS stock_uom
                 FROM production_order_operation_components b
                 JOIN items st ON st.id = b.item_id
-                WHERE b.operasyon_id=$1 FOR UPDATE
+                WHERE b.operation_id=$1 FOR UPDATE
                 `,
                 [op.id]
             );
@@ -755,14 +755,14 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
                 depoGrup.get(depoId).push({
                     item_id: b.item_id,
-                    quantity: Number(b.planlanan_quantity) * rate,
+                    quantity: Number(b.planned_quantity) * rate,
                     direction: -1,
                     uom_code: b.uom_code || b.stock_uom,
                 });
                 await client.query(
                     `UPDATE production_order_operation_components
-                     SET tuketilen_quantity = tuketilen_quantity + $1 WHERE id=$2`,
-                    [Number(b.planlanan_quantity) * rate, b.id]
+                     SET consumed_quantity = consumed_quantity + $1 WHERE id=$2`,
+                    [Number(b.planned_quantity) * rate, b.id]
                 );
             }
 
@@ -784,11 +784,11 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
             let mamulHareketId = null;
             if (op.output_item_id) {
                 const cikti = await client.query(
-                    'SELECT id, uom_code, item_type, kalite_control_gerekli FROM items WHERE id=$1',
+                    'SELECT id, uom_code, item_type, quality_control_required FROM items WHERE id=$1',
                     [op.output_item_id]
                 );
                 const ckk = await resolveOutgoingQcWarehouse(client, emir.plant_id);
-                if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
+                if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_role=CKK).');
                 const ciktiDepo = ckk.id;
                 const hedefDepo = await resolveOutgoingQcTargetWarehouse(client, op.output_item_id, emir.plant_id);
                 // CKK/hedef depo izinlerini otomatik aç (kalite akışı)
@@ -833,7 +833,7 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
             }
 
             const yeniUretilen = Number(op.produced_quantity) + quantity;
-            const opDurum = yeniUretilen + 1e-9 >= Number(op.planlanan_quantity) ? 'Tamamlandi' : 'Hazir';
+            const opDurum = yeniUretilen + 1e-9 >= Number(op.planned_quantity) ? 'Tamamlandi' : 'Hazir';
             await client.query(
                 `UPDATE production_order_operations
                  SET produced_quantity=$1, status=$2 WHERE id=$3`,
@@ -841,14 +841,14 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
             );
 
             // Sıradaki operasyonu Hazir yap
-            if (opDurum === 'Tamamlandi' && op.sonraki_line_no) {
+            if (opDurum === 'Tamamlandi' && op.next_line_no) {
                 await client.query(
                     `
                     UPDATE production_order_operations
                     SET status='Hazir'
                     WHERE order_id=$1 AND line_no=$2 AND status='Bekliyor'
                     `,
-                    [emirId, op.sonraki_line_no]
+                    [emirId, op.next_line_no]
                 );
             }
 
@@ -878,13 +878,13 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
             await client.query(
                 `
                 INSERT INTO production_receipts
-                    (giris_no, order_id, quantity, consumption_movement_id, finished_good_movement_id)
+                    (receipt_no, order_id, quantity, consumption_movement_id, finished_good_movement_id)
                 VALUES ($1,$2,$3,$4,$5)
                 `,
                 [girisNo, emirId, quantity, tuketimHareketId, mamulHareketId]
             );
 
-            return { operasyon_id: op.id, operation_code: op.operation_code, quantity };
+            return { operation_id: op.id, operation_code: op.operation_code, quantity };
         });
 
         res.status(201).json({
@@ -936,15 +936,15 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
         const op = opRes.rows[0];
         if (!op) throw new Error('Tamamlanacak Hazir operasyon yok.');
 
-        const quantity = Number(miktarOpsiyonel || op.planlanan_quantity);
-        const rate = quantity / Number(op.planlanan_quantity);
+        const quantity = Number(miktarOpsiyonel || op.planned_quantity);
+        const rate = quantity / Number(op.planned_quantity);
 
         const bilesenler = await client.query(
             `
             SELECT b.*, st.item_type, st.uom_code AS stock_uom
             FROM production_order_operation_components b
             JOIN items st ON st.id = b.item_id
-            WHERE b.operasyon_id=$1 FOR UPDATE
+            WHERE b.operation_id=$1 FOR UPDATE
             `,
             [op.id]
         );
@@ -955,14 +955,14 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
             if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
             depoGrup.get(depoId).push({
                 item_id: b.item_id,
-                quantity: Number(b.planlanan_quantity) * rate,
+                quantity: Number(b.planned_quantity) * rate,
                 direction: -1,
                 uom_code: b.uom_code || b.stock_uom,
             });
             await client.query(
                 `UPDATE production_order_operation_components
-                 SET tuketilen_quantity = tuketilen_quantity + $1 WHERE id=$2`,
-                [Number(b.planlanan_quantity) * rate, b.id]
+                 SET consumed_quantity = consumed_quantity + $1 WHERE id=$2`,
+                [Number(b.planned_quantity) * rate, b.id]
             );
         }
 
@@ -987,7 +987,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
                 [op.output_item_id]
             );
             const ckk = await resolveOutgoingQcWarehouse(client, emir.plant_id);
-            if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
+            if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_role=CKK).');
             const hedefDepo = await resolveOutgoingQcTargetWarehouse(client, op.output_item_id, emir.plant_id);
             for (const wid of [ckk.id, hedefDepo?.id].filter(Boolean)) {
                 await client.query(
@@ -1035,14 +1035,14 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
             [quantity, op.id]
         );
 
-        if (op.sonraki_line_no) {
+        if (op.next_line_no) {
             await client.query(
                 `
                 UPDATE production_order_operations
                 SET status='Hazir'
                 WHERE order_id=$1 AND line_no=$2 AND status='Bekliyor'
                 `,
-                [emirId, op.sonraki_line_no]
+                [emirId, op.next_line_no]
             );
         }
 
@@ -1075,7 +1075,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
         await client.query(
             `
             INSERT INTO production_receipts
-                (giris_no, order_id, quantity, consumption_movement_id, finished_good_movement_id)
+                (receipt_no, order_id, quantity, consumption_movement_id, finished_good_movement_id)
             VALUES ($1,$2,$3,$4,$5)
             `,
             [girisNo, emirId, quantity, tuketimHareketId, mamulHareketId]
@@ -1094,16 +1094,16 @@ router.put('/:id', async (req, res) => {
         if (b.status && !allowed.includes(b.status)) {
             return res.status(400).json({ hata: `Geçersiz status. İzin verilen: ${allowed.join(', ')}` });
         }
-        if (b.planli_kesin && !['Planli', 'Kesin'].includes(b.planli_kesin)) {
-            return res.status(400).json({ hata: "planli_kesin 'Planli' veya 'Kesin' olmalı." });
+        if (b.planned_firm && !['Planli', 'Kesin'].includes(b.planned_firm)) {
+            return res.status(400).json({ hata: "planned_firm 'Planli' veya 'Kesin' olmalı." });
         }
-        if (b.acik_kapali && !['Acik', 'Kapali'].includes(b.acik_kapali)) {
-            return res.status(400).json({ hata: "acik_kapali 'Acik' veya 'Kapali' olmalı." });
+        if (b.is_open && !['Acik', 'Kapali'].includes(b.is_open)) {
+            return res.status(400).json({ hata: "is_open 'Acik' veya 'Kapali' olmalı." });
         }
-        let tipPlanli = b.planli_kesin || null;
+        let tipPlanli = b.planned_firm || null;
         if (b.order_type_id && !tipPlanli) {
-            const t = await pool.query('SELECT planli_kesin FROM production_order_types WHERE id=$1', [b.order_type_id]);
-            tipPlanli = t.rows[0]?.planli_kesin || null;
+            const t = await pool.query('SELECT planned_firm FROM production_order_types WHERE id=$1', [b.order_type_id]);
+            tipPlanli = t.rows[0]?.planned_firm || null;
         }
 
         const id = await withTransaction(pool, async (client) => {
@@ -1120,7 +1120,7 @@ router.put('/:id', async (req, res) => {
             const yeniAgac = b.product_bom_id != null ? Number(b.product_bom_id) : Number(m.product_bom_id);
             const yeniRota = b.route_id != null ? Number(b.route_id) : Number(m.route_id);
             const yeniStok = b.item_id != null ? Number(b.item_id) : Number(m.item_id);
-            const yeniMiktar = b.planlanan_quantity != null ? Number(b.planlanan_quantity) : Number(m.planlanan_quantity);
+            const yeniMiktar = b.planned_quantity != null ? Number(b.planned_quantity) : Number(m.planned_quantity);
 
             if (b.product_bom_id != null || b.route_id != null || b.item_id != null) {
                 await validateBomRouting(client, {
@@ -1132,7 +1132,7 @@ router.put('/:id', async (req, res) => {
                 });
             }
 
-            let acikKapali = b.acik_kapali || null;
+            let acikKapali = b.is_open || null;
             if (!acikKapali && b.status) {
                 acikKapali = ['Kapali', 'Iptal'].includes(b.status) ? 'Kapali' : 'Acik';
             }
@@ -1140,15 +1140,15 @@ router.put('/:id', async (req, res) => {
             const upd = await client.query(
                 `
                 UPDATE production_orders SET
-                    planlanan_quantity = COALESCE($2, planlanan_quantity),
+                    planned_quantity = COALESCE($2, planned_quantity),
                     status = COALESCE($3, status),
                     sales_order_id = COALESCE($4, sales_order_id),
                     order_type_id = COALESCE($5, order_type_id),
-                    planli_kesin = COALESCE($6, planli_kesin),
+                    planned_firm = COALESCE($6, planned_firm),
                     is_started = COALESCE($7, is_started),
-                    cikis_type = COALESCE($8, cikis_type),
-                    giris_type = COALESCE($9, giris_type),
-                    silindi = COALESCE($10, silindi),
+                    issue_type = COALESCE($8, issue_type),
+                    receipt_type = COALESCE($9, receipt_type),
+                    is_deleted = COALESCE($10, is_deleted),
                     source_document_type = COALESCE($11, source_document_type),
                     source_document_id = COALESCE($12, source_document_id),
                     plant_id = COALESCE($13, plant_id),
@@ -1164,11 +1164,11 @@ router.put('/:id', async (req, res) => {
                     plan_end = COALESCE($22, plan_end),
                     end_date = COALESCE($23, end_date),
                     uom_code = COALESCE($24, uom_code),
-                    acik_kapali = COALESCE($25, acik_kapali),
-                    onayli = COALESCE($26, onayli),
-                    yayinlandi = COALESCE($27, yayinlandi),
+                    is_open = COALESCE($25, is_open),
+                    is_approved = COALESCE($26, is_approved),
+                    is_released = COALESCE($27, is_released),
                     is_printed = COALESCE($28, is_printed),
-                    product_girisi_tamamlandi = COALESCE($29, product_girisi_tamamlandi),
+                    product_receipt_completed = COALESCE($29, product_receipt_completed),
                     description = COALESCE($30, description),
                     project_code = COALESCE($31, project_code)
                 WHERE id = $1
@@ -1176,15 +1176,15 @@ router.put('/:id', async (req, res) => {
                 `,
                 [
                     req.params.id,
-                    b.planlanan_quantity ?? null,
+                    b.planned_quantity ?? null,
                     b.status || null,
                     b.sales_order_id !== undefined ? b.sales_order_id : null,
                     b.order_type_id || null,
                     tipPlanli,
                     typeof b.is_started === 'boolean' ? b.is_started : null,
-                    b.cikis_type || null,
-                    b.giris_type || null,
-                    typeof b.silindi === 'boolean' ? b.silindi : null,
+                    b.issue_type || null,
+                    b.receipt_type || null,
+                    typeof b.is_deleted === 'boolean' ? b.is_deleted : null,
                     b.source_document_type || null,
                     b.source_document_id !== undefined ? b.source_document_id : null,
                     b.plant_id || null,
@@ -1200,10 +1200,10 @@ router.put('/:id', async (req, res) => {
                     dateDay(b.end_date),
                     b.uom_code || null,
                     acikKapali,
-                    typeof b.onayli === 'boolean' ? b.onayli : null,
-                    typeof b.yayinlandi === 'boolean' ? b.yayinlandi : null,
+                    typeof b.is_approved === 'boolean' ? b.is_approved : null,
+                    typeof b.is_released === 'boolean' ? b.is_released : null,
                     typeof b.is_printed === 'boolean' ? b.is_printed : null,
-                    typeof b.product_girisi_tamamlandi === 'boolean' ? b.product_girisi_tamamlandi : null,
+                    typeof b.product_receipt_completed === 'boolean' ? b.product_receipt_completed : null,
                     b.description !== undefined ? b.description : null,
                     b.project_code !== undefined ? b.project_code : null,
                 ],
@@ -1219,14 +1219,14 @@ router.put('/:id', async (req, res) => {
                     await client.query(
                         `
                         INSERT INTO production_order_components
-                            (order_id, item_id, planlanan_quantity, tuketilen_quantity, uom_code, line_no, warehouse_id)
+                            (order_id, item_id, planned_quantity, consumed_quantity, uom_code, line_no, warehouse_id)
                         VALUES ($1,$2,$3,$4,$5,$6,$7)
                         `,
                         [
                             req.params.id,
                             row.item_id,
-                            row.planlanan_quantity ?? row.quantity ?? 0,
-                            row.tuketilen_quantity ?? 0,
+                            row.planned_quantity ?? row.quantity ?? 0,
+                            row.consumed_quantity ?? 0,
                             row.uom_code || null,
                             row.line_no != null ? row.line_no : sira,
                             row.warehouse_id || null,
@@ -1242,7 +1242,7 @@ router.put('/:id', async (req, res) => {
                     await client.query(
                         `
                         UPDATE production_order_operations SET
-                            planlanan_quantity = COALESCE($2, planlanan_quantity),
+                            planned_quantity = COALESCE($2, planned_quantity),
                             operation_name = COALESCE($3, operation_name),
                             work_center_id = COALESCE($4, work_center_id),
                             status = COALESCE($5, status)
@@ -1250,7 +1250,7 @@ router.put('/:id', async (req, res) => {
                         `,
                         [
                             op.id,
-                            op.planlanan_quantity ?? null,
+                            op.planned_quantity ?? null,
                             op.operation_name || null,
                             op.work_center_id || null,
                             op.status || null,
@@ -1280,22 +1280,22 @@ router.post('/:id/detaylari-doldur', async (req, res) => {
                 urunAgaciId: e.product_bom_id,
                 rotaId: e.route_id,
                 stokId: e.item_id,
-                quantity: e.planlanan_quantity,
+                quantity: e.planned_quantity,
                 tarih: e.order_date,
             });
-            const carpan = Number(e.planlanan_quantity) / Number(agac.quantity || 1);
+            const carpan = Number(e.planned_quantity) / Number(agac.quantity || 1);
             const opN = await fillOrderOperations(client, e.id, {
                 rotaOps,
-                planlananMiktar: e.planlanan_quantity,
+                planlananMiktar: e.planned_quantity,
                 bilesenCarpan: carpan,
             });
             const malN = await fillOrderMaterials(client, e.id, {
                 urunAgaciId: e.product_bom_id,
-                planlananMiktar: e.planlanan_quantity,
+                planlananMiktar: e.planned_quantity,
                 agacMiktar: agac.quantity,
                 hammaddeDepoId: e.component_warehouse_id,
             });
-            return { operasyon: opN, malzeme: malN };
+            return { operasyon: opN, material: malN };
         });
         const emir = await getQcOrder(req.params.id);
         res.json({ ...emir, _doldurulan: result });
@@ -1324,7 +1324,7 @@ router.post('/:id/bom-rota-degistir', async (req, res) => {
                 urunAgaciId: yeniAgac,
                 rotaId: yeniRota,
                 stokId: e.item_id,
-                quantity: e.planlanan_quantity,
+                quantity: e.planned_quantity,
                 tarih: e.order_date,
             });
             await client.query(
@@ -1332,15 +1332,15 @@ router.post('/:id/bom-rota-degistir', async (req, res) => {
                 [e.id, yeniAgac, yeniRota],
             );
             if (detaylari_doldur) {
-                const carpan = Number(e.planlanan_quantity) / Number(agac.quantity || 1);
+                const carpan = Number(e.planned_quantity) / Number(agac.quantity || 1);
                 await fillOrderOperations(client, e.id, {
                     rotaOps,
-                    planlananMiktar: e.planlanan_quantity,
+                    planlananMiktar: e.planned_quantity,
                     bilesenCarpan: carpan,
                 });
                 await fillOrderMaterials(client, e.id, {
                     urunAgaciId: yeniAgac,
-                    planlananMiktar: e.planlanan_quantity,
+                    planlananMiktar: e.planned_quantity,
                     agacMiktar: agac.quantity,
                     hammaddeDepoId: e.component_warehouse_id,
                 });
@@ -1358,7 +1358,7 @@ router.post('/:id/onayla', async (req, res) => {
         const upd = await pool.query(
             `
             UPDATE production_orders
-            SET status = 'Acik', onayli = TRUE, acik_kapali = 'Acik'
+            SET status = 'Acik', is_approved = TRUE, is_open = 'Acik'
             WHERE id = $1 AND status IN ('Taslak', 'OnayBekliyor')
             RETURNING id
             `,
@@ -1405,7 +1405,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query(`DELETE FROM production_orders WHERE id=$1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

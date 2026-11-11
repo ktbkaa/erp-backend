@@ -43,7 +43,7 @@ async function createStockMovement(client, {
     }
 
     const paramNegatif = await isNegativeStockAllowed(client);
-    const eksiIzin = Boolean(hareketKodu?.eksi_balance_izin) || paramNegatif;
+    const eksiIzin = Boolean(hareketKodu?.allow_negative_balance) || paramNegatif;
     const depoZorunlu = !depoZorunluAtla
         && String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
 
@@ -64,7 +64,7 @@ async function createStockMovement(client, {
 
     const cols = ['movement_no', 'movement_type', 'plant_id', 'warehouse_id', 'document_type', 'document_id', 'description', 'movement_code_id'];
     const vals = [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, description, hareketKoduId || null];
-    // target_warehouse_id / bagli_movement_id 015'te
+    // target_warehouse_id / linked_movement_id 015'te
     // company_id: açık parametre veya stok satırından türet
     let resolvedFirmaId = firmaId || null;
     if (!resolvedFirmaId && satirlar[0]?.item_id) {
@@ -76,7 +76,7 @@ async function createStockMovement(client, {
         `
         INSERT INTO stock_movements
             (movement_no, movement_type, plant_id, warehouse_id, document_type, document_id, description, movement_code_id,
-             target_warehouse_id, bagli_movement_id, company_id, partner_id, user_code, ref_no, project_code)
+             target_warehouse_id, linked_movement_id, company_id, partner_id, user_code, ref_no, project_code)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
         RETURNING *;
         `,
@@ -155,14 +155,14 @@ async function createStockMovement(client, {
         const satirRes = await client.query(
             `
             INSERT INTO stock_movement_lines
-                (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status, raf_code, konum_code)
+                (movement_id, item_id, quantity, direction, uom_code, lot_id, stock_status, bin_code, location_code)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             RETURNING *;
             `,
             [
                 hareket.id, s.item_id, s.quantity, s.direction, s.uom_code || null, partiId,
                 Number(s.direction) === -1 ? cikisStatu : statu,
-                s.raf_code || null, s.konum_code || null,
+                s.bin_code || null, s.location_code || null,
             ]
         );
         eklenen.push(satirRes.rows[0]);
@@ -298,7 +298,7 @@ async function listWarehouseBalances(pool, depoIdOrOpts = null) {
             h.warehouse_id,
             d.warehouse_code,
             d.warehouse_name,
-            d.warehouse_rolu,
+            d.warehouse_role,
             s.item_id,
             st.item_code,
             st.item_name,
@@ -314,7 +314,7 @@ async function listWarehouseBalances(pool, depoIdOrOpts = null) {
         JOIN items st ON st.id = s.item_id
         LEFT JOIN item_lots p ON p.id = s.lot_id
         ${whereSql}
-        GROUP BY h.warehouse_id, d.warehouse_code, d.warehouse_name, d.warehouse_rolu,
+        GROUP BY h.warehouse_id, d.warehouse_code, d.warehouse_name, d.warehouse_role,
                  s.item_id, st.item_code, st.item_name, st.item_type, st.safety_stock,
                  COALESCE(s.stock_status, 'Kullanilabilir'), s.lot_id, p.lot_no
         ${havingSql}

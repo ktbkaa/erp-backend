@@ -15,7 +15,7 @@ const SIPARIS_BASLIK = [
 // sales_order_lines mevcut kolonları (şema dışı alan INSERT’i kırar)
 const SIPARIS_SATIR = [
   'line_description', 'delivery_date', 'warehouse_id', 'net_unit_price', 'amount_ex_tax',
-  'amount_ttc', 'product_type', 'unit_cost', 'kar_marji', 'discount_rate',
+  'amount_ttc', 'product_type', 'unit_cost', 'profit_margin', 'discount_rate',
   'discount_amount', 'vat_rate', 'vat_amount', 'line_no', 'quotation_line_id',
 ];
 
@@ -25,12 +25,12 @@ const NULLISH_KEYS = /(_id$|_date$|_at$|^date$|tarih|exchange_rate|discount_|vat
 const FATURA_BASLIK = [
   'customer_invoice_ref', 'project_code', 'company_id', 'plant_id', 'price_list_id', 'warehouse_id',
   'payment_method', 'payment_term_code', 'payment_plan', 'delivery_term_code', 'due_date', 'due_days',
-  'payment_status', 'odenen_amount', 'remaining_amount', 'invoice_source_id', 'iade_mi',
+  'payment_status', 'paid_amount', 'remaining_amount', 'invoice_source_id', 'is_return',
   'public_note', 'internal_note', 'created_by', 'approved_by',
   'currency_code', 'exchange_rate', 'rate_type', 'rate_option', 'region', 'sales_rep',
   'ship_to_address', 'description', 'description_2', 'description_3', 'scenario', 'invoice_category', 'invoice_date',
   'payment_due_days', 'goods_receipt_id', 'sales_order_id', 'delivery_note_id',
-  'e_document_status', 'document_series', 'document_sequence', 'gib_number', 'uuid_ettn', 'ozellestirme_no',
+  'e_document_status', 'document_series', 'document_sequence', 'gib_number', 'uuid_ettn', 'customization_no',
   'mailbox_alias', 'portal_sent_date',
   'ecommerce_web', 'ecommerce_name', 'ecommerce_last_name', 'ecommerce_email',
   'ship_to_partner_id', 'ship_address_type', 'ship_name', 'ship_last_name',
@@ -42,7 +42,7 @@ const FATURA_BASLIK = [
   'withholding_code', 'withholding_rate', 'withholding_amount', 'tax_schema', 'special_movement_type',
   'fin_due_date', 'fin_due_days', 'stock_date',
   'is_printed', 'print_local_currency',
-  'invoice_footer_discount', 'total_excise', 'total_withholding', 'total_bandrol',
+  'invoice_footer_discount', 'total_excise', 'total_withholding', 'total_stamp_tax',
   'movement_code_id', 'source_document_type', 'source_document_id', 'status',
 ];
 
@@ -52,10 +52,10 @@ const FATURA_SATIR = [
   'unit_cost', 'warehouse_id', 'lot_id', 'serial_no', 'price_list_id',
   'currency_code', 'rate_type', 'exchange_rate', 'local_unit_price', 'local_currency_amount',
   'discount_rate', 'discount_rate_2', 'discount_rate_3',
-  'discount_amount', 'discount_tutari2', 'discount_tutari3',
+  'discount_amount', 'discount_amount_2', 'discount_amount_3',
   'vat_code', 'vat_rate', 'vat_amount', 'vat_mode',
   'withholding_code', 'withholding_rate', 'withholding_amount',
-  'excise_code', 'excise_rate', 'excise_amount', 'bandrol_rate', 'bandrol_amount',
+  'excise_code', 'excise_rate', 'excise_amount', 'stamp_tax_rate', 'stamp_tax_amount',
   'tax_schema', 'due_date', 'due_days', 'customer_ref_code',
   'project_code', 'order_no', 'uom_code', 'line_no',
   'delivery_line_id', 'sales_order_line_id',

@@ -56,13 +56,13 @@ router.get('/:id', async (req, res) => {
 
 router.post('/:id/kaydet', async (req, res) => {
     try {
-        const kullanici = await assertPermission(pool, reqUserCode(req), 'kalite_control');
+        const kullanici = await assertPermission(pool, reqUserCode(req), 'can_quality_control');
         await withTransaction(pool, async (client) => {
             await saveQcOrder(client, Number(req.params.id), {
                 olcumler: req.body.olcumler || [],
                 uygunMiktar: req.body.accepted_quantity,
                 uygunsuzMiktar: req.body.rejected_quantity,
-                numuneMiktar: req.body.numune_quantity,
+                numuneMiktar: req.body.sample_quantity,
                 description: req.body.description,
                 kullanici,
             });
@@ -75,14 +75,14 @@ router.post('/:id/kaydet', async (req, res) => {
 
 router.post('/:id/onayla', async (req, res) => {
     try {
-        const kullanici = await assertPermission(pool, reqUserCode(req), 'kalite_control');
+        const kullanici = await assertPermission(pool, reqUserCode(req), 'can_quality_control');
         await withTransaction(pool, async (client) => {
             await approveQcOrder(client, Number(req.params.id), {
                 onay: req.body.onay !== false && req.body.onay !== 'Hayir',
                 uygunMiktar: req.body.accepted_quantity,
                 uygunsuzMiktar: req.body.rejected_quantity,
                 hedefDepoId: req.body.target_warehouse_id,
-                retNedenId: req.body.ret_neden_id,
+                retNedenId: req.body.rejection_reason_id,
                 description: req.body.description,
                 kullanici,
             });
@@ -95,7 +95,7 @@ router.post('/:id/onayla', async (req, res) => {
 
 router.post('/:id/reddet', async (req, res) => {
     try {
-        const kullanici = await assertPermission(pool, reqUserCode(req), 'kalite_control');
+        const kullanici = await assertPermission(pool, reqUserCode(req), 'can_quality_control');
         await withTransaction(pool, async (client) => {
             const emir = await client.query('SELECT quantity FROM qc_orders WHERE id=$1', [req.params.id]);
             if (!emir.rows[0]) throw Object.assign(new Error('Emir yok'), { status: 404 });
@@ -103,7 +103,7 @@ router.post('/:id/reddet', async (req, res) => {
                 onay: false,
                 uygunMiktar: 0,
                 uygunsuzMiktar: Number(emir.rows[0].quantity),
-                retNedenId: req.body.ret_neden_id,
+                retNedenId: req.body.rejection_reason_id,
                 description: req.body.description,
                 kullanici,
             });

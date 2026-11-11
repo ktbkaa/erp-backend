@@ -1,12 +1,12 @@
 /**
  * Stok uom_code dönüşümü — item_uom_conversions katsayıları.
  * Baz uom_code = items.uom_code (katsayı 1 varsayılır).
- * Kayıt modeli: source_katsayi × uom_code = katsayi × cevrilecek_uom
- *   → 1 × uom_code = (katsayi / source_katsayi) × cevrilecek_uom
+ * Kayıt modeli: source_factor × uom_code = katsayi × target_uom
+ *   → 1 × uom_code = (katsayi / source_factor) × target_uom
  */
 function lineRate(row) {
-  const sag = Number(row.katsayi);
-  const sol = Number(row.source_katsayi);
+  const sag = Number(row.conversion_factor);
+  const sol = Number(row.source_factor);
   const source = Number.isFinite(sol) && sol > 0 ? sol : 1;
   if (!Number.isFinite(sag) || sag <= 0) return null;
   return sag / source;
@@ -14,16 +14,16 @@ function lineRate(row) {
 
 async function itemBaseUom(clientOrPool, stokId) {
   const stok = await clientOrPool.query(
-    `SELECT uom_code, stock_takip_uom FROM items WHERE id = $1`,
+    `SELECT uom_code, stock_tracking_uom FROM items WHERE id = $1`,
     [stokId]
   );
-  return stok.rows[0]?.uom_code || stok.rows[0]?.stock_takip_uom || null;
+  return stok.rows[0]?.uom_code || stok.rows[0]?.stock_tracking_uom || null;
 }
 
 async function uomDefinitions(clientOrPool, stokId) {
   const r = await clientOrPool.query(
     `
-    SELECT uom_code, source_katsayi, katsayi, cevrilecek_uom, takip_uom_mi
+    SELECT uom_code, source_factor, conversion_factor, target_uom, is_tracking_uom
     FROM item_uom_conversions
     WHERE item_id = $1
     ORDER BY line_no NULLS LAST, id
@@ -46,7 +46,7 @@ async function uomFactor(clientOrPool, stokId, uom_code) {
 
   for (const row of rows) {
     const kod = String(row.uom_code || '').toLowerCase();
-    const hedef = String(row.cevrilecek_uom || baz).toLowerCase();
+    const hedef = String(row.target_uom || baz).toLowerCase();
     const k = lineRate(row);
     if (k == null) continue;
 
@@ -57,7 +57,7 @@ async function uomFactor(clientOrPool, stokId, uom_code) {
     // zincir: 1 kod = k × hedef, hedef≠baz ama hedef tanımı var
     if (kod === target && hedef !== bazL) {
       try {
-        const hedefK = await uomFactor(clientOrPool, stokId, row.cevrilecek_uom || baz);
+        const hedefK = await uomFactor(clientOrPool, stokId, row.target_uom || baz);
         return k * hedefK;
       } catch (_) { /* devam */ }
     }
@@ -89,9 +89,9 @@ async function convertUom(clientOrPool, stokId, quantity, fromBirim, toBirim = n
 function uomClass(kod) {
   const k = String(kod || '').toUpperCase();
   if (['AD', 'ADET', 'PCS', 'EA', 'KOLİ', 'KOLI', 'PKT', 'PAKET'].includes(k)) return 'adet';
-  if (['KG', 'GR', 'G', 'TON', 'MG', 'LB'].includes(k)) return 'agirlik';
+  if (['KG', 'GR', 'G', 'TON', 'MG', 'LB'].includes(k)) return 'weight';
   if (['MT', 'M', 'CM', 'MM', 'KM', 'IN'].includes(k)) return 'uzunluk';
-  if (['LT', 'L', 'ML', 'M3', 'CL'].includes(k)) return 'hacim';
+  if (['LT', 'L', 'ML', 'M3', 'CL'].includes(k)) return 'volume';
   return 'ozel';
 }
 

@@ -13,8 +13,8 @@ async function fetchById(id) {
            a.user_code AS alan_kodu,
            role.role_code, role.role_name
     FROM approval_delegations d
-    JOIN users v ON v.id = d.veren_kisi_id
-    JOIN users a ON a.id = d.field_kisi_id
+    JOIN users v ON v.id = d.delegator_user_id
+    JOIN users a ON a.id = d.delegate_user_id
     LEFT JOIN approval_roles role ON role.id = d.role_id
     WHERE d.id = $1
     `,
@@ -28,9 +28,9 @@ router.get('/', async (req, res) => {
     const params = [];
     const where = [];
     if (req.query.is_active === 'true') where.push('d.is_active = TRUE');
-    if (req.query.field_kisi_id) {
-      params.push(req.query.field_kisi_id);
-      where.push(`d.field_kisi_id = $${params.length}`);
+    if (req.query.delegate_user_id) {
+      params.push(req.query.delegate_user_id);
+      where.push(`d.delegate_user_id = $${params.length}`);
     }
     const sql = `
       SELECT d.id FROM approval_delegations d
@@ -59,29 +59,29 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     let {
-      devir_code, veren_kisi_id, field_kisi_id, role_id,
+      delegation_code, delegator_user_id, delegate_user_id, role_id,
       start_date, end_date, is_active, description,
     } = req.body;
-    if (!veren_kisi_id || !field_kisi_id) {
-      return res.status(400).json({ hata: 'veren_kisi_id ve field_kisi_id zorunlu.' });
+    if (!delegator_user_id || !delegate_user_id) {
+      return res.status(400).json({ hata: 'delegator_user_id ve delegate_user_id zorunlu.' });
     }
-    if (Number(veren_kisi_id) === Number(field_kisi_id)) {
+    if (Number(delegator_user_id) === Number(delegate_user_id)) {
       return res.status(400).json({ hata: 'Veren ve alan aynı kişi olamaz.' });
     }
-    if (!devir_code) {
-      try { devir_code = await nextSequenceCode(pool, 'ONAY_DEVIR'); }
-      catch (_) { devir_code = `OD${Date.now().toString().slice(-5)}`; }
+    if (!delegation_code) {
+      try { delegation_code = await nextSequenceCode(pool, 'ONAY_DEVIR'); }
+      catch (_) { delegation_code = `OD${Date.now().toString().slice(-5)}`; }
     }
     const ins = await pool.query(
       `
       INSERT INTO approval_delegations (
-        devir_code, veren_kisi_id, field_kisi_id, role_id,
+        delegation_code, delegator_user_id, delegate_user_id, role_id,
         start_date, end_date, is_active, description
       ) VALUES ($1,$2,$3,$4,COALESCE($5,CURRENT_DATE),$6,COALESCE($7,TRUE),$8)
       RETURNING id
       `,
       [
-        devir_code, veren_kisi_id, field_kisi_id, role_id || null,
+        delegation_code, delegator_user_id, delegate_user_id, role_id || null,
         start_date || null, end_date || null, is_active, description || null,
       ],
     );
@@ -94,14 +94,14 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const {
-      veren_kisi_id, field_kisi_id, role_id,
+      delegator_user_id, delegate_user_id, role_id,
       start_date, end_date, is_active, description,
     } = req.body;
     const r = await pool.query(
       `
       UPDATE approval_delegations SET
-        veren_kisi_id = COALESCE($2, veren_kisi_id),
-        field_kisi_id = COALESCE($3, field_kisi_id),
+        delegator_user_id = COALESCE($2, delegator_user_id),
+        delegate_user_id = COALESCE($3, delegate_user_id),
         role_id = COALESCE($4, role_id),
         start_date = COALESCE($5, start_date),
         end_date = COALESCE($6, end_date),
@@ -110,7 +110,7 @@ router.put('/:id', async (req, res) => {
       WHERE id=$1 RETURNING id
       `,
       [
-        req.params.id, veren_kisi_id || null, field_kisi_id || null, role_id,
+        req.params.id, delegator_user_id || null, delegate_user_id || null, role_id,
         start_date || null, end_date, is_active, description,
       ],
     );
@@ -125,7 +125,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const r = await pool.query('DELETE FROM approval_delegations WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Devir bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

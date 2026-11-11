@@ -88,7 +88,7 @@ async function loadOrg(client) {
     else if (d.depo_kodu.includes('MAM') || d.depo_rolu === 'Mamul') depolar.MAM = d;
     else if (d.depo_kodu.includes('SVK') || d.depo_kodu.includes('SEVK')) depolar.SVK = d;
     else if (d.depo_kodu.includes('KK') || d.depo_rolu === 'GKK') depolar.KK = d;
-    else if (d.varsayilan || d.depo_kodu.includes('ANA')) depolar.ANA = d;
+    else if (d.is_default || d.depo_kodu.includes('ANA')) depolar.ANA = d;
   }
   if (!depolar.ANA) depolar.ANA = depoRows[0];
   if (!depolar.HMD) depolar.HMD = depolar.ANA;
@@ -112,11 +112,11 @@ async function createPartner(client, {
   const cariKodu = await kod(client, partnerTypeFromSeriesCode(turu), `C-${Date.now()}`);
   const c = (await client.query(
     `INSERT INTO cariler (
-       cari_kodu, cari_adi, cari_adi_2, cari_turu, telefon, telefon2, cep_tel, fax, email, website,
-       vergi_no, vergi_dairesi, yetkili_adi, yetkili_telefon,
+       cari_kodu, cari_adi, cari_adi_2, cari_turu, phone, phone_2, cep_tel, fax, email, website,
+       vergi_no, vergi_dairesi, yetkili_adi, authorized_phone,
        adres, fatura_adresi, fatura_adres1, fatura_adres2, fatura_adres3,
-       il, ilce, ulke, posta_kodu, para_birimi, odeme_vadesi_gun, aktif,
-       sektor_kodu, bolge_kodu, nace_kodu, aciklama, notlar,
+       province, ilce, ulke, posta_kodu, para_birimi, odeme_vadesi_gun, aktif,
+       sektor_kodu, bolge_kodu, nace_kodu, aciklama, notes,
        firma_id, is_yeri_id
      ) VALUES (
        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
@@ -156,13 +156,13 @@ async function createPartner(client, {
   };
   await spChild('sevk',
     `INSERT INTO cari_sevk_adresleri (
-       cari_id, sira_no, adres_adi, adres1, adres2, ulke, il, ilce, posta_kodu,
-       telefon, yetkili_adi, varsayilan, pasif
+       cari_id, sira_no, adres_adi, address_line_1, address_line_2, ulke, province, ilce, posta_kodu,
+       phone, yetkili_adi, is_default, pasif
      ) VALUES ($1,1,'Merkez Sevk',$2,'Depo girişi','TR',$3,$4,'27000',$5,$6,TRUE,FALSE)`,
     [c.id, `${sehir} Lojistik Cad. No:5`, sehir, ilce, '0342 200 00 01', 'Sevk Sorumlusu']);
   await spChild('banka',
     `INSERT INTO cari_banka_bilgileri (
-       cari_id, sira_no, banka_adi, sube_adi, iban, para_birimi, varsayilan
+       cari_id, sira_no, banka_adi, sube_adi, iban, para_birimi, is_default
      ) VALUES ($1,1,'Ziraat Bankası','Gaziantep OSB','TR330001000000000000000001','TRY',TRUE)`,
     [c.id]);
 
@@ -177,11 +177,11 @@ async function createItem(client, {
     `INSERT INTO stoklar (
        stok_kodu, stok_adi, stok_adi_2, uzun_stok_kodu, birim, satin_birimi, satis_birimi,
        stok_takip_birimi, satis_fiyati, stok_tipi, tedarik_tipi, aktif,
-       abc_kodu, marka, ulke_mensei, gtip_kodu, uretici_kodu,
+       abc_kodu, brand_name, ulke_mensei, gtip_kodu, uretici_kodu,
        emniyet_stok, minimum_stok, maksimum_stok, yeniden_siparis_seviyesi,
        sabit_siparis_miktari, optimum_siparis_miktari, temin_suresi_gun,
        varsayilan_kdv_oran, kalite_kontrol_gerekli, parti_politika, seri_politika,
-       maliyet_yontem, son_maliyet, net_agirlik, brut_agirlik, agirlik_birimi,
+       maliyet_yontem, son_maliyet, net_weight, gross_weight, agirlik_birimi,
        varsayilan_giris_depo_id, varsayilan_cikis_depo_id,
        aciklama, firma_id
      ) VALUES (
@@ -222,7 +222,7 @@ async function createItem(client, {
     );
   }
   await trySql(client,
-    `INSERT INTO stok_barkodlari (stok_id, barkod, barkod_tipi, varsayilan)
+    `INSERT INTO stok_barkodlari (stok_id, barcode, barkod_tipi, is_default)
      VALUES ($1,$2,'EAN13',TRUE)`,
     [s.id, `869${String(s.id).padStart(10, '0')}`.slice(0, 13)]);
   await trySql(client,
@@ -357,7 +357,7 @@ async function seedMaster(client, org) {
 
   const rotaNo = await kod(client, 'ROTA', 'R-TEKS-1');
   const rota = (await client.query(
-    `INSERT INTO rotalar (rota_kodu, rota_adi, stok_id, aktif, firma_id, varsayilan)
+    `INSERT INTO rotalar (rota_kodu, rota_adi, stok_id, aktif, firma_id, is_default)
      VALUES ($1,$2,$3,TRUE,$4,TRUE) RETURNING *`,
     [rotaNo, 'Kot Pantolon Rota', mamul.id, firma.id]
   )).rows[0];
@@ -370,7 +370,7 @@ async function seedMaster(client, org) {
   let opSira = 10;
   for (const [kodOp, adi, dk] of ops) {
     await client.query(
-      `INSERT INTO rota_operasyonlari (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, sure_dk)
+      `INSERT INTO rota_operasyonlari (rota_id, sira_no, operasyon_kodu, operasyon_adi, is_merkezi_id, duration_minutes)
        VALUES ($1,$2,$3,$4,$5,$6)`,
       [rota.id, opSira, kodOp, adi, im.id, dk]
     );
@@ -412,7 +412,7 @@ async function seedOrnek1(client, org, master) {
     const adayNo = await kod(client, 'CRM_ADAY', 'ADAY-1');
     return (await client.query(
       `INSERT INTO crm_adaylar (
-         aday_kodu, aday_adi, telefon, email, il, ulke, durum, firma_id, bulma_yontemi, notlar
+         aday_kodu, aday_adi, phone, email, province, ulke, durum, firma_id, lead_source, notes
        ) VALUES ($1,$2,$3,$4,'İstanbul','TR','Nitelikli',$5,'Fuar',$6) RETURNING *`,
       [adayNo, 'Yeni Zincir Adayı', '0212 555 00 11', 'aday@moda.demo',
         firma.id, `${tag} CRM aday notu`]
@@ -425,7 +425,7 @@ async function seedOrnek1(client, org, master) {
     return (await client.query(
       `INSERT INTO crm_firsatlar (
          firsat_kodu, firsat_adi, musteri_tipi, cari_id, asama_id, durum,
-         firma_id, is_yeri_id, beklenen_gelir, para_birimi, aciklama
+         firma_id, is_yeri_id, expected_revenue, para_birimi, aciklama
        ) VALUES ($1,$2,'Musteri',$3,$4,'Acik',$5,$6,$7,'TRY',$8) RETURNING *`,
       [firsatNo, `${tag} Kot Pantolon Sezon Siparişi`, musteri.id, asamaId,
         firma.id, isYeri.id, 890 * qty,
@@ -539,14 +539,14 @@ async function seedOrnek1(client, org, master) {
   const istekNo = await kod(client, 'SATINALMA_TEKLIF_ISTEK', 'TI-1');
   const istek = (await client.query(
     `INSERT INTO satin_alma_teklif_istekleri (
-       istek_no, is_yeri_id, firma_id, durum, aciklama
+       rfq_no, is_yeri_id, firma_id, durum, aciklama
      ) VALUES ($1,$2,$3,'TeklifeDonustu',$4) RETURNING *`,
     [istekNo, isYeri.id, firma.id, `${tag} teklif isteği — tüm hammaddeler`]
   )).rows[0];
   for (const h of hammaddeler) {
     const miktar = Number((h.bomMiktar * ihtiyacCarpan * 1.05).toFixed(3));
     await client.query(
-      `INSERT INTO satin_alma_teklif_istek_satirlari (istek_id, stok_id, miktar, birim)
+      `INSERT INTO satin_alma_teklif_istek_satirlari (rfq_id, stok_id, miktar, birim)
        VALUES ($1,$2,$3,$4)`,
       [istek.id, h.id, miktar, h.birim]
     );
@@ -555,7 +555,7 @@ async function seedOrnek1(client, org, master) {
   const saTeklifNo = await kod(client, 'SATINALMA_TEKLIF', 'SATK-1');
   const saTeklif = (await client.query(
     `INSERT INTO satin_alma_teklifleri (
-       teklif_no, cari_id, istek_id, is_yeri_id, firma_id, durum, gecerlilik_tarihi,
+       teklif_no, cari_id, rfq_id, is_yeri_id, firma_id, durum, gecerlilik_tarihi,
        para_birimi, kur, aciklama
      ) VALUES ($1,$2,$3,$4,$5,'Onayli',$6,'TRY',1,$7)
      RETURNING *`,
@@ -578,7 +578,7 @@ async function seedOrnek1(client, org, master) {
     const anNo = await kod(client, 'SATINALMA_ANLASMA', 'ANL-1');
     await client.query(
       `INSERT INTO satin_alma_anlasmalari (
-         anlasma_no, cari_id, firma_id, is_yeri_id, durum, baslangic_tarihi, bitis_tarihi,
+         agreement_no, cari_id, firma_id, is_yeri_id, durum, baslangic_tarihi, bitis_tarihi,
          para_birimi, aciklama, teklif_id
        ) VALUES ($1,$2,$3,$4,'Aktif',CURRENT_DATE,$5,'TRY',$6,$7)`,
       [anNo, tedarikci.id, firma.id, isYeri.id, plusDays(365),
@@ -869,7 +869,7 @@ async function seedOrnek2(client, org, master) {
   const biNo = await kod(client, 'MRP_BI', 'BI-2');
   const bi = (await client.query(
     `INSERT INTO mrp_bagimsiz_ihtiyaclar
-       (ihtiyac_no, stok_id, miktar, birim, ihtiyac_tarihi, kaynak, firma_id, is_yeri_id, aciklama, aktif)
+       (requirement_no, stok_id, miktar, birim, ihtiyac_tarihi, kaynak, firma_id, is_yeri_id, aciklama, aktif)
      VALUES ($1,$2,$3,'AD',$4,'Manuel',$5,$6,$7,TRUE) RETURNING *`,
     [
       biNo, mamul.id, qty, plusDays(28),
@@ -917,7 +917,7 @@ async function seedOrnek2(client, org, master) {
   return {
     tag,
     biId: bi.id,
-    biNo: bi.ihtiyac_no,
+    biNo: bi.requirement_no,
     siparis: sip.siparis_no,
     siparisId: sip.id,
     qty,
@@ -940,8 +940,8 @@ async function finishOrnek2AfterMrp(pool, org, master, o2, mrpSonuc) {
     const { tedarikci, hammaddeler, mamul, agac, rota } = { ...master, ...o2 };
 
     // MRP önerilerinden SA talep (manuel kayıt — API yerine doğrudan, alanlar dolu)
-    const saOneri = (mrpSonuc.sonuclar || []).filter((r) => r.oneri === 'Satınalma' && r.net_ihtiyac > 0);
-    const ueOneri = (mrpSonuc.sonuclar || []).filter((r) => r.oneri === 'Üretim emri' && r.net_ihtiyac > 0);
+    const saOneri = (mrpSonuc.sonuclar || []).filter((r) => r.suggestion === 'Satınalma' && r.net_requirement > 0);
+    const ueOneri = (mrpSonuc.sonuclar || []).filter((r) => r.suggestion === 'Üretim emri' && r.net_requirement > 0);
 
     const talepNo = await kod(client, 'SATINALMA_TALEP', 'TAL-2');
     const talep = (await client.query(
@@ -963,7 +963,7 @@ async function finishOrnek2AfterMrp(pool, org, master, o2, mrpSonuc) {
         await client.query(
           `INSERT INTO satin_alma_talep_satirlari (talep_id, stok_id, miktar, birim, satir_aciklama)
            VALUES ($1,$2,$3,$4,$5)`,
-          [talep.id, h.id, r.net_ihtiyac, h.birim, `${tag} MRP net ${r.net_ihtiyac}`]
+          [talep.id, h.id, r.net_requirement, h.birim, `${tag} MRP net ${r.net_requirement}`]
         );
       }
     } else {
@@ -1020,7 +1020,7 @@ async function finishOrnek2AfterMrp(pool, org, master, o2, mrpSonuc) {
     // Üretim emirleri (MRP önerisi veya mamul için)
     const ueTargets = ueOneri.length
       ? ueOneri.filter((r) => r.stok_id === mamul.id || r.stok_kodu === mamul.stok_kodu)
-      : [{ stok_id: mamul.id, net_ihtiyac: o2.qty }];
+      : [{ stok_id: mamul.id, net_requirement: o2.qty }];
     const ueNos = [];
     for (const u of ueTargets.slice(0, 3)) {
       const ueNo = await kod(client, 'URETIM_EMRI', 'UE-2');
@@ -1032,14 +1032,14 @@ async function finishOrnek2AfterMrp(pool, org, master, o2, mrpSonuc) {
          ) VALUES ($1,$2,$3,'Acik',$4,$5,$6,$7,$8,$9,$10,CURRENT_DATE,'MRP',$11)
          RETURNING *`,
         [
-          ueNo, u.stok_id || mamul.id, u.net_ihtiyac || o2.qty,
+          ueNo, u.stok_id || mamul.id, u.net_requirement || o2.qty,
           isYeri.id, firma.id, depolar.MAM.id, depolar.HMD.id, agac.id, rota.id,
           o2.siparisId, mrpSonuc.calisma?.id || null,
         ]
       )).rows[0];
       ueNos.push(ue.emir_no);
       await stockReceipt(client, {
-        stokId: mamul.id, depoId: depolar.MAM.id, miktar: u.net_ihtiyac || o2.qty, birim: 'AD',
+        stokId: mamul.id, depoId: depolar.MAM.id, miktar: u.net_requirement || o2.qty, birim: 'AD',
         firmaId: firma.id, isYeriId: isYeri.id, tag,
         aciklama: `${tag} MRP üretim çıktısı`,
       });
@@ -1104,7 +1104,7 @@ async function finishOrnek2AfterMrp(pool, org, master, o2, mrpSonuc) {
       tag,
       bi: o2.biNo,
       mrp: mrpSonuc.calisma?.calisma_no,
-      netPozitif: mrpSonuc.calisma?.net_pozitif,
+      netPozitif: mrpSonuc.calisma?.net_positive_only,
       talep: talep.talep_no,
       sa: sa.siparis_no,
       ue: ueNos,
@@ -1147,11 +1147,11 @@ async function main() {
   summary.mrp = {
     calisma: mrpSonuc.calisma?.calisma_no,
     satir: mrpSonuc.calisma?.satir_sayisi,
-    net: mrpSonuc.calisma?.net_pozitif,
+    net: mrpSonuc.calisma?.net_positive_only,
     oneriler: (mrpSonuc.sonuclar || [])
-      .filter((r) => r.net_ihtiyac > 0)
+      .filter((r) => r.net_requirement > 0)
       .slice(0, 12)
-      .map((r) => ({ stok: r.stok_kodu, net: r.net_ihtiyac, oneri: r.oneri })),
+      .map((r) => ({ stok: r.stok_kodu, net: r.net_requirement, suggestion: r.suggestion })),
   };
   console.log('MRP OK', summary.mrp);
 

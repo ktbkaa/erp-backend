@@ -20,7 +20,7 @@ async function getOrder(id) {
     SELECT ss.*,
            COALESCE(ss.item_code, st.item_code) AS item_code,
            COALESCE(ss.item_name, st.item_name) AS item_name,
-           (ss.quantity - ss.giren_quantity) AS remaining_quantity
+           (ss.quantity - ss.received_quantity) AS remaining_quantity
     FROM purchase_order_lines ss
     JOIN items st ON st.id = ss.item_id
     WHERE ss.purchase_order_id = $1
@@ -46,7 +46,7 @@ async function assertTedarikci(client, partner_id) {
 
 async function insertOrderLine(client, siparisId, s, sira, baslikKur) {
   const stok = await client.query(
-    `SELECT id, uom_code, purchase_uom, item_code, item_name, varsayilan_vat_rate
+    `SELECT id, uom_code, purchase_uom, item_code, item_name, default_vat_rate
      FROM items WHERE id=$1`,
     [s.item_id]
   );
@@ -59,7 +59,7 @@ async function insertOrderLine(client, siparisId, s, sira, baslikKur) {
     discount_rate: s.discount_rate,
     discount_rate_2: s.discount_rate_2,
     discount_rate_3: s.discount_rate_3,
-    vat_rate: s.vat_rate ?? st.varsayilan_vat_rate ?? 20,
+    vat_rate: s.vat_rate ?? st.default_vat_rate ?? 20,
     vat_mode: s.vat_mode || 'Haric',
     withholding_rate: s.withholding_rate,
     excise_rate: s.excise_rate,
@@ -69,12 +69,12 @@ async function insertOrderLine(client, siparisId, s, sira, baslikKur) {
     `INSERT INTO purchase_order_lines (
         purchase_order_id, requisition_line_id, item_id, quantity, unit_price, uom_code,
         line_no, line_type, line_description, delivery_date, ship_date,
-        discount_rate, discount_amount, discount_rate_2, discount_tutari2, discount_rate_3, discount_tutari3,
+        discount_rate, discount_amount, discount_rate_2, discount_amount_2, discount_rate_3, discount_amount_3,
         vat_rate, vat_amount, vat_mode, amount_ex_tax, amount_ttc,
         withholding_code, withholding_rate, withholding_amount, excise_rate, excise_amount,
         currency_code, exchange_rate, rate_type, yp_unit_price, yp_amount,
         supplier_item_code, supplier_item_name, warehouse_id, project_code, region,
-        rezervasyon_type, rezervasyon_iliski_no, item_code, item_name
+        reservation_type, reservation_link_no, item_code, item_name
      ) VALUES (
         $1,$2,$3,$4,$5,$6,
         $7,COALESCE($8,'S'),$9,$10,$11,
@@ -89,13 +89,13 @@ async function insertOrderLine(client, siparisId, s, sira, baslikKur) {
       siparisId, s.requisition_line_id || null, s.item_id, s.quantity, Number(s.unit_price || 0),
       s.uom_code || st.purchase_uom || st.uom_code,
       sira, s.line_type || 'S', s.line_description || null, s.delivery_date || null, s.ship_date || null,
-      hes.discount_rate, hes.discount_amount, hes.discount_rate_2, hes.discount_tutari2, hes.discount_rate_3, hes.discount_tutari3,
+      hes.discount_rate, hes.discount_amount, hes.discount_rate_2, hes.discount_amount_2, hes.discount_rate_3, hes.discount_amount_3,
       hes.vat_rate, hes.vat_amount, hes.vat_mode, hes.amount_ex_tax, hes.amount_ttc,
       s.withholding_code || null, hes.withholding_rate, hes.withholding_amount, hes.excise_rate, hes.excise_amount,
       s.currency_code || null, exchange_rate, s.rate_type || null, hes.yp_unit_price, hes.yp_amount,
       s.supplier_item_code || null, s.supplier_item_name || null,
       s.warehouse_id || null, s.project_code || null, s.region || null,
-      s.rezervasyon_type || null, s.rezervasyon_iliski_no || null,
+      s.reservation_type || null, s.reservation_link_no || null,
       s.item_code || st.item_code, s.item_name || st.item_name,
     ]
   );
@@ -234,7 +234,7 @@ router.post('/talep-donustur', async (req, res) => {
         ...sat,
         requisition_line_id: sat.id,
         unit_price: Number(
-          fiyatMap[sat.item_id] ?? fiyatMap[String(sat.item_id)] ?? sat.tahmini_unit_price ?? 0
+          fiyatMap[sat.item_id] ?? fiyatMap[String(sat.item_id)] ?? sat.estimated_unit_price ?? 0
         ),
         currency_code: sat.currency_code || t.currency_code,
         exchange_rate: sat.exchange_rate ?? t.exchange_rate ?? 1,
@@ -332,7 +332,7 @@ router.post('/:id/onayla', async (req, res) => {
 
     const result = await withTransaction(pool, async (client) => {
       const upd = await client.query(
-        `UPDATE purchase_orders SET status='Onayli', onay_date=CURRENT_TIMESTAMP
+        `UPDATE purchase_orders SET status='Onayli', approved_at=CURRENT_TIMESTAMP
          WHERE id=$1 AND status='Taslak' RETURNING *`,
         [req.params.id]
       );
@@ -351,10 +351,10 @@ router.post('/:id/onayla', async (req, res) => {
           module_code: 'SATINALMA',
           document_id: po.id,
           document_no: po.order_no,
-          document_ozet: po.description || `SA sipariş ${po.order_no}`,
+          document_summary: po.description || `SA sipariş ${po.order_no}`,
           amount: Number(po.total_amount) || 0,
           currency_code: po.currency_code || 'TRY',
-          baslatan_kisi_id: kullanici?.id || null,
+          initiator_user_id: kullanici?.id || null,
           description: po.description || null,
         });
       } catch (onayErr) {
@@ -377,7 +377,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const result = await pool.query(`DELETE FROM purchase_orders WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

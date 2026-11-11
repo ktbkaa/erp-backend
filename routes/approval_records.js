@@ -102,7 +102,7 @@ router.post('/baslat', async (req, res) => {
     const user = await resolveUser(req);
     const body = { ...req.body };
     if (!body.company_id) body.company_id = companyIdFromReq(req);
-    if (!body.baslatan_kisi_id && user) body.baslatan_kisi_id = user.id;
+    if (!body.initiator_user_id && user) body.initiator_user_id = user.id;
     const result = await withTransaction(pool, async (client) => startApproval(client, body));
     res.status(201).json(result);
   } catch (err) {
@@ -114,7 +114,7 @@ router.post('/:id/onayla', async (req, res) => {
   try {
     const user = await resolveUser(req);
     const result = await withTransaction(pool, async (client) =>
-      onaylaAdim(client, req.params.id, user, { notlar: req.body?.notlar || req.body?.description || null }),
+      onaylaAdim(client, req.params.id, user, { notes: req.body?.notes || req.body?.description || null }),
     );
     res.json(result);
   } catch (err) {
@@ -126,7 +126,7 @@ router.post('/:id/reddet', async (req, res) => {
   try {
     const user = await resolveUser(req);
     const result = await withTransaction(pool, async (client) =>
-      reddetAdim(client, req.params.id, user, { notlar: req.body?.notlar || req.body?.description || null }),
+      reddetAdim(client, req.params.id, user, { notes: req.body?.notes || req.body?.description || null }),
     );
     res.json(result);
   } catch (err) {
@@ -138,7 +138,7 @@ router.post('/:id/iptal', async (req, res) => {
   try {
     const user = await resolveUser(req);
     const result = await withTransaction(pool, async (client) =>
-      cancelRecord(client, req.params.id, user, { notlar: req.body?.notlar || req.body?.description || null }),
+      cancelRecord(client, req.params.id, user, { notes: req.body?.notes || req.body?.description || null }),
     );
     res.json(result);
   } catch (err) {

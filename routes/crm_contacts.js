@@ -77,17 +77,17 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: 'partner_id veya lead_id zorunlu.' });
         }
         const id = await withTransaction(pool, async (client) => {
-            const kod = b.kontak_code || (await nextSequenceCode(client, 'CRM_KONTAK'));
-            if (b.birincil) {
+            const kod = b.contact_code || (await nextSequenceCode(client, 'CRM_KONTAK'));
+            if (b.is_primary) {
                 if (b.partner_id) {
                     await client.query(
-                        `UPDATE crm_contacts SET birincil=FALSE WHERE partner_id=$1`,
+                        `UPDATE crm_contacts SET is_primary=FALSE WHERE partner_id=$1`,
                         [b.partner_id]
                     );
                 }
                 if (b.lead_id) {
                     await client.query(
-                        `UPDATE crm_contacts SET birincil=FALSE WHERE lead_id=$1`,
+                        `UPDATE crm_contacts SET is_primary=FALSE WHERE lead_id=$1`,
                         [b.lead_id]
                     );
                 }
@@ -96,15 +96,15 @@ router.post('/', async (req, res) => {
             const r = await client.query(
                 `
                 INSERT INTO crm_contacts
-                    (kontak_code, first_name, last_name, title, email, telefon, mobile_phone,
-                     partner_id, lead_id, birincil, is_active, notlar, company_id)
+                    (contact_code, first_name, last_name, title, email, phone, mobile_phone,
+                     partner_id, lead_id, is_primary, is_active, notes, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,FALSE),COALESCE($11,TRUE),$12,$13)
                 RETURNING id
                 `,
                 [
-                    kod, b.first_name, b.last_name, b.title || null, b.email || null, b.telefon || null,
-                    b.mobile_phone || null, b.partner_id || null, b.lead_id || null, b.birincil,
-                    b.is_active, b.notlar || null, firmaId,
+                    kod, b.first_name, b.last_name, b.title || null, b.email || null, b.phone || null,
+                    b.mobile_phone || null, b.partner_id || null, b.lead_id || null, b.is_primary,
+                    b.is_active, b.notes || null, firmaId,
                 ]
             );
             return r.rows[0].id;
@@ -125,19 +125,19 @@ router.put('/:id', async (req, res) => {
                 last_name = COALESCE($3, last_name),
                 title = COALESCE($4, title),
                 email = COALESCE($5, email),
-                telefon = COALESCE($6, telefon),
+                phone = COALESCE($6, phone),
                 mobile_phone = COALESCE($7, mobile_phone),
                 partner_id = COALESCE($8, partner_id),
                 lead_id = COALESCE($9, lead_id),
-                birincil = COALESCE($10, birincil),
+                is_primary = COALESCE($10, is_primary),
                 is_active = COALESCE($11, is_active),
-                notlar = COALESCE($12, notlar)
+                notes = COALESCE($12, notes)
             WHERE id=$1 RETURNING id
             `,
             [
                 req.params.id, b.first_name || null, b.last_name || null, b.title ?? null, b.email ?? null,
-                b.telefon ?? null, b.mobile_phone ?? null, b.partner_id || null, b.lead_id || null,
-                b.birincil, b.is_active, b.notlar ?? null,
+                b.phone ?? null, b.mobile_phone ?? null, b.partner_id || null, b.lead_id || null,
+                b.is_primary, b.is_active, b.notes ?? null,
             ]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Kontak bulunamadı.' });
@@ -151,7 +151,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM crm_contacts WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Kontak bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

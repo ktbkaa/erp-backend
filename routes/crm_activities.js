@@ -18,13 +18,13 @@ async function getActivity(id) {
                TRIM(CONCAT(COALESCE(kk.first_name,''),' ',COALESCE(kk.last_name,''))) AS kontak_adi,
                iy.plant_code, iy.plant_name
         FROM crm_activities fy
-        LEFT JOIN crm_activity_types type ON type.id = fy.faaliyet_type_id
+        LEFT JOIN crm_activity_types type ON type.id = fy.activity_type_id
         LEFT JOIN partners c ON c.id = fy.partner_id
         LEFT JOIN crm_leads a ON a.id = fy.lead_id
         LEFT JOIN crm_opportunities f ON f.id = fy.firsat_id
         LEFT JOIN crm_activity_plans p ON p.id = fy.plan_id
-        LEFT JOIN users k ON k.id = fy.giren_id
-        LEFT JOIN crm_contacts kk ON kk.id = fy.kontak_id
+        LEFT JOIN users k ON k.id = fy.entered_by_id
+        LEFT JOIN crm_contacts kk ON kk.id = fy.contact_id
         LEFT JOIN plants iy ON iy.id = fy.plant_id
         WHERE fy.id = $1
         `,
@@ -60,11 +60,11 @@ router.get('/', async (req, res) => {
                    c.partner_name, a.lead_name, f.firsat_code,
                    TRIM(CONCAT(COALESCE(k.first_name,''),' ',COALESCE(k.last_name,''))) AS giren_adi
             FROM crm_activities fy
-            LEFT JOIN crm_activity_types type ON type.id = fy.faaliyet_type_id
+            LEFT JOIN crm_activity_types type ON type.id = fy.activity_type_id
             LEFT JOIN partners c ON c.id = fy.partner_id
             LEFT JOIN crm_leads a ON a.id = fy.lead_id
             LEFT JOIN crm_opportunities f ON f.id = fy.firsat_id
-            LEFT JOIN users k ON k.id = fy.giren_id
+            LEFT JOIN users k ON k.id = fy.entered_by_id
             ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
             ORDER BY fy.start_date DESC, fy.id DESC
             `,
@@ -89,7 +89,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const b = req.body;
-        if (!b.description && !b.konu) {
+        if (!b.description && !b.subject) {
             return res.status(400).json({ hata: 'konu veya description zorunlu.' });
         }
         const musteriTipi = resolveCustomerType(b);
@@ -121,14 +121,14 @@ router.post('/', async (req, res) => {
                     [b.plan_id]
                 );
             }
-            const kod = b.faaliyet_code || (await nextSequenceCode(client, 'CRM_FAALIYET'));
+            const kod = b.activity_code || (await nextSequenceCode(client, 'CRM_FAALIYET'));
             const firmaId = b.company_id || companyIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_activities
-                    (faaliyet_code, customer_type, partner_id, lead_id, firsat_id, plan_id, kontak_id,
-                     faaliyet_type_id, giren_id, plant_id, start_date, end_date,
-                     harcanan_dk, konu, description, degerlendirme, status, company_id)
+                    (activity_code, customer_type, partner_id, lead_id, firsat_id, plan_id, contact_id,
+                     activity_type_id, entered_by_id, plant_id, start_date, end_date,
+                     spent_minutes, subject, description, rating, status, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
                         COALESCE($11::timestamp,CURRENT_TIMESTAMP),$12,
                         COALESCE($13,0),$14,$15,$16,COALESCE($17,'Tamamlandi'),$18)
@@ -136,9 +136,9 @@ router.post('/', async (req, res) => {
                 `,
                 [
                     kod, type, cariId, adayId, b.firsat_id || null, b.plan_id || null,
-                    b.kontak_id || null, b.faaliyet_type_id || null, b.giren_id || null,
+                    b.contact_id || null, b.activity_type_id || null, b.entered_by_id || null,
                     b.plant_id || null, b.start_date || null, b.end_date || null,
-                    b.harcanan_dk, b.konu || null, b.description || null, b.degerlendirme || null,
+                    b.spent_minutes, b.subject || null, b.description || null, b.rating || null,
                     b.status || null, firmaId,
                 ]
             );
@@ -161,25 +161,25 @@ router.put('/:id', async (req, res) => {
                 lead_id = COALESCE($4, lead_id),
                 firsat_id = COALESCE($5, firsat_id),
                 plan_id = COALESCE($6, plan_id),
-                kontak_id = COALESCE($7, kontak_id),
-                faaliyet_type_id = COALESCE($8, faaliyet_type_id),
-                giren_id = COALESCE($9, giren_id),
+                contact_id = COALESCE($7, contact_id),
+                activity_type_id = COALESCE($8, activity_type_id),
+                entered_by_id = COALESCE($9, entered_by_id),
                 plant_id = COALESCE($10, plant_id),
                 start_date = COALESCE($11::timestamp, start_date),
                 end_date = COALESCE($12::timestamp, end_date),
-                harcanan_dk = COALESCE($13, harcanan_dk),
-                konu = COALESCE($14, konu),
+                spent_minutes = COALESCE($13, spent_minutes),
+                subject = COALESCE($14, subject),
                 description = COALESCE($15, description),
-                degerlendirme = COALESCE($16, degerlendirme),
+                rating = COALESCE($16, rating),
                 status = COALESCE($17, status)
             WHERE id=$1 RETURNING id
             `,
             [
                 req.params.id, b.customer_type || null, b.partner_id || null, b.lead_id || null,
-                b.firsat_id || null, b.plan_id || null, b.kontak_id || null,
-                b.faaliyet_type_id || null, b.giren_id || null, b.plant_id || null,
-                b.start_date || null, b.end_date || null, b.harcanan_dk ?? null,
-                b.konu ?? null, b.description ?? null, b.degerlendirme ?? null, b.status || null,
+                b.firsat_id || null, b.plan_id || null, b.contact_id || null,
+                b.activity_type_id || null, b.entered_by_id || null, b.plant_id || null,
+                b.start_date || null, b.end_date || null, b.spent_minutes ?? null,
+                b.subject ?? null, b.description ?? null, b.rating ?? null, b.status || null,
             ]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Faaliyet bulunamadı.' });
@@ -193,7 +193,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM crm_activities WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Faaliyet bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

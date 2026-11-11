@@ -23,7 +23,7 @@ async function getRouting(id) {
     `
     SELECT r.*,
            s.item_code, s.item_name, s.item_type,
-           ua.bom_code, ua.bom_name, ua.alt_no AS bom_alt_no,
+           ua.bom_code, ua.bom_name, ua.alternative_no AS bom_alt_no,
            p.plant_code, p.plant_name,
            c.company_code, c.company_name
     FROM routings r
@@ -83,12 +83,12 @@ async function getRouting(id) {
       SELECT b.*, st.item_code, st.item_name, st.item_type
       FROM routing_operation_components b
       JOIN items st ON st.id = b.item_id
-      WHERE b.operasyon_id = $1
+      WHERE b.operation_id = $1
       ORDER BY b.id
       `,
       [op.id]
     );
-    const sonraki = ops.rows.find((x) => x.line_no === op.sonraki_line_no);
+    const sonraki = ops.rows.find((x) => x.line_no === op.next_line_no);
     operasyonlar.push({
       ...op,
       bilesenler: bilesenler.rows,
@@ -114,14 +114,14 @@ function pickHeader(body, cur = {}) {
     route_code: g('route_code', null),
     route_name: g('route_name', null),
     template: boolOr(g('template', false), false),
-    varsayilan: boolOr(g('varsayilan', false), false),
+    is_default: boolOr(g('is_default', false), false),
     valid_from: g('valid_from', null) || null,
     valid_to: g('valid_to', null) || null,
     company_id: g('company_id', null) || null,
     plant_id: g('plant_id', null) || null,
     route_type: g('route_type', 'Uretim') || 'Uretim',
-    alt_no: g('alt_no', '00') != null ? String(g('alt_no', '00')) : '00',
-    alt_description: g('alt_description', null) || null,
+    alternative_no: g('alternative_no', '00') != null ? String(g('alternative_no', '00')) : '00',
+    alternative_description: g('alternative_description', null) || null,
     min_quantity: numOr(g('min_quantity', 0), 0),
     max_quantity: numOr(g('max_quantity', 999999999), 999999999),
     revision: g('revision', null) || null,
@@ -135,7 +135,7 @@ function pickHeader(body, cur = {}) {
 }
 
 function opInsertValues(rotaId, op) {
-  const opTime = numOr(op.op_time != null ? op.op_time : op.sure_dk, 0);
+  const opTime = numOr(op.op_time != null ? op.op_time : op.duration_minutes, 0);
   return [
     rotaId,
     op.line_no || 10,
@@ -144,7 +144,7 @@ function opInsertValues(rotaId, op) {
     op.work_center_id || null,
     opTime,
     op.output_item_id || null,
-    op.sonraki_line_no || null,
+    op.next_line_no || null,
     op.description || null,
     op.work_station_id || null,
     opTime,
@@ -175,7 +175,7 @@ function opInsertValues(rotaId, op) {
 const OP_INSERT_SQL = `
   INSERT INTO routing_operations (
     route_id, line_no, operation_code, operation_name, work_center_id,
-    sure_dk, output_item_id, sonraki_line_no,
+    duration_minutes, output_item_id, next_line_no,
     description, work_station_id,
     op_time, op_time_uom, wait_time, wait_time_uom,
     setup_time, setup_time_uom, unload_time, unload_time_uom,
@@ -229,7 +229,7 @@ async function insertOps(client, rotaId, operasyonlar) {
     for (const b of op.bilesenler || []) {
       if (!b.item_id) continue;
       await client.query(
-        `INSERT INTO routing_operation_components (operasyon_id, item_id, quantity, uom_code)
+        `INSERT INTO routing_operation_components (operation_id, item_id, quantity, uom_code)
          VALUES ($1,$2,$3,$4)`,
         [opId, b.item_id, b.quantity || 0, b.uom_code || null]
       );
@@ -241,8 +241,8 @@ async function insertOps(client, rotaId, operasyonlar) {
 async function clearOtherDefault(client, itemId, keepId) {
   if (!itemId) return;
   await client.query(
-    `UPDATE routings SET varsayilan=FALSE
-     WHERE item_id=$1 AND id IS DISTINCT FROM $2 AND varsayilan=TRUE`,
+    `UPDATE routings SET is_default=FALSE
+     WHERE item_id=$1 AND id IS DISTINCT FROM $2 AND is_default=TRUE`,
     [itemId, keepId || 0]
   );
 }
@@ -321,7 +321,7 @@ router.post('/:id/sablon-uygula', async (req, res) => {
       }
       const eskiOps = await client.query('SELECT id FROM routing_operations WHERE route_id=$1', [req.params.id]);
       for (const op of eskiOps.rows) {
-        await client.query('DELETE FROM routing_operation_components WHERE operasyon_id=$1', [op.id]);
+        await client.query('DELETE FROM routing_operation_components WHERE operation_id=$1', [op.id]);
         await client.query('DELETE FROM routing_operation_equipment WHERE operation_id=$1', [op.id]);
       }
       await client.query('DELETE FROM routing_operations WHERE route_id=$1', [req.params.id]);
@@ -364,8 +364,8 @@ router.post('/', async (req, res) => {
       const baslik = await client.query(
         `
         INSERT INTO routings (
-          item_id, product_bom_id, route_code, route_name, template, varsayilan,
-          valid_from, valid_to, company_id, plant_id, route_type, alt_no, alt_description,
+          item_id, product_bom_id, route_code, route_name, template, is_default,
+          valid_from, valid_to, company_id, plant_id, route_type, alternative_no, alternative_description,
           min_quantity, max_quantity, revision, brand_code, attr3_code,
           wo_change_mode, is_reverse, is_active, notes, updated_at
         ) VALUES (
@@ -381,14 +381,14 @@ router.post('/', async (req, res) => {
           h.route_code,
           h.route_name,
           h.template,
-          h.varsayilan,
+          h.is_default,
           h.valid_from,
           h.valid_to,
           firmaId,
           h.plant_id,
           h.route_type,
-          h.alt_no,
-          h.alt_description,
+          h.alternative_no,
+          h.alternative_description,
           h.min_quantity,
           h.max_quantity,
           h.revision,
@@ -401,7 +401,7 @@ router.post('/', async (req, res) => {
         ]
       );
       const rotaId = baslik.rows[0].id;
-      if (h.varsayilan) await clearOtherDefault(client, h.item_id, rotaId);
+      if (h.is_default) await clearOtherDefault(client, h.item_id, rotaId);
       await insertOps(client, rotaId, operasyonlar);
       return rotaId;
     });
@@ -445,14 +445,14 @@ router.put('/:id', async (req, res) => {
           item_id=COALESCE($3, item_id),
           product_bom_id=$4,
           template=$5,
-          varsayilan=$6,
+          is_default=$6,
           valid_from=$7,
           valid_to=$8,
           plant_id=$9,
           company_id=COALESCE($10, company_id),
           route_type=$11,
-          alt_no=$12,
-          alt_description=$13,
+          alternative_no=$12,
+          alternative_description=$13,
           min_quantity=$14,
           max_quantity=$15,
           revision=$16,
@@ -471,14 +471,14 @@ router.put('/:id', async (req, res) => {
           h.item_id || null,
           nextHeaderBom,
           h.template,
-          h.varsayilan,
+          h.is_default,
           h.valid_from,
           h.valid_to,
           h.plant_id,
           h.company_id,
           h.route_type,
-          h.alt_no,
-          h.alt_description,
+          h.alternative_no,
+          h.alternative_description,
           h.min_quantity,
           h.max_quantity,
           h.revision,
@@ -492,12 +492,12 @@ router.put('/:id', async (req, res) => {
       );
 
       const itemId = h.item_id || mevcut.rows[0].item_id;
-      if (h.varsayilan) await clearOtherDefault(client, itemId, Number(req.params.id));
+      if (h.is_default) await clearOtherDefault(client, itemId, Number(req.params.id));
 
       if (Array.isArray(operasyonlar)) {
         const eskiOps = await client.query('SELECT id FROM routing_operations WHERE route_id=$1', [req.params.id]);
         for (const op of eskiOps.rows) {
-          await client.query('DELETE FROM routing_operation_components WHERE operasyon_id=$1', [op.id]);
+          await client.query('DELETE FROM routing_operation_components WHERE operation_id=$1', [op.id]);
           await client.query('DELETE FROM routing_operation_equipment WHERE operation_id=$1', [op.id]);
         }
         await client.query('DELETE FROM routing_operations WHERE route_id=$1', [req.params.id]);
@@ -516,7 +516,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const result = await pool.query(`DELETE FROM routings WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ hata: 'Rota bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

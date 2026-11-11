@@ -37,7 +37,7 @@ describe('auth JWT', () => {
 
   it('AUTH_ZORUNLU iken header spoof 401', async () => {
     await pool.query(
-      `UPDATE system_parameters SET value='Evet' WHERE parametre_code='AUTH_ZORUNLU'`
+      `UPDATE system_parameters SET value='Evet' WHERE parameter_code='AUTH_ZORUNLU'`
     );
     try {
       const res = await request(app, 'GET', '/kokpit/ozet', {
@@ -46,7 +46,7 @@ describe('auth JWT', () => {
       assert.ok(res.status === 401 || res.status === 403, `beklenen 401/403, gelen ${res.status}`);
     } finally {
       await pool.query(
-        `UPDATE system_parameters SET value='Hayir' WHERE parametre_code='AUTH_ZORUNLU'`
+        `UPDATE system_parameters SET value='Hayir' WHERE parameter_code='AUTH_ZORUNLU'`
       );
     }
   });

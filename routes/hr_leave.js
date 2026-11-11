@@ -102,11 +102,11 @@ router.delete('/turler/:id', async (req, res) => {
     );
     if (used.rows[0]) {
       await pool.query(`UPDATE hr_leave_types SET is_active=FALSE WHERE id=$1`, [req.params.id]);
-      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+      return res.json({ is_deleted: false, pasife_alindi: true, id: Number(req.params.id) });
     }
     const r = await pool.query(`DELETE FROM hr_leave_types WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'İzin türü bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

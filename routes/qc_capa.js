@@ -11,7 +11,7 @@ async function fetchById(id) {
            k.user_code AS sorumlu_kodu
     FROM qc_capa c
     LEFT JOIN qc_nonconformances u ON u.id = c.nonconformance_id
-    LEFT JOIN users k ON k.id = c.sorumlu_kisi_id
+    LEFT JOIN users k ON k.id = c.owner_user_id
     WHERE c.id = $1
     `,
     [id]
@@ -55,17 +55,17 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { baslik, description, nonconformance_id, sorumlu_kisi_id, target_date, status } = req.body || {};
+    const { title: baslik, description, nonconformance_id, owner_user_id, target_date, status } = req.body || {};
     if (!baslik) return res.status(400).json({ hata: 'baslik zorunlu.' });
     const id = await withTransaction(pool, async (client) => {
       const no = await nextDocumentNo(client, 'CAPA');
       const r = await client.query(
         `
-        INSERT INTO qc_capa (capa_no, nonconformance_id, baslik, description, sorumlu_kisi_id, target_date, status)
+        INSERT INTO qc_capa (capa_no, nonconformance_id, title, description, owner_user_id, target_date, status)
         VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,'Acik'))
         RETURNING id
         `,
-        [no, nonconformance_id || null, baslik, description || null, sorumlu_kisi_id || null, target_date || null, status]
+        [no, nonconformance_id || null, baslik, description || null, owner_user_id || null, target_date || null, status]
       );
       return r.rows[0].id;
     });
@@ -77,7 +77,7 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
-    const fields = ['baslik', 'description', 'nonconformance_id', 'sorumlu_kisi_id', 'target_date', 'status'];
+    const fields = ['title', 'description', 'nonconformance_id', 'owner_user_id', 'target_date', 'status'];
     const sets = [];
     const params = [req.params.id];
     for (const f of fields) {

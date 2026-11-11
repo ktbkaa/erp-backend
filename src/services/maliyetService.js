@@ -5,7 +5,7 @@
 async function updateCostOnReceipt(client, { stokId, quantity, birimMaliyet, hareketId = null }) {
   if (!stokId || !quantity || birimMaliyet == null) return null;
   const st = await client.query(
-    `SELECT id, son_cost, cost_yontem FROM items WHERE id=$1 FOR UPDATE`,
+    `SELECT id, last_cost, costing_method FROM items WHERE id=$1 FOR UPDATE`,
     [stokId]
   );
   if (!st.rows[0]) return null;
@@ -22,14 +22,14 @@ async function updateCostOnReceipt(client, { stokId, quantity, birimMaliyet, har
   // Mevcut bakiye bu girişten önce yaklaşık; giriş zaten yazıldıysa düş
   let mevcutMiktar = Number(bak.rows[0].bakiye) - Number(quantity);
   if (mevcutMiktar < 0) mevcutMiktar = 0;
-  const eskiMaliyet = Number(st.rows[0].son_cost || 0);
+  const eskiMaliyet = Number(st.rows[0].last_cost || 0);
   const yeni =
     mevcutMiktar + Number(quantity) <= 0
       ? Number(birimMaliyet)
       : (eskiMaliyet * mevcutMiktar + Number(birimMaliyet) * Number(quantity)) /
         (mevcutMiktar + Number(quantity));
 
-  await client.query(`UPDATE items SET son_cost=$2 WHERE id=$1`, [stokId, yeni]);
+  await client.query(`UPDATE items SET last_cost=$2 WHERE id=$1`, [stokId, yeni]);
   await client.query(
     `
     INSERT INTO item_cost_movements (item_id, movement_id, quantity, uom_cost, direction)
@@ -37,7 +37,7 @@ async function updateCostOnReceipt(client, { stokId, quantity, birimMaliyet, har
     `,
     [stokId, hareketId, quantity, birimMaliyet]
   ).catch(() => {});
-  return { son_cost: yeni };
+  return { last_cost: yeni };
 }
 
 module.exports = { updateCostOnReceipt };

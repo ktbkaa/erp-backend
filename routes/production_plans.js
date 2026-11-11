@@ -77,8 +77,8 @@ router.post('/', async (req, res) => {
     try {
         const {
             plan_no, company_id, item_id, quantity, uom_code,
-            planlanan_start, delivery_date, is_started, fixed,
-            status, malzeme, mrp_result_id, description,
+            planned_start, delivery_date, is_started, fixed,
+            status, material: malzeme, mrp_result_id, description,
         } = req.body || {};
         if (!item_id || quantity == null || Number(quantity) <= 0) {
             return res.status(400).json({ hata: 'item_id ve pozitif quantity zorunlu.' });
@@ -89,8 +89,8 @@ router.post('/', async (req, res) => {
                 `
                 INSERT INTO production_plans
                     (plan_no, company_id, item_id, quantity, uom_code,
-                     planlanan_start, delivery_date, is_started, fixed,
-                     status, malzeme, mrp_result_id, description)
+                     planned_start, delivery_date, is_started, fixed,
+                     status, material, mrp_result_id, description)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,FALSE),COALESCE($9,FALSE),
                         COALESCE($10,'Acik'),COALESCE($11,FALSE),$12,$13)
                 RETURNING id
@@ -101,7 +101,7 @@ router.post('/', async (req, res) => {
                     item_id,
                     quantity,
                     uom_code || null,
-                    planlanan_start || null,
+                    planned_start || null,
                     delivery_date || null,
                     typeof is_started === 'boolean' ? is_started : null,
                     typeof fixed === 'boolean' ? fixed : null,
@@ -123,8 +123,8 @@ router.put('/:id', async (req, res) => {
     try {
         const fields = [
             'company_id', 'item_id', 'quantity', 'uom_code',
-            'planlanan_start', 'delivery_date', 'is_started', 'fixed',
-            'status', 'malzeme', 'mrp_result_id', 'description',
+            'planned_start', 'delivery_date', 'is_started', 'fixed',
+            'status', 'material', 'mrp_result_id', 'description',
         ];
         const sets = [];
         const params = [req.params.id];
@@ -153,7 +153,7 @@ router.delete('/:id', async (req, res) => {
             [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Üretim planı bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -237,7 +237,7 @@ router.post('/:id/cevir', async (req, res) => {
                 `
                 INSERT INTO production_orders
                     (order_no, item_id, product_bom_id, route_id, plant_id,
-                     component_warehouse_id, fg_warehouse_id, planlanan_quantity, status, planli_kesin,
+                     component_warehouse_id, fg_warehouse_id, planned_quantity, status, planned_firm,
                      source_document_type, source_document_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Acik','Planli','UretimPlan',$9)
                 RETURNING id, order_no

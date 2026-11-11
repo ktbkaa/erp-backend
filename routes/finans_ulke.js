@@ -101,7 +101,7 @@ router.delete('/paketler/:kod', async (req, res, next) => {
       [String(req.params.kod).toUpperCase()],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Ülke paketi bulunamadı.' });
-    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
+    res.json({ is_deleted: false, pasife_alindi: true, ...r.rows[0] });
   } catch (err) {
     next(err);
   }

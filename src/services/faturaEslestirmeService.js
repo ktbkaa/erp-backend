@@ -53,11 +53,11 @@ async function matchInvoice(client, faturaId) {
 
   const row = await client.query(
     `INSERT INTO invoice_matches
-      (invoice_id, purchase_order_id, goods_receipt_id, fiyat_fark, quantity_fark, result, description)
+      (invoice_id, purchase_order_id, goods_receipt_id, price_variance, quantity_variance, result, description)
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
     [
       faturaId, siparisId, malKabulId, fiyatFark, miktarFark, result,
-      `3-way: fiyat_fark=${fiyatFark.toFixed(2)} quantity_fark=${miktarFark.toFixed(3)}`,
+      `3-way: price_variance=${fiyatFark.toFixed(2)} quantity_variance=${miktarFark.toFixed(3)}`,
     ]
   );
   return row.rows[0];

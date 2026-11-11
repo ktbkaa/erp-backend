@@ -187,11 +187,11 @@ router.delete('/vardiyalar/:id', async (req, res) => {
     const used = await pool.query(`SELECT 1 FROM hr_employees WHERE shift_id=$1 LIMIT 1`, [req.params.id]);
     if (used.rows[0]) {
       await pool.query(`UPDATE hr_shifts SET is_active=FALSE WHERE id=$1`, [req.params.id]);
-      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+      return res.json({ is_deleted: false, pasife_alindi: true, id: Number(req.params.id) });
     }
     const r = await pool.query(`DELETE FROM hr_shifts WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Vardiya bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -282,7 +282,7 @@ router.delete('/vardiya-atamalari/:id', async (req, res) => {
   try {
     const r = await pool.query(`DELETE FROM hr_shift_assignments WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Atama bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -367,7 +367,7 @@ router.delete('/tatiller/:id', async (req, res) => {
   try {
     const r = await pool.query(`DELETE FROM hr_public_holidays WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Tatil bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

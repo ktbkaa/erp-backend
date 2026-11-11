@@ -14,7 +14,7 @@ const router = createDocumentRouter({
   allowedDurum: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'],
   requireCari: true,
   linePrice: true,
-  extraFields: ['istek_id', 'requisition_id', 'valid_date', 'status', 'company_id', 'plant_id', 'currency_code', 'exchange_rate'],
+  extraFields: ['rfq_id', 'requisition_id', 'valid_date', 'status', 'company_id', 'plant_id', 'currency_code', 'exchange_rate'],
 });
 
 /**

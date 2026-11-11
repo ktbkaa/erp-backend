@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-11-11T10:49:28.437Z",
+  "generatedAt": "2026-11-11T10:58:03.505Z",
   "base": "http://localhost:3000",
   "health": {
     "ok": true,
     "status": 200,
-    "ms": 39,
+    "ms": 34,
     "body": {
       "status": "ok",
-      "zaman": "2026-11-11T10:49:27.928Z",
+      "zaman": "2026-11-11T10:58:03.042Z",
       "veritabani": "bagli"
     }
   },
@@ -67,7 +67,7 @@
       "endpoint": "/sql-console",
       "status": 404,
       "ok": false,
-      "ms": 4,
+      "ms": 3,
       "rowCount": null,
       "error": "Endpoint bulunamadı."
     }
@@ -80,7 +80,7 @@
       "endpoint": "/kod-serileri",
       "status": 200,
       "ok": true,
-      "ms": 6,
+      "ms": 5,
       "rowCount": 111,
       "error": null
     },
@@ -91,7 +91,7 @@
       "endpoint": "/olcu-birimleri",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 3,
       "rowCount": 6,
       "error": null
     },
@@ -102,7 +102,7 @@
       "endpoint": "/kategoriler",
       "status": 200,
       "ok": true,
-      "ms": 5,
+      "ms": 3,
       "rowCount": 16,
       "error": null
     },
@@ -124,7 +124,7 @@
       "endpoint": "/para-birimleri",
       "status": 200,
       "ok": true,
-      "ms": 5,
+      "ms": 3,
       "rowCount": 7,
       "error": null
     },
@@ -135,7 +135,7 @@
       "endpoint": "/cities",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 3,
       "rowCount": 33,
       "error": null
     },
@@ -157,7 +157,7 @@
       "endpoint": "/teslimat-kosullari",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 2,
       "rowCount": 8,
       "error": null
     },
@@ -168,7 +168,7 @@
       "endpoint": "/languages",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 5,
       "error": null
     },
@@ -179,7 +179,7 @@
       "endpoint": "/banks",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 7,
       "error": null
     },
@@ -190,7 +190,7 @@
       "endpoint": "/doviz-kurlari",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 2,
       "rowCount": 30,
       "error": null
     },
@@ -223,7 +223,7 @@
       "endpoint": "/finans-vergi-kodlari",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 3,
       "rowCount": 9,
       "error": null
     },
@@ -256,7 +256,7 @@
       "endpoint": "/sistem-parametreleri",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 2,
       "rowCount": 38,
       "error": null
     },
@@ -278,7 +278,7 @@
       "endpoint": "/meta/ekranlar",
       "status": 200,
       "ok": true,
-      "ms": 14,
+      "ms": 10,
       "rowCount": null,
       "error": null
     },
@@ -289,7 +289,7 @@
       "endpoint": "/sql-console",
       "status": 404,
       "ok": false,
-      "ms": 4,
+      "ms": 3,
       "rowCount": null,
       "error": "Endpoint bulunamadı."
     },
@@ -300,7 +300,7 @@
       "endpoint": "/eposta-gonderimleri",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 2,
       "rowCount": 55,
       "error": null
     },
@@ -311,7 +311,7 @@
       "endpoint": "/companies",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 1,
       "error": null
     },
@@ -322,7 +322,7 @@
       "endpoint": "/is-yerleri",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 1,
       "error": null
     },
@@ -333,7 +333,7 @@
       "endpoint": "/warehouses",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 4,
       "rowCount": 8,
       "error": null
     },
@@ -344,7 +344,7 @@
       "endpoint": "/items",
       "status": 200,
       "ok": true,
-      "ms": 5,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -355,7 +355,7 @@
       "endpoint": "/stok-bakiyeleri",
       "status": 200,
       "ok": true,
-      "ms": 5,
+      "ms": 4,
       "rowCount": 0,
       "error": null
     },
@@ -388,7 +388,7 @@
       "endpoint": "/sayim-belgeleri",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -399,7 +399,7 @@
       "endpoint": "/stok-partileri",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -410,7 +410,7 @@
       "endpoint": "/mrp/bagimsiz-ihtiyaclar",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 2,
       "rowCount": 15,
       "error": null
     },
@@ -421,7 +421,7 @@
       "endpoint": "/mrp/calismalar",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 3,
       "rowCount": 10,
       "error": null
     },
@@ -432,7 +432,7 @@
       "endpoint": "/mrp",
       "status": 200,
       "ok": true,
-      "ms": 22,
+      "ms": 18,
       "rowCount": 69,
       "error": null
     },
@@ -461,7 +461,7 @@
       "endpoint": "/stok-serileri",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -483,7 +483,7 @@
       "endpoint": "/partners",
       "status": 200,
       "ok": true,
-      "ms": 11,
+      "ms": 10,
       "rowCount": 1,
       "error": null
     },
@@ -505,7 +505,7 @@
       "endpoint": "/tahsilat-odemeler",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -516,7 +516,7 @@
       "endpoint": "/urun-agaclari",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -527,7 +527,7 @@
       "endpoint": "/bom/patlatma",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -538,7 +538,7 @@
       "endpoint": "/bom/level-listesi",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -593,7 +593,7 @@
       "endpoint": "/routings",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -615,7 +615,7 @@
       "endpoint": "/uretim-planlari",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -626,7 +626,7 @@
       "endpoint": "/uretim-emirleri",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -666,7 +666,7 @@
       "endpoint": "/uretim-girisleri",
       "status": 200,
       "ok": true,
-      "ms": 13,
+      "ms": 14,
       "rowCount": 53,
       "error": null
     },
@@ -677,7 +677,7 @@
       "endpoint": "/satin-alma-teklif-istekleri",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -688,7 +688,7 @@
       "endpoint": "/satin-alma-teklifleri",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 1,
       "rowCount": 0,
       "error": null
     },
@@ -732,7 +732,7 @@
       "endpoint": "/mal-kabuller",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -743,7 +743,7 @@
       "endpoint": "/tedarikci-irsaliyeleri",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -754,7 +754,7 @@
       "endpoint": "/giris-kontrolleri",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -787,7 +787,7 @@
       "endpoint": "/crm-adaylar",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 1,
       "error": null
     },
@@ -820,7 +820,7 @@
       "endpoint": "/crm-faaliyet-planlari",
       "status": 200,
       "ok": true,
-      "ms": 5,
+      "ms": 6,
       "rowCount": 1,
       "error": null
     },
@@ -831,7 +831,7 @@
       "endpoint": "/crm-faaliyetler",
       "status": 200,
       "ok": true,
-      "ms": 4,
+      "ms": 3,
       "rowCount": 1,
       "error": null
     },
@@ -842,7 +842,7 @@
       "endpoint": "/crm-gorevler",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 1,
       "error": null
     },
@@ -853,7 +853,7 @@
       "endpoint": "/crm-ajanda",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 4,
       "rowCount": 13,
       "error": null
     },
@@ -908,7 +908,7 @@
       "endpoint": "/invoices",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 4,
       "rowCount": 0,
       "error": null
     },
@@ -919,7 +919,7 @@
       "endpoint": "/kk-emirleri?direction=GKK",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -930,7 +930,7 @@
       "endpoint": "/kk-emirleri?direction=CKK",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -963,7 +963,7 @@
       "endpoint": "/kk-kontrol-planlari",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 4,
       "error": null
     },
@@ -974,7 +974,7 @@
       "endpoint": "/kk-stok-planlari",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 1,
       "rowCount": 0,
       "error": null
     },
@@ -985,7 +985,7 @@
       "endpoint": "/kk-ret-nedenleri",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 1,
       "rowCount": 4,
       "error": null
     },
@@ -996,7 +996,7 @@
       "endpoint": "/onay-module-kullanimlari",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -1007,7 +1007,7 @@
       "endpoint": "/onay-kayitlari?benim=true",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -1018,7 +1018,7 @@
       "endpoint": "/onay-kayitlari",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -1095,7 +1095,7 @@
       "endpoint": "/muhasebe-hesaplari",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 36,
       "error": null
     },
@@ -1146,7 +1146,7 @@
       "endpoint": "/muhasebe-donemleri/mali-yillar",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 4,
       "rowCount": 1,
       "error": null
     },
@@ -1168,7 +1168,7 @@
       "endpoint": "/finans-nakit/kasa-hesaplari",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 1,
       "rowCount": 1,
       "error": null
     },
@@ -1245,7 +1245,7 @@
       "endpoint": "/fiyat-listeleri",
       "status": 200,
       "ok": true,
-      "ms": 6,
+      "ms": 7,
       "rowCount": 6,
       "error": null
     },
@@ -1278,7 +1278,7 @@
       "endpoint": "/hr-personel",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 4,
       "rowCount": 3,
       "error": null
     },
@@ -1311,7 +1311,7 @@
       "endpoint": "/hr-takvim/takvimler",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 1,
       "error": null
     },
@@ -1344,7 +1344,7 @@
       "endpoint": "/hr-izin/talepler",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -1377,7 +1377,7 @@
       "endpoint": "/hr-ise-alim/cikis-nedenleri",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -1388,7 +1388,7 @@
       "endpoint": "/hr-izin/bakiyeler",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 0,
       "error": null
     },
@@ -1399,7 +1399,7 @@
       "endpoint": "/hr-puantaj/gunluk",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 1,
       "error": null
     },
@@ -1410,7 +1410,7 @@
       "endpoint": "/hr-bordro/ucretler",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 2,
       "error": null
     },
@@ -1421,7 +1421,7 @@
       "endpoint": "/hr-bordro/avanslar",
       "status": 200,
       "ok": true,
-      "ms": 3,
+      "ms": 2,
       "rowCount": 0,
       "error": null
     },
@@ -1454,7 +1454,7 @@
       "endpoint": "/hr-bordro/parametreler",
       "status": 200,
       "ok": true,
-      "ms": 2,
+      "ms": 3,
       "rowCount": 1,
       "error": null
     },
@@ -1509,7 +1509,7 @@
       "endpoint": "/hr-ise-alim/cikislar",
       "status": 200,
       "ok": true,
-      "ms": 6,
+      "ms": 4,
       "rowCount": 0,
       "error": null
     }

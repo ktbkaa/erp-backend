@@ -18,7 +18,7 @@ async function findWarehouseByCodeOrRole(client, { kodParam, role, plantId = nul
     }
     if (role) {
         const params = [role];
-        let sql = `SELECT * FROM warehouses WHERE warehouse_rolu=$1 AND is_active=TRUE`;
+        let sql = `SELECT * FROM warehouses WHERE warehouse_role=$1 AND is_active=TRUE`;
         if (plantId) {
             params.push(plantId);
             sql += ` AND plant_id=$${params.length}`;
@@ -134,9 +134,9 @@ async function getQcOrder(pool, id) {
     const [olcumler, gecmis, uygunsuz] = await Promise.all([
         pool.query(
             `
-            SELECT o.*, k.kriter_code, k.kriter_name, k.olcum_type, k.min_value, k.max_value, k.zorunlu
+            SELECT o.*, k.criterion_code, k.criterion_name, k.measurement_type, k.min_value, k.max_value, k.is_required
             FROM qc_measurements o
-            JOIN qc_criteria k ON k.id = o.kriter_id
+            JOIN qc_criteria k ON k.id = o.criterion_id
             WHERE o.order_id=$1 ORDER BY k.line_no
             `,
             [id]
@@ -144,9 +144,9 @@ async function getQcOrder(pool, id) {
         pool.query(`SELECT * FROM qc_approval_history WHERE order_id=$1 ORDER BY id`, [id]),
         pool.query(
             `
-            SELECT u.*, r.neden_code, r.neden_name
+            SELECT u.*, r.reason_code, r.reason_name
             FROM qc_nonconformances u
-            LEFT JOIN qc_rejection_reasons r ON r.id = u.ret_neden_id
+            LEFT JOIN qc_rejection_reasons r ON r.id = u.rejection_reason_id
             WHERE u.order_id=$1 ORDER BY u.id
             `,
             [id]
@@ -177,17 +177,17 @@ async function saveQcOrder(client, emirId, { olcumler = [], uygunMiktar, uygunsu
     }
 
     for (const o of olcumler) {
-        if (!o.kriter_id) continue;
+        if (!o.criterion_id) continue;
         await client.query(
             `
-            INSERT INTO qc_measurements (order_id, kriter_id, olcum_value, accepted, description)
+            INSERT INTO qc_measurements (order_id, criterion_id, measured_value, accepted, description)
             VALUES ($1,$2,$3,$4,$5)
-            ON CONFLICT (order_id, kriter_id) DO UPDATE SET
-                olcum_value = EXCLUDED.olcum_value,
+            ON CONFLICT (order_id, criterion_id) DO UPDATE SET
+                measured_value = EXCLUDED.measured_value,
                 accepted = EXCLUDED.accepted,
                 description = EXCLUDED.description
             `,
-            [emirId, o.kriter_id, o.olcum_value ?? null, o.accepted ?? null, o.description ?? null]
+            [emirId, o.criterion_id, o.measured_value ?? null, o.accepted ?? null, o.description ?? null]
         );
     }
 
@@ -198,7 +198,7 @@ async function saveQcOrder(client, emirId, { olcumler = [], uygunMiktar, uygunsu
         UPDATE qc_orders SET
             accepted_quantity=$2,
             rejected_quantity=$3,
-            numune_quantity=COALESCE($4, numune_quantity),
+            sample_quantity=COALESCE($4, sample_quantity),
             description=COALESCE($5, description),
             status='Kaydedildi'
         WHERE id=$1
@@ -307,7 +307,7 @@ async function approveQcOrder(client, emirId, {
         if (retNedenId || description) {
             await client.query(
                 `
-                INSERT INTO qc_nonconformances (order_id, ret_neden_id, quantity, description)
+                INSERT INTO qc_nonconformances (order_id, rejection_reason_id, quantity, description)
                 VALUES ($1,$2,$3,$4)
                 `,
                 [emirId, retNedenId || null, uygunsuz, description || null]
@@ -334,7 +334,7 @@ async function approveQcOrder(client, emirId, {
             status=$5,
             transfer_movement_id=COALESCE($6, transfer_movement_id),
             approved_by_user_id=$7,
-            onay_date=CURRENT_TIMESTAMP,
+            approved_at=CURRENT_TIMESTAMP,
             description=COALESCE($8, description)
         WHERE id=$1
         `,
@@ -385,8 +385,8 @@ async function createQcOrdersFromMovementCode(client, {
     plantId = null,
 }) {
     if (!hareketKodu || !hareket?.id) return [];
-    const wantGkk = Boolean(hareketKodu.gkk_emri_olussun);
-    const wantCkk = Boolean(hareketKodu.ckk_emri_olussun);
+    const wantGkk = Boolean(hareketKodu.create_incoming_qc_order);
+    const wantCkk = Boolean(hareketKodu.create_outgoing_qc_order);
     if (!wantGkk && !wantCkk) return [];
 
     const isYeri = plantId || hareket.plant_id || null;
@@ -410,8 +410,8 @@ async function createQcOrdersFromMovementCode(client, {
         if (!kaliteDepo) {
             throw Object.assign(
                 new Error(yon === 'GKK'
-                    ? 'Giriş kalite deposu tanımlı değil (GKK_DEPO_KODU / warehouse_rolu=GKK).'
-                    : 'Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).'),
+                    ? 'Giriş kalite deposu tanımlı değil (GKK_DEPO_KODU / warehouse_role=GKK).'
+                    : 'Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_role=CKK).'),
                 { status: 400 }
             );
         }

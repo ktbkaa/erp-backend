@@ -16,12 +16,12 @@ const {
 } = require('../src/utils/belgeAlanlari');
 
 const EBELGE_ALANLAR = [
-  'scenario', 'invoice_category', 'ozellestirme_no', 'uuid_ettn',
+  'scenario', 'invoice_category', 'customization_no', 'uuid_ettn',
   'payment_due_days', 'payment_term_code', 'currency_code', 'exchange_rate',
   'ship_to_address', 'description', 'invoice_date',
   'net_amount', 'total_discount', 'tax_amount', 'payable_amount',
   'movement_code_id', 'sales_order_id', 'delivery_note_id', 'goods_receipt_id',
-  'source_document_type', 'source_document_id', 'status', 'vat_rate_varsayilan',
+  'source_document_type', 'source_document_id', 'status', 'vat_rate_default',
 ];
 
 /** Başlık güncellemesi: e-belge + FATURA_BASLIK birleşik */
@@ -139,13 +139,13 @@ router.post('/', async (req, res, next) => {
       let tax_amount = 0;
       for (const k of kalemler) {
         const satir = Number(k.quantity) * Number(k.unit_price);
-        const kdvOran = Number(k.vat_rate ?? ekstra.vat_rate_varsayilan ?? 20);
+        const kdvOran = Number(k.vat_rate ?? ekstra.vat_rate_default ?? 20);
         total_amount += satir;
         tax_amount += satir * (kdvOran / 100);
       }
 
       const extras = { ...ekstra };
-      delete extras.vat_rate_varsayilan;
+      delete extras.vat_rate_default;
 
       if (extras.remaining_amount == null) extras.remaining_amount = total_amount + tax_amount;
       const baslik = appendInsert(
@@ -165,7 +165,7 @@ router.post('/', async (req, res, next) => {
           throw Object.assign(new Error('Her kalemde item_id, quantity ve unit_price zorunludur.'), { status: 400 });
         }
         const satirToplam = Number(k.quantity) * Number(k.unit_price);
-        const kdvOran = Number(k.vat_rate ?? ekstra.vat_rate_varsayilan ?? 20);
+        const kdvOran = Number(k.vat_rate ?? ekstra.vat_rate_default ?? 20);
         const kdvTutari = satirToplam * (kdvOran / 100);
         const satirEx = pickFields(k, FATURA_SATIR);
         if (satirEx.amount_ex_tax == null) satirEx.amount_ex_tax = satirToplam;
@@ -217,7 +217,7 @@ router.put('/:id', async (req, res, next) => {
         sets.push(`partner_id = $${params.length}`);
       }
       for (const [k, v] of Object.entries(ekstra)) {
-        if (k === 'vat_rate_varsayilan') continue;
+        if (k === 'vat_rate_default') continue;
         params.push(v);
         sets.push(`${k} = $${params.length}`);
       }
@@ -334,7 +334,7 @@ router.get('/:id/yazdir', async (req, res, next) => {
     const f = await getInvoice(req.params.id);
     if (!f) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
     const html = documentHtml({
-      baslik: String(f.invoice_type || '').toLowerCase().includes('alis') ? 'Alış Faturası' : 'Satış Faturası',
+      title: String(f.invoice_type || '').toLowerCase().includes('alis') ? 'Alış Faturası' : 'Satış Faturası',
       belgeNo: f.invoice_no,
       tarih: f.invoice_date || f.created_at,
       cari: f,
@@ -412,7 +412,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query('DELETE FROM invoices WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

@@ -27,7 +27,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    let { template_code, template_name, olay, konu, govde, is_active } = req.body;
+    let { template_code, template_name, event_code: olay, subject: konu, body_text: govde, is_active } = req.body;
     if (!template_name) return res.status(400).json({ hata: 'template_name zorunlu.' });
     if (!template_code) {
       try { template_code = await nextSequenceCode(pool, 'ONAY_SABLON'); }
@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
     }
     const r = await pool.query(
       `
-      INSERT INTO approval_message_templates (template_code, template_name, olay, konu, govde, is_active)
+      INSERT INTO approval_message_templates (template_code, template_name, event_code, subject, body_text, is_active)
       VALUES ($1,$2,COALESCE($3,'Bekleme'),$4,$5,COALESCE($6,TRUE))
       RETURNING *
       `,
@@ -49,14 +49,14 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { template_name, olay, konu, govde, is_active } = req.body;
+    const { template_name, event_code: olay, subject: konu, body_text: govde, is_active } = req.body;
     const r = await pool.query(
       `
       UPDATE approval_message_templates SET
         template_name = COALESCE($2, template_name),
-        olay = COALESCE($3, olay),
-        konu = COALESCE($4, konu),
-        govde = COALESCE($5, govde),
+        event_code = COALESCE($3, event_code),
+        subject = COALESCE($4, subject),
+        body_text = COALESCE($5, body_text),
         is_active = COALESCE($6, is_active)
       WHERE id=$1 RETURNING *
       `,
@@ -73,7 +73,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const r = await pool.query('DELETE FROM approval_message_templates WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Şablon bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

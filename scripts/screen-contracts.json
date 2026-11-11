@@ -19,8 +19,8 @@
         "STOK_VERGI_GRID_FIELDS",
         "STOK_VERGI_RATE_TYPES",
         "STOK_DEPO_POLITIKA_FIELDS",
-        "varsayilan_giris_warehouse_id",
-        "varsayilan_cikis_warehouse_id",
+        "default_receipt_warehouse_id",
+        "default_issue_warehouse_id",
         "kind: 'stok-firmalar'",
         "kind: 'stok-depolar'"
       ]
@@ -53,7 +53,7 @@
       "requiredTabs": [],
       "requiredKinds": [],
       "requiredFlags": { "crud": true },
-      "requiredFieldKeys": ["gkk_emri_olussun", "ckk_emri_olussun", "movement_code", "document_type"]
+      "requiredFieldKeys": ["create_incoming_qc_order", "create_outgoing_qc_order", "movement_code", "document_type"]
     },
     "mrp-calisma": {
       "title": "MRP Konsol",
@@ -71,7 +71,7 @@
         "renderMrpSonucPane",
         "MRP 2 Parametreleri",
         "btnMrpSonucRapor",
-        "hedef_ortalama",
+        "target_average",
         "sistem geneli"
       ]
     },

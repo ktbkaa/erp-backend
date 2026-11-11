@@ -7,12 +7,12 @@ const { withTransaction } = require('../src/utils/withTransaction');
 const HEADER_COLS = [
   'finished_good_item_id', 'bom_code', 'bom_name', 'quantity', 'uom_code',
   'valid_from', 'valid_to', 'min_quantity', 'max_quantity', 'company_id', 'plant_id',
-  'category', 'alt_no', 'bom_type', 'design_department', 'bom_status',
+  'category', 'alternative_no', 'bom_type', 'design_department', 'bom_status',
   'element_interval', 'proportional_qty', 'drawing_no', 'revision',
   'customer_partner_id', 'is_cad', 'notes', 'is_default_for_wo', 'is_disassembly',
-  'is_active', 'silindi', 'created_by', 'updated_by',
+  'is_active', 'is_deleted', 'created_by', 'updated_by',
   // Uyum gap
-  'fg_warehouse_id', 'alt_description', 'version_code', 'brand_code', 'attr3_code',
+  'fg_warehouse_id', 'alternative_description', 'version_code', 'brand_code', 'attr3_code',
   'wo_change_mode', 'lock_when_used_in_route', 'std_cost', 'precost_amount', 'precost_at',
 ];
 
@@ -77,7 +77,7 @@ async function loadAlternatives(lineIds) {
     `
     SELECT a.*, st.item_code AS alt_item_code, st.item_name AS alt_item_name, st.item_type AS alt_item_type
     FROM bom_line_alternatives a
-    JOIN items st ON st.id = a.alt_item_id
+    JOIN items st ON st.id = a.alternative_item_id
     WHERE a.bom_line_id = ANY($1::int[])
     ORDER BY a.priority, a.id
     `,
@@ -96,7 +96,7 @@ async function getBomTree(id) {
     `
     SELECT ua.*,
            s.item_code, s.item_name, s.item_type, s.uom_code AS item_uom_code,
-           s.son_cost AS mamul_son_cost, s.marka AS item_marka,
+           s.last_cost AS mamul_son_cost, s.brand_name AS item_marka,
            p.plant_code, p.plant_name,
            c.company_code, c.company_name,
            pr.partner_code AS customer_code, pr.partner_name AS customer_name,
@@ -116,7 +116,7 @@ async function getBomTree(id) {
   const satirlar = await pool.query(
     `
     SELECT us.*, st.item_code, st.item_name, st.item_type, st.uom_code AS item_uom_code,
-           st.son_cost AS item_son_cost,
+           st.last_cost AS item_son_cost,
            wh.warehouse_code, wh.warehouse_name
     FROM bom_lines us
     JOIN items st ON st.id = us.component_item_id
@@ -154,11 +154,11 @@ function buildListWhere(req) {
   const onlyMamul = q.type !== 'hepsi';
   if (onlyMamul) where.push(`s.item_type IN ('Mamul', 'YariMamul')`);
 
-  const silinen = boolOr(q.silindi ?? q.silinen, false);
+  const silinen = boolOr(q.is_deleted ?? q.silinen, false);
   if (!silinen) {
-    where.push(`COALESCE(ua.silindi, FALSE) = FALSE`);
+    where.push(`COALESCE(ua.is_deleted, FALSE) = FALSE`);
   } else {
-    where.push(`COALESCE(ua.silindi, FALSE) = TRUE`);
+    where.push(`COALESCE(ua.is_deleted, FALSE) = TRUE`);
   }
 
   const addEq = (col, val) => {
@@ -175,7 +175,7 @@ function buildListWhere(req) {
   addEq('ua.plant_id', q.plant_id);
   addEq('ua.finished_good_item_id', q.finished_good_item_id);
   addEq('ua.category', q.category);
-  addEq('ua.alt_no', q.alt_no);
+  addEq('ua.alternative_no', q.alternative_no);
   addEq('ua.bom_type', q.bom_type);
   addEq('ua.design_department', q.design_department);
   addEq('ua.bom_status', q.bom_status);
@@ -183,7 +183,7 @@ function buildListWhere(req) {
   addEq('ua.version_code', q.version_code);
   addLike('ua.bom_code', q.bom_code);
   addLike('ua.bom_name', q.bom_name || q.aciklama);
-  addLike('ua.alt_description', q.alt_description);
+  addLike('ua.alternative_description', q.alternative_description);
   addLike('s.item_code', q.item_code || q.malzeme_no);
 
   if (q.is_active != null && q.is_active !== '') {
@@ -214,7 +214,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-/** Ön maliyet — kaydedilmiş ağaç üzerinden stok son_cost * brüt miktar */
+/** Ön maliyet — kaydedilmiş ağaç üzerinden stok last_cost * brüt miktar */
 router.get('/:id/on-maliyet', async (req, res) => {
   try {
     const agac = await getBomTree(req.params.id);
@@ -282,7 +282,7 @@ function pickHeader(body, { forInsert = false } = {}) {
   }
   if (forInsert) {
     out.category = out.category || 'Standart';
-    out.alt_no = out.alt_no != null && out.alt_no !== '' ? String(out.alt_no) : '00';
+    out.alternative_no = out.alternative_no != null && out.alternative_no !== '' ? String(out.alternative_no) : '00';
     out.bom_type = out.bom_type || 'Uretim';
     out.design_department = out.design_department || 'Standart';
     out.bom_status = out.bom_status || 'Aktif';
@@ -292,7 +292,7 @@ function pickHeader(body, { forInsert = false } = {}) {
     out.is_default_for_wo = boolOr(out.is_default_for_wo, false);
     out.is_disassembly = boolOr(out.is_disassembly, out.category === 'Demontaj');
     out.is_active = out.is_active == null ? true : boolOr(out.is_active, true);
-    out.silindi = boolOr(out.silindi, false);
+    out.is_deleted = boolOr(out.is_deleted, false);
     out.min_quantity = out.min_quantity ?? 0;
     out.max_quantity = out.max_quantity ?? 999999999;
     out.quantity = out.quantity != null ? Number(out.quantity) : 1;
@@ -314,7 +314,7 @@ function lineValues(satir, urunAgaciId, ustSatirId, siraNo) {
     satir.line_no || siraNo,
     ustSatirId,
     satir.component_type || 'Stok',
-    satir.component_alt_no != null ? String(satir.component_alt_no) : '00',
+    satir.component_alternative_no != null ? String(satir.component_alternative_no) : '00',
     satir.line_description || satir.description || null,
     qty.scrap_pct,
     satir.operation_seq != null && satir.operation_seq !== '' ? Number(satir.operation_seq) : null,
@@ -359,7 +359,7 @@ function lineValues(satir, urunAgaciId, ustSatirId, siraNo) {
 const LINE_INSERT_SQL = `
   INSERT INTO bom_lines (
     product_bom_id, component_item_id, quantity, uom_code, line_no, parent_line_id,
-    component_type, component_alt_no, line_description, scrap_pct, operation_seq,
+    component_type, component_alternative_no, line_description, scrap_pct, operation_seq,
     is_fixed_qty, goes_to_wo, is_phantom, is_byproduct, valid_from, valid_to,
     line_type, qty_entry_type, net_quantity, gross_quantity, warehouse_id,
     operation_code, operation_name, operation_no,
@@ -387,12 +387,12 @@ async function insertAlternatives(client, bomLineId, alts) {
   const list = Array.isArray(alts) ? alts : [];
   let prio = 10;
   for (const a of list) {
-    if (!a?.alt_item_id && !a?.component_item_id) continue;
-    const itemId = a.alt_item_id || a.component_item_id;
+    if (!a?.alternative_item_id && !a?.component_item_id) continue;
+    const itemId = a.alternative_item_id || a.component_item_id;
     await client.query(
       `
       INSERT INTO bom_line_alternatives (
-        bom_line_id, alt_item_id, priority, quantity, uom_code,
+        bom_line_id, alternative_item_id, priority, quantity, uom_code,
         quality_code, color_code, packaging_type_code, notes
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       `,
@@ -437,7 +437,7 @@ async function assertNotLockedByRoute(client, bomId, lockFlag) {
   if (!lockFlag) return;
   const used = await client.query(
     `SELECT id, route_code FROM routings
-     WHERE product_bom_id = $1 AND COALESCE(silindi, FALSE) = FALSE
+     WHERE product_bom_id = $1 AND COALESCE(is_deleted, FALSE) = FALSE
      LIMIT 1`,
     [bomId]
   );
@@ -482,11 +482,11 @@ router.post('/', async (req, res) => {
         INSERT INTO boms (
           finished_good_item_id, bom_code, bom_name, quantity, uom_code,
           valid_from, valid_to, min_quantity, max_quantity, company_id, plant_id,
-          category, alt_no, bom_type, design_department, bom_status,
+          category, alternative_no, bom_type, design_department, bom_status,
           element_interval, proportional_qty, drawing_no, revision,
           customer_partner_id, is_cad, notes, is_default_for_wo, is_disassembly,
-          is_active, silindi, created_by, updated_by, updated_at,
-          fg_warehouse_id, alt_description, version_code, brand_code, attr3_code,
+          is_active, is_deleted, created_by, updated_by, updated_at,
+          fg_warehouse_id, alternative_description, version_code, brand_code, attr3_code,
           wo_change_mode, lock_when_used_in_route
         ) VALUES (
           $1,$2,$3,COALESCE($4,1),$5,
@@ -513,7 +513,7 @@ router.post('/', async (req, res) => {
           firmaId,
           h.plant_id || null,
           h.category,
-          h.alt_no,
+          h.alternative_no,
           h.bom_type,
           h.design_department,
           h.bom_status,
@@ -527,10 +527,10 @@ router.post('/', async (req, res) => {
           h.is_default_for_wo,
           h.is_disassembly,
           h.is_active,
-          h.silindi,
+          h.is_deleted,
           userCode,
           h.fg_warehouse_id || null,
-          h.alt_description || null,
+          h.alternative_description || null,
           h.version_code || null,
           h.brand_code || null,
           h.attr3_code || null,
@@ -585,7 +585,7 @@ router.put('/:id', async (req, res) => {
         plant_id: h.plant_id !== undefined ? h.plant_id : cur.plant_id,
         company_id: h.company_id !== undefined ? h.company_id : cur.company_id,
         category: h.category || cur.category,
-        alt_no: h.alt_no != null ? String(h.alt_no) : cur.alt_no,
+        alternative_no: h.alternative_no != null ? String(h.alternative_no) : cur.alternative_no,
         bom_type: h.bom_type || cur.bom_type,
         design_department: h.design_department || cur.design_department,
         bom_status: h.bom_status || cur.bom_status,
@@ -601,9 +601,9 @@ router.put('/:id', async (req, res) => {
           ? boolOr(h.is_disassembly, false)
           : (h.category === 'Demontaj' ? true : cur.is_disassembly),
         is_active: h.is_active !== undefined ? boolOr(h.is_active, true) : cur.is_active,
-        silindi: h.silindi !== undefined ? boolOr(h.silindi, false) : cur.silindi,
+        is_deleted: h.is_deleted !== undefined ? boolOr(h.is_deleted, false) : cur.is_deleted,
         fg_warehouse_id: h.fg_warehouse_id !== undefined ? h.fg_warehouse_id : cur.fg_warehouse_id,
-        alt_description: h.alt_description !== undefined ? h.alt_description : cur.alt_description,
+        alternative_description: h.alternative_description !== undefined ? h.alternative_description : cur.alternative_description,
         version_code: h.version_code !== undefined ? h.version_code : cur.version_code,
         brand_code: h.brand_code !== undefined ? h.brand_code : cur.brand_code,
         attr3_code: h.attr3_code !== undefined ? h.attr3_code : cur.attr3_code,
@@ -627,11 +627,11 @@ router.put('/:id', async (req, res) => {
           bom_name=$2, quantity=$3, uom_code=$4, finished_good_item_id=$5,
           valid_from=$6, valid_to=$7, min_quantity=$8, max_quantity=$9,
           plant_id=$10, company_id=COALESCE($11, company_id),
-          category=$12, alt_no=$13, bom_type=$14, design_department=$15, bom_status=$16,
+          category=$12, alternative_no=$13, bom_type=$14, design_department=$15, bom_status=$16,
           element_interval=$17, proportional_qty=$18, drawing_no=$19, revision=$20,
           customer_partner_id=$21, is_cad=$22, notes=$23,
-          is_default_for_wo=$24, is_disassembly=$25, is_active=$26, silindi=$27,
-          fg_warehouse_id=$28, alt_description=$29, version_code=$30, brand_code=$31, attr3_code=$32,
+          is_default_for_wo=$24, is_disassembly=$25, is_active=$26, is_deleted=$27,
+          fg_warehouse_id=$28, alternative_description=$29, version_code=$30, brand_code=$31, attr3_code=$32,
           wo_change_mode=$33, lock_when_used_in_route=$34,
           updated_by=$35, updated_at=NOW()
          WHERE id=$1`,
@@ -648,7 +648,7 @@ router.put('/:id', async (req, res) => {
           next.plant_id || null,
           next.company_id || null,
           next.category,
-          next.alt_no,
+          next.alternative_no,
           next.bom_type,
           next.design_department,
           next.bom_status,
@@ -662,9 +662,9 @@ router.put('/:id', async (req, res) => {
           next.is_default_for_wo,
           next.is_disassembly,
           next.is_active,
-          next.silindi,
+          next.is_deleted,
           next.fg_warehouse_id || null,
-          next.alt_description || null,
+          next.alternative_description || null,
           next.version_code || null,
           next.brand_code || null,
           next.attr3_code || null,
@@ -706,14 +706,14 @@ router.delete('/:id', async (req, res) => {
     if (hard) {
       const result = await pool.query(`DELETE FROM boms WHERE id=$1 RETURNING id`, [req.params.id]);
       if (!result.rows[0]) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
-      return res.json({ silindi: true, hard: true, id: Number(req.params.id) });
+      return res.json({ is_deleted: true, hard: true, id: Number(req.params.id) });
     }
     const result = await pool.query(
-      `UPDATE boms SET silindi=TRUE, is_active=FALSE, updated_at=NOW() WHERE id=$1 RETURNING id`,
+      `UPDATE boms SET is_deleted=TRUE, is_active=FALSE, updated_at=NOW() WHERE id=$1 RETURNING id`,
       [req.params.id]
     );
     if (!result.rows[0]) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
-    res.json({ silindi: true, hard: false, id: Number(req.params.id) });
+    res.json({ is_deleted: true, hard: false, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

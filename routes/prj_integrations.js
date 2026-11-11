@@ -39,9 +39,9 @@ router.post('/from-opportunity/:id', async (req, res, next) => {
           type.rows[0]?.id || null,
           statusId,
           opp.partner_id || null,
-          opp.takip_by_id || opp.created_by_user_id || req.user?.id || null,
+          opp.followed_by_id || opp.created_by_user_id || req.user?.id || null,
           opp.para_birimi || opp.currency_code,
-          opp.beklenen_gelir || opp.expected_revenue,
+          opp.expected_revenue || opp.expected_revenue,
           opp.id,
           req.user?.id || null,
         ]

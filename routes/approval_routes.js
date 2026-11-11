@@ -19,9 +19,9 @@ async function getRouting(id) {
     LEFT JOIN companies f ON f.id = rt.company_id
     LEFT JOIN plants iy ON iy.id = rt.plant_id
     LEFT JOIN approval_rules ku ON ku.id = rt.rule_id
-    LEFT JOIN approval_message_templates s1 ON s1.id = rt.ilk_message_template_id
-    LEFT JOIN approval_message_templates s2 ON s2.id = rt.red_message_template_id
-    LEFT JOIN approval_message_templates s3 ON s3.id = rt.ekstra_message_template_id
+    LEFT JOIN approval_message_templates s1 ON s1.id = rt.first_message_template_id
+    LEFT JOIN approval_message_templates s2 ON s2.id = rt.reject_message_template_id
+    LEFT JOIN approval_message_templates s3 ON s3.id = rt.extra_message_template_id
     WHERE rt.id = $1
     `,
     [id],
@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
       where.push(`screen_id = $${params.length}`);
     }
     if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
-    sql += ' ORDER BY route_code, versiyon DESC';
+    sql += ' ORDER BY route_code, version_no DESC';
     const liste = await pool.query(sql, params);
     const out = [];
     for (const row of liste.rows) out.push(await getRouting(row.id));
@@ -91,8 +91,8 @@ async function saveSteps(client, rotaId, adimlar) {
     await client.query(
       `
       INSERT INTO approval_route_steps (
-        route_id, line_no, step_name, role_id, role_name, zorunlu, paralel, min_amount,
-        mail_gonder, sms_gonder, value_degistirebilir, geri_gonder_line, description
+        route_id, line_no, step_name, role_id, role_name, is_required, is_parallel, min_amount,
+        send_mail, send_sms, value_editable, send_back_line, description
       ) VALUES (
         $1,$2,$3,$4,$5,COALESCE($6,TRUE),COALESCE($7,FALSE),$8,
         COALESCE($9,TRUE),COALESCE($10,FALSE),COALESCE($11,FALSE),$12,$13
@@ -104,13 +104,13 @@ async function saveSteps(client, rotaId, adimlar) {
         a.step_name || rolAdi || `Adım ${sn}`,
         rolId,
         rolAdi || a.step_name || null,
-        a.zorunlu,
-        a.paralel,
+        a.is_required,
+        a.is_parallel,
         a.min_amount != null ? a.min_amount : null,
-        a.mail_gonder,
-        a.sms_gonder,
-        a.value_degistirebilir,
-        a.geri_gonder_line != null ? a.geri_gonder_line : null,
+        a.send_mail,
+        a.send_sms,
+        a.value_editable,
+        a.send_back_line != null ? a.send_back_line : null,
         a.description || null,
       ],
     );
@@ -122,8 +122,8 @@ router.post('/', async (req, res) => {
   try {
     const {
       route_code, route_name, description, company_id, plant_id, screen_id, rule_id,
-      versiyon, ilk_message_template_id, red_message_template_id, ekstra_message_template_id,
-      iptal_role_name, ekli_dosya_mail, is_active, adimlar,
+      version_no: versiyon, first_message_template_id, reject_message_template_id, extra_message_template_id,
+      cancel_role_name, attach_file_to_mail, is_active, adimlar,
     } = req.body;
     if (!route_name) return res.status(400).json({ hata: 'Rota adı zorunlu.' });
     const id = await withTransaction(pool, async (client) => {
@@ -136,8 +136,8 @@ router.post('/', async (req, res) => {
         `
         INSERT INTO approval_routes (
           route_code, route_name, description, company_id, plant_id, screen_id, rule_id,
-          versiyon, ilk_message_template_id, red_message_template_id, ekstra_message_template_id,
-          iptal_role_name, ekli_dosya_mail, is_active
+          version_no, first_message_template_id, reject_message_template_id, extra_message_template_id,
+          cancel_role_name, attach_file_to_mail, is_active
         ) VALUES (
           $1,$2,$3,$4,$5,$6,$7,
           COALESCE($8,1),$9,$10,$11,
@@ -146,8 +146,8 @@ router.post('/', async (req, res) => {
         `,
         [
           kod, route_name, description || null, company_id || null, plant_id || null, screen_id || null, rule_id || null,
-          versiyon, ilk_message_template_id || null, red_message_template_id || null, ekstra_message_template_id || null,
-          iptal_role_name || null, ekli_dosya_mail, is_active,
+          versiyon, first_message_template_id || null, reject_message_template_id || null, extra_message_template_id || null,
+          cancel_role_name || null, attach_file_to_mail, is_active,
         ],
       );
       await saveSteps(client, ins.rows[0].id, adimlar);
@@ -163,8 +163,8 @@ router.put('/:id', async (req, res) => {
   try {
     const {
       route_name, description, company_id, plant_id, screen_id, rule_id,
-      versiyon, ilk_message_template_id, red_message_template_id, ekstra_message_template_id,
-      iptal_role_name, ekli_dosya_mail, is_active, adimlar,
+      version_no: versiyon, first_message_template_id, reject_message_template_id, extra_message_template_id,
+      cancel_role_name, attach_file_to_mail, is_active, adimlar,
     } = req.body;
     await withTransaction(pool, async (client) => {
       const r = await client.query(
@@ -176,19 +176,19 @@ router.put('/:id', async (req, res) => {
           plant_id = COALESCE($5, plant_id),
           screen_id = COALESCE($6, screen_id),
           rule_id = COALESCE($7, rule_id),
-          versiyon = COALESCE($8, versiyon),
-          ilk_message_template_id = COALESCE($9, ilk_message_template_id),
-          red_message_template_id = COALESCE($10, red_message_template_id),
-          ekstra_message_template_id = COALESCE($11, ekstra_message_template_id),
-          iptal_role_name = COALESCE($12, iptal_role_name),
-          ekli_dosya_mail = COALESCE($13, ekli_dosya_mail),
+          version_no = COALESCE($8, version_no),
+          first_message_template_id = COALESCE($9, first_message_template_id),
+          reject_message_template_id = COALESCE($10, reject_message_template_id),
+          extra_message_template_id = COALESCE($11, extra_message_template_id),
+          cancel_role_name = COALESCE($12, cancel_role_name),
+          attach_file_to_mail = COALESCE($13, attach_file_to_mail),
           is_active = COALESCE($14, is_active)
         WHERE id=$1 RETURNING id
         `,
         [
           req.params.id, route_name || null, description, company_id, plant_id, screen_id || null, rule_id,
-          versiyon ?? null, ilk_message_template_id, red_message_template_id, ekstra_message_template_id,
-          iptal_role_name, ekli_dosya_mail, is_active,
+          versiyon ?? null, first_message_template_id, reject_message_template_id, extra_message_template_id,
+          cancel_role_name, attach_file_to_mail, is_active,
         ],
       );
       if (!r.rows[0]) {
@@ -208,7 +208,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const r = await pool.query('DELETE FROM approval_routes WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Rota bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

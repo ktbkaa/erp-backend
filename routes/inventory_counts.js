@@ -96,12 +96,12 @@ router.post('/', async (req, res, next) => {
       const firmaId = companyIdFromReq(req) || Number(req.body.company_id) || null;
       const ins = await client.query(
         `INSERT INTO inventory_counts
-            (document_no, company_id, plant_id, warehouse_id, sayim_date, description, created_by, status)
+            (document_no, company_id, plant_id, warehouse_id, count_date, description, created_by, status)
          VALUES ($1,$2,$3,$4,COALESCE($5::date,CURRENT_DATE),$6,$7,'Taslak')
          RETURNING id`,
         [
           no, firmaId, req.body.plant_id || null, depoId,
-          req.body.sayim_date || null,
+          req.body.count_date || null,
           trimOrNull(req.body.description),
           req.headers['x-kullanici-kodu'] || req.body.created_by || null,
         ]
@@ -111,19 +111,19 @@ router.post('/', async (req, res, next) => {
         if (!s.item_id) throw new Error('Satırda item_id zorunlu.');
         const stok = await client.query('SELECT uom_code FROM items WHERE id=$1', [s.item_id]);
         if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
-        let sistem = s.sistem_quantity;
+        let sistem = s.system_quantity;
         if (sistem == null || sistem === '') {
           sistem = await systemBalance(client, depoId, s.item_id);
         }
-        const sayilan = s.sayilan_quantity != null ? Number(s.sayilan_quantity) : Number(sistem);
+        const sayilan = s.counted_quantity != null ? Number(s.counted_quantity) : Number(sistem);
         await client.query(
           `INSERT INTO inventory_count_lines
-              (document_id, item_id, sistem_quantity, sayilan_quantity, uom_code, lot_id, raf_code, description)
+              (document_id, item_id, system_quantity, counted_quantity, uom_code, lot_id, bin_code, description)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
           [
             belgeId, s.item_id, Number(sistem), sayilan,
             s.uom_code || stok.rows[0].uom_code, s.lot_id || null,
-            trimOrNull(s.raf_code), trimOrNull(s.description),
+            trimOrNull(s.bin_code), trimOrNull(s.description),
           ]
         );
       }
@@ -148,13 +148,13 @@ router.put('/:id', async (req, res, next) => {
       await client.query(
         `UPDATE inventory_counts SET
             description = COALESCE($2, description),
-            sayim_date = COALESCE($3::date, sayim_date),
+            count_date = COALESCE($3::date, count_date),
             plant_id = COALESCE($4, plant_id)
          WHERE id=$1`,
         [
           req.params.id,
           trimOrNull(req.body.description),
-          req.body.sayim_date || null,
+          req.body.count_date || null,
           req.body.plant_id || null,
         ]
       );
@@ -162,19 +162,19 @@ router.put('/:id', async (req, res, next) => {
         await client.query('DELETE FROM inventory_count_lines WHERE document_id=$1', [req.params.id]);
         for (const s of req.body.satirlar) {
           if (!s.item_id) throw new Error('Satırda item_id zorunlu.');
-          let sistem = s.sistem_quantity;
+          let sistem = s.system_quantity;
           if (sistem == null || sistem === '') {
             sistem = await systemBalance(client, mevcut.warehouse_id, s.item_id);
           }
-          const sayilan = s.sayilan_quantity != null ? Number(s.sayilan_quantity) : Number(sistem);
+          const sayilan = s.counted_quantity != null ? Number(s.counted_quantity) : Number(sistem);
           await client.query(
             `INSERT INTO inventory_count_lines
-                (document_id, item_id, sistem_quantity, sayilan_quantity, uom_code, lot_id, raf_code, description)
+                (document_id, item_id, system_quantity, counted_quantity, uom_code, lot_id, bin_code, description)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
             [
               req.params.id, s.item_id, Number(sistem), sayilan,
               s.uom_code || null, s.lot_id || null,
-              trimOrNull(s.raf_code), trimOrNull(s.description),
+              trimOrNull(s.bin_code), trimOrNull(s.description),
             ]
           );
         }
@@ -207,14 +207,14 @@ router.post('/:id/onayla', async (req, res, next) => {
       );
       const farkSatirlar = [];
       for (const s of sat.rows) {
-        const fark = Number(s.sayilan_quantity) - Number(s.sistem_quantity);
+        const fark = Number(s.counted_quantity) - Number(s.system_quantity);
         if (Math.abs(fark) < 0.0000001) continue;
         farkSatirlar.push({
           item_id: s.item_id,
           quantity: Math.abs(fark),
           uom_code: s.uom_code,
           lot_id: s.lot_id,
-          raf_code: s.raf_code,
+          bin_code: s.bin_code,
           direction: fark > 0 ? 1 : -1,
         });
       }
@@ -236,7 +236,7 @@ router.post('/:id/onayla', async (req, res, next) => {
       await client.query(
         `UPDATE inventory_counts SET
             status='Onayli',
-            onay_date=CURRENT_TIMESTAMP,
+            approved_at=CURRENT_TIMESTAMP,
             approved_by=$2,
             movement_id=$3
          WHERE id=$1`,
@@ -281,7 +281,7 @@ router.delete('/:id', async (req, res, next) => {
       return res.status(400).json({ hata: 'Onaylı sayım silinemez.' });
     }
     await pool.query('DELETE FROM inventory_counts WHERE id=$1', [req.params.id]);
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

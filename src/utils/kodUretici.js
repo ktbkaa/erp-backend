@@ -5,7 +5,7 @@
 async function nextSequenceCode(client, seriKodu) {
     const result = await client.query(
         `
-        SELECT series_code, onek, son_numara
+        SELECT series_code, prefix, last_number
         FROM number_series
         WHERE series_code = $1
         FOR UPDATE
@@ -17,11 +17,11 @@ async function nextSequenceCode(client, seriKodu) {
         throw new Error(`Kod serisi tanımlı değil: ${seriKodu}`);
     }
 
-    const { onek, son_numara } = result.rows[0];
-    const yeniNo = Number(son_numara) + 1;
+    const { prefix: onek, last_number } = result.rows[0];
+    const yeniNo = Number(last_number) + 1;
 
     await client.query(
-        `UPDATE number_series SET son_numara = $1 WHERE series_code = $2`,
+        `UPDATE number_series SET last_number = $1 WHERE series_code = $2`,
         [yeniNo, seriKodu]
     );
 
@@ -47,14 +47,14 @@ async function nextPrefixedCode(client, {
     if (!pref) throw new Error('Belge no öneki zorunlu.');
 
     const existing = await client.query(
-        `SELECT series_code, son_numara FROM number_series WHERE series_code = $1 FOR UPDATE`,
+        `SELECT series_code, last_number FROM number_series WHERE series_code = $1 FOR UPDATE`,
         [seri]
     );
     if (!existing.rows[0]) {
         let onek = pref.replace(/[^A-Z0-9]/gi, '').slice(0, 10) || 'HX';
         let n = 0;
         while (n < 50) {
-            const clash = await client.query(`SELECT 1 FROM number_series WHERE onek = $1`, [onek]);
+            const clash = await client.query(`SELECT 1 FROM number_series WHERE prefix = $1`, [onek]);
             if (!clash.rows[0]) break;
             n += 1;
             onek = `H${n}${onek}`.replace(/[^A-Z0-9]/gi, '').slice(0, 10);
@@ -62,7 +62,7 @@ async function nextPrefixedCode(client, {
         await client.query(
             `
             INSERT INTO number_series (
-                series_code, onek, description, son_numara, screen_code, screen_name, is_active
+                series_code, prefix, description, last_number, screen_code, screen_name, is_active
             ) VALUES ($1,$2,$3,0,$4,$5,TRUE)
             ON CONFLICT (series_code) DO NOTHING
             `,
@@ -76,13 +76,13 @@ async function nextPrefixedCode(client, {
         );
     }
     const locked = await client.query(
-        `SELECT series_code, son_numara FROM number_series WHERE series_code = $1 FOR UPDATE`,
+        `SELECT series_code, last_number FROM number_series WHERE series_code = $1 FOR UPDATE`,
         [seri]
     );
     if (!locked.rows[0]) throw new Error(`Kod serisi oluşturulamadı: ${seri}`);
-    const yeniNo = Number(locked.rows[0].son_numara) + 1;
+    const yeniNo = Number(locked.rows[0].last_number) + 1;
     await client.query(
-        `UPDATE number_series SET son_numara = $1 WHERE series_code = $2`,
+        `UPDATE number_series SET last_number = $1 WHERE series_code = $2`,
         [yeniNo, seri]
     );
     return `${pref}${separator}${String(yeniNo).padStart(pad, '0')}`;
@@ -105,7 +105,7 @@ async function nextStockMovementNo(client, movementCode) {
 
 /**
  * Önizleme: sayacı artırmadan bir sonraki no’yu gösterir (STC-01-00001).
- * Seri yoksa oluşturur (son_numara=0) ama ayırmaz.
+ * Seri yoksa oluşturur (last_number=0) ama ayırmaz.
  */
 async function peekStockMovementNo(client, movementCode) {
     const code = String(movementCode || '').trim().toUpperCase();
@@ -114,14 +114,14 @@ async function peekStockMovementNo(client, movementCode) {
     const pad = 5;
     const separator = '-';
     let row = (await client.query(
-        `SELECT series_code, son_numara FROM number_series WHERE series_code = $1`,
+        `SELECT series_code, last_number FROM number_series WHERE series_code = $1`,
         [seriesCode]
     )).rows[0];
     if (!row) {
         let onek = code.replace(/[^A-Z0-9]/gi, '').slice(0, 10) || 'HX';
         let n = 0;
         while (n < 50) {
-            const clash = await client.query(`SELECT 1 FROM number_series WHERE onek = $1`, [onek]);
+            const clash = await client.query(`SELECT 1 FROM number_series WHERE prefix = $1`, [onek]);
             if (!clash.rows[0]) break;
             n += 1;
             onek = `H${n}${onek}`.replace(/[^A-Z0-9]/gi, '').slice(0, 10);
@@ -129,19 +129,19 @@ async function peekStockMovementNo(client, movementCode) {
         await client.query(
             `
             INSERT INTO number_series (
-                series_code, onek, description, son_numara, screen_code, screen_name, is_active
+                series_code, prefix, description, last_number, screen_code, screen_name, is_active
             ) VALUES ($1,$2,$3,0,$4,$5,TRUE)
             ON CONFLICT (series_code) DO NOTHING
             `,
             [seriesCode, onek, `Stok hareket ${code}`, 'stok-hareketleri', 'Stok Hareketleri']
         );
         row = (await client.query(
-            `SELECT series_code, son_numara FROM number_series WHERE series_code = $1`,
+            `SELECT series_code, last_number FROM number_series WHERE series_code = $1`,
             [seriesCode]
         )).rows[0];
     }
     if (!row) throw new Error(`Kod serisi oluşturulamadı: ${seriesCode}`);
-    const next = Number(row.son_numara) + 1;
+    const next = Number(row.last_number) + 1;
     return `${code}${separator}${String(next).padStart(pad, '0')}`;
 }
 

@@ -87,7 +87,7 @@ async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null, ulkeK
       description: fatura.invoice_no,
     });
     if (kdv > 0) {
-      const vo = await taxRate(client, country, fatura.vat_rate_varsayilan || 20);
+      const vo = await taxRate(client, country, fatura.vat_rate_default || 20);
       const kdvKod = vo?.output_tax_account_code || '391.01.001';
       const kdvHesap = await resolveAccountId(client, { account_code: kdvKod, country_code: country });
       lines.push({
@@ -102,7 +102,7 @@ async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null, ulkeK
       account_id: stok, debit: mal, credit: 0, description: fatura.invoice_no,
     });
     if (kdv > 0) {
-      const vo = await taxRate(client, country, fatura.vat_rate_varsayilan || 20);
+      const vo = await taxRate(client, country, fatura.vat_rate_default || 20);
       const kdvKod = vo?.input_tax_account_code || '191.01.001';
       const kdvHesap = await resolveAccountId(client, { account_code: kdvKod, country_code: country });
       lines.push({
@@ -170,7 +170,7 @@ async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null, ulkeK
     kdv,
     kural,
     kullaniciKodu,
-    line_sayisi: lines.length,
+    line_count: lines.length,
   };
 }
 

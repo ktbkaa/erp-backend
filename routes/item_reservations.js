@@ -45,9 +45,9 @@ router.get('/', async (req, res, next) => {
       params.push(`%${String(req.query.item_code).trim()}%`);
       where.push(`s.item_code ILIKE $${params.length}`);
     }
-    if (req.query.rezervasyon_no) {
-      params.push(`%${String(req.query.rezervasyon_no).trim()}%`);
-      where.push(`r.rezervasyon_no ILIKE $${params.length}`);
+    if (req.query.reservation_no) {
+      params.push(`%${String(req.query.reservation_no).trim()}%`);
+      where.push(`r.reservation_no ILIKE $${params.length}`);
     }
     if (req.query.status) {
       params.push(req.query.status);
@@ -139,7 +139,7 @@ router.delete('/:id', async (req, res, next) => {
     await withTransaction(pool, async (client) => {
       await cancelReservation(client, Number(req.params.id));
     });
-    res.json({ silindi: true, id: Number(req.params.id), iptal: true });
+    res.json({ is_deleted: true, id: Number(req.params.id), iptal: true });
   } catch (err) {
     next(err);
   }
