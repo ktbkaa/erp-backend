@@ -191,8 +191,13 @@ router.post('/:id/cariye-donustur', async (req, res) => {
         const aday = await adayGetir(req.params.id);
         if (!aday) return res.status(404).json({ hata: 'Müşteri adayı bulunamadı.' });
         if (aday.status === 'Donusturuldu' && aday.partner_id) {
-            return res.status(400).json({ hata: 'Aday zaten cariye dönüştürülmüş.', partner_id: aday.partner_id });
+            return res.status(400).json({
+                hata: 'Aday zaten cariye dönüştürülmüş.',
+                partner_id: aday.partner_id,
+                cari: { id: aday.partner_id, partner_code: aday.partner_code, partner_name: aday.partner_name },
+            });
         }
+        // Donusturuldu ama cari yoksa (UI yarım kaldı) — yeniden dene
 
         const result = await withTransaction(pool, async (client) => {
             const kod = req.body.partner_code || (await sonrakiKod(client, 'MUSTERI'));

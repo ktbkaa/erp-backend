@@ -163,12 +163,15 @@ router.post('/', async (req, res) => {
     try {
         const b = req.body;
         if (!b.firsat_name) return res.status(400).json({ hata: 'firsat_name zorunlu.' });
-        const musteriTipi = b.customer_type || (b.lead_id && !b.partner_id ? 'Aday' : 'Musteri');
+        // Fırsat varsayılanı: müşteri adayı (lead). Cari, aday dönüşümünden bağlanır.
+        const musteriTipi = b.customer_type
+            || (b.lead_id && !b.partner_id ? 'Aday' : null)
+            || (b.partner_id && !b.lead_id ? 'Musteri' : 'Aday');
         if (musteriTipi === 'Musteri' && !b.partner_id) {
             return res.status(400).json({ hata: 'Müşteri tipi için partner_id zorunlu.' });
         }
         if (musteriTipi === 'Aday' && !b.lead_id) {
-            return res.status(400).json({ hata: 'Aday tipi için lead_id zorunlu.' });
+            return res.status(400).json({ hata: 'Müşteri adayı (lead_id) zorunlu.' });
         }
 
         const id = await withTransaction(pool, async (client) => {
@@ -232,32 +235,41 @@ router.put('/:id', async (req, res) => {
                 e.status = 404;
                 throw e;
             }
+            const tip = b.customer_type || null;
+            // partner_id yalnızca body’de geldiyse güncelle; Aday + boş partner → temizle
+            const touchPartner = Object.prototype.hasOwnProperty.call(b, 'partner_id')
+                || tip === 'Aday';
+            const partnerId = tip === 'Aday' && (b.partner_id == null || b.partner_id === '')
+                ? null
+                : (b.partner_id != null && b.partner_id !== '' ? Number(b.partner_id) : null);
             await client.query(
                 `
                 UPDATE crm_opportunities SET
                     firsat_name = COALESCE($2, firsat_name),
                     konu = COALESCE($3, konu),
                     customer_type = COALESCE($4, customer_type),
-                    partner_id = COALESCE($5, partner_id),
-                    lead_id = COALESCE($6, lead_id),
-                    stage_id = COALESCE($7, stage_id),
-                    created_by_user_id = COALESCE($8, created_by_user_id),
-                    takip_by_id = COALESCE($9, takip_by_id),
-                    beklenen_gelir = COALESCE($10, beklenen_gelir),
-                    currency_code = COALESCE($11, currency_code),
-                    degerlendirme = COALESCE($12, degerlendirme),
-                    target_kapatma_date = COALESCE($13::date, target_kapatma_date),
-                    country = COALESCE($14, country),
-                    plant_id = COALESCE($15, plant_id),
-                    description = COALESCE($16, description)
+                    partner_id = CASE WHEN $5::boolean THEN $6::int ELSE partner_id END,
+                    lead_id = COALESCE($7, lead_id),
+                    stage_id = COALESCE($8, stage_id),
+                    created_by_user_id = COALESCE($9, created_by_user_id),
+                    takip_by_id = COALESCE($10, takip_by_id),
+                    beklenen_gelir = COALESCE($11, beklenen_gelir),
+                    currency_code = COALESCE($12, currency_code),
+                    degerlendirme = COALESCE($13, degerlendirme),
+                    target_kapatma_date = COALESCE($14::date, target_kapatma_date),
+                    country = COALESCE($15, country),
+                    plant_id = COALESCE($16, plant_id),
+                    company_id = COALESCE($17, company_id),
+                    description = COALESCE($18, description)
                 WHERE id=$1
                 `,
                 [
-                    req.params.id, b.firsat_name || null, b.konu ?? null, b.customer_type || null,
-                    b.partner_id || null, b.lead_id || null, b.stage_id || null,
+                    req.params.id, b.firsat_name || null, b.konu ?? null, tip,
+                    touchPartner, partnerId,
+                    b.lead_id || null, b.stage_id || null,
                     b.created_by_user_id || b.created_by_id || null, b.takip_by_id || null, b.beklenen_gelir ?? null,
                     b.currency_code || null, b.degerlendirme ?? null, b.target_kapatma_date || null,
-                    b.country ?? null, b.plant_id || null, b.description ?? null,
+                    b.country ?? null, b.plant_id || null, b.company_id || null, b.description ?? null,
                 ]
             );
             if (Array.isArray(b.satirlar) || Array.isArray(b.kalemler)) {
