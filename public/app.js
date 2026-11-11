@@ -10108,6 +10108,11 @@ function showView(name) {
     return;
   }
 
+  // Liste dışına çıkınca yan filtreyi menüye geri ver
+  if (name !== 'screen' && typeof undockFiltersFromSidebar === 'function') {
+    undockFiltersFromSidebar();
+  }
+
   home.hidden = name !== 'home';
   screen.hidden = name !== 'screen';
   form.hidden = name !== 'form';
@@ -10121,6 +10126,81 @@ function showView(name) {
   if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
   if (sql) sql.style.display = name === 'sql' ? 'grid' : 'none';
   if (pq) pq.style.display = name === 'pageQuery' ? 'grid' : 'none';
+  if (typeof syncMenuButtonLabel === 'function') syncMenuButtonLabel();
+}
+
+/** Liste ekranı (#viewScreen) görünür mü? */
+function isListScreenOpen() {
+  const screen = $('#viewScreen');
+  if (!screen) return false;
+  // state.screenId + görünür view: inline style / hidden / computed hepsi
+  if (!state.screenId) return false;
+  if (screen.hidden) return false;
+  const inline = (screen.style.display || '').trim();
+  if (inline === 'none') return false;
+  try {
+    if (getComputedStyle(screen).display === 'none') return false;
+  } catch (_) { /* ignore */ }
+  return true;
+}
+
+function isFilterDocked() {
+  return Boolean($('#appShell')?.classList.contains('sidebar-filter-dock'));
+}
+
+function syncMenuButtonLabel() {
+  const btn = $('#btnMenu');
+  if (!btn) return;
+  if (isFilterDocked()) {
+    btn.title = 'Menüyü aç — filtre üst banda döner';
+    btn.setAttribute('aria-label', 'Menüyü aç');
+  } else if (isListScreenOpen()) {
+    btn.title = 'Menüyü kapat — filtreyi yana taşı';
+    btn.setAttribute('aria-label', 'Menüyü kapat, filtreyi yana taşı');
+  } else {
+    btn.title = 'Menüyü kapat/aç';
+    btn.setAttribute('aria-label', 'Menüyü aç/kapat');
+  }
+}
+
+/** Filtre panelini logo altındaki yan alana taşı (menü yerine). */
+function dockFiltersToSidebar() {
+  const shell = $('#appShell');
+  const host = $('#sidebarFilterHost');
+  const pane = $('#filterPane');
+  const screen = $('#viewScreen');
+  const nav = $('#sidebarNav');
+  const foot = document.querySelector('.sidebar-foot');
+  if (!shell || !host || !pane || !screen) return;
+  shell.classList.remove('sidebar-collapsed');
+  shell.classList.add('sidebar-filter-dock');
+  screen.classList.add('filter-docked');
+  if (pane.parentElement !== host) host.appendChild(pane);
+  host.hidden = false;
+  if (nav) nav.hidden = true;
+  if (foot) foot.hidden = true;
+  syncMenuButtonLabel();
+}
+
+/** Yan filtreyi üst banda geri al; menüyü göster. */
+function undockFiltersFromSidebar(opts = {}) {
+  const shell = $('#appShell');
+  const host = $('#sidebarFilterHost');
+  const home = $('#filterPaneHome');
+  const pane = $('#filterPane');
+  const screen = $('#viewScreen');
+  const nav = $('#sidebarNav');
+  const foot = document.querySelector('.sidebar-foot');
+  if (!shell) return;
+  const wasDocked = shell.classList.contains('sidebar-filter-dock');
+  shell.classList.remove('sidebar-filter-dock');
+  if (screen) screen.classList.remove('filter-docked');
+  if (pane && home && pane.parentElement !== home) home.appendChild(pane);
+  if (host) host.hidden = true;
+  if (nav) nav.hidden = false;
+  if (foot) foot.hidden = false;
+  if (opts.keepCollapsed && wasDocked) shell.classList.add('sidebar-collapsed');
+  syncMenuButtonLabel();
 }
 
 
@@ -22669,10 +22749,25 @@ function bindEvents() {
     const shell = $('#appShell');
     const sidebar = $('#sidebar');
     if (window.matchMedia('(max-width: 900px)').matches) {
+      // Mobil: yalnızca çekmece menü
+      undockFiltersFromSidebar({ keepCollapsed: false });
       sidebar.classList.toggle('open');
-    } else {
-      shell.classList.toggle('sidebar-collapsed');
+      return;
     }
+    // Liste ekranı açıkken: menü ↔ yan filtre takası (logo altında, aynı genişlik)
+    if (isListScreenOpen()) {
+      if (isFilterDocked()) {
+        undockFiltersFromSidebar();
+      } else {
+        shell.classList.remove('sidebar-collapsed');
+        dockFiltersToSidebar();
+      }
+      return;
+    }
+    // Ekran yokken: klasik menü aç/kapa
+    undockFiltersFromSidebar({ keepCollapsed: false });
+    shell.classList.toggle('sidebar-collapsed');
+    syncMenuButtonLabel();
   });
 
   $('#btnSidebarLocate')?.addEventListener('click', (e) => {

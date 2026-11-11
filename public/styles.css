@@ -5596,12 +5596,6 @@ html[data-theme="yellow"] {
 @media (max-width: 640px) {
   .theme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-}
-.theme-card-name { display: block; font-weight: 600; font-size: 0.88rem; color: var(--ink); }
-.theme-card-hint { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
-@media (max-width: 640px) {
-  .theme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 
 /* —— MRP Konsol —— */
 .mrp-console { display: flex; flex-direction: column; gap: 0.85rem; padding: 0.35rem 0.15rem 1rem; }
@@ -5911,12 +5905,6 @@ html[data-appearance="dark"] .page-query-sql {
 
 
 
-/* --- ported from parallel stacks --- */
-  border-right: 1px solid var(--line);
-  box-shadow: 2px 0 18px rgba(26, 35, 48, 0.04);
-  overflow: hidden;
-  opacity: 1;
-}
 /* Sağ kenar: sürükleyerek menü genişliği */
 .sidebar-resizer {
   position: absolute;
@@ -6132,7 +6120,7 @@ body.sidebar-resizing .workspace {
   align-items: center;
   gap: 0.45rem;
   margin: 0.1rem 0 0;
-
+}
 
 /* Liste iç kaydırma + sayfa bağımsız scroll */
 #viewScreen.screen-view {
@@ -6230,13 +6218,6 @@ body.sidebar-resizing iframe {
   color: var(--accent);
 }
 
-.icon-btn {
-  display: inline-grid;
-  place-items: center;
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 0
-
 /* Field info (i) button — top right of a field */
 .field { position: relative; }
 .field-info-btn {
@@ -6293,4 +6274,118 @@ body.sidebar-resizing iframe {
   gap: 0.55rem 1.1rem;
   margin-bottom: 0.85rem;
   font-size: 0.86rem;
+}
+
+/* —— Menü kapalı + liste açık: filtre logo altında dikey yan panel —— */
+.sidebar-filter-host {
+  display: none;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+.app-shell.sidebar-filter-dock .sidebar-filter-host {
+  display: flex;
+}
+.app-shell.sidebar-filter-dock .sidebar-nav,
+.app-shell.sidebar-filter-dock .sidebar-foot {
+  display: none !important;
+}
+.app-shell.sidebar-filter-dock .sidebar-filter-host .filter-pane {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0.65rem 0.75rem 0.85rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.app-shell.sidebar-filter-dock .filter-pane-head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-bottom: 0.15rem;
+}
+.app-shell.sidebar-filter-dock .filter-pane-head h2 {
+  font-size: 0.82rem;
+}
+.app-shell.sidebar-filter-dock .filter-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+.app-shell.sidebar-filter-dock .filter-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+/* Alt alta alanlar — yatay bant düzenini bırak */
+.app-shell.sidebar-filter-dock .filter-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: stretch;
+  grid-template-columns: none;
+}
+.app-shell.sidebar-filter-dock .filter-col,
+.app-shell.sidebar-filter-dock .filter-col--scope,
+.app-shell.sidebar-filter-dock .filter-col--main {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  grid-template-columns: none;
+}
+.app-shell.sidebar-filter-dock .filter-col--scope .filter-field--isyeri {
+  margin: 0;
+  padding: 0 0 0.45rem;
+  border-bottom: 1px solid var(--line);
+}
+.app-shell.sidebar-filter-dock .filter-field {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.2rem;
+  width: 100%;
+}
+.app-shell.sidebar-filter-dock .filter-field label {
+  font-size: 0.72rem;
+  white-space: normal;
+}
+.app-shell.sidebar-filter-dock .filter-controls {
+  grid-template-columns: minmax(4.5rem, 5.4rem) minmax(0, 1fr);
+}
+.app-shell.sidebar-filter-dock .filter-field .filter-controls,
+.app-shell.sidebar-filter-dock .filter-field .lookup-widget,
+.app-shell.sidebar-filter-dock .filter-field input,
+.app-shell.sidebar-filter-dock .filter-field select {
+  width: 100%;
+  min-width: 0;
+}
+/* Üst filtre yuvası boşalınca liste yukarı büyür */
+#viewScreen.screen-view.filter-docked {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+#viewScreen.screen-view.filter-docked #filterPaneHome {
+  display: none !important;
+  min-height: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+}
+.filter-pane-home:empty {
+  display: none;
 }
