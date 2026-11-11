@@ -673,14 +673,41 @@ const MODULES = [
           { key: 'rate_date', label: 'Kur tarihi', type: 'date', required: true },
           { key: 'source_currency', label: 'Kaynak PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
           { key: 'target_currency', label: 'Hedef PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
-          { key: 'buy_rate', label: 'Alış kuru', type: 'number', required: true },
-          { key: 'sell_rate', label: 'Satış kuru', type: 'number', required: true },
+          {
+            key: 'buy_rate',
+            label: 'Alış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz alış (Forex Buying): Kaydi/hesaplar arası işlemde kurumun sizden döviz aldığı kur. TCMB seçiliyse bültenden gelir; Manuel’de banka veya sözleşmenize göre girin. Belgede «Kur tipi = Alış» bu değeri kullanır.',
+          },
+          {
+            key: 'sell_rate',
+            label: 'Satış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz satış (Forex Selling): Kaydi işlemde kurumun size döviz sattığı kur. Genelde alıştan yüksektir (makas). Satış belgelerinde sıkça bu tip seçilir. TCMB gösterge niteliğindedir; banka kurunuz farklı olabilir.',
+          },
         ],
         detailFields: [
-          { key: 'effective_buy_rate', label: 'Efektif alış', type: 'number' },
-          { key: 'effective_sell_rate', label: 'Efektif satış', type: 'number' },
-          // TCMB: bültende varsa alış/satış doldurulur; yoksa (MXN vb.) Manuel'e düşülür
-          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel'] },
+          {
+            key: 'effective_buy_rate',
+            label: 'Efektif alış',
+            type: 'number',
+            info: 'Efektif alış (Banknote Buying): Nakit banknot dövizi kurumun sizden aldığı kur. Elden döviz bozdurma senaryosu. TCMB’de bazı paralarda boş olabilir; o zaman döviz alışa düşülür.',
+          },
+          {
+            key: 'effective_sell_rate',
+            label: 'Efektif satış',
+            type: 'number',
+            info: 'Efektif satış (Banknote Selling): Nakit banknotu kurumdan alırken kullanılan kur. Nakit makası genelde kaydi makastan geniştir. Manuel tanımlarken fiilen uyguladığınız gişe/banka kurunu yazın.',
+          },
+          {
+            key: 'source',
+            label: 'Kur kaynağı',
+            type: 'select',
+            options: ['TCMB', 'Manuel'],
+            info: 'TCMB: Sistem Parametreleri’ndeki TCMB_KUR_URL (today.xml) ile iş günü bülteni çekilir; TCMB_KUR_AUTO=true ise günde bir kez otomatik güncellenir. Manuel: TCMB’de olmayan pariteler (ör. MXN) veya kendi banka kurunuz.',
+          },
         ],
         detailKey: null,
         detailAsFields: true,
@@ -11623,24 +11650,100 @@ const DIL_AD_MAP = {
   NL: 'Nederlands', PT: 'Português', ZH: '中文', JA: '日本語',
 };
 
-async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false } = {}) {
-  if (!kurEl) return;
+const RATE_TYPE_OPTIONS = [
+  { value: 'TCMB-ALIS', label: 'Alış' },
+  { value: 'TCMB-SATIS', label: 'Satış' },
+  { value: 'EFKT-ALIS', label: 'Efektif alış' },
+  { value: 'EFKT-SATIS', label: 'Efektif satış' },
+  { value: 'Serbest', label: 'Serbest' },
+];
+
+/** rate_type → /doviz-kurlari/cevir type; null = free (manual) rate */
+function rateTypeToConversionType(rateType) {
+  const t = String(rateType || '').toUpperCase();
+  if (t === 'SERBEST') return null;
+  if (t.includes('EFKT') && t.includes('ALIS')) return 'efektif-alis';
+  if (t.includes('EFKT') && t.includes('SATIS')) return 'efektif-satis';
+  if (t.includes('ALIS')) return 'alis';
+  return 'satis';
+}
+
+function setControlDisabled(el, disabled, title = '') {
+  if (!el) return;
+  el.disabled = Boolean(disabled);
+  if (title != null) el.title = title;
+  const widget = el.closest?.('.lookup-widget');
+  if (widget) {
+    widget.querySelectorAll('.lookup-typeahead, .lookup-browse-btn, select').forEach((n) => {
+      if (n !== el && 'disabled' in n) n.disabled = Boolean(disabled);
+    });
+  }
+  if (el.type === 'radio') {
+    const name = el.getAttribute('name');
+    if (name) {
+      document.querySelectorAll(`input[type="radio"][name="${name}"]`).forEach((r) => {
+        r.disabled = Boolean(disabled);
+      });
+    }
+  }
+}
+
+/**
+ * Fills / locks the exchange-rate field for a currency and rate type.
+ * TRY → rate 1, rate and rate type locked. Others → rate by type unless Serbest.
+ */
+async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false, rateType = null, rateTypeEl = null } = {}) {
   const pb = String(pbKod || 'TRY').toUpperCase();
+  const tipEl = rateTypeEl
+    || findAttrControl('data-master', 'rate_type')
+    || findAttrControl('data-detail', 'rate_type');
+  const tip = rateType != null
+    ? rateType
+    : (tipEl ? (tipEl.type === 'radio' ? readMasterDetailValue('rate_type') : tipEl.value) : null)
+      || state.formRecord?.rate_type
+      || 'TCMB-SATIS';
+
+  if (!kurEl && !tipEl) return;
+
   if (pb === 'TRY' || pb === 'TL') {
-    kurEl.value = '1';
-    kurEl.disabled = true;
-    kurEl.title = 'TRY için exchange_rate sabittir';
+    if (kurEl) {
+      kurEl.value = '1';
+      setControlDisabled(kurEl, true, 'TRY için kur sabittir (1)');
+    }
+    if (tipEl) setControlDisabled(tipEl, true, 'TRY için kur tipi gerekmez');
+    if (state.formRecord && kurEl?.hasAttribute?.('data-master')) state.formRecord.exchange_rate = 1;
     return;
   }
-  kurEl.disabled = false;
-  kurEl.title = '';
+
+  if (tipEl) setControlDisabled(tipEl, false, '');
+  const conversionType = rateTypeToConversionType(tip);
+  if (!kurEl) return;
+  setControlDisabled(kurEl, false, conversionType == null ? 'Serbest kur — elle girin' : '');
+  if (conversionType == null) return;
   if (!force && kurEl.value && Number(kurEl.value) > 0 && Number(kurEl.value) !== 1) return;
   try {
-    const r = await api(`/doviz-kurlari/cevir?quantity=1&source_currency=${encodeURIComponent(pb)}&target_currency=TRY&type=satis`);
-    if (r?.exchange_rate != null) kurEl.value = String(r.exchange_rate);
+    const r = await api(
+      `/doviz-kurlari/cevir?quantity=1&source_currency=${encodeURIComponent(pb)}&target_currency=TRY&type=${encodeURIComponent(conversionType)}`
+    );
+    if (r?.exchange_rate != null) {
+      kurEl.value = String(r.exchange_rate);
+      if (state.formRecord && kurEl.hasAttribute('data-master')) {
+        state.formRecord.exchange_rate = Number(r.exchange_rate);
+        state.formRecord.rate_type = tip;
+      }
+    }
   } catch (_) {
-    /* exchange_rate yoksa kullanıcı girer */
+    /* no rate: user enters it or switches to Serbest */
   }
+}
+
+/** Aligns rate controls on form open / currency change */
+async function syncDocumentRateFields(force = true) {
+  const pb = String(readMasterDetailValue('currency_code') || state.formRecord?.currency_code || 'TRY').toUpperCase();
+  const tip = String(readMasterDetailValue('rate_type') || state.formRecord?.rate_type || 'TCMB-SATIS');
+  const kurEl = findAttrControl('data-master', 'exchange_rate');
+  const tipEl = findAttrControl('data-master', 'rate_type');
+  await applyExchangeRateForCurrency(pb, kurEl, { force, rateType: tip, rateTypeEl: tipEl });
 }
 
 function readMasterDetailValue(key) {
@@ -13566,27 +13669,40 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     return `<input type="password" ${name} value="" autocomplete="new-password" placeholder="${escAttr(ph)}" ${dis} ${reqPw} />`;
   }
   if (field.type === 'select') {
-    const opts = field.options || [];
+    let opts = field.options || [];
+    // Rate type: readable labels instead of codes (Alış / Satış / Efektif…)
+    if (field.key === 'rate_type' && opts.length && typeof opts[0] === 'string') {
+      opts = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
+      if (!opts.length) opts = RATE_TYPE_OPTIONS.slice();
+    }
+    const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
+    const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.l ?? optVal(o)) : o);
     // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
     if (opts.length === 2) {
       // Her segment örneği benzersiz name alsın (master/grid/bom/flow — tüm ekranlar)
       if (!fieldControl._segSeq) fieldControl._segSeq = 0;
       fieldControl._segSeq += 1;
       const radioName = `seg_${String(attrName || 'f').replace(/[^a-z0-9]+/gi, '_')}_${field.key}_${fieldControl._segSeq}`;
-      const cur = (v === '' || v == null) ? opts[0] : v;
+      const cur = (v === '' || v == null) ? optVal(opts[0]) : v;
       return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
-        const on = String(cur) === String(o);
+        const ov = optVal(o);
+        const on = String(cur) === String(ov);
         return `<label class="seg-opt">
-          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(o)}" ${on ? 'checked' : ''} ${dis} ${req} />
-          <span>${escAttr(o)}</span>
+          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(ov)}" ${on ? 'checked' : ''} ${dis} ${req} />
+          <span>${escAttr(optLabel(o))}</span>
         </label>`;
       }).join('')}</div>`;
     }
+    const hit = opts.find((o) => String(optVal(o)) === String(v));
+    const curLabel = hit ? String(optLabel(hit)) : (v === '' || v == null ? '' : String(v));
     const sel = `<select class="lookup-pick lookup-combo-select" ${name} ${dis} ${req}>
       <option value="">—</option>
-      ${opts.map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
+      ${opts.map((o) => {
+        const ov = optVal(o);
+        return `<option value="${escAttr(ov)}" ${String(v) === String(ov) ? 'selected' : ''}>${escAttr(optLabel(o) || '—')}</option>`;
+      }).join('')}
     </select>`;
-    return wrapLookupCombobox(sel, v === '' || v == null ? '' : String(v), Boolean(dis));
+    return wrapLookupCombobox(sel, curLabel, Boolean(dis));
   }
   if (field.type === 'lookup') {
     const scope = ctx || state.formRecord || {};
@@ -16162,7 +16278,10 @@ function fieldShell(f, controlHtml, value) {
   const reqBadge = isReq
     ? '<span class="req-triangle" title="Zorunlu alan" aria-label="Zorunlu alan"></span>'
     : '';
-  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi">${reqBadge}<label>${star}${f.label}</label>${controlHtml}</div>`;
+  const infoBtn = f.info
+    ? `<button type="button" class="field-info-btn" data-field-info="${escAttr(f.key)}" title="Alan bilgisi" aria-label="${escAttr(f.label || f.key)} bilgisi">i</button>`
+    : '';
+  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi">${reqBadge}${infoBtn}<label>${star}${f.label}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -18012,6 +18131,9 @@ function renderForm(screen) {
       syncStockMovementTransferFields();
       refreshStockMovementNo(false);
     }).catch(() => { syncStockMovementTransferFields(); });
+  }
+  if (findAttrControl('data-master', 'exchange_rate') || findAttrControl('data-master', 'currency_code')) {
+    syncDocumentRateFields(false).catch(() => {});
   }
 }
 
@@ -19900,20 +20022,27 @@ function bindCascadeLookups(_screen) {
       }
     }
 
-    // Para birimi → exchange_rate
-    if (fieldKey === 'currency_code') {
-      const pb = el.value;
+    // Para birimi / kur tipi → exchange_rate (TRY ise kur kilitli)
+    if (fieldKey === 'currency_code' || fieldKey === 'rate_type') {
       if (masterKey) {
-        const kurEl = document.querySelector('[data-master="exchange_rate"]');
-        await applyExchangeRateForCurrency(pb, kurEl, { force: true });
-        if (state.formRecord && kurEl) state.formRecord.exchange_rate = Number(kurEl.value) || 1;
+        await syncDocumentRateFields(true);
+        if (state.formRecord) {
+          const kurEl = findAttrControl('data-master', 'exchange_rate');
+          if (kurEl) state.formRecord.exchange_rate = Number(kurEl.value) || 1;
+          state.formRecord.rate_type = readMasterDetailValue('rate_type') || state.formRecord.rate_type;
+          state.formRecord.currency_code = readMasterDetailValue('currency_code') || state.formRecord.currency_code;
+        }
       } else if (detailKey) {
         const didx = el.getAttribute('data-didx');
         const grid = el.getAttribute('data-grid');
-        const kurEl = document.querySelector(
-          `[data-detail="exchange_rate"][data-didx="${didx}"][data-grid="${grid}"]`
+        const sel = (k) => document.querySelector(
+          `[data-detail="${k}"][data-didx="${didx}"]${grid != null ? `[data-grid="${grid}"]` : ''}`
         );
-        await applyExchangeRateForCurrency(pb, kurEl, { force: true });
+        const kurEl = sel('exchange_rate');
+        const tipEl = sel('rate_type');
+        const pb = fieldKey === 'currency_code' ? el.value : (sel('currency_code')?.value || '');
+        const tip = fieldKey === 'rate_type' ? el.value : (tipEl?.value || 'TCMB-SATIS');
+        await applyExchangeRateForCurrency(pb, kurEl, { force: true, rateType: tip, rateTypeEl: tipEl });
       }
     }
 
@@ -21840,13 +21969,14 @@ function closeRecordInfo() {
   if (dlg) dlg.hidden = true;
 }
 
-async function showFieldHelpForElement(el) {
-  if (!el) return;
-  const fieldEl = el.closest('[data-field-key], [data-master], [data-detail]');
-  if (!fieldEl && !el.getAttribute?.('data-master') && !el.getAttribute?.('data-detail')) return;
-  const key = fieldEl?.getAttribute('data-field-key')
-    || el.getAttribute('data-master')
-    || el.getAttribute('data-detail')
+async function showFieldHelpForElement(el, forcedKey = null) {
+  if (!el && !forcedKey) return;
+  const fieldEl = el?.closest?.('[data-field-key], [data-master], [data-detail]');
+  if (!forcedKey && !fieldEl && !el?.getAttribute?.('data-master') && !el?.getAttribute?.('data-detail')) return;
+  const key = forcedKey
+    || fieldEl?.getAttribute('data-field-key')
+    || el?.getAttribute('data-master')
+    || el?.getAttribute('data-detail')
     || fieldEl?.querySelector?.('[data-master], [data-detail]')?.getAttribute('data-master')
     || fieldEl?.querySelector?.('[data-detail]')?.getAttribute('data-detail');
   const screen = findScreen(state.screenId);
@@ -21859,6 +21989,16 @@ async function showFieldHelpForElement(el) {
   if (!body || !dlg) return;
   body.innerHTML = '<p>Yükleniyor…</p>';
   dlg.hidden = false;
+  const titleEl = $('#fieldHelpTitle');
+  const fieldDef = collectTabFields(screen).find((f) => f.key === key)
+    || (screen.masterFields || []).find((f) => f.key === key)
+    || (screen.detailFields || []).find((f) => f.key === key);
+  if (fieldDef?.info) {
+    if (titleEl) titleEl.textContent = `${fieldDef.label || key} — bilgi`;
+    body.innerHTML = `<p class="meta-help-lead">${escapeHtml(fieldDef.info)}</p>`;
+    return;
+  }
+  if (titleEl) titleEl.textContent = 'Alan bilgisi (F1)';
   try {
     const info = await api(`/meta/alan?screen=${encodeURIComponent(screen.id)}&field=${encodeURIComponent(key)}`);
     body.innerHTML = `
@@ -21970,6 +22110,15 @@ function bindMetaHelpGlobal() {
       ? field
       : field.querySelector('[data-master], [data-detail]');
     showFieldHelpForElement(ctl || field);
+  });
+  document.addEventListener('click', (e) => {
+    const infoBtn = e.target.closest?.('[data-field-info]');
+    if (!infoBtn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const field = infoBtn.closest('[data-field-key]');
+    const ctl = field?.querySelector('[data-master], [data-detail]') || field;
+    showFieldHelpForElement(ctl || infoBtn, infoBtn.getAttribute('data-field-info'));
   });
   document.addEventListener('click', (e) => {
     const wrap = $('#formInfoWrap');

@@ -150,7 +150,16 @@ router.get('/cevir', async (req, res, next) => {
     if (source === hedef) {
       return res.json({ quantity, result: quantity, exchange_rate: 1, source_currency: source, target_currency: hedef });
     }
-    const type = String(req.query.type || 'satis').toLowerCase() === 'alis' ? 'buy_rate' : 'sell_rate';
+    const rateColumns = {
+      alis: 'buy_rate',
+      satis: 'sell_rate',
+      'efektif-alis': 'effective_buy_rate',
+      'efektif-satis': 'effective_sell_rate',
+    };
+    const requested = rateColumns[String(req.query.type || 'satis').toLowerCase()] || 'sell_rate';
+    // Effective (banknote) rates are optional; fall back to the forex rate.
+    const fallback = requested === 'effective_buy_rate' ? 'buy_rate' : 'sell_rate';
+    const pickRate = (row) => Number(row[requested]) || Number(row[fallback]);
     const params = [source, hedef];
     let sql = `SELECT * FROM exchange_rates WHERE source_currency=$1 AND target_currency=$2`;
     if (req.query.tarih) {
@@ -167,7 +176,7 @@ router.get('/cevir', async (req, res, next) => {
         [hedef, source]
       );
       if (rev.rows[0]) {
-        const k = Number(rev.rows[0][type]);
+        const k = pickRate(rev.rows[0]);
         const result = quantity / k;
         return res.json({
           quantity, result, exchange_rate: 1 / k, ters: true,
@@ -176,7 +185,7 @@ router.get('/cevir', async (req, res, next) => {
       }
       return res.status(404).json({ hata: 'Kur bulunamadı.' });
     }
-    const exchange_rate = Number(r.rows[0][type]);
+    const exchange_rate = pickRate(r.rows[0]);
     res.json({
       quantity, result: quantity * exchange_rate, exchange_rate,
       source_currency: source, target_currency: hedef, kur_kaydi: r.rows[0],

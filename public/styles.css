@@ -6236,3 +6236,34 @@ body.sidebar-resizing iframe {
   border: 1px solid var(--line);
   background: #fff;
   border-radius: 0
+
+/* Field info (i) button — top right of a field */
+.field { position: relative; }
+.field-info-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line, #c5ced8);
+  background: var(--surface, #fff);
+  color: var(--accent, #3d5a80);
+  font: italic 700 0.68rem/1 Georgia, 'Times New Roman', serif;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: none;
+}
+.field-info-btn:hover {
+  background: var(--accent-soft, #e8f1fb);
+  border-color: var(--accent, #2f6fed);
+}
+.meta-help-lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text, #2a3340);
+}
