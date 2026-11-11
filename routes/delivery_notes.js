@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement, warehouseItemBalance } = require('../src/services/stokHareketService');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
@@ -705,7 +706,10 @@ router.put('/:id', async (req, res) => {
                 kaynakTip: kaynakTip || m.source_document_type,
                 kaynakId: kaynakId || m.source_document_id,
             });
-            if (Array.isArray(raw)) {
+            if (Array.isArray(raw) && await canRewriteLines(client, {
+                lineTable: 'delivery_note_lines', fkCol: 'delivery_note_id', docId: Number(req.params.id),
+                submitted: raw, orderBy: 'line_no, id', label: 'İrsaliyenin',
+            })) {
                 await client.query('DELETE FROM delivery_note_lines WHERE delivery_note_id=$1', [req.params.id]);
                 const kurBelge = merged.exchange_rate != null ? Number(merged.exchange_rate) : 1;
                 const hesaplar = [];

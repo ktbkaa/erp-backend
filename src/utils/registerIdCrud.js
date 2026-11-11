@@ -44,7 +44,7 @@ function registerIdCrud(router, pool, opts) {
         const params = [req.params.id];
         for (const col of updatable) {
           if (b[col] === undefined) continue;
-          params.push(b[col]);
+          params.push(b[col] === '' ? null : b[col]);
           sets.push(`${col}=$${params.length}`);
         }
         if (!sets.length) {

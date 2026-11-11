@@ -44,7 +44,6 @@ registerIdCrud(router, pool, {
   path: '',
   table: 'qc_rejection_reasons',
   notFound: 'Ret nedeni bulunamadı.',
-  skipGet: true,
   skipPut: true,
   softDelete: true,
 });

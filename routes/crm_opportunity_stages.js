@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
             `
             INSERT INTO crm_opportunity_stages
                 (stage_code, stage_name, line_no, is_won, is_lost, is_active)
-            VALUES ($1,$2,COALESCE($3,10),COALESCE($4,FALSE),COALESCE($5,FALSE),COALESCE($6,TRUE))
+            VALUES ($1,$2,COALESCE($3::numeric,10),COALESCE($4,FALSE),COALESCE($5,FALSE),COALESCE($6,TRUE))
             RETURNING *
             `,
             [stage_code, stage_name, line_no, is_won, is_lost, is_active]

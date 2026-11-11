@@ -140,7 +140,7 @@ router.post('/', async (req, res) => {
           cancel_role_name, attach_file_to_mail, is_active
         ) VALUES (
           $1,$2,$3,$4,$5,$6,$7,
-          COALESCE($8,1),$9,$10,$11,
+          COALESCE($8::numeric,1),$9,$10,$11,
           $12,COALESCE($13,FALSE),COALESCE($14,TRUE)
         ) RETURNING id
         `,

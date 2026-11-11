@@ -48,7 +48,7 @@ router.post('/paketler', async (req, res, next) => {
       `INSERT INTO fin_country_packs (
          country_code, country_name, local_currency, chart_of_accounts_code,
          reporting_framework, retention_years, e_document_note, is_active
-       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,10),$7,COALESCE($8,TRUE))
+       ) VALUES ($1,$2,$3,$4,$5,COALESCE($6::numeric,10),$7,COALESCE($8,TRUE))
        RETURNING country_code AS id, country_code, country_name, local_currency,
                  chart_of_accounts_code, reporting_framework, retention_years,
                  e_document_note, is_active, created_at`,

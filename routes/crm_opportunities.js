@@ -192,7 +192,7 @@ router.post('/', async (req, res) => {
                     (opportunity_code, opportunity_name, subject, customer_type, partner_id, lead_id, stage_id,
                      created_by_user_id, followed_by_id, expected_revenue, currency_code, rating,
                      target_close_date, country, plant_id, description, status, company_id)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),COALESCE($11,'TRY'),$12,
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10::numeric,0),COALESCE($11,'TRY'),$12,
                         $13,COALESCE($14,'TR'),$15,$16,'Acik',$17)
                 RETURNING id
                 `,

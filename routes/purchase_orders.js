@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { isPartnerSupplier } = require('../src/utils/kodUretici');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
@@ -311,7 +312,10 @@ router.put('/:id', async (req, res) => {
         ]
       );
 
-      if (Array.isArray(b.satirlar)) {
+      if (Array.isArray(b.satirlar) && await canRewriteLines(client, {
+        lineTable: 'purchase_order_lines', fkCol: 'purchase_order_id', docId: Number(req.params.id),
+        submitted: b.satirlar, orderBy: 'COALESCE(line_no, id), id', label: 'Siparişin',
+      })) {
         const exchange_rate = b.exchange_rate ?? mevcut.rows[0].exchange_rate ?? 1;
         await replaceOrderLines(client, Number(req.params.id), b.satirlar, exchange_rate);
       }

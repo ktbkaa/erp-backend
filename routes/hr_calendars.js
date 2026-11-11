@@ -141,7 +141,7 @@ router.post('/vardiyalar', async (req, res) => {
         `INSERT INTO hr_shifts (
            company_id, shift_code, shift_name, start_time, end_time, break_minutes,
            crosses_midnight, net_hours, is_active, description
-         ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,60),COALESCE($7,FALSE),$8,COALESCE($9,TRUE),$10)
+         ) VALUES ($1,$2,$3,$4,$5,COALESCE($6::numeric,60),COALESCE($7,FALSE),$8,COALESCE($9,TRUE),$10)
          RETURNING id`,
         [
           firmaId, kod, b.shift_name, b.start_time, b.end_time, b.break_minutes,

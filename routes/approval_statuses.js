@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
     const r = await pool.query(
       `
       INSERT INTO approval_statuses (status_code, status_name, line_no, is_final, is_positive, is_active)
-      VALUES ($1,$2,COALESCE($3,10),COALESCE($4,FALSE),COALESCE($5,FALSE),COALESCE($6,TRUE))
+      VALUES ($1,$2,COALESCE($3::numeric,10),COALESCE($4,FALSE),COALESCE($5,FALSE),COALESCE($6,TRUE))
       RETURNING *
       `,
       [status_code, status_name, line_no, nihai, olumlu, is_active],

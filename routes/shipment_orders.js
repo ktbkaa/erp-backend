@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 
 async function getShipment(id) {
@@ -175,7 +176,10 @@ router.put('/:id', async (req, res) => {
                     status || null, movement_code_id || null, description ?? null,
                 ]
             );
-            if (Array.isArray(raw)) {
+            if (Array.isArray(raw) && await canRewriteLines(client, {
+                lineTable: 'shipment_order_lines', fkCol: 'ship_id', docId: Number(req.params.id),
+                submitted: raw, orderBy: 'line_no, id', label: 'Sevk emrinin',
+            })) {
                 await client.query('DELETE FROM shipment_order_lines WHERE ship_id=$1', [req.params.id]);
                 for (const s of raw) {
                     if (!s.item_id || !s.quantity) continue;

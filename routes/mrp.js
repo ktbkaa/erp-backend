@@ -615,4 +615,8 @@ router.get('/:stokId', async (req, res, next) => {
     }
 });
 
+router.put('/calismalar/:id', (req, res) => {
+  res.status(409).json({ hata: 'MRP çalışması düzeltilemez. Parametreleri değiştirip yeniden çalıştırın.' });
+});
+
 module.exports = router;

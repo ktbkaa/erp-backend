@@ -193,7 +193,7 @@ router.post('/', async (req, res) => {
         const result = await pool.query(
             `
             INSERT INTO number_series (series_code, prefix, description, last_number, screen_code, screen_name, is_active)
-            VALUES ($1, $2, $3, COALESCE($4, 0), $5, $6, TRUE)
+            VALUES ($1, $2, $3, COALESCE($4::numeric,0), $5, $6, TRUE)
             RETURNING series_code AS id, series_code, prefix, description, last_number,
                       screen_code, screen_name, is_active, created_at
             `,

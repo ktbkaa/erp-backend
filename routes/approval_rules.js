@@ -126,7 +126,7 @@ router.post('/', async (req, res) => {
           term_direction, term_min_amount, term_max_amount, condition_statuses,
           auto_approve, activate_on_approval, is_active, description
         ) VALUES (
-          $1,$2,COALESCE($3,10),$4,$5,$6,$7,
+          $1,$2,COALESCE($3::numeric,10),$4,$5,$6,$7,
           COALESCE($8,'Hepsi'),$9,$10,$11,
           COALESCE($12,FALSE),COALESCE($13,TRUE),COALESCE($14,TRUE),$15
         ) RETURNING id

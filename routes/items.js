@@ -611,13 +611,13 @@ router.post('/', async (req, res) => {
                     $12,$13,$14,$15,$16,$17,
                     $18,$19,$20,$21,$22,
                     $23,$24,$25,$26,$27,
-                    $28,$29,COALESCE($30,3),
+                    $28,$29,COALESCE($30::numeric,3),
                     COALESCE($31,'Takipsiz'),COALESCE($32,FALSE),$33,$34,
                     $35,
                     $36,$37,$38,$39,$40,$41,
-                    COALESCE($42,0),COALESCE($43,0),COALESCE($44,20),
-                    COALESCE($45,0),$46,$47,$48,
-                    COALESCE($49,'Takipsiz'),$50,COALESCE($51,0),COALESCE($52,0),$53,
+                    COALESCE($42::numeric,0),COALESCE($43::numeric,0),COALESCE($44::numeric,20),
+                    COALESCE($45::numeric,0),$46,$47,$48,
+                    COALESCE($49,'Takipsiz'),$50,COALESCE($51::numeric,0),COALESCE($52::numeric,0),$53,
                     COALESCE($54,'Manuel'),COALESCE($55,FALSE),$56,
                     COALESCE($57,'TRY'),COALESCE($58,'TRY')
                 )

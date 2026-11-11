@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
       INSERT INTO approval_module_usages (
         usage_code, usage_name, module_code, screen_id, route_id,
         company_id, min_amount, auto_send, template_id, is_active, description
-      ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,0),COALESCE($8,FALSE),$9,COALESCE($10,TRUE),$11)
+      ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7::numeric,0),COALESCE($8,FALSE),$9,COALESCE($10,TRUE),$11)
       RETURNING id
       `,
       [

@@ -489,7 +489,7 @@ router.post('/', async (req, res) => {
           fg_warehouse_id, alternative_description, version_code, brand_code, attr3_code,
           wo_change_mode, lock_when_used_in_route
         ) VALUES (
-          $1,$2,$3,COALESCE($4,1),$5,
+          $1,$2,$3,COALESCE($4::numeric,1),$5,
           $6,$7,$8,$9,$10,$11,
           $12,$13,$14,$15,$16,
           $17,$18,$19,$20,

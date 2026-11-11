@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/', async (req, res) => {
     try {
@@ -75,6 +76,14 @@ router.delete('/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
+});
+
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'qc_item_plans',
+  notFound: 'Kalite planı bulunamadı.',
+  skipPut: true,
+  skipDelete: true,
 });
 
 module.exports = router;

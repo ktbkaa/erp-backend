@@ -134,7 +134,7 @@ router.post('/hareketler', async (req, res, next) => {
         INSERT INTO fin_cash_movements
           (company_id, movement_no, movement_date, direction, amount, currency_code, exchange_rate,
            bank_account_id, cash_account_id, partner_id, description, status)
-        VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,$5,COALESCE($6,'TRY'),COALESCE($7,1),
+        VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,$5,COALESCE($6,'TRY'),COALESCE($7::numeric,1),
                 $8,$9,$10,$11,'Onayli')
         RETURNING *
         `,
@@ -219,6 +219,10 @@ registerIdCrud(router, pool, {
     if (row.gl_document_id) return 'Muhasebeleşmiş nakit hareket silinemez.';
     return true;
   },
+});
+
+router.put('/hareketler/:id', (req, res) => {
+  res.status(409).json({ hata: 'Nakit hareketi düzeltilemez. Hatalı kayıt için ters hareket girin.' });
 });
 
 module.exports = router;

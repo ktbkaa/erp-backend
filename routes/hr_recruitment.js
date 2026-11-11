@@ -36,7 +36,7 @@ router.post('/ilanlar', async (req, res) => {
       const ins = await client.query(
         `INSERT INTO hr_job_requisitions (
            company_id, requisition_no, title, department_id, position_id, status, headcount, description
-         ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'Acik'),COALESCE($7,1),$8) RETURNING id`,
+         ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,'Acik'),COALESCE($7::numeric,1),$8) RETURNING id`,
         [firmaId, no, b.title, b.department_id || null, b.position_id || null, b.status, b.headcount, b.description || null],
       );
       return ins.rows[0].id;

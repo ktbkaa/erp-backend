@@ -50,7 +50,7 @@ async function syncParamChildren(client, setId, paramValues, taxBrackets) {
       if (b.rate == null) continue;
       await client.query(
         `INSERT INTO hr_payroll_tax_brackets (param_set_id, line_no, up_to_amount, rate, fixed_amount)
-         VALUES ($1,$2,$3,$4,COALESCE($5,0))`,
+         VALUES ($1,$2,$3,$4,COALESCE($5::numeric,0))`,
         [setId, b.line_no || line, b.up_to_amount ?? null, b.rate, b.fixed_amount],
       );
       line += 10;

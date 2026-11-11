@@ -131,7 +131,7 @@ router.post('/', async (req, res) => {
                      spent_minutes, subject, description, rating, status, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
                         COALESCE($11::timestamp,CURRENT_TIMESTAMP),$12,
-                        COALESCE($13,0),$14,$15,$16,COALESCE($17,'Tamamlandi'),$18)
+                        COALESCE($13::numeric,0),$14,$15,$16,COALESCE($17,'Tamamlandi'),$18)
                 RETURNING id
                 `,
                 [

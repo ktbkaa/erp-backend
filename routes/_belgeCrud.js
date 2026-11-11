@@ -160,7 +160,9 @@ function createDocumentRouter(cfg) {
                 if (description !== undefined) add('description', description);
                 if (status) add('status', status);
                 if (requireCari && partner_id) add('partner_id', partner_id);
+                const handled = new Set(['description', 'status', 'partner_id']);
                 for (const f of extraFields) {
+                    if (handled.has(f)) continue;
                     if (req.body[f] !== undefined) add(f, req.body[f]);
                 }
                 if (sets.length) {
