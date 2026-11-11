@@ -19704,6 +19704,7 @@ function parseScreenOpenQuery() {
 async function openForm(mode, opts = {}) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
+  applyRequiredFieldOverrides(screen);
   if (screen.readOnly && mode !== 'incele') {
     toast('Bu ekran yalnızca incelenebilir.');
     return;
