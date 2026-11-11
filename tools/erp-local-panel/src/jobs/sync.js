@@ -4,6 +4,7 @@ const { getConfig } = require('../util/config');
 const { runAsync } = require('../util/run');
 const { resolvePgDump } = require('../util/pgdump');
 const { nodeSqlBackup } = require('../util/nodeBackup');
+const { gitBranch, resolveErpRoot } = require('../util/erpRoot');
 const logger = require('../util/logger');
 
 function assertErpRoot(cfg) {
@@ -185,11 +186,30 @@ async function stepBackup(cfg) {
 async function runSync(opts = {}) {
   const cfg = getConfig();
   assertErpRoot(cfg);
+  const resolved = resolveErpRoot(cfg.erpRoot);
+  if (resolved.switched) {
+    logger.append({
+      level: 'warn',
+      message: `ERP klasörü otomatik düzeltildi: ${resolved.from} → ${resolved.root}`,
+    });
+    cfg.erpRoot = resolved.root;
+  }
   const steps = { ...cfg.steps, ...(opts.steps || {}) };
   const started = Date.now();
-  logger.append({ level: 'info', message: 'Senkron başladı', erpRoot: cfg.erpRoot });
+  const branch = gitBranch(cfg.erpRoot);
+  logger.append({
+    level: 'info',
+    message: `Senkron başladı · ${cfg.erpRoot}${branch ? ` · ${branch}` : ''}`,
+    erpRoot: cfg.erpRoot,
+  });
 
-  const result = { ok: true, steps: {}, erpRoot: cfg.erpRoot, startedAt: new Date().toISOString() };
+  const result = {
+    ok: true,
+    steps: {},
+    erpRoot: cfg.erpRoot,
+    branch,
+    startedAt: new Date().toISOString(),
+  };
 
   try {
     if (steps.gitPull !== false) {
@@ -246,10 +266,18 @@ async function getStatus() {
     pgModule = true;
   } catch { /* ignore */ }
 
+  const branch = erpOk ? gitBranch(cfg.erpRoot) : null;
+  const healScript = erpOk && fs.existsSync(path.join(cfg.erpRoot, 'scripts', 'local-heal.js'));
+  const switched = Boolean(cfg.erpRootResolved?.switched);
+
   return {
     erpRoot: cfg.erpRoot || null,
     erpOk,
     gitOk,
+    branch,
+    healScript,
+    pathSwitched: switched,
+    pathSwitchFrom: cfg.erpRootResolved?.from || null,
     migrateScript,
     backupScript,
     pgDump,

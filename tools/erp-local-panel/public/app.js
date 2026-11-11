@@ -33,11 +33,16 @@ async function refreshStatus() {
   } else {
     pgDumpCell = '<span class="bad">Bulunamadı — Ayarlar’dan yol verin veya npm install</span>';
   }
+  const pathNote = s.pathSwitched
+    ? ` <span class="warn">(otomatik düzeltildi${s.pathSwitchFrom ? `: eski ${s.pathSwitchFrom}` : ''})</span>`
+    : '';
   const rows = [
-    ['ERP klasörü', s.erpRoot || '—'],
+    ['ERP klasörü', `${s.erpRoot || '—'}${pathNote}`],
+    ['Dal', s.branch ? `<span class="ok">${s.branch}</span>` : '—'],
     ['Klasör', flag(s.erpOk)],
     ['Git', flag(s.gitOk, 'Var', 'Yok')],
     ['migrate script', flag(s.migrateScript)],
+    ['heal script', flag(s.healScript)],
     ['pg_dump', pgDumpCell],
     ['Node yedek', flag(s.nodeBackupOk, 'Hazır', 'pg yok')],
     ['DB', `${s.db?.database}@${s.db?.host}:${s.db?.port} (${s.db?.passwordSet ? 'şifre var' : 'şifre yok'})`],
@@ -77,12 +82,18 @@ async function runAction(label, path) {
     toast(`${label} başladı…`);
     const r = await api(path, { method: 'POST', body: '{}' });
     const backup = r.steps?.backup || r;
+    const where = r.erpRoot ? ` · ${r.erpRoot}` : '';
+    const br = r.branch ? ` · ${r.branch}` : '';
     if (backup?.method === 'node-sql') {
-      toast(`${label} tamam (Node SQL yedek)`);
+      toast(`${label} tamam (Node SQL yedek)${br}`);
     } else if (backup?.method === 'pg_dump') {
-      toast(`${label} tamam (pg_dump)`);
+      toast(`${label} tamam (pg_dump)${br}`);
     } else {
-      toast(r.ok === false ? (r.error || 'Hata') : `${label} tamam`);
+      toast(r.ok === false ? (r.error || 'Hata') : `${label} tamam${br}${r.steps?.heal ? ' · heal OK' : ''}`);
+    }
+    if (r.erpRoot) {
+      const rootEl = $('erpRoot');
+      if (rootEl && rootEl.value.trim() !== r.erpRoot) rootEl.value = r.erpRoot;
     }
   } catch (err) {
     toast(err.message || String(err));
