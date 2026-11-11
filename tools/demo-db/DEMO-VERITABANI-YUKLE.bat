@@ -7,7 +7,7 @@ echo  KTB ERP - demo veritabani yukleme
 echo  ---------------------------------
 echo  Demo dump (ktb_erp_demo*.sql.gz) yeni "ktb_erp" veritabanina yuklenir.
 echo  Mevcut veritabaniniz silinmez; .env yedeklenip DB_NAME=ktb_erp yapilir.
-echo  Dosyayi bu .bat uzerine surukleyebilir veya Indirilenler klasorune koyabilirsiniz.
+echo  Varsayilan dosya: tools\demo-db\ktb_erp_demo.sql.gz (depoyla gelir).
 echo.
 
 set "PATH=%ProgramFiles%\nodejs;%PATH%"

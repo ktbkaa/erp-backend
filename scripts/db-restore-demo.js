@@ -5,7 +5,8 @@
  *
  *   node scripts/db-restore-demo.js [dump.sql.gz] [--db=ktb_erp] [--force] [--no-env]
  *
- * Without a path it looks for ktb_erp_demo*.sql(.gz) in backups/, Downloads and Desktop.
+ * Without a path it picks the newest ktb_erp_demo*.sql(.gz) in backups/, tools/demo-db
+ * (shipped, users without password hashes), Downloads and Desktop.
  * --force drops the target database first when it already exists.
  */
 const fs = require('fs');
@@ -35,6 +36,7 @@ function findDump() {
   const dirs = [
     path.join(ROOT, 'backups'),
     path.join(ROOT, 'backups', 'demo'),
+    path.join(ROOT, 'tools', 'demo-db'),
     path.join(home, 'Downloads'),
     path.join(home, 'OneDrive', 'Downloads'),
     path.join(home, 'Desktop'),
