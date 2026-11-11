@@ -77,7 +77,7 @@ router.post('/', async (req, res) => {
     try {
         const {
             plan_no, company_id, item_id, quantity, uom_code,
-            planned_start, delivery_date, is_started, fixed,
+            planned_start, delivery_date, is_started, is_fixed,
             status, material: malzeme, mrp_result_id, description,
         } = req.body || {};
         if (!item_id || quantity == null || Number(quantity) <= 0) {
@@ -89,7 +89,7 @@ router.post('/', async (req, res) => {
                 `
                 INSERT INTO production_plans
                     (plan_no, company_id, item_id, quantity, uom_code,
-                     planned_start, delivery_date, is_started, fixed,
+                     planned_start, delivery_date, is_started, is_fixed,
                      status, material, mrp_result_id, description)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,FALSE),COALESCE($9,FALSE),
                         COALESCE($10,'Acik'),COALESCE($11,FALSE),$12,$13)
@@ -104,7 +104,7 @@ router.post('/', async (req, res) => {
                     planned_start || null,
                     delivery_date || null,
                     typeof is_started === 'boolean' ? is_started : null,
-                    typeof fixed === 'boolean' ? fixed : null,
+                    typeof is_fixed === 'boolean' ? is_fixed : null,
                     status || null,
                     typeof malzeme === 'boolean' ? malzeme : null,
                     mrp_result_id || null,
@@ -123,7 +123,7 @@ router.put('/:id', async (req, res) => {
     try {
         const fields = [
             'company_id', 'item_id', 'quantity', 'uom_code',
-            'planned_start', 'delivery_date', 'is_started', 'fixed',
+            'planned_start', 'delivery_date', 'is_started', 'is_fixed',
             'status', 'material', 'mrp_result_id', 'description',
         ];
         const sets = [];
