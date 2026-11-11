@@ -66,7 +66,14 @@ describe('prj core', () => {
     });
     assert.equal(child.status, 201, JSON.stringify(child.json));
 
-    const day = `2026-03-${String(10 + (Date.now() % 18)).padStart(2, '0')}`;
+    const free = await pool.query(
+      `SELECT d::date::text AS day
+         FROM generate_series('2026-01-01'::date, '2026-12-31'::date, '1 day') d
+        WHERE NOT EXISTS (SELECT 1 FROM work_logs w WHERE w.user_id = $1 AND w.work_date = d::date)
+        ORDER BY random() LIMIT 1`,
+      [userId]
+    );
+    const day = free.rows[0].day;
     const log = await request(app, 'POST', `/prj-isler/${wi.json.id}/work-logs`, {
       headers,
       body: {
