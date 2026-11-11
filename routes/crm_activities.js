@@ -12,7 +12,7 @@ async function getActivity(id) {
                type.type_code AS faaliyet_tipi_kodu, type.type_name AS faaliyet_tipi_adi,
                c.partner_code, c.partner_name,
                a.lead_code, a.lead_name,
-               f.firsat_code, f.firsat_name,
+               f.opportunity_code, f.opportunity_name,
                p.plan_code,
                TRIM(CONCAT(COALESCE(k.first_name,''),' ',COALESCE(k.last_name,''))) AS giren_adi,
                TRIM(CONCAT(COALESCE(kk.first_name,''),' ',COALESCE(kk.last_name,''))) AS kontak_adi,
@@ -21,7 +21,7 @@ async function getActivity(id) {
         LEFT JOIN crm_activity_types type ON type.id = fy.activity_type_id
         LEFT JOIN partners c ON c.id = fy.partner_id
         LEFT JOIN crm_leads a ON a.id = fy.lead_id
-        LEFT JOIN crm_opportunities f ON f.id = fy.firsat_id
+        LEFT JOIN crm_opportunities f ON f.id = fy.opportunity_id
         LEFT JOIN crm_activity_plans p ON p.id = fy.plan_id
         LEFT JOIN users k ON k.id = fy.entered_by_id
         LEFT JOIN crm_contacts kk ON kk.id = fy.contact_id
@@ -41,12 +41,12 @@ function resolveCustomerType(b) {
 
 router.get('/', async (req, res) => {
     try {
-        const { partner_id, lead_id, firsat_id, status } = req.query;
+        const { partner_id, lead_id, opportunity_id, status } = req.query;
         const params = [];
         const where = [];
         if (partner_id) { params.push(Number(partner_id)); where.push(`fy.partner_id=$${params.length}`); }
         if (lead_id) { params.push(Number(lead_id)); where.push(`fy.lead_id=$${params.length}`); }
-        if (firsat_id) { params.push(Number(firsat_id)); where.push(`fy.firsat_id=$${params.length}`); }
+        if (opportunity_id) { params.push(Number(opportunity_id)); where.push(`fy.opportunity_id=$${params.length}`); }
         if (status) { params.push(status); where.push(`fy.status=$${params.length}`); }
         const firmaId = companyIdFromReq(req);
         if (firmaId) {
@@ -57,13 +57,13 @@ router.get('/', async (req, res) => {
             `
             SELECT fy.*,
                    type.type_name AS faaliyet_tipi_adi,
-                   c.partner_name, a.lead_name, f.firsat_code,
+                   c.partner_name, a.lead_name, f.opportunity_code,
                    TRIM(CONCAT(COALESCE(k.first_name,''),' ',COALESCE(k.last_name,''))) AS giren_adi
             FROM crm_activities fy
             LEFT JOIN crm_activity_types type ON type.id = fy.activity_type_id
             LEFT JOIN partners c ON c.id = fy.partner_id
             LEFT JOIN crm_leads a ON a.id = fy.lead_id
-            LEFT JOIN crm_opportunities f ON f.id = fy.firsat_id
+            LEFT JOIN crm_opportunities f ON f.id = fy.opportunity_id
             LEFT JOIN users k ON k.id = fy.entered_by_id
             ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
             ORDER BY fy.start_date DESC, fy.id DESC
@@ -93,21 +93,21 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: 'konu veya description zorunlu.' });
         }
         const musteriTipi = resolveCustomerType(b);
-        if (musteriTipi === 'Musteri' && !b.partner_id && !b.firsat_id) {
-            return res.status(400).json({ hata: 'partner_id veya firsat_id gerekli.' });
+        if (musteriTipi === 'Musteri' && !b.partner_id && !b.opportunity_id) {
+            return res.status(400).json({ hata: 'partner_id veya opportunity_id gerekli.' });
         }
-        if (musteriTipi === 'Aday' && !b.lead_id && !b.firsat_id) {
-            return res.status(400).json({ hata: 'lead_id veya firsat_id gerekli.' });
+        if (musteriTipi === 'Aday' && !b.lead_id && !b.opportunity_id) {
+            return res.status(400).json({ hata: 'lead_id veya opportunity_id gerekli.' });
         }
 
         const id = await withTransaction(pool, async (client) => {
             let cariId = b.partner_id || null;
             let adayId = b.lead_id || null;
             let type = musteriTipi;
-            if (b.firsat_id) {
+            if (b.opportunity_id) {
                 const f = await client.query(
                     'SELECT partner_id, lead_id, customer_type FROM crm_opportunities WHERE id=$1',
-                    [b.firsat_id]
+                    [b.opportunity_id]
                 );
                 if (!f.rows[0]) throw new Error('Fırsat bulunamadı.');
                 cariId = cariId || f.rows[0].partner_id;
@@ -126,7 +126,7 @@ router.post('/', async (req, res) => {
             const r = await client.query(
                 `
                 INSERT INTO crm_activities
-                    (activity_code, customer_type, partner_id, lead_id, firsat_id, plan_id, contact_id,
+                    (activity_code, customer_type, partner_id, lead_id, opportunity_id, plan_id, contact_id,
                      activity_type_id, entered_by_id, plant_id, start_date, end_date,
                      spent_minutes, subject, description, rating, status, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
@@ -135,7 +135,7 @@ router.post('/', async (req, res) => {
                 RETURNING id
                 `,
                 [
-                    kod, type, cariId, adayId, b.firsat_id || null, b.plan_id || null,
+                    kod, type, cariId, adayId, b.opportunity_id || null, b.plan_id || null,
                     b.contact_id || null, b.activity_type_id || null, b.entered_by_id || null,
                     b.plant_id || null, b.start_date || null, b.end_date || null,
                     b.spent_minutes, b.subject || null, b.description || null, b.rating || null,
@@ -159,7 +159,7 @@ router.put('/:id', async (req, res) => {
                 customer_type = COALESCE($2, customer_type),
                 partner_id = COALESCE($3, partner_id),
                 lead_id = COALESCE($4, lead_id),
-                firsat_id = COALESCE($5, firsat_id),
+                opportunity_id = COALESCE($5, opportunity_id),
                 plan_id = COALESCE($6, plan_id),
                 contact_id = COALESCE($7, contact_id),
                 activity_type_id = COALESCE($8, activity_type_id),
@@ -176,7 +176,7 @@ router.put('/:id', async (req, res) => {
             `,
             [
                 req.params.id, b.customer_type || null, b.partner_id || null, b.lead_id || null,
-                b.firsat_id || null, b.plan_id || null, b.contact_id || null,
+                b.opportunity_id || null, b.plan_id || null, b.contact_id || null,
                 b.activity_type_id || null, b.entered_by_id || null, b.plant_id || null,
                 b.start_date || null, b.end_date || null, b.spent_minutes ?? null,
                 b.subject ?? null, b.description ?? null, b.rating ?? null, b.status || null,

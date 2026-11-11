@@ -27,7 +27,7 @@ async function getLead(id) {
         ),
         pool.query(
             `
-            SELECT f.id, f.firsat_code, f.firsat_name, f.status, f.expected_revenue,
+            SELECT f.id, f.opportunity_code, f.opportunity_name, f.status, f.expected_revenue,
                    asama.stage_code, asama.stage_name
             FROM crm_opportunities f
             JOIN crm_opportunity_stages asama ON asama.id = f.stage_id

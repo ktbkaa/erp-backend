@@ -207,7 +207,7 @@ async function loadItemMap(pool, { stokId = null, firmaId = null, includePassive
         : '';
     const r = await pool.query(
         firmaId
-            ? `SELECT s.id, s.item_code, s.item_name, s.item_type, s.tedarik_type, s.uom_code,
+            ? `SELECT s.id, s.item_code, s.item_name, s.item_type, s.procurement_type, s.uom_code,
                       COALESCE(NULLIF(fp.safety_stock, 0), s.safety_stock, 0)::numeric AS safety_stock,
                       COALESCE(NULLIF(fp.reorder_level, 0), s.reorder_level, 0)::numeric AS reorder_level,
                       COALESCE(NULLIF(fp.min_stock, 0), s.min_stock, 0)::numeric AS min_stock,
@@ -219,7 +219,7 @@ async function loadItemMap(pool, { stokId = null, firmaId = null, includePassive
                ${firmaJoin}
                ${where}
                ORDER BY s.item_code`
-            : `SELECT s.id, s.item_code, s.item_name, s.item_type, s.tedarik_type, s.uom_code,
+            : `SELECT s.id, s.item_code, s.item_name, s.item_type, s.procurement_type, s.uom_code,
                       COALESCE(s.safety_stock, 0)::numeric AS safety_stock,
                       COALESCE(s.reorder_level, 0)::numeric AS reorder_level,
                       COALESCE(s.min_stock, 0)::numeric AS min_stock,
@@ -567,7 +567,7 @@ function lotSize(net, stok, { ignoreMin = false } = {}) {
 }
 
 function isProduction(stok) {
-    const t = String(stok?.tedarik_type || '').toLowerCase();
+    const t = String(stok?.procurement_type || '').toLowerCase();
     return t.includes('uret');
 }
 
@@ -748,7 +748,7 @@ async function calculateMrp(pool, {
             item_code: s.item_code,
             item_name: s.item_name,
             item_type: s.item_type,
-            tedarik_type: s.tedarik_type,
+            procurement_type: s.procurement_type,
             uom_code: s.uom_code,
             level: parentOf.has(id) ? 1 : 0,
             source_item_id: parentOf.get(id) || null,
@@ -983,7 +983,7 @@ async function buildMrpRapor(pool, runId) {
     const run = c.rows[0];
     const p = defaultMrpParametre(run.parameters_json || {});
     const sonuclar = await pool.query(
-        `SELECT ms.*, st.item_code, st.item_name, st.tedarik_type, st.item_type, st.uom_code AS stok_uom,
+        `SELECT ms.*, st.item_code, st.item_name, st.procurement_type, st.item_type, st.uom_code AS stok_uom,
                 ks.item_code AS kaynak_stok_kodu
          FROM mrp_results ms
          JOIN items st ON st.id = ms.item_id

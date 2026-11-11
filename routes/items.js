@@ -592,7 +592,7 @@ router.post('/', async (req, res) => {
                 `
                 INSERT INTO items (
                     item_code, item_name, item_name_2, description, long_item_code,
-                    uom_code, stock_tracking_uom, sales_price, item_type, tedarik_type, is_active,
+                    uom_code, stock_tracking_uom, sales_price, item_type, procurement_type, is_active,
                     abc_code, volume, density, volume_uom, density_uom, weight_uom,
                     carton_gross_weight, box_gross_weight, box_width_mm, box_length_mm, box_height_mm,
                     barcode, safety_stock, max_stock, country_of_origin, shelf_life_days,
@@ -625,7 +625,7 @@ router.post('/', async (req, res) => {
                 `,
                 [
                     kod, item_name, trimOrNull(m.item_name_2), trimOrNull(m.description), trimOrNull(m.long_item_code),
-                    uom_code, takip, m.sales_price || 0, type, trimOrNull(m.tedarik_type),
+                    uom_code, takip, m.sales_price || 0, type, trimOrNull(m.procurement_type),
                     typeof m.is_active === 'boolean' ? m.is_active : true,
                     abc, m.volume ?? null, m.density ?? null,
                     trimOrNull(m.volume_uom), trimOrNull(m.density_uom), trimOrNull(m.weight_uom),
@@ -766,7 +766,7 @@ router.put('/:id', async (req, res) => {
                     stock_tracking_uom = COALESCE($7, stock_tracking_uom),
                     sales_price = COALESCE($8, sales_price),
                     item_type = COALESCE($9, item_type),
-                    tedarik_type = COALESCE($10, tedarik_type),
+                    procurement_type = COALESCE($10, procurement_type),
                     is_active = COALESCE($11, is_active),
                     abc_code = $12,
                     volume = $13,
@@ -828,7 +828,7 @@ router.put('/:id', async (req, res) => {
                     takip === undefined ? null : takip,
                     m.sales_price ?? null,
                     trimOrNull(m.item_type),
-                    trimOrNull(m.tedarik_type),
+                    trimOrNull(m.procurement_type),
                     typeof m.is_active === 'boolean' ? m.is_active : null,
                     abc,
                     m.volume ?? null,

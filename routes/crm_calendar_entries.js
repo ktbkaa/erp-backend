@@ -101,18 +101,18 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { title: baslik, start_at, end_at, type, partner_id, lead_id, firsat_id, user_code, description } = req.body || {};
+    const { title: baslik, start_at, end_at, type, partner_id, lead_id, opportunity_id, user_code, description } = req.body || {};
     if (!baslik || !start_at) {
       return res.status(400).json({ hata: 'baslik ve start_at zorunlu.' });
     }
     const r = await pool.query(
       `
       INSERT INTO crm_calendar_entries
-        (title, start_at, end_at, type, partner_id, lead_id, firsat_id, user_code, description)
+        (title, start_at, end_at, type, partner_id, lead_id, opportunity_id, user_code, description)
       VALUES ($1,$2,$3,COALESCE($4,'Toplanti'),$5,$6,$7,$8,$9)
       RETURNING *
       `,
-      [baslik, start_at, end_at || null, type, partner_id || null, lead_id || null, firsat_id || null, user_code || null, description || null]
+      [baslik, start_at, end_at || null, type, partner_id || null, lead_id || null, opportunity_id || null, user_code || null, description || null]
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {

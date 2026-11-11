@@ -10,12 +10,12 @@ async function getQuotation(id) {
     const t = await pool.query(
         `
         SELECT t.*, c.partner_code, c.partner_name, hk.movement_code, hk.movement_name,
-               f.firsat_code, f.firsat_name,
+               f.opportunity_code, f.opportunity_name,
                a.lead_code, a.lead_name
         FROM sales_quotations t
         JOIN partners c ON c.id = t.partner_id
         LEFT JOIN movement_codes hk ON hk.id = t.movement_code_id
-        LEFT JOIN crm_opportunities f ON f.id = t.firsat_id
+        LEFT JOIN crm_opportunities f ON f.id = t.opportunity_id
         LEFT JOIN crm_leads a ON a.id = t.lead_id
         WHERE t.id = $1
         `,
@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
     try {
         const {
             partner_id, quotation_date, valid_date, currency_code, description,
-            movement_code_id, status, firsat_id, lead_id, source_document_type, source_document_id,
+            movement_code_id, status, opportunity_id, lead_id, source_document_type, source_document_id,
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         if (!partner_id) return res.status(400).json({ hata: 'partner_id zorunlu.' });
@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
                 INSERT INTO sales_quotations
                     (quotation_no, partner_id, quotation_date, valid_date, currency_code,
                      status, movement_code_id, description, total_amount,
-                     firsat_id, lead_id, source_document_type, source_document_id)
+                     opportunity_id, lead_id, source_document_type, source_document_id)
                 VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,COALESCE($5,'TRY'),
                         COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13)
                 RETURNING id
@@ -104,9 +104,9 @@ router.post('/', async (req, res) => {
                 [
                     no, partner_id, quotation_date || null, valid_date || null, currency_code,
                     status || 'Taslak', hk, description || null, top.total_amount,
-                    firsat_id || null, lead_id || null,
-                    source_document_type || (firsat_id ? 'CRM_FIRSAT' : null),
-                    source_document_id || firsat_id || null,
+                    opportunity_id || null, lead_id || null,
+                    source_document_type || (opportunity_id ? 'CRM_FIRSAT' : null),
+                    source_document_id || opportunity_id || null,
                 ]
             );
             const tid = baslik.rows[0].id;
@@ -136,7 +136,7 @@ router.put('/:id', async (req, res) => {
     try {
         const {
             partner_id, quotation_date, valid_date, currency_code, description,
-            movement_code_id, status, firsat_id, lead_id,
+            movement_code_id, status, opportunity_id, lead_id,
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'];
@@ -166,14 +166,14 @@ router.put('/:id', async (req, res) => {
                     movement_code_id = COALESCE($7, movement_code_id),
                     description = COALESCE($8, description),
                     total_amount = COALESCE($9, total_amount),
-                    firsat_id = COALESCE($10, firsat_id),
+                    opportunity_id = COALESCE($10, opportunity_id),
                     lead_id = COALESCE($11, lead_id)
                 WHERE id=$1
                 `,
                 [
                     req.params.id, partner_id || null, quotation_date || null, valid_date || null,
                     currency_code || null, status || null, movement_code_id || null, description ?? null, toplam,
-                    firsat_id || null, lead_id || null,
+                    opportunity_id || null, lead_id || null,
                 ]
             );
             if (satirlar) {

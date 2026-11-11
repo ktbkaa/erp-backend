@@ -527,7 +527,7 @@ async function purgeGida(client, companyId) {
     [`DELETE FROM crm_tasks WHERE company_id=$1`, [id], 'crm_tasks'],
     [`DELETE FROM crm_activities WHERE company_id=$1`, [id], 'crm_activities'],
     [`DELETE FROM crm_activity_plans WHERE company_id=$1`, [id], 'crm_plans'],
-    [`DELETE FROM crm_opportunity_lines WHERE firsat_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, [id], 'crm_opp_lines'],
+    [`DELETE FROM crm_opportunity_lines WHERE opportunity_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, [id], 'crm_opp_lines'],
     [`DELETE FROM crm_opportunities WHERE company_id=$1`, [id], 'crm_opportunities'],
     [`DELETE FROM crm_contacts WHERE company_id=$1`, [id], 'crm_contacts'],
     [`DELETE FROM crm_leads WHERE company_id=$1`, [id], 'crm_leads'],
@@ -638,7 +638,7 @@ async function createItem(client, {
   const tedarikType = tedarik || (type === 'Mamul' || type === 'YariMamul' ? 'Uretim' : 'Satinalma');
   const row = (await client.query(
     `INSERT INTO items (
-       item_code, item_name, uom_code, sales_price, item_type, tedarik_type,
+       item_code, item_name, uom_code, sales_price, item_type, procurement_type,
        is_active, company_id, default_receipt_warehouse_id, default_issue_warehouse_id,
        quality_control_required, description, lead_time_days, safety_stock, lot_policy
      ) VALUES ($1,$2,$3,$4,$5,$6,TRUE,$7,$8,$9,$10,$11,$12,$13,$14)

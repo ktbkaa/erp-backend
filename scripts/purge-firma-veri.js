@@ -261,7 +261,7 @@ async function purgeCompany(client, companyId, tables, log) {
   await deleteWhere(client, 'stock_movement_lines',
     `movement_id IN (SELECT id FROM stock_movements WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'crm_opportunity_lines',
-    `firsat_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, p, log);
+    `opportunity_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'price_list_lines',
     `list_id IN (SELECT id FROM price_lists WHERE company_id=$1)`, p, log);
   await deleteWhere(client, 'journal_entry_lines',

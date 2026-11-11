@@ -439,7 +439,7 @@ async function seedOrnek1(client, org, master) {
   const teklif = (await client.query(
     `INSERT INTO satis_teklifleri (
        teklif_no, cari_id, teklif_tarihi, gecerlilik_tarihi, teslim_tarihi,
-       para_birimi, kur, durum, firsat_id, musteri_teklif_no, proje_kodu,
+       para_birimi, kur, durum, opportunity_id, musteri_teklif_no, proje_kodu,
        is_yeri_id, firma_id, fiyat_liste_id, iskonto_oran,
        odeme_kosulu, odeme_sekli, teslimat_kosulu, hareket_kodu_id,
        ara_toplam, toplam_kdv, genel_toplam,

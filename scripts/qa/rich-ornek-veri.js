@@ -256,7 +256,7 @@ async function upsertItem(client, { def, it, firmaId, plantId, wh }) {
   if (row) return row;
   row = (await client.query(
     `INSERT INTO items (
-       item_code, item_name, item_name_2, uom_code, sales_price, item_type, tedarik_type,
+       item_code, item_name, item_name_2, uom_code, sales_price, item_type, procurement_type,
        is_active, company_id, default_receipt_warehouse_id, default_issue_warehouse_id,
        quality_control_required, description, lead_time_days, safety_stock, lot_policy,
        abc_code, barcode, stock_tracking_uom
@@ -631,11 +631,11 @@ async function seedSector(def) {
 
     for (let i = 0; i < 5; i++) {
       const code = `${def.prefix}-FRS-${i + 1}`;
-      let f = (await client.query(`SELECT * FROM crm_opportunities WHERE firsat_code=$1`, [code])).rows[0];
+      let f = (await client.query(`SELECT * FROM crm_opportunities WHERE opportunity_code=$1`, [code])).rows[0];
       if (!f) {
         f = (await client.query(
           `INSERT INTO crm_opportunities (
-             firsat_code, firsat_name, partner_id, stage_id, expected_revenue, currency_code,
+             opportunity_code, opportunity_name, partner_id, stage_id, expected_revenue, currency_code,
              target_close_date, plant_id, company_id, description, status, customer_type
            ) VALUES ($1,$2,$3,$4,$5,'TRY',CURRENT_DATE,$6,$7,$8,'Acik','Musteri') RETURNING *`,
           [
@@ -658,7 +658,7 @@ async function seedSector(def) {
       if (!exists) {
         await client.query(
           `INSERT INTO crm_activities (
-             activity_code, partner_id, firsat_id, plant_id, company_id,
+             activity_code, partner_id, opportunity_id, plant_id, company_id,
              start_date, end_date, subject, description, status, spent_minutes, customer_type
            ) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,CURRENT_DATE,$6,$7,'Tamamlandi',$8,'Musteri')`,
           [

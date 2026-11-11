@@ -24,9 +24,12 @@ const DRY = args.includes('--dry');
 
 const multi = Object.entries(MAP).filter(([k]) => k.includes('_') || /\d/.test(k));
 const single = Object.fromEntries(Object.entries(MAP).filter(([k]) => !k.includes('_') && !/\d/.test(k)));
-const multiRe = new RegExp(`(?<![A-Za-z0-9_$])(${multi.map(([k]) => k).sort((a, b) => b.length - a.length).join('|')})(?![A-Za-z0-9_$])`, 'g');
+const wordRe = (words) => (words.length
+  ? new RegExp(`(?<![A-Za-z0-9_$])(${words.join('|')})(?![A-Za-z0-9_$])`, 'g')
+  : /(?!)/g);
+const multiRe = wordRe(multi.map(([k]) => k).sort((a, b) => b.length - a.length));
 const multiMap = Object.fromEntries(multi);
-const singleRe = new RegExp(`(?<![A-Za-z0-9_$])(${Object.keys(single).join('|')})(?![A-Za-z0-9_$])`, 'g');
+const singleRe = wordRe(Object.keys(single));
 const SQL_RE = /\b(SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|WHERE|JOIN|ORDER\s+BY|GROUP\s+BY|RETURNING|ON\s+CONFLICT|ALTER\s+TABLE|COALESCE)\b/i;
 
 function walk(dir, out = []) {

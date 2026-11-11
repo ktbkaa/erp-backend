@@ -386,7 +386,16 @@ BEGIN
     ('warehouses','location_code','konum_code'),
     ('warehouses','bin_code','raf_code'),
     ('warehouses','is_default','varsayilan'),
-    ('warehouses','warehouse_role','warehouse_rolu')
+    ('warehouses','warehouse_role','warehouse_rolu'),
+    ('crm_activities','opportunity_id','firsat_id'),
+    ('crm_activity_plans','opportunity_id','firsat_id'),
+    ('crm_calendar_entries','opportunity_id','firsat_id'),
+    ('crm_opportunity_lines','opportunity_id','firsat_id'),
+    ('crm_tasks','opportunity_id','firsat_id'),
+    ('sales_quotations','opportunity_id','firsat_id'),
+    ('crm_opportunities','opportunity_code','firsat_code'),
+    ('crm_opportunities','opportunity_name','firsat_name'),
+    ('items','procurement_type','tedarik_type')
   ) AS v(tbl, old_col, new_col) LOOP
     IF EXISTS (SELECT 1 FROM information_schema.columns
                WHERE table_schema='public' AND table_name=r.tbl AND column_name=r.old_col)

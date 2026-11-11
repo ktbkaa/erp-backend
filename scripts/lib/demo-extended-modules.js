@@ -76,7 +76,7 @@ async function seedExtendedModules(ctx) {
   log(`\n=== X. Genişletilmiş modüller (${firma.company_code}) CRM / İK / PRJ / Finans ===`);
 
   // ─── CRM: aday → kontak → fırsat(+kalem) → plan → faaliyet → görev → ajanda ───
-  // + mevcut satış teklifine firsat_id bağla
+  // + mevcut satış teklifine opportunity_id bağla
   try {
     const lead = await api('POST', '/crm-adaylar', {
       lead_name: `${firma.company_code} Demo Aday — Enerji / Perakende`,
@@ -109,7 +109,7 @@ async function seedExtendedModules(ctx) {
     await setCompany('crm_contacts', kontakLead.id, firma.id);
 
     const firsatAday = await api('POST', '/crm-firsatlar', {
-      firsat_name: `${firma.company_code} Aday Fırsat — yeni hat`,
+      opportunity_name: `${firma.company_code} Aday Fırsat — yeni hat`,
       subject: 'Demo fırsat (aday)',
       customer_type: 'Aday',
       lead_id: lead.id,
@@ -123,7 +123,7 @@ async function seedExtendedModules(ctx) {
       satirlar: fg ? [{ item_id: fg.id, quantity: 30, unit_price: 4200, line_no: 10 }] : [],
     }, firma.id);
     await setCompany('crm_opportunities', firsatAday.id, firma.id);
-    out.crm.firsat_aday = { id: firsatAday.id, code: firsatAday.firsat_code };
+    out.crm.firsat_aday = { id: firsatAday.id, code: firsatAday.opportunity_code };
 
     let firsatMusteri = null;
     if (mus?.id) {
@@ -140,7 +140,7 @@ async function seedExtendedModules(ctx) {
       await setCompany('crm_contacts', kontakMus.id, firma.id);
 
       firsatMusteri = await api('POST', '/crm-firsatlar', {
-        firsat_name: `${firma.company_code} Müşteri Fırsat — tekrar sipariş`,
+        opportunity_name: `${firma.company_code} Müşteri Fırsat — tekrar sipariş`,
         subject: 'Mevcut müşteri upsell',
         customer_type: 'Musteri',
         partner_id: mus.id,
@@ -154,19 +154,19 @@ async function seedExtendedModules(ctx) {
         satirlar: fg ? [{ item_id: fg.id, quantity: 20, unit_price: 4200, line_no: 10 }] : [],
       }, firma.id);
       await setCompany('crm_opportunities', firsatMusteri.id, firma.id);
-      out.crm.firsat_musteri = { id: firsatMusteri.id, code: firsatMusteri.firsat_code };
+      out.crm.firsat_musteri = { id: firsatMusteri.id, code: firsatMusteri.opportunity_code };
 
       // Satış teklifi ↔ fırsat bağlantısı
       if (ctx.links?.manQuotationId) {
         await pool.query(
           `UPDATE sales_quotations
-           SET firsat_id=$2, lead_id=COALESCE(lead_id,$3), company_id=COALESCE(company_id,$4)
+           SET opportunity_id=$2, lead_id=COALESCE(lead_id,$3), company_id=COALESCE(company_id,$4)
            WHERE id=$1`,
           [ctx.links.manQuotationId, firsatMusteri.id, lead.id, firma.id]
         );
         out.baglantilar.teklif_firsat = {
           quotation_id: ctx.links.manQuotationId,
-          firsat_id: firsatMusteri.id,
+          opportunity_id: firsatMusteri.id,
         };
       }
     }
@@ -179,7 +179,7 @@ async function seedExtendedModules(ctx) {
       customer_type: mus?.id ? 'Musteri' : 'Aday',
       partner_id: mus?.id || null,
       lead_id: mus?.id ? null : lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
+      opportunity_id: (firsatMusteri || firsatAday).id,
       activity_type_id: tipId,
       entered_by_id: userId,
       assignee_id: userId,
@@ -195,7 +195,7 @@ async function seedExtendedModules(ctx) {
       customer_type: mus?.id ? 'Musteri' : 'Aday',
       partner_id: mus?.id || null,
       lead_id: mus?.id ? null : lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
+      opportunity_id: (firsatMusteri || firsatAday).id,
       plan_id: plan.id,
       activity_type_id: tipId,
       entered_by_id: userId,
@@ -215,7 +215,7 @@ async function seedExtendedModules(ctx) {
       owner_id: userId,
       partner_id: mus?.id || null,
       lead_id: lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
+      opportunity_id: (firsatMusteri || firsatAday).id,
       activity_id: faaliyet.id,
       priority: 'Yuksek',
       status: 'Acik',
@@ -231,7 +231,7 @@ async function seedExtendedModules(ctx) {
       type: 'Toplanti',
       partner_id: mus?.id || null,
       lead_id: lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
+      opportunity_id: (firsatMusteri || firsatAday).id,
       user_code: 'owner',
       description: 'Demo ajanda',
     }, firma.id).catch((e) => {

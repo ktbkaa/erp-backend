@@ -1270,7 +1270,7 @@ const MODULES = [
           { key: 'item_code', label: 'Stok kodu', mono: true },
           { key: 'item_name', label: 'Stok adı' },
           { key: 'item_type', label: 'Tip' },
-          { key: 'tedarik_type', label: 'Tedarik' },
+          { key: 'procurement_type', label: 'Tedarik' },
           { key: 'uom_code', label: 'Birim' },
           { key: 'sales_price', label: 'Fiyat' },
         ],
@@ -1308,7 +1308,7 @@ const MODULES = [
               { key: 'item_code', label: 'Stok kodu', code: true, required: true, group: 'kimlik' },
               { key: 'item_name', label: 'Stok adı', name: true, required: true, group: 'kimlik' },
               { key: 'item_name_2', label: 'Stok adı 2', group: 'kimlik' },
-              { key: 'tedarik_type', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'], hint: 'Satınalma veya üretim temini', group: 'kimlik' },
+              { key: 'procurement_type', label: 'Tedarik tipi', type: 'select', options: ['Satinalma', 'Uretim'], hint: 'Satınalma veya üretim temini', group: 'kimlik' },
               { key: 'uom_code', label: 'Baz birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', required: true, group: 'olcu' },
               { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
               { key: 'is_deleted', label: 'Silindi', type: 'checkbox', group: 'status' },
@@ -3877,8 +3877,8 @@ const MODULES = [
         endpoint: '/crm-firsatlar',
         crud: true,
         numeratorSeri: 'CRM_FIRSAT',
-        codeField: 'firsat_code',
-        nameField: 'firsat_name',
+        codeField: 'opportunity_code',
+        nameField: 'opportunity_name',
         convertAction: {
           label: 'Teklife Dönüştür',
           path: '/crm-firsatlar/{id}/teklife-donustur',
@@ -3890,14 +3890,14 @@ const MODULES = [
           dialog: 'firsat-kapat',
         },
         filters: [
-          { key: 'firsat_code', label: 'Kod' },
-          { key: 'firsat_name', label: 'Ad' },
+          { key: 'opportunity_code', label: 'Kod' },
+          { key: 'opportunity_name', label: 'Ad' },
           { key: 'stage_name', label: 'Aşama' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kazanildi', 'Kaybedildi', 'Iptal'] },
         ],
         columns: [
-          { key: 'firsat_code', label: 'Kod', mono: true },
-          { key: 'firsat_name', label: 'Ad' },
+          { key: 'opportunity_code', label: 'Kod', mono: true },
+          { key: 'opportunity_name', label: 'Ad' },
           { key: 'lead_name', label: 'Müşteri adayı' },
           { key: 'partner_name', label: 'Cari' },
           { key: 'stage_name', label: 'Aşama' },
@@ -3907,8 +3907,8 @@ const MODULES = [
         masterFields: [
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', groupLabel: 'Organizasyon', lead: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', groupLabel: 'Organizasyon', lead: true },
-          { key: 'firsat_code', label: 'Fırsat kodu', code: true, group: 'kimlik' },
-          { key: 'firsat_name', label: 'Fırsat adı', name: true, required: true, group: 'kimlik' },
+          { key: 'opportunity_code', label: 'Fırsat kodu', code: true, group: 'kimlik' },
+          { key: 'opportunity_name', label: 'Fırsat adı', name: true, required: true, group: 'kimlik' },
           { key: 'subject', label: 'Konu', group: 'kimlik' },
           { key: 'lead_id', label: 'Müşteri adayı', type: 'lookup', lookup: 'crm-adaylar', valueKey: 'id', labelKey: 'lead_name', codeKey: 'lead_code', requiredOnNew: true, group: 'kimlik' },
           { key: 'stage_id', label: 'Aşama', type: 'lookup', lookup: 'crm-firsat-asamalari', valueKey: 'id', labelKey: 'stage_name', codeKey: 'stage_code', required: true, group: 'kimlik' },
@@ -3962,7 +3962,7 @@ const MODULES = [
           { key: 'faaliyet_tipi_adi', label: 'Tip' },
           { key: 'partner_name', label: 'Cari' },
           { key: 'lead_name', label: 'Aday' },
-          { key: 'firsat_code', label: 'Fırsat', mono: true },
+          { key: 'opportunity_code', label: 'Fırsat', mono: true },
           { key: 'start_date', label: 'Başlangıç' },
           { key: 'status', label: 'Durum' },
         ],
@@ -3971,7 +3971,7 @@ const MODULES = [
           { key: 'customer_type', label: 'Müşteri tipi', type: 'select', options: ['Musteri', 'Aday'], required: true },
           { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
           { key: 'lead_id', label: 'Aday', type: 'lookup', lookup: 'crm-adaylar', valueKey: 'id', labelKey: 'lead_name', codeKey: 'lead_code' },
-          { key: 'firsat_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'firsat_name', codeKey: 'firsat_code' },
+          { key: 'opportunity_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'opportunity_name', codeKey: 'opportunity_code' },
           { key: 'activity_type_id', label: 'Faaliyet tipi', type: 'lookup', lookup: 'crm-faaliyet-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code' },
           { key: 'assignee_id', label: 'Yapacak', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code' },
           { key: 'contact_id', label: 'Kontak', type: 'lookup', lookup: 'crm-kontaklar', valueKey: 'id', labelKey: 'first_name', codeKey: 'contact_code' },
@@ -4006,7 +4006,7 @@ const MODULES = [
           { key: 'faaliyet_tipi_adi', label: 'Tip' },
           { key: 'partner_name', label: 'Cari' },
           { key: 'lead_name', label: 'Aday' },
-          { key: 'firsat_code', label: 'Fırsat', mono: true },
+          { key: 'opportunity_code', label: 'Fırsat', mono: true },
           { key: 'start_date', label: 'Tarih' },
           { key: 'status', label: 'Durum' },
         ],
@@ -4015,7 +4015,7 @@ const MODULES = [
           { key: 'customer_type', label: 'Müşteri tipi', type: 'select', options: ['Musteri', 'Aday'], required: true },
           { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
           { key: 'lead_id', label: 'Aday', type: 'lookup', lookup: 'crm-adaylar', valueKey: 'id', labelKey: 'lead_name', codeKey: 'lead_code' },
-          { key: 'firsat_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'firsat_name', codeKey: 'firsat_code' },
+          { key: 'opportunity_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'opportunity_name', codeKey: 'opportunity_code' },
           { key: 'activity_type_id', label: 'Faaliyet tipi', type: 'lookup', lookup: 'crm-faaliyet-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code' },
           { key: 'entered_by_id', label: 'Giren', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code' },
           { key: 'contact_id', label: 'Kontak', type: 'lookup', lookup: 'crm-kontaklar', valueKey: 'id', labelKey: 'first_name', codeKey: 'contact_code' },
@@ -4055,7 +4055,7 @@ const MODULES = [
           { key: 'sorumlu_adi', label: 'Sorumlu' },
           { key: 'priority', label: 'Öncelik' },
           { key: 'due_date', label: 'Son tarih' },
-          { key: 'firsat_code', label: 'Fırsat', mono: true },
+          { key: 'opportunity_code', label: 'Fırsat', mono: true },
           { key: 'status', label: 'Durum' },
         ],
         masterFields: [
@@ -4065,7 +4065,7 @@ const MODULES = [
           { key: 'owner_id', label: 'Sorumlu', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code' },
           { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
           { key: 'lead_id', label: 'Aday', type: 'lookup', lookup: 'crm-adaylar', valueKey: 'id', labelKey: 'lead_name', codeKey: 'lead_code' },
-          { key: 'firsat_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'firsat_name', codeKey: 'firsat_code' },
+          { key: 'opportunity_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'opportunity_name', codeKey: 'opportunity_code' },
           { key: 'priority', label: 'Öncelik', type: 'select', options: ['Dusuk', 'Normal', 'Yuksek', 'Kritik'] },
           { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Devam', 'Tamamlandi', 'Iptal'] },
           { key: 'due_date', label: 'Son tarih', type: 'date' },
@@ -4846,14 +4846,14 @@ const MODULES = [
           { key: 'tax_amount', label: 'KDV' },
           { key: 'grand_total', label: 'Genel' },
           { key: 'status', label: 'Durum' },
-          { key: 'firsat_code', label: 'Fırsat', mono: true },
+          { key: 'opportunity_code', label: 'Fırsat', mono: true },
           { key: 'project_code', label: 'Proje', mono: true },
         ],
         masterFields: [
           { key: 'quotation_no', label: 'Teklif no', code: true },
           { key: 'customer_quotation_no', label: 'Müşteri teklif ref' },
           { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'firsat_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'firsat_name', codeKey: 'firsat_code' },
+          { key: 'opportunity_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'opportunity_name', codeKey: 'opportunity_code' },
           { key: 'lead_id', label: 'Aday', type: 'lookup', lookup: 'crm-adaylar', valueKey: 'id', labelKey: 'lead_name', codeKey: 'lead_code' },
           { key: 'quotation_date', label: 'Teklif tarihi', type: 'date' },
           { key: 'valid_date', label: 'Geçerlilik', type: 'date' },
@@ -9267,13 +9267,13 @@ function buildLinkedPrefill(link, sourceRec, extra = {}) {
   if (link === 'firsat-teklif') {
     return {
       partner_id: sourceRec.partner_id || extra.partner_id || null,
-      firsat_id: sourceRec.id,
+      opportunity_id: sourceRec.id,
       lead_id: sourceRec.lead_id || null,
       currency_code: sourceRec.currency_code || 'TRY',
       status: 'Taslak',
       source_document_type: 'CRM_FIRSAT',
       source_document_id: sourceRec.id,
-      description: `Fırsat ${sourceRec.firsat_code || sourceRec.id}`,
+      description: `Fırsat ${sourceRec.opportunity_code || sourceRec.id}`,
       satirlar: (sourceRec.satirlar || []).map((s, i) => ({
         line_no: s.line_no || i + 1,
         item_id: s.item_id,
@@ -10188,7 +10188,7 @@ const BELGE_BAGLANTI = {
   },
   'satis-teklifleri': {
     kaynaklar: [
-      { id: 'firsat', label: 'Fırsat (kaynak)', field: 'firsat_id', screenId: 'crm-firsatlar' },
+      { id: 'firsat', label: 'Fırsat (kaynak)', field: 'opportunity_id', screenId: 'crm-firsatlar' },
       { id: 'aday', label: 'Müşteri adayı (kaynak)', field: 'lead_id', screenId: 'crm-adaylar' },
     ],
     sonrakiler: [
@@ -10249,7 +10249,7 @@ const BELGE_BAGLANTI = {
       { id: 'cari', label: 'Cari kartı', field: 'partner_id', screenId: 'cari-kartlari' },
     ],
     sonrakiler: [
-      { id: 'teklif', label: 'Satış teklifi', screenId: 'satis-teklifleri', findBy: ['firsat_id'] },
+      { id: 'teklif', label: 'Satış teklifi', screenId: 'satis-teklifleri', findBy: ['opportunity_id'] },
     ],
   },
 };
@@ -15714,7 +15714,7 @@ function detailColClass(f) {
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / address / …). */
 const FIELD_GROUP_DEFS = [
   { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|work_center|work_station|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
-  { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|operation_|line_no|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|tedarik_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code|output_item)/i },
+  { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|operation_|line_no|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|procurement_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code|output_item)/i },
   { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity|planned_quantity)/i },
   { id: 'depo', title: 'Depo / stok yeri', re: /^(warehouse_id|depo|component_warehouse|wip_warehouse|fg_warehouse)/i },
   { id: 'planlama', title: 'Planlama', re: /^(plan_|planli|planlanan|plan_start|plan_end|end_date|teslim|delivery_date|gecerlilik|issue_type|receipt_type|op_time|setup_time|wait_time|unload_time|duration_minutes)/i },
@@ -15918,7 +15918,7 @@ function inferFieldSizeClass(f) {
     || f?.type === 'number'
     || f?.type === 'date'
     || /^(quantity|exchange_rate|katsayi|line_no|.*_oran|kdv|iskonto|received_quantity|accepted_flag|reddedilen|status)$/i.test(k)
-    || /^(uom_code|currency_code|language_code|pb|order_type|item_type|tedarik_type)$/i.test(k)
+    || /^(uom_code|currency_code|language_code|pb|order_type|item_type|procurement_type)$/i.test(k)
   ) {
     return 'field--short';
   }

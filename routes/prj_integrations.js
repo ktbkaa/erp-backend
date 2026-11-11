@@ -34,7 +34,7 @@ router.post('/from-opportunity/:id', async (req, res, next) => {
         [
           firmaId,
           code,
-          req.body.project_name || opp.firsat_name || opp.opportunity_name || `Fırsat ${opp.id}`,
+          req.body.project_name || opp.opportunity_name || opp.opportunity_name || `Fırsat ${opp.id}`,
           opp.aciklama || opp.description || null,
           type.rows[0]?.id || null,
           statusId,

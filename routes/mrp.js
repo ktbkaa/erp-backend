@@ -188,7 +188,7 @@ router.get('/calismalar/:id', async (req, res, next) => {
         const c = await pool.query('SELECT * FROM mrp_runs WHERE id=$1', [req.params.id]);
         if (!c.rows[0]) return res.status(404).json({ hata: 'MRP çalışması bulunamadı.' });
         const s = await pool.query(
-            `SELECT ms.*, st.item_code, st.item_name, st.tedarik_type,
+            `SELECT ms.*, st.item_code, st.item_name, st.procurement_type,
                     ks.item_code AS kaynak_stok_kodu
              FROM mrp_results ms
              JOIN items st ON st.id = ms.item_id
@@ -217,7 +217,7 @@ router.get('/calismalar/:id', async (req, res, next) => {
 router.get('/calismalar/:id/sonuclar', async (req, res, next) => {
     try {
         const s = await pool.query(
-            `SELECT ms.*, st.item_code, st.item_name, st.tedarik_type,
+            `SELECT ms.*, st.item_code, st.item_name, st.procurement_type,
                     ks.item_code AS kaynak_stok_kodu
              FROM mrp_results ms
              JOIN items st ON st.id = ms.item_id
@@ -283,7 +283,7 @@ function renderMrpRaporHtml(rapor) {
     const rows = (rapor.satirlar || []).map((r) => `<tr>
       <td class="mono">${esc(r.item_code)}</td>
       <td>${esc(r.item_name)}</td>
-      <td>${esc(r.tedarik_type || r.item_type || '')}</td>
+      <td>${esc(r.procurement_type || r.item_type || '')}</td>
       <td class="num">${n4(r.independent_demand)}</td>
       <td class="num">${n4(r.dependent_demand)}</td>
       <td class="num">${n4(r.available_stock)}</td>
