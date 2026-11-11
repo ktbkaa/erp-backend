@@ -68,8 +68,9 @@
     <div class="login-atmosphere" aria-hidden="true"></div>
     <div class="login-stage">
       <div class="login-brand">
-        <span class="login-brand-mark">KTB</span>
-        <h1 class="login-brand-name">KTB ERP</h1>
+        <div class="ktb-logo ktb-logo--login">
+          <img class="ktb-logo-img" src="/assets/ktb-logo.png?v=20261102clear" alt="KTB ERP" width="650" height="150" decoding="async" />
+        </div>
         <p class="login-brand-lead">Üretim, stok ve satış süreçlerinizi tek omurgada yönetin.</p>
       </div>
       <form class="login-card" id="loginForm" autocomplete="on">
@@ -94,8 +95,9 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand" id="btnHome" title="KTB ERP · UI build 20261020d" aria-label="Ana sayfa">
-        <span class="brand-mark">KTB</span>
-        <span class="brand-name">KTB ERP</span>
+        <span class="ktb-logo ktb-logo--sidebar">
+          <img class="ktb-logo-img" src="/assets/ktb-logo.png?v=20261102clear" alt="KTB ERP" width="650" height="150" decoding="async" />
+        </span>
       </div>
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot" aria-label="Menü araçları">
@@ -218,7 +220,7 @@
 
       <main class="workspace-main">
         <section id="viewHome" class="view home-view">
-          <div class="ktb-emboss" aria-hidden="true">KTB</div>
+          <div class="ktb-logo ktb-logo--hero" aria-hidden="true" title="KTB ERP"></div>
         </section>
 
         <section id="viewScreen" class="view screen-view" hidden>
@@ -275,6 +277,25 @@
             </aside>
             <div class="meta-detail" id="metaDetail">
               <div class="meta-empty">Soldan bir ekran seçin. Tablolar ve alan adları burada listelenir.</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="viewPageQuery" class="view meta-view page-query-view" hidden>
+          <div class="screen-banner" id="pageQueryBanner">Sayfa Sorgu</div>
+          <div class="page-query-filter" id="pageQueryFilterBar">
+            <label for="pageQueryScreenFilter">Ekran</label>
+            <select id="pageQueryScreenFilter" aria-label="Ekran filtresi">
+              <option value="">— Ekran seçin —</option>
+            </select>
+            <input type="search" id="pageQueryNavSearch" placeholder="Ekran ara / filtrele…" autocomplete="off" />
+          </div>
+          <div class="meta-layout">
+            <aside class="meta-nav" id="pageQueryNav" aria-label="Ekran listesi">
+              <div class="meta-nav-body" id="pageQueryNavBody"></div>
+            </aside>
+            <div class="meta-detail" id="pageQueryDetail">
+              <div class="meta-empty">Üstten veya soldan bir ekran seçin. Arka plandaki sorgular burada görünür.</div>
             </div>
           </div>
         </section>
