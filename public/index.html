@@ -253,6 +253,7 @@
             <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
             <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
             <button type="button" class="btn action" data-action="mrp-calistir" id="btnMrpCalistir" hidden title="MRP çalıştır ve sonuçları kaydet">MRP Çalıştır</button>
+            <button type="button" class="btn action ghost" data-action="tcmb-cek" id="btnTcmbCek" hidden title="TCMB günlük kurlarını tanımlı para birimleri için çek">TCMB'den Çek</button>
           </div>
 
           <div class="filter-pane" id="filterPane">
@@ -553,7 +554,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261111isimTarih"></script>
+  <script src="/app.js?v=20261111tcmb"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

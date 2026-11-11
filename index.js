@@ -207,4 +207,12 @@ const listenOpts = host === '::'
 server.listen(listenOpts, () => {
     console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
+    if (process.env.NODE_ENV !== 'test' && process.env.TCMB_SCHEDULER !== 'off') {
+      try {
+        const { startTcmbScheduler } = require('./src/services/tcmbRateService');
+        startTcmbScheduler(pool, console);
+      } catch (err) {
+        console.error('[tcmb] zamanlayıcı başlatılamadı:', err.message);
+      }
+    }
 });

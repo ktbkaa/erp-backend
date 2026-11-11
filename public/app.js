@@ -646,17 +646,19 @@ const MODULES = [
         crud: true,
         codeField: 'source_currency',
         nameField: 'target_currency',
+        tcmbFetchAction: true,
         filters: [
           { key: 'source_currency', label: 'Kaynak PB' },
           { key: 'target_currency', label: 'Hedef PB' },
+          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel', 'Seed'] },
         ],
         columns: [
           { key: 'rate_date', label: 'Tarih' },
-          { key: 'source_currency', label: 'Kaynak', mono: true },
-          { key: 'target_currency', label: 'Hedef', mono: true },
+          { key: 'source_currency', label: 'Kaynak PB', mono: true },
+          { key: 'target_currency', label: 'Hedef PB', mono: true },
           { key: 'buy_rate', label: 'Alış' },
           { key: 'sell_rate', label: 'Satış' },
-          { key: 'source', label: 'Kaynak' },
+          { key: 'source', label: 'Kur kaynağı' },
         ],
         masterFields: [
           { key: 'rate_date', label: 'Kur tarihi', type: 'date', required: true },
@@ -668,7 +670,8 @@ const MODULES = [
         detailFields: [
           { key: 'effective_buy_rate', label: 'Efektif alış', type: 'number' },
           { key: 'effective_sell_rate', label: 'Efektif satış', type: 'number' },
-          { key: 'source', label: 'Kaynak' },
+          // TCMB: bültende varsa alış/satış doldurulur; yoksa (MXN vb.) Manuel'e düşülür
+          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel'] },
         ],
         detailKey: null,
         detailAsFields: true,
@@ -11631,6 +11634,100 @@ async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false } = {}
   }
 }
 
+function readMasterDetailValue(key) {
+  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"], input[type="radio"][data-detail="${key}"]`)];
+  if (radios.length) return radios.find((r) => r.checked)?.value ?? (state.formRecord?.[key] ?? '');
+  const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+  if (!el) return state.formRecord?.[key] ?? '';
+  return el.value;
+}
+
+function writeMasterDetailValue(key, val) {
+  if (val == null) return;
+  const str = String(val);
+  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"], input[type="radio"][data-detail="${key}"]`)];
+  if (radios.length) {
+    radios.forEach((r) => { r.checked = String(r.value) === str; });
+  } else {
+    const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+    if (el) el.value = str;
+  }
+  if (state.formRecord) state.formRecord[key] = val;
+}
+
+/**
+ * Exchange-rate form: when rate source = TCMB, buy/sell come from the TCMB bulletin.
+ * Currencies missing from the bulletin (e.g. MXN) fall back to Manuel entry.
+ */
+async function fillExchangeRateFromTcmbIfNeeded() {
+  if (state.screenId !== 'doviz-exchange_rate-tanimi') return;
+  if (state.formMode === 'incele') return;
+  if (String(readMasterDetailValue('source') || '').trim().toUpperCase() !== 'TCMB') return;
+
+  const resolveCode = (raw) => {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^[A-Z]{3}$/i.test(s)) return s.toUpperCase();
+    const rows = state.lookupCache['para-birimleri'] || [];
+    const lower = s.toLocaleLowerCase('tr');
+    const hit = rows.find((r) => String(r.currency_code).toUpperCase() === s.toUpperCase()
+      || String(r.currency_name || '').toLocaleLowerCase('tr') === lower
+      || `${r.currency_code} - ${r.currency_name}`.toLocaleLowerCase('tr') === lower);
+    return hit ? String(hit.currency_code).toUpperCase() : s.toUpperCase();
+  };
+  const source = resolveCode(readMasterDetailValue('source_currency'));
+  const target = resolveCode(readMasterDetailValue('target_currency')) || 'TRY';
+  if (!source) return;
+  writeMasterDetailValue('source_currency', source);
+  writeMasterDetailValue('target_currency', target);
+  ['source_currency', 'target_currency'].forEach((k) => {
+    const sel = findAttrControl('data-master', k);
+    if (sel) syncLookupTypeaheadFromSelect(sel);
+  });
+
+  const rateDate = String(readMasterDetailValue('rate_date') || '').slice(0, 10);
+  try {
+    const q = new URLSearchParams({ source_currency: source, target_currency: target });
+    if (rateDate) q.set('rate_date', rateDate);
+    const r = await api(`/doviz-kurlari/tcmb-onizleme?${q}`);
+    writeMasterDetailValue('buy_rate', r.buy_rate);
+    writeMasterDetailValue('sell_rate', r.sell_rate);
+    writeMasterDetailValue('effective_buy_rate', r.effective_buy_rate);
+    writeMasterDetailValue('effective_sell_rate', r.effective_sell_rate);
+    if (r.rate_date) writeMasterDetailValue('rate_date', r.rate_date);
+    writeMasterDetailValue('source', 'TCMB');
+    toast(`TCMB ${r.bulletin_no || r.rate_date || ''}: ${source}/${target} dolduruldu`);
+  } catch (_) {
+    writeMasterDetailValue('source', 'Manuel');
+    toast(`${source} TCMB bülteninde yok. Kur kaynağı Manuel'e alındı — alış/satışı elle girin.`);
+  }
+}
+
+/** Exchange-rate list: TCMB today.xml → upsert for every defined currency */
+async function fetchTcmbRates() {
+  const screen = findScreen(state.screenId);
+  if (!screen?.tcmbFetchAction) return;
+  if (!screenPermission(screen.id, 'tcmb-cek')) {
+    toast('Bu işlem için yetkiniz yok.');
+    return;
+  }
+  toast('TCMB kurları çekiliyor…');
+  try {
+    const result = await api('/doviz-kurlari/tcmb-cek', {
+      method: 'POST',
+      body: JSON.stringify({ target_currency: 'TRY' }),
+    });
+    const skipped = result.skipped_currencies || [];
+    const skipNote = skipped.length
+      ? ` (tanımsız atlanan: ${skipped.slice(0, 8).join(', ')}${skipped.length > 8 ? '…' : ''})`
+      : '';
+    toast(`TCMB ${result.bulletin_no || ''} · ${result.rate_date}: ${result.upserted_count} kur yazıldı${skipNote}`);
+    await openScreen(screen.id);
+  } catch (err) {
+    toast(err.message || 'TCMB kurları alınamadı');
+  }
+}
+
 /**
  * Cari seçilince sevk adresini Adres sekmesine doldur.
  * Öncelik: varsayılan sevk adresi → fatura_adres* → address.
@@ -12598,7 +12695,7 @@ function screenPermission(screenId, action = null) {
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
-  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir') {
+  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir' || action === 'tcmb-cek') {
     return Boolean(row.incele || row.duzelt || row.yeni);
   }
   return Boolean(row[action]);
@@ -12640,6 +12737,9 @@ function updateActionButtons(screen) {
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
       btn.disabled = !screenPermission(screen.id, 'mrp-calistir');
+    } else if (act === 'tcmb-cek') {
+      btn.hidden = !screen.tcmbFetchAction;
+      btn.disabled = !screenPermission(screen.id, 'tcmb-cek');
     } else if (act === 'report-pdf') {
       btn.hidden = !screen.reportPdfAction;
       btn.disabled = !screen.reportPdfAction;
@@ -12651,6 +12751,8 @@ function updateActionButtons(screen) {
   if (mrpUe) mrpUe.hidden = !screen.mrpUretimAction;
   const mrpRun = $('#btnMrpCalistir');
   if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
+  const tcmbBtn = $('#btnTcmbCek');
+  if (tcmbBtn) tcmbBtn.hidden = !screen.tcmbFetchAction;
   const pdfBtn = $('#btnReportPdf');
   if (pdfBtn) pdfBtn.hidden = !screen.reportPdfAction;
 }
@@ -19781,6 +19883,11 @@ function bindCascadeLookups(_screen) {
       }
     }
 
+    if (scr.id === 'doviz-exchange_rate-tanimi'
+      && ['source', 'source_currency', 'target_currency', 'rate_date'].includes(fieldKey)) {
+      await fillExchangeRateFromTcmbIfNeeded();
+    }
+
     // fillFrom: teklif / talep / sipariş / sevk / irsaliye / mal-kabul satır doldurma
     if (masterKey && el instanceof HTMLSelectElement) {
       const f = collectTabFields(scr).find((x) => x.key === masterKey)
@@ -20843,6 +20950,12 @@ async function openForm(mode, opts = {}) {
     record.last_number = 0;
     record.is_active = true;
     if (mode === 'yeni') record.series_code = '';
+  }
+
+  if (screen.id === 'doviz-exchange_rate-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
+    if (!record.rate_date) record.rate_date = new Date().toISOString().slice(0, 10);
+    if (!record.target_currency) record.target_currency = 'TRY';
+    if (!record.source) record.source = 'Manuel';
   }
 
   if (screen.id === 'stok-karti') {
@@ -22082,6 +22195,7 @@ function bindEvents() {
       else if (act === 'mrp-talep') createMrpRequisitions().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
+      else if (act === 'tcmb-cek') fetchTcmbRates().catch((err) => toast(err.message));
       else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
