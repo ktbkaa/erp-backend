@@ -1,4 +1,4 @@
-async function fiyatBul(pool, { stokId, cariId = null, quantity = 1, tarih = null }) {
+async function findPrice(pool, { stokId, cariId = null, quantity = 1, tarih = null }) {
   const t = tarih || new Date().toISOString().slice(0, 10);
   const r = await pool.query(
     `
@@ -24,4 +24,4 @@ async function fiyatBul(pool, { stokId, cariId = null, quantity = 1, tarih = nul
   return { ...row, net_unit_price: net };
 }
 
-module.exports = { fiyatBul };
+module.exports = { findPrice };

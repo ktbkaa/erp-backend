@@ -1,8 +1,8 @@
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
+const { nextDocumentNo } = require('../utils/belgeNo');
 const { parametreAl } = require('../utils/yetki');
-const { depoTransfer } = require('./stokHareketService');
+const { transferBetweenWarehouses } = require('./stokHareketService');
 
-async function depoBulKodVeyaRol(client, { kodParam, role, plantId = null }) {
+async function findWarehouseByCodeOrRole(client, { kodParam, role, plantId = null }) {
     const kod = await parametreAl(client, kodParam, null);
     if (kod) {
         const params = [kod];
@@ -18,7 +18,7 @@ async function depoBulKodVeyaRol(client, { kodParam, role, plantId = null }) {
     }
     if (role) {
         const params = [role];
-        let sql = `SELECT * FROM warehouses WHERE warehouse_rolu=$1 AND is_active=TRUE`;
+        let sql = `SELECT * FROM warehouses WHERE warehouse_role=$1 AND is_active=TRUE`;
         if (plantId) {
             params.push(plantId);
             sql += ` AND plant_id=$${params.length}`;
@@ -30,24 +30,24 @@ async function depoBulKodVeyaRol(client, { kodParam, role, plantId = null }) {
     return null;
 }
 
-async function ckkHedefDepoCozumle(client, itemId, plantId = null) {
+async function resolveOutgoingQcTargetWarehouse(client, itemId, plantId = null) {
     const st = await client.query(`SELECT item_type FROM items WHERE id=$1`, [itemId]);
     const tip = st.rows[0]?.item_type || 'Mamul';
     if (tip === 'YariMamul') {
-        return depoBulKodVeyaRol(client, {
+        return findWarehouseByCodeOrRole(client, {
             kodParam: 'YARIMAMUL_DEPO_KODU',
             role: 'YariMamul',
             plantId,
         });
     }
-    return depoBulKodVeyaRol(client, {
+    return findWarehouseByCodeOrRole(client, {
         kodParam: 'MAMUL_DEPO_KODU',
         role: 'Mamul',
         plantId,
     });
 }
 
-async function stokPlanBul(client, stokId, direction) {
+async function findItemQcPlan(client, stokId, direction) {
     const r = await client.query(
         `
         SELECT sp.*, p.plan_code, p.plan_name
@@ -69,7 +69,7 @@ async function stokPlanBul(client, stokId, direction) {
  * Stok girişinden sonra KK gerekliyse emir oluştur.
  * Çağıran, stoku zaten Kalitede + GKK/CKK deposuna almış olmalı.
  */
-async function kkEmriOlustur(client, {
+async function createQcOrder(client, {
     direction,
     stokId,
     partiId = null,
@@ -83,8 +83,8 @@ async function kkEmriOlustur(client, {
     projectCode = null,
     companyId = null,
 }) {
-    const plan = await stokPlanBul(client, stokId, direction);
-    const emirNo = await sonrakiBelgeNo(client, 'KK_EMIR');
+    const plan = await findItemQcPlan(client, stokId, direction);
+    const emirNo = await nextDocumentNo(client, 'KK_EMIR');
     let firmaId = companyId || null;
     if (!firmaId && stokId) {
         const fr = await client.query(`SELECT company_id FROM items WHERE id=$1`, [stokId]);
@@ -115,7 +115,7 @@ async function kkEmriOlustur(client, {
     return r.rows[0];
 }
 
-async function emirGetir(pool, id) {
+async function getQcOrder(pool, id) {
     const e = await pool.query(
         `
         SELECT e.*, s.item_code, s.item_name, d.warehouse_code, d.warehouse_name,
@@ -134,9 +134,9 @@ async function emirGetir(pool, id) {
     const [olcumler, gecmis, uygunsuz] = await Promise.all([
         pool.query(
             `
-            SELECT o.*, k.kriter_code, k.kriter_name, k.olcum_type, k.min_value, k.max_value, k.zorunlu
+            SELECT o.*, k.criterion_code, k.criterion_name, k.measurement_type, k.min_value, k.max_value, k.is_required
             FROM qc_measurements o
-            JOIN qc_criteria k ON k.id = o.kriter_id
+            JOIN qc_criteria k ON k.id = o.criterion_id
             WHERE o.order_id=$1 ORDER BY k.line_no
             `,
             [id]
@@ -144,9 +144,9 @@ async function emirGetir(pool, id) {
         pool.query(`SELECT * FROM qc_approval_history WHERE order_id=$1 ORDER BY id`, [id]),
         pool.query(
             `
-            SELECT u.*, r.neden_code, r.neden_name
+            SELECT u.*, r.reason_code, r.reason_name
             FROM qc_nonconformances u
-            LEFT JOIN qc_rejection_reasons r ON r.id = u.ret_neden_id
+            LEFT JOIN qc_rejection_reasons r ON r.id = u.rejection_reason_id
             WHERE u.order_id=$1 ORDER BY u.id
             `,
             [id]
@@ -169,7 +169,7 @@ async function emirGetir(pool, id) {
     };
 }
 
-async function emirKaydet(client, emirId, { olcumler = [], uygunMiktar, uygunsuzMiktar, numuneMiktar, description, kullanici }) {
+async function saveQcOrder(client, emirId, { olcumler = [], uygunMiktar, uygunsuzMiktar, numuneMiktar, description, kullanici }) {
     const emir = await client.query(`SELECT * FROM qc_orders WHERE id=$1 FOR UPDATE`, [emirId]);
     if (!emir.rows[0]) throw Object.assign(new Error('KK emri bulunamadı.'), { status: 404 });
     if (['Onayli', 'Red', 'Iptal'].includes(emir.rows[0].status)) {
@@ -177,17 +177,17 @@ async function emirKaydet(client, emirId, { olcumler = [], uygunMiktar, uygunsuz
     }
 
     for (const o of olcumler) {
-        if (!o.kriter_id) continue;
+        if (!o.criterion_id) continue;
         await client.query(
             `
-            INSERT INTO qc_measurements (order_id, kriter_id, olcum_value, accepted, description)
+            INSERT INTO qc_measurements (order_id, criterion_id, measured_value, accepted, description)
             VALUES ($1,$2,$3,$4,$5)
-            ON CONFLICT (order_id, kriter_id) DO UPDATE SET
-                olcum_value = EXCLUDED.olcum_value,
+            ON CONFLICT (order_id, criterion_id) DO UPDATE SET
+                measured_value = EXCLUDED.measured_value,
                 accepted = EXCLUDED.accepted,
                 description = EXCLUDED.description
             `,
-            [emirId, o.kriter_id, o.olcum_value ?? null, o.accepted ?? null, o.description ?? null]
+            [emirId, o.criterion_id, o.measured_value ?? null, o.accepted ?? null, o.description ?? null]
         );
     }
 
@@ -198,7 +198,7 @@ async function emirKaydet(client, emirId, { olcumler = [], uygunMiktar, uygunsuz
         UPDATE qc_orders SET
             accepted_quantity=$2,
             rejected_quantity=$3,
-            numune_quantity=COALESCE($4, numune_quantity),
+            sample_quantity=COALESCE($4, sample_quantity),
             description=COALESCE($5, description),
             status='Kaydedildi'
         WHERE id=$1
@@ -219,7 +219,7 @@ async function emirKaydet(client, emirId, { olcumler = [], uygunMiktar, uygunsuz
  * Onay: accepted miktarı hedef depoya Kullanilabilir transfer; uygunsuz Bloke kalır / bloke depoya.
  * Mükerrer onay engeli: status Onayli/Red/Kismi ve transfer_movement_id doluysa reddet.
  */
-async function emirOnayla(client, emirId, {
+async function approveQcOrder(client, emirId, {
     onay = true,
     uygunMiktar = null,
     uygunsuzMiktar = null,
@@ -254,10 +254,10 @@ async function emirOnayla(client, emirId, {
     if (!hedef && onay && accepted > 0) {
         let d = null;
         if (emir.direction === 'GKK') {
-            d = await depoBulKodVeyaRol(client, { kodParam: 'HAMMADDE_DEPO_KODU', role: 'Hammadde' });
+            d = await findWarehouseByCodeOrRole(client, { kodParam: 'HAMMADDE_DEPO_KODU', role: 'Hammadde' });
             if (!d) throw new Error('Hedef depo bulunamadı (HAMMADDE_DEPO_KODU / Hammadde).');
         } else {
-            d = await ckkHedefDepoCozumle(client, emir.item_id);
+            d = await resolveOutgoingQcTargetWarehouse(client, emir.item_id);
             if (!d) throw new Error('Hedef depo bulunamadı (Mamul / YariMamul).');
         }
         hedef = d.id;
@@ -265,7 +265,7 @@ async function emirOnayla(client, emirId, {
 
     let transferId = null;
     if (accepted > 0 && onay !== false) {
-        const tr = await depoTransfer(client, {
+        const tr = await transferBetweenWarehouses(client, {
             kaynakDepoId: emir.warehouse_id,
             hedefDepoId: hedef,
             stokId: emir.item_id,
@@ -291,8 +291,8 @@ async function emirOnayla(client, emirId, {
     }
 
     if (uygunsuz > 0) {
-        const { stokStatuTransfer } = require('./stokHareketService');
-        await stokStatuTransfer(client, {
+        const { transferStockStatus } = require('./stokHareketService');
+        await transferStockStatus(client, {
             depoId: emir.warehouse_id,
             stokId: emir.item_id,
             quantity: uygunsuz,
@@ -307,7 +307,7 @@ async function emirOnayla(client, emirId, {
         if (retNedenId || description) {
             await client.query(
                 `
-                INSERT INTO qc_nonconformances (order_id, ret_neden_id, quantity, description)
+                INSERT INTO qc_nonconformances (order_id, rejection_reason_id, quantity, description)
                 VALUES ($1,$2,$3,$4)
                 `,
                 [emirId, retNedenId || null, uygunsuz, description || null]
@@ -334,7 +334,7 @@ async function emirOnayla(client, emirId, {
             status=$5,
             transfer_movement_id=COALESCE($6, transfer_movement_id),
             approved_by_user_id=$7,
-            onay_date=CURRENT_TIMESTAMP,
+            approved_at=CURRENT_TIMESTAMP,
             description=COALESCE($8, description)
         WHERE id=$1
         `,
@@ -364,29 +364,29 @@ async function emirOnayla(client, emirId, {
 /**
  * Mal kabul / üretim girişi için KK akışı yardımcıları.
  */
-async function girisDepoCozumle(client, plantId = null) {
-    return depoBulKodVeyaRol(client, { kodParam: 'GIRIS_DEPO_KODU', role: 'Giris', plantId });
+async function resolveReceivingWarehouse(client, plantId = null) {
+    return findWarehouseByCodeOrRole(client, { kodParam: 'GIRIS_DEPO_KODU', role: 'Giris', plantId });
 }
-async function gkkDepoCozumle(client, plantId = null) {
-    return depoBulKodVeyaRol(client, { kodParam: 'GKK_DEPO_KODU', role: 'GKK', plantId });
+async function resolveIncomingQcWarehouse(client, plantId = null) {
+    return findWarehouseByCodeOrRole(client, { kodParam: 'GKK_DEPO_KODU', role: 'GKK', plantId });
 }
-async function ckkDepoCozumle(client, plantId = null) {
-    return depoBulKodVeyaRol(client, { kodParam: 'CKK_DEPO_KODU', role: 'CKK', plantId });
+async function resolveOutgoingQcWarehouse(client, plantId = null) {
+    return findWarehouseByCodeOrRole(client, { kodParam: 'CKK_DEPO_KODU', role: 'CKK', plantId });
 }
 
 /**
  * Hareket kodunda GKK/CKK tikleri açıksa stok hareketi satırlarından kalite emri üretir.
  * Giriş yönlü satırlar (direction>0) işlenir; gerekirse kalite deposuna aktarım yapılır.
  */
-async function hareketKodundanKkEmirleri(client, {
+async function createQcOrdersFromMovementCode(client, {
     hareketKodu,
     hareket,
     satirlar = [],
     plantId = null,
 }) {
     if (!hareketKodu || !hareket?.id) return [];
-    const wantGkk = Boolean(hareketKodu.gkk_emri_olussun);
-    const wantCkk = Boolean(hareketKodu.ckk_emri_olussun);
+    const wantGkk = Boolean(hareketKodu.create_incoming_qc_order);
+    const wantCkk = Boolean(hareketKodu.create_outgoing_qc_order);
     if (!wantGkk && !wantCkk) return [];
 
     const isYeri = plantId || hareket.plant_id || null;
@@ -405,18 +405,18 @@ async function hareketKodundanKkEmirleri(client, {
         wantCkk ? 'CKK' : null,
     ].filter(Boolean)) {
         const kaliteDepo = yon === 'GKK'
-            ? await gkkDepoCozumle(client, isYeri)
-            : await ckkDepoCozumle(client, isYeri);
+            ? await resolveIncomingQcWarehouse(client, isYeri)
+            : await resolveOutgoingQcWarehouse(client, isYeri);
         if (!kaliteDepo) {
             throw Object.assign(
                 new Error(yon === 'GKK'
-                    ? 'Giriş kalite deposu tanımlı değil (GKK_DEPO_KODU / warehouse_rolu=GKK).'
-                    : 'Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).'),
+                    ? 'Giriş kalite deposu tanımlı değil (GKK_DEPO_KODU / warehouse_role=GKK).'
+                    : 'Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_role=CKK).'),
                 { status: 400 }
             );
         }
         const hedefDepo = yon === 'GKK'
-            ? await depoBulKodVeyaRol(client, {
+            ? await findWarehouseByCodeOrRole(client, {
                 kodParam: 'HAMMADDE_DEPO_KODU',
                 role: 'Hammadde',
                 plantId: isYeri,
@@ -429,7 +429,7 @@ async function hareketKodundanKkEmirleri(client, {
             let partiId = s.lot_id || null;
 
             if (Number(depoId) !== Number(kaliteDepo.id)) {
-                const tr = await depoTransfer(client, {
+                const tr = await transferBetweenWarehouses(client, {
                     kaynakDepoId: depoId,
                     hedefDepoId: kaliteDepo.id,
                     isYeriId: isYeri,
@@ -460,11 +460,11 @@ async function hareketKodundanKkEmirleri(client, {
 
             let hedefDepoId = hedefDepo?.id || null;
             if (yon === 'CKK') {
-                const hd = await ckkHedefDepoCozumle(client, s.item_id, isYeri);
+                const hd = await resolveOutgoingQcTargetWarehouse(client, s.item_id, isYeri);
                 hedefDepoId = hd?.id || null;
             }
 
-            const emir = await kkEmriOlustur(client, {
+            const emir = await createQcOrder(client, {
                 direction: yon,
                 stokId: s.item_id,
                 partiId,
@@ -484,15 +484,15 @@ async function hareketKodundanKkEmirleri(client, {
 }
 
 module.exports = {
-    kkEmriOlustur,
-    emirGetir,
-    emirKaydet,
-    emirOnayla,
-    girisDepoCozumle,
-    gkkDepoCozumle,
-    ckkDepoCozumle,
-    ckkHedefDepoCozumle,
-    depoBulKodVeyaRol,
-    stokPlanBul,
-    hareketKodundanKkEmirleri,
+    createQcOrder,
+    getQcOrder,
+    saveQcOrder,
+    approveQcOrder,
+    resolveReceivingWarehouse,
+    resolveIncomingQcWarehouse,
+    resolveOutgoingQcWarehouse,
+    resolveOutgoingQcTargetWarehouse,
+    findWarehouseByCodeOrRole,
+    findItemQcPlan,
+    createQcOrdersFromMovementCode,
 };

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
         const country_name = trimOrNull(req.body.country_name);
         if (!country_name) return res.status(400).json({ hata: 'country_name zorunludur.' });
         const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.country_code) || (await sonrakiKod(client, 'ULKE'));
+            const kod = trimOrNull(req.body.country_code) || (await nextSequenceCode(client, 'ULKE'));
             const ins = await client.query(
                 `INSERT INTO countries (country_code, country_name, is_active)
                  VALUES ($1,$2,COALESCE($3,TRUE)) RETURNING *`,
@@ -75,7 +75,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM countries WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Ülke bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

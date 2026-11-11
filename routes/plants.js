@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
-async function isYeriGetir(id) {
+async function getPlant(id) {
     const result = await pool.query(
         `
         SELECT i.*, f.company_name, f.company_code
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
             SELECT i.*, f.company_name, f.company_code
             FROM plants i
             JOIN companies f ON i.company_id = f.id
-            ${(() => { const fid = firmaIdFromReq(req); return fid ? 'WHERE i.company_id = ' + Number(fid) : ''; })()}
+            ${(() => { const fid = companyIdFromReq(req); return fid ? 'WHERE i.company_id = ' + Number(fid) : ''; })()}
         ORDER BY i.id DESC
         `);
         res.json(result.rows);
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await isYeriGetir(req.params.id);
+        const row = await getPlant(req.params.id);
         if (!row) return res.status(404).json({ hata: 'İş yeri bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -51,7 +51,7 @@ router.post('/', async (req, res) => {
         }
 
         const id = await withTransaction(pool, async (client) => {
-            const kod = plant_code || (await sonrakiKod(client, 'ISYERI'));
+            const kod = plant_code || (await nextSequenceCode(client, 'ISYERI'));
             const result = await client.query(
                 `
                 INSERT INTO plants (company_id, plant_code, plant_name, address)
@@ -62,7 +62,7 @@ router.post('/', async (req, res) => {
             );
             return result.rows[0].id;
         });
-        res.status(201).json(await isYeriGetir(id));
+        res.status(201).json(await getPlant(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -84,7 +84,7 @@ router.put('/:id', async (req, res) => {
             [req.params.id, company_id || null, plant_name, address || null]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'İş yeri bulunamadı.' });
-        res.json(await isYeriGetir(result.rows[0].id));
+        res.json(await getPlant(result.rows[0].id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -94,7 +94,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query(`DELETE FROM plants WHERE id = $1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'İş yeri bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

@@ -134,7 +134,7 @@ async function resolveField(pool, screenId, fieldKey) {
 const AUDIT_COL_CANDIDATES = [
   'created_by', 'created_by', 'created_by_id',
   'guncelleyen_kullanici', 'guncelleyen', 'guncelleyen_id',
-  'olusturma_date', 'updated_at', 'created_at',
+  'created_date', 'updated_at', 'created_at',
   'created_at', 'updated_at',
 ];
 
@@ -196,13 +196,13 @@ async function recordInfo(pool, screenId, recordId) {
   try {
     const a = await pool.query(
       `
-      SELECT user_code, action, created_at, yol, table_name
+      SELECT user_code, action, created_at, request_path, table_name
       FROM audit_logs
       WHERE record_id = $1
         AND (
           table_name = $2
           OR table_name = $3
-          OR yol ILIKE '%' || $2 || '%'
+          OR request_path ILIKE '%' || $2 || '%'
         )
       ORDER BY id ASC
       `,
@@ -216,7 +216,7 @@ async function recordInfo(pool, screenId, recordId) {
 
   const createdUser = row?.created_by || row?.created_by || olusturanAd
     || auditFirst?.user_code || null;
-  const createdAt = row?.olusturma_date || row?.created_at || row?.created_at
+  const createdAt = row?.created_date || row?.created_at || row?.created_at
     || auditFirst?.created_at || null;
   const updatedUser = row?.guncelleyen_kullanici || row?.guncelleyen
     || (auditLast && auditLast !== auditFirst ? auditLast.user_code : null)

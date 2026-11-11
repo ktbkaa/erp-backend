@@ -1,8 +1,8 @@
 /** Ortak seed yardımcıları */
 async function sonraki(client, seri, fallback) {
   try {
-    const { sonrakiKod } = require('../../src/utils/kodUretici');
-    return await sonrakiKod(client, seri);
+    const { nextSequenceCode } = require('../../src/utils/kodUretici');
+    return await nextSequenceCode(client, seri);
   } catch (_) {
     return fallback;
   }

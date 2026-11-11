@@ -2,16 +2,16 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
-const { reqKullaniciKodu } = require('../src/utils/yetki');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { reqUserCode } = require('../src/utils/yetki');
 const {
-  fisOlustur,
+  createJournalEntry,
   fisKesinlestir,
   fisTersKayit,
   assertLines,
 } = require('../src/services/muhasebeMotorService');
 
-async function belgeGetir(id) {
+async function getDocument(id) {
   const b = await pool.query('SELECT * FROM journal_entries WHERE id=$1', [id]);
   if (!b.rows[0]) return null;
   const kalemler = await pool.query(
@@ -38,7 +38,7 @@ async function belgeGetir(id) {
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const liste = await pool.query(
       `
       SELECT id FROM journal_entries
@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
       [firmaId]
     );
     const result = [];
-    for (const r of liste.rows) result.push(await belgeGetir(r.id));
+    for (const r of liste.rows) result.push(await getDocument(r.id));
     res.json(result);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -58,7 +58,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const belge = await belgeGetir(req.params.id);
+    const belge = await getDocument(req.params.id);
     if (!belge) return res.status(404).json({ hata: 'Belge bulunamadı.' });
     res.json(belge);
   } catch (err) {
@@ -75,8 +75,8 @@ router.post('/', async (req, res) => {
     } = req.body;
     const lines = kalemler || satirlar;
     assertLines(lines || []);
-    const created = await withTransaction(pool, (client) => fisOlustur(client, {
-      firmaId: firmaIdFromReq(req),
+    const created = await withTransaction(pool, (client) => createJournalEntry(client, {
+      firmaId: companyIdFromReq(req),
       ulkeKodu: country_code || 'TR',
       islemUlkeKodu: transaction_country_code,
       vergiUlkeKodu: tax_country_code,
@@ -88,11 +88,11 @@ router.post('/', async (req, res) => {
       lines,
       kaynakBelgeTipi: source_document_type,
       kaynakBelgeId: source_document_id,
-      olusturanKullanici: reqKullaniciKodu(req),
+      olusturanKullanici: reqUserCode(req),
       kesinlestir: Boolean(kesinlestir) || status === 'Onayli',
       status: status || 'Taslak',
     }));
-    res.status(201).json(await belgeGetir(created.id));
+    res.status(201).json(await getDocument(created.id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod, ...err });
   }
@@ -146,7 +146,7 @@ router.put('/:id', async (req, res) => {
       }
       return Number(req.params.id);
     });
-    res.json(await belgeGetir(id));
+    res.json(await getDocument(id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
@@ -155,10 +155,10 @@ router.put('/:id', async (req, res) => {
 router.post('/:id/onayla', async (req, res) => {
   try {
     await withTransaction(pool, (client) => fisKesinlestir(client, Number(req.params.id), {
-      kullaniciKodu: reqKullaniciKodu(req),
-      firmaId: firmaIdFromReq(req),
+      kullaniciKodu: reqUserCode(req),
+      firmaId: companyIdFromReq(req),
     }));
-    res.json(await belgeGetir(req.params.id));
+    res.json(await getDocument(req.params.id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
@@ -167,10 +167,10 @@ router.post('/:id/onayla', async (req, res) => {
 router.post('/:id/kesinlestir', async (req, res) => {
   try {
     await withTransaction(pool, (client) => fisKesinlestir(client, Number(req.params.id), {
-      kullaniciKodu: reqKullaniciKodu(req),
-      firmaId: firmaIdFromReq(req),
+      kullaniciKodu: reqUserCode(req),
+      firmaId: companyIdFromReq(req),
     }));
-    res.json(await belgeGetir(req.params.id));
+    res.json(await getDocument(req.params.id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
@@ -188,12 +188,12 @@ router.post('/:id/onay-kaldir', async (req, res) => {
 router.post('/:id/ters-kayit', async (req, res) => {
   try {
     const ters = await withTransaction(pool, (client) => fisTersKayit(client, Number(req.params.id), {
-      kullaniciKodu: reqKullaniciKodu(req),
+      kullaniciKodu: reqUserCode(req),
       description: req.body?.description,
     }));
     res.status(201).json({
-      orijinal: await belgeGetir(req.params.id),
-      ters: await belgeGetir(ters.id),
+      orijinal: await getDocument(req.params.id),
+      ters: await getDocument(ters.id),
       message: 'Ters kayıt oluşturuldu. Orijinal fiş is_locked kaldı.',
     });
   } catch (err) {
@@ -212,7 +212,7 @@ router.delete('/:id', async (req, res) => {
       });
     }
     await pool.query('DELETE FROM journal_entries WHERE id=$1', [req.params.id]);
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

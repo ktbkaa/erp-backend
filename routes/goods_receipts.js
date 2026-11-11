@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { stokHareketOlustur, assertStokDepoIzin } = require('../src/services/stokHareketService');
-const { girisDepoCozumle, gkkDepoCozumle } = require('../src/services/kaliteService');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { createStockMovement, assertItemWarehouseAllowed } = require('../src/services/stokHareketService');
+const { resolveReceivingWarehouse, resolveIncomingQcWarehouse } = require('../src/services/kaliteService');
 const { parametreAl } = require('../src/utils/yetki');
 
-async function kabulGetir(id) {
+async function getGoodsReceipt(id) {
     const k = await pool.query(`
         SELECT mk.*, sas.order_no, sas.partner_id, d.warehouse_code, d.warehouse_name
         FROM goods_receipts mk
@@ -28,9 +28,9 @@ async function kabulGetir(id) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM goods_receipts'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        const liste = await (() => { const firmaId = companyIdFromReq(req); const params = []; let sql = 'SELECT id FROM goods_receipts'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
         const result = [];
-        for (const r of liste.rows) result.push(await kabulGetir(r.id));
+        for (const r of liste.rows) result.push(await getGoodsReceipt(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
         const {
             purchase_order_id, warehouse_id, satirlar, company_id,
             vendor_delivery_note_no, delivery_date, vendor_invoice_no,
-            receipt_date, description, internal_note, gkk_gerekli, received_by,
+            receipt_date, description, internal_note, incoming_qc_required, received_by,
             status: kabulDurum, vendor_delivery_note_id,
         } = req.body;
         if (!purchase_order_id) {
@@ -92,7 +92,7 @@ router.post('/', async (req, res) => {
                     kabulSatirlari = siparisSatirlari.rows
                         .map((s) => ({
                             order_line_id: s.id,
-                            quantity: Number(s.quantity) - Number(s.giren_quantity),
+                            quantity: Number(s.quantity) - Number(s.received_quantity),
                         }))
                         .filter((s) => s.quantity > 0);
                 }
@@ -102,7 +102,7 @@ router.post('/', async (req, res) => {
                     if (ks.order_line_id) return ks;
                     const hit = siparisSatirlari.rows.find(
                         (s) => Number(s.item_id) === Number(ks.item_id)
-                            && Number(s.quantity) - Number(s.giren_quantity) > 0
+                            && Number(s.quantity) - Number(s.received_quantity) > 0
                     );
                     return hit ? { ...ks, order_line_id: hit.id } : ks;
                 }).filter((ks) => ks.order_line_id && Number(ks.quantity) > 0);
@@ -126,9 +126,9 @@ router.post('/', async (req, res) => {
             const hareketSatirlari = [];
             const islenen = [];
             const plantId = siparis.rows[0].plant_id || null;
-            const girisDepo = await girisDepoCozumle(client, plantId);
+            const girisDepo = await resolveReceivingWarehouse(client, plantId);
             if (!girisDepo) {
-                throw new Error('Giriş deposu tanımlı değil (GIRIS_DEPO_KODU / warehouse_rolu=Giris).');
+                throw new Error('Giriş deposu tanımlı değil (GIRIS_DEPO_KODU / warehouse_role=Giris).');
             }
             // Mal kabul her zaman Giriş Depo'ya düşer; miktar kontrolü → GKK → Hammadde
             const hedefDepoId = girisDepo.id;
@@ -137,7 +137,7 @@ router.post('/', async (req, res) => {
             for (const ks of kabulSatirlari) {
                 const satir = siparisSatirlari.rows.find((x) => x.id === Number(ks.order_line_id));
                 if (!satir) throw new Error(`Sipariş satırı yok: ${ks.order_line_id}`);
-                const kalan = Number(satir.quantity) - Number(satir.giren_quantity);
+                const kalan = Number(satir.quantity) - Number(satir.received_quantity);
                 const quantity = Number(ks.quantity);
                 if (quantity <= 0) throw new Error('Kabul miktarı > 0 olmalı.');
                 if (quantity - kalan > 1e-9) {
@@ -145,7 +145,7 @@ router.post('/', async (req, res) => {
                 }
 
                 const stok = await client.query(
-                    `SELECT id, uom_code, kalite_control_gerekli, varsayilan_giris_warehouse_id, lot_politika,
+                    `SELECT id, uom_code, quality_control_required, default_receipt_warehouse_id, lot_policy,
                             item_code, item_name
                      FROM items WHERE id=$1`,
                     [satir.item_id]
@@ -154,11 +154,11 @@ router.post('/', async (req, res) => {
 
                 if (depoZorunlu) {
                     try {
-                        await assertStokDepoIzin(client, satir.item_id, hedefDepoId);
+                        await assertItemWarehouseAllowed(client, satir.item_id, hedefDepoId);
                     } catch (e) {
                         await client.query(
                             `
-                            INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active, varsayilan_giris)
+                            INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active, is_default_receipt)
                             VALUES ($1,$2,$3,TRUE,FALSE)
                             ON CONFLICT (item_id, warehouse_id) DO UPDATE SET is_active=TRUE
                             `,
@@ -169,7 +169,7 @@ router.post('/', async (req, res) => {
 
                 await client.query(
                     `UPDATE purchase_order_lines
-                     SET giren_quantity = giren_quantity + $1 WHERE id = $2`,
+                     SET received_quantity = received_quantity + $1 WHERE id = $2`,
                     [quantity, satir.id]
                 );
 
@@ -197,9 +197,9 @@ router.post('/', async (req, res) => {
                 });
             }
 
-            const { hareketKoduBul, BELGE_TIPI } = require('../src/utils/belgeOmurga');
-            const hk = await hareketKoduBul(client, BELGE_TIPI.MAL_KABUL);
-            const hareket = await stokHareketOlustur(client, {
+            const { findMovementCode, BELGE_TIPI } = require('../src/utils/belgeOmurga');
+            const hk = await findMovementCode(client, BELGE_TIPI.MAL_KABUL);
+            const hareket = await createStockMovement(client, {
                 hareketTipi: 'SATINALMA_GIRIS',
                 isYeriId: plantId,
                 depoId: hedefDepoId,
@@ -210,18 +210,18 @@ router.post('/', async (req, res) => {
             });
             const anaHareketId = hareket.hareket.id;
 
-            const kabulNo = await sonrakiBelgeNo(client, 'MAL_KABUL');
-            let firmaId = company_id || siparis.rows[0].company_id || firmaIdFromReq(req) || null;
+            const kabulNo = await nextDocumentNo(client, 'MAL_KABUL');
+            let firmaId = company_id || siparis.rows[0].company_id || companyIdFromReq(req) || null;
             if (!firmaId && plantId) {
                 const pf = await client.query(`SELECT company_id FROM plants WHERE id=$1`, [plantId]);
                 firmaId = pf.rows[0]?.company_id || null;
             }
-            const gkkDepo = await gkkDepoCozumle(client, plantId);
+            const gkkDepo = await resolveIncomingQcWarehouse(client, plantId);
             const kabul = await client.query(
                 `INSERT INTO goods_receipts (
                     receipt_no, purchase_order_id, warehouse_id, item_movement_id, company_id, plant_id,
                     vendor_delivery_note_no, delivery_date, vendor_invoice_no,
-                    receipt_date, description, internal_note, gkk_gerekli, received_by, status,
+                    receipt_date, description, internal_note, incoming_qc_required, received_by, status,
                     vendor_delivery_note_id
                  ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,CURRENT_DATE),$11,$12,$13,$14,COALESCE($15,'Onayli'),$16)
                  RETURNING id`,
@@ -245,17 +245,17 @@ router.post('/', async (req, res) => {
                 const lineIns = await client.query(
                     `INSERT INTO goods_receipt_lines (
                         receipt_id, order_line_id, item_id, quantity,
-                        accepted_flag, reddedilen, uom_code, unit_price, lot_no, serial_no,
-                        stock_status, raf_code, son_kullanma_date, line_description
+                        accepted_flag, rejected_qty, uom_code, unit_price, lot_no, serial_no,
+                        stock_status, bin_code, expiry_date, line_description
                      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
                      RETURNING id`,
                     [
                         kabulId, s.order_line_id, s.item_id, s.quantity,
-                        uiSat?.accepted_flag ?? s.quantity, uiSat?.reddedilen ?? 0,
+                        uiSat?.accepted_flag ?? s.quantity, uiSat?.rejected_qty ?? 0,
                         uiSat?.uom_code || s.uom_code || null, uiSat?.unit_price ?? null,
                         uiSat?.lot_no || null, uiSat?.serial_no || null,
                         'Kullanilabilir',
-                        uiSat?.raf_code || null, uiSat?.son_kullanma_date || null,
+                        uiSat?.bin_code || null, uiSat?.expiry_date || null,
                         uiSat?.line_description || null,
                     ]
                 );
@@ -299,7 +299,7 @@ router.post('/', async (req, res) => {
             }
 
             // Giriş kontrol belgesi: miktar/ürün doğrulaması sonrası GKK'ya aktarım
-            const inspNo = await sonrakiBelgeNo(client, 'GIRIS_KONTROL');
+            const inspNo = await nextDocumentNo(client, 'GIRIS_KONTROL');
             const insp = await client.query(
                 `INSERT INTO incoming_inspections (
                     inspection_no, company_id, plant_id, purchase_order_id, goods_receipt_id,
@@ -330,11 +330,11 @@ router.post('/', async (req, res) => {
 
             // Sipariş durumu
             const guncel = await client.query(
-                'SELECT quantity, giren_quantity FROM purchase_order_lines WHERE purchase_order_id = $1',
+                'SELECT quantity, received_quantity FROM purchase_order_lines WHERE purchase_order_id = $1',
                 [purchase_order_id]
             );
-            const hepsi = guncel.rows.every((r) => Number(r.giren_quantity) + 1e-9 >= Number(r.quantity));
-            const hic = guncel.rows.every((r) => Number(r.giren_quantity) === 0);
+            const hepsi = guncel.rows.every((r) => Number(r.received_quantity) + 1e-9 >= Number(r.quantity));
+            const hic = guncel.rows.every((r) => Number(r.received_quantity) === 0);
             const status = hepsi ? 'Kapali' : hic ? 'Onayli' : 'KismiTeslim';
             await client.query('UPDATE purchase_orders SET status = $1 WHERE id = $2', [status, purchase_order_id]);
 
@@ -348,7 +348,7 @@ router.post('/', async (req, res) => {
             return kabulId;
         });
 
-        res.status(201).json(await kabulGetir(id));
+        res.status(201).json(await getGoodsReceipt(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -356,7 +356,7 @@ router.post('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await kabulGetir(req.params.id);
+        const row = await getGoodsReceipt(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Mal kabul bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -368,7 +368,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query(`DELETE FROM goods_receipts WHERE id=$1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Mal kabul bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -410,7 +410,7 @@ router.post('/:id/fatura-olustur', async (req, res, next) => {
             );
             if (!satirlar.rows.length) throw Object.assign(new Error('Mal kabul satırı yok.'), { status: 400 });
 
-            const no = await sonrakiBelgeNo(client, 'ALIS_FATURA');
+            const no = await nextDocumentNo(client, 'ALIS_FATURA');
             let toplam = 0;
             let toplamKdv = 0;
             const kdvOran = Number(req.body.vat_rate ?? 20);
@@ -471,7 +471,7 @@ router.post('/:id/fatura-olustur', async (req, res, next) => {
  */
 router.post('/:id/iade', async (req, res, next) => {
     try {
-        const { stokHareketOlustur } = require('../src/services/stokHareketService');
+        const { createStockMovement } = require('../src/services/stokHareketService');
         const kabulId = Number(req.params.id);
         const result = await withTransaction(pool, async (client) => {
             const k = await client.query(`SELECT * FROM goods_receipts WHERE id=$1`, [kabulId]);
@@ -482,7 +482,7 @@ router.post('/:id/iade', async (req, res, next) => {
             );
             if (!satirlar.rows.length) throw Object.assign(new Error('Satır yok.'), { status: 400 });
             const depoId = Number(req.body.warehouse_id || k.rows[0].warehouse_id);
-            const hareket = await stokHareketOlustur(client, {
+            const hareket = await createStockMovement(client, {
                 hareketTipi: 'IADE_CIKIS',
                 depoId,
                 belgeTipi: 'ALIS_IADE',

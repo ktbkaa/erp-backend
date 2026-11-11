@@ -1,10 +1,10 @@
-const { createBelgeRouter } = require('./_belgeCrud');
+const { createDocumentRouter } = require('./_belgeCrud');
 
-module.exports = createBelgeRouter({
+module.exports = createDocumentRouter({
     table: 'rfqs',
     lineTable: 'rfq_lines',
-    fk: 'istek_id',
-    noField: 'istek_no',
+    fk: 'rfq_id',
+    noField: 'rfq_no',
     seri: 'SATINALMA_TEKLIF_ISTEK',
     notFound: 'Teklif isteği bulunamadı.',
     allowedDurum: ['Acik', 'Onayli', 'TeklifeDonustu', 'Iptal', 'Kapali'],

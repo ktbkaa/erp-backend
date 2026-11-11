@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq, andFirma } = require('../src/utils/firmaScope');
+const { companyIdFromReq, andCompany } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
   if (v === undefined || v === null) return null;
@@ -76,10 +76,10 @@ async function projectDetail(id) {
 
 router.get('/', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     let where = 'WHERE 1=1';
-    where += andFirma('p.company_id', firmaId, params);
+    where += andCompany('p.company_id', firmaId, params);
     if (req.query.is_active === 'true') where += ' AND p.is_active=TRUE';
     if (req.query.is_active === 'false') where += ' AND p.is_active=FALSE';
     if (req.query.is_archived === 'true') where += ' AND p.is_archived=TRUE';
@@ -125,7 +125,7 @@ router.get('/:id', async (req, res, next) => {
   try {
     const row = await projectDetail(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Proje bulunamadı.' });
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId && Number(row.company_id) !== Number(firmaId)) {
       return res.status(403).json({ hata: 'Bu firma için proje erişimi yok.' });
     }
@@ -137,7 +137,7 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req) || Number(req.body.company_id);
+    const firmaId = companyIdFromReq(req) || Number(req.body.company_id);
     if (!firmaId) return res.status(400).json({ hata: 'company_id / X-Firma-Id zorunlu.' });
     const project_name = trimOrNull(req.body.project_name);
     if (!project_name) return res.status(400).json({ hata: 'project_name zorunlu.' });
@@ -163,7 +163,7 @@ router.post('/', async (req, res, next) => {
         priorityId = pr.rows[0]?.id || null;
       }
       const code =
-        trimOrNull(req.body.project_code) || (await sonrakiKod(client, 'PRJ_PROJECT'));
+        trimOrNull(req.body.project_code) || (await nextSequenceCode(client, 'PRJ_PROJECT'));
       const ins = await client.query(
         `
         INSERT INTO projects (
@@ -243,7 +243,7 @@ router.put('/:id', async (req, res, next) => {
     const existing = await pool.query(`SELECT * FROM projects WHERE id=$1`, [req.params.id]);
     if (!existing.rows[0]) return res.status(404).json({ hata: 'Proje bulunamadı.' });
     const cur = existing.rows[0];
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId && Number(cur.company_id) !== Number(firmaId)) {
       return res.status(403).json({ hata: 'Bu firma için proje erişimi yok.' });
     }
@@ -353,7 +353,7 @@ router.post('/:id/phases', async (req, res, next) => {
     if (!phase_name) return res.status(400).json({ hata: 'phase_name zorunlu.' });
     const code =
       trimOrNull(req.body.phase_code) ||
-      (await withTransaction(pool, async (c) => sonrakiKod(c, 'PRJ_PHASE')));
+      (await withTransaction(pool, async (c) => nextSequenceCode(c, 'PRJ_PHASE')));
     const r = await pool.query(
       `
       INSERT INTO project_phases (
@@ -387,7 +387,7 @@ router.delete('/:id', async (req, res, next) => {
       [req.params.id]
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Proje bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

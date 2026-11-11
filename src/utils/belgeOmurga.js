@@ -36,7 +36,7 @@ const HAREKET_BELGE_TIPI = Object.freeze({
     STOK_CIKIS: 'StokCikis',
 });
 
-async function hareketKoduBul(client, belgeTipiKod, verilenId = null) {
+async function findMovementCode(client, belgeTipiKod, verilenId = null) {
     if (verilenId) {
         const r = await client.query(
             `SELECT * FROM movement_codes WHERE id=$1 AND is_active`,
@@ -54,21 +54,21 @@ async function hareketKoduBul(client, belgeTipiKod, verilenId = null) {
     return r.rows[0] || null;
 }
 
-function kaynakBelgeAlanlari(type, id) {
+function sourceDocumentFields(type, id) {
     if (!type || id == null) return { source_document_type: null, source_document_id: null };
     return { source_document_type: type, source_document_id: Number(id) };
 }
 
-function kalanMiktar(satir) {
+function remainingQuantity(satir) {
     const quantity = Number(satir.quantity || 0);
     const sevk = Number(satir.shipped_quantity || 0);
     return Math.max(0, quantity - sevk);
 }
 
-async function stokNegatifIzinliMi(client) {
+async function isNegativeStockAllowed(client) {
     const r = await client.query(
         `SELECT value FROM system_parameters
-         WHERE parametre_code='STOK_NEGATIF' AND is_active IS DISTINCT FROM FALSE
+         WHERE parameter_code='STOK_NEGATIF' AND is_active IS DISTINCT FROM FALSE
          LIMIT 1`
     );
     const v = String(r.rows[0]?.value || 'Hayir').trim().toLowerCase();
@@ -106,9 +106,9 @@ async function onerilenDepolar(client, stokId, gerekenMiktar, haricDepoId = null
 module.exports = {
     BELGE_TIPI,
     HAREKET_BELGE_TIPI,
-    hareketKoduBul,
-    kaynakBelgeAlanlari,
-    kalanMiktar,
-    stokNegatifIzinliMi,
+    findMovementCode,
+    sourceDocumentFields,
+    remainingQuantity,
+    isNegativeStockAllowed,
     onerilenDepolar,
 };

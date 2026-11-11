@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 const TIPLER = ['ABC', 'Marka', 'TeminSekli', 'Sektor', 'Bolge', 'Cari'];
 
@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
 
         const row = await withTransaction(pool, async (client) => {
             const kod = trimOrNull(req.body.category_code)
-                || (await sonrakiKod(client, 'KATEGORI'));
+                || (await nextSequenceCode(client, 'KATEGORI'));
             const ins = await client.query(
                 `
                 INSERT INTO categories
@@ -152,7 +152,7 @@ router.delete('/:id', async (req, res) => {
             [req.params.id]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Kategori bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
-const { reqKullaniciKodu } = require('../src/utils/yetki');
-const { fisOlustur, hesapIdCoz } = require('../src/services/muhasebeMotorService');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { reqUserCode } = require('../src/utils/yetki');
+const { createJournalEntry, resolveAccountId } = require('../src/services/muhasebeMotorService');
 
-async function bankaListe(firmaId) {
+async function listBanks(firmaId) {
   const r = await pool.query(
     `
     SELECT b.*, h.account_code AS gl_account_code, bk.bank_name
@@ -24,7 +24,7 @@ async function bankaListe(firmaId) {
 
 router.get('/banka-hesaplari', async (req, res, next) => {
   try {
-    res.json(await bankaListe(firmaIdFromReq(req)));
+    res.json(await listBanks(companyIdFromReq(req)));
   } catch (err) {
     next(err);
   }
@@ -32,10 +32,10 @@ router.get('/banka-hesaplari', async (req, res, next) => {
 
 router.post('/banka-hesaplari', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const { account_code, account_name, bank_id, iban, currency_code, gl_account_id } = req.body || {};
     if (!account_name) return res.status(400).json({ hata: 'account_name zorunlu.' });
-    const kod = account_code || (await withTransaction(pool, (c) => sonrakiBelgeNo(c, 'FIN_BANKA_HESAP')));
+    const kod = account_code || (await withTransaction(pool, (c) => nextDocumentNo(c, 'FIN_BANKA_HESAP')));
     const r = await pool.query(
       `
       INSERT INTO fin_bank_accounts
@@ -52,7 +52,7 @@ router.post('/banka-hesaplari', async (req, res, next) => {
 
 router.get('/kasa-hesaplari', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `
       SELECT k.*, h.account_code AS gl_account_code
@@ -71,10 +71,10 @@ router.get('/kasa-hesaplari', async (req, res, next) => {
 
 router.post('/kasa-hesaplari', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const { cash_code, cash_name, currency_code, gl_account_id } = req.body || {};
     if (!cash_name) return res.status(400).json({ hata: 'cash_name zorunlu.' });
-    const kod = cash_code || (await withTransaction(pool, (c) => sonrakiBelgeNo(c, 'FIN_KASA')));
+    const kod = cash_code || (await withTransaction(pool, (c) => nextDocumentNo(c, 'FIN_KASA')));
     const r = await pool.query(
       `
       INSERT INTO fin_cash_accounts (company_id, cash_code, cash_name, currency_code, gl_account_id)
@@ -90,7 +90,7 @@ router.post('/kasa-hesaplari', async (req, res, next) => {
 
 router.get('/hareketler', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `
       SELECT n.*, c.partner_name
@@ -113,7 +113,7 @@ router.get('/hareketler', async (req, res, next) => {
  */
 router.post('/hareketler', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const {
       direction, amount, currency_code, exchange_rate, bank_account_id, cash_account_id,
       partner_id, description, movement_date, muhasebelestir, karsi_hesap_kodu, country_code,
@@ -127,7 +127,7 @@ router.post('/hareketler', async (req, res, next) => {
     }
 
     const result = await withTransaction(pool, async (client) => {
-      const no = await sonrakiBelgeNo(client, 'FIN_NAKIT_HAREKET');
+      const no = await nextDocumentNo(client, 'FIN_NAKIT_HAREKET');
       const ins = await client.query(
         `
         INSERT INTO fin_cash_movements
@@ -154,13 +154,13 @@ router.post('/hareketler', async (req, res, next) => {
           nakitHesapId = kh.rows[0]?.gl_account_id;
         }
         if (!nakitHesapId) {
-          nakitHesapId = await hesapIdCoz(client, {
+          nakitHesapId = await resolveAccountId(client, {
             account_code: bank_account_id ? '102.01.001' : '100.01.001',
             country_code: country_code || 'TR',
           });
         }
         const karsiKod = karsi_hesap_kodu || (direction === 'Giris' ? '120.01.001' : '320.01.001');
-        const karsiId = await hesapIdCoz(client, { account_code: karsiKod, country_code: country_code || 'TR' });
+        const karsiId = await resolveAccountId(client, { account_code: karsiKod, country_code: country_code || 'TR' });
         const t = Number(amount);
         const lines = direction === 'Cikis'
           ? [
@@ -171,7 +171,7 @@ router.post('/hareketler', async (req, res, next) => {
             { account_id: nakitHesapId, debit: t, credit: 0, description },
             { account_id: karsiId, debit: 0, credit: t, description },
           ];
-        fis = await fisOlustur(client, {
+        fis = await createJournalEntry(client, {
           firmaId,
           ulkeKodu: country_code || 'TR',
           fisTipi: direction === 'Giris' ? 'Tahsilat' : 'Tediye',
@@ -182,7 +182,7 @@ router.post('/hareketler', async (req, res, next) => {
           lines,
           kaynakBelgeTipi: 'NAKIT_HAREKET',
           kaynakBelgeId: har.id,
-          olusturanKullanici: reqKullaniciKodu(req),
+          olusturanKullanici: reqUserCode(req),
           kesinlestir: true,
         });
         await client.query(

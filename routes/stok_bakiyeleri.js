@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
-const { depoBakiyeListesi } = require('../src/services/stokHareketService');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { listWarehouseBalances } = require('../src/services/stokHareketService');
 
 router.get('/', async (req, res) => {
     try {
         const yalnizca = req.query.yalnizca_stokta;
-        const liste = await depoBakiyeListesi(pool, {
+        const liste = await listWarehouseBalances(pool, {
             depoId: req.query.warehouse_id ? Number(req.query.warehouse_id) : null,
             stokId: req.query.item_id ? Number(req.query.item_id) : null,
             stokStatu: req.query.stock_status || null,
-            firmaId: firmaIdFromReq(req),
+            firmaId: companyIdFromReq(req),
             depoKodu: req.query.warehouse_code || null,
             stokKodu: req.query.item_code || null,
             stokAdi: req.query.item_name || null,

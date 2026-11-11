@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -23,7 +23,7 @@ function parseIsProfile(v) {
 router.get('/', async (req, res) => {
     try {
         // X-Firma-Id varsa yalnız o firma; boş/yoksa tüm liste (profil seçici / org ekranı)
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         const result = firmaId
             ? await pool.query('SELECT * FROM companies WHERE id = $1 ORDER BY id DESC', [firmaId])
             : await pool.query('SELECT * FROM companies ORDER BY id DESC');
@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
         const is_profile = parseIsProfile(req.body.is_profile) === true;
 
         const row = await withTransaction(pool, async (client) => {
-            const kod = company_code_in || (await sonrakiKod(client, 'FIRMA'));
+            const kod = company_code_in || (await nextSequenceCode(client, 'FIRMA'));
             const result = await client.query(
                 `INSERT INTO companies (company_code, company_name, is_profile) VALUES ($1, $2, $3) RETURNING *`,
                 [kod, company_name, is_profile]
@@ -94,7 +94,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query(`DELETE FROM companies WHERE id = $1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Firma bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

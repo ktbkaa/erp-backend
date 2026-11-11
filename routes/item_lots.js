@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 router.get('/', async (req, res) => {
     try {
@@ -14,13 +14,13 @@ router.get('/', async (req, res) => {
             where.push(`p.item_id = $${params.length}`);
         }
         if (req.query.is_active === 'true') where.push('p.is_active = TRUE');
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`(p.company_id = $${params.length} OR s.company_id = $${params.length})`);
         }
         const sql = `
-            SELECT p.*, s.item_code, s.item_name, s.lot_politika
+            SELECT p.*, s.item_code, s.item_name, s.lot_policy
             FROM item_lots p
             JOIN items s ON s.id = p.item_id
             ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
@@ -44,7 +44,7 @@ router.get('/:id', async (req, res) => {
             [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Parti bulunamadı.' });
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         const rowFirma = r.rows[0].company_id ?? r.rows[0].stok_firma_id;
         if (firmaId && rowFirma != null && Number(rowFirma) !== Number(firmaId)) {
             return res.status(404).json({ hata: 'Parti bulunamadı.' });
@@ -70,16 +70,16 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { item_id, lot_no, production_date, son_kullanma_date, description } = req.body;
+        const { item_id, lot_no, production_date, expiry_date, description } = req.body;
         if (!item_id) return res.status(400).json({ hata: 'item_id zorunlu.' });
         const id = await withTransaction(pool, async (client) => {
-            const no = lot_no || (await sonrakiKod(client, 'PARTI'));
+            const no = lot_no || (await nextSequenceCode(client, 'PARTI'));
             const r = await client.query(
                 `
-                INSERT INTO item_lots (item_id, lot_no, production_date, son_kullanma_date, description)
+                INSERT INTO item_lots (item_id, lot_no, production_date, expiry_date, description)
                 VALUES ($1,$2,$3,$4,$5) RETURNING id
                 `,
-                [item_id, no, production_date || null, son_kullanma_date || null, description || null]
+                [item_id, no, production_date || null, expiry_date || null, description || null]
             );
             return r.rows[0].id;
         });
@@ -92,17 +92,17 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { production_date, son_kullanma_date, description, is_active } = req.body;
+        const { production_date, expiry_date, description, is_active } = req.body;
         const r = await pool.query(
             `
             UPDATE item_lots SET
                 production_date = COALESCE($2, production_date),
-                son_kullanma_date = COALESCE($3, son_kullanma_date),
+                expiry_date = COALESCE($3, expiry_date),
                 description = COALESCE($4, description),
                 is_active = COALESCE($5, is_active)
             WHERE id=$1 RETURNING *
             `,
-            [req.params.id, production_date, son_kullanma_date, description, is_active]
+            [req.params.id, production_date, expiry_date, description, is_active]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Parti bulunamadı.' });
         res.json(r.rows[0]);

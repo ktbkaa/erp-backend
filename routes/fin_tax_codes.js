@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 
-async function vergiGetir(id) {
+async function getTax(id) {
   const r = await pool.query(`SELECT * FROM fin_tax_codes WHERE id=$1`, [id]);
   if (!r.rows[0]) return null;
   const oranlar = await pool.query(
@@ -49,7 +49,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const row = await vergiGetir(req.params.id);
+    const row = await getTax(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Vergi kodu bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -106,7 +106,7 @@ router.post('/', async (req, res, next) => {
       }
       return taxId;
     });
-    res.status(201).json(await vergiGetir(id));
+    res.status(201).json(await getTax(id));
   } catch (err) {
     next(err);
   }
@@ -147,7 +147,7 @@ router.put('/:id', async (req, res, next) => {
         }
       }
     });
-    res.json(await vergiGetir(req.params.id));
+    res.json(await getTax(req.params.id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -160,7 +160,7 @@ router.delete('/:id', async (req, res, next) => {
       [req.params.id],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Vergi kodu bulunamadı.' });
-    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
+    res.json({ is_deleted: false, pasife_alindi: true, ...r.rows[0] });
   } catch (err) {
     next(err);
   }

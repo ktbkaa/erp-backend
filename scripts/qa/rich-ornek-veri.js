@@ -15,11 +15,11 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../../db');
 const { withTransaction } = require('../../src/utils/withTransaction');
-const { sonrakiKod, stokSeriKodundanTip, cariSeriKodundanTur } = require('../../src/utils/kodUretici');
-const { stokHareketOlustur } = require('../../src/services/stokHareketService');
+const { nextSequenceCode, itemTypeFromSeriesCode, partnerTypeFromSeriesCode } = require('../../src/utils/kodUretici');
+const { createStockMovement } = require('../../src/services/stokHareketService');
 
 const BASE_URL = process.env.ERP_BASE || `http://127.0.0.1:${process.env.PORT || 3000}`;
-const argFirma = (process.argv.find((a) => a.startsWith('--firma=')) || '').split('=')[1];
+const argCompany = (process.argv.find((a) => a.startsWith('--firma=')) || '').split('=')[1];
 
 const SECTORS = {
   GIDA: {
@@ -188,7 +188,7 @@ async function ensureOrg(client, def) {
     let w = (await client.query(`SELECT * FROM warehouses WHERE plant_id=$1 AND warehouse_code=$2`, [plant.id, code])).rows[0];
     if (!w) {
       w = (await client.query(
-        `INSERT INTO warehouses (plant_id, warehouse_code, warehouse_name, is_active, warehouse_rolu)
+        `INSERT INTO warehouses (plant_id, warehouse_code, warehouse_name, is_active, warehouse_role)
          VALUES ($1,$2,$3,TRUE,$4) RETURNING *`,
         [plant.id, code, name, rol]
       )).rows[0];
@@ -206,8 +206,8 @@ async function ensureOrg(client, def) {
     const u = (await client.query(`SELECT id FROM users WHERE user_code=$1`, [code])).rows[0];
     if (!u) continue;
     await client.query(
-      `INSERT INTO user_company_permissions (kisi_id, company_id)
-       SELECT $1,$2 WHERE NOT EXISTS (SELECT 1 FROM user_company_permissions WHERE kisi_id=$1 AND company_id=$2)`,
+      `INSERT INTO user_company_permissions (user_id, company_id)
+       SELECT $1,$2 WHERE NOT EXISTS (SELECT 1 FROM user_company_permissions WHERE user_id=$1 AND company_id=$2)`,
       [u.id, firma.id]
     );
   }
@@ -229,10 +229,10 @@ async function upsertPartner(client, { def, name, type, i }) {
   const kod = `${def.prefix}-${type === 'Tedarikci' ? 'T' : 'M'}${String(i + 1).padStart(2, '0')}`;
   row = (await client.query(
     `INSERT INTO partners (
-       partner_code, partner_name, partner_name_2, partner_type, telefon, telefon2, email,
-       tax_id, tax_office, yetkili_name, yetkili_telefon, address, billing_address,
-       il, district, country, postal_code, currency_code, payment_due_days, is_active,
-       company_id, plant_id, notlar, description
+       partner_code, partner_name, partner_name_2, partner_type, phone, phone_2, email,
+       tax_id, tax_office, authorized_person, authorized_phone, address, billing_address,
+       province, district, country, postal_code, currency_code, payment_due_days, is_active,
+       company_id, plant_id, notes, description
      ) VALUES (
        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'TR',$16,'TRY',$17,TRUE,$18,$19,$20,$21
      ) RETURNING *`,
@@ -256,10 +256,10 @@ async function upsertItem(client, { def, it, firmaId, plantId, wh }) {
   if (row) return row;
   row = (await client.query(
     `INSERT INTO items (
-       item_code, item_name, item_name_2, uom_code, sales_price, item_type, tedarik_type,
-       is_active, company_id, varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id,
-       kalite_control_gerekli, description, temin_suresi_days, safety_stock, lot_politika,
-       abc_code, barkod, stock_takip_uom
+       item_code, item_name, item_name_2, uom_code, sales_price, item_type, procurement_type,
+       is_active, company_id, default_receipt_warehouse_id, default_issue_warehouse_id,
+       quality_control_required, description, lead_time_days, safety_stock, lot_policy,
+       abc_code, barcode, stock_tracking_uom
      ) VALUES (
        $1,$2,$3,$4,$5,$6,$7,TRUE,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$4
      ) RETURNING *`,
@@ -377,7 +377,7 @@ async function seedSector(def) {
       bom = (await client.query(
         `INSERT INTO boms (
            finished_good_item_id, bom_code, bom_name, quantity, uom_code,
-           company_id, plant_id, alt_no, bom_type, bom_status, is_active,
+           company_id, plant_id, alternative_no, bom_type, bom_status, is_active,
            is_default_for_wo, fg_warehouse_id, notes
          ) VALUES ($1,$2,$3,1,$4,$5,$6,'00','Uretim','Onayli',TRUE,TRUE,$7,$8) RETURNING *`,
         [fg.id, `${def.prefix}-BOM-01`, `${fg.item_name} Ağacı`, fg.uom_code || 'AD',
@@ -410,7 +410,7 @@ async function seedSector(def) {
           ebom = (await client.query(
             `INSERT INTO boms (
                finished_good_item_id, bom_code, bom_name, quantity, uom_code,
-               company_id, plant_id, alt_no, bom_type, bom_status, is_active,
+               company_id, plant_id, alternative_no, bom_type, bom_status, is_active,
                is_default_for_wo, fg_warehouse_id, notes
              ) VALUES ($1,$2,$3,1,$4,$5,$6,'00','Uretim','Onayli',TRUE,FALSE,$7,$8) RETURNING *`,
             [efg.id, eb.code, `${efg.item_name} Ağacı`, efg.uom_code || 'AD',
@@ -440,7 +440,7 @@ async function seedSector(def) {
     if (!rota && fg) {
       rota = (await client.query(
         `INSERT INTO routings (
-           route_code, route_name, item_id, is_active, company_id, plant_id, varsayilan, notes
+           route_code, route_name, item_id, is_active, company_id, plant_id, is_default, notes
          ) VALUES ($1,$2,$3,TRUE,$4,$5,TRUE,$6) RETURNING *`,
         [`${def.prefix}-R01`, `${def.code} Ana Rota`, fg.id, org.firma.id, org.plant.id, def.tag]
       )).rows[0];
@@ -448,7 +448,7 @@ async function seedSector(def) {
       for (const op of def.ops) {
         await safe(client, `rota-op-${sira}`, async () => {
           await client.query(
-            `INSERT INTO routing_operations (route_id, line_no, operation_code, operation_name, work_center_id, sure_dk)
+            `INSERT INTO routing_operations (route_id, line_no, operation_code, operation_name, work_center_id, duration_minutes)
              VALUES ($1,$2,$3,$4,$5,30)`,
             [rota.id, sira, `OP${sira}`, op, org.wc.id]
           );
@@ -486,7 +486,7 @@ async function seedSector(def) {
     }));
     if (hmLines.length) {
       await safe(client, 'stok-acilis-hm', async () => {
-        await stokHareketOlustur(client, {
+        await createStockMovement(client, {
           hareketTipi: 'STOK_GIRIS',
           isYeriId: org.plant.id,
           depoId: org.wh.hmd.id,
@@ -506,7 +506,7 @@ async function seedSector(def) {
     }));
     if (fgLines.length) {
       await safe(client, 'stok-acilis-mamul', async () => {
-        await stokHareketOlustur(client, {
+        await createStockMovement(client, {
           hareketTipi: 'STOK_GIRIS',
           isYeriId: org.plant.id,
           depoId: org.wh.mam.id,
@@ -523,7 +523,7 @@ async function seedSector(def) {
       const code = `${def.prefix}-LOT-${it.code.slice(-3)}`;
       await safe(client, `lot-${code}`, async () => {
         await client.query(
-          `INSERT INTO item_lots (lot_no, item_id, company_id, son_kullanma_date, is_active)
+          `INSERT INTO item_lots (lot_no, item_id, company_id, expiry_date, is_active)
            SELECT $1::text,$2::int,$3::int,CURRENT_DATE + 120, TRUE
            WHERE NOT EXISTS (SELECT 1 FROM item_lots WHERE lot_no=$1::text)`,
           [code, items[it.code].id, org.firma.id]
@@ -579,9 +579,9 @@ async function seedSector(def) {
       if (!L) {
         L = (await client.query(
           `INSERT INTO crm_leads (
-             lead_code, lead_name, status, priority, telefon, mobile_phone, email, website,
-             address, il, district, country, postal_code, sektor_code, bulma_yontemi,
-             tercih_sebebi, notlar, company_id, is_active
+             lead_code, lead_name, status, priority, phone, mobile_phone, email, website,
+             address, province, district, country, postal_code, industry_code, lead_source,
+             preference_reason, notes, company_id, is_active
            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'TR','38000',$12,'Fuar','Fiyat/kalite',$13,$14,TRUE)
            RETURNING *`,
           [
@@ -610,12 +610,12 @@ async function seedSector(def) {
 
     for (let i = 0; i < 5; i++) {
       const code = `${def.prefix}-KON-${i + 1}`;
-      let row = (await client.query(`SELECT * FROM crm_contacts WHERE kontak_code=$1`, [code])).rows[0];
+      let row = (await client.query(`SELECT * FROM crm_contacts WHERE contact_code=$1`, [code])).rows[0];
       if (!row) {
         row = (await client.query(
           `INSERT INTO crm_contacts (
-             kontak_code, first_name, last_name, title, email, telefon, mobile_phone,
-             partner_id, birincil, notlar, company_id, is_active
+             contact_code, first_name, last_name, title, email, phone, mobile_phone,
+             partner_id, is_primary, notes, company_id, is_active
            ) VALUES ($1,$2,'Yılmaz','Satınalma',$3,$4,$5,$6,$7,$8,$9,TRUE) RETURNING *`,
           [
             code, `Ali${i + 1}`, `kontak${i + 1}@${def.code.toLowerCase()}.ornek`,
@@ -631,12 +631,12 @@ async function seedSector(def) {
 
     for (let i = 0; i < 5; i++) {
       const code = `${def.prefix}-FRS-${i + 1}`;
-      let f = (await client.query(`SELECT * FROM crm_opportunities WHERE firsat_code=$1`, [code])).rows[0];
+      let f = (await client.query(`SELECT * FROM crm_opportunities WHERE opportunity_code=$1`, [code])).rows[0];
       if (!f) {
         f = (await client.query(
           `INSERT INTO crm_opportunities (
-             firsat_code, firsat_name, partner_id, stage_id, beklenen_gelir, currency_code,
-             target_kapatma_date, plant_id, company_id, description, status, customer_type
+             opportunity_code, opportunity_name, partner_id, stage_id, expected_revenue, currency_code,
+             target_close_date, plant_id, company_id, description, status, customer_type
            ) VALUES ($1,$2,$3,$4,$5,'TRY',CURRENT_DATE,$6,$7,$8,'Acik','Musteri') RETURNING *`,
           [
             code, `${def.prefix} Fırsat ${i + 1} — ${fg?.item_name || 'Mamul'}`,
@@ -654,12 +654,12 @@ async function seedSector(def) {
 
     for (let i = 0; i < 8; i++) {
       const code = `${def.prefix}-FYT-${i + 1}`;
-      const exists = (await client.query(`SELECT id FROM crm_activities WHERE faaliyet_code=$1`, [code])).rows[0];
+      const exists = (await client.query(`SELECT id FROM crm_activities WHERE activity_code=$1`, [code])).rows[0];
       if (!exists) {
         await client.query(
           `INSERT INTO crm_activities (
-             faaliyet_code, partner_id, firsat_id, plant_id, company_id,
-             start_date, end_date, konu, description, status, harcanan_dk, customer_type
+             activity_code, partner_id, opportunity_id, plant_id, company_id,
+             start_date, end_date, subject, description, status, spent_minutes, customer_type
            ) VALUES ($1,$2,$3,$4,$5,CURRENT_DATE,CURRENT_DATE,$6,$7,'Tamamlandi',$8,'Musteri')`,
           [
             code, mus[i % mus.length].id,
@@ -670,7 +670,7 @@ async function seedSector(def) {
         );
       } else {
         await client.query(
-          `UPDATE crm_activities SET company_id=$1 WHERE faaliyet_code=$2 AND company_id IS NULL`,
+          `UPDATE crm_activities SET company_id=$1 WHERE activity_code=$2 AND company_id IS NULL`,
           [firmaId, code]
         );
       }
@@ -679,11 +679,11 @@ async function seedSector(def) {
 
     for (let i = 0; i < 5; i++) {
       const code = `${def.prefix}-GRV-${i + 1}`;
-      const exists = (await client.query(`SELECT id FROM crm_tasks WHERE gorev_code=$1`, [code])).rows[0];
+      const exists = (await client.query(`SELECT id FROM crm_tasks WHERE task_code=$1`, [code])).rows[0];
       if (!exists) {
         await client.query(
           `INSERT INTO crm_tasks (
-             gorev_code, baslik, description, status, priority, son_date, company_id, partner_id
+             task_code, title, description, status, priority, due_date, company_id, partner_id
            ) VALUES ($1,$2,$3,$4,'Normal',CURRENT_DATE,$5,$6)`,
           [
             code, `${def.prefix} Görev ${i + 1}`, def.tag,
@@ -692,7 +692,7 @@ async function seedSector(def) {
         );
       } else {
         await client.query(
-          `UPDATE crm_tasks SET company_id=$1 WHERE gorev_code=$2 AND company_id IS NULL`,
+          `UPDATE crm_tasks SET company_id=$1 WHERE task_code=$2 AND company_id IS NULL`,
           [firmaId, code]
         );
       }
@@ -893,7 +893,7 @@ async function seedSector(def) {
         warehouse_id: org.wh.hmd.id,
         company_id: firmaId,
         description: `[${def.tag}] Örnek mal kabul ${i + 1}`,
-        gkk_gerekli: true,
+        incoming_qc_required: true,
         internal_note: def.tag,
       }, firmaId);
       if (mkR.ok) {
@@ -931,7 +931,7 @@ async function seedSector(def) {
           if (!routeForBom) {
             routeForBom = (await client.query(
               `INSERT INTO routings (
-                 route_code, route_name, item_id, is_active, company_id, plant_id, varsayilan, notes
+                 route_code, route_name, item_id, is_active, company_id, plant_id, is_default, notes
                ) VALUES ($1,$2,$3,TRUE,$4,$5,FALSE,$6) RETURNING *`,
               [code, `${b.bom_name || b.bom_code} Rota`, b.finished_good_item_id,
                 firmaId, org.plant.id, def.tag]
@@ -939,7 +939,7 @@ async function seedSector(def) {
             let sira = 10;
             for (const op of def.ops.slice(0, 4)) {
               await client.query(
-                `INSERT INTO routing_operations (route_id, line_no, operation_code, operation_name, work_center_id, sure_dk)
+                `INSERT INTO routing_operations (route_id, line_no, operation_code, operation_name, work_center_id, duration_minutes)
                  VALUES ($1,$2,$3,$4,$5,25)`,
                 [routeForBom.id, sira, `OP${sira}`, op, org.wc.id]
               );
@@ -959,9 +959,9 @@ async function seedSector(def) {
       component_warehouse_id: org.wh.hmd.id,
       fg_warehouse_id: org.wh.mam.id,
       wip_warehouse_id: org.wh.ana.id,
-      planlanan_quantity: 25 + idx * 10,
+      planned_quantity: 25 + idx * 10,
       order_type_id: 3,
-      planli_kesin: 'Kesin',
+      planned_firm: 'Kesin',
       description: `[${def.tag}] Örnek UE ${b.bom_code}`,
       order_date: today,
     }, firmaId);
@@ -982,9 +982,9 @@ async function seedSector(def) {
         const no = `${def.prefix}-BI-${i + 1}`;
         await client.query(
           `INSERT INTO mrp_independent_requirements
-             (ihtiyac_no, item_id, quantity, uom_code, ihtiyac_date, source, company_id, plant_id, description, is_active)
+             (requirement_no, item_id, quantity, uom_code, requirement_date, source, company_id, plant_id, description, is_active)
            SELECT $1::text,$2::int,$3::numeric,$4::text,CURRENT_DATE+14,'Manuel',$5::int,$6::int,$7::text,TRUE
-           WHERE NOT EXISTS (SELECT 1 FROM mrp_independent_requirements WHERE ihtiyac_no=$1::text)`,
+           WHERE NOT EXISTS (SELECT 1 FROM mrp_independent_requirements WHERE requirement_no=$1::text)`,
           [no, items[mamul.code].id, 80 + i * 20, mamul.uom, firmaId, org.plant.id, def.tag]
         );
         bump('mrp-bagimsiz-ihtiyac');
@@ -1130,7 +1130,7 @@ async function seedSector(def) {
         gross_amount: 35000 + i * 2500,
         iban: `TR00${String(1000000000000000 + i).slice(0, 16)}`,
         bank_name: 'Örnek Bank',
-        sgk_sicil_no: `SGK${def.prefix}${i + 1}`,
+        social_security_no: `SGK${def.prefix}${i + 1}`,
         description: def.tag,
         emergency_contact_name: 'Acil Kişi',
         emergency_contact_phone: '05320000000',
@@ -1228,7 +1228,7 @@ async function seedSector(def) {
   await qn('hr-personel', `SELECT count(*)::int n FROM hr_employees WHERE company_id=$1`);
   await qn('hr-departmanlar', `SELECT count(*)::int n FROM hr_departments WHERE company_id=$1`);
   await qn('stok-partileri', `SELECT count(*)::int n FROM item_lots WHERE company_id=$1 AND lot_no LIKE '${def.prefix}-%'`);
-  await qn('mrp-bagimsiz-ihtiyac', `SELECT count(*)::int n FROM mrp_independent_requirements WHERE company_id=$1 AND ihtiyac_no LIKE '${def.prefix}-%'`);
+  await qn('mrp-bagimsiz-ihtiyac', `SELECT count(*)::int n FROM mrp_independent_requirements WHERE company_id=$1 AND requirement_no LIKE '${def.prefix}-%'`);
   catalog.db_counts = dbCounts;
   catalog.counts = { ...catalog.counts, ...dbCounts };
 
@@ -1242,7 +1242,7 @@ async function seedSector(def) {
 }
 
 async function main() {
-  const keys = argFirma ? [argFirma.toUpperCase()] : ['GIDA', 'DOKUM'];
+  const keys = argCompany ? [argCompany.toUpperCase()] : ['GIDA', 'DOKUM'];
   const report = { generatedAt: new Date().toISOString(), sectors: [] };
   // finance seed once
   try {

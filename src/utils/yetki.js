@@ -6,7 +6,7 @@
 
 async function parametreAl(clientOrPool, kod, varsayilan = null) {
     const r = await clientOrPool.query(
-        `SELECT value FROM system_parameters WHERE parametre_code=$1 AND is_active=TRUE`,
+        `SELECT value FROM system_parameters WHERE parameter_code=$1 AND is_active=TRUE`,
         [kod]
     );
     const v = r.rows[0]?.value;
@@ -21,11 +21,11 @@ function isTamYetkili(kullanici) {
     return false;
 }
 
-async function kullaniciGetir(clientOrPool, kullaniciKodu) {
+async function getUser(clientOrPool, kullaniciKodu) {
     if (!kullaniciKodu) return null;
     const r = await clientOrPool.query(
-        `SELECT k.*, g.satinalma_onay, g.purchase_requisition_ref, g.kalite_control, g.group_name,
-                g.module_permissions, g.warehouse_yetkileri
+        `SELECT k.*, g.can_approve_purchase, g.purchase_requisition_ref, g.can_quality_control, g.group_name,
+                g.module_permissions, g.warehouse_permissions
          FROM users k
          LEFT JOIN user_groups g ON g.group_code = k.group_code AND g.is_active = TRUE
          WHERE k.user_code = $1 OR k.username = $1`,
@@ -34,7 +34,7 @@ async function kullaniciGetir(clientOrPool, kullaniciKodu) {
     return r.rows[0] || null;
 }
 
-function reqKullaniciKodu(req) {
+function reqUserCode(req) {
     return (
         req.get?.('x-kullanici-kodu') ||
         req.headers?.['x-kullanici-kodu'] ||
@@ -44,8 +44,8 @@ function reqKullaniciKodu(req) {
     );
 }
 
-async function assertYetki(clientOrPool, kullaniciKodu, alan, message) {
-    const kullanici = await kullaniciGetir(clientOrPool, kullaniciKodu);
+async function assertPermission(clientOrPool, kullaniciKodu, alan, message) {
+    const kullanici = await getUser(clientOrPool, kullaniciKodu);
     if (!kullanici) {
         const err = new Error(message || `Yetkili kullanıcı gerekli (${alan}). X-Kullanici-Kodu gönderin.`);
         err.status = 401;
@@ -58,9 +58,9 @@ async function assertYetki(clientOrPool, kullaniciKodu, alan, message) {
     }
     if (isTamYetkili(kullanici)) return kullanici;
 
-    if (alan === 'satinalma_onay') {
+    if (alan === 'can_approve_purchase') {
         const onayGrup = await parametreAl(clientOrPool, 'SATINALMA_ONAY_GRUP', 'SATINALMA');
-        const ok = Boolean(kullanici.satinalma_onay) || kullanici.group_code === onayGrup;
+        const ok = Boolean(kullanici.can_approve_purchase) || kullanici.group_code === onayGrup;
         if (!ok) {
             const err = new Error('Satınalma onay yetkisi yok (SATINALMA grubu gerekli).');
             err.status = 403;
@@ -73,8 +73,8 @@ async function assertYetki(clientOrPool, kullaniciKodu, alan, message) {
             err.status = 403;
             throw err;
         }
-    } else if (alan === 'kalite_control') {
-        if (!kullanici.kalite_control) {
+    } else if (alan === 'can_quality_control') {
+        if (!kullanici.can_quality_control) {
             const err = new Error('Kalite kontrol yetkisi yok (KALITE grubu gerekli).');
             err.status = 403;
             throw err;
@@ -85,8 +85,8 @@ async function assertYetki(clientOrPool, kullaniciKodu, alan, message) {
 
 module.exports = {
     parametreAl,
-    kullaniciGetir,
-    reqKullaniciKodu,
-    assertYetki,
+    getUser,
+    reqUserCode,
+    assertPermission,
     isTamYetkili,
 };

@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod, stokSeriKodundanTip } = require('../src/utils/kodUretici');
-const { firmaIdFromReq, andStokFirma, assertStokFirmaKayit } = require('../src/utils/firmaScope');
+const { nextSequenceCode, itemTypeFromSeriesCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq, andItemCompany, assertItemCompanyRecord } = require('../src/utils/firmaScope');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -26,7 +26,7 @@ function rowHasContent(row, keys) {
     });
 }
 
-async function assertBirim(client, kod, label) {
+async function assertUom(client, kod, label) {
     const k = trimOrNull(kod);
     if (!k) return null;
     const r = await client.query(
@@ -47,7 +47,7 @@ async function assertBirim(client, kod, label) {
     return k;
 }
 
-async function stokGetir(id) {
+async function getItemById(id) {
     const stokRes = await pool.query(
         `
         SELECT
@@ -167,10 +167,10 @@ async function saveChildren(client, stokId, body) {
     if (Array.isArray(body.item_details)) {
         await client.query('DELETE FROM item_details WHERE item_id = $1', [stokId]);
         for (const d of body.item_details) {
-            if (!rowHasContent(d, ['boyut', 'agirlik'])) continue;
+            if (!rowHasContent(d, ['dimensions', 'weight'])) continue;
             await client.query(
-                `INSERT INTO item_details (item_id, boyut, agirlik) VALUES ($1, $2, $3)`,
-                [stokId, trimOrNull(d.boyut), d.agirlik ?? null]
+                `INSERT INTO item_details (item_id, dimensions, weight) VALUES ($1, $2, $3)`,
+                [stokId, trimOrNull(d.dimensions), d.weight ?? null]
             );
         }
     }
@@ -181,37 +181,37 @@ async function saveChildren(client, stokId, body) {
         for (const d of body.birim_tanimlari) {
             if (!nonempty(d.uom_code)) continue;
             sira += 1;
-            const uom_code = await assertBirim(client, d.uom_code, 'Birim kodu');
-            const cevr = nonempty(d.cevrilecek_uom)
-                ? await assertBirim(client, d.cevrilecek_uom, 'Çevrilecek uom_code')
+            const uom_code = await assertUom(client, d.uom_code, 'Birim kodu');
+            const cevr = nonempty(d.target_uom)
+                ? await assertUom(client, d.target_uom, 'Çevrilecek uom_code')
                 : null;
-            const kaynakKatsayi = d.source_katsayi == null || d.source_katsayi === ''
+            const kaynakKatsayi = d.source_factor == null || d.source_factor === ''
                 ? 1
-                : Number(d.source_katsayi);
+                : Number(d.source_factor);
             if (!Number.isFinite(kaynakKatsayi) || kaynakKatsayi <= 0) {
                 const err = new Error('Kaynak katsayi 0 dan buyuk olmalidir.');
                 err.status = 400;
-                err.alan = 'source_katsayi';
+                err.alan = 'source_factor';
                 throw err;
             }
-            const katsayi = Number(d.katsayi);
+            const katsayi = Number(d.conversion_factor);
             if (!Number.isFinite(katsayi) || katsayi <= 0) {
                 const err = new Error('Birim katsayisi 0 dan buyuk olmalidir.');
                 err.status = 400;
-                err.alan = 'katsayi';
+                err.alan = 'conversion_factor';
                 throw err;
             }
             await client.query(
                 `
                 INSERT INTO item_uom_conversions (
-                    item_id, line_no, uom_code, source_katsayi, katsayi, cevrilecek_uom, barkod,
-                    kutu_en_mm, kutu_boy_mm, kutu_yukseklik_mm, hacim, agirlik, takip_uom_mi
+                    item_id, line_no, uom_code, source_factor, conversion_factor, target_uom, barcode,
+                    box_width_mm, box_length_mm, box_height_mm, volume, weight, is_tracking_uom
                 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,COALESCE($13,FALSE))
                 `,
                 [
-                    stokId, sira, uom_code, kaynakKatsayi, katsayi, cevr, trimOrNull(d.barkod),
-                    d.kutu_en_mm ?? null, d.kutu_boy_mm ?? null, d.kutu_yukseklik_mm ?? null,
-                    d.hacim ?? null, d.agirlik ?? null, Boolean(d.takip_uom_mi),
+                    stokId, sira, uom_code, kaynakKatsayi, katsayi, cevr, trimOrNull(d.barcode),
+                    d.box_width_mm ?? null, d.box_length_mm ?? null, d.box_height_mm ?? null,
+                    d.volume ?? null, d.weight ?? null, Boolean(d.is_tracking_uom),
                 ]
             );
         }
@@ -251,11 +251,11 @@ async function saveChildren(client, stokId, body) {
     if (Array.isArray(body.barkodlar)) {
         await client.query('DELETE FROM item_barcodes WHERE item_id = $1', [stokId]);
         for (const d of body.barkodlar) {
-            if (!nonempty(d.barkod)) continue;
+            if (!nonempty(d.barcode)) continue;
             await client.query(
-                `INSERT INTO item_barcodes (item_id, barkod, uom_code, varsayilan)
+                `INSERT INTO item_barcodes (item_id, barcode, uom_code, is_default)
                  VALUES ($1,$2,$3,COALESCE($4,FALSE))`,
-                [stokId, trimOrNull(d.barkod), trimOrNull(d.uom_code), Boolean(d.varsayilan)]
+                [stokId, trimOrNull(d.barcode), trimOrNull(d.uom_code), Boolean(d.is_default)]
             );
         }
     }
@@ -263,18 +263,18 @@ async function saveChildren(client, stokId, body) {
     if (Array.isArray(body.dil_tanimlari)) {
         await client.query('DELETE FROM item_languages WHERE item_id = $1', [stokId]);
         for (const d of body.dil_tanimlari) {
-            if (!nonempty(d.dil_code)) continue;
+            if (!nonempty(d.language_code)) continue;
             await client.query(
                 `INSERT INTO item_languages
-                    (item_id, dil_code, dil_name, item_name, description, varsayilan)
+                    (item_id, language_code, language_name, item_name, description, is_default)
                  VALUES ($1,$2,$3,$4,$5,COALESCE($6,FALSE))`,
                 [
                     stokId,
-                    trimOrNull(d.dil_code),
-                    trimOrNull(d.dil_name),
+                    trimOrNull(d.language_code),
+                    trimOrNull(d.language_name),
                     trimOrNull(d.item_name),
                     trimOrNull(d.description),
-                    Boolean(d.varsayilan),
+                    Boolean(d.is_default),
                 ]
             );
         }
@@ -297,20 +297,20 @@ async function saveChildren(client, stokId, body) {
             const isActive = d.is_active === false ? false : true;
             await client.query(
                 `INSERT INTO item_warehouses (
-                    item_id, warehouse_id, plant_id, is_active, varsayilan_giris, varsayilan_cikis
+                    item_id, warehouse_id, plant_id, is_active, is_default_receipt, is_default_issue
                  ) VALUES ($1,$2,$3,$4,COALESCE($5,FALSE),COALESCE($6,FALSE))
                  ON CONFLICT (item_id, warehouse_id) DO UPDATE SET
                     plant_id = EXCLUDED.plant_id,
                     is_active = EXCLUDED.is_active,
-                    varsayilan_giris = EXCLUDED.varsayilan_giris,
-                    varsayilan_cikis = EXCLUDED.varsayilan_cikis`,
+                    is_default_receipt = EXCLUDED.is_default_receipt,
+                    is_default_issue = EXCLUDED.is_default_issue`,
                 [
                     stokId,
                     wid,
                     plantId,
                     isActive,
-                    Boolean(d.varsayilan_giris),
-                    Boolean(d.varsayilan_cikis),
+                    Boolean(d.is_default_receipt),
+                    Boolean(d.is_default_issue),
                 ]
             );
         }
@@ -351,12 +351,12 @@ async function saveChildren(client, stokId, body) {
                     item_id, company_id, plant_id, is_active,
                     sales_price, purchase_uom, sales_uom,
                     currency_code, purchase_currency_code,
-                    sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, temin_suresi_days, cikis_type,
-                    default_tax_code_id, varsayilan_vat_rate,
+                    po_tolerance_min_pct, po_tolerance_max_pct, lead_time_days, issue_type,
+                    default_tax_code_id, default_vat_rate,
                     safety_stock, min_stock, max_stock, reorder_level,
                     fixed_order_quantity, optimum_order_quantity,
-                    varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id,
-                    lot_politika, series_politika, updated_at
+                    default_receipt_warehouse_id, default_issue_warehouse_id,
+                    lot_policy, serial_policy, updated_at
                  ) VALUES (
                     $1,$2,$3,COALESCE($4,TRUE),
                     $5,$6,$7,
@@ -374,16 +374,16 @@ async function saveChildren(client, stokId, body) {
                     d.sales_price ?? null, trimOrNull(d.purchase_uom), trimOrNull(d.sales_uom),
                     trimOrNull(d.currency_code) || 'TRY',
                     trimOrNull(d.purchase_currency_code) || trimOrNull(d.currency_code) || 'TRY',
-                    d.sa_tolerans_min_yuzde ?? null, d.sa_tolerans_max_yuzde ?? null,
-                    d.temin_suresi_days ?? null, trimOrNull(d.cikis_type),
+                    d.po_tolerance_min_pct ?? null, d.po_tolerance_max_pct ?? null,
+                    d.lead_time_days ?? null, trimOrNull(d.issue_type),
                     d.default_tax_code_id ? Number(d.default_tax_code_id) : null,
-                    d.varsayilan_vat_rate ?? null,
+                    d.default_vat_rate ?? null,
                     d.safety_stock ?? null, d.min_stock ?? null, d.max_stock ?? null, d.reorder_level ?? null,
                     d.fixed_order_quantity ?? null, d.optimum_order_quantity ?? null,
-                    d.varsayilan_giris_warehouse_id ? Number(d.varsayilan_giris_warehouse_id) : null,
-                    d.varsayilan_cikis_warehouse_id ? Number(d.varsayilan_cikis_warehouse_id) : null,
-                    trimOrNull(d.lot_politika) || 'Takipsiz',
-                    trimOrNull(d.series_politika) || 'Takipsiz',
+                    d.default_receipt_warehouse_id ? Number(d.default_receipt_warehouse_id) : null,
+                    d.default_issue_warehouse_id ? Number(d.default_issue_warehouse_id) : null,
+                    trimOrNull(d.lot_policy) || 'Takipsiz',
+                    trimOrNull(d.serial_policy) || 'Takipsiz',
                 ]
             );
         }
@@ -482,15 +482,15 @@ router.get('/', async (req, res) => {
         }
         if (is_active === 'true') where.push('is_active IS DISTINCT FROM FALSE');
         if (is_active === 'false') where.push('is_active = FALSE');
-        const firmaId = firmaIdFromReq(req);
-        const firmaClause = andStokFirma('items', firmaId, params);
-        if (firmaClause) where.push(firmaClause.replace(/^\s*AND\s+/i, ''));
+        const firmaId = companyIdFromReq(req);
+        const companyClause = andItemCompany('items', firmaId, params);
+        if (companyClause) where.push(companyClause.replace(/^\s*AND\s+/i, ''));
         const ids = await pool.query(
             `SELECT id FROM items ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY item_code`,
             params
         );
         const items = [];
-        for (const r of ids.rows) items.push(await stokGetir(r.id));
+        for (const r of ids.rows) items.push(await getItemById(r.id));
         res.json(items);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -499,13 +499,13 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             // Liste (andStokFirma) ile aynı kapsam — aksi halde Düzelt boş form
-            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            const ok = await assertItemCompanyRecord(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         }
-        const stok = await stokGetir(req.params.id);
+        const stok = await getItemById(req.params.id);
         if (!stok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         res.json(stok);
     } catch (err) {
@@ -525,7 +525,7 @@ router.post('/', async (req, res) => {
         const type = trimOrNull(req.body.item_type) || 'Ticari';
         const m = req.body;
         // Firma zorunlu; iş yeri bağları boşsa firmanın tüm iş yerleri default
-        const firmaId = Number(m.company_id) || firmaIdFromReq(req) || null;
+        const firmaId = Number(m.company_id) || companyIdFromReq(req) || null;
         if (!firmaId) {
             return res.status(400).json({
                 hata: 'Firma zorunludur.',
@@ -559,9 +559,9 @@ router.post('/', async (req, res) => {
             || null;
 
         const sonucId = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(m.item_code) || (await sonrakiKod(client, stokSeriKodundanTip(type)));
-            const uom_code = await assertBirim(client, m.uom_code || m.stock_takip_uom || 'AD', 'Birim') || 'AD';
-            const takip = await assertBirim(client, m.stock_takip_uom || uom_code, 'Stok takip birimi') || uom_code;
+            const kod = trimOrNull(m.item_code) || (await nextSequenceCode(client, itemTypeFromSeriesCode(type)));
+            const uom_code = await assertUom(client, m.uom_code || m.stock_tracking_uom || 'AD', 'Birim') || 'AD';
+            const takip = await assertUom(client, m.stock_tracking_uom || uom_code, 'Stok takip birimi') || uom_code;
             const abc = trimOrNull(m.abc_code);
             if (abc && !['A', 'B', 'C'].includes(abc)) {
                 const err = new Error("ABC kodu 'A', 'B' veya 'C' olmalı.");
@@ -574,12 +574,12 @@ router.post('/', async (req, res) => {
             const vatRate = await syncVatRateFromTax(
                 client,
                 taxCodeId,
-                m.varsayilan_vat_rate ?? 20
+                m.default_vat_rate ?? 20
             );
             // Varsayılan depolar seçiliyse depo_baglari'na ekle
             if (Array.isArray(m.depo_baglari)) {
                 const seen = new Set(m.depo_baglari.map((b) => Number(b.warehouse_id)).filter(Boolean));
-                for (const wid of [m.varsayilan_giris_warehouse_id, m.varsayilan_cikis_warehouse_id]) {
+                for (const wid of [m.default_receipt_warehouse_id, m.default_issue_warehouse_id]) {
                     const idn = Number(wid);
                     if (idn && !seen.has(idn)) {
                         m.depo_baglari.push({ warehouse_id: idn, plant_id: isYeriId, is_active: true });
@@ -591,19 +591,19 @@ router.post('/', async (req, res) => {
             const stokSonuc = await client.query(
                 `
                 INSERT INTO items (
-                    item_code, item_name, item_name_2, description, uzun_item_code,
-                    uom_code, stock_takip_uom, sales_price, item_type, tedarik_type, is_active,
-                    abc_code, hacim, yogunluk, hacim_uom, yogunluk_uom, agirlik_uom,
-                    koli_brut_agirlik, kutu_brut_agirlik, kutu_en_mm, kutu_boy_mm, kutu_yukseklik_mm,
-                    barkod, safety_stock, max_stock, country_mensei, raf_omru_days,
-                    marka, temin_method, quantity_hassasiyeti,
-                    lot_politika, kalite_control_gerekli, varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id,
+                    item_code, item_name, item_name_2, description, long_item_code,
+                    uom_code, stock_tracking_uom, sales_price, item_type, procurement_type, is_active,
+                    abc_code, volume, density, volume_uom, density_uom, weight_uom,
+                    carton_gross_weight, box_gross_weight, box_width_mm, box_length_mm, box_height_mm,
+                    barcode, safety_stock, max_stock, country_of_origin, shelf_life_days,
+                    brand_name, procurement_method, quantity_precision,
+                    lot_policy, quality_control_required, default_receipt_warehouse_id, default_issue_warehouse_id,
                     company_id,
-                    purchase_uom, sales_uom, gtip_code, uretici_code, old_item_code, original_code,
-                    sa_tolerans_min_yuzde, sa_tolerans_max_yuzde, varsayilan_vat_rate,
-                    min_stock, optimum_order_quantity, net_agirlik, brut_agirlik,
-                    series_politika, class_code, temin_suresi_days, reorder_level, fixed_order_quantity,
-                    cikis_type, silindi, default_tax_code_id,
+                    purchase_uom, sales_uom, hs_code, manufacturer_code, old_item_code, original_code,
+                    po_tolerance_min_pct, po_tolerance_max_pct, default_vat_rate,
+                    min_stock, optimum_order_quantity, net_weight, gross_weight,
+                    serial_policy, class_code, lead_time_days, reorder_level, fixed_order_quantity,
+                    issue_type, is_deleted, default_tax_code_id,
                     currency_code, purchase_currency_code
                 ) VALUES (
                     $1,$2,$3,$4,$5,
@@ -624,29 +624,29 @@ router.post('/', async (req, res) => {
                 RETURNING id
                 `,
                 [
-                    kod, item_name, trimOrNull(m.item_name_2), trimOrNull(m.description), trimOrNull(m.uzun_item_code),
-                    uom_code, takip, m.sales_price || 0, type, trimOrNull(m.tedarik_type),
+                    kod, item_name, trimOrNull(m.item_name_2), trimOrNull(m.description), trimOrNull(m.long_item_code),
+                    uom_code, takip, m.sales_price || 0, type, trimOrNull(m.procurement_type),
                     typeof m.is_active === 'boolean' ? m.is_active : true,
-                    abc, m.hacim ?? null, m.yogunluk ?? null,
-                    trimOrNull(m.hacim_uom), trimOrNull(m.yogunluk_uom), trimOrNull(m.agirlik_uom),
-                    m.koli_brut_agirlik ?? null, m.kutu_brut_agirlik ?? null,
-                    m.kutu_en_mm ?? null, m.kutu_boy_mm ?? null, m.kutu_yukseklik_mm ?? null,
-                    trimOrNull(m.barkod), m.safety_stock ?? null, m.max_stock ?? null,
-                    trimOrNull(m.country_mensei), m.raf_omru_days ?? null,
-                    trimOrNull(m.marka), trimOrNull(m.temin_method), m.quantity_hassasiyeti ?? 3,
-                    trimOrNull(m.lot_politika) || 'Takipsiz',
-                    typeof m.kalite_control_gerekli === 'boolean' ? m.kalite_control_gerekli : false,
-                    m.varsayilan_giris_warehouse_id || null,
-                    m.varsayilan_cikis_warehouse_id || null,
+                    abc, m.volume ?? null, m.density ?? null,
+                    trimOrNull(m.volume_uom), trimOrNull(m.density_uom), trimOrNull(m.weight_uom),
+                    m.carton_gross_weight ?? null, m.box_gross_weight ?? null,
+                    m.box_width_mm ?? null, m.box_length_mm ?? null, m.box_height_mm ?? null,
+                    trimOrNull(m.barcode), m.safety_stock ?? null, m.max_stock ?? null,
+                    trimOrNull(m.country_of_origin), m.shelf_life_days ?? null,
+                    trimOrNull(m.brand_name), trimOrNull(m.procurement_method), m.quantity_precision ?? 3,
+                    trimOrNull(m.lot_policy) || 'Takipsiz',
+                    typeof m.quality_control_required === 'boolean' ? m.quality_control_required : false,
+                    m.default_receipt_warehouse_id || null,
+                    m.default_issue_warehouse_id || null,
                     firmaId,
-                    trimOrNull(m.purchase_uom), trimOrNull(m.sales_uom), trimOrNull(m.gtip_code),
-                    trimOrNull(m.uretici_code), trimOrNull(m.old_item_code), trimOrNull(m.original_code),
-                    m.sa_tolerans_min_yuzde ?? 0, m.sa_tolerans_max_yuzde ?? 0, vatRate ?? 20,
-                    m.min_stock ?? 0, m.optimum_order_quantity ?? null, m.net_agirlik ?? null, m.brut_agirlik ?? null,
-                    trimOrNull(m.series_politika) || 'Takipsiz', trimOrNull(m.class_code),
-                    m.temin_suresi_days ?? 0, m.reorder_level ?? 0, m.fixed_order_quantity ?? null,
-                    trimOrNull(m.cikis_type) || 'Manuel',
-                    typeof m.silindi === 'boolean' ? m.silindi : false,
+                    trimOrNull(m.purchase_uom), trimOrNull(m.sales_uom), trimOrNull(m.hs_code),
+                    trimOrNull(m.manufacturer_code), trimOrNull(m.old_item_code), trimOrNull(m.original_code),
+                    m.po_tolerance_min_pct ?? 0, m.po_tolerance_max_pct ?? 0, vatRate ?? 20,
+                    m.min_stock ?? 0, m.optimum_order_quantity ?? null, m.net_weight ?? null, m.gross_weight ?? null,
+                    trimOrNull(m.serial_policy) || 'Takipsiz', trimOrNull(m.class_code),
+                    m.lead_time_days ?? 0, m.reorder_level ?? 0, m.fixed_order_quantity ?? null,
+                    trimOrNull(m.issue_type) || 'Manuel',
+                    typeof m.is_deleted === 'boolean' ? m.is_deleted : false,
                     taxCodeId ?? null,
                     trimOrNull(m.currency_code) || 'TRY',
                     trimOrNull(m.purchase_currency_code) || trimOrNull(m.currency_code) || 'TRY',
@@ -656,13 +656,13 @@ router.post('/', async (req, res) => {
 
             // birim_tanimlari yoksa takip biriminden tek satır
             if (!Array.isArray(m.birim_tanimlari) || !m.birim_tanimlari.some((b) => nonempty(b.uom_code))) {
-                m.birim_tanimlari = [{ source_katsayi: 1, uom_code: takip, katsayi: 1, cevrilecek_uom: takip, takip_uom_mi: true }];
+                m.birim_tanimlari = [{ source_factor: 1, uom_code: takip, conversion_factor: 1, target_uom: takip, is_tracking_uom: true }];
             }
             await saveChildren(client, stokId, m);
             return stokId;
         });
 
-        res.status(201).json(await stokGetir(sonucId));
+        res.status(201).json(await getItemById(sonucId));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu stok kodu zaten kullanılıyor.', alan: 'item_code' });
@@ -673,9 +673,9 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
-            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            const ok = await assertItemCompanyRecord(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         }
         const item_name = trimOrNull(req.body.item_name);
@@ -693,8 +693,8 @@ router.put('/:id', async (req, res) => {
                 hatalar: [{ alan: 'abc_code', hata: "ABC kodu 'A', 'B' veya 'C' olmalı." }],
             });
         }
-        const putFirmaId = Number(m.company_id) || firmaIdFromReq(req) || null;
-        if (m.company_id !== undefined && m.company_id !== null && m.company_id !== '' && !Number(m.company_id) && !firmaIdFromReq(req)) {
+        const putFirmaId = Number(m.company_id) || companyIdFromReq(req) || null;
+        if (m.company_id !== undefined && m.company_id !== null && m.company_id !== '' && !Number(m.company_id) && !companyIdFromReq(req)) {
             return res.status(400).json({
                 hata: 'Firma zorunludur.',
                 hatalar: [{ alan: 'company_id', hata: 'Firma zorunludur.' }],
@@ -729,20 +729,20 @@ router.put('/:id', async (req, res) => {
 
         await withTransaction(pool, async (client) => {
             const uom_code = Object.prototype.hasOwnProperty.call(m, 'uom_code')
-                ? (await assertBirim(client, m.uom_code, 'Birim'))
+                ? (await assertUom(client, m.uom_code, 'Birim'))
                 : undefined;
-            const takip = Object.prototype.hasOwnProperty.call(m, 'stock_takip_uom')
-                ? (await assertBirim(client, m.stock_takip_uom, 'Stok takip birimi'))
+            const takip = Object.prototype.hasOwnProperty.call(m, 'stock_tracking_uom')
+                ? (await assertUom(client, m.stock_tracking_uom, 'Stok takip birimi'))
                 : undefined;
 
             const taxCodeId = await resolveTaxCodeId(client, m);
-            let vatRate = m.varsayilan_vat_rate ?? null;
+            let vatRate = m.default_vat_rate ?? null;
             if (taxCodeId !== undefined) {
                 vatRate = await syncVatRateFromTax(client, taxCodeId, vatRate);
             }
             if (Array.isArray(m.depo_baglari)) {
                 const seen = new Set(m.depo_baglari.map((b) => Number(b.warehouse_id)).filter(Boolean));
-                for (const wid of [m.varsayilan_giris_warehouse_id, m.varsayilan_cikis_warehouse_id]) {
+                for (const wid of [m.default_receipt_warehouse_id, m.default_issue_warehouse_id]) {
                     const idn = Number(wid);
                     if (idn && !seen.has(idn)) {
                         m.depo_baglari.push({
@@ -761,57 +761,57 @@ router.put('/:id', async (req, res) => {
                     item_name = $2,
                     item_name_2 = $3,
                     description = $4,
-                    uzun_item_code = $5,
+                    long_item_code = $5,
                     uom_code = COALESCE($6, uom_code),
-                    stock_takip_uom = COALESCE($7, stock_takip_uom),
+                    stock_tracking_uom = COALESCE($7, stock_tracking_uom),
                     sales_price = COALESCE($8, sales_price),
                     item_type = COALESCE($9, item_type),
-                    tedarik_type = COALESCE($10, tedarik_type),
+                    procurement_type = COALESCE($10, procurement_type),
                     is_active = COALESCE($11, is_active),
                     abc_code = $12,
-                    hacim = $13,
-                    yogunluk = $14,
-                    hacim_uom = $15,
-                    yogunluk_uom = $16,
-                    agirlik_uom = $17,
-                    koli_brut_agirlik = $18,
-                    kutu_brut_agirlik = $19,
-                    kutu_en_mm = $20,
-                    kutu_boy_mm = $21,
-                    kutu_yukseklik_mm = $22,
-                    barkod = $23,
+                    volume = $13,
+                    density = $14,
+                    volume_uom = $15,
+                    density_uom = $16,
+                    weight_uom = $17,
+                    carton_gross_weight = $18,
+                    box_gross_weight = $19,
+                    box_width_mm = $20,
+                    box_length_mm = $21,
+                    box_height_mm = $22,
+                    barcode = $23,
                     safety_stock = $24,
                     max_stock = $25,
-                    country_mensei = $26,
-                    raf_omru_days = $27,
-                    marka = $28,
-                    temin_method = $29,
-                    quantity_hassasiyeti = COALESCE($30, quantity_hassasiyeti),
-                    lot_politika = COALESCE($31, lot_politika),
-                    kalite_control_gerekli = COALESCE($32, kalite_control_gerekli),
-                    varsayilan_giris_warehouse_id = COALESCE($33, varsayilan_giris_warehouse_id),
-                    varsayilan_cikis_warehouse_id = COALESCE($34, varsayilan_cikis_warehouse_id),
+                    country_of_origin = $26,
+                    shelf_life_days = $27,
+                    brand_name = $28,
+                    procurement_method = $29,
+                    quantity_precision = COALESCE($30, quantity_precision),
+                    lot_policy = COALESCE($31, lot_policy),
+                    quality_control_required = COALESCE($32, quality_control_required),
+                    default_receipt_warehouse_id = COALESCE($33, default_receipt_warehouse_id),
+                    default_issue_warehouse_id = COALESCE($34, default_issue_warehouse_id),
                     company_id = COALESCE($35, company_id),
-                    temin_suresi_days = COALESCE($36, temin_suresi_days),
+                    lead_time_days = COALESCE($36, lead_time_days),
                     reorder_level = COALESCE($37, reorder_level),
                     fixed_order_quantity = COALESCE($38, fixed_order_quantity),
                     purchase_uom = COALESCE($39, purchase_uom),
                     sales_uom = COALESCE($40, sales_uom),
-                    gtip_code = COALESCE($41, gtip_code),
-                    uretici_code = COALESCE($42, uretici_code),
+                    hs_code = COALESCE($41, hs_code),
+                    manufacturer_code = COALESCE($42, manufacturer_code),
                     old_item_code = COALESCE($43, old_item_code),
                     original_code = COALESCE($44, original_code),
-                    sa_tolerans_min_yuzde = COALESCE($45, sa_tolerans_min_yuzde),
-                    sa_tolerans_max_yuzde = COALESCE($46, sa_tolerans_max_yuzde),
-                    varsayilan_vat_rate = COALESCE($47, varsayilan_vat_rate),
+                    po_tolerance_min_pct = COALESCE($45, po_tolerance_min_pct),
+                    po_tolerance_max_pct = COALESCE($46, po_tolerance_max_pct),
+                    default_vat_rate = COALESCE($47, default_vat_rate),
                     min_stock = COALESCE($48, min_stock),
                     optimum_order_quantity = COALESCE($49, optimum_order_quantity),
-                    net_agirlik = COALESCE($50, net_agirlik),
-                    brut_agirlik = COALESCE($51, brut_agirlik),
-                    series_politika = COALESCE($52, series_politika),
+                    net_weight = COALESCE($50, net_weight),
+                    gross_weight = COALESCE($51, gross_weight),
+                    serial_policy = COALESCE($52, serial_policy),
                     class_code = COALESCE($53, class_code),
-                    cikis_type = COALESCE($54, cikis_type),
-                    silindi = COALESCE($55, silindi),
+                    issue_type = COALESCE($54, issue_type),
+                    is_deleted = COALESCE($55, is_deleted),
                     default_tax_code_id = CASE WHEN $57::boolean THEN $56 ELSE default_tax_code_id END,
                     currency_code = COALESCE($58, currency_code, 'TRY'),
                     purchase_currency_code = COALESCE($59, purchase_currency_code, 'TRY')
@@ -823,57 +823,57 @@ router.put('/:id', async (req, res) => {
                     item_name,
                     trimOrNull(m.item_name_2),
                     trimOrNull(m.description),
-                    trimOrNull(m.uzun_item_code),
+                    trimOrNull(m.long_item_code),
                     uom_code === undefined ? null : uom_code,
                     takip === undefined ? null : takip,
                     m.sales_price ?? null,
                     trimOrNull(m.item_type),
-                    trimOrNull(m.tedarik_type),
+                    trimOrNull(m.procurement_type),
                     typeof m.is_active === 'boolean' ? m.is_active : null,
                     abc,
-                    m.hacim ?? null,
-                    m.yogunluk ?? null,
-                    trimOrNull(m.hacim_uom),
-                    trimOrNull(m.yogunluk_uom),
-                    trimOrNull(m.agirlik_uom),
-                    m.koli_brut_agirlik ?? null,
-                    m.kutu_brut_agirlik ?? null,
-                    m.kutu_en_mm ?? null,
-                    m.kutu_boy_mm ?? null,
-                    m.kutu_yukseklik_mm ?? null,
-                    trimOrNull(m.barkod),
+                    m.volume ?? null,
+                    m.density ?? null,
+                    trimOrNull(m.volume_uom),
+                    trimOrNull(m.density_uom),
+                    trimOrNull(m.weight_uom),
+                    m.carton_gross_weight ?? null,
+                    m.box_gross_weight ?? null,
+                    m.box_width_mm ?? null,
+                    m.box_length_mm ?? null,
+                    m.box_height_mm ?? null,
+                    trimOrNull(m.barcode),
                     m.safety_stock ?? null,
                     m.max_stock ?? null,
-                    trimOrNull(m.country_mensei),
-                    m.raf_omru_days ?? null,
-                    trimOrNull(m.marka),
-                    trimOrNull(m.temin_method),
-                    m.quantity_hassasiyeti ?? null,
-                    trimOrNull(m.lot_politika),
-                    typeof m.kalite_control_gerekli === 'boolean' ? m.kalite_control_gerekli : null,
-                    m.varsayilan_giris_warehouse_id ?? null,
-                    m.varsayilan_cikis_warehouse_id ?? null,
-                    Number(m.company_id) || firmaIdFromReq(req) || null,
-                    m.temin_suresi_days ?? null,
+                    trimOrNull(m.country_of_origin),
+                    m.shelf_life_days ?? null,
+                    trimOrNull(m.brand_name),
+                    trimOrNull(m.procurement_method),
+                    m.quantity_precision ?? null,
+                    trimOrNull(m.lot_policy),
+                    typeof m.quality_control_required === 'boolean' ? m.quality_control_required : null,
+                    m.default_receipt_warehouse_id ?? null,
+                    m.default_issue_warehouse_id ?? null,
+                    Number(m.company_id) || companyIdFromReq(req) || null,
+                    m.lead_time_days ?? null,
                     m.reorder_level ?? null,
                     m.fixed_order_quantity ?? null,
                     trimOrNull(m.purchase_uom),
                     trimOrNull(m.sales_uom),
-                    trimOrNull(m.gtip_code),
-                    trimOrNull(m.uretici_code),
+                    trimOrNull(m.hs_code),
+                    trimOrNull(m.manufacturer_code),
                     trimOrNull(m.old_item_code),
                     trimOrNull(m.original_code),
-                    m.sa_tolerans_min_yuzde ?? null,
-                    m.sa_tolerans_max_yuzde ?? null,
+                    m.po_tolerance_min_pct ?? null,
+                    m.po_tolerance_max_pct ?? null,
                     vatRate,
                     m.min_stock ?? null,
                     m.optimum_order_quantity ?? null,
-                    m.net_agirlik ?? null,
-                    m.brut_agirlik ?? null,
-                    trimOrNull(m.series_politika),
+                    m.net_weight ?? null,
+                    m.gross_weight ?? null,
+                    trimOrNull(m.serial_policy),
                     trimOrNull(m.class_code),
-                    trimOrNull(m.cikis_type),
-                    typeof m.silindi === 'boolean' ? m.silindi : null,
+                    trimOrNull(m.issue_type),
+                    typeof m.is_deleted === 'boolean' ? m.is_deleted : null,
                     taxCodeId === undefined ? null : taxCodeId,
                     taxCodeId !== undefined,
                     trimOrNull(m.currency_code) || 'TRY',
@@ -884,7 +884,7 @@ router.put('/:id', async (req, res) => {
             await saveChildren(client, Number(req.params.id), m);
         });
 
-        res.json(await stokGetir(req.params.id));
+        res.json(await getItemById(req.params.id));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu stok kodu zaten kullanılıyor.', alan: 'item_code' });
@@ -895,14 +895,14 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
-            const ok = await assertStokFirmaKayit(pool, req.params.id, firmaId);
+            const ok = await assertItemCompanyRecord(pool, req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Stok bulunamadı.' });
         }
         const result = await pool.query(`DELETE FROM items WHERE id = $1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Stok bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

@@ -1,4 +1,4 @@
-const { depoBakiyeListesi } = require('./stokHareketService');
+const { listWarehouseBalances } = require('./stokHareketService');
 
 /**
  * MRP motoru — parametre destekli (konsol):
@@ -75,7 +75,7 @@ function defaultMrpParametre(partial = {}) {
         start_date: start,
         end_date: end,
         notes: partial.notes || '',
-        parametre_code: partial.parametre_code || '',
+        parameter_code: partial.parameter_code || '',
         // Stok
         include_order_level_items: truthy(partial.include_order_level_items, false),
         skip_no_demand_items: truthy(partial.skip_no_demand_items, false),
@@ -182,7 +182,7 @@ async function safeQuery(pool, sql, params = []) {
     }
 }
 
-async function loadStokMap(pool, { stokId = null, firmaId = null, includePassive = false } = {}) {
+async function loadItemMap(pool, { stokId = null, firmaId = null, includePassive = false } = {}) {
     const params = [];
     let where = includePassive ? 'WHERE 1=1' : 'WHERE s.is_active IS DISTINCT FROM FALSE';
     if (stokId) {
@@ -197,7 +197,7 @@ async function loadStokMap(pool, { stokId = null, firmaId = null, includePassive
     const firmaJoin = firmaId
         ? `LEFT JOIN LATERAL (
              SELECT fp.safety_stock, fp.min_stock, fp.max_stock, fp.reorder_level,
-                    fp.fixed_order_quantity, fp.temin_suresi_days
+                    fp.fixed_order_quantity, fp.lead_time_days
              FROM item_company_params fp
              WHERE fp.item_id = s.id AND fp.company_id = $${params.length}
                AND fp.is_active IS DISTINCT FROM FALSE
@@ -207,25 +207,25 @@ async function loadStokMap(pool, { stokId = null, firmaId = null, includePassive
         : '';
     const r = await pool.query(
         firmaId
-            ? `SELECT s.id, s.item_code, s.item_name, s.item_type, s.tedarik_type, s.uom_code,
+            ? `SELECT s.id, s.item_code, s.item_name, s.item_type, s.procurement_type, s.uom_code,
                       COALESCE(NULLIF(fp.safety_stock, 0), s.safety_stock, 0)::numeric AS safety_stock,
                       COALESCE(NULLIF(fp.reorder_level, 0), s.reorder_level, 0)::numeric AS reorder_level,
                       COALESCE(NULLIF(fp.min_stock, 0), s.min_stock, 0)::numeric AS min_stock,
                       COALESCE(NULLIF(fp.max_stock, 0), s.max_stock, 0)::numeric AS max_stock,
                       COALESCE(fp.fixed_order_quantity, s.fixed_order_quantity) AS fixed_order_quantity,
-                      COALESCE(NULLIF(fp.temin_suresi_days, 0), s.temin_suresi_days, 0)::int AS temin_suresi_days,
+                      COALESCE(NULLIF(fp.lead_time_days, 0), s.lead_time_days, 0)::int AS lead_time_days,
                       s.is_active
                FROM items s
                ${firmaJoin}
                ${where}
                ORDER BY s.item_code`
-            : `SELECT s.id, s.item_code, s.item_name, s.item_type, s.tedarik_type, s.uom_code,
+            : `SELECT s.id, s.item_code, s.item_name, s.item_type, s.procurement_type, s.uom_code,
                       COALESCE(s.safety_stock, 0)::numeric AS safety_stock,
                       COALESCE(s.reorder_level, 0)::numeric AS reorder_level,
                       COALESCE(s.min_stock, 0)::numeric AS min_stock,
                       COALESCE(s.max_stock, 0)::numeric AS max_stock,
                       s.fixed_order_quantity,
-                      COALESCE(s.temin_suresi_days, 0)::int AS temin_suresi_days,
+                      COALESCE(s.lead_time_days, 0)::int AS lead_time_days,
                       s.is_active
                FROM items s
                ${where}
@@ -276,7 +276,7 @@ async function loadSupplyMaps(pool, {
     log = null,
 } = {}) {
     const p = defaultMrpParametre(parametre);
-    const bakiyeler = await depoBakiyeListesi(pool, { stokStatu: 'Kullanilabilir', stokId });
+    const bakiyeler = await listWarehouseBalances(pool, { stokStatu: 'Kullanilabilir', stokId });
     const kullanilabilir = new Map();
     let skippedWh = 0;
     for (const b of bakiyeler) {
@@ -298,13 +298,13 @@ async function loadSupplyMaps(pool, {
         const poParams = [];
         let poSql = `
             SELECT ss.item_id,
-                   SUM(GREATEST(ss.quantity - COALESCE(ss.giren_quantity,0), 0))::numeric AS acik_siparis
+                   SUM(GREATEST(ss.quantity - COALESCE(ss.received_quantity,0), 0))::numeric AS acik_siparis
             FROM purchase_order_lines ss
             JOIN purchase_orders s ON s.id = ss.purchase_order_id
             WHERE s.status NOT IN ('Iptal', 'Kapali')
-              AND COALESCE(s.silindi, FALSE) IS DISTINCT FROM TRUE`;
+              AND COALESCE(s.is_deleted, FALSE) IS DISTINCT FROM TRUE`;
         if (p.check_po_approval) {
-            poSql += ` AND (s.approved_by IS NOT NULL OR s.onay_date IS NOT NULL OR s.status ILIKE '%onay%')`;
+            poSql += ` AND (s.approved_by IS NOT NULL OR s.approved_at IS NOT NULL OR s.status ILIKE '%onay%')`;
         }
         if (p.ignore_po_without_delivery_date) {
             poSql += ` AND s.delivery_date IS NOT NULL`;
@@ -342,10 +342,10 @@ async function loadSupplyMaps(pool, {
             FROM purchase_requisition_lines tl
             JOIN purchase_requisitions t ON t.id = tl.requisition_id
             WHERE t.status NOT IN ('Iptal', 'Kapali', 'Kapandi')
-              AND COALESCE(t.silindi, FALSE) IS DISTINCT FROM TRUE
+              AND COALESCE(t.is_deleted, FALSE) IS DISTINCT FROM TRUE
               AND tl.item_id IS NOT NULL`;
         if (p.check_pr_approval) {
-            prSql += ` AND (t.approved_by_user_id IS NOT NULL OR t.onay_date IS NOT NULL OR t.status ILIKE '%onay%')`;
+            prSql += ` AND (t.approved_by_user_id IS NOT NULL OR t.approved_at IS NOT NULL OR t.status ILIKE '%onay%')`;
         }
         if (isYeriId) {
             prParams.push(isYeriId);
@@ -370,10 +370,10 @@ async function loadSupplyMaps(pool, {
         const ueParams = [];
         let ueSql = `
             SELECT item_id,
-                   SUM(GREATEST(planlanan_quantity - COALESCE(produced_quantity,0), 0))::numeric AS plan_uretim
+                   SUM(GREATEST(planned_quantity - COALESCE(produced_quantity,0), 0))::numeric AS plan_uretim
             FROM production_orders
             WHERE status NOT IN ('Kapali', 'Iptal', 'Tamamlandi')
-              AND COALESCE(silindi, FALSE) IS DISTINCT FROM TRUE`;
+              AND COALESCE(is_deleted, FALSE) IS DISTINCT FROM TRUE`;
         if (isYeriId) {
             ueParams.push(isYeriId);
             ueSql += ` AND plant_id = $${ueParams.length}`;
@@ -390,7 +390,7 @@ async function loadSupplyMaps(pool, {
             )`;
         }
         if (p.planned_wo_mode === 'kesin') {
-            ueSql += ` AND COALESCE(planli_kesin, FALSE) = TRUE`;
+            ueSql += ` AND COALESCE(planned_firm, FALSE) = TRUE`;
         }
         ueSql += ' GROUP BY item_id';
         const ueArz = await safeQuery(pool, ueSql, ueParams);
@@ -437,7 +437,7 @@ async function loadIndependentDemand(pool, {
     // Manuel / tahmin BI
     const biParams = [];
     let biSql = `
-        SELECT item_id, quantity, ihtiyac_date, source, ihtiyac_no
+        SELECT item_id, quantity, requirement_date, source, requirement_no
         FROM mrp_independent_requirements
         WHERE is_active IS DISTINCT FROM FALSE`;
     if (isYeriId) {
@@ -450,17 +450,17 @@ async function loadIndependentDemand(pool, {
     }
     const bi = await safeQuery(pool, biSql, biParams);
     bi.rows.forEach((r) => {
-        let dt = toDateStr(r.ihtiyac_date);
+        let dt = toDateStr(r.requirement_date);
         if (dt && p.start_date && dt < p.start_date) {
-            if (log) log.warn('BI_DATE', `${r.ihtiyac_no} ihtiyaç tarihi ${dt} ufuk başından önce — ${p.start_date} alındı.`);
+            if (log) log.warn('BI_DATE', `${r.requirement_no} ihtiyaç tarihi ${dt} ufuk başından önce — ${p.start_date} alındı.`);
             dt = p.start_date;
             shiftedDates += 1;
         }
         if (dt && !inHorizon(dt) && p.end_date && dt > p.end_date) {
-            if (log) log.info('BI_SKIP', `${r.ihtiyac_no} ufuk dışında atlandı (${dt}).`);
+            if (log) log.info('BI_SKIP', `${r.requirement_no} ufuk dışında atlandı (${dt}).`);
             return;
         }
-        bump(r.item_id, r.quantity, dt, `BI:${r.ihtiyac_no}`);
+        bump(r.item_id, r.quantity, dt, `BI:${r.requirement_no}`);
     });
 
     const mode = String(p.so_forecast_mode || 'sales_orders');
@@ -470,14 +470,14 @@ async function loadIndependentDemand(pool, {
     if (useSo) {
         const soParams = [];
         let soSql = `
-            SELECT s.order_no, s.order_type, s.status, s.approved_by, s.onay_date,
+            SELECT s.order_no, s.order_type, s.status, s.approved_by, s.approved_at,
                    s.delivery_date, s.order_date,
                    sd.item_id,
                    SUM(GREATEST(
-                     COALESCE(sd.bekleyen_quantity, sd.quantity - COALESCE(sd.shipped_quantity,0) - COALESCE(sd.delivered_quantity_x,0)),
+                     COALESCE(sd.pending_quantity, sd.quantity - COALESCE(sd.shipped_quantity,0) - COALESCE(sd.delivered_quantity_x,0)),
                      0
                    ))::numeric AS kalan,
-                   MIN(COALESCE(sd.delivery_date, s.delivery_date, s.order_date)) AS ihtiyac_date
+                   MIN(COALESCE(sd.delivery_date, s.delivery_date, s.order_date)) AS requirement_date
             FROM sales_order_lines sd
             JOIN sales_orders s ON s.id = sd.sales_order_id
             WHERE s.status NOT IN ('Iptal', 'Kapali')
@@ -498,21 +498,21 @@ async function loadIndependentDemand(pool, {
             soParams.push(p.so_cutoff_date);
             soSql += ` AND COALESCE(sd.delivery_date, s.delivery_date, s.order_date) <= $${soParams.length}::date`;
         }
-        soSql += ' GROUP BY s.order_no, s.order_type, s.status, s.approved_by, s.onay_date, s.delivery_date, s.order_date, sd.item_id';
+        soSql += ' GROUP BY s.order_no, s.order_type, s.status, s.approved_by, s.approved_at, s.delivery_date, s.order_date, sd.item_id';
         const so = await safeQuery(pool, soSql, soParams);
         if (so.error && log) log.warn('SO_LOAD', `Satış siparişleri okunamadı: ${so.error.message}`);
         so.rows.forEach((r) => {
             if (num(r.kalan) <= 0) return;
-            if (p.check_so_approval && !(r.approved_by || r.onay_date || String(r.status || '').toLowerCase().includes('onay'))) {
+            if (p.check_so_approval && !(r.approved_by || r.approved_at || String(r.status || '').toLowerCase().includes('onay'))) {
                 skippedSoApproval += 1;
                 return;
             }
-            if (p.ignore_so_without_ship_date && !r.delivery_date && !r.ihtiyac_date) {
+            if (p.ignore_so_without_ship_date && !r.delivery_date && !r.requirement_date) {
                 skippedSoNoDate += 1;
                 if (log) log.warn('SO_NODATE', `SO ${r.order_no} teslim tarihi boş — atlandı.`);
                 return;
             }
-            let dt = toDateStr(r.ihtiyac_date);
+            let dt = toDateStr(r.requirement_date);
             if (dt && p.start_date && dt < p.start_date) {
                 if (log) log.warn('SO_DATE', `SO ${r.order_no} ihtiyaç tarihi ${dt} geride — ${p.start_date} alındı.`);
                 dt = p.start_date;
@@ -531,7 +531,7 @@ async function loadIndependentDemand(pool, {
             const itemId = num(row.item_id);
             const qty = num(row.quantity);
             if (!itemId || qty <= 0) continue;
-            const dt = toDateStr(row.ihtiyac_date) || p.start_date;
+            const dt = toDateStr(row.requirement_date) || p.start_date;
             if (dt && p.end_date && dt > p.end_date) continue;
             bump(itemId, qty, dt, `Tahmin:${row.code || row.id || ''}`);
         }
@@ -546,7 +546,7 @@ async function loadIndependentDemand(pool, {
             const itemId = num(row.item_id);
             const qty = num(row.quantity);
             if (!itemId || qty <= 0) continue;
-            const dt = toDateStr(row.ihtiyac_date) || p.start_date;
+            const dt = toDateStr(row.requirement_date) || p.start_date;
             bump(itemId, qty, dt, `MPS:${row.code || row.id || ''}`);
         }
         if (log) log.info('MPS_SKELETON', `${p.mps_rows.length} MPS satırı bağımsız ihtiyaca eklendi.`);
@@ -566,8 +566,8 @@ function lotSize(net, stok, { ignoreMin = false } = {}) {
     return net;
 }
 
-function isUretim(stok) {
-    const t = String(stok?.tedarik_type || '').toLowerCase();
+function isProduction(stok) {
+    const t = String(stok?.procurement_type || '').toLowerCase();
     return t.includes('uret');
 }
 
@@ -575,7 +575,7 @@ function isUretim(stok) {
  * BOM patlatmalı MRP hesaplaması (bellekte).
  * @returns {Promise<{ results: object[], messages: object[], parametre: object }>}
  */
-async function mrpHesapla(pool, {
+async function calculateMrp(pool, {
     isYeriId = null,
     firmaId = null,
     stokId = null,
@@ -585,7 +585,7 @@ async function mrpHesapla(pool, {
     const log = makeLogger();
     log.info('START', `MRP ufuk ${p.start_date} → ${p.end_date}`);
 
-    const stokMap = await loadStokMap(pool, {
+    const stokMap = await loadItemMap(pool, {
         stokId: null,
         firmaId,
         includePassive: p.include_passive_items,
@@ -613,7 +613,7 @@ async function mrpHesapla(pool, {
         const bParams = [];
         let bSql = `
             SELECT ub.item_id,
-                   SUM(GREATEST(ub.planlanan_quantity - COALESCE(ub.tuketilen_quantity,0), 0))::numeric AS ihtiyac
+                   SUM(GREATEST(ub.planned_quantity - COALESCE(ub.consumed_quantity,0), 0))::numeric AS ihtiyac
             FROM production_order_components ub
             JOIN production_orders ue ON ue.id = ub.order_id
             WHERE ue.status NOT IN ('Kapali', 'Iptal', 'Tamamlandi')`;
@@ -636,7 +636,7 @@ async function mrpHesapla(pool, {
     const queue = [];
     independent.forEach((d, k) => {
         const st = stokMap.get(k);
-        if (st && isUretim(st) && d.qty > 0) queue.push({ stokId: k, qty: d.qty, date: d.date, depth: 0 });
+        if (st && isProduction(st) && d.qty > 0) queue.push({ stokId: k, qty: d.qty, date: d.date, depth: 0 });
     });
 
     const visitedExplosion = new Set();
@@ -650,7 +650,7 @@ async function mrpHesapla(pool, {
         const children = bomByParent.get(String(job.stokId)) || [];
         if (!children.length && p.bulk_explode_warning === 'uyar') {
             const st = stokMap.get(String(job.stokId));
-            if (st && isUretim(st)) {
+            if (st && isProduction(st)) {
                 log.warn('BOM_MISSING', `${st.item_code}: üretim tipi ama aktif BOM yok.`);
             }
         }
@@ -663,13 +663,13 @@ async function mrpHesapla(pool, {
             const cid = String(ch.component_item_id);
             bagimli.set(cid, (bagimli.get(cid) || 0) + need);
             if (!parentOf.has(cid)) parentOf.set(cid, Number(job.stokId));
-            const lead = num(parent?.temin_suresi_days);
+            const lead = num(parent?.lead_time_days);
             const childDate = job.date ? addDays(job.date, -lead) : null;
             if (childDate && (!needDate.has(cid) || childDate < needDate.get(cid))) {
                 needDate.set(cid, childDate);
             }
             const childSt = stokMap.get(cid);
-            if (childSt && isUretim(childSt)) {
+            if (childSt && isProduction(childSt)) {
                 queue.push({ stokId: cid, qty: need, date: childDate, depth: job.depth + 1 });
             }
         }
@@ -732,15 +732,15 @@ async function mrpHesapla(pool, {
         const netRaw = Math.max(0, brut + emniyet + Math.max(ropGap, bandGap) - eldeki - siparis - uretim);
         const onerilen = lotSize(netRaw, s, { ignoreMin: p.ignore_min_production_qty });
         let oneri = 'Yeterli';
-        if (onerilen > 0) oneri = isUretim(s) ? 'Üretim emri' : 'Satınalma';
+        if (onerilen > 0) oneri = isProduction(s) ? 'Üretim emri' : 'Satınalma';
 
         let ihtiyacTarihi = needDate.get(id) || null;
         if (!ihtiyacTarihi && (emniyet > 0 || bandGap > 0) && p.safety_stock_date_type === 'ihtiyac') {
             ihtiyacTarihi = p.start_date;
         }
         const planlananBaslangic = ihtiyacTarihi
-            ? addDays(ihtiyacTarihi, -num(s.temin_suresi_days))
-            : addDays(p.start_date, -num(s.temin_suresi_days));
+            ? addDays(ihtiyacTarihi, -num(s.lead_time_days))
+            : addDays(p.start_date, -num(s.lead_time_days));
 
         results.push({
             id: s.id,
@@ -748,49 +748,49 @@ async function mrpHesapla(pool, {
             item_code: s.item_code,
             item_name: s.item_name,
             item_type: s.item_type,
-            tedarik_type: s.tedarik_type,
+            procurement_type: s.procurement_type,
             uom_code: s.uom_code,
             level: parentOf.has(id) ? 1 : 0,
             source_item_id: parentOf.get(id) || null,
-            bagimsiz_ihtiyac: bi,
-            bagimli_ihtiyac: bd,
-            brut_ihtiyac: brut,
+            independent_demand: bi,
+            dependent_demand: bd,
+            gross_requirement: brut,
             safety_stock: emniyet,
             reorder_point: reorder,
             min_stock: minStock,
             max_stock: maxStock,
-            hedef_ortalama: hedefOrtalama,
+            target_average: hedefOrtalama,
             available_stock: eldeki,
-            acik_satinalma: siparis,
-            planlanan_production: uretim,
+            open_purchase_qty: siparis,
+            planned_production: uretim,
             acik_uretim_ihtiyaci: bd,
-            net_ihtiyac: netRaw,
-            onerilen_quantity: onerilen,
-            oneri,
-            ihtiyac_date: ihtiyacTarihi,
-            planlanan_start: planlananBaslangic,
-            temin_suresi_days: num(s.temin_suresi_days),
+            net_requirement: netRaw,
+            suggested_quantity: onerilen,
+            suggestion: oneri,
+            requirement_date: ihtiyacTarihi,
+            planned_start: planlananBaslangic,
+            lead_time_days: num(s.lead_time_days),
             ufuk_baslangic: p.start_date,
             ufuk_bitis: p.end_date,
         });
     }
 
     results.sort((a, b) => {
-        if (b.net_ihtiyac !== a.net_ihtiyac) return b.net_ihtiyac - a.net_ihtiyac;
+        if (b.net_requirement !== a.net_requirement) return b.net_requirement - a.net_requirement;
         return String(a.item_code).localeCompare(String(b.item_code), 'tr');
     });
 
     const filtered = results.filter((r) =>
         stokId
-        || r.net_ihtiyac > 0
-        || r.brut_ihtiyac > 0
+        || r.net_requirement > 0
+        || r.gross_requirement > 0
         || r.safety_stock > 0
         || r.reorder_point > 0
         || r.available_stock !== 0
-        || r.acik_satinalma > 0
-        || r.planlanan_production > 0);
+        || r.open_purchase_qty > 0
+        || r.planned_production > 0);
 
-    log.info('DONE', `${filtered.length} sonuç satırı · net>0: ${filtered.filter((r) => r.net_ihtiyac > 0).length}`);
+    log.info('DONE', `${filtered.length} sonuç satırı · net>0: ${filtered.filter((r) => r.net_requirement > 0).length}`);
 
     return { results: filtered, messages: log.messages, parametre: p };
 }
@@ -798,8 +798,8 @@ async function mrpHesapla(pool, {
 /**
  * Geriye uyum: eski çağrılar dizi bekliyor olabilir.
  */
-async function mrpHesaplaListe(pool, opts = {}) {
-    const out = await mrpHesapla(pool, opts);
+async function calculateMrpList(pool, opts = {}) {
+    const out = await calculateMrp(pool, opts);
     return out.results;
 }
 
@@ -814,7 +814,7 @@ async function mrpCalistir(client, {
     parametre = {},
     notes = null,
 } = {}) {
-    const { sonrakiKod } = require('../utils/kodUretici');
+    const { nextSequenceCode } = require('../utils/kodUretici');
     const p = defaultMrpParametre(parametre);
     if (notes != null) p.notes = String(notes);
 
@@ -830,10 +830,10 @@ async function mrpCalistir(client, {
         if (!iy.rows[0]) safeIsYeri = null;
     }
 
-    const no = await sonrakiKod(client, 'MRP_CALISMA');
+    const no = await nextSequenceCode(client, 'MRP_CALISMA');
     const ins = await client.query(
         `INSERT INTO mrp_runs
-            (run_no, company_id, plant_id, status, parametre_json, description, created_by,
+            (run_no, company_id, plant_id, status, parameters_json, description, created_by,
              start_date, end_date, notes)
          VALUES ($1,$2,$3,'Calisiyor',$4::jsonb,$5,$6,$7::date,$8::date,$9)
          RETURNING *`,
@@ -846,7 +846,7 @@ async function mrpCalistir(client, {
 
     let out;
     try {
-        out = await mrpHesapla(client, { firmaId: safeFirma, isYeriId: safeIsYeri, parametre: p });
+        out = await calculateMrp(client, { firmaId: safeFirma, isYeriId: safeIsYeri, parametre: p });
     } catch (err) {
         await client.query(
             `UPDATE mrp_runs SET status='Hata', end_ts=CURRENT_TIMESTAMP,
@@ -866,31 +866,31 @@ async function mrpCalistir(client, {
     });
     let netPozitif = 0;
     for (const r of liste) {
-        if (r.net_ihtiyac > 0) netPozitif += 1;
-        const hv = hareketMap.get(String(r.item_id)) || { giris_toplam: 0, cikis_toplam: 0 };
-        r.giris_toplam = hv.giris_toplam;
-        r.cikis_toplam = hv.cikis_toplam;
-        r.acik_isemri = num(r.planlanan_production);
+        if (r.net_requirement > 0) netPozitif += 1;
+        const hv = hareketMap.get(String(r.item_id)) || { receipt_total: 0, issue_total: 0 };
+        r.receipt_total = hv.receipt_total;
+        r.issue_total = hv.issue_total;
+        r.open_work_order_qty = num(r.planned_production);
         await client.query(
             `INSERT INTO mrp_results (
-                run_id, item_id, seviye, source_item_id,
-                brut_ihtiyac, bagimsiz_ihtiyac, bagimli_ihtiyac,
+                run_id, item_id, bom_level, source_item_id,
+                gross_requirement, independent_demand, dependent_demand,
                 safety_stock, reorder_point, available_stock,
-                acik_satinalma, planlanan_production, net_ihtiyac, onerilen_quantity,
-                oneri, ihtiyac_date, planlanan_start, uom_code,
-                min_stock, max_stock, hedef_ortalama, giris_toplam, cikis_toplam, acik_isemri
+                open_purchase_qty, planned_production, net_requirement, suggested_quantity,
+                suggestion, requirement_date, planned_start, uom_code,
+                min_stock, max_stock, target_average, receipt_total, issue_total, open_work_order_qty
              ) VALUES (
                 $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
                 $19,$20,$21,$22,$23,$24
              )`,
             [
                 calisma.id, r.item_id, r.level ?? 0, r.source_item_id,
-                r.brut_ihtiyac, r.bagimsiz_ihtiyac, r.bagimli_ihtiyac,
+                r.gross_requirement, r.independent_demand, r.dependent_demand,
                 r.safety_stock, r.reorder_point, r.available_stock,
-                r.acik_satinalma, r.planlanan_production, r.net_ihtiyac, r.onerilen_quantity,
-                r.oneri, r.ihtiyac_date, r.planlanan_start, r.uom_code,
-                r.min_stock || 0, r.max_stock || 0, r.hedef_ortalama || 0,
-                r.giris_toplam || 0, r.cikis_toplam || 0, r.acik_isemri || 0,
+                r.open_purchase_qty, r.planned_production, r.net_requirement, r.suggested_quantity,
+                r.suggestion, r.requirement_date, r.planned_start, r.uom_code,
+                r.min_stock || 0, r.max_stock || 0, r.target_average || 0,
+                r.receipt_total || 0, r.issue_total || 0, r.open_work_order_qty || 0,
             ]
         );
     }
@@ -907,9 +907,9 @@ async function mrpCalistir(client, {
         `UPDATE mrp_runs SET
             status = 'Tamamlandi',
             end_ts = CURRENT_TIMESTAMP,
-            line_sayisi = $2,
-            net_pozitif = $3,
-            parametre_json = $4::jsonb
+            line_count = $2,
+            net_positive_only = $3,
+            parameters_json = $4::jsonb
          WHERE id = $1 RETURNING *`,
         [calisma.id, liste.length, netPozitif, JSON.stringify(p)]
     );
@@ -941,18 +941,18 @@ async function loadHorizonMovementTotals(pool, {
     const params = [ids];
     let sql = `
         SELECT hsl.item_id,
-               SUM(CASE WHEN hsl.direction > 0 THEN hsl.quantity ELSE 0 END)::numeric AS giris_toplam,
-               SUM(CASE WHEN hsl.direction < 0 THEN hsl.quantity ELSE 0 END)::numeric AS cikis_toplam
+               SUM(CASE WHEN hsl.direction > 0 THEN hsl.quantity ELSE 0 END)::numeric AS receipt_total,
+               SUM(CASE WHEN hsl.direction < 0 THEN hsl.quantity ELSE 0 END)::numeric AS issue_total
         FROM stock_movement_lines hsl
         JOIN stock_movements h ON h.id = hsl.movement_id
         WHERE hsl.item_id = ANY($1::int[])`;
     if (startDate) {
         params.push(startDate);
-        sql += ` AND COALESCE(h.fiscal_date, h.fiziksel_date, h.movement_date) >= $${params.length}::date`;
+        sql += ` AND COALESCE(h.fiscal_date, h.physical_date, h.movement_date) >= $${params.length}::date`;
     }
     if (endDate) {
         params.push(endDate);
-        sql += ` AND COALESCE(h.fiscal_date, h.fiziksel_date, h.movement_date) <= $${params.length}::date`;
+        sql += ` AND COALESCE(h.fiscal_date, h.physical_date, h.movement_date) <= $${params.length}::date`;
     }
     if (warehouseIds?.length) {
         params.push(warehouseIds.map(Number));
@@ -963,8 +963,8 @@ async function loadHorizonMovementTotals(pool, {
     const map = new Map();
     for (const row of r.rows || []) {
         map.set(String(row.item_id), {
-            giris_toplam: num(row.giris_toplam),
-            cikis_toplam: num(row.cikis_toplam),
+            receipt_total: num(row.receipt_total),
+            issue_total: num(row.issue_total),
         });
     }
     return map;
@@ -981,15 +981,15 @@ async function buildMrpRapor(pool, runId) {
         throw err;
     }
     const run = c.rows[0];
-    const p = defaultMrpParametre(run.parametre_json || {});
+    const p = defaultMrpParametre(run.parameters_json || {});
     const sonuclar = await pool.query(
-        `SELECT ms.*, st.item_code, st.item_name, st.tedarik_type, st.item_type, st.uom_code AS stok_uom,
+        `SELECT ms.*, st.item_code, st.item_name, st.procurement_type, st.item_type, st.uom_code AS stok_uom,
                 ks.item_code AS kaynak_stok_kodu
          FROM mrp_results ms
          JOIN items st ON st.id = ms.item_id
          LEFT JOIN items ks ON ks.id = ms.source_item_id
          WHERE ms.run_id = $1
-         ORDER BY ms.net_ihtiyac DESC, st.item_code`,
+         ORDER BY ms.net_requirement DESC, st.item_code`,
         [runId]
     );
     const msgs = await pool.query(
@@ -1009,7 +1009,7 @@ async function buildMrpRapor(pool, runId) {
     const ue = await safeQuery(
         pool,
         `SELECT item_id,
-                SUM(GREATEST(planlanan_quantity - COALESCE(produced_quantity,0), 0))::numeric AS acik_isemri,
+                SUM(GREATEST(planned_quantity - COALESCE(produced_quantity,0), 0))::numeric AS open_work_order_qty,
                 COUNT(*)::int AS isemri_adet
          FROM production_orders
          WHERE status NOT IN ('Kapali', 'Iptal', 'Tamamlandi')
@@ -1023,7 +1023,7 @@ async function buildMrpRapor(pool, runId) {
     const sa = await safeQuery(
         pool,
         `SELECT ss.item_id,
-                SUM(GREATEST(ss.quantity - COALESCE(ss.giren_quantity,0), 0))::numeric AS acik_sa,
+                SUM(GREATEST(ss.quantity - COALESCE(ss.received_quantity,0), 0))::numeric AS acik_sa,
                 COUNT(*)::int AS sa_adet
          FROM purchase_order_lines ss
          JOIN purchase_orders s ON s.id = ss.purchase_order_id
@@ -1035,30 +1035,30 @@ async function buildMrpRapor(pool, runId) {
     const saMap = new Map((sa.rows || []).map((r) => [String(r.item_id), r]));
 
     const satirlar = sonuclar.rows.map((r) => {
-        const hv = hareket.get(String(r.item_id)) || { giris_toplam: 0, cikis_toplam: 0 };
+        const hv = hareket.get(String(r.item_id)) || { receipt_total: 0, issue_total: 0 };
         const u = ueMap.get(String(r.item_id)) || {};
         const s = saMap.get(String(r.item_id)) || {};
         return {
             ...r,
-            giris_toplam: num(r.giris_toplam) || hv.giris_toplam,
-            cikis_toplam: num(r.cikis_toplam) || hv.cikis_toplam,
-            acik_isemri: num(r.acik_isemri) || num(u.acik_isemri),
+            receipt_total: num(r.receipt_total) || hv.receipt_total,
+            issue_total: num(r.issue_total) || hv.issue_total,
+            open_work_order_qty: num(r.open_work_order_qty) || num(u.open_work_order_qty),
             isemri_adet: num(u.isemri_adet),
             acik_sa_adet: num(s.sa_adet),
-            acik_sa_miktar: num(s.acik_sa) || num(r.acik_satinalma),
+            acik_sa_miktar: num(s.acik_sa) || num(r.open_purchase_qty),
         };
     });
 
     const ozet = {
         satir_sayisi: satirlar.length,
-        net_pozitif: satirlar.filter((r) => num(r.net_ihtiyac) > 0).length,
-        satinalma_oneri: satirlar.filter((r) => r.oneri === 'Satınalma').length,
-        uretim_oneri: satirlar.filter((r) => r.oneri === 'Üretim emri').length,
-        yeterli: satirlar.filter((r) => r.oneri === 'Yeterli').length,
-        toplam_net: satirlar.reduce((a, r) => a + num(r.net_ihtiyac), 0),
-        toplam_onerilen: satirlar.reduce((a, r) => a + num(r.onerilen_quantity), 0),
-        toplam_giris: satirlar.reduce((a, r) => a + num(r.giris_toplam), 0),
-        toplam_cikis: satirlar.reduce((a, r) => a + num(r.cikis_toplam), 0),
+        net_positive_only: satirlar.filter((r) => num(r.net_requirement) > 0).length,
+        satinalma_oneri: satirlar.filter((r) => r.suggestion === 'Satınalma').length,
+        uretim_oneri: satirlar.filter((r) => r.suggestion === 'Üretim emri').length,
+        yeterli: satirlar.filter((r) => r.suggestion === 'Yeterli').length,
+        toplam_net: satirlar.reduce((a, r) => a + num(r.net_requirement), 0),
+        toplam_onerilen: satirlar.reduce((a, r) => a + num(r.suggested_quantity), 0),
+        toplam_giris: satirlar.reduce((a, r) => a + num(r.receipt_total), 0),
+        toplam_cikis: satirlar.reduce((a, r) => a + num(r.issue_total), 0),
     };
 
     return {
@@ -1075,8 +1075,8 @@ async function buildMrpRapor(pool, runId) {
 }
 
 module.exports = {
-    mrpHesapla: mrpHesaplaListe,
-    mrpHesaplaDetay: mrpHesapla,
+    calculateMrp: calculateMrpList,
+    mrpHesaplaDetay: calculateMrp,
     mrpCalistir,
     loadIndependentDemand,
     defaultMrpParametre,

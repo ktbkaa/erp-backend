@@ -105,12 +105,12 @@ function main() {
 
   // Global guards — helpers that screen kinds depend on
   const helpers = [
-    'function renderStokFirmalarPane',
-    'function renderStokDepolarPane',
-    'function renderCariFirmalarPane',
+    'function renderItemCompaniesPane',
+    'function renderItemWarehousesPane',
+    'function renderPartnerCompaniesPane',
     'function renderMrpParametrePane',
-    'function isFirmaProfil',
-    'function syncStokHareketTransferFields',
+    'function isCompanyProfile',
+    'function syncStockMovementTransferFields',
   ];
   for (const h of helpers) {
     if (!src.includes(h)) errors.push(`[helpers] eksik: ${h}`);

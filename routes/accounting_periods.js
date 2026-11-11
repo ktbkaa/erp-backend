@@ -2,13 +2,13 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
-const { reqKullaniciKodu } = require('../src/utils/yetki');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { reqUserCode } = require('../src/utils/yetki');
 const { donemKapat, donemYenidenAc } = require('../src/services/muhasebeMotorService');
 
 router.get('/mali-yillar', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `
       SELECT * FROM fiscal_years
@@ -36,7 +36,7 @@ router.get('/mali-yillar/:id', async (req, res, next) => {
 router.post('/mali-yillar', async (req, res, next) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.year) {
       return res.status(400).json({ hata: 'company_id ve year zorunlu.' });
     }
@@ -75,7 +75,7 @@ router.put('/mali-yillar/:id', async (req, res, next) => {
 
 router.get('/', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const r = await pool.query(
       `
       SELECT d.*, y.year AS mali_yil
@@ -109,7 +109,7 @@ router.get('/:id', async (req, res, next) => {
 router.post('/:id/kapat', async (req, res, next) => {
   try {
     const row = await withTransaction(pool, (client) =>
-      donemKapat(client, Number(req.params.id), { kullaniciKodu: reqKullaniciKodu(req) })
+      donemKapat(client, Number(req.params.id), { kullaniciKodu: reqUserCode(req) })
     );
     res.json({
       ...row,
@@ -123,7 +123,7 @@ router.post('/:id/kapat', async (req, res, next) => {
 router.post('/:id/yeniden-ac', async (req, res, next) => {
   try {
     const row = await withTransaction(pool, (client) =>
-      donemYenidenAc(client, Number(req.params.id), { kullaniciKodu: reqKullaniciKodu(req) })
+      donemYenidenAc(client, Number(req.params.id), { kullaniciKodu: reqUserCode(req) })
     );
     res.json({
       ...row,

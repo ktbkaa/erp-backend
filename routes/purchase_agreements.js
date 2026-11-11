@@ -1,10 +1,10 @@
-const { createBelgeRouter } = require('./_belgeCrud');
+const { createDocumentRouter } = require('./_belgeCrud');
 
-module.exports = createBelgeRouter({
+module.exports = createDocumentRouter({
     table: 'purchase_agreements',
     lineTable: 'purchase_agreement_lines',
-    fk: 'anlasma_id',
-    noField: 'anlasma_no',
+    fk: 'agreement_id',
+    noField: 'agreement_no',
     seri: 'SATINALMA_ANLASMA',
     notFound: 'Anlaşma bulunamadı.',
     allowedDurum: ['Taslak', 'Onayli', 'Kapali', 'Iptal'],

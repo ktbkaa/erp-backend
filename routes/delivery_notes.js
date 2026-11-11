@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { stokHareketOlustur, depoStokBakiye } = require('../src/services/stokHareketService');
-const { satirHesapla, belgelerToplam } = require('../src/utils/kalemHesap');
-const { sevkGetir } = require('./shipment_orders');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { createStockMovement, warehouseItemBalance } = require('../src/services/stokHareketService');
+const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
+const { getShipment } = require('./shipment_orders');
 const {
     BELGE_TIPI,
-    hareketKoduBul,
+    findMovementCode,
     onerilenDepolar,
 } = require('../src/utils/belgeOmurga');
 const { rezervasyonTuket } = require('../src/services/rezervasyonService');
-const { belgeHtml } = require('../src/services/belgePdfService');
+const { documentHtml } = require('../src/services/belgePdfService');
 const {
     pickFields,
     appendInsert,
@@ -33,8 +33,8 @@ function boolOr(v, fallback = false) {
     return ['1', 'true', 'evet', 'e', 'yes'].includes(String(v).trim().toLowerCase());
 }
 
-function satirHesapPaketi(s, kurBelge = 1) {
-    const h = satirHesapla({
+function lineCalcBundle(s, kurBelge = 1) {
+    const h = calculateLine({
         quantity: s.quantity,
         unit_price: s.unit_price,
         discount_rate: s.discount_rate,
@@ -46,13 +46,13 @@ function satirHesapPaketi(s, kurBelge = 1) {
         excise_rate: s.excise_rate,
         exchange_rate: s.exchange_rate != null ? s.exchange_rate : kurBelge,
     });
-    const bandrolOran = Number(s.bandrol_rate) || 0;
-    const bandrol_amount = Math.round(((Number(h.goods_service_amount) || 0) * bandrolOran / 100) * 100) / 100;
-    return { ...h, bandrol_rate: bandrolOran, bandrol_amount };
+    const bandrolOran = Number(s.stamp_tax_rate) || 0;
+    const stamp_tax_amount = Math.round(((Number(h.goods_service_amount) || 0) * bandrolOran / 100) * 100) / 100;
+    return { ...h, stamp_tax_rate: bandrolOran, stamp_tax_amount };
 }
 
-async function irsaliyeSatirYaz(client, irsaliyeId, s, sira, kaynakTip, kaynakId, kurBelge = 1) {
-    const h = satirHesapPaketi(s, kurBelge);
+async function writeDeliveryNoteLine(client, irsaliyeId, s, sira, kaynakTip, kaynakId, kurBelge = 1) {
+    const h = lineCalcBundle(s, kurBelge);
     await client.query(
         `
         INSERT INTO delivery_note_lines
@@ -60,17 +60,17 @@ async function irsaliyeSatirYaz(client, irsaliyeId, s, sira, kaynakTip, kaynakId
              unit_price, price_list_id, currency_code, rate_type, exchange_rate,
              local_unit_price, local_currency_amount,
              discount_rate, discount_rate_2, discount_rate_3,
-             discount_amount, discount_tutari2, discount_tutari3,
+             discount_amount, discount_amount_2, discount_amount_3,
              vat_code, vat_rate, vat_mode, vat_amount,
              withholding_code, withholding_rate, withholding_amount,
              excise_code, excise_rate, excise_amount,
-             bandrol_rate, bandrol_amount, tax_schema,
+             stamp_tax_rate, stamp_tax_amount, tax_schema,
              due_date, due_days,
              line_description, line_description_2, line_description_3, customer_ref_code,
-             lot_id, lot_no, serial_no, stock_status, raf_code, konum_code,
+             lot_id, lot_no, serial_no, stock_status, bin_code, location_code,
              invoiced_quantity, order_no,
              amount_ex_tax, amount_ttc,
-             ship_emri_line_id, sales_order_line_id,
+             shipment_order_line_id, sales_order_line_id,
              source_document_type, source_document_id, source_document_line_id)
         VALUES (
             $1,$2,$3,$4,$5,$6,$7,
@@ -110,8 +110,8 @@ async function irsaliyeSatirYaz(client, irsaliyeId, s, sira, kaynakTip, kaynakId
             h.discount_rate_2,
             h.discount_rate_3,
             h.discount_amount,
-            h.discount_tutari2,
-            h.discount_tutari3,
+            h.discount_amount_2,
+            h.discount_amount_3,
             s.vat_code || null,
             h.vat_rate,
             h.vat_mode,
@@ -122,8 +122,8 @@ async function irsaliyeSatirYaz(client, irsaliyeId, s, sira, kaynakTip, kaynakId
             s.excise_code || null,
             h.excise_rate,
             h.excise_amount,
-            h.bandrol_rate,
-            h.bandrol_amount,
+            h.stamp_tax_rate,
+            h.stamp_tax_amount,
             s.tax_schema || null,
             s.due_date || null,
             nOrNull(s.due_days),
@@ -135,25 +135,25 @@ async function irsaliyeSatirYaz(client, irsaliyeId, s, sira, kaynakTip, kaynakId
             s.lot_no || null,
             s.serial_no || null,
             s.stock_status || 'Kullanilabilir',
-            s.raf_code || null,
-            s.konum_code || null,
+            s.bin_code || null,
+            s.location_code || null,
             s.invoiced_quantity ?? 0,
             s.order_no || null,
             h.amount_ex_tax,
             h.amount_ttc,
-            s.ship_emri_line_id || null,
+            s.shipment_order_line_id || null,
             s.sales_order_line_id || null,
             s.source_document_type || kaynakTip,
             s.source_document_id || kaynakId,
-            s.source_document_line_id || s.ship_emri_line_id || s.sales_order_line_id || null,
+            s.source_document_line_id || s.shipment_order_line_id || s.sales_order_line_id || null,
         ],
     );
     return { ...s, ...h };
 }
 
-async function irsaliyeToplamlariGuncelle(client, irsaliyeId, satirHesaplari, altiIskonto = 0) {
+async function updateDeliveryNoteTotals(client, irsaliyeId, satirHesaplari, altiIskonto = 0) {
     const t = belgelerToplam(satirHesaplari);
-    const bandrol = satirHesaplari.reduce((a, s) => a + (Number(s.bandrol_amount) || 0), 0);
+    const bandrol = satirHesaplari.reduce((a, s) => a + (Number(s.stamp_tax_amount) || 0), 0);
     const alti = Number(altiIskonto) || 0;
     const genel = Math.round(((Number(t.grand_total) || 0) - alti) * 100) / 100;
     await client.query(
@@ -164,7 +164,7 @@ async function irsaliyeToplamlariGuncelle(client, irsaliyeId, satirHesaplari, al
             tax_amount = $4,
             total_excise = $5,
             total_withholding = $6,
-            total_bandrol = $7,
+            total_stamp_tax = $7,
             delivery_footer_discount = $8,
             grand_total = $9,
             updated_at = CURRENT_TIMESTAMP
@@ -184,13 +184,13 @@ async function irsaliyeToplamlariGuncelle(client, irsaliyeId, satirHesaplari, al
     );
 }
 
-async function irsaliyeGetir(id) {
+async function getDeliveryNote(id) {
     const i = await pool.query(
         `
         SELECT ir.*, c.partner_code, c.partner_name,
                COALESCE(ir.tax_id, c.tax_id) AS tax_id,
                COALESCE(ir.tax_office, c.tax_office) AS tax_office,
-               c.email AS cari_email, c.telefon AS cari_telefon,
+               c.email AS cari_email, c.phone AS cari_telefon,
                d.warehouse_code, d.warehouse_name,
                sp.order_no, se.shipment_no,
                hk.movement_code, hk.movement_name,
@@ -224,7 +224,7 @@ async function irsaliyeGetir(id) {
     return { ...i.rows[0], satirlar: satirlar.rows, kalemler: satirlar.rows };
 }
 
-function validateSevkAlanlari(body) {
+function validateShipmentFields(body) {
     const eksik = [];
     if (!body.ship_city) eksik.push('ship_city');
     if (!body.ship_district) eksik.push('ship_district');
@@ -239,11 +239,11 @@ function validateSevkAlanlari(body) {
 }
 
 /** Onay öncesi depo bakiyesi kontrolü (UI için) */
-async function depoKontrolEt(client, depoId, satirlar) {
+async function checkWarehouse(client, depoId, satirlar) {
     const sonuclar = [];
     let accepted = true;
     for (const s of satirlar) {
-        const bakiye = await depoStokBakiye(client, depoId, s.item_id);
+        const bakiye = await warehouseItemBalance(client, depoId, s.item_id);
         const istenen = Number(s.quantity);
         const ok = bakiye + 1e-9 >= istenen;
         if (!ok) accepted = false;
@@ -263,14 +263,14 @@ async function depoKontrolEt(client, depoId, satirlar) {
 
 router.get('/', async (req, res) => {
     try {
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         const params = [];
         let sql = 'SELECT id FROM delivery_notes';
         if (firmaId) { params.push(firmaId); sql += ` WHERE company_id = $${params.length}`; }
         sql += ' ORDER BY id DESC';
         const liste = await pool.query(sql, params);
         const result = [];
-        for (const r of liste.rows) result.push(await irsaliyeGetir(r.id));
+        for (const r of liste.rows) result.push(await getDeliveryNote(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -279,7 +279,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await irsaliyeGetir(req.params.id);
+        const row = await getDeliveryNote(req.params.id);
         if (!row) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -290,10 +290,10 @@ router.get('/:id', async (req, res) => {
 /** Depo bakiyesi ön kontrol (P04) */
 router.get('/:id/depo-kontrol', async (req, res) => {
     try {
-        const ir = await irsaliyeGetir(req.params.id);
+        const ir = await getDeliveryNote(req.params.id);
         if (!ir) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         const depoId = Number(req.query.warehouse_id || ir.warehouse_id);
-        const result = await depoKontrolEt(pool, depoId, ir.satirlar);
+        const result = await checkWarehouse(pool, depoId, ir.satirlar);
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -303,7 +303,7 @@ router.get('/:id/depo-kontrol', async (req, res) => {
 /** Belge zinciri timeline */
 router.get('/:id/zincir', async (req, res) => {
     try {
-        const ir = await irsaliyeGetir(req.params.id);
+        const ir = await getDeliveryNote(req.params.id);
         if (!ir) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         const adimlar = [];
         if (ir.sales_order_id) {
@@ -347,7 +347,7 @@ router.get('/:id/zincir', async (req, res) => {
     }
 });
 
-function baslikKaynak(body) {
+function headerSource(body) {
     let kaynakTip = body.source_document_type || null;
     let kaynakId = body.source_document_id || null;
     if (!kaynakTip && body.shipment_order_id) {
@@ -360,9 +360,9 @@ function baslikKaynak(body) {
     return { kaynakTip, kaynakId };
 }
 
-async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kaynakId }) {
+async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip, kaynakId }) {
     const vals = {
-        ozellestirme_no: body.ozellestirme_no || 'TR1.2.1',
+        customization_no: body.customization_no || 'TR1.2.1',
         scenario: body.scenario || 'TEMELIRSALIYE',
         delivery_note_type: body.delivery_note_type || 'SEVK',
         delivery_date: body.delivery_date || null,
@@ -466,14 +466,14 @@ async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kay
         status: body.status || 'Taslak',
         source_document_type: kaynakTip,
         source_document_id: kaynakId,
-        iade_mi: boolOr(body.iade_mi, false),
+        is_return: boolOr(body.is_return, false),
     };
 
     if (!id) {
         const ins = await client.query(
             `
             INSERT INTO delivery_notes (
-                delivery_note_no, ozellestirme_no, scenario, delivery_note_type,
+                delivery_note_no, customization_no, scenario, delivery_note_type,
                 delivery_date, delivery_time, ship_date, ship_time,
                 actual_ship_date, actual_ship_time,
                 partner_id, sales_order_id, shipment_order_id, warehouse_id, movement_code_id,
@@ -496,7 +496,7 @@ async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kay
                 driver_name, driver_last_name, driver_national_id, driver_mobile, cargo_no, vehicle_description,
                 carrier_title, carrier_tax_id,
                 description, description_2, description_3, public_note, internal_note,
-                delivery_footer_discount, status, source_document_type, source_document_id, iade_mi
+                delivery_footer_discount, status, source_document_type, source_document_id, is_return
             ) VALUES (
                 $1,$2,$3,$4,
                 COALESCE($5::date,CURRENT_DATE), COALESCE($6::time,CURRENT_TIME),
@@ -526,7 +526,7 @@ async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kay
             ) RETURNING id
             `,
             [
-                no, vals.ozellestirme_no, vals.scenario, vals.delivery_note_type,
+                no, vals.customization_no, vals.scenario, vals.delivery_note_type,
                 vals.delivery_date, vals.delivery_time, vals.ship_date, vals.ship_time,
                 vals.actual_ship_date, vals.actual_ship_time,
                 vals.partner_id, vals.sales_order_id, vals.shipment_order_id, vals.warehouse_id, vals.movement_code_id,
@@ -549,7 +549,7 @@ async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kay
                 vals.driver_name, vals.driver_last_name, vals.driver_national_id, vals.driver_mobile, vals.cargo_no, vals.vehicle_description,
                 vals.carrier_title, vals.carrier_tax_id,
                 vals.description, vals.description_2, vals.description_3, vals.public_note, vals.internal_note,
-                vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.iade_mi,
+                vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.is_return,
             ],
         );
         return ins.rows[0].id;
@@ -558,7 +558,7 @@ async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kay
     await client.query(
         `
         UPDATE delivery_notes SET
-            ozellestirme_no=COALESCE($2, ozellestirme_no),
+            customization_no=COALESCE($2, customization_no),
             scenario=COALESCE($3, scenario),
             delivery_note_type=COALESCE($4, delivery_note_type),
             delivery_date=COALESCE($5::date, delivery_date),
@@ -602,13 +602,13 @@ async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kay
             status=COALESCE($102, status),
             source_document_type=COALESCE($103, source_document_type),
             source_document_id=COALESCE($104, source_document_id),
-            iade_mi=COALESCE($105, iade_mi),
+            is_return=COALESCE($105, is_return),
             updated_at=CURRENT_TIMESTAMP
         WHERE id=$1
         `,
         [
             id,
-            vals.ozellestirme_no, vals.scenario, vals.delivery_note_type,
+            vals.customization_no, vals.scenario, vals.delivery_note_type,
             vals.delivery_date, vals.delivery_time, vals.ship_date, vals.ship_time,
             vals.actual_ship_date, vals.actual_ship_time,
             vals.partner_id, vals.sales_order_id, vals.shipment_order_id, vals.warehouse_id, vals.movement_code_id,
@@ -633,7 +633,7 @@ async function irsaliyeBaslikUpsert(client, { id, body, hkId, no, kaynakTip, kay
             vals.driver_name, vals.driver_last_name, vals.driver_national_id, vals.driver_mobile, vals.cargo_no, vals.vehicle_description,
             vals.carrier_title, vals.carrier_tax_id,
             vals.description, vals.description_2, vals.description_3, vals.public_note, vals.internal_note,
-            vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.iade_mi,
+            vals.delivery_footer_discount, vals.status, vals.source_document_type, vals.source_document_id, vals.is_return,
         ],
     );
     return id;
@@ -651,11 +651,11 @@ router.post('/', async (req, res) => {
         }
 
         const id = await withTransaction(pool, async (client) => {
-            const no = body.delivery_note_no || (await sonrakiBelgeNo(client, 'IRSALIYE'));
-            const hk = await hareketKoduBul(client, BELGE_TIPI.IRSALIYE, body.movement_code_id || null);
+            const no = body.delivery_note_no || (await nextDocumentNo(client, 'IRSALIYE'));
+            const hk = await findMovementCode(client, BELGE_TIPI.IRSALIYE, body.movement_code_id || null);
             if (!hk) throw new Error('Satış irsaliye hareket kodu tanımlı değil (SIR-01).');
-            const { kaynakTip, kaynakId } = baslikKaynak(body);
-            const iid = await irsaliyeBaslikUpsert(client, {
+            const { kaynakTip, kaynakId } = headerSource(body);
+            const iid = await upsertDeliveryNoteHeader(client, {
                 id: null, body, hkId: hk.id, no, kaynakTip, kaynakId,
             });
             const kurBelge = body.exchange_rate != null ? Number(body.exchange_rate) : 1;
@@ -663,12 +663,12 @@ router.post('/', async (req, res) => {
             let sira = 1;
             for (const s of satirlar) {
                 if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
-                hesaplar.push(await irsaliyeSatirYaz(client, iid, s, sira++, kaynakTip, kaynakId, kurBelge));
+                hesaplar.push(await writeDeliveryNoteLine(client, iid, s, sira++, kaynakTip, kaynakId, kurBelge));
             }
-            await irsaliyeToplamlariGuncelle(client, iid, hesaplar, body.delivery_footer_discount);
+            await updateDeliveryNoteTotals(client, iid, hesaplar, body.delivery_footer_discount);
             return iid;
         });
-        res.status(201).json(await irsaliyeGetir(id));
+        res.status(201).json(await getDeliveryNote(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -696,8 +696,8 @@ router.put('/:id', async (req, res) => {
                 partner_id: body.partner_id != null ? body.partner_id : m.partner_id,
                 warehouse_id: body.warehouse_id != null ? body.warehouse_id : m.warehouse_id,
             };
-            const { kaynakTip, kaynakId } = baslikKaynak(merged);
-            await irsaliyeBaslikUpsert(client, {
+            const { kaynakTip, kaynakId } = headerSource(merged);
+            await upsertDeliveryNoteHeader(client, {
                 id: Number(req.params.id),
                 body: merged,
                 hkId: body.movement_code_id || m.movement_code_id,
@@ -712,7 +712,7 @@ router.put('/:id', async (req, res) => {
                 let sira = 1;
                 for (const s of raw) {
                     if (!s.item_id || !s.quantity) continue;
-                    hesaplar.push(await irsaliyeSatirYaz(
+                    hesaplar.push(await writeDeliveryNoteLine(
                         client,
                         Number(req.params.id),
                         s,
@@ -722,11 +722,11 @@ router.put('/:id', async (req, res) => {
                         kurBelge,
                     ));
                 }
-                await irsaliyeToplamlariGuncelle(client, Number(req.params.id), hesaplar, merged.delivery_footer_discount);
+                await updateDeliveryNoteTotals(client, Number(req.params.id), hesaplar, merged.delivery_footer_discount);
             }
             return Number(req.params.id);
         });
-        res.json(await irsaliyeGetir(id));
+        res.json(await getDeliveryNote(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -735,11 +735,11 @@ router.put('/:id', async (req, res) => {
 /** Onay + stok çıkışı (SATIS_CIKIS) — P02 hareket bağ, P04 depo doğrulama */
 router.post('/:id/onayla', async (req, res) => {
     try {
-        const ir = await irsaliyeGetir(req.params.id);
+        const ir = await getDeliveryNote(req.params.id);
         if (!ir) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         if (ir.status !== 'Taslak') return res.status(400).json({ hata: 'Sadece Taslak onaylanır.' });
 
-        const eksik = validateSevkAlanlari(ir);
+        const eksik = validateShipmentFields(ir);
         if (eksik.length) {
             return res.status(400).json({
                 hata: `e-İrsaliye zorunlu alanlar eksik: ${eksik.join(', ')}`,
@@ -750,15 +750,15 @@ router.post('/:id/onayla', async (req, res) => {
         if (!depoId) return res.status(400).json({ hata: 'warehouse_id zorunlu.' });
 
         // Ön kontrol — UI'ya detaylı yanıt
-        const kontrol = await depoKontrolEt(pool, depoId, ir.satirlar);
+        const kontrol = await checkWarehouse(pool, depoId, ir.satirlar);
         if (!kontrol.accepted && req.body.zorla !== true) {
             // STOK_NEGATIF / eksi izin stok motorunda da kontrol edilecek;
             // burada erken ve zengin hata dönüyoruz.
-            const hk = await hareketKoduBul(pool, BELGE_TIPI.IRSALIYE, ir.movement_code_id);
+            const hk = await findMovementCode(pool, BELGE_TIPI.IRSALIYE, ir.movement_code_id);
             const param = await pool.query(
-                `SELECT value FROM system_parameters WHERE parametre_code='STOK_NEGATIF' LIMIT 1`
+                `SELECT value FROM system_parameters WHERE parameter_code='STOK_NEGATIF' LIMIT 1`
             );
-            const negatifOk = Boolean(hk?.eksi_balance_izin)
+            const negatifOk = Boolean(hk?.allow_negative_balance)
                 || ['evet', 'true', '1', 'yes', 'e'].includes(
                     String(param.rows[0]?.value || '').trim().toLowerCase()
                 );
@@ -778,13 +778,13 @@ router.post('/:id/onayla', async (req, res) => {
 
             let hkId = ir.movement_code_id;
             if (!hkId) {
-                const hk = await hareketKoduBul(client, BELGE_TIPI.IRSALIYE);
+                const hk = await findMovementCode(client, BELGE_TIPI.IRSALIYE);
                 if (!hk) throw new Error('Satış irsaliye hareket kodu zorunlu (SIR-01).');
                 hkId = hk.id;
                 await client.query(`UPDATE delivery_notes SET movement_code_id=$2 WHERE id=$1`, [ir.id, hkId]);
             }
 
-            const hareket = await stokHareketOlustur(client, {
+            const hareket = await createStockMovement(client, {
                 hareketTipi: 'SATIS_CIKIS',
                 depoId,
                 belgeTipi: 'IRSALIYE',
@@ -820,7 +820,7 @@ router.post('/:id/onayla', async (req, res) => {
                 [ir.id, hareket.hareket.id, depoId]
             );
         });
-        res.json(await irsaliyeGetir(ir.id));
+        res.json(await getDeliveryNote(ir.id));
     } catch (err) {
         const status = err.code === 'YETERSIZ_STOK' ? 400 : 500;
         res.status(status).json({
@@ -836,7 +836,7 @@ router.post('/sevk-emrinden', async (req, res) => {
     try {
         const { shipment_order_id } = req.body;
         if (!shipment_order_id) return res.status(400).json({ hata: 'shipment_order_id zorunlu.' });
-        const sevk = await sevkGetir(shipment_order_id);
+        const sevk = await getShipment(shipment_order_id);
         if (!sevk) return res.status(404).json({ hata: 'Sevk emri bulunamadı.' });
         if (!['Onayli', 'Taslak'].includes(sevk.status)) {
             return res.status(400).json({ hata: `Sevk durumu accepted değil: ${sevk.status}` });
@@ -861,11 +861,11 @@ router.post('/sevk-emrinden', async (req, res) => {
         };
 
         const id = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'IRSALIYE');
-            const hk = await hareketKoduBul(client, BELGE_TIPI.IRSALIYE, body.movement_code_id || null);
+            const no = await nextDocumentNo(client, 'IRSALIYE');
+            const hk = await findMovementCode(client, BELGE_TIPI.IRSALIYE, body.movement_code_id || null);
             if (!hk) throw new Error('Satış irsaliye hareket kodu tanımlı değil.');
 
-            const firmaId = body.company_id || sevk.company_id || firmaIdFromReq(req) || null;
+            const firmaId = body.company_id || sevk.company_id || companyIdFromReq(req) || null;
             const baslik = await client.query(
                 `
                 INSERT INTO delivery_notes
@@ -893,7 +893,7 @@ router.post('/sevk-emrinden', async (req, res) => {
                 await client.query(
                     `INSERT INTO delivery_note_lines
                         (delivery_note_id, line_no, item_id, quantity, uom_code,
-                         ship_emri_line_id, sales_order_line_id,
+                         shipment_order_line_id, sales_order_line_id,
                          source_document_type, source_document_id, source_document_line_id)
                      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
                     [
@@ -909,7 +909,7 @@ router.post('/sevk-emrinden', async (req, res) => {
             );
             return iid;
         });
-        res.status(201).json(await irsaliyeGetir(id));
+        res.status(201).json(await getDeliveryNote(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -918,7 +918,7 @@ router.post('/sevk-emrinden', async (req, res) => {
 /** İrsaliye → Satış faturası — Onaylı + GİB gönderildi; numaratörden no kabul edilir */
 router.post('/:id/fatura-olustur', async (req, res) => {
     try {
-        const ir = await irsaliyeGetir(req.params.id);
+        const ir = await getDeliveryNote(req.params.id);
         if (!ir) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         if (ir.status !== 'Onayli') {
             return res.status(400).json({
@@ -936,8 +936,8 @@ router.post('/:id/fatura-olustur', async (req, res) => {
 
         const faturaId = await withTransaction(pool, async (client) => {
             const no = (req.body.invoice_no && String(req.body.invoice_no).trim())
-                || (await sonrakiBelgeNo(client, 'FATURA'));
-            const hk = await hareketKoduBul(client, BELGE_TIPI.SATIS_FATURA);
+                || (await nextDocumentNo(client, 'FATURA'));
+            const hk = await findMovementCode(client, BELGE_TIPI.SATIS_FATURA);
             const kurBelge = Number(ir.exchange_rate) > 0 ? Number(ir.exchange_rate) : 1;
 
             const kalemler = [];
@@ -950,7 +950,7 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                     ?? (s.unit_price != null && Number(s.unit_price) > 0
                         ? Number(s.unit_price)
                         : Number(stok.rows[0]?.sales_price || 0));
-                const h = satirHesapPaketi({
+                const h = lineCalcBundle({
                     ...s,
                     unit_price: fiyat,
                     quantity: s.quantity,
@@ -989,13 +989,13 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                 });
             }
             const top = belgelerToplam(kalemler);
-            const bandrol = kalemler.reduce((a, k) => a + (Number(k.bandrol_amount) || 0), 0);
+            const bandrol = kalemler.reduce((a, k) => a + (Number(k.stamp_tax_amount) || 0), 0);
             const vadeGun = ir.due_days != null ? ir.due_days : ir.fin_due_days;
 
-            const baslikKaynak = {
+            const headerSource = {
                 invoice_category: 'SATIS',
                 scenario: 'TICARIFATURA',
-                ozellestirme_no: 'TR1.2',
+                customization_no: 'TR1.2',
                 invoice_date: req.body.invoice_date || ir.delivery_date
                     || new Date().toISOString().slice(0, 10),
                 currency_code: ir.currency_code || 'TRY',
@@ -1066,13 +1066,13 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                 invoice_footer_discount: ir.delivery_footer_discount ?? 0,
                 total_excise: top.total_excise || 0,
                 total_withholding: top.total_withholding || 0,
-                total_bandrol: bandrol,
+                total_stamp_tax: bandrol,
                 remaining_amount: top.payable_amount,
                 status: 'Taslak',
                 source_document_type: BELGE_TIPI.IRSALIYE,
                 source_document_id: ir.id,
             };
-            const extras = pickFields(baslikKaynak, FATURA_BASLIK);
+            const extras = pickFields(headerSource, FATURA_BASLIK);
             delete extras.uuid_ettn;
             const baslik = appendInsert(
                 ['invoice_no', 'partner_id', 'invoice_type', 'total_amount', 'net_amount',
@@ -1153,7 +1153,7 @@ router.post('/:id/fatura-olustur', async (req, res) => {
         res.status(201).json({
             ok: true,
             fatura: { ...f.rows[0], kalemler: kalemler.rows, satirlar: kalemler.rows },
-            irsaliye: await irsaliyeGetir(ir.id),
+            irsaliye: await getDeliveryNote(ir.id),
             yonlendir: 'fatura-yonetimi',
             message: 'Fatura ekranına yönlendiriliyorsunuz',
         });
@@ -1165,10 +1165,10 @@ router.post('/:id/fatura-olustur', async (req, res) => {
 /** GET /delivery_notes/:id/yazdir — HTML+QR yazdırma (SAL-010) */
 router.get('/:id/yazdir', async (req, res) => {
     try {
-        const ir = await irsaliyeGetir(req.params.id);
+        const ir = await getDeliveryNote(req.params.id);
         if (!ir) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
-        const html = belgeHtml({
-            baslik: 'Satış İrsaliyesi',
+        const html = documentHtml({
+            title: 'Satış İrsaliyesi',
             belgeNo: ir.delivery_note_no,
             tarih: ir.delivery_date || ir.created_at,
             cari: ir,
@@ -1185,14 +1185,14 @@ router.get('/:id/pdf', (req, res) => res.redirect(302, `/delivery_notes/${req.pa
 /** POST /delivery_notes/:id/iade — satış iade irsaliyesi (ters stok girişi) */
 router.post('/:id/iade', async (req, res) => {
     try {
-        const source = await irsaliyeGetir(req.params.id);
+        const source = await getDeliveryNote(req.params.id);
         if (!source) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         if (source.status !== 'Onayli' && source.status !== 'FaturayaDonustu') {
             return res.status(400).json({ hata: 'Yalnızca onaylı irsaliyeden iade oluşturulur.' });
         }
         const depoId = Number(req.body.warehouse_id || source.warehouse_id);
         const id = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'IRSALIYE').catch(() => `SIA-${Date.now()}`);
+            const no = await nextDocumentNo(client, 'IRSALIYE').catch(() => `SIA-${Date.now()}`);
             const baslik = await client.query(
                 `
                 INSERT INTO delivery_notes
@@ -1244,7 +1244,7 @@ router.post('/:id/iade', async (req, res) => {
                 [iadeId]
             );
             if (satirlar.rows.length) {
-                const hareket = await stokHareketOlustur(client, {
+                const hareket = await createStockMovement(client, {
                     hareketTipi: 'IADE_GIRIS',
                     depoId,
                     belgeTipi: 'SATIS_IADE',
@@ -1267,7 +1267,7 @@ router.post('/:id/iade', async (req, res) => {
             }
             return iadeId;
         });
-        res.status(201).json(await irsaliyeGetir(id));
+        res.status(201).json(await getDeliveryNote(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message, kod: err.code, detay: err.detay });
     }
@@ -1281,11 +1281,11 @@ router.delete('/:id', async (req, res) => {
             return res.status(400).json({ hata: 'Onaylı/faturalanmış irsaliye silinemez.' });
         }
         await pool.query('DELETE FROM delivery_notes WHERE id=$1', [req.params.id]);
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
 });
 
 module.exports = router;
-module.exports.irsaliyeGetir = irsaliyeGetir;
+module.exports.getDeliveryNote = getDeliveryNote;

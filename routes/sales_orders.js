@@ -2,12 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { parametreAl } = require('../src/utils/yetki');
 const {
   kullanilabilirNet,
-  siparisRezerveEt,
-  rezervasyonIptalSiparis,
+  reserveOrder,
+  cancelOrderReservations,
 } = require('../src/services/rezervasyonService');
 const {
   pickFields,
@@ -17,9 +17,9 @@ const {
   SIPARIS_SATIR,
 } = require('../src/utils/belgeAlanlari');
 
-const { firmaIdFromReq, andFirma, andFirmaViaIsYeri, andStokFirma, andCariFirma } = require('../src/utils/firmaScope');
+const { companyIdFromReq, andCompany, andCompanyViaPlant, andItemCompany, andPartnerCompany } = require('../src/utils/firmaScope');
 /** ATP: kullanılabilir stok (fiziksel − rezerv) vs sipariş kalemleri (REQ-SAL-008 / INV-004) */
-async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
+async function checkAtp(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
   let zorunlu = sert;
   if (zorunlu == null) {
     const vSert = await parametreAl(clientOrPool, 'ATP_SERT', 'Hayir');
@@ -55,7 +55,7 @@ async function atpKontrol(clientOrPool, kalemler, { sert = null, depoId = null }
   return uyari;
 }
 
-async function siparisGetir(id) {
+async function getOrder(id) {
     const s = await pool.query(
         `
         SELECT sp.*, c.partner_code AS cari_kodu_ref, c.partner_name AS cari_adi_ref
@@ -95,7 +95,7 @@ router.get('/', async (req, res) => {
             params.push(status);
             where.push(`status = ${params.length}`);
         }
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
           params.push(firmaId);
           where.push(`company_id = $${params.length}`);
@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
         `;
         const liste = await pool.query(sql, params);
         const sales_orders = [];
-        for (const r of liste.rows) sales_orders.push(await siparisGetir(r.id));
+        for (const r of liste.rows) sales_orders.push(await getOrder(r.id));
         res.json(sales_orders);
     } catch (err) {
         console.error('Sipariş listeleme hatası:', err);
@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const siparis = await siparisGetir(req.params.id);
+        const siparis = await getOrder(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         res.json(siparis);
     } catch (err) {
@@ -129,7 +129,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-async function resolveCari(client, body) {
+async function resolvePartner(client, body) {
     if (body.partner_id) {
         const r = await client.query(
             'SELECT id, partner_code, partner_name FROM partners WHERE id = $1',
@@ -200,7 +200,7 @@ router.post('/', async (req, res) => {
         }
 
         const id = await withTransaction(pool, async (client) => {
-            const cari = await resolveCari(client, req.body);
+            const cari = await resolvePartner(client, req.body);
             const { islenmis, toplam } = await resolveKalemler(client, kalemler);
 
             const belgeTipi =
@@ -213,14 +213,14 @@ router.post('/', async (req, res) => {
             // ATP yalnızca satış siparişlerinde
             let atpUyari = [];
             if (belgeTipi === 'SATIS_SIPARIS') {
-                atpUyari = await atpKontrol(client, islenmis, { depoId: req.body.warehouse_id || null });
+                atpUyari = await checkAtp(client, islenmis, { depoId: req.body.warehouse_id || null });
             }
 
             // Formda numaratörden ayrılan no varsa ona sadık kal — yeniden ayırma
             const reserved = order_no != null && String(order_no).trim() !== ''
               ? String(order_no).trim()
               : null;
-            const no = reserved || (await sonrakiBelgeNo(client, belgeTipi));
+            const no = reserved || (await nextDocumentNo(client, belgeTipi));
             const extras = pickFields(req.body, SIPARIS_BASLIK);
             if (extras.subtotal == null) extras.subtotal = toplam;
             if (extras.grand_total == null) extras.grand_total = toplam;
@@ -228,7 +228,7 @@ router.post('/', async (req, res) => {
               extras.tax_amount = Number(req.body.tax_amount) || 0;
             }
             if (extras.company_id == null) {
-              const fid = firmaIdFromReq(req);
+              const fid = companyIdFromReq(req);
               if (fid) extras.company_id = Number(fid);
             }
             const baslik = appendInsert(
@@ -264,7 +264,7 @@ router.post('/', async (req, res) => {
             return { siparisId, atpUyari };
         });
 
-        const row = await siparisGetir(id.siparisId);
+        const row = await getOrder(id.siparisId);
         res.status(201).json({ ...row, atp_uyari: id.atpUyari || [] });
     } catch (err) {
         console.error('Sipariş kayıt hatası:', err);
@@ -298,7 +298,7 @@ router.put('/:id', async (req, res) => {
                 partner_name: mevcut.rows[0].partner_name,
             };
             if (req.body.partner_id || req.body.partner_code) {
-                cari = await resolveCari(client, req.body);
+                cari = await resolvePartner(client, req.body);
             }
 
             let toplam = mevcut.rows[0].total_amount;
@@ -338,7 +338,7 @@ router.put('/:id', async (req, res) => {
             if (extras.subtotal == null && Array.isArray(kalemler)) extras.subtotal = toplam;
             if (extras.grand_total == null && Array.isArray(kalemler)) extras.grand_total = toplam;
             if (extras.company_id == null) {
-                const fid = firmaIdFromReq(req);
+                const fid = companyIdFromReq(req);
                 if (fid) extras.company_id = Number(fid);
             }
             // order_no numaratörden gelir — PUT ile değiştirilmez
@@ -354,7 +354,7 @@ router.put('/:id', async (req, res) => {
             return Number(req.params.id);
         });
 
-        res.json(await siparisGetir(id));
+        res.json(await getOrder(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -364,11 +364,11 @@ router.put('/:id', async (req, res) => {
 router.post('/:id/rezerve', async (req, res) => {
   try {
     const olusan = await withTransaction(pool, async (client) => {
-      return siparisRezerveEt(client, Number(req.params.id), {
+      return reserveOrder(client, Number(req.params.id), {
         depoId: req.body.warehouse_id ? Number(req.body.warehouse_id) : null,
       });
     });
-    const siparis = await siparisGetir(req.params.id);
+    const siparis = await getOrder(req.params.id);
     res.status(201).json({ rezervasyonlar: olusan, siparis });
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, detay: err.detay });
@@ -379,9 +379,9 @@ router.post('/:id/rezerve', async (req, res) => {
 router.post('/:id/rezervasyon-iptal', async (req, res) => {
   try {
     await withTransaction(pool, async (client) => {
-      await rezervasyonIptalSiparis(client, Number(req.params.id));
+      await cancelOrderReservations(client, Number(req.params.id));
     });
-    res.json(await siparisGetir(req.params.id));
+    res.json(await getOrder(req.params.id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -390,9 +390,9 @@ router.post('/:id/rezervasyon-iptal', async (req, res) => {
 /** Satış siparişi → Sevk emri (P01 ref + P04 depo + P32 açık quantity) */
 router.post('/:id/sevk-emri-olustur', async (req, res) => {
     try {
-        const { BELGE_TIPI, hareketKoduBul, kalanMiktar, onerilenDepolar } = require('../src/utils/belgeOmurga');
-        const { depoStokBakiye } = require('../src/services/stokHareketService');
-        const siparis = await siparisGetir(req.params.id);
+        const { BELGE_TIPI, findMovementCode, remainingQuantity, onerilenDepolar } = require('../src/utils/belgeOmurga');
+        const { warehouseItemBalance } = require('../src/services/stokHareketService');
+        const siparis = await getOrder(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.status)) {
             return res.status(400).json({ hata: `Sipariş durumu accepted değil: ${siparis.status}` });
@@ -404,9 +404,9 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
         const uyariSatirlar = [];
         for (const k of siparis.kalemler || []) {
             if (!k.item_id) continue;
-            const kalan = kalanMiktar(k);
+            const kalan = remainingQuantity(k);
             if (kalan <= 0) continue;
-            const bakiye = await depoStokBakiye(pool, warehouse_id, k.item_id);
+            const bakiye = await warehouseItemBalance(pool, warehouse_id, k.item_id);
             if (bakiye + 1e-9 < kalan) {
                 uyariSatirlar.push({
                     item_id: k.item_id,
@@ -423,10 +423,10 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
             // Kritik stok yoksa bile devam.
         }
 
-        const { sevkGetir } = require('./shipment_orders');
+        const { getShipment } = require('./shipment_orders');
         const id = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'SEVK_EMRI');
-            const hk = await hareketKoduBul(client, BELGE_TIPI.SEVK_EMRI);
+            const no = await nextDocumentNo(client, 'SEVK_EMRI');
+            const hk = await findMovementCode(client, BELGE_TIPI.SEVK_EMRI);
             const cari = await client.query(`SELECT * FROM partners WHERE id=$1`, [siparis.partner_id]);
             const c = cari.rows[0] || {};
             const baslik = await client.query(
@@ -442,7 +442,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                 [
                     no, siparis.id, siparis.partner_id, warehouse_id,
                     req.body.ship_to_address || siparis.ship_to_address || c.bill_address_1 || c.address,
-                    req.body.ship_city || c.il, req.body.ship_district || c.district,
+                    req.body.ship_city || c.province, req.body.ship_district || c.district,
                     req.body.ship_country || c.country, req.body.ship_postal_code || c.postal_code,
                     req.body.status || 'Onayli', hk?.id || null,
                     req.body.description || `Sipariş ${siparis.order_no}`,
@@ -455,7 +455,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
             let sevkEdilenVar = false;
             for (const k of siparis.kalemler || []) {
                 if (!k.item_id) continue;
-                const kalan = kalanMiktar(k);
+                const kalan = remainingQuantity(k);
                 if (kalan <= 0) continue;
                 const quantity = req.body.miktarlar?.[k.id] != null
                     ? Number(req.body.miktarlar[k.id])
@@ -500,7 +500,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
             );
             return sid;
         });
-        const sevk = await sevkGetir(id);
+        const sevk = await getShipment(id);
         res.status(201).json({
             ...sevk,
             stok_uyari: uyariSatirlar.length ? uyariSatirlar : undefined,
@@ -514,7 +514,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM sales_orders WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

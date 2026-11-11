@@ -76,20 +76,20 @@ async function seedExtendedModules(ctx) {
   log(`\n=== X. Genişletilmiş modüller (${firma.company_code}) CRM / İK / PRJ / Finans ===`);
 
   // ─── CRM: aday → kontak → fırsat(+kalem) → plan → faaliyet → görev → ajanda ───
-  // + mevcut satış teklifine firsat_id bağla
+  // + mevcut satış teklifine opportunity_id bağla
   try {
     const lead = await api('POST', '/crm-adaylar', {
       lead_name: `${firma.company_code} Demo Aday — Enerji / Perakende`,
       status: 'Nitelikli',
-      sorumlu_id: userId,
+      owner_id: userId,
       priority: 'Yuksek',
-      telefon: '0212 555 0101',
+      phone: '0212 555 0101',
       email: `aday.${firma.company_code.toLowerCase()}@demo.local`,
-      il: 'İstanbul',
+      province: 'İstanbul',
       country: 'TR',
-      sektor_code: firma.company_code === 'TEKS' ? 'TEKSTIL' : 'ELEKTRONIK',
-      bulma_yontemi: 'Fuar',
-      notlar: `[${tag}] Demo aday`,
+      industry_code: firma.company_code === 'TEKS' ? 'TEKSTIL' : 'ELEKTRONIK',
+      lead_source: 'Fuar',
+      notes: `[${tag}] Demo aday`,
       company_id: firma.id,
     }, firma.id);
     await setCompany('crm_leads', lead.id, firma.id);
@@ -100,30 +100,30 @@ async function seedExtendedModules(ctx) {
       last_name: 'Aydın',
       title: 'Satın Alma Müdürü',
       email: `selin.${firma.company_code.toLowerCase()}@demo.local`,
-      telefon: '0532 111 2233',
+      phone: '0532 111 2233',
       lead_id: lead.id,
-      birincil: true,
-      notlar: `[${tag}] Aday kontak`,
+      is_primary: true,
+      notes: `[${tag}] Aday kontak`,
       company_id: firma.id,
     }, firma.id);
     await setCompany('crm_contacts', kontakLead.id, firma.id);
 
     const firsatAday = await api('POST', '/crm-firsatlar', {
-      firsat_name: `${firma.company_code} Aday Fırsat — yeni hat`,
-      konu: 'Demo fırsat (aday)',
+      opportunity_name: `${firma.company_code} Aday Fırsat — yeni hat`,
+      subject: 'Demo fırsat (aday)',
       customer_type: 'Aday',
       lead_id: lead.id,
       stage_id: 2,
       created_by_user_id: userId,
-      takip_by_id: userId,
-      beklenen_gelir: 150000,
+      followed_by_id: userId,
+      expected_revenue: 150000,
       plant_id: plant.id,
       description: `[${tag}] Aday fırsat`,
       company_id: firma.id,
       satirlar: fg ? [{ item_id: fg.id, quantity: 30, unit_price: 4200, line_no: 10 }] : [],
     }, firma.id);
     await setCompany('crm_opportunities', firsatAday.id, firma.id);
-    out.crm.firsat_aday = { id: firsatAday.id, code: firsatAday.firsat_code };
+    out.crm.firsat_aday = { id: firsatAday.id, code: firsatAday.opportunity_code };
 
     let firsatMusteri = null;
     if (mus?.id) {
@@ -133,40 +133,40 @@ async function seedExtendedModules(ctx) {
         title: 'Operasyon',
         email: `burak.${firma.company_code.toLowerCase()}@musteri.local`,
         partner_id: mus.id,
-        birincil: true,
-        notlar: `[${tag}] Müşteri kontak`,
+        is_primary: true,
+        notes: `[${tag}] Müşteri kontak`,
         company_id: firma.id,
       }, firma.id);
       await setCompany('crm_contacts', kontakMus.id, firma.id);
 
       firsatMusteri = await api('POST', '/crm-firsatlar', {
-        firsat_name: `${firma.company_code} Müşteri Fırsat — tekrar sipariş`,
-        konu: 'Mevcut müşteri upsell',
+        opportunity_name: `${firma.company_code} Müşteri Fırsat — tekrar sipariş`,
+        subject: 'Mevcut müşteri upsell',
         customer_type: 'Musteri',
         partner_id: mus.id,
         stage_id: 3,
         created_by_user_id: userId,
-        takip_by_id: userId,
-        beklenen_gelir: 84000,
+        followed_by_id: userId,
+        expected_revenue: 84000,
         plant_id: plant.id,
         description: `[${tag}] Müşteri fırsat — MAN satışa bağlı`,
         company_id: firma.id,
         satirlar: fg ? [{ item_id: fg.id, quantity: 20, unit_price: 4200, line_no: 10 }] : [],
       }, firma.id);
       await setCompany('crm_opportunities', firsatMusteri.id, firma.id);
-      out.crm.firsat_musteri = { id: firsatMusteri.id, code: firsatMusteri.firsat_code };
+      out.crm.firsat_musteri = { id: firsatMusteri.id, code: firsatMusteri.opportunity_code };
 
       // Satış teklifi ↔ fırsat bağlantısı
       if (ctx.links?.manQuotationId) {
         await pool.query(
           `UPDATE sales_quotations
-           SET firsat_id=$2, lead_id=COALESCE(lead_id,$3), company_id=COALESCE(company_id,$4)
+           SET opportunity_id=$2, lead_id=COALESCE(lead_id,$3), company_id=COALESCE(company_id,$4)
            WHERE id=$1`,
           [ctx.links.manQuotationId, firsatMusteri.id, lead.id, firma.id]
         );
         out.baglantilar.teklif_firsat = {
           quotation_id: ctx.links.manQuotationId,
-          firsat_id: firsatMusteri.id,
+          opportunity_id: firsatMusteri.id,
         };
       }
     }
@@ -179,13 +179,13 @@ async function seedExtendedModules(ctx) {
       customer_type: mus?.id ? 'Musteri' : 'Aday',
       partner_id: mus?.id || null,
       lead_id: mus?.id ? null : lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
-      faaliyet_type_id: tipId,
-      giren_id: userId,
-      yapacak_id: userId,
+      opportunity_id: (firsatMusteri || firsatAday).id,
+      activity_type_id: tipId,
+      entered_by_id: userId,
+      assignee_id: userId,
       plant_id: plant.id,
       start_date: new Date().toISOString(),
-      konu: `[${tag}] Keşif ziyareti planı`,
+      subject: `[${tag}] Keşif ziyareti planı`,
       description: 'Demo plan',
       company_id: firma.id,
     }, firma.id);
@@ -195,14 +195,14 @@ async function seedExtendedModules(ctx) {
       customer_type: mus?.id ? 'Musteri' : 'Aday',
       partner_id: mus?.id || null,
       lead_id: mus?.id ? null : lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
+      opportunity_id: (firsatMusteri || firsatAday).id,
       plan_id: plan.id,
-      faaliyet_type_id: tipId,
-      giren_id: userId,
+      activity_type_id: tipId,
+      entered_by_id: userId,
       plant_id: plant.id,
       start_date: new Date().toISOString(),
-      harcanan_dk: 45,
-      konu: `[${tag}] Telefon görüşmesi`,
+      spent_minutes: 45,
+      subject: `[${tag}] Telefon görüşmesi`,
       description: 'İhtiyaç netleştirildi',
       status: 'Tamamlandi',
       company_id: firma.id,
@@ -210,28 +210,28 @@ async function seedExtendedModules(ctx) {
     await setCompany('crm_activities', faaliyet.id, firma.id);
 
     const gorev = await api('POST', '/crm-gorevler', {
-      baslik: `[${tag}] Teklif hazırla`,
+      title: `[${tag}] Teklif hazırla`,
       description: 'Fırsat kalemlerine göre satış teklifi',
-      sorumlu_id: userId,
+      owner_id: userId,
       partner_id: mus?.id || null,
       lead_id: lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
-      faaliyet_id: faaliyet.id,
+      opportunity_id: (firsatMusteri || firsatAday).id,
+      activity_id: faaliyet.id,
       priority: 'Yuksek',
       status: 'Acik',
-      son_date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+      due_date: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
       company_id: firma.id,
     }, firma.id);
     await setCompany('crm_tasks', gorev.id, firma.id);
 
     const ajanda = await api('POST', '/crm-ajanda', {
-      baslik: `[${tag}] Müşteri toplantısı`,
+      title: `[${tag}] Müşteri toplantısı`,
       start_at: new Date(Date.now() + 2 * 86400000).toISOString(),
       end_at: new Date(Date.now() + 2 * 86400000 + 3600000).toISOString(),
       type: 'Toplanti',
       partner_id: mus?.id || null,
       lead_id: lead.id,
-      firsat_id: (firsatMusteri || firsatAday).id,
+      opportunity_id: (firsatMusteri || firsatAday).id,
       user_code: 'owner',
       description: 'Demo ajanda',
     }, firma.id).catch((e) => {
@@ -240,8 +240,8 @@ async function seedExtendedModules(ctx) {
     });
 
     out.crm.plan = plan.plan_code || plan.id;
-    out.crm.faaliyet = faaliyet.faaliyet_code || faaliyet.id;
-    out.crm.gorev = gorev.gorev_code || gorev.id;
+    out.crm.faaliyet = faaliyet.activity_code || faaliyet.id;
+    out.crm.gorev = gorev.task_code || gorev.id;
     out.crm.ajanda = ajanda?.id || null;
     log(`  CRM OK: lead=${out.crm.lead.code} firsat=${out.crm.firsat_musteri?.code || out.crm.firsat_aday.code}`);
   } catch (err) {

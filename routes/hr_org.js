@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 // ---- Departmanlar ----
 router.get('/departmanlar', async (req, res) => {
   try {
     const params = [];
     let where = '';
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where = `WHERE d.company_id=$${params.length}`;
@@ -42,7 +42,7 @@ router.get('/departmanlar/:id', async (req, res) => {
 router.post('/departmanlar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.department_name) {
       return res.status(400).json({ hata: 'company_id ve department_name zorunlu.' });
     }
@@ -50,7 +50,7 @@ router.post('/departmanlar', async (req, res) => {
       return res.status(400).json({ hata: 'Departman kendi üstü olamaz.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.department_code || (await sonrakiKod(client, 'HR_DEPT'));
+      const kod = b.department_code || (await nextSequenceCode(client, 'HR_DEPT'));
       const ins = await client.query(
         `INSERT INTO hr_departments (
            company_id, department_code, department_name, parent_id, cost_center_code, manager_employee_id, description
@@ -95,11 +95,11 @@ router.delete('/departmanlar/:id', async (req, res) => {
     const used = await pool.query(`SELECT 1 FROM hr_employees WHERE department_id=$1 LIMIT 1`, [req.params.id]);
     if (used.rows[0]) {
       await pool.query(`UPDATE hr_departments SET is_active=FALSE WHERE id=$1`, [req.params.id]);
-      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+      return res.json({ is_deleted: false, pasife_alindi: true, id: Number(req.params.id) });
     }
     const r = await pool.query(`DELETE FROM hr_departments WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Departman bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -110,7 +110,7 @@ router.get('/pozisyonlar', async (req, res) => {
   try {
     const params = [];
     let where = '';
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where = `WHERE p.company_id=$${params.length}`;
@@ -142,12 +142,12 @@ router.get('/pozisyonlar/:id', async (req, res) => {
 router.post('/pozisyonlar', async (req, res) => {
   try {
     const b = req.body || {};
-    const firmaId = firmaIdFromReq(req) || b.company_id;
+    const firmaId = companyIdFromReq(req) || b.company_id;
     if (!firmaId || !b.position_name) {
       return res.status(400).json({ hata: 'company_id ve position_name zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
-      const kod = b.position_code || (await sonrakiKod(client, 'HR_POS'));
+      const kod = b.position_code || (await nextSequenceCode(client, 'HR_POS'));
       const ins = await client.query(
         `INSERT INTO hr_positions (company_id, position_code, position_name, department_id, description)
          VALUES ($1,$2,$3,$4,$5) RETURNING id`,
@@ -186,11 +186,11 @@ router.delete('/pozisyonlar/:id', async (req, res) => {
     const used = await pool.query(`SELECT 1 FROM hr_employees WHERE position_id=$1 LIMIT 1`, [req.params.id]);
     if (used.rows[0]) {
       await pool.query(`UPDATE hr_positions SET is_active=FALSE WHERE id=$1`, [req.params.id]);
-      return res.json({ silindi: false, pasife_alindi: true, id: Number(req.params.id) });
+      return res.json({ is_deleted: false, pasife_alindi: true, id: Number(req.params.id) });
     }
     const r = await pool.query(`DELETE FROM hr_positions WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Pozisyon bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

@@ -17,7 +17,7 @@ function qrSvgPlaceholder(text) {
   </svg>`;
 }
 
-function belgeHtml({ baslik, belgeNo, tarih, cari, satirlar = [], toplamlar = {}, ekstra = {} }) {
+function documentHtml({ title: baslik, belgeNo, tarih, cari, satirlar = [], toplamlar = {}, ekstra = {} }) {
   const rows = satirlar
     .map(
       (s, i) => `<tr>
@@ -67,4 +67,4 @@ function belgeHtml({ baslik, belgeNo, tarih, cari, satirlar = [], toplamlar = {}
 </body></html>`;
 }
 
-module.exports = { belgeHtml, escapeHtml };
+module.exports = { documentHtml, escapeHtml };

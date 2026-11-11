@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function getir(id) {
+async function fetchById(id) {
   const r = await pool.query(
     `
     SELECT k.*,
@@ -24,7 +24,7 @@ async function getir(id) {
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     let sql = 'SELECT id FROM approval_module_usages';
     const where = [];
@@ -34,10 +34,10 @@ router.get('/', async (req, res) => {
       where.push(`(company_id IS NULL OR company_id = $${params.length})`);
     }
     if (where.length) sql += ` WHERE ${where.join(' AND ')}`;
-    sql += ' ORDER BY kullanim_code';
+    sql += ' ORDER BY usage_code';
     const liste = await pool.query(sql, params);
     const out = [];
-    for (const row of liste.rows) out.push(await getir(row.id));
+    for (const row of liste.rows) out.push(await fetchById(row.id));
     res.json(out);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Kullanım bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -57,30 +57,30 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     let {
-      kullanim_code, kullanim_name, module_code, screen_id, route_id,
-      company_id, min_amount, otomatik_gonder, template_id, is_active, description,
+      usage_code, usage_name, module_code, screen_id, route_id,
+      company_id, min_amount, auto_send, template_id, is_active, description,
     } = req.body;
-    if (!kullanim_name || !module_code || !screen_id || !route_id) {
-      return res.status(400).json({ hata: 'kullanim_name, module_code, screen_id, route_id zorunlu.' });
+    if (!usage_name || !module_code || !screen_id || !route_id) {
+      return res.status(400).json({ hata: 'usage_name, module_code, screen_id, route_id zorunlu.' });
     }
-    if (!kullanim_code) {
-      try { kullanim_code = await sonrakiKod(pool, 'ONAY_KULLANIM'); }
-      catch (_) { kullanim_code = `OM${Date.now().toString().slice(-5)}`; }
+    if (!usage_code) {
+      try { usage_code = await nextSequenceCode(pool, 'ONAY_KULLANIM'); }
+      catch (_) { usage_code = `OM${Date.now().toString().slice(-5)}`; }
     }
     const ins = await pool.query(
       `
       INSERT INTO approval_module_usages (
-        kullanim_code, kullanim_name, module_code, screen_id, route_id,
-        company_id, min_amount, otomatik_gonder, template_id, is_active, description
+        usage_code, usage_name, module_code, screen_id, route_id,
+        company_id, min_amount, auto_send, template_id, is_active, description
       ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,0),COALESCE($8,FALSE),$9,COALESCE($10,TRUE),$11)
       RETURNING id
       `,
       [
-        kullanim_code, kullanim_name, module_code, screen_id, route_id,
-        company_id || null, min_amount, otomatik_gonder, template_id || null, is_active, description || null,
+        usage_code, usage_name, module_code, screen_id, route_id,
+        company_id || null, min_amount, auto_send, template_id || null, is_active, description || null,
       ],
     );
-    res.status(201).json(await getir(ins.rows[0].id));
+    res.status(201).json(await fetchById(ins.rows[0].id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -89,31 +89,31 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const {
-      kullanim_name, module_code, screen_id, route_id,
-      company_id, min_amount, otomatik_gonder, template_id, is_active, description,
+      usage_name, module_code, screen_id, route_id,
+      company_id, min_amount, auto_send, template_id, is_active, description,
     } = req.body;
     const r = await pool.query(
       `
       UPDATE approval_module_usages SET
-        kullanim_name = COALESCE($2, kullanim_name),
+        usage_name = COALESCE($2, usage_name),
         module_code = COALESCE($3, module_code),
         screen_id = COALESCE($4, screen_id),
         route_id = COALESCE($5, route_id),
         company_id = COALESCE($6, company_id),
         min_amount = COALESCE($7, min_amount),
-        otomatik_gonder = COALESCE($8, otomatik_gonder),
+        auto_send = COALESCE($8, auto_send),
         template_id = COALESCE($9, template_id),
         is_active = COALESCE($10, is_active),
         description = COALESCE($11, description)
       WHERE id=$1 RETURNING id
       `,
       [
-        req.params.id, kullanim_name || null, module_code || null, screen_id || null, route_id || null,
-        company_id, min_amount, otomatik_gonder, template_id, is_active, description,
+        req.params.id, usage_name || null, module_code || null, screen_id || null, route_id || null,
+        company_id, min_amount, auto_send, template_id, is_active, description,
       ],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kullanım bulunamadı.' });
-    res.json(await getir(req.params.id));
+    res.json(await fetchById(req.params.id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -123,7 +123,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const r = await pool.query('DELETE FROM approval_module_usages WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kullanım bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

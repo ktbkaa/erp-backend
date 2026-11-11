@@ -28,20 +28,20 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { partner_id, period, kalite_puan, delivery_puan, fiyat_puan, grand_puan, description } = req.body || {};
+    const { partner_id, period, quality_score, delivery_score, price_score, total_score, description } = req.body || {};
     if (!partner_id || !period) return res.status(400).json({ hata: 'partner_id ve period zorunlu.' });
     const genel =
-      grand_puan != null
-        ? Number(grand_puan)
-        : ((Number(kalite_puan) || 0) + (Number(delivery_puan) || 0) + (Number(fiyat_puan) || 0)) / 3;
+      total_score != null
+        ? Number(total_score)
+        : ((Number(quality_score) || 0) + (Number(delivery_score) || 0) + (Number(price_score) || 0)) / 3;
     const r = await pool.query(
       `
       INSERT INTO supplier_evaluations
-        (partner_id, period, kalite_puan, delivery_puan, fiyat_puan, grand_puan, description)
+        (partner_id, period, quality_score, delivery_score, price_score, total_score, description)
       VALUES ($1,$2,$3,$4,$5,$6,$7)
       RETURNING *
       `,
-      [partner_id, period, kalite_puan, delivery_puan, fiyat_puan, genel, description || null]
+      [partner_id, period, quality_score, delivery_score, price_score, genel, description || null]
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { assertYetki, reqKullaniciKodu } = require('../src/utils/yetki');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { assertPermission, reqUserCode } = require('../src/utils/yetki');
 const { epostaKuyrugaAl, gonderBir } = require('../src/services/epostaService');
 
 const TALEP_BASLIK_KEYS = [
@@ -21,7 +21,7 @@ function pick(body, keys) {
   return out;
 }
 
-async function talepGetir(id) {
+async function getRequisition(id) {
   const t = await pool.query('SELECT * FROM purchase_requisitions WHERE id = $1', [id]);
   if (!t.rows[0]) return null;
   const satirlar = await pool.query(`
@@ -37,9 +37,9 @@ async function talepGetir(id) {
   return { ...t.rows[0], satirlar: satirlar.rows };
 }
 
-async function insertTalepSatir(client, talepId, s, sira) {
+async function insertRequisitionLine(client, talepId, s, sira) {
   const stok = await client.query(
-    `SELECT id, uom_code, purchase_uom, item_code, item_name, varsayilan_vat_rate
+    `SELECT id, uom_code, purchase_uom, item_code, item_name, default_vat_rate
      FROM items WHERE id = $1`,
     [s.item_id]
   );
@@ -49,11 +49,11 @@ async function insertTalepSatir(client, talepId, s, sira) {
     talepId, s.item_id, s.quantity, s.uom_code || st.purchase_uom || st.uom_code, sira,
     s.line_type || 'S', s.line_description || null,
     s.delivery_date || null, s.warehouse_id || null, s.project_code || null, s.region || null,
-    s.tahmini_unit_price ?? s.unit_price ?? 0,
+    s.estimated_unit_price ?? s.unit_price ?? 0,
     s.currency_code || null, s.exchange_rate ?? null, s.rate_type || null,
-    s.vat_rate ?? st.varsayilan_vat_rate ?? 20, s.vat_mode || 'Haric', s.discount_rate ?? 0,
+    s.vat_rate ?? st.default_vat_rate ?? 20, s.vat_mode || 'Haric', s.discount_rate ?? 0,
     s.supplier_item_code || null, s.supplier_item_name || null,
-    s.rezervasyon_type || null, s.rezervasyon_iliski_no || null,
+    s.reservation_type || null, s.reservation_link_no || null,
     s.item_code || st.item_code, s.item_name || st.item_name,
   ];
   const existingId = s.id != null && s.id !== '' ? Number(s.id) : null;
@@ -63,10 +63,10 @@ async function insertTalepSatir(client, talepId, s, sira) {
           item_id=$3, quantity=$4, uom_code=$5, line_no=$6,
           line_type=COALESCE($7,'S'), line_description=$8,
           delivery_date=$9, warehouse_id=$10, project_code=$11, region=$12,
-          tahmini_unit_price=COALESCE($13::numeric,0), currency_code=$14, exchange_rate=$15, rate_type=$16,
+          estimated_unit_price=COALESCE($13::numeric,0), currency_code=$14, exchange_rate=$15, rate_type=$16,
           vat_rate=COALESCE($17::numeric,20), vat_mode=COALESCE($18,'Haric'), discount_rate=COALESCE($19::numeric,0),
           supplier_item_code=$20, supplier_item_name=$21,
-          rezervasyon_type=$22, rezervasyon_iliski_no=$23, item_code=$24, item_name=$25
+          reservation_type=$22, reservation_link_no=$23, item_code=$24, item_name=$25
        WHERE id=$1 AND requisition_id=$2
        RETURNING id`,
       [existingId, ...vals]
@@ -77,10 +77,10 @@ async function insertTalepSatir(client, talepId, s, sira) {
     `INSERT INTO purchase_requisition_lines (
         requisition_id, item_id, quantity, uom_code, line_no, line_type, line_description,
         delivery_date, warehouse_id, project_code, region,
-        tahmini_unit_price, currency_code, exchange_rate, rate_type,
+        estimated_unit_price, currency_code, exchange_rate, rate_type,
         vat_rate, vat_mode, discount_rate,
         supplier_item_code, supplier_item_name,
-        rezervasyon_type, rezervasyon_iliski_no, item_code, item_name
+        reservation_type, reservation_link_no, item_code, item_name
      ) VALUES (
         $1,$2,$3,$4,$5,COALESCE($6,'S'),$7,
         $8,$9,$10,$11,
@@ -97,7 +97,7 @@ router.get('/', async (req, res) => {
   try {
     const params = [];
     let sql = 'SELECT id FROM purchase_requisitions';
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       sql += ` WHERE company_id = $${params.length}`;
@@ -105,7 +105,7 @@ router.get('/', async (req, res) => {
     sql += ' ORDER BY id DESC';
     const liste = await pool.query(sql, params);
     const result = [];
-    for (const r of liste.rows) result.push(await talepGetir(r.id));
+    for (const r of liste.rows) result.push(await getRequisition(r.id));
     res.json(result);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -114,9 +114,9 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const talep = await talepGetir(req.params.id);
+    const talep = await getRequisition(req.params.id);
     if (!talep) return res.status(404).json({ hata: 'Talep bulunamadı.' });
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId && talep.company_id != null && Number(talep.company_id) !== Number(firmaId)) {
       return res.status(404).json({ hata: 'Talep bulunamadı.' });
     }
@@ -133,14 +133,14 @@ router.post('/', async (req, res) => {
     if (!Array.isArray(satirlar) || satirlar.length === 0) {
       return res.status(400).json({ hata: 'satirlar zorunlu.' });
     }
-    const kod = reqKullaniciKodu(req);
+    const kod = reqUserCode(req);
     let created_by = null;
-    if (kod) created_by = await assertYetki(pool, kod, 'purchase_requisition_ref');
-    const firmaId = body.company_id || firmaIdFromReq(req) || null;
+    if (kod) created_by = await assertPermission(pool, kod, 'purchase_requisition_ref');
+    const firmaId = body.company_id || companyIdFromReq(req) || null;
     const p = pick(body, TALEP_BASLIK_KEYS);
 
     const id = await withTransaction(pool, async (client) => {
-      const no = await sonrakiBelgeNo(client, 'SATINALMA_TALEP');
+      const no = await nextDocumentNo(client, 'SATINALMA_TALEP');
       const baslik = await client.query(
         `INSERT INTO purchase_requisitions (
             requisition_no, plant_id, description, created_by_user_id, supplier_partner_id, company_id,
@@ -163,13 +163,13 @@ router.post('/', async (req, res) => {
       let sira = 1;
       for (const s of satirlar) {
         if (!s.item_id || s.quantity == null) continue;
-        await insertTalepSatir(client, talepId, s, s.line_no || sira);
+        await insertRequisitionLine(client, talepId, s, s.line_no || sira);
         sira += 1;
       }
       return talepId;
     });
 
-    res.status(201).json(await talepGetir(id));
+    res.status(201).json(await getRequisition(id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -226,7 +226,7 @@ router.put('/:id', async (req, res) => {
         let sira = 1;
         for (const s of satirlar) {
           if (!s.item_id || s.quantity == null) continue;
-          const lineId = await insertTalepSatir(client, Number(req.params.id), s, s.line_no || sira);
+          const lineId = await insertRequisitionLine(client, Number(req.params.id), s, s.line_no || sira);
           if (lineId != null) keepIds.push(lineId);
           sira += 1;
         }
@@ -243,7 +243,7 @@ router.put('/:id', async (req, res) => {
       return Number(req.params.id);
     });
 
-    res.json(await talepGetir(id));
+    res.json(await getRequisition(id));
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -251,13 +251,13 @@ router.put('/:id', async (req, res) => {
 
 router.post('/:id/onayla', async (req, res) => {
   try {
-    const approved_by = await assertYetki(pool, reqKullaniciKodu(req), 'satinalma_onay');
-    const epostaGonder = req.body.eposta !== false;
+    const approved_by = await assertPermission(pool, reqUserCode(req), 'can_approve_purchase');
+    const epostaGonder = req.body.email_address !== false;
 
     const result = await withTransaction(pool, async (client) => {
       const upd = await client.query(
         `UPDATE purchase_requisitions SET
-            status='Onayli', approved_by_user_id=$2, onay_date=CURRENT_TIMESTAMP,
+            status='Onayli', approved_by_user_id=$2, approved_at=CURRENT_TIMESTAMP,
             supplier_partner_id=COALESCE($3, supplier_partner_id)
          WHERE id=$1 AND status='Acik' RETURNING *`,
         [req.params.id, approved_by.id, req.body.supplier_partner_id || null]
@@ -299,18 +299,18 @@ router.post('/:id/onayla', async (req, res) => {
           eposta = await epostaKuyrugaAl(client, {
             kaynakTipi: 'SATINALMA_TALEP',
             kaynakId: talep.id,
-            alici,
-            konu: `Satınalma talebi ${talep.requisition_no}`,
-            govde,
+            recipient: alici,
+            subject: `Satınalma talebi ${talep.requisition_no}`,
+            body_text: govde,
           });
           eposta = await gonderBir(client, eposta.id);
         }
       }
-      return { talepId: talep.id, eposta };
+      return { talepId: talep.id, email_address: eposta };
     });
 
-    const talep = await talepGetir(result.talepId);
-    res.json({ ...talep, eposta: result.eposta });
+    const talep = await getRequisition(result.talepId);
+    res.json({ ...talep, email_address: result.email_address });
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message });
   }
@@ -320,7 +320,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const result = await pool.query(`DELETE FROM purchase_requisitions WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ hata: 'Talep bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

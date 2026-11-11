@@ -36,24 +36,24 @@ const LEGACY_LABELS = {
  * Belge tipi → hareket_kodlari.document_type değeri.
  * Eşleme yoksa document_type_code olduğu gibi kullanılır (SATIS_IADE vb.).
  */
-function hareketBelgeKey(documentTypeCode) {
+function movementDocumentKey(documentTypeCode) {
     const code = String(documentTypeCode || '').trim();
     if (!code) return '';
     return HAREKET_BELGE_TIPI[code] || code;
 }
 
 /** UI / validasyon için belge tipi listesi (DB + legacy) */
-async function loadBelgeTipiOptions(client = pool) {
+async function loadDocumentTypeOptions(client = pool) {
     const byKey = new Map();
 
     const docs = await client.query(
-        `SELECT document_type_code, document_type_name, module, stock_etkisi, is_active
+        `SELECT document_type_code, document_type_name, module, affects_stock, is_active
          FROM document_types
          WHERE is_active IS DISTINCT FROM FALSE
          ORDER BY module, document_type_name, document_type_code`
     );
     for (const row of docs.rows) {
-        let key = hareketBelgeKey(row.document_type_code);
+        let key = movementDocumentKey(row.document_type_code);
         if (!key) continue;
         // Çakışmada stok etkili / kendi kodunu koru
         const prev = byKey.get(key);
@@ -66,7 +66,7 @@ async function loadBelgeTipiOptions(client = pool) {
             label: row.document_type_name || key,
             document_type_code: row.document_type_code,
             module: row.module || null,
-            stock_etkisi: Boolean(row.stock_etkisi),
+            affects_stock: Boolean(row.affects_stock),
             source: 'document_types',
         });
     }
@@ -80,7 +80,7 @@ async function loadBelgeTipiOptions(client = pool) {
             label: LEGACY_LABELS[id] || id,
             document_type_code: null,
             module: null,
-            stock_etkisi: null,
+            affects_stock: null,
             source: 'legacy',
         });
     }
@@ -97,7 +97,7 @@ async function loadBelgeTipiOptions(client = pool) {
             label: LEGACY_LABELS[id] || id,
             document_type_code: null,
             module: null,
-            stock_etkisi: null,
+            affects_stock: null,
             source: 'movement_codes',
         });
     }
@@ -111,7 +111,7 @@ async function loadBelgeTipiOptions(client = pool) {
 async function assertValidDocumentType(document_type) {
     const tip = String(document_type || '').trim();
     if (!tip) return { ok: false, hata: 'document_type zorunlu.' };
-    const opts = await loadBelgeTipiOptions();
+    const opts = await loadDocumentTypeOptions();
     if (opts.some((o) => o.id === tip)) return { ok: true, tip };
     // Doğrudan document_types kodu (eşlemesiz) da kabul
     const doc = await pool.query(
@@ -128,9 +128,9 @@ async function assertValidDocumentType(document_type) {
 
 router.get('/belge-tipleri', async (req, res) => {
     try {
-        let rows = await loadBelgeTipiOptions();
-        if (req.query.stock_etkisi === 'true') {
-            rows = rows.filter((r) => r.stock_etkisi === true || r.stock_etkisi == null);
+        let rows = await loadDocumentTypeOptions();
+        if (req.query.affects_stock === 'true') {
+            rows = rows.filter((r) => r.affects_stock === true || r.affects_stock == null);
         }
         res.json(rows);
     } catch (err) {
@@ -140,7 +140,7 @@ router.get('/belge-tipleri', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const { document_type, is_active, stock_etkisi, grup } = req.query;
+        const { document_type, is_active, affects_stock, grup } = req.query;
         const where = [];
         const params = [];
         if (document_type) {
@@ -148,7 +148,7 @@ router.get('/', async (req, res) => {
             where.push(`document_type = $${params.length}`);
         }
         if (is_active === 'true') where.push('is_active = TRUE');
-        if (stock_etkisi === 'true') where.push('stock_etkisi = TRUE');
+        if (affects_stock === 'true') where.push('affects_stock = TRUE');
         if (grup === 'inv') {
             where.push(`document_type IN ('StokGiris','StokCikis','Transfer','Sayim','Fire','Duzeltme','STOK_GIRIS','STOK_CIKIS','STOK_HAREKET','TRANSFER','SAYIM')`);
         }
@@ -188,9 +188,9 @@ function asBool(v, fallback = null) {
 router.post('/', async (req, res) => {
     try {
         const {
-            movement_code, movement_name, document_type, direction, stock_etkisi,
-            partner_zorunlu, warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
-            gkk_emri_olussun, ckk_emri_olussun,
+            movement_code, movement_name, document_type, direction, affects_stock,
+            partner_required, warehouse_required, allow_negative_balance, gl_account_code, description, is_active,
+            create_incoming_qc_order, create_outgoing_qc_order,
         } = req.body;
         if (!movement_code || !movement_name || !document_type) {
             return res.status(400).json({ hata: 'movement_code, movement_name, document_type zorunlu.' });
@@ -204,17 +204,17 @@ router.post('/', async (req, res) => {
         const result = await pool.query(
             `
             INSERT INTO movement_codes
-                (movement_code, movement_name, document_type, direction, stock_etkisi, partner_zorunlu,
-                 warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
-                 gkk_emri_olussun, ckk_emri_olussun)
+                (movement_code, movement_name, document_type, direction, affects_stock, partner_required,
+                 warehouse_required, allow_negative_balance, gl_account_code, description, is_active,
+                 create_incoming_qc_order, create_outgoing_qc_order)
             VALUES ($1,$2,$3,$4,COALESCE($5,FALSE),COALESCE($6,FALSE),COALESCE($7,FALSE),
                     COALESCE($8,FALSE),$9,$10,COALESCE($11,TRUE),COALESCE($12,FALSE),COALESCE($13,FALSE))
             RETURNING *
             `,
             [
-                movement_code, movement_name, check.tip, type, stock_etkisi, partner_zorunlu,
-                warehouse_zorunlu, eksi_balance_izin, gl_account_code || null, description || null, is_active,
-                asBool(gkk_emri_olussun, false), asBool(ckk_emri_olussun, false),
+                movement_code, movement_name, check.tip, type, affects_stock, partner_required,
+                warehouse_required, allow_negative_balance, gl_account_code || null, description || null, is_active,
+                asBool(create_incoming_qc_order, false), asBool(create_outgoing_qc_order, false),
             ]
         );
         res.status(201).json(result.rows[0]);
@@ -226,9 +226,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const {
-            movement_name, document_type, direction, stock_etkisi, partner_zorunlu,
-            warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
-            gkk_emri_olussun, ckk_emri_olussun,
+            movement_name, document_type, direction, affects_stock, partner_required,
+            warehouse_required, allow_negative_balance, gl_account_code, description, is_active,
+            create_incoming_qc_order, create_outgoing_qc_order,
         } = req.body;
         let tip = document_type;
         if (document_type) {
@@ -245,22 +245,22 @@ router.put('/:id', async (req, res) => {
                 movement_name = COALESCE($2, movement_name),
                 document_type = COALESCE($3, document_type),
                 direction = COALESCE($4, direction),
-                stock_etkisi = COALESCE($5, stock_etkisi),
-                partner_zorunlu = COALESCE($6, partner_zorunlu),
-                warehouse_zorunlu = COALESCE($7, warehouse_zorunlu),
-                eksi_balance_izin = COALESCE($8, eksi_balance_izin),
+                affects_stock = COALESCE($5, affects_stock),
+                partner_required = COALESCE($6, partner_required),
+                warehouse_required = COALESCE($7, warehouse_required),
+                allow_negative_balance = COALESCE($8, allow_negative_balance),
                 gl_account_code = COALESCE($9, gl_account_code),
                 description = COALESCE($10, description),
                 is_active = COALESCE($11, is_active),
-                gkk_emri_olussun = COALESCE($12, gkk_emri_olussun),
-                ckk_emri_olussun = COALESCE($13, ckk_emri_olussun)
+                create_incoming_qc_order = COALESCE($12, create_incoming_qc_order),
+                create_outgoing_qc_order = COALESCE($13, create_outgoing_qc_order)
             WHERE id=$1 RETURNING *
             `,
             [
-                req.params.id, movement_name, tip, direction, stock_etkisi, partner_zorunlu,
-                warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
-                asBool(gkk_emri_olussun, null),
-                asBool(ckk_emri_olussun, null),
+                req.params.id, movement_name, tip, direction, affects_stock, partner_required,
+                warehouse_required, allow_negative_balance, gl_account_code, description, is_active,
+                asBool(create_incoming_qc_order, null),
+                asBool(create_outgoing_qc_order, null),
             ]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Hareket kodu bulunamadı.' });
@@ -274,7 +274,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query('DELETE FROM movement_codes WHERE id=$1 RETURNING id', [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Hareket kodu bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -282,5 +282,5 @@ router.delete('/:id', async (req, res) => {
 
 module.exports = router;
 module.exports.BELGE_TIPLERI = LEGACY_BELGE_TIPLERI;
-module.exports.loadBelgeTipiOptions = loadBelgeTipiOptions;
-module.exports.hareketBelgeKey = hareketBelgeKey;
+module.exports.loadDocumentTypeOptions = loadDocumentTypeOptions;
+module.exports.movementDocumentKey = movementDocumentKey;

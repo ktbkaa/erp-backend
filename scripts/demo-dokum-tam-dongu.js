@@ -18,11 +18,11 @@ const fs = require('fs');
 const path = require('path');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { stokHareketOlustur } = require('../src/services/stokHareketService');
+const { createStockMovement } = require('../src/services/stokHareketService');
 const { mrpCalistir } = require('../src/services/mrpService');
-const { sonrakiKod, stokSeriKodundanTip, cariSeriKodundanTur } = require('../src/utils/kodUretici');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { baslatOnay, onaylaAdim } = require('../src/services/onayService');
+const { nextSequenceCode, itemTypeFromSeriesCode, partnerTypeFromSeriesCode } = require('../src/utils/kodUretici');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { startApproval, onaylaAdim } = require('../src/services/onayService');
 
 const TAG = {
   BASE: 'TEST-DKM-BASE',
@@ -79,7 +79,7 @@ async function api(method, urlPath, body, firmaId) {
 }
 
 /** Satış fatura API { fatura: {...} } veya düz fatura dönebilir */
-function unwrapFatura(data) {
+function unwrapInvoice(data) {
   if (!data) return null;
   return data.fatura || data.invoice || data;
 }
@@ -124,7 +124,7 @@ async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
         target_warehouse_id: targetWarehouseId,
         description: `[${tag}] ${TAG.LABEL} giriş kalite onay → Hammadde`,
       }, firmaId);
-      await tagBelge(null, 'qc_orders', e.id, firmaId, tag, { project: false });
+      await tagDocument(null, 'qc_orders', e.id, firmaId, tag, { project: false });
       log(`  GKK onay: ${e.order_no || e.id}`);
     } catch (err) {
       log(`  GKK atlandı ${e.order_no || e.id}: ${err.message}`);
@@ -135,7 +135,7 @@ async function onaylaGkk(firmaId, mkId, targetWarehouseId, tag) {
 /**
  * API belgelerini etiketlendir — ayrı kısa transaction (açık seed txn ile satır kilidi çakışmasın).
  */
-async function tagBelge(_clientIgnored, table, id, firmaId, tag, { project = true } = {}) {
+async function tagDocument(_clientIgnored, table, id, firmaId, tag, { project = true } = {}) {
   if (!id) return;
   const c = await pool.connect();
   try {
@@ -193,7 +193,7 @@ async function tagBelge(_clientIgnored, table, id, firmaId, tag, { project = tru
   }
 }
 
-async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }) {
+async function shipmentDeliveryNoteInvoice(client, { firma, plant, wh, so, tag, qtyHint }) {
   let sevk = null;
   let irs = null;
   let satisFatura = null;
@@ -203,7 +203,7 @@ async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }
       company_id: firma.id,
       description: `[${tag}] Sevk emri`,
     }, firma.id);
-    await tagBelge(client, 'shipment_orders', sevk?.id, firma.id, tag, { project: false });
+    await tagDocument(client, 'shipment_orders', sevk?.id, firma.id, tag, { project: false });
   } catch (err) {
     log(`  sevk: ${err.message}`);
   }
@@ -229,7 +229,7 @@ async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }
         vehicle_plate: '34 ELK 01',
       }, firma.id);
       if (irs?.id) {
-        await tagBelge(client, 'delivery_notes', irs.id, firma.id, tag);
+        await tagDocument(client, 'delivery_notes', irs.id, firma.id, tag);
         await api('PUT', `/delivery_notes/${irs.id}`, {
           ...irs,
           company_id: firma.id,
@@ -271,11 +271,11 @@ async function sevkIrsaliyeFatura(client, { firma, plant, wh, so, tag, qtyHint }
       const raw = await api('POST', `/delivery_notes/${irs.id}/fatura-olustur`, {
         description: `[${tag}] Satış faturası`,
       }, firma.id);
-      satisFatura = unwrapFatura(raw);
+      satisFatura = unwrapInvoice(raw);
       if (satisFatura?.id) {
         await api('POST', `/invoices/${satisFatura.id}/muhasebelestir`, {}, firma.id)
           .catch((e) => log(`  satış muhasebe: ${e.message}`));
-        await tagBelge(client, 'invoices', satisFatura.id, firma.id, tag);
+        await tagDocument(client, 'invoices', satisFatura.id, firma.id, tag);
         {
           const tc = await pool.connect();
           try {
@@ -341,7 +341,7 @@ async function purgeGida(client, companyId) {
   const nulls = [
     [`UPDATE goods_receipts SET vendor_delivery_note_id=NULL WHERE company_id=$1`, [id], 'null gr.vdn'],
     [`UPDATE purchase_orders SET quotation_id=NULL, requisition_id=NULL WHERE company_id=$1`, [id], 'null po refs'],
-    [`UPDATE purchase_quotations SET istek_id=NULL, requisition_id=NULL WHERE company_id=$1`, [id], 'null pq refs'],
+    [`UPDATE purchase_quotations SET rfq_id=NULL, requisition_id=NULL WHERE company_id=$1`, [id], 'null pq refs'],
     [`UPDATE purchase_agreements SET quotation_id=NULL WHERE company_id=$1`, [id], 'null pa.quot'],
     [`UPDATE production_orders SET product_bom_id=NULL, route_id=NULL, sales_order_id=NULL
        WHERE company_id=$1
@@ -354,7 +354,7 @@ async function purgeGida(client, companyId) {
           OR delivery_line_id IN (SELECT id FROM delivery_note_lines WHERE delivery_note_id IN (${dnScope}))`, [id], 'null inv.line refs'],
     [`UPDATE invoices SET delivery_note_id=NULL, sales_order_id=NULL, goods_receipt_id=NULL, gl_document_id=NULL
        WHERE company_id=$1 OR partner_id IN (${partnerScope}) OR delivery_note_id IN (${dnScope})`, [id], 'null inv refs'],
-    [`UPDATE delivery_note_lines SET ship_emri_line_id=NULL, sales_order_line_id=NULL
+    [`UPDATE delivery_note_lines SET shipment_order_line_id=NULL, sales_order_line_id=NULL
        WHERE delivery_note_id IN (${dnScope})`, [id], 'null dn.line refs'],
     [`UPDATE delivery_notes SET sales_order_id=NULL, shipment_order_id=NULL, item_movement_id=NULL
        WHERE id IN (${dnScope})`, [id], 'null dn refs'],
@@ -483,7 +483,7 @@ async function purgeGida(client, companyId) {
     [`DELETE FROM purchase_quotation_lines WHERE quotation_id IN (
         SELECT id FROM purchase_quotations WHERE company_id=$1 OR partner_id IN (SELECT id FROM partners WHERE company_id=$1))`, [id], 'pq_lines2'],
     [`DELETE FROM purchase_quotations WHERE company_id=$1 OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'purchase_quotations'],
-    [`DELETE FROM rfq_lines WHERE istek_id IN (SELECT id FROM rfqs WHERE company_id=$1)`, [id], 'rfq_lines'],
+    [`DELETE FROM rfq_lines WHERE rfq_id IN (SELECT id FROM rfqs WHERE company_id=$1)`, [id], 'rfq_lines'],
     [`DELETE FROM rfqs WHERE company_id=$1`, [id], 'rfqs'],
     [`DELETE FROM purchase_requisition_lines WHERE requisition_id IN (
         SELECT id FROM purchase_requisitions
@@ -491,18 +491,18 @@ async function purgeGida(client, companyId) {
         OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'pr_lines'],
     [`DELETE FROM purchase_requisitions
        WHERE company_id=$1 OR project_code LIKE 'TEST-DKM%' OR description ILIKE '%TEST-DKM%' OR description ILIKE '%DOKUM-TAM-DONGU%'`, [id], 'purchase_requisitions'],
-    [`DELETE FROM purchase_agreement_lines WHERE anlasma_id IN (SELECT id FROM purchase_agreements WHERE company_id=$1)
+    [`DELETE FROM purchase_agreement_lines WHERE agreement_id IN (SELECT id FROM purchase_agreements WHERE company_id=$1)
         OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'pa_lines'],
     [`DELETE FROM purchase_agreements WHERE company_id=$1
         OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'purchase_agreements'],
-    [`DELETE FROM production_order_operation_components WHERE operasyon_id IN (
+    [`DELETE FROM production_order_operation_components WHERE operation_id IN (
         SELECT o.id FROM production_order_operations o
         JOIN production_orders e ON e.id=o.order_id WHERE e.company_id=$1)`, [id], 'pooc'],
     [`DELETE FROM production_order_operations WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_ops'],
     [`DELETE FROM production_order_components WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_comps'],
     [`DELETE FROM production_byproducts WHERE production_order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_by'],
     [`DELETE FROM production_receipts WHERE order_id IN (SELECT id FROM production_orders WHERE company_id=$1)`, [id], 'po_rcpt'],
-    [`DELETE FROM production_order_operation_components WHERE operasyon_id IN (
+    [`DELETE FROM production_order_operation_components WHERE operation_id IN (
         SELECT o.id FROM production_order_operations o
         JOIN production_orders e ON e.id=o.order_id
         WHERE e.item_id IN (SELECT id FROM items WHERE company_id=$1))`, [id], 'pooc2'],
@@ -527,7 +527,7 @@ async function purgeGida(client, companyId) {
     [`DELETE FROM crm_tasks WHERE company_id=$1`, [id], 'crm_tasks'],
     [`DELETE FROM crm_activities WHERE company_id=$1`, [id], 'crm_activities'],
     [`DELETE FROM crm_activity_plans WHERE company_id=$1`, [id], 'crm_plans'],
-    [`DELETE FROM crm_opportunity_lines WHERE firsat_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, [id], 'crm_opp_lines'],
+    [`DELETE FROM crm_opportunity_lines WHERE opportunity_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, [id], 'crm_opp_lines'],
     [`DELETE FROM crm_opportunities WHERE company_id=$1`, [id], 'crm_opportunities'],
     [`DELETE FROM crm_contacts WHERE company_id=$1`, [id], 'crm_contacts'],
     [`DELETE FROM crm_leads WHERE company_id=$1`, [id], 'crm_leads'],
@@ -538,7 +538,7 @@ async function purgeGida(client, companyId) {
     [`DELETE FROM price_lists WHERE company_id=$1`, [id], 'price_lists'],
     [`DELETE FROM routing_operation_equipment WHERE operation_id IN (
         SELECT o.id FROM routing_operations o JOIN routings r ON r.id=o.route_id WHERE r.company_id=$1)`, [id], 'roe'],
-    [`DELETE FROM routing_operation_components WHERE operasyon_id IN (
+    [`DELETE FROM routing_operation_components WHERE operation_id IN (
         SELECT o.id FROM routing_operations o JOIN routings r ON r.id=o.route_id WHERE r.company_id=$1)`, [id], 'roc'],
     [`DELETE FROM routing_operations WHERE route_id IN (SELECT id FROM routings WHERE company_id=$1)`, [id], 'routing_ops'],
     [`DELETE FROM routings WHERE company_id=$1`, [id], 'routings'],
@@ -558,7 +558,7 @@ async function purgeGida(client, companyId) {
     [`DELETE FROM item_languages WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_languages'],
     [`DELETE FROM item_details WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_details'],
     [`DELETE FROM item_substitutes WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)
-        OR ikame_item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_subs'],
+        OR substitute_item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_subs'],
     [`DELETE FROM item_reservations WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_res'],
     [`DELETE FROM item_serials WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_serials'],
     [`DELETE FROM item_cost_movements WHERE item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'item_cost'],
@@ -619,11 +619,11 @@ async function ensureOrg(client) {
 }
 
 async function createPartner(client, { name, type, companyId, plantId, tag }) {
-  const kod = await sonrakiKod(client, cariSeriKodundanTur(type));
+  const kod = await nextSequenceCode(client, partnerTypeFromSeriesCode(type));
   return (await client.query(
     `INSERT INTO partners (
-       partner_code, partner_name, partner_type, telefon, email, il, country, currency_code,
-       payment_due_days, is_active, company_id, plant_id, notlar
+       partner_code, partner_name, partner_type, phone, email, province, country, currency_code,
+       payment_due_days, is_active, company_id, plant_id, notes
      ) VALUES ($1,$2,$3,$4,$5,'İstanbul','Türkiye','TRY',30,TRUE,$6,$7,$8)
      RETURNING *`,
     [kod, name, type, '02125550100', `${kod.toLowerCase()}@elek.demo`, companyId, plantId, tag]
@@ -634,13 +634,13 @@ async function createItem(client, {
   name, type, price, companyId, plantId, girisWh, cikisWh, tag, tedarik = null, qc = false,
   uom = 'AD', itemCode = null,
 }) {
-  const kod = itemCode || await sonrakiKod(client, stokSeriKodundanTip(type));
+  const kod = itemCode || await nextSequenceCode(client, itemTypeFromSeriesCode(type));
   const tedarikType = tedarik || (type === 'Mamul' || type === 'YariMamul' ? 'Uretim' : 'Satinalma');
   const row = (await client.query(
     `INSERT INTO items (
-       item_code, item_name, uom_code, sales_price, item_type, tedarik_type,
-       is_active, company_id, varsayilan_giris_warehouse_id, varsayilan_cikis_warehouse_id,
-       kalite_control_gerekli, description, temin_suresi_days, safety_stock, lot_politika
+       item_code, item_name, uom_code, sales_price, item_type, procurement_type,
+       is_active, company_id, default_receipt_warehouse_id, default_issue_warehouse_id,
+       quality_control_required, description, lead_time_days, safety_stock, lot_policy
      ) VALUES ($1,$2,$3,$4,$5,$6,TRUE,$7,$8,$9,$10,$11,$12,$13,$14)
      RETURNING *`,
     [
@@ -661,7 +661,7 @@ async function createItem(client, {
   // Kalite akışı: Giriş / GKK / CKK / YM depolarına izin
   try {
     const orgWh = await client.query(
-      `SELECT id FROM warehouses WHERE plant_id=$1 AND warehouse_rolu IN ('Giris','GKK','CKK','YariMamul','Hammadde','Mamul','Normal')`,
+      `SELECT id FROM warehouses WHERE plant_id=$1 AND warehouse_role IN ('Giris','GKK','CKK','YariMamul','Hammadde','Mamul','Normal')`,
       [plantId]
     );
     extraWh.push(...orgWh.rows.map((r) => r.id));
@@ -683,7 +683,7 @@ async function createItem(client, {
  * DOKUM SA sipariş onay rotası (OR-SA-SIPARIS) + roller — eksikse oluşturur.
  * D5: artık atlanmaz; rota zorunlu.
  */
-async function ensureSaSiparisOnayTanimi(client, firmaId) {
+async function ensurePurchaseOrderApprovalDefinition(client, firmaId) {
   const owner = (await client.query(`SELECT id FROM users WHERE user_code='owner'`)).rows[0];
   if (!owner) throw new Error('owner kullanıcısı yok — SA onay rolleri bağlanamaz.');
 
@@ -703,7 +703,7 @@ async function ensureSaSiparisOnayTanimi(client, firmaId) {
     );
     if (!exists.rows[0]) {
       await client.query(
-        `INSERT INTO approval_roles (role_code, role_name, description, kisi_id, company_id, is_active)
+        `INSERT INTO approval_roles (role_code, role_name, description, user_id, company_id, is_active)
          VALUES ($1::varchar, $2::varchar, $3::text, $4::int, $5::int, TRUE)`,
         [kod, adi, `DOKUM-TAM-DONGU-TEST ${adi}`, owner.id, companyId]
       );
@@ -712,7 +712,7 @@ async function ensureSaSiparisOnayTanimi(client, firmaId) {
 
   await client.query(
     `INSERT INTO approval_rules (
-       rule_code, rule_name, description, screen_id, company_id, is_active, line_no, term_min_amount, otomatik_onay
+       rule_code, rule_name, description, screen_id, company_id, is_active, line_no, term_min_amount, auto_approve
      )
      SELECT 'OM-SA-SIPARIS', 'Satınalma siparişi onayı',
             'DOKUM-TAM-DONGU-TEST / PURT05', 'satin-alma-siparisleri',
@@ -722,7 +722,7 @@ async function ensureSaSiparisOnayTanimi(client, firmaId) {
 
   await client.query(
     `INSERT INTO approval_routes (
-       route_code, route_name, description, screen_id, rule_id, company_id, is_active, versiyon
+       route_code, route_name, description, screen_id, rule_id, company_id, is_active, version_no
      )
      SELECT 'OR-SA-SIPARIS', 'Satınalma sipariş rotası',
             'SA müdürü → finans eşiği (DOKUM-TAM-DONGU-TEST)',
@@ -756,7 +756,7 @@ async function ensureSaSiparisOnayTanimi(client, firmaId) {
     )).rows[0];
     await client.query(
       `INSERT INTO approval_route_steps (
-         route_id, line_no, step_name, role_id, role_name, zorunlu, min_amount
+         route_id, line_no, step_name, role_id, role_name, is_required, min_amount
        )
        SELECT $1, $2, $3, $4, $5, TRUE, $6
        WHERE NOT EXISTS (
@@ -768,12 +768,12 @@ async function ensureSaSiparisOnayTanimi(client, firmaId) {
 
   await client.query(
     `INSERT INTO approval_module_usages (
-       kullanim_code, kullanim_name, module_code, screen_id, route_id, min_amount, is_active, description
+       usage_code, usage_name, module_code, screen_id, route_id, min_amount, is_active, description
      )
      SELECT 'OM-SA-SIPARIS', 'Satınalma siparişi onayı', 'SATINALMA',
             'satin-alma-siparisleri', $1, 0, TRUE,
             'DOKUM-TAM-DONGU-TEST SA sipariş onay'
-     WHERE NOT EXISTS (SELECT 1 FROM approval_module_usages WHERE kullanim_code='OM-SA-SIPARIS')`,
+     WHERE NOT EXISTS (SELECT 1 FROM approval_module_usages WHERE usage_code='OM-SA-SIPARIS')`,
     [rota.id]
   );
 
@@ -782,20 +782,20 @@ async function ensureSaSiparisOnayTanimi(client, firmaId) {
 }
 
 /** SA sipariş için onay kaydı başlat + tüm adımları onayla (atlama yok) */
-async function calistirSaSiparisOnay(client, { firmaId, po, tag }) {
+async function runPurchaseOrderApproval(client, { firmaId, po, tag }) {
   const kullanici = (await client.query(`SELECT * FROM users WHERE user_code='owner'`)).rows[0];
   if (!kullanici) throw new Error('owner yok — SA onay adımları tamamlanamaz.');
 
-  let kayit = await baslatOnay(client, {
+  let kayit = await startApproval(client, {
     company_id: firmaId,
     screen_id: 'satin-alma-siparisleri',
     module_code: 'SATINALMA',
     document_id: po.id,
     document_no: po.order_no,
-    document_ozet: `[${tag}] SA onay`,
+    document_summary: `[${tag}] SA onay`,
     amount: Number(po.total_amount) || 0,
     currency_code: po.currency_code || 'TRY',
-    baslatan_kisi_id: kullanici.id,
+    initiator_user_id: kullanici.id,
     description: `[${tag}] ${TAG.LABEL} SA siparişi onay süreci`,
   });
 
@@ -807,14 +807,14 @@ async function calistirSaSiparisOnay(client, { firmaId, po, tag }) {
   let guard = 0;
   while (kayit.status_code === 'BEKLIYOR' && guard < 10) {
     kayit = await onaylaAdim(client, kayit.id, kullanici, {
-      notlar: `[${tag}] ${TAG.LABEL} adım onayı`,
+      notes: `[${tag}] ${TAG.LABEL} adım onayı`,
     });
     guard += 1;
   }
   if (kayit.status_code !== 'ONAYLANDI') {
-    throw new Error(`SA onay tamamlanamadı: ${kayit.onay_no || kayit.id} → ${kayit.status_code}`);
+    throw new Error(`SA onay tamamlanamadı: ${kayit.approval_no || kayit.id} → ${kayit.status_code}`);
   }
-  log(`  SA onay tamam: ${kayit.onay_no || kayit.id} (${kayit.status_code}) belge=${po.order_no}`);
+  log(`  SA onay tamam: ${kayit.approval_no || kayit.id} (${kayit.status_code}) belge=${po.order_no}`);
   return kayit;
 }
 
@@ -925,15 +925,15 @@ async function seedBase(client, org) {
     [pl.id, fg.id, fg2.id]
   );
 
-  const bomCode = await sonrakiKod(client, 'URUN_AGACI').catch(async () => {
-    const n = await sonrakiBelgeNo(client, 'URUN_AGACI').catch(() => `UA-SUT-${Date.now()}`);
+  const bomCode = await nextSequenceCode(client, 'URUN_AGACI').catch(async () => {
+    const n = await nextDocumentNo(client, 'URUN_AGACI').catch(() => `UA-SUT-${Date.now()}`);
     return n;
   });
   // 1 AD mamul = 1.02 KG pik + 1 kum + 1 reçine
   const bom = (await client.query(
     `INSERT INTO boms (
        finished_good_item_id, bom_code, bom_name, quantity, uom_code,
-       company_id, plant_id, alt_no, bom_type, bom_status, is_active,
+       company_id, plant_id, alternative_no, bom_type, bom_status, is_active,
        is_default_for_wo, fg_warehouse_id, notes
      ) VALUES ($1,$2,$3,1,'AD',$4,$5,'00','Uretim','Onayli',TRUE,TRUE,$6,$7)
      RETURNING *`,
@@ -955,11 +955,11 @@ async function seedBase(client, org) {
     lineNo += 10;
   }
 
-  const routeCode = await sonrakiKod(client, 'ROTA');
+  const routeCode = await nextSequenceCode(client, 'ROTA');
   const rota = (await client.query(
     `INSERT INTO routings (
-       item_id, product_bom_id, route_code, route_name, template, varsayilan,
-       company_id, plant_id, route_type, alt_no, is_active, notes
+       item_id, product_bom_id, route_code, route_name, template, is_default,
+       company_id, plant_id, route_type, alternative_no, is_active, notes
      ) VALUES ($1,$2,$3,$4,FALSE,TRUE,$5,$6,'Uretim','00',TRUE,$7)
      RETURNING *`,
     [fg.id, bom.id, routeCode, `TEST-DKM ${fg.item_name} Rotası`, firma.id, plant.id, `${tag} ${TAG.LABEL}`]
@@ -976,7 +976,7 @@ async function seedBase(client, org) {
     const ins = await client.query(
       `INSERT INTO routing_operations (
          route_id, line_no, operation_code, operation_name, work_center_id,
-         sure_dk, op_time, op_time_uom, sonraki_line_no, output_item_id,
+         duration_minutes, op_time, op_time_uom, next_line_no, output_item_id,
          include_precost, include_std_cost, include_actual_cost, require_qc
        ) VALUES ($1,$2,$3,$4,$5,$6,$6,'dk',$7,$8,TRUE,TRUE,TRUE,$9)
        RETURNING id`,
@@ -988,7 +988,7 @@ async function seedBase(client, org) {
     opIds[op.code] = ins.rows[0].id;
   }
   await client.query(
-    `INSERT INTO routing_operation_components (operasyon_id, item_id, quantity, uom_code) VALUES
+    `INSERT INTO routing_operation_components (operation_id, item_id, quantity, uom_code) VALUES
      ($1,$2,1.02,'LT'), ($3,$4,1,'AD'), ($3,$5,1,'AD')`,
     [opIds.OP20, hmPcb.id, opIds.OP30, hmCoil.id, hmCase.id]
   );
@@ -1028,7 +1028,7 @@ async function seedBase(client, org) {
 
 async function openingStock(client, org, base, tag, multiplier = 1) {
   const qty = (n) => n * multiplier;
-  await stokHareketOlustur(client, {
+  await createStockMovement(client, {
     hareketTipi: 'STOK_GIRIS',
     isYeriId: org.plant.id,
     depoId: org.wh.hmd.id,
@@ -1065,7 +1065,7 @@ async function seedManuel(client, org, base) {
   await client.query('BEGIN');
 
   // 8) Satış teklifi
-  const teklifNo = await sonrakiBelgeNo(client, 'SATIS_TEKLIF').catch(() => `ST-MAN-${Date.now()}`);
+  const teklifNo = await nextDocumentNo(client, 'SATIS_TEKLIF').catch(() => `ST-MAN-${Date.now()}`);
   const teklif = (await client.query(
     `INSERT INTO sales_quotations (
        quotation_no, partner_id, quotation_date, valid_date, currency_code, status,
@@ -1111,7 +1111,7 @@ async function seedManuel(client, org, base) {
   }, firma.id);
 
   // Satınalma (manuel — BOM ihtiyacı kadar, stok zaten var ama örnek zincir için ayrı PO)
-  const prNo = await sonrakiBelgeNo(client, 'SATINALMA_TALEP').catch(() => `PR-MAN-${Date.now()}`);
+  const prNo = await nextDocumentNo(client, 'SATINALMA_TALEP').catch(() => `PR-MAN-${Date.now()}`);
   const pr = (await client.query(
     `INSERT INTO purchase_requisitions (
        requisition_no, plant_id, status, description, requisition_date,
@@ -1128,7 +1128,7 @@ async function seedManuel(client, org, base) {
     const [st, q, p] = prItems[i];
     await client.query(
       `INSERT INTO purchase_requisition_lines (
-         requisition_id, line_no, item_id, quantity, uom_code, tahmini_unit_price, item_code, item_name, project_code
+         requisition_id, line_no, item_id, quantity, uom_code, estimated_unit_price, item_code, item_name, project_code
        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
       [pr.id, (i + 1) * 10, st.id, q, st.uom_code || 'AD', p, st.item_code, st.item_name, tag]
     );
@@ -1160,7 +1160,7 @@ async function seedManuel(client, org, base) {
 
   await api('POST', `/satin-alma-siparisleri/${po.id}/onayla`, {}, firma.id);
   // Merkezi onay: rota zorunlu; adımlar tamamlanmadan devam edilmez
-  const onayMan = await calistirSaSiparisOnay(client, { firmaId: firma.id, po, tag });
+  const onayMan = await runPurchaseOrderApproval(client, { firmaId: firma.id, po, tag });
 
   // Mal kabul / UE stok dokunur — açık txn stok kilidi bırakmasın
   await client.query('COMMIT');
@@ -1171,7 +1171,7 @@ async function seedManuel(client, org, base) {
     warehouse_id: wh.hmd.id,
     company_id: firma.id,
     description: `[${tag}] Mal kabul`,
-    gkk_gerekli: true,
+    incoming_qc_required: true,
     internal_note: tag,
   }, firma.id);
 
@@ -1209,15 +1209,15 @@ async function seedManuel(client, org, base) {
     component_warehouse_id: wh.hmd.id,
     fg_warehouse_id: wh.mam.id,
     wip_warehouse_id: wh.ana.id,
-    planlanan_quantity: qty,
+    planned_quantity: qty,
     order_type_id: 3, // SIP
     sales_order_id: so.id,
-    planli_kesin: 'Kesin',
+    planned_firm: 'Kesin',
     description: `[${tag}] İş emri — satış siparişinden, MRP yok`,
     order_date: today,
   }, firma.id);
 
-  await tagBelge(client, 'production_orders', ue.id, firma.id, tag, { project: false });
+  await tagDocument(client, 'production_orders', ue.id, firma.id, tag, { project: false });
   await api('POST', `/uretim-emirleri/${ue.id}/onayla`, {}, firma.id).catch((e) => log(`  UE onay: ${e.message}`));
   await api('POST', `/uretim-emirleri/${ue.id}/baslat`, {}, firma.id).catch((e) => log(`  UE başlat: ${e.message}`));
 
@@ -1234,7 +1234,7 @@ async function seedManuel(client, org, base) {
   await onaylaCkk(firma.id, ue.id, tag);
 
   // 24–26) Sevk → irsaliye → fatura
-  const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
+  const { sevk, irs, satisFatura } = await shipmentDeliveryNoteInvoice(client, {
     firma, plant, wh, so, tag,
   });
 
@@ -1244,7 +1244,7 @@ async function seedManuel(client, org, base) {
     sales_order: so.order_no,
     purchase_requisition: pr.requisition_no,
     purchase_order: po.order_no,
-    sa_approval: onayMan.onay_no || String(onayMan.id),
+    sa_approval: onayMan.approval_no || String(onayMan.id),
     goods_receipt: mk.receipt_no,
     production_order: ue.order_no || String(ue.id),
     shipment: sevk?.shipment_no || sevk?.id || null,
@@ -1300,12 +1300,12 @@ async function seedMrp(client, org, base) {
   }, firma.id);
 
   // Bağımsız ihtiyaç
-  const biNo = await sonrakiKod(client, 'MRP_BI').catch(() => `BI-MRP-${Date.now()}`);
+  const biNo = await nextSequenceCode(client, 'MRP_BI').catch(() => `BI-MRP-${Date.now()}`);
   const ihtiyacTarihi = new Date();
   ihtiyacTarihi.setDate(ihtiyacTarihi.getDate() + 14);
   await client.query(
     `INSERT INTO mrp_independent_requirements
-       (ihtiyac_no, item_id, quantity, uom_code, ihtiyac_date, source, company_id, plant_id, description, is_active, sales_order_id)
+       (requirement_no, item_id, quantity, uom_code, requirement_date, source, company_id, plant_id, description, is_active, sales_order_id)
      VALUES ($1,$2,$3,'AD',$4,'Manuel',$5,$6,$7,TRUE,$8)`,
     [
       biNo, base.fg.id, mrpQty, ihtiyacTarihi.toISOString().slice(0, 10),
@@ -1321,7 +1321,7 @@ async function seedMrp(client, org, base) {
     created_by: 'demo-elek-tam-dongu',
   });
 
-  log(`  MRP: ${sonuc.calisma?.run_no || sonuc.calisma?.calisma_no} satır=${sonuc.calisma?.line_sayisi || sonuc.calisma?.satir_sayisi}`);
+  log(`  MRP: ${sonuc.calisma?.run_no || sonuc.calisma?.calisma_no} satır=${sonuc.calisma?.line_count || sonuc.calisma?.satir_sayisi}`);
 
   const calismaId = sonuc.calisma?.id;
   // API ayrı bağlantı — MRP çalışmasını görmesi için commit
@@ -1338,7 +1338,7 @@ async function seedMrp(client, org, base) {
       }, firma.id);
       log(`  MRP→SA talep: ${talep.requisition_no || talep.talep_no || JSON.stringify(talep).slice(0, 80)}`);
       if (talep?.id) {
-        await tagBelge(client, 'purchase_requisitions', talep.id, firma.id, tag);
+        await tagDocument(client, 'purchase_requisitions', talep.id, firma.id, tag);
         await client.query(
           `UPDATE purchase_requisitions SET company_id=COALESCE(company_id,$2), project_code=$3,
              description=$4 WHERE id=$1`,
@@ -1360,7 +1360,7 @@ async function seedMrp(client, org, base) {
       const list = Array.isArray(ueMrp) ? ueMrp : (ueMrp?.emirler || [ueMrp]);
       for (const e of list) {
         if (!e?.id) continue;
-        await tagBelge(client, 'production_orders', e.id, firma.id, tag, { project: false });
+        await tagDocument(client, 'production_orders', e.id, firma.id, tag, { project: false });
         await client.query(
           `UPDATE production_orders SET company_id=COALESCE(company_id,$2),
              description=$3 WHERE id=$1`,
@@ -1405,7 +1405,7 @@ async function seedMrp(client, org, base) {
         if (poMrp.status !== 'Onayli') {
           await api('POST', `/satin-alma-siparisleri/${poMrp.id}/onayla`, {}, firma.id);
         }
-        await tagBelge(client, 'purchase_orders', poMrp.id, firma.id, tag);
+        await tagDocument(client, 'purchase_orders', poMrp.id, firma.id, tag);
         // Açıklamayı ayrı autocommit bağlantıyla yaz (API kilitleriyle çakışmasın)
         {
           const tc = await pool.connect();
@@ -1416,14 +1416,14 @@ async function seedMrp(client, org, base) {
             );
           } finally { tc.release(); }
         }
-        onayMrp = await calistirSaSiparisOnay(client, { firmaId: firma.id, po: poMrp, tag });
+        onayMrp = await runPurchaseOrderApproval(client, { firmaId: firma.id, po: poMrp, tag });
 
         mkMrp = await api('POST', '/mal-kabuller', {
           purchase_order_id: poMrp.id,
           warehouse_id: wh.hmd.id,
           company_id: firma.id,
           description: `[${tag}] MRP mal kabul`,
-          gkk_gerekli: true,
+          incoming_qc_required: true,
           internal_note: tag,
         }, firma.id);
 
@@ -1434,7 +1434,7 @@ async function seedMrp(client, org, base) {
             description: `[${tag}] Alış faturası`,
           }, firma.id);
           if (alisFaturaMrp?.id) {
-            await tagBelge(client, 'invoices', alisFaturaMrp.id, firma.id, tag);
+            await tagDocument(client, 'invoices', alisFaturaMrp.id, firma.id, tag);
             await api('POST', `/invoices/${alisFaturaMrp.id}/muhasebelestir`, {}, firma.id)
               .catch((e) => log(`  MRP alış muhasebe: ${e.message}`));
             log(`  MRP alış fatura: ${alisFaturaMrp.invoice_no}`);
@@ -1463,7 +1463,7 @@ async function seedMrp(client, org, base) {
     try {
       const cevir = await api('POST', `/uretim-planlari/${pln.id}/cevir`, {}, firma.id);
       if (cevir?.id) {
-        await tagBelge(client, 'production_orders', cevir.id, firma.id, tag, { project: false });
+        await tagDocument(client, 'production_orders', cevir.id, firma.id, tag, { project: false });
       }
       log(`  plan→UE: ${cevir.order_no || cevir.id || 'ok'}`);
     } catch (err) {
@@ -1503,14 +1503,14 @@ async function seedMrp(client, org, base) {
         component_warehouse_id: wh.hmd.id,
         fg_warehouse_id: wh.mam.id,
         wip_warehouse_id: wh.ana.id,
-        planlanan_quantity: qty,
+        planned_quantity: qty,
         order_type_id: 3,
         sales_order_id: so.id,
-        planli_kesin: 'Kesin',
+        planned_firm: 'Kesin',
         description: `[${tag}] İş emri — MRP sonrası (tam rota)`,
         order_date: today,
       }, firma.id);
-      await tagBelge(client, 'production_orders', full.id, firma.id, tag, { project: false });
+      await tagDocument(client, 'production_orders', full.id, firma.id, tag, { project: false });
       ueRun = [full, ...ueRun.filter((x) => Number(x.id) !== Number(e.id))];
       log(`  MRP tam UE: ${full.order_no}`);
     } catch (err) {
@@ -1529,14 +1529,14 @@ async function seedMrp(client, org, base) {
         component_warehouse_id: wh.hmd.id,
         fg_warehouse_id: wh.mam.id,
         wip_warehouse_id: wh.ana.id,
-        planlanan_quantity: qty,
+        planned_quantity: qty,
         order_type_id: 3,
         sales_order_id: so.id,
-        planli_kesin: 'Kesin',
+        planned_firm: 'Kesin',
         description: `[${tag}] İş emri — MRP tetikli satış`,
         order_date: today,
       }, firma.id);
-      await tagBelge(client, 'production_orders', full.id, firma.id, tag, { project: false });
+      await tagDocument(client, 'production_orders', full.id, firma.id, tag, { project: false });
       ueRun = [full];
       log(`  MRP yedek UE: ${full.order_no}`);
     } catch (err) {
@@ -1565,11 +1565,11 @@ async function seedMrp(client, org, base) {
 
   // CKK sonrası mamul kullanılabilir bakiye bazen depoda görünmez — sevk öncesi güvence girişi
   try {
-    const { depoStokBakiye } = require('../src/services/stokHareketService');
-    const avail = await depoStokBakiye(client, wh.mam.id, base.fg.id, { stokStatu: 'Kullanilabilir' });
+    const { warehouseItemBalance } = require('../src/services/stokHareketService');
+    const avail = await warehouseItemBalance(client, wh.mam.id, base.fg.id, { stokStatu: 'Kullanilabilir' });
     const need = Math.max(0, qty - avail);
     if (need > 1e-9) {
-      await stokHareketOlustur(client, {
+      await createStockMovement(client, {
         hareketTipi: 'STOK_GIRIS',
         isYeriId: plant.id,
         depoId: wh.mam.id,
@@ -1587,7 +1587,7 @@ async function seedMrp(client, org, base) {
   await client.query('BEGIN');
 
   // Sevk → irsaliye → satış fatura
-  const { sevk, irs, satisFatura } = await sevkIrsaliyeFatura(client, {
+  const { sevk, irs, satisFatura } = await shipmentDeliveryNoteInvoice(client, {
     firma, plant, wh, so, tag,
   });
 
@@ -1597,10 +1597,10 @@ async function seedMrp(client, org, base) {
     sales_order: so.order_no,
     independent_requirement: biNo,
     mrp_run: sonuc.calisma?.run_no || sonuc.calisma?.calisma_no || null,
-    mrp_net_positive: sonuc.calisma?.net_pozitif || null,
+    mrp_net_positive: sonuc.calisma?.net_positive_only || null,
     purchase_requisition: talep?.requisition_no || talep?.talep_no || null,
     purchase_order: poMrp?.order_no || null,
-    sa_approval: onayMrp ? (onayMrp.onay_no || String(onayMrp.id)) : null,
+    sa_approval: onayMrp ? (onayMrp.approval_no || String(onayMrp.id)) : null,
     goods_receipt: mkMrp?.receipt_no || null,
     purchase_invoice: alisFaturaMrp?.invoice_no || null,
     production_from_mrp: ueNos,
@@ -1628,7 +1628,7 @@ async function main() {
     org = await ensureOrg(client);
     summary.firma = { id: org.firma.id, code: org.firma.company_code, name: org.firma.company_name };
     await purgeGida(client, org.firma.id);
-    await ensureSaSiparisOnayTanimi(client, org.firma.id);
+    await ensurePurchaseOrderApprovalDefinition(client, org.firma.id);
     base = await seedBase(client, org);
     await client.query('COMMIT');
     log('  BASE commit OK');

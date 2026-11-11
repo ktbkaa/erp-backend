@@ -1,6 +1,6 @@
 const pool = require('../../db');
 const { verifyToken } = require('../utils/jwt');
-const { parametreAl, kullaniciGetir, reqKullaniciKodu } = require('../utils/yetki');
+const { parametreAl, getUser, reqUserCode } = require('../utils/yetki');
 
 /**
  * JWT veya X-Kullanici-Kodu ile kimlik.
@@ -14,7 +14,7 @@ async function authOptional(req, res, next) {
       try {
         const payload = verifyToken(bearer);
         if (payload?.user_code && payload.typ !== 'refresh') {
-          req.user = await kullaniciGetir(pool, payload.user_code);
+          req.user = await getUser(pool, payload.user_code);
           req.auth = { type: 'jwt', payload };
         }
       } catch (_) {
@@ -24,9 +24,9 @@ async function authOptional(req, res, next) {
     const zorunlu = String(await parametreAl(pool, 'AUTH_ZORUNLU', 'Hayir')).toLowerCase() === 'evet';
     // AUTH_ZORUNLU iken yalnız JWT; header spoof kapalı
     if (!req.user && !zorunlu) {
-      const kod = reqKullaniciKodu(req);
+      const kod = reqUserCode(req);
       if (kod) {
-        req.user = await kullaniciGetir(pool, kod);
+        req.user = await getUser(pool, kod);
         req.auth = { type: 'header', user_code: kod };
       }
     }
@@ -59,13 +59,13 @@ function parseJsonArr(v, fallback = ['*']) {
   return fallback;
 }
 
-async function assertDepoYetki(req, depoId) {
+async function assertWarehousePermission(req, depoId) {
   if (!req.user || !depoId) return true;
-  const list = parseJsonArr(req.user.warehouse_yetkileri, ['*']);
+  const list = parseJsonArr(req.user.warehouse_permissions, ['*']);
   if (list.includes('*')) {
     // satır bazlı kullanıcı_depo varsa onu da kontrol et
     const r = await pool.query(
-      `SELECT 1 FROM user_warehouses WHERE kisi_id=$1 LIMIT 1`,
+      `SELECT 1 FROM user_warehouses WHERE user_id=$1 LIMIT 1`,
       [req.user.id]
     );
     if (!r.rows[0]) return true;
@@ -77,7 +77,7 @@ async function assertDepoYetki(req, depoId) {
     if (list.includes(String(depoId)) || (kod && list.includes(kod))) return true;
   }
   const row = await pool.query(
-    `SELECT 1 FROM user_warehouses WHERE kisi_id=$1 AND warehouse_id=$2`,
+    `SELECT 1 FROM user_warehouses WHERE user_id=$1 AND warehouse_id=$2`,
     [req.user.id, depoId]
   );
   if (row.rows[0]) return true;
@@ -87,7 +87,7 @@ async function assertDepoYetki(req, depoId) {
   throw err;
 }
 
-function assertModulYetki(req, modulId) {
+function assertModulePermission(req, modulId) {
   if (!req.user) return true;
   const list = parseJsonArr(req.user.module_permissions, ['*']);
   if (list.includes('*') || list.includes(modulId)) return true;
@@ -99,7 +99,7 @@ function assertModulYetki(req, modulId) {
 module.exports = {
   authOptional,
   authRequired,
-  assertDepoYetki,
-  assertModulYetki,
+  assertWarehousePermission,
+  assertModulePermission,
   parseJsonArr,
 };

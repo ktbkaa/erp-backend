@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -41,14 +41,14 @@ router.post('/', async (req, res) => {
         const currency_name = trimOrNull(req.body.currency_name);
         if (!currency_name) return res.status(400).json({ hata: 'currency_name zorunludur.' });
         const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.currency_code) || (await sonrakiKod(client, 'PARA_BIRIM'));
+            const kod = trimOrNull(req.body.currency_code) || (await nextSequenceCode(client, 'PARA_BIRIM'));
             const ins = await client.query(
-                `INSERT INTO currencies (currency_code, currency_name, sembol, is_active)
+                `INSERT INTO currencies (currency_code, currency_name, symbol, is_active)
                  VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
                 [
                     kod,
                     currency_name,
-                    trimOrNull(req.body.sembol),
+                    trimOrNull(req.body.symbol),
                     typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
                 ]
             );
@@ -68,13 +68,13 @@ router.put('/:id', async (req, res) => {
         const upd = await pool.query(
             `UPDATE currencies SET
                 currency_name = $2,
-                sembol = COALESCE($3, sembol),
+                symbol = COALESCE($3, symbol),
                 is_active = COALESCE($4, is_active)
              WHERE id = $1 RETURNING *`,
             [
                 req.params.id,
                 currency_name,
-                trimOrNull(req.body.sembol),
+                trimOrNull(req.body.symbol),
                 typeof req.body.is_active === 'boolean' ? req.body.is_active : null,
             ]
         );
@@ -89,7 +89,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM currencies WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Para birimi bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

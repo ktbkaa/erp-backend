@@ -5,9 +5,9 @@ const { hashParola } = require('../src/utils/parola');
 
 const PUBLIC_COLS = `
   id, first_name, last_name, eposta, telefon, role, title, created_at,
-  user_code, username, is_active, group_code, son_giris_at,
+  user_code, username, is_active, group_code, last_login_at,
   profile_image,
-  (parola_hash IS NOT NULL) AS parola_var
+  (password_hash IS NOT NULL) AS parola_var
 `;
 
 const YETKI_ACTIONS = ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'];
@@ -21,15 +21,15 @@ function cleanLoginName(v) {
 function sanitizeRow(row) {
   if (!row) return row;
   const out = { ...row };
-  delete out.parola_hash;
+  delete out.password_hash;
   delete out.refresh_token_hash;
-  if (out.parola_var === undefined && row.parola_hash !== undefined) {
-    out.parola_var = Boolean(row.parola_hash);
+  if (out.parola_var === undefined && row.password_hash !== undefined) {
+    out.parola_var = Boolean(row.password_hash);
   }
   return out;
 }
 
-function normYetkiRow(y) {
+function normalizePermissionRow(y) {
   if (!y || !y.screen_id) return null;
   const actions = {};
   YETKI_ACTIONS.forEach((a) => { actions[a] = Boolean(y[a]); });
@@ -48,7 +48,7 @@ async function loadYetkiler(client, kisiId) {
   const r = await client.query(
     `SELECT screen_id, erisim, can_create AS yeni, incele, duzelt, kopyala, sil
      FROM user_screen_permissions
-     WHERE kisi_id=$1
+     WHERE user_id=$1
      ORDER BY screen_id`,
     [kisiId]
   );
@@ -58,12 +58,12 @@ async function loadYetkiler(client, kisiId) {
   }));
 }
 
-async function loadFirmaYetkileri(client, kisiId) {
+async function loadCompanyPermissions(client, kisiId) {
   const r = await client.query(
     `SELECT f.id AS company_id, f.company_code, f.company_name
      FROM user_company_permissions k
      JOIN companies f ON f.id = k.company_id
-     WHERE k.kisi_id=$1
+     WHERE k.user_id=$1
      ORDER BY f.company_code`,
     [kisiId]
   );
@@ -71,16 +71,16 @@ async function loadFirmaYetkileri(client, kisiId) {
 }
 
 async function saveYetkiler(client, kisiId, yetkiler) {
-  await client.query(`DELETE FROM user_screen_permissions WHERE kisi_id=$1`, [kisiId]);
+  await client.query(`DELETE FROM user_screen_permissions WHERE user_id=$1`, [kisiId]);
   if (!Array.isArray(yetkiler)) return;
   for (const raw of yetkiler) {
-    const y = normYetkiRow(raw);
+    const y = normalizePermissionRow(raw);
     if (!y) continue;
     await client.query(
       `INSERT INTO user_screen_permissions
-        (kisi_id, screen_id, erisim, can_create, incele, duzelt, kopyala, sil)
+        (user_id, screen_id, erisim, can_create, incele, duzelt, kopyala, sil)
        VALUES ($1,$2,TRUE,$3,$4,$5,$6,$7)
-       ON CONFLICT (kisi_id, screen_id) DO UPDATE SET
+       ON CONFLICT (user_id, screen_id) DO UPDATE SET
          erisim=EXCLUDED.erisim,
          can_create=EXCLUDED.can_create, incele=EXCLUDED.incele,
          duzelt=EXCLUDED.duzelt, kopyala=EXCLUDED.kopyala, sil=EXCLUDED.sil`,
@@ -89,8 +89,8 @@ async function saveYetkiler(client, kisiId, yetkiler) {
   }
 }
 
-async function saveFirmaYetkileri(client, kisiId, companies) {
-  await client.query(`DELETE FROM user_company_permissions WHERE kisi_id=$1`, [kisiId]);
+async function saveCompanyPermissions(client, kisiId, companies) {
+  await client.query(`DELETE FROM user_company_permissions WHERE user_id=$1`, [kisiId]);
   if (!Array.isArray(companies)) return;
   const seen = new Set();
   for (const raw of companies) {
@@ -98,7 +98,7 @@ async function saveFirmaYetkileri(client, kisiId, companies) {
     if (!id || seen.has(id)) continue;
     seen.add(id);
     await client.query(
-      `INSERT INTO user_company_permissions (kisi_id, company_id)
+      `INSERT INTO user_company_permissions (user_id, company_id)
        VALUES ($1,$2) ON CONFLICT DO NOTHING`,
       [kisiId, id]
     );
@@ -108,7 +108,7 @@ async function saveFirmaYetkileri(client, kisiId, companies) {
 async function loadSqlPermissions(client, kisiId) {
   const r = await client.query(
     `SELECT can_select, can_insert, can_update, can_delete
-     FROM user_sql_permissions WHERE kisi_id=$1`,
+     FROM user_sql_permissions WHERE user_id=$1`,
     [kisiId]
   ).catch(() => ({ rows: [] }));
   if (r.rows[0]) {
@@ -125,9 +125,9 @@ async function loadSqlPermissions(client, kisiId) {
 async function saveSqlPermissions(client, kisiId, sqlPerms) {
   if (!sqlPerms || typeof sqlPerms !== 'object') return;
   await client.query(
-    `INSERT INTO user_sql_permissions (kisi_id, can_select, can_insert, can_update, can_delete)
+    `INSERT INTO user_sql_permissions (user_id, can_select, can_insert, can_update, can_delete)
      VALUES ($1,$2,$3,$4,$5)
-     ON CONFLICT (kisi_id) DO UPDATE SET
+     ON CONFLICT (user_id) DO UPDATE SET
        can_select=EXCLUDED.can_select,
        can_insert=EXCLUDED.can_insert,
        can_update=EXCLUDED.can_update,
@@ -146,7 +146,7 @@ async function hydrateUser(row) {
   if (!row) return null;
   const out = sanitizeRow(row);
   out.yetkiler = await loadYetkiler(pool, row.id);
-  out.firma_yetkileri = await loadFirmaYetkileri(pool, row.id);
+  out.firma_yetkileri = await loadCompanyPermissions(pool, row.id);
   out.sql_permissions = await loadSqlPermissions(pool, row.id);
   return out;
 }
@@ -172,9 +172,9 @@ router.get('/', async (req, res) => {
   try {
     // Liste: profile_image gönderme (ağır); yetki sayısı yeterli
     const result = await pool.query(
-      `SELECT id, first_name, last_name, eposta, telefon, role, title, created_at,
-              user_code, username, is_active, group_code, son_giris_at,
-              (parola_hash IS NOT NULL) AS parola_var,
+      `SELECT id, first_name, last_name, email_address, phone, role, title, created_at,
+              user_code, username, is_active, group_code, last_login_at,
+              (password_hash IS NOT NULL) AS parola_var,
               (profile_image IS NOT NULL AND profile_image <> '') AS profil_var
        FROM users ORDER BY id DESC`
     );
@@ -202,7 +202,7 @@ router.post('/', async (req, res) => {
   const client = await pool.connect();
   try {
     const {
-      first_name, last_name, eposta, telefon, role, title,
+      first_name, last_name, email_address: eposta, phone: telefon, role, title,
       user_code, username, is_active, group_code,
       sifre, parola, password, profile_image, yetkiler, firma_yetkileri, companies,
       sql_permissions,
@@ -226,8 +226,8 @@ router.post('/', async (req, res) => {
     const result = await client.query(
       `
       INSERT INTO users (
-        first_name, last_name, eposta, telefon, role, title,
-        user_code, username, is_active, group_code, parola_hash, profile_image
+        first_name, last_name, email_address, phone, role, title,
+        user_code, username, is_active, group_code, password_hash, profile_image
       )
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,TRUE),$10,$11,$12)
       RETURNING ${PUBLIC_COLS}
@@ -240,7 +240,7 @@ router.post('/', async (req, res) => {
     );
     const row = result.rows[0];
     await saveYetkiler(client, row.id, yetkiler);
-    await saveFirmaYetkileri(client, row.id, firmaList);
+    await saveCompanyPermissions(client, row.id, firmaList);
     if (sql_permissions !== undefined) {
       await saveSqlPermissions(client, row.id, sql_permissions);
     }
@@ -263,7 +263,7 @@ router.put('/:id', async (req, res) => {
   const client = await pool.connect();
   try {
     const {
-      first_name, last_name, eposta, telefon, role, title,
+      first_name, last_name, email_address: eposta, phone: telefon, role, title,
       user_code, username, is_active, group_code,
       sifre, parola, password, profile_image, yetkiler, firma_yetkileri, companies,
       sql_permissions,
@@ -285,15 +285,15 @@ router.put('/:id', async (req, res) => {
       UPDATE users SET
         first_name = COALESCE($2, first_name),
         last_name = COALESCE($3, last_name),
-        eposta = COALESCE($4, eposta),
-        telefon = COALESCE($5, telefon),
+        email_address = COALESCE($4, email_address),
+        phone = COALESCE($5, phone),
         role = COALESCE($6, role),
         title = COALESCE($7, title),
         user_code = COALESCE($8, user_code),
         username = COALESCE($9, username),
         is_active = COALESCE($10, is_active),
         group_code = COALESCE($11, group_code),
-        parola_hash = CASE WHEN $12::text IS NOT NULL THEN $12 ELSE parola_hash END,
+        password_hash = CASE WHEN $12::text IS NOT NULL THEN $12 ELSE password_hash END,
         profile_image = CASE WHEN $13::boolean THEN $14 ELSE profile_image END
       WHERE id=$1
       RETURNING ${PUBLIC_COLS}
@@ -312,7 +312,7 @@ router.put('/:id', async (req, res) => {
       await saveYetkiler(client, Number(req.params.id), yetkiler);
     }
     if (firmaList !== undefined) {
-      await saveFirmaYetkileri(client, Number(req.params.id), firmaList);
+      await saveCompanyPermissions(client, Number(req.params.id), firmaList);
     }
     if (sql_permissions !== undefined) {
       await saveSqlPermissions(client, Number(req.params.id), sql_permissions);
@@ -335,7 +335,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const result = await pool.query('DELETE FROM users WHERE id=$1 RETURNING id', [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ hata: 'Kullanıcı bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
