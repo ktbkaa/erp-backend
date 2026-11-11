@@ -4,6 +4,7 @@ const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/', async (req, res) => {
     try {
@@ -109,6 +110,15 @@ router.put('/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
+});
+
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'item_lots',
+  notFound: 'Parti bulunamadı.',
+  skipGet: true,
+  skipPut: true,
+  softDelete: true,
 });
 
 module.exports = router;
