@@ -31,7 +31,7 @@ function andFirmaViaIsYeri(isYeriExpr, firmaId, params) {
   return ` AND ${isYeriExpr} IN (SELECT id FROM plants WHERE company_id = $${params.length})`;
 }
 
-/** Stok: doğrudan company_id veya item_plants → plants */
+/** Stok: company_id VEYA item_plants→plants VEYA item_company_params (assert ile aynı) */
 function andStokFirma(stokAlias, firmaId, params) {
   if (!firmaId) return '';
   params.push(firmaId);
@@ -42,6 +42,12 @@ function andStokFirma(stokAlias, firmaId, params) {
       SELECT 1 FROM item_plants siy
       JOIN plants iy ON iy.id = siy.plant_id
       WHERE siy.item_id = ${stokAlias}.id AND iy.company_id = ${p}
+    )
+    OR EXISTS (
+      SELECT 1 FROM item_company_params fp
+      WHERE fp.item_id = ${stokAlias}.id
+        AND fp.company_id = ${p}
+        AND fp.is_active IS DISTINCT FROM FALSE
     )
   )`;
 }
@@ -72,6 +78,51 @@ async function assertFirmaKayit(clientOrPool, table, id, firmaId, { firmaCol = '
   return r.rows.length > 0;
 }
 
+/**
+ * Stok GET/PUT: liste filtresi (andStokFirma) ile aynı kapsam.
+ * items.company_id VEYA item_plants→plants VEYA item_company_params.
+ */
+async function assertStokFirmaKayit(clientOrPool, itemId, firmaId) {
+  if (!firmaId || !itemId) return true;
+  const r = await clientOrPool.query(
+    `SELECT 1 FROM items s
+     WHERE s.id = $1
+       AND (
+         s.company_id = $2
+         OR EXISTS (
+           SELECT 1 FROM item_plants siy
+           JOIN plants iy ON iy.id = siy.plant_id
+           WHERE siy.item_id = s.id AND iy.company_id = $2
+         )
+         OR EXISTS (
+           SELECT 1 FROM item_company_params fp
+           WHERE fp.item_id = s.id
+             AND fp.company_id = $2
+             AND fp.is_active IS DISTINCT FROM FALSE
+         )
+       )
+     LIMIT 1`,
+    [itemId, firmaId]
+  );
+  return r.rows.length > 0;
+}
+
+/** Cari: company_id veya plant üzerinden firma (liste ile uyumlu). */
+async function assertCariFirmaKayit(clientOrPool, partnerId, firmaId) {
+  if (!firmaId || !partnerId) return true;
+  const r = await clientOrPool.query(
+    `SELECT 1 FROM partners c
+     WHERE c.id = $1
+       AND (
+         c.company_id = $2
+         OR c.plant_id IN (SELECT id FROM plants WHERE company_id = $2)
+       )
+     LIMIT 1`,
+    [partnerId, firmaId]
+  );
+  return r.rows.length > 0;
+}
+
 module.exports = {
   firmaIdFromReq,
   andFirma,
@@ -79,4 +130,6 @@ module.exports = {
   andStokFirma,
   andCariFirma,
   assertFirmaKayit,
+  assertStokFirmaKayit,
+  assertCariFirmaKayit,
 };

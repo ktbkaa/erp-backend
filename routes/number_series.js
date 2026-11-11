@@ -2,7 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const {
+    sonrakiKod,
+    sonrakiPrefixedKod,
+    sonrakiStokHareketNo,
+    peekStokHareketNo,
+} = require('../src/utils/kodUretici');
 
 router.get('/', async (req, res) => {
     try {
@@ -15,7 +20,8 @@ router.get('/', async (req, res) => {
         }
         const result = await pool.query(
             `
-            SELECT series_code, onek, description, son_numara, screen_code, screen_name, is_active, created_at
+            SELECT series_code AS id, series_code, onek, description, son_numara,
+                   screen_code, screen_name, is_active, created_at
             FROM number_series
             ${where}
             ORDER BY COALESCE(screen_name, description), series_code
@@ -28,10 +34,91 @@ router.get('/', async (req, res) => {
     }
 });
 
+/**
+ * Stok hareket no önizleme (sayacı artırmaz): STC-01-00001.
+ * Query/body: movement_code=STC-01
+ * Not: /:seriKodu rotalarından ÖNCE tanımlanmalı.
+ */
+router.get('/stok-hareket/peek', async (req, res) => {
+    try {
+        const movementCode = String(req.query?.movement_code || '').trim().toUpperCase();
+        if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
+        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        res.json({
+            series_code: `STOK_HAREKET__${movementCode}`,
+            movement_code: movementCode,
+            kod,
+            peek: true,
+        });
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+router.post('/stok-hareket/peek', async (req, res) => {
+    try {
+        const movementCode = String(req.body?.movement_code || req.query?.movement_code || '').trim().toUpperCase();
+        if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
+        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        res.json({
+            series_code: `STOK_HAREKET__${movementCode}`,
+            movement_code: movementCode,
+            kod,
+            peek: true,
+        });
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+/**
+ * Stok hareket no ayır (sayacı artırır): STC-01-00001.
+ * Body: { movement_code: 'STC-01' }
+ */
+router.post('/stok-hareket/ayir', async (req, res) => {
+    try {
+        const movementCode = String(req.body?.movement_code || '').trim().toUpperCase();
+        if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
+        const kod = await withTransaction(pool, async (client) => sonrakiStokHareketNo(client, movementCode));
+        res.status(201).json({
+            series_code: `STOK_HAREKET__${movementCode}`,
+            movement_code: movementCode,
+            kod,
+        });
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
+/** Genel önekli ayır: { series_code, prefix, pad?, separator? } */
+router.post('/ayir-prefixed', async (req, res) => {
+    try {
+        const seriesCode = String(req.body?.series_code || '').trim();
+        const prefix = String(req.body?.prefix || '').trim().toUpperCase();
+        if (!seriesCode || !prefix) {
+            return res.status(400).json({ hata: 'series_code ve prefix zorunlu.' });
+        }
+        const kod = await withTransaction(pool, async (client) => sonrakiPrefixedKod(client, {
+            seriesCode,
+            prefix,
+            pad: Number(req.body?.pad) > 0 ? Number(req.body.pad) : 5,
+            separator: req.body?.separator != null ? String(req.body.separator) : '-',
+            description: req.body?.description || null,
+            screenCode: req.body?.screen_code || null,
+            screenName: req.body?.screen_name || null,
+        }));
+        res.status(201).json({ series_code: seriesCode, prefix, kod });
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
 router.get('/:seriKodu', async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT * FROM number_series WHERE series_code = $1`,
+            `SELECT series_code AS id, series_code, onek, description, son_numara,
+                    screen_code, screen_name, is_active, created_at
+             FROM number_series WHERE series_code = $1`,
             [req.params.seriKodu]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Numaratör bulunamadı.' });
@@ -74,7 +161,8 @@ router.put('/:seriKodu', async (req, res) => {
                 son_numara = COALESCE($6, son_numara),
                 onek = COALESCE($7, onek)
             WHERE series_code = $1
-            RETURNING *
+            RETURNING series_code AS id, series_code, onek, description, son_numara,
+                      screen_code, screen_name, is_active, created_at
             `,
             [
                 req.params.seriKodu,
@@ -106,7 +194,8 @@ router.post('/', async (req, res) => {
             `
             INSERT INTO number_series (series_code, onek, description, son_numara, screen_code, screen_name, is_active)
             VALUES ($1, $2, $3, COALESCE($4, 0), $5, $6, TRUE)
-            RETURNING *
+            RETURNING series_code AS id, series_code, onek, description, son_numara,
+                      screen_code, screen_name, is_active, created_at
             `,
             [series_code, String(onek).toUpperCase(), description, son_numara ?? 0, screen_code || null, screen_name || null]
         );

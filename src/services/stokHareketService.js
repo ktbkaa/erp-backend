@@ -1,4 +1,4 @@
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
+const { sonrakiBelgeNo, sonrakiStokHareketNo } = require('../utils/belgeNo');
 const { stokNegatifIzinliMi, onerilenDepolar } = require('../utils/belgeOmurga');
 const { parametreAl } = require('../utils/yetki');
 const { partiCozumle } = require('./partiService');
@@ -20,6 +20,7 @@ async function stokHareketOlustur(client, {
     belgeId = null,
     description = null,
     hareketKoduId = null,
+    hareketNo: hareketNoOpt = null,
     satirlar,
     bagliHareketId = null,
     depoZorunluAtla = false,
@@ -46,7 +47,20 @@ async function stokHareketOlustur(client, {
     const depoZorunlu = !depoZorunluAtla
         && String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
 
-    const hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
+    let hareketNo = String(hareketNoOpt || '').trim() || null;
+    if (hareketNo) {
+        const clash = await client.query(
+            `SELECT id FROM stock_movements WHERE movement_no = $1 LIMIT 1`,
+            [hareketNo]
+        );
+        if (clash.rows[0]) hareketNo = null;
+    }
+    if (!hareketNo && hareketKodu?.movement_code) {
+        hareketNo = await sonrakiStokHareketNo(client, hareketKodu.movement_code);
+    }
+    if (!hareketNo) {
+        hareketNo = await sonrakiBelgeNo(client, 'STOK_HAREKET');
+    }
 
     const cols = ['movement_no', 'movement_type', 'plant_id', 'warehouse_id', 'document_type', 'document_id', 'description', 'movement_code_id'];
     const vals = [hareketNo, hareketTipi, isYeriId, depoId, belgeTipi, belgeId, description, hareketKoduId || null];
