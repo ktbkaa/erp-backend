@@ -78,11 +78,13 @@ function setBusy(on) {
 
 async function runAction(label, path) {
   setBusy(true);
+  const poll = setInterval(() => {
+    refreshLogs().catch(() => {});
+  }, 1000);
   try {
-    toast(`${label} başladı…`);
+    toast(`${label} başladı… Birkaç dakika sürebilir, logları izleyin.`);
     const r = await api(path, { method: 'POST', body: '{}' });
     const backup = r.steps?.backup || r;
-    const where = r.erpRoot ? ` · ${r.erpRoot}` : '';
     const br = r.branch ? ` · ${r.branch}` : '';
     if (backup?.method === 'node-sql') {
       toast(`${label} tamam (Node SQL yedek)${br}`);
@@ -98,6 +100,7 @@ async function runAction(label, path) {
   } catch (err) {
     toast(err.message || String(err));
   } finally {
+    clearInterval(poll);
     setBusy(false);
     await refreshStatus();
     await refreshLogs();
@@ -125,6 +128,7 @@ $('btnSave').addEventListener('click', async () => {
     });
     toast('Ayarlar kaydedildi');
     await refreshStatus();
+    await refreshLogs();
   } catch (err) {
     toast(err.message || String(err));
   } finally {

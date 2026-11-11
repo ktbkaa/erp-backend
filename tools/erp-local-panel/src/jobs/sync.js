@@ -33,8 +33,21 @@ async function stepGitPull(cfg) {
     logger.append({ level: 'warn', message: 'Git deposu yok — git pull atlandı' });
     return { skipped: true, reason: 'not-a-git-repo' };
   }
+  // Önce mevcut dalı çek; ff-only kırılırsa rebase deneme — kullanıcıya net hata
   await runAsync(gitCmd(), ['fetch', 'origin'], { cwd: cfg.erpRoot, label: 'git fetch' });
-  await runAsync(gitCmd(), ['pull', '--ff-only'], { cwd: cfg.erpRoot, label: 'git pull' });
+  try {
+    await runAsync(gitCmd(), ['pull', '--ff-only'], { cwd: cfg.erpRoot, label: 'git pull' });
+  } catch (err) {
+    const br = gitBranch(cfg.erpRoot) || 'HEAD';
+    logger.append({
+      level: 'warn',
+      message: `git pull --ff-only olmadı (${br}): ${err.message}. origin/${br} merge deneniyor…`,
+    });
+    await runAsync(gitCmd(), ['pull', 'origin', br, '--no-edit'], {
+      cwd: cfg.erpRoot,
+      label: `git pull origin ${br}`,
+    });
+  }
   return { ok: true };
 }
 
