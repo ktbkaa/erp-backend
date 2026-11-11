@@ -10126,12 +10126,22 @@ function showView(name) {
   if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
   if (sql) sql.style.display = name === 'sql' ? 'grid' : 'none';
   if (pq) pq.style.display = name === 'pageQuery' ? 'grid' : 'none';
+  if (typeof syncMenuButtonLabel === 'function') syncMenuButtonLabel();
 }
 
 /** Liste ekranı (#viewScreen) görünür mü? */
 function isListScreenOpen() {
   const screen = $('#viewScreen');
-  return Boolean(screen && !screen.hidden && screen.style.display !== 'none');
+  if (!screen) return false;
+  // state.screenId + görünür view: inline style / hidden / computed hepsi
+  if (!state.screenId) return false;
+  if (screen.hidden) return false;
+  const inline = (screen.style.display || '').trim();
+  if (inline === 'none') return false;
+  try {
+    if (getComputedStyle(screen).display === 'none') return false;
+  } catch (_) { /* ignore */ }
+  return true;
 }
 
 function isFilterDocked() {
