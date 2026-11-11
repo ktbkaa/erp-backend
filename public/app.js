@@ -13565,7 +13565,7 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
   if (field.type === 'static') {
     return `<span class="field-static" aria-hidden="true">${escAttr(field.label || '=')}</span>`;
   }
-  const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
+  const codeLocked = field.code && !(field.editableOnNew && (state.formMode === 'yeni' || (state.formMode === 'kopyala' && !state.formNumeratorSeri)));
   let transferLocked = false;
   if (field.transferOnly) {
     const hkId = state.formRecord?.movement_code_id
@@ -13660,6 +13660,24 @@ function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
     ? `data-didx="${idx}" data-grid="${gridKey}"`
     : `data-didx="${idx}"`;
   return fieldControl(field, value, 'data-detail', extra, rowCtx || {});
+}
+
+/** Code / name / unique fields are not copied (avoids duplicate keys). */
+function isNonCopyableField(f) {
+  if (!f || !f.key || f.type === 'lookup') return false;
+  return Boolean(f.code || f.name || f.unique || f.noCopy);
+}
+
+function stripNonCopyableOnRowCopy(fields, src) {
+  const out = { ...(src || {}) };
+  delete out.id;
+  (fields || []).forEach((f) => {
+    if (!isNonCopyableField(f)) return;
+    out[f.key] = f.type === 'checkbox' ? false : '';
+  });
+  out._satir_kayitli = false;
+  out._satir_duzenleniyor = true;
+  return out;
 }
 
 function emptyRowFromFields(fields) {
@@ -16192,7 +16210,7 @@ function fieldShell(f, controlHtml, value) {
   }
   const cls = ['field', inferFieldSizeClass(f)];
   const isReq = Boolean(f.required || (f.requiredOnNew && state.formMode === 'yeni'));
-  const codeLocked = f.code && !(f.editableOnNew && state.formMode === 'yeni');
+  const codeLocked = f.code && !(f.editableOnNew && (state.formMode === 'yeni' || (state.formMode === 'kopyala' && !state.formNumeratorSeri)));
   const isRo = Boolean(f.readOnly || state.formMode === 'incele' || codeLocked);
   if (isReq) cls.push('required');
   if (isRo) cls.push('field--readonly');
@@ -20944,9 +20962,10 @@ async function openForm(mode, opts = {}) {
 
   function initSpecialTabs(src) {
     const stripIds = mode === 'kopyala' || mode === 'yeni';
-    const keepOrStrip = (row) => {
+    const keepOrStrip = (row, fields) => {
       if (!row || typeof row !== 'object') return row;
       if (!stripIds) return { ...row };
+      if (mode === 'kopyala') return stripNonCopyableOnRowCopy(fields || [], row);
       const { id, ...rest } = row;
       return rest;
     };
@@ -20955,7 +20974,7 @@ async function openForm(mode, opts = {}) {
         const raw = mode === 'kopyala' && screen.detailPersist?.[tab.key]
           ? []
           : (Array.isArray(src[tab.key]) ? src[tab.key] : []);
-        record[tab.key] = normalizeGridRows(tab, raw.map(keepOrStrip));
+        record[tab.key] = normalizeGridRows(tab, raw.map((r) => keepOrStrip(r, tab.fields)));
       }
       if (tab.kind === 'master-grid') {
         const gkey = tab.grid?.key || tab.key || '_detail';
@@ -20968,7 +20987,7 @@ async function openForm(mode, opts = {}) {
         const raw = mode === 'kopyala' && screen.detailPersist?.[gkey]
           ? []
           : (Array.isArray(src[gkey]) ? src[gkey] : []);
-        record[gkey] = normalizeGridRows(gtab, raw.map(keepOrStrip));
+        record[gkey] = normalizeGridRows(gtab, raw.map((r) => keepOrStrip(r, gtab.fields)));
       }
       if (tab.kind === 'bom-tree' || tab.kind === 'bom-workspace') {
         record.satirlar = Array.isArray(src.agac) && src.agac.length
@@ -21040,10 +21059,20 @@ async function openForm(mode, opts = {}) {
       try {
         record[screen.codeField] = await reserveCode(seri);
         state.formNumeratorSeri = seri;
-      } catch (err) { toast(err.message); }
+      } catch (err) {
+        toast(err.message);
+        record[screen.codeField] = '';
+        state.formNumeratorSeri = null;
+      }
     } else {
+      if (screen.codeField) record[screen.codeField] = '';
       state.formNumeratorSeri = null;
     }
+    (screen.masterFields || []).forEach((f) => {
+      if (!isNonCopyableField(f)) return;
+      if (screen.codeField && f.key === screen.codeField && seri) return;
+      record[f.key] = f.type === 'checkbox' ? false : '';
+    });
     initSpecialTabs(full);
   } else {
     const full = await loadRecord(row.id);
@@ -23033,16 +23062,9 @@ function bindEvents() {
       if (act === 'kopyala') {
         if (!rows[idx]) return;
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
-        const copy = { ...rows[idx] };
-        delete copy.id;
-        copy._satir_kayitli = false;
-        copy._satir_duzenleniyor = true;
+        const copy = stripNonCopyableOnRowCopy(tab.fields, rows[idx]);
         delete copy._satir_toplu; // kopya = teker teker; ✓ sonrası boş satır
-        if (key === 'districts') {
-          copy.district_code = '';
-          copy.district_name = '';
-          copy.is_active = true;
-        }
+        if (key === 'districts') copy.is_active = true;
         rows.splice(idx + 1, 0, copy);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
