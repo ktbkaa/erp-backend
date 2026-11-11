@@ -5,10 +5,29 @@
  */
 
 async function parametreAl(clientOrPool, kod, varsayilan = null) {
-    const r = await clientOrPool.query(
-        `SELECT value FROM system_parameters WHERE parameter_code=$1 AND is_active=TRUE`,
-        [kod]
-    );
+    // EN (parameter_code) önce; eski TR şemada parametre_code'a düş — ekran geçişini kırmaz
+    let r;
+    try {
+        r = await clientOrPool.query(
+            `SELECT value FROM system_parameters WHERE parameter_code=$1 AND is_active IS DISTINCT FROM FALSE`,
+            [kod]
+        );
+    } catch (err) {
+        if (err && err.code === '42703') {
+            // Eski TR şema: parametre_code (value / is_active aynı kalmış olabilir)
+            try {
+                r = await clientOrPool.query(
+                    `SELECT value FROM system_parameters
+                     WHERE parametre_code=$1 AND is_active IS DISTINCT FROM FALSE`,
+                    [kod]
+                );
+            } catch (_) {
+                r = { rows: [] };
+            }
+        } else {
+            throw err;
+        }
+    }
     const v = r.rows[0]?.value;
     if (v === undefined || v === null || v === '') return varsayilan;
     return v;

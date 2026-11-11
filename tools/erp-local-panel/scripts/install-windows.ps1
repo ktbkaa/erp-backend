@@ -95,21 +95,23 @@ function Test-ErpRoot([string]$path) {
 $candidates = @()
 if ($ErpRoot) { $candidates += $ErpRoot }
 $candidates += @(
-  (Join-Path $env:USERPROFILE "OneDrive\Masaustu\erp-backend"),
+  (Join-Path $env:USERPROFILE "OneDrive\Masaüstü\ERP PROJESİ\erp-backend"),
+  (Join-Path $env:USERPROFILE "OneDrive\Masaustu\ERP PROJESI\erp-backend"),
+  (Join-Path $env:USERPROFILE "OneDrive\Masaüstü\erp-backend"),
   (Join-Path $env:USERPROFILE "OneDrive\Masaustu\erp-backend"),
   (Join-Path $env:USERPROFILE "Desktop\erp-backend"),
   (Join-Path $env:USERPROFILE "OneDrive\Desktop\erp-backend"),
   (Join-Path $env:USERPROFILE "Documents\erp-backend"),
   "C:\erp-backend",
   (Join-Path (Split-Path $PanelRoot -Parent) "erp-backend")
-# OneDrive / masaustu altinda erp-backend ara
+)
+# OneDrive / masaüstü altında erp-backend ara (ERP PROJESİ dahil)
 try {
   $od = Join-Path $env:USERPROFILE "OneDrive"
   if (Test-Path $od) {
-    Get-ChildItem $od -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-      $c = Join-Path $_.FullName "erp-backend"
-      if (Test-Path $c) { $candidates += $c }
-    }
+    Get-ChildItem $od -Directory -Recurse -Depth 3 -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -eq 'erp-backend' } |
+      ForEach-Object { $candidates += $_.FullName }
   }
 } catch {}
 try {
@@ -118,9 +120,13 @@ try {
     ForEach-Object {
       $c = Join-Path $_.FullName "erp-backend"
       if (Test-Path $c) { $candidates += $c }
+      Get-ChildItem $_.FullName -Directory -ErrorAction SilentlyContinue |
+        ForEach-Object {
+          $c2 = Join-Path $_.FullName "erp-backend"
+          if (Test-Path $c2) { $candidates += $c2 }
+        }
     }
 } catch {}
-)
 
 $found = $null
 foreach ($c in $candidates) {
@@ -156,6 +162,7 @@ $config = @{
     gitPull = $true
     npmInstall = $true
     migrate = $true
+    heal = $true
     backup = $true
   }
   pgDumpPath = ""

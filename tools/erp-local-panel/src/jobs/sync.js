@@ -60,6 +60,21 @@ async function stepMigrate(cfg) {
   return { ok: true };
 }
 
+/** Migrate sonrası firma profil / yetki onarımı — veri silmez */
+async function stepHeal(cfg) {
+  const pkg = JSON.parse(fs.readFileSync(path.join(cfg.erpRoot, 'package.json'), 'utf8'));
+  if (!pkg.scripts || !pkg.scripts['local:heal']) {
+    logger.append({ level: 'warn', message: 'local:heal script yok — atlandı (eski branch?)' });
+    return { skipped: true, reason: 'no-local-heal-script' };
+  }
+  await runAsync(npmCmd(), ['run', 'local:heal', '--', '--seed-ornek'], {
+    cwd: cfg.erpRoot,
+    label: 'npm run local:heal -- --seed-ornek',
+    shell: process.platform === 'win32',
+  });
+  return { ok: true };
+}
+
 function stampNow() {
   return new Date()
     .toISOString()
@@ -189,6 +204,10 @@ async function runSync(opts = {}) {
       result.steps.migrate = await stepMigrate(cfg);
       logger.append({ level: 'info', message: 'Adım tamam: migrate' });
     }
+    if (steps.heal !== false) {
+      result.steps.heal = await stepHeal(cfg);
+      logger.append({ level: 'info', message: 'Adım tamam: heal (firma/profil)' });
+    }
     if (steps.backup !== false) {
       result.steps.backup = await stepBackup(cfg);
       const method = result.steps.backup?.method || 'yedek';
@@ -253,6 +272,7 @@ module.exports = {
   runSync,
   stepBackup,
   stepMigrate,
+  stepHeal,
   stepGitPull,
   stepNpmInstall,
   getStatus,
