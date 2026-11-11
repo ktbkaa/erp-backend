@@ -215,4 +215,16 @@ server.listen(listenOpts, () => {
         console.error('[tcmb] zamanlayıcı başlatılamadı:', err.message);
       }
     }
+    // Demo firma profilleri + kullanıcı yetkileri (veri silmez)
+    if (process.env.NODE_ENV !== 'test') {
+      setImmediate(() => {
+        const { ensureDemoFirms } = require('./src/bootstrap/ensureDemoFirms');
+        ensureDemoFirms(pool)
+          .then((r) => {
+            if (r?.skipped) return;
+            console.log(`[heal] firma profilleri: ${r.count} · yeni: ${(r.created || []).join(',') || '—'} · yetki+${r.grants || 0}`);
+          })
+          .catch((err) => console.error('[heal] ensureDemoFirms:', err.message));
+      });
+    }
 });
