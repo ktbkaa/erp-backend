@@ -174,6 +174,17 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+/** Form/API boolean: true/false, 1/0, "evet"/"hayir" */
+function asBool(v, fallback = null) {
+    if (v === undefined || v === null || v === '') return fallback;
+    if (typeof v === 'boolean') return v;
+    if (typeof v === 'number') return v !== 0;
+    const s = String(v).trim().toLowerCase();
+    if (['1', 'true', 'evet', 'yes', 'on', 'e'].includes(s)) return true;
+    if (['0', 'false', 'hayir', 'no', 'off', 'h'].includes(s)) return false;
+    return fallback;
+}
+
 router.post('/', async (req, res) => {
     try {
         const {
@@ -203,7 +214,7 @@ router.post('/', async (req, res) => {
             [
                 movement_code, movement_name, check.tip, type, stock_etkisi, partner_zorunlu,
                 warehouse_zorunlu, eksi_balance_izin, gl_account_code || null, description || null, is_active,
-                gkk_emri_olussun, ckk_emri_olussun,
+                asBool(gkk_emri_olussun, false), asBool(ckk_emri_olussun, false),
             ]
         );
         res.status(201).json(result.rows[0]);
@@ -248,8 +259,8 @@ router.put('/:id', async (req, res) => {
             [
                 req.params.id, movement_name, tip, direction, stock_etkisi, partner_zorunlu,
                 warehouse_zorunlu, eksi_balance_izin, gl_account_code, description, is_active,
-                typeof gkk_emri_olussun === 'boolean' ? gkk_emri_olussun : null,
-                typeof ckk_emri_olussun === 'boolean' ? ckk_emri_olussun : null,
+                asBool(gkk_emri_olussun, null),
+                asBool(ckk_emri_olussun, null),
             ]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Hareket kodu bulunamadı.' });
