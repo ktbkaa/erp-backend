@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "migrate": "node db/migrate.js",
+    "local:heal": "node scripts/local-heal.js",
     "db:backup": "node scripts/db-backup.js",
     "demo:cycle": "node scripts/demo-cycle.js",
     "demo:cleanup": "node scripts/demo-cleanup.js",
