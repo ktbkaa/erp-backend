@@ -48,10 +48,51 @@ const STOK_FIRMA_GENEL_FIELDS = [
   { key: 'cikis_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'firma-geneli', groupLabel: 'Firma geneli' },
 ];
 
+/** Stok kartı — kur/fiyat tipine göre KDV satırları */
+const STOK_VERGI_RATE_TYPES = ['Alış', 'Satış', 'Efektif alış', 'Efektif satış'];
+
+const STOK_VERGI_GRID_FIELDS = [
+  {
+    key: 'rate_type',
+    label: 'Tip',
+    type: 'select',
+    options: STOK_VERGI_RATE_TYPES,
+    required: true,
+    size: 'short',
+  },
+  {
+    key: 'tax_code_id',
+    label: 'KDV / vergi',
+    type: 'lookup',
+    lookup: 'vergi-kodlari',
+    valueKey: 'id',
+    labelKey: 'tax_name',
+    codeKey: 'tax_code',
+    required: true,
+  },
+  {
+    key: 'vat_rate',
+    label: 'Oran %',
+    type: 'number',
+    size: 'short',
+    readOnly: true,
+  },
+];
+
+function defaultStokVergiTanimlari() {
+  return STOK_VERGI_RATE_TYPES.map((rate_type) => ({
+    rate_type,
+    tax_code_id: null,
+    vat_rate: null,
+    is_active: true,
+  }));
+}
+
+/** Firma parametrelerine yazılan özet vergi (Satış satırından türetilir) */
 const STOK_VERGI_FIELDS = [
   {
     key: 'default_tax_code_id',
-    label: 'Vergi tipi',
+    label: 'Vergi tipi (satış)',
     type: 'lookup',
     lookup: 'vergi-kodlari',
     valueKey: 'id',
@@ -88,8 +129,7 @@ const STOK_DEPO_POLITIKA_FIELDS = [
     valueKey: 'id',
     labelKey: 'warehouse_name',
     codeKey: 'warehouse_code',
-    dependsOn: 'company_id',
-    filterKey: 'company_id',
+    // X-Firma-Id ile depo listesi aktif firmaya göre gelir; company_id bağı seçimi kilitliyordu
     group: 'depo',
   },
   {
@@ -100,8 +140,6 @@ const STOK_DEPO_POLITIKA_FIELDS = [
     valueKey: 'id',
     labelKey: 'warehouse_name',
     codeKey: 'warehouse_code',
-    dependsOn: 'company_id',
-    filterKey: 'company_id',
     group: 'depo',
   },
 ];
@@ -1020,11 +1058,15 @@ const MODULES = [
           series_politika: 'Takipsiz',
           depo_baglari: [],
           firma_parametreleri: [],
+          vergi_tanimlari: defaultStokVergiTanimlari(),
           varsayilan_vat_rate: 20,
         },
         formLinks: {
           default_tax_code_id: [
             { field: 'varsayilan_vat_rate', fromLookup: 'vergi-kodlari', parentKey: 'default_tax_code_id', prop: 'rate' },
+          ],
+          tax_code_id: [
+            { field: 'vat_rate', fromLookup: 'vergi-kodlari', parentKey: 'tax_code_id', prop: 'rate' },
           ],
         },
         formTabs: [
@@ -1044,9 +1086,8 @@ const MODULES = [
               { key: 'country_mensei', label: 'Ülke menşei', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name', group: 'address' },
               { key: 'gtip_code', label: 'GTİP / gümrük kodu', group: 'kimlik' },
               { key: 'description', label: 'Açıklama', group: 'status' },
-              // Firma geneli + Vergi — Stok Kart sekmesinin altı (seçili firmalara kaydedilir)
+              // Firma geneli — seçili firmalara kaydedilir (vergi ayrı sekmede satır satır)
               ...STOK_FIRMA_GENEL_FIELDS,
-              ...STOK_VERGI_FIELDS,
             ],
           },
           {
@@ -1054,6 +1095,14 @@ const MODULES = [
             label: 'Firmalar',
             kind: 'stok-firmalar',
             // Yalnızca firma çoklu seçimi (parametreler diğer sekmelerde)
+          },
+          {
+            id: 'vergi',
+            label: 'Vergi',
+            kind: 'grid',
+            key: 'vergi_tanimlari',
+            slots: 4,
+            fields: [...STOK_VERGI_GRID_FIELDS],
           },
           {
             id: 'ek-bilgiler', label: 'Ek Bilgiler', kind: 'fields',
@@ -12495,9 +12544,71 @@ function hydrateStokFirmaIsYeri(rec) {
   if (!rec.plant_id && Array.isArray(rec.is_yeri_baglari) && rec.is_yeri_baglari[0]?.plant_id) {
     rec.plant_id = Number(rec.is_yeri_baglari[0].plant_id);
   }
+  ensureStokVergiTanimlariSeed(rec);
   ensureStokFirmaParamsSeed(rec);
 }
 
+/** Vergi sekmesi: 4 tip satırı (Alış/Satış/Efektif) eksikse tamamla */
+function ensureStokVergiTanimlariSeed(rec) {
+  if (!rec) return;
+  let list = Array.isArray(rec.vergi_tanimlari) ? [...rec.vergi_tanimlari] : [];
+  const byType = new Map(
+    list.filter((r) => r && r.rate_type).map((r) => [String(r.rate_type), r])
+  );
+  // Eski tek alanlı kayıttan Satış satırı üret
+  if (!byType.has('Satış') && (rec.default_tax_code_id || rec.varsayilan_vat_rate != null)) {
+    byType.set('Satış', {
+      rate_type: 'Satış',
+      tax_code_id: rec.default_tax_code_id || null,
+      vat_rate: rec.varsayilan_vat_rate ?? null,
+      is_active: true,
+    });
+  }
+  list = STOK_VERGI_RATE_TYPES.map((rate_type) => {
+    const prev = byType.get(rate_type);
+    return prev
+      ? { ...prev, rate_type, is_active: prev.is_active !== false }
+      : { rate_type, tax_code_id: null, vat_rate: null, is_active: true };
+  });
+  rec.vergi_tanimlari = list;
+}
+
+/** Vergi grid → master default_tax (Satış) — firma parametrelerine yazılır */
+function syncStokVergiFromGrid(master) {
+  const rows = Array.isArray(master.vergi_tanimlari) ? master.vergi_tanimlari : [];
+  const clean = [];
+  const seen = new Set();
+  for (const r of rows) {
+    if (!r || r.is_active === false) continue;
+    const tip = String(r.rate_type || '').trim();
+    if (!STOK_VERGI_RATE_TYPES.includes(tip)) continue;
+    if (seen.has(tip)) continue;
+    seen.add(tip);
+    const taxId = Number(r.tax_code_id) || null;
+    let rate = r.vat_rate;
+    if (taxId) {
+      const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+      const tax = taxRows.find((t) => Number(t.id) === taxId);
+      if (tax && tax.rate != null && tax.rate !== '') rate = Number(tax.rate);
+    }
+    clean.push({
+      rate_type: tip,
+      tax_code_id: taxId,
+      vat_rate: rate != null && rate !== '' ? Number(rate) : null,
+      is_active: true,
+    });
+  }
+  // Tip eksikse boş satır bırak (UI seed); kayıtta yalnızca tax seçili olanlar API’ye gider
+  master.vergi_tanimlari = STOK_VERGI_RATE_TYPES.map((rate_type) => {
+    const hit = clean.find((r) => r.rate_type === rate_type);
+    return hit || { rate_type, tax_code_id: null, vat_rate: null, is_active: true };
+  });
+  const satis = clean.find((r) => r.rate_type === 'Satış') || clean[0];
+  if (satis?.tax_code_id) {
+    master.default_tax_code_id = satis.tax_code_id;
+    if (satis.vat_rate != null) master.varsayilan_vat_rate = satis.vat_rate;
+  }
+}
 
 function syncStokFirmaIsYeriForSave(master) {
   const firmaId = Number(master.company_id) || getActiveFirmaId() || null;
@@ -13202,6 +13313,49 @@ function hareketKoduRowById(id) {
     || state.lookupCache?.['hareket-kodlari']
     || [];
   return rows.find((r) => String(r.id) === String(id)) || null;
+}
+
+/** Önizleme — sayacı artırmaz; gerçek no kayıtta sunucuda ayrılır. */
+async function peekStokHareketNo(movementCode) {
+  const q = encodeURIComponent(movementCode);
+  const data = await api(`/kod-serileri/stok-hareket/peek?movement_code=${q}`);
+  return data.kod;
+}
+
+async function refreshStokHareketNo(force = false) {
+  const screen = findScreen(state.screenId);
+  if (!screen?.numeratorFromMovementCode || screen.id !== 'stok-hareketleri') return;
+  if (state.formMode !== 'yeni' && state.formMode !== 'kopyala') return;
+  const tipKey = screen.numeratorFromMovementCode.field || 'movement_code_id';
+  const tipEl = findAttrControl('data-master', tipKey);
+  const tipVal = tipEl ? tipEl.value : state.formRecord?.[tipKey];
+  if (tipVal == null || tipVal === '') {
+    if (state.formRecord) state.formRecord[screen.codeField] = '';
+    const codeEl = findAttrControl('data-master', screen.codeField);
+    if (codeEl) codeEl.value = '';
+    state.formNumeratorSeri = null;
+    return;
+  }
+  await fetchLookupKey(screen.numeratorFromMovementCode.lookup || 'hareket-kodlari-stok').catch(() => null);
+  const hk = hareketKoduRowById(tipVal);
+  const code = hk?.[screen.numeratorFromMovementCode.codeKey || 'movement_code'];
+  if (!code) return;
+  const seri = `STOK_HAREKET__${String(code).toUpperCase()}`;
+  if (!force && state.formNumeratorSeri === seri && state.formRecord?.[screen.codeField]) return;
+  try {
+    const kod = await peekStokHareketNo(code);
+    if (!state.formRecord) state.formRecord = {};
+    state.formRecord[screen.codeField] = kod;
+    state.formRecord[tipKey] = tipVal;
+    state.formNumeratorSeri = seri;
+    const codeEl = findAttrControl('data-master', screen.codeField);
+    if (codeEl) {
+      codeEl.value = kod;
+      codeEl.readOnly = true;
+    }
+  } catch (err) {
+    toast(err.message || String(err));
+  }
 }
 
 function bindStokHareketNumerator(screen) {
@@ -15711,6 +15865,7 @@ function renderForm(screen) {
     bindStokHareketNumerator(screen);
     fetchLookupKey('hareket-kodlari-stok').then(() => {
       syncStokHareketTransferFields();
+      refreshStokHareketNo(false);
     }).catch(() => { syncStokHareketTransferFields(); });
   }
 }
@@ -18543,6 +18698,7 @@ async function saveForm({ after = 'stay' } = {}) {
     } else {
       master.is_yeri_baglari = [];
     }
+    syncStokVergiFromGrid(master);
     applyPrimaryStokFirmaToMaster(master);
     syncStokFirmaIsYeriForSave(master);
     master.depo_baglari = readStokDepoBaglariFromDom(master);

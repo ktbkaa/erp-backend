@@ -6,26 +6,24 @@
   "screens": {
     "stok-karti": {
       "title": "Stok Kartı",
-      "requiredTabs": ["ana", "firmalar", "ek-bilgiler", "depolar", "olcu", "mrp"],
+      "requiredTabs": ["ana", "firmalar", "vergi", "ek-bilgiler", "depolar", "olcu", "mrp"],
       "requiredKinds": ["master-detail", "stok-firmalar", "stok-depolar", "fields", "grid"],
       "requiredFlags": { "crud": true },
       "requiredFieldKeys": [],
       "requiredText": [
         "firma_parametreleri",
         "depo_baglari",
+        "vergi_tanimlari",
         "STOK_FIRMA_GENEL_FIELDS",
         "STOK_VERGI_FIELDS",
+        "STOK_VERGI_GRID_FIELDS",
+        "STOK_VERGI_RATE_TYPES",
         "STOK_DEPO_POLITIKA_FIELDS",
+        "varsayilan_giris_warehouse_id",
+        "varsayilan_cikis_warehouse_id",
         "kind: 'stok-firmalar'",
         "kind: 'stok-depolar'"
       ]
-    },
-    "companies": {
-      "title": "Firmalar",
-      "requiredTabs": [],
-      "requiredKinds": [],
-      "requiredFlags": { "crud": true },
-      "requiredFieldKeys": ["is_profile", "company_code", "company_name"]
     },
     "stok-hareketleri": {
       "title": "Stok Hareketleri",
@@ -36,7 +34,19 @@
         "barkodScanToggle": true,
         "numeratorFromMovementCode": true
       },
-      "requiredFieldKeys": ["unit_price", "tax_code_id", "currency_code", "lot_no"]
+      "requiredFieldKeys": ["unit_price", "tax_code_id", "currency_code", "lot_no"],
+      "requiredText": [
+        "refreshStokHareketNo",
+        "peekStokHareketNo",
+        "numeratorFromMovementCode"
+      ]
+    },
+    "companies": {
+      "title": "Firmalar",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": ["is_profile", "company_code", "company_name"]
     },
     "hareket-kodlari": {
       "title": "Hareket Kodları",

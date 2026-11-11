@@ -88,7 +88,7 @@ async function stokGetir(id) {
         [id]
     );
     if (!stokRes.rows[0]) return null;
-    const [detaylar, birimler, isyerleri, barkodlar, languages, depolar, firmaParams] = await Promise.all([
+    const [detaylar, birimler, isyerleri, barkodlar, languages, depolar, firmaParams, vergiTanimlari] = await Promise.all([
         pool.query('SELECT * FROM item_details WHERE item_id = $1 ORDER BY id', [id]),
         pool.query('SELECT * FROM item_uom_conversions WHERE item_id = $1 ORDER BY line_no, id', [id]),
         pool.query(
@@ -120,6 +120,28 @@ async function stokGetir(id) {
              ORDER BY f.company_code, fp.id`,
             [id]
         ).catch(() => ({ rows: [] })),
+        pool.query(
+            `SELECT t.*,
+                    vk.tax_code, vk.tax_name,
+                    COALESCE(
+                      t.vat_rate,
+                      (SELECT vo.rate FROM fin_tax_rates vo
+                       WHERE vo.tax_code_id = t.tax_code_id
+                         AND vo.valid_from <= CURRENT_DATE
+                         AND (vo.valid_to IS NULL OR vo.valid_to >= CURRENT_DATE)
+                       ORDER BY vo.valid_from DESC LIMIT 1)
+                    ) AS vat_rate
+             FROM item_tax_by_rate_type t
+             LEFT JOIN fin_tax_codes vk ON vk.id = t.tax_code_id
+             WHERE t.item_id = $1
+             ORDER BY CASE t.rate_type
+               WHEN 'Alış' THEN 1
+               WHEN 'Satış' THEN 2
+               WHEN 'Efektif alış' THEN 3
+               WHEN 'Efektif satış' THEN 4
+               ELSE 9 END, t.id`,
+            [id]
+        ).catch(() => ({ rows: [] })),
     ]);
     const row = stokRes.rows[0];
     const bags = isyerleri.rows;
@@ -137,6 +159,7 @@ async function stokGetir(id) {
         dil_tanimlari: languages.rows,
         depo_baglari: depolar.rows,
         firma_parametreleri: firmaParams.rows,
+        vergi_tanimlari: vergiTanimlari.rows,
     };
 }
 
@@ -362,6 +385,51 @@ async function saveChildren(client, stokId, body) {
                     trimOrNull(d.lot_politika) || 'Takipsiz',
                     trimOrNull(d.series_politika) || 'Takipsiz',
                 ]
+            );
+        }
+    }
+
+    if (Array.isArray(body.vergi_tanimlari)) {
+        const allowed = new Set(['Alış', 'Satış', 'Efektif alış', 'Efektif satış']);
+        await client.query('DELETE FROM item_tax_by_rate_type WHERE item_id = $1', [stokId]);
+        const seen = new Set();
+        for (const d of body.vergi_tanimlari) {
+            if (!d || d.is_active === false) continue;
+            const tip = String(d.rate_type || '').trim();
+            if (!allowed.has(tip) || seen.has(tip)) continue;
+            seen.add(tip);
+            const taxId = d.tax_code_id != null && d.tax_code_id !== ''
+                ? Number(d.tax_code_id)
+                : null;
+            if (taxId) {
+                const chk = await client.query('SELECT id FROM fin_tax_codes WHERE id = $1', [taxId]);
+                if (!chk.rows[0]) {
+                    const err = new Error(`Vergi kodu bulunamadı (${taxId}).`);
+                    err.status = 400;
+                    err.alan = 'tax_code_id';
+                    throw err;
+                }
+            }
+            let rate = d.vat_rate;
+            if (taxId) {
+                rate = await syncVatRateFromTax(client, taxId, rate);
+            } else if (rate != null && rate !== '') {
+                rate = Number(rate);
+            } else {
+                rate = null;
+            }
+            // KDV seçilmemiş boş tip satırlarını yazma
+            if (!taxId && (rate == null || rate === '')) continue;
+            await client.query(
+                `INSERT INTO item_tax_by_rate_type (
+                    item_id, rate_type, tax_code_id, vat_rate, is_active, updated_at
+                 ) VALUES ($1,$2,$3,$4,TRUE,NOW())
+                 ON CONFLICT (item_id, rate_type) DO UPDATE SET
+                    tax_code_id = EXCLUDED.tax_code_id,
+                    vat_rate = EXCLUDED.vat_rate,
+                    is_active = TRUE,
+                    updated_at = NOW()`,
+                [stokId, tip, taxId, rate]
             );
         }
     }
