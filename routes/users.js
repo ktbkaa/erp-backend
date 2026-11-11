@@ -4,7 +4,7 @@ const pool = require('../db');
 const { hashParola } = require('../src/utils/parola');
 
 const PUBLIC_COLS = `
-  id, first_name, last_name, eposta, telefon, role, title, created_at,
+  id, first_name, last_name, email_address, phone, role, title, created_at,
   user_code, username, is_active, group_code, last_login_at,
   profile_image,
   (password_hash IS NOT NULL) AS parola_var
