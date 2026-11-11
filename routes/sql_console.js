@@ -160,6 +160,12 @@ router.get('/meta', async (req, res) => {
       profiles: profiles.rows,
     });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -339,6 +345,12 @@ router.get('/permissions', async (req, res) => {
     `);
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -368,6 +380,12 @@ router.put('/permissions/:kisiId', async (req, res) => {
     );
     res.json({ ok: true });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

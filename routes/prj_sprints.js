@@ -223,7 +223,8 @@ registerIdCrud(router, pool, {
   table: 'prj_sprints',
   notFound: 'Sprint bulunamadı.',
   skipGet: true,
-  skipDelete: true,
+  softDelete: true,
+  softCol: 'is_active',
   updatable: ['sprint_name', 'goal', 'start_date', 'end_date', 'capacity_hours', 'is_active'],
 });
 

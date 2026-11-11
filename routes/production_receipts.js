@@ -26,6 +26,12 @@ router.get('/', async (req, res) => {
         for (const r of liste.rows) result.push(await getIncomingInspection(r.id));
         res.json(result);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -36,6 +42,12 @@ router.get('/:id', async (req, res) => {
         if (!giris) return res.status(404).json({ hata: 'Üretim girişi bulunamadı.' });
         res.json(giris);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -64,6 +76,12 @@ router.post('/', async (req, res) => {
         }
         res.status(201).json(body);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

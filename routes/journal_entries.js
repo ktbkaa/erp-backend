@@ -52,6 +52,12 @@ router.get('/', async (req, res) => {
     for (const r of liste.rows) result.push(await getDocument(r.id));
     res.json(result);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -62,6 +68,12 @@ router.get('/:id', async (req, res) => {
     if (!belge) return res.status(404).json({ hata: 'Belge bulunamadı.' });
     res.json(belge);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -214,6 +226,12 @@ router.delete('/:id', async (req, res) => {
     await pool.query('DELETE FROM journal_entries WHERE id=$1', [req.params.id]);
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

@@ -8396,6 +8396,16 @@ function bomScopeItemIds(agacId, { includeRoot = false } = {}) {
   return ids;
 }
 
+/** Active company profile: only that company in lookups (org screens exempt). */
+function companiesForActiveScope(allRows) {
+  const all = Array.isArray(allRows) ? allRows : [];
+  const aid = getActiveCompanyId();
+  if (!aid) return all;
+  const screen = findScreen(state.screenId);
+  if (screen && screen.scopeFirma === false) return all;
+  return all.filter((r) => Number(r.id) === Number(aid));
+}
+
 function lookupRowsForField(field, ctx = {}) {
   const all = state.lookupCache[field.lookup] || [];
   let rows = all;
@@ -8406,6 +8416,10 @@ function lookupRowsForField(field, ctx = {}) {
     if (bomId == null || bomId === '') return [];
     const ids = bomScopeItemIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
     rows = all.filter((r) => ids && ids.has(Number(r.id)));
+  }
+
+  if (field.lookup === 'companies' && !field.ignoreFirmaScope) {
+    rows = companiesForActiveScope(rows);
   }
 
   if (!field.dependsOn || !field.filterKey) return rows;
@@ -10820,6 +10834,85 @@ async function importExcelIntoList(ctx) {
 }
 
 
+async function showStokHareketOnizle(row) {
+  if (!row?.id) {
+    toast('Önce bir stok hareketi seçin.');
+    return;
+  }
+  let rec = row;
+  try {
+    rec = await api(`/stok-hareketleri/${row.id}`);
+  } catch (err) {
+    toast(err.message || 'Önizleme yüklenemedi');
+    return;
+  }
+  const lines = Array.isArray(rec.satirlar) ? rec.satirlar : (Array.isArray(rec.kalemler) ? rec.kalemler : []);
+  const kaynak = `${rec.warehouse_code || '—'} ${rec.warehouse_name ? `· ${rec.warehouse_name}` : ''}`.trim();
+  const hedef = rec.target_warehouse_code || rec.hedef_depo_kodu
+    ? `${rec.target_warehouse_code || rec.hedef_depo_kodu}${rec.target_warehouse_name || rec.hedef_depo_adi ? ` · ${rec.target_warehouse_name || rec.hedef_depo_adi}` : ''}`
+    : '—';
+  const bodyRows = lines.length
+    ? lines.map((s) => {
+      const giren = Number(s.quantity_in) || (Number(s.direction) > 0 ? Number(s.quantity) || 0 : 0);
+      const cikan = Number(s.quantity_out) || (Number(s.direction) < 0 ? Number(s.quantity) || 0 : 0);
+      const depoTxt = Number(s.direction) < 0
+        ? (s.warehouse_code || rec.warehouse_code || '—')
+        : (rec.movement_type === 'TRANSFER'
+          ? (rec.target_warehouse_code || rec.hedef_depo_kodu || s.warehouse_code || rec.warehouse_code || '—')
+          : (s.warehouse_code || rec.warehouse_code || '—'));
+      return `<tr>
+        <td class="mono">${escapeHtml(s.item_code || '')}</td>
+        <td>${escapeHtml(s.item_name || '')}</td>
+        <td class="mono">${escapeHtml(depoTxt)}</td>
+        <td class="mono qty-plus">${giren ? `+${giren}` : '—'}</td>
+        <td class="mono qty-minus">${cikan ? `−${cikan}` : '—'}</td>
+        <td class="mono">${escapeHtml(s.lot_no || '—')}</td>
+        <td class="mono">${escapeHtml(formatTotalAmount(s.line_goods_amount ?? ((Number(s.quantity) || 0) * (Number(s.unit_price) || 0))))}</td>
+      </tr>`;
+    }).join('')
+    : '<tr><td colspan="7" class="detail-empty">Satır yok.</td></tr>';
+  const signed = rec.quantity_signed != null
+    ? rec.quantity_signed
+    : (Number(rec.quantity_net) > 0 ? `+${rec.quantity_net}` : String(rec.quantity_net ?? 0));
+  const html = `
+    <div class="cvt-overlay" id="stokHareketOnizleDlg" role="presentation">
+      <div class="cvt-dialog lookup-browser-dialog" role="dialog" aria-modal="true" style="max-width:48rem">
+        <header class="cvt-head">
+          <h2>Önizle · ${escapeHtml(rec.movement_no || '')}</h2>
+          <button type="button" class="icon-btn" data-onizle-close="1" aria-label="Kapat">×</button>
+        </header>
+        <div class="cvt-body">
+          <div class="stok-hareket-onizle-meta">
+            <span><strong>Kod</strong> ${escapeHtml(rec.movement_code || '—')}</span>
+            <span><strong>Tip</strong> ${escapeHtml(rec.movement_type || '—')}</span>
+            <span><strong>Kaynak depo</strong> ${escapeHtml(kaynak)}</span>
+            <span><strong>Hedef depo</strong> ${escapeHtml(hedef)}</span>
+            <span><strong>Toplam hareket</strong> <span class="mono">${escapeHtml(String(signed))}</span></span>
+            <span><strong>Mal tutarı</strong> ${escapeHtml(formatTotalAmount(rec.goods_amount))}</span>
+            <span><strong>Maliyet</strong> ${escapeHtml(formatTotalAmount(rec.cost_total))}</span>
+          </div>
+          <table class="stok-hareket-onizle-table">
+            <thead>
+              <tr>
+                <th>Stok kodu</th><th>Stok adı</th><th>Depo</th><th>Giren</th><th>Çıkan</th><th>Parti</th><th>Tutar</th>
+              </tr>
+            </thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+        <footer class="cvt-foot">
+          <button type="button" class="btn action" data-onizle-close="1">Kapat</button>
+        </footer>
+      </div>
+    </div>`;
+  document.getElementById('stokHareketOnizleDlg')?.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+  const dlg = document.getElementById('stokHareketOnizleDlg');
+  dlg?.addEventListener('click', (e) => {
+    if (e.target === dlg || e.target.closest?.('[data-onizle-close]')) dlg.remove();
+  });
+}
+
 async function showListContextMenu(screen, clientX, clientY) {
   const menu = $('#listCtxMenu');
   if (!menu || !screen) return;
@@ -10870,6 +10963,10 @@ async function showListContextMenu(screen, clientX, clientY) {
       e.preventDefault();
       menu.hidden = true;
       const act = btn.getAttribute('data-list-ctx');
+      if (act === 'onizle') {
+        showStokHareketOnizle(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
       if (act === 'excel-sablon') {
         downloadExcelTemplate(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
         return;
@@ -12396,6 +12493,7 @@ function filterValueControl(f, st) {
       else if (f.lookup === 'is-yerleri') rows = state.isYerleri;
     }
     rows = Array.isArray(rows) ? rows : [];
+    if (f.lookup === 'companies') rows = companiesForActiveScope(rows);
     const a = buildFilterSelectOptions(rows, f, st.a);
     const b = buildFilterSelectOptions(rows, f, st.b);
     const aHtml = wrapLookupCombobox(
@@ -12547,6 +12645,12 @@ function formatListDateTime(val) {
   });
 }
 
+function formatListDateOnly(val) {
+  const m = String(val || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return `${m[3]}.${m[2]}.${m[1]}`;
+}
+
 function cellHtml(col, row, index = 0) {
   let val = col.key === 'id' ? rowKey(row, index) : row[col.key];
   // Aktif kolonu Pasif olarak gösterilir: tik/Evet = is_inactive (is_active=false)
@@ -12558,9 +12662,12 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Evet' : 'Hayır';
   } else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) {
     val = formatListDateTime(val);
+  } else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
+    && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
+    val = formatListDateOnly(val) || val;
   }
   if (val === null || val === undefined || val === '') val = '—';
-  return col.mono ? `<span class="mono">${val}</span>` : String(val);
+  return col.mono ? `<span class="mono">${escapeHtml(String(val))}</span>` : escapeHtml(String(val));
 }
 
 function renderListSideNav(screen) {
@@ -14016,6 +14123,16 @@ function isFooterNoteField(f) {
 }
 
 /** Belge satırlarından ara / KDV / genel toplam (çoklu isk + KDV dahil/hariç + ÖTV + tevkifat). */
+function resolveRowVatRate(row) {
+  if (row?.tax_code_id) {
+    const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+    const tax = taxRows.find((t) => Number(t.id) === Number(row.tax_code_id));
+    if (tax && tax.rate != null && tax.rate !== '') return Number(tax.rate);
+  }
+  const n = Number(row?.vat_rate);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function computeDocumentTotals(rows, fields) {
   const list = Array.isArray(rows) ? rows : [];
   const keys = new Set((fields || []).map((f) => f.key));
@@ -14036,7 +14153,7 @@ function computeDocumentTotals(rows, fields) {
     const isk1 = Number(row.discount_rate) || 0;
     const isk2 = Number(row.discount_rate_2) || 0;
     const isk3 = Number(row.discount_rate_3) || 0;
-    const kdvOran = Number(row.vat_rate) || 0;
+    const kdvOran = resolveRowVatRate(row);
     const otvOran = Number(row.excise_rate) || 0;
     const tevOran = Number(row.withholding_rate) || 0;
     const bandOran = Number(row.stamp_tax_rate) || 0;
@@ -14076,6 +14193,54 @@ function formatTotalAmount(n) {
   if (n == null || Number.isNaN(Number(n))) return '';
   return Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+/** Update footer totals without re-rendering the whole form (KDV Dahil/Haric etc.). */
+function refreshDocumentFooterLive(screen) {
+  try {
+    const foot = document.querySelector('#viewForm .md-footer .md-footer-totals');
+    if (!foot || !screen) return;
+    const gridKey = screen.detailKey
+      || (screen.formTabs || []).find((t) => t.kind === 'master-grid' || t.kind === 'grid')?.grid?.key
+      || (screen.formTabs || []).find((t) => t.kind === 'master-grid' || t.kind === 'grid')?.key
+      || 'satirlar';
+    const tab = resolveGridTab(screen, gridKey);
+    const fields = tab?.fields || screen.detailFields || [];
+    if (tab) {
+      const rows = readGridFromForm(tab);
+      if (!state.formRecord) state.formRecord = {};
+      state.formRecord[gridKey] = rows;
+    }
+    const rows = Array.isArray(state.formRecord?.[gridKey]) ? state.formRecord[gridKey] : [];
+    const totals = computeDocumentTotals(rows, fields);
+    if (totals.subtotal == null) return;
+    const altiIsk = Number(state.formRecord?.delivery_footer_discount) || 0;
+    const genel = (Number(totals.grand_total) || 0) - altiIsk;
+    const extra = [];
+    if (totals.total_discount > 0) {
+      extra.push(`<div class="md-total-row"><label>Toplam iskonto</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_discount))}" /></div>`);
+    }
+    if (totals.total_excise > 0) {
+      extra.push(`<div class="md-total-row"><label>Toplam ÖTV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_excise))}" /></div>`);
+    }
+    if (totals.total_withholding > 0) {
+      extra.push(`<div class="md-total-row"><label>Tevkifat</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_withholding))}" /></div>`);
+    }
+    if (totals.total_bandrol > 0) {
+      extra.push(`<div class="md-total-row"><label>Bandrol</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_bandrol))}" /></div>`);
+    }
+    if (altiIsk > 0) {
+      extra.push(`<div class="md-total-row"><label>İrs. altı iskonto</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(altiIsk))}" /></div>`);
+    }
+    foot.innerHTML = `
+      <div class="md-total-row"><label>Mal tutarı</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.subtotal))}" /></div>
+      ${extra.join('')}
+      <div class="md-total-row"><label>Toplam KDV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.tax_amount))}" /></div>
+      <div class="md-total-row md-total-row--grand"><label>Genel toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(genel))}" /></div>`;
+  } catch (err) {
+    console.warn('refreshDocumentFooterLive', err);
+  }
+}
+
 
 function renderDocumentFooter(rec, noteFields, gridFields, gridKey) {
   const notes = Array.isArray(noteFields) ? noteFields : [];
@@ -14524,13 +14689,22 @@ function renderItemCompaniesPane(rec) {
   ensureItemCompanyParamsSeed(rec);
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
-  const companies = Array.isArray(state.companies) && state.companies.length
+  const aid = getActiveCompanyId();
+  const allCompanies = Array.isArray(state.companies) && state.companies.length
     ? state.companies
     : (state.lookupCache?.companies || []);
-  const selected = new Set(itemCompanySelectedCompanyIds(rec));
+  // Active company profile → only that firm on the stock Firms tab
+  const companies = aid
+    ? allCompanies.filter((f) => Number(f.id) === Number(aid))
+    : allCompanies;
+  const selected = new Set(
+    aid
+      ? [Number(aid)]
+      : itemCompanySelectedCompanyIds(rec)
+  );
   if (!selected.size) {
-    const aid = Number(rec?.company_id) || getActiveCompanyId();
-    if (aid) selected.add(Number(aid));
+    const rid = Number(rec?.company_id) || getActiveCompanyId();
+    if (rid) selected.add(Number(rid));
     else if (companies[0]) selected.add(Number(companies[0].id));
   }
 
@@ -19894,6 +20068,21 @@ function bindCascadeLookups(_screen) {
         || (scr.masterFields || []).find((x) => x.key === masterKey);
       state.formRecord[masterKey] = f ? readFieldValue(el, f) : el.value;
     }
+    // Detail money / VAT fields → update footer without full re-render
+    if (detailKey && state.formRecord
+      && /^(quantity|unit_price|vat_rate|discount_rate|discount_rate_2|discount_rate_3|excise_rate|withholding_rate|stamp_tax_rate|bandrol_rate|vat_mode|line_type|tax_code_id)$/i.test(detailKey)) {
+      const didx = Number(el.getAttribute('data-didx'));
+      const grid = el.getAttribute('data-grid') || scr.detailKey || 'satirlar';
+      if (Number.isFinite(didx) && didx >= 0) {
+        if (!Array.isArray(state.formRecord[grid])) state.formRecord[grid] = [];
+        const row = { ...(state.formRecord[grid][didx] || {}) };
+        const fDef = (scr.detailFields || []).find((x) => x.key === detailKey)
+          || (scr.formTabs || []).flatMap((t) => t.grid?.fields || t.detailFields || []).find((x) => x.key === detailKey);
+        row[detailKey] = fDef ? readFieldValue(el, fDef) : el.value;
+        state.formRecord[grid][didx] = row;
+        refreshDocumentFooterLive(scr);
+      }
+    }
     refreshDependentLookups(scr, el);
     if (!_formLinking && fieldKey) {
       await applyFormLinkages(scr, fieldKey, el);
@@ -21554,14 +21743,10 @@ async function deleteSelected() {
     toast('Bu ekranda silme yetkiniz yok.');
     return;
   }
-  if (screen.id === 'numarator-tanimi') {
-    toast('Numaratör silinmez; pasife alın.');
-    return;
-  }
   if (!confirm(`${row[screen.codeField] || row.id} silinsin mi?`)) return;
   try {
-    await api(`${screenApiBase(screen.endpoint)}/${row.id}`, { method: 'DELETE' });
-    toastInfo('Silindi.', 'INF-DELETE-OK');
+    const del = await api(`${screenApiBase(screen.endpoint)}/${row.id}`, { method: 'DELETE' });
+    toastInfo(del?.soft ? 'Pasife alındı.' : 'Silindi.', 'INF-DELETE-OK');
     if (screen.id === 'zorunlu-alan-tanimlari') {
       await loadRequiredFieldDefs().catch(() => {});
     }

@@ -25,6 +25,12 @@ router.get('/', async (req, res) => {
         );
         res.json(result.rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -35,6 +41,12 @@ router.get('/:id', async (req, res) => {
         if (!result.rows[0]) return res.status(404).json({ hata: 'Hesap bulunamadı.' });
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -69,6 +81,12 @@ router.post('/', async (req, res) => {
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -95,6 +113,12 @@ router.put('/:id', async (req, res) => {
         if (!result.rows[0]) return res.status(404).json({ hata: 'Hesap bulunamadı.' });
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -111,6 +135,12 @@ router.delete('/:id', async (req, res) => {
         const result = await pool.query('DELETE FROM gl_accounts WHERE id=$1 RETURNING id', [req.params.id]);
         res.json({ is_deleted: true, id: Number(result.rows[0].id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

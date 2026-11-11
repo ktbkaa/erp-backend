@@ -6267,3 +6267,30 @@ body.sidebar-resizing iframe {
   line-height: 1.45;
   color: var(--text, #2a3340);
 }
+
+.qty-plus { color: #0a7a3e; font-weight: 600; }
+.qty-minus { color: #b42318; font-weight: 600; }
+.stok-hareket-onizle-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.stok-hareket-onizle-table th,
+.stok-hareket-onizle-table td {
+  border-bottom: 1px solid var(--line, #dde3ea);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+}
+.stok-hareket-onizle-table th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted, #6a7a88);
+}
+.stok-hareket-onizle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1.1rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.86rem;
+}

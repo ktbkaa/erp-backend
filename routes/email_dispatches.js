@@ -30,6 +30,12 @@ router.get('/', async (req, res) => {
         );
         res.json(r.rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -40,6 +46,12 @@ router.get('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt yok.' });
         res.json(r.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -49,6 +61,12 @@ router.post('/:id/gonder', async (req, res) => {
         const result = await withTransaction(pool, async (client) => gonderBir(client, Number(req.params.id)));
         res.json(result);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -58,6 +76,12 @@ router.post('/:id/yeniden-dene', async (req, res) => {
         const result = await withTransaction(pool, async (client) => yenidenDene(client, Number(req.params.id)));
         res.json(result);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

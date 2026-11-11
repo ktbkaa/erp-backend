@@ -26,6 +26,12 @@ router.get('/turler', async (req, res) => {
     );
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -36,6 +42,12 @@ router.get('/turler/:id', async (req, res) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'İzin türü bulunamadı.' });
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -62,6 +74,12 @@ router.post('/turler', async (req, res) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -91,6 +109,12 @@ router.put('/turler/:id', async (req, res) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'İzin türü bulunamadı.' });
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -109,6 +133,12 @@ router.delete('/turler/:id', async (req, res) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'İzin türü bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -141,6 +171,12 @@ router.get('/talepler', async (req, res) => {
     const rows = await pool.query(sql, params);
     res.json(rows.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -158,6 +194,12 @@ router.get('/talepler/:id', async (req, res) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'İzin talebi bulunamadı.' });
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -205,6 +247,12 @@ router.post('/talepler', async (req, res) => {
     const row = await pool.query(`SELECT * FROM hr_leave_requests WHERE id=$1`, [id]);
     res.status(201).json(row.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -219,6 +267,12 @@ router.post('/talepler/:id/gonder', async (req, res) => {
     if (!r.rows[0]) return res.status(400).json({ hata: 'Yalnızca Taslak talepler gönderilebilir.' });
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -289,6 +343,12 @@ router.post('/talepler/:id/onayla', async (req, res) => {
     });
     res.json(out);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -305,6 +365,12 @@ router.post('/talepler/:id/reddet', async (req, res) => {
     if (!r.rows[0]) return res.status(400).json({ hata: 'Talep reddedilemedi.' });
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -337,6 +403,12 @@ router.get('/bakiyeler', async (req, res) => {
     );
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -382,6 +454,12 @@ router.post('/bakiyeler/accrue', async (req, res) => {
     });
     res.status(201).json(out);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

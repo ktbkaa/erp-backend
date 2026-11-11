@@ -149,6 +149,12 @@ router.put('/:id', async (req, res, next) => {
     });
     res.json(await getTax(req.params.id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });

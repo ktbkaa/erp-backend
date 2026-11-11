@@ -194,6 +194,12 @@ router.get('/:id', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ hata: 'Kullanıcı bulunamadı.' });
     res.json(await hydrateUser(result.rows[0]));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -337,6 +343,12 @@ router.delete('/:id', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ hata: 'Kullanıcı bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
