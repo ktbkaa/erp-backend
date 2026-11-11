@@ -4,6 +4,18 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { ensureDemoFirms } = require('../src/bootstrap/ensureDemoFirms');
+
+let healOnce = null;
+function healInBackground() {
+    if (healOnce) return healOnce;
+    healOnce = ensureDemoFirms(pool)
+        .catch((err) => {
+            console.error('[heal] companies:', err.message);
+            healOnce = null;
+        });
+    return healOnce;
+}
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -22,6 +34,8 @@ function parseIsProfile(v) {
 
 router.get('/', async (req, res) => {
     try {
+        // İlk liste çağrısında demo profilleri / yetkileri sessizce onar (veri silmez)
+        await healInBackground();
         // X-Firma-Id varsa yalnız o firma; boş/yoksa tüm liste (profil seçici / org ekranı)
         const firmaId = companyIdFromReq(req);
         const result = firmaId
