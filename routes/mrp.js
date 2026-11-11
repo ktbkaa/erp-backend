@@ -90,7 +90,7 @@ router.post('/bagimsiz-ihtiyaclar', async (req, res, next) => {
         const item_id = num(req.body.item_id);
         const quantity = num(req.body.quantity);
         if (!item_id || !quantity || quantity <= 0) {
-            return res.status(400).json({ hata: 'item_id ve quantity zorunlu.' });
+            return res.status(400).json({ hata: 'item_id ve miktar zorunlu.' });
         }
         const row = await withTransaction(pool, async (client) => {
             const kod = trimOrNull(req.body.requirement_no) || (await nextSequenceCode(client, 'MRP_BI'));
@@ -125,7 +125,7 @@ router.post('/bagimsiz-ihtiyaclar', async (req, res, next) => {
 router.put('/bagimsiz-ihtiyaclar/:id', async (req, res, next) => {
     try {
         const quantity = num(req.body.quantity);
-        if (!quantity || quantity <= 0) return res.status(400).json({ hata: 'quantity zorunlu.' });
+        if (!quantity || quantity <= 0) return res.status(400).json({ hata: 'miktar zorunlu.' });
         const upd = await pool.query(
             `UPDATE mrp_independent_requirements SET
                 item_id = COALESCE($2, item_id),

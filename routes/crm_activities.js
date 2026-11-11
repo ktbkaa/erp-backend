@@ -90,7 +90,7 @@ router.post('/', async (req, res) => {
     try {
         const b = req.body;
         if (!b.description && !b.subject) {
-            return res.status(400).json({ hata: 'konu veya description zorunlu.' });
+            return res.status(400).json({ hata: 'konu veya açıklama zorunlu.' });
         }
         const musteriTipi = resolveCustomerType(b);
         if (musteriTipi === 'Musteri' && !b.partner_id && !b.opportunity_id) {

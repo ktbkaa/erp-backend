@@ -72,7 +72,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const b = req.body;
-        if (!b.first_name || !b.last_name) return res.status(400).json({ hata: 'first_name ve last_name zorunlu.' });
+        if (!b.first_name || !b.last_name) return res.status(400).json({ hata: 'ad ve soyad zorunlu.' });
         if (!b.partner_id && !b.lead_id) {
             return res.status(400).json({ hata: 'partner_id veya lead_id zorunlu.' });
         }

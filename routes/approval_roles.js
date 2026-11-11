@@ -64,7 +64,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     let { role_code, role_name, user_id, company_id, plant_id, description, is_active } = req.body;
-    if (!role_name) return res.status(400).json({ hata: 'Onay role adı zorunlu.' });
+    if (!role_name) return res.status(400).json({ hata: 'Onay rol adı zorunlu.' });
     if (!user_id) return res.status(400).json({ hata: 'Kişi seçimi zorunlu.' });
     if (!role_code) {
       try { role_code = await nextSequenceCode(pool, 'ONAY_ROL'); }

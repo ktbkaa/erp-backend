@@ -662,7 +662,7 @@ router.post('/', async (req, res) => {
             const hesaplar = [];
             let sira = 1;
             for (const s of satirlar) {
-                if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
+                if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve miktar zorunlu.');
                 hesaplar.push(await writeDeliveryNoteLine(client, iid, s, sira++, kaynakTip, kaynakId, kurBelge));
             }
             await updateDeliveryNoteTotals(client, iid, hesaplar, body.delivery_footer_discount);
@@ -680,7 +680,7 @@ router.put('/:id', async (req, res) => {
         const raw = body.satirlar || body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'];
         if (body.status && !allowed.includes(body.status)) {
-            return res.status(400).json({ hata: 'Geçersiz status.' });
+            return res.status(400).json({ hata: 'Geçersiz durum.' });
         }
         const id = await withTransaction(pool, async (client) => {
             const mevcut = await client.query('SELECT * FROM delivery_notes WHERE id=$1 FOR UPDATE', [req.params.id]);
@@ -839,7 +839,7 @@ router.post('/sevk-emrinden', async (req, res) => {
         const sevk = await getShipment(shipment_order_id);
         if (!sevk) return res.status(404).json({ hata: 'Sevk emri bulunamadı.' });
         if (!['Onayli', 'Taslak'].includes(sevk.status)) {
-            return res.status(400).json({ hata: `Sevk durumu accepted değil: ${sevk.status}` });
+            return res.status(400).json({ hata: `Sevk durumu uygun değil: ${sevk.status}` });
         }
 
         const depoId = Number(req.body.warehouse_id || sevk.warehouse_id);

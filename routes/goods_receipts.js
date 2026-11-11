@@ -107,7 +107,7 @@ router.post('/', async (req, res) => {
                     return hit ? { ...ks, order_line_id: hit.id } : ks;
                 }).filter((ks) => ks.order_line_id && Number(ks.quantity) > 0);
             }
-            if (kabulSatirlari.length === 0) throw new Error('Kabul edilecek kalan quantity yok.');
+            if (kabulSatirlari.length === 0) throw new Error('Kabul edilecek kalan miktar yok.');
 
             if (vendor_delivery_note_id) {
                 const ir = await client.query(

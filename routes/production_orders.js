@@ -13,7 +13,7 @@ async function resolveType(client, emirTipiId, siparisId) {
             'SELECT id, type_code, planned_firm FROM production_order_types WHERE id=$1 AND is_active=TRUE',
             [emirTipiId]
         );
-        if (!t.rows[0]) throw new Error('Üretim emri tipi bulunamadı veya is_inactive.');
+        if (!t.rows[0]) throw new Error('Üretim emri tipi bulunamadı veya pasif.');
         return t.rows[0];
     }
     const kod = siparisId ? 'SIP' : 'STD';
@@ -53,10 +53,10 @@ async function validateBomRouting(client, { urunAgaciId, rotaId, stokId, quantit
     }
     const mq = Number(quantity);
     if (a.min_quantity != null && mq < Number(a.min_quantity)) {
-        throw new Error(`Planlanan quantity ağaç min (${a.min_quantity}) altında.`);
+        throw new Error(`Planlanan miktar ağaç min (${a.min_quantity}) altında.`);
     }
     if (a.max_quantity != null && mq > Number(a.max_quantity)) {
-        throw new Error(`Planlanan quantity ağaç max (${a.max_quantity}) üstünde.`);
+        throw new Error(`Planlanan miktar ağaç max (${a.max_quantity}) üstünde.`);
     }
 
     const rota = await client.query('SELECT * FROM routings WHERE id=$1', [rotaId]);
@@ -553,7 +553,7 @@ router.post('/satis-siparisinden', async (req, res) => {
         if (!siparis.rows[0]) return res.status(404).json({ hata: 'Satış siparişi bulunamadı.' });
         const quantity = planned_quantity || Number(siparis.rows[0].kalem_miktar);
         if (!quantity || quantity <= 0) {
-            return res.status(400).json({ hata: 'Sipariş kaleminde quantity yok; planned_quantity verin.' });
+            return res.status(400).json({ hata: 'Sipariş kaleminde miktar yok; planned_quantity verin.' });
         }
 
         const id = await withTransaction(pool, async (client) =>
@@ -1092,7 +1092,7 @@ router.put('/:id', async (req, res) => {
         const b = req.body || {};
         const allowed = ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'];
         if (b.status && !allowed.includes(b.status)) {
-            return res.status(400).json({ hata: `Geçersiz status. İzin verilen: ${allowed.join(', ')}` });
+            return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
         }
         if (b.planned_firm && !['Planli', 'Kesin'].includes(b.planned_firm)) {
             return res.status(400).json({ hata: "planned_firm 'Planli' veya 'Kesin' olmalı." });
@@ -1366,7 +1366,7 @@ router.post('/:id/onayla', async (req, res) => {
         );
         if (!upd.rows[0]) {
             return res.status(400).json({
-                hata: 'Emir onaylanamadı (bulunamadı veya status Taslak/OnayBekliyor değil).',
+                hata: 'Emir onaylanamadı (bulunamadı veya durumu Taslak/OnayBekliyor değil).',
             });
         }
         res.json(await getQcOrder(upd.rows[0].id));
@@ -1392,7 +1392,7 @@ router.post('/:id/baslat', async (req, res) => {
         );
         if (!upd.rows[0]) {
             return res.status(400).json({
-                hata: 'Emir başlatılamadı (bulunamadı, zaten başlatılmış veya status accepted değil).',
+                hata: 'Emir başlatılamadı (bulunamadı, zaten başlatılmış veya durumu uygun değil).',
             });
         }
         res.json(await getQcOrder(upd.rows[0].id));

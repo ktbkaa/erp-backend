@@ -181,7 +181,7 @@ router.put('/:id', async (req, res) => {
     const { satirlar } = body;
     const allowed = ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'];
     if (body.status && !allowed.includes(body.status)) {
-      return res.status(400).json({ hata: `Geçersiz status. İzin verilen: ${allowed.join(', ')}` });
+      return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
     }
     const p = pick(body, TALEP_BASLIK_KEYS);
 
@@ -263,7 +263,7 @@ router.post('/:id/onayla', async (req, res) => {
         [req.params.id, approved_by.id, req.body.supplier_partner_id || null]
       );
       if (!upd.rows[0]) {
-        const err = new Error('Talep onaylanamadı (bulunamadı veya status Acik değil).');
+        const err = new Error('Talep onaylanamadı (bulunamadı veya durumu Açık değil).');
         err.status = 400;
         throw err;
       }

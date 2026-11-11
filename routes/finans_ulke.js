@@ -131,7 +131,7 @@ router.get('/is_active', async (req, res, next) => {
       accounting_country_code: country,
       paket: paket.rows[0] || null,
       description:
-        'Varsayılan ülke is_active şirketin muhasebe ülkesidir. Geçici işlem ülkesi ana ülkeyi değiştirmez; '
+        'Varsayılan ülke aktif şirketin muhasebe ülkesidir. Geçici işlem ülkesi ana ülkeyi değiştirmez; '
         + 'kesinleşmiş fişlerin ülkesi geriye dönük güncellenmez.',
     });
   } catch (err) {
@@ -153,7 +153,7 @@ router.put('/firma/:id', async (req, res, next) => {
       );
       if (!p.rows[0]) {
         return res.status(400).json({
-          hata: `Geçersiz veya is_inactive ülke paketi: ${accounting_country_code}`,
+          hata: `Geçersiz veya pasif ülke paketi: ${accounting_country_code}`,
           kod: 'ULKE_PAKET_YOK',
         });
       }

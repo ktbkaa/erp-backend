@@ -208,7 +208,7 @@ router.post('/', async (req, res) => {
       sql_permissions,
     } = req.body;
     if (!first_name || !last_name) {
-      return res.status(400).json({ hata: 'first_name ve last_name zorunludur.' });
+      return res.status(400).json({ hata: 'ad ve soyad zorunludur.' });
     }
 
     const loginAdi = cleanLoginName(username) || cleanLoginName(user_code);

@@ -168,7 +168,7 @@ async function resolveKalemler(client, kalemler) {
             stok = r.rows[0];
         }
         if (!stok) throw new Error(`Stok bulunamadı (${k.item_id || k.item_code}).`);
-        if (k.quantity == null) throw new Error('Her kalemde quantity zorunludur.');
+        if (k.quantity == null) throw new Error('Her kalemde miktar zorunludur.');
         const unit_price =
             k.unit_price !== undefined && k.unit_price !== null
                 ? Number(k.unit_price)
@@ -395,7 +395,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
         const siparis = await getOrder(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.status)) {
-            return res.status(400).json({ hata: `Sipariş durumu accepted değil: ${siparis.status}` });
+            return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.status}` });
         }
         const warehouse_id = Number(req.body.warehouse_id);
         if (!warehouse_id) return res.status(400).json({ hata: 'warehouse_id zorunlu.' });
@@ -484,7 +484,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                 );
                 sevkEdilenVar = true;
             }
-            if (!sevkEdilenVar) throw new Error('Sevk edilecek açık quantity yok.');
+            if (!sevkEdilenVar) throw new Error('Sevk edilecek açık miktar yok.');
 
             // Sipariş durumu: kısmi / kapalı (sevk bazlı)
             const guncel = await client.query(

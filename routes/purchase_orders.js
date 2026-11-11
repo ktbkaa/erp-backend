@@ -35,7 +35,7 @@ async function assertTedarikci(client, partner_id) {
     [partner_id]
   );
   if (!cari.rows[0]) throw new Error('Cari bulunamadı.');
-  if (cari.rows[0].is_active === false) throw new Error('Cari is_inactive; satınalma yapılamaz.');
+  if (cari.rows[0].is_active === false) throw new Error('Cari pasif; satınalma yapılamaz.');
   if (!isPartnerSupplier(cari.rows[0].partner_type)) {
     throw new Error(
       `Satınalma siparişi yalnızca tedarikçiye açılır. Seçilen cari (${cari.rows[0].partner_code}) türü: ${cari.rows[0].partner_type}`
@@ -260,7 +260,7 @@ router.put('/:id', async (req, res) => {
     const b = req.body || {};
     const allowed = ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'];
     if (b.status && !allowed.includes(b.status)) {
-      return res.status(400).json({ hata: `Geçersiz status. İzin verilen: ${allowed.join(', ')}` });
+      return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
     }
 
     const id = await withTransaction(pool, async (client) => {
@@ -337,7 +337,7 @@ router.post('/:id/onayla', async (req, res) => {
         [req.params.id]
       );
       if (!upd.rows[0]) {
-        const err = new Error('Sipariş onaylanamadı (bulunamadı veya status Taslak değil).');
+        const err = new Error('Sipariş onaylanamadı (bulunamadı veya durumu Taslak değil).');
         err.status = 400;
         throw err;
       }

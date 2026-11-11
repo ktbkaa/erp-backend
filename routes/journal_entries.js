@@ -194,7 +194,7 @@ router.post('/:id/ters-kayit', async (req, res) => {
     res.status(201).json({
       orijinal: await getDocument(req.params.id),
       ters: await getDocument(ters.id),
-      message: 'Ters kayıt oluşturuldu. Orijinal fiş is_locked kaldı.',
+      message: 'Ters kayıt oluşturuldu. Orijinal fiş kilitli kaldı.',
     });
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
@@ -207,7 +207,7 @@ router.delete('/:id', async (req, res) => {
     if (!mevcut.rows[0]) return res.status(404).json({ hata: 'Belge bulunamadı.' });
     if (mevcut.rows[0].status === 'Onayli' || mevcut.rows[0].is_locked) {
       return res.status(400).json({
-        hata: 'Onaylı/is_locked belge silinemez. Ters kayıt kullanın.',
+        hata: 'Onaylı/kilitli belge silinemez. Ters kayıt kullanın.',
         kod: 'KESIN_FIS_KILIT',
       });
     }

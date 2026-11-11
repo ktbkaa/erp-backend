@@ -140,7 +140,7 @@ router.put('/:id', async (req, res) => {
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'];
-        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz status.' });
+        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz durum.' });
 
         const id = await withTransaction(pool, async (client) => {
             const mevcut = await client.query('SELECT id, status FROM sales_quotations WHERE id=$1 FOR UPDATE', [req.params.id]);
@@ -208,7 +208,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
         const teklif = await getQuotation(req.params.id);
         if (!teklif) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         if (!['Onayli', 'Taslak'].includes(teklif.status)) {
-            return res.status(400).json({ hata: `Durum dönüşüme accepted değil: ${teklif.status}` });
+            return res.status(400).json({ hata: `Durum dönüşüme uygun değil: ${teklif.status}` });
         }
 
         const siparisId = await withTransaction(pool, async (client) => {

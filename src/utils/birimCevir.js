@@ -64,8 +64,8 @@ async function uomFactor(clientOrPool, stokId, uom_code) {
   }
 
   const err = new Error(
-    `Stok ${stokId} için uom_code dönüşümü bulunamadı: ${uom_code} (baz=${baz}). `
-    + 'Birim Dönüşümleri sekmesinde katsayı,uom_code = katsayı,uom_code tanımlayın.'
+    `Stok ${stokId} için birim dönüşümü bulunamadı: ${uom_code} (baz=${baz}). `
+    + 'Birim Dönüşümleri sekmesinde katsayı,birim = katsayı,birim tanımlayın.'
   );
   err.status = 400;
   throw err;

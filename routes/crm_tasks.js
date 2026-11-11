@@ -153,7 +153,7 @@ router.post('/:id/tamamla', async (req, res) => {
             [req.params.id]
         );
         if (!r.rows[0]) {
-            return res.status(400).json({ hata: 'Görev tamamlanamadı (bulunamadı veya accepted değil).' });
+            return res.status(400).json({ hata: 'Görev tamamlanamadı (bulunamadı veya uygun değil).' });
         }
         res.json(await getTask(r.rows[0].id));
     } catch (err) {

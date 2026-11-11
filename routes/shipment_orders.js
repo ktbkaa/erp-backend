@@ -119,7 +119,7 @@ router.post('/', async (req, res) => {
             );
             const sid = baslik.rows[0].id;
             for (const s of satirlar) {
-                if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
+                if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve miktar zorunlu.');
                 await client.query(
                     `
                     INSERT INTO shipment_order_lines
@@ -145,7 +145,7 @@ router.put('/:id', async (req, res) => {
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'IrsaliyeDonustu', 'Iptal', 'Kapali'];
-        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz status.' });
+        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz durum.' });
 
         const id = await withTransaction(pool, async (client) => {
             const mevcut = await client.query('SELECT id FROM shipment_orders WHERE id=$1 FOR UPDATE', [req.params.id]);

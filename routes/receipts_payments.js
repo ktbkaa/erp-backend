@@ -67,7 +67,7 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ hata: 'type Tahsilat veya Odeme olmalı.' });
     }
     if (!partner_id || amount == null) {
-      return res.status(400).json({ hata: 'partner_id ve amount zorunlu.' });
+      return res.status(400).json({ hata: 'partner_id ve tutar zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
       const seri = type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME';

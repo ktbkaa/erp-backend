@@ -110,7 +110,7 @@ function createDocumentRouter(cfg) {
                 );
                 const docId = baslik.rows[0].id;
                 for (const s of satirlar) {
-                    if (!s.item_id || s.quantity == null) throw new Error('Her satırda item_id ve quantity zorunlu.');
+                    if (!s.item_id || s.quantity == null) throw new Error('Her satırda item_id ve miktar zorunlu.');
                     const stok = await client.query('SELECT id, uom_code FROM items WHERE id=$1', [s.item_id]);
                     if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
                     if (linePrice) {
@@ -139,7 +139,7 @@ function createDocumentRouter(cfg) {
         try {
             const { description, status, partner_id, satirlar } = req.body;
             if (status && allowedDurum && !allowedDurum.includes(status)) {
-                return res.status(400).json({ hata: `Geçersiz status: ${status}` });
+                return res.status(400).json({ hata: `Geçersiz durum: ${status}` });
             }
             const id = await withTransaction(pool, async (client) => {
                 const mevcut = await client.query(

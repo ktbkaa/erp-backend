@@ -139,7 +139,7 @@ router.put('/:id', async (req, res) => {
         const b = req.body;
         const allowed = ['Yeni', 'Nitelikli', 'Kazanildi', 'Kaybedildi', 'Donusturuldu'];
         if (b.status && !allowed.includes(b.status)) {
-            return res.status(400).json({ hata: `Geçersiz status: ${b.status}` });
+            return res.status(400).json({ hata: `Geçersiz durum: ${b.status}` });
         }
         const r = await pool.query(
             `

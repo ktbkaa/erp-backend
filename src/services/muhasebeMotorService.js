@@ -13,7 +13,7 @@ function round2(n) {
 
 function assertLines(lines) {
   if (!Array.isArray(lines) || lines.length < 2) {
-    throw Object.assign(new Error('Muhasebe fişinde en az iki kalem olmalı (borç ve credit).'), {
+    throw Object.assign(new Error('Muhasebe fişinde en az iki kalem olmalı (borç ve alacak).'), {
       status: 400,
       kod: 'FIS_KALEM_EKSIK',
     });
@@ -28,7 +28,7 @@ function assertLines(lines) {
     const a = round2(k.credit);
     if (b < 0 || a < 0 || (b > 0 && a > 0) || (b === 0 && a === 0)) {
       throw Object.assign(
-        new Error('Her kalemde yalnızca borç veya yalnızca credit tutarı > 0 olmalı.'),
+        new Error('Her kalemde yalnızca borç veya yalnızca alacak tutarı > 0 olmalı.'),
         { status: 400, kod: 'KALEM_BORC_ALACAK' }
       );
     }
@@ -40,7 +40,7 @@ function assertLines(lines) {
   if (Math.abs(debit - credit) >= EPS) {
     throw Object.assign(
       new Error(
-        `Fiş dengeli değil: toplam borç ${debit} ≠ toplam credit ${credit}. `
+        `Fiş dengeli değil: toplam borç ${debit} ≠ toplam alacak ${credit}. `
         + 'Çift taraflı muhasebede iki taraf eşit olmalıdır.'
       ),
       { status: 400, kod: 'FIS_DENGESIZ', debit, credit }
@@ -162,7 +162,7 @@ async function createJournalEntry(client, {
   const mevcut = await hasSourceJournalEntry(client, { firmaId, kaynakBelgeTipi, kaynakBelgeId });
   if (mevcut && (kesinlestir || status === 'Onayli')) {
     throw Object.assign(
-      new Error(`Bu source belge zaten muhasebeleştirilmiş (fiş ${mevcut.document_no}). Mükerrer fiş oluşturulmaz.`),
+      new Error(`Bu kaynak belge zaten muhasebeleştirilmiş (fiş ${mevcut.document_no}). Mükerrer fiş oluşturulmaz.`),
       { status: 409, kod: 'MUKERRER_FIS', gl_document_id: mevcut.id }
     );
   }

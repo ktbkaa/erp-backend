@@ -45,7 +45,7 @@ router.post('/', async (req, res) => {
     try {
         const { order_id, quantity } = req.body;
         if (!order_id || quantity == null) {
-            return res.status(400).json({ hata: 'order_id ve quantity zorunlu.' });
+            return res.status(400).json({ hata: 'order_id ve miktar zorunlu.' });
         }
         const base = `http://127.0.0.1:${process.env.PORT || 3000}`;
         const r = await fetch(`${base}/uretim-emirleri/${order_id}/uretim-giris`, {

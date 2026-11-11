@@ -122,7 +122,7 @@ router.post('/hareketler', async (req, res, next) => {
     if (!['Giris', 'Cikis', 'Virman'].includes(direction)) {
       return res.status(400).json({ hata: 'direction Giris|Cikis|Virman olmalı.' });
     }
-    if (!(Number(amount) > 0)) return res.status(400).json({ hata: 'amount > 0 olmalı.' });
+    if (!(Number(amount) > 0)) return res.status(400).json({ hata: 'tutar > 0 olmalı.' });
     if (!bank_account_id && !cash_account_id) {
       return res.status(400).json({ hata: 'bank_account_id veya cash_account_id gerekli.' });
     }

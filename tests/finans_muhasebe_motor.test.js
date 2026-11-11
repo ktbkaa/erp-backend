@@ -57,7 +57,7 @@ describe('finans muhasebe motor', () => {
     );
   });
 
-  it('3) is_inactive / ana hesapla kesinleştirme engellenir', async () => {
+  it('3) pasif / ana hesapla kesinleştirme engellenir', async () => {
     const ana = await pool.query(`SELECT id FROM gl_accounts WHERE account_type='Ana' LIMIT 1`);
     const h120 = await accountId('120.01.001');
     await assert.rejects(
@@ -72,7 +72,7 @@ describe('finans muhasebe motor', () => {
     );
   });
 
-  it('4) aynı source belge ikinci kez mükerrer fiş üretmez', async () => {
+  it('4) aynı kaynak belge ikinci kez mükerrer fiş üretmez', async () => {
     const h100 = await accountId('100.01.001');
     const h120 = await accountId('120.01.001');
     const kaynakId = 900001 + Math.floor(Math.random() * 1000);

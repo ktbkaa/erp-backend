@@ -138,7 +138,7 @@ router.post('/:seriKodu/ayir', async (req, res) => {
             );
             if (!seri.rows[0]) throw Object.assign(new Error('Numaratör tanımlı değil.'), { status: 404 });
             if (seri.rows[0].is_active === false) {
-                throw Object.assign(new Error('Numaratör is_inactive.'), { status: 400 });
+                throw Object.assign(new Error('Numaratör pasif.'), { status: 400 });
             }
             return nextSequenceCode(client, req.params.seriKodu);
         });

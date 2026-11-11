@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
             status, material: malzeme, mrp_result_id, description,
         } = req.body || {};
         if (!item_id || quantity == null || Number(quantity) <= 0) {
-            return res.status(400).json({ hata: 'item_id ve pozitif quantity zorunlu.' });
+            return res.status(400).json({ hata: 'item_id ve pozitif miktar zorunlu.' });
         }
         const id = await withTransaction(pool, async (client) => {
             const no = plan_no || (await nextDocumentNo(client, 'URETIM_PLAN'));

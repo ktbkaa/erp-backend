@@ -52,7 +52,7 @@ async function assertPermission(clientOrPool, kullaniciKodu, alan, message) {
         throw err;
     }
     if (kullanici.is_active === false) {
-        const err = new Error('Kullanıcı is_inactive.');
+        const err = new Error('Kullanıcı pasif.');
         err.status = 403;
         throw err;
     }
