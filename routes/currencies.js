@@ -41,14 +41,15 @@ router.post('/', async (req, res) => {
         const currency_name = trimOrNull(req.body.currency_name);
         if (!currency_name) return res.status(400).json({ hata: 'currency_name zorunludur.' });
         const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.currency_code) || (await nextSequenceCode(client, 'PARA_BIRIM'));
+            const raw = trimOrNull(req.body.currency_code);
+            const kod = raw ? raw.toUpperCase() : await nextSequenceCode(client, 'PARA_BIRIM');
             const ins = await client.query(
                 `INSERT INTO currencies (currency_code, currency_name, symbol, is_active)
                  VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
                 [
                     kod,
                     currency_name,
-                    trimOrNull(req.body.symbol),
+                    trimOrNull(req.body.symbol) || kod,
                     typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
                 ]
             );
