@@ -1,5 +1,5 @@
 /**
- * GIDA + DOKUM için bol örnek veri — mümkün olan tüm modül/ekran alanlarını doldurur.
+ * GIDA / DOKUM / ELEK / KILIF için bol örnek veri — mümkün olan tüm modül/ekran alanlarını doldurur.
  *
  *   node scripts/qa/rich-ornek-veri.js              # ikisi
  *   node scripts/qa/rich-ornek-veri.js --firma=GIDA
@@ -126,6 +126,112 @@ const SECTORS = {
     ops: ['Hammadde Hazırlık', 'Eritme', 'Kalıplama', 'Döküm', 'Temizleme', 'Kalite Kontrol'],
     hrDepts: ['Eritme', 'Kalıp', 'Kalite', 'Satış', 'Satınalma', 'Bakım'],
   },
+  ELEK: {
+    code: 'ELEK',
+    tag: 'ORNEK-ELEK-2026',
+    prefix: 'OE',
+    city: 'İstanbul',
+    district: 'Tuzla',
+    sectorName: 'Elektronik Kart ve Röle',
+    companyName: 'Kompanzasyon Röle Elektronik A.Ş.',
+    vehiclePlate: '34 OE 01',
+    items: [
+      { code: 'OE-H01', name: 'PCB Boş Kart FR4 2 Katman', type: 'Hammadde', uom: 'AD', price: 42, qc: true },
+      { code: 'OE-H02', name: 'Mikrodenetleyici STM32', type: 'Hammadde', uom: 'AD', price: 95, qc: true },
+      { code: 'OE-H03', name: 'SMD Direnç 0603 (makara)', type: 'Hammadde', uom: 'AD', price: 0.05 },
+      { code: 'OE-H04', name: 'SMD Kondansatör 0805', type: 'Hammadde', uom: 'AD', price: 0.08 },
+      { code: 'OE-H05', name: 'Röle 24V 10A', type: 'Hammadde', uom: 'AD', price: 38, qc: true },
+      { code: 'OE-A01', name: 'Lehim Pastası SAC305', type: 'Hammadde', uom: 'KG', price: 1450 },
+      { code: 'OE-A02', name: 'Plastik Kutu DIN Ray', type: 'Hammadde', uom: 'AD', price: 28 },
+      { code: 'OE-A03', name: 'ESD Ambalaj Poşeti', type: 'Hammadde', uom: 'AD', price: 1.2 },
+      { code: 'OE-Y01', name: 'Dizgili PCB Kart (SMT)', type: 'YariMamul', uom: 'AD', price: 210, tedarik: 'Uretim', qc: true },
+      { code: 'OE-Y02', name: 'Test Edilmiş Kontrol Kartı', type: 'YariMamul', uom: 'AD', price: 260, tedarik: 'Uretim', qc: true },
+      { code: 'OE-M01', name: 'Reaktif Güç Rölesi RG-12', type: 'Mamul', uom: 'AD', price: 3900, tedarik: 'Uretim', qc: true },
+      { code: 'OE-M02', name: 'Enerji Analizörü EA-3', type: 'Mamul', uom: 'AD', price: 5400, tedarik: 'Uretim', qc: true },
+      { code: 'OE-M03', name: 'Akım Trafosu Kartı AT-5', type: 'Mamul', uom: 'AD', price: 640, tedarik: 'Uretim', qc: true },
+      { code: 'OE-M04', name: 'Kompanzasyon Kontrol Kartı KK-1', type: 'Mamul', uom: 'AD', price: 1250, tedarik: 'Uretim', qc: true },
+    ],
+    partners: {
+      tedarikci: [
+        'OE Tedarik — PCB Üretim Kartal',
+        'OE Tedarik — Elektronik Komponent Dağıtım',
+        'OE Tedarik — Röle ve Anahtar Sanayi',
+        'OE Tedarik — Lehim ve Kimyasal',
+        'OE Tedarik — Plastik Kutu Enjeksiyon',
+        'OE Tedarik — ESD Ambalaj',
+      ],
+      musteri: [
+        'OE Müşteri — Elektrik Pano Üreticisi',
+        'OE Müşteri — Enerji Dağıtım A.Ş.',
+        'OE Müşteri — OSB Fabrikalar Birliği',
+        'OE Müşteri — Elektrik Malzeme Toptancısı',
+        'OE Müşteri — Yenilenebilir Enerji Santrali',
+        'OE Müşteri — İhracat Distribütör (DE)',
+      ],
+    },
+    bomFg: 'OE-M01',
+    bomComps: [['OE-Y01', 1, 'AD'], ['OE-H05', 6, 'AD'], ['OE-A02', 1, 'AD'], ['OE-A03', 1, 'AD']],
+    extraBoms: [
+      { code: 'OE-BOM-SMT', fg: 'OE-Y01', comps: [['OE-H01', 1, 'AD'], ['OE-H02', 1, 'AD'], ['OE-H03', 48, 'AD'], ['OE-H04', 32, 'AD'], ['OE-A01', 0.004, 'KG']] },
+      { code: 'OE-BOM-EA3', fg: 'OE-M02', comps: [['OE-Y01', 1, 'AD'], ['OE-A02', 1, 'AD'], ['OE-A03', 1, 'AD']] },
+      { code: 'OE-BOM-KK1', fg: 'OE-M04', comps: [['OE-H01', 1, 'AD'], ['OE-H02', 1, 'AD'], ['OE-H05', 2, 'AD']] },
+    ],
+    ops: ['Lehim Pastası Baskı', 'SMD Dizgi', 'Reflow Fırın', 'AOI Optik Kontrol', 'THT Montaj', 'Fonksiyon Testi', 'Paketleme'],
+    hrDepts: ['SMT Hattı', 'Montaj', 'Test', 'Kalite', 'Satış', 'Satınalma'],
+  },
+  KILIF: {
+    code: 'KILIF',
+    tag: 'ORNEK-KILIF-2026',
+    prefix: 'OK',
+    city: 'Kocaeli',
+    district: 'Gebze',
+    sectorName: 'Silikon ve Plastik Telefon Kılıfı',
+    companyName: 'CaseForm Silikon & Plastik Kılıf A.Ş.',
+    vehiclePlate: '41 OK 01',
+    items: [
+      { code: 'OK-H01', name: 'TPU Granül Şeffaf', type: 'Hammadde', uom: 'KG', price: 185, qc: true },
+      { code: 'OK-H02', name: 'Sıvı Silikon (LSR) A+B', type: 'Hammadde', uom: 'KG', price: 420, qc: true },
+      { code: 'OK-H03', name: 'PC Granül Sert Kasa', type: 'Hammadde', uom: 'KG', price: 160, qc: true },
+      { code: 'OK-H04', name: 'Renk Masterbatch Siyah', type: 'Hammadde', uom: 'KG', price: 240 },
+      { code: 'OK-H05', name: 'MagSafe Mıknatıs Halka', type: 'Hammadde', uom: 'AD', price: 6.5, qc: true },
+      { code: 'OK-A01', name: 'Kılıf Karton Kutu', type: 'Hammadde', uom: 'AD', price: 2.2 },
+      { code: 'OK-A02', name: 'Blister Ambalaj', type: 'Hammadde', uom: 'AD', price: 1.1 },
+      { code: 'OK-A03', name: 'Barkod Etiketi', type: 'Hammadde', uom: 'AD', price: 0.15 },
+      { code: 'OK-Y01', name: 'Kalıptan Çıkmış Ham Kılıf', type: 'YariMamul', uom: 'AD', price: 18, tedarik: 'Uretim', qc: true },
+      { code: 'OK-Y02', name: 'Baskılı Arka Panel', type: 'YariMamul', uom: 'AD', price: 24, tedarik: 'Uretim', qc: true },
+      { code: 'OK-M01', name: 'Silikon Kılıf iPhone 15 Siyah', type: 'Mamul', uom: 'AD', price: 249, tedarik: 'Uretim', qc: true },
+      { code: 'OK-M02', name: 'Şeffaf TPU Kılıf Galaxy S24', type: 'Mamul', uom: 'AD', price: 199, tedarik: 'Uretim', qc: true },
+      { code: 'OK-M03', name: 'MagSafe Uyumlu Sert Kılıf iPhone 15', type: 'Mamul', uom: 'AD', price: 349, tedarik: 'Uretim', qc: true },
+      { code: 'OK-M04', name: 'Darbe Emici Kılıf Redmi Note 13', type: 'Mamul', uom: 'AD', price: 179, tedarik: 'Uretim', qc: true },
+    ],
+    partners: {
+      tedarikci: [
+        'OK Tedarik — Polimer Granül Kimya',
+        'OK Tedarik — Silikon Hammadde Ltd.',
+        'OK Tedarik — Masterbatch Renk',
+        'OK Tedarik — Mıknatıs Aksesuar',
+        'OK Tedarik — Karton Ambalaj',
+        'OK Tedarik — Kalıp Bakım Servisi',
+      ],
+      musteri: [
+        'OK Müşteri — TeknoMarket Zinciri',
+        'OK Müşteri — Operatör Bayi Ağı',
+        'OK Müşteri — Online Pazaryeri',
+        'OK Müşteri — Aksesuar Toptancısı',
+        'OK Müşteri — Kurumsal Hediye Firması',
+        'OK Müşteri — İhracat Distribütör (NL)',
+      ],
+    },
+    bomFg: 'OK-M01',
+    bomComps: [['OK-Y01', 1, 'AD'], ['OK-A01', 1, 'AD'], ['OK-A03', 1, 'AD']],
+    extraBoms: [
+      { code: 'OK-BOM-HAM', fg: 'OK-Y01', comps: [['OK-H02', 0.032, 'KG'], ['OK-H04', 0.001, 'KG']] },
+      { code: 'OK-BOM-TPU', fg: 'OK-M02', comps: [['OK-H01', 0.028, 'KG'], ['OK-A02', 1, 'AD'], ['OK-A03', 1, 'AD']] },
+      { code: 'OK-BOM-MAG', fg: 'OK-M03', comps: [['OK-H03', 0.03, 'KG'], ['OK-H05', 1, 'AD'], ['OK-Y02', 1, 'AD'], ['OK-A01', 1, 'AD']] },
+    ],
+    ops: ['Granül Kurutma', 'Enjeksiyon / LSR Kalıplama', 'Çapak Alma', 'UV Baskı', 'Görsel Kontrol', 'Paketleme'],
+    hrDepts: ['Enjeksiyon', 'Baskı', 'Paketleme', 'Kalite', 'Satış', 'Satınalma'],
+  },
 };
 
 function isDup(err) {
@@ -168,10 +274,10 @@ async function ensureOrg(client, def) {
     firma = (await client.query(
       `INSERT INTO companies (company_code, company_name, tax_id, address, email)
        VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [def.code, `Anadolu ${def.sectorName} A.Ş.`, '1112223330', `${def.city} OSB`, `info@${def.code.toLowerCase()}.ornek.local`]
+      [def.code, def.companyName || `Anadolu ${def.sectorName} A.Ş.`, '1112223330', `${def.city} OSB`, `info@${def.code.toLowerCase()}.ornek.local`]
     )).rows[0];
   }
-  let plant = (await client.query(`SELECT * FROM plants WHERE company_id=$1 ORDER BY id LIMIT 1`, [firma.id])).rows[0];
+  let plant = (await client.query(`SELECT * FROM plants WHERE company_id=$1 ORDER BY (plant_code LIKE '%-FB') DESC, id LIMIT 1`, [firma.id])).rows[0];
   if (!plant) {
     plant = (await client.query(
       `INSERT INTO plants (company_id, plant_code, plant_name, address) VALUES ($1,$2,$3,$4) RETURNING *`,
@@ -185,7 +291,11 @@ async function ensureOrg(client, def) {
     ['CKK', 'Çıkış KK', 'CKK'], ['YM', 'Yarı Mamul', 'YariMamul'],
   ]) {
     const code = `${def.code}-${suf}`;
-    let w = (await client.query(`SELECT * FROM warehouses WHERE plant_id=$1 AND warehouse_code=$2`, [plant.id, code])).rows[0];
+    let w = (await client.query(
+      `SELECT * FROM warehouses WHERE plant_id=$1 AND (warehouse_code=$2 OR warehouse_code LIKE '%-' || $3)
+        ORDER BY (warehouse_code=$2) DESC, id LIMIT 1`,
+      [plant.id, code, suf]
+    )).rows[0];
     if (!w) {
       w = (await client.query(
         `INSERT INTO warehouses (plant_id, warehouse_code, warehouse_name, is_active, warehouse_role)
@@ -221,7 +331,7 @@ async function upsertPartner(client, { def, name, type, i }) {
   )).rows[0];
   // company_id from name lookup above is fragile — use join
   const firmaId = (await client.query(`SELECT id FROM companies WHERE company_code=$1`, [def.code])).rows[0].id;
-  const plantId = (await client.query(`SELECT id FROM plants WHERE company_id=$1 ORDER BY id LIMIT 1`, [firmaId])).rows[0].id;
+  const plantId = (await client.query(`SELECT id FROM plants WHERE company_id=$1 ORDER BY (plant_code LIKE '%-FB') DESC, id LIMIT 1`, [firmaId])).rows[0].id;
   let row = (await client.query(
     `SELECT * FROM partners WHERE company_id=$1 AND partner_name=$2 LIMIT 1`, [firmaId, name]
   )).rows[0];
@@ -793,7 +903,7 @@ async function seedSector(def) {
           driver_name: 'Ali',
           driver_last_name: 'Yılmaz',
           driver_national_id: '10000000146',
-          vehicle_plate: def.code === 'GIDA' ? '42 OG 01' : '38 OD 01',
+          vehicle_plate: def.vehiclePlate || (def.code === 'GIDA' ? '42 OG 01' : '38 OD 01'),
         }, firmaId);
         if (irs.ok) {
           bump('irsaliyeler');
@@ -813,7 +923,7 @@ async function seedSector(def) {
             driver_name: 'Ali',
             driver_last_name: 'Yılmaz',
             driver_national_id: '10000000146',
-            vehicle_plate: def.code === 'GIDA' ? '42 OG 01' : '38 OD 01',
+            vehicle_plate: def.vehiclePlate || (def.code === 'GIDA' ? '42 OG 01' : '38 OD 01'),
           }, firmaId);
           const onay = await apiSoft('POST', `/delivery_notes/${irs.data.id}/onayla`, {
             warehouse_id: org.wh.mam.id,
@@ -1242,7 +1352,7 @@ async function seedSector(def) {
 }
 
 async function main() {
-  const keys = argCompany ? [argCompany.toUpperCase()] : ['GIDA', 'DOKUM'];
+  const keys = argCompany ? [argCompany.toUpperCase()] : Object.keys(SECTORS);
   const report = { generatedAt: new Date().toISOString(), sectors: [] };
   // finance seed once
   try {
@@ -1263,10 +1373,17 @@ async function main() {
 
   const outDir = path.join(__dirname, '../../docs/qa');
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'ornek-veri-katalog.json'), JSON.stringify(report, null, 2));
+  const catalogPath = path.join(outDir, 'ornek-veri-katalog.json');
+  if (fs.existsSync(catalogPath)) {
+    const prev = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+    const fresh = new Set(report.sectors.map((x) => x.firma));
+    report.sectors = [...(prev.sectors || []).filter((x) => !fresh.has(x.firma)), ...report.sectors];
+  }
+  fs.writeFileSync(catalogPath, JSON.stringify(report, null, 2));
+  const defs = Object.values(SECTORS);
 
   const md = [
-    '# Örnek Veri Kataloğu — GIDA & DOKUM',
+    `# Örnek Veri Kataloğu — ${defs.map((d) => d.code).join(' / ')}`,
     '',
     `Üretim: ${report.generatedAt}`,
     '',
@@ -1276,14 +1393,13 @@ async function main() {
     '',
     '| Firma | Şirket | Etiket | Kod öneki | Şehir |',
     '|---|---|---|---|---|',
-    '| GIDA | Anadolu Süt ve Süt Ürünleri A.Ş. | `ORNEK-GIDA-2026` | `OG-*` | Konya |',
-    '| DOKUM | Anadolu Döküm Sanayi A.Ş. | `ORNEK-DOKUM-2026` | `OD-*` | Kayseri |',
+    ...defs.map((d) => `| ${d.code} | ${d.companyName || `Anadolu ${d.sectorName} A.Ş.`} | \`${d.tag}\` | \`${d.prefix}-*\` | ${d.city} |`),
     '',
     '## Nasıl filtrelerim?',
     '',
-    '1. Üst bardan firma seç: **GIDA** veya **DOKUM**',
-    '2. Belge listelerinde `project_code` / açıklama: `ORNEK-GIDA-2026` / `ORNEK-DOKUM-2026`',
-    '3. Stok/cari: kod öneki `OG-` / `OD-`',
+    `1. Üst bardan firma seç: ${defs.map((d) => `**${d.code}**`).join(', ')}`,
+    `2. Belge listelerinde \`project_code\` / açıklama: ${defs.map((d) => `\`${d.tag}\``).join(' / ')}`,
+    `3. Stok/cari: kod öneki ${defs.map((d) => `\`${d.prefix}-\``).join(' / ')}`,
     '',
     '## Örnek stok / cari kodları',
     '',
@@ -1291,7 +1407,9 @@ async function main() {
     '- GIDA hammadde: `OG-H01` Çiğ İnek Sütü · `OG-A01` PET Şişe',
     '- DOKUM mamul: `OD-M01` Fren Diski · `OD-M02` Motor Blok · `OD-M04` Pompa Gövdesi',
     '- DOKUM hammadde: `OD-H01` Pik Demir · `OD-A01` Kalıp Kumu',
-    '- Cari: `OG-T01`…`OG-T06` / `OG-M01`…`OG-M06` · `OD-T*` / `OD-M*`',
+    '- ELEK mamul: `OE-M01` Reaktif Güç Rölesi · `OE-M02` Enerji Analizörü · yarı mamul `OE-Y01` Dizgili PCB',
+    '- KILIF mamul: `OK-M01` Silikon Kılıf iPhone 15 · `OK-M02` Şeffaf TPU Kılıf · `OK-M03` MagSafe Sert Kılıf',
+    '- Cari: `<önek>-T01`…`T06` tedarikçi / `<önek>-M01`…`M06` müşteri',
     '',
   ];
   for (const s of report.sectors) {
@@ -1310,9 +1428,11 @@ async function main() {
   }
   md.push('## Çalıştırma');
   md.push('```bash');
-  md.push('npm run qa:ornek-all          # GIDA + DOKUM');
+  md.push('npm run qa:ornek-all          # tüm sektörler');
   md.push('npm run qa:ornek-gida         # yalnız süt');
   md.push('npm run qa:ornek-dokum        # yalnız döküm');
+  md.push('npm run qa:ornek-elek         # yalnız elektronik / PCB');
+  md.push('npm run qa:ornek-kilif        # yalnız telefon kılıfı');
   md.push('```');
   md.push('');
   md.push('Idempotent: mevcut `OG-*` / `OD-*` master veriyi silmez; eksikleri tamamlar, belge zincirine yeni örnekler ekler.');
