@@ -9,14 +9,18 @@ const SIPARIS_BASLIK = [
   'subtotal', 'tax_amount', 'grand_total', 'payment_method', 'payment_term_code', 'delivery_term_code',
   'ship_to_address', 'ship_city', 'ship_district', 'ship_country', 'ship_postal_code',
   'currency_code', 'description', 'public_note', 'internal_note', 'order_source',
-  'company_id', 'created_by', 'approved_by',
+  'company_id', 'created_by', 'approved_by', 'movement_code_id', 'quotation_id',
 ];
 
+// sales_order_lines mevcut kolonları (şema dışı alan INSERT’i kırar)
 const SIPARIS_SATIR = [
   'line_description', 'delivery_date', 'warehouse_id', 'net_unit_price', 'amount_ex_tax',
   'amount_ttc', 'product_type', 'unit_cost', 'kar_marji', 'discount_rate',
-  'discount_amount', 'vat_rate', 'vat_amount', 'line_no',
+  'discount_amount', 'vat_rate', 'vat_amount', 'line_no', 'quotation_line_id',
 ];
+
+/** Boş string / NaN tarih-id alanlarını null yap — INSERT/UPDATE kaybını önler */
+const NULLISH_KEYS = /(_id$|_date$|_at$|^date$|tarih|exchange_rate|discount_|vat_|tax_|subtotal|grand_total|total_amount|quantity|unit_price)/i;
 
 const FATURA_BASLIK = [
   'customer_invoice_ref', 'project_code', 'company_id', 'plant_id', 'price_list_id', 'warehouse_id',
@@ -58,11 +62,22 @@ const FATURA_SATIR = [
   'source_document_type', 'source_document_id', 'source_document_line_id',
 ];
 
+function normalizeFieldValue(key, value) {
+  if (value === undefined) return undefined;
+  if (value === '') return NULLISH_KEYS.test(key) ? null : value;
+  if (typeof value === 'number' && Number.isNaN(value)) return null;
+  // ISO datetime → YYYY-MM-DD (date kolonları)
+  if (/_date$|tarih/i.test(key) && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    return value.slice(0, 10);
+  }
+  return value;
+}
+
 function pickFields(body, keys) {
   const out = {};
   if (!body || typeof body !== 'object') return out;
   for (const k of keys) {
-    if (body[k] !== undefined) out[k] = body[k];
+    if (body[k] !== undefined) out[k] = normalizeFieldValue(k, body[k]);
   }
   return out;
 }
@@ -96,4 +111,5 @@ module.exports = {
   pickFields,
   appendInsert,
   buildUpdateSets,
+  normalizeFieldValue,
 };

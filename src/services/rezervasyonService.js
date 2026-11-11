@@ -19,41 +19,143 @@ async function kullanilabilirNet(pool, stokId, depoId = null) {
   return { bakiye, rezerve, kullanilabilir: bakiye - rezerve };
 }
 
+async function rezervasyonSatirOlustur(client, {
+  siparisId,
+  siparisDetayId,
+  itemId,
+  depoId,
+  quantity,
+}) {
+  const qty = Number(quantity);
+  if (!itemId) throw Object.assign(new Error('item_id zorunlu.'), { status: 400 });
+  if (!Number.isFinite(qty) || qty <= 0) {
+    throw Object.assign(new Error('Rezerve miktar 0\'dan büyük olmalı.'), { status: 400 });
+  }
+  if (!depoId) {
+    throw Object.assign(new Error('Depo seçimi zorunlu.'), { status: 400 });
+  }
+  const net = await kullanilabilirNet(client, itemId, depoId);
+  if (net.kullanilabilir + 1e-9 < qty) {
+    throw Object.assign(
+      new Error(
+        `Rezervasyon için yetersiz stok: item_id=${itemId} depo=${depoId} kullanılabilir=${net.kullanilabilir} ihtiyaç=${qty}`
+      ),
+      { status: 409, detay: net }
+    );
+  }
+  const no = await sonrakiBelgeNo(client, 'REZERVASYON');
+  const r = await client.query(
+    `INSERT INTO item_reservations
+      (rezervasyon_no, sales_order_id, sales_order_line_id, item_id, warehouse_id, quantity, remaining_quantity, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$6,'Aktif') RETURNING *`,
+    [no, siparisId || null, siparisDetayId || null, itemId, depoId, qty]
+  );
+  if (siparisDetayId) {
+    await client.query(
+      `UPDATE sales_order_lines SET rezerve_quantity = COALESCE(rezerve_quantity,0) + $2 WHERE id=$1`,
+      [siparisDetayId, qty]
+    );
+  }
+  return r.rows[0];
+}
+
+/**
+ * Seçili sipariş satırlarını (stok + depo + miktar) rezerve et.
+ * satirlar: [{ sales_order_line_id?, item_id, warehouse_id, quantity }]
+ */
+async function satirlariRezerveEt(client, siparisId, {
+  depoId = null,
+  satirlar = null,
+} = {}) {
+  const sip = await client.query(`SELECT * FROM sales_orders WHERE id=$1 FOR UPDATE`, [siparisId]);
+  if (!sip.rows[0]) throw Object.assign(new Error('Sipariş bulunamadı.'), { status: 404 });
+
+  let kaynak = Array.isArray(satirlar) ? satirlar.filter(Boolean) : null;
+  if (!kaynak || !kaynak.length) {
+    // Tüm kalan satırlar (eski davranış)
+    const tum = await client.query(
+      `SELECT * FROM sales_order_lines WHERE sales_order_id=$1 ORDER BY id`,
+      [siparisId]
+    );
+    kaynak = tum.rows.map((s) => ({
+      sales_order_line_id: s.id,
+      item_id: s.item_id,
+      warehouse_id: depoId,
+      quantity: Number(s.quantity) - Number(s.rezerve_quantity || 0) - Number(s.shipped_quantity || 0),
+    }));
+  }
+
+  const olusan = [];
+  for (const raw of kaynak) {
+    const lineId = raw.sales_order_line_id ? Number(raw.sales_order_line_id) : null;
+    let itemId = raw.item_id ? Number(raw.item_id) : null;
+    let maxKalan = null;
+    if (lineId) {
+      const lr = await client.query(
+        `SELECT * FROM sales_order_lines WHERE id=$1 AND sales_order_id=$2 FOR UPDATE`,
+        [lineId, siparisId]
+      );
+      const line = lr.rows[0];
+      if (!line) {
+        throw Object.assign(new Error(`Sipariş satırı bulunamadı: ${lineId}`), { status: 400 });
+      }
+      itemId = Number(line.item_id);
+      maxKalan = Number(line.quantity) - Number(line.rezerve_quantity || 0) - Number(line.shipped_quantity || 0);
+    }
+    let qty = raw.quantity != null && raw.quantity !== '' ? Number(raw.quantity) : maxKalan;
+    if (!Number.isFinite(qty) || qty <= 0) continue;
+    if (maxKalan != null && qty > maxKalan + 1e-9) {
+      throw Object.assign(
+        new Error(`Satır ${lineId}: rezerve edilecek miktar kalanı aşıyor (kalan=${maxKalan}, istenen=${qty}).`),
+        { status: 400 }
+      );
+    }
+    const wh = raw.warehouse_id != null && raw.warehouse_id !== ''
+      ? Number(raw.warehouse_id)
+      : (depoId ? Number(depoId) : null);
+    const row = await rezervasyonSatirOlustur(client, {
+      siparisId,
+      siparisDetayId: lineId,
+      itemId,
+      depoId: wh,
+      quantity: qty,
+    });
+    olusan.push(row);
+  }
+  if (!olusan.length) {
+    throw Object.assign(new Error('Rezerve edilecek satır yok (miktar/stok seçin).'), { status: 400 });
+  }
+  return olusan;
+}
+
 /**
  * Sipariş onayında / açıkça: satırları rezerve et.
  */
-async function siparisRezerveEt(client, siparisId, { depoId = null } = {}) {
-  const sip = await client.query(`SELECT * FROM sales_orders WHERE id=$1 FOR UPDATE`, [siparisId]);
-  if (!sip.rows[0]) throw Object.assign(new Error('Sipariş bulunamadı.'), { status: 404 });
-  const satirlar = await client.query(
-    `SELECT * FROM sales_order_lines WHERE sales_order_id=$1 ORDER BY id`,
-    [siparisId]
+async function siparisRezerveEt(client, siparisId, { depoId = null, satirlar = null } = {}) {
+  return satirlariRezerveEt(client, siparisId, { depoId, satirlar });
+}
+
+async function rezervasyonIptalTek(client, rezervasyonId) {
+  const r = await client.query(
+    `SELECT * FROM item_reservations WHERE id=$1 FOR UPDATE`,
+    [rezervasyonId]
   );
-  const olusan = [];
-  for (const s of satirlar.rows) {
-    const hedef = Number(s.quantity) - Number(s.rezerve_quantity || 0) - Number(s.shipped_quantity || 0);
-    if (hedef <= 1e-9) continue;
-    const net = await kullanilabilirNet(client, s.item_id, depoId);
-    if (net.kullanilabilir + 1e-9 < hedef) {
-      throw Object.assign(
-        new Error(`Rezervasyon için yetersiz stok: item_id=${s.item_id} kullanılabilir=${net.kullanilabilir} ihtiyaç=${hedef}`),
-        { status: 409, detay: net }
-      );
-    }
-    const no = await sonrakiBelgeNo(client, 'REZERVASYON');
-    const r = await client.query(
-      `INSERT INTO item_reservations
-        (rezervasyon_no, sales_order_id, sales_order_line_id, item_id, warehouse_id, quantity, remaining_quantity, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$6,'Aktif') RETURNING *`,
-      [no, siparisId, s.id, s.item_id, depoId, hedef]
-    );
-    await client.query(
-      `UPDATE sales_order_lines SET rezerve_quantity = COALESCE(rezerve_quantity,0) + $2 WHERE id=$1`,
-      [s.id, hedef]
-    );
-    olusan.push(r.rows[0]);
+  if (!r.rows[0]) throw Object.assign(new Error('Rezervasyon bulunamadı.'), { status: 404 });
+  const row = r.rows[0];
+  if (row.status !== 'Aktif') {
+    throw Object.assign(new Error(`Yalnız Aktif rezervasyon iptal edilir (durum=${row.status}).`), { status: 409 });
   }
-  return olusan;
+  await client.query(
+    `UPDATE item_reservations SET status='Iptal', remaining_quantity=0, iptal_date=NOW() WHERE id=$1`,
+    [row.id]
+  );
+  if (row.sales_order_line_id) {
+    await client.query(
+      `UPDATE sales_order_lines SET rezerve_quantity = GREATEST(0, COALESCE(rezerve_quantity,0) - $2) WHERE id=$1`,
+      [row.sales_order_line_id, row.remaining_quantity]
+    );
+  }
+  return { ...row, status: 'Iptal', remaining_quantity: 0 };
 }
 
 /** İrsaliye onayında rezervasyonu tüket */
@@ -102,6 +204,9 @@ async function rezervasyonIptalSiparis(client, siparisId) {
 module.exports = {
   kullanilabilirNet,
   siparisRezerveEt,
+  satirlariRezerveEt,
+  rezervasyonSatirOlustur,
   rezervasyonTuket,
   rezervasyonIptalSiparis,
+  rezervasyonIptalTek,
 };

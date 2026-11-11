@@ -1826,23 +1826,100 @@ const MODULES = [
         businessNameEn: 'StockReservationScreen',
         title: 'Stok Rezervasyonları',
         endpoint: '/stok-rezervasyonlari',
-        crud: false,
-        readOnly: true,
+        crud: true,
+        // Liste kaydı tek rezervasyon; Yeni formu siparişten çoklu satır oluşturur
+        codeField: 'rezervasyon_no',
+        nameField: 'item_name',
+        // Rezervasyon no sunucuda satır başına üretilir
+        numeratorSeri: null,
+        approveAction: {
+          label: 'İptal Et',
+          path: '/stok-rezervasyonlari/{id}/iptal',
+        },
         filters: [
           { key: 'rezervasyon_no', label: 'Rezervasyon' },
           { key: 'item_code', label: 'Stok' },
-          { key: 'status', label: 'Durum' },
+          { key: 'order_no', label: 'Sipariş' },
+          { key: 'warehouse_code', label: 'Depo' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Aktif', 'Tuketildi', 'Iptal', 'SuresiDoldu'] },
         ],
         columns: [
           { key: 'rezervasyon_no', label: 'No', mono: true },
           { key: 'order_no', label: 'Sipariş', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
           { key: 'item_name', label: 'Ad' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
           { key: 'quantity', label: 'Miktar' },
           { key: 'remaining_quantity', label: 'Kalan' },
           { key: 'status', label: 'Durum' },
+          { key: 'created_at', label: 'Kayıt' },
         ],
-      },
+        masterFields: [
+          {
+            key: 'sales_order_id',
+            label: 'Satış siparişi',
+            type: 'lookup',
+            lookup: 'sales_orders',
+            valueKey: 'id',
+            labelKey: 'order_no',
+            codeKey: 'order_no',
+            required: true,
+            lead: true,
+            fillFrom: 'rezervasyon-siparis-kalemler',
+          },
+          {
+            key: 'warehouse_id',
+            label: 'Varsayılan depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            required: true,
+            lead: true,
+          },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            required: true,
+          },
+          { key: 'sales_order_line_id', label: 'Sip. satır', type: 'number', readOnly: true, size: 'short' },
+          { key: 'siparis_miktar', label: 'Sipariş miktar', type: 'number', readOnly: true, size: 'short' },
+          { key: 'mevcut_rezerve', label: 'Mevcut rezerve', type: 'number', readOnly: true, size: 'short' },
+          { key: 'kalan_rezerve', label: 'Kalan (max)', type: 'number', readOnly: true, size: 'short' },
+          { key: 'quantity', label: 'Rezerve miktar', type: 'number', required: true, size: 'short' },
+          {
+            key: 'warehouse_id',
+            label: 'Depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            required: true,
+          },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+        ],
+        formLinks: {
+          item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+          ],
+          warehouse_id: [
+            // master varsayılan depo → boş satır depoları (applyFormLinkages master→detail özel değil; save’de doldurulur)
+          ],
+        },
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { satirlar: [] },
+      },,
       {
         id: 'stok-serileri',
         techId: 'INV-SER-SCR-001',
@@ -11799,6 +11876,47 @@ async function fillLinesFromSource(kind, sourceId) {
         });
       toast(`Sipariş ${sip.order_no || sourceId} kalan kalemleri yüklendi`);
       renderForm(screen);
+
+    } else if (kind === 'rezervasyon-siparis-kalemler') {
+      const sip = await api(`/sales_orders/${sourceId}`);
+      if (!sip) return;
+      state.formRecord.sales_order_id = Number(sourceId);
+      if (sip.warehouse_id && !state.formRecord.warehouse_id) {
+        state.formRecord.warehouse_id = sip.warehouse_id;
+      }
+      if (sip.company_id && !state.formRecord.company_id) state.formRecord.company_id = sip.company_id;
+      if (sip.plant_id && !state.formRecord.plant_id) state.formRecord.plant_id = sip.plant_id;
+      const defWh = state.formRecord.warehouse_id || sip.warehouse_id || null;
+      const lines = sip.kalemler || sip.satirlar || [];
+      state.formRecord[detailKey] = lines
+        .map((s) => {
+          const sipQty = Number(s.quantity) || 0;
+          const rez = Number(s.rezerve_quantity || 0);
+          const sevk = Number(s.shipped_quantity || 0);
+          const kalan = Math.max(0, sipQty - rez - sevk);
+          return {
+            sales_order_line_id: s.id,
+            item_id: s.item_id,
+            item_code: s.item_code,
+            item_name: s.item_name,
+            uom_code: s.uom_code || s.stock_uom || '',
+            siparis_miktar: sipQty,
+            mevcut_rezerve: rez,
+            kalan_rezerve: kalan,
+            quantity: kalan > 0 ? kalan : '',
+            warehouse_id: s.warehouse_id || defWh || null,
+            _satir_kayitli: false,
+            _satir_duzenleniyor: true,
+          };
+        })
+        .filter((s) => s.item_id && Number(s.kalan_rezerve) > 0);
+      if (!state.formRecord[detailKey].length) {
+        toast('Bu siparişte rezerve edilecek kalan stok yok.');
+      } else {
+        toast(`Sipariş ${sip.order_no || sourceId}: ${state.formRecord[detailKey].length} kalem yüklendi — depo/miktar seçin.`);
+      }
+      renderForm(screen);
+
     } else if (kind === 'sevk-satirlar') {
       const sevk = await api(`/sevk-emirleri/${sourceId}`);
       if (!sevk) return;
@@ -12954,6 +13072,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari', 'companies'],
   'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
+  'stok-rezervasyonlari': ['sales_orders', 'warehouses', 'items', 'items-mamul', 'olcu-birimleri'],
   'cari-kartlari': [
     'partners', 'partners-musteri', 'partners-tedarikci',
     'companies', 'is-yerleri', 'para-birimleri',
@@ -16031,29 +16150,56 @@ function renderYetkiGrid(rec) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const rows = allScreensCatalog();
-  let lastMod = null;
-  const body = rows.map((s) => {
-    const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
-    const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
-    let modRow = '';
-    if (s.moduleTitle !== lastMod) {
-      lastMod = s.moduleTitle;
-      modRow = `<tr class="yetki-mod-row"><td colspan="8">${escapeHtml(s.moduleTitle)}</td></tr>`;
+  const byMod = [];
+  rows.forEach((s) => {
+    const last = byMod[byMod.length - 1];
+    if (!last || last.title !== s.moduleTitle) {
+      byMod.push({ id: s.moduleId || s.moduleTitle, title: s.moduleTitle, screens: [s] });
+    } else {
+      last.screens.push(s);
     }
-    return `${modRow}
-      <tr data-yetki-ekran="${escAttr(s.id)}">
+  });
+
+  const body = byMod.map((mod) => {
+    // Default kapalı — yalnızca bu oturumda açılanlar açık kalsın
+    const open = Boolean(state.yetkiModOpen?.[mod.id]);
+    const modRow = `
+      <tr class="yetki-mod-row${open ? ' is-open' : ''}" data-yetki-mod="${escAttr(mod.id)}">
+        <td colspan="8">
+          <button type="button" class="yetki-mod-toggle" data-yetki-mod-toggle="${escAttr(mod.id)}"
+            aria-expanded="${open ? 'true' : 'false'}">
+            <span class="yetki-mod-caret" aria-hidden="true">▸</span>
+            <span>${escapeHtml(mod.title)}</span>
+            <span class="yetki-mod-count">${mod.screens.length} ekran</span>
+          </button>
+        </td>
+      </tr>`;
+    const screenRows = mod.screens.map((s) => {
+      const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
+      const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
+      return `
+      <tr class="yetki-screen-row${open ? '' : ' is-collapsed'}${y.erisim ? ' has-erisim' : ''}"
+          data-yetki-ekran="${escAttr(s.id)}" data-yetki-mod-of="${escAttr(mod.id)}">
         <td class="yetki-erisim">
           <input type="checkbox" data-yetki="erisim" ${y.erisim ? 'checked' : ''} ${dis} title="Ekran erişimi" />
         </td>
         <td class="yetki-ekran">${escapeHtml(s.title)}</td>
         ${YETKI_ACTIONS.map((a) => `
           <td class="yetki-act">
-            <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="${a.label}" />
+            <label class="yetki-act-cell" title="${a.label}">
+              <span class="yetki-act-letter">${escapeHtml(a.label.slice(0, 1))}</span>
+              <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} aria-label="${a.label}" />
+            </label>
           </td>`).join('')}
         <td class="yetki-act">
-          <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="Hepsi" />
+          <label class="yetki-act-cell" title="Hepsi">
+            <span class="yetki-act-letter">H</span>
+            <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} aria-label="Hepsi" />
+          </label>
         </td>
       </tr>`;
+    }).join('');
+    return `${modRow}${screenRows}`;
   }).join('');
 
   return `
@@ -16061,11 +16207,13 @@ function renderYetkiGrid(rec) {
       <div class="yetki-pane-head">
         <div class="section-label">Yetkiler</div>
         <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <button type="button" class="btn ghost" id="yetkiExpandAllMods">Başlıkları aç</button>
+          <button type="button" class="btn ghost" id="yetkiCollapseAllMods">Başlıkları kapat</button>
           <button type="button" class="btn ghost" id="yetkiSelectAll">Tüm ekranlar</button>
           <button type="button" class="btn ghost" id="yetkiClearAll">Temizle</button>
         </div>
       </div>
-      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. ADMIN / Yönetici için tümü işaretli kaydedilirse yetki listesi boş tutulur — yeni eklenen ekranlar da otomatik açılır. Yalnızca İncele işaretliyse o ekranda sadece incele kullanılabilir.</p>
+      <p class="hint yetki-hint">Modül başlığına tıklayarak ekran listesini açın/kapatın (varsayılan kapalı). Sol yuvarlak kutu erişim; açılınca Yeni / İncele / Düzelt / Kopyala / Sil kutuları etkinleşir. ADMIN’de tümü işaretli kaydedilirse yetki listesi boş tutulur.</p>
       <div class="yetki-scroll">
         <table class="yetki-table" id="yetkiTable">
           <thead>
@@ -16126,15 +16274,53 @@ function readFirmaYetkiFromDom() {
   return out;
 }
 
+function setYetkiModOpen(modId, open) {
+  if (!state.yetkiModOpen) state.yetkiModOpen = {};
+  state.yetkiModOpen[modId] = Boolean(open);
+  const table = $('#yetkiTable');
+  if (!table) return;
+  const modRow = table.querySelector(`tr.yetki-mod-row[data-yetki-mod="${CSS.escape(modId)}"]`);
+  const btn = modRow?.querySelector('[data-yetki-mod-toggle]');
+  modRow?.classList.toggle('is-open', open);
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  table.querySelectorAll(`tr.yetki-screen-row[data-yetki-mod-of="${CSS.escape(modId)}"]`).forEach((tr) => {
+    tr.classList.toggle('is-collapsed', !open);
+  });
+}
+
 function bindYetkiGridEvents() {
   const table = $('#yetkiTable');
-  if (!table || state.formMode === 'incele') return;
+  if (!table) return;
+
+  table.addEventListener('click', (e) => {
+    const toggle = e.target.closest('[data-yetki-mod-toggle]');
+    if (!toggle) return;
+    e.preventDefault();
+    const modId = toggle.getAttribute('data-yetki-mod-toggle');
+    if (!modId) return;
+    const open = toggle.getAttribute('aria-expanded') !== 'true';
+    setYetkiModOpen(modId, open);
+  });
+
+  $('#yetkiExpandAllMods')?.addEventListener('click', () => {
+    table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
+      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), true);
+    });
+  });
+  $('#yetkiCollapseAllMods')?.addEventListener('click', () => {
+    table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
+      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), false);
+    });
+  });
+
+  if (state.formMode === 'incele') return;
 
   const syncRow = (tr) => {
     const erisim = tr.querySelector('[data-yetki="erisim"]');
     const acts = YETKI_ACTIONS.map((a) => tr.querySelector(`[data-yetki="${a.id}"]`));
     const hepsi = tr.querySelector('[data-yetki="hepsi"]');
     const on = Boolean(erisim?.checked);
+    tr.classList.toggle('has-erisim', on);
     acts.forEach((el) => { if (el) el.disabled = !on; });
     if (hepsi) hepsi.disabled = !on;
     if (!on) {
@@ -16143,6 +16329,9 @@ function bindYetkiGridEvents() {
       return;
     }
     if (hepsi) hepsi.checked = acts.every((el) => el?.checked);
+    // Erişim açılınca satırın modülü kapalıysa aç — Yeni/Düzelt görünsün
+    const modId = tr.getAttribute('data-yetki-mod-of');
+    if (modId && tr.classList.contains('is-collapsed')) setYetkiModOpen(modId, true);
   };
 
   const syncHeadChecks = () => {
@@ -17341,6 +17530,9 @@ function renderForm(screen) {
     if (screen.id === 'crm-faaliyet-planlari') {
       show = Boolean(screen.convertAction && ['Planlandi', 'Devam'].includes(rec.status));
     }
+    if (screen.id === 'stok-rezervasyonlari') {
+      show = Boolean(screen.approveAction && rec.id && rec.status === 'Aktif' && state.formMode !== 'yeni');
+    }
     if (screen.id === 'satin-alma-talepleri') {
       show = Boolean(screen.approveAction && rec.status === 'Acik');
     }
@@ -17398,6 +17590,7 @@ function renderForm(screen) {
           || (screen.id === 'muhasebe-donemleri' && ['Acik', 'YenidenAcik'].includes(rec.status))
           || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
           || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.status))
+          || (screen.id === 'stok-rezervasyonlari' && rec.status === 'Aktif')
           || (screen.id === 'satin-alma-talepleri' && rec.status === 'Acik')
           || (screen.id === 'satin-alma-teklifleri' && rec.status === 'Taslak')
           || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
@@ -20582,6 +20775,21 @@ async function openForm(mode, opts = {}) {
     hydrateStokFirmaIsYeri(record);
   }
 
+  // Mevcut tek rezervasyon kaydı → satır grid’ine yansıt (incele/iptal)
+  if (screen.id === 'stok-rezervasyonlari' && record.id && !Array.isArray(record.satirlar)) {
+    record.satirlar = [{
+      item_id: record.item_id,
+      sales_order_line_id: record.sales_order_line_id || null,
+      siparis_miktar: record.quantity,
+      mevcut_rezerve: record.quantity,
+      kalan_rezerve: record.remaining_quantity,
+      quantity: record.quantity,
+      warehouse_id: record.warehouse_id,
+      uom_code: record.stok_birim || record.uom_code || '',
+      _satir_kayitli: true,
+    }];
+  }
+
   state.formRecord = record;
   addFormTab(screen, mode, record);
   showView('form');
@@ -20795,6 +21003,58 @@ async function saveForm({ after = 'stay' } = {}) {
         master.varsayilan_vat_rate = Number(tax.rate);
       }
     }
+  }
+
+
+  // Stok rezervasyon: sipariş + seçili stoklar → depolara rezerve
+  if (screen.id === 'stok-rezervasyonlari') {
+    if (state.formMode === 'duzelt') {
+      toast('Rezervasyon düzeltilemez. İptal edip yeniden oluşturun.');
+      return;
+    }
+    if (!Number(master.sales_order_id)) {
+      toast('Satış siparişi seçin.');
+      return;
+    }
+    const defWh = Number(master.warehouse_id) || null;
+    const raw = Array.isArray(master.satirlar) ? master.satirlar : [];
+    const clean = [];
+    for (let i = 0; i < raw.length; i += 1) {
+      const s = { ...(raw[i] || {}) };
+      const itemId = Number(s.item_id);
+      const qty = Number(s.quantity);
+      const wh = Number(s.warehouse_id) || defWh;
+      if (!itemId && !(qty > 0)) continue;
+      if (!itemId) {
+        toast(`Satır ${i + 1}: stok seçin.`);
+        return;
+      }
+      if (!Number.isFinite(qty) || qty <= 0) {
+        toast(`Satır ${i + 1}: rezerve miktar girin.`);
+        return;
+      }
+      if (!wh) {
+        toast(`Satır ${i + 1}: depo seçin (veya varsayılan depo).`);
+        return;
+      }
+      const maxKalan = s.kalan_rezerve != null && s.kalan_rezerve !== '' ? Number(s.kalan_rezerve) : null;
+      if (maxKalan != null && Number.isFinite(maxKalan) && qty > maxKalan + 1e-9) {
+        toast(`Satır ${i + 1}: miktar kalanı aşıyor (max ${maxKalan}).`);
+        return;
+      }
+      clean.push({
+        sales_order_line_id: s.sales_order_line_id ? Number(s.sales_order_line_id) : null,
+        item_id: itemId,
+        warehouse_id: wh,
+        quantity: qty,
+      });
+    }
+    if (!clean.length) {
+      toast('En az bir stok satırı rezerve edilmeli.');
+      return;
+    }
+    master.satirlar = clean;
+    master.warehouse_id = defWh;
   }
 
   // Kullanıcı kartı: giriş adı + şifre + yetki + profil
@@ -21583,6 +21843,17 @@ function bindUiPrefsEvents() {
 function bindEvents() {
   bindUiPrefsEvents();
   // LDAP anahtar
+  $('#loginPassToggle')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const input = $('#loginPass');
+    const btn = $('#loginPassToggle');
+    if (!input || !btn) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    btn.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
+    btn.title = show ? 'Şifreyi gizle' : 'Şifreyi göster';
+  });
   $('#loginLdapToggle')?.addEventListener('click', (e) => {
     e.preventDefault();
     const btn = $('#loginLdapToggle');

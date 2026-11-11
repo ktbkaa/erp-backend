@@ -6150,3 +6150,89 @@ body.sidebar-resizing iframe {
   pointer-events: none;
 }
 
+/* Yetki modül collapse (login-yetki port) */
+.yetki-mod-row td {
+  background: var(--cyan-soft);
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--ink);
+  padding: 0;
+}
+.yetki-mod-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.yetki-mod-toggle:hover {
+  background: rgba(63, 135, 245, 0.08);
+}
+.yetki-mod-caret {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--line);
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--accent);
+  flex: 0 0 auto;
+  transition: transform 0.15s ease;
+}
+.yetki-mod-row.is-open .yetki-mod-caret {
+  transform: rotate(90deg);
+}
+.yetki-mod-count {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.yetki-screen-row.is-collapsed {
+  display: none;
+}
+.yetki-erisim { width: 3.2rem; text-align: center; }
+.yetki-ekran { text-align: left; min-width: 10rem; }
+.yetki-act { width: 3.6rem; text-align: center; }
+.yetki-table input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+.yetki-act-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+.yetki-act-letter {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.yetki-screen-row:not(.has-erisim) .yetki-act-cell {
+  opacity: 0.35;
+}
+.yetki-screen-row.has-erisim .yetki-act-letter {
+  color: var(--accent);
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 0
