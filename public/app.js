@@ -8163,20 +8163,48 @@ const KTB_MENU_LAYOUT = [
     id: 'satis',
     title: 'Satış Yönetimi',
     sections: [
-      { id: 'teklifler', title: 'Teklifler', screenIds: ['satis-teklifleri'] },
-      { id: 'siparisler', title: 'Siparişler', screenIds: ['satis-siparisleri'] },
-      { id: 'sevkiyat', title: 'Sevkiyat', screenIds: ['sevk-emirleri'] },
-      { id: 'belgeler', title: 'Satış Belgeleri', screenIds: ['irsaliye-yonetimi', 'fatura-yonetimi'] },
+      {
+        id: 'satis-islemleri',
+        title: 'Satış İşlemleri',
+        screenIds: ['satis-teklifleri', 'satis-siparisleri'],
+      },
+      {
+        id: 'sevkiyat-irsaliye',
+        title: 'Sevkiyat ve İrsaliye',
+        screenIds: ['irsaliye-yonetimi', 'sevk-emirleri', 'satis-iade-irsaliyeleri'],
+      },
+      {
+        id: 'faturalandirma',
+        title: 'Faturalandırma',
+        screenIds: ['satis-faturalari', 'satis-iade-faturalari'],
+      },
     ],
   },
   {
     id: 'satinalma',
     title: 'Satınalma Yönetimi',
     sections: [
-      { id: 'talepler', title: 'Satınalma Talepleri', screenIds: ['satin-alma-talepleri'] },
-      { id: 'teklifler', title: 'Tedarikçi Teklifleri', screenIds: ['satin-alma-teklif-istekleri', 'satin-alma-teklifleri', 'satin-alma-anlasmalari'] },
-      { id: 'siparisler', title: 'Satınalma Siparişleri', screenIds: ['satin-alma-siparisleri'] },
-      { id: 'mal-kabul', title: 'Mal Kabul', screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri'] },
+      {
+        id: 'satinalma-islemleri',
+        title: 'Satınalma İşlemleri',
+        screenIds: [
+          'satin-alma-talepleri',
+          'satin-alma-teklif-istekleri',
+          'satin-alma-teklifleri',
+          'satin-alma-anlasmalari',
+          'satin-alma-siparisleri',
+        ],
+      },
+      {
+        id: 'mal-kabul-irsaliye',
+        title: 'Mal Kabul ve İrsaliye',
+        screenIds: ['tedarikci-irsaliyeleri', 'mal-kabuller', 'giris-kontrolleri'],
+      },
+      {
+        id: 'faturalandirma',
+        title: 'Faturalandırma',
+        screenIds: ['alis-faturalari', 'alis-iade-faturalari'],
+      },
     ],
   },
   {
@@ -8189,7 +8217,6 @@ const KTB_MENU_LAYOUT = [
       { id: 'sayim', title: 'Depo Sayımları', screenIds: ['sayim-belgeleri'] },
       { id: 'rezervasyon', title: 'Stok Rezervasyonları', screenIds: ['stok-rezervasyonlari'] },
       { id: 'lot-seri', title: 'Lot / Seri Takibi', screenIds: ['stok-partileri', 'stok-serileri', 'stok-ikame'] },
-      { id: 'planlama', title: 'Stok Planlama', screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
       { id: 'tanimlamalar', title: 'Tanımlamalar', screenIds: ['warehouses', 'kategori-tip-tanimi', 'kategori-tanimi'] },
     ],
   },
@@ -8201,6 +8228,11 @@ const KTB_MENU_LAYOUT = [
       { id: 'rotalar', title: 'Üretim Rotaları', screenIds: ['routings'] },
       { id: 'is-emirleri', title: 'İş Emirleri', screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'] },
       { id: 'planlama', title: 'Üretim Planlama', screenIds: ['uretim-planlari'] },
+      {
+        id: 'mrp',
+        title: 'MRP Planlama',
+        screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'],
+      },
       { id: 'gerceklesme', title: 'Üretim Gerçekleşmeleri', screenIds: ['uretim-girisleri'] },
       { id: 'hizli-giris', title: 'Hızlı Üretim Girişi', screenIds: ['hizli-uretim-girisi'] },
       { id: 'onay', title: 'İş Emri Onayı', screenIds: ['kolay-is-emri-onayi'] },
@@ -8354,6 +8386,48 @@ const MODULE_PERM_ALIASES = {
   raporlama: ['raporlama', 'finans'],
 };
 
+/**
+ * Menü varyantları: aynı backend ekranı, farklı başlık + varsayılan filtre.
+ * Alış/satış fatura-irsaliye karışmasını menüde ayırmak için.
+ */
+const KTB_MENU_SCREEN_VARIANTS = [
+  {
+    id: 'satis-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Satış Faturaları',
+    presetFilters: { invoice_type: 'Satis' },
+    defaultsPatch: { invoice_type: 'Satis', invoice_category: 'SATIS', scenario: 'TICARIFATURA' },
+  },
+  {
+    id: 'satis-iade-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Satış İade Faturaları',
+    presetFilters: { invoice_type: 'Iade' },
+    defaultsPatch: { invoice_type: 'Iade', invoice_category: 'SATIS_IADE' },
+  },
+  {
+    id: 'alis-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Alış Faturaları',
+    presetFilters: { invoice_type: 'Alis' },
+    defaultsPatch: { invoice_type: 'Alis', invoice_category: 'ALIS', rate_type: 'TCMB-ALIS' },
+  },
+  {
+    id: 'alis-iade-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Alış İade Faturaları',
+    presetFilters: { invoice_type: 'AlisIade' },
+    defaultsPatch: { invoice_type: 'AlisIade', invoice_category: 'ALIS_IADE', rate_type: 'TCMB-ALIS' },
+  },
+  {
+    id: 'satis-iade-irsaliyeleri',
+    baseId: 'irsaliye-yonetimi',
+    title: 'Satış İade İrsaliyeleri',
+    presetFilters: { delivery_note_type: 'IADE' },
+    defaultsPatch: { delivery_note_type: 'IADE', is_return: true, invoice_status: 'Irsaliye', status: 'Taslak' },
+  },
+];
+
 (function applyKtbMenuLayout() {
   const byId = Object.create(null);
   const oldPlacement = [];
@@ -8363,6 +8437,49 @@ const MODULE_PERM_ALIASES = {
       if (!byId[s.id]) byId[s.id] = s;
       oldPlacement.push({ screenId: s.id, moduleId: mod.id, moduleTitle: mod.title });
     }
+  }
+
+  // Görünen başlıklar: satış/alış ayrımı
+  if (byId['irsaliye-yonetimi']) byId['irsaliye-yonetimi'].title = 'Satış İrsaliyeleri';
+  if (byId['sevk-emirleri']) byId['sevk-emirleri'].title = 'Sevkiyat İşlemleri';
+  if (byId['tedarikci-irsaliyeleri']) byId['tedarikci-irsaliyeleri'].title = 'Alış İrsaliyeleri';
+  if (byId['mal-kabuller']) byId['mal-kabuller'].title = 'Mal Kabul İşlemleri';
+
+  // İrsaliye tip filtresi (iade menü varyantı + istemci filtresi)
+  if (byId['irsaliye-yonetimi']) {
+    const ir = byId['irsaliye-yonetimi'];
+    ir.filters = Array.isArray(ir.filters) ? ir.filters.slice() : [];
+    if (!ir.filters.some((f) => f.key === 'delivery_note_type')) {
+      ir.filters.push({
+        key: 'delivery_note_type',
+        label: 'İrsaliye tipi',
+        type: 'select',
+        options: ['', 'SEVK', 'MATBU', 'IADE'],
+      });
+    }
+  }
+
+  for (const v of KTB_MENU_SCREEN_VARIANTS) {
+    const base = byId[v.baseId];
+    if (!base) continue;
+    if (byId[v.id]) continue;
+    const clone = {
+      ...base,
+      id: v.id,
+      title: v.title,
+      baseScreenId: v.baseId,
+      menuVariant: true,
+      presetFilters: { ...(v.presetFilters || {}) },
+      defaults: { ...(base.defaults || {}), ...(v.defaultsPatch || {}) },
+      filters: Array.isArray(base.filters)
+        ? base.filters.map((f) => {
+          const preset = v.presetFilters?.[f.key];
+          if (preset == null) return { ...f };
+          return { ...f, default: preset };
+        })
+        : base.filters,
+    };
+    byId[v.id] = clone;
   }
   const used = new Set();
   const missing = [];
@@ -8397,6 +8514,16 @@ const MODULE_PERM_ALIASES = {
       });
     }
   }
+  // Birleşik fatura ekranı menüde gösterilmez; satış/alış varyantları kullanılır.
+  if (byId['fatura-yonetimi'] && !used.has('fatura-yonetimi')) {
+    byId['fatura-yonetimi'].hidden = true;
+    used.add('fatura-yonetimi');
+    const fin = finalMods.find((m) => m.id === 'finans');
+    if (fin && !fin.screens.some((s) => s.id === 'fatura-yonetimi')) {
+      fin.screens.push(byId['fatura-yonetimi']);
+    }
+  }
+
   const orphans = Object.keys(byId).filter((id) => !used.has(id));
   if (orphans.length) {
     let sist = finalMods.find((m) => m.id === 'sistem');
@@ -10609,6 +10736,8 @@ const SCREEN_ALIASES = {
 
 function resolveScreenId(id) {
   if (!id) return id;
+  // Gerçek menü varyantı varsa alias’a düşme (satis-faturalari vb.)
+  if (typeof ALL_SCREENS !== 'undefined' && ALL_SCREENS.some((s) => s.id === id)) return id;
   return SCREEN_ALIASES[id] || id;
 }
 
@@ -10617,14 +10746,22 @@ function findScreen(id) {
   return ALL_SCREENS.find((s) => s.id === resolved) || null;
 }
 
+function canonicalScreenId(screenOrId) {
+  if (!screenOrId) return screenOrId;
+  if (typeof screenOrId === 'object') {
+    return screenOrId.baseScreenId || screenOrId.id;
+  }
+  const s = findScreen(screenOrId);
+  if (s?.baseScreenId) return s.baseScreenId;
+  return resolveScreenId(screenOrId);
+}
+
 function isDeliveryNoteManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'irsaliye-yonetimi';
+  return canonicalScreenId(screenOrId) === 'irsaliye-yonetimi';
 }
 
 function isInvoiceManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'fatura-yonetimi';
+  return canonicalScreenId(screenOrId) === 'fatura-yonetimi';
 }
 
 function selectedRow() {
@@ -12397,16 +12534,27 @@ async function loadPlantsForActiveCompany() {
 
 function buildDefaultFilterState(screen) {
   const fs = {};
+  const presets = screen?.presetFilters && typeof screen.presetFilters === 'object'
+    ? screen.presetFilters
+    : {};
   (screen.filters || []).forEach((f) => {
+    const preset = presets[f.key] != null ? presets[f.key] : f.default;
     if (f.type === 'checkbox') {
-      const on = f.default === true || f.default === 'true' || f.default === 1;
+      const on = preset === true || preset === 'true' || preset === 1 || preset === 'evet';
       fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
     } else if (f.key === 'is_active' || f.type === 'bool') {
-      fs[f.key] = { op: 'esit', a: 'evet', b: '' };
+      if (preset != null && preset !== '') {
+        const on = preset === true || preset === 'true' || preset === 1 || preset === 'evet';
+        fs[f.key] = { op: 'esit', a: on ? 'evet' : 'hayir', b: '' };
+      } else {
+        fs[f.key] = { op: 'esit', a: 'evet', b: '' };
+      }
     } else if (f.key === 'company_id' && getActiveCompanyId() && screen.scopeFirma !== false) {
       fs[f.key] = { op: 'esit', a: String(getActiveCompanyId()), b: '' };
     } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
+    } else if (preset != null && String(preset).trim() !== '') {
+      fs[f.key] = { op: 'esit', a: String(preset), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
       // Açılır listeler: boş operatör satırı = filtresiz
       fs[f.key] = { op: '', a: '', b: '' };
@@ -13695,11 +13843,15 @@ function screenPermission(screenId, action = null) {
     // Yetki satırı yok + modül * veya tanımsız → aç
     return !mods || !mods.length || mods.includes('*');
   }
-  const canonical = resolveScreenId(screenId);
+  const found = findScreen(screenId);
+  const canonical = found?.baseScreenId || resolveScreenId(screenId);
   const aliasIds = Object.entries(SCREEN_ALIASES)
     .filter(([, v]) => v === canonical)
     .map(([k]) => k);
-  const candidates = [screenId, canonical, ...aliasIds];
+  const variantIds = (typeof ALL_SCREENS !== 'undefined' ? ALL_SCREENS : [])
+    .filter((s) => s.baseScreenId === canonical)
+    .map((s) => s.id);
+  const candidates = [screenId, found?.id, canonical, ...aliasIds, ...variantIds].filter(Boolean);
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;

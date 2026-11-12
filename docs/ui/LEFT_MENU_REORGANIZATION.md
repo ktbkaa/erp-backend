@@ -165,3 +165,22 @@ Kanıt görselleri: `/opt/cursor/artifacts/menu_reorg_*.png`
 - Favori / hash URL’ler screen id’ye bağlı olduğu için kırılmaz.  
 - “Diğer Ekranlar” grubu artık boş (orphan kalmadı).  
 - Word menü screenshot paketi bu koşuda doğrulanamadı; canlı envanter esas alındı.
+
+## 10. Satış / Satınalma belge ayrımı (revizyon)
+
+Menü grupları alış–satış karışmasını önlemek için ayrıldı:
+
+### Satış Yönetimi
+- **Satış İşlemleri:** Satış Teklifleri, Satış Siparişleri  
+- **Sevkiyat ve İrsaliye:** Satış İrsaliyeleri (`irsaliye-yonetimi`), Sevkiyat İşlemleri (`sevk-emirleri`), Satış İade İrsaliyeleri (varyant, `delivery_note_type=IADE`)  
+- **Faturalandırma:** Satış Faturaları / Satış İade Faturaları (`fatura-yonetimi` varyantları, `invoice_type` preset)
+
+### Satınalma Yönetimi
+- **Satınalma İşlemleri:** Talepler, teklif istekleri/teklifler/anlaşmalar, siparişler  
+- **Mal Kabul ve İrsaliye:** Alış İrsaliyeleri (`tedarikci-irsaliyeleri`), Mal Kabul İşlemleri, Giriş Kontrolleri  
+- **Faturalandırma:** Alış Faturaları / Alış İade Faturaları (varyantlar)
+
+**Henüz yok (menüye eklenmedi):** Alış İade İrsaliyeleri (ayrı ekran/endpoint yok).
+
+### MRP
+MRP ekranları Stok’tan çıkarıldı → **Üretim Yönetimi → MRP Planlama**.
