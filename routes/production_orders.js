@@ -1764,6 +1764,69 @@ router.post('/:id/detaylari-doldur', async (req, res) => {
     }
 });
 
+/** Yalnızca ürün ağacından malzeme satırlarını doldurur. */
+router.post('/:id/malzemeleri-doldur', async (req, res) => {
+    try {
+        const result = await withTransaction(pool, async (client) => {
+            await canFillOrderDetails(client, req.params.id);
+            const emir = await client.query('SELECT * FROM production_orders WHERE id=$1', [req.params.id]);
+            const e = emir.rows[0];
+            if (!e?.product_bom_id) throw new Error('Ürün ağacı seçilmemiş.');
+            const agac = await client.query('SELECT * FROM boms WHERE id=$1', [e.product_bom_id]);
+            if (!agac.rows[0]) throw new Error('Ürün ağacı bulunamadı.');
+            const malN = await fillOrderMaterials(client, e.id, {
+                urunAgaciId: e.product_bom_id,
+                planlananMiktar: e.planned_quantity,
+                agacMiktar: agac.rows[0].quantity,
+                hammaddeDepoId: e.component_warehouse_id,
+            });
+            return { material: malN };
+        });
+        const emir = await getQcOrder(req.params.id);
+        res.json({ ...emir, _doldurulan: result });
+    } catch (err) {
+        res.status(400).json({ hata: err.message });
+    }
+});
+
+/** Yalnızca rotadan operasyon satırlarını doldurur. Body: { route_id? } */
+router.post('/:id/operasyonlari-doldur', async (req, res) => {
+    try {
+        const result = await withTransaction(pool, async (client) => {
+            await canFillOrderDetails(client, req.params.id);
+            const emir = await client.query('SELECT * FROM production_orders WHERE id=$1', [req.params.id]);
+            const e = emir.rows[0];
+            const bodyRoute = req.body?.route_id;
+            if (bodyRoute != null && bodyRoute !== '' && Number(bodyRoute) !== Number(e.route_id)) {
+                await client.query('UPDATE production_orders SET route_id=$2 WHERE id=$1', [e.id, Number(bodyRoute)]);
+                e.route_id = Number(bodyRoute);
+            }
+            if (!e?.route_id) throw new Error('Rota seçilmemiş.');
+            const rotaOps = await client.query(
+                'SELECT * FROM routing_operations WHERE route_id=$1 ORDER BY line_no',
+                [e.route_id],
+            );
+            if (!rotaOps.rows.length) throw new Error('Rotada operasyon yok.');
+            let carpan = Number(e.planned_quantity) || 1;
+            if (e.product_bom_id) {
+                const agac = await client.query('SELECT quantity FROM boms WHERE id=$1', [e.product_bom_id]);
+                const agacQty = Number(agac.rows[0]?.quantity || 1) || 1;
+                carpan = Number(e.planned_quantity) / agacQty;
+            }
+            const opN = await fillOrderOperations(client, e.id, {
+                rotaOps: rotaOps.rows,
+                planlananMiktar: e.planned_quantity,
+                bilesenCarpan: carpan,
+            });
+            return { operasyon: opN };
+        });
+        const emir = await getQcOrder(req.params.id);
+        res.json({ ...emir, _doldurulan: result });
+    } catch (err) {
+        res.status(400).json({ hata: err.message });
+    }
+});
+
 /**
  * Emir üzerinde ürün ağacı / rota değişikliği.
  * Body: { product_bom_id?, route_id?, detaylari_doldur?: true }

@@ -5983,17 +5983,6 @@ body.sidebar-resizing .workspace {
 .app-shell.form-solo .sidebar-resizer {
   display: none;
 }
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-
-  scrollbar-gutter: stable;
-}
-/* Diğer table-scroll kullanımları (meta vb.) */
-.table-scroll:not(#listTableScroll) {
-  overflow: auto;
-  min-height: 0;
-}
 .list-pager {
   flex: 0 0 auto;
   display: flex;
@@ -6161,9 +6150,22 @@ body.sidebar-resizing .workspace {
 #viewScreen.screen-view {
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
-#listTableScroll {
+.list-pane .table-scroll,
+#listTableScroll,
+#listTableScroll.table-scroll {
+  flex: 0 0 auto;
   overflow: auto;
+  height: min(28rem, 52vh);
+  min-height: 10rem;
+  max-height: min(28rem, 52vh);
+  overscroll-behavior-y: auto;
+  scrollbar-gutter: stable;
+}
+/* Üst filtre yan panele taşınca da liste kendi scrollbar’ını korur */
+#viewScreen.screen-view.filter-docked .list-pane .table-scroll,
+#viewScreen.screen-view.filter-docked #listTableScroll {
   height: min(28rem, 52vh);
   max-height: min(28rem, 52vh);
 }
