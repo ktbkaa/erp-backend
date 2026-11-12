@@ -13789,10 +13789,12 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
   }
   if (field.type === 'select') {
     let opts = field.options || [];
-    // Rate type: readable labels instead of codes (Alış / Satış / Efektif…)
+    // Döviz kuru rate_type: TCMB-ALIS vb. kod → okunur etiket.
+    // Stok vergi Tip’i ('Alış','Satış',…) aynı key’i kullanır; kur listesine düşürme —
+    // aksi halde seçenekler uyuşmaz, Tip boş görünür ve DOM okumada silinir.
     if (field.key === 'rate_type' && opts.length && typeof opts[0] === 'string') {
-      opts = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
-      if (!opts.length) opts = RATE_TYPE_OPTIONS.slice();
+      const mapped = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
+      if (mapped.length) opts = mapped;
     }
     const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
     const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.l ?? optVal(o)) : o);
@@ -14427,8 +14429,14 @@ function ensureItemTaxDefinitionsSeed(rec) {
   if (!rec) return;
   let list = Array.isArray(rec.vergi_tanimlari) ? [...rec.vergi_tanimlari] : [];
   const byType = new Map(
-    list.filter((r) => r && r.rate_type).map((r) => [String(r.rate_type), r])
+    list.filter((r) => r && String(r.rate_type || '').trim())
+      .map((r) => [String(r.rate_type).trim(), r])
   );
+  // Tip boşalıp KDV kalan satırlar — sırayla boş tiplere geri yaz
+  const orphans = list.filter((r) => {
+    if (!r || String(r.rate_type || '').trim()) return false;
+    return r.tax_code_id || (r.vat_rate != null && r.vat_rate !== '');
+  });
   // Eski tek alanlı kayıttan Satış satırı üret
   if (!byType.has('Satış') && (rec.default_tax_code_id || rec.default_vat_rate != null)) {
     byType.set('Satış', {
@@ -14438,11 +14446,19 @@ function ensureItemTaxDefinitionsSeed(rec) {
       is_active: true,
     });
   }
+  let orphanIdx = 0;
   list = STOK_VERGI_RATE_TYPES.map((rate_type) => {
     const prev = byType.get(rate_type);
-    return prev
-      ? { ...prev, rate_type, is_active: prev.is_active !== false }
-      : { rate_type, tax_code_id: null, vat_rate: null, is_active: true };
+    if (prev) return { ...prev, rate_type, is_active: prev.is_active !== false };
+    const orphan = orphans[orphanIdx++];
+    if (orphan) {
+      return {
+        ...orphan,
+        rate_type,
+        is_active: orphan.is_active !== false,
+      };
+    }
+    return { rate_type, tax_code_id: null, vat_rate: null, is_active: true };
   });
   rec.vergi_tanimlari = list;
 }
@@ -21582,6 +21598,8 @@ async function saveForm({ after = 'stay' } = {}) {
     } else {
       master.is_yeri_baglari = [];
     }
+    // Tip DOM’da boşalsa bile KDV’li satırları 4 tipe geri oturt, sonra temizle
+    ensureItemTaxDefinitionsSeed(master);
     syncItemTaxFromGrid(master);
     applyPrimaryItemCompanyToMaster(master);
     syncItemCompanyPlantForSave(master);
@@ -23245,6 +23263,18 @@ function bindEvents() {
         rows[state.gridSel.idx] = row;
       }
       if (act === 'yeni') {
+        // Vergi tanımları sabit 4 tip — boş satır ekleme
+        if (key === 'vergi_tanimlari') {
+          ensureItemTaxDefinitionsSeed(state.formRecord);
+          state.formRecord[key] = (state.formRecord[key] || []).map((r, i) => ({
+            ...r,
+            _satir_duzenleniyor: i === 0,
+            _satir_kayitli: false,
+          }));
+          state.gridSel = { key, idx: 0 };
+          renderForm(screen);
+          return;
+        }
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
         const blank = emptyRowFromFields(tab.fields);
         blank._satir_kayitli = false;
@@ -23275,10 +23305,15 @@ function bindEvents() {
           try {
             if (screen.detailPersist?.[key]) await deletePersistedGridRow(screen, key, doomed);
             rows.splice(doomedIdx, 1);
-            state.formRecord[key] = rows;
+            if (key === 'vergi_tanimlari') {
+              state.formRecord[key] = rows;
+              ensureItemTaxDefinitionsSeed(state.formRecord);
+            } else {
+              state.formRecord[key] = rows;
+            }
             state.gridSel = { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır sil başarı — ekran içi mesaj yok (hata toast kalır)
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -23327,12 +23362,17 @@ function bindEvents() {
           try {
             if (screen.detailPersist?.[key]) await deletePersistedGridRow(screen, key, doomed);
             rows.splice(idx, 1);
-            state.formRecord[key] = rows;
+            if (key === 'vergi_tanimlari') {
+              state.formRecord[key] = rows;
+              ensureItemTaxDefinitionsSeed(state.formRecord);
+            } else {
+              state.formRecord[key] = rows;
+            }
             state.gridSel = rows.length
-              ? { key, idx: Math.min(idx, rows.length - 1) }
+              ? { key, idx: Math.min(idx, Math.max(0, (state.formRecord[key] || []).length - 1)) }
               : { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır sil başarı — ekran içi mesaj yok
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -23341,6 +23381,14 @@ function bindEvents() {
       }
       if (act === 'kopyala') {
         if (!rows[idx]) return;
+        if (key === 'vergi_tanimlari') {
+          // Tip satırları tekil — kopya yerine düzenlemeye al
+          rows.forEach((r, i) => { if (r) r._satir_duzenleniyor = i === idx; });
+          state.formRecord[key] = rows;
+          state.gridSel = { key, idx };
+          renderForm(screen);
+          return;
+        }
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
         const copy = stripNonCopyableOnRowCopy(tab.fields, rows[idx]);
         delete copy._satir_toplu; // kopya = teker teker; ✓ sonrası boş satır
@@ -23349,7 +23397,7 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — Kaydet ile onaylayın.');
+        // Satır kopyala — ekran içi başarı mesajı yok
         return;
       }
       if (act === 'kaydet') {
@@ -23389,6 +23437,22 @@ function bindEvents() {
           row._satir_duzenleniyor = false;
           if (wasBulk) row._satir_toplu = true;
           else delete row._satir_toplu;
+
+          if (key === 'vergi_tanimlari') {
+            // Sabit 4 tip: boş satır ekleme / alta taşıma yok — tip korunur
+            rows[idx] = row;
+            state.formRecord[key] = rows;
+            ensureItemTaxDefinitionsSeed(state.formRecord);
+            state.formRecord.vergi_tanimlari = (state.formRecord.vergi_tanimlari || []).map((r) => ({
+              ...r,
+              _satir_kayitli: true,
+              _satir_duzenleniyor: false,
+            }));
+            state.gridSel = { key, idx };
+            renderForm(screen);
+            return;
+          }
+
           // Onaylanan satır alta; boş satır yalnız manuel girişte
           rows.splice(idx, 1);
           rows.push(row);
@@ -23416,15 +23480,12 @@ function bindEvents() {
               }
             });
           }
-          toast(screen.detailPersist?.[key]
-            ? 'Satır veritabanına kaydedildi.'
-            : 'Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+          // Satır kaydet başarı — ekran içi mesaj yok (üst Kaydet belgeyi yazar)
           return;
         }
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
         renderForm(screen);
-        toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
         return;
       }
     }
