@@ -210,6 +210,12 @@ router.get('/', async (req, res) => {
     for (const a of liste.rows) result.push(await getBomTree(a.id));
     res.json(result);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -261,6 +267,12 @@ router.get('/:id/on-maliyet', async (req, res) => {
       kalemler,
     });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -271,6 +283,12 @@ router.get('/:id', async (req, res) => {
     if (!agac) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
     res.json(agac);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -489,7 +507,7 @@ router.post('/', async (req, res) => {
           fg_warehouse_id, alternative_description, version_code, brand_code, attr3_code,
           wo_change_mode, lock_when_used_in_route
         ) VALUES (
-          $1,$2,$3,COALESCE($4,1),$5,
+          $1,$2,$3,COALESCE($4::numeric,1),$5,
           $6,$7,$8,$9,$10,$11,
           $12,$13,$14,$15,$16,
           $17,$18,$19,$20,
@@ -554,6 +572,12 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(await getBomTree(kayitId));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -695,6 +719,12 @@ router.put('/:id', async (req, res) => {
 
     res.json(await getBomTree(kayitId));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -715,6 +745,12 @@ router.delete('/:id', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
     res.json({ is_deleted: true, hard: false, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

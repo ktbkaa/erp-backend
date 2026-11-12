@@ -73,4 +73,52 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+router.get('/:id', async (req, res, next) => {
+  try {
+    const r = await pool.query(
+      `SELECT r.*, p.project_code FROM project_risks r JOIN projects p ON p.id = r.project_id WHERE r.id=$1`,
+      [req.params.id]
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Risk bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    const cur = await pool.query(`SELECT * FROM project_risks WHERE id=$1`, [req.params.id]);
+    const old = cur.rows[0];
+    if (!old) return res.status(404).json({ hata: 'Risk bulunamadı.' });
+    const b = req.body || {};
+    const pick = (k) => (b[k] === undefined ? old[k] : (b[k] === '' ? null : b[k]));
+    const probability = pick('probability') || 'Medium';
+    const impact = pick('impact') || 'Medium';
+    const title = pick('title');
+    if (!title) return res.status(400).json({ hata: 'title zorunlu.' });
+    const r = await pool.query(
+      `UPDATE project_risks SET
+         title=$2, description=$3, probability=$4, impact=$5, score=$6,
+         owner_user_id=$7, mitigation=$8, contingency=$9, status_code=$10
+       WHERE id=$1 RETURNING *`,
+      [req.params.id, title, pick('description'), probability, impact, calcScore(probability, impact),
+        pick('owner_user_id'), pick('mitigation'), pick('contingency'), pick('status_code')]
+    );
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const r = await pool.query(`UPDATE project_risks SET is_active=FALSE WHERE id=$1 RETURNING id`, [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Risk bulunamadı.' });
+    res.json({ is_deleted: true, soft: true, id: Number(r.rows[0].id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

@@ -108,6 +108,12 @@ router.get('/', async (req, res) => {
     for (const r of liste.rows) result.push(await getRequisition(r.id));
     res.json(result);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -122,6 +128,12 @@ router.get('/:id', async (req, res) => {
     }
     res.json(talep);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -171,6 +183,12 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(await getRequisition(id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -181,7 +199,7 @@ router.put('/:id', async (req, res) => {
     const { satirlar } = body;
     const allowed = ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'];
     if (body.status && !allowed.includes(body.status)) {
-      return res.status(400).json({ hata: `Geçersiz status. İzin verilen: ${allowed.join(', ')}` });
+      return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
     }
     const p = pick(body, TALEP_BASLIK_KEYS);
 
@@ -245,6 +263,12 @@ router.put('/:id', async (req, res) => {
 
     res.json(await getRequisition(id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -263,7 +287,7 @@ router.post('/:id/onayla', async (req, res) => {
         [req.params.id, approved_by.id, req.body.supplier_partner_id || null]
       );
       if (!upd.rows[0]) {
-        const err = new Error('Talep onaylanamadı (bulunamadı veya status Acik değil).');
+        const err = new Error('Talep onaylanamadı (bulunamadı veya durumu Açık değil).');
         err.status = 400;
         throw err;
       }
@@ -312,6 +336,12 @@ router.post('/:id/onayla', async (req, res) => {
     const talep = await getRequisition(result.talepId);
     res.json({ ...talep, email_address: result.email_address });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -322,6 +352,12 @@ router.delete('/:id', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ hata: 'Talep bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

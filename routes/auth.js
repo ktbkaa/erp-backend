@@ -111,7 +111,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({
         hata: useLdap
           ? 'LDAP doğrulaması için önce ERP’de aynı kullanıcı adı ile kullanıcı kartı olmalı.'
-          : 'Kullanıcı bulunamadı veya is_inactive.',
+          : 'Kullanıcı bulunamadı veya pasif.',
       });
     }
 

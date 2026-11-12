@@ -278,8 +278,17 @@ const MODULES = [
           { key: 'description', label: 'Açıklama', name: true, required: true },
         ],
         detailFields: [
-          { key: 'screen_code', label: 'Ekran kodu' },
-          { key: 'screen_name', label: 'Ekran adı' },
+          {
+            key: 'screen_code',
+            label: 'Ekran kodu',
+            type: 'lookup',
+            lookup: 'ekranlar',
+            valueKey: 'screen_code',
+            labelKey: 'screen_name',
+            codeKey: 'screen_code',
+            autoFillName: 'screen_name',
+          },
+          { key: 'screen_name', label: 'Ekran adı', readOnly: true },
           { key: 'last_number', label: 'Son numara', type: 'number' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
@@ -356,7 +365,7 @@ const MODULES = [
         crud: true,
         codeField: 'category_code',
         nameField: 'category_name',
-        numeratorSeri: 'KATEGORI',
+        numeratorSeri: null,
         filters: [
           { key: 'category_code', label: 'Kategori kodu' },
           { key: 'category_name', label: 'Kategori adı' },
@@ -369,7 +378,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'category_code', label: 'Kategori kodu', code: true, required: true },
+          { key: 'category_code', label: 'Kategori kodu', code: true, editableOnNew: true, required: true },
           { key: 'category_name', label: 'Kategori adı', name: true, required: true },
           {
             key: 'category_type',
@@ -398,7 +407,7 @@ const MODULES = [
         crud: true,
         codeField: 'country_code',
         nameField: 'country_name',
-        numeratorSeri: 'ULKE',
+        numeratorSeri: null,
         filters: [
           { key: 'country_code', label: 'Ülke kodu' },
           { key: 'country_name', label: 'Ülke adı' },
@@ -409,7 +418,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'country_code', label: 'Ülke kodu', code: true, required: true },
+          { key: 'country_code', label: 'Ülke kodu', code: true, editableOnNew: true, required: true },
           { key: 'country_name', label: 'Ülke adı', name: true, required: true },
         ],
         detailFields: [
@@ -427,7 +436,7 @@ const MODULES = [
         crud: true,
         codeField: 'currency_code',
         nameField: 'currency_name',
-        numeratorSeri: 'PARA_BIRIM',
+        numeratorSeri: null,
         filters: [
           { key: 'currency_code', label: 'PB kodu' },
           { key: 'currency_name', label: 'PB adı' },
@@ -458,7 +467,7 @@ const MODULES = [
         crud: true,
         codeField: 'city_code',
         nameField: 'city_name',
-        numeratorSeri: 'SEHIR',
+        numeratorSeri: null,
         filters: [
           { key: 'city_code', label: 'Şehir kodu' },
           { key: 'city_name', label: 'Şehir adı' },
@@ -474,44 +483,25 @@ const MODULES = [
           { key: 'city_code', label: 'Şehir kodu', code: true, editableOnNew: true, required: true },
           { key: 'city_name', label: 'Şehir adı', name: true, required: true },
           { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
-        ],
-        detailFields: [
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'district-tanimi',
-        techId: 'MDM-DIST-SCR-001',
-        businessNameEn: 'DistrictDefinitionScreen',
-        title: 'İlçe Tanımı',
-        endpoint: '/districts',
-        crud: true,
-        codeField: 'district_code',
-        nameField: 'district_name',
-        numeratorSeri: 'ILCE',
-        filters: [
-          { key: 'district_code', label: 'İlçe kodu' },
-          { key: 'district_name', label: 'İlçe adı' },
-          { key: 'city_code', label: 'Şehir' },
-        ],
-        columns: [
-          { key: 'district_code', label: 'Kod', mono: true },
-          { key: 'district_name', label: 'Ad' },
-          { key: 'city_code', label: 'Şehir' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'district_code', label: 'İlçe kodu', code: true, editableOnNew: true, required: true },
+        // Districts live under the city card (no standalone district screen)
+        detailKey: 'districts',
+        detailSlots: 3,
+        detailAsFields: false,
+        detailFields: [
+          { key: 'district_code', label: 'İlçe kodu', code: true, mono: true, size: 'short' },
           { key: 'district_name', label: 'İlçe adı', name: true, required: true },
-          { key: 'city_code', label: 'Şehir', type: 'lookup', lookup: 'cities', valueKey: 'city_code', labelKey: 'city_name' },
-        ],
-        detailFields: [
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
-        detailKey: null,
-        detailAsFields: true,
+        // Row ✓ / Sil writes to /districts right away
+        detailPersist: {
+          districts: {
+            endpoint: '/districts',
+            parentFields: { city_code: 'city_code' },
+          },
+        },
+        defaults: { is_active: true, districts: [] },
       },
       {
         id: 'odeme-kosulu-tanimi',
@@ -522,7 +512,7 @@ const MODULES = [
         crud: true,
         codeField: 'term_code',
         nameField: 'term_name',
-        numeratorSeri: 'ODEME_KOSUL',
+        numeratorSeri: null,
         filters: [
           { key: 'term_code', label: 'Kod' },
           { key: 'term_name', label: 'Ad' },
@@ -554,7 +544,7 @@ const MODULES = [
         crud: true,
         codeField: 'term_code',
         nameField: 'term_name',
-        numeratorSeri: 'TESLIMAT_KOSUL',
+        numeratorSeri: null,
         filters: [
           { key: 'term_code', label: 'Kod' },
           { key: 'term_name', label: 'Ad' },
@@ -584,7 +574,7 @@ const MODULES = [
         crud: true,
         codeField: 'language_code',
         nameField: 'language_name',
-        numeratorSeri: 'DIL',
+        numeratorSeri: null,
         filters: [
           { key: 'language_code', label: 'Kod' },
           { key: 'language_name', label: 'Ad' },
@@ -613,7 +603,7 @@ const MODULES = [
         crud: true,
         codeField: 'bank_code',
         nameField: 'bank_name',
-        numeratorSeri: 'BANKA',
+        numeratorSeri: null,
         filters: [
           { key: 'bank_code', label: 'Kod' },
           { key: 'bank_name', label: 'Ad' },
@@ -646,29 +636,59 @@ const MODULES = [
         crud: true,
         codeField: 'source_currency',
         nameField: 'target_currency',
+        tcmbFetchAction: true,
         filters: [
           { key: 'source_currency', label: 'Kaynak PB' },
           { key: 'target_currency', label: 'Hedef PB' },
+          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel', 'Seed'] },
         ],
         columns: [
           { key: 'rate_date', label: 'Tarih' },
-          { key: 'source_currency', label: 'Kaynak', mono: true },
-          { key: 'target_currency', label: 'Hedef', mono: true },
+          { key: 'source_currency', label: 'Kaynak PB', mono: true },
+          { key: 'target_currency', label: 'Hedef PB', mono: true },
           { key: 'buy_rate', label: 'Alış' },
           { key: 'sell_rate', label: 'Satış' },
-          { key: 'source', label: 'Kaynak' },
+          { key: 'source', label: 'Kur kaynağı' },
         ],
         masterFields: [
           { key: 'rate_date', label: 'Kur tarihi', type: 'date', required: true },
           { key: 'source_currency', label: 'Kaynak PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
           { key: 'target_currency', label: 'Hedef PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
-          { key: 'buy_rate', label: 'Alış kuru', type: 'number', required: true },
-          { key: 'sell_rate', label: 'Satış kuru', type: 'number', required: true },
+          {
+            key: 'buy_rate',
+            label: 'Alış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz alış (Forex Buying): Kaydi/hesaplar arası işlemde kurumun sizden döviz aldığı kur. TCMB seçiliyse bültenden gelir; Manuel’de banka veya sözleşmenize göre girin. Belgede «Kur tipi = Alış» bu değeri kullanır.',
+          },
+          {
+            key: 'sell_rate',
+            label: 'Satış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz satış (Forex Selling): Kaydi işlemde kurumun size döviz sattığı kur. Genelde alıştan yüksektir (makas). Satış belgelerinde sıkça bu tip seçilir. TCMB gösterge niteliğindedir; banka kurunuz farklı olabilir.',
+          },
         ],
         detailFields: [
-          { key: 'effective_buy_rate', label: 'Efektif alış', type: 'number' },
-          { key: 'effective_sell_rate', label: 'Efektif satış', type: 'number' },
-          { key: 'source', label: 'Kaynak' },
+          {
+            key: 'effective_buy_rate',
+            label: 'Efektif alış',
+            type: 'number',
+            info: 'Efektif alış (Banknote Buying): Nakit banknot dövizi kurumun sizden aldığı kur. Elden döviz bozdurma senaryosu. TCMB’de bazı paralarda boş olabilir; o zaman döviz alışa düşülür.',
+          },
+          {
+            key: 'effective_sell_rate',
+            label: 'Efektif satış',
+            type: 'number',
+            info: 'Efektif satış (Banknote Selling): Nakit banknotu kurumdan alırken kullanılan kur. Nakit makası genelde kaydi makastan geniştir. Manuel tanımlarken fiilen uyguladığınız gişe/banka kurunu yazın.',
+          },
+          {
+            key: 'source',
+            label: 'Kur kaynağı',
+            type: 'select',
+            options: ['TCMB', 'Manuel'],
+            info: 'TCMB: Sistem Parametreleri’ndeki TCMB_KUR_URL (today.xml) ile iş günü bülteni çekilir; TCMB_KUR_AUTO=true ise günde bir kez otomatik güncellenir. Manuel: TCMB’de olmayan pariteler (ör. MXN) veya kendi banka kurunuz.',
+          },
         ],
         detailKey: null,
         detailAsFields: true,
@@ -899,7 +919,7 @@ const MODULES = [
         crud: true,
         codeField: 'group_code',
         nameField: 'group_name',
-        numeratorSeri: 'KULLANICI_GRUP',
+        numeratorSeri: null,
         filters: [
           { key: 'group_code', label: 'Grup kodu' },
           { key: 'group_name', label: 'Grup adı' },
@@ -912,7 +932,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'group_code', label: 'Grup kodu', code: true, required: true },
+          { key: 'group_code', label: 'Grup kodu', code: true, editableOnNew: true, required: true },
           { key: 'group_name', label: 'Grup adı', name: true, required: true },
         ],
         detailFields: [
@@ -1131,7 +1151,7 @@ const MODULES = [
         scopeIsYeri: false,
         codeField: 'company_code',
         nameField: 'company_name',
-        numeratorSeri: 'FIRMA',
+        numeratorSeri: null,
         filters: [
           { key: 'company_code', label: 'Firma kodu' },
           { key: 'company_name', label: 'Firma adı' },
@@ -1167,7 +1187,7 @@ const MODULES = [
         scopeIsYeri: false,
         codeField: 'plant_code',
         nameField: 'plant_name',
-        numeratorSeri: 'ISYERI',
+        numeratorSeri: null,
         filters: [
           { key: 'company_name', label: 'Firma' },
           { key: 'plant_code', label: 'İş yeri kodu' },
@@ -1180,7 +1200,7 @@ const MODULES = [
           { key: 'address', label: 'Adres' },
         ],
         masterFields: [
-          { key: 'plant_code', label: 'İş yeri kodu', code: true, required: true },
+          { key: 'plant_code', label: 'İş yeri kodu', code: true, editableOnNew: true, required: true },
           { key: 'plant_name', label: 'İş yeri adı', name: true, required: true },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
         ],
@@ -1201,7 +1221,7 @@ const MODULES = [
         scopeIsYeri: false,
         codeField: 'warehouse_code',
         nameField: 'warehouse_name',
-        numeratorSeri: 'DEPO',
+        numeratorSeri: null,
         filters: [
           { key: 'company_code', label: 'Firma' },
           { key: 'plant_code', label: 'İş yeri' },
@@ -1216,7 +1236,7 @@ const MODULES = [
           { key: 'is_default', label: 'Varsayılan' },
         ],
         masterFields: [
-          { key: 'warehouse_code', label: 'Depo kodu', code: true, required: true },
+          { key: 'warehouse_code', label: 'Depo kodu', code: true, editableOnNew: true, required: true },
           { key: 'warehouse_name', label: 'Depo adı', name: true, required: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
         ],
@@ -1369,10 +1389,10 @@ const MODULES = [
           {
             id: 'uom_code', label: 'Birim Dönüşümleri', kind: 'grid', key: 'birim_tanimlari', slots: 3,
             fields: [
-              { key: 'source_factor', label: 'Katsayı', type: 'number', size: 'short', hint: 'Sol quantity' },
+              { key: 'source_factor', label: 'Katsayı', type: 'number', size: 'short', hint: 'Sol miktar' },
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
               { key: '_esittir', label: '=', type: 'static', size: 'short' },
-              { key: 'conversion_factor', label: 'Katsayı', type: 'number', size: 'short', hint: 'Sağ quantity' },
+              { key: 'conversion_factor', label: 'Katsayı', type: 'number', size: 'short', hint: 'Sağ miktar' },
               { key: 'target_uom', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
               { key: 'barcode', label: 'Barkod' },
               { key: 'is_tracking_uom', label: 'Takip birimi', type: 'checkbox' },
@@ -1502,7 +1522,7 @@ const MODULES = [
         masterFields: [
           { key: 'movement_no', label: 'Hareket no', code: true, readOnly: true, hint: 'Hareket koduna göre (ör. STC-01-00001)' },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-stok', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', required: true },
-          { key: 'warehouse_id', label: 'Depo (source)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
+          { key: 'warehouse_id', label: 'Depo (kaynak)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
           {
             key: 'target_warehouse_id',
             label: 'Hedef depo (transfer)',
@@ -1787,7 +1807,7 @@ const MODULES = [
           { key: 'open_purchase_qty', label: 'Açık SA' },
           { key: 'planned_production', label: 'Açık UE' },
           { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri quantity' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
           { key: 'suggestion', label: 'Öneri' },
           { key: 'planned_start', label: 'Plan baş.' },
         ],
@@ -1814,7 +1834,7 @@ const MODULES = [
           { key: 'dependent_demand', label: 'Bağımlı' },
           { key: 'available_stock', label: 'Eldeki' },
           { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri quantity' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
           { key: 'suggestion', label: 'Öneri' },
           { key: 'donusturuldu', label: 'Dönüştü' },
           { key: 'donusum_document_no', label: 'Belge' },
@@ -1970,7 +1990,7 @@ const MODULES = [
           { key: 'item_code', label: 'Stok', mono: true },
           { key: 'item_name', label: 'Ad' },
           { key: 'ikame_stok_kodu', label: 'İkame', mono: true },
-          { key: 'ikame_stok_adi', label: 'İkame first_name' },
+          { key: 'ikame_stok_adi', label: 'İkame ad' },
           { key: 'priority', label: 'Öncelik' },
         ],
         masterFields: [
@@ -2518,7 +2538,7 @@ const MODULES = [
         readOnly: true,
         codeField: 'list_code',
         nameField: 'description',
-        banner: 'Tüm ürün ağaçlarının düz level dökümü (where-used / level raporu). Miktarlı patlatma için «Ürün Ağacı Patlatma» ekranını kullanın.',
+        banner: 'Tüm ürün ağaçlarının düz seviye dökümü (where-used / seviye raporu). Miktarlı patlatma için «Ürün Ağacı Patlatma» ekranını kullanın.',
         filters: [
           { key: 'bom_code', label: 'Ağaç kodu' },
           { key: 'item_code', label: 'Stok kodu' },
@@ -2572,7 +2592,7 @@ const MODULES = [
         crud: true,
         codeField: 'class_code',
         nameField: 'class_name',
-        numeratorSeri: 'STOK_SINIF',
+        numeratorSeri: null,
         filters: [
           { key: 'class_code', label: 'Sınıf kodu' },
           { key: 'class_name', label: 'Sınıf adı' },
@@ -2584,7 +2604,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'class_code', label: 'Sınıf kodu', code: true, required: true },
+          { key: 'class_code', label: 'Sınıf kodu', code: true, editableOnNew: true, required: true },
           { key: 'class_name', label: 'Sınıf adı', name: true, required: true },
           { key: 'parent_class_code', label: 'Üst sınıf kodu' },
         ],
@@ -2602,7 +2622,7 @@ const MODULES = [
         title: 'İş Merkezleri',
         endpoint: '/is-merkezleri',
         crud: true,
-        numeratorSeri: 'IS_MERKEZI',
+        numeratorSeri: null,
         codeField: 'center_code',
         nameField: 'center_name',
         filters: [
@@ -2616,7 +2636,7 @@ const MODULES = [
           { key: 'plant_name', label: 'İş yeri' },
         ],
         masterFields: [
-          { key: 'center_code', label: 'Kod', code: true },
+          { key: 'center_code', label: 'Kod', code: true, editableOnNew: true },
           { key: 'center_name', label: 'Ad', name: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
         ],
@@ -2629,7 +2649,7 @@ const MODULES = [
         title: 'İş İstasyonları',
         endpoint: '/is-istasyonlari',
         crud: true,
-        numeratorSeri: 'IS_ISTASYONU',
+        numeratorSeri: null,
         codeField: 'station_code',
         nameField: 'station_name',
         filters: [
@@ -2645,7 +2665,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'station_code', label: 'Kod', code: true },
+          { key: 'station_code', label: 'Kod', code: true, editableOnNew: true },
           { key: 'station_name', label: 'Ad', name: true, required: true },
           { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', required: true },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -2821,7 +2841,7 @@ const MODULES = [
         title: 'Üretim Emri Tipleri',
         endpoint: '/uretim-emri-tipleri',
         crud: true,
-        numeratorSeri: 'URETIM_EMRI_TIP',
+        numeratorSeri: null,
         codeField: 'type_code',
         nameField: 'type_name',
         filters: [
@@ -2836,7 +2856,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'type_code', label: 'Tip kodu', code: true, required: true },
+          { key: 'type_code', label: 'Tip kodu', code: true, editableOnNew: true, required: true },
           { key: 'type_name', label: 'Tip adı', name: true, required: true },
           { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], required: true },
         ],
@@ -2952,8 +2972,8 @@ const MODULES = [
             dependsOn: 'item_id', filterKey: 'item_id',
           },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
-          { key: 'planned_quantity', label: 'Planlanan quantity', type: 'number', required: true, group: 'kimlik' },
-          { key: 'produced_quantity', label: 'Üretilen quantity', type: 'number', readOnly: true, group: 'kimlik' },
+          { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik' },
+          { key: 'produced_quantity', label: 'Üretilen miktar', type: 'number', readOnly: true, group: 'kimlik' },
           { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', group: 'kimlik' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'kimlik' },
           // 3) Depolar — stok kartı varsayılan giriş/çıkış
@@ -2982,7 +3002,7 @@ const MODULES = [
           { key: 'operation_code', label: 'Operasyon kodu', size: 'short' },
           { key: 'operation_name', label: 'Operasyon adı' },
           { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
-          { key: 'planned_quantity', label: 'Plan quantity', type: 'number', size: 'short' },
+          { key: 'planned_quantity', label: 'Plan miktar', type: 'number', size: 'short' },
           { key: 'produced_quantity', label: 'Üretilen', type: 'number', size: 'short', readOnly: true },
           { key: 'status', label: 'Durum', type: 'select', options: ['Bekliyor', 'Hazir', 'Tamamlandi', 'Kapali'] },
           { key: 'ilk_operasyon', label: 'İlk op?', type: 'checkbox', readOnly: true },
@@ -3007,7 +3027,7 @@ const MODULES = [
               { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
               { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-              { key: 'planned_quantity', label: 'Plan quantity', type: 'number', size: 'short', required: true },
+              { key: 'planned_quantity', label: 'Plan miktar', type: 'number', size: 'short', required: true },
               { key: 'consumed_quantity', label: 'Tüketilen', type: 'number', size: 'short', readOnly: true },
               { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
             ],
@@ -3067,7 +3087,7 @@ const MODULES = [
           { key: 'partner_name', label: 'Cari' },
           { key: 'item_code', label: 'Stok', mono: true },
           { key: 'item_name', label: 'Ad' },
-          { key: 'siparis_miktar', label: 'Sip. quantity' },
+          { key: 'siparis_miktar', label: 'Sip. miktar' },
           { key: 'remaining_quantity', label: 'Kalan' },
           { key: 'onerilen_agac_kodu', label: 'Ağaç', mono: true },
           { key: 'onerilen_rota_kodu', label: 'Rota', mono: true },
@@ -3088,7 +3108,7 @@ const MODULES = [
             dependsOn: 'item_id', filterKey: 'item_id',
           },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
-          { key: 'planned_quantity', label: 'Planlanan quantity', type: 'number', required: true, group: 'kimlik' },
+          { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik' },
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
@@ -3338,7 +3358,7 @@ const MODULES = [
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
@@ -3439,7 +3459,7 @@ const MODULES = [
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
           { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'discount_rate', label: 'İsk %', type: 'number', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
@@ -3520,7 +3540,7 @@ const MODULES = [
           { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short', group: 'kimlik' },
           { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short', group: 'finans' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short', group: 'finans' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short', group: 'finans' },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short', group: 'finans' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short', group: 'finans' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short', group: 'finans' },
@@ -3764,7 +3784,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'type_code', label: 'Tip kodu', code: true, required: true },
+          { key: 'type_code', label: 'Tip kodu', code: true, editableOnNew: true, required: true },
           { key: 'type_name', label: 'Tip adı', name: true, required: true },
         ],
         detailFields: [
@@ -4286,7 +4306,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'category_code', label: 'Kategori kodu', code: true, required: true },
+          { key: 'category_code', label: 'Kategori kodu', code: true, editableOnNew: true, required: true },
           { key: 'category_name', label: 'Kategori adı', name: true, required: true },
           { key: 'line_no', label: 'Sıra', type: 'number' },
         ],
@@ -4938,7 +4958,7 @@ const MODULES = [
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
@@ -5034,7 +5054,7 @@ const MODULES = [
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
           { key: 'valid_date', label: 'Geçerlilik', type: 'date', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
@@ -5126,7 +5146,7 @@ const MODULES = [
           { key: 'ship_district', label: 'İlçe' },
           { key: 'ship_country', label: 'Ülke' },
           { key: 'ship_postal_code', label: 'Posta kodu' },
-          { key: 'carrier_title', label: 'Taşıyıcı title' },
+          { key: 'carrier_title', label: 'Taşıyıcı unvan' },
           { key: 'carrier_tax_id', label: 'Taşıyıcı VKN' },
           { key: 'vehicle_plate', label: 'Araç plaka' },
           { key: 'driver_name', label: 'Şoför' },
@@ -5210,7 +5230,7 @@ const MODULES = [
           { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
           { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['SevkTarihi', 'BelgeTarihi', 'Serbest'] },
-          { key: 'e_document_status', label: 'e-Belge status', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
+          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
           { key: 'actual_ship_date', label: 'Fiili sevk tarihi', type: 'date', lead: true },
           { key: 'actual_ship_time', label: 'Fiili sevk saati' },
           { key: 'due_date', label: 'Vade tarihi', type: 'date' },
@@ -5252,7 +5272,7 @@ const MODULES = [
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'vat_code', label: 'KDV kodu', size: 'short' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
           { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short' },
@@ -5307,12 +5327,12 @@ const MODULES = [
             kind: 'fields',
             fields: [
               { key: 'ship_to_partner_id', label: 'Sevk cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-              { key: 'ship_address_type', label: 'Sevk address tipi' },
-              { key: 'ship_name', label: 'Sevk first_name' },
-              { key: 'ship_last_name', label: 'Sevk last_name' },
-              { key: 'ship_address_1', label: 'Sevk address 1', size: 'wide' },
-              { key: 'ship_address_2', label: 'Sevk address 2', size: 'wide' },
-              { key: 'ship_address_3', label: 'Sevk address 3', size: 'wide' },
+              { key: 'ship_address_type', label: 'Sevk adres tipi' },
+              { key: 'ship_name', label: 'Sevk ad' },
+              { key: 'ship_last_name', label: 'Sevk soyad' },
+              { key: 'ship_address_1', label: 'Sevk adres 1', size: 'wide' },
+              { key: 'ship_address_2', label: 'Sevk adres 2', size: 'wide' },
+              { key: 'ship_address_3', label: 'Sevk adres 3', size: 'wide' },
               { key: 'ship_country', label: 'Sevk ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
               { key: 'ship_city', label: 'Sevk il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
               { key: 'ship_district', label: 'Sevk ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
@@ -5329,16 +5349,16 @@ const MODULES = [
               { key: 'fin_due_date', label: 'Fin. vade tarih', type: 'date' },
               { key: 'fin_due_days', label: 'Fin. vade gün', type: 'number' },
               { key: 'stock_date', label: 'Stok tarihi', type: 'date' },
-              { key: 'bill_address_1', label: 'Fatura address 1', size: 'wide' },
-              { key: 'bill_address_2', label: 'Fatura address 2', size: 'wide' },
-              { key: 'bill_address_3', label: 'Fatura address 3', size: 'wide' },
+              { key: 'bill_address_1', label: 'Fatura adres 1', size: 'wide' },
+              { key: 'bill_address_2', label: 'Fatura adres 2', size: 'wide' },
+              { key: 'bill_address_3', label: 'Fatura adres 3', size: 'wide' },
               { key: 'bill_postal_code', label: 'Fatura posta kodu' },
               { key: 'bill_country', label: 'Fatura ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
               { key: 'bill_city', label: 'Fatura il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
               { key: 'bill_district', label: 'Fatura ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
               { key: 'contract_code', label: 'Sözleşme kodu' },
-              { key: 'partner_title', label: 'Cari title', size: 'wide' },
-              { key: 'partner_title_2', label: 'Cari title 2', size: 'wide' },
+              { key: 'partner_title', label: 'Cari unvan', size: 'wide' },
+              { key: 'partner_title_2', label: 'Cari unvan 2', size: 'wide' },
               { key: 'tax_office', label: 'Vergi dairesi' },
               { key: 'tax_id', label: 'Vergi no' },
             ],
@@ -5357,9 +5377,9 @@ const MODULES = [
               { key: 'paper_sequence', label: 'Matbu sıra' },
               { key: 'paper_document_date', label: 'Matbu belge tarih', type: 'date' },
               { key: 'portal_sent_date', label: 'Portala iletilen tarih', type: 'date' },
-              { key: 'ecommerce_web', label: 'e-Ticaret web address', size: 'wide' },
-              { key: 'ecommerce_name', label: 'e-Ticaret first_name' },
-              { key: 'ecommerce_last_name', label: 'e-Ticaret last_name' },
+              { key: 'ecommerce_web', label: 'e-Ticaret web adresi', size: 'wide' },
+              { key: 'ecommerce_name', label: 'e-Ticaret ad' },
+              { key: 'ecommerce_last_name', label: 'e-Ticaret soyad' },
               { key: 'ecommerce_email', label: 'e-Ticaret email' },
             ],
           },
@@ -5468,7 +5488,7 @@ const MODULES = [
           { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
           { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['BelgeTarihi', 'SevkTarihi', 'Serbest'] },
-          { key: 'e_document_status', label: 'e-Belge status', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
+          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
           { key: 'due_date', label: 'Vade tarihi', type: 'date', required: true },
           { key: 'due_days', label: 'Vade gün', type: 'number' },
           { key: 'payment_due_days', label: 'Vade (gün)', type: 'number' },
@@ -5511,7 +5531,7 @@ const MODULES = [
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'vat_code', label: 'KDV kodu', size: 'short' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
           { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short' },
@@ -5566,12 +5586,12 @@ const MODULES = [
             kind: 'fields',
             fields: [
               { key: 'ship_to_partner_id', label: 'Sevk cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-              { key: 'ship_address_type', label: 'Sevk address tipi' },
-              { key: 'ship_name', label: 'Sevk first_name' },
-              { key: 'ship_last_name', label: 'Sevk last_name' },
-              { key: 'ship_address_1', label: 'Sevk address 1', size: 'wide' },
-              { key: 'ship_address_2', label: 'Sevk address 2', size: 'wide' },
-              { key: 'ship_address_3', label: 'Sevk address 3', size: 'wide' },
+              { key: 'ship_address_type', label: 'Sevk adres tipi' },
+              { key: 'ship_name', label: 'Sevk ad' },
+              { key: 'ship_last_name', label: 'Sevk soyad' },
+              { key: 'ship_address_1', label: 'Sevk adres 1', size: 'wide' },
+              { key: 'ship_address_2', label: 'Sevk adres 2', size: 'wide' },
+              { key: 'ship_address_3', label: 'Sevk adres 3', size: 'wide' },
               { key: 'ship_country', label: 'Sevk ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
               { key: 'ship_city', label: 'Sevk il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
               { key: 'ship_district', label: 'Sevk ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
@@ -5588,16 +5608,16 @@ const MODULES = [
               { key: 'fin_due_date', label: 'Fin. vade tarih', type: 'date' },
               { key: 'fin_due_days', label: 'Fin. vade gün', type: 'number' },
               { key: 'stock_date', label: 'Stok tarihi', type: 'date' },
-              { key: 'bill_address_1', label: 'Fatura address 1', size: 'wide' },
-              { key: 'bill_address_2', label: 'Fatura address 2', size: 'wide' },
-              { key: 'bill_address_3', label: 'Fatura address 3', size: 'wide' },
+              { key: 'bill_address_1', label: 'Fatura adres 1', size: 'wide' },
+              { key: 'bill_address_2', label: 'Fatura adres 2', size: 'wide' },
+              { key: 'bill_address_3', label: 'Fatura adres 3', size: 'wide' },
               { key: 'bill_postal_code', label: 'Fatura posta kodu' },
               { key: 'bill_country', label: 'Fatura ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
               { key: 'bill_city', label: 'Fatura il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
               { key: 'bill_district', label: 'Fatura ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
               { key: 'contract_code', label: 'Sözleşme kodu' },
-              { key: 'partner_title', label: 'Cari title', size: 'wide' },
-              { key: 'partner_title_2', label: 'Cari title 2', size: 'wide' },
+              { key: 'partner_title', label: 'Cari unvan', size: 'wide' },
+              { key: 'partner_title_2', label: 'Cari unvan 2', size: 'wide' },
               { key: 'tax_office', label: 'Vergi dairesi', required: true },
               { key: 'tax_id', label: 'Vergi no', required: true },
             ],
@@ -5612,9 +5632,9 @@ const MODULES = [
               { key: 'uuid_ettn', label: 'ETTN', readOnly: true },
               { key: 'mailbox_alias', label: 'Posta kutusu (alias)' },
               { key: 'portal_sent_date', label: 'Portala iletilen tarih', type: 'date' },
-              { key: 'ecommerce_web', label: 'e-Ticaret web address', size: 'wide' },
-              { key: 'ecommerce_name', label: 'e-Ticaret first_name' },
-              { key: 'ecommerce_last_name', label: 'e-Ticaret last_name' },
+              { key: 'ecommerce_web', label: 'e-Ticaret web adresi', size: 'wide' },
+              { key: 'ecommerce_name', label: 'e-Ticaret ad' },
+              { key: 'ecommerce_last_name', label: 'e-Ticaret soyad' },
               { key: 'ecommerce_email', label: 'e-Ticaret email' },
             ],
           },
@@ -5661,8 +5681,8 @@ const MODULES = [
           { key: 'order_no', label: 'Emir no', code: true },
           { key: 'item_code', label: 'Stok kodu' },
           { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'accepted_quantity', label: 'Uygun quantity', type: 'number' },
-          { key: 'rejected_quantity', label: 'Uygunsuz quantity', type: 'number' },
+          { key: 'accepted_quantity', label: 'Uygun miktar', type: 'number' },
+          { key: 'rejected_quantity', label: 'Uygunsuz miktar', type: 'number' },
           { key: 'status', label: 'Durum' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'description', label: 'Açıklama' },
@@ -5702,8 +5722,8 @@ const MODULES = [
           { key: 'order_no', label: 'Emir no', code: true },
           { key: 'item_code', label: 'Stok kodu' },
           { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'accepted_quantity', label: 'Uygun quantity', type: 'number' },
-          { key: 'rejected_quantity', label: 'Uygunsuz quantity', type: 'number' },
+          { key: 'accepted_quantity', label: 'Uygun miktar', type: 'number' },
+          { key: 'rejected_quantity', label: 'Uygunsuz miktar', type: 'number' },
           { key: 'status', label: 'Durum' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'description', label: 'Açıklama' },
@@ -5999,7 +6019,7 @@ const MODULES = [
         readOnly: true,
         codeField: 'approval_no',
         nameField: 'document_summary',
-        banner: 'Tüm onay kayıtları — status, belge ve rota izi.',
+        banner: 'Tüm onay kayıtları — durum, belge ve rota izi.',
         filters: [
           { key: 'approval_no', label: 'Onay no' },
           { key: 'document_no', label: 'Belge no' },
@@ -6092,7 +6112,7 @@ const MODULES = [
         numeratorSeri: 'ONAY_ROL',
         codeField: 'role_code',
         nameField: 'role_name',
-        banner: 'Bir kişiye, firma ve iş yeri kapsamında onay rolü verilir. Rotadaki adımlar bu role adına bakar.',
+        banner: 'Bir kişiye, firma ve iş yeri kapsamında onay rolü verilir. Rotadaki adımlar bu rol adına bakar.',
         filters: [
           { key: 'role_name', label: 'Rol adı' },
           { key: 'kisi_adi', label: 'Kişi' },
@@ -6108,7 +6128,7 @@ const MODULES = [
         ],
         masterFields: [
           { key: 'user_id', label: 'Kişi', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code', required: true },
-          { key: 'role_name', label: 'Onay role adı', name: true, required: true },
+          { key: 'role_name', label: 'Onay rol adı', name: true, required: true },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', required: true },
         ],
@@ -6174,12 +6194,12 @@ const MODULES = [
             codeKey: 'template_code',
           },
           { key: 'term_direction', label: 'Belge yönü', type: 'select', options: ['Hepsi', 'Alis', 'Satis'] },
-          { key: 'term_min_amount', label: 'Min. amount', type: 'number' },
-          { key: 'term_max_amount', label: 'Max. amount', type: 'number' },
+          { key: 'term_min_amount', label: 'Min. tutar', type: 'number' },
+          { key: 'term_max_amount', label: 'Max. tutar', type: 'number' },
           { key: 'condition_statuses', label: 'Belge durumları (virgülle; boş = tümü)' },
           { key: 'auto_approve', label: 'Koşul sağlanırsa otomatik onayla', type: 'checkbox' },
-          { key: 'activate_on_approval', label: 'Onaylanınca belgeyi is_active et', type: 'checkbox' },
-          { key: 'is_active', label: 'Kural is_active', type: 'checkbox' },
+          { key: 'activate_on_approval', label: 'Onaylanınca belgeyi aktif et', type: 'checkbox' },
+          { key: 'is_active', label: 'Kural aktif', type: 'checkbox' },
           { key: 'description', label: 'Açıklama' },
         ],
         detailFields: [
@@ -6280,7 +6300,7 @@ const MODULES = [
             labelKey: 'template_name',
             codeKey: 'template_code',
           },
-          { key: 'cancel_role_name', label: 'İptali onaylayacak role adı' },
+          { key: 'cancel_role_name', label: 'İptali onaylayacak rol adı' },
           { key: 'attach_file_to_mail', label: 'Ekleri mail ile gönder', type: 'checkbox' },
           { key: 'description', label: 'Açıklama' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -6288,11 +6308,11 @@ const MODULES = [
         detailFields: [
           { key: 'line_no', label: 'Adım no', type: 'number', required: true },
           { key: 'step_name', label: 'Adım açıklaması' },
-          { key: 'role_name', label: 'Onay role adı', required: true },
+          { key: 'role_name', label: 'Onay rol adı', required: true },
           { key: 'send_mail', label: 'Mail gönder', type: 'checkbox' },
           { key: 'send_sms', label: 'SMS gönder', type: 'checkbox' },
           { key: 'value_editable', label: 'Değer değiştirebilir', type: 'checkbox' },
-          { key: 'min_amount', label: 'Bu adım için min. amount', type: 'number' },
+          { key: 'min_amount', label: 'Bu adım için min. tutar', type: 'number' },
           { key: 'send_back_line', label: 'Düzeltmede dönülecek adım no', type: 'number' },
           { key: 'is_required', label: 'Zorunlu', type: 'checkbox' },
           { key: 'description', label: 'Not' },
@@ -6360,7 +6380,7 @@ const MODULES = [
           { key: 'line_no', label: 'Sıra', type: 'number' },
         ],
         detailFields: [
-          { key: 'is_final', label: 'Nihai status', type: 'checkbox' },
+          { key: 'is_final', label: 'Nihai durum', type: 'checkbox' },
           { key: 'is_positive', label: 'Olumlu (onay)', type: 'checkbox' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
@@ -6438,7 +6458,7 @@ const MODULES = [
         numeratorSeri: 'MUHASEBE_BELGE',
         approveAction: { label: 'Kesinleştir', path: '/muhasebe-belgeleri/{id}/kesinlestir' },
         convertAction: { label: 'Ters Kayıt', path: '/muhasebe-belgeleri/{id}/ters-kayit' },
-        helpText: 'Toplam borç = toplam credit olmalıdır. Kesinleşmiş fiş değiştirilemez; hata için ters kayıt kullanın.',
+        helpText: 'Toplam borç = toplam alacak olmalıdır. Kesinleşmiş fiş değiştirilemez; hata için ters kayıt kullanın.',
         filters: [
           { key: 'document_no', label: 'Belge no' },
           { key: 'status', label: 'Durum' },
@@ -6471,7 +6491,7 @@ const MODULES = [
         detailFields: [
           { key: 'account_id', label: 'Hesap', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code', required: true },
           { key: 'debit', label: 'Borç', type: 'number', help: 'Hesabın sol tarafı (varlık/gider artışı genelde borç).' },
-          { key: 'credit', label: 'Alacak', type: 'number', help: 'Hesabın sağ tarafı (source/gelir artışı genelde credit).' },
+          { key: 'credit', label: 'Alacak', type: 'number', help: 'Hesabın sağ tarafı (kaynak/gelir artışı genelde alacak).' },
           { key: 'tax_code', label: 'Vergi kodu' },
           { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
           { key: 'description', label: 'Kalem açıklama' },
@@ -6678,7 +6698,7 @@ const MODULES = [
         crud: true,
         codeField: 'account_code',
         nameField: 'account_name',
-        numeratorSeri: 'FIN_BANKA_HESAP',
+        numeratorSeri: null,
         filters: [
           { key: 'account_code', label: 'Kod' },
           { key: 'account_name', label: 'Ad' },
@@ -6692,7 +6712,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'account_code', label: 'Hesap kodu', code: true },
+          { key: 'account_code', label: 'Hesap kodu', code: true, editableOnNew: true },
           { key: 'account_name', label: 'Hesap adı', name: true, required: true },
           { key: 'bank_id', label: 'Banka', type: 'lookup', lookup: 'banks', valueKey: 'id', labelKey: 'bank_name', codeKey: 'bank_code' },
           { key: 'iban', label: 'IBAN' },
@@ -6714,7 +6734,7 @@ const MODULES = [
         crud: true,
         codeField: 'cash_code',
         nameField: 'cash_name',
-        numeratorSeri: 'FIN_KASA',
+        numeratorSeri: null,
         filters: [
           { key: 'cash_code', label: 'Kod' },
           { key: 'cash_name', label: 'Ad' },
@@ -6726,7 +6746,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'cash_code', label: 'Kasa kodu', code: true },
+          { key: 'cash_code', label: 'Kasa kodu', code: true, editableOnNew: true },
           { key: 'cash_name', label: 'Kasa adı', name: true, required: true },
           { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
           { key: 'gl_account_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code' },
@@ -6931,7 +6951,7 @@ const MODULES = [
         detailFields: [
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
           { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-          { key: 'min_quantity', label: 'Min quantity', type: 'number' },
+          { key: 'min_quantity', label: 'Min miktar', type: 'number' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
           { key: 'discount_rate', label: 'İskonto %', type: 'number' },
         ],
@@ -7093,7 +7113,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'department_code', label: 'Kod', code: true },
+          { key: 'department_code', label: 'Kod', code: true, editableOnNew: true },
           { key: 'department_name', label: 'Ad', name: true, required: true },
           { key: 'parent_id', label: 'Üst departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
           { key: 'cost_center_code', label: 'Maliyet merkezi' },
@@ -7119,7 +7139,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'position_code', label: 'Kod', code: true },
+          { key: 'position_code', label: 'Kod', code: true, editableOnNew: true },
           { key: 'position_name', label: 'Ad', name: true, required: true },
           { key: 'department_id', label: 'Departman', type: 'lookup', lookup: 'hr-departmanlar', valueKey: 'id', labelKey: 'department_name', codeKey: 'department_code' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -7146,7 +7166,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'calendar_code', label: 'Kod', code: true },
+          { key: 'calendar_code', label: 'Kod', code: true, editableOnNew: true },
           { key: 'calendar_name', label: 'Ad', name: true, required: true },
           { key: 'country_code', label: 'Ülke' },
           { key: 'work_days_per_week', label: 'Çalışma günü/hafta', type: 'number' },
@@ -7180,7 +7200,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'shift_code', label: 'Kod', code: true },
+          { key: 'shift_code', label: 'Kod', code: true, editableOnNew: true },
           { key: 'shift_name', label: 'Ad', name: true, required: true },
           { key: 'start_time', label: 'Başlangıç', required: true },
           { key: 'end_time', label: 'Bitiş', required: true },
@@ -8376,6 +8396,16 @@ function bomScopeItemIds(agacId, { includeRoot = false } = {}) {
   return ids;
 }
 
+/** Active company profile: only that company in lookups (org screens exempt). */
+function companiesForActiveScope(allRows) {
+  const all = Array.isArray(allRows) ? allRows : [];
+  const aid = getActiveCompanyId();
+  if (!aid) return all;
+  const screen = findScreen(state.screenId);
+  if (screen && screen.scopeFirma === false) return all;
+  return all.filter((r) => Number(r.id) === Number(aid));
+}
+
 function lookupRowsForField(field, ctx = {}) {
   const all = state.lookupCache[field.lookup] || [];
   let rows = all;
@@ -8386,6 +8416,10 @@ function lookupRowsForField(field, ctx = {}) {
     if (bomId == null || bomId === '') return [];
     const ids = bomScopeItemIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
     rows = all.filter((r) => ids && ids.has(Number(r.id)));
+  }
+
+  if (field.lookup === 'companies' && !field.ignoreFirmaScope) {
+    rows = companiesForActiveScope(rows);
   }
 
   if (!field.dependsOn || !field.filterKey) return rows;
@@ -9362,7 +9396,7 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
   let record = { ...(target.defaults || {}), ...prefill };
   collectTabFields(target).forEach((f) => {
     if (record[f.key] !== undefined) return;
-    if (f.type === 'checkbox') record[f.key] = f.key === 'is_inactive' ? false : true;
+    if (f.type === 'checkbox') record[f.key] = f.key === 'is_active';
     else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
     else if (f.key === 'company_id' && getActiveCompanyId()) record[f.key] = getActiveCompanyId();
     else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
@@ -10074,6 +10108,11 @@ function showView(name) {
     return;
   }
 
+  // Liste dışına çıkınca yan filtreyi menüye geri ver
+  if (name !== 'screen' && typeof undockFiltersFromSidebar === 'function') {
+    undockFiltersFromSidebar();
+  }
+
   home.hidden = name !== 'home';
   screen.hidden = name !== 'screen';
   form.hidden = name !== 'form';
@@ -10087,6 +10126,81 @@ function showView(name) {
   if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
   if (sql) sql.style.display = name === 'sql' ? 'grid' : 'none';
   if (pq) pq.style.display = name === 'pageQuery' ? 'grid' : 'none';
+  if (typeof syncMenuButtonLabel === 'function') syncMenuButtonLabel();
+}
+
+/** Liste ekranı (#viewScreen) görünür mü? */
+function isListScreenOpen() {
+  const screen = $('#viewScreen');
+  if (!screen) return false;
+  // state.screenId + görünür view: inline style / hidden / computed hepsi
+  if (!state.screenId) return false;
+  if (screen.hidden) return false;
+  const inline = (screen.style.display || '').trim();
+  if (inline === 'none') return false;
+  try {
+    if (getComputedStyle(screen).display === 'none') return false;
+  } catch (_) { /* ignore */ }
+  return true;
+}
+
+function isFilterDocked() {
+  return Boolean($('#appShell')?.classList.contains('sidebar-filter-dock'));
+}
+
+function syncMenuButtonLabel() {
+  const btn = $('#btnMenu');
+  if (!btn) return;
+  if (isFilterDocked()) {
+    btn.title = 'Menüyü aç — filtre üst banda döner';
+    btn.setAttribute('aria-label', 'Menüyü aç');
+  } else if (isListScreenOpen()) {
+    btn.title = 'Menüyü kapat — filtreyi yana taşı';
+    btn.setAttribute('aria-label', 'Menüyü kapat, filtreyi yana taşı');
+  } else {
+    btn.title = 'Menüyü kapat/aç';
+    btn.setAttribute('aria-label', 'Menüyü aç/kapat');
+  }
+}
+
+/** Filtre panelini logo altındaki yan alana taşı (menü yerine). */
+function dockFiltersToSidebar() {
+  const shell = $('#appShell');
+  const host = $('#sidebarFilterHost');
+  const pane = $('#filterPane');
+  const screen = $('#viewScreen');
+  const nav = $('#sidebarNav');
+  const foot = document.querySelector('.sidebar-foot');
+  if (!shell || !host || !pane || !screen) return;
+  shell.classList.remove('sidebar-collapsed');
+  shell.classList.add('sidebar-filter-dock');
+  screen.classList.add('filter-docked');
+  if (pane.parentElement !== host) host.appendChild(pane);
+  host.hidden = false;
+  if (nav) nav.hidden = true;
+  if (foot) foot.hidden = true;
+  syncMenuButtonLabel();
+}
+
+/** Yan filtreyi üst banda geri al; menüyü göster. */
+function undockFiltersFromSidebar(opts = {}) {
+  const shell = $('#appShell');
+  const host = $('#sidebarFilterHost');
+  const home = $('#filterPaneHome');
+  const pane = $('#filterPane');
+  const screen = $('#viewScreen');
+  const nav = $('#sidebarNav');
+  const foot = document.querySelector('.sidebar-foot');
+  if (!shell) return;
+  const wasDocked = shell.classList.contains('sidebar-filter-dock');
+  shell.classList.remove('sidebar-filter-dock');
+  if (screen) screen.classList.remove('filter-docked');
+  if (pane && home && pane.parentElement !== home) home.appendChild(pane);
+  if (host) host.hidden = true;
+  if (nav) nav.hidden = false;
+  if (foot) foot.hidden = false;
+  if (opts.keepCollapsed && wasDocked) shell.classList.add('sidebar-collapsed');
+  syncMenuButtonLabel();
 }
 
 
@@ -10512,55 +10626,6 @@ async function formCrudAction(act) {
   }
 }
 
-async function persistGridRowImmediately(screen, gridKey, row) {
-  const cfg = screen?.detailPersist?.[gridKey];
-  if (!cfg?.endpoint) return null;
-  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
-  const body = { ...row };
-  delete body._satir_kayitli;
-  delete body._satir_duzenleniyor;
-  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
-    const v = master[masterKey];
-    if (v != null && v !== '') body[bodyKey] = v;
-  });
-  // Şehir kartı: city_code zorunlu (FK)
-  const missingParent = Object.entries(cfg.parentFields || {})
-    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
-    .map(([, masterKey]) => masterKey);
-  if (missingParent.length) {
-    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
-  }
-  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
-  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
-    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
-  }
-  if (gridKey === 'districts' && !body.district_code && body.district_name) {
-    body.district_code = districtCodeFromName(body.city_code, body.district_name);
-  }
-  const base = screenApiBase(cfg.endpoint);
-  if (row.id != null && row.id !== '') {
-    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
-  }
-  try {
-    return await api(base, { method: 'POST', body: JSON.stringify(body) });
-  } catch (err) {
-    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
-    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
-      const list = await api(
-        `${base}?city_code=${encodeURIComponent(body.city_code)}`
-      );
-      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
-      const hit = (Array.isArray(list) ? list : []).find(
-        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
-      );
-      if (hit?.id != null) {
-        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
-      }
-    }
-    throw err;
-  }
-}
-
 function districtCodeFromName(cityCode, districtName) {
   const vowels = new Set('aeıioöuüâêîôûAEIİOÖUÜÂÊÎÔÛ'.split(''));
   const cons = String(districtName || '')
@@ -10849,6 +10914,85 @@ async function importExcelIntoList(ctx) {
 }
 
 
+async function showStokHareketOnizle(row) {
+  if (!row?.id) {
+    toast('Önce bir stok hareketi seçin.');
+    return;
+  }
+  let rec = row;
+  try {
+    rec = await api(`/stok-hareketleri/${row.id}`);
+  } catch (err) {
+    toast(err.message || 'Önizleme yüklenemedi');
+    return;
+  }
+  const lines = Array.isArray(rec.satirlar) ? rec.satirlar : (Array.isArray(rec.kalemler) ? rec.kalemler : []);
+  const kaynak = `${rec.warehouse_code || '—'} ${rec.warehouse_name ? `· ${rec.warehouse_name}` : ''}`.trim();
+  const hedef = rec.target_warehouse_code || rec.hedef_depo_kodu
+    ? `${rec.target_warehouse_code || rec.hedef_depo_kodu}${rec.target_warehouse_name || rec.hedef_depo_adi ? ` · ${rec.target_warehouse_name || rec.hedef_depo_adi}` : ''}`
+    : '—';
+  const bodyRows = lines.length
+    ? lines.map((s) => {
+      const giren = Number(s.quantity_in) || (Number(s.direction) > 0 ? Number(s.quantity) || 0 : 0);
+      const cikan = Number(s.quantity_out) || (Number(s.direction) < 0 ? Number(s.quantity) || 0 : 0);
+      const depoTxt = Number(s.direction) < 0
+        ? (s.warehouse_code || rec.warehouse_code || '—')
+        : (rec.movement_type === 'TRANSFER'
+          ? (rec.target_warehouse_code || rec.hedef_depo_kodu || s.warehouse_code || rec.warehouse_code || '—')
+          : (s.warehouse_code || rec.warehouse_code || '—'));
+      return `<tr>
+        <td class="mono">${escapeHtml(s.item_code || '')}</td>
+        <td>${escapeHtml(s.item_name || '')}</td>
+        <td class="mono">${escapeHtml(depoTxt)}</td>
+        <td class="mono qty-plus">${giren ? `+${giren}` : '—'}</td>
+        <td class="mono qty-minus">${cikan ? `−${cikan}` : '—'}</td>
+        <td class="mono">${escapeHtml(s.lot_no || '—')}</td>
+        <td class="mono">${escapeHtml(formatTotalAmount(s.line_goods_amount ?? ((Number(s.quantity) || 0) * (Number(s.unit_price) || 0))))}</td>
+      </tr>`;
+    }).join('')
+    : '<tr><td colspan="7" class="detail-empty">Satır yok.</td></tr>';
+  const signed = rec.quantity_signed != null
+    ? rec.quantity_signed
+    : (Number(rec.quantity_net) > 0 ? `+${rec.quantity_net}` : String(rec.quantity_net ?? 0));
+  const html = `
+    <div class="cvt-overlay" id="stokHareketOnizleDlg" role="presentation">
+      <div class="cvt-dialog lookup-browser-dialog" role="dialog" aria-modal="true" style="max-width:48rem">
+        <header class="cvt-head">
+          <h2>Önizle · ${escapeHtml(rec.movement_no || '')}</h2>
+          <button type="button" class="icon-btn" data-onizle-close="1" aria-label="Kapat">×</button>
+        </header>
+        <div class="cvt-body">
+          <div class="stok-hareket-onizle-meta">
+            <span><strong>Kod</strong> ${escapeHtml(rec.movement_code || '—')}</span>
+            <span><strong>Tip</strong> ${escapeHtml(rec.movement_type || '—')}</span>
+            <span><strong>Kaynak depo</strong> ${escapeHtml(kaynak)}</span>
+            <span><strong>Hedef depo</strong> ${escapeHtml(hedef)}</span>
+            <span><strong>Toplam hareket</strong> <span class="mono">${escapeHtml(String(signed))}</span></span>
+            <span><strong>Mal tutarı</strong> ${escapeHtml(formatTotalAmount(rec.goods_amount))}</span>
+            <span><strong>Maliyet</strong> ${escapeHtml(formatTotalAmount(rec.cost_total))}</span>
+          </div>
+          <table class="stok-hareket-onizle-table">
+            <thead>
+              <tr>
+                <th>Stok kodu</th><th>Stok adı</th><th>Depo</th><th>Giren</th><th>Çıkan</th><th>Parti</th><th>Tutar</th>
+              </tr>
+            </thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+        <footer class="cvt-foot">
+          <button type="button" class="btn action" data-onizle-close="1">Kapat</button>
+        </footer>
+      </div>
+    </div>`;
+  document.getElementById('stokHareketOnizleDlg')?.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+  const dlg = document.getElementById('stokHareketOnizleDlg');
+  dlg?.addEventListener('click', (e) => {
+    if (e.target === dlg || e.target.closest?.('[data-onizle-close]')) dlg.remove();
+  });
+}
+
 async function showListContextMenu(screen, clientX, clientY) {
   const menu = $('#listCtxMenu');
   if (!menu || !screen) return;
@@ -10899,6 +11043,10 @@ async function showListContextMenu(screen, clientX, clientY) {
       e.preventDefault();
       menu.hidden = true;
       const act = btn.getAttribute('data-list-ctx');
+      if (act === 'onizle') {
+        showStokHareketOnizle(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
       if (act === 'excel-sablon') {
         downloadExcelTemplate(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
         return;
@@ -11611,24 +11759,210 @@ const DIL_AD_MAP = {
   NL: 'Nederlands', PT: 'Português', ZH: '中文', JA: '日本語',
 };
 
-async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false } = {}) {
-  if (!kurEl) return;
+const RATE_TYPE_OPTIONS = [
+  { value: 'TCMB-ALIS', label: 'Alış' },
+  { value: 'TCMB-SATIS', label: 'Satış' },
+  { value: 'EFKT-ALIS', label: 'Efektif alış' },
+  { value: 'EFKT-SATIS', label: 'Efektif satış' },
+  { value: 'Serbest', label: 'Serbest' },
+];
+
+/** rate_type → /doviz-kurlari/cevir type; null = free (manual) rate */
+function rateTypeToConversionType(rateType) {
+  const t = String(rateType || '').toUpperCase();
+  if (t === 'SERBEST') return null;
+  if (t.includes('EFKT') && t.includes('ALIS')) return 'efektif-alis';
+  if (t.includes('EFKT') && t.includes('SATIS')) return 'efektif-satis';
+  if (t.includes('ALIS')) return 'alis';
+  return 'satis';
+}
+
+function setControlDisabled(el, disabled, title = '') {
+  if (!el) return;
+  el.disabled = Boolean(disabled);
+  if (title != null) el.title = title;
+  const widget = el.closest?.('.lookup-widget');
+  if (widget) {
+    widget.querySelectorAll('.lookup-typeahead, .lookup-browse-btn, select').forEach((n) => {
+      if (n !== el && 'disabled' in n) n.disabled = Boolean(disabled);
+    });
+  }
+  if (el.type === 'radio') {
+    const name = el.getAttribute('name');
+    if (name) {
+      document.querySelectorAll(`input[type="radio"][name="${name}"]`).forEach((r) => {
+        r.disabled = Boolean(disabled);
+      });
+    }
+  }
+}
+
+/**
+ * Fills / locks the exchange-rate field for a currency and rate type.
+ * TRY → rate 1, rate and rate type locked. Others → rate by type unless Serbest.
+ */
+async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false, rateType = null, rateTypeEl = null } = {}) {
   const pb = String(pbKod || 'TRY').toUpperCase();
+  const tipEl = rateTypeEl
+    || findAttrControl('data-master', 'rate_type')
+    || findAttrControl('data-detail', 'rate_type');
+  const tip = rateType != null
+    ? rateType
+    : (tipEl ? (tipEl.type === 'radio' ? readMasterDetailValue('rate_type') : tipEl.value) : null)
+      || state.formRecord?.rate_type
+      || 'TCMB-SATIS';
+
+  if (!kurEl && !tipEl) return;
+
   if (pb === 'TRY' || pb === 'TL') {
-    kurEl.value = '1';
-    kurEl.disabled = true;
-    kurEl.title = 'TRY için exchange_rate sabittir';
+    if (kurEl) {
+      kurEl.value = '1';
+      setControlDisabled(kurEl, true, 'TRY için kur sabittir (1)');
+    }
+    if (tipEl) setControlDisabled(tipEl, true, 'TRY için kur tipi gerekmez');
+    if (state.formRecord && kurEl?.hasAttribute?.('data-master')) state.formRecord.exchange_rate = 1;
     return;
   }
-  kurEl.disabled = false;
-  kurEl.title = '';
+
+  if (tipEl) setControlDisabled(tipEl, false, '');
+  const conversionType = rateTypeToConversionType(tip);
+  if (!kurEl) return;
+  setControlDisabled(kurEl, false, conversionType == null ? 'Serbest kur — elle girin' : '');
+  if (conversionType == null) return;
   if (!force && kurEl.value && Number(kurEl.value) > 0 && Number(kurEl.value) !== 1) return;
   try {
-    const r = await api(`/doviz-kurlari/cevir?quantity=1&source_currency=${encodeURIComponent(pb)}&target_currency=TRY&type=satis`);
-    if (r?.exchange_rate != null) kurEl.value = String(r.exchange_rate);
+    const r = await api(
+      `/doviz-kurlari/cevir?quantity=1&source_currency=${encodeURIComponent(pb)}&target_currency=TRY&type=${encodeURIComponent(conversionType)}`
+    );
+    if (r?.exchange_rate != null) {
+      kurEl.value = String(r.exchange_rate);
+      if (state.formRecord && kurEl.hasAttribute('data-master')) {
+        state.formRecord.exchange_rate = Number(r.exchange_rate);
+        state.formRecord.rate_type = tip;
+      }
+    }
   } catch (_) {
-    /* exchange_rate yoksa kullanıcı girer */
+    /* no rate: user enters it or switches to Serbest */
   }
+}
+
+/** Aligns rate controls on form open / currency change */
+async function syncDocumentRateFields(force = true) {
+  const pb = String(readMasterDetailValue('currency_code') || state.formRecord?.currency_code || 'TRY').toUpperCase();
+  const tip = String(readMasterDetailValue('rate_type') || state.formRecord?.rate_type || 'TCMB-SATIS');
+  const kurEl = findAttrControl('data-master', 'exchange_rate');
+  const tipEl = findAttrControl('data-master', 'rate_type');
+  await applyExchangeRateForCurrency(pb, kurEl, { force, rateType: tip, rateTypeEl: tipEl });
+}
+
+function readMasterDetailValue(key) {
+  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"], input[type="radio"][data-detail="${key}"]`)];
+  if (radios.length) return radios.find((r) => r.checked)?.value ?? (state.formRecord?.[key] ?? '');
+  const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+  if (!el) return state.formRecord?.[key] ?? '';
+  return el.value;
+}
+
+function writeMasterDetailValue(key, val) {
+  if (val == null) return;
+  const str = String(val);
+  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"], input[type="radio"][data-detail="${key}"]`)];
+  if (radios.length) {
+    radios.forEach((r) => { r.checked = String(r.value) === str; });
+  } else {
+    const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
+    if (el) el.value = str;
+  }
+  if (state.formRecord) state.formRecord[key] = val;
+}
+
+/**
+ * Exchange-rate form: when rate source = TCMB, buy/sell come from the TCMB bulletin.
+ * Currencies missing from the bulletin (e.g. MXN) fall back to Manuel entry.
+ */
+async function fillExchangeRateFromTcmbIfNeeded() {
+  if (state.screenId !== 'doviz-exchange_rate-tanimi') return;
+  if (state.formMode === 'incele') return;
+  if (String(readMasterDetailValue('source') || '').trim().toUpperCase() !== 'TCMB') return;
+
+  const resolveCode = (raw) => {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (/^[A-Z]{3}$/i.test(s)) return s.toUpperCase();
+    const rows = state.lookupCache['para-birimleri'] || [];
+    const lower = s.toLocaleLowerCase('tr');
+    const hit = rows.find((r) => String(r.currency_code).toUpperCase() === s.toUpperCase()
+      || String(r.currency_name || '').toLocaleLowerCase('tr') === lower
+      || `${r.currency_code} - ${r.currency_name}`.toLocaleLowerCase('tr') === lower);
+    return hit ? String(hit.currency_code).toUpperCase() : s.toUpperCase();
+  };
+  const source = resolveCode(readMasterDetailValue('source_currency'));
+  const target = resolveCode(readMasterDetailValue('target_currency')) || 'TRY';
+  if (!source) return;
+  writeMasterDetailValue('source_currency', source);
+  writeMasterDetailValue('target_currency', target);
+  ['source_currency', 'target_currency'].forEach((k) => {
+    const sel = findAttrControl('data-master', k);
+    if (sel) syncLookupTypeaheadFromSelect(sel);
+  });
+
+  const rateDate = String(readMasterDetailValue('rate_date') || '').slice(0, 10);
+  try {
+    const q = new URLSearchParams({ source_currency: source, target_currency: target });
+    if (rateDate) q.set('rate_date', rateDate);
+    const r = await api(`/doviz-kurlari/tcmb-onizleme?${q}`);
+    writeMasterDetailValue('buy_rate', r.buy_rate);
+    writeMasterDetailValue('sell_rate', r.sell_rate);
+    writeMasterDetailValue('effective_buy_rate', r.effective_buy_rate);
+    writeMasterDetailValue('effective_sell_rate', r.effective_sell_rate);
+    if (r.rate_date) writeMasterDetailValue('rate_date', r.rate_date);
+    writeMasterDetailValue('source', 'TCMB');
+    toast(`TCMB ${r.bulletin_no || r.rate_date || ''}: ${source}/${target} dolduruldu`);
+  } catch (_) {
+    writeMasterDetailValue('source', 'Manuel');
+    toast(`${source} TCMB bülteninde yok. Kur kaynağı Manuel'e alındı — alış/satışı elle girin.`);
+  }
+}
+
+/** Exchange-rate list: TCMB today.xml → upsert for every defined currency */
+async function fetchTcmbRates() {
+  const screen = findScreen(state.screenId);
+  if (!screen?.tcmbFetchAction) return;
+  if (!screenPermission(screen.id, 'tcmb-cek')) {
+    toast('Bu işlem için yetkiniz yok.');
+    return;
+  }
+  toast('TCMB kurları çekiliyor…');
+  try {
+    const result = await api('/doviz-kurlari/tcmb-cek', {
+      method: 'POST',
+      body: JSON.stringify({ target_currency: 'TRY' }),
+    });
+    const skipped = result.skipped_currencies || [];
+    const skipNote = skipped.length
+      ? ` (tanımsız atlanan: ${skipped.slice(0, 8).join(', ')}${skipped.length > 8 ? '…' : ''})`
+      : '';
+    toast(`TCMB ${result.bulletin_no || ''} · ${result.rate_date}: ${result.upserted_count} kur yazıldı${skipNote}`);
+    await openScreen(screen.id);
+  } catch (err) {
+    toast(err.message || 'TCMB kurları alınamadı');
+  }
+}
+
+/** Shows the open record id in the address bar (?id=…), cleared on list. */
+function syncFormBrowserUrl(screen) {
+  if (!screen || state.formSolo) return;
+  try {
+    const params = new URLSearchParams(location.search || '');
+    if (params.get('view') === 'form' || params.get('view') === 'screen') return;
+    const rid = state.formRecord?.id;
+    if (state.formMode && rid != null && rid !== '') params.set('id', String(rid));
+    else params.delete('id');
+    const qs = params.toString();
+    const next = `${location.pathname}${qs ? `?${qs}` : ''}#${encodeURIComponent(screen.id)}`;
+    const cur = `${location.pathname}${location.search}${location.hash}`;
+    if (cur !== next) history.replaceState({ screenId: screen.id, formId: rid || null }, '', next);
+  } catch (_) { /* ignore */ }
 }
 
 /**
@@ -11677,7 +12011,7 @@ async function fillAddressFromPartner(cariId, { force = false } = {}) {
       });
     }
   } catch (err) {
-    console.warn('Cari address doldurulamadı', err);
+    console.warn('Cari adres doldurulamadı', err);
   }
 }
 
@@ -12239,6 +12573,7 @@ function filterValueControl(f, st) {
       else if (f.lookup === 'is-yerleri') rows = state.isYerleri;
     }
     rows = Array.isArray(rows) ? rows : [];
+    if (f.lookup === 'companies') rows = companiesForActiveScope(rows);
     const a = buildFilterSelectOptions(rows, f, st.a);
     const b = buildFilterSelectOptions(rows, f, st.b);
     const aHtml = wrapLookupCombobox(
@@ -12390,6 +12725,12 @@ function formatListDateTime(val) {
   });
 }
 
+function formatListDateOnly(val) {
+  const m = String(val || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return `${m[3]}.${m[2]}.${m[1]}`;
+}
+
 function cellHtml(col, row, index = 0) {
   let val = col.key === 'id' ? rowKey(row, index) : row[col.key];
   // Aktif kolonu Pasif olarak gösterilir: tik/Evet = is_inactive (is_active=false)
@@ -12401,9 +12742,12 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Evet' : 'Hayır';
   } else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) {
     val = formatListDateTime(val);
+  } else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
+    && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
+    val = formatListDateOnly(val) || val;
   }
   if (val === null || val === undefined || val === '') val = '—';
-  return col.mono ? `<span class="mono">${val}</span>` : String(val);
+  return col.mono ? `<span class="mono">${escapeHtml(String(val))}</span>` : escapeHtml(String(val));
 }
 
 function renderListSideNav(screen) {
@@ -12598,7 +12942,7 @@ function screenPermission(screenId, action = null) {
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
-  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir') {
+  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir' || action === 'tcmb-cek') {
     return Boolean(row.incele || row.duzelt || row.yeni);
   }
   return Boolean(row[action]);
@@ -12640,6 +12984,9 @@ function updateActionButtons(screen) {
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
       btn.disabled = !screenPermission(screen.id, 'mrp-calistir');
+    } else if (act === 'tcmb-cek') {
+      btn.hidden = !screen.tcmbFetchAction;
+      btn.disabled = !screenPermission(screen.id, 'tcmb-cek');
     } else if (act === 'report-pdf') {
       btn.hidden = !screen.reportPdfAction;
       btn.disabled = !screen.reportPdfAction;
@@ -12651,6 +12998,8 @@ function updateActionButtons(screen) {
   if (mrpUe) mrpUe.hidden = !screen.mrpUretimAction;
   const mrpRun = $('#btnMrpCalistir');
   if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
+  const tcmbBtn = $('#btnTcmbCek');
+  if (tcmbBtn) tcmbBtn.hidden = !screen.tcmbFetchAction;
   const pdfBtn = $('#btnReportPdf');
   if (pdfBtn) pdfBtn.hidden = !screen.reportPdfAction;
 }
@@ -12754,8 +13103,13 @@ async function openScreen(id, opts = {}) {
     }
     ensureSidebarPath(screen);
 
-    if (location.hash !== `#${screen.id}`) {
-      history.pushState({ screenId: screen.id }, '', `#${screen.id}`);
+    {
+      const params = new URLSearchParams(location.search || '');
+      params.delete('id');
+      const qs = params.toString();
+      const listUrl = `${location.pathname}${qs ? `?${qs}` : ''}#${encodeURIComponent(screen.id)}`;
+      const cur = `${location.pathname}${location.search}${location.hash}`;
+      if (cur !== listUrl) history.pushState({ screenId: screen.id }, '', listUrl);
     }
 
     if (!opts.skipTab) addListTab(screen);
@@ -13398,7 +13752,7 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
   if (field.type === 'static') {
     return `<span class="field-static" aria-hidden="true">${escAttr(field.label || '=')}</span>`;
   }
-  const codeLocked = field.code && !(field.editableOnNew && state.formMode === 'yeni');
+  const codeLocked = field.code && !(field.editableOnNew && (state.formMode === 'yeni' || (state.formMode === 'kopyala' && !state.formNumeratorSeri)));
   let transferLocked = false;
   if (field.transferOnly) {
     const hkId = state.formRecord?.movement_code_id
@@ -13434,27 +13788,40 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     return `<input type="password" ${name} value="" autocomplete="new-password" placeholder="${escAttr(ph)}" ${dis} ${reqPw} />`;
   }
   if (field.type === 'select') {
-    const opts = field.options || [];
+    let opts = field.options || [];
+    // Rate type: readable labels instead of codes (Alış / Satış / Efektif…)
+    if (field.key === 'rate_type' && opts.length && typeof opts[0] === 'string') {
+      opts = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
+      if (!opts.length) opts = RATE_TYPE_OPTIONS.slice();
+    }
+    const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
+    const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.l ?? optVal(o)) : o);
     // İki seçenek: dropdown yerine kompakt aç/kapa (segment)
     if (opts.length === 2) {
       // Her segment örneği benzersiz name alsın (master/grid/bom/flow — tüm ekranlar)
       if (!fieldControl._segSeq) fieldControl._segSeq = 0;
       fieldControl._segSeq += 1;
       const radioName = `seg_${String(attrName || 'f').replace(/[^a-z0-9]+/gi, '_')}_${field.key}_${fieldControl._segSeq}`;
-      const cur = (v === '' || v == null) ? opts[0] : v;
+      const cur = (v === '' || v == null) ? optVal(opts[0]) : v;
       return `<div class="seg-toggle" role="radiogroup" aria-label="${escAttr(field.label || field.key)}">${opts.map((o) => {
-        const on = String(cur) === String(o);
+        const ov = optVal(o);
+        const on = String(cur) === String(ov);
         return `<label class="seg-opt">
-          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(o)}" ${on ? 'checked' : ''} ${dis} ${req} />
-          <span>${escAttr(o)}</span>
+          <input type="radio" name="${escAttr(radioName)}" ${name} value="${escAttr(ov)}" ${on ? 'checked' : ''} ${dis} ${req} />
+          <span>${escAttr(optLabel(o))}</span>
         </label>`;
       }).join('')}</div>`;
     }
+    const hit = opts.find((o) => String(optVal(o)) === String(v));
+    const curLabel = hit ? String(optLabel(hit)) : (v === '' || v == null ? '' : String(v));
     const sel = `<select class="lookup-pick lookup-combo-select" ${name} ${dis} ${req}>
       <option value="">—</option>
-      ${opts.map((o) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${o || '—'}</option>`).join('')}
+      ${opts.map((o) => {
+        const ov = optVal(o);
+        return `<option value="${escAttr(ov)}" ${String(v) === String(ov) ? 'selected' : ''}>${escAttr(optLabel(o) || '—')}</option>`;
+      }).join('')}
     </select>`;
-    return wrapLookupCombobox(sel, v === '' || v == null ? '' : String(v), Boolean(dis));
+    return wrapLookupCombobox(sel, curLabel, Boolean(dis));
   }
   if (field.type === 'lookup') {
     const scope = ctx || state.formRecord || {};
@@ -13480,6 +13847,24 @@ function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
     ? `data-didx="${idx}" data-grid="${gridKey}"`
     : `data-didx="${idx}"`;
   return fieldControl(field, value, 'data-detail', extra, rowCtx || {});
+}
+
+/** Code / name / unique fields are not copied (avoids duplicate keys). */
+function isNonCopyableField(f) {
+  if (!f || !f.key || f.type === 'lookup') return false;
+  return Boolean(f.code || f.name || f.unique || f.noCopy);
+}
+
+function stripNonCopyableOnRowCopy(fields, src) {
+  const out = { ...(src || {}) };
+  delete out.id;
+  (fields || []).forEach((f) => {
+    if (!isNonCopyableField(f)) return;
+    out[f.key] = f.type === 'checkbox' ? false : '';
+  });
+  out._satir_kayitli = false;
+  out._satir_duzenleniyor = true;
+  return out;
 }
 
 function emptyRowFromFields(fields) {
@@ -13818,6 +14203,16 @@ function isFooterNoteField(f) {
 }
 
 /** Belge satırlarından ara / KDV / genel toplam (çoklu isk + KDV dahil/hariç + ÖTV + tevkifat). */
+function resolveRowVatRate(row) {
+  if (row?.tax_code_id) {
+    const taxRows = state.lookupCache?.['vergi-kodlari'] || state.lookupCache?.['finans-vergi-kodlari'] || [];
+    const tax = taxRows.find((t) => Number(t.id) === Number(row.tax_code_id));
+    if (tax && tax.rate != null && tax.rate !== '') return Number(tax.rate);
+  }
+  const n = Number(row?.vat_rate);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function computeDocumentTotals(rows, fields) {
   const list = Array.isArray(rows) ? rows : [];
   const keys = new Set((fields || []).map((f) => f.key));
@@ -13838,7 +14233,7 @@ function computeDocumentTotals(rows, fields) {
     const isk1 = Number(row.discount_rate) || 0;
     const isk2 = Number(row.discount_rate_2) || 0;
     const isk3 = Number(row.discount_rate_3) || 0;
-    const kdvOran = Number(row.vat_rate) || 0;
+    const kdvOran = resolveRowVatRate(row);
     const otvOran = Number(row.excise_rate) || 0;
     const tevOran = Number(row.withholding_rate) || 0;
     const bandOran = Number(row.stamp_tax_rate) || 0;
@@ -13878,6 +14273,54 @@ function formatTotalAmount(n) {
   if (n == null || Number.isNaN(Number(n))) return '';
   return Number(n).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+/** Update footer totals without re-rendering the whole form (KDV Dahil/Haric etc.). */
+function refreshDocumentFooterLive(screen) {
+  try {
+    const foot = document.querySelector('#viewForm .md-footer .md-footer-totals');
+    if (!foot || !screen) return;
+    const gridKey = screen.detailKey
+      || (screen.formTabs || []).find((t) => t.kind === 'master-grid' || t.kind === 'grid')?.grid?.key
+      || (screen.formTabs || []).find((t) => t.kind === 'master-grid' || t.kind === 'grid')?.key
+      || 'satirlar';
+    const tab = resolveGridTab(screen, gridKey);
+    const fields = tab?.fields || screen.detailFields || [];
+    if (tab) {
+      const rows = readGridFromForm(tab);
+      if (!state.formRecord) state.formRecord = {};
+      state.formRecord[gridKey] = rows;
+    }
+    const rows = Array.isArray(state.formRecord?.[gridKey]) ? state.formRecord[gridKey] : [];
+    const totals = computeDocumentTotals(rows, fields);
+    if (totals.subtotal == null) return;
+    const altiIsk = Number(state.formRecord?.delivery_footer_discount) || 0;
+    const genel = (Number(totals.grand_total) || 0) - altiIsk;
+    const extra = [];
+    if (totals.total_discount > 0) {
+      extra.push(`<div class="md-total-row"><label>Toplam iskonto</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_discount))}" /></div>`);
+    }
+    if (totals.total_excise > 0) {
+      extra.push(`<div class="md-total-row"><label>Toplam ÖTV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_excise))}" /></div>`);
+    }
+    if (totals.total_withholding > 0) {
+      extra.push(`<div class="md-total-row"><label>Tevkifat</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_withholding))}" /></div>`);
+    }
+    if (totals.total_bandrol > 0) {
+      extra.push(`<div class="md-total-row"><label>Bandrol</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.total_bandrol))}" /></div>`);
+    }
+    if (altiIsk > 0) {
+      extra.push(`<div class="md-total-row"><label>İrs. altı iskonto</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(altiIsk))}" /></div>`);
+    }
+    foot.innerHTML = `
+      <div class="md-total-row"><label>Mal tutarı</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.subtotal))}" /></div>
+      ${extra.join('')}
+      <div class="md-total-row"><label>Toplam KDV</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(totals.tax_amount))}" /></div>
+      <div class="md-total-row md-total-row--grand"><label>Genel toplam</label><input type="text" readonly tabindex="-1" value="${escAttr(formatTotalAmount(genel))}" /></div>`;
+  } catch (err) {
+    console.warn('refreshDocumentFooterLive', err);
+  }
+}
+
 
 function renderDocumentFooter(rec, noteFields, gridFields, gridKey) {
   const notes = Array.isArray(noteFields) ? noteFields : [];
@@ -14326,13 +14769,22 @@ function renderItemCompaniesPane(rec) {
   ensureItemCompanyParamsSeed(rec);
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
-  const companies = Array.isArray(state.companies) && state.companies.length
+  const aid = getActiveCompanyId();
+  const allCompanies = Array.isArray(state.companies) && state.companies.length
     ? state.companies
     : (state.lookupCache?.companies || []);
-  const selected = new Set(itemCompanySelectedCompanyIds(rec));
+  // Active company profile → only that firm on the stock Firms tab
+  const companies = aid
+    ? allCompanies.filter((f) => Number(f.id) === Number(aid))
+    : allCompanies;
+  const selected = new Set(
+    aid
+      ? [Number(aid)]
+      : itemCompanySelectedCompanyIds(rec)
+  );
   if (!selected.size) {
-    const aid = Number(rec?.company_id) || getActiveCompanyId();
-    if (aid) selected.add(Number(aid));
+    const rid = Number(rec?.company_id) || getActiveCompanyId();
+    if (rid) selected.add(Number(rid));
     else if (companies[0]) selected.add(Number(companies[0].id));
   }
 
@@ -16012,7 +16464,7 @@ function fieldShell(f, controlHtml, value) {
   }
   const cls = ['field', inferFieldSizeClass(f)];
   const isReq = Boolean(f.required || (f.requiredOnNew && state.formMode === 'yeni'));
-  const codeLocked = f.code && !(f.editableOnNew && state.formMode === 'yeni');
+  const codeLocked = f.code && !(f.editableOnNew && (state.formMode === 'yeni' || (state.formMode === 'kopyala' && !state.formNumeratorSeri)));
   const isRo = Boolean(f.readOnly || state.formMode === 'incele' || codeLocked);
   if (isReq) cls.push('required');
   if (isRo) cls.push('field--readonly');
@@ -16030,7 +16482,10 @@ function fieldShell(f, controlHtml, value) {
   const reqBadge = isReq
     ? '<span class="req-triangle" title="Zorunlu alan" aria-label="Zorunlu alan"></span>'
     : '';
-  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi">${reqBadge}<label>${star}${f.label}</label>${controlHtml}</div>`;
+  const infoBtn = f.info
+    ? `<button type="button" class="field-info-btn" data-field-info="${escAttr(f.key)}" title="Alan bilgisi" aria-label="${escAttr(f.label || f.key)} bilgisi">i</button>`
+    : '';
+  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi">${reqBadge}${infoBtn}<label>${star}${f.label}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -16198,13 +16653,13 @@ function renderCompanyPermissionPane(rec) {
           <button type="button" class="btn ghost" id="firmaYetkiClearAll">Temizle</button>
         </div>
       </div>
-      <p class="hint yetki-hint">Kullanıcının işlem yapabileceği firmaları satırdan işaretleyin. ADMIN’de hepsi / boş kayıt = tüm companies (kısıt yok).</p>
+      <p class="hint yetki-hint">Kullanıcının işlem yapabileceği firmaları satırdan işaretleyin. ADMIN’de hepsi / boş kayıt = tüm firmalar (kısıt yok).</p>
       <div class="firma-yetki-scroll">
         <table class="yetki-table" id="firmaYetkiTable">
           <thead>
             <tr>
               <th class="yetki-erisim">
-                <label class="yetki-th-hepsi" title="Tüm companies">
+                <label class="yetki-th-hepsi" title="Tüm firmalar">
                   <input type="checkbox" data-firma-head="hepsi" ${dis} />
                   <span>Hepsi</span>
                 </label>
@@ -16753,7 +17208,9 @@ function renderGridToolbar(tabKey, { canEdit }) {
   return `<div class="inline-toolbar erp-grid-toolbar" data-grid-toolbar="${tabKey}">
     <button type="button" class="btn action" data-grid-act="yeni" data-grid-key="${tabKey}" title="Yeni satır">＋ Satır</button>
     <button type="button" class="btn action ghost" data-grid-act="sil" data-grid-key="${tabKey}" title="Seçili satırı sil">✕ Sil</button>
-    <span class="toolbar-hint">Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır</span>
+    <span class="toolbar-hint">${findScreen(state.screenId)?.detailPersist?.[tabKey]
+    ? 'Satırda ✓ Kaydet veritabanına yazar'
+    : 'Satırda Kaydet yalnızca satırı onaylar · belge üstteki Kaydet ile yazılır'}</span>
   </div>`;
 }
 
@@ -17479,7 +17936,10 @@ function renderForm(screen) {
     const codeKey = screen.codeField;
     const codeVal = codeKey ? rec?.[codeKey] : null;
     const statusVal = rec?.status;
+    const rid = rec?.id != null && rec.id !== '' ? rec.id : null;
     const parts = [];
+    // SERIAL id is not a form field; shown in the top bar and the list
+    if (rid != null) parts.push(`ID ${rid}`);
     if (codeVal) parts.push(String(codeVal));
     if (statusVal) parts.push(String(statusVal));
     if (parts.length) {
@@ -17490,6 +17950,7 @@ function renderForm(screen) {
       chip.textContent = '';
     }
   }
+  syncFormBrowserUrl(screen);
   const saveHidden = readonly;
   ['btnFormSave', 'btnFormSaveClose', 'btnFormSaveNew'].forEach((id) => {
     const el = document.getElementById(id);
@@ -17876,6 +18337,9 @@ function renderForm(screen) {
       syncStockMovementTransferFields();
       refreshStockMovementNo(false);
     }).catch(() => { syncStockMovementTransferFields(); });
+  }
+  if (findAttrControl('data-master', 'exchange_rate') || findAttrControl('data-master', 'currency_code')) {
+    syncDocumentRateFields(false).catch(() => {});
   }
 }
 
@@ -18315,7 +18779,7 @@ const LOOKUP_TO_SCREEN = {
   'olcu-birimleri': 'olcu-birimleri',
   countries: 'country-tanimi',
   cities: 'sehir-tanimi',
-  districts: 'district-tanimi',
+  districts: 'sehir-tanimi',
   'para-birimleri': 'para-birimi-tanimi',
   'odeme-kosullari': 'odeme-kosulu-tanimi',
   'teslimat-kosullari': 'teslimat-kosulu-tanimi',
@@ -19684,6 +20148,21 @@ function bindCascadeLookups(_screen) {
         || (scr.masterFields || []).find((x) => x.key === masterKey);
       state.formRecord[masterKey] = f ? readFieldValue(el, f) : el.value;
     }
+    // Detail money / VAT fields → update footer without full re-render
+    if (detailKey && state.formRecord
+      && /^(quantity|unit_price|vat_rate|discount_rate|discount_rate_2|discount_rate_3|excise_rate|withholding_rate|stamp_tax_rate|bandrol_rate|vat_mode|line_type|tax_code_id)$/i.test(detailKey)) {
+      const didx = Number(el.getAttribute('data-didx'));
+      const grid = el.getAttribute('data-grid') || scr.detailKey || 'satirlar';
+      if (Number.isFinite(didx) && didx >= 0) {
+        if (!Array.isArray(state.formRecord[grid])) state.formRecord[grid] = [];
+        const row = { ...(state.formRecord[grid][didx] || {}) };
+        const fDef = (scr.detailFields || []).find((x) => x.key === detailKey)
+          || (scr.formTabs || []).flatMap((t) => t.grid?.fields || t.detailFields || []).find((x) => x.key === detailKey);
+        row[detailKey] = fDef ? readFieldValue(el, fDef) : el.value;
+        state.formRecord[grid][didx] = row;
+        refreshDocumentFooterLive(scr);
+      }
+    }
     refreshDependentLookups(scr, el);
     if (!_formLinking && fieldKey) {
       await applyFormLinkages(scr, fieldKey, el);
@@ -19764,21 +20243,33 @@ function bindCascadeLookups(_screen) {
       }
     }
 
-    // Para birimi → exchange_rate
-    if (fieldKey === 'currency_code') {
-      const pb = el.value;
+    // Para birimi / kur tipi → exchange_rate (TRY ise kur kilitli)
+    if (fieldKey === 'currency_code' || fieldKey === 'rate_type') {
       if (masterKey) {
-        const kurEl = document.querySelector('[data-master="exchange_rate"]');
-        await applyExchangeRateForCurrency(pb, kurEl, { force: true });
-        if (state.formRecord && kurEl) state.formRecord.exchange_rate = Number(kurEl.value) || 1;
+        await syncDocumentRateFields(true);
+        if (state.formRecord) {
+          const kurEl = findAttrControl('data-master', 'exchange_rate');
+          if (kurEl) state.formRecord.exchange_rate = Number(kurEl.value) || 1;
+          state.formRecord.rate_type = readMasterDetailValue('rate_type') || state.formRecord.rate_type;
+          state.formRecord.currency_code = readMasterDetailValue('currency_code') || state.formRecord.currency_code;
+        }
       } else if (detailKey) {
         const didx = el.getAttribute('data-didx');
         const grid = el.getAttribute('data-grid');
-        const kurEl = document.querySelector(
-          `[data-detail="exchange_rate"][data-didx="${didx}"][data-grid="${grid}"]`
+        const sel = (k) => document.querySelector(
+          `[data-detail="${k}"][data-didx="${didx}"]${grid != null ? `[data-grid="${grid}"]` : ''}`
         );
-        await applyExchangeRateForCurrency(pb, kurEl, { force: true });
+        const kurEl = sel('exchange_rate');
+        const tipEl = sel('rate_type');
+        const pb = fieldKey === 'currency_code' ? el.value : (sel('currency_code')?.value || '');
+        const tip = fieldKey === 'rate_type' ? el.value : (tipEl?.value || 'TCMB-SATIS');
+        await applyExchangeRateForCurrency(pb, kurEl, { force: true, rateType: tip, rateTypeEl: tipEl });
       }
+    }
+
+    if (scr.id === 'doviz-exchange_rate-tanimi'
+      && ['source', 'source_currency', 'target_currency', 'rate_date'].includes(fieldKey)) {
+      await fillExchangeRateFromTcmbIfNeeded();
     }
 
     // fillFrom: teklif / talep / sipariş / sevk / irsaliye / mal-kabul satır doldurma
@@ -19794,7 +20285,7 @@ function bindCascadeLookups(_screen) {
         state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
         await fillAddressFromPartner(el.value, { force: true });
         renderForm(scr);
-        toast('Cari address / ödeme bilgileri forma aktarıldı');
+        toast('Cari adres / ödeme bilgileri forma aktarıldı');
         return;
       }
     }
@@ -20724,27 +21215,35 @@ async function openForm(mode, opts = {}) {
   const seedFields = () => {
     collectTabFields(screen).forEach((f) => {
       if (f.type === 'checkbox') {
-        // is_active varsayılan true → Pasif kutusu boş
-        record[f.key] = f.key === 'is_inactive' ? false : true;
-      } else if (f.type === 'select') record[f.key] = f.options?.[0] || '';
-      else if (f.key === 'company_id' && getActiveCompanyId()) record[f.key] = getActiveCompanyId();
-      else if (f.key === 'plant_id' && state.activeIsYeriId) record[f.key] = state.activeIsYeriId;
-      else if (record[f.key] === undefined) record[f.key] = '';
+        // screen.defaults wins; otherwise only is_active starts ticked
+        if (Object.prototype.hasOwnProperty.call(record, f.key)) return;
+        record[f.key] = f.key === 'is_active';
+      } else if (f.type === 'select') {
+        const first = f.options?.[0];
+        if (record[f.key] === undefined) record[f.key] = (first && typeof first === 'object' ? first.value : first) || '';
+      } else if (f.key === 'company_id' && getActiveCompanyId()) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = getActiveCompanyId();
+      } else if (f.key === 'plant_id' && state.activeIsYeriId) {
+        if (record[f.key] === undefined || record[f.key] === '') record[f.key] = state.activeIsYeriId;
+      } else if (record[f.key] === undefined) record[f.key] = '';
     });
   };
 
   function initSpecialTabs(src) {
     const stripIds = mode === 'kopyala' || mode === 'yeni';
-    const keepOrStrip = (row) => {
+    const keepOrStrip = (row, fields) => {
       if (!row || typeof row !== 'object') return row;
       if (!stripIds) return { ...row };
+      if (mode === 'kopyala') return stripNonCopyableOnRowCopy(fields || [], row);
       const { id, ...rest } = row;
       return rest;
     };
     (screen.formTabs || []).forEach((tab) => {
       if (tab.kind === 'grid') {
-        const raw = Array.isArray(src[tab.key]) ? src[tab.key] : [];
-        record[tab.key] = normalizeGridRows(tab, raw.map(keepOrStrip));
+        const raw = mode === 'kopyala' && screen.detailPersist?.[tab.key]
+          ? []
+          : (Array.isArray(src[tab.key]) ? src[tab.key] : []);
+        record[tab.key] = normalizeGridRows(tab, raw.map((r) => keepOrStrip(r, tab.fields)));
       }
       if (tab.kind === 'master-grid') {
         const gkey = tab.grid?.key || tab.key || '_detail';
@@ -20754,8 +21253,10 @@ async function openForm(mode, opts = {}) {
           fields: tab.grid?.fields || tab.detailFields || [],
           slots: tab.grid?.slots,
         };
-        const raw = Array.isArray(src[gkey]) ? src[gkey] : [];
-        record[gkey] = normalizeGridRows(gtab, raw.map(keepOrStrip));
+        const raw = mode === 'kopyala' && screen.detailPersist?.[gkey]
+          ? []
+          : (Array.isArray(src[gkey]) ? src[gkey] : []);
+        record[gkey] = normalizeGridRows(gtab, raw.map((r) => keepOrStrip(r, gtab.fields)));
       }
       if (tab.kind === 'bom-tree' || tab.kind === 'bom-workspace') {
         record.satirlar = Array.isArray(src.agac) && src.agac.length
@@ -20827,10 +21328,20 @@ async function openForm(mode, opts = {}) {
       try {
         record[screen.codeField] = await reserveCode(seri);
         state.formNumeratorSeri = seri;
-      } catch (err) { toast(err.message); }
+      } catch (err) {
+        toast(err.message);
+        record[screen.codeField] = '';
+        state.formNumeratorSeri = null;
+      }
     } else {
+      if (screen.codeField) record[screen.codeField] = '';
       state.formNumeratorSeri = null;
     }
+    (screen.masterFields || []).forEach((f) => {
+      if (!isNonCopyableField(f)) return;
+      if (screen.codeField && f.key === screen.codeField && seri) return;
+      record[f.key] = f.type === 'checkbox' ? false : '';
+    });
     initSpecialTabs(full);
   } else {
     const full = await loadRecord(row.id);
@@ -20843,6 +21354,12 @@ async function openForm(mode, opts = {}) {
     record.last_number = 0;
     record.is_active = true;
     if (mode === 'yeni') record.series_code = '';
+  }
+
+  if (screen.id === 'doviz-exchange_rate-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
+    if (!record.rate_date) record.rate_date = new Date().toISOString().slice(0, 10);
+    if (!record.target_currency) record.target_currency = 'TRY';
+    if (!record.source) record.source = 'Manuel';
   }
 
   if (screen.id === 'stok-karti') {
@@ -21214,6 +21731,11 @@ async function saveForm({ after = 'stay' } = {}) {
     }
     delete master._sablon_rota_id;
   }
+  // detailPersist lists are written row by row; sending them on update would
+  // make the server sync drop rows that only exist in the database.
+  if (screen.detailPersist && state.formRecord?.id) {
+    Object.keys(screen.detailPersist).forEach((k) => { delete master[k]; });
+  }
 
   try {
     let saved = { ...master };
@@ -21301,14 +21823,10 @@ async function deleteSelected() {
     toast('Bu ekranda silme yetkiniz yok.');
     return;
   }
-  if (screen.id === 'numarator-tanimi') {
-    toast('Numaratör silinmez; pasife alın.');
-    return;
-  }
   if (!confirm(`${row[screen.codeField] || row.id} silinsin mi?`)) return;
   try {
-    await api(`${screenApiBase(screen.endpoint)}/${row.id}`, { method: 'DELETE' });
-    toastInfo('Silindi.', 'INF-DELETE-OK');
+    const del = await api(`${screenApiBase(screen.endpoint)}/${row.id}`, { method: 'DELETE' });
+    toastInfo(del?.soft ? 'Pasife alındı.' : 'Silindi.', 'INF-DELETE-OK');
     if (screen.id === 'zorunlu-alan-tanimlari') {
       await loadRequiredFieldDefs().catch(() => {});
     }
@@ -21693,13 +22211,14 @@ function closeRecordInfo() {
   if (dlg) dlg.hidden = true;
 }
 
-async function showFieldHelpForElement(el) {
-  if (!el) return;
-  const fieldEl = el.closest('[data-field-key], [data-master], [data-detail]');
-  if (!fieldEl && !el.getAttribute?.('data-master') && !el.getAttribute?.('data-detail')) return;
-  const key = fieldEl?.getAttribute('data-field-key')
-    || el.getAttribute('data-master')
-    || el.getAttribute('data-detail')
+async function showFieldHelpForElement(el, forcedKey = null) {
+  if (!el && !forcedKey) return;
+  const fieldEl = el?.closest?.('[data-field-key], [data-master], [data-detail]');
+  if (!forcedKey && !fieldEl && !el?.getAttribute?.('data-master') && !el?.getAttribute?.('data-detail')) return;
+  const key = forcedKey
+    || fieldEl?.getAttribute('data-field-key')
+    || el?.getAttribute('data-master')
+    || el?.getAttribute('data-detail')
     || fieldEl?.querySelector?.('[data-master], [data-detail]')?.getAttribute('data-master')
     || fieldEl?.querySelector?.('[data-detail]')?.getAttribute('data-detail');
   const screen = findScreen(state.screenId);
@@ -21712,6 +22231,16 @@ async function showFieldHelpForElement(el) {
   if (!body || !dlg) return;
   body.innerHTML = '<p>Yükleniyor…</p>';
   dlg.hidden = false;
+  const titleEl = $('#fieldHelpTitle');
+  const fieldDef = collectTabFields(screen).find((f) => f.key === key)
+    || (screen.masterFields || []).find((f) => f.key === key)
+    || (screen.detailFields || []).find((f) => f.key === key);
+  if (fieldDef?.info) {
+    if (titleEl) titleEl.textContent = `${fieldDef.label || key} — bilgi`;
+    body.innerHTML = `<p class="meta-help-lead">${escapeHtml(fieldDef.info)}</p>`;
+    return;
+  }
+  if (titleEl) titleEl.textContent = 'Alan bilgisi (F1)';
   try {
     const info = await api(`/meta/alan?screen=${encodeURIComponent(screen.id)}&field=${encodeURIComponent(key)}`);
     body.innerHTML = `
@@ -21823,6 +22352,15 @@ function bindMetaHelpGlobal() {
       ? field
       : field.querySelector('[data-master], [data-detail]');
     showFieldHelpForElement(ctl || field);
+  });
+  document.addEventListener('click', (e) => {
+    const infoBtn = e.target.closest?.('[data-field-info]');
+    if (!infoBtn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const field = infoBtn.closest('[data-field-key]');
+    const ctl = field?.querySelector('[data-master], [data-detail]') || field;
+    showFieldHelpForElement(ctl || infoBtn, infoBtn.getAttribute('data-field-info'));
   });
   document.addEventListener('click', (e) => {
     const wrap = $('#formInfoWrap');
@@ -22082,6 +22620,7 @@ function bindEvents() {
       else if (act === 'mrp-talep') createMrpRequisitions().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
+      else if (act === 'tcmb-cek') fetchTcmbRates().catch((err) => toast(err.message));
       else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
@@ -22210,10 +22749,25 @@ function bindEvents() {
     const shell = $('#appShell');
     const sidebar = $('#sidebar');
     if (window.matchMedia('(max-width: 900px)').matches) {
+      // Mobil: yalnızca çekmece menü
+      undockFiltersFromSidebar({ keepCollapsed: false });
       sidebar.classList.toggle('open');
-    } else {
-      shell.classList.toggle('sidebar-collapsed');
+      return;
     }
+    // Liste ekranı açıkken: menü ↔ yan filtre takası (logo altında, aynı genişlik)
+    if (isListScreenOpen()) {
+      if (isFilterDocked()) {
+        undockFiltersFromSidebar();
+      } else {
+        shell.classList.remove('sidebar-collapsed');
+        dockFiltersToSidebar();
+      }
+      return;
+    }
+    // Ekran yokken: klasik menü aç/kapa
+    undockFiltersFromSidebar({ keepCollapsed: false });
+    shell.classList.toggle('sidebar-collapsed');
+    syncMenuButtonLabel();
   });
 
   $('#btnSidebarLocate')?.addEventListener('click', (e) => {
@@ -22696,6 +23250,7 @@ function bindEvents() {
         blank._satir_kayitli = false;
         blank._satir_duzenleniyor = true;
         delete blank._satir_toplu; // manuel satır — ✓ sonrası yeni boş satır
+        if (key === 'districts') blank.is_active = true;
         rows.push(blank);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: rows.length - 1 };
@@ -22714,9 +23269,21 @@ function bindEvents() {
           toast('Silmek için önce bir satır seçin.');
           return;
         }
-        rows.splice(state.gridSel.idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = { key: null, idx: null };
+        const doomedIdx = state.gridSel.idx;
+        const doomed = rows[doomedIdx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) await deletePersistedGridRow(screen, key, doomed);
+            rows.splice(doomedIdx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
+        return;
       }
       renderForm(screen);
       return;
@@ -22755,23 +23322,29 @@ function bindEvents() {
       }
       if (act === 'sil') {
         if (!rows[idx]) return;
-        rows.splice(idx, 1);
-        state.formRecord[key] = rows;
-        state.gridSel = rows.length
-          ? { key, idx: Math.min(idx, rows.length - 1) }
-          : { key: null, idx: null };
-        renderForm(screen);
-        toast('Satır silindi.');
+        const doomed = rows[idx];
+        (async () => {
+          try {
+            if (screen.detailPersist?.[key]) await deletePersistedGridRow(screen, key, doomed);
+            rows.splice(idx, 1);
+            state.formRecord[key] = rows;
+            state.gridSel = rows.length
+              ? { key, idx: Math.min(idx, rows.length - 1) }
+              : { key: null, idx: null };
+            renderForm(screen);
+            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+          } catch (err) {
+            toast(err.message || 'Satır silinemedi');
+          }
+        })();
         return;
       }
       if (act === 'kopyala') {
         if (!rows[idx]) return;
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
-        const copy = { ...rows[idx] };
-        delete copy.id;
-        copy._satir_kayitli = false;
-        copy._satir_duzenleniyor = true;
+        const copy = stripNonCopyableOnRowCopy(tab.fields, rows[idx]);
         delete copy._satir_toplu; // kopya = teker teker; ✓ sonrası boş satır
+        if (key === 'districts') copy.is_active = true;
         rows.splice(idx + 1, 0, copy);
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
@@ -22782,10 +23355,34 @@ function bindEvents() {
       if (act === 'kaydet') {
         // Satır Kaydet yalnızca bellek/UI — belgeyi (saveForm) kaydetmez.
         if (rows[idx]) {
-          const { row, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
+          const { row: domRow, missing } = syncGridRowFromDom(tab, idx, rows[idx]);
           if (missing?.length) {
             toast(`Satır eksik: ${missing.map((f) => f.label || f.key).join(', ')}`);
             return;
+          }
+          let row = domRow;
+          if (screen.detailPersist?.[key]) {
+            // detailPersist rows are written to the API right away, then re-run this branch.
+            if (!row._persisted_now) {
+              (async () => {
+                try {
+                  const apiRow = await persistGridRowImmediately(screen, key, row);
+                  rows[idx] = { ...row, ...(apiRow || {}), _persisted_now: true };
+                  state.formRecord[key] = rows;
+                  if (key === 'districts') delete state.lookupCache.districts;
+                  renderForm(screen);
+                  const again = document.querySelector(
+                    `[data-row-act="kaydet"][data-grid-key="${key}"][data-grid-idx="${idx}"]`
+                  );
+                  if (again) again.click();
+                } catch (err) {
+                  toast(err.message || 'Satır kaydedilemedi');
+                }
+              })();
+              return;
+            }
+            row = { ...row };
+            delete row._persisted_now;
           }
           const wasBulk = Boolean(row._satir_toplu);
           row._satir_kayitli = true;
@@ -22819,7 +23416,9 @@ function bindEvents() {
               }
             });
           }
-          toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+          toast(screen.detailPersist?.[key]
+            ? 'Satır veritabanına kaydedildi.'
+            : 'Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
           return;
         }
         state.formRecord[key] = rows;

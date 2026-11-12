@@ -26,6 +26,12 @@ router.get('/', async (req, res) => {
         for (const r of liste.rows) result.push(await getIncomingInspection(r.id));
         res.json(result);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -36,6 +42,12 @@ router.get('/:id', async (req, res) => {
         if (!giris) return res.status(404).json({ hata: 'Üretim girişi bulunamadı.' });
         res.json(giris);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -45,7 +57,7 @@ router.post('/', async (req, res) => {
     try {
         const { order_id, quantity } = req.body;
         if (!order_id || quantity == null) {
-            return res.status(400).json({ hata: 'order_id ve quantity zorunlu.' });
+            return res.status(400).json({ hata: 'order_id ve miktar zorunlu.' });
         }
         const base = `http://127.0.0.1:${process.env.PORT || 3000}`;
         const r = await fetch(`${base}/uretim-emirleri/${order_id}/uretim-giris`, {
@@ -64,6 +76,29 @@ router.post('/', async (req, res) => {
         }
         res.status(201).json(body);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+router.put('/:id', (req, res) => {
+    res.status(409).json({ hata: 'Üretim girişi stok hareketi üretir; düzeltilemez. Kaydı silip yeniden oluşturun.' });
+});
+
+router.delete('/:id', async (req, res) => {
+    try {
+        const r = await pool.query(`DELETE FROM production_receipts WHERE id=$1 RETURNING id`, [req.params.id]);
+        if (!r.rows[0]) return res.status(404).json({ hata: 'Üretim girişi bulunamadı.' });
+        res.json({ is_deleted: true, id: Number(r.rows[0].id) });
+    } catch (err) {
+        if (err.code === '23503') {
+            return res.status(409).json({ hata: 'Bağlı stok hareketleri nedeniyle silinemedi.' });
+        }
         res.status(500).json({ hata: err.message });
     }
 });

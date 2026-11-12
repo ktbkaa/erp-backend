@@ -4,6 +4,21 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { ensureDemoFirms } = require('../src/bootstrap/ensureDemoFirms');
+
+let healOnce = null;
+function healInBackground() {
+    if (healOnce) return healOnce;
+    const { ensureDemoData } = require('../src/bootstrap/ensureDemoData');
+    healOnce = (async () => {
+        await ensureDemoFirms(pool);
+        await ensureDemoData(pool);
+    })().catch((err) => {
+        console.error('[heal] companies:', err.message);
+        healOnce = null;
+    });
+    return healOnce;
+}
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -22,6 +37,8 @@ function parseIsProfile(v) {
 
 router.get('/', async (req, res) => {
     try {
+        // İlk liste çağrısında demo profilleri / yetkileri sessizce onar (veri silmez)
+        await healInBackground();
         // X-Firma-Id varsa yalnız o firma; boş/yoksa tüm liste (profil seçici / org ekranı)
         const firmaId = companyIdFromReq(req);
         const result = firmaId
@@ -39,6 +56,12 @@ router.get('/:id', async (req, res) => {
         if (!result.rows[0]) return res.status(404).json({ hata: 'Firma bulunamadı.' });
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -86,6 +109,12 @@ router.put('/:id', async (req, res) => {
         if (!result.rows[0]) return res.status(404).json({ hata: 'Firma bulunamadı.' });
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -96,6 +125,12 @@ router.delete('/:id', async (req, res) => {
         if (!result.rows[0]) return res.status(404).json({ hata: 'Firma bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

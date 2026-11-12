@@ -4,6 +4,7 @@ const { getConfig } = require('../util/config');
 const { runAsync } = require('../util/run');
 const { resolvePgDump } = require('../util/pgdump');
 const { nodeSqlBackup } = require('../util/nodeBackup');
+const { gitBranch, resolveErpRoot } = require('../util/erpRoot');
 const logger = require('../util/logger');
 
 function assertErpRoot(cfg) {
@@ -32,8 +33,21 @@ async function stepGitPull(cfg) {
     logger.append({ level: 'warn', message: 'Git deposu yok — git pull atlandı' });
     return { skipped: true, reason: 'not-a-git-repo' };
   }
+  // Önce mevcut dalı çek; ff-only kırılırsa rebase deneme — kullanıcıya net hata
   await runAsync(gitCmd(), ['fetch', 'origin'], { cwd: cfg.erpRoot, label: 'git fetch' });
-  await runAsync(gitCmd(), ['pull', '--ff-only'], { cwd: cfg.erpRoot, label: 'git pull' });
+  try {
+    await runAsync(gitCmd(), ['pull', '--ff-only'], { cwd: cfg.erpRoot, label: 'git pull' });
+  } catch (err) {
+    const br = gitBranch(cfg.erpRoot) || 'HEAD';
+    logger.append({
+      level: 'warn',
+      message: `git pull --ff-only olmadı (${br}): ${err.message}. origin/${br} merge deneniyor…`,
+    });
+    await runAsync(gitCmd(), ['pull', 'origin', br, '--no-edit'], {
+      cwd: cfg.erpRoot,
+      label: `git pull origin ${br}`,
+    });
+  }
   return { ok: true };
 }
 
@@ -55,6 +69,22 @@ async function stepMigrate(cfg) {
   await runAsync(npmCmd(), ['run', 'migrate'], {
     cwd: cfg.erpRoot,
     label: 'npm run migrate',
+    shell: process.platform === 'win32',
+  });
+  return { ok: true };
+}
+
+/** Migrate sonrası firma profil / yetki onarımı — veri silmez */
+async function stepHeal(cfg) {
+  const pkg = JSON.parse(fs.readFileSync(path.join(cfg.erpRoot, 'package.json'), 'utf8'));
+  if (!pkg.scripts || !pkg.scripts['local:heal']) {
+    logger.append({ level: 'warn', message: 'local:heal script yok — atlandı (eski branch?)' });
+    return { skipped: true, reason: 'no-local-heal-script' };
+  }
+  // local:heal eksik OG veri varsa otomatik seed eder (silmez)
+  await runAsync(npmCmd(), ['run', 'local:heal'], {
+    cwd: cfg.erpRoot,
+    label: 'npm run local:heal',
     shell: process.platform === 'win32',
   });
   return { ok: true };
@@ -170,11 +200,30 @@ async function stepBackup(cfg) {
 async function runSync(opts = {}) {
   const cfg = getConfig();
   assertErpRoot(cfg);
+  const resolved = resolveErpRoot(cfg.erpRoot);
+  if (resolved.switched) {
+    logger.append({
+      level: 'warn',
+      message: `ERP klasörü otomatik düzeltildi: ${resolved.from} → ${resolved.root}`,
+    });
+    cfg.erpRoot = resolved.root;
+  }
   const steps = { ...cfg.steps, ...(opts.steps || {}) };
   const started = Date.now();
-  logger.append({ level: 'info', message: 'Senkron başladı', erpRoot: cfg.erpRoot });
+  const branch = gitBranch(cfg.erpRoot);
+  logger.append({
+    level: 'info',
+    message: `Senkron başladı · ${cfg.erpRoot}${branch ? ` · ${branch}` : ''}`,
+    erpRoot: cfg.erpRoot,
+  });
 
-  const result = { ok: true, steps: {}, erpRoot: cfg.erpRoot, startedAt: new Date().toISOString() };
+  const result = {
+    ok: true,
+    steps: {},
+    erpRoot: cfg.erpRoot,
+    branch,
+    startedAt: new Date().toISOString(),
+  };
 
   try {
     if (steps.gitPull !== false) {
@@ -188,6 +237,10 @@ async function runSync(opts = {}) {
     if (steps.migrate !== false) {
       result.steps.migrate = await stepMigrate(cfg);
       logger.append({ level: 'info', message: 'Adım tamam: migrate' });
+    }
+    if (steps.heal !== false) {
+      result.steps.heal = await stepHeal(cfg);
+      logger.append({ level: 'info', message: 'Adım tamam: heal (firma/profil)' });
     }
     if (steps.backup !== false) {
       result.steps.backup = await stepBackup(cfg);
@@ -227,10 +280,18 @@ async function getStatus() {
     pgModule = true;
   } catch { /* ignore */ }
 
+  const branch = erpOk ? gitBranch(cfg.erpRoot) : null;
+  const healScript = erpOk && fs.existsSync(path.join(cfg.erpRoot, 'scripts', 'local-heal.js'));
+  const switched = Boolean(cfg.erpRootResolved?.switched);
+
   return {
     erpRoot: cfg.erpRoot || null,
     erpOk,
     gitOk,
+    branch,
+    healScript,
+    pathSwitched: switched,
+    pathSwitchFrom: cfg.erpRootResolved?.from || null,
     migrateScript,
     backupScript,
     pgDump,
@@ -253,6 +314,7 @@ module.exports = {
   runSync,
   stepBackup,
   stepMigrate,
+  stepHeal,
   stepGitPull,
   stepNpmInstall,
   getStatus,

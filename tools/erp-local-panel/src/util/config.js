@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const { resolveErpRoot } = require('./erpRoot');
 
 const ROOT = path.join(__dirname, '..', '..');
 
@@ -29,6 +30,27 @@ function getConfig() {
   if (panelEnv.PG_DUMP_PATH) cfg.pgDumpPath = panelEnv.PG_DUMP_PATH;
 
   cfg.erpRoot = String(cfg.erpRoot || '').trim().replace(/^["']|["']$/g, '');
+
+  // Yanlış düz Masaüstü\erp-backend yerine ERP PROJESİ\erp-backend seç
+  const resolved = resolveErpRoot(cfg.erpRoot);
+  cfg.erpRootResolved = resolved;
+  if (resolved.root && resolved.root !== cfg.erpRoot) {
+    cfg.erpRoot = resolved.root;
+    // Otomatik düzeltmeyi kalıcı yaz (panel her açılışta doğru kökte kalsın)
+    try {
+      const file = path.join(ROOT, 'config.json');
+      const cur = readJson(file, {});
+      if (cur.erpRoot !== resolved.root) {
+        cur.erpRoot = resolved.root;
+        if (!cur.backupDir || String(cur.backupDir).includes(path.sep + 'erp-backend' + path.sep + 'backups')
+            || /[\\/](Masaüstü|Masaustu|Desktop)[\\/]erp-backend[\\/]backups$/i.test(String(cur.backupDir || ''))) {
+          cur.backupDir = path.join(resolved.root, 'backups');
+        }
+        fs.writeFileSync(file, JSON.stringify(cur, null, 2), 'utf8');
+      }
+    } catch { /* ignore */ }
+  }
+
   if (!cfg.backupDir) {
     cfg.backupDir = cfg.erpRoot
       ? path.join(cfg.erpRoot, 'backups')

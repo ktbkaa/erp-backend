@@ -21,6 +21,13 @@ function notFoundHandler(req, res) {
 
 function errorHandler(err, req, res, next) {
   if (res.headersSent) return next(err);
+  // Postgres FK violation → readable conflict instead of raw 500
+  if (err && err.code === '23503') {
+    return res.status(409).json({
+      hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+      kod: 'ERR-FK-23503',
+    });
+  }
   const status = err.status || err.statusCode || 500;
   const body = {
     hata: err.message || 'Sunucu hatası',

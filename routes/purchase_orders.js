@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { isPartnerSupplier } = require('../src/utils/kodUretici');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
@@ -35,7 +36,7 @@ async function assertTedarikci(client, partner_id) {
     [partner_id]
   );
   if (!cari.rows[0]) throw new Error('Cari bulunamadı.');
-  if (cari.rows[0].is_active === false) throw new Error('Cari is_inactive; satınalma yapılamaz.');
+  if (cari.rows[0].is_active === false) throw new Error('Cari pasif; satınalma yapılamaz.');
   if (!isPartnerSupplier(cari.rows[0].partner_type)) {
     throw new Error(
       `Satınalma siparişi yalnızca tedarikçiye açılır. Seçilen cari (${cari.rows[0].partner_code}) türü: ${cari.rows[0].partner_type}`
@@ -137,6 +138,12 @@ router.get('/', async (req, res) => {
     for (const r of liste.rows) result.push(await getOrder(r.id));
     res.json(result);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -147,6 +154,12 @@ router.get('/:id', async (req, res) => {
     if (!siparis) return res.status(404).json({ hata: 'Satınalma siparişi bulunamadı.' });
     res.json(siparis);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -260,7 +273,7 @@ router.put('/:id', async (req, res) => {
     const b = req.body || {};
     const allowed = ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'];
     if (b.status && !allowed.includes(b.status)) {
-      return res.status(400).json({ hata: `Geçersiz status. İzin verilen: ${allowed.join(', ')}` });
+      return res.status(400).json({ hata: `Geçersiz durum. İzin verilen: ${allowed.join(', ')}` });
     }
 
     const id = await withTransaction(pool, async (client) => {
@@ -311,7 +324,10 @@ router.put('/:id', async (req, res) => {
         ]
       );
 
-      if (Array.isArray(b.satirlar)) {
+      if (Array.isArray(b.satirlar) && await canRewriteLines(client, {
+        lineTable: 'purchase_order_lines', fkCol: 'purchase_order_id', docId: Number(req.params.id),
+        submitted: b.satirlar, orderBy: 'COALESCE(line_no, id), id', label: 'Siparişin',
+      })) {
         const exchange_rate = b.exchange_rate ?? mevcut.rows[0].exchange_rate ?? 1;
         await replaceOrderLines(client, Number(req.params.id), b.satirlar, exchange_rate);
       }
@@ -320,6 +336,12 @@ router.put('/:id', async (req, res) => {
 
     res.json(await getOrder(id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -337,7 +359,7 @@ router.post('/:id/onayla', async (req, res) => {
         [req.params.id]
       );
       if (!upd.rows[0]) {
-        const err = new Error('Sipariş onaylanamadı (bulunamadı veya status Taslak değil).');
+        const err = new Error('Sipariş onaylanamadı (bulunamadı veya durumu Taslak değil).');
         err.status = 400;
         throw err;
       }
@@ -369,6 +391,12 @@ router.post('/:id/onayla', async (req, res) => {
     const siparis = await getOrder(result.id);
     res.json({ ...siparis, onay_kayit: result.onayKayit || null });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -379,6 +407,12 @@ router.delete('/:id', async (req, res) => {
     if (!result.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

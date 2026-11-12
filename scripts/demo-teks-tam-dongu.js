@@ -546,7 +546,14 @@ async function purgeElek(client, companyId) {
         OR sales_order_id IN (SELECT id FROM sales_orders WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1))`, [id], 'sales_order_lines'],
     [`DELETE FROM sales_orders WHERE company_id=$1
         OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'sales_orders'],
-    [`DELETE FROM sales_quotation_lines WHERE quotation_id IN (SELECT id FROM sales_quotations WHERE company_id=$1)`, [id], 'sales_quotation_lines'],
+    [`DELETE FROM sales_quotation_lines WHERE quotation_id IN (SELECT id FROM sales_quotations WHERE company_id=$1)
+        OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'sales_quotation_lines'],
+    [`UPDATE sales_quotations SET opportunity_id=NULL
+        WHERE opportunity_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, [id], 'null quot.opp'],
+    [`UPDATE sales_quotations SET lead_id=NULL
+        WHERE lead_id IN (SELECT id FROM crm_leads WHERE company_id=$1)`, [id], 'null quot.lead'],
+    [`UPDATE projects SET partner_id=NULL
+        WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'null prj.partner'],
     [`DELETE FROM sales_quotations WHERE company_id=$1`, [id], 'sales_quotations'],
     [`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id IN (SELECT id FROM vendor_delivery_notes WHERE company_id=$1)`, [id], 'vdn_lines'],
     [`DELETE FROM incoming_inspection_lines WHERE inspection_id IN (
@@ -655,8 +662,7 @@ async function purgeElek(client, companyId) {
     [`DELETE FROM partner_details WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'partner_det'],
     [`DELETE FROM partner_ledger_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'partner_ledger'],
     [`DELETE FROM partner_company_params WHERE company_id=$1`, [id], 'partner_params'],
-    [`DELETE FROM crm_calendar_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)
-        OR company_id=$1`, [id], 'crm_calendar'],
+    [`DELETE FROM crm_calendar_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'crm_calendar'],
     [`DELETE FROM partners WHERE company_id=$1`, [id], 'partners'],
   ];
 
@@ -966,6 +972,11 @@ async function seedManuel(client, org, base) {
     [teklif.id, base.fg.id, qty, qty * 4200]
   );
 
+  const soMovementCodeId = await hkId(client, 'SatisSiparis');
+  // API ayrı bağlantı kullanır; quotation_id FK'si teklifi görebilmeli
+  await client.query('COMMIT');
+  await client.query('BEGIN');
+
   // 9) Satış siparişi (tekliften)
   const so = await api('POST', '/sales_orders', {
     order_type: 'SatisSiparis',
@@ -978,7 +989,7 @@ async function seedManuel(client, org, base) {
     project_code: tag,
     description: `[${tag}] Satış siparişi — MRP yok, doğrudan plan`,
     price_list_id: base.pl.id,
-    movement_code_id: await hkId(client, 'SatisSiparis'),
+    movement_code_id: soMovementCodeId,
     quotation_id: teklif.id,
     kalemler: [{
       item_id: base.fg.id,

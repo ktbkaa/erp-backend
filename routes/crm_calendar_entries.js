@@ -120,6 +120,40 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+router.get('/:id', async (req, res, next) => {
+  try {
+    const r = await pool.query('SELECT * FROM crm_calendar_entries WHERE id = $1', [req.params.id]);
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    if (!b.title || !b.start_at) {
+      return res.status(400).json({ hata: 'title ve start_at zorunlu.' });
+    }
+    const r = await pool.query(
+      `UPDATE crm_calendar_entries SET
+         title = $2, start_at = $3, end_at = $4, type = COALESCE($5, type),
+         partner_id = $6, lead_id = $7, opportunity_id = $8,
+         user_code = COALESCE($9, user_code), description = $10
+       WHERE id = $1
+       RETURNING *`,
+      [req.params.id, b.title, b.start_at, b.end_at || null, b.type || null,
+        b.partner_id || null, b.lead_id || null, b.opportunity_id || null,
+        b.user_code || null, b.description || null]
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query(`DELETE FROM crm_calendar_entries WHERE id=$1 RETURNING id`, [req.params.id]);

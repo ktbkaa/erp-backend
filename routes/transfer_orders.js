@@ -103,7 +103,7 @@ router.post('/', async (req, res, next) => {
       );
       const emirId = ins.rows[0].id;
       for (const s of satirlar) {
-        if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
+        if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve miktar zorunlu.');
         const stok = await client.query('SELECT uom_code FROM items WHERE id=$1', [s.item_id]);
         if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
         await client.query(
@@ -155,7 +155,7 @@ router.put('/:id', async (req, res, next) => {
       if (Array.isArray(req.body.satirlar)) {
         await client.query('DELETE FROM transfer_order_lines WHERE order_id=$1', [req.params.id]);
         for (const s of req.body.satirlar) {
-          if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
+          if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve miktar zorunlu.');
           await client.query(
             `INSERT INTO transfer_order_lines
                 (order_id, item_id, quantity, uom_code, lot_id, bin_code, description)

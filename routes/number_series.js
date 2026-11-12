@@ -30,6 +30,12 @@ router.get('/', async (req, res) => {
         );
         res.json(result.rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -51,6 +57,12 @@ router.get('/stok-hareket/peek', async (req, res) => {
             peek: true,
         });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -67,6 +79,12 @@ router.post('/stok-hareket/peek', async (req, res) => {
             peek: true,
         });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -86,6 +104,12 @@ router.post('/stok-hareket/ayir', async (req, res) => {
             kod,
         });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -109,6 +133,12 @@ router.post('/ayir-prefixed', async (req, res) => {
         }));
         res.status(201).json({ series_code: seriesCode, prefix, kod });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -124,6 +154,12 @@ router.get('/:seriKodu', async (req, res) => {
         if (!result.rows[0]) return res.status(404).json({ hata: 'Numaratör bulunamadı.' });
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -138,12 +174,18 @@ router.post('/:seriKodu/ayir', async (req, res) => {
             );
             if (!seri.rows[0]) throw Object.assign(new Error('Numaratör tanımlı değil.'), { status: 404 });
             if (seri.rows[0].is_active === false) {
-                throw Object.assign(new Error('Numaratör is_inactive.'), { status: 400 });
+                throw Object.assign(new Error('Numaratör pasif.'), { status: 400 });
             }
             return nextSequenceCode(client, req.params.seriKodu);
         });
         res.status(201).json({ series_code: req.params.seriKodu, kod });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -177,6 +219,12 @@ router.put('/:seriKodu', async (req, res) => {
         if (!result.rows[0]) return res.status(404).json({ hata: 'Numaratör bulunamadı.' });
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -193,7 +241,7 @@ router.post('/', async (req, res) => {
         const result = await pool.query(
             `
             INSERT INTO number_series (series_code, prefix, description, last_number, screen_code, screen_name, is_active)
-            VALUES ($1, $2, $3, COALESCE($4, 0), $5, $6, TRUE)
+            VALUES ($1, $2, $3, COALESCE($4::numeric,0), $5, $6, TRUE)
             RETURNING series_code AS id, series_code, prefix, description, last_number,
                       screen_code, screen_name, is_active, created_at
             `,
@@ -201,8 +249,36 @@ router.post('/', async (req, res) => {
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
+
+router.delete('/:seriKodu', async (req, res) => {
+    try {
+        const r = await pool.query(
+            `UPDATE number_series SET is_active = FALSE
+             WHERE series_code = $1
+             RETURNING series_code AS id, series_code, is_active`,
+            [req.params.seriKodu]
+        );
+        if (!r.rows[0]) return res.status(404).json({ hata: 'Numaratör bulunamadı.' });
+        res.json({ is_deleted: true, soft: true, id: r.rows[0].id });
+    } catch (err) {
+        if (err.code === '23503') {
+            return res.status(409).json({
+                hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                kod: 'ERR-FK-23503',
+            });
+        }
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
 
 module.exports = router;
