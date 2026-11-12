@@ -123,9 +123,14 @@ async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, b
     await client.query('DELETE FROM production_order_operations WHERE order_id=$1', [emirId]);
     const plan = Number(planlananMiktar);
     const carpan = Number(bilesenCarpan) > 0 ? Number(bilesenCarpan) : plan;
+    const sorted = [...(rotaOps || [])].sort((a, b) => Number(a.line_no) - Number(b.line_no));
     let ilk = true;
     let n = 0;
-    for (const op of rotaOps) {
+    for (let i = 0; i < sorted.length; i += 1) {
+        const op = sorted[i];
+        const nextFromRoute = op.next_line_no != null ? op.next_line_no : null;
+        const nextFallback = sorted[i + 1] ? sorted[i + 1].line_no : null;
+        const nextLine = nextFromRoute != null ? nextFromRoute : nextFallback;
         const opIns = await client.query(
             `
             INSERT INTO production_order_operations
@@ -141,7 +146,7 @@ async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, b
                 op.operation_name,
                 op.work_center_id,
                 op.output_item_id,
-                op.next_line_no,
+                nextLine,
                 plan,
                 ilk ? 'Hazir' : 'Bekliyor',
             ],
@@ -1077,16 +1082,30 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 [yeniUretilen, opDurum, op.id]
             );
 
-            // Sıradaki operasyonu Hazir yap
-            if (opDurum === 'Tamamlandi' && op.next_line_no) {
-                await client.query(
-                    `
-                    UPDATE production_order_operations
-                    SET status='Hazir'
-                    WHERE order_id=$1 AND line_no=$2 AND status='Bekliyor'
-                    `,
-                    [emirId, op.next_line_no]
-                );
+            // Sıradaki operasyonu Hazir yap (next_line_no yoksa satır sırası)
+            if (opDurum === 'Tamamlandi') {
+                let nextLine = op.next_line_no;
+                if (nextLine == null) {
+                    const nx = await client.query(
+                        `
+                        SELECT line_no FROM production_order_operations
+                        WHERE order_id=$1 AND line_no > $2 AND status='Bekliyor'
+                        ORDER BY line_no LIMIT 1
+                        `,
+                        [emirId, op.line_no]
+                    );
+                    nextLine = nx.rows[0]?.line_no || null;
+                }
+                if (nextLine != null) {
+                    await client.query(
+                        `
+                        UPDATE production_order_operations
+                        SET status='Hazir'
+                        WHERE order_id=$1 AND line_no=$2 AND status='Bekliyor'
+                        `,
+                        [emirId, nextLine]
+                    );
+                }
             }
 
             // Tüm ops tamamsa emri kapat; mamul miktarını güncelle
@@ -1384,14 +1403,26 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
             [quantity, op.id]
         );
 
-        if (op.next_line_no) {
+        let nextLine = op.next_line_no;
+        if (nextLine == null) {
+            const nx = await client.query(
+                `
+                SELECT line_no FROM production_order_operations
+                WHERE order_id=$1 AND line_no > $2 AND status='Bekliyor'
+                ORDER BY line_no LIMIT 1
+                `,
+                [emirId, op.line_no]
+            );
+            nextLine = nx.rows[0]?.line_no || null;
+        }
+        if (nextLine != null) {
             await client.query(
                 `
                 UPDATE production_order_operations
                 SET status='Hazir'
                 WHERE order_id=$1 AND line_no=$2 AND status='Bekliyor'
                 `,
-                [emirId, op.next_line_no]
+                [emirId, nextLine]
             );
         }
 
@@ -1411,11 +1442,16 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
         if (kalanOps.rows[0].c === 0) {
             await client.query(`UPDATE production_orders SET status='Kapali' WHERE id=$1`, [emirId]);
             if (emir.project_code) {
+                // SAVEPOINT: PRJ maliyet hatası txn'i abort etmesin
                 try {
+                    await client.query('SAVEPOINT prj_cost');
                     const { fromProductionOrder } = require('../src/services/prjCostService');
                     const refreshed = await client.query(`SELECT * FROM production_orders WHERE id=$1`, [emirId]);
                     await fromProductionOrder(client, { order: refreshed.rows[0] });
-                } catch (_) { /* PRJ yoksa sessiz */ }
+                    await client.query('RELEASE SAVEPOINT prj_cost');
+                } catch (_) {
+                    try { await client.query('ROLLBACK TO SAVEPOINT prj_cost'); } catch (__) { /* ignore */ }
+                }
             }
         }
 
