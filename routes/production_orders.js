@@ -421,6 +421,39 @@ router.get('/', async (req, res) => {
     }
 });
 
+/** Üretim girişi formu — operasyon lookup (order_id ile süzülür) */
+router.get('/operasyon-lookup', async (req, res) => {
+    try {
+        const params = [];
+        const where = [`o.status IN ('Hazir','Bekliyor','Uretimde')`];
+        if (req.query.order_id) {
+            params.push(Number(req.query.order_id));
+            where.push(`o.order_id = $${params.length}`);
+        }
+        const firmaId = companyIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`ue.company_id = $${params.length}`);
+        }
+        const r = await pool.query(
+            `
+            SELECT o.id, o.order_id, o.line_no, o.operation_code, o.operation_name, o.status,
+                   o.planned_quantity, o.produced_quantity, o.work_center_id,
+                   ue.order_no
+            FROM production_order_operations o
+            JOIN production_orders ue ON ue.id = o.order_id
+            WHERE ${where.join(' AND ')}
+            ORDER BY o.order_id DESC, o.line_no
+            LIMIT 1000
+            `,
+            params
+        );
+        res.json(r.rows);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 /**
  * Açık satış siparişi kalemleri — iş emrine aday (Uyumsoft sipariş→iş emri uyarlaması)
  * id = siparis_detay.id
@@ -920,16 +953,28 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
     }
 });
 
-// Tüm Hazir operasyonları sırayla bitir (demo/kolay yol)
+// Tüm Hazir operasyonları sırayla bitir (demo/kolay yol) — body opsiyonel alanlarla tek adım da olabilir
 router.post('/:id/uretim-giris', async (req, res) => {
     try {
         const emirId = Number(req.params.id);
         let emir = await getQcOrder(emirId);
         if (!emir) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
 
+        const body = req.body || {};
+        // Tek operasyon / hızlı giriş: operation_id veya quick bayrağı
+        if (body.operation_id || body.quick || body.single_step) {
+            const r = await tamamlaOperasyonInternal(emirId, body);
+            return res.status(201).json({ adimlar: [r.tamamlanan], emir: r.emir, receipt_id: r.tamamlanan?.receipt_id });
+        }
+
         const adimlar = [];
         while (emir.aktif_operasyon) {
-            const r = await tamamlaOperasyonInternal(emirId, req.body.quantity);
+            const r = await tamamlaOperasyonInternal(emirId, {
+                quantity: body.quantity,
+                consume_materials: body.consume_materials,
+                product_warehouse_id: body.product_warehouse_id,
+                material_warehouse_id: body.material_warehouse_id,
+            });
             adimlar.push(r.tamamlanan);
             emir = r.emir;
             if (emir.status === 'Kapali') break;
@@ -940,7 +985,15 @@ router.post('/:id/uretim-giris', async (req, res) => {
     }
 });
 
-async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
+/**
+ * Operasyon tamamla + stok tüketim/giriş + production_receipts kaydı.
+ * opts: quantity, operation_id, consume_materials, materials[], product_warehouse_id,
+ *       material_warehouse_id, header extras, skip_qc
+ */
+async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
+    const opts = (miktarOrOpts && typeof miktarOrOpts === 'object' && !Array.isArray(miktarOrOpts))
+        ? miktarOrOpts
+        : { quantity: miktarOrOpts };
     const result = await withTransaction(pool, async (client) => {
         const emirRes = await client.query(
             'SELECT * FROM production_orders WHERE id=$1 FOR UPDATE',
@@ -949,23 +1002,38 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
         const emir = emirRes.rows[0];
         if (!emir) throw new Error('Üretim emri bulunamadı.');
 
-        const opRes = await client.query(
-            `
-            SELECT * FROM production_order_operations
-            WHERE order_id=$1 AND status='Hazir'
-            ORDER BY line_no LIMIT 1 FOR UPDATE
-            `,
-            [emirId]
-        );
-        const op = opRes.rows[0];
+        let op;
+        if (opts.operation_id) {
+            const opRes = await client.query(
+                `SELECT * FROM production_order_operations WHERE id=$1 AND order_id=$2 FOR UPDATE`,
+                [Number(opts.operation_id), emirId]
+            );
+            op = opRes.rows[0];
+            if (!op) throw new Error('Operasyon bulunamadı.');
+            if (!['Hazir', 'Bekliyor', 'Uretimde'].includes(op.status)) {
+                throw new Error(`Operasyon durumu uygun değil: ${op.status}`);
+            }
+        } else {
+            const opRes = await client.query(
+                `
+                SELECT * FROM production_order_operations
+                WHERE order_id=$1 AND status='Hazir'
+                ORDER BY line_no LIMIT 1 FOR UPDATE
+                `,
+                [emirId]
+            );
+            op = opRes.rows[0];
+        }
         if (!op) throw new Error('Tamamlanacak Hazir operasyon yok.');
 
-        const quantity = Number(miktarOpsiyonel || op.planned_quantity);
-        const rate = quantity / Number(op.planned_quantity);
+        const quantity = Number(opts.quantity != null ? opts.quantity : op.planned_quantity);
+        if (!(quantity > 0)) throw new Error('Miktar > 0 olmalı.');
+        const rate = Number(op.planned_quantity) > 0 ? quantity / Number(op.planned_quantity) : 1;
+        const consume = opts.consume_materials !== false;
 
         const bilesenler = await client.query(
             `
-            SELECT b.*, st.item_type, st.uom_code AS stock_uom
+            SELECT b.*, st.item_type, st.uom_code AS stock_uom, st.item_code, st.item_name
             FROM production_order_operation_components b
             JOIN items st ON st.id = b.item_id
             WHERE b.operation_id=$1 FOR UPDATE
@@ -974,20 +1042,61 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
         );
 
         const depoGrup = new Map();
-        for (const b of bilesenler.rows) {
-            const depoId = pickConsumptionWarehouse(emir, b.item_type);
-            if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
-            depoGrup.get(depoId).push({
-                item_id: b.item_id,
-                quantity: Number(b.planned_quantity) * rate,
-                direction: -1,
-                uom_code: b.uom_code || b.stock_uom,
-            });
-            await client.query(
-                `UPDATE production_order_operation_components
-                 SET consumed_quantity = consumed_quantity + $1 WHERE id=$2`,
-                [Number(b.planned_quantity) * rate, b.id]
-            );
+        const materialSnapshot = [];
+        if (consume) {
+            const manual = Array.isArray(opts.materials)
+                ? opts.materials.filter((m) => m && m.item_id && Number(m.quantity) > 0 && !m.is_byproduct)
+                : [];
+            if (manual.length) {
+                for (const [i, m] of manual.entries()) {
+                    const depoId = Number(m.warehouse_id)
+                        || Number(opts.material_warehouse_id)
+                        || pickConsumptionWarehouse(emir, m.line_type || m.item_type);
+                    if (!depoId) throw new Error('Malzeme çıkış deposu gerekli.');
+                    if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
+                    depoGrup.get(depoId).push({
+                        item_id: Number(m.item_id),
+                        quantity: Number(m.quantity),
+                        direction: -1,
+                        uom_code: m.uom_code || null,
+                    });
+                    materialSnapshot.push({ ...m, line_no: m.line_no || i + 1, is_byproduct: false });
+                }
+            } else {
+                for (const [i, b] of bilesenler.rows.entries()) {
+                    const qty = Number(b.planned_quantity) * rate;
+                    const depoId = Number(opts.material_warehouse_id)
+                        || pickConsumptionWarehouse(emir, b.item_type);
+                    if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
+                    depoGrup.get(depoId).push({
+                        item_id: b.item_id,
+                        quantity: qty,
+                        direction: -1,
+                        uom_code: b.uom_code || b.stock_uom,
+                    });
+                    await client.query(
+                        `UPDATE production_order_operation_components
+                         SET consumed_quantity = consumed_quantity + $1 WHERE id=$2`,
+                        [qty, b.id]
+                    );
+                    materialSnapshot.push({
+                        line_no: b.line_no || i + 1,
+                        line_type: b.item_type || 'Hammadde',
+                        item_id: b.item_id,
+                        item_code: b.item_code,
+                        item_name: b.item_name,
+                        unit_quantity: Number(b.planned_quantity),
+                        quantity: qty,
+                        net_quantity: qty,
+                        gross_quantity: qty,
+                        scrap_quantity: 0,
+                        rework_quantity: 0,
+                        uom_code: b.uom_code || b.stock_uom,
+                        warehouse_id: depoId,
+                        is_byproduct: false,
+                    });
+                }
+            }
         }
 
         let tuketimHareketId = null;
@@ -1004,16 +1113,48 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
             tuketimHareketId = h.hareket.id;
         }
 
+        // Yan ürünler (opsiyonel giriş)
+        const byproducts = Array.isArray(opts.materials)
+            ? opts.materials.filter((m) => m && m.is_byproduct && m.item_id && Number(m.quantity) > 0)
+            : [];
+        for (const [i, m] of byproducts.entries()) {
+            const depoId = Number(m.warehouse_id) || Number(opts.byproduct_warehouse_id) || Number(opts.product_warehouse_id);
+            if (!depoId) continue;
+            await createStockMovement(client, {
+                hareketTipi: 'URETIM_GIRIS',
+                isYeriId: emir.plant_id,
+                depoId,
+                belgeTipi: 'URETIM_EMRI_OP',
+                belgeId: op.id,
+                description: `${emir.order_no} yan ürün`,
+                depoZorunluAtla: true,
+                satirlar: [{
+                    item_id: Number(m.item_id),
+                    quantity: Number(m.quantity),
+                    direction: 1,
+                    uom_code: m.uom_code || null,
+                    stock_status: 'Kullanilabilir',
+                }],
+            });
+            materialSnapshot.push({ ...m, line_no: m.line_no || 900 + i, is_byproduct: true });
+        }
+
         let mamulHareketId = null;
+        let productWarehouseId = Number(opts.product_warehouse_id) || null;
         if (op.output_item_id) {
             const cikti = await client.query(
                 'SELECT id, uom_code, item_type FROM items WHERE id=$1',
                 [op.output_item_id]
             );
-            const ckk = await resolveOutgoingQcWarehouse(client, emir.plant_id);
-            if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_role=CKK).');
+            let girisDepoId = productWarehouseId;
+            if (!girisDepoId) {
+                const ckk = await resolveOutgoingQcWarehouse(client, emir.plant_id);
+                if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_role=CKK).');
+                girisDepoId = ckk.id;
+            }
+            productWarehouseId = girisDepoId;
             const hedefDepo = await resolveOutgoingQcTargetWarehouse(client, op.output_item_id, emir.plant_id);
-            for (const wid of [ckk.id, hedefDepo?.id].filter(Boolean)) {
+            for (const wid of [girisDepoId, hedefDepo?.id].filter(Boolean)) {
                 await client.query(
                     `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
                      SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
@@ -1025,37 +1166,41 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
             const h = await createStockMovement(client, {
                 hareketTipi: 'URETIM_GIRIS',
                 isYeriId: emir.plant_id,
-                depoId: ckk.id,
+                depoId: girisDepoId,
                 belgeTipi: 'URETIM_EMRI_OP',
                 belgeId: op.id,
-                description: `${emir.order_no} / ${op.operation_code} çıktı → Çıkış Kalite`,
+                description: `${emir.order_no} / ${op.operation_code} çıktı`,
                 depoZorunluAtla: true,
                 satirlar: [{
                     item_id: op.output_item_id,
                     quantity,
                     direction: 1,
                     uom_code: cikti.rows[0].uom_code,
-                    stock_status: 'Kalitede',
+                    stock_status: opts.skip_qc ? 'Kullanilabilir' : 'Kalitede',
                 }],
             });
             mamulHareketId = h.hareket.id;
-            await createQcOrder(client, {
-                direction: 'CKK',
-                stokId: op.output_item_id,
-                partiId: h.satirlar[0]?.lot_id || null,
-                depoId: ckk.id,
-                hedefDepoId: hedefDepo?.id || null,
-                quantity,
-                kaynakTipi: 'URETIM_EMRI',
-                kaynakId: emirId,
-                stokHareketId: mamulHareketId,
-                description: `${emir.order_no} çıkış kalite (${cikti.rows[0].item_type || 'Mamul'})`,
-            });
+            if (!opts.skip_qc) {
+                await createQcOrder(client, {
+                    direction: 'CKK',
+                    stokId: op.output_item_id,
+                    partiId: h.satirlar[0]?.lot_id || null,
+                    depoId: girisDepoId,
+                    hedefDepoId: hedefDepo?.id || null,
+                    quantity,
+                    kaynakTipi: 'URETIM_EMRI',
+                    kaynakId: emirId,
+                    stokHareketId: mamulHareketId,
+                    description: `${emir.order_no} çıkış kalite (${cikti.rows[0].item_type || 'Mamul'})`,
+                });
+            }
         }
 
         await client.query(
             `UPDATE production_order_operations
-             SET produced_quantity = produced_quantity + $1, status='Tamamlandi' WHERE id=$2`,
+             SET produced_quantity = produced_quantity + $1,
+                 status=CASE WHEN produced_quantity + $1 + 1e-9 >= planned_quantity THEN 'Tamamlandi' ELSE 'Hazir' END
+             WHERE id=$2`,
             [quantity, op.id]
         );
 
@@ -1085,7 +1230,6 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
         );
         if (kalanOps.rows[0].c === 0) {
             await client.query(`UPDATE production_orders SET status='Kapali' WHERE id=$1`, [emirId]);
-            // PRJ otomatik üretim maliyeti
             if (emir.project_code) {
                 try {
                     const { fromProductionOrder } = require('../src/services/prjCostService');
@@ -1095,17 +1239,83 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
             }
         }
 
-        const girisNo = await nextDocumentNo(client, 'URETIM_GIRIS');
-        await client.query(
+        const netQty = opts.net_quantity != null ? Number(opts.net_quantity) : quantity;
+        const grossQty = opts.gross_quantity != null ? Number(opts.gross_quantity) : quantity;
+        const scrapQty = opts.scrap_quantity != null ? Number(opts.scrap_quantity) : 0;
+        const reworkQty = opts.rework_quantity != null ? Number(opts.rework_quantity) : 0;
+        const girisNo = opts.receipt_no || await nextDocumentNo(client, 'URETIM_GIRIS');
+        const ins = await client.query(
             `
             INSERT INTO production_receipts
-                (receipt_no, order_id, quantity, consumption_movement_id, finished_good_movement_id)
-            VALUES ($1,$2,$3,$4,$5)
+                (receipt_no, order_id, quantity, consumption_movement_id, finished_good_movement_id,
+                 plant_id, operation_id, work_center_id, actual_work_center_id, source_type,
+                 consume_materials, net_quantity, gross_quantity, scrap_quantity, rework_quantity,
+                 uom_code, serial_no, shift_code, product_warehouse_id, material_warehouse_id,
+                 wip_warehouse_id, scrap_warehouse_id, byproduct_warehouse_id,
+                 started_at, ended_at, description, company_id, receipt_date)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,COALESCE($28,CURRENT_DATE))
+            RETURNING id
             `,
-            [girisNo, emirId, quantity, tuketimHareketId, mamulHareketId]
+            [
+                girisNo, emirId, quantity, tuketimHareketId, mamulHareketId,
+                opts.plant_id || emir.plant_id || null,
+                op.id,
+                opts.work_center_id || op.work_center_id || null,
+                opts.actual_work_center_id || opts.work_center_id || op.work_center_id || null,
+                opts.source_type || 'Operasyonel',
+                consume,
+                netQty, grossQty, scrapQty, reworkQty,
+                opts.uom_code || null,
+                opts.serial_no || null,
+                opts.shift_code || null,
+                productWarehouseId,
+                Number(opts.material_warehouse_id) || null,
+                Number(opts.wip_warehouse_id) || null,
+                Number(opts.scrap_warehouse_id) || null,
+                Number(opts.byproduct_warehouse_id) || null,
+                opts.started_at || null,
+                opts.ended_at || null,
+                opts.description || null,
+                opts.company_id || emir.company_id || null,
+                opts.receipt_date || null,
+            ]
         );
+        const receiptId = ins.rows[0].id;
+        for (const [i, m] of materialSnapshot.entries()) {
+            await client.query(
+                `
+                INSERT INTO production_receipt_materials (
+                  receipt_id, line_no, line_type, item_id, item_code, item_name, alternative_no,
+                  quantity_type, unit_quantity, quantity, scrap_quantity, rework_quantity,
+                  gross_quantity, net_quantity, uom_code, warehouse_id, warehouse_code, warehouse_name,
+                  warehouse_balance, lot_no, note, revision, brand, feature_3, general_feature_1,
+                  entry_mode, source_ref, source_material_id, is_byproduct
+                ) VALUES (
+                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
+                )
+                `,
+                [
+                    receiptId, m.line_no || i + 1, m.line_type || null, m.item_id || null,
+                    m.item_code || null, m.item_name || null, m.alternative_no || null,
+                    m.quantity_type || 'Net', m.unit_quantity ?? null, Number(m.quantity) || 0,
+                    Number(m.scrap_quantity) || 0, Number(m.rework_quantity) || 0,
+                    (m.gross_quantity ?? Number(m.quantity)) || 0, (m.net_quantity ?? Number(m.quantity)) || 0,
+                    m.uom_code || null, m.warehouse_id || null, m.warehouse_code || null, m.warehouse_name || null,
+                    m.warehouse_balance ?? null, m.lot_no || null, m.note || null, m.revision || null,
+                    m.brand || null, m.feature_3 || null, m.general_feature_1 || null,
+                    m.entry_mode || null, m.source_ref || null, m.source_material_id || null,
+                    Boolean(m.is_byproduct),
+                ]
+            );
+        }
 
-        return { operation_code: op.operation_code, quantity };
+        return {
+            operation_code: op.operation_code,
+            operation_id: op.id,
+            quantity,
+            receipt_id: receiptId,
+            receipt_no: girisNo,
+        };
     });
 
     return { tamamlanan: result, emir: await getQcOrder(emirId) };
@@ -1459,4 +1669,6 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+router.tamamlaOperasyonInternal = tamamlaOperasyonInternal;
+router.getProductionOrder = getQcOrder;
 module.exports = router;
