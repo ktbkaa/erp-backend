@@ -561,6 +561,186 @@ router.get('/siparis-adaylari/:id', async (req, res) => {
     }
 });
 
+/**
+ * PRDT03 — onay öncesi hazırlık kontrolü (stok yeterliliği zorlanmaz).
+ * @returns {{ ready: boolean, blockers: string[], warnings: string[] }}
+ */
+function evaluateApprovalReadiness(emir) {
+    const blockers = [];
+    const warnings = [];
+    if (!emir) {
+        return { ready: false, blockers: ['Üretim emri bulunamadı.'], warnings };
+    }
+    if (emir.is_deleted) blockers.push('Emir silinmiş.');
+    if (emir.status === 'Iptal') blockers.push('İptal edilmiş emir onaylanamaz.');
+    if (!['Taslak', 'OnayBekliyor'].includes(emir.status)) {
+        blockers.push(`Durum uygun değil: ${emir.status}`);
+    }
+    if (emir.is_approved) blockers.push('Emir zaten onaylı.');
+    if (!(Number(emir.planned_quantity) > 0)) blockers.push('Planlanan miktar > 0 olmalı.');
+    if (!emir.item_id) blockers.push('Ürün (stok) seçili değil.');
+    const ops = emir.operasyonlar || [];
+    if (!ops.length) blockers.push('Operasyon satırı yok — önce detay doldurun / BOM-rota uygulayın.');
+    if (!emir.product_bom_id) warnings.push('Ürün ağacı (BOM) bağlı değil.');
+    if (!emir.route_id) warnings.push('Rota bağlı değil.');
+    if (ops.some((o) => !o.work_center_id)) warnings.push('Bazı operasyonlarda iş merkezi boş.');
+    if (!(emir.malzemeler || emir.bilesenler || []).length) {
+        warnings.push('Malzeme satırı yok.');
+    }
+    return { ready: blockers.length === 0, blockers, warnings };
+}
+
+function userCodeFromReq(req) {
+    return req.user?.user_code
+        || req.user?.username
+        || req.get?.('x-kullanici-kodu')
+        || req.headers?.['x-kullanici-kodu']
+        || req.body?.user_code
+        || null;
+}
+
+async function approveProductionOrder(emirId, { companyId = null, userCode = null } = {}) {
+    const emir = await getQcOrder(emirId);
+    if (!emir) {
+        const err = new Error('Üretim emri bulunamadı.');
+        err.status = 404;
+        throw err;
+    }
+    if (companyId && emir.company_id && Number(emir.company_id) !== Number(companyId)) {
+        const err = new Error('Emir aktif firma kapsamında değil.');
+        err.status = 403;
+        throw err;
+    }
+    const check = evaluateApprovalReadiness(emir);
+    if (!check.ready) {
+        const err = new Error(check.blockers.join(' '));
+        err.status = 400;
+        err.blockers = check.blockers;
+        err.warnings = check.warnings;
+        throw err;
+    }
+    const upd = await pool.query(
+        `
+        UPDATE production_orders
+        SET status = 'Acik',
+            is_approved = TRUE,
+            is_open = 'Acik',
+            approved_at = CURRENT_TIMESTAMP,
+            approved_by_user_code = COALESCE($2, approved_by_user_code)
+        WHERE id = $1
+          AND status IN ('Taslak', 'OnayBekliyor')
+          AND COALESCE(is_approved, FALSE) = FALSE
+          AND COALESCE(is_deleted, FALSE) = FALSE
+        RETURNING id
+        `,
+        [emirId, userCode || null]
+    );
+    if (!upd.rows[0]) {
+        const err = new Error('Emir onaylanamadı (eşzamanlı güncelleme veya durum değişti).');
+        err.status = 409;
+        throw err;
+    }
+    const refreshed = await getQcOrder(upd.rows[0].id);
+    return { emir: refreshed, warnings: check.warnings };
+}
+
+/** PRDT03 — onay adayı listesi */
+router.get('/onay-adaylari', async (req, res) => {
+    try {
+        const params = [];
+        const where = [
+            `COALESCE(ue.is_deleted, FALSE) = FALSE`,
+            `ue.status IN ('Taslak', 'OnayBekliyor')`,
+        ];
+        const firmaId = companyIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`ue.company_id = $${params.length}`);
+        }
+        if (req.query.status) {
+            params.push(String(req.query.status));
+            where.push(`ue.status = $${params.length}`);
+        }
+        if (req.query.order_no) {
+            params.push(`%${String(req.query.order_no).trim()}%`);
+            where.push(`ue.order_no ILIKE $${params.length}`);
+        }
+        if (req.query.item_code) {
+            params.push(`%${String(req.query.item_code).trim()}%`);
+            where.push(`EXISTS (
+              SELECT 1 FROM items s WHERE s.id = ue.item_id AND s.item_code ILIKE $${params.length}
+            )`);
+        }
+        if (req.query.plant_id) {
+            params.push(Number(req.query.plant_id));
+            where.push(`ue.plant_id = $${params.length}`);
+        }
+        if (req.query.order_type_id) {
+            params.push(Number(req.query.order_type_id));
+            where.push(`ue.order_type_id = $${params.length}`);
+        }
+        const liste = await pool.query(
+            `
+            SELECT ue.id FROM production_orders ue
+            WHERE ${where.join(' AND ')}
+            ORDER BY ue.id DESC
+            LIMIT 500
+            `,
+            params
+        );
+        const result = [];
+        for (const r of liste.rows) {
+            const emir = await getQcOrder(r.id);
+            if (!emir) continue;
+            const check = evaluateApprovalReadiness(emir);
+            result.push({
+                ...emir,
+                ready: check.ready,
+                blockers: check.blockers,
+                warnings: check.warnings,
+            });
+        }
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+/** PRDT03 — toplu onay (bağımsız kayıtlar; kısmi başarı OK) */
+router.post('/toplu-onay', async (req, res) => {
+    try {
+        const ids = Array.isArray(req.body?.ids)
+            ? req.body.ids.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0)
+            : [];
+        if (!ids.length) return res.status(400).json({ hata: 'ids[] zorunlu.' });
+        const firmaId = companyIdFromReq(req);
+        const userCode = userCodeFromReq(req);
+        const basarili = [];
+        const hatali = [];
+        for (const id of ids) {
+            try {
+                const r = await approveProductionOrder(id, { companyId: firmaId, userCode });
+                basarili.push({
+                    id,
+                    order_no: r.emir.order_no,
+                    warnings: r.warnings,
+                });
+            } catch (err) {
+                hatali.push({ id, hata: err.message, blockers: err.blockers || null });
+            }
+        }
+        res.status(basarili.length ? 200 : 400).json({
+            basarili,
+            hatali,
+            basarili_sayisi: basarili.length,
+            hata_sayisi: hatali.length,
+        });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+
 router.get('/:id', async (req, res) => {
     try {
         const emir = await getQcOrder(req.params.id);
@@ -1595,33 +1775,31 @@ router.post('/:id/bom-rota-degistir', async (req, res) => {
 /** PRDT02 / PRDT03 — iş emri onay */
 router.post('/:id/onayla', async (req, res) => {
     try {
-        const upd = await pool.query(
-            `
-            UPDATE production_orders
-            SET status = 'Acik', is_approved = TRUE, is_open = 'Acik'
-            WHERE id = $1 AND status IN ('Taslak', 'OnayBekliyor')
-            RETURNING id
-            `,
-            [req.params.id]
-        );
-        if (!upd.rows[0]) {
-            return res.status(400).json({
-                hata: 'Emir onaylanamadı (bulunamadı veya durumu Taslak/OnayBekliyor değil).',
-            });
-        }
-        res.json(await getQcOrder(upd.rows[0].id));
+        const r = await approveProductionOrder(Number(req.params.id), {
+            companyId: companyIdFromReq(req),
+            userCode: userCodeFromReq(req),
+        });
+        res.json({ ...r.emir, _warnings: r.warnings });
     } catch (err) {
         if (err.code === '23503') {
-                    return res.status(409).json({
-                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
-                        kod: 'ERR-FK-23503',
-                    });
-                }
-        res.status(500).json({ hata: err.message });
+            return res.status(409).json({
+                hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                kod: 'ERR-FK-23503',
+            });
+        }
+        res.status(err.status || 400).json({
+            hata: err.message,
+            blockers: err.blockers || undefined,
+            warnings: err.warnings || undefined,
+        });
     }
 });
 
-/** İş emrini başlat (is_started = true) */
+/**
+ * İş emrini başlat (is_started = true).
+ * OnayBekliyor/Taslak ile başlatma kapalı — önce onay.
+ * Manuel oluşturulan Acik emirler (is_approved=false) geriye uyum için başlatılabilir.
+ */
 router.post('/:id/baslat', async (req, res) => {
     try {
         const upd = await pool.query(
@@ -1631,14 +1809,14 @@ router.post('/:id/baslat', async (req, res) => {
                 status = CASE WHEN status = 'Acik' THEN 'Uretimde' ELSE status END
             WHERE id = $1
               AND COALESCE(is_started, FALSE) = FALSE
-              AND status IN ('Acik', 'Uretimde', 'OnayBekliyor')
+              AND status IN ('Acik', 'Uretimde')
             RETURNING id
             `,
             [req.params.id]
         );
         if (!upd.rows[0]) {
             return res.status(400).json({
-                hata: 'Emir başlatılamadı (bulunamadı, zaten başlatılmış veya durumu uygun değil).',
+                hata: 'Emir başlatılamadı (bulunamadı, onay bekliyor, zaten başlatılmış veya durumu uygun değil).',
             });
         }
         res.json(await getQcOrder(upd.rows[0].id));
