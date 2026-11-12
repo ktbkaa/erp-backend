@@ -1130,12 +1130,28 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 
 .screen-view {
   display: grid;
-  /* banner | aksiyon | filtre(içerik kadar) | liste(kalan) — filtre aşağı şişmez */
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  /* banner | aksiyon | filtre | liste — içerik kadar uzar; sıkıştırmadan taşır → ekran kayar */
+  grid-template-rows: max-content max-content max-content max-content;
+  grid-auto-rows: max-content;
+  align-content: start;
   height: 100%;
   min-height: 0;
   background: var(--page);
   gap: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  padding-bottom: max(1.5rem, 3vh);
+}
+.screen-view > * {
+  /* min-height:0 grid sıkıştırmasını engelle — satırlar içerik boyunda kalsın */
+  min-height: min-content;
+}
+/* Liste view’ı: kabuk değil ekranın sağındaki ana scrollbar */
+.view.screen-view:not([hidden]) {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .screen-banner {
   margin: 0.65rem 0.85rem 0;
@@ -1200,7 +1216,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   box-shadow: var(--shadow-card);
   padding: 0.65rem 1rem 0.7rem;
   overflow: visible;
-  min-height: 0;
+  min-height: min-content;
   flex: 0 0 auto;
 }
 .filter-pane-head, .list-pane-head, .detail-head, .form-topbar {
@@ -1359,7 +1375,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 }
 
 .list-pane {
-  min-height: 0;
+  min-height: min-content;
   display: flex;
   flex-direction: column;
   margin: 0.65rem 0.85rem 0.85rem;
@@ -1368,16 +1384,29 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
   box-shadow: var(--shadow-card);
+  /* viewport’u doldurmasın — sayfa da kayabilsin */
+  max-height: none;
 }
-.list-pane-head { margin-bottom: 0.4rem; }
+.list-pane-head { margin-bottom: 0.4rem; flex: 0 0 auto; }
 .list-meta { color: var(--muted); font-size: 0.8rem; }
-.table-scroll {
-  flex: 1;
-  min-height: 0;
+/* Liste tablosu: sınırlı yükseklik + kendi scrollbar; uçta ekrana zincirlenir */
+.list-pane .table-scroll,
+#listTableScroll.table-scroll {
+  flex: 0 0 auto;
+  height: min(28rem, 52vh);
+  min-height: 10rem;
+  max-height: min(28rem, 52vh);
   overflow: auto;
+  overscroll-behavior-y: auto;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   background: #fff;
+  scrollbar-gutter: stable;
+}
+/* Diğer table-scroll kullanımları (meta vb.) */
+.table-scroll:not(#listTableScroll) {
+  overflow: auto;
+  min-height: 0;
 }
 #dataTable {
   width: 100%;
@@ -2741,9 +2770,10 @@ tr.selected td { background: var(--accent-soft); }
   .bar-center { max-width: none; order: 2; }
   .bar-right { max-width: none; width: 100%; order: 3; }
   .screen-view {
-    grid-template-rows: auto auto minmax(180px, 32vh) minmax(0, 1fr);
+    grid-template-rows: max-content max-content max-content max-content;
     height: 100%;
     min-height: 0;
+    overflow-y: auto;
   }
   .form-split { grid-template-rows: minmax(160px, 28%) 1fr; }
   .form-tabs-layout {
@@ -2764,14 +2794,19 @@ tr.selected td { background: var(--accent-soft); }
   display: grid;
   grid-template-columns: 108px 1fr;
   gap: 0;
-  min-height: 0;
+  min-height: min-content;
   min-width: 0;
-  height: 100%;
-  overflow: hidden;
-  background: #fff;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  background: transparent;
 }
 .list-work .list-pane {
   min-width: 0;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+  margin-bottom: 0.85rem;
 }
 .list-work:not(:has(.list-side-nav:not([hidden]))) {
   grid-template-columns: 1fr;
@@ -6122,13 +6157,15 @@ body.sidebar-resizing .workspace {
   margin: 0.1rem 0 0;
 }
 
-/* Liste iç kaydırma + sayfa bağımsız scroll */
+/* Liste iç kaydırma + sayfa bağımsız scroll (liste ↔ ekran zinciri) */
 #viewScreen.screen-view {
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 #listTableScroll {
   overflow: auto;
-  max-height: min(62vh, 42rem);
+  height: min(28rem, 52vh);
+  max-height: min(28rem, 52vh);
 }
 body.sidebar-resizing {
   cursor: col-resize;
@@ -6373,9 +6410,9 @@ body.sidebar-resizing iframe {
   width: 100%;
   min-width: 0;
 }
-/* Üst filtre yuvası boşalınca liste yukarı büyür */
+/* Üst filtre yuvası boşalınca liste yukarı büyür — içerik boyutu korunur */
 #viewScreen.screen-view.filter-docked {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: max-content max-content max-content;
 }
 #viewScreen.screen-view.filter-docked #filterPaneHome {
   display: none !important;
