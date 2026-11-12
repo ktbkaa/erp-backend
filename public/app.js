@@ -3315,17 +3315,6 @@ const MODULES = [
         ],
         masterFields: [
           {
-            key: 'plant_id',
-            label: 'İş yeri',
-            type: 'lookup',
-            lookup: 'is-yerleri',
-            valueKey: 'id',
-            labelKey: 'plant_name',
-            codeKey: 'plant_code',
-            group: 'genel',
-            groupLabel: 'Genel bilgiler',
-          },
-          {
             key: 'order_id',
             label: 'İş emri',
             type: 'lookup',
@@ -3333,9 +3322,10 @@ const MODULES = [
             valueKey: 'id',
             labelKey: 'order_no',
             required: true,
+            lead: true,
             fillFrom: 'uretim-giris-onizleme',
-            group: 'genel',
-            groupLabel: 'Genel bilgiler',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
           },
           {
             key: 'operation_id',
@@ -3347,7 +3337,19 @@ const MODULES = [
             codeKey: 'operation_code',
             dependsOn: 'order_id',
             filterKey: 'order_id',
+            lead: true,
             fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          {
+            key: 'plant_id',
+            label: 'İş yeri',
+            type: 'lookup',
+            lookup: 'is-yerleri',
+            valueKey: 'id',
+            labelKey: 'plant_name',
+            codeKey: 'plant_code',
             group: 'genel',
             groupLabel: 'Genel bilgiler',
           },
@@ -3590,7 +3592,10 @@ const MODULES = [
             valueKey: 'id',
             labelKey: 'order_no',
             required: true,
+            lead: true,
             fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
           },
           {
             key: 'operation_id',
@@ -3602,14 +3607,17 @@ const MODULES = [
             codeKey: 'operation_code',
             dependsOn: 'order_id',
             filterKey: 'order_id',
+            lead: true,
             fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
           },
-          { key: 'item_code', label: 'Ürün', readOnly: true },
-          { key: 'item_name', label: 'Ürün adı', readOnly: true },
-          { key: 'planned_quantity', label: 'Emir miktarı', type: 'number', readOnly: true },
-          { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true },
-          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true },
-          { key: 'consume_materials', label: 'Malzeme tüket', type: 'checkbox' },
+          { key: 'item_code', label: 'Ürün', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'item_name', label: 'Ürün adı', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'planned_quantity', label: 'Emir miktarı', type: 'number', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'consume_materials', label: 'Malzeme tüket', type: 'checkbox', group: 'genel', groupLabel: 'Ürün / miktar' },
           {
             key: 'product_warehouse_id',
             label: 'Ürün giriş depo',
@@ -3618,6 +3626,8 @@ const MODULES = [
             valueKey: 'id',
             labelKey: 'warehouse_name',
             codeKey: 'warehouse_code',
+            group: 'depo',
+            groupLabel: 'Depolar',
           },
           {
             key: 'material_warehouse_id',
@@ -3627,10 +3637,12 @@ const MODULES = [
             valueKey: 'id',
             labelKey: 'warehouse_name',
             codeKey: 'warehouse_code',
+            group: 'depo',
+            groupLabel: 'Depolar',
           },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'quick', label: 'Hızlı onay', type: 'checkbox', readOnly: true },
-          { key: 'source_type', label: 'Kaynak', type: 'select', options: ['Hizli', 'Operasyonel'], readOnly: true },
+          { key: 'description', label: 'Açıklama', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'quick', label: 'Hızlı onay', type: 'checkbox', readOnly: true, group: 'diger', groupLabel: 'Diğer' },
+          { key: 'source_type', label: 'Kaynak', type: 'select', options: ['Hizli', 'Operasyonel'], readOnly: true, group: 'diger', groupLabel: 'Diğer' },
         ],
         detailFields: [],
         detailKey: null,
@@ -12904,7 +12916,8 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
     malzemeler: data.malzemeler || [],
     duruslar: prev.duruslar || [],
   };
-  await fetchLookupKey('uretim-emir-operasyonlari').catch(() => {});
+  invalidateLookups('uretim-emir-operasyonlari');
+  await fetchLookupKey('uretim-emir-operasyonlari', { order_id: oid }).catch(() => {});
   renderForm(screen);
   const nMal = (data.malzemeler || []).length;
   toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme`);
@@ -14545,7 +14558,7 @@ function buildScreenLookupRows() {
   })).sort((a, b) => String(a.screen_name).localeCompare(String(b.screen_name), 'tr'));
 }
 
-async function fetchLookupKey(key) {
+async function fetchLookupKey(key, query = null) {
   // UI ekran kataloğu — API’ye gitmeden MODULES’ten
   if (key === 'ekranlar' || key === 'screens' || key === 'onay-ekranlari') {
     if (key === 'onay-ekranlari') {
@@ -14564,10 +14577,18 @@ async function fetchLookupKey(key) {
     state.lookupCache[key] = buildScreenLookupRows();
     return state.lookupCache[key];
   }
-  const ep = resolveLookupEndpoint(key);
+  let ep = resolveLookupEndpoint(key);
   if (!ep) {
     state.lookupCache[key] = state.lookupCache[key] || [];
     return state.lookupCache[key];
+  }
+  if (query && typeof query === 'object') {
+    const qs = new URLSearchParams();
+    Object.entries(query).forEach(([k, v]) => {
+      if (v != null && String(v).trim() !== '') qs.set(k, String(v));
+    });
+    const qstr = qs.toString();
+    if (qstr) ep = ep.includes('?') ? `${ep}&${qstr}` : `${ep}?${qstr}`;
   }
   try {
     // Firmalar her zaman tam liste (backend zaten izolasyonsuz).
@@ -17212,6 +17233,8 @@ function detailColClass(f) {
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / address / …). */
 const FIELD_GROUP_DEFS = [
+  // İş emri seçimi üretim girişinde önce gelmeli (order_id aksi halde «Diğer»e düşüyordu)
+  { id: 'kaynak-belge', title: 'İş emri', re: /^(order_id|operation_id|production_order_id)$/i },
   { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|work_center|work_station|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
   { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|operation_|line_no|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|procurement_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code|output_item)/i },
   { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity|planned_quantity)/i },
@@ -19700,6 +19723,13 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'type_code', label: 'Tip kodu', mono: true },
     { key: 'type_name', label: 'Tip adı' },
   ],
+  'uretim-emir-operasyonlari': [
+    { key: 'line_no', label: 'Sıra', mono: true },
+    { key: 'operation_code', label: 'Op kod', mono: true },
+    { key: 'operation_name', label: 'Operasyon' },
+    { key: 'status', label: 'Durum' },
+    { key: 'order_no', label: 'Emir', mono: true },
+  ],
   ekranlar: [
     { key: 'screen_code', label: 'Ekran kodu', mono: true },
     { key: 'screen_name', label: 'Ekran adı' },
@@ -20082,7 +20112,10 @@ async function reloadLookupBrowserRows() {
   let rows = [];
   if (field.type === 'lookup' && field.lookup) {
     invalidateLookups(field.lookup);
-    await fetchLookupKey(field.lookup);
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
     // Formdaki select seçeneklerini de taze tut
     const html = buildLookupOptionsHtml(field, st.sel.value, rows);
@@ -20115,7 +20148,20 @@ async function openLookupBrowserForSelect(sel) {
   let valueKey = field.valueKey || 'id';
 
   if (field.type === 'lookup' && field.lookup) {
-    await fetchLookupKey(field.lookup);
+    if (field.dependsOn) {
+      const parentVal = ctx?.[field.dependsOn];
+      if (parentVal == null || String(parentVal).trim() === '') {
+        const parentField = findScreen(state.screenId)?.masterFields?.find((f) => f.key === field.dependsOn)
+          || findScreen(state.screenId)?.detailFields?.find((f) => f.key === field.dependsOn);
+        toast(`Önce «${parentField?.label || field.dependsOn}» seçin.`);
+        return;
+      }
+    }
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    if (depQuery) invalidateLookups(field.lookup);
+    await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
     valueKey = field.valueKey || 'id';
   } else if (Array.isArray(field.options) && field.options.length) {
