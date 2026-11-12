@@ -3534,6 +3534,7 @@ const MODULES = [
           { key: 'serial_no', label: 'Seri no', group: 'diger', groupLabel: 'Diğer bilgiler' },
           { key: 'shift_code', label: 'Vardiya kodu', group: 'diger', groupLabel: 'Diğer bilgiler' },
           { key: 'receipt_no', label: 'Giriş no', code: true, editableOnNew: true, group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'description', label: 'Açıklama', group: 'diger', groupLabel: 'Diğer bilgiler' },
         ],
         detailFields: [],
         detailKey: null,
@@ -3648,61 +3649,6 @@ const MODULES = [
             ],
           },
           {
-            id: 'yan-urunler',
-            label: 'Yan Ürünler',
-            kind: 'grid',
-            key: 'yan_urunler',
-            slots: 3,
-            fields: [
-              { key: 'line_no', label: 'Sıra No', type: 'number', size: 'short' },
-              {
-                key: 'item_id',
-                label: 'Stok',
-                type: 'lookup',
-                lookup: 'items',
-                valueKey: 'id',
-                labelKey: 'item_name',
-                codeKey: 'item_code',
-                required: true,
-              },
-              { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
-              {
-                key: 'uom_code',
-                label: 'Birim',
-                type: 'lookup',
-                lookup: 'olcu-birimleri',
-                valueKey: 'uom_code',
-                labelKey: 'uom_name',
-                size: 'short',
-              },
-              {
-                key: 'warehouse_id',
-                label: 'Depo',
-                type: 'lookup',
-                lookup: 'warehouses',
-                valueKey: 'id',
-                labelKey: 'warehouse_name',
-                codeKey: 'warehouse_code',
-              },
-              { key: 'lot_no', label: 'Parti Kod', size: 'short' },
-              { key: 'note', label: 'Not' },
-            ],
-          },
-          {
-            id: 'ekipmanlar',
-            label: 'Ekipmanlar',
-            kind: 'grid',
-            key: 'ekipmanlar',
-            slots: 2,
-            fields: [
-              { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
-              { key: 'equipment_code', label: 'Ekipman kodu', size: 'short' },
-              { key: 'equipment_name', label: 'Ekipman adı' },
-              { key: 'duration_min', label: 'Süre (dk)', type: 'number', size: 'short' },
-              { key: 'note', label: 'Not' },
-            ],
-          },
-          {
             id: 'duruslar',
             label: 'İş Emri Duruşları',
             kind: 'grid',
@@ -3716,83 +3662,6 @@ const MODULES = [
               { key: 'note', label: 'Not' },
             ],
           },
-          {
-            id: 'personel',
-            label: 'Personel Bilgisi',
-            kind: 'grid',
-            key: 'personel',
-            slots: 2,
-            fields: [
-              { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
-              { key: 'employee_code', label: 'Personel kodu', size: 'short' },
-              { key: 'employee_name', label: 'Ad soyad' },
-              { key: 'duration_min', label: 'Süre (dk)', type: 'number', size: 'short' },
-              { key: 'note', label: 'Not' },
-            ],
-          },
-          {
-            id: 'hurdalar',
-            label: 'Hurdalar',
-            kind: 'grid',
-            key: 'hurdalar',
-            slots: 2,
-            fields: [
-              { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
-              {
-                key: 'item_id',
-                label: 'Stok',
-                type: 'lookup',
-                lookup: 'items',
-                valueKey: 'id',
-                labelKey: 'item_name',
-                codeKey: 'item_code',
-              },
-              { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
-              { key: 'uom_code', label: 'Birim', size: 'short' },
-              { key: 'reason', label: 'Neden' },
-            ],
-          },
-          {
-            id: 'yeniden',
-            label: 'Yeniden İşleme',
-            kind: 'grid',
-            key: 'yeniden_isleme',
-            slots: 2,
-            fields: [
-              { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
-              {
-                key: 'item_id',
-                label: 'Stok',
-                type: 'lookup',
-                lookup: 'items',
-                valueKey: 'id',
-                labelKey: 'item_name',
-                codeKey: 'item_code',
-              },
-              { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
-              { key: 'uom_code', label: 'Birim', size: 'short' },
-              { key: 'note', label: 'Not' },
-            ],
-          },
-          {
-            id: 'stok-ozellik',
-            label: 'Stok Özellikleri',
-            kind: 'fields',
-            fields: [
-              { key: 'lot_no', label: 'Parti no' },
-              { key: 'serial_no', label: 'Seri no' },
-              { key: 'brand', label: 'Marka' },
-              { key: 'revision', label: 'Revizyon' },
-            ],
-          },
-          {
-            id: 'aciklamalar',
-            label: 'Açıklamalar',
-            kind: 'fields',
-            fields: [
-              { key: 'description', label: 'Açıklama' },
-            ],
-          },
         ],
         detailFillAction: { label: 'Detayları Getir', client: 'uretim-giris-onizleme' },
         defaults: {
@@ -3804,12 +3673,7 @@ const MODULES = [
           net_quantity: 1,
           gross_quantity: 1,
           malzemeler: [],
-          yan_urunler: [],
-          ekipmanlar: [],
           duruslar: [],
-          personel: [],
-          hurdalar: [],
-          yeniden_isleme: [],
         },
       },
       {
@@ -12685,12 +12549,7 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
     shift_code: prev.shift_code || '',
     description: prev.description || data.description || '',
     malzemeler: data.malzemeler || [],
-    yan_urunler: data.yan_urunler || [],
-    ekipmanlar: prev.ekipmanlar || [],
     duruslar: prev.duruslar || [],
-    personel: prev.personel || [],
-    hurdalar: prev.hurdalar || [],
-    yeniden_isleme: prev.yeniden_isleme || [],
   };
   await fetchLookupKey('uretim-emir-operasyonlari').catch(() => {});
   renderForm(screen);
@@ -24689,7 +24548,7 @@ function bindEvents() {
             state.formRecord[key] = rows;
             state.gridSel = { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır silmede başarı toast’ı yok — yalnız hata gösterilir
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -24743,7 +24602,7 @@ function bindEvents() {
               ? { key, idx: Math.min(idx, rows.length - 1) }
               : { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır silmede başarı toast’ı yok
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -24760,7 +24619,7 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — Kaydet ile onaylayın.');
+        // Satır kopyala başarı toast’ı yok
         return;
       }
       if (act === 'kaydet') {
@@ -24827,15 +24686,12 @@ function bindEvents() {
               }
             });
           }
-          toast(screen.detailPersist?.[key]
-            ? 'Satır veritabanına kaydedildi.'
-            : 'Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+          // Satır kaydet/onay başarı toast’ı yok
           return;
         }
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
         renderForm(screen);
-        toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
         return;
       }
     }
