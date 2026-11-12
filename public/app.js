@@ -2254,7 +2254,7 @@ const MODULES = [
     title: 'Üretim',
     sections: [
       { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'] },
-      { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri', 'hizli-uretim-girisi'] },
+      { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'kolay-is-emri-onayi', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri', 'hizli-uretim-girisi'] },
       { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
       { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri'] },
     ],
@@ -3066,6 +3066,74 @@ const MODULES = [
           product_receipt_completed: false,
           status: 'Acik',
         },
+      },
+      {
+        id: 'kolay-is-emri-onayi',
+        techId: 'MFG-WO-APR-001',
+        businessNameEn: 'EasyWorkOrderApprovalScreen',
+        title: 'Kolay İş Emri Onayı',
+        endpoint: '/uretim-emirleri/onay-adaylari',
+        resourceEndpoint: '/uretim-emirleri',
+        crud: false,
+        listActions: ['incele'],
+        codeField: 'order_no',
+        nameField: 'item_name',
+        banner: 'Onay bekleyen iş emirleri (Taslak / OnayBekliyor). Onay stok hareketi üretmez; üretime açar.',
+        approveAction: { label: 'Onayla', path: '/uretim-emirleri/{id}/onayla' },
+        secondaryAction: {
+          label: 'Uygunları Toplu Onayla',
+          bulkApprovePath: '/uretim-emirleri/toplu-onay',
+        },
+        filters: [
+          { key: 'order_no', label: 'Emir no' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'status', label: 'Durum' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', queryParam: true },
+        ],
+        columns: [
+          { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'order_date', label: 'Tarih' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'planned_quantity', label: 'Miktar' },
+          { key: 'uom_code', label: 'Birim', mono: true },
+          { key: 'plan_start', label: 'Plan baş.' },
+          { key: 'plan_end', label: 'Plan bit.' },
+          { key: 'plant_name', label: 'İş yeri' },
+          { key: 'status', label: 'Durum' },
+          { key: 'is_approved', label: 'Onaylı' },
+          { key: 'ready', label: 'Hazır' },
+          { key: 'blockers', label: 'Engeller' },
+        ],
+        masterFields: [
+          { key: 'order_no', label: 'Emir no', code: true, readOnly: true },
+          { key: 'status', label: 'Durum', readOnly: true },
+          { key: 'is_approved', label: 'Onaylı', type: 'checkbox', readOnly: true },
+          { key: 'item_code', label: 'Stok kodu', readOnly: true },
+          { key: 'item_name', label: 'Stok adı', readOnly: true },
+          { key: 'planned_quantity', label: 'Miktar', type: 'number', readOnly: true },
+          { key: 'uom_code', label: 'Birim', readOnly: true },
+          { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', readOnly: true },
+          { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', readOnly: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', readOnly: true },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', readOnly: true },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'date', readOnly: true },
+          { key: 'approved_at', label: 'Onay zamanı', readOnly: true },
+          { key: 'approved_by_user_code', label: 'Onaylayan', readOnly: true },
+          { key: 'description', label: 'Açıklama', readOnly: true },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
+          { key: 'operation_code', label: 'Op', size: 'short' },
+          { key: 'operation_name', label: 'Operasyon' },
+          { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
+          { key: 'planned_quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'status', label: 'Durum', size: 'short' },
+        ],
+        detailKey: 'operasyonlar',
+        detailSlots: 0,
+        detailAsFields: false,
+        defaults: {},
       },
       {
         id: 'siparis-is-emri',
@@ -13124,6 +13192,8 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
+  } else if (Array.isArray(val)) {
+    val = val.length ? val.join('; ') : '—';
   } else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) {
     val = formatListDateTime(val);
   } else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
@@ -13386,6 +13456,29 @@ function updateActionButtons(screen) {
   if (tcmbBtn) tcmbBtn.hidden = !screen.tcmbFetchAction;
   const pdfBtn = $('#btnReportPdf');
   if (pdfBtn) pdfBtn.hidden = !screen.reportPdfAction;
+
+  // PRDT03: uygun adayları toplu onayla
+  let bulkBtn = $('#btnBulkApprove');
+  if (!bulkBtn) {
+    const bar = $('#actionBar');
+    if (bar) {
+      bulkBtn = document.createElement('button');
+      bulkBtn.type = 'button';
+      bulkBtn.className = 'btn action';
+      bulkBtn.id = 'btnBulkApprove';
+      bulkBtn.dataset.action = 'bulk-approve';
+      bulkBtn.textContent = 'Uygunları Toplu Onayla';
+      bar.appendChild(bulkBtn);
+    }
+  }
+  if (bulkBtn) {
+    const showBulk = Boolean(screen.secondaryAction?.bulkApprovePath);
+    bulkBtn.hidden = !showBulk;
+    if (showBulk) {
+      bulkBtn.textContent = screen.secondaryAction.label || 'Uygunları Toplu Onayla';
+      bulkBtn.disabled = !(state.rows || []).some((r) => r.ready);
+    }
+  }
 }
 
 async function openScreen(id, opts = {}) {
@@ -16590,6 +16683,38 @@ async function createMrpProductionOrders() {
   openScreen('uretim-emirleri');
 }
 
+/** PRDT03 — listede ready=true olan onay adaylarını toplu onayla */
+async function runBulkProductionOrderApprove() {
+  const screen = findScreen(state.screenId);
+  const path = screen?.secondaryAction?.bulkApprovePath;
+  if (!path) {
+    toast('Toplu onay bu ekranda tanımlı değil.');
+    return;
+  }
+  const readyRows = (state.rows || []).filter((r) => r.ready && r.id);
+  if (!readyRows.length) {
+    toast('Onaya uygun kayıt yok (Hazır = Hayır).');
+    return;
+  }
+  if (!window.confirm(`${readyRows.length} uygun iş emri onaylanacak. Devam?`)) return;
+  const result = await api(path, {
+    method: 'POST',
+    body: JSON.stringify({ ids: readyRows.map((r) => r.id) }),
+  });
+  const ok = result.basarili_sayisi || 0;
+  const fail = result.hata_sayisi || 0;
+  const failMsg = (result.hatali || [])
+    .slice(0, 3)
+    .map((h) => `#${h.id}: ${h.hata}`)
+    .join(' · ');
+  toast(
+    fail
+      ? `Toplu onay: ${ok} başarılı, ${fail} hatalı${failMsg ? ` — ${failMsg}` : ''}`
+      : `Toplu onay: ${ok} iş emri onaylandı.`
+  );
+  await loadList(screen);
+}
+
 function partitionMasterFields(fields, maxPrimary = MASTER_PRIMARY_MAX) {
   const raw = Array.isArray(fields) ? fields : [];
   const footerNotes = raw.filter((f) => isFooterNoteField(f));
@@ -18380,7 +18505,7 @@ function renderForm(screen) {
       else if (['Acik', 'YenidenAcik'].includes(rec.status)) show = Boolean(screen.approveAction);
       else show = false;
     }
-    if (screen.id === 'uretim-emirleri') {
+    if (screen.id === 'uretim-emirleri' || screen.id === 'kolay-is-emri-onayi') {
       show = Boolean(
         screen.approveAction
         && rec.id
@@ -18513,6 +18638,7 @@ function renderForm(screen) {
           || (screen.id === 'muhasebe-belgeleri' && rec.status === 'Taslak')
           || (screen.id === 'muhasebe-donemleri' && ['Acik', 'YenidenAcik'].includes(rec.status))
           || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
+          || (screen.id === 'kolay-is-emri-onayi' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
           || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.status))
           || (screen.id === 'stok-rezervasyonlari' && rec.status === 'Aktif')
           || (screen.id === 'satin-alma-talepleri' && rec.status === 'Acik')
@@ -21599,7 +21725,8 @@ async function openForm(mode, opts = {}) {
 
   async function loadRecord(id) {
     try {
-      return await api(`${screenApiBase(screen.endpoint)}/${id}`);
+      const base = screen.resourceEndpoint || screenApiBase(screen.endpoint);
+      return await api(`${base}/${id}`);
     } catch (_) {
       return { ...row };
     }
@@ -23030,7 +23157,9 @@ function bindEvents() {
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
       else if (act === 'tcmb-cek') fetchTcmbRates().catch((err) => toast(err.message));
-      else if (act === 'incele' && state.screenId === 'mrp-calisma') {
+      else if (act === 'bulk-approve') {
+        runBulkProductionOrderApprove().catch((err) => toast(err.message || 'Toplu onay başarısız'));
+      } else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
           state.mrpCalismaId = sel.id;
