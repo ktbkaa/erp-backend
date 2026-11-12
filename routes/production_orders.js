@@ -425,10 +425,14 @@ router.get('/', async (req, res) => {
 router.get('/operasyon-lookup', async (req, res) => {
     try {
         const params = [];
-        const where = [`o.status IN ('Hazir','Bekliyor','Uretimde')`];
+        const where = [];
+        // Emir seçiliyse o emrin tüm operasyonları (kapalı dahil — kullanıcı görsün).
+        // Emir yoksa yalnızca girişe uygun aktif durumlar.
         if (req.query.order_id) {
             params.push(Number(req.query.order_id));
             where.push(`o.order_id = $${params.length}`);
+        } else {
+            where.push(`o.status IN ('Hazir','Bekliyor','Uretimde')`);
         }
         const firmaId = companyIdFromReq(req);
         if (firmaId) {
