@@ -9,11 +9,14 @@ const { ensureDemoFirms } = require('../src/bootstrap/ensureDemoFirms');
 let healOnce = null;
 function healInBackground() {
     if (healOnce) return healOnce;
-    healOnce = ensureDemoFirms(pool)
-        .catch((err) => {
-            console.error('[heal] companies:', err.message);
-            healOnce = null;
-        });
+    const { ensureDemoData } = require('../src/bootstrap/ensureDemoData');
+    healOnce = (async () => {
+        await ensureDemoFirms(pool);
+        await ensureDemoData(pool);
+    })().catch((err) => {
+        console.error('[heal] companies:', err.message);
+        healOnce = null;
+    });
     return healOnce;
 }
 

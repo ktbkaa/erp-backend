@@ -111,11 +111,13 @@ async function main() {
 
     runNpm('ensure:firma-yetki');
 
+    const { ensureDemoData } = require('../src/bootstrap/ensureDemoData');
     const og = await pool.query(`SELECT count(*)::int AS n FROM items WHERE item_code LIKE 'OG-%'`);
     const needSeed = forceSeed || before.rowCount === 0 || Number(og.rows[0]?.n || 0) < 5;
     if (needSeed) {
-      console.log('Örnek veri eksik — qa:ornek-gida (idempotent, silmez)…');
-      runNpm('qa:ornek-gida');
+      console.log('Örnek veri eksik — SQL seed (silmez)…');
+      const seeded = await ensureDemoData(pool);
+      console.log(JSON.stringify(seeded));
     } else {
       console.log(`Örnek veri mevcut (OG stok: ${og.rows[0].n})`);
     }
