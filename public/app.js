@@ -8144,6 +8144,423 @@ const MODULES = [
 
 ];
 
+/**
+ * Sol menü yeniden organizasyonu (KTB ERP modül hiyerarşisi).
+ * Ekran tanımları (id/endpoint) korunur; yalnızca modül/bölüm yerleşimi değişir.
+ * Sistemde olmayan ekranlar layout'a eklenmez.
+ */
+const KTB_MENU_LAYOUT = [
+  {
+    id: 'crm',
+    title: 'CRM',
+    sections: [
+      { id: 'firsatlar', title: 'Fırsatlar', screenIds: ['crm-firsatlar', 'crm-adaylar', 'crm-kontaklar'] },
+      { id: 'faaliyetler', title: 'Faaliyetler', screenIds: ['crm-faaliyetler', 'crm-faaliyet-planlari', 'crm-gorevler', 'crm-ajanda'] },
+      { id: 'tanimlamalar', title: 'Tanımlamalar', screenIds: ['crm-firsat-asamalari', 'crm-faaliyet-tipleri'] },
+    ],
+  },
+  {
+    id: 'satis',
+    title: 'Satış Yönetimi',
+    sections: [
+      {
+        id: 'satis-islemleri',
+        title: 'Satış İşlemleri',
+        screenIds: ['satis-teklifleri', 'satis-siparisleri'],
+      },
+      {
+        id: 'sevkiyat-irsaliye',
+        title: 'Sevkiyat ve İrsaliye',
+        screenIds: ['irsaliye-yonetimi', 'sevk-emirleri', 'satis-iade-irsaliyeleri'],
+      },
+      {
+        id: 'faturalandirma',
+        title: 'Faturalandırma',
+        screenIds: ['satis-faturalari', 'satis-iade-faturalari'],
+      },
+    ],
+  },
+  {
+    id: 'satinalma',
+    title: 'Satınalma Yönetimi',
+    sections: [
+      {
+        id: 'satinalma-islemleri',
+        title: 'Satınalma İşlemleri',
+        screenIds: [
+          'satin-alma-talepleri',
+          'satin-alma-teklif-istekleri',
+          'satin-alma-teklifleri',
+          'satin-alma-anlasmalari',
+          'satin-alma-siparisleri',
+        ],
+      },
+      {
+        id: 'mal-kabul-irsaliye',
+        title: 'Mal Kabul ve İrsaliye',
+        screenIds: ['tedarikci-irsaliyeleri', 'mal-kabuller', 'giris-kontrolleri'],
+      },
+      {
+        id: 'faturalandirma',
+        title: 'Faturalandırma',
+        screenIds: ['alis-faturalari', 'alis-iade-faturalari'],
+      },
+    ],
+  },
+  {
+    id: 'stok',
+    title: 'Stok ve Depo Yönetimi',
+    sections: [
+      { id: 'kartlar', title: 'Malzeme Kartları', screenIds: ['stok-karti'] },
+      { id: 'hareketler', title: 'Stok Hareketleri', screenIds: ['stok-hareketleri', 'depo-bakiye', 'stok-depo'] },
+      { id: 'transfer', title: 'Depo Transferleri', screenIds: ['transfer-emirleri'] },
+      { id: 'sayim', title: 'Depo Sayımları', screenIds: ['sayim-belgeleri'] },
+      { id: 'rezervasyon', title: 'Stok Rezervasyonları', screenIds: ['stok-rezervasyonlari'] },
+      { id: 'lot-seri', title: 'Lot / Seri Takibi', screenIds: ['stok-partileri', 'stok-serileri', 'stok-ikame'] },
+      { id: 'tanimlamalar', title: 'Tanımlamalar', screenIds: ['warehouses', 'kategori-tip-tanimi', 'kategori-tanimi'] },
+    ],
+  },
+  {
+    id: 'uretim',
+    title: 'Üretim Yönetimi',
+    sections: [
+      { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'] },
+      { id: 'rotalar', title: 'Üretim Rotaları', screenIds: ['routings'] },
+      { id: 'is-emirleri', title: 'İş Emirleri', screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'] },
+      { id: 'planlama', title: 'Üretim Planlama', screenIds: ['uretim-planlari'] },
+      {
+        id: 'mrp',
+        title: 'MRP Planlama',
+        screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'],
+      },
+      { id: 'gerceklesme', title: 'Üretim Gerçekleşmeleri', screenIds: ['uretim-girisleri'] },
+      { id: 'hizli-giris', title: 'Hızlı Üretim Girişi', screenIds: ['hizli-uretim-girisi'] },
+      { id: 'onay', title: 'İş Emri Onayı', screenIds: ['kolay-is-emri-onayi'] },
+      { id: 'is-merkezleri', title: 'İş Merkezleri', screenIds: ['is-merkezleri', 'is-istasyonlari'] },
+      { id: 'tanimlamalar', title: 'Tanımlamalar', screenIds: ['sinif-tanimi', 'uretim-emri-tipleri'] },
+    ],
+  },
+  {
+    id: 'kalite',
+    title: 'Kalite Yönetimi',
+    sections: [
+      { id: 'giris-kk', title: 'Giriş Kalite Kontrol', screenIds: ['kk-emirleri-gkk'] },
+      { id: 'cikis-kk', title: 'Son Kontrol', screenIds: ['kk-emirleri-ckk'] },
+      { id: 'uygunsuzluk', title: 'Uygunsuzluk Yönetimi', screenIds: ['kk-uygunsuzluklar'] },
+      { id: 'capa', title: 'Düzeltici ve Önleyici Faaliyetler', screenIds: ['kk-capa'] },
+      { id: 'tanimlamalar', title: 'Tanımlamalar', screenIds: ['kk-kontrol-planlari', 'kk-stok-planlari', 'kk-ret-nedenleri'] },
+    ],
+  },
+  {
+    id: 'proje',
+    title: 'Proje Yönetimi',
+    sections: [
+      { id: 'projeler', title: 'Projeler', screenIds: ['prj-projeler', 'prj-isler', 'prj-dashboard', 'prj-portfolio'] },
+      { id: 'gorevler', title: 'Görevler', screenIds: ['prj-isler'] },
+      { id: 'kanban', title: 'Kanban Panoları', screenIds: ['prj-board'] },
+      { id: 'backlog', title: 'Backlog', screenIds: ['prj-backlog'] },
+      { id: 'sprintler', title: 'Sprintler', screenIds: ['prj-sprintler'] },
+      { id: 'zaman', title: 'Zaman Çizelgesi', screenIds: ['prj-gantt'] },
+      { id: 'kaynak', title: 'Kaynak Planlama', screenIds: ['prj-workload'] },
+      { id: 'butce', title: 'Bütçe ve Maliyetler', screenIds: ['prj-butce'] },
+      { id: 'riskler', title: 'Riskler', screenIds: ['prj-riskler'] },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: [
+          'prj-sablonlar', 'prj-automations',
+          'prj-project-types', 'prj-project-categories', 'prj-project-statuses', 'prj-project-priorities',
+          'prj-work-item-types', 'prj-work-item-statuses', 'prj-work-item-priorities',
+          'prj-project-roles', 'prj-relation-types',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'finans',
+    title: 'Finans ve Muhasebe',
+    sections: [
+      { id: 'cari', title: 'Cari Finans', screenIds: ['cari-kartlari', 'cari-ekstre', 'tahsilat-odemeler'] },
+      { id: 'kasa', title: 'Kasa', screenIds: ['finans-kasa-hesaplari'] },
+      { id: 'banka', title: 'Banka', screenIds: ['finans-banka-hesaplari', 'finans-nakit-hareketleri'] },
+      { id: 'belgeler', title: 'Finansal Belgeler', screenIds: ['fatura-kontrolleri'] },
+      { id: 'fisler', title: 'Muhasebe Fişleri', screenIds: ['muhasebe-belgeleri'] },
+      { id: 'hesap-plani', title: 'Hesap Planı', screenIds: ['hesap-plani', 'hesap-belirleme-kurallari'] },
+      { id: 'butce', title: 'Bütçe', screenIds: ['mali-yillar', 'muhasebe-donemleri'] },
+      {
+        id: 'raporlar',
+        title: 'Finans Raporları',
+        screenIds: ['mizan', 'finans-yevmiye', 'finans-bilanco', 'finans-gelir-tablosu'],
+      },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: ['finans-vergi-kodlari', 'vergi-kodlari', 'finans-ulke-paketleri', 'fiyat-listeleri'],
+      },
+    ],
+  },
+  {
+    id: 'insan-kaynaklari',
+    title: 'İnsan Kaynakları',
+    sections: [
+      { id: 'ozluk', title: 'Personel Özlük', screenIds: ['hr-personel'] },
+      { id: 'organizasyon', title: 'Organizasyon', screenIds: ['hr-departmanlar', 'hr-pozisyonlar'] },
+      { id: 'puantaj', title: 'Puantaj', screenIds: ['hr-puantaj'] },
+      { id: 'izin', title: 'İzin Yönetimi', screenIds: ['hr-izin-talepleri', 'hr-izin-bakiyeleri'] },
+      { id: 'vardiya', title: 'Vardiya', screenIds: ['hr-vardiya-atamalari'] },
+      { id: 'bordro', title: 'Ücret ve Bordro', screenIds: ['hr-ucretler', 'hr-avanslar', 'hr-bordro-donemleri', 'hr-bordro-calismalari'] },
+      { id: 'ise-alim', title: 'İşe Alım', screenIds: ['hr-is-ilanlari', 'hr-adaylar', 'hr-onboarding'] },
+      { id: 'cikis', title: 'İşten Ayrılış', screenIds: ['hr-isten-cikis'] },
+      { id: 'zimmet', title: 'Zimmet', screenIds: ['hr-zimmetler'] },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: [
+          'hr-izin-turleri', 'hr-vardiyalar', 'hr-calisma-takvimleri', 'hr-resmi-tatiller',
+          'hr-bordro-parametreleri', 'hr-cikis-nedenleri',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'onay',
+    title: 'Onay Yönetimi',
+    sections: [
+      { id: 'bekleyen', title: 'Bekleyen Onaylar', screenIds: ['onaylarim'] },
+      { id: 'gecmis', title: 'Onay Geçmişi', screenIds: ['onay-izleme'] },
+      { id: 'yetki', title: 'Onay Yetkileri', screenIds: ['onay-yetki-devri'] },
+      {
+        id: 'sabit',
+        title: 'Sabit Tanımlar',
+        screenIds: [
+          'onay-role-tanim', 'onay-kural-tanim', 'onay-rota-tanim',
+          'onay-message-template', 'onay-status-tanim', 'onay-modul-kullanimlari',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'raporlama',
+    title: 'Raporlama ve Analiz',
+    sections: [
+      { id: 'dashboard', title: 'Yönetim Dashboard', screenIds: ['kokpit', 'prj-dashboard', 'prj-portfolio'] },
+    ],
+  },
+  {
+    id: 'sistem',
+    title: 'Sistem Yönetimi',
+    sections: [
+      { id: 'sirket', title: 'Şirket Yönetimi', screenIds: ['companies', 'is-yerleri'] },
+      { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar'] },
+      { id: 'gruplar', title: 'Kullanıcı Grupları', screenIds: ['kullanici-gruplari'] },
+      { id: 'bildirim', title: 'Bildirim Ayarları', screenIds: ['eposta-gonderimleri', 'mesaj-tanimlari'] },
+      { id: 'parametreler', title: 'Sistem Parametreleri', screenIds: ['sistem-parametreleri', 'zorunlu-alan-tanimlari', 'numarator-tanimi'] },
+      { id: 'loglar', title: 'İşlem Logları', screenIds: ['audit-log', 'tablo-bilgileri', 'sql-sorgu', 'sayfa-sorgulari'] },
+      {
+        id: 'ortak-tanimlar',
+        title: 'Ortak Tanımlamalar',
+        screenIds: [
+          'olcu-birimleri', 'country-tanimi', 'sehir-tanimi', 'para-birimi-tanimi',
+          'doviz-exchange_rate-tanimi', 'dil-tanimi', 'banka-tanimi',
+          'odeme-kosulu-tanimi', 'teslimat-kosulu-tanimi',
+          'hareket-kodlari', 'belge-tipleri',
+        ],
+      },
+    ],
+  },
+];
+
+/** Eski modül id → yeni (module_permissions geriye uyum) */
+const MODULE_PERM_ALIASES = {
+  sistem: ['sistem', 'fixed-tanimlar', 'ana-veri'],
+  stok: ['stok', 'ana-veri'],
+  finans: ['finans', 'cari', 'muhasebe'],
+  satinalma: ['satinalma', 'satin-alma'],
+  satis: ['satis'],
+  uretim: ['uretim'],
+  kalite: ['kalite'],
+  crm: ['crm'],
+  proje: ['proje'],
+  onay: ['onay'],
+  'insan-kaynaklari': ['insan-kaynaklari', 'hr', 'ik'],
+  raporlama: ['raporlama', 'finans'],
+};
+
+/**
+ * Menü varyantları: aynı backend ekranı, farklı başlık + varsayılan filtre.
+ * Alış/satış fatura-irsaliye karışmasını menüde ayırmak için.
+ */
+const KTB_MENU_SCREEN_VARIANTS = [
+  {
+    id: 'satis-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Satış Faturaları',
+    presetFilters: { invoice_type: 'Satis' },
+    defaultsPatch: { invoice_type: 'Satis', invoice_category: 'SATIS', scenario: 'TICARIFATURA' },
+  },
+  {
+    id: 'satis-iade-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Satış İade Faturaları',
+    presetFilters: { invoice_type: 'Iade' },
+    defaultsPatch: { invoice_type: 'Iade', invoice_category: 'SATIS_IADE' },
+  },
+  {
+    id: 'alis-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Alış Faturaları',
+    presetFilters: { invoice_type: 'Alis' },
+    defaultsPatch: { invoice_type: 'Alis', invoice_category: 'ALIS', rate_type: 'TCMB-ALIS' },
+  },
+  {
+    id: 'alis-iade-faturalari',
+    baseId: 'fatura-yonetimi',
+    title: 'Alış İade Faturaları',
+    presetFilters: { invoice_type: 'AlisIade' },
+    defaultsPatch: { invoice_type: 'AlisIade', invoice_category: 'ALIS_IADE', rate_type: 'TCMB-ALIS' },
+  },
+  {
+    id: 'satis-iade-irsaliyeleri',
+    baseId: 'irsaliye-yonetimi',
+    title: 'Satış İade İrsaliyeleri',
+    presetFilters: { delivery_note_type: 'IADE' },
+    defaultsPatch: { delivery_note_type: 'IADE', is_return: true, invoice_status: 'Irsaliye', status: 'Taslak' },
+  },
+];
+
+(function applyKtbMenuLayout() {
+  const byId = Object.create(null);
+  const oldPlacement = [];
+  for (const mod of MODULES) {
+    for (const s of mod.screens || []) {
+      if (!s?.id) continue;
+      if (!byId[s.id]) byId[s.id] = s;
+      oldPlacement.push({ screenId: s.id, moduleId: mod.id, moduleTitle: mod.title });
+    }
+  }
+
+  // Görünen başlıklar: satış/alış ayrımı
+  if (byId['irsaliye-yonetimi']) byId['irsaliye-yonetimi'].title = 'Satış İrsaliyeleri';
+  if (byId['sevk-emirleri']) byId['sevk-emirleri'].title = 'Sevkiyat İşlemleri';
+  if (byId['tedarikci-irsaliyeleri']) byId['tedarikci-irsaliyeleri'].title = 'Alış İrsaliyeleri';
+  if (byId['mal-kabuller']) byId['mal-kabuller'].title = 'Mal Kabul İşlemleri';
+
+  // İrsaliye tip filtresi (iade menü varyantı + istemci filtresi)
+  if (byId['irsaliye-yonetimi']) {
+    const ir = byId['irsaliye-yonetimi'];
+    ir.filters = Array.isArray(ir.filters) ? ir.filters.slice() : [];
+    if (!ir.filters.some((f) => f.key === 'delivery_note_type')) {
+      ir.filters.push({
+        key: 'delivery_note_type',
+        label: 'İrsaliye tipi',
+        type: 'select',
+        options: ['', 'SEVK', 'MATBU', 'IADE'],
+      });
+    }
+  }
+
+  for (const v of KTB_MENU_SCREEN_VARIANTS) {
+    const base = byId[v.baseId];
+    if (!base) continue;
+    if (byId[v.id]) continue;
+    const clone = {
+      ...base,
+      id: v.id,
+      title: v.title,
+      baseScreenId: v.baseId,
+      menuVariant: true,
+      presetFilters: { ...(v.presetFilters || {}) },
+      defaults: { ...(base.defaults || {}), ...(v.defaultsPatch || {}) },
+      filters: Array.isArray(base.filters)
+        ? base.filters.map((f) => {
+          const preset = v.presetFilters?.[f.key];
+          if (preset == null) return { ...f };
+          return { ...f, default: preset };
+        })
+        : base.filters,
+    };
+    byId[v.id] = clone;
+  }
+  const used = new Set();
+  const missing = [];
+  const finalMods = [];
+  for (const layout of KTB_MENU_LAYOUT) {
+    const screens = [];
+    const sections = [];
+    const seenInMod = new Set();
+    for (const sec of layout.sections || []) {
+      const ids = [];
+      for (const id of sec.screenIds || []) {
+        if (!byId[id]) {
+          missing.push({ moduleId: layout.id, sectionId: sec.id, screenId: id });
+          continue;
+        }
+        ids.push(id);
+        used.add(id);
+        // Aynı ekran birden fazla modülde menüde görünebilir (ör. dashboard)
+        if (!seenInMod.has(id)) {
+          screens.push(byId[id]);
+          seenInMod.add(id);
+        }
+      }
+      if (ids.length) sections.push({ id: sec.id, title: sec.title, screenIds: ids });
+    }
+    if (screens.length) {
+      finalMods.push({
+        id: layout.id,
+        title: layout.title,
+        sections,
+        screens,
+      });
+    }
+  }
+  // Birleşik fatura ekranı menüde gösterilmez; satış/alış varyantları kullanılır.
+  if (byId['fatura-yonetimi'] && !used.has('fatura-yonetimi')) {
+    byId['fatura-yonetimi'].hidden = true;
+    used.add('fatura-yonetimi');
+    const fin = finalMods.find((m) => m.id === 'finans');
+    if (fin && !fin.screens.some((s) => s.id === 'fatura-yonetimi')) {
+      fin.screens.push(byId['fatura-yonetimi']);
+    }
+  }
+
+  const orphans = Object.keys(byId).filter((id) => !used.has(id));
+  if (orphans.length) {
+    let sist = finalMods.find((m) => m.id === 'sistem');
+    if (!sist) {
+      sist = {
+        id: 'sistem',
+        title: 'Sistem Yönetimi',
+        sections: [],
+        screens: [],
+      };
+      finalMods.push(sist);
+    }
+    sist.sections.push({ id: 'diger-ekranlar', title: 'Diğer Ekranlar', screenIds: orphans.slice() });
+    for (const id of orphans) {
+      if (!sist.screens.some((s) => s.id === id)) sist.screens.push(byId[id]);
+    }
+  }
+
+  MODULES.length = 0;
+  for (const m of finalMods) MODULES.push(m);
+
+  if (typeof globalThis !== 'undefined') {
+    globalThis.__KTB_MENU_REORG__ = {
+      used: [...used],
+      orphans,
+      missing,
+      oldPlacement,
+      modules: finalMods.map((m) => ({
+        id: m.id,
+        title: m.title,
+        sections: m.sections,
+        screenCount: m.screens.length,
+      })),
+    };
+  }
+})();
+
 /** Modül menü bölümleri — sections yoksa düz liste (Sabit Tanımlar). */
 function moduleMenuSections(mod) {
   const screens = (mod.screens || []).filter((s) => s && s.id && !s.hidden && !s.deprecated);
@@ -8982,9 +9399,18 @@ function enrichFiltersFromForm(screen) {
   });
 }
 
-const ALL_SCREENS = MODULES.flatMap((m) =>
-  m.screens.map((s) => normalizeScreen(s, m.id, m.title))
-);
+const ALL_SCREENS = (() => {
+  const out = [];
+  const seen = new Set();
+  for (const m of MODULES) {
+    for (const s of m.screens || []) {
+      if (!s?.id || seen.has(s.id)) continue;
+      seen.add(s.id);
+      out.push(normalizeScreen(s, m.id, m.title));
+    }
+  }
+  return out;
+})();
 
 const LIST_PAGE_SIZE = 15;
 const SIDEBAR_W_KEY = 'ktb_sidebar_w';
@@ -9017,22 +9443,25 @@ const UI_THEME_DEFS = [
 ];
 
 const MODULE_TITLE_EN = {
-  'fixed-tanimlar': 'Master Data (Fixed)',
-  sistem: 'System',
-  'ana-veri': 'Master Data',
-  stok: 'Inventory',
-  cari: 'Partners',
-  uretim: 'Production',
-  'satin-alma': 'Purchasing',
   crm: 'CRM',
-  satis: 'Sales',
-  kalite: 'Quality',
-  finans: 'Finance',
+  satis: 'Sales Management',
+  satinalma: 'Purchasing Management',
+  'satin-alma': 'Purchasing Management',
+  stok: 'Inventory & Warehouse',
+  uretim: 'Production Management',
+  kalite: 'Quality Management',
+  proje: 'Project Management',
+  finans: 'Finance & Accounting',
   muhasebe: 'Accounting',
-  onay: 'Approvals',
+  cari: 'Partners',
   'insan-kaynaklari': 'Human Resources',
   hr: 'HR',
   ik: 'HR',
+  onay: 'Approvals',
+  raporlama: 'Reporting & Analytics',
+  sistem: 'System Administration',
+  'fixed-tanimlar': 'Master Data (Fixed)',
+  'ana-veri': 'Master Data',
 };
 
 const SECTION_TITLE_EN = {
@@ -10307,6 +10736,8 @@ const SCREEN_ALIASES = {
 
 function resolveScreenId(id) {
   if (!id) return id;
+  // Gerçek menü varyantı varsa alias’a düşme (satis-faturalari vb.)
+  if (typeof ALL_SCREENS !== 'undefined' && ALL_SCREENS.some((s) => s.id === id)) return id;
   return SCREEN_ALIASES[id] || id;
 }
 
@@ -10315,14 +10746,22 @@ function findScreen(id) {
   return ALL_SCREENS.find((s) => s.id === resolved) || null;
 }
 
+function canonicalScreenId(screenOrId) {
+  if (!screenOrId) return screenOrId;
+  if (typeof screenOrId === 'object') {
+    return screenOrId.baseScreenId || screenOrId.id;
+  }
+  const s = findScreen(screenOrId);
+  if (s?.baseScreenId) return s.baseScreenId;
+  return resolveScreenId(screenOrId);
+}
+
 function isDeliveryNoteManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'irsaliye-yonetimi';
+  return canonicalScreenId(screenOrId) === 'irsaliye-yonetimi';
 }
 
 function isInvoiceManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'fatura-yonetimi';
+  return canonicalScreenId(screenOrId) === 'fatura-yonetimi';
 }
 
 function selectedRow() {
@@ -11556,18 +11995,21 @@ function closeOpenTab(tabKey) {
 }
 
 const MOD_ICONS = {
-  'fixed-tanimlar': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
-  sistem: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg>',
-  'ana-veri': '<svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h12"/></svg>',
-  stok: '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>',
-  cari: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
-  uretim: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg>',
   crm: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-  satinalma: '<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
   satis: '<svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  satinalma: '<svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>',
+  stok: '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>',
+  uretim: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg>',
   kalite: '<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
+  proje: '<svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7V5a2 2 0 0 1 2-2h4l2 2"/></svg>',
   finans: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
   'insan-kaynaklari': '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  onay: '<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+  raporlama: '<svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 17V9M12 17V7M16 17v-5"/></svg>',
+  sistem: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  'fixed-tanimlar': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  'ana-veri': '<svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h12"/></svg>',
+  cari: '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
 };
 
 function ensureSidebarPath(screen) {
@@ -11653,7 +12095,9 @@ function modulYetkiliMi(modId) {
   }
   const mods = s.module_permissions;
   if (!mods || !mods.length || mods.includes('*')) return true;
-  return mods.includes(modId);
+  if (mods.includes(modId)) return true;
+  const aliases = (typeof MODULE_PERM_ALIASES !== 'undefined' && MODULE_PERM_ALIASES[modId]) || [modId];
+  return aliases.some((a) => mods.includes(a));
 }
 
 function isScreenVisibleInMenu(screenId) {
@@ -12090,16 +12534,27 @@ async function loadPlantsForActiveCompany() {
 
 function buildDefaultFilterState(screen) {
   const fs = {};
+  const presets = screen?.presetFilters && typeof screen.presetFilters === 'object'
+    ? screen.presetFilters
+    : {};
   (screen.filters || []).forEach((f) => {
+    const preset = presets[f.key] != null ? presets[f.key] : f.default;
     if (f.type === 'checkbox') {
-      const on = f.default === true || f.default === 'true' || f.default === 1;
+      const on = preset === true || preset === 'true' || preset === 1 || preset === 'evet';
       fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
     } else if (f.key === 'is_active' || f.type === 'bool') {
-      fs[f.key] = { op: 'esit', a: 'evet', b: '' };
+      if (preset != null && preset !== '') {
+        const on = preset === true || preset === 'true' || preset === 1 || preset === 'evet';
+        fs[f.key] = { op: 'esit', a: on ? 'evet' : 'hayir', b: '' };
+      } else {
+        fs[f.key] = { op: 'esit', a: 'evet', b: '' };
+      }
     } else if (f.key === 'company_id' && getActiveCompanyId() && screen.scopeFirma !== false) {
       fs[f.key] = { op: 'esit', a: String(getActiveCompanyId()), b: '' };
     } else if (f.key === 'plant_id' && state.activeIsYeriId && screen.scopeIsYeri !== false) {
       fs[f.key] = { op: 'esit', a: String(state.activeIsYeriId), b: '' };
+    } else if (preset != null && String(preset).trim() !== '') {
+      fs[f.key] = { op: 'esit', a: String(preset), b: '' };
     } else if (f.type === 'lookup' || f.type === 'select' || (f.options && f.options.length)) {
       // Açılır listeler: boş operatör satırı = filtresiz
       fs[f.key] = { op: '', a: '', b: '' };
@@ -13388,11 +13843,15 @@ function screenPermission(screenId, action = null) {
     // Yetki satırı yok + modül * veya tanımsız → aç
     return !mods || !mods.length || mods.includes('*');
   }
-  const canonical = resolveScreenId(screenId);
+  const found = findScreen(screenId);
+  const canonical = found?.baseScreenId || resolveScreenId(screenId);
   const aliasIds = Object.entries(SCREEN_ALIASES)
     .filter(([, v]) => v === canonical)
     .map(([k]) => k);
-  const candidates = [screenId, canonical, ...aliasIds];
+  const variantIds = (typeof ALL_SCREENS !== 'undefined' ? ALL_SCREENS : [])
+    .filter((s) => s.baseScreenId === canonical)
+    .map((s) => s.id);
+  const candidates = [screenId, found?.id, canonical, ...aliasIds, ...variantIds].filter(Boolean);
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
