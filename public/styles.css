@@ -2922,6 +2922,8 @@ tr.selected td { background: var(--accent-soft); }
 }
 .list-work .list-pane {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 .list-work:not(:has(.list-side-nav:not([hidden]))) {
   grid-template-columns: 1fr;
@@ -6272,13 +6274,20 @@ body.sidebar-resizing .workspace {
   margin: 0.1rem 0 0;
 }
 
-/* Liste iç kaydırma + sayfa bağımsız scroll */
+/* Liste: grid’de kalan yüksekliği doldurur; sabit kısa max-height yok */
 #viewScreen.screen-view {
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
-#listTableScroll {
+#listTableScroll,
+#listTableScroll.table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  height: 100%;
   overflow: auto;
-  max-height: min(62vh, 42rem);
+  overscroll-behavior-y: contain;
 }
 body.sidebar-resizing {
   cursor: col-resize;
