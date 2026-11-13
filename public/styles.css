@@ -1280,8 +1280,8 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 
 .screen-view {
   display: grid;
-  /* banner | aksiyon | filtre(içerik kadar) | liste(kalan) — filtre aşağı şişmez */
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  /* banner | aksiyon | filtre(içerik kadar) | liste(kalan, kısa olmasın) */
+  grid-template-rows: auto auto auto minmax(min(36rem, 62vh), 1fr);
   height: 100%;
   min-height: 0;
   background: var(--page);
@@ -2891,7 +2891,7 @@ tr.selected td { background: var(--accent-soft); }
   .bar-center { max-width: none; order: 2; }
   .bar-right { max-width: none; width: 100%; order: 3; }
   .screen-view {
-    grid-template-rows: auto auto minmax(180px, 32vh) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(180px, 32vh) minmax(min(22rem, 48vh), 1fr);
     height: 100%;
     min-height: 0;
   }
@@ -6274,7 +6274,7 @@ body.sidebar-resizing .workspace {
   margin: 0.1rem 0 0;
 }
 
-/* Liste: grid’de kalan yüksekliği doldurur; sabit kısa max-height yok */
+/* Liste: kalan alanı doldurur; kısa tavan yok, taban en az ~62vh */
 #viewScreen.screen-view {
   overflow-x: hidden;
   overflow-y: auto;
@@ -6283,7 +6283,7 @@ body.sidebar-resizing .workspace {
 #listTableScroll,
 #listTableScroll.table-scroll {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: min(62vh, 42rem);
   max-height: none;
   height: 100%;
   overflow: auto;
@@ -6534,7 +6534,7 @@ body.sidebar-resizing iframe {
 }
 /* Üst filtre yuvası boşalınca liste yukarı büyür */
 #viewScreen.screen-view.filter-docked {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(min(36rem, 62vh), 1fr);
 }
 #viewScreen.screen-view.filter-docked #filterPaneHome {
   display: none !important;
