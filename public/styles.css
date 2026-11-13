@@ -1596,6 +1596,48 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   z-index: 1;
   padding: 0.4rem 0.55rem !important;
 }
+#dataTable thead tr.list-col-labels th {
+  top: 0;
+  z-index: 3;
+  border-bottom: 0 !important;
+}
+#dataTable thead tr.list-col-filters th {
+  top: 1.7rem;
+  z-index: 2;
+  padding: 0.2rem 0.35rem !important;
+  background: #f3f6fa !important;
+  font-weight: 500;
+  vertical-align: middle !important;
+  overflow: visible;
+  max-width: none;
+  white-space: normal;
+}
+#dataTable .list-col-filter {
+  display: block;
+  width: 100%;
+  min-width: 4.5rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.22rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.2;
+}
+#dataTable .list-col-filter::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+#dataTable .list-col-filter:focus {
+  outline: none;
+  border-color: var(--sidebar-ring);
+  box-shadow: 0 0 0 2px rgba(63, 135, 245, 0.18);
+}
 #dataTable tbody tr { height: 1.95rem; }
 #dataTable tbody tr:nth-child(even) td { background: var(--zebra); }
 #dataTable tr:hover td { background: var(--hover-row) !important; }

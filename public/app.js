@@ -9513,6 +9513,8 @@ const state = {
   isYerleri: [],
   requiredFieldDefs: [],
   listPage: 1,
+  /** Liste kolon altı arama: { [screenId]: { [colKey]: string } } — LIKE %…%; `;` ile VEYA */
+  listColFilters: {},
   excelCtx: null,
   pageQueryOpenMods: {},
   pageQueryFocusScreenId: null,
@@ -13521,12 +13523,64 @@ function renderListSideNav(screen) {
   `).join('');
 }
 
+function getListColFilters(screenId) {
+  const id = screenId || state.screenId;
+  if (!id) return {};
+  if (!state.listColFilters || typeof state.listColFilters !== 'object') state.listColFilters = {};
+  if (!state.listColFilters[id]) state.listColFilters[id] = {};
+  return state.listColFilters[id];
+}
+
+function clearListColFilters(screenId) {
+  const id = screenId || state.screenId;
+  if (!id || !state.listColFilters) return;
+  state.listColFilters[id] = {};
+}
+
+/** `;` ile ayrılmış terimler — her biri LIKE %terim% (VEYA) */
+function listColFilterTerms(raw) {
+  return String(raw || '')
+    .split(';')
+    .map((t) => normalizeLikeNeedle(t))
+    .filter(Boolean);
+}
+
+function listCellSearchText(col, row, index = 0) {
+  let val = col?.key === 'id' ? rowKey(row, index) : row?.[col?.key];
+  if (col?.key === 'is_active' && typeof val === 'boolean') val = val ? 'Hayır' : 'Evet';
+  else if (col?.key === 'parola_var') val = val ? 'Var' : 'Yok';
+  else if (typeof val === 'boolean') val = val ? 'Evet' : 'Hayır';
+  else if (Array.isArray(val)) val = val.length ? val.join('; ') : '';
+  else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) val = formatListDateTime(val);
+  else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
+    && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
+    val = formatListDateOnly(val) || val;
+  }
+  if (val === null || val === undefined || val === '') return '';
+  return String(val);
+}
+
+function applyListColFilters(rows, screen) {
+  const filters = getListColFilters(screen?.id);
+  const active = Object.entries(filters).filter(([, v]) => String(v || '').trim() !== '');
+  if (!active.length) return rows;
+  const cols = listColumns(screen);
+  const colMap = new Map(cols.map((c) => [c.key, c]));
+  return rows.filter((row, index) => active.every(([key, raw]) => {
+    const terms = listColFilterTerms(raw);
+    if (!terms.length) return true;
+    const text = listCellSearchText(colMap.get(key) || { key }, row, index);
+    return terms.some((term) => likeIncludes(text, term));
+  }));
+}
+
 function rowsForList(screen) {
   let rows = state.rows || [];
   if (screen.listCategories?.length && screen.categoryKey && state.listCategory) {
     rows = rows.filter((r) => String(r[screen.categoryKey]) === String(state.listCategory));
   }
-  return applyFilters(rows, screen);
+  rows = applyFilters(rows, screen);
+  return applyListColFilters(rows, screen);
 }
 
 /** Liste satır anahtarı — id yoksa bileşik anahtar (depo bakiye vb. tüm satır seçimini önler). */
@@ -13639,10 +13693,20 @@ function renderList(screen) {
   const { page, pageSize } = clampListPage(total);
   const start = (page - 1) * pageSize;
   const pageRows = state.filtered.slice(start, start + pageSize);
-  head.innerHTML = `<tr>${cols.map((c) => {
+  const colFilters = getListColFilters(screen.id);
+  const labelRow = `<tr class="list-col-labels">${cols.map((c) => {
     const drag = c.key === 'id' ? '' : 'draggable="true"';
     return `<th data-col-key="${escapeAttr(c.key)}" ${drag} title="${c.key === 'id' ? 'ID' : 'Sürükleyerek sıralayın'}">${escapeHtml(c.label)}</th>`;
   }).join('')}</tr>`;
+  const filterRow = `<tr class="list-col-filters">${cols.map((c) => {
+    const val = colFilters[c.key] || '';
+    return `<th class="list-col-filter-th" data-col-key="${escapeAttr(c.key)}">
+      <input type="search" class="list-col-filter" data-col-key="${escapeAttr(c.key)}"
+        value="${escapeAttr(val)}" placeholder="%…%" autocomplete="off" spellcheck="false"
+        title="LIKE %metin% — birden fazla terim için ; kullanın" />
+    </th>`;
+  }).join('')}</tr>`;
+  head.innerHTML = labelRow + filterRow;
   if (!total) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
@@ -13665,6 +13729,7 @@ function renderList(screen) {
   renderListPager(total);
   updateActionButtons(screen);
   bindListColumnDrag(screen);
+  bindListColFilterUi();
   // Listeler / sayfalar arası geçişte eski scroll kalıntısı (ghost scrollbar) kalmasın
   const listScroll = $('#listTableScroll');
   if (listScroll) {
@@ -13673,10 +13738,75 @@ function renderList(screen) {
   }
 }
 
+/** Kolon altı arama — input’ta odak kaybolmasın diye yalnız gövdeyi yenile */
+function refreshListBodyFromColFilters(screen) {
+  if (!screen) return;
+  const body = $('#dataBody');
+  if (!body) return;
+  state.filtered = rowsForList(screen);
+  const total = state.filtered.length;
+  const cols = listColumns(screen);
+  const { page, pageSize } = clampListPage(total);
+  const start = (page - 1) * pageSize;
+  const pageRows = state.filtered.slice(start, start + pageSize);
+  if (!total) {
+    body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
+  } else {
+    body.innerHTML = pageRows.map((row, i) => {
+      const index = start + i;
+      const key = rowKey(row, index);
+      const selected = state.selectedId != null && String(key) === String(state.selectedId);
+      return `
+      <tr data-id="${escapeAttr(key)}" class="${selected ? 'selected' : ''}">
+        ${cols.map((c) => `<td>${cellHtml(c, row, index)}</td>`).join('')}
+      </tr>`;
+    }).join('');
+  }
+  const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
+    ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
+    : (state.rows || []).length;
+  const layoutSaved = Boolean(loadListLayout(screen.id) && !state._listLayoutOverride?.[screen.id]);
+  const draft = Boolean(state._listLayoutOverride?.[screen.id]);
+  const meta = $('#listMeta');
+  if (meta) {
+    meta.textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa${draft ? ' · düzen değişti (kaydedilmedi)' : (layoutSaved ? ' · kayıtlı düzen' : '')}`;
+  }
+  renderListPager(total);
+  updateActionButtons(screen);
+}
+
+function bindListColFilterUi() {
+  if (document.documentElement.dataset.listColFilterBound === '1') return;
+  document.documentElement.dataset.listColFilterBound = '1';
+  const onFilterInput = (e) => {
+    const inp = e.target?.closest?.('.list-col-filter');
+    if (!inp) return;
+    const screen = findScreen(state.screenId);
+    if (!screen) return;
+    const key = inp.getAttribute('data-col-key');
+    if (!key) return;
+    const filters = getListColFilters(screen.id);
+    filters[key] = inp.value;
+    state.listPage = 1;
+    refreshListBodyFromColFilters(screen);
+  };
+  document.addEventListener('input', onFilterInput);
+  document.addEventListener('search', onFilterInput); // type=search clear (x)
+  document.addEventListener('keydown', (e) => {
+    const inp = e.target?.closest?.('.list-col-filter');
+    if (!inp) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      inp.value = '';
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+}
+
 function bindListColumnDrag(screen) {
   const head = $('#dataHead');
   if (!head || !screen) return;
-  head.querySelectorAll('th[data-col-key][draggable="true"]').forEach((th) => {
+  head.querySelectorAll('tr.list-col-labels th[data-col-key][draggable="true"]').forEach((th) => {
     th.addEventListener('dragstart', (e) => {
       const key = th.getAttribute('data-col-key');
       e.dataTransfer.setData('text/plain', key);
@@ -14802,8 +14932,9 @@ function normalizeLikeNeedle(q) {
 }
 
 function likeIncludes(haystack, needle) {
-  if (!needle) return true;
-  return String(haystack ?? '').toLocaleLowerCase('tr').includes(needle);
+  const n = normalizeLikeNeedle(needle);
+  if (!n) return true;
+  return String(haystack ?? '').toLocaleLowerCase('tr').includes(n);
 }
 
 function wrapLookupPick(innerHtml, disabled = false) {
@@ -24499,6 +24630,7 @@ function bindEvents() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     state.filterState = buildDefaultFilterState(screen);
+    clearListColFilters(screen.id);
     renderFilterPane(screen);
     if (screen.id === 'bom-patlatma') {
       try {
@@ -24508,7 +24640,7 @@ function bindEvents() {
         toast(err.message || 'Liste yenilenemedi');
       }
     }
-    state.filtered = applyFilters(state.rows, screen);
+    state.listPage = 1;
     state.selectedId = null;
     renderList(screen);
   });
