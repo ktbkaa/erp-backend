@@ -1280,14 +1280,15 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 
 .screen-view {
   display: grid;
-  /* banner | aksiyon | filtre(içerik, sıkışmaz) | liste(kalan) */
-  grid-template-rows: auto auto minmax(min-content, auto) minmax(0, 1fr);
+  /* banner | aksiyon | filtre(içerik) | liste(en az ~16rem, kalanı doldurur) */
+  grid-template-rows: auto auto minmax(min-content, auto) minmax(16rem, 1fr);
   height: 100%;
   min-height: 0;
   background: var(--page);
   gap: 0;
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 .screen-view > * {
   min-height: 0;
@@ -1302,10 +1303,10 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 .filter-pane-home {
   overflow: visible;
 }
-/* Liste view’ı: kabuk değil ekranın sağındaki ana scrollbar */
+/* Liste view: filtre uzunsa sayfa kayar; liste kaybolmaz */
 .view.screen-view:not([hidden]) {
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 .screen-banner {
   margin: 0.65rem 0.85rem 0;
@@ -1532,7 +1533,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  margin: 0.65rem 0.85rem 0.85rem;
+  margin: 0;
   padding: 0.75rem 1rem 0.95rem;
   background: #fff;
   border: 1px solid var(--line);
@@ -1541,14 +1542,15 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   height: 100%;
   max-height: none;
   overflow: hidden;
+  box-sizing: border-box;
 }
 .list-pane-head { margin-bottom: 0.4rem; flex: 0 0 auto; }
 .list-meta { color: var(--muted); font-size: 0.8rem; }
 /* Liste tablosu: kalan yüksekliği doldurur, kendi scrollbar’ı vardır */
 .list-pane .table-scroll,
 #listTableScroll.table-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 10rem;
   max-height: none;
   height: auto;
   overflow: auto;
@@ -2925,10 +2927,10 @@ tr.selected td { background: var(--accent-soft); }
   .bar-center { max-width: none; order: 2; }
   .bar-right { max-width: none; width: 100%; order: 3; }
   .screen-view {
-    grid-template-rows: auto auto minmax(min-content, auto) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(min-content, auto) minmax(14rem, 1fr);
     height: 100%;
     min-height: 0;
-    overflow-y: hidden;
+    overflow-y: auto;
   }
   .form-split { grid-template-rows: minmax(160px, 28%) 1fr; }
   .form-tabs-layout {
@@ -2949,12 +2951,14 @@ tr.selected td { background: var(--accent-soft); }
   display: grid;
   grid-template-columns: 108px 1fr;
   gap: 0;
-  min-height: 0;
+  min-height: 16rem;
   min-width: 0;
   height: 100%;
   max-height: none;
   overflow: hidden;
-  background: #fff;
+  background: transparent;
+  padding: 0.65rem 0.85rem 0.85rem;
+  box-sizing: border-box;
 }
 .list-work .list-pane {
   min-width: 0;
@@ -6310,15 +6314,15 @@ body.sidebar-resizing .workspace {
   margin: 0.1rem 0 0;
 }
 
-/* Liste: filtreyi ezmeden kalan yüksekliği doldurur */
+/* Liste: filtreyi ezmeden kalan yüksekliği doldurur; asgari yükseklik korunur */
 #viewScreen.screen-view {
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 #listTableScroll,
 #listTableScroll.table-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 0;
+  min-height: 10rem;
   max-height: none;
   height: auto;
   overflow: auto;
@@ -6569,7 +6573,7 @@ body.sidebar-resizing iframe {
 }
 /* Üst filtre yuvası boşalınca liste yukarı büyür — içerik boyutu korunur */
 #viewScreen.screen-view.filter-docked {
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(16rem, 1fr);
 }
 #viewScreen.screen-view.filter-docked #filterPaneHome {
   display: none !important;
