@@ -1,0 +1,340 @@
+          can asERP EĞİTİM İÇERİK
+
+
+
+
+PRD.101.T - PRD - Üret m Planlama ve Kontrol Son Kullanıcı Eğ t m
+
+3 - Normal İş Emr Operasyonlarının Onay ve Düzeltme Süreçler
+
+ 3.1 - Normal İş Emr nde Onay ve Düzeltme
+ Normal ş em rler nde onay sürec
+
+ 3.2 - Oto Em ş Malzemel Normal İş Emr nde Onay ve Düzeltme
+
+ 3.3 - Operasyon Onaylarında Otomat k em ş Yan Ürün M ktarlarının Hesaplanması
+ Operasyon onaylarında otomat k em ş yan ürün m ktarlarının hesaplanması
+
+ 3.4 - Otomat k ya da Operasyonel Çıkışlı İş Em rler nde Onay ve Düzeltme
+ Otomat k ve Operasyonel t pte çıkış şlemler nde onay ve düzeltme yapmak
+
+ 3.5 - Otomat k G r ş İş Em rler nde Onay ve Düzeltme
+ Otomat k g r ş t p nde ş emr n n onayı ve düzelt lmes
+
+ 3.6 - Operasyon Onaylarında Yen den İşleme M ktarı
+ Operasyon Onaylarında Yen den İşleme M ktarı
+3 - Normal İş Emr Operasyonlarının Onay ve Düzeltme Süreçler
+
+
+
+
+3.1 - Normal İş Emr nde Onay ve Düzeltme
+
+
+Normal ş em rler nde onay sürec
+
+
+
+
+1. İş B t ş Onayı Arama ekranında 'Ara' butonu le l steleme yapılır ve ş emr seç lerek
+operasyonları ncelen r. İş b t ş onayında her operasyon ç n onay ver lmekted r. İlk operasyon
+seç lerek onay butonu le onay ver leb l r.
+2. İş B t ş Onayı G r ş ekranı 'genel' sekmes nde, 'üret len' alanına m ktar b lg s g r l r. Tam olarak
+hedeflenen m ktar üret lmed ğ ç n, ş emr kısm olarak onaylanır.
+
+
+
+
+3. Eğer onayda b r hata varsa onay ver lm ş operasyon seç l p, "Düzeltme" butonuyla ver lm ş onay
+çer s nde düzeltme yapılab l r.
+4. Onay L stes nde, daha önce ver len onayların l stes görüntülen r. Her operasyon ç n lg l onay
+poz syonu üzer nden düzeltme gerçekleşt r l r. B r öncek aşamada ver lm ş olan onay seç l r ve
+"Onay" butonuna basılır.
+
+
+
+
+5. Esk den 5 br olan onay m ktarı 3 br e düşürülerek, lg l düzeltme yapılır ve "Kaydet" butonuna
+basılarak kısm onay gerçekleşt r lm ş olur.
+6. İş emr ne ver len onay bu şek lde düzelt lm ş olur.
+3.2 - Oto Em ş Malzemel Normal İş Emr nde Onay ve Düzeltme
+
+
+
+
+1. Otomat k em ş malzeme, ş emr ne değ l lg l operasyonun onayına bağlı olarak çıkışı yapılacak
+malzemelerd r. Bu nedenle ş emr başlatıldığında değ l, her onay sırasında çıkış yapılır. B r
+malzemen n otomat k em ş olup olmayacağı BAST03 Malzeme Ana kayıtları veya PRDT01 -
+İş Emr Yönet m ekranında bel rleneb l r. PRDT01 - İş Emr Yönet m ekranına g d l r, arama
+kr terler doldurulur, l stelenen satırlardan stenen ş emr seç l r ve "Değ şt r" butonuyla ş emr n n
+detayına g d l r.
+
+
+
+
+2. Kalemler sekmes ne g d l r.
+3. Çıkış t p Otomat k Em ş ayarlanmak stenen kalem seç l r ve "Detay" butonuna basılır.
+
+
+
+
+4. Çıkış t p Otomat k Em ş seç l r ve "Onay" butonuna basılır.
+5. B r d ğer kalem seç l r ve "Detay" butonuna basılır.
+
+
+
+
+6. D ğer kalem n çıkış t p n n Yok olduğu gözlenmekted r. "Onay" butonuna basılır ve Operasyon -
+Malzeme ekranı kapatılır.
+7. Genel sekmes nde "Ç zelgele" butonuna basılır ve ş emr ç zelgelen r.
+
+
+
+
+8. Bu şek lde ş emr kayded lm ş olur. İlg l ş emr ne onay vermek ç n PRDT02 - İş B t ş Onayı
+uygulamasına g d l r.
+9. Otomat k em ş malzemen n tüket leceğ 10 numaralı operasyon seç l r ve "Onay" butonuna
+basılır.
+
+
+
+
+10. Üret len alanına 5 b r m yazılır ve "Onay" butonuna basılır.
+11. Otomat k Em ş Malzemeler M ktar onayı ekranında 'çıkış m ktarı' b lg s n n hesaplandığı ve
+l stelend ğ görülür.Onaya bağlı olarak çıkış m ktarları g r l r ve onay ver l r. Gerek rse otomat k em ş
+malzeme l stes nden malzemeler s l neb l r veya yen malzeme ekleneb l r.
+
+
+
+
+12. Kısm onay ver lerek ş emr onaylanmıştır.
+13. Ver lm ş olan onayda değ ş kl k yapılmak sten yorsa, lg l operasyon seç l r ve "Düzeltme"
+butonuna basılır.
+
+
+
+
+14. Daha önceden ver lm ş olan onay Onay L stes nden seç l r ve "Değ şt r" butonuna basılır.
+15. Yapılmak stenen m ktarsal değ ş kl k yapılır ve "Kaydet" butonuna basılır.
+
+
+
+
+16. 3 b r ml k olan m ktarsal değ ş m, Otomat k Em ş Malzemeler M ktar Onayı ekranından 2 b r m
+olarak değ şt r l r ve "Onay" butonuna basılır.
+17. Bu şek lde ş emr kısm olarak onaylanmış olur.
+
+
+
+
+18. Yapılan envanter hareket n gözlemlemek ç n INVT05 - Stok Belgeler n Detaylı Raporlama
+ekranına g d l r.
+19. Kaynak belge alanında ş emr ve numarası ayarlanıp, "Ara" butonuna basılır. L stelenen
+satırlarda görüldüğü g b Otomat k Em ş Malzemeler M ktar Onayı ekranında yapılan değ ş kl ğe
+bağlı olarak envanter hareket gerçekleşm şt r.
+3.3 - Operasyon Onaylarında Otomat k em ş Yan Ürün M ktarlarının Hesaplanması
+
+
+Operasyon onaylarında otomat k em ş yan ürün m ktarlarının hesaplanması
+
+
+
+
+1. Öncel kle PRDT01 – İş Emr Yönet m uygulamasında ş emr n n detayı ncelen r.
+Görüntülenmek stenen İş Emr b lg ler g r l r ve 'Arama' butonuna basılır.
+
+
+
+
+2. L stelenen satırlardan lg l satır seç l r ve 'Değ şt r' butonuyla detayına g d l r.
+3. Detayına g d len ş emr nde yan ürün sekmes ne geç l r. Açılan ekranda görüldüğü g b ürün
+m ktarı kadar yan ürün meydana gelmekted r. Ve bu yan ürünün 20 numaralı operasyon sonucunda
+açığa çıkacağı gözlenmekted r. İsten rse kalem n detayına g d lerek çıkış t p n n otomat k em ş olup
+olmadığı nceleneb l r. İş emr n kaydetmek ç n Genel sekmes ne geç l r.
+
+
+
+
+4. İş emr ç zelgelen r ve kayded l r.
+5. İş emr n onaylamak ç n PRDT02 - İş B t ş Onay ekranına g d l r, lg l arama kr terler doldurulur
+ve l stelenen satırlardan 20 numaralı operasyon seç l r. "Onay" butonuna basılır.
+
+
+
+
+6. Üret len alanına 10 b r m g r lerek, Yan Ürün sekmes ne g d l r.
+7. Yan ürüne de 10 b r ml k onay g r l r ve "Kaydet" butonuna basılır.
+
+
+
+
+8. Yan ürünün çıkış t p otomat k em ş seç ld ğ ç n Otomat k Em ş Malzemeler M ktar Onayı
+ekranından çıkışı yapılır. İsten rse bu ekran m ktarda değ ş kl k yapılab lmekted r. İstenen
+ayarlamalar yapıldıktan sonra "Onay" butonuna basılır.
+9. Ger ye dönük onaylar yapılır ve ş emr onaylanmış olur. İş emr n n onayı sonrasında, envanter
+hareket n gözlemlemek ç n INVT05 - Stok Belgeler n Detaylı Raporları uygulamasına g d l r.
+
+
+
+
+10. İş Emr ne bağlı olarak l steleme yapmak ç n, Kaynak Belge B lg ler alanından Kaynak Belge
+t p İş Emr / Proje seç l r. Kaynak Belge No alanına se onay ver len operasyonun ş emr numarası
+g r l r. 'Arama' butonuna basılır. L stelenen satırlar ncelend ğ nde 10 adet Yan Ürün g r ş n n
+gerçekleşt ğ görülmekted r.
+3.4 - Otomat k ya da Operasyonel Çıkışlı İş Em rler nde Onay ve Düzeltme
+
+
+Otomat k ve Operasyonel t pte çıkış şlemler nde onay ve düzeltme yapmak
+
+
+
+
+1. PRDT01 İş Emr Yönet m uygulaması açılır. Daha önceden oluşturulmuş olan ş emr n
+ncelemek ç n arama kr terler uygun şek lde doldurulur, "Ara" butonuna basılır ve l stelenen
+satırlarından ş emr seç l r. "Değ şt r" butonuyla lg l ş emr n n detayına g d l r.
+
+
+
+
+2. İş em rler nde bel rleneb len 3 t p çıkış vardır. Bunlar "Manuel Çıkış", "Otomat k Çıkış" ve
+"Operasyonel Çıkış" t pler d r. Bu çıkış t pler otomat k em ş olmayan malzemeler ç n
+geçerl d r."Operasyonel Çıkış" seç ld ğ nde se ş emr n n hammaddeler b r sonrak operasyon ç n
+gereken hammaddeler n çıkışı yapılarak çıkılır. İlg l ş emr ç n çıkış t p "Operasyonel Çıkış"
+seç l r ve Kalemler sekmes ne g d l r.
+
+
+
+
+3. Bu ürünün üret m ç n Tel ve Z nc r kullanıldığı gözlenmekted r. Otomat k em ş çıkış t p
+olmayan, Z nc r hammaddes 10 numaralı lk operasyon, Tel hammaddes se 20 numaralı
+operasyonda tüket lmekted r.
+
+
+
+
+4. İş emr ç zelgelen r ve kayded l r. Operasyonel çıkış seç ld ğ ç n ş emr kayded ld ğ g b , lk
+operasyon olan 10 numaralı operasyonun tükett ğ hammadden n çıkışı olacaktır. Bu durumu
+gözlemlemek ç n INVT05 - Stok Belgeler n Detaylı Raporlama uygulamasına g d l r.
+5. İş emr b lg ler Kaynak - Belge alanına g r l r ve "Ara" butonuna basılır. L stelenen satırda
+görüldüğü g b sadece lk operasyona bağlı olan Z nc r hammaddes n n çıkışı olmuştur.
+
+
+
+
+5. İş emr ne onay vermek ç n PRDT02 - İş B t ş Onayı ekranına g d l r. İş emr numarası alanına
+yazılır ve "Ara" butonuna basılır. L stelenen operasyonlardan lk operasyon seç l r ve "Onay"
+butonuna basılır.
+6. Üret len alanına onay m ktarı yazılır ve "Kaydet" butonuna basılır. Bu şek lde operasyon
+onaylanmış olur. Bu onay sonrasında b r sonrak operasyon ç n hammadde çıkışı olacaktır.
+INVT05 - Stok Belgeler n Detaylı Raporlama ekranına g d l r.
+7. İş emr numarası ve t p Kaynak - Belge alanında bel rt l r, ve "Ara" butonuna basılır. L stelenen
+satırlar ncelend ğ nde b r öncek ncelemeden farklı olarak Tel malzemes n nde, b r öncek
+operasyon tamamen onaylandığı ç n ş emr nde bel rt len m ktar kadar çıkışının olduğu
+görüntülenmekted r.
+3.5 - Otomat k G r ş İş Em rler nde Onay ve Düzeltme
+
+
+Otomat k g r ş t p nde ş emr n n onayı ve düzelt lmes
+
+
+
+
+1. Otomat k G r ş İş Em rler nde Onay ve Düzeltmey ncelemek ç n PRDT01 - İş Emr Yönet m
+ekranına g d l r. İş emr numarası lg l alana yazılır ve "Ara" butonuna basılır. L stelenen satırlardan
+stenen ş emr seç l r ve "Değ şt r" butonuyla detayına g d l r.
+
+
+
+
+2. Ürünün stok g r ş n yöneten kontrolde 3 seçenek vardır. Bunlar;
+
+Manuel G r ş ; Ürün g r ş n n onaylardan bağımsız olarak INVT01 - Malzeme
+Hareketler uygulamasından manuel olarak yapılacağını fade eder.
+Otomat k G r ş ; Ürün g r ş n n son operasyon onaylandığı anda otomat k olarak arka planda
+yapılacağını fade eder.
+
+Manuel G r ş ve Oto. Em ş Çıkış ; Ürün g r ş n n manuel yapılacağını ancak operasyonlara bağlı oto
+em ş malzemeler n çıkış hareketler n n operasyon onayları sırasında yapılacağını fade eder. İş
+emr nde G r ş t p n n otomat k g r ş olduğu kontrol ed l r, "Ç zelgeleme" butonuna basılır.
+
+
+
+
+3. Ç zelgenen ş emr kayded l r ve ş emr n onaylamak ç n PRDT02 - İş B t ş Onayı ekranına
+g d l r.
+
+
+
+
+4. İncelenen ş emr ne bağlı onaylanmak stenen operasyon seç l r ve "Onay" butonuna basılır.
+5. Daha sonra açılan İş B t ş Onayı G r ş ekranında "Üret len" alanında üret m m ktarı bel rt l r ve
+"Kaydet" butonuna basılır.
+
+
+
+
+6. Öncek operasyon da onaylanmış oldu.
+7. S stem ver len onayı kaydett kten sonra ger ye doğru temeltaş olmayan operasyonların onayını
+da yapacaktır. Ardından da bu onaylara bağlı olan stok hareketler n gerçekleşt recekt r. İş emr
+otomat k g r ş olduğu ç n ve son operasyon onaylandığı ç n ürünün stok g r ş otomat k olarak arka
+planda yapılacaktır.
+
+
+
+
+8. Bu ş emr ne bağlı stok hareketler n görüntülemek ç n INVT05 - Stok
+Belgeler Detaylı Raporlama uygulaması açılır. "Kaynak Belge" alanında İş Emr /Proje" seçeneğ
+seç l r ve "Kaynak Belge No" alanında lg l ş emr numarası ve yazılarak "Ara" butonuna basılır.
+Arama yapıldığında bu ş emr ne bağlı olarak yapılmış stok hareketler l stelen r. Ürünün stok
+g r ş n n arka planda otomat k olarak yapıldığı görülür.
+9. Ürünün otomat k g r ş hareketler onay düzeltme sırasında da yapılab lmekted r. Bunun ç n
+tekrar PRDT02 - İş B t ş Onayı Arama uygulamasına geç ş yapılır. Düzeltme yapılmak stenen
+satır seç l r "Düzeltme" butonuna basılır.
+
+
+
+
+10. Ver len onayın olduğu satır seç l r ve "Düzenle" butonuna basılır.
+11. Açılan İş B t ş Onayı G r ş ekranında "Üret len" alanında bulunan onay m ktarı değ şt r l r. Bu
+düzeltme şlem kayded ld ğ nde s stem öncek onaya bağlı olarak yapılan g r ş hareket n ptal
+edecek, yer ne yen m ktara göre yen b r stok g r ş hareket yapacaktır.
+
+
+
+
+12. Gerekl b lg ler bel rt ld kten sonra "Kaydet" butonuna basılarak yapılan düzeltme şlem
+kayded l r.
+13. INVT05 Stok Belgeler Detaylı Raporlama uygulaması açılarak tekrar stok hareketler ne
+bakıldığında 10 adetl k g r ş n ptal olduğunu ve bunun yer ne 5 adetl k g r ş n geld ğ görülür.
+3.6 - Operasyon Onaylarında Yen den İşleme M ktarı
+
+
+Operasyon Onaylarında Yen den İşleme M ktarı
+
+
+
+
+1. Yen den şleme g r ş yapılacak ş emr b lg s arama kr terler ne g r l r ve 'Arama' butonuna basılır.
+
+
+
+
+2. Sıraca öncel kl olan 10. operasyona onay vermek ç n, lg l satır seç l r ve "Onay" butonuna
+tıklanır.
+3. Açılan ekranda Yen den İşleme alanına 2 b r ml k onay ver l r ve Yen den İşleme Kodu da
+doldurulduktan sonra "Kaydet" butonuna basılarak operasyon onaylanır.
+
+
+
+
+4. Bu şek lde ş emr onaylanmış olur. Envanter hareket n ncelemek ç n INVT05 - Stok Belgeler
+Detaylı Raporlama uygulamasına g d l r.
+5. Açılan ekranda Kaynak Belge b lg ler alanından İş Emr / Proje seç l r, Kaynak Belge No
+alanında ş emr numarası g r l r ve 'Ara' butonuna basılır. İsten rse lg l depo ve stok yer de arama
+kr terler nde bel rt leb l r.
+
+
+
+
+6. Yen den şleme kodunun detayında bel rt lm ş olan depo ve stok yer ne g r ş yapmıştır.
+

@@ -1,0 +1,588 @@
+           can asERP EĞİTİM İÇERİK
+
+
+
+
+PRD.101.T - PRD - Üret m Planlama ve Kontrol Son Kullanıcı Eğ t m
+
+1 - Üret m Yönet m
+
+ 1.1 - Üret m Yönet m
+
+2 - Normal İş Emr Oluşturma ve Yönet m Süreçler
+
+ 2.1 - Normal İş Emr Oluşturma ve Ç zelgeleme
+ Tek sev yel ş emr oluşturmak ç n normal ş emr oluşturma kullanılır.
+
+ 2.2 - Normal İş Emr nde Operasyonlar ve Komponentler
+ Normal ş emr b leşen ve operasyon kontrolü yapılması
+
+ 2.3 - İş Emr n n Güncellenmes
+ İş emr güncelleme ve ç zelgeleme
+
+ 2.5 - İş Em rler nde Yan Ürün Yönet m
+ Üret m Yönet m - Normal, kollekt f ve komb ne ş em rler nde yan ürün yönet m
+
+ 2.6 - İş Em rler nde Kaynak Yönet m
+ İş Emr Kaynak Yönet m
+
+ 2.7 - Normal İş Emr ne Malzeme Çıkışı
+ Normal ş emr ne bağlı çıkış hareket oluşturmak
+
+ 2.8 - Normal İş Emr nde Ürün G r ş
+ Normal ş emr malzeme g r ş
+
+ 2.9 - Standart Mal yet
+ İş Emr nde Standart Mal yet
+
+  2.10 - Ek Dokümanlar
+1 - Üret m Yönet m
+
+
+
+
+1.1 - Üret m Yönet m
+
+
+
+
+can asERP Üret m Yönet m - Product on Management (PRD) - modülü, şletmen n tüm üret m
+süreçler ne uyarlanab l r özell ğ sayes nde süreçler n opt m zasyonuna katkı sağlar. Tek sev yel ya
+da çok sev yel üret m yapma mkanı sunan modül, Malzeme İht yaç Planlaması modülü tarafından
+oluşturulan üret m planlarının üret m em rler ne çevr lmes n ve bu em rler n yönet lmes n sağlar.
+S stem n genel ne kusursuz b r şek lde entegre ed leb len Üret m Yönet m modülü, başarılı b r ver
+akışı sağlar. Böylece f rmalar şeffaf, tutarlı, güven l r ve ver ml b r üret m sürec gerçekleşt reb l rler.
+Modül üzer nde oluşturulan üret m em rler , üret lecek olan mamülün m ktar, varyant, ürün ağacı
+b leşenler ve rota operasyonları g b üret m ç n gerekl tüm özell kler n çer r. B r üret m emr n n
+oluşturulması sırasında, eks k malzeme anal z otomat k olarak gerçekleşt r l r. Bu modül, ayrıntılı
+planlama türler n n yardımıyla, ler ye dönük veya ger ye dönük ç zelgeleme mkanı sunarak
+operasyonlara yen den term n tar h ver lmes ne olanak sağlar. Ayrıca kaynaklar ve kaynakların
+kullanımına l şk n b lg ler de elde ed leb l r. Modül üzer nde üret m kademeler , g rd m ktarları ve
+üret m m ktarları ç n planlanan ve gerçekleşen karşılaştırması yapmak da mümkündür.
+Entegrasyon
+
+can asERP s stem ne entegre yapısı sayes nde Üret m Yönet m modülüyle d ğer modüller
+arasında kusursuz b lg alışver ş gerçekleşt r leb l r. Otomasyon modülü tarafından doğrudan
+beslenen modül, aynı zamanda Üret m Zekâsı modülü ç n de b r ver kaynağı olarak kullanılır.
+Modül ayrıca Temel Ver Yönet m , Ürün Ağacı Yönet m , Rota Yönet m , Malzeme İht yaç
+Planlaması, Kapas te Yönet m , Satış Yönet m , Proje Yönet m , Stok Yönet m , Depo Yönet m ,
+Transfer Yönet m , Bakım Yönet m , Kal te Yönet m , Standart Mal yet Yönet m , Üret m Mal yet
+Yönet m ve Mal yet Merkezler Muhasebes g b modüllerle entegre b r şek lde çalışmaktadır.
+
+Özell klere Genel Bakış
+
+/// Alternat f Yönet m
+
+/// Varyant yönet m
+
+/// Üret m süreçler n n opt m zasyonu
+
+/// Farklı üret m em r t pler le ht yaca yönel k kullanım
+
+/// Çok sev yel üret m
+
+/// Operasyon ç zelgeleme
+
+/// Fason operasyon yönet m
+
+/// Kaynak yönet m
+
+/// Benzer operasyonlar ç n operasyon gruplama konsept
+
+/// Üret mde kullanılacak malzemeler ç n anlık stok tak b
+
+/// İht yaca göre yönet leb len envanter hareketler
+
+/// Operasyon onaylarında çeş tl l k
+
+/// Etk l mal yet yönet m
+/// Detaylı anal z ve raporlama
+
+
+
+
+Üret m Emr Özell kler ve Yönet m
+
+Üret m Yönet m modülünde tek sev yel ya da çok sev yel (mamul ve mamul üret m ç n ht yaç
+duyulan yarı mamuller) üret m yapab lmek mümkündür. Modül, benzer mamuller n üret m n tek b r
+üret m emr üzer nden yönet lmes ne olanak sağladığı g b parçalamalı (demontaj) üret mler ç n de
+kullanılab l r. Malzeme İht yaç Planlaması modülü tarafından oluşturulan üret m planları, henüz tam
+olarak üret m emr değ ld r. Bu planların, b rer üret m emr olarak değerlend r lmes ç n plandan
+üret m emr ne çev rme özell ğ kullanılab l r. Modül, ht yaç duyulduğunda lg l malzemeye a t gerekl
+m ktarları çeren üret m planını otomat k olarak üret m emr ne dönüştüreb l r.
+
+Planı dönüştürme sırasında, Malzeme İht yaç Planlaması tarafından öner len değerler, yönlend rme
+amacıyla kullanılab l r. B r üret m emr n n oluşturulması sırasında eks k malzeme anal z otomat k
+olarak gerçekleşt r l r. Bu anal zde, gerekl b leşenler n mevcutta olup olmadığı kontrol ed l r. İlg l
+parçalar ht yaç duyulan tar h ç n otomat k olarak rezerve ed leb l r ve böylece uygun malzeme
+akışı sağlanır.
+
+Modülde fason süreçler n oluşturulması da mümkündür. Fason operasyonların tanımlanmasıyla
+üret m em rler kes nt s z zleneb l r. Fason operasyonun yapılacağı tedar kç ye, operasyon
+sırasında kullanacağı malzemeler stoktan transfer ed leb l r ve operasyon sonucu oluşan Fason
+Ürünler envantere alınab l r. Bu özell kler parça ve fason ürün tak b ç n kolaylık sağlar.
+
+Operasyon Planlaması
+
+Üret m Yönet m modülünün, Kapas te Yönet m modülüyle entegrasyonu, lg l üret m emr ç n en
+uygun kaynak planlamasının yapılmasını sağlar. Ayrıntılı planlama türler n n yardımıyla, ler ye
+dönük, ger ye dönük veya herhang b r aşamadan yola çıkılarak operasyonlara yen den term n
+tar h ver leb l r. Ayrıca modül sayes nde kaynaklar, kaynakların kullanımı ve ürün ağaçlarına l şk n
+b lg ler de elde ed leb l r. Böylece Üret m Yönet m modülündek planlamada, lg l üret m süreçler ne
+dah l ed len tüm şletme ver ler d kkate alınır.
+
+Benzer operasyonlar ç n şletmen n ortak kaynakları kullanılacağı durumlarda bu benzer
+operasyonlar, operasyon b rleşt rme yöntem yle beraber planlanab l r ve onaylanab l r. Bu özell k,
+şletmedek mak neler n doluluk oranlarını maks m ze ederek, zamandan ve mal yetten tasarruf
+sağlar. Ayrıca, modülün gerçek zamanlı zleme özell ğ sayes nde, stend ğ nde üret m sürec ne
+yönel k b r öngörü elde ed leb l r. Malzeme tüket m f ş veya üret m emr f ş g b üret m sürec ç n
+öneml dokümanlar da modül üzer nden hazırlanab l r.
+
+
+
+
+Üret m Onayları
+
+B r operasyon kısmen veya tamamen sona erd kten sonra tamamlanan m ktar kadar onaylanması
+gerek r. Kal te Yönet m modülü le entegrasyon sayes nde, atanan test planına göre onaydan önce,
+onay sırasında veya onaydan sonra kal te kontrol sürec başlatılab l r. Üret m Onay ekranları, her
+tarzda kullanıcı ç n çeş tlend r leb l r. Modülde normal, bas t ve hızlı üret m onayları olmak üzere üç
+farklı onaylama yöntem mevcuttur. Bunlar onay sırasında ver lmes gereken detaylara göre
+ s mlend r lm şlerd r. Üret m sırasında kullanılan b leşenler n, farklı metotlarla otomat k envanter
+tüket mler yapılab l r. Y ne üret lecek malzeme le lg l tüm operasyonlar onaylandıysa, mamul ç n
+otomat k envanter g r ş hareket gerçekleşt r leb l r. Ayrıca onaylar ve envanter hareketler ,
+barkodlar veya manuel g r şler le de kayded leb l r. Böylece üret len tüm b leşenler eks ks z
+ zleneb l r.
+
+Anal zler ve Değerlend rmeler
+
+Modülde, üret mdek opt m zasyon potans yeller n bel rlemek ve değerlend rmek ç n kullanıcıya
+çeş tl anal zler sunulur. Bu anal zler, kullanıcıya ş merkezler veya mal yet merkezler g b farklı
+konuları çeş tl ölçütlere göre değerlend rme olanağı sunar. Modül üzer nde üret m kademeler , g rd
+m ktarları ve üret m m ktarları ç n planlanan ve gerçekleşen karşılaştırması yapmak da
+mümkündür. Üret m Yönet m modülünde, güncel olarak üret mde yer alan b leşenler n değer n
+hesaplamak ç n yarı mamul (WIP; Work- n-Process) anal zler de sunulur. Ayrıca modülde yen den
+ şleme ve hurda anal zler de kullanıma sunulmuştur. Böylece ana ürün ağaçlarından ve
+rotalarından farklılık gösteren üret m ürün ağaçları ve rotaları, or j naller le karşılaştırılab l r.
+Modüldek araç/gereç yönet m özell ğ , operasyon sırasında kullanılan kaynakları bel rlemen n yanı
+sıra opt m zasyon potans yeller n n tesp t ed lmes n sağlayan b r kaynak s mülasyonu sunar.
+2 - Normal İş Emr Oluşturma ve Yönet m Süreçler
+
+
+
+
+2.1 - Normal İş Emr Oluşturma ve Ç zelgeleme
+
+
+Tek sev yel ş emr oluşturmak ç n normal ş emr oluşturma kullanılır.
+
+
+
+
+1. PRDT01 - İş Emr Yönet m uygulamasında normal b r İş Emr oluşturmak ç n öncel kle seç len
+ürünün ürün ağacının olması gerek r. İş emr oluşturmak ç n "Yen " butonuna basılır.
+2. İlg l alanlar doldurulur ve "Onay" butonuna basılır.
+
+
+
+
+3. Genel sekmes nde ş emr n n ç zelgelenmes le lg l b lg ler g r l r. "Ç zelgele" butonuna
+basıldığında s stem ürünün rotasında tanımlı olan operasyonlardan lg l süre b lg ler n toplayarak
+ş emr n n başlangıç ve b t ş tar hler n bel rler.
+
+
+
+
+4. "Genel" sekmes de, "onaylı, kısm onaylı, başlatıldı, yazdırıldı, stok g r ş ve çıkışı" statüler yer
+alır. Oluşturulan ş emr n n onaylanab lmes ç n ç zelgelend kten sonra "Başlatıldı" statüsünün
+şaretlen p kayded lmes gerek r. İş emr kayded ld ğ nde ş emr t p nde tanımlanmış numara
+aralığından b r numara üret lerek kayded l r. Sonuç olarak yen normal ş emr üret lmeye ve
+onaylanmaya hazır duruma gelm ş olur.
+5. "Kaydet" butonuna basılarak ş emr kayded lm ş olur.
+2.2 - Normal İş Emr nde Operasyonlar ve Komponentler
+
+
+Normal ş emr b leşen ve operasyon kontrolü yapılması
+
+
+
+
+1. PRDT01 - İş Emr Yönet m ekranında kr terler kullanılarak f ltreleme yapılır. Detay alanda
+Malzeme, M ktar, B r m, İk nc B r m ve d ğer detay b lg ler kontrol ed l r.
+
+
+
+
+2. Herhang b r satır seç lerek 'Değ şt r' butonuna basıldığında 'İş Emr Detay' ekranı görüntülen r.
+3. İş emr oluşturulduğunda, ürün ağacı patlatılarak hammaddeler ş emr ne get r l r ve 'Kalemler'
+sekmes nde l stelen r. Güncelleme yapab lmek amacıyla 'Kalemler' sekmes kullanılır. Kullanılacak
+hammaddelere a t detaylar satır detayında görüntüleneb l r.
+
+
+
+
+4. Kullanılacak hammaddelere a t detaylar, PRDT01 İş Emr
+Yönet m uygulaması kalemler sekmes nde satırda herhang b r kayıt seç l ken 'Detay' butonuna
+basılarak da görüntüleneb l r.
+5. Açılan Operasyon/Malzeme ekranında, kalem t p , çıkış yapılacak depo ve stok yer b lg ler , özel
+stok t p , malzeme ve malzeme açıklaması yer alır. Ayrıca malzemen n tüket m m ktarı, hang
+operasyonda tüket leceğ b lg ler de görüntülen r.
+
+
+
+
+6. Operasyon detaylarını ncelemek ç n Operasyon sekmes ne g d l r.
+7. PRDT01 İş Emr Yönet m uygulaması, 'Operasyon' sekmes nde, lg l ürüne a t rotanın
+patlatılmış operasyonları l stelenmekted r. Bu ş emr ne özel olarak operasyonların özell kler de
+değ şt r leb l r, yen operasyon ekleneb l r veya mevcut tanımlar çıkarılab l r. 'Operasyon Detayları'
+b lg s ne g tmek ç n Detay' butonuna basılır.
+
+
+
+
+8. Operasyon Detayları ekranı 'Genel' sekmes nde, operasyonun yapılacağı ş merkez , ş merkez
+kapas te grubu ve mal yet merkez öncel kl alanlardır. Operasyonda tüket lecek malzemeler
+ncelemek ç n "Malzemeler" sekmes ne g d l r.
+9. Malzemeler sekmes nde lg l malzemen n ne kadar tüket leceğ , hang depo ve stok yer nden
+çıkışı yapılacağı, ürün ağacı kalem no su g b b lg ler görüntüleneb lmekted r.
+2.3 - İş Emr n n Güncellenmes
+
+
+İş emr güncelleme ve ç zelgeleme
+
+
+
+
+1. S stemde oluşan ş em rler n güncellemek ç n PRDT01 İş Emr Yönet m uygulaması açılır. İş
+em rler l stelen r. Güncelleme yapılacak ş emr seç lerek güncelleme butonuna basılır.
+
+
+
+
+2. İş emr detay ekranında stok çıkışı yapılmamış kalemler ve tamamı onaylanmamış operasyonlar
+değ şt r leb l r. Yen operasyon veya yen kalem ekleneb l r. Yan ürünler güncelleneb l r. Ekranın üst
+kısmında yer alan ş emr detayında ş emr sorumlusu, ş emr açıklaması, ş emr g r ş yapılacak
+depo, stok yer ve part numarası g b b lg ler güncelleneb l r.
+Genel sekmes nde se ş emr 'Başlatıldı' statüsü öneml d r. İş emr başlatıldı se onaya hazır hale
+gel r ve kapas te ç zelgelemede d kkate alınır. Planlamacının seçt ğ başlangıç ve b t ş tar h ,
+planlanan başlangıç ve b t ş tar h d r. Kapas te ç zelgeleme veya ş emr ç zelgeleme sonrasında
+oluşan başlangıç ve b t ş tar hler se hedef başlangıç ve b t ş tar hler d r.
+
+
+
+
+3. Kalemler sekmes nde, bu ş emr nde kullanılacak malzemeler n detayı yer almaktadır. Envanter
+hareket görmem ş malzemeler güncelleneb lmekted r. Bu ş emr nde kullanılacak malzemeler,
+malzemeler n kalem t pler , sev yeler, ürün ağacı, tüket leceğ operasyon, kullanılacak m ktar,
+mevcut stok, kullanım tar h ve çıkış yapılacak depo, stok yer g b detaylar yer almaktadır. Burada
+ lg l kalem n tüket leceğ operasyon, kullanım tar h , depo, stok yer değ şt r leb l r. Eğer yen kalem
+eklenecekse klavyen n 'INSERT' tuşu le yen kalem ekleneb l r. Seç len kalem, 'DELETE' tuşu le
+(eğer çıkış yapılmamışsa) s l neb l r.
+4. Yan ürün sekmes nde se bu ş emr onayı sonrasında ürün le b rl kte oluşab lecek d ğer ürünler
+l stelen r. Yan ürün, normal üret m sürec nde beklenmeyen ama ana ürünün üret m sırasında
+ortaya çıkan malzemelerd r. Yan ürünler ürün ağacından geleb leceğ g b PRDT01 -İş Emr
+Yönet m uygulamasında da eklenmekted r. Burada da malzeme, malzeme kalem t p , operasyon
+ve m ktar b lg ler g r leb l r. Yan ürünlerde öneml olan kalem t p n n 'Yan Ürün' olmasıdır.
+
+
+
+
+5. Eğer operasyon tamamen onaylanmış se üzer nde b r değ ş kl k yapılamaz. Kısm onaylı veya
+onaysız se bu operasyon üzer nde değ ş kl k yapılab l r. Onaysız se bu operasyon
+s l neb l r. Operasyon güncellemek ç n operasyon satırı seç l r ve detay butonuna basılır.
+
+
+
+
+6. Operasyonlar değ şt r ld ğ ç n 'Ç zelgele' butonuna basılır ve operasyonlar arasındak l şk ve
+operasyonun gerçek süres hesaplatılır.
+7. Ç zelgeleme sonrası 'Kaydet' butonuna basılır ve ş emr kayded l r.
+2.5 - İş Em rler nde Yan Ürün Yönet m
+
+
+Üret m Yönet m - Normal, kollekt f ve komb ne ş em rler nde yan ürün yönet m
+
+
+
+
+1. Normal üret m süreçler nde b r ş emr yle b r ürün üret leb lmekted r. Bazı durumlarda ürünün
+yanında yan ürün de üret leb lmekted r. Yan ürün türüne göre bazen üründen tamamen farklı
+olab l r. Ürünle eş değer, ürüne çok benzer başka b r malzeme de olab l r. Bu tür ürüne benzer
+malzemelere 'eşdeğer yan ürün', ürüne benzemeyen ama üret m sonucunda ürünle b rl kte açığa
+çıkan malzemelere de 'normal yan ürün' den l r.Eğer üret m sırasında açığa çıktıysa PRDT02 - İş
+Emr Onay uygulaması le yan ürün ekleneb l r. Yen b r ş emr oluşturmak ç n PRDT01 - İş Emr
+Yönet m uygulamasına g d l r.
+
+
+
+
+            İ
+2. PRDT01 - İş Emr Yönet m uygulaması İş Emr Oluşturma ekranında, 'normal ş emr t p '
+seç l r. D ğer lg l alanlar ve m ktar yazılırak 'Onay' butonuna basılır.
+
+(Yan ürün yönet m ; normal-demontaj-kollekt f-komb ne ş em rler nde aynı şek lde olduğu ç n şlem
+sadece normal ş emr t p le yapılmaktadır.)
+
+
+
+
+3. Yan ürün yönet m ç n Yan ürün sekmes ne g d l r.
+
+
+
+
+4. Açığa çıkacak yan ürün, ürün ağacı kalem numarası, hang operasyonda açığa çıkacağı,
+planlanan m ktar ve Depo stok yer bel rt ld kten sonra 'Genel' sekmes ne geç l r.
+7. İş emr 'Kaydet' butonun yanında bulunan alt menüden 'Kaydet ve Ç zelgele' seç lerek ş emr
+ç zelgelen r.
+
+
+
+
+8. İş emr kayded ld kten sonra ş emr n onaylamak ç n PRDT02 - İş Emr Onayı ekranına g d l r.
+9. PRDT02 İş B t ş Onayı uygulamasında arama kr terler uygun şek lde doldurulur ve , "Ara"
+butonuna basılır. İlg l operasyon seç l r ve "Onay" butonuna basılır.
+
+
+
+
+10. Üret len m ktar alana yazılır ve Yan Ürün sekmes ne geç l r.
+11. Yan ürün g r ş de yapıldıktan sonra, "Kaydet" butonuna basılarak ş emr ne kısm onay ver lm ş
+olur. Ger ye dönük onay mekan zması öncek operasyonlar ç n çalışacaktır.
+
+
+
+
+12. Kaynak Belge B lg ler alanında Kaynak - Belge, İş Emr / Proje olarak seç l r ve lg l kaynak
+belge no alana yazılarak "Ara" butonuna basılır. İlg l ürün ve yan ürünün g r ş hareket şek ldek
+g b görüntülenmekted r.
+2.6 - İş Em rler nde Kaynak Yönet m
+
+
+İş Emr Kaynak Yönet m
+
+
+
+
+1. İş em rler nde b r operasyon yürütülürken pres, personel, çek ç ve kumpas g b farklı kaynaklar
+da kullanılab lmekted r. Bu kaynakların tanımı rotada yapıldığı takt rde rotadan ş emr ne
+akmaktadır. Ayrıca kaynak tanımlaması ş emr açılırken de yönet leb lmekted r. İş em rler nde
+kaynak kullanımı normal, kolekt f veya komb ne ş emr olmasına göre değ şmed ğ nden sadece
+normal ş emr nde kaynak kullanımını açıklanacaktır. Öncel kle PRDT01 - İş Emr Yönet m
+uygulamasında ş emr n oluşturmak ç n "Yen " butonuna basılır.
+
+
+
+
+             İ
+2. PRDT01 - İş Emr Yönet m uygulaması İş Emr Oluşturma ekranında, 'normal ş emr t p '
+seç l r. D ğer lg l alanlar ve m ktar yazılırak 'Onay' butonuna basılır.
+
+
+
+
+3. Kaynak eklemek ç n Araçlar sekmes ne g d l r.
+
+
+
+
+4. Kaynak kodu alanından stenen kaynak eklen r. Kaynak olarak malzeme, alet veya ş merkez
+seç leb lmekted r.
+5. Kaynak olarak Alet - Mult metre seç l r ve "Onay" butonuna basılır.
+
+
+
+
+6. Kaynak lg l ş emr ne atanmış olur. Genel sekmes ne g d l r.
+7. İş emr ç zelgelen r ve kayded l r.
+2.7 - Normal İş Emr ne Malzeme Çıkışı
+
+
+Normal ş emr ne bağlı çıkış hareket oluşturmak
+
+
+
+
+1. Çıkış hareketler n n nasıl yapılacağı, ş emr t p destek tablosundan gelen b r b lg d r. Çıkış t p
+manuel, otomat k çıkış veya operasyonel çıkış olab lmekted r. Manuel çıkış seç ld ğ nde ş emr ne
+bağlı kalemler n çıkışının INVT01 - Malzeme Hareketler uygulamasından manuel yapılması
+gerek r. İlg l ş emr b lg ler arama kr terler alanından doldurulur ve "Ara" butonuna basılır.
+
+
+
+
+2. İlg l satır seç l r ve "Değ şt r" butonuyla detayına g d l r.
+3. Genel Sekmes nde, Stok G r ş/Çıkış Kontrolü alanında çıkış b lg s n n 'Manuel Çıkış' olduğu
+görüntülen r. İş Emr "İptal" butonuna basılarak kapatılır ve Manuel olarak hareket yapab lmek ç n
+INVT01 - Malzeme Hareketler uygulamasına g d l r.
+
+
+
+
+4. Açılan ekranda Stok Hareket Seç m alanında 'Çıkış' ve 'İş Emr /Proje' olarak seç ld ğ nde, sağ
+tarafta ekrana gelen Belge T p ve Belge No alanlarıda doldurulur.
+5. "Onay" butonuna basılır.
+
+
+
+
+6. İş Emr ne Malzeme Çıkışı ekranında çıkışı yapılması gereken malzemeler ve m ktarları
+tanımlanmıştır. "Kaydet" butonuna basılır, bu şek lde manual çıkış şlem tanımlanmıştır.
+7. B r d ğer hareket t p olan Otomat k G r ş / Çıkış ncelemek ç n yen den PRDT01 - İş Emr
+Yönet m uygulamasına g d l r ve ş emr seç l p "Değ şt r" butonuna basılır.
+
+
+
+
+8. İş emr çer s nde Stok G r ş/Çıkış Kontrolü alanında Otomat k G r ş / Çıkış seç l r. Ve "Kaydet"
+butonuna basılır.
+9. Otomat k G r ş / Çıkış hareket n ncelemek ç n INVT05 - Stok Belgeler n Detaylı Raporlama
+uygulamasına g d l r.
+
+
+
+
+10. Kaynak - Belge B lg ler alanında Kaynak - Belge, İş Emr / Proje olarak seç l r ve lg l kaynak
+belge no alana yazılarak "Ara" butonuna basılır. İlg l malzemeler n otomat k çıkış hareketler
+şek ldek g b görüntülenmekted r.
+11. İlg l arama kr terler doldurulur ve "Ara" butonuna basılır. Son olarak operasyonel çıkışı
+ncelemek ç n İş emr seç l r ve "Değ şt r" butonuyla ş emr detayına g d l r.
+
+
+
+
+12. Stok G r ş / Çıkış Kontrolü alanından Operasyonel Çıkış seç l r.
+13. Kalemler sekmes nde de görüldüğü g b BR0211 malzemes 10 nolu operasyonda tüket lecekt r.
+Operasyonel çıkış seç ld ğ nde, bu malzeme lk operasyonda tüket ld ğ ç n sadece bu malzemen n
+çıkışı gözlenecekt r.
+
+
+
+
+14. Hareket n gerçekleşmes ç n "Kaydet" butonuna basılır ve ş emr kayded l r.
+15. İlg l ekranda görüldüğü g b operasyonel çıkış sonucu sadece BR0211 - Z nc r malzemes n n
+çıkışı gözlenmekted r.
+2.8 - Normal İş Emr nde Ürün G r ş
+
+
+Normal ş emr malzeme g r ş
+
+
+
+
+1. PRDT01 - İş Emr Yönet m ekranında arama yapılarak herhang b r ş emr seç l r ve
+güncelleme butonuna basılır.
+
+
+
+
+2. Genel Sekmes nde, Stok G r ş/Çıkış Kontrolü alanında çıkış b lg s n n 'Manuel G r ş' olduğu
+görüntülen r. İş Emr "Kaydet" butonuna basılarak kapatılır ve Manuel olarak hareket yapab lmek
+ç n PRDT02 - İş B t ş Onayı uygulamasına g d l r.
+3. Arama kr terler uygun şek lde doldurulur ve "Ara" butonuna basılır.
+
+
+
+
+4. PRDT02 - İş Emr Onay uygulamasında lg l operasyonlar aratılır. Son operasyona onay
+vermek ç n lg l satır seç l r ve 'Onay' butonuna basılır.
+5. Son operasyon m ktarı ç n 10 adet g r lerek "Kaydet" butonuna basılır.
+
+
+
+
+6. Öncek operasyonun onaylanacağı b lg s ver l r.
+7. 20 numaralı operasyon onaylanmış olur. Manuel ürün g r ş yapmak ç n INVT01 - Malzeme
+Hareketler uygulamasına g d l r.
+
+
+
+
+8. Açılan ekranda Stok Hareket Seç m alanında 'G r ş' ve 'İş Emr /Proje' olarak seç ld ğ nde, sağ
+tarafta ekrana gelen Belge T p ve Belge No alanlarıda doldurulur.
+9. "Onay" butonuna basılır.
+
+
+
+
+10. İş emr ne bağlı olarak g r ş yapılacak olan malzemeler şek ldek g b l stelenmekted r. "Kaydet"
+butonuna basılarak manuel hareket tamamlanmış olur.
+11. B r d ğer hareket t p olan Otomat k G r ş ncelemek ç n yen den PRDT01 - İş Emr Yönet m
+uygulamasına g d l r ve ş emr seç l p "Değ şt r" butonuna basılır.
+
+
+
+
+12. G r ş t p Otomat k g r ş seç l r ve ş emr kayded l r. Otomat k G r ş hareket n ncelemek ç n
+öncel kle ş emr ne onay ver lmes gerekmekted r. PRDT02 - İş B t ş Onayı uygulamasına g d l r.
+13. Arama kr terler doldurulur ve uygun olan operasyon seç l r. "Onay" butonuna basılarak ş emr
+onaylanır.
+14. 10 b r ml k onaylanan m ktar alanına yazılır ve "Kaydet" butonuna basılır.
+
+
+
+
+15. Ger ye dönük onay mekan zması çalışır ve 10. operasyona da onay ver l r.
+16. Bu şek lde 20 numaralı operasyona onay ver lm ş olur.
+
+
+
+
+17. Otomat k g r ş hareket n gözlemlemek ç n INVT05 - Stok Belgeler n Detaylı Raporlama
+uygulamasına g d l r.
+18. Kaynak - Belge B lg ler alanında Kaynak - Belge, İş Emr / Proje olarak seç l r ve lg l kaynak
+belge no alana yazılarak "Ara" butonuna basılır. İlg l malzemen n otomat k g r ş hareket şek ldek
+g b görüntülenmekted r.
+2.9 - Standart Mal yet
+
+
+İş Emr nde Standart Mal yet
+
+
+
+
+1. İş emr nde standart mal yet ncelemek ç n PRDT01 - İş Emr Yönet m uygulamasına g d l r.
+Arama kr terler doldurulur ve "Değ şt r" butonuyla lg l ş emr n n detayına g d l r.
+
+
+
+
+2. Mal yetlend rme sekmes ne geç l r.
+3. İş emr n oluşturulan k öge Malzemeler ve Operasyon mal yetler sonucunda standart mal yet
+oluşmaktadır. İlg l mal yetlend rme t p alana yazılır ve "Yen " butonuna basılır.
+
+
+
+
+4. S stem ş emr üzer ndek değerlerle standart mal yet hesaplar. İş Emr n n hammaddeler nden
+b r nde m ktar değ şt r ld ğ nde yen duruma uygun standart mal yet tekrar hesaplanab l r. Yen
+mal yetlend rme b r öncek hesaplamadan farklı olacaktır.
+
+
+2.10 - Ek Dokümanlar
+1- PRDT01 İş Emr Oluşturma Değ şt rme ekranında, ş emr ne özel olarak doküman, belge, res m
+ekleme şlemler yapılab l r.
+
+
+
+
+2- PRDT01 İş Emr Oluşturma Değ şt rme ekranında, 'ara' butonuna basılır ve kayıtlar l stelen r.
+3- PRDT01 İş Emr Detay ekranı/Dokümanlar sekmes nde 'yen ' butonu altında yer alan 'yen
+dosya' butonuna basılır.
+
+
+
+
+4- Açılan 'yen doküman' ekranında 'doküman t p -dosya yolu' seç lerek 'onay' butonuna basılır.
+Dosya adı-tags yükleneb l r. Ayrıca 'dosya sıkıştır' parametres de şaretlenerek süreç
+gerçekleşt r l r.
+5- Dokümanlar sekmes detaylarında eklenen dosya görüntülen r. Eklenen dosyalar
+görüntüleneb l r veya s l neb l r. Mevcut dosya nceleneb l r, b lg sayarda bel rl b r lokasyona
+nd r leb l r. 'Kaydet' butonuna basıldığında s stem ş emr kayded ld şekl nde b lg mesajı ver r.
+
+
+
+
+6- Dokümanlar sekmes nde 'Kaydet' butonuna basıldığında s stem ş emr kayded ld şekl nde b lg
+mesajı ver r. İş emr ne dosya yükleme şlem yapılmış olur.
+
