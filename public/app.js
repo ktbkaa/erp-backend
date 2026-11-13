@@ -3142,6 +3142,7 @@ const MODULES = [
         ],
         masterFields: [
           // 1) Organizasyon
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', lead: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', lead: true },
           { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
           // 2) Üretim kimliği — stok → ağaç → rota (önem / bağımlılık sırası)
@@ -22913,6 +22914,12 @@ async function saveForm({ after = 'stay' } = {}) {
     master.source_type = master.source_type || 'Operasyonel';
     if (master.net_quantity == null || master.net_quantity === '') master.net_quantity = master.quantity;
     if (master.gross_quantity == null || master.gross_quantity === '') master.gross_quantity = master.quantity;
+  }
+
+  // Üretim emri: aktif firma / iş yeri kayda yazılsın (liste filtresi için zorunlu)
+  if (screen.id === 'uretim-emirleri') {
+    if (!master.company_id && getActiveCompanyId()) master.company_id = getActiveCompanyId();
+    if (!master.plant_id && state.activeIsYeriId) master.plant_id = state.activeIsYeriId;
   }
 
   // Kullanıcı kartı: giriş adı + şifre + yetki + profil

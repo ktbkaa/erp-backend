@@ -404,9 +404,42 @@ async function getQcOrder(id) {
     };
 }
 
+/** company_id boş kalan emirleri iş yerinden / stok-firma bağından onar */
+async function healNullCompanyOrders(client = pool) {
+    await client.query(`
+        UPDATE production_orders ue
+        SET company_id = p.company_id
+        FROM plants p
+        WHERE ue.company_id IS NULL
+          AND ue.plant_id = p.id
+          AND p.company_id IS NOT NULL
+    `);
+    await client.query(`
+        UPDATE production_orders ue
+        SET company_id = icp.company_id
+        FROM (
+            SELECT DISTINCT ON (item_id) item_id, company_id
+            FROM item_company_params
+            WHERE company_id IS NOT NULL
+            ORDER BY item_id, id
+        ) icp
+        WHERE ue.company_id IS NULL
+          AND ue.item_id = icp.item_id
+    `);
+}
+
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = companyIdFromReq(req); const params = []; let sql = 'SELECT id FROM production_orders'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        await healNullCompanyOrders().catch(() => {});
+        const firmaId = companyIdFromReq(req);
+        const params = [];
+        let sql = 'SELECT id FROM production_orders';
+        if (firmaId) {
+            params.push(firmaId);
+            sql += ` WHERE company_id = $${params.length}`;
+        }
+        sql += ' ORDER BY id DESC';
+        const liste = await pool.query(sql, params);
         const result = [];
         for (const r of liste.rows) result.push(await getQcOrder(r.id));
         res.json(result);
@@ -567,8 +600,47 @@ router.get('/siparis-adaylari/:id', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const emir = await getQcOrder(req.params.id);
+        let emir = await getQcOrder(req.params.id);
         if (!emir) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+
+        // Malzeme/rota boşsa ve emir henüz üretime geçmediyse BOM+rotadan otomatik doldur
+        const malEmpty = !(emir.malzemeler || []).length;
+        const opEmpty = !(emir.operasyonlar || []).length;
+        if ((malEmpty || opEmpty) && emir.product_bom_id && emir.route_id
+            && !emir.is_started && Number(emir.produced_quantity || 0) <= 0
+            && !['Kapali', 'Iptal'].includes(emir.status)) {
+            try {
+                await withTransaction(pool, async (client) => {
+                    await canFillOrderDetails(client, emir.id);
+                    const { agac, rotaOps } = await validateBomRouting(client, {
+                        urunAgaciId: emir.product_bom_id,
+                        rotaId: emir.route_id,
+                        stokId: emir.item_id,
+                        quantity: emir.planned_quantity,
+                        tarih: emir.order_date,
+                    });
+                    const carpan = Number(emir.planned_quantity) / Number(agac.quantity || 1);
+                    if (opEmpty) {
+                        await fillOrderOperations(client, emir.id, {
+                            rotaOps,
+                            planlananMiktar: emir.planned_quantity,
+                            bilesenCarpan: carpan,
+                        });
+                    }
+                    if (malEmpty) {
+                        await fillOrderMaterials(client, emir.id, {
+                            urunAgaciId: emir.product_bom_id,
+                            planlananMiktar: emir.planned_quantity,
+                            agacMiktar: agac.quantity,
+                            hammaddeDepoId: emir.component_warehouse_id,
+                        });
+                    }
+                });
+                emir = await getQcOrder(emir.id);
+            } catch (_) {
+                /* doldurma mümkün değilse mevcut kaydı döndür */
+            }
+        }
         res.json(emir);
     } catch (err) {
         if (err.code === '23503') {
@@ -617,12 +689,14 @@ router.post('/satis-siparisinden', async (req, res) => {
             return res.status(400).json({ hata: 'Sipariş kaleminde miktar yok; planned_quantity verin.' });
         }
 
+        const firmaId = companyIdFromReq(req) || siparis.rows[0].company_id || null;
         const id = await withTransaction(pool, async (client) =>
             createOrder(client, {
                 item_id,
                 product_bom_id,
                 route_id,
                 plant_id,
+                company_id: req.body.company_id || firmaId,
                 component_warehouse_id,
                 wip_warehouse_id,
                 fg_warehouse_id,
@@ -688,6 +762,7 @@ router.post('/toplu', async (req, res) => {
                         product_bom_id,
                         route_id,
                         plant_id,
+                        company_id: k.company_id || ortak.company_id || companyIdFromReq(req) || null,
                         component_warehouse_id,
                         wip_warehouse_id,
                         fg_warehouse_id,
@@ -742,7 +817,18 @@ router.post('/', async (req, res) => {
             });
         }
 
-        const id = await withTransaction(pool, async (client) => createOrder(client, b));
+        const firmaId = companyIdFromReq(req);
+        const payload = {
+            ...b,
+            company_id: b.company_id || firmaId || null,
+        };
+        // İş yerinden firma türet (body/header boşsa)
+        if (!payload.company_id && payload.plant_id) {
+            const pr = await pool.query('SELECT company_id FROM plants WHERE id=$1', [payload.plant_id]);
+            payload.company_id = pr.rows[0]?.company_id || null;
+        }
+
+        const id = await withTransaction(pool, async (client) => createOrder(client, payload));
 
         res.status(201).json(await getQcOrder(id));
     } catch (err) {
