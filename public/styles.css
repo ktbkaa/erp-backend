@@ -1280,26 +1280,32 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 
 .screen-view {
   display: grid;
-  /* banner | aksiyon | filtre(içerik kadar) | liste(kalan, kısa olmasın) */
-  grid-template-rows: auto auto auto minmax(min(36rem, 62vh), 1fr);
+  /* banner | aksiyon | filtre(içerik, sıkışmaz) | liste(kalan) */
+  grid-template-rows: auto auto minmax(min-content, auto) minmax(0, 1fr);
   height: 100%;
   min-height: 0;
   background: var(--page);
   gap: 0;
   overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  scrollbar-gutter: stable;
-  padding-bottom: max(1.5rem, 3vh);
+  overflow-y: hidden;
 }
 .screen-view > * {
-  /* min-height:0 grid sıkıştırmasını engelle — satırlar içerik boyunda kalsın */
+  min-height: 0;
+}
+.screen-view > .screen-banner,
+.screen-view > .action-bar,
+.screen-view > #filterPaneHome,
+.screen-view > .filter-pane-home {
+  /* Filtre/aksiyon satırı liste tarafından ezilmesin */
   min-height: min-content;
+}
+.filter-pane-home {
+  overflow: visible;
 }
 /* Liste view’ı: kabuk değil ekranın sağındaki ana scrollbar */
 .view.screen-view:not([hidden]) {
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 .screen-banner {
   margin: 0.65rem 0.85rem 0;
@@ -1523,7 +1529,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 }
 
 .list-pane {
-  min-height: min-content;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   margin: 0.65rem 0.85rem 0.85rem;
@@ -1532,20 +1538,21 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
   box-shadow: var(--shadow-card);
-  /* viewport’u doldurmasın — sayfa da kayabilsin */
+  height: 100%;
   max-height: none;
+  overflow: hidden;
 }
 .list-pane-head { margin-bottom: 0.4rem; flex: 0 0 auto; }
 .list-meta { color: var(--muted); font-size: 0.8rem; }
-/* Liste tablosu: sınırlı yükseklik + kendi scrollbar; uçta ekrana zincirlenir */
+/* Liste tablosu: kalan yüksekliği doldurur, kendi scrollbar’ı vardır */
 .list-pane .table-scroll,
 #listTableScroll.table-scroll {
-  flex: 0 0 auto;
-  height: min(28rem, 52vh);
-  min-height: 10rem;
-  max-height: min(28rem, 52vh);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  height: auto;
   overflow: auto;
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: contain;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   background: #fff;
@@ -2918,10 +2925,10 @@ tr.selected td { background: var(--accent-soft); }
   .bar-center { max-width: none; order: 2; }
   .bar-right { max-width: none; width: 100%; order: 3; }
   .screen-view {
-    grid-template-rows: auto auto minmax(180px, 32vh) minmax(min(22rem, 48vh), 1fr);
+    grid-template-rows: auto auto minmax(min-content, auto) minmax(0, 1fr);
     height: 100%;
     min-height: 0;
-    overflow-y: auto;
+    overflow-y: hidden;
   }
   .form-split { grid-template-rows: minmax(160px, 28%) 1fr; }
   .form-tabs-layout {
@@ -2942,12 +2949,12 @@ tr.selected td { background: var(--accent-soft); }
   display: grid;
   grid-template-columns: 108px 1fr;
   gap: 0;
-  min-height: min-content;
+  min-height: 0;
   min-width: 0;
-  height: auto;
+  height: 100%;
   max-height: none;
-  overflow: visible;
-  background: transparent;
+  overflow: hidden;
+  background: #fff;
 }
 .list-work .list-pane {
   min-width: 0;
@@ -6303,18 +6310,17 @@ body.sidebar-resizing .workspace {
   margin: 0.1rem 0 0;
 }
 
-/* Liste: kalan alanı doldurur; kısa tavan yok, taban en az ~62vh */
+/* Liste: filtreyi ezmeden kalan yüksekliği doldurur */
 #viewScreen.screen-view {
   overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overflow-y: hidden;
 }
 #listTableScroll,
 #listTableScroll.table-scroll {
   flex: 1 1 auto;
-  min-height: min(62vh, 42rem);
+  min-height: 0;
   max-height: none;
-  height: 100%;
+  height: auto;
   overflow: auto;
   overscroll-behavior-y: contain;
 }
@@ -6563,7 +6569,7 @@ body.sidebar-resizing iframe {
 }
 /* Üst filtre yuvası boşalınca liste yukarı büyür — içerik boyutu korunur */
 #viewScreen.screen-view.filter-docked {
-  grid-template-rows: auto auto minmax(min(36rem, 62vh), 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 #viewScreen.screen-view.filter-docked #filterPaneHome {
   display: none !important;
