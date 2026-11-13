@@ -3171,10 +3171,10 @@ const MODULES = [
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
-          // 4) Planlama
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', group: 'planlama' },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date', group: 'planlama' },
-          { key: 'end_date', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+          // 4) Planlama — tarih + saat
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
+          { key: 'end_date', label: 'Bitiş tarihi', type: 'datetime', group: 'planlama' },
           { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama' },
           { key: 'issue_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
           { key: 'receipt_type', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
@@ -8784,8 +8784,9 @@ function applyDefinitionLookup(field) {
   if (!field || !field.key) return field;
   const def = TANIM_LOOKUP_BY_KEY[field.key];
   if (!def) return field;
-  // select/checkbox/number/date veya zaten doğru lookup ise dokunma (label/required koru)
-  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'password') {
+  // select/checkbox/number/date/datetime veya zaten doğru lookup ise dokunma (label/required koru)
+  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date'
+    || field.type === 'datetime' || field.type === 'password') {
     return field;
   }
   if (field.type === 'select' && Array.isArray(field.options) && field.options.length) {
@@ -8919,8 +8920,16 @@ function buildLookupOptionsHtml(field, value, rows) {
     if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı —';
     else if (field.dependsOn) emptyLabel = '— önce üst alan —';
   }
+  const list = Array.isArray(rows) ? [...rows] : [];
+  // Seçili değer listede yoksa (firma filtresi / autofill) yine de göster
+  if (value != null && value !== ''
+    && !list.some((r) => String(r?.[vk]) === String(value))) {
+    const stub = { [vk]: value, [lk]: String(value) };
+    if (ck) stub[ck] = String(value);
+    list.unshift(stub);
+  }
   const opts = [`<option value="">${emptyLabel}</option>`].concat(
-    rows.map((r) => {
+    list.map((r) => {
       const val = r[vk];
       // Kod–first_name: select’te kod, title’da tam metin (dar kutu)
       const code = ck ? String(r[ck] || val || '') : '';
@@ -8931,6 +8940,15 @@ function buildLookupOptionsHtml(field, value, rows) {
     })
   );
   return opts.join('');
+}
+
+/** Autofill / çapraz firma: lookup cache’e satır ekle (yoksa) */
+function ensureLookupCacheRow(lookupKey, row, valueKey = 'id') {
+  if (!lookupKey || !row || row[valueKey] == null || row[valueKey] === '') return;
+  if (!state.lookupCache[lookupKey]) state.lookupCache[lookupKey] = [];
+  const list = state.lookupCache[lookupKey];
+  if (list.some((r) => String(r[valueKey]) === String(row[valueKey]))) return;
+  list.push(row);
 }
 
 function lookupNameOnly(field, value) {
@@ -15063,7 +15081,24 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const dv = v ? String(v).slice(0, 10) : '';
     return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
   }
+  if (field.type === 'datetime') {
+    return `<input type="datetime-local" step="60" ${name} value="${escAttr(toDatetimeLocalValue(v))}" ${dis} ${req} />`;
+  }
   return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
+}
+
+/** datetime-local value (YYYY-MM-DDTHH:mm) — API ISO / Postgres timestamp */
+function toDatetimeLocalValue(v) {
+  if (v == null || v === '') return '';
+  const s = String(v).trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return s.slice(0, 16);
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) return `${s.slice(0, 10)}T${s.slice(11, 16)}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00`;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
@@ -15748,6 +15783,152 @@ async function refreshQcMeasurementsFromPlan(screen) {
   // Plan değişince ölçüm değerlerini sıfırla; satır iskeleti yeni kriterlerden gelir
   state.formRecord.olcumler = buildQcMeasurementRows(state.formRecord.kriterler, []);
   renderForm(screen);
+}
+
+/** Ürün ağacı satırlarından iş emri malzeme grid’i (miktar ölçekli) */
+function buildWoMaterialsFromBom(bom, { plannedQty, warehouseId } = {}) {
+  const baseQty = Number(bom?.quantity) || 1;
+  const plan = Number(plannedQty);
+  const carpan = (Number.isFinite(plan) ? plan : 0) / (baseQty || 1);
+  const lines = Array.isArray(bom?.satirlar) ? bom.satirlar : [];
+  let nextNo = 1;
+  const rows = [];
+  lines.forEach((s) => {
+    if (!s?.component_item_id) return;
+    const lineNo = s.line_no != null && s.line_no !== '' ? Number(s.line_no) : nextNo;
+    nextNo = Math.max(nextNo, (Number.isFinite(lineNo) ? lineNo : nextNo) + 1);
+    const rawQty = Number(s.quantity != null && s.quantity !== '' ? s.quantity : s.net_quantity) || 0;
+    const qty = s.is_fixed_qty ? rawQty : rawQty * carpan;
+    rows.push({
+      line_no: Number.isFinite(lineNo) ? lineNo : rows.length + 1,
+      item_id: Number(s.component_item_id),
+      uom_code: s.uom_code || s.item_uom_code || '',
+      planned_quantity: qty,
+      consumed_quantity: 0,
+      warehouse_id: s.warehouse_id || warehouseId || null,
+    });
+  });
+  return rows;
+}
+
+/** Rota operasyonlarından iş emri rota grid’i */
+function buildWoOperationsFromRoute(route, { plannedQty } = {}) {
+  const plan = Number(plannedQty);
+  const planQty = Number.isFinite(plan) ? plan : 0;
+  const ops = Array.isArray(route?.operasyonlar) ? route.operasyonlar : [];
+  return ops.map((op, i) => ({
+    line_no: op.line_no != null && op.line_no !== '' ? Number(op.line_no) : (i + 1) * 10,
+    operation_code: op.operation_code || '',
+    operation_name: op.operation_name || '',
+    work_center_id: op.work_center_id || null,
+    planned_quantity: planQty,
+    produced_quantity: Number(op.produced_quantity) || 0,
+    status: op.status || (i === 0 ? 'Hazir' : 'Bekliyor'),
+    ilk_operasyon: i === 0,
+    son_operasyon: i === ops.length - 1,
+  }));
+}
+
+function canAutoFillUretimEmriDetails(rec) {
+  if (!rec || state.formMode === 'incele') return false;
+  if (rec.is_started || Number(rec.produced_quantity) > 0) return false;
+  const mals = Array.isArray(rec.malzemeler) ? rec.malzemeler : [];
+  if (mals.some((m) => Number(m.consumed_quantity) > 0)) return false;
+  const ops = Array.isArray(rec.operasyonlar) ? rec.operasyonlar : [];
+  if (ops.some((o) => Number(o.produced_quantity) > 0)) return false;
+  return true;
+}
+
+/**
+ * Üretim emri: ürün ağacı → malzemeler; rota → operasyonlar (formda anında).
+ * Grid DOM’u yeniden okumadan master’ı birleştirir (lookup firma filtresi item_id’yi silmesin).
+ */
+async function autoFillUretimEmriDetails(screen, { materials = false, operations = false } = {}) {
+  if (screen?.id !== 'uretim-emirleri' || !state.formRecord) return;
+  if (!materials && !operations) return;
+  const master = readMasterFromForm(screen);
+  const prevMal = state.formRecord.malzemeler;
+  const prevOps = state.formRecord.operasyonlar;
+  state.formRecord = {
+    ...state.formRecord,
+    ...master,
+    malzemeler: prevMal,
+    operasyonlar: prevOps,
+  };
+  if (!canAutoFillUretimEmriDetails(state.formRecord)) return;
+
+  const rec = state.formRecord;
+  const msgs = [];
+  let changed = false;
+
+  if (materials) {
+    const bomId = Number(rec.product_bom_id);
+    if (!bomId) {
+      if ((rec.malzemeler || []).length) {
+        rec.malzemeler = [];
+        changed = true;
+      }
+    } else {
+      try {
+        let bom = (state.lookupCache['urun-agaclari'] || [])
+          .find((b) => Number(b.id) === bomId);
+        if (!bom?.satirlar?.length) bom = await api(`/urun-agaclari/${bomId}`);
+        (bom.satirlar || []).forEach((s) => {
+          if (!s?.component_item_id) return;
+          ensureLookupCacheRow('items', {
+            id: Number(s.component_item_id),
+            item_code: s.item_code || String(s.component_item_id),
+            item_name: s.item_name || s.line_description || '',
+            uom_code: s.uom_code || s.item_uom_code || '',
+            item_type: s.item_type || '',
+          });
+        });
+        rec.malzemeler = buildWoMaterialsFromBom(bom, {
+          plannedQty: rec.planned_quantity,
+          warehouseId: rec.component_warehouse_id,
+        });
+        msgs.push(`${rec.malzemeler.length} malzeme`);
+        changed = true;
+      } catch (err) {
+        toast(err.message || 'Ürün ağacı malzemeleri okunamadı');
+      }
+    }
+  }
+
+  if (operations) {
+    const routeId = Number(rec.route_id);
+    if (!routeId) {
+      if ((rec.operasyonlar || []).length) {
+        rec.operasyonlar = [];
+        changed = true;
+      }
+    } else {
+      try {
+        let route = (state.lookupCache.routings || [])
+          .find((r) => Number(r.id) === routeId);
+        if (!route?.operasyonlar?.length) route = await api(`/routings/${routeId}`);
+        (route.operasyonlar || []).forEach((op) => {
+          if (!op?.work_center_id) return;
+          ensureLookupCacheRow('is-merkezleri', {
+            id: Number(op.work_center_id),
+            center_code: op.center_code || String(op.work_center_id),
+            center_name: op.center_name || op.work_center_name || '',
+          });
+        });
+        rec.operasyonlar = buildWoOperationsFromRoute(route, {
+          plannedQty: rec.planned_quantity,
+        });
+        msgs.push(`${rec.operasyonlar.length} operasyon`);
+        changed = true;
+      } catch (err) {
+        toast(err.message || 'Rota operasyonları okunamadı');
+      }
+    }
+  }
+
+  if (!changed) return;
+  renderForm(screen);
+  if (msgs.length) toast(`İş emri detay: ${msgs.join(', ')} dolduruldu`);
 }
 
 function hydrateItemCompanyPlant(rec) {
@@ -21538,12 +21719,22 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
 
   const rules = [...(links || []), ...detailStokRules];
   const kkPlanRefresh = isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail;
-  if (!rules.length && !kkPlanRefresh) return;
+  const woDetailRefresh = screen.id === 'uretim-emirleri'
+    && !isDetail && !isBomField && !isFlowComp
+    && ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey);
+  if (!rules.length && !kkPlanRefresh && !woDetailRefresh) return;
 
   _formLinking = true;
   try {
     if (kkPlanRefresh && !rules.length) {
       await refreshQcMeasurementsFromPlan(screen);
+      return;
+    }
+    if (woDetailRefresh && !rules.length) {
+      await autoFillUretimEmriDetails(screen, {
+        materials: ['item_id', 'product_bom_id', 'planned_quantity'].includes(changedKey),
+        operations: ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey),
+      });
       return;
     }
     // BOM/rota listeleri güncel olsun
@@ -21649,6 +21840,14 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
     // KK emri: plan değişince ölçüm satırlarını kriterlerden yenile
     if (isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail) {
       await refreshQcMeasurementsFromPlan(screen);
+    }
+
+    // Üretim emri: ürün ağacı → malzemeler; rota → operasyonlar
+    if (woDetailRefresh) {
+      await autoFillUretimEmriDetails(screen, {
+        materials: ['item_id', 'product_bom_id', 'planned_quantity'].includes(changedKey),
+        operations: ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey),
+      });
     }
   } finally {
     _formLinking = false;

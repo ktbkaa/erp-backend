@@ -34,6 +34,25 @@ function dateDay(v) {
     return null;
 }
 
+/** Plan / bitiş: tarih+saat — datetime-local veya ISO kabul eder */
+function dateTimeValue(v) {
+    if (v == null || v === '') return null;
+    if (v instanceof Date) {
+        if (Number.isNaN(v.getTime())) return null;
+        return v;
+    }
+    const s = String(v).trim();
+    if (!s) return null;
+    // YYYY-MM-DDTHH:mm(:ss)? — Postgres kabul eder
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return s.length === 16 ? `${s}:00` : s;
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) return s;
+    // Yalnız tarih → gün başı
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00:00`;
+    const d = new Date(s);
+    if (!Number.isNaN(d.getTime())) return d;
+    return null;
+}
+
 /** BOM / rota geçerlilik + quantity aralığı kontrolü (Uyumsoft uyarlaması) */
 async function validateBomRouting(client, { urunAgaciId, rotaId, stokId, quantity, tarih }) {
     const gun = dateDay(tarih) || new Date().toISOString().slice(0, 10);
@@ -274,9 +293,9 @@ async function createOrder(client, opts) {
             source_document_id || null,
             dateDay(order_date) || new Date().toISOString().slice(0, 10),
             dateDay(order_date) || new Date().toISOString().slice(0, 10),
-            plan_start || null,
-            plan_end || null,
-            dateDay(end_date),
+            dateTimeValue(plan_start),
+            dateTimeValue(plan_end),
+            dateTimeValue(end_date),
             uom_code || stok.rows[0]?.uom_code || null,
             is_open || (durumVal === 'Kapali' || durumVal === 'Iptal' ? 'Kapali' : 'Acik'),
             !!onayli,
@@ -1519,9 +1538,9 @@ router.put('/:id', async (req, res) => {
                     b.product_bom_id || null,
                     b.route_id || null,
                     dateDay(b.order_date),
-                    b.plan_start || null,
-                    b.plan_end || null,
-                    dateDay(b.end_date),
+                    dateTimeValue(b.plan_start),
+                    dateTimeValue(b.plan_end),
+                    dateTimeValue(b.end_date),
                     b.uom_code || null,
                     acikKapali,
                     typeof b.is_approved === 'boolean' ? b.is_approved : null,
