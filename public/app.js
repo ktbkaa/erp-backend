@@ -12977,17 +12977,48 @@ function defaultListColumnDefs(screen) {
 }
 
 /**
+ * Stok kodu ve stok adı tüm listelerde ayrı kolon.
+ * item_code varsa hemen ardından item_name gelir (yoksa eklenir / yanına taşınır).
+ */
+function ensureStockCodeNameColumns(cols) {
+  const nameColRaw = cols.find((c) => c.key === 'item_name');
+  const nameLabel = (!nameColRaw?.label || nameColRaw.label === 'Ad' || nameColRaw.label === 'Stok' || nameColRaw.label === 'Malzeme')
+    ? 'Stok adı'
+    : nameColRaw.label;
+  const nameCol = { ...(nameColRaw || {}), key: 'item_name', label: nameLabel };
+  const out = [];
+  let namePlaced = false;
+  cols.forEach((c) => {
+    if (c.key === 'item_name') return; // kodun hemen ardından yerleştirilecek
+    if (c.key === 'item_code') {
+      const label = (!c.label || c.label === 'Stok' || c.label === 'Malzeme')
+        ? 'Stok kodu'
+        : c.label;
+      out.push({ ...c, key: 'item_code', label, mono: true });
+      out.push(nameCol);
+      namePlaced = true;
+      return;
+    }
+    out.push(c);
+  });
+  if (!namePlaced && nameColRaw) out.push(nameCol);
+  return out;
+}
+
+/**
  * Tüm listelerde ilk sütun: satır ID.
  * Kayıtlı düzen varsa sıra/görünürlük uygulanır.
- * Stok kodu varken ad kolonu yoksa item_code hücresinde ad birleştirilir.
+ * Stok varsa Stok kodu + Stok adı ayrı kolonlardır.
  */
 function listColumns(screen) {
-  const defaults = defaultListColumnDefs(screen);
+  const defaults = ensureStockCodeNameColumns(defaultListColumnDefs(screen));
   const catalog = listColumnCatalog(screen);
   const layout = loadListLayout(screen.id);
   let cols;
   if (layout?.order?.length) {
-    const hidden = new Set(layout.hidden || []);
+    // Stok kodu görünürken stok adını gizlemeyi engelle (ayrı kolon kuralı)
+    const hidden = new Set((layout.hidden || []).filter((k) => k !== 'item_name' || !layout.order.includes('item_code')));
+    if (layout.order.includes('item_code')) hidden.delete('item_name');
     const defMap = new Map(defaults.map((c) => [c.key, c]));
     const ordered = [];
     const seen = new Set();
@@ -12997,6 +13028,11 @@ function listColumns(screen) {
       if (!base) return;
       ordered.push({ ...base, key });
       seen.add(key);
+      // Kayıtlı düzende kod var, ad yoksa kodun hemen ardına ad ekle
+      if (key === 'item_code' && !layout.order.includes('item_name') && !seen.has('item_name')) {
+        ordered.push(defMap.get('item_name') || { key: 'item_name', label: 'Stok adı' });
+        seen.add('item_name');
+      }
     });
     // Yeni varsayılan kolonlar (kayıtta yoksa) sonda eklenir
     defaults.forEach((c) => {
@@ -13011,14 +13047,9 @@ function listColumns(screen) {
       ordered.splice(ordered.findIndex((c) => c.key === 'id'), 1);
       ordered.unshift(idCol);
     }
-    cols = ordered;
+    cols = ensureStockCodeNameColumns(ordered);
   } else {
     cols = defaults;
-  }
-  const hasItemCode = cols.some((c) => c.key === 'item_code');
-  const hasItemName = cols.some((c) => c.key === 'item_name');
-  if (hasItemCode && !hasItemName) {
-    cols = cols.map((c) => (c.key === 'item_code' ? { ...c, combineStockName: true } : c));
   }
   return cols;
 }
@@ -13062,20 +13093,7 @@ function cellHtml(col, row, index = 0) {
     && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
     val = formatListDateOnly(val) || val;
   }
-  // Stok kodu kolonunda ad yoksa kod + ad birlikte
-  if (col.combineStockName || (col.key === 'item_code' && col.combineStockName !== false)) {
-    const code = row.item_code != null && row.item_code !== '' ? String(row.item_code) : '';
-    const name = row.item_name != null && row.item_name !== '' ? String(row.item_name) : '';
-    if (col.combineStockName && name) {
-      val = code ? `${code} — ${name}` : name;
-    }
-  }
   if (val === null || val === undefined || val === '') val = '—';
-  if (col.combineStockName && String(val).includes(' — ')) {
-    const [codePart, ...rest] = String(val).split(' — ');
-    const namePart = rest.join(' — ');
-    return `<span class="list-stock-cell"><span class="mono">${escapeHtml(codePart)}</span><span class="list-stock-name">${escapeHtml(namePart)}</span></span>`;
-  }
   return col.mono ? `<span class="mono">${escapeHtml(String(val))}</span>` : escapeHtml(String(val));
 }
 
@@ -13323,9 +13341,6 @@ function exportListAsExcel() {
     cols.map((c) => c.label),
     ...rows.map((r, i) => cols.map((c) => {
       if (c.key === 'id') return rowKey(r, i);
-      if (c.combineStockName && r.item_name) {
-        return `${r.item_code || ''} — ${r.item_name}`;
-      }
       let v = r[c.key];
       if (typeof v === 'boolean') v = v ? 'Evet' : 'Hayır';
       if (v == null) v = '';
@@ -13345,7 +13360,6 @@ function buildListExportTableHtml(screen, cols, rows) {
     const tds = cols.map((c) => {
       let text;
       if (c.key === 'id') text = rowKey(r, i);
-      else if (c.combineStockName && r.item_name) text = `${r.item_code || ''} — ${r.item_name}`;
       else {
         let v = r[c.key];
         if (typeof v === 'boolean') v = v ? 'Evet' : 'Hayır';
