@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const productionOrders = require('./production_orders');
+const { getProductionParams } = require('../src/services/productionParamsService');
 
 async function getReceipt(id) {
     const g = await pool.query(
@@ -54,9 +55,18 @@ router.get('/onizleme', async (req, res) => {
             op = (emir.operasyonlar || []).find((o) => o.status === 'Hazir')
                 || (emir.operasyonlar || [])[0];
         }
+        const plannedOp = Number(op?.planned_quantity || emir.planned_quantity || 1);
+        const producedOp = Number(op?.produced_quantity || 0);
+        const remainingOp = Math.max(0, plannedOp - producedOp);
+        const prodParams = await getProductionParams(pool, emir.company_id, emir.plant_id);
+        let maxExtra = 0;
+        if (prodParams.allow_over_production) {
+            maxExtra = plannedOp * (Number(prodParams.over_production_pct) || 0) / 100;
+        }
+        const maxAllowed = remainingOp + maxExtra;
         const qty = quantity != null && quantity > 0
             ? quantity
-            : Number(op?.planned_quantity || emir.planned_quantity || 1);
+            : (remainingOp > 0 ? remainingOp : plannedOp);
         const rate = op && Number(op.planned_quantity) > 0 ? qty / Number(op.planned_quantity) : 1;
 
         let comps = [];
@@ -133,6 +143,18 @@ router.get('/onizleme', async (req, res) => {
             product_warehouse_id: emir.fg_warehouse_id || null,
             material_warehouse_id: emir.component_warehouse_id || null,
             wip_warehouse_id: emir.wip_warehouse_id || null,
+            op_planned_quantity: plannedOp,
+            op_produced_quantity: producedOp,
+            op_remaining_quantity: remainingOp,
+            max_allowed_quantity: maxAllowed,
+            production_params: {
+                allow_over_production: prodParams.allow_over_production,
+                over_production_pct: prodParams.over_production_pct,
+                allow_under_production: prodParams.allow_under_production,
+                under_production_pct: prodParams.under_production_pct,
+                enforce_op_sequence: prodParams.enforce_op_sequence,
+                require_material_consume: prodParams.require_material_consume,
+            },
             malzemeler,
             yan_urunler: [],
             operasyonlar: emir.operasyonlar || [],

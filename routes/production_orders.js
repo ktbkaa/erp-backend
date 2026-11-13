@@ -6,6 +6,11 @@ const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement } = require('../src/services/stokHareketService');
 const { createQcOrder, resolveOutgoingQcWarehouse, resolveOutgoingQcTargetWarehouse } = require('../src/services/kaliteService');
+const {
+    getProductionParams,
+    assertOperationQtyAllowed,
+    assertOrderCloseQtyAllowed,
+} = require('../src/services/productionParamsService');
 
 async function resolveType(client, emirTipiId, siparisId) {
     if (emirTipiId) {
@@ -900,8 +905,8 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
 
             const quantity = Number(req.body.quantity || op.planned_quantity);
             if (quantity <= 0) throw new Error('quantity > 0 olmalı.');
-            const kalan = Number(op.planned_quantity) - Number(op.produced_quantity);
-            if (quantity - kalan > 1e-9) throw new Error(`Fazla üretim engellendi. Kalan=${kalan}`);
+            const prodParams = await getProductionParams(client, emir.company_id, emir.plant_id);
+            assertOperationQtyAllowed(prodParams, op, quantity);
 
             const rate = quantity / Number(op.planned_quantity);
             const bilesenler = await client.query(
@@ -1033,7 +1038,12 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                  WHERE order_id=$1 AND status <> 'Tamamlandi'`,
                 [emirId]
             );
-            if (kalanOps.rows[0].c === 0) {
+            if (kalanOps.rows[0].c === 0 && prodParams.auto_close_on_complete) {
+                const emirFresh = await client.query(
+                    'SELECT planned_quantity, produced_quantity FROM production_orders WHERE id=$1',
+                    [emirId]
+                );
+                assertOrderCloseQtyAllowed(prodParams, emirFresh.rows[0] || emir);
                 await client.query(
                     `UPDATE production_orders SET status='Kapali' WHERE id=$1`,
                     [emirId]
@@ -1137,8 +1147,31 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
 
         const quantity = Number(opts.quantity != null ? opts.quantity : op.planned_quantity);
         if (!(quantity > 0)) throw new Error('Miktar > 0 olmalı.');
+        const prodParams = await getProductionParams(client, emir.company_id, emir.plant_id);
+        if (prodParams.enforce_op_sequence && op.status === 'Bekliyor') {
+            const earlier = await client.query(
+                `
+                SELECT COUNT(*)::int AS c FROM production_order_operations
+                WHERE order_id=$1 AND line_no < $2 AND status <> 'Tamamlandi'
+                `,
+                [emirId, op.line_no]
+            );
+            if (earlier.rows[0].c > 0) {
+                throw Object.assign(
+                    new Error('Önceki operasyonlar tamamlanmadan bu operasyona giriş yapılamaz (üretim parametresi: operasyon sırası zorunlu).'),
+                    { status: 400, code: 'ERR-MFG-OP-SEQ' }
+                );
+            }
+        }
+        assertOperationQtyAllowed(prodParams, op, quantity);
         const rate = Number(op.planned_quantity) > 0 ? quantity / Number(op.planned_quantity) : 1;
         const consume = opts.consume_materials !== false;
+        if (prodParams.require_material_consume && consume === false) {
+            throw Object.assign(
+                new Error('Malzeme tüketimi zorunlu (üretim parametreleri).'),
+                { status: 400, code: 'ERR-MFG-CONSUME' }
+            );
+        }
 
         const bilesenler = await client.query(
             `
@@ -1337,12 +1370,16 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
              WHERE order_id=$1 AND status <> 'Tamamlandi'`,
             [emirId]
         );
-        if (kalanOps.rows[0].c === 0) {
+        if (kalanOps.rows[0].c === 0 && prodParams.auto_close_on_complete) {
+            const emirFresh = await client.query(
+                'SELECT planned_quantity, produced_quantity FROM production_orders WHERE id=$1',
+                [emirId]
+            );
+            assertOrderCloseQtyAllowed(prodParams, emirFresh.rows[0] || emir);
             await client.query(`UPDATE production_orders SET status='Kapali' WHERE id=$1`, [emirId]);
             if (emir.project_code) {
                 try {
-                    const { fromProductionOrder } = require('../src/services/prjCostService');
-                    const refreshed = await client.query(`SELECT * FROM production_orders WHERE id=$1`, [emirId]);
+                    const { fromProductionOrder } = require('../src/services/prjCostService');                    const refreshed = await client.query(`SELECT * FROM production_orders WHERE id=$1`, [emirId]);
                     await fromProductionOrder(client, { order: refreshed.rows[0] });
                 } catch (_) { /* PRJ yoksa sessiz */ }
             }

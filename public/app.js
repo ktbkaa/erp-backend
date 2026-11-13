@@ -2446,7 +2446,7 @@ const MODULES = [
       { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'] },
       { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri', 'hizli-uretim-girisi'] },
       { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri', 'uretim-parametreleri'] },
     ],
     screens: [
       {
@@ -3058,6 +3058,78 @@ const MODULES = [
         detailAsFields: true,
       },
       {
+        id: 'uretim-parametreleri',
+        techId: 'MFG-PRM-SCR-001',
+        businessNameEn: 'ProductionParametersScreen',
+        title: 'Üretim Parametreleri',
+        endpoint: '/uretim-parametreleri',
+        crud: true,
+        numeratorSeri: null,
+        codeField: 'company_code',
+        nameField: 'company_name',
+        banner: 'Firma / iş yeri üretim kuralları — fazla-eksik üretim, operasyon sırası, malzeme tüketimi.',
+        filters: [
+          { key: 'company_code', label: 'Firma' },
+          { key: 'plant_code', label: 'İş yeri' },
+        ],
+        columns: [
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'plant_code', label: 'İş yeri', mono: true },
+          { key: 'allow_over_production', label: 'Fazla üretim' },
+          { key: 'over_production_pct', label: 'Fazla %' },
+          { key: 'allow_under_production', label: 'Eksik üretim' },
+          { key: 'under_production_pct', label: 'Eksik %' },
+          { key: 'enforce_op_sequence', label: 'Op. sırası' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          {
+            key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies',
+            valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true, group: 'kapsam',
+          },
+          {
+            key: 'plant_id', label: 'İş yeri (opsiyonel)', type: 'lookup', lookup: 'is-yerleri',
+            valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'kapsam',
+            dependsOn: 'company_id', filterKey: 'company_id',
+          },
+          {
+            key: 'allow_over_production', label: 'Fazla üretime izin ver', type: 'checkbox', group: 'miktar',
+          },
+          {
+            key: 'over_production_pct', label: 'Fazla üretim toleransı %', type: 'number', group: 'miktar',
+          },
+          {
+            key: 'allow_under_production', label: 'Eksik üretime izin ver (kısmi / kapatma)', type: 'checkbox', group: 'miktar',
+          },
+          {
+            key: 'under_production_pct', label: 'Eksik üretim toleransı %', type: 'number', group: 'miktar',
+          },
+          {
+            key: 'enforce_op_sequence', label: 'Operasyon sırasını zorunlu tut', type: 'checkbox', group: 'surec',
+          },
+          {
+            key: 'require_material_consume', label: 'Malzeme tüketimi zorunlu', type: 'checkbox', group: 'surec',
+          },
+          {
+            key: 'auto_close_on_complete', label: 'Tüm operasyonlar bitince emri kapat', type: 'checkbox', group: 'surec',
+          },
+          { key: 'description', label: 'Açıklama', size: 'wide', group: 'status' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        defaults: {
+          allow_over_production: false,
+          over_production_pct: 0,
+          allow_under_production: true,
+          under_production_pct: 0,
+          enforce_op_sequence: true,
+          require_material_consume: true,
+          auto_close_on_complete: true,
+          is_active: true,
+        },
+      },
+      {
         id: 'uretim-planlari',
         techId: 'MFG-PLN-SCR-001',
         businessNameEn: 'ProductionPlanScreen',
@@ -3534,6 +3606,8 @@ const MODULES = [
           { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'miktar', groupLabel: 'Miktarlar' },
           { key: 'planned_quantity', label: 'İş emri miktarı', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
           { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'op_remaining_quantity', label: 'Operasyon kalan', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'max_allowed_quantity', label: 'Maks. izin (toleranslı)', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
           { key: 'serial_no', label: 'Seri no', group: 'diger', groupLabel: 'Diğer bilgiler' },
           { key: 'shift_code', label: 'Vardiya kodu', group: 'diger', groupLabel: 'Diğer bilgiler' },
           { key: 'receipt_no', label: 'Giriş no', code: true, editableOnNew: true, group: 'diger', groupLabel: 'Diğer bilgiler' },
@@ -12597,7 +12671,12 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
   await fetchLookupKey('uretim-emir-operasyonlari', { order_id: oid }).catch(() => {});
   renderForm(screen);
   const nMal = (data.malzemeler || []).length;
-  toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme`);
+  const kalan = data.op_remaining_quantity != null ? Number(data.op_remaining_quantity) : null;
+  const maxA = data.max_allowed_quantity != null ? Number(data.max_allowed_quantity) : null;
+  const qtyHint = (kalan != null && maxA != null)
+    ? ` · kalan ${kalan}, max ${maxA}`
+    : '';
+  toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme${qtyHint}`);
 }
 
 async function fillLinesFromSource(kind, sourceId) {
@@ -14636,6 +14715,7 @@ const LOOKUP_ENDPOINTS = {
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-emir-operasyonlari': '/uretim-emirleri/operasyon-lookup',
   'uretim-girisleri': '/uretim-girisleri',
+  'uretim-parametreleri': '/uretim-parametreleri',
   'uretim-planlari': '/uretim-planlari',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?is_active=true',
   'stok-depo': '/stok-depo?is_active=true',
@@ -23564,7 +23644,22 @@ async function saveForm({ after = 'stay' } = {}) {
     master.warehouse_id = defWh;
   }
 
-  // Üretim girişi: kaynak tipi + hızlı bayrak
+  // Üretim girişi: kaynak tipi + hızlı bayrak + fazla üretim istemci kontrolü
+  if (screen.id === 'hizli-uretim-girisi' || screen.id === 'uretim-girisleri') {
+    const qty = Number(master.quantity);
+    const maxA = master.max_allowed_quantity != null && master.max_allowed_quantity !== ''
+      ? Number(master.max_allowed_quantity)
+      : null;
+    if (maxA != null && Number.isFinite(maxA) && Number.isFinite(qty) && qty - maxA > 1e-9) {
+      toast(
+        `Fazla üretim engellendi. Maksimum izin ${maxA}`
+        + (master.op_remaining_quantity != null ? ` (kalan ${master.op_remaining_quantity})` : '')
+        + '. Üretim Parametreleri ekranından tolerans ayarlanabilir.',
+        { type: 'Hata', code: 'ERR-MFG-OVERPROD' }
+      );
+      return;
+    }
+  }
   if (screen.id === 'hizli-uretim-girisi') {
     master.quick = true;
     master.source_type = 'Hizli';

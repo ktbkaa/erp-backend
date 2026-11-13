@@ -727,6 +727,20 @@
       }
     ]
   },
+  "uretim-parametreleri": {
+    "screenId": "uretim-parametreleri",
+    "title": "Üretim Parametreleri",
+    "techId": "MFG-PRM-SCR-001",
+    "endpoint": "/uretim-parametreleri",
+    "auditTablo": "uretim-parametreleri",
+    "primaryTable": "production_parameters",
+    "tables": [
+      {
+        "name": "production_parameters",
+        "role": "master"
+      }
+    ]
+  },
   "uretim-planlari": {
     "screenId": "uretim-planlari",
     "title": "Üretim Planları",
