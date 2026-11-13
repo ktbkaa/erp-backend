@@ -3,7 +3,8 @@
 **Belge tipi:** Hedef ürün / süreç dokümanı  
 **Tarih:** 2026-11-13 (Europe/Istanbul)  
 **Durum:** Onaylı tasarım yönergesi → uygulama dalgaları P0–P3  
-**İlgili:** `32_PRD_MODUL_YENIDEN_ANALIZ.md` (kaynak analizi) · `32_PRD_GAP_MATRISI.csv` · `33_URETIM_EKRAN_ENVANTERI.csv`
+**İlgili:** `32_PRD_MODUL_YENIDEN_ANALIZ.md` (kaynak analizi) · `32_PRD_GAP_MATRISI.csv` · `33_URETIM_EKRAN_ENVANTERI.csv`  
+**PDF (ekran görüntülü):** `docs/production/pdf/KTB_ERP_Uretim_Modulu_Yeni_Hali.pdf`
 
 Bu belge, KTB ERP üretim modülünün **yeni halini** tanımlar: menü, ekranlar, sekmeler, iş kuralları, ekranlar arası bağlantılar ve kabul kriterleri. Canias PRD davranışı alınır; KTB’nin kendi form kabuğu (liste + sekmeli kart, yuvarlak lookup, formLinks, bağımsız scroll) korunur.
 
