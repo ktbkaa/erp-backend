@@ -2928,8 +2928,9 @@ const MODULES = [
         nameField: 'item_code',
         approveAction: { label: 'Onayla', path: '/uretim-emirleri/{id}/onayla' },
         secondaryAction: { label: 'Başlat', path: '/uretim-emirleri/{id}/baslat' },
-        detailFillAction: { label: 'Detayları Doldur', path: '/uretim-emirleri/{id}/detaylari-doldur' },
+        detailFillAction: { label: 'Malzemeleri Getir', path: '/uretim-emirleri/{id}/malzemeleri-doldur' },
         bomRotaChangeAction: { label: 'BOM/Rota Uygula', path: '/uretim-emirleri/{id}/bom-rota-degistir' },
+        routeOpsFillAction: { path: '/uretim-emirleri/{id}/operasyonlari-doldur' },
         filters: [
           { key: 'order_no', label: 'Emir no' },
           { key: 'item_code', label: 'Stok kodu' },
@@ -2941,7 +2942,7 @@ const MODULES = [
           { key: 'order_no', label: 'Emir', mono: true },
           { key: 'emir_tipi_kodu', label: 'Tip', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'sales_order_no', label: 'Sipariş', mono: true },
           { key: 'planned_quantity', label: 'Plan' },
           { key: 'produced_quantity', label: 'Üretilen' },
           { key: 'planned_firm', label: 'P/K' },
@@ -2981,8 +2982,8 @@ const MODULES = [
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           // 4) Planlama
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', group: 'planlama' },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date', group: 'planlama' },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
           { key: 'end_date', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
           { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama' },
           { key: 'issue_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
@@ -3116,8 +3117,8 @@ const MODULES = [
           { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', readOnly: true },
           { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', readOnly: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', readOnly: true },
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', readOnly: true },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date', readOnly: true },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', readOnly: true },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', readOnly: true },
           { key: 'approved_at', label: 'Onay zamanı', readOnly: true },
           { key: 'approved_by_user_code', label: 'Onaylayan', readOnly: true },
           { key: 'description', label: 'Açıklama', readOnly: true },
@@ -3143,14 +3144,17 @@ const MODULES = [
         endpoint: '/uretim-emirleri/siparis-adaylari',
         createEndpoint: '/uretim-emirleri/satis-siparisinden',
         crud: true,
+        numeratorSeri: 'URETIM_EMRI',
         codeField: 'order_no',
         nameField: 'item_code',
         filters: [
+          { key: 'wo_order_no', label: 'İş emri no' },
           { key: 'order_no', label: 'Sipariş' },
           { key: 'item_code', label: 'Stok' },
           { key: 'partner_name', label: 'Cari' },
         ],
         columns: [
+          { key: 'wo_order_no', label: 'İş emri no', mono: true },
           { key: 'order_no', label: 'Sipariş', mono: true },
           { key: 'partner_name', label: 'Cari' },
           { key: 'item_code', label: 'Stok', mono: true },
@@ -3163,8 +3167,13 @@ const MODULES = [
         masterFields: [
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
           { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
+          { key: 'order_no', label: 'İş emri no', code: true, group: 'kimlik' },
           { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', required: true, group: 'kimlik' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+          {
+            key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items-mamul',
+            valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik',
+            dependsOn: 'sales_order_id', filterBySalesOrderKey: 'sales_order_id',
+          },
           {
             key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
             valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
@@ -3177,15 +3186,22 @@ const MODULES = [
           },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
           { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik' },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
         ],
         formLinks: {
+          sales_order_id: [
+            { field: 'order_type_id', pick: 'defaultOrderTypeSip' },
+            { field: 'item_id', pick: 'soleItemFromSalesOrder' },
+          ],
           item_id: [
             { field: 'product_bom_id', pick: 'bomForItem' },
             { field: 'route_id', pick: 'routeForItem' },
             { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'planned_quantity', pick: 'qtyFromSalesOrderLine' },
             { field: 'component_warehouse_id', fromItem: 'default_issue_warehouse_id' },
             { field: 'fg_warehouse_id', fromItem: 'default_receipt_warehouse_id' },
           ],
@@ -8749,7 +8765,7 @@ function applyCompactDocumentShell(s) {
       if (!detailKeys.has(f.key)) {
         detail.push({
           ...f,
-          size: f.size || (f.type === 'date' || f.type === 'number' ? 'short' : undefined),
+          size: f.size || (f.type === 'date' || f.type === 'datetime' || f.type === 'number' ? 'short' : undefined),
         });
         detailKeys.add(f.key);
       }
@@ -9147,7 +9163,7 @@ function applyDefinitionLookup(field) {
   const def = TANIM_LOOKUP_BY_KEY[field.key];
   if (!def) return field;
   // select/checkbox/number/date veya zaten doğru lookup ise dokunma (label/required koru)
-  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'password') {
+  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'datetime' || field.type === 'password') {
     return field;
   }
   if (field.type === 'select' && Array.isArray(field.options) && field.options.length) {
@@ -9230,6 +9246,37 @@ function companiesForActiveScope(allRows) {
   return all.filter((r) => Number(r.id) === Number(aid));
 }
 
+function salesOrderLinesCacheKey(soId) {
+  return `sales-order-lines:${soId}`;
+}
+
+async function ensureSalesOrderLinesCache(soId) {
+  if (soId == null || soId === '') return [];
+  const key = salesOrderLinesCacheKey(soId);
+  if (Array.isArray(state.lookupCache[key])) return state.lookupCache[key];
+  try {
+    const order = await api(`/sales_orders/${encodeURIComponent(soId)}`);
+    const lines = Array.isArray(order?.kalemler)
+      ? order.kalemler
+      : (Array.isArray(order?.satirlar) ? order.satirlar : []);
+    const mapped = lines.map((l) => ({
+      ...l,
+      item_id: l.item_id,
+      item_code: l.item_code || l.stok_kodu_ref || '',
+      item_name: l.item_name || l.stok_adi_ref || '',
+      remaining_quantity: l.remaining_quantity
+        ?? l.kalan_sevk_miktar
+        ?? Math.max(0, Number(l.quantity || 0) - Number(l.shipped_quantity || 0)),
+      siparis_miktar: l.quantity,
+    }));
+    state.lookupCache[key] = mapped;
+    return mapped;
+  } catch (_) {
+    state.lookupCache[key] = [];
+    return [];
+  }
+}
+
 function lookupRowsForField(field, ctx = {}) {
   const all = state.lookupCache[field.lookup] || [];
   let rows = all;
@@ -9240,6 +9287,16 @@ function lookupRowsForField(field, ctx = {}) {
     if (bomId == null || bomId === '') return [];
     const ids = bomScopeItemIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
     rows = all.filter((r) => ids && ids.has(Number(r.id)));
+  }
+
+  if (field.filterBySalesOrderKey) {
+    const soId = ctx[field.filterBySalesOrderKey]
+      ?? state.formRecord?.[field.filterBySalesOrderKey];
+    if (soId == null || soId === '') return [];
+    const lines = state.lookupCache[salesOrderLinesCacheKey(soId)] || [];
+    const ids = new Set(lines.map((l) => String(l.item_id)).filter(Boolean));
+    if (!ids.size) return [];
+    rows = all.filter((r) => ids.has(String(r.id)));
   }
 
   if (field.lookup === 'companies' && !field.ignoreFirmaScope) {
@@ -9279,6 +9336,7 @@ function buildLookupOptionsHtml(field, value, rows) {
   let emptyLabel = '—';
   if (!(value || rows.length)) {
     if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı —';
+    else if (field.filterBySalesOrderKey) emptyLabel = '— önce sipariş —';
     else if (field.dependsOn) emptyLabel = '— önce üst alan —';
   }
   const opts = [`<option value="">${emptyLabel}</option>`].concat(
@@ -14595,7 +14653,15 @@ async function fetchLookupKey(key, query = null) {
     // İş yeri/depo lookup’ı aktif firmaya bağlı kalsın — org liste ekranları
     // openScreen’de skipFirma ile ayrı yüklenir; cache karışmasın.
     const rows = await api(ep, key === 'companies' ? { skipFirma: true } : {});
-    state.lookupCache[key] = Array.isArray(rows) ? rows : [];
+    let list = Array.isArray(rows) ? rows : [];
+    if (key === 'sales_orders') {
+      list = list.map((r) => ({
+        ...r,
+        partner_code: r.partner_code || r.cari_kodu_ref || '',
+        partner_name: r.partner_name || r.cari_adi_ref || '',
+      }));
+    }
+    state.lookupCache[key] = list;
     if (key === 'companies') state.companies = state.lookupCache[key];
     if (key === 'is-yerleri') state.isYerleri = state.lookupCache[key];
   } catch (_) {
@@ -14801,7 +14867,29 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const dv = v ? String(v).slice(0, 10) : '';
     return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
   }
+  if (field.type === 'datetime') {
+    const dv = toDatetimeLocalValue(v);
+    return `<input type="datetime-local" step="60" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
+  }
   return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
+}
+
+/** API / Date → datetime-local (YYYY-MM-DDTHH:mm) */
+function toDatetimeLocalValue(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date && !Number.isNaN(v.getTime())) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())}T${pad(v.getHours())}:${pad(v.getMinutes())}`;
+  }
+  const s = String(v).trim();
+  if (!s) return '';
+  // 2026-11-13T08:30:00.000Z / 2026-11-13 08:30:00 / 2026-11-13T08:30
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}):(\d{2})/);
+  if (m) return `${m[1]}T${m[2]}:${m[3]}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00`;
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) return toDatetimeLocalValue(d);
+  return '';
 }
 
 function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
@@ -19718,10 +19806,21 @@ const LOOKUP_BROWSER_COLUMNS = {
   ],
   sales_orders: [
     { key: 'order_no', label: 'Sipariş no', mono: true },
+    { key: 'partner_code', label: 'Cari kod', mono: true },
+    { key: 'partner_name', label: 'Cari adı' },
+    { key: 'order_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
   ],
   'uretim-emri-tipleri': [
     { key: 'type_code', label: 'Tip kodu', mono: true },
     { key: 'type_name', label: 'Tip adı' },
+  ],
+  'uretim-emirleri': [
+    { key: 'order_no', label: 'Emir no', mono: true },
+    { key: 'item_code', label: 'Stok', mono: true },
+    { key: 'item_name', label: 'Stok adı' },
+    { key: 'planned_quantity', label: 'Miktar', num: true },
+    { key: 'status', label: 'Durum' },
   ],
   'uretim-emir-operasyonlari': [
     { key: 'line_no', label: 'Sıra', mono: true },
@@ -19729,6 +19828,273 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'operation_name', label: 'Operasyon' },
     { key: 'status', label: 'Durum' },
     { key: 'order_no', label: 'Emir', mono: true },
+  ],
+  'satin-alma-talepleri': [
+    { key: 'requisition_no', label: 'Talep no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'requisition_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'satin-alma-teklifleri': [
+    { key: 'quotation_no', label: 'Teklif no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'quotation_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'satin-alma-siparisleri': [
+    { key: 'order_no', label: 'Sipariş no', mono: true },
+    { key: 'partner_code', label: 'Cari kod', mono: true },
+    { key: 'partner_name', label: 'Cari adı' },
+    { key: 'order_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'tedarikci-irsaliyeleri': [
+    { key: 'delivery_note_no', label: 'İrsaliye no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'delivery_note_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'mal-kabuller': [
+    { key: 'receipt_no', label: 'Kabul no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'receipt_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'satis-teklifleri': [
+    { key: 'quotation_no', label: 'Teklif no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'quotation_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'sevk-emirleri': [
+    { key: 'shipment_no', label: 'Sevk no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'shipment_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  delivery_notes: [
+    { key: 'delivery_note_no', label: 'İrsaliye no', mono: true },
+    { key: 'partner_code', label: 'Cari kod', mono: true },
+    { key: 'partner_name', label: 'Cari adı' },
+    { key: 'delivery_note_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'irsaliye-yonetimi': [
+    { key: 'delivery_note_no', label: 'İrsaliye no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'delivery_note_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'alis-faturalari': [
+    { key: 'invoice_no', label: 'Fatura no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'invoice_date', label: 'Tarih' },
+    { key: 'grand_total', label: 'Tutar', num: true },
+    { key: 'status', label: 'Durum' },
+  ],
+  'satis-faturalari': [
+    { key: 'invoice_no', label: 'Fatura no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'invoice_date', label: 'Tarih' },
+    { key: 'grand_total', label: 'Tutar', num: true },
+    { key: 'status', label: 'Durum' },
+  ],
+  'fatura-yonetimi': [
+    { key: 'invoice_no', label: 'Fatura no', mono: true },
+    { key: 'partner_name', label: 'Cari' },
+    { key: 'invoice_date', label: 'Tarih' },
+    { key: 'grand_total', label: 'Tutar', num: true },
+    { key: 'status', label: 'Durum' },
+  ],
+  'hareket-kodlari': [
+    { key: 'movement_code', label: 'Kod', mono: true },
+    { key: 'movement_name', label: 'Ad' },
+    { key: 'document_type', label: 'Belge tipi' },
+  ],
+  'hareket-kodlari-teklif': [
+    { key: 'movement_code', label: 'Kod', mono: true },
+    { key: 'movement_name', label: 'Ad' },
+  ],
+  'hareket-kodlari-siparis': [
+    { key: 'movement_code', label: 'Kod', mono: true },
+    { key: 'movement_name', label: 'Ad' },
+  ],
+  'hareket-kodlari-sevk': [
+    { key: 'movement_code', label: 'Kod', mono: true },
+    { key: 'movement_name', label: 'Ad' },
+  ],
+  'hareket-kodlari-irsaliye': [
+    { key: 'movement_code', label: 'Kod', mono: true },
+    { key: 'movement_name', label: 'Ad' },
+  ],
+  'hareket-kodlari-fatura': [
+    { key: 'movement_code', label: 'Kod', mono: true },
+    { key: 'movement_name', label: 'Ad' },
+  ],
+  'hareket-kodlari-stok': [
+    { key: 'movement_code', label: 'Kod', mono: true },
+    { key: 'movement_name', label: 'Ad' },
+  ],
+  'stok-partileri': [
+    { key: 'lot_no', label: 'Parti no', mono: true },
+    { key: 'item_code', label: 'Stok', mono: true },
+    { key: 'item_name', label: 'Stok adı' },
+    { key: 'quantity', label: 'Miktar', num: true },
+  ],
+  banks: [
+    { key: 'bank_code', label: 'Banka kodu', mono: true },
+    { key: 'bank_name', label: 'Banka adı' },
+  ],
+  languages: [
+    { key: 'language_code', label: 'Dil kodu', mono: true },
+    { key: 'language_name', label: 'Dil adı' },
+  ],
+  'odeme-kosullari': [
+    { key: 'payment_term_code', label: 'Kod', mono: true },
+    { key: 'payment_term_name', label: 'Ad' },
+  ],
+  'teslimat-kosullari': [
+    { key: 'delivery_term_code', label: 'Kod', mono: true },
+    { key: 'delivery_term_name', label: 'Ad' },
+  ],
+  'vergi-kodlari': [
+    { key: 'tax_code', label: 'Vergi kodu', mono: true },
+    { key: 'tax_name', label: 'Vergi adı' },
+    { key: 'rate', label: 'Oran', num: true },
+  ],
+  users: [
+    { key: 'user_code', label: 'Kullanıcı', mono: true },
+    { key: 'full_name', label: 'Ad soyad' },
+    { key: 'email', label: 'E-posta' },
+  ],
+  'kullanici-gruplari': [
+    { key: 'group_code', label: 'Grup kodu', mono: true },
+    { key: 'group_name', label: 'Grup adı' },
+  ],
+  'crm-adaylar': [
+    { key: 'lead_code', label: 'Aday kodu', mono: true },
+    { key: 'company_name', label: 'Firma / ad' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'crm-firsatlar': [
+    { key: 'opportunity_code', label: 'Fırsat kodu', mono: true },
+    { key: 'opportunity_name', label: 'Ad' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'crm-kontaklar': [
+    { key: 'contact_code', label: 'Kontak kodu', mono: true },
+    { key: 'first_name', label: 'Ad' },
+    { key: 'last_name', label: 'Soyad' },
+  ],
+  'crm-firsat-asamalari': [
+    { key: 'stage_code', label: 'Kod', mono: true },
+    { key: 'stage_name', label: 'Ad' },
+  ],
+  'crm-faaliyet-tipleri': [
+    { key: 'activity_type_code', label: 'Kod', mono: true },
+    { key: 'activity_type_name', label: 'Ad' },
+  ],
+  'prj-projeler': [
+    { key: 'project_code', label: 'Proje kodu', mono: true },
+    { key: 'project_name', label: 'Proje adı' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'prj-isler': [
+    { key: 'work_item_code', label: 'İş kodu', mono: true },
+    { key: 'title', label: 'Başlık' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'prj-project-types': [
+    { key: 'type_code', label: 'Kod', mono: true },
+    { key: 'type_name', label: 'Ad' },
+  ],
+  'prj-project-categories': [
+    { key: 'category_code', label: 'Kod', mono: true },
+    { key: 'category_name', label: 'Ad' },
+  ],
+  'prj-project-statuses': [
+    { key: 'status_code', label: 'Kod', mono: true },
+    { key: 'status_name', label: 'Ad' },
+  ],
+  'prj-project-priorities': [
+    { key: 'priority_code', label: 'Kod', mono: true },
+    { key: 'priority_name', label: 'Ad' },
+  ],
+  'prj-work-item-types': [
+    { key: 'type_code', label: 'Kod', mono: true },
+    { key: 'type_name', label: 'Ad' },
+  ],
+  'prj-work-item-statuses': [
+    { key: 'status_code', label: 'Kod', mono: true },
+    { key: 'status_name', label: 'Ad' },
+  ],
+  'prj-work-item-priorities': [
+    { key: 'priority_code', label: 'Kod', mono: true },
+    { key: 'priority_name', label: 'Ad' },
+  ],
+  'kategoriler-abc': [
+    { key: 'category_code', label: 'Kod', mono: true },
+    { key: 'category_name', label: 'Ad' },
+  ],
+  'kategoriler-marka': [
+    { key: 'category_code', label: 'Kod', mono: true },
+    { key: 'category_name', label: 'Ad' },
+  ],
+  'kategoriler-temin': [
+    { key: 'category_code', label: 'Kod', mono: true },
+    { key: 'category_name', label: 'Ad' },
+  ],
+  'kategoriler-sektor': [
+    { key: 'category_code', label: 'Kod', mono: true },
+    { key: 'category_name', label: 'Ad' },
+  ],
+  'kategoriler-region': [
+    { key: 'category_code', label: 'Kod', mono: true },
+    { key: 'category_name', label: 'Ad' },
+  ],
+  'kategoriler-cari': [
+    { key: 'category_code', label: 'Kod', mono: true },
+    { key: 'category_name', label: 'Ad' },
+  ],
+  'kategori-tipleri': [
+    { key: 'type_code', label: 'Kod', mono: true },
+    { key: 'type_name', label: 'Ad' },
+  ],
+  'muhasebe-hesaplari': [
+    { key: 'account_code', label: 'Hesap kodu', mono: true },
+    { key: 'account_name', label: 'Hesap adı' },
+  ],
+  'fiyat-listeleri': [
+    { key: 'price_list_code', label: 'Liste kodu', mono: true },
+    { key: 'price_list_name', label: 'Liste adı' },
+  ],
+  'kk-kontrol-planlari': [
+    { key: 'plan_code', label: 'Plan kodu', mono: true },
+    { key: 'plan_name', label: 'Plan adı' },
+  ],
+  'kk-ret-nedenleri': [
+    { key: 'reason_code', label: 'Kod', mono: true },
+    { key: 'reason_name', label: 'Ad' },
+  ],
+  'onay-rolleri': [
+    { key: 'role_code', label: 'Rol kodu', mono: true },
+    { key: 'role_name', label: 'Rol adı' },
+  ],
+  'onay-rota-tanim': [
+    { key: 'route_code', label: 'Rota kodu', mono: true },
+    { key: 'route_name', label: 'Rota adı' },
+  ],
+  'onay-message-sablonlari': [
+    { key: 'template_code', label: 'Şablon kodu', mono: true },
+    { key: 'template_name', label: 'Şablon adı' },
+  ],
+  'onay-message-template': [
+    { key: 'template_code', label: 'Şablon kodu', mono: true },
+    { key: 'template_name', label: 'Şablon adı' },
+  ],
+  'onay-kurallari': [
+    { key: 'rule_code', label: 'Kural kodu', mono: true },
+    { key: 'rule_name', label: 'Kural adı' },
   ],
   ekranlar: [
     { key: 'screen_code', label: 'Ekran kodu', mono: true },
@@ -19742,19 +20108,69 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'module_title', label: 'Modül' },
     { key: 'tech_id', label: 'Tech ID', mono: true },
   ],
+  'onay-ekranlari': [
+    { key: 'screen_code', label: 'Ekran kodu', mono: true },
+    { key: 'screen_name', label: 'Ekran adı' },
+    { key: 'module_title', label: 'Modül' },
+  ],
 };
 
-function lookupBrowserColumnsFor(field) {
+/** Satır örneklerinden kod / ad / miktar / belge kolonlarını çıkar. */
+function inferLookupBrowserColumns(sampleRows, field) {
+  const sample = Array.isArray(sampleRows) ? sampleRows.find((r) => r && typeof r === 'object') : null;
+  const keys = sample ? Object.keys(sample) : [];
+  const has = (re) => keys.find((k) => re.test(k));
+  const cols = [];
+  const push = (key, label, opts = {}) => {
+    if (!key || cols.some((c) => c.key === key)) return;
+    cols.push({ key, label, ...opts });
+  };
+
+  if (field?.codeKey) push(field.codeKey, 'Kod', { mono: true });
+  if (field?.labelKey && field.labelKey !== field.codeKey) push(field.labelKey, 'Ad');
+
+  const codeKey = has(/^(.*_)?code$/i) || has(/_kodu$/i) || has(/^(order|invoice|delivery_note|receipt|shipment|quotation|requisition|lot|project|work_item|opportunity|lead|contact|movement|account|bank|user|group|plan|reason|rule|role|template|type|stage|status|priority|category|payment_term|delivery_term|tax|language)_no$/i);
+  const nameKey = has(/^(.*_)?name$/i) || has(/_adi$/i) || has(/^title$/i) || has(/^full_name$/i);
+  const docKey = has(/_(no|number)$/i) || has(/^(document|belge)_/i);
+  const qtyKey = has(/^(planned_|remaining_|ordered_|shipped_|quantity|miktar|qty|grand_total|amount|bakiye|kullanilabilir)/i);
+  const partnerName = has(/^partner_name$/i);
+  const partnerCode = has(/^partner_code$/i);
+  const itemCode = has(/^item_code$/i);
+  const itemName = has(/^item_name$/i);
+  const statusKey = has(/^status$/i) || has(/_status$/i) || has(/^durum$/i);
+  const dateKey = has(/_date$/i) || has(/^tarih$/i);
+
+  if (!field?.codeKey) {
+    if (docKey) push(docKey, 'Belge no', { mono: true });
+    else if (codeKey) push(codeKey, 'Kod', { mono: true });
+  }
+  if (partnerCode) push(partnerCode, 'Cari kod', { mono: true });
+  if (partnerName) push(partnerName, 'Cari adı');
+  if (itemCode && itemCode !== field?.codeKey) push(itemCode, 'Stok', { mono: true });
+  if (itemName && itemName !== field?.labelKey) push(itemName, 'Stok adı');
+  if (!field?.labelKey && nameKey && nameKey !== codeKey && nameKey !== docKey) push(nameKey, 'Ad');
+  if (qtyKey) push(qtyKey, /total|tutar|amount/i.test(qtyKey) ? 'Tutar' : 'Miktar', { num: true });
+  if (dateKey) push(dateKey, 'Tarih');
+  if (statusKey) push(statusKey, 'Durum');
+
+  if (!cols.length && field?.valueKey) push(field.valueKey, 'Değer');
+  if (!cols.length && keys.includes('id')) push('id', 'Id', { mono: true });
+  return cols.slice(0, 6);
+}
+
+function lookupBrowserColumnsFor(field, sampleRows = null) {
   if (field?.lookup && LOOKUP_BROWSER_COLUMNS[field.lookup]) {
     return LOOKUP_BROWSER_COLUMNS[field.lookup].map((c) => ({ ...c }));
   }
+  if (Array.isArray(field?.options)) {
+    return [{ key: '_opt', label: field.label || 'Seçenek' }];
+  }
+  const inferred = inferLookupBrowserColumns(sampleRows, field);
+  if (inferred.length) return inferred;
   const cols = [];
   if (field?.codeKey) cols.push({ key: field.codeKey, label: 'Kod', mono: true });
   if (field?.labelKey) cols.push({ key: field.labelKey, label: 'Ad' });
   if (!cols.length && field?.valueKey) cols.push({ key: field.valueKey, label: 'Değer' });
-  if (!cols.length && Array.isArray(field?.options)) {
-    return [{ key: '_opt', label: 'Seçenek' }];
-  }
   return cols.length ? cols : [{ key: 'id', label: 'Id' }];
 }
 
@@ -20112,6 +20528,9 @@ async function reloadLookupBrowserRows() {
   let rows = [];
   if (field.type === 'lookup' && field.lookup) {
     invalidateLookups(field.lookup);
+    if (field.filterBySalesOrderKey) {
+      await ensureSalesOrderLinesCache(ctx?.[field.filterBySalesOrderKey]);
+    }
     const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
       ? { [field.filterKey]: ctx[field.dependsOn] }
       : null;
@@ -20127,12 +20546,15 @@ async function reloadLookupBrowserRows() {
       .filter((o) => o.value !== '')
       .map((o) => ({ _opt: o.value, _label: o.textContent }));
   }
-  let cols = lookupBrowserColumnsFor(field);
+  let cols = lookupBrowserColumnsFor(field, rows);
   if (st.valueKey === '_opt' && cols[0]?.key === '_opt') {
     cols = [{ key: '_opt', label: field.label || 'Seçenek' }];
   }
   const enriched = await enrichLookupRowsWithQty(field, rows, ctx);
   st.allRows = enriched.rows;
+  if (!LOOKUP_BROWSER_COLUMNS[field?.lookup]) {
+    cols = lookupBrowserColumnsFor(field, enriched.rows);
+  }
   st.cols = enriched.qtyCol ? cols.concat([enriched.qtyCol]) : cols;
   if (st.selectedVal) {
     st.selectedRow = st.allRows.find((r) => String(lookupBrowserRowValue(r, st.valueKey)) === String(st.selectedVal)) || null;
@@ -20157,6 +20579,10 @@ async function openLookupBrowserForSelect(sel) {
         return;
       }
     }
+    if (field.filterBySalesOrderKey) {
+      const soId = ctx?.[field.filterBySalesOrderKey];
+      await ensureSalesOrderLinesCache(soId);
+    }
     const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
       ? { [field.filterKey]: ctx[field.dependsOn] }
       : null;
@@ -20164,6 +20590,19 @@ async function openLookupBrowserForSelect(sel) {
     await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
     valueKey = field.valueKey || 'id';
+    if (field.filterBySalesOrderKey) {
+      const lines = state.lookupCache[salesOrderLinesCacheKey(ctx?.[field.filterBySalesOrderKey])] || [];
+      const byItem = new Map(lines.map((l) => [String(l.item_id), l]));
+      rows = rows.map((r) => {
+        const l = byItem.get(String(r.id));
+        if (!l) return r;
+        return {
+          ...r,
+          _siparis_miktar: l.siparis_miktar ?? l.quantity ?? '',
+          _kalan_miktar: l.remaining_quantity ?? '',
+        };
+      });
+    }
   } else if (Array.isArray(field.options) && field.options.length) {
     rows = field.options.map((o) => ({ _opt: o }));
     valueKey = '_opt';
@@ -20174,13 +20613,23 @@ async function openLookupBrowserForSelect(sel) {
     valueKey = '_opt';
   }
 
-  let cols = lookupBrowserColumnsFor(field);
+  const enriched = await enrichLookupRowsWithQty(field, rows, ctx);
+  rows = enriched.rows;
+  let cols = lookupBrowserColumnsFor(field, rows);
   if (valueKey === '_opt' && cols[0]?.key === '_opt') {
     cols = [{ key: '_opt', label: field.label || 'Seçenek' }];
   }
-  const enriched = await enrichLookupRowsWithQty(field, rows, ctx);
-  rows = enriched.rows;
-  if (enriched.qtyCol) cols = cols.concat([enriched.qtyCol]);
+  if (field.filterBySalesOrderKey) {
+    if (!cols.some((c) => c.key === '_siparis_miktar')) {
+      cols = cols.concat([{ key: '_siparis_miktar', label: 'Sip. miktar', num: true }]);
+    }
+    if (!cols.some((c) => c.key === '_kalan_miktar')) {
+      cols = cols.concat([{ key: '_kalan_miktar', label: 'Kalan', num: true }]);
+    }
+  }
+  if (enriched.qtyCol && !cols.some((c) => c.key === enriched.qtyCol.key)) {
+    cols = cols.concat([enriched.qtyCol]);
+  }
 
   const targetScreen = field.lookup ? screenForLookupKey(field.lookup) : null;
   const initialVal = sel.value || '';
@@ -20774,6 +21223,98 @@ function pickDefaultRouteForItem(itemId, bomId = null) {
   return rows.slice().sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
 }
 
+function pickDefaultOrderTypeSip() {
+  const rows = state.lookupCache['uretim-emri-tipleri'] || [];
+  const sip = rows.find((r) => String(r.type_code || '').toUpperCase() === 'SIP');
+  if (sip) return sip;
+  const aktif = rows.find((r) => r.is_active !== false);
+  return aktif || rows[0] || null;
+}
+
+function pickSoleItemFromSalesOrder(soId) {
+  const lines = state.lookupCache[salesOrderLinesCacheKey(soId)] || [];
+  const uniq = [];
+  const seen = new Set();
+  for (const l of lines) {
+    const id = l.item_id;
+    if (id == null || id === '' || seen.has(String(id))) continue;
+    seen.add(String(id));
+    uniq.push(id);
+  }
+  return uniq.length === 1 ? uniq[0] : '';
+}
+
+function pickQtyFromSalesOrderLine(soId, itemId) {
+  if (!soId || !itemId) return '';
+  const lines = state.lookupCache[salesOrderLinesCacheKey(soId)] || [];
+  const line = lines.find((l) => String(l.item_id) === String(itemId));
+  if (!line) return '';
+  const qty = line.remaining_quantity != null ? line.remaining_quantity : line.siparis_miktar;
+  return qty == null || qty === '' ? '' : qty;
+}
+
+/** Rota başlığından iş emri operasyon satırlarını formda üret (kayıtsız önizleme). */
+async function fillWoOpsFromRouteClient(routeId, plannedQty) {
+  if (!routeId) return [];
+  try {
+    const rota = await api(`/routings/${encodeURIComponent(routeId)}`);
+    const ops = Array.isArray(rota?.operasyonlar) ? rota.operasyonlar : [];
+    const plan = Number(plannedQty) || 0;
+    return ops.map((op, i) => ({
+      line_no: op.line_no != null ? op.line_no : (i + 1),
+      operation_code: op.operation_code || '',
+      operation_name: op.operation_name || '',
+      work_center_id: op.work_center_id || '',
+      planned_quantity: plan || op.planned_quantity || '',
+      produced_quantity: 0,
+      status: 'Bekliyor',
+      ilk_operasyon: i === 0,
+      son_operasyon: i === ops.length - 1,
+      _satir_kayitli: true,
+      _satir_duzenleniyor: false,
+    }));
+  } catch (_) {
+    return [];
+  }
+}
+
+async function autoFillWoRouteOps(screen) {
+  if (!screen || screen.id !== 'uretim-emirleri') return;
+  const routeEl = document.querySelector('select[data-master="route_id"], input[data-master="route_id"]');
+  const routeId = routeEl?.value || state.formRecord?.route_id;
+  if (!routeId) return;
+  const qty = state.formRecord?.planned_quantity
+    || document.querySelector('[data-master="planned_quantity"]')?.value
+    || '';
+  const recId = state.formRecord?.id;
+  const canPersist = Boolean(recId)
+    && state.formMode !== 'yeni'
+    && !state.formRecord?.is_started
+    && Number(state.formRecord?.produced_quantity || 0) <= 0
+    && !['Kapali', 'Iptal'].includes(state.formRecord?.status)
+    && screen.routeOpsFillAction?.path;
+
+  if (canPersist) {
+    try {
+      const path = screen.routeOpsFillAction.path.replace('{id}', recId);
+      const result = await api(path, {
+        method: 'POST',
+        body: JSON.stringify({ route_id: routeId }),
+      });
+      state.formRecord = result;
+      renderForm(screen);
+      return;
+    } catch (_) {
+      /* client fallback */
+    }
+  }
+
+  const ops = await fillWoOpsFromRouteClient(routeId, qty);
+  if (!ops.length) return;
+  state.formRecord = { ...(state.formRecord || {}), operasyonlar: ops };
+  renderForm(screen);
+}
+
 function syncLookupNameRo(sel) {
   if (!(sel instanceof HTMLSelectElement)) return;
   const pair = sel.closest('.lookup-pair');
@@ -20832,6 +21373,15 @@ function resolveFormLinkValue(rule, ctx) {
   }
   if (rule.pick === 'routeForBom') {
     return pickDefaultRouteForItem(itemId, ctx.product_bom_id || ctx[rule.bomKey || 'product_bom_id'])?.id ?? '';
+  }
+  if (rule.pick === 'defaultOrderTypeSip') {
+    return pickDefaultOrderTypeSip()?.id ?? '';
+  }
+  if (rule.pick === 'soleItemFromSalesOrder') {
+    return pickSoleItemFromSalesOrder(ctx.sales_order_id) || '';
+  }
+  if (rule.pick === 'qtyFromSalesOrderLine') {
+    return pickQtyFromSalesOrderLine(ctx.sales_order_id, itemId);
   }
   if (rule.value != null) return rule.value;
   return '';
@@ -20897,7 +21447,8 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
     : [];
 
   const rules = [...(links || []), ...detailStokRules];
-  if (!rules.length) return;
+  const routeChanged = changedKey === 'route_id' && screen.id === 'uretim-emirleri' && !isDetail;
+  if (!rules.length && !routeChanged && changedKey !== 'sales_order_id') return;
 
   _formLinking = true;
   try {
@@ -20908,6 +21459,17 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
         fetchLookupKey('routings'),
         fetchLookupKey('items'),
         fetchLookupKey('items-mamul'),
+        fetchLookupKey('uretim-emri-tipleri'),
+      ]);
+    }
+    if (changedKey === 'sales_order_id') {
+      const soId = changedEl.type === 'checkbox' ? changedEl.checked : changedEl.value;
+      await Promise.all([
+        ensureSalesOrderLinesCache(soId),
+        fetchLookupKey('uretim-emri-tipleri'),
+        fetchLookupKey('items-mamul'),
+        fetchLookupKey('urun-agaclari'),
+        fetchLookupKey('routings'),
       ]);
     }
 
@@ -20989,16 +21551,23 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
       }
     }
 
-    if (filled.length && stokChanged) {
-      const labels = filled.map((k) => {
-        if (k === 'product_bom_id') return 'ürün ağacı';
-        if (k === 'route_id') return 'rota';
-        if (k === 'uom_code') return 'birim';
-        if (k.includes('warehouse')) return 'depo';
-        return k;
-      });
-      const uniq = [...new Set(labels)];
-      toast(`Stok bağlantısı: ${uniq.join(', ')} dolduruldu`);
+    // Siparişten iş emri: stok (tek kalem veya temizleme) sonrası ağaç/rota zinciri
+    if (changedKey === 'sales_order_id' && filled.includes('item_id')) {
+      const itemEl = findLinkedTargetEl('item_id', scope);
+      if (itemEl) {
+        _formLinking = false;
+        await applyFormLinkages(screen, 'item_id', itemEl);
+        return;
+      }
+    }
+
+    // Üretim emri: rota yazılınca (doğrudan veya stok/ağaç zinciriyle) rota satırlarını doldur
+    const routeFilled = routeChanged
+      || (screen.id === 'uretim-emirleri' && !isDetail && filled.includes('route_id'));
+    if (routeFilled && (ctx.route_id || document.querySelector('[data-master="route_id"]')?.value)) {
+      _formLinking = false;
+      await autoFillWoRouteOps(screen);
+      return;
     }
   } finally {
     _formLinking = false;
@@ -22324,7 +22893,11 @@ async function openForm(mode, opts = {}) {
         product_bom_id: adayPrefill.onerilen_agac_id || '',
         route_id: adayPrefill.onerilen_rota_id || '',
         planned_quantity: adayPrefill.remaining_quantity || adayPrefill.siparis_miktar || '',
+        order_type_id: pickDefaultOrderTypeSip()?.id || '',
       });
+      if (adayPrefill.sales_order_id) {
+        await ensureSalesOrderLinesCache(adayPrefill.sales_order_id);
+      }
     }
     if (adayPrefill && screen.id === 'toplu-is-emri') {
       record.kalemler = [{
@@ -22406,6 +22979,10 @@ async function openForm(mode, opts = {}) {
       uom_code: record.stok_birim || record.uom_code || '',
       _satir_kayitli: true,
     }];
+  }
+
+  if (record.sales_order_id && (screen.id === 'siparis-is-emri' || screen.id === 'toplu-is-emri' || screen.id === 'uretim-emirleri')) {
+    await ensureSalesOrderLinesCache(record.sales_order_id);
   }
 
   state.formRecord = record;
@@ -24102,17 +24679,19 @@ function bindEvents() {
         return;
       }
       if (!rec?.id) return;
-      if (!window.confirm('Malzeme ve rota satırları ürün ağacı + rotadan yeniden doldurulacak. Devam?')) return;
       try {
+        // Formdaki ürün ağacı / depo değişikliklerini önce kaydet, sonra malzemeleri çek
+        const master = readMasterFromForm(screen);
+        await api(`${screenApiBase(screen.endpoint)}/${rec.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ ...rec, ...master, operasyonlar: undefined, malzemeler: undefined }),
+        }).catch(() => null);
         const path = screen.detailFillAction.path.replace('{id}', rec.id);
         const result = await api(path, { method: 'POST', body: JSON.stringify({}) });
-        const nMal = result._doldurulan?.material ?? (result.malzemeler || []).length;
-        const nOp = result._doldurulan?.operasyon ?? (result.operasyonlar || []).length;
-        toast(`${screen.detailFillAction.label}: ${nMal} malzeme, ${nOp} operasyon.`);
         state.formRecord = result;
         renderForm(screen);
       } catch (err) {
-        toast(err.message || 'Detay doldurma başarısız');
+        toast(err.message || 'Malzemeler getirilemedi');
       }
     });
   }
@@ -24130,7 +24709,6 @@ function bindEvents() {
         toast('Ürün ağacı veya rota seçin.');
         return;
       }
-      if (!window.confirm('Formdaki ürün ağacı / rota emre uygulanacak; malzemeler ve operasyonlar yenilenecek. Devam?')) return;
       try {
         const path = screen.bomRotaChangeAction.path.replace('{id}', rec.id);
         const result = await api(path, {
@@ -24141,7 +24719,6 @@ function bindEvents() {
             detaylari_doldur: true,
           }),
         });
-        toast(screen.bomRotaChangeAction.label + ' tamam.');
         state.formRecord = result;
         renderForm(screen);
       } catch (err) {
@@ -24308,20 +24885,14 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: rows.length - 1 };
       } else if (act === 'duzelt') {
-        if (state.gridSel.key !== key || state.gridSel.idx == null) {
-          toast('Düzeltmek için önce bir satır seçin.');
-          return;
-        }
+        if (state.gridSel.key !== key || state.gridSel.idx == null) return;
         rows.forEach((r, i) => {
           if (!r) return;
           r._satir_duzenleniyor = i === state.gridSel.idx;
         });
         state.formRecord[key] = rows;
       } else if (act === 'sil') {
-        if (state.gridSel.key !== key || state.gridSel.idx == null) {
-          toast('Silmek için önce bir satır seçin.');
-          return;
-        }
+        if (state.gridSel.key !== key || state.gridSel.idx == null) return;
         const doomedIdx = state.gridSel.idx;
         const doomed = rows[doomedIdx];
         (async () => {

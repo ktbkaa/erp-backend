@@ -207,6 +207,7 @@ async function createOrder(client, opts) {
         planned_quantity,
         sales_order_id,
         order_type_id,
+        order_no: orderNoOpt,
         status,
         is_started,
         issue_type,
@@ -239,7 +240,10 @@ async function createOrder(client, opts) {
     });
 
     const stok = await client.query('SELECT uom_code FROM items WHERE id=$1', [item_id]);
-    const no = await nextDocumentNo(client, 'URETIM_EMRI');
+    const providedNo = orderNoOpt != null && String(orderNoOpt).trim() !== ''
+      ? String(orderNoOpt).trim()
+      : null;
+    const no = providedNo || await nextDocumentNo(client, 'URETIM_EMRI');
     const durumVal = status || (sales_order_id ? 'OnayBekliyor' : 'Acik');
     const emir = await client.query(
         `
@@ -484,6 +488,8 @@ router.get('/siparis-adaylari', async (req, res) => {
                 sd.quantity AS siparis_miktar,
                 COALESCE(ue_sum.uretim_plan, 0) AS uretim_planlanan,
                 GREATEST(sd.quantity - COALESCE(ue_sum.uretim_plan, 0), 0) AS remaining_quantity,
+                ue_last.order_no AS wo_order_no,
+                ue_last.id AS wo_order_id,
                 ua.id AS onerilen_agac_id,
                 ua.bom_code AS onerilen_agac_kodu,
                 r.id AS onerilen_rota_id,
@@ -498,6 +504,14 @@ router.get('/siparis-adaylari', async (req, res) => {
                 WHERE ue.sales_order_id = s.id AND ue.item_id = sd.item_id
                   AND ue.status NOT IN ('Iptal')
             ) ue_sum ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT ue3.id, ue3.order_no
+                FROM production_orders ue3
+                WHERE ue3.sales_order_id = s.id AND ue3.item_id = sd.item_id
+                  AND ue3.status NOT IN ('Iptal')
+                ORDER BY ue3.id DESC
+                LIMIT 1
+            ) ue_last ON TRUE
             LEFT JOIN LATERAL (
                 SELECT ua2.id, ua2.bom_code
                 FROM boms ua2
@@ -782,6 +796,10 @@ router.post('/satis-siparisinden', async (req, res) => {
             fg_warehouse_id,
             planned_quantity,
             order_type_id,
+            order_no,
+            plan_start,
+            plan_end,
+            uom_code,
         } = req.body;
         if (!sales_order_id || !item_id || !product_bom_id || !route_id || !component_warehouse_id || !fg_warehouse_id) {
             return res.status(400).json({
@@ -814,6 +832,10 @@ router.post('/satis-siparisinden', async (req, res) => {
                 planned_quantity: quantity,
                 sales_order_id,
                 order_type_id,
+                order_no,
+                plan_start: plan_start || null,
+                plan_end: plan_end || null,
+                uom_code,
                 status: 'OnayBekliyor',
             })
         );
@@ -1756,6 +1778,69 @@ router.post('/:id/detaylari-doldur', async (req, res) => {
                 hammaddeDepoId: e.component_warehouse_id,
             });
             return { operasyon: opN, material: malN };
+        });
+        const emir = await getQcOrder(req.params.id);
+        res.json({ ...emir, _doldurulan: result });
+    } catch (err) {
+        res.status(400).json({ hata: err.message });
+    }
+});
+
+/** Yalnızca ürün ağacından malzeme satırlarını doldurur. */
+router.post('/:id/malzemeleri-doldur', async (req, res) => {
+    try {
+        const result = await withTransaction(pool, async (client) => {
+            await canFillOrderDetails(client, req.params.id);
+            const emir = await client.query('SELECT * FROM production_orders WHERE id=$1', [req.params.id]);
+            const e = emir.rows[0];
+            if (!e?.product_bom_id) throw new Error('Ürün ağacı seçilmemiş.');
+            const agac = await client.query('SELECT * FROM boms WHERE id=$1', [e.product_bom_id]);
+            if (!agac.rows[0]) throw new Error('Ürün ağacı bulunamadı.');
+            const malN = await fillOrderMaterials(client, e.id, {
+                urunAgaciId: e.product_bom_id,
+                planlananMiktar: e.planned_quantity,
+                agacMiktar: agac.rows[0].quantity,
+                hammaddeDepoId: e.component_warehouse_id,
+            });
+            return { material: malN };
+        });
+        const emir = await getQcOrder(req.params.id);
+        res.json({ ...emir, _doldurulan: result });
+    } catch (err) {
+        res.status(400).json({ hata: err.message });
+    }
+});
+
+/** Yalnızca rotadan operasyon satırlarını doldurur. Body: { route_id? } */
+router.post('/:id/operasyonlari-doldur', async (req, res) => {
+    try {
+        const result = await withTransaction(pool, async (client) => {
+            await canFillOrderDetails(client, req.params.id);
+            const emir = await client.query('SELECT * FROM production_orders WHERE id=$1', [req.params.id]);
+            const e = emir.rows[0];
+            const bodyRoute = req.body?.route_id;
+            if (bodyRoute != null && bodyRoute !== '' && Number(bodyRoute) !== Number(e.route_id)) {
+                await client.query('UPDATE production_orders SET route_id=$2 WHERE id=$1', [e.id, Number(bodyRoute)]);
+                e.route_id = Number(bodyRoute);
+            }
+            if (!e?.route_id) throw new Error('Rota seçilmemiş.');
+            const rotaOps = await client.query(
+                'SELECT * FROM routing_operations WHERE route_id=$1 ORDER BY line_no',
+                [e.route_id],
+            );
+            if (!rotaOps.rows.length) throw new Error('Rotada operasyon yok.');
+            let carpan = Number(e.planned_quantity) || 1;
+            if (e.product_bom_id) {
+                const agac = await client.query('SELECT quantity FROM boms WHERE id=$1', [e.product_bom_id]);
+                const agacQty = Number(agac.rows[0]?.quantity || 1) || 1;
+                carpan = Number(e.planned_quantity) / agacQty;
+            }
+            const opN = await fillOrderOperations(client, e.id, {
+                rotaOps: rotaOps.rows,
+                planlananMiktar: e.planned_quantity,
+                bilesenCarpan: carpan,
+            });
+            return { operasyon: opN };
         });
         const emir = await getQcOrder(req.params.id);
         res.json({ ...emir, _doldurulan: result });
