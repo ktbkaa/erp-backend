@@ -11115,44 +11115,64 @@ async function showStokHareketOnizle(row) {
   });
 }
 
-async function showListContextMenu(screen, clientX, clientY) {
+async function showListContextMenu(screen, clientX, clientY, opts = {}) {
   const menu = $('#listCtxMenu');
   if (!menu || !screen) return;
+  const mode = opts.mode || 'list'; // list | header
   const row = selectedRow() || {};
   const parts = [];
-  (screen.contextMenu || []).forEach((item) => {
-    parts.push(`<button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
-      data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(item.label)}</button>`);
-  });
-  // Belge bağlantısı (form sağ tık ile aynı zincir) — aday→cari vb.
-  if (row.id) {
-    const baglanti = await buildFormBaglantiMenuItems(screen, row);
-    if (baglanti.length) {
-      if (parts.length) parts.push('<div class="ctx-sep"></div>');
-      parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
-      baglanti.forEach((it) => {
-        if (it.type === 'heading') {
-          parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
-          return;
-        }
-        if (it.type === 'sep') {
-          parts.push('<div class="ctx-sep"></div>');
-          return;
-        }
-        const dis = it.enabled ? '' : 'disabled class="is-disabled"';
-        const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
-        parts.push(`<button type="button" role="menuitem" ${dis}${title}
-          data-list-ctx="baglanti:${escAttr(it.id)}"
-          data-open-screen="${escAttr(it.screenId || '')}"
-          data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
-      });
+
+  if (mode === 'header') {
+    parts.push('<button type="button" role="menuitem" data-list-ctx="liste-ayarlari">Liste ayarları…</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="ayarlari-kaydet">Ayarları kaydet</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="varsayilan-duzen">Varsayılan düzene dön</button>');
+    parts.push('<div class="ctx-sep"></div>');
+    parts.push('<span class="ctx-heading">Dışarı al</span>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-pdf">PDF</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-excel">Excel</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-word">Word</button>');
+  } else {
+    (screen.contextMenu || []).forEach((item) => {
+      parts.push(`<button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
+        data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(item.label)}</button>`);
+    });
+    // Belge bağlantısı (form sağ tık ile aynı zincir) — aday→cari vb.
+    if (row.id) {
+      const baglanti = await buildFormBaglantiMenuItems(screen, row);
+      if (baglanti.length) {
+        if (parts.length) parts.push('<div class="ctx-sep"></div>');
+        parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
+        baglanti.forEach((it) => {
+          if (it.type === 'heading') {
+            parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
+            return;
+          }
+          if (it.type === 'sep') {
+            parts.push('<div class="ctx-sep"></div>');
+            return;
+          }
+          const dis = it.enabled ? '' : 'disabled class="is-disabled"';
+          const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
+          parts.push(`<button type="button" role="menuitem" ${dis}${title}
+            data-list-ctx="baglanti:${escAttr(it.id)}"
+            data-open-screen="${escAttr(it.screenId || '')}"
+            data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
+        });
+      }
     }
+    if (parts.length) parts.push('<div class="ctx-sep"></div>');
+    parts.push('<span class="ctx-heading">Dışarı al</span>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-pdf">PDF</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-excel">Excel</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-word">Word</button>');
+    parts.push('<div class="ctx-sep"></div>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="liste-ayarlari">Liste ayarları…</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="ayarlari-kaydet">Ayarları kaydet</button>');
+    parts.push('<div class="ctx-sep"></div>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="excel-sablon">Excel şablon indir</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="excel-al">Excel’den veri al</button>');
   }
-  // Excel — her listede sağ tık
-  if (parts.length) parts.push('<div class="ctx-sep"></div>');
-  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-sablon">Excel şablon indir</button>');
-  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-al">Excel’den veri al</button>');
-  if (!parts.length) return;
+
   menu.innerHTML = parts.join('');
   menu.hidden = false;
   positionCtxMenu(menu, clientX, clientY);
@@ -11165,8 +11185,36 @@ async function showListContextMenu(screen, clientX, clientY) {
       e.preventDefault();
       menu.hidden = true;
       const act = btn.getAttribute('data-list-ctx');
+      const scr = findScreen(state.screenId);
       if (act === 'onizle') {
         showStokHareketOnizle(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'export-pdf') {
+        try { exportListAsPdf(); } catch (err) { toast(err.message); }
+        return;
+      }
+      if (act === 'export-excel') {
+        try { exportListAsExcel(); } catch (err) { toast(err.message); }
+        return;
+      }
+      if (act === 'export-word') {
+        try { exportListAsWord(); } catch (err) { toast(err.message); }
+        return;
+      }
+      if (act === 'liste-ayarlari') {
+        openListSettingsPopup(scr);
+        return;
+      }
+      if (act === 'ayarlari-kaydet') {
+        persistCurrentListLayout(state.screenId);
+        return;
+      }
+      if (act === 'varsayilan-duzen') {
+        clearListLayout(state.screenId);
+        if (state._listLayoutOverride) delete state._listLayoutOverride[state.screenId];
+        if (scr) renderList(scr);
+        toast('Varsayılan liste düzenine dönüldü.');
         return;
       }
       if (act === 'excel-sablon') {
@@ -12825,10 +12873,185 @@ function renderFilterPane(screen) {
   syncBetweenInputs(screen);
 }
 
-/** Tüm listelerde ilk sütun: satır ID (ekran kolonlarında yoksa eklenir). */
-function listColumns(screen) {
-  const cols = (screen.columns || []).filter((c) => c.key !== 'id');
+/** Liste kolon düzeni — kullanıcı tercihi (sıra + gizlenenler), ekran bazında. */
+const LIST_LAYOUT_STORAGE_KEY = 'ktb_list_layout_v1';
+
+function listLayoutStorageKey(screenId) {
+  const user = state.session?.user_code || state.user?.user_code || localStorage.getItem('ktb_kullanici_kodu') || 'anon';
+  return `${LIST_LAYOUT_STORAGE_KEY}:${user}:${screenId}`;
+}
+
+function loadListLayout(screenId) {
+  if (!screenId) return null;
+  if (state._listLayoutOverride?.[screenId]) return state._listLayoutOverride[screenId];
+  try {
+    const raw = localStorage.getItem(listLayoutStorageKey(screenId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.order)) return null;
+    return {
+      order: parsed.order.map(String),
+      hidden: Array.isArray(parsed.hidden) ? parsed.hidden.map(String) : [],
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveListLayout(screenId, layout) {
+  if (!screenId || !layout) return;
+  const payload = {
+    order: (layout.order || []).map(String),
+    hidden: (layout.hidden || []).map(String),
+    savedAt: new Date().toISOString(),
+  };
+  localStorage.setItem(listLayoutStorageKey(screenId), JSON.stringify(payload));
+}
+
+function clearListLayout(screenId) {
+  if (!screenId) return;
+  localStorage.removeItem(listLayoutStorageKey(screenId));
+}
+
+function humanizeListFieldKey(key) {
+  const map = {
+    id: 'ID',
+    item_code: 'Stok kodu',
+    item_name: 'Stok adı',
+    warehouse_code: 'Depo kodu',
+    warehouse_name: 'Depo adı',
+    plant_code: 'İş yeri kodu',
+    plant_name: 'İş yeri adı',
+    company_code: 'Firma kodu',
+    company_name: 'Firma adı',
+    partner_code: 'Cari kodu',
+    partner_name: 'Cari adı',
+    order_no: 'Belge no',
+    uom_code: 'Birim',
+    status: 'Durum',
+    description: 'Açıklama',
+  };
+  if (map[key]) return map[key];
+  return String(key || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR'));
+}
+
+/** Ekran tanımı + master alanlardan tüm bilinen kolon adayları. */
+function listColumnCatalog(screen) {
+  const byKey = new Map();
+  const add = (key, label, extra = {}) => {
+    if (!key || key === 'id') return;
+    if (!byKey.has(key)) byKey.set(key, { key, label: label || humanizeListFieldKey(key), ...extra });
+  };
+  (screen.columns || []).forEach((c) => add(c.key, c.label, { mono: c.mono, type: c.type }));
+  (screen.masterFields || []).forEach((f) => {
+    if (!f?.key || f.type === 'static') return;
+    add(f.key, f.label, { type: f.type, mono: Boolean(f.code) });
+    if (f.codeKey && f.codeKey !== f.key) add(f.codeKey, `${f.label || f.key} kodu`, { mono: true });
+    if (f.labelKey && f.labelKey !== f.key) add(f.labelKey, `${f.label || f.key} adı`);
+  });
+  (screen.filters || []).forEach((f) => add(f.key, f.label, { type: f.type }));
+  // Satır verisinden gelen ek alanlar (API join)
+  const sample = (state.rows || []).slice(0, 25);
+  sample.forEach((row) => {
+    if (!row || typeof row !== 'object') return;
+    Object.keys(row).forEach((k) => {
+      if (k.startsWith('_')) return;
+      if (typeof row[k] === 'object' && row[k] !== null) return;
+      add(k, humanizeListFieldKey(k));
+    });
+  });
+  return byKey;
+}
+
+function defaultListColumnDefs(screen) {
+  const catalog = listColumnCatalog(screen);
+  const cols = (screen.columns || [])
+    .filter((c) => c.key && c.key !== 'id')
+    .map((c) => {
+      const meta = catalog.get(c.key) || {};
+      return { ...meta, ...c, key: c.key, label: c.label || meta.label || humanizeListFieldKey(c.key) };
+    });
   return [{ key: 'id', label: 'ID', mono: true }, ...cols];
+}
+
+/**
+ * Stok kodu ve stok adı tüm listelerde ayrı kolon.
+ * item_code varsa hemen ardından item_name gelir (yoksa eklenir / yanına taşınır).
+ */
+function ensureStockCodeNameColumns(cols) {
+  const nameColRaw = cols.find((c) => c.key === 'item_name');
+  const nameLabel = (!nameColRaw?.label || nameColRaw.label === 'Ad' || nameColRaw.label === 'Stok' || nameColRaw.label === 'Malzeme')
+    ? 'Stok adı'
+    : nameColRaw.label;
+  const nameCol = { ...(nameColRaw || {}), key: 'item_name', label: nameLabel };
+  const out = [];
+  let namePlaced = false;
+  cols.forEach((c) => {
+    if (c.key === 'item_name') return; // kodun hemen ardından yerleştirilecek
+    if (c.key === 'item_code') {
+      const label = (!c.label || c.label === 'Stok' || c.label === 'Malzeme')
+        ? 'Stok kodu'
+        : c.label;
+      out.push({ ...c, key: 'item_code', label, mono: true });
+      out.push(nameCol);
+      namePlaced = true;
+      return;
+    }
+    out.push(c);
+  });
+  if (!namePlaced && nameColRaw) out.push(nameCol);
+  return out;
+}
+
+/**
+ * Tüm listelerde ilk sütun: satır ID.
+ * Kayıtlı düzen varsa sıra/görünürlük uygulanır.
+ * Stok varsa Stok kodu + Stok adı ayrı kolonlardır.
+ */
+function listColumns(screen) {
+  const defaults = ensureStockCodeNameColumns(defaultListColumnDefs(screen));
+  const catalog = listColumnCatalog(screen);
+  const layout = loadListLayout(screen.id);
+  let cols;
+  if (layout?.order?.length) {
+    // Stok kodu görünürken stok adını gizlemeyi engelle (ayrı kolon kuralı)
+    const hidden = new Set((layout.hidden || []).filter((k) => k !== 'item_name' || !layout.order.includes('item_code')));
+    if (layout.order.includes('item_code')) hidden.delete('item_name');
+    const defMap = new Map(defaults.map((c) => [c.key, c]));
+    const ordered = [];
+    const seen = new Set();
+    layout.order.forEach((key) => {
+      if (hidden.has(key) || seen.has(key)) return;
+      const base = defMap.get(key) || catalog.get(key);
+      if (!base) return;
+      ordered.push({ ...base, key });
+      seen.add(key);
+      // Kayıtlı düzende kod var, ad yoksa kodun hemen ardına ad ekle
+      if (key === 'item_code' && !layout.order.includes('item_name') && !seen.has('item_name')) {
+        ordered.push(defMap.get('item_name') || { key: 'item_name', label: 'Stok adı' });
+        seen.add('item_name');
+      }
+    });
+    // Yeni varsayılan kolonlar (kayıtta yoksa) sonda eklenir
+    defaults.forEach((c) => {
+      if (seen.has(c.key) || hidden.has(c.key)) return;
+      ordered.push(c);
+      seen.add(c.key);
+    });
+    if (!ordered.some((c) => c.key === 'id')) {
+      ordered.unshift({ key: 'id', label: 'ID', mono: true });
+    } else {
+      const idCol = ordered.find((c) => c.key === 'id');
+      ordered.splice(ordered.findIndex((c) => c.key === 'id'), 1);
+      ordered.unshift(idCol);
+    }
+    cols = ensureStockCodeNameColumns(ordered);
+  } else {
+    cols = defaults;
+  }
+  return cols;
 }
 
 const ISO_DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z$/;
@@ -12862,6 +13085,8 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
+  } else if (Array.isArray(val)) {
+    val = val.length ? val.join('; ') : '—';
   } else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) {
     val = formatListDateTime(val);
   } else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
@@ -13007,7 +13232,10 @@ function renderList(screen) {
   const { page, pageSize } = clampListPage(total);
   const start = (page - 1) * pageSize;
   const pageRows = state.filtered.slice(start, start + pageSize);
-  head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
+  head.innerHTML = `<tr>${cols.map((c) => {
+    const drag = c.key === 'id' ? '' : 'draggable="true"';
+    return `<th data-col-key="${escapeAttr(c.key)}" ${drag} title="${c.key === 'id' ? 'ID' : 'Sürükleyerek sıralayın'}">${escapeHtml(c.label)}</th>`;
+  }).join('')}</tr>`;
   if (!total) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
@@ -13024,9 +13252,322 @@ function renderList(screen) {
   const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
     ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
     : (state.rows || []).length;
-  $('#listMeta').textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa`;
+  const layoutSaved = Boolean(loadListLayout(screen.id) && !state._listLayoutOverride?.[screen.id]);
+  const draft = Boolean(state._listLayoutOverride?.[screen.id]);
+  $('#listMeta').textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa${draft ? ' · düzen değişti (kaydedilmedi)' : (layoutSaved ? ' · kayıtlı düzen' : '')}`;
   renderListPager(total);
   updateActionButtons(screen);
+  bindListColumnDrag(screen);
+}
+
+function bindListColumnDrag(screen) {
+  const head = $('#dataHead');
+  if (!head || !screen) return;
+  head.querySelectorAll('th[data-col-key][draggable="true"]').forEach((th) => {
+    th.addEventListener('dragstart', (e) => {
+      const key = th.getAttribute('data-col-key');
+      e.dataTransfer.setData('text/plain', key);
+      e.dataTransfer.effectAllowed = 'move';
+      th.classList.add('col-dragging');
+      state._draggingColKey = key;
+    });
+    th.addEventListener('dragend', () => {
+      th.classList.remove('col-dragging');
+      head.querySelectorAll('th.col-drop-target').forEach((x) => x.classList.remove('col-drop-target'));
+      state._draggingColKey = null;
+    });
+    th.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      th.classList.add('col-drop-target');
+    });
+    th.addEventListener('dragleave', () => th.classList.remove('col-drop-target'));
+    th.addEventListener('drop', (e) => {
+      e.preventDefault();
+      th.classList.remove('col-drop-target');
+      const fromKey = e.dataTransfer.getData('text/plain') || state._draggingColKey;
+      const toKey = th.getAttribute('data-col-key');
+      if (!fromKey || !toKey || fromKey === toKey) return;
+      applyListColumnReorder(screen.id, fromKey, toKey);
+    });
+  });
+}
+
+function applyListColumnReorder(screenId, fromKey, toKey) {
+  if (!screenId || !fromKey || !toKey || fromKey === toKey || fromKey === 'id') return;
+  const screen = findScreen(screenId);
+  if (!screen) return;
+  const cols = listColumns(screen).map((c) => c.key);
+  const fromIdx = cols.indexOf(fromKey);
+  let toIdx = cols.indexOf(toKey);
+  if (fromIdx < 0 || toIdx < 0) return;
+  cols.splice(fromIdx, 1);
+  toIdx = cols.indexOf(toKey);
+  if (toIdx < 0) toIdx = cols.length;
+  cols.splice(toIdx, 0, fromKey);
+  const prev = loadListLayout(screenId) || { order: cols, hidden: [] };
+  const layout = { order: cols, hidden: [...(prev.hidden || [])] };
+  state._listLayoutOverride = state._listLayoutOverride || {};
+  state._listLayoutOverride[screenId] = layout;
+  renderList(screen);
+}
+
+function persistCurrentListLayout(screenId, { toastOk = true } = {}) {
+  const screen = findScreen(screenId || state.screenId);
+  if (!screen) return;
+  const cols = listColumns(screen).map((c) => c.key);
+  const prev = loadListLayout(screen.id) || { order: cols, hidden: [] };
+  const layout = {
+    order: cols,
+    hidden: [...(prev.hidden || [])],
+  };
+  // Override'daki hidden öncelikli
+  if (state._listLayoutOverride?.[screen.id]?.hidden) {
+    layout.hidden = [...state._listLayoutOverride[screen.id].hidden];
+  }
+  saveListLayout(screen.id, layout);
+  if (state._listLayoutOverride) delete state._listLayoutOverride[screen.id];
+  renderList(screen);
+  if (toastOk) toast('Liste ayarları kaydedildi.');
+}
+
+function exportListAsExcel() {
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const XLSXlib = ensureXlsxLib();
+  const cols = listColumns(screen);
+  const rows = state.filtered || [];
+  const aoa = [
+    cols.map((c) => c.label),
+    ...rows.map((r, i) => cols.map((c) => {
+      if (c.key === 'id') return rowKey(r, i);
+      let v = r[c.key];
+      if (typeof v === 'boolean') v = v ? 'Evet' : 'Hayır';
+      if (v == null) v = '';
+      return v;
+    })),
+  ];
+  const ws = XLSXlib.utils.aoa_to_sheet(aoa);
+  const wb = XLSXlib.utils.book_new();
+  XLSXlib.utils.book_append_sheet(wb, ws, String(screen.id || 'Liste').slice(0, 31));
+  XLSXlib.writeFile(wb, `${screen.id || 'liste'}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  toast('Excel indirildi.');
+}
+
+function buildListExportTableHtml(screen, cols, rows) {
+  const head = cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join('');
+  const body = rows.map((r, i) => {
+    const tds = cols.map((c) => {
+      let text;
+      if (c.key === 'id') text = rowKey(r, i);
+      else {
+        let v = r[c.key];
+        if (typeof v === 'boolean') v = v ? 'Evet' : 'Hayır';
+        text = v == null || v === '' ? '—' : String(v);
+      }
+      return `<td>${escapeHtml(String(text))}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  return `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:11px;width:100%">
+    <thead style="background:#e8eef5"><tr>${head}</tr></thead>
+    <tbody>${body || `<tr><td colspan="${cols.length}">Kayıt yok</td></tr>`}</tbody>
+  </table>`;
+}
+
+function exportListAsPdf() {
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const cols = listColumns(screen);
+  const rows = state.filtered || [];
+  const table = buildListExportTableHtml(screen, cols, rows);
+  const w = window.open('', '_blank');
+  if (!w) {
+    toast('Pop-up engellendi — tarayıcıda izin verin.');
+    return;
+  }
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"/><title>${escapeHtml(screen.title || screen.id)}</title>
+    <style>body{font-family:Segoe UI,Arial,sans-serif;padding:16px} h1{font-size:16px;margin:0 0 12px}
+    @media print{body{padding:0}}</style></head><body>
+    <h1>${escapeHtml(screen.title || screen.id)} — Liste</h1>
+    <p style="color:#666;font-size:12px">${rows.length} kayıt · ${new Date().toLocaleString('tr-TR')}</p>
+    ${table}
+    <script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script>
+    </body></html>`);
+  w.document.close();
+  toast('PDF için yazdır penceresi açıldı.');
+}
+
+function exportListAsWord() {
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const cols = listColumns(screen);
+  const rows = state.filtered || [];
+  const table = buildListExportTableHtml(screen, cols, rows);
+  const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office"
+    xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"/><title>${escapeHtml(screen.title || screen.id)}</title></head>
+    <body><h2>${escapeHtml(screen.title || screen.id)}</h2>
+    <p>${rows.length} kayıt · ${new Date().toLocaleString('tr-TR')}</p>${table}</body></html>`;
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${screen.id || 'liste'}-${new Date().toISOString().slice(0, 10)}.doc`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Word dosyası indirildi.');
+}
+
+function openListSettingsPopup(screen) {
+  if (!screen) screen = findScreen(state.screenId);
+  if (!screen) return;
+  const catalog = listColumnCatalog(screen);
+  const visible = listColumns(screen).filter((c) => c.key !== 'id');
+  const visibleKeys = new Set(visible.map((c) => c.key));
+  const layout = loadListLayout(screen.id) || { order: [], hidden: [] };
+  const hiddenSet = new Set(layout.hidden || []);
+  const available = [];
+  catalog.forEach((meta, key) => {
+    if (key === 'id') return;
+    if (visibleKeys.has(key)) return;
+    available.push({ key, label: meta.label || humanizeListFieldKey(key) });
+  });
+  // Gizlenenler de available'da olsun
+  (layout.hidden || []).forEach((key) => {
+    if (visibleKeys.has(key) || available.some((a) => a.key === key)) return;
+    const meta = catalog.get(key);
+    available.push({ key, label: meta?.label || humanizeListFieldKey(key) });
+  });
+  available.sort((a, b) => a.label.localeCompare(b.label, 'tr'));
+
+  document.getElementById('listSettingsDlg')?.remove();
+  const html = `
+  <div class="list-settings-dlg" id="listSettingsDlg" role="dialog" aria-modal="true" aria-labelledby="listSettingsTitle">
+    <div class="list-settings-backdrop" data-ls-close="1"></div>
+    <div class="list-settings-card">
+      <header class="list-settings-head">
+        <strong id="listSettingsTitle">Liste ayarları — ${escapeHtml(screen.title || screen.id)}</strong>
+        <button type="button" class="btn tiny ghost" data-ls-close="1" aria-label="Kapat">✕</button>
+      </header>
+      <p class="list-settings-hint">Soldaki görünür kolonları sürükleyerek sıralayın. Sağdaki alanları sola sürükleyerek listeye ekleyin; soldakileri sağa sürükleyerek çıkarın.</p>
+      <div class="list-settings-cols">
+        <div class="list-settings-pane">
+          <h3>Görünen kolonlar</h3>
+          <ul class="list-settings-list" id="lsVisible" data-ls-zone="visible">
+            ${visible.map((c) => `<li draggable="true" data-ls-key="${escapeAttr(c.key)}">${escapeHtml(c.label)} <span class="mono dim">${escapeHtml(c.key)}</span></li>`).join('') || '<li class="ls-empty">Kolon yok</li>'}
+          </ul>
+        </div>
+        <div class="list-settings-pane">
+          <h3>Eklenebilir alanlar</h3>
+          <ul class="list-settings-list" id="lsAvailable" data-ls-zone="available">
+            ${available.map((c) => `<li draggable="true" data-ls-key="${escapeAttr(c.key)}">${escapeHtml(c.label)} <span class="mono dim">${escapeHtml(c.key)}</span></li>`).join('') || '<li class="ls-empty">Hepsi görünür</li>'}
+          </ul>
+        </div>
+      </div>
+      <footer class="list-settings-foot">
+        <button type="button" class="btn ghost" data-ls-reset="1">Varsayılana dön</button>
+        <div class="list-settings-foot-right">
+          <button type="button" class="btn ghost" data-ls-close="1">İptal</button>
+          <button type="button" class="btn" data-ls-apply="1">Uygula</button>
+          <button type="button" class="btn action" data-ls-save="1">Kaydet</button>
+        </div>
+      </footer>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  const dlg = document.getElementById('listSettingsDlg');
+  let dragKey = null;
+  let dragFrom = null;
+
+  const bindZone = (ul) => {
+    ul.addEventListener('dragstart', (e) => {
+      const li = e.target.closest('li[data-ls-key]');
+      if (!li) return;
+      dragKey = li.getAttribute('data-ls-key');
+      dragFrom = ul.getAttribute('data-ls-zone');
+      e.dataTransfer.setData('text/plain', dragKey);
+      e.dataTransfer.effectAllowed = 'move';
+      li.classList.add('ls-dragging');
+    });
+    ul.addEventListener('dragend', () => {
+      ul.querySelectorAll('.ls-dragging').forEach((x) => x.classList.remove('ls-dragging'));
+      dlg.querySelectorAll('.ls-drop').forEach((x) => x.classList.remove('ls-drop'));
+      dragKey = null;
+      dragFrom = null;
+    });
+    ul.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      ul.classList.add('ls-drop');
+    });
+    ul.addEventListener('dragleave', () => ul.classList.remove('ls-drop'));
+    ul.addEventListener('drop', (e) => {
+      e.preventDefault();
+      ul.classList.remove('ls-drop');
+      const key = e.dataTransfer.getData('text/plain') || dragKey;
+      if (!key) return;
+      const targetZone = ul.getAttribute('data-ls-zone');
+      const escKey = (typeof CSS !== 'undefined' && CSS.escape)
+        ? CSS.escape(key)
+        : String(key).replace(/["\\]/g, '\\$&');
+      const li = dlg.querySelector(`li[data-ls-key="${escKey}"]`);
+      if (!li) return;
+      const empty = ul.querySelector('.ls-empty');
+      if (empty) empty.remove();
+      const overLi = e.target.closest('li[data-ls-key]');
+      if (overLi && overLi !== li && targetZone === 'visible') {
+        ul.insertBefore(li, overLi);
+      } else {
+        ul.appendChild(li);
+      }
+      // Boş kalan listeye empty yaz
+      ['lsVisible', 'lsAvailable'].forEach((id) => {
+        const zone = document.getElementById(id);
+        if (zone && !zone.querySelector('li[data-ls-key]')) {
+          zone.innerHTML = `<li class="ls-empty">${id === 'lsVisible' ? 'Kolon yok' : 'Hepsi görünür'}</li>`;
+        }
+      });
+    });
+  };
+  bindZone(document.getElementById('lsVisible'));
+  bindZone(document.getElementById('lsAvailable'));
+
+  const readLayoutFromDlg = () => {
+    const order = ['id', ...[...document.querySelectorAll('#lsVisible li[data-ls-key]')].map((li) => li.getAttribute('data-ls-key'))];
+    const hidden = [...document.querySelectorAll('#lsAvailable li[data-ls-key]')].map((li) => li.getAttribute('data-ls-key'));
+    return { order, hidden };
+  };
+
+  dlg.addEventListener('click', (e) => {
+    if (e.target.closest('[data-ls-close]')) {
+      dlg.remove();
+      return;
+    }
+    if (e.target.closest('[data-ls-reset]')) {
+      clearListLayout(screen.id);
+      if (state._listLayoutOverride) delete state._listLayoutOverride[screen.id];
+      dlg.remove();
+      renderList(screen);
+      toast('Liste varsayılan düzene döndü.');
+      return;
+    }
+    if (e.target.closest('[data-ls-apply]')) {
+      const layout = readLayoutFromDlg();
+      state._listLayoutOverride = state._listLayoutOverride || {};
+      state._listLayoutOverride[screen.id] = layout;
+      dlg.remove();
+      renderList(screen);
+      toast('Liste düzeni uygulandı (henüz kaydedilmedi).');
+      return;
+    }
+    if (e.target.closest('[data-ls-save]')) {
+      const layout = readLayoutFromDlg();
+      saveListLayout(screen.id, layout);
+      if (state._listLayoutOverride) delete state._listLayoutOverride[screen.id];
+      dlg.remove();
+      renderList(screen);
+      toast('Liste ayarları kaydedildi.');
+    }
+  });
 }
 
 function isSessionTamYetkili() {
@@ -22842,25 +23383,47 @@ function bindEvents() {
     });
   }
 
-  // Liste satırı sağ tık — contextMenu + belge bağlantısı (aday→cari vb.)
+  // Liste satırı / tablo alanı sağ tık — dışa aktar, liste ayarları, belge bağlantısı
   const dataBody = $('#dataBody');
   if (dataBody && !dataBody.dataset.ctxBound) {
     dataBody.dataset.ctxBound = '1';
     dataBody.addEventListener('contextmenu', (e) => {
-      const tr = e.target.closest('tr[data-id]');
-      if (!tr) return;
       const screen = findScreen(state.screenId);
       if (!screen) return;
-      const hasCtx = Boolean(screen.contextMenu?.length);
-      const hasBaglanti = Boolean(BELGE_BAGLANTI[screen.id] || screen.documentNav);
-      if (!hasCtx && !hasBaglanti) return;
+      const tr = e.target.closest('tr[data-id]');
       e.preventDefault();
       e.stopPropagation();
-      state.selectedId = tr.getAttribute('data-id');
-      document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
-      tr.classList.add('selected');
-      updateActionButtons(screen);
-      showListContextMenu(screen, e.clientX, e.clientY).catch((err) => toast(err.message));
+      if (tr) {
+        state.selectedId = tr.getAttribute('data-id');
+        document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
+        tr.classList.add('selected');
+        updateActionButtons(screen);
+      }
+      showListContextMenu(screen, e.clientX, e.clientY, { mode: 'list' }).catch((err) => toast(err.message));
+    });
+  }
+
+  // Liste başlığı / kolon başlığı sağ tık — ayarları kaydet
+  const listPaneHead = $('#listPane .list-pane-head');
+  if (listPaneHead && !listPaneHead.dataset.ctxBound) {
+    listPaneHead.dataset.ctxBound = '1';
+    listPaneHead.addEventListener('contextmenu', (e) => {
+      const screen = findScreen(state.screenId);
+      if (!screen) return;
+      e.preventDefault();
+      e.stopPropagation();
+      showListContextMenu(screen, e.clientX, e.clientY, { mode: 'header' }).catch((err) => toast(err.message));
+    });
+  }
+  const dataHead = $('#dataHead');
+  if (dataHead && !dataHead.dataset.ctxBound) {
+    dataHead.dataset.ctxBound = '1';
+    dataHead.addEventListener('contextmenu', (e) => {
+      const screen = findScreen(state.screenId);
+      if (!screen) return;
+      e.preventDefault();
+      e.stopPropagation();
+      showListContextMenu(screen, e.clientX, e.clientY, { mode: 'header' }).catch((err) => toast(err.message));
     });
   }
 
