@@ -13665,6 +13665,12 @@ function renderList(screen) {
   renderListPager(total);
   updateActionButtons(screen);
   bindListColumnDrag(screen);
+  // Listeler / sayfalar arası geçişte eski scroll kalıntısı (ghost scrollbar) kalmasın
+  const listScroll = $('#listTableScroll');
+  if (listScroll) {
+    listScroll.scrollTop = 0;
+    listScroll.scrollLeft = 0;
+  }
 }
 
 function bindListColumnDrag(screen) {
@@ -14161,6 +14167,7 @@ async function openScreen(id, opts = {}) {
     state.screenId = screen.id;
     state.selectedId = null;
     state.formMode = null;
+    state.listPage = 1;
     state.listCategory = screen.listCategories?.[0]?.id || null;
     if (!state.isYerleri.length && getActiveCompanyId()) {
       await loadPlantsForActiveCompany();

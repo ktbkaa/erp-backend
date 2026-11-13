@@ -6179,8 +6179,6 @@ body.sidebar-resizing .workspace {
 .sidebar-brand {
   display: flex;
   align-items: center;
-
-  scrollbar-gutter: stable;
 }
 /* Diğer table-scroll kullanımları (meta vb.) */
 .table-scroll:not(#listTableScroll) {
@@ -6226,13 +6224,16 @@ body.sidebar-resizing .workspace {
 .list-page-btn:hover:not(:disabled) {
   background: var(--accent-soft);
   border-color: var(--sidebar-ring);
-
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 1.5rem 1.25rem 2rem;
-  overflow: hidden;
-  isolation: isolate;
+}
+.list-page-btn.active,
+.list-page-btn[aria-current="page"] {
+  background: var(--accent-soft);
+  border-color: var(--sidebar-ring);
+  color: var(--accent);
+}
+.list-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .login-ldap-switch {
