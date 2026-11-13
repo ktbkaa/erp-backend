@@ -11,6 +11,8 @@
 
 **Amaç:** Canias PRD davranışını KTB’nin kendi UI diline harmanlayarak üretim süreçlerini yeniden tasarlamak için **tek yönerge**. Uygulama dalgaları bu dokümana bağlanır.
 
+**Hedef ürün dokümanı (yeni hali):** `docs/production/33_URETIM_MODULU_YENI_HAL.md` · ekran envanteri: `33_URETIM_EKRAN_ENVANTERI.csv`
+
 **Video notu:** Flat playlist metadata (64 başlık) alındı. Video karesi / altyazı bu ortamda YouTube bot doğrulaması nedeniyle indirilemedi; UI piksel doğrulaması PDF eğitim ekran görüntülerinden + başlık/metadata’dan yapıldı. Cookie ile altyazı gelirse bu belge güncellenir.
 
 ---
