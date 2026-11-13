@@ -6009,6 +6009,7 @@ body.sidebar-resizing .workspace {
 .list-page-btn {
   min-width: 2rem;
   height: 1.85rem;
+  max-height: 1.85rem;
   padding: 0 0.45rem;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
@@ -6017,18 +6018,30 @@ body.sidebar-resizing .workspace {
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
+  flex: 0 0 auto;
+  box-sizing: border-box;
 }
 .list-page-btn:hover:not(:disabled) {
   background: var(--accent-soft);
   border-color: var(--sidebar-ring);
-
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 1.5rem 1.25rem 2rem;
-  overflow: hidden;
-  isolation: isolate;
+}
+.list-page-btn.active,
+.list-page-btn[aria-current="page"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.list-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.list-page-ellipsis {
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0 0.15rem;
+  user-select: none;
 }
 
 .login-ldap-switch {

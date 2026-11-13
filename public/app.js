@@ -2942,7 +2942,7 @@ const MODULES = [
           { key: 'order_no', label: 'Emir', mono: true },
           { key: 'emir_tipi_kodu', label: 'Tip', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'sales_order_no', label: 'Sipariş', mono: true },
           { key: 'planned_quantity', label: 'Plan' },
           { key: 'produced_quantity', label: 'Üretilen' },
           { key: 'planned_firm', label: 'P/K' },
@@ -2982,8 +2982,8 @@ const MODULES = [
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           // 4) Planlama
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', group: 'planlama' },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date', group: 'planlama' },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
           { key: 'end_date', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
           { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama' },
           { key: 'issue_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
@@ -3117,8 +3117,8 @@ const MODULES = [
           { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', readOnly: true },
           { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', readOnly: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', readOnly: true },
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', readOnly: true },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date', readOnly: true },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', readOnly: true },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', readOnly: true },
           { key: 'approved_at', label: 'Onay zamanı', readOnly: true },
           { key: 'approved_by_user_code', label: 'Onaylayan', readOnly: true },
           { key: 'description', label: 'Açıklama', readOnly: true },
@@ -3144,14 +3144,17 @@ const MODULES = [
         endpoint: '/uretim-emirleri/siparis-adaylari',
         createEndpoint: '/uretim-emirleri/satis-siparisinden',
         crud: true,
+        numeratorSeri: 'URETIM_EMRI',
         codeField: 'order_no',
         nameField: 'item_code',
         filters: [
+          { key: 'wo_order_no', label: 'İş emri no' },
           { key: 'order_no', label: 'Sipariş' },
           { key: 'item_code', label: 'Stok' },
           { key: 'partner_name', label: 'Cari' },
         ],
         columns: [
+          { key: 'wo_order_no', label: 'İş emri no', mono: true },
           { key: 'order_no', label: 'Sipariş', mono: true },
           { key: 'partner_name', label: 'Cari' },
           { key: 'item_code', label: 'Stok', mono: true },
@@ -3164,6 +3167,7 @@ const MODULES = [
         masterFields: [
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
           { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
+          { key: 'order_no', label: 'İş emri no', code: true, group: 'kimlik' },
           { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', required: true, group: 'kimlik' },
           {
             key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items-mamul',
@@ -3182,6 +3186,8 @@ const MODULES = [
           },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
           { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik' },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
@@ -8759,7 +8765,7 @@ function applyCompactDocumentShell(s) {
       if (!detailKeys.has(f.key)) {
         detail.push({
           ...f,
-          size: f.size || (f.type === 'date' || f.type === 'number' ? 'short' : undefined),
+          size: f.size || (f.type === 'date' || f.type === 'datetime' || f.type === 'number' ? 'short' : undefined),
         });
         detailKeys.add(f.key);
       }
@@ -9157,7 +9163,7 @@ function applyDefinitionLookup(field) {
   const def = TANIM_LOOKUP_BY_KEY[field.key];
   if (!def) return field;
   // select/checkbox/number/date veya zaten doğru lookup ise dokunma (label/required koru)
-  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'password') {
+  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'datetime' || field.type === 'password') {
     return field;
   }
   if (field.type === 'select' && Array.isArray(field.options) && field.options.length) {
@@ -14861,7 +14867,29 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const dv = v ? String(v).slice(0, 10) : '';
     return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
   }
+  if (field.type === 'datetime') {
+    const dv = toDatetimeLocalValue(v);
+    return `<input type="datetime-local" step="60" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
+  }
   return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
+}
+
+/** API / Date → datetime-local (YYYY-MM-DDTHH:mm) */
+function toDatetimeLocalValue(v) {
+  if (v == null || v === '') return '';
+  if (v instanceof Date && !Number.isNaN(v.getTime())) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())}T${pad(v.getHours())}:${pad(v.getMinutes())}`;
+  }
+  const s = String(v).trim();
+  if (!s) return '';
+  // 2026-11-13T08:30:00.000Z / 2026-11-13 08:30:00 / 2026-11-13T08:30
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}):(\d{2})/);
+  if (m) return `${m[1]}T${m[2]}:${m[3]}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00`;
+  const d = new Date(s);
+  if (!Number.isNaN(d.getTime())) return toDatetimeLocalValue(d);
+  return '';
 }
 
 function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
