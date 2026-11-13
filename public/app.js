@@ -2444,9 +2444,9 @@ const MODULES = [
     title: 'Üretim',
     sections: [
       { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'] },
-      { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri'] },
+      { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri', 'hizli-uretim-girisi'] },
       { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri', 'uretim-parametreleri'] },
     ],
     screens: [
       {
@@ -3058,6 +3058,78 @@ const MODULES = [
         detailAsFields: true,
       },
       {
+        id: 'uretim-parametreleri',
+        techId: 'MFG-PRM-SCR-001',
+        businessNameEn: 'ProductionParametersScreen',
+        title: 'Üretim Parametreleri',
+        endpoint: '/uretim-parametreleri',
+        crud: true,
+        numeratorSeri: null,
+        codeField: 'company_code',
+        nameField: 'company_name',
+        banner: 'Firma / iş yeri üretim kuralları — fazla-eksik üretim, operasyon sırası, malzeme tüketimi.',
+        filters: [
+          { key: 'company_code', label: 'Firma' },
+          { key: 'plant_code', label: 'İş yeri' },
+        ],
+        columns: [
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'plant_code', label: 'İş yeri', mono: true },
+          { key: 'allow_over_production', label: 'Fazla üretim' },
+          { key: 'over_production_pct', label: 'Fazla %' },
+          { key: 'allow_under_production', label: 'Eksik üretim' },
+          { key: 'under_production_pct', label: 'Eksik %' },
+          { key: 'enforce_op_sequence', label: 'Op. sırası' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          {
+            key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies',
+            valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true, group: 'kapsam',
+          },
+          {
+            key: 'plant_id', label: 'İş yeri (opsiyonel)', type: 'lookup', lookup: 'is-yerleri',
+            valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'kapsam',
+            dependsOn: 'company_id', filterKey: 'company_id',
+          },
+          {
+            key: 'allow_over_production', label: 'Fazla üretime izin ver', type: 'checkbox', group: 'miktar',
+          },
+          {
+            key: 'over_production_pct', label: 'Fazla üretim toleransı %', type: 'number', group: 'miktar',
+          },
+          {
+            key: 'allow_under_production', label: 'Eksik üretime izin ver (kısmi / kapatma)', type: 'checkbox', group: 'miktar',
+          },
+          {
+            key: 'under_production_pct', label: 'Eksik üretim toleransı %', type: 'number', group: 'miktar',
+          },
+          {
+            key: 'enforce_op_sequence', label: 'Operasyon sırasını zorunlu tut', type: 'checkbox', group: 'surec',
+          },
+          {
+            key: 'require_material_consume', label: 'Malzeme tüketimi zorunlu', type: 'checkbox', group: 'surec',
+          },
+          {
+            key: 'auto_close_on_complete', label: 'Tüm operasyonlar bitince emri kapat', type: 'checkbox', group: 'surec',
+          },
+          { key: 'description', label: 'Açıklama', size: 'wide', group: 'status' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        defaults: {
+          allow_over_production: false,
+          over_production_pct: 0,
+          allow_under_production: true,
+          under_production_pct: 0,
+          enforce_op_sequence: true,
+          require_material_consume: true,
+          auto_close_on_complete: true,
+          is_active: true,
+        },
+      },
+      {
         id: 'uretim-planlari',
         techId: 'MFG-PLN-SCR-001',
         businessNameEn: 'ProductionPlanScreen',
@@ -3142,6 +3214,7 @@ const MODULES = [
         ],
         masterFields: [
           // 1) Organizasyon
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', lead: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', lead: true },
           { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
           // 2) Üretim kimliği — stok → ağaç → rota (önem / bağımlılık sırası)
@@ -3170,10 +3243,10 @@ const MODULES = [
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
-          // 4) Planlama
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', group: 'planlama' },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date', group: 'planlama' },
-          { key: 'end_date', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+          // 4) Planlama — tarih + saat
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
+          { key: 'end_date', label: 'Bitiş tarihi', type: 'datetime', group: 'planlama' },
           { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama' },
           { key: 'issue_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
           { key: 'receipt_type', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
@@ -3411,13 +3484,15 @@ const MODULES = [
       {
         id: 'uretim-girisleri',
         techId: 'MFG-RCPT-SCR-001',
-        businessNameEn: 'ProductionReceiptScreen',
-        title: 'Üretim Girişleri',
+        businessNameEn: 'OperationalProductionEntryScreen',
+        title: 'Operasyonel Üretim Girişi',
         endpoint: '/uretim-girisleri',
         crud: true,
+        listActions: ['yeni', 'incele'],
+        listSourceType: 'Operasyonel',
         codeField: 'receipt_no',
         nameField: 'order_no',
-        numeratorSeri: null,
+        numeratorSeri: 'URETIM_GIRIS',
         filters: [
           { key: 'receipt_no', label: 'Giriş no' },
           { key: 'order_no', label: 'Emir no' },
@@ -3426,16 +3501,355 @@ const MODULES = [
         columns: [
           { key: 'receipt_no', label: 'Giriş', mono: true },
           { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'operation_code', label: 'Op', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
           { key: 'quantity', label: 'Miktar' },
+          { key: 'source_type', label: 'Kaynak' },
           { key: 'created_at', label: 'Tarih' },
         ],
         masterFields: [
-          { key: 'order_id', label: 'Üretim emri', type: 'lookup', lookup: 'uretim-emirleri', valueKey: 'id', labelKey: 'order_no', required: true },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
+          {
+            key: 'order_id',
+            label: 'İş emri',
+            type: 'lookup',
+            lookup: 'uretim-emirleri',
+            valueKey: 'id',
+            labelKey: 'order_no',
+            required: true,
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          {
+            key: 'operation_id',
+            label: 'Operasyon',
+            type: 'lookup',
+            lookup: 'uretim-emir-operasyonlari',
+            valueKey: 'id',
+            labelKey: 'operation_name',
+            codeKey: 'operation_code',
+            dependsOn: 'order_id',
+            filterKey: 'order_id',
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          {
+            key: 'plant_id',
+            label: 'İş yeri',
+            type: 'lookup',
+            lookup: 'is-yerleri',
+            valueKey: 'id',
+            labelKey: 'plant_name',
+            codeKey: 'plant_code',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          { key: 'item_code', label: 'Ürün kodu', readOnly: true, group: 'genel', groupLabel: 'Genel bilgiler' },
+          { key: 'item_name', label: 'Ürün', readOnly: true, group: 'genel', groupLabel: 'Genel bilgiler' },
+          {
+            key: 'work_center_id',
+            label: 'Planlanan iş ist.',
+            type: 'lookup',
+            lookup: 'is-merkezleri',
+            valueKey: 'id',
+            labelKey: 'center_name',
+            codeKey: 'center_code',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          {
+            key: 'actual_work_center_id',
+            label: 'Gerçekleşen iş ist.',
+            type: 'lookup',
+            lookup: 'is-merkezleri',
+            valueKey: 'id',
+            labelKey: 'center_name',
+            codeKey: 'center_code',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          { key: 'started_at', label: 'Op. baş. tarihi', type: 'date', group: 'genel', groupLabel: 'Genel bilgiler' },
+          { key: 'ended_at', label: 'Op. bit. tarihi', type: 'date', group: 'genel', groupLabel: 'Genel bilgiler' },
+          {
+            key: 'source_type',
+            label: 'Kaynak',
+            type: 'select',
+            options: ['Operasyonel', 'Hizli', 'Barkod', 'Manuel'],
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          {
+            key: 'consume_materials',
+            label: 'Hammadde/yarı mamul tüket',
+            type: 'checkbox',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          { key: 'net_quantity', label: 'Net miktar', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'gross_quantity', label: 'Brüt miktar', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          {
+            key: 'uom_code',
+            label: 'Birim',
+            type: 'lookup',
+            lookup: 'olcu-birimleri',
+            valueKey: 'uom_code',
+            labelKey: 'uom_name',
+            group: 'miktar',
+            groupLabel: 'Miktarlar',
+          },
+          { key: 'scrap_quantity', label: 'Toplam hurda', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'rework_quantity', label: 'Yeniden işlem', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'planned_quantity', label: 'İş emri miktarı', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'op_remaining_quantity', label: 'Operasyon kalan', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'max_allowed_quantity', label: 'Maks. izin (toleranslı)', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'serial_no', label: 'Seri no', group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'shift_code', label: 'Vardiya kodu', group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'receipt_no', label: 'Giriş no', code: true, editableOnNew: true, group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'description', label: 'Açıklama', group: 'diger', groupLabel: 'Diğer bilgiler' },
         ],
         detailFields: [],
         detailKey: null,
+        formTabs: [
+          { id: 'urun', label: 'Ürün Giriş Bilgileri', kind: 'fields', fields: null },
+          {
+            id: 'depolar',
+            label: 'Depolar',
+            kind: 'fields',
+            fields: [
+              {
+                key: 'product_warehouse_id',
+                label: 'Ürün giriş depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'material_warehouse_id',
+                label: 'Malzeme çıkış depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'wip_warehouse_id',
+                label: 'Yarı mamul çıkış depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'scrap_warehouse_id',
+                label: 'Malzeme hurda giriş depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'byproduct_warehouse_id',
+                label: 'Yan ürün giriş depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+            ],
+          },
+          {
+            id: 'malzemeler',
+            label: 'Malzemeler',
+            kind: 'grid',
+            key: 'malzemeler',
+            slots: 8,
+            fields: [
+              { key: 'line_no', label: 'Sıra No', type: 'number', size: 'short' },
+              { key: 'line_type', label: 'Tip', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Sarf'], size: 'short' },
+              {
+                key: 'item_id',
+                label: 'Stok',
+                type: 'lookup',
+                lookup: 'items',
+                valueKey: 'id',
+                labelKey: 'item_name',
+                codeKey: 'item_code',
+                required: true,
+              },
+              { key: 'alternative_no', label: 'Alternatif No', size: 'short' },
+              { key: 'quantity_type', label: 'Miktar Tipi', type: 'select', options: ['Net', 'Brüt', 'Sabit'], size: 'short' },
+              { key: 'unit_quantity', label: 'Birim Miktar', type: 'number', size: 'short' },
+              { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
+              { key: 'scrap_quantity', label: 'Hurda Miktarı', type: 'number', size: 'short' },
+              { key: 'rework_quantity', label: 'Yeniden İşlem Miktarı', type: 'number', size: 'short' },
+              { key: 'gross_quantity', label: 'Brüt Miktar', type: 'number', size: 'short' },
+              { key: 'net_quantity', label: 'Net Miktar', type: 'number', size: 'short' },
+              {
+                key: 'uom_code',
+                label: 'Birim',
+                type: 'lookup',
+                lookup: 'olcu-birimleri',
+                valueKey: 'uom_code',
+                labelKey: 'uom_name',
+                size: 'short',
+              },
+              {
+                key: 'warehouse_id',
+                label: 'Depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              { key: 'warehouse_balance', label: 'Depo Mik.', type: 'number', size: 'short', readOnly: true },
+              { key: 'lot_no', label: 'Parti Kod', size: 'short' },
+              { key: 'note', label: 'Not' },
+              { key: 'revision', label: 'Revizyon', size: 'short' },
+              { key: 'brand', label: 'Marka', size: 'short' },
+              { key: 'feature_3', label: 'Özellik3', size: 'short' },
+              { key: 'general_feature_1', label: 'Gnl.Özellik1', size: 'short' },
+              { key: 'entry_mode', label: 'Giriş Şekli', size: 'short' },
+              { key: 'source_ref', label: 'Kaynak', size: 'short' },
+            ],
+          },
+          {
+            id: 'duruslar',
+            label: 'İş Emri Duruşları',
+            kind: 'grid',
+            key: 'duruslar',
+            slots: 2,
+            fields: [
+              { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
+              { key: 'downtime_code', label: 'Duruş kodu', size: 'short' },
+              { key: 'downtime_name', label: 'Duruş adı' },
+              { key: 'duration_min', label: 'Süre (dk)', type: 'number', size: 'short' },
+              { key: 'note', label: 'Not' },
+            ],
+          },
+        ],
+        detailFillAction: { label: 'Detayları Getir', client: 'uretim-giris-onizleme' },
+        defaults: {
+          source_type: 'Operasyonel',
+          consume_materials: true,
+          scrap_quantity: 0,
+          rework_quantity: 0,
+          quantity: 1,
+          net_quantity: 1,
+          gross_quantity: 1,
+          malzemeler: [],
+          duruslar: [],
+        },
+      },
+      {
+        id: 'hizli-uretim-girisi',
+        techId: 'MFG-RCPT-SCR-002',
+        businessNameEn: 'QuickProductionEntryScreen',
+        title: 'Hızlı Üretim Girişi',
+        endpoint: '/uretim-girisleri',
+        createEndpoint: '/uretim-girisleri',
+        crud: true,
+        listActions: ['yeni', 'incele'],
+        listSourceType: 'Hizli',
+        codeField: 'receipt_no',
+        nameField: 'order_no',
+        detailFillAction: { label: 'Detayları Getir', client: 'uretim-giris-onizleme' },
+        filters: [
+          { key: 'receipt_no', label: 'Giriş no' },
+          { key: 'order_no', label: 'Emir no' },
+          { key: 'item_code', label: 'Stok' },
+        ],
+        columns: [
+          { key: 'receipt_no', label: 'Giriş', mono: true },
+          { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'operation_code', label: 'Op', mono: true },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'quantity', label: 'Miktar' },
+          { key: 'source_type', label: 'Kaynak' },
+          { key: 'created_at', label: 'Tarih' },
+        ],
+        masterFields: [
+          {
+            key: 'order_id',
+            label: 'İş emri',
+            type: 'lookup',
+            lookup: 'uretim-emirleri',
+            valueKey: 'id',
+            labelKey: 'order_no',
+            required: true,
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          {
+            key: 'operation_id',
+            label: 'Operasyon (boş = aktif)',
+            type: 'lookup',
+            lookup: 'uretim-emir-operasyonlari',
+            valueKey: 'id',
+            labelKey: 'operation_name',
+            codeKey: 'operation_code',
+            dependsOn: 'order_id',
+            filterKey: 'order_id',
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          { key: 'item_code', label: 'Ürün', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'item_name', label: 'Ürün adı', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'planned_quantity', label: 'Emir miktarı', type: 'number', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'consume_materials', label: 'Malzeme tüket', type: 'checkbox', group: 'genel', groupLabel: 'Ürün / miktar' },
+          {
+            key: 'product_warehouse_id',
+            label: 'Ürün giriş depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            group: 'depo',
+            groupLabel: 'Depolar',
+          },
+          {
+            key: 'material_warehouse_id',
+            label: 'Malzeme çıkış depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            group: 'depo',
+            groupLabel: 'Depolar',
+          },
+          { key: 'description', label: 'Açıklama', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'quick', label: 'Hızlı onay', type: 'checkbox', readOnly: true, group: 'diger', groupLabel: 'Diğer' },
+          { key: 'source_type', label: 'Kaynak', type: 'select', options: ['Hizli', 'Operasyonel'], readOnly: true, group: 'diger', groupLabel: 'Diğer' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: {
+          quantity: 1,
+          consume_materials: true,
+          quick: true,
+          source_type: 'Hizli',
+        },
       },
     ],
   },
@@ -8444,8 +8858,9 @@ function applyDefinitionLookup(field) {
   if (!field || !field.key) return field;
   const def = TANIM_LOOKUP_BY_KEY[field.key];
   if (!def) return field;
-  // select/checkbox/number/date veya zaten doğru lookup ise dokunma (label/required koru)
-  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'password') {
+  // select/checkbox/number/date/datetime veya zaten doğru lookup ise dokunma (label/required koru)
+  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date'
+    || field.type === 'datetime' || field.type === 'password') {
     return field;
   }
   if (field.type === 'select' && Array.isArray(field.options) && field.options.length) {
@@ -8579,8 +8994,16 @@ function buildLookupOptionsHtml(field, value, rows) {
     if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı —';
     else if (field.dependsOn) emptyLabel = '— önce üst alan —';
   }
+  const list = Array.isArray(rows) ? [...rows] : [];
+  // Seçili değer listede yoksa (firma filtresi / autofill) yine de göster
+  if (value != null && value !== ''
+    && !list.some((r) => String(r?.[vk]) === String(value))) {
+    const stub = { [vk]: value, [lk]: String(value) };
+    if (ck) stub[ck] = String(value);
+    list.unshift(stub);
+  }
   const opts = [`<option value="">${emptyLabel}</option>`].concat(
-    rows.map((r) => {
+    list.map((r) => {
       const val = r[vk];
       // Kod–first_name: select’te kod, title’da tam metin (dar kutu)
       const code = ck ? String(r[ck] || val || '') : '';
@@ -8591,6 +9014,15 @@ function buildLookupOptionsHtml(field, value, rows) {
     })
   );
   return opts.join('');
+}
+
+/** Autofill / çapraz firma: lookup cache’e satır ekle (yoksa) */
+function ensureLookupCacheRow(lookupKey, row, valueKey = 'id') {
+  if (!lookupKey || !row || row[valueKey] == null || row[valueKey] === '') return;
+  if (!state.lookupCache[lookupKey]) state.lookupCache[lookupKey] = [];
+  const list = state.lookupCache[lookupKey];
+  if (list.some((r) => String(r[valueKey]) === String(row[valueKey]))) return;
+  list.push(row);
 }
 
 function lookupNameOnly(field, value) {
@@ -9173,6 +9605,8 @@ const state = {
   isYerleri: [],
   requiredFieldDefs: [],
   listPage: 1,
+  /** Liste kolon altı arama: { [screenId]: { [colKey]: string } } — LIKE %…%; `;` ile VEYA */
+  listColFilters: {},
   excelCtx: null,
   pageQueryOpenMods: {},
   pageQueryFocusScreenId: null,
@@ -11901,6 +12335,9 @@ function listRowsFromResponse(screen, data) {
 function buildListEndpoint(screen) {
   let url = screen.endpoint || '';
   const extras = [];
+  if (screen.listSourceType) {
+    extras.push(`source_type=${encodeURIComponent(screen.listSourceType)}`);
+  }
   (screen.filters || []).forEach((f) => {
     if (!f.queryParam) return;
     const st = state.filterState?.[f.key];
@@ -11973,12 +12410,12 @@ function setControlDisabled(el, disabled, title = '') {
  */
 async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false, rateType = null, rateTypeEl = null } = {}) {
   const pb = String(pbKod || 'TRY').toUpperCase();
+  // Yalnızca belge/satır kur tipi — stok Vergi.Tip (rate_type) ile karıştırma
   const tipEl = rateTypeEl
-    || findAttrControl('data-master', 'rate_type')
-    || findAttrControl('data-detail', 'rate_type');
+    || findAttrControl('data-master', 'rate_type');
   const tip = rateType != null
     ? rateType
-    : (tipEl ? (tipEl.type === 'radio' ? readMasterDetailValue('rate_type') : tipEl.value) : null)
+    : (tipEl ? (tipEl.type === 'radio' ? tipEl.value : tipEl.value) : null)
       || state.formRecord?.rate_type
       || 'TCMB-SATIS';
 
@@ -12026,10 +12463,19 @@ async function syncDocumentRateFields(force = true) {
 }
 
 function readMasterDetailValue(key) {
-  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"], input[type="radio"][data-detail="${key}"]`)];
+  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"]`)];
   if (radios.length) return radios.find((r) => r.checked)?.value ?? (state.formRecord?.[key] ?? '');
-  const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
-  if (!el) return state.formRecord?.[key] ?? '';
+  // rate_type / exchange_rate: stok Vergi grid’indeki rate_type ile karışmasın → önce master
+  const preferMaster = key === 'rate_type' || key === 'exchange_rate' || key === 'currency_code';
+  const el = preferMaster
+    ? (findAttrControl('data-master', key) || null)
+    : (findAttrControl('data-master', key) || findAttrControl('data-detail', key));
+  if (!el) {
+    if (preferMaster) return state.formRecord?.[key] ?? '';
+    const detailEl = findAttrControl('data-detail', key);
+    if (!detailEl) return state.formRecord?.[key] ?? '';
+    return detailEl.value;
+  }
   return el.value;
 }
 
@@ -12183,6 +12629,54 @@ async function fillAddressFromPartner(cariId, { force = false } = {}) {
   } catch (err) {
     console.warn('Cari adres doldurulamadı', err);
   }
+}
+
+/** İş emri / operasyon seçilince üretim girişi formunu önizleme ile doldur */
+async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = null, quantity = null } = {}) {
+  if (!state.formRecord) return;
+  const oid = Number(orderId || state.formRecord.order_id || document.querySelector('[data-master="order_id"]')?.value);
+  if (!oid) {
+    toast('Önce iş emri seçin.');
+    return;
+  }
+  const opEl = document.querySelector('[data-master="operation_id"]');
+  const qtyEl = document.querySelector('[data-master="quantity"]');
+  const opId = operationId != null
+    ? operationId
+    : (state.formRecord.operation_id || opEl?.value || '');
+  const qty = quantity != null
+    ? quantity
+    : (state.formRecord.quantity || qtyEl?.value || '');
+  const q = new URLSearchParams({ order_id: String(oid) });
+  if (opId) q.set('operation_id', String(opId));
+  if (qty !== '' && qty != null && Number(qty) > 0) q.set('quantity', String(qty));
+  const prev = { ...(state.formRecord || {}) };
+  const data = await api(`/uretim-girisleri/onizleme?${q}`);
+  const keepSource = screen.id === 'hizli-uretim-girisi' ? 'Hizli' : (prev.source_type || 'Operasyonel');
+  state.formRecord = {
+    ...prev,
+    ...data,
+    id: prev.id,
+    receipt_no: prev.receipt_no,
+    source_type: keepSource,
+    quick: screen.id === 'hizli-uretim-girisi' ? true : Boolean(prev.quick),
+    consume_materials: prev.consume_materials != null ? prev.consume_materials : true,
+    serial_no: prev.serial_no || data.serial_no || '',
+    shift_code: prev.shift_code || '',
+    description: prev.description || data.description || '',
+    malzemeler: data.malzemeler || [],
+    duruslar: prev.duruslar || [],
+  };
+  invalidateLookups('uretim-emir-operasyonlari');
+  await fetchLookupKey('uretim-emir-operasyonlari', { order_id: oid }).catch(() => {});
+  renderForm(screen);
+  const nMal = (data.malzemeler || []).length;
+  const kalan = data.op_remaining_quantity != null ? Number(data.op_remaining_quantity) : null;
+  const maxA = data.max_allowed_quantity != null ? Number(data.max_allowed_quantity) : null;
+  const qtyHint = (kalan != null && maxA != null)
+    ? ` · kalan ${kalan}, max ${maxA}`
+    : '';
+  toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme${qtyHint}`);
 }
 
 async function fillLinesFromSource(kind, sourceId) {
@@ -12562,13 +13056,25 @@ async function fillLinesFromSource(kind, sourceId) {
       }));
       toast(`Mal kabul ${mk.receipt_no || sourceId} satırları yüklendi`);
       renderForm(screen);
+    } else if (kind === 'uretim-giris-onizleme') {
+      // sourceId çoğu zaman order_id; operasyon alanından da tetiklenebilir — emri formdan oku
+      const orderFromForm = Number(
+        state.formRecord.order_id
+        || document.querySelector('[data-master="order_id"]')?.value
+        || 0
+      );
+      const looksLikeOrder = orderFromForm && Number(sourceId) === orderFromForm;
+      await fillUretimGirisOnizleme(screen, {
+        orderId: looksLikeOrder ? sourceId : (orderFromForm || sourceId),
+        operationId: looksLikeOrder ? undefined : (sourceId || undefined),
+      });
     }
     // Bağlı belge / kaynak satırları toplu gelir — satır ✓ sonrası boş satır açılmaz
     const sourceKinds = new Set([
       'talep-satirlar', 'siparis-satirlar', 'tedarikci-irsaliye-satirlar',
       'teklif-satirlar', 'sa-teklif-satirlar', 'siparis-kalemler',
       'rezervasyon-siparis-kalemler', 'sevk-satirlar', 'irsaliye-satirlar',
-      'mal-kabul-satirlar',
+      'mal-kabul-satirlar', 'uretim-giris-onizleme',
     ]);
     if (sourceKinds.has(kind)) {
       const loaded = state.formRecord?.[detailKey];
@@ -13114,12 +13620,64 @@ function renderListSideNav(screen) {
   `).join('');
 }
 
+function getListColFilters(screenId) {
+  const id = screenId || state.screenId;
+  if (!id) return {};
+  if (!state.listColFilters || typeof state.listColFilters !== 'object') state.listColFilters = {};
+  if (!state.listColFilters[id]) state.listColFilters[id] = {};
+  return state.listColFilters[id];
+}
+
+function clearListColFilters(screenId) {
+  const id = screenId || state.screenId;
+  if (!id || !state.listColFilters) return;
+  state.listColFilters[id] = {};
+}
+
+/** `;` ile ayrılmış terimler — her biri LIKE %terim% (VEYA) */
+function listColFilterTerms(raw) {
+  return String(raw || '')
+    .split(';')
+    .map((t) => normalizeLikeNeedle(t))
+    .filter(Boolean);
+}
+
+function listCellSearchText(col, row, index = 0) {
+  let val = col?.key === 'id' ? rowKey(row, index) : row?.[col?.key];
+  if (col?.key === 'is_active' && typeof val === 'boolean') val = val ? 'Hayır' : 'Evet';
+  else if (col?.key === 'parola_var') val = val ? 'Var' : 'Yok';
+  else if (typeof val === 'boolean') val = val ? 'Evet' : 'Hayır';
+  else if (Array.isArray(val)) val = val.length ? val.join('; ') : '';
+  else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) val = formatListDateTime(val);
+  else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
+    && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
+    val = formatListDateOnly(val) || val;
+  }
+  if (val === null || val === undefined || val === '') return '';
+  return String(val);
+}
+
+function applyListColFilters(rows, screen) {
+  const filters = getListColFilters(screen?.id);
+  const active = Object.entries(filters).filter(([, v]) => String(v || '').trim() !== '');
+  if (!active.length) return rows;
+  const cols = listColumns(screen);
+  const colMap = new Map(cols.map((c) => [c.key, c]));
+  return rows.filter((row, index) => active.every(([key, raw]) => {
+    const terms = listColFilterTerms(raw);
+    if (!terms.length) return true;
+    const text = listCellSearchText(colMap.get(key) || { key }, row, index);
+    return terms.some((term) => likeIncludes(text, term));
+  }));
+}
+
 function rowsForList(screen) {
   let rows = state.rows || [];
   if (screen.listCategories?.length && screen.categoryKey && state.listCategory) {
     rows = rows.filter((r) => String(r[screen.categoryKey]) === String(state.listCategory));
   }
-  return applyFilters(rows, screen);
+  rows = applyFilters(rows, screen);
+  return applyListColFilters(rows, screen);
 }
 
 /** Liste satır anahtarı — id yoksa bileşik anahtar (depo bakiye vb. tüm satır seçimini önler). */
@@ -13232,10 +13790,20 @@ function renderList(screen) {
   const { page, pageSize } = clampListPage(total);
   const start = (page - 1) * pageSize;
   const pageRows = state.filtered.slice(start, start + pageSize);
-  head.innerHTML = `<tr>${cols.map((c) => {
+  const colFilters = getListColFilters(screen.id);
+  const labelRow = `<tr class="list-col-labels">${cols.map((c) => {
     const drag = c.key === 'id' ? '' : 'draggable="true"';
     return `<th data-col-key="${escapeAttr(c.key)}" ${drag} title="${c.key === 'id' ? 'ID' : 'Sürükleyerek sıralayın'}">${escapeHtml(c.label)}</th>`;
   }).join('')}</tr>`;
+  const filterRow = `<tr class="list-col-filters">${cols.map((c) => {
+    const val = colFilters[c.key] || '';
+    return `<th class="list-col-filter-th" data-col-key="${escapeAttr(c.key)}">
+      <input type="search" class="list-col-filter" data-col-key="${escapeAttr(c.key)}"
+        value="${escapeAttr(val)}" placeholder="%…%" autocomplete="off" spellcheck="false"
+        title="LIKE %metin% — birden fazla terim için ; kullanın" />
+    </th>`;
+  }).join('')}</tr>`;
+  head.innerHTML = labelRow + filterRow;
   if (!total) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
@@ -13258,12 +13826,84 @@ function renderList(screen) {
   renderListPager(total);
   updateActionButtons(screen);
   bindListColumnDrag(screen);
+  bindListColFilterUi();
+  // Listeler / sayfalar arası geçişte eski scroll kalıntısı (ghost scrollbar) kalmasın
+  const listScroll = $('#listTableScroll');
+  if (listScroll) {
+    listScroll.scrollTop = 0;
+    listScroll.scrollLeft = 0;
+  }
+}
+
+/** Kolon altı arama — input’ta odak kaybolmasın diye yalnız gövdeyi yenile */
+function refreshListBodyFromColFilters(screen) {
+  if (!screen) return;
+  const body = $('#dataBody');
+  if (!body) return;
+  state.filtered = rowsForList(screen);
+  const total = state.filtered.length;
+  const cols = listColumns(screen);
+  const { page, pageSize } = clampListPage(total);
+  const start = (page - 1) * pageSize;
+  const pageRows = state.filtered.slice(start, start + pageSize);
+  if (!total) {
+    body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
+  } else {
+    body.innerHTML = pageRows.map((row, i) => {
+      const index = start + i;
+      const key = rowKey(row, index);
+      const selected = state.selectedId != null && String(key) === String(state.selectedId);
+      return `
+      <tr data-id="${escapeAttr(key)}" class="${selected ? 'selected' : ''}">
+        ${cols.map((c) => `<td>${cellHtml(c, row, index)}</td>`).join('')}
+      </tr>`;
+    }).join('');
+  }
+  const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
+    ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
+    : (state.rows || []).length;
+  const layoutSaved = Boolean(loadListLayout(screen.id) && !state._listLayoutOverride?.[screen.id]);
+  const draft = Boolean(state._listLayoutOverride?.[screen.id]);
+  const meta = $('#listMeta');
+  if (meta) {
+    meta.textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa${draft ? ' · düzen değişti (kaydedilmedi)' : (layoutSaved ? ' · kayıtlı düzen' : '')}`;
+  }
+  renderListPager(total);
+  updateActionButtons(screen);
+}
+
+function bindListColFilterUi() {
+  if (document.documentElement.dataset.listColFilterBound === '1') return;
+  document.documentElement.dataset.listColFilterBound = '1';
+  const onFilterInput = (e) => {
+    const inp = e.target?.closest?.('.list-col-filter');
+    if (!inp) return;
+    const screen = findScreen(state.screenId);
+    if (!screen) return;
+    const key = inp.getAttribute('data-col-key');
+    if (!key) return;
+    const filters = getListColFilters(screen.id);
+    filters[key] = inp.value;
+    state.listPage = 1;
+    refreshListBodyFromColFilters(screen);
+  };
+  document.addEventListener('input', onFilterInput);
+  document.addEventListener('search', onFilterInput); // type=search clear (x)
+  document.addEventListener('keydown', (e) => {
+    const inp = e.target?.closest?.('.list-col-filter');
+    if (!inp) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      inp.value = '';
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
 }
 
 function bindListColumnDrag(screen) {
   const head = $('#dataHead');
   if (!head || !screen) return;
-  head.querySelectorAll('th[data-col-key][draggable="true"]').forEach((th) => {
+  head.querySelectorAll('tr.list-col-labels th[data-col-key][draggable="true"]').forEach((th) => {
     th.addEventListener('dragstart', (e) => {
       const key = th.getAttribute('data-col-key');
       e.dataTransfer.setData('text/plain', key);
@@ -13754,6 +14394,7 @@ async function openScreen(id, opts = {}) {
     state.screenId = screen.id;
     state.selectedId = null;
     state.formMode = null;
+    state.listPage = 1;
     state.listCategory = screen.listCategories?.[0]?.id || null;
     if (!state.isYerleri.length && getActiveCompanyId()) {
       await loadPlantsForActiveCompany();
@@ -13839,6 +14480,9 @@ async function openScreen(id, opts = {}) {
     let rows = listRowsFromResponse(screen, data);
     if (screen.id === 'numarator-tanimi') {
       rows = rows.map((r) => ({ ...r, id: r.series_code }));
+    }
+    if (screen.listSourceType) {
+      rows = rows.filter((r) => String(r.source_type || 'Operasyonel') === String(screen.listSourceType));
     }
     state.rows = ensureRowIds(rows);
     if (screen.visualGantt && data && typeof data === 'object' && !Array.isArray(data)) {
@@ -14069,6 +14713,9 @@ const LOOKUP_ENDPOINTS = {
   'is-istasyonlari': '/is-istasyonlari?is_active=true',
   'rota-sablonlari': '/routings?type=hepsi&template=true',
   'uretim-emirleri': '/uretim-emirleri',
+  'uretim-emir-operasyonlari': '/uretim-emirleri/operasyon-lookup',
+  'uretim-girisleri': '/uretim-girisleri',
+  'uretim-parametreleri': '/uretim-parametreleri',
   'uretim-planlari': '/uretim-planlari',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?is_active=true',
   'stok-depo': '/stok-depo?is_active=true',
@@ -14269,7 +14916,7 @@ function buildScreenLookupRows() {
   })).sort((a, b) => String(a.screen_name).localeCompare(String(b.screen_name), 'tr'));
 }
 
-async function fetchLookupKey(key) {
+async function fetchLookupKey(key, query = null) {
   // UI ekran kataloğu — API’ye gitmeden MODULES’ten
   if (key === 'ekranlar' || key === 'screens' || key === 'onay-ekranlari') {
     if (key === 'onay-ekranlari') {
@@ -14288,10 +14935,18 @@ async function fetchLookupKey(key) {
     state.lookupCache[key] = buildScreenLookupRows();
     return state.lookupCache[key];
   }
-  const ep = resolveLookupEndpoint(key);
+  let ep = resolveLookupEndpoint(key);
   if (!ep) {
     state.lookupCache[key] = state.lookupCache[key] || [];
     return state.lookupCache[key];
+  }
+  if (query && typeof query === 'object') {
+    const qs = new URLSearchParams();
+    Object.entries(query).forEach(([k, v]) => {
+      if (v != null && String(v).trim() !== '') qs.set(k, String(v));
+    });
+    const qstr = qs.toString();
+    if (qstr) ep = ep.includes('?') ? `${ep}&${qstr}` : `${ep}?${qstr}`;
   }
   try {
     // Firmalar her zaman tam liste (backend zaten izolasyonsuz).
@@ -14375,8 +15030,9 @@ function normalizeLikeNeedle(q) {
 }
 
 function likeIncludes(haystack, needle) {
-  if (!needle) return true;
-  return String(haystack ?? '').toLocaleLowerCase('tr').includes(needle);
+  const n = normalizeLikeNeedle(needle);
+  if (!n) return true;
+  return String(haystack ?? '').toLocaleLowerCase('tr').includes(n);
 }
 
 function wrapLookupPick(innerHtml, disabled = false) {
@@ -14454,10 +15110,11 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
   }
   if (field.type === 'select') {
     let opts = field.options || [];
-    // Rate type: readable labels instead of codes (Alış / Satış / Efektif…)
+    // Döviz kur tipi: kod → okunur etiket (TCMB-ALIS → Alış).
+    // Stok Vergi Tip (Alış/Satış/…) aynı key’i kullanır; kod listesinde yoksa olduğu gibi bırak.
     if (field.key === 'rate_type' && opts.length && typeof opts[0] === 'string') {
-      opts = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
-      if (!opts.length) opts = RATE_TYPE_OPTIONS.slice();
+      const asCodes = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
+      if (asCodes.length) opts = asCodes;
     }
     const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
     const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.l ?? optVal(o)) : o);
@@ -14504,7 +15161,24 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const dv = v ? String(v).slice(0, 10) : '';
     return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
   }
+  if (field.type === 'datetime') {
+    return `<input type="datetime-local" step="60" ${name} value="${escAttr(toDatetimeLocalValue(v))}" ${dis} ${req} />`;
+  }
   return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
+}
+
+/** datetime-local value (YYYY-MM-DDTHH:mm) — API ISO / Postgres timestamp */
+function toDatetimeLocalValue(v) {
+  if (v == null || v === '') return '';
+  const s = String(v).trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return s.slice(0, 16);
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) return `${s.slice(0, 10)}T${s.slice(11, 16)}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00`;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
@@ -15189,6 +15863,152 @@ async function refreshQcMeasurementsFromPlan(screen) {
   // Plan değişince ölçüm değerlerini sıfırla; satır iskeleti yeni kriterlerden gelir
   state.formRecord.olcumler = buildQcMeasurementRows(state.formRecord.kriterler, []);
   renderForm(screen);
+}
+
+/** Ürün ağacı satırlarından iş emri malzeme grid’i (miktar ölçekli) */
+function buildWoMaterialsFromBom(bom, { plannedQty, warehouseId } = {}) {
+  const baseQty = Number(bom?.quantity) || 1;
+  const plan = Number(plannedQty);
+  const carpan = (Number.isFinite(plan) ? plan : 0) / (baseQty || 1);
+  const lines = Array.isArray(bom?.satirlar) ? bom.satirlar : [];
+  let nextNo = 1;
+  const rows = [];
+  lines.forEach((s) => {
+    if (!s?.component_item_id) return;
+    const lineNo = s.line_no != null && s.line_no !== '' ? Number(s.line_no) : nextNo;
+    nextNo = Math.max(nextNo, (Number.isFinite(lineNo) ? lineNo : nextNo) + 1);
+    const rawQty = Number(s.quantity != null && s.quantity !== '' ? s.quantity : s.net_quantity) || 0;
+    const qty = s.is_fixed_qty ? rawQty : rawQty * carpan;
+    rows.push({
+      line_no: Number.isFinite(lineNo) ? lineNo : rows.length + 1,
+      item_id: Number(s.component_item_id),
+      uom_code: s.uom_code || s.item_uom_code || '',
+      planned_quantity: qty,
+      consumed_quantity: 0,
+      warehouse_id: s.warehouse_id || warehouseId || null,
+    });
+  });
+  return rows;
+}
+
+/** Rota operasyonlarından iş emri rota grid’i */
+function buildWoOperationsFromRoute(route, { plannedQty } = {}) {
+  const plan = Number(plannedQty);
+  const planQty = Number.isFinite(plan) ? plan : 0;
+  const ops = Array.isArray(route?.operasyonlar) ? route.operasyonlar : [];
+  return ops.map((op, i) => ({
+    line_no: op.line_no != null && op.line_no !== '' ? Number(op.line_no) : (i + 1) * 10,
+    operation_code: op.operation_code || '',
+    operation_name: op.operation_name || '',
+    work_center_id: op.work_center_id || null,
+    planned_quantity: planQty,
+    produced_quantity: Number(op.produced_quantity) || 0,
+    status: op.status || (i === 0 ? 'Hazir' : 'Bekliyor'),
+    ilk_operasyon: i === 0,
+    son_operasyon: i === ops.length - 1,
+  }));
+}
+
+function canAutoFillUretimEmriDetails(rec) {
+  if (!rec || state.formMode === 'incele') return false;
+  if (rec.is_started || Number(rec.produced_quantity) > 0) return false;
+  const mals = Array.isArray(rec.malzemeler) ? rec.malzemeler : [];
+  if (mals.some((m) => Number(m.consumed_quantity) > 0)) return false;
+  const ops = Array.isArray(rec.operasyonlar) ? rec.operasyonlar : [];
+  if (ops.some((o) => Number(o.produced_quantity) > 0)) return false;
+  return true;
+}
+
+/**
+ * Üretim emri: ürün ağacı → malzemeler; rota → operasyonlar (formda anında).
+ * Grid DOM’u yeniden okumadan master’ı birleştirir (lookup firma filtresi item_id’yi silmesin).
+ */
+async function autoFillUretimEmriDetails(screen, { materials = false, operations = false } = {}) {
+  if (screen?.id !== 'uretim-emirleri' || !state.formRecord) return;
+  if (!materials && !operations) return;
+  const master = readMasterFromForm(screen);
+  const prevMal = state.formRecord.malzemeler;
+  const prevOps = state.formRecord.operasyonlar;
+  state.formRecord = {
+    ...state.formRecord,
+    ...master,
+    malzemeler: prevMal,
+    operasyonlar: prevOps,
+  };
+  if (!canAutoFillUretimEmriDetails(state.formRecord)) return;
+
+  const rec = state.formRecord;
+  const msgs = [];
+  let changed = false;
+
+  if (materials) {
+    const bomId = Number(rec.product_bom_id);
+    if (!bomId) {
+      if ((rec.malzemeler || []).length) {
+        rec.malzemeler = [];
+        changed = true;
+      }
+    } else {
+      try {
+        let bom = (state.lookupCache['urun-agaclari'] || [])
+          .find((b) => Number(b.id) === bomId);
+        if (!bom?.satirlar?.length) bom = await api(`/urun-agaclari/${bomId}`);
+        (bom.satirlar || []).forEach((s) => {
+          if (!s?.component_item_id) return;
+          ensureLookupCacheRow('items', {
+            id: Number(s.component_item_id),
+            item_code: s.item_code || String(s.component_item_id),
+            item_name: s.item_name || s.line_description || '',
+            uom_code: s.uom_code || s.item_uom_code || '',
+            item_type: s.item_type || '',
+          });
+        });
+        rec.malzemeler = buildWoMaterialsFromBom(bom, {
+          plannedQty: rec.planned_quantity,
+          warehouseId: rec.component_warehouse_id,
+        });
+        msgs.push(`${rec.malzemeler.length} malzeme`);
+        changed = true;
+      } catch (err) {
+        toast(err.message || 'Ürün ağacı malzemeleri okunamadı');
+      }
+    }
+  }
+
+  if (operations) {
+    const routeId = Number(rec.route_id);
+    if (!routeId) {
+      if ((rec.operasyonlar || []).length) {
+        rec.operasyonlar = [];
+        changed = true;
+      }
+    } else {
+      try {
+        let route = (state.lookupCache.routings || [])
+          .find((r) => Number(r.id) === routeId);
+        if (!route?.operasyonlar?.length) route = await api(`/routings/${routeId}`);
+        (route.operasyonlar || []).forEach((op) => {
+          if (!op?.work_center_id) return;
+          ensureLookupCacheRow('is-merkezleri', {
+            id: Number(op.work_center_id),
+            center_code: op.center_code || String(op.work_center_id),
+            center_name: op.center_name || op.work_center_name || '',
+          });
+        });
+        rec.operasyonlar = buildWoOperationsFromRoute(route, {
+          plannedQty: rec.planned_quantity,
+        });
+        msgs.push(`${rec.operasyonlar.length} operasyon`);
+        changed = true;
+      } catch (err) {
+        toast(err.message || 'Rota operasyonları okunamadı');
+      }
+    }
+  }
+
+  if (!changed) return;
+  renderForm(screen);
+  if (msgs.length) toast(`İş emri detay: ${msgs.join(', ')} dolduruldu`);
 }
 
 function hydrateItemCompanyPlant(rec) {
@@ -17031,6 +17851,8 @@ function detailColClass(f) {
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / address / …). */
 const FIELD_GROUP_DEFS = [
+  // İş emri seçimi üretim girişinde önce gelmeli (order_id aksi halde «Diğer»e düşüyordu)
+  { id: 'kaynak-belge', title: 'İş emri', re: /^(order_id|operation_id|production_order_id)$/i },
   { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|work_center|work_station|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
   { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|operation_|line_no|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|procurement_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code|output_item)/i },
   { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity|planned_quantity)/i },
@@ -18946,6 +19768,7 @@ function renderForm(screen) {
   }
 
   // İş emri: Detayları Doldur + BOM/Rota Uygula (başlatılmamış, açık emir)
+  // Üretim girişi: Detayları Getir (iş emrinden malzeme/depo önizleme)
   const fillBtn = $('#btnFormDetailFill');
   const bomBtn = $('#btnFormBomRota');
   const woCanRefill = screen.id === 'uretim-emirleri'
@@ -18955,8 +19778,13 @@ function renderForm(screen) {
     && !rec.is_started
     && Number(rec.produced_quantity || 0) <= 0
     && !['Kapali', 'Iptal'].includes(rec.status);
+  const uretimGirisFill = (screen.id === 'uretim-girisleri' || screen.id === 'hizli-uretim-girisi')
+    && screen.detailFillAction?.client === 'uretim-giris-onizleme'
+    && state.formMode !== 'incele'
+    && !readonly
+    && Boolean(rec.order_id || document.querySelector('[data-master="order_id"]')?.value);
   if (fillBtn) {
-    const showFill = woCanRefill && screen.detailFillAction;
+    const showFill = (woCanRefill && screen.detailFillAction) || uretimGirisFill;
     fillBtn.hidden = !showFill;
     if (showFill) fillBtn.textContent = screen.detailFillAction.label;
   }
@@ -19378,6 +20206,7 @@ function collectLookupFieldDefs(screen) {
 
 function findFieldDefByKey(screen, key) {
   return collectLookupFieldDefs(screen).find((f) => f.key === key)
+    || collectScreenFormFields(screen).find((f) => f.key === key)
     || (TANIM_LOOKUP_BY_KEY[key] ? applyDefinitionLookup({ key, label: key }) : null);
 }
 
@@ -19518,6 +20347,13 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'type_code', label: 'Tip kodu', mono: true },
     { key: 'type_name', label: 'Tip adı' },
   ],
+  'uretim-emir-operasyonlari': [
+    { key: 'line_no', label: 'Sıra', mono: true },
+    { key: 'operation_code', label: 'Op kod', mono: true },
+    { key: 'operation_name', label: 'Operasyon' },
+    { key: 'status', label: 'Durum' },
+    { key: 'order_no', label: 'Emir', mono: true },
+  ],
   ekranlar: [
     { key: 'screen_code', label: 'Ekran kodu', mono: true },
     { key: 'screen_name', label: 'Ekran adı' },
@@ -19529,6 +20365,18 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'screen_name', label: 'Ekran adı' },
     { key: 'module_title', label: 'Modül' },
     { key: 'tech_id', label: 'Tech ID', mono: true },
+  ],
+  'vergi-kodlari': [
+    { key: 'tax_code', label: 'Vergi kodu', mono: true },
+    { key: 'tax_name', label: 'Vergi adı' },
+    { key: 'rate', label: 'Oran %', num: true },
+    { key: 'tax_type', label: 'Tip' },
+  ],
+  'finans-vergi-kodlari': [
+    { key: 'tax_code', label: 'Vergi kodu', mono: true },
+    { key: 'tax_name', label: 'Vergi adı' },
+    { key: 'rate', label: 'Oran %', num: true },
+    { key: 'tax_type', label: 'Tip' },
   ],
 };
 
@@ -19661,6 +20509,7 @@ const LOOKUP_TO_SCREEN = {
   'hr-cikis-nedenleri': 'hr-cikis-nedenleri',
   'belge-tipleri': 'belge-tipleri',
   'finans-vergi-kodlari': 'finans-vergi-kodlari',
+  'vergi-kodlari': 'finans-vergi-kodlari',
   'finans-ulke-paketleri': 'finans-ulke-paketleri',
   'mali-yillar': 'mali-yillar',
   'muhasebe-donemleri': 'muhasebe-donemleri',
@@ -19769,11 +20618,13 @@ async function enrichLookupRowsWithQty(field, rows, ctx) {
 
 function lookupBrowserRowValue(row, valueKey) {
   if (!row) return '';
-  if (row._opt != null) return row._opt;
+  if (row._opt != null) {
+    return typeof row._opt === 'object' ? (row._opt.value ?? row._opt.id ?? '') : row._opt;
+  }
   return row[valueKey];
 }
 
-function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = false, checkedIds = null) {
+function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = false, checkedIds = null, indexOffset = 0) {
   if (!rows.length) {
     return '<div class="lookup-browser-empty">Kayıt bulunamadı.</div>';
   }
@@ -19782,7 +20633,8 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = fal
     ? `<th class="lookup-browser-check"><span class="sr-only">Seç</span></th>`
     : '';
   const head = checkHead + cols.map((c) => `<th class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(c.label)}</th>`).join('');
-  const body = rows.map((r, idx) => {
+  const body = rows.map((r, i) => {
+    const idx = indexOffset + i;
     const val = lookupBrowserRowValue(r, valueKey);
     const rid = r.id != null ? String(r.id) : String(val ?? '');
     const isChecked = multi && checked.has(String(rid));
@@ -19792,7 +20644,9 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = fal
       : '';
     const cells = cols.map((c) => {
       let raw = r[c.key];
-      if (c.key === '_opt') raw = r._opt;
+      if (c.key === '_opt') {
+        raw = typeof r._opt === 'object' ? (r._opt?.label ?? r._opt?.value ?? r._label) : r._opt;
+      }
       if (raw == null || raw === '') raw = '—';
       if (c.num && raw !== '—' && !Number.isNaN(Number(raw))) {
         raw = Number(raw).toLocaleString('tr-TR', { maximumFractionDigits: 4 });
@@ -19872,15 +20726,35 @@ function paintLookupBrowser() {
   if (!body) return;
   const filtered = filterLookupBrowserRows(st.allRows, st.cols, search?.value || '');
   st.filteredRows = filtered;
-  if (count) count.textContent = `${filtered.length} kayıt`;
-  body.innerHTML = renderLookupBrowserTable(
-    filtered,
+  const pageSize = LOOKUP_SUGGEST_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize) || 1);
+  let pageNo = Number(st.page) || 0;
+  if (pageNo > totalPages - 1) pageNo = totalPages - 1;
+  if (pageNo < 0) pageNo = 0;
+  st.page = pageNo;
+  const start = pageNo * pageSize;
+  const pageRows = filtered.slice(start, start + pageSize);
+  const from = filtered.length ? start + 1 : 0;
+  const to = Math.min(start + pageRows.length, filtered.length);
+  if (count) count.textContent = filtered.length
+    ? `${from}–${to} / ${filtered.length} kayıt`
+    : '0 kayıt';
+  const tableHtml = renderLookupBrowserTable(
+    pageRows,
     st.cols,
     st.selectedVal,
     st.valueKey,
     Boolean(st.multi),
     st.checkedIds,
+    start,
   );
+  const pagerHtml = `
+    <div class="lookup-suggest-pager lookup-browser-pager" data-lb-pager="1">
+      <button type="button" class="btn ghost" data-lb-page="-1" ${pageNo <= 0 ? 'disabled' : ''}>← Geri</button>
+      <span class="lookup-suggest-pager-info">Sayfa ${pageNo + 1} / ${totalPages}</span>
+      <button type="button" class="btn ghost" data-lb-page="1" ${pageNo >= totalPages - 1 ? 'disabled' : ''}>İleri →</button>
+    </div>`;
+  body.innerHTML = tableHtml + pagerHtml;
   updateLookupBrowserActionButtons();
 }
 
@@ -19900,13 +20774,22 @@ async function reloadLookupBrowserRows() {
   let rows = [];
   if (field.type === 'lookup' && field.lookup) {
     invalidateLookups(field.lookup);
-    await fetchLookupKey(field.lookup);
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
     // Formdaki select seçeneklerini de taze tut
     const html = buildLookupOptionsHtml(field, st.sel.value, rows);
     st.sel.innerHTML = html;
   } else if (Array.isArray(field.options) && field.options.length) {
-    rows = field.options.map((o) => ({ _opt: o }));
+    rows = field.options.map((o) => {
+      if (typeof o === 'object' && o != null) {
+        const v = o.value ?? o.id ?? o.v;
+        return { _opt: v, _label: o.label ?? o.l ?? v };
+      }
+      return { _opt: o, _label: o };
+    });
   } else {
     rows = [...st.sel.options]
       .filter((o) => o.value !== '')
@@ -19933,11 +20816,31 @@ async function openLookupBrowserForSelect(sel) {
   let valueKey = field.valueKey || 'id';
 
   if (field.type === 'lookup' && field.lookup) {
-    await fetchLookupKey(field.lookup);
+    if (field.dependsOn) {
+      const parentVal = ctx?.[field.dependsOn];
+      if (parentVal == null || String(parentVal).trim() === '') {
+        const parentField = findScreen(state.screenId)?.masterFields?.find((f) => f.key === field.dependsOn)
+          || findScreen(state.screenId)?.detailFields?.find((f) => f.key === field.dependsOn);
+        toast(`Önce «${parentField?.label || field.dependsOn}» seçin.`);
+        return;
+      }
+    }
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    if (depQuery) invalidateLookups(field.lookup);
+    await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
     valueKey = field.valueKey || 'id';
   } else if (Array.isArray(field.options) && field.options.length) {
-    rows = field.options.map((o) => ({ _opt: o }));
+    rows = field.options.map((o) => {
+      if (typeof o === 'object' && o != null) {
+        const v = o.value ?? o.id ?? o.v;
+        const lab = o.label ?? o.l ?? v;
+        return { _opt: v, _label: lab };
+      }
+      return { _opt: o, _label: o };
+    });
     valueKey = '_opt';
   } else {
     rows = [...sel.options]
@@ -19981,19 +20884,22 @@ async function openLookupBrowserForSelect(sel) {
   if (!dlg) return;
   const screenTitle = targetScreen?.title || field.label || 'Kayıt';
   if (title) title.textContent = multi ? `${screenTitle} · çoklu seç` : `${screenTitle}`;
-  // Çoklu seçte arama kutusu boş açılsın
-  const typed = multi ? '' : (sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead')?.value || '');
+  // Pop-up: seçili etiketle filtreleme — tüm liste görünsün; kullanıcı arar
   if (search) {
-    search.value = typed.trim();
+    search.value = '';
     search.placeholder = 'Ara — LIKE %metin% …';
   }
+  _lookupBrowserState.page = 0;
   paintLookupBrowser();
   dlg.hidden = false;
   search?.focus();
   if (search && !search.dataset.bound) {
     search.dataset.bound = '1';
     search.addEventListener('input', () => {
-      if (_lookupBrowserState) paintLookupBrowser();
+      if (_lookupBrowserState) {
+        _lookupBrowserState.page = 0;
+        paintLookupBrowser();
+      }
     });
   }
   if (!_lookupBrowserFocusBound) {
@@ -20212,34 +21118,173 @@ async function lookupBrowserCrudAction(act) {
   }
 }
 
+const LOOKUP_SUGGEST_PAGE_SIZE = 10;
+
 function closeLookupSuggest(widget) {
-  const box = widget?.querySelector('.lookup-suggest');
-  if (box) {
+  const suggestId = widget?.dataset?.suggestId || '';
+  const portal = suggestId
+    ? document.querySelector(`.lookup-suggest[data-suggest-for="${CSS.escape(suggestId)}"]`)
+    : null;
+  const inline = widget?.querySelector?.('.lookup-suggest');
+  [portal, inline].filter(Boolean).forEach((box) => {
     box.hidden = true;
     box.innerHTML = '';
+    box.classList.remove('lookup-suggest--portal');
+    if (box.dataset.portal === '1') box.remove();
+  });
+  if (widget) {
+    delete widget._suggestPage;
+    delete widget._suggestMatches;
+    delete widget._suggestNeedle;
   }
 }
 
-function paintLookupSuggest(widget, sel, needle) {
-  const box = widget?.querySelector('.lookup-suggest');
-  if (!box || !sel) return;
+function ensureLookupSuggestBox(widget) {
+  if (!widget) return null;
+  let box = widget.querySelector('.lookup-suggest');
+  // Detay tablosu overflow yüzünden kesilmesin → body portal
+  const inGrid = Boolean(widget.closest('.detail-table, .detail-table-wrap, .filter-pane, td, th'));
+  if (!widget.dataset.suggestId) {
+    widget.dataset.suggestId = `ls${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  }
+  if (inGrid) {
+    let portal = document.querySelector(`.lookup-suggest[data-suggest-for="${widget.dataset.suggestId}"]`);
+    if (!portal) {
+      portal = document.createElement('div');
+      portal.className = 'lookup-suggest lookup-suggest--portal';
+      portal.dataset.suggestFor = widget.dataset.suggestId;
+      portal.dataset.portal = '1';
+      portal.hidden = true;
+      portal.setAttribute('role', 'listbox');
+      document.body.appendChild(portal);
+    }
+    return portal;
+  }
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'lookup-suggest';
+    box.hidden = true;
+    box.setAttribute('role', 'listbox');
+    widget.querySelector('.lookup-combo-main')?.appendChild(box);
+  }
+  return box;
+}
+
+function positionLookupSuggestPortal(widget, box) {
+  if (!box?.classList.contains('lookup-suggest--portal')) return;
+  const ta = widget?.querySelector('.lookup-typeahead');
+  if (!ta) return;
+  const r = ta.getBoundingClientRect();
+  const width = Math.max(r.width, 240);
+  let left = r.left;
+  if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - width - 8);
+  let top = r.bottom + 2;
+  const estH = 280;
+  if (top + estH > window.innerHeight - 8 && r.top > estH) {
+    top = Math.max(8, r.top - estH - 2);
+  }
+  box.style.left = `${Math.round(left)}px`;
+  box.style.top = `${Math.round(top)}px`;
+  box.style.width = `${Math.round(width)}px`;
+}
+
+/** Lookup / select seçeneklerini tazeleyerek doldurur (API veya statik options) */
+async function ensureSelectLookupOptions(sel) {
+  if (!sel || sel.disabled) return;
+  const field = resolveSelectFieldDef(sel);
+  if (field?.type === 'lookup' && field.lookup) {
+    const { ctx } = cascadeScopeContext(sel);
+    if (field.dependsOn) {
+      const parentVal = ctx?.[field.dependsOn];
+      if (parentVal == null || String(parentVal).trim() === '') return;
+    }
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    await fetchLookupKey(field.lookup, depQuery);
+    const rows = lookupRowsForField(field, ctx);
+    const keep = sel.value;
+    sel.innerHTML = buildLookupOptionsHtml(field, keep, rows);
+    if (keep) sel.value = keep;
+    syncLookupTypeaheadFromSelect(sel);
+    return;
+  }
+  // Statik select: option’lar boşsa alan tanımından yeniden bas
+  if (Array.isArray(field?.options) && field.options.length) {
+    const existing = [...sel.options].filter((o) => o.value !== '').length;
+    if (existing >= field.options.length) return;
+    const keep = sel.value;
+    const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
+    const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.l ?? optVal(o)) : o);
+    sel.innerHTML = `<option value="">—</option>${field.options.map((o) => {
+      const ov = optVal(o);
+      return `<option value="${escAttr(ov)}" ${String(keep) === String(ov) ? 'selected' : ''}>${escAttr(optLabel(o) || '—')}</option>`;
+    }).join('')}`;
+    if (keep) sel.value = keep;
+    syncLookupTypeaheadFromSelect(sel);
+  }
+}
+
+function paintLookupSuggest(widget, sel, needle, { page } = {}) {
+  if (!widget || !sel) return;
+  const box = ensureLookupSuggestBox(widget);
+  if (!box) return;
   const n = normalizeLikeNeedle(needle);
   const opts = [...sel.options].filter((o) => o.value !== '');
   const matches = n
     ? opts.filter((o) => likeIncludes(o.getAttribute('title') || o.textContent, n)
       || likeIncludes(o.value, n))
-    : opts.slice(0, 40);
-  const limited = matches.slice(0, 40);
-  if (!limited.length) {
-    box.innerHTML = `<div class="lookup-suggest-empty">Eşleşme yok (LIKE %${escAttr(n || '')}% )</div>`;
+    : opts.slice();
+  widget._suggestMatches = matches;
+  widget._suggestNeedle = n;
+  const pageSize = LOOKUP_SUGGEST_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(matches.length / pageSize) || 1);
+  let pageNo = page != null ? Number(page) : (widget._suggestPage || 0);
+  if (!Number.isFinite(pageNo) || pageNo < 0) pageNo = 0;
+  if (pageNo > totalPages - 1) pageNo = totalPages - 1;
+  widget._suggestPage = pageNo;
+  const start = pageNo * pageSize;
+  const pageRows = matches.slice(start, start + pageSize);
+
+  if (!matches.length) {
+    box.innerHTML = `<div class="lookup-suggest-empty">${
+      opts.length
+        ? `Eşleşme yok (LIKE %${escAttr(n || '')}%)`
+        : 'Liste boş — veri yüklenemedi veya kayıt yok.'
+    }</div>`;
     box.hidden = false;
+    positionLookupSuggestPortal(widget, box);
     return;
   }
-  box.innerHTML = limited.map((o) => {
+
+  const listHtml = pageRows.map((o, i) => {
     const label = o.getAttribute('title') || o.textContent || o.value;
-    return `<button type="button" class="lookup-suggest-item" role="option" data-lookup-pick="${escAttr(o.value)}" title="${escAttr(label)}">${escAttr(label)}</button>`;
+    return `<button type="button" class="lookup-suggest-item${i === 0 ? ' is-active' : ''}" role="option" data-lookup-pick="${escAttr(o.value)}" title="${escAttr(label)}">${escAttr(label)}</button>`;
   }).join('');
+  const from = start + 1;
+  const to = Math.min(start + pageRows.length, matches.length);
+  const pagerHtml = `
+    <div class="lookup-suggest-pager" data-suggest-pager="1">
+      <button type="button" class="btn ghost" data-suggest-page="-1" ${pageNo <= 0 ? 'disabled' : ''} title="Önceki 10">← Geri</button>
+      <span class="lookup-suggest-pager-info">${from}–${to} / ${matches.length}</span>
+      <button type="button" class="btn ghost" data-suggest-page="1" ${pageNo >= totalPages - 1 ? 'disabled' : ''} title="Sonraki 10">İleri →</button>
+    </div>`;
+  box.innerHTML = `<div class="lookup-suggest-list">${listHtml}</div>${pagerHtml}`;
   box.hidden = false;
+  positionLookupSuggestPortal(widget, box);
+}
+
+function moveLookupSuggestActive(widget, delta) {
+  const box = ensureLookupSuggestBox(widget);
+  if (!box || box.hidden) return;
+  const items = [...box.querySelectorAll('.lookup-suggest-item')];
+  if (!items.length) return;
+  let idx = items.findIndex((el) => el.classList.contains('is-active'));
+  if (idx < 0) idx = 0;
+  else idx = (idx + delta + items.length) % items.length;
+  items.forEach((el, i) => el.classList.toggle('is-active', i === idx));
+  items[idx].focus({ preventScroll: true });
+  items[idx].scrollIntoView({ block: 'nearest' });
 }
 
 function applyLookupTypeaheadPick(widget, val) {
@@ -20264,7 +21309,8 @@ function bindLookupBrowseUi() {
     const widget = ta.closest('.lookup-widget');
     const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
     if (!sel || sel.disabled) return;
-    paintLookupSuggest(widget, sel, ta.value);
+    widget._suggestPage = 0;
+    paintLookupSuggest(widget, sel, ta.value, { page: 0 });
   });
   document.addEventListener('focusin', (e) => {
     const ta = e.target?.closest?.('.lookup-typeahead');
@@ -20272,48 +21318,102 @@ function bindLookupBrowseUi() {
     const widget = ta.closest('.lookup-widget');
     const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
     if (!sel || sel.disabled) return;
-    // Seçili değeri göster; boşsa öneri aç
-    if (!ta.value) paintLookupSuggest(widget, sel, '');
+    // Boşsa veya odaklanınca öneriyi hazırla (veri yoksa API’den doldur)
+    ensureSelectLookupOptions(sel).then(() => {
+      if (!ta.value) paintLookupSuggest(widget, sel, '', { page: widget._suggestPage || 0 });
+    }).catch(() => {
+      if (!ta.value) paintLookupSuggest(widget, sel, '', { page: 0 });
+    });
   });
   document.addEventListener('keydown', (e) => {
     const ta = e.target?.closest?.('.lookup-typeahead');
     if (!ta) return;
     const widget = ta.closest('.lookup-widget');
-    const box = widget?.querySelector('.lookup-suggest');
+    const box = ensureLookupSuggestBox(widget);
+    const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
     if (e.key === 'Escape') {
       closeLookupSuggest(widget);
       return;
     }
     if (e.key === 'Enter') {
       e.preventDefault();
-      const first = box && !box.hidden ? box.querySelector('.lookup-suggest-item') : null;
-      if (first) {
-        applyLookupTypeaheadPick(widget, first.getAttribute('data-lookup-pick'));
+      const active = box && !box.hidden
+        ? (box.querySelector('.lookup-suggest-item.is-active') || box.querySelector('.lookup-suggest-item'))
+        : null;
+      if (active) {
+        applyLookupTypeaheadPick(widget, active.getAttribute('data-lookup-pick'));
         return;
       }
-      // Öneri yoksa liste popup’ı aç (yazılan metin LIKE aramasına gider)
-      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
       if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
       return;
     }
-    if (e.key === 'ArrowDown' && (e.altKey || box?.hidden)) {
+    // ↓ : alt listeyi aç / satır gezin · Alt+↓ : tam liste popup
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
-      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+      if (!sel) return;
+      if (e.altKey) {
+        openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+        return;
+      }
+      const open = box && !box.hidden;
+      if (!open) {
+        const selectedLabel = (sel.selectedOptions?.[0]?.getAttribute('title')
+          || sel.selectedOptions?.[0]?.textContent
+          || '').trim();
+        const typed = (ta.value || '').trim();
+        // Seçili etiket aynen duruyorsa tüm liste; kullanıcı yazıyorsa LIKE filtre
+        const needle = (typed && typed !== selectedLabel) ? typed : '';
+        ensureSelectLookupOptions(sel).then(() => {
+          paintLookupSuggest(widget, sel, needle, { page: 0 });
+        }).catch(() => {
+          paintLookupSuggest(widget, sel, needle, { page: 0 });
+        });
+      } else {
+        moveLookupSuggestActive(widget, 1);
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      const open = box && !box.hidden;
+      if (!open) return;
+      e.preventDefault();
+      moveLookupSuggestActive(widget, -1);
     }
   });
   document.addEventListener('mousedown', (e) => {
+    const pageBtn = e.target.closest?.('[data-suggest-page]');
+    if (pageBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const box = pageBtn.closest('.lookup-suggest');
+      const suggestId = box?.dataset?.suggestFor;
+      const widget = suggestId
+        ? document.querySelector(`.lookup-widget[data-suggest-id="${CSS.escape(suggestId)}"]`)
+        : pageBtn.closest('.lookup-widget');
+      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+      if (!widget || !sel) return;
+      const delta = Number(pageBtn.getAttribute('data-suggest-page') || 0);
+      const next = (widget._suggestPage || 0) + delta;
+      paintLookupSuggest(widget, sel, widget._suggestNeedle || '', { page: next });
+      return;
+    }
     const item = e.target.closest?.('.lookup-suggest-item');
     if (item) {
       e.preventDefault();
-      const widget = item.closest('.lookup-widget');
+      const box = item.closest('.lookup-suggest');
+      const suggestId = box?.dataset?.suggestFor;
+      const widget = suggestId
+        ? document.querySelector(`.lookup-widget[data-suggest-id="${CSS.escape(suggestId)}"]`)
+        : item.closest('.lookup-widget');
       applyLookupTypeaheadPick(widget, item.getAttribute('data-lookup-pick'));
       return;
     }
-    if (!e.target.closest?.('.lookup-combobox')) {
-      document.querySelectorAll('.lookup-suggest:not([hidden])').forEach((box) => {
+    if (!e.target.closest?.('.lookup-combobox') && !e.target.closest?.('.lookup-suggest')) {
+      document.querySelectorAll('.lookup-widget').forEach((w) => closeLookupSuggest(w));
+      document.querySelectorAll('.lookup-suggest[data-portal="1"]').forEach((box) => {
         box.hidden = true;
         box.innerHTML = '';
+        box.remove();
       });
     }
   });
@@ -20325,12 +21425,31 @@ function bindLookupBrowseUi() {
       e.stopPropagation();
       const widget = btn.closest('.lookup-widget');
       const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
-      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+      if (!sel || !widget) return;
+      closeLookupSuggest(widget);
+      // Yuvarlak buton → pop-up liste; ↓ tuşu → alanın altında öneri
+      ensureSelectLookupOptions(sel).then(() => {
+        const n = [...sel.options].filter((o) => o.value !== '').length;
+        if (!n) {
+          toast('Listelenecek kayıt yok.');
+          return;
+        }
+        return openLookupBrowserForSelect(sel);
+      }).catch((err) => toast(err.message || String(err)));
       return;
     }
 
     const dlg = $('#lookupBrowserDialog');
     if (!dlg || dlg.hidden) return;
+
+    const pageBtn = e.target.closest?.('[data-lb-page]');
+    if (pageBtn && _lookupBrowserState) {
+      e.preventDefault();
+      const delta = Number(pageBtn.getAttribute('data-lb-page') || 0);
+      _lookupBrowserState.page = (Number(_lookupBrowserState.page) || 0) + delta;
+      paintLookupBrowser();
+      return;
+    }
 
     const actBtn = e.target.closest?.('#lookupBrowserActions [data-lb-act]');
     if (actBtn && !actBtn.disabled) {
@@ -20442,6 +21561,16 @@ function bindLookupBrowseUi() {
     e.preventDefault();
     sel.focus();
   }, true);
+
+  const repositionPortals = () => {
+    document.querySelectorAll('.lookup-suggest.lookup-suggest--portal:not([hidden])').forEach((box) => {
+      const id = box.dataset.suggestFor;
+      const widget = id ? document.querySelector(`.lookup-widget[data-suggest-id="${CSS.escape(id)}"]`) : null;
+      if (widget) positionLookupSuggestPortal(widget, box);
+    });
+  };
+  window.addEventListener('resize', repositionPortals);
+  window.addEventListener('scroll', repositionPortals, true);
 }
 
 function cascadeScopeContext(el) {
@@ -20670,12 +21799,22 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
 
   const rules = [...(links || []), ...detailStokRules];
   const kkPlanRefresh = isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail;
-  if (!rules.length && !kkPlanRefresh) return;
+  const woDetailRefresh = screen.id === 'uretim-emirleri'
+    && !isDetail && !isBomField && !isFlowComp
+    && ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey);
+  if (!rules.length && !kkPlanRefresh && !woDetailRefresh) return;
 
   _formLinking = true;
   try {
     if (kkPlanRefresh && !rules.length) {
       await refreshQcMeasurementsFromPlan(screen);
+      return;
+    }
+    if (woDetailRefresh && !rules.length) {
+      await autoFillUretimEmriDetails(screen, {
+        materials: ['item_id', 'product_bom_id', 'planned_quantity'].includes(changedKey),
+        operations: ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey),
+      });
       return;
     }
     // BOM/rota listeleri güncel olsun
@@ -20781,6 +21920,14 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
     // KK emri: plan değişince ölçüm satırlarını kriterlerden yenile
     if (isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail) {
       await refreshQcMeasurementsFromPlan(screen);
+    }
+
+    // Üretim emri: ürün ağacı → malzemeler; rota → operasyonlar
+    if (woDetailRefresh) {
+      await autoFillUretimEmriDetails(screen, {
+        materials: ['item_id', 'product_bom_id', 'planned_quantity'].includes(changedKey),
+        operations: ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey),
+      });
     }
   } finally {
     _formLinking = false;
@@ -21052,6 +22199,7 @@ function bindCascadeLookups(_screen) {
     }
 
     // Para birimi / kur tipi → exchange_rate (TRY ise kur kilitli)
+    // Stok Vergi.Tip de rate_type kullanır; yalnızca gerçek kur satırlarında uygula
     if (fieldKey === 'currency_code' || fieldKey === 'rate_type') {
       if (masterKey) {
         await syncDocumentRateFields(true);
@@ -21069,9 +22217,15 @@ function bindCascadeLookups(_screen) {
         );
         const kurEl = sel('exchange_rate');
         const tipEl = sel('rate_type');
-        const pb = fieldKey === 'currency_code' ? el.value : (sel('currency_code')?.value || '');
-        const tip = fieldKey === 'rate_type' ? el.value : (tipEl?.value || 'TCMB-SATIS');
-        await applyExchangeRateForCurrency(pb, kurEl, { force: true, rateType: tip, rateTypeEl: tipEl });
+        const pbEl = sel('currency_code');
+        // Vergi / diğer rate_type satırları (kur yok) — dokunma
+        if (!kurEl && !pbEl) {
+          /* skip */
+        } else {
+          const pb = fieldKey === 'currency_code' ? el.value : (pbEl?.value || '');
+          const tip = fieldKey === 'rate_type' ? el.value : (tipEl?.value || 'TCMB-SATIS');
+          await applyExchangeRateForCurrency(pb, kurEl, { force: true, rateType: tip, rateTypeEl: tipEl });
+        }
       }
     }
 
@@ -21137,7 +22291,28 @@ function syncGridRowFromDom(tab, idx, baseRow = {}) {
   return { row, any, missing };
 }
 
-function readGridFromForm(tab) {
+/** Görünen tüm düzenlenebilir satırları DOM’dan oku — bir satır ✓ iken diğerleri silinmesin */
+function syncAllEditableGridRowsFromDom(tab, rows) {
+  const key = tab?.key;
+  const out = (Array.isArray(rows) ? rows : []).map((r) => ({ ...(r || {}) }));
+  if (!key) return out;
+  const domRows = [...document.querySelectorAll(`tr[data-grid-row="${CSS.escape(key)}"]`)];
+  domRows.forEach((tr) => {
+    const idx = Number(tr.getAttribute('data-grid-idx'));
+    if (!Number.isFinite(idx) || idx < 0) return;
+    // Salt okunur satırda input yok — formRecord’daki değeri koru
+    const editable = tr.classList.contains('detail-row--editing')
+      || tr.classList.contains('detail-row--draft')
+      || Boolean(tr.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])'));
+    if (!editable) return;
+    while (out.length <= idx) out.push(emptyRowFromFields(tab.fields));
+    const { row } = syncGridRowFromDom(tab, idx, out[idx] || {});
+    out[idx] = row;
+  });
+  return out;
+}
+
+function readGridFromForm(tab, { forApi = false } = {}) {
   const existing = Array.isArray(state.formRecord?.[tab.key]) ? state.formRecord[tab.key] : [];
   const count = Math.max(
     existing.length,
@@ -21145,7 +22320,8 @@ function readGridFromForm(tab) {
   );
   const rows = [];
   for (let idx = 0; idx < count; idx += 1) {
-    const { row, any } = syncGridRowFromDom(tab, idx, existing[idx] || {});
+    const base = existing[idx] || {};
+    const { row, any } = syncGridRowFromDom(tab, idx, base);
     const hasContent = any || Object.keys(row).some((k) => {
       if (k === 'bilesenler' || k === 'alt_satirlar' || k.startsWith('_')) return false;
       // Varsayılan katsayı 1 boş satır sayılmaz
@@ -21153,13 +22329,21 @@ function readGridFromForm(tab) {
       const v = row[k];
       return v !== '' && v != null && v !== false;
     });
-    if (hasContent) {
+    // Sabit slots / kayıtlı satır: boş görünse bile sırayı koru (vergi Tip satırları vb.)
+    const keepSlot = Number(tab.slots) > 0 && idx < count && (base.rate_type || base.id != null || base._satir_kayitli);
+    if (hasContent || keepSlot) {
       if (Array.isArray(existing[idx]?.bilesenler)) row.bilesenler = existing[idx].bilesenler;
-      // UI-only alanları API'ye gönderme
       delete row._esittir;
-      delete row._satir_kayitli;
-      delete row._satir_duzenleniyor;
-      delete row._satir_toplu;
+      if (forApi) {
+        delete row._satir_kayitli;
+        delete row._satir_duzenleniyor;
+        delete row._satir_toplu;
+      } else {
+        // Sekme değişiminde UI bayraklarını koru
+        if (base._satir_kayitli != null) row._satir_kayitli = base._satir_kayitli;
+        if (base._satir_duzenleniyor != null) row._satir_duzenleniyor = base._satir_duzenleniyor;
+        if (base._satir_toplu != null) row._satir_toplu = base._satir_toplu;
+      }
       rows.push(row);
     }
   }
@@ -22460,6 +23644,41 @@ async function saveForm({ after = 'stay' } = {}) {
     master.warehouse_id = defWh;
   }
 
+  // Üretim girişi: kaynak tipi + hızlı bayrak + fazla üretim istemci kontrolü
+  if (screen.id === 'hizli-uretim-girisi' || screen.id === 'uretim-girisleri') {
+    const qty = Number(master.quantity);
+    const maxA = master.max_allowed_quantity != null && master.max_allowed_quantity !== ''
+      ? Number(master.max_allowed_quantity)
+      : null;
+    if (maxA != null && Number.isFinite(maxA) && Number.isFinite(qty) && qty - maxA > 1e-9) {
+      toast(
+        `Fazla üretim engellendi. Maksimum izin ${maxA}`
+        + (master.op_remaining_quantity != null ? ` (kalan ${master.op_remaining_quantity})` : '')
+        + '. Üretim Parametreleri ekranından tolerans ayarlanabilir.',
+        { type: 'Hata', code: 'ERR-MFG-OVERPROD' }
+      );
+      return;
+    }
+  }
+  if (screen.id === 'hizli-uretim-girisi') {
+    master.quick = true;
+    master.source_type = 'Hizli';
+    if (master.net_quantity == null || master.net_quantity === '') master.net_quantity = master.quantity;
+    if (master.gross_quantity == null || master.gross_quantity === '') master.gross_quantity = master.quantity;
+  }
+  if (screen.id === 'uretim-girisleri') {
+    master.quick = false;
+    master.source_type = master.source_type || 'Operasyonel';
+    if (master.net_quantity == null || master.net_quantity === '') master.net_quantity = master.quantity;
+    if (master.gross_quantity == null || master.gross_quantity === '') master.gross_quantity = master.quantity;
+  }
+
+  // Üretim emri: aktif firma / iş yeri kayda yazılsın (liste filtresi için zorunlu)
+  if (screen.id === 'uretim-emirleri') {
+    if (!master.company_id && getActiveCompanyId()) master.company_id = getActiveCompanyId();
+    if (!master.plant_id && state.activeIsYeriId) master.plant_id = state.activeIsYeriId;
+  }
+
   // Kullanıcı kartı: giriş adı + şifre + yetki + profil
   if (screen.id === 'kullanicilar') {
     const adi = String(master.username || '').trim();
@@ -23705,6 +24924,7 @@ function bindEvents() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     state.filterState = buildDefaultFilterState(screen);
+    clearListColFilters(screen.id);
     renderFilterPane(screen);
     if (screen.id === 'bom-patlatma') {
       try {
@@ -23714,7 +24934,7 @@ function bindEvents() {
         toast(err.message || 'Liste yenilenemedi');
       }
     }
-    state.filtered = applyFilters(state.rows, screen);
+    state.listPage = 1;
     state.selectedId = null;
     renderList(screen);
   });
@@ -23899,7 +25119,17 @@ function bindEvents() {
     btnDetailFill.addEventListener('click', async () => {
       const screen = findScreen(state.screenId);
       const rec = state.formRecord;
-      if (!screen?.detailFillAction || !rec?.id) return;
+      if (!screen?.detailFillAction) return;
+      if (screen.detailFillAction.client === 'uretim-giris-onizleme') {
+        try {
+          state.formRecord = { ...rec, ...readTabbedPayload(screen) };
+          await fillUretimGirisOnizleme(screen);
+        } catch (err) {
+          toast(err.message || 'Detaylar getirilemedi');
+        }
+        return;
+      }
+      if (!rec?.id) return;
       if (!window.confirm('Malzeme ve rota satırları ürün ağacı + rotadan yeniden doldurulacak. Devam?')) return;
       try {
         const path = screen.detailFillAction.path.replace('{id}', rec.id);
@@ -24091,10 +25321,7 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
-        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
-        rows[state.gridSel.idx] = row;
-      }
+      rows = syncAllEditableGridRowsFromDom(tab, rows);
       if (act === 'yeni') {
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
         const blank = emptyRowFromFields(tab.fields);
@@ -24129,7 +25356,7 @@ function bindEvents() {
             state.formRecord[key] = rows;
             state.gridSel = { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır silmede başarı toast’ı yok — yalnız hata gösterilir
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -24153,14 +25380,8 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      // Aktif satır DOM’dan oku (manuel yazılan değerler kaybolmasın)
-      if (rows[idx]) {
-        const { row } = syncGridRowFromDom(tab, idx, rows[idx]);
-        rows[idx] = row;
-      } else if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
-        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
-        rows[state.gridSel.idx] = row;
-      }
+      // Tüm düzenlenebilir satırları DOM’dan oku — sıra sıra ✓ iken önceki yazılar silinmesin
+      rows = syncAllEditableGridRowsFromDom(tab, rows);
       if (act === 'duzelt') {
         rows.forEach((r, i) => {
           if (!r) return;
@@ -24183,7 +25404,7 @@ function bindEvents() {
               ? { key, idx: Math.min(idx, rows.length - 1) }
               : { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır silmede başarı toast’ı yok
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -24200,7 +25421,7 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — Kaydet ile onaylayın.');
+        // Satır kopyala başarı toast’ı yok
         return;
       }
       if (act === 'kaydet') {
@@ -24240,26 +25461,33 @@ function bindEvents() {
           row._satir_duzenleniyor = false;
           if (wasBulk) row._satir_toplu = true;
           else delete row._satir_toplu;
-          // Onaylanan satır alta; boş satır yalnız manuel girişte
-          rows.splice(idx, 1);
-          rows.push(row);
-          if (!wasBulk) {
+          // Satırı yerinde onayla (sıra/veri kaybı olmasın)
+          rows[idx] = row;
+          const otherOpen = rows.some((r, i) => i !== idx && r && (
+            r._satir_duzenleniyor === true
+            || (r._satir_kayitli !== true && r.id == null)
+          ));
+          const fixedSlots = Number(tab.slots) > 0;
+          // Yeni boş satır: yalnız tek satırlık manuel akışta; çok satır / slots / toplu → ekleme
+          const shouldAddBlank = !wasBulk && !fixedSlots && !otherOpen && rows.length <= 1;
+          if (shouldAddBlank) {
             const blank = emptyRowFromFields(tab.fields);
             blank._satir_kayitli = false;
             blank._satir_duzenleniyor = true;
             if (key === 'districts') blank.is_active = true;
-            rows.unshift(blank);
-            state.gridSel = { key, idx: 0 };
-          } else {
+            rows.push(blank);
             state.gridSel = { key, idx: rows.length - 1 };
+          } else {
+            state.gridSel = { key, idx };
           }
           state.formRecord[key] = rows;
           renderForm(screen);
-          if (!wasBulk) {
+          if (shouldAddBlank) {
             requestAnimationFrame(() => {
+              const focusIdx = rows.length - 1;
               const first = document.querySelector(
-                `tr[data-grid-row="${key}"][data-grid-idx="0"] input:not([disabled]):not([type="checkbox"]), `
-                + `tr[data-grid-row="${key}"][data-grid-idx="0"] select:not([disabled])`
+                `tr[data-grid-row="${key}"][data-grid-idx="${focusIdx}"] input:not([disabled]):not([type="checkbox"]), `
+                + `tr[data-grid-row="${key}"][data-grid-idx="${focusIdx}"] select:not([disabled])`
               );
               if (first) {
                 first.focus();
@@ -24267,15 +25495,12 @@ function bindEvents() {
               }
             });
           }
-          toast(screen.detailPersist?.[key]
-            ? 'Satır veritabanına kaydedildi.'
-            : 'Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+          // Satır kaydet/onay başarı toast’ı yok
           return;
         }
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
         renderForm(screen);
-        toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
         return;
       }
     }

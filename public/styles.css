@@ -1280,12 +1280,33 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
 
 .screen-view {
   display: grid;
-  /* banner | aksiyon | filtre(içerik kadar) | liste(kalan, kısa olmasın) */
-  grid-template-rows: auto auto auto minmax(min(36rem, 62vh), 1fr);
+  /* banner | aksiyon | filtre(içerik) | liste(en az ~16rem, kalanı doldurur) */
+  grid-template-rows: auto auto minmax(min-content, auto) minmax(16rem, 1fr);
   height: 100%;
   min-height: 0;
   background: var(--page);
   gap: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.screen-view > * {
+  min-height: 0;
+}
+.screen-view > .screen-banner,
+.screen-view > .action-bar,
+.screen-view > #filterPaneHome,
+.screen-view > .filter-pane-home {
+  /* Filtre/aksiyon satırı liste tarafından ezilmesin */
+  min-height: min-content;
+}
+.filter-pane-home {
+  overflow: visible;
+}
+/* Liste view: filtre uzunsa sayfa kayar; liste kaybolmaz */
+.view.screen-view:not([hidden]) {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .screen-banner {
   margin: 0.65rem 0.85rem 0;
@@ -1350,7 +1371,7 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   box-shadow: var(--shadow-card);
   padding: 0.65rem 1rem 0.7rem;
   overflow: visible;
-  min-height: 0;
+  min-height: min-content;
   flex: 0 0 auto;
 }
 .filter-pane-head, .list-pane-head, .detail-head, .form-topbar {
@@ -1512,22 +1533,37 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  margin: 0.65rem 0.85rem 0.85rem;
+  margin: 0;
   padding: 0.75rem 1rem 0.95rem;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--erp-card-radius);
   box-shadow: var(--shadow-card);
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
+  box-sizing: border-box;
 }
-.list-pane-head { margin-bottom: 0.4rem; }
+.list-pane-head { margin-bottom: 0.4rem; flex: 0 0 auto; }
 .list-meta { color: var(--muted); font-size: 0.8rem; }
-.table-scroll {
-  flex: 1;
-  min-height: 0;
+/* Liste tablosu: kalan yüksekliği doldurur, kendi scrollbar’ı vardır */
+.list-pane .table-scroll,
+#listTableScroll.table-scroll {
+  flex: 1 1 0;
+  min-height: 10rem;
+  max-height: none;
+  height: auto;
   overflow: auto;
+  overscroll-behavior-y: contain;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   background: #fff;
+  scrollbar-gutter: stable;
+}
+/* Diğer table-scroll kullanımları (meta vb.) */
+.table-scroll:not(#listTableScroll) {
+  overflow: auto;
+  min-height: 0;
 }
 #dataTable {
   width: 100%;
@@ -1559,6 +1595,48 @@ body:not(.doc-tabs-open) .doc-tabs-dock {
   text-transform: none;
   z-index: 1;
   padding: 0.4rem 0.55rem !important;
+}
+#dataTable thead tr.list-col-labels th {
+  top: 0;
+  z-index: 3;
+  border-bottom: 0 !important;
+}
+#dataTable thead tr.list-col-filters th {
+  top: 1.7rem;
+  z-index: 2;
+  padding: 0.2rem 0.35rem !important;
+  background: #f3f6fa !important;
+  font-weight: 500;
+  vertical-align: middle !important;
+  overflow: visible;
+  max-width: none;
+  white-space: normal;
+}
+#dataTable .list-col-filter {
+  display: block;
+  width: 100%;
+  min-width: 4.5rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.22rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.2;
+}
+#dataTable .list-col-filter::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+#dataTable .list-col-filter:focus {
+  outline: none;
+  border-color: var(--sidebar-ring);
+  box-shadow: 0 0 0 2px rgba(63, 135, 245, 0.18);
 }
 #dataTable tbody tr { height: 1.95rem; }
 #dataTable tbody tr:nth-child(even) td { background: var(--zebra); }
@@ -2891,9 +2969,10 @@ tr.selected td { background: var(--accent-soft); }
   .bar-center { max-width: none; order: 2; }
   .bar-right { max-width: none; width: 100%; order: 3; }
   .screen-view {
-    grid-template-rows: auto auto minmax(180px, 32vh) minmax(min(22rem, 48vh), 1fr);
+    grid-template-rows: auto auto minmax(min-content, auto) minmax(14rem, 1fr);
     height: 100%;
     min-height: 0;
+    overflow-y: auto;
   }
   .form-split { grid-template-rows: minmax(160px, 28%) 1fr; }
   .form-tabs-layout {
@@ -2914,11 +2993,14 @@ tr.selected td { background: var(--accent-soft); }
   display: grid;
   grid-template-columns: 108px 1fr;
   gap: 0;
-  min-height: 0;
+  min-height: 16rem;
   min-width: 0;
   height: 100%;
+  max-height: none;
   overflow: hidden;
-  background: #fff;
+  background: transparent;
+  padding: 0.65rem 0.85rem 0.85rem;
+  box-sizing: border-box;
 }
 .list-work .list-pane {
   min-width: 0;
@@ -3574,13 +3656,26 @@ body.col-resizing iframe { pointer-events: none; }
   right: 0;
   top: calc(100% + 2px);
   z-index: 40;
-  max-height: 14rem;
-  overflow: auto;
+  max-height: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 0.45rem;
   box-shadow: var(--shadow-card);
   padding: 0.2rem;
+}
+/* Tablo hücresinde taşmayı önlemek için body’ye taşınmış öneri */
+.lookup-suggest.lookup-suggest--portal {
+  position: fixed;
+  z-index: 2400;
+  margin: 0;
+}
+.lookup-suggest-list {
+  max-height: 16rem;
+  overflow: auto;
+  padding: 0;
 }
 .lookup-suggest-item {
   display: block;
@@ -3599,14 +3694,37 @@ body.col-resizing iframe { pointer-events: none; }
   text-overflow: ellipsis;
 }
 .lookup-suggest-item:hover,
-.lookup-suggest-item:focus {
+.lookup-suggest-item:focus,
+.lookup-suggest-item.is-active {
   background: rgba(63, 135, 245, 0.1);
   color: var(--accent);
+  outline: none;
 }
 .lookup-suggest-empty {
   padding: 0.55rem 0.6rem;
   font-size: 0.8rem;
   color: var(--muted);
+}
+.lookup-suggest-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.28rem 0.2rem 0.1rem;
+  border-top: 1px solid var(--line);
+  margin-top: 0.15rem;
+  flex: 0 0 auto;
+}
+.lookup-suggest-pager-info {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lookup-suggest-pager .btn {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  min-width: 0;
 }
 select.lookup-pick,
 select.lookup-select.lookup-pick {
@@ -6103,8 +6221,6 @@ body.sidebar-resizing .workspace {
 .sidebar-brand {
   display: flex;
   align-items: center;
-
-  scrollbar-gutter: stable;
 }
 /* Diğer table-scroll kullanımları (meta vb.) */
 .table-scroll:not(#listTableScroll) {
@@ -6150,13 +6266,16 @@ body.sidebar-resizing .workspace {
 .list-page-btn:hover:not(:disabled) {
   background: var(--accent-soft);
   border-color: var(--sidebar-ring);
-
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 1.5rem 1.25rem 2rem;
-  overflow: hidden;
-  isolation: isolate;
+}
+.list-page-btn.active,
+.list-page-btn[aria-current="page"] {
+  background: var(--accent-soft);
+  border-color: var(--sidebar-ring);
+  color: var(--accent);
+}
+.list-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .login-ldap-switch {
@@ -6274,18 +6393,17 @@ body.sidebar-resizing .workspace {
   margin: 0.1rem 0 0;
 }
 
-/* Liste: kalan alanı doldurur; kısa tavan yok, taban en az ~62vh */
+/* Liste: filtreyi ezmeden kalan yüksekliği doldurur; asgari yükseklik korunur */
 #viewScreen.screen-view {
   overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
 }
 #listTableScroll,
 #listTableScroll.table-scroll {
-  flex: 1 1 auto;
-  min-height: min(62vh, 42rem);
+  flex: 1 1 0;
+  min-height: 10rem;
   max-height: none;
-  height: 100%;
+  height: auto;
   overflow: auto;
   overscroll-behavior-y: contain;
 }
@@ -6532,9 +6650,9 @@ body.sidebar-resizing iframe {
   width: 100%;
   min-width: 0;
 }
-/* Üst filtre yuvası boşalınca liste yukarı büyür */
+/* Üst filtre yuvası boşalınca liste yukarı büyür — içerik boyutu korunur */
 #viewScreen.screen-view.filter-docked {
-  grid-template-rows: auto auto minmax(min(36rem, 62vh), 1fr);
+  grid-template-rows: auto auto minmax(16rem, 1fr);
 }
 #viewScreen.screen-view.filter-docked #filterPaneHome {
   display: none !important;
