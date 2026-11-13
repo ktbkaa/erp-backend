@@ -14784,7 +14784,7 @@ function escAttr(v) {
 /** Noktalı halka — tıklanınca ekran benzeri liste/CRUD popup; ↓ tuşu native listeyi açar */
 function lookupBrowseButtonHtml(disabled) {
   if (disabled) return '';
-  return `<button type="button" class="lookup-browse-btn" tabindex="-1" title="Listeyi aç (Alt+tık: tam ekran)" aria-label="Kayıt listesini aç"><span class="lookup-browse-dot" aria-hidden="true"></span></button>`;
+  return `<button type="button" class="lookup-browse-btn" tabindex="-1" title="Liste / ekran aç" aria-label="Kayıt listesini ve ekran işlemlerini aç"><span class="lookup-browse-dot" aria-hidden="true"></span></button>`;
 }
 
 /** LIKE %metin% — kullanıcı % yazsa da tek sarmalama */
@@ -20485,10 +20485,9 @@ async function openLookupBrowserForSelect(sel) {
   if (!dlg) return;
   const screenTitle = targetScreen?.title || field.label || 'Kayıt';
   if (title) title.textContent = multi ? `${screenTitle} · çoklu seç` : `${screenTitle}`;
-  // Çoklu seçte arama kutusu boş açılsın
-  const typed = multi ? '' : (sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead')?.value || '');
+  // Pop-up: seçili etiketle filtreleme — tüm liste görünsün; kullanıcı arar
   if (search) {
-    search.value = typed.trim();
+    search.value = '';
     search.placeholder = 'Ara — LIKE %metin% …';
   }
   _lookupBrowserState.page = 0;
@@ -21027,24 +21026,16 @@ function bindLookupBrowseUi() {
       e.stopPropagation();
       const widget = btn.closest('.lookup-widget');
       const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
-      const ta = widget?.querySelector('.lookup-typeahead');
       if (!sel || !widget) return;
-      // Alt+tık → tam liste popup; normal tık → altta 10’lu öneri listesi
-      if (e.altKey) {
-        ensureSelectLookupOptions(sel).then(() => openLookupBrowserForSelect(sel))
-          .catch((err) => toast(err.message || String(err)));
-        return;
-      }
+      closeLookupSuggest(widget);
+      // Yuvarlak buton → pop-up liste; ↓ tuşu → alanın altında öneri
       ensureSelectLookupOptions(sel).then(() => {
         const n = [...sel.options].filter((o) => o.value !== '').length;
         if (!n) {
           toast('Listelenecek kayıt yok.');
           return;
         }
-        // Yuvarlak buton: tüm liste (yazı filtresi yok); ↓ tuşu yazılan metni kullanır
-        widget._suggestPage = 0;
-        paintLookupSuggest(widget, sel, '', { page: 0 });
-        ta?.focus();
+        return openLookupBrowserForSelect(sel);
       }).catch((err) => toast(err.message || String(err)));
       return;
     }
@@ -21883,7 +21874,28 @@ function syncGridRowFromDom(tab, idx, baseRow = {}) {
   return { row, any, missing };
 }
 
-function readGridFromForm(tab) {
+/** Görünen tüm düzenlenebilir satırları DOM’dan oku — bir satır ✓ iken diğerleri silinmesin */
+function syncAllEditableGridRowsFromDom(tab, rows) {
+  const key = tab?.key;
+  const out = (Array.isArray(rows) ? rows : []).map((r) => ({ ...(r || {}) }));
+  if (!key) return out;
+  const domRows = [...document.querySelectorAll(`tr[data-grid-row="${CSS.escape(key)}"]`)];
+  domRows.forEach((tr) => {
+    const idx = Number(tr.getAttribute('data-grid-idx'));
+    if (!Number.isFinite(idx) || idx < 0) return;
+    // Salt okunur satırda input yok — formRecord’daki değeri koru
+    const editable = tr.classList.contains('detail-row--editing')
+      || tr.classList.contains('detail-row--draft')
+      || Boolean(tr.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])'));
+    if (!editable) return;
+    while (out.length <= idx) out.push(emptyRowFromFields(tab.fields));
+    const { row } = syncGridRowFromDom(tab, idx, out[idx] || {});
+    out[idx] = row;
+  });
+  return out;
+}
+
+function readGridFromForm(tab, { forApi = false } = {}) {
   const existing = Array.isArray(state.formRecord?.[tab.key]) ? state.formRecord[tab.key] : [];
   const count = Math.max(
     existing.length,
@@ -21891,7 +21903,8 @@ function readGridFromForm(tab) {
   );
   const rows = [];
   for (let idx = 0; idx < count; idx += 1) {
-    const { row, any } = syncGridRowFromDom(tab, idx, existing[idx] || {});
+    const base = existing[idx] || {};
+    const { row, any } = syncGridRowFromDom(tab, idx, base);
     const hasContent = any || Object.keys(row).some((k) => {
       if (k === 'bilesenler' || k === 'alt_satirlar' || k.startsWith('_')) return false;
       // Varsayılan katsayı 1 boş satır sayılmaz
@@ -21899,13 +21912,21 @@ function readGridFromForm(tab) {
       const v = row[k];
       return v !== '' && v != null && v !== false;
     });
-    if (hasContent) {
+    // Sabit slots / kayıtlı satır: boş görünse bile sırayı koru (vergi Tip satırları vb.)
+    const keepSlot = Number(tab.slots) > 0 && idx < count && (base.rate_type || base.id != null || base._satir_kayitli);
+    if (hasContent || keepSlot) {
       if (Array.isArray(existing[idx]?.bilesenler)) row.bilesenler = existing[idx].bilesenler;
-      // UI-only alanları API'ye gönderme
       delete row._esittir;
-      delete row._satir_kayitli;
-      delete row._satir_duzenleniyor;
-      delete row._satir_toplu;
+      if (forApi) {
+        delete row._satir_kayitli;
+        delete row._satir_duzenleniyor;
+        delete row._satir_toplu;
+      } else {
+        // Sekme değişiminde UI bayraklarını koru
+        if (base._satir_kayitli != null) row._satir_kayitli = base._satir_kayitli;
+        if (base._satir_duzenleniyor != null) row._satir_duzenleniyor = base._satir_duzenleniyor;
+        if (base._satir_toplu != null) row._satir_toplu = base._satir_toplu;
+      }
       rows.push(row);
     }
   }
@@ -24867,10 +24888,7 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
-        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
-        rows[state.gridSel.idx] = row;
-      }
+      rows = syncAllEditableGridRowsFromDom(tab, rows);
       if (act === 'yeni') {
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
         const blank = emptyRowFromFields(tab.fields);
@@ -24929,14 +24947,8 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      // Aktif satır DOM’dan oku (manuel yazılan değerler kaybolmasın)
-      if (rows[idx]) {
-        const { row } = syncGridRowFromDom(tab, idx, rows[idx]);
-        rows[idx] = row;
-      } else if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
-        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
-        rows[state.gridSel.idx] = row;
-      }
+      // Tüm düzenlenebilir satırları DOM’dan oku — sıra sıra ✓ iken önceki yazılar silinmesin
+      rows = syncAllEditableGridRowsFromDom(tab, rows);
       if (act === 'duzelt') {
         rows.forEach((r, i) => {
           if (!r) return;
@@ -25016,26 +25028,33 @@ function bindEvents() {
           row._satir_duzenleniyor = false;
           if (wasBulk) row._satir_toplu = true;
           else delete row._satir_toplu;
-          // Onaylanan satır alta; boş satır yalnız manuel girişte
-          rows.splice(idx, 1);
-          rows.push(row);
-          if (!wasBulk) {
+          // Satırı yerinde onayla (sıra/veri kaybı olmasın)
+          rows[idx] = row;
+          const otherOpen = rows.some((r, i) => i !== idx && r && (
+            r._satir_duzenleniyor === true
+            || (r._satir_kayitli !== true && r.id == null)
+          ));
+          const fixedSlots = Number(tab.slots) > 0;
+          // Yeni boş satır: yalnız tek satırlık manuel akışta; çok satır / slots / toplu → ekleme
+          const shouldAddBlank = !wasBulk && !fixedSlots && !otherOpen && rows.length <= 1;
+          if (shouldAddBlank) {
             const blank = emptyRowFromFields(tab.fields);
             blank._satir_kayitli = false;
             blank._satir_duzenleniyor = true;
             if (key === 'districts') blank.is_active = true;
-            rows.unshift(blank);
-            state.gridSel = { key, idx: 0 };
-          } else {
+            rows.push(blank);
             state.gridSel = { key, idx: rows.length - 1 };
+          } else {
+            state.gridSel = { key, idx };
           }
           state.formRecord[key] = rows;
           renderForm(screen);
-          if (!wasBulk) {
+          if (shouldAddBlank) {
             requestAnimationFrame(() => {
+              const focusIdx = rows.length - 1;
               const first = document.querySelector(
-                `tr[data-grid-row="${key}"][data-grid-idx="0"] input:not([disabled]):not([type="checkbox"]), `
-                + `tr[data-grid-row="${key}"][data-grid-idx="0"] select:not([disabled])`
+                `tr[data-grid-row="${key}"][data-grid-idx="${focusIdx}"] input:not([disabled]):not([type="checkbox"]), `
+                + `tr[data-grid-row="${key}"][data-grid-idx="${focusIdx}"] select:not([disabled])`
               );
               if (first) {
                 first.focus();
