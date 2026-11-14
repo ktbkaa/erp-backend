@@ -9280,6 +9280,24 @@ const UI_THEME_DEFS = [
   { id: 'yellow', nameTr: 'Ayçiçeği', nameEn: 'Sunflower', swatchA: '#c9a227', swatchB: '#e6d089', hintTr: 'Sarı', hintEn: 'Yellow' },
 ];
 
+/** Görünüm 1 = modern (varsayılan), Görünüm 2 = classic (mevcut tasarım) */
+const UI_VIEW_DEFS = [
+  {
+    id: 'modern',
+    nameTr: 'Görünüm 1 — Modern',
+    nameEn: 'View 1 — Modern',
+    hintTr: 'Sade, düşük yoğunluklu SaaS ERP arayüzü (varsayılan)',
+    hintEn: 'Clean, low-density SaaS ERP layout (default)',
+  },
+  {
+    id: 'classic',
+    nameTr: 'Görünüm 2 — Klasik',
+    nameEn: 'View 2 — Classic',
+    hintTr: 'Mevcut arayüz — değişiklik yok',
+    hintEn: 'Current UI — unchanged',
+  },
+];
+
 const MODULE_TITLE_EN = {
   'fixed-tanimlar': 'Master Data (Fixed)',
   sistem: 'System',
@@ -9316,8 +9334,12 @@ const UI_EN = {
   Ayarlar: 'Settings',
   'Sistem dili': 'System language',
   'Temalar…': 'Themes…',
+  'Tema ve Görünüm…': 'Theme & View…',
   'Tema seçin': 'Choose a theme',
-  Görünüm: 'Appearance',
+  'Tema ve Görünüm': 'Theme & View',
+  'Renk Teması': 'Color theme',
+  Parlaklık: 'Brightness',
+  Görünüm: 'View',
   Açık: 'Light',
   Koyu: 'Dark',
   'Koyu tema': 'Dark theme',
@@ -9471,6 +9493,7 @@ function applyUiTheme(themeId, { persist = true } = {}) {
     try { localStorage.setItem('ktb_ui_theme', id); } catch (_) { /* ignore */ }
   }
   renderThemeGrid();
+  renderViewModeGrid();
   syncSettingsMenu();
 }
 
@@ -9484,14 +9507,27 @@ function applyUiAppearance(mode, { persist = true } = {}) {
   syncSettingsMenu();
 }
 
+function applyUiView(viewId, { persist = true } = {}) {
+  const id = viewId === 'classic' ? 'classic' : 'modern';
+  state.uiView = id;
+  document.documentElement.setAttribute('data-view', id);
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_view', id); } catch (_) { /* ignore */ }
+  }
+  renderViewModeGrid();
+  syncSettingsMenu();
+}
+
 function syncStaticChromeLabels() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     const map = {
       'settings.language': L('Sistem dili'),
-      'settings.appearance': L('Görünüm'),
-      'settings.themes': L('Temalar…'),
-      'settings.themesTitle': L('Tema seçin'),
+      'settings.appearance': L('Parlaklık'),
+      'settings.themes': L('Tema ve Görünüm…'),
+      'settings.themesTitle': L('Tema ve Görünüm'),
+      'settings.tabColors': L('Renk Teması'),
+      'settings.tabView': L('Görünüm'),
       'settings.light': L('Açık'),
       'settings.dark': L('Koyu'),
     };
@@ -9632,6 +9668,39 @@ function renderThemeGrid() {
   `).join('');
 }
 
+function renderViewModeGrid() {
+  const grid = $('#viewModeGrid');
+  if (!grid) return;
+  const en = state.uiLang === 'en';
+  const current = state.uiView === 'classic' ? 'classic' : 'modern';
+  grid.innerHTML = UI_VIEW_DEFS.map((v) => `
+    <button type="button" class="view-mode-card${current === v.id ? ' active' : ''}" data-view-pick="${v.id}">
+      <div class="view-mode-preview ${v.id === 'modern' ? 'is-modern' : 'is-classic'}" aria-hidden="true">
+        <div class="vp-side"></div>
+        <div class="vp-top"></div>
+        <div class="vp-main"></div>
+      </div>
+      <span class="view-mode-card-name">${en ? v.nameEn : v.nameTr}</span>
+      <span class="view-mode-card-hint">${en ? v.hintEn : v.hintTr}</span>
+    </button>
+  `).join('');
+}
+
+function setThemeModalTab(tab) {
+  const which = tab === 'view' ? 'view' : 'colors';
+  document.querySelectorAll('[data-theme-tab]').forEach((btn) => {
+    const on = btn.getAttribute('data-theme-tab') === which;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-theme-pane]').forEach((pane) => {
+    const on = pane.getAttribute('data-theme-pane') === which;
+    pane.hidden = !on;
+  });
+  if (which === 'colors') renderThemeGrid();
+  else renderViewModeGrid();
+}
+
 function toggleSettingsMenu(force) {
   const menu = $('#settingsMenu');
   const btn = $('#btnSettings');
@@ -9645,7 +9714,9 @@ function openThemeModal(show = true) {
   const modal = $('#themeModal');
   if (!modal) return;
   if (show) {
+    setThemeModalTab('colors');
     renderThemeGrid();
+    renderViewModeGrid();
     modal.hidden = false;
     toggleSettingsMenu(false);
   } else {
@@ -9657,13 +9728,16 @@ function initUiPrefs() {
   let theme = 'blue';
   let lang = 'tr';
   let appearance = 'light';
+  let view = 'modern';
   try {
     theme = localStorage.getItem('ktb_ui_theme') || 'blue';
     lang = localStorage.getItem('ktb_ui_lang') || 'tr';
     appearance = localStorage.getItem('ktb_ui_appearance') || 'light';
+    view = localStorage.getItem('ktb_ui_view') || 'modern';
   } catch (_) { /* ignore */ }
   applyUiTheme(theme, { persist: false });
   applyUiAppearance(appearance, { persist: false });
+  applyUiView(view, { persist: false });
   applyUiLanguage(lang, { persist: false, refresh: false });
 }
 
@@ -9671,6 +9745,7 @@ const state = {
   uiLang: 'tr',
   uiTheme: 'blue',
   uiAppearance: 'light',
+  uiView: 'modern',
   screenId: null,
   rows: [],
   filtered: [],
@@ -24608,11 +24683,24 @@ function bindUiPrefsEvents() {
         openThemeModal(false);
         return;
       }
+      const tabBtn = e.target.closest('[data-theme-tab]');
+      if (tabBtn) {
+        e.preventDefault();
+        setThemeModalTab(tabBtn.getAttribute('data-theme-tab'));
+        return;
+      }
       const pick = e.target.closest('[data-theme-pick]');
       if (pick) {
         e.preventDefault();
         applyUiTheme(pick.getAttribute('data-theme-pick'));
-        openThemeModal(false);
+        // Renk değişince görünüm korunur; modal açık kalabilir (sekme 1)
+        return;
+      }
+      const viewPick = e.target.closest('[data-view-pick]');
+      if (viewPick) {
+        e.preventDefault();
+        applyUiView(viewPick.getAttribute('data-view-pick'));
+        // Görünüm değişince renk korunur
       }
     });
   }

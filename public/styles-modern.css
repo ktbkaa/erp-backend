@@ -1,0 +1,744 @@
+/**
+ * KTB ERP — Görünüm 1 (Modern)
+ * Yalnızca html[data-view="modern"] altında uygulanır.
+ * Görünüm 2 (classic) mevcut styles.css davranışını korur.
+ */
+
+/* ——— Design tokens (Modern) ——— */
+html[data-view="modern"] {
+  --primary: var(--accent);
+  --primary-hover: var(--accent-hover);
+  --primary-soft: var(--accent-soft);
+  --background: #f4f6f8;
+  --surface: #ffffff;
+  --surface-secondary: #eef1f5;
+  --border: #e3e8ef;
+  --text-primary: #1c2430;
+  --text-secondary: #667788;
+  --radius: 0.5rem;
+  --radius-sm: 0.35rem;
+  --shadow-card: 0 1px 2px rgba(28, 36, 48, 0.04);
+  --shadow-soft: none;
+  --page: var(--background);
+  --panel: var(--surface);
+  --line: var(--border);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --sidebar: #ffffff;
+  --erp-card-radius: 0.5rem;
+  --erp-card-border: var(--border);
+  --erp-field-gap-x: 1rem;
+  --erp-field-gap-y: 0.65rem;
+  --erp-label-w: 7.5rem;
+  --lookup-bg: #fffbeb;
+  --lookup-border: #f0d78c;
+  --required-mark: #c45c5c;
+  --logo-filter: brightness(1);
+}
+
+html[data-view="modern"][data-appearance="dark"] {
+  --background: #161922;
+  --surface: #1e2230;
+  --surface-secondary: #262b3a;
+  --border: #32384a;
+  --text-primary: #eef1f6;
+  --text-secondary: #9aa3b5;
+  --page: var(--background);
+  --panel: var(--surface);
+  --line: var(--border);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --sidebar: #141722;
+  --lookup-bg: #2a2618;
+  --lookup-border: #6b5a2a;
+  --logo-filter: brightness(1.15) saturate(1.02);
+}
+
+/* Soften page tint from color themes under modern (keep accent functional) */
+html[data-view="modern"][data-theme="green"],
+html[data-view="modern"][data-theme="red"],
+html[data-view="modern"][data-theme="orange"],
+html[data-view="modern"][data-theme="purple"],
+html[data-view="modern"][data-theme="yellow"],
+html[data-view="modern"][data-theme="blue"] {
+  --page: var(--background);
+  --panel: var(--surface);
+  --erp-form-bg: var(--background);
+}
+
+html[data-view="modern"] body {
+  background: var(--background);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* ——— Shell ——— */
+html[data-view="modern"] .app-shell {
+  background: var(--background);
+}
+html[data-view="modern"] .sidebar {
+  border-right: 1px solid var(--border);
+  box-shadow: none;
+  background: var(--sidebar);
+}
+html[data-view="modern"] .sidebar-brand {
+  padding: 0.85rem 1rem;
+  min-height: 3.4rem;
+  background: var(--sidebar) !important;
+  border-bottom: 1px solid var(--border);
+}
+html[data-view="modern"] .ktb-logo--sidebar .ktb-logo-img,
+html[data-view="modern"] .sidebar-brand .ktb-logo-img {
+  max-height: 1.85rem;
+  width: auto;
+  filter: var(--logo-filter);
+}
+html[data-view="modern"] .brand-mark {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.4rem;
+  box-shadow: none;
+  background: var(--primary);
+}
+html[data-view="modern"] .brand-name {
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+html[data-view="modern"] .sidebar-nav {
+  padding: 0.55rem 0.5rem 0.85rem;
+}
+html[data-view="modern"] .mod-group {
+  border-radius: 0.4rem;
+  margin-bottom: 0.1rem;
+}
+html[data-view="modern"] .mod-title {
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.4rem;
+  color: var(--text-primary);
+}
+html[data-view="modern"] .mod-title:hover {
+  background: var(--primary-soft);
+}
+html[data-view="modern"] .mod-group.open > .mod-title {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+html[data-view="modern"] .mod-section-title {
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0.45rem 0.55rem 0.2rem;
+}
+html[data-view="modern"] .mod-item,
+html[data-view="modern"] .nav-link {
+  border-radius: 0.35rem;
+  padding: 0.38rem 0.55rem 0.38rem 1.65rem;
+  font-size: 0.82rem;
+  color: var(--sidebar-ink);
+  border-left: 2px solid transparent;
+}
+html[data-view="modern"] .mod-item:hover,
+html[data-view="modern"] .nav-link:hover {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+html[data-view="modern"] .mod-item.active,
+html[data-view="modern"] .nav-link.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 600;
+}
+html[data-view="modern"] .sidebar-foot {
+  border-top: 1px solid var(--border);
+  background: var(--sidebar) !important;
+  box-shadow: none;
+}
+
+/* Collapsed: icon rail feel via existing collapse — tighten */
+html[data-view="modern"] .app-shell.sidebar-collapsed .sidebar-brand {
+  justify-content: center;
+  padding: 0.65rem 0.35rem;
+}
+
+/* ——— Top bar ——— */
+html[data-view="modern"] .workspace-bar {
+  min-height: 2.75rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+}
+html[data-view="modern"] .workspace-bar .icon-btn {
+  border-radius: 0.4rem;
+  color: var(--text-secondary);
+}
+html[data-view="modern"] .workspace-bar .icon-btn:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+html[data-view="modern"] .search-field input,
+html[data-view="modern"] #screenSearch {
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--surface-secondary);
+  min-height: 2rem;
+  font-size: 0.84rem;
+}
+html[data-view="modern"] .search-field input:focus,
+html[data-view="modern"] #screenSearch:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  background: var(--surface);
+}
+
+/* ——— Document tabs ——— */
+html[data-view="modern"] .doc-tabs-dock {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+html[data-view="modern"] .doc-tabs {
+  gap: 0.15rem;
+  padding: 0.25rem 0.45rem;
+}
+html[data-view="modern"] .doc-tab,
+html[data-view="modern"] .tab-item {
+  height: 1.85rem;
+  border-radius: 0.35rem 0.35rem 0 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  padding: 0 0.55rem;
+}
+html[data-view="modern"] .doc-tab:hover,
+html[data-view="modern"] .tab-item:hover {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+html[data-view="modern"] .doc-tab.active,
+html[data-view="modern"] .tab-item.active {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+  border-bottom-color: var(--surface);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+/* ——— Screen chrome / list ——— */
+html[data-view="modern"] .workspace-main {
+  background: var(--background);
+}
+html[data-view="modern"] .screen-view {
+  gap: 0.55rem;
+  padding: 0.65rem 0.85rem 0.75rem;
+}
+html[data-view="modern"] .screen-banner {
+  margin: 0;
+  padding: 0.35rem 0.15rem 0.15rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+html[data-view="modern"] .action-bar {
+  gap: 0.35rem;
+  padding: 0.15rem 0;
+  border: 0;
+  background: transparent;
+}
+html[data-view="modern"] .action-bar .btn,
+html[data-view="modern"] .btn {
+  border-radius: 0.4rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  box-shadow: none;
+}
+html[data-view="modern"] .btn.primary,
+html[data-view="modern"] .action-bar [data-action="yeni"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+html[data-view="modern"] .btn.primary:hover,
+html[data-view="modern"] .action-bar [data-action="yeni"]:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+html[data-view="modern"] .btn.ghost,
+html[data-view="modern"] .btn.secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+html[data-view="modern"] .btn.ghost:hover,
+html[data-view="modern"] .btn.secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+/* Filter: denser, less card chrome */
+html[data-view="modern"] .filter-pane,
+html[data-view="modern"] .filter-pane-home .filter-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  padding: 0.55rem 0.75rem 0.65rem;
+}
+html[data-view="modern"] .filter-pane-head h2 {
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+html[data-view="modern"] .filter-field label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+html[data-view="modern"] .filter-field input,
+html[data-view="modern"] .filter-field select {
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  min-height: 1.85rem;
+  font-size: 0.82rem;
+  background: var(--surface);
+}
+
+html[data-view="modern"] .list-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  padding: 0.55rem 0.65rem 0.65rem;
+}
+html[data-view="modern"] .list-pane-head h2 {
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+html[data-view="modern"] .list-meta {
+  font-size: 0.78rem;
+}
+html[data-view="modern"] .list-pane .table-scroll,
+html[data-view="modern"] #listTableScroll.table-scroll {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+html[data-view="modern"] #dataTable {
+  font-size: 0.82rem;
+}
+html[data-view="modern"] #dataTable th,
+html[data-view="modern"] #dataTable td {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 0.42rem 0.6rem !important;
+}
+html[data-view="modern"] #dataTable th {
+  background: var(--surface-secondary) !important;
+  color: var(--text-secondary);
+  font-size: 0.72rem !important;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+html[data-view="modern"] #dataTable thead tr.list-col-filters th {
+  background: var(--surface) !important;
+  top: 1.75rem;
+}
+html[data-view="modern"] #dataTable tbody tr:hover td {
+  background: var(--hover-row) !important;
+}
+html[data-view="modern"] #dataTable tbody tr.selected td,
+html[data-view="modern"] #dataTable tbody tr.is-selected td {
+  background: var(--primary-soft) !important;
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+html[data-view="modern"] #dataTable .list-col-filter {
+  border-radius: 0.3rem;
+  border-color: var(--border);
+  background: var(--surface);
+}
+html[data-view="modern"] .list-pager {
+  border-top: 1px solid var(--border);
+  padding-top: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+/* ——— Forms ——— */
+html[data-view="modern"] .form-view {
+  background: var(--background);
+}
+html[data-view="modern"] .form-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.85rem;
+}
+html[data-view="modern"] .form-tabs-layout,
+html[data-view="modern"] .md-split,
+html[data-view="modern"] .erp-master-panel,
+html[data-view="modern"] .md-master,
+html[data-view="modern"] .md-detail {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: none;
+}
+html[data-view="modern"] .erp-master-panel,
+html[data-view="modern"] .md-master {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 0.75rem 0.9rem 0.9rem;
+}
+html[data-view="modern"] .form-group-title,
+html[data-view="modern"] .field-group-label,
+html[data-view="modern"] .erp-group-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0.65rem 0 0.35rem;
+  margin: 0.55rem 0 0.55rem;
+  background: transparent;
+}
+html[data-view="modern"] .form-tab-nav {
+  gap: 0.15rem;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+html[data-view="modern"] .form-tab-nav button,
+html[data-view="modern"] .form-tab-btn {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 0.75rem;
+}
+html[data-view="modern"] .form-tab-nav button.active,
+html[data-view="modern"] .form-tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: transparent;
+  box-shadow: none;
+}
+html[data-view="modern"] .field label,
+html[data-view="modern"] .md-field label,
+html[data-view="modern"] .form-field label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+html[data-view="modern"] .field input,
+html[data-view="modern"] .field select,
+html[data-view="modern"] .field textarea,
+html[data-view="modern"] .md-field input,
+html[data-view="modern"] .md-field select,
+html[data-view="modern"] .md-field textarea,
+html[data-view="modern"] [data-master],
+html[data-view="modern"] .lookup-input input {
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  min-height: 2rem;
+  font-size: 0.84rem;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+html[data-view="modern"] .field input:focus,
+html[data-view="modern"] .field select:focus,
+html[data-view="modern"] .field textarea:focus,
+html[data-view="modern"] .md-field input:focus,
+html[data-view="modern"] .md-field select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* Lookup = soft yellow (meaning preserved) */
+html[data-view="modern"] .field.lookup input,
+html[data-view="modern"] .md-field.lookup input,
+html[data-view="modern"] .lookup-wrap input,
+html[data-view="modern"] input.lookup,
+html[data-view="modern"] .field[data-lookup] input,
+html[data-view="modern"] .md-field .lookup-input input,
+html[data-view="modern"] .lookup-combo input {
+  background: var(--lookup-bg) !important;
+  border-color: var(--lookup-border) !important;
+}
+
+/* Required mark softer red */
+html[data-view="modern"] .req,
+html[data-view="modern"] .required-mark,
+html[data-view="modern"] label .req-star,
+html[data-view="modern"] .field.required > label::after,
+html[data-view="modern"] .md-field.required > label::after {
+  color: var(--required-mark) !important;
+}
+html[data-view="modern"] .field.required input,
+html[data-view="modern"] .md-field.required input,
+html[data-view="modern"] .field.required select,
+html[data-view="modern"] input.required-field {
+  border-left: 2px solid var(--required-mark);
+}
+
+html[data-view="modern"] .detail-table,
+html[data-view="modern"] .md-detail table {
+  font-size: 0.82rem;
+}
+html[data-view="modern"] .detail-table th,
+html[data-view="modern"] .md-detail th {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--border);
+}
+html[data-view="modern"] .md-footer,
+html[data-view="modern"] .md-footer-totals {
+  background: var(--surface-secondary);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* Reduce card-in-card noise on document forms */
+html[data-view="modern"] .erp-form--document .md-split,
+html[data-view="modern"] .form-compact-master {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: none;
+}
+html[data-view="modern"] .form-compact-master {
+  padding: 0.55rem 0.75rem;
+}
+
+/* Login: keep usable, slightly calmer */
+html[data-view="modern"] body.is-login {
+  background: linear-gradient(160deg, var(--background) 0%, var(--primary-soft) 100%);
+}
+
+/* Theme / view modal */
+html[data-view="modern"] .theme-modal-card {
+  width: min(42rem, calc(100vw - 1.5rem));
+  border-radius: 0.65rem;
+  box-shadow: 0 12px 40px rgba(20, 28, 40, 0.16);
+  padding: 0;
+  overflow: hidden;
+}
+html[data-view="modern"] .theme-modal-head {
+  padding: 0.85rem 1rem 0.55rem;
+  margin: 0;
+}
+html[data-view="modern"] .theme-modal-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--border);
+}
+html[data-view="modern"] .theme-modal-tab {
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+html[data-view="modern"] .theme-modal-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+html[data-view="modern"] .theme-modal-body {
+  padding: 0.9rem 1rem 1.1rem;
+}
+html[data-view="modern"] .theme-grid {
+  gap: 0.65rem;
+}
+html[data-view="modern"] .theme-card {
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+html[data-view="modern"] .theme-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-soft);
+}
+
+/* View mode preview cards */
+.view-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+.view-mode-card {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  padding: 0.65rem;
+  background: var(--surface-1, #fff);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.view-mode-card:hover {
+  border-color: var(--accent-border, var(--accent));
+}
+.view-mode-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.view-mode-preview {
+  height: 5.2rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--line);
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  position: relative;
+  background: #eef1f5;
+}
+.view-mode-preview .vp-side {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 28%;
+  background: #fff;
+  border-right: 1px solid #dde3ea;
+}
+.view-mode-preview .vp-side::before,
+.view-mode-preview .vp-side::after {
+  content: '';
+  display: block;
+  margin: 0.45rem 0.35rem;
+  height: 0.35rem;
+  border-radius: 2px;
+  background: #c5ced8;
+}
+.view-mode-preview .vp-side::after {
+  width: 70%;
+  opacity: 0.7;
+}
+.view-mode-preview .vp-top {
+  position: absolute;
+  left: 28%; right: 0; top: 0;
+  height: 18%;
+  background: #fff;
+  border-bottom: 1px solid #dde3ea;
+}
+.view-mode-preview .vp-main {
+  position: absolute;
+  left: 32%; right: 4%; top: 28%; bottom: 10%;
+  background: #fff;
+  border-radius: 3px;
+  border: 1px solid #dde3ea;
+}
+.view-mode-preview .vp-main::before {
+  content: '';
+  display: block;
+  height: 22%;
+  background: var(--accent-soft, #dbe8ff);
+  border-bottom: 1px solid #dde3ea;
+}
+.view-mode-preview.is-classic {
+  background: #e8eef8;
+}
+.view-mode-preview.is-classic .vp-side {
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(26, 35, 48, 0.06);
+}
+.view-mode-preview.is-classic .vp-main {
+  box-shadow: 0 2px 8px rgba(42, 42, 42, 0.06);
+}
+.view-mode-preview.is-modern {
+  background: #f4f6f8;
+}
+.view-mode-preview.is-modern .vp-side {
+  box-shadow: none;
+}
+.view-mode-preview.is-modern .vp-main {
+  border-color: #e3e8ef;
+  box-shadow: none;
+}
+.view-mode-card-name {
+  display: block;
+  font-weight: 650;
+  font-size: 0.88rem;
+}
+.view-mode-card-hint {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+@media (max-width: 640px) {
+  .view-mode-grid { grid-template-columns: 1fr; }
+}
+
+/* Settings modal shared (also works in classic) */
+.theme-modal-card--wide {
+  width: min(42rem, calc(100vw - 1.5rem));
+}
+.theme-modal-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 1.1rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0;
+}
+.theme-modal-tab {
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.theme-modal-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.theme-modal-body {
+  padding: 0.9rem 1.1rem 1.15rem;
+}
+.theme-modal-pane[hidden] { display: none !important; }
+
+/* Responsive form columns under modern */
+@media (max-width: 1100px) {
+  html[data-view="modern"] .form-tab-fields,
+  html[data-view="modern"] .erp-master-panel .fields-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 720px) {
+  html[data-view="modern"] .form-tab-fields,
+  html[data-view="modern"] .erp-master-panel .fields-grid,
+  html[data-view="modern"] .filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

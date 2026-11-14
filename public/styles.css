@@ -1,5 +1,5 @@
 :root {
-  /* Enlink-inspired tokens (themenate CRM) */
+  /* Enlink-inspired tokens (themenate CRM) — Görünüm 2 (classic) tabanı */
   --ink: #2a2a2a;
   --muted: #72849a;
   --line: #edf2f9;
@@ -12,6 +12,16 @@
   --accent-hover: #2778f4;
   --accent-soft: rgba(63, 135, 245, 0.12);
   --accent-glow: rgba(63, 135, 245, 0.22);
+  /* Design-system aliases (Görünüm 1 / dokümantasyon) */
+  --primary: var(--accent);
+  --primary-hover: var(--accent-hover);
+  --primary-soft: var(--accent-soft);
+  --background: var(--page);
+  --surface: #ffffff;
+  --surface-secondary: #f3f6fa;
+  --border: var(--line);
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
   --cyan: #00c9a7;
   --cyan-soft: rgba(0, 201, 167, 0.12);
   --sidebar-active: rgba(63, 135, 245, 0.1);
