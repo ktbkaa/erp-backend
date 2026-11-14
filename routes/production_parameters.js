@@ -2,7 +2,12 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
-const { normalizeParams } = require('../src/services/productionParamsService');
+const {
+  normalizeParams,
+  assertOperationQtyAllowed,
+  DEFAULTS,
+} = require('../src/services/productionParamsService');
+const { auditYaz } = require('../src/services/auditService');
 
 async function getRow(id) {
   const r = await pool.query(
@@ -19,6 +24,111 @@ async function getRow(id) {
   );
   return r.rows[0] || null;
 }
+
+/** Tüm firmalar için parametre kapsam + tolerans senaryo doğrulaması */
+router.get('/dogrula', async (req, res) => {
+  try {
+    const firms = await pool.query(
+      `SELECT c.id, c.company_code, c.company_name,
+              (SELECT COUNT(*) FROM production_parameters p
+               WHERE p.company_id=c.id AND p.plant_id IS NULL AND p.is_active) AS firma_param_cnt,
+              (SELECT COUNT(*) FROM production_parameters p
+               WHERE p.company_id=c.id AND p.plant_id IS NOT NULL AND p.is_active) AS plant_param_cnt
+       FROM companies c
+       ORDER BY c.company_code`
+    );
+
+    const scenarios = [];
+    for (const f of firms.rows) {
+      const pr = await pool.query(
+        `SELECT * FROM production_parameters
+         WHERE company_id=$1 AND plant_id IS NULL AND is_active=TRUE LIMIT 1`,
+        [f.id]
+      );
+      const params = normalizeParams(pr.rows[0] || { company_id: f.id });
+      const op = { planned_quantity: 100, produced_quantity: 90 }; // kalan 10
+
+      let rejectOver = null;
+      try {
+        assertOperationQtyAllowed(params, op, 15); // 15 > kalan 10
+        rejectOver = false;
+      } catch (e) {
+        rejectOver = e.code === 'ERR-MFG-OVERPROD';
+      }
+
+      const expectedBlock = !params.allow_over_production
+        || (params.allow_over_production && Number(params.over_production_pct) === 0);
+
+      scenarios.push({
+        company_id: f.id,
+        company_code: f.company_code,
+        company_name: f.company_name,
+        has_firma_param: Number(f.firma_param_cnt) > 0,
+        plant_param_cnt: Number(f.plant_param_cnt),
+        allow_over_production: params.allow_over_production,
+        over_production_pct: params.over_production_pct,
+        allow_under_production: params.allow_under_production,
+        under_production_pct: params.under_production_pct,
+        enforce_op_sequence: params.enforce_op_sequence,
+        require_material_consume: params.require_material_consume,
+        scenario: 'plan=100 uretilen=90 kalan=10 giris=15',
+        over_rejected: rejectOver,
+        expected_block: expectedBlock,
+        scenario_ok: expectedBlock ? rejectOver === true : rejectOver === false,
+        using_defaults: !pr.rows[0],
+      });
+    }
+
+    const missing = scenarios.filter((s) => !s.has_firma_param);
+    const failed = scenarios.filter((s) => !s.scenario_ok);
+    res.json({
+      checked_at: new Date().toISOString(),
+      defaults: DEFAULTS,
+      firm_count: scenarios.length,
+      missing_param_count: missing.length,
+      scenario_fail_count: failed.length,
+      ok: missing.length === 0 && failed.length === 0,
+      satirlar: scenarios,
+    });
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
+
+/** Eksik firma parametrelerini güvenli varsayılanla tamamla */
+router.post('/eksikleri-tamamla', async (req, res) => {
+  try {
+    const ins = await pool.query(
+      `INSERT INTO production_parameters (
+         company_id, plant_id,
+         allow_over_production, over_production_pct,
+         allow_under_production, under_production_pct,
+         enforce_op_sequence, require_material_consume, auto_close_on_complete,
+         description, is_active
+       )
+       SELECT c.id, NULL,
+              FALSE, 0, TRUE, 0, TRUE, TRUE, TRUE,
+              'Otomatik tamamlandı — güvenli varsayılan', TRUE
+       FROM companies c
+       WHERE NOT EXISTS (
+         SELECT 1 FROM production_parameters p
+         WHERE p.company_id=c.id AND p.plant_id IS NULL AND p.is_active=TRUE
+       )
+       RETURNING id, company_id`
+    );
+    await auditYaz(pool, {
+      tablo: 'uretim-parametreleri',
+      kayitId: null,
+      action: 'POST',
+      kullaniciKodu: req.user?.user_code || req.get?.('x-kullanici-kodu') || null,
+      yeni: { completed: ins.rows.length, ids: ins.rows.map((r) => r.id) },
+      request_path: 'POST /uretim-parametreleri/eksikleri-tamamla',
+    });
+    res.json({ completed: ins.rows.length, rows: ins.rows });
+  } catch (err) {
+    res.status(500).json({ hata: err.message });
+  }
+});
 
 router.get('/', async (req, res) => {
   try {

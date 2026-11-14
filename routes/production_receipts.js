@@ -4,6 +4,8 @@ const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const productionOrders = require('./production_orders');
 const { getProductionParams } = require('../src/services/productionParamsService');
+const { assertWarehousePermission, assertModulePermission } = require('../src/middleware/authJwt');
+const { auditYaz } = require('../src/services/auditService');
 
 async function getReceipt(id) {
     const g = await pool.query(
@@ -213,12 +215,17 @@ router.get('/:id', async (req, res) => {
 /** Operasyonel veya hızlı üretim girişi */
 router.post('/', async (req, res) => {
     try {
+        assertModulePermission(req, 'uretim');
         const body = req.body || {};
         const orderId = Number(body.order_id);
         if (!orderId) return res.status(400).json({ hata: 'order_id zorunlu.' });
         if (body.quantity == null || !(Number(body.quantity) > 0)) {
             return res.status(400).json({ hata: 'quantity > 0 zorunlu.' });
         }
+
+        // Üretim ACL: mamul / hammadde depo yetkisi
+        if (body.product_warehouse_id) await assertWarehousePermission(req, body.product_warehouse_id);
+        if (body.material_warehouse_id) await assertWarehousePermission(req, body.material_warehouse_id);
 
         const materials = [
             ...(Array.isArray(body.malzemeler) ? body.malzemeler : []),
@@ -260,8 +267,28 @@ router.post('/', async (req, res) => {
         });
 
         const receiptId = r.tamamlanan?.receipt_id;
-        if (receiptId) return res.status(201).json(await getReceipt(receiptId));
-        res.status(201).json({ ...r.tamamlanan, emir: r.emir });
+        const payload = receiptId
+            ? await getReceipt(receiptId)
+            : { ...r.tamamlanan, emir: r.emir };
+
+        await auditYaz(pool, {
+            tablo: 'uretim-girisleri',
+            kayitId: receiptId || null,
+            action: 'POST',
+            kullaniciKodu: req.user?.user_code || req.get?.('x-kullanici-kodu') || null,
+            yeni: {
+                order_id: orderId,
+                operation_id: body.operation_id || null,
+                quantity: Number(body.quantity),
+                product_warehouse_id: body.product_warehouse_id || null,
+                material_warehouse_id: body.material_warehouse_id || null,
+                source_type: body.source_type || (body.quick ? 'Hizli' : 'Operasyonel'),
+            },
+            request_path: 'POST /uretim-girisleri',
+        });
+
+        if (receiptId) return res.status(201).json(payload);
+        res.status(201).json(payload);
     } catch (err) {
         res.status(err.status || 400).json({ hata: err.message });
     }
