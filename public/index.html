@@ -36,15 +36,19 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261115roadmap1" />
+  <link rel="stylesheet" href="/styles.css?v=20261115view1" />
+  <link rel="stylesheet" href="/styles-modern.css?v=20261115view1" />
   <script>
     (function () {
       try {
         var t = localStorage.getItem('ktb_ui_theme') || 'blue';
         var l = localStorage.getItem('ktb_ui_lang') || 'tr';
         var a = localStorage.getItem('ktb_ui_appearance') || 'light';
+        var v = localStorage.getItem('ktb_ui_view') || 'modern';
+        if (v !== 'classic' && v !== 'modern') v = 'modern';
         document.documentElement.setAttribute('data-theme', t);
         document.documentElement.setAttribute('data-appearance', a === 'dark' ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-view', v);
         document.documentElement.setAttribute('lang', l === 'en' ? 'en' : 'tr');
       } catch (e) { /* ignore */ }
     })();
@@ -199,7 +203,7 @@
               </div>
               <div class="settings-menu-sep" role="separator"></div>
               <div class="settings-menu-section">
-                <div class="settings-menu-label" data-i18n="settings.appearance">Görünüm</div>
+                <div class="settings-menu-label" data-i18n="settings.appearance">Parlaklık</div>
                 <button type="button" class="settings-menu-item" role="menuitemradio" data-set-appearance="light" aria-checked="true">
                   <span data-i18n="settings.light">Açık</span><span class="settings-check" aria-hidden="true">✓</span>
                 </button>
@@ -209,7 +213,7 @@
               </div>
               <div class="settings-menu-sep" role="separator"></div>
               <button type="button" class="settings-menu-item settings-menu-item--action" role="menuitem" id="btnOpenThemes" data-i18n="settings.themes">
-                Temalar…
+                Tema ve Görünüm…
               </button>
             </div>
           </div>
@@ -219,12 +223,23 @@
 
       <div class="theme-modal" id="themeModal" hidden>
         <div class="theme-modal-backdrop" data-theme-close></div>
-        <div class="theme-modal-card" role="dialog" aria-labelledby="themeModalTitle">
+        <div class="theme-modal-card theme-modal-card--wide" role="dialog" aria-labelledby="themeModalTitle">
           <div class="theme-modal-head">
-            <strong id="themeModalTitle" data-i18n="settings.themesTitle">Tema seçin</strong>
+            <strong id="themeModalTitle" data-i18n="settings.themesTitle">Tema ve Görünüm</strong>
             <button type="button" class="btn tiny ghost" data-theme-close aria-label="Kapat">✕</button>
           </div>
-          <div class="theme-grid" id="themeGrid"></div>
+          <div class="theme-modal-tabs" role="tablist">
+            <button type="button" class="theme-modal-tab active" role="tab" id="themeTabColors" data-theme-tab="colors" aria-selected="true" data-i18n="settings.tabColors">Renk Teması</button>
+            <button type="button" class="theme-modal-tab" role="tab" id="themeTabView" data-theme-tab="view" aria-selected="false" data-i18n="settings.tabView">Görünüm</button>
+          </div>
+          <div class="theme-modal-body">
+            <div class="theme-modal-pane" id="themePaneColors" data-theme-pane="colors" role="tabpanel">
+              <div class="theme-grid" id="themeGrid"></div>
+            </div>
+            <div class="theme-modal-pane" id="themePaneView" data-theme-pane="view" role="tabpanel" hidden>
+              <div class="view-mode-grid" id="viewModeGrid"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -557,7 +572,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261115roadmap1"></script>
+  <script src="/app.js?v=20261115view1"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {
