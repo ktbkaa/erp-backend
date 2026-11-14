@@ -2201,7 +2201,7 @@ const MODULES = [
     title: 'Cari',
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['cari-kartlari'] },
-      { id: 'finans', title: 'Finans', screenIds: ['cari-ekstre', 'tahsilat-odemeler'] },
+      { id: 'finans', title: 'Finans', screenIds: ['cari-ekstre', 'cari-mutabakat', 'tahsilat-odemeler', 'e-belge-kuyruk'] },
     ],
     screens: [
       {
@@ -2392,6 +2392,55 @@ const MODULES = [
         ],
       },
       {
+        id: 'cari-mutabakat',
+        techId: 'FIN-BP-REC-001',
+        businessNameEn: 'PartnerReconciliationScreen',
+        title: 'Cari Mutabakat',
+        endpoint: '/cari-mutabakat',
+        crud: false,
+        readOnly: true,
+        banner: 'Açık fatura bakiyesi ile cari hareket net bakiyesini karşılaştırır. Muhasebeleştirilmemiş faturalar ayrıca işaretlenir.',
+        filters: [
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
+          { key: 'only_diff', label: 'Sadece farklar (true)', queryParam: true },
+        ],
+        columns: [
+          { key: 'partner_code', label: 'Cari', mono: true },
+          { key: 'partner_name', label: 'Ad' },
+          { key: 'open_invoice_balance', label: 'Açık fatura' },
+          { key: 'ledger_balance', label: 'Cari bakiye' },
+          { key: 'difference', label: 'Fark' },
+          { key: 'unposted_invoice_count', label: 'Muhasebesiz fatura' },
+          { key: 'posted_invoice_count', label: 'Muhasebeli' },
+          { key: 'match_status', label: 'Durum' },
+        ],
+      },
+      {
+        id: 'e-belge-kuyruk',
+        techId: 'FIN-EDOC-QUE-001',
+        businessNameEn: 'EDocumentQueueScreen',
+        title: 'e-Belge Kuyruk',
+        endpoint: '/e-belge',
+        crud: false,
+        readOnly: true,
+        banner: 'e-Fatura / e-İrsaliye kuyruk iskeleti. Harici gönderim adaptörü bağlanana kadar simülasyon ile durum ilerletilir.',
+        filters: [
+          { key: 'status', label: 'Durum', queryParam: true },
+        ],
+        columns: [
+          { key: 'id', label: 'ID', mono: true },
+          { key: 'document_type', label: 'Tip' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'direction', label: 'Yön' },
+          { key: 'status', label: 'Durum' },
+          { key: 'uuid_ettn', label: 'ETTN', mono: true },
+          { key: 'gib_number', label: 'GİB no', mono: true },
+          { key: 'last_error', label: 'Hata' },
+          { key: 'queued_at', label: 'Kuyruk' },
+          { key: 'sent_at', label: 'Gönderim' },
+        ],
+      },
+      {
         id: 'tahsilat-odemeler',
         techId: 'FIN-APAR-SCR-001',
         businessNameEn: 'CollectionPaymentScreen',
@@ -2445,8 +2494,9 @@ const MODULES = [
     sections: [
       { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'] },
       { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri', 'hizli-uretim-girisi'] },
+      { id: 'kapasite', title: 'Kapasite', screenIds: ['is-merkezi-yuku'] },
       { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri', 'uretim-parametreleri'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri', 'uretim-parametreleri', 'uretim-parametre-dogrulama'] },
     ],
     screens: [
       {
@@ -2824,13 +2874,46 @@ const MODULES = [
           { key: 'center_code', label: 'Kod', mono: true },
           { key: 'center_name', label: 'Ad' },
           { key: 'plant_name', label: 'İş yeri' },
+          { key: 'daily_capacity_hours', label: 'Günlük kap. (s)' },
+          { key: 'efficiency_pct', label: 'Verim %' },
         ],
         masterFields: [
           { key: 'center_code', label: 'Kod', code: true, editableOnNew: true },
           { key: 'center_name', label: 'Ad', name: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'daily_capacity_hours', label: 'Günlük kapasite (saat)', type: 'number' },
+          { key: 'efficiency_pct', label: 'Verimlilik %', type: 'number' },
+          { key: 'description', label: 'Açıklama', size: 'wide' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
         detailFields: [],
+        defaults: { daily_capacity_hours: 8, efficiency_pct: 100, is_active: true },
+      },
+      {
+        id: 'is-merkezi-yuku',
+        techId: 'MFG-WCL-RPT-001',
+        businessNameEn: 'WorkCenterLoadReport',
+        title: 'İş Merkezi Yükü',
+        endpoint: '/is-merkezi-yuku',
+        crud: false,
+        readOnly: true,
+        banner: 'Açık iş emri operasyonlarından kaba kapasite / yük görünümü. Rota süreleri bağlanınca yük hesabı netleşir.',
+        filters: [
+          { key: 'horizon_days', label: 'Ufuk (gün)', type: 'number', queryParam: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', queryParam: true },
+        ],
+        columns: [
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'plant_code', label: 'İş yeri', mono: true },
+          { key: 'center_code', label: 'Merkez', mono: true },
+          { key: 'center_name', label: 'Ad' },
+          { key: 'open_op_count', label: 'Açık op' },
+          { key: 'remaining_qty', label: 'Kalan miktar' },
+          { key: 'available_hours', label: 'Uygun saat' },
+          { key: 'rough_load_hours', label: 'Kaba yük (s)' },
+          { key: 'load_pct', label: 'Yük %' },
+          { key: 'load_band', label: 'Bant' },
+        ],
       },
       {
         id: 'is-istasyonlari',
@@ -3128,6 +3211,26 @@ const MODULES = [
           auto_close_on_complete: true,
           is_active: true,
         },
+      },
+      {
+        id: 'uretim-parametre-dogrulama',
+        techId: 'MFG-PRM-RPT-001',
+        businessNameEn: 'ProductionParametersValidation',
+        title: 'Üretim Parametre Doğrulama',
+        endpoint: '/uretim-parametreleri/dogrula',
+        crud: false,
+        readOnly: true,
+        listResponseKey: 'satirlar',
+        banner: 'Tüm firmalarda parametre kapsamı ve fazla üretim engeli senaryosu (plan=100, üretilen=90, giriş=15).',
+        columns: [
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'has_firma_param', label: 'Parametre var' },
+          { key: 'allow_over_production', label: 'Fazla izin' },
+          { key: 'over_production_pct', label: 'Fazla %' },
+          { key: 'over_rejected', label: 'Aşım reddi' },
+          { key: 'scenario_ok', label: 'Senaryo OK' },
+          { key: 'using_defaults', label: 'Varsayılan' },
+        ],
       },
       {
         id: 'uretim-planlari',
@@ -3493,6 +3596,7 @@ const MODULES = [
         codeField: 'receipt_no',
         nameField: 'order_no',
         numeratorSeri: 'URETIM_GIRIS',
+        banner: 'İş emri + operasyon seçip «Detayları Getir» deyin. Operasyon kalanı ve maks. izin (toleranslı) alanları üretim parametrelerine göre dolar; aşım kayıttan önce engellenir.',
         filters: [
           { key: 'receipt_no', label: 'Giriş no' },
           { key: 'order_no', label: 'Emir no' },
@@ -3765,6 +3869,7 @@ const MODULES = [
         listSourceType: 'Hizli',
         codeField: 'receipt_no',
         nameField: 'order_no',
+        banner: 'Hızlı giriş: emir seç → Detayları Getir → kalan / max izin kontrolü otomatik. Fazla üretim üretim parametrelerine göre reddedilir.',
         detailFillAction: { label: 'Detayları Getir', client: 'uretim-giris-onizleme' },
         filters: [
           { key: 'receipt_no', label: 'Giriş no' },
@@ -12669,10 +12774,22 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
   };
   invalidateLookups('uretim-emir-operasyonlari');
   await fetchLookupKey('uretim-emir-operasyonlari', { order_id: oid }).catch(() => {});
-  renderForm(screen);
   const nMal = (data.malzemeler || []).length;
   const kalan = data.op_remaining_quantity != null ? Number(data.op_remaining_quantity) : null;
   const maxA = data.max_allowed_quantity != null ? Number(data.max_allowed_quantity) : null;
+  const allowOver = data.production_params?.allow_over_production === true;
+  const overPct = data.production_params?.over_production_pct != null
+    ? Number(data.production_params.over_production_pct)
+    : 0;
+  // Eğitim / operatör: form üst bandında kalan ve max izin her zaman görünsün
+  screen._runtimeBanner = [
+    `Emir ${data.order_no || oid}`,
+    data.operation_code ? `Op ${data.operation_code}` : null,
+    kalan != null ? `Kalan: ${kalan}` : null,
+    maxA != null ? `Max izin: ${maxA}` : null,
+    allowOver ? `Fazla üretim açık (%${overPct})` : 'Fazla üretim kapalı',
+  ].filter(Boolean).join(' · ');
+  renderForm(screen);
   const qtyHint = (kalan != null && maxA != null)
     ? ` · kalan ${kalan}, max ${maxA}`
     : '';
@@ -14710,12 +14827,16 @@ const LOOKUP_ENDPOINTS = {
   'fatura-yonetimi': '/invoices',
   'irsaliye-yonetimi': '/delivery_notes',
   'is-merkezleri': '/is-merkezleri',
+  'is-merkezi-yuku': '/is-merkezi-yuku',
   'is-istasyonlari': '/is-istasyonlari?is_active=true',
   'rota-sablonlari': '/routings?type=hepsi&template=true',
   'uretim-emirleri': '/uretim-emirleri',
   'uretim-emir-operasyonlari': '/uretim-emirleri/operasyon-lookup',
   'uretim-girisleri': '/uretim-girisleri',
   'uretim-parametreleri': '/uretim-parametreleri',
+  'uretim-parametre-dogrulama': '/uretim-parametreleri/dogrula',
+  'cari-mutabakat': '/cari-mutabakat',
+  'e-belge-kuyruk': '/e-belge',
   'uretim-planlari': '/uretim-planlari',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?is_active=true',
   'stok-depo': '/stok-depo?is_active=true',
@@ -19545,6 +19666,18 @@ function renderForm(screen) {
   }
   const screenLabel = $('#formScreenLabel');
   if (screenLabel) screenLabel.textContent = screen.title;
+  // Üretim girişi vb.: runtime banner (kalan / max izin) form üst bandına
+  {
+    const banner = $('#screenBanner');
+    if (banner) {
+      const runtime = screen._runtimeBanner;
+      if (runtime) {
+        banner.textContent = `${screen.title} — ${runtime}`;
+      } else if (screen.banner) {
+        banner.textContent = `${screen.title} — ${screen.banner}${screen.techId ? ' · ' + screen.techId : ''}`;
+      }
+    }
+  }
   const chip = $('#formRecordChip');
   if (chip) {
     const codeKey = screen.codeField;

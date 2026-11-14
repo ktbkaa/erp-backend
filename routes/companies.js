@@ -81,7 +81,26 @@ router.post('/', async (req, res) => {
                 `INSERT INTO companies (company_code, company_name, is_profile) VALUES ($1, $2, $3) RETURNING *`,
                 [kod, company_name, is_profile]
             );
-            return result.rows[0];
+            const firma = result.rows[0];
+            // Yeni firmaya güvenli üretim parametreleri (fazla üretim kapalı)
+            const exists = await client.query(
+              `SELECT 1 FROM production_parameters WHERE company_id=$1 AND plant_id IS NULL LIMIT 1`,
+              [firma.id]
+            );
+            if (!exists.rows[0]) {
+              await client.query(
+                `INSERT INTO production_parameters (
+                   company_id, plant_id,
+                   allow_over_production, over_production_pct,
+                   allow_under_production, under_production_pct,
+                   enforce_op_sequence, require_material_consume, auto_close_on_complete,
+                   description, is_active
+                 ) VALUES ($1, NULL, FALSE, 0, TRUE, 0, TRUE, TRUE, TRUE,
+                           'Firma oluştururken otomatik', TRUE)`,
+                [firma.id]
+              );
+            }
+            return firma;
         });
         res.status(201).json(row);
     } catch (err) {

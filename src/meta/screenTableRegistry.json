@@ -741,6 +741,70 @@
       }
     ]
   },
+  "uretim-parametre-dogrulama": {
+    "screenId": "uretim-parametre-dogrulama",
+    "title": "Üretim Parametre Doğrulama",
+    "techId": "MFG-PRM-RPT-001",
+    "endpoint": "/uretim-parametreleri/dogrula",
+    "auditTablo": "uretim-parametreleri",
+    "primaryTable": "production_parameters",
+    "tables": [
+      {
+        "name": "production_parameters",
+        "role": "master"
+      }
+    ]
+  },
+  "is-merkezi-yuku": {
+    "screenId": "is-merkezi-yuku",
+    "title": "İş Merkezi Yükü",
+    "techId": "MFG-WCL-RPT-001",
+    "endpoint": "/is-merkezi-yuku",
+    "auditTablo": "is-merkezi-yuku",
+    "primaryTable": "work_centers",
+    "tables": [
+      {
+        "name": "work_centers",
+        "role": "master"
+      },
+      {
+        "name": "production_order_operations",
+        "role": "related"
+      }
+    ]
+  },
+  "cari-mutabakat": {
+    "screenId": "cari-mutabakat",
+    "title": "Cari Mutabakat",
+    "techId": "FIN-BP-REC-001",
+    "endpoint": "/cari-mutabakat",
+    "auditTablo": "cari-mutabakat",
+    "primaryTable": "partner_ledger_entries",
+    "tables": [
+      {
+        "name": "partner_ledger_entries",
+        "role": "master"
+      },
+      {
+        "name": "invoices",
+        "role": "related"
+      }
+    ]
+  },
+  "e-belge-kuyruk": {
+    "screenId": "e-belge-kuyruk",
+    "title": "e-Belge Kuyruk",
+    "techId": "FIN-EDOC-QUE-001",
+    "endpoint": "/e-belge",
+    "auditTablo": "e-belge",
+    "primaryTable": "e_document_queue",
+    "tables": [
+      {
+        "name": "e_document_queue",
+        "role": "master"
+      }
+    ]
+  },
   "uretim-planlari": {
     "screenId": "uretim-planlari",
     "title": "Üretim Planları",
