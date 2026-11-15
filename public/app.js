@@ -11261,6 +11261,7 @@ async function showFormContextMenu(clientX, clientY) {
       const btn = e.target.closest('[data-form-ctx]');
       if (!btn || btn.disabled) return;
       e.preventDefault();
+      e.stopPropagation();
       menu.hidden = true;
       const sid = btn.getAttribute('data-open-screen');
       const rid = btn.getAttribute('data-open-id');
@@ -11736,6 +11737,13 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
   const row = selectedRow() || {};
   const parts = [];
 
+  // Menüyü hemen göster (bağlantı API’si beklerken de görünür kalsın)
+  hideTabContextMenu();
+  menu.innerHTML = '<span class="ctx-heading">Menü yükleniyor…</span>';
+  menu.hidden = false;
+  positionCtxMenu(menu, clientX, clientY);
+  state.excelCtx = { kind: 'list', screenId: screen.id };
+
   if (mode === 'header') {
     parts.push('<button type="button" role="menuitem" data-list-ctx="liste-ayarlari">Liste ayarları…</button>');
     parts.push('<button type="button" role="menuitem" data-list-ctx="ayarlari-kaydet">Ayarları kaydet</button>');
@@ -11752,26 +11760,30 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
     });
     // Belge bağlantısı (form sağ tık ile aynı zincir) — aday→cari vb.
     if (row.id) {
-      const baglanti = await buildFormBaglantiMenuItems(screen, row);
-      if (baglanti.length) {
-        if (parts.length) parts.push('<div class="ctx-sep"></div>');
-        parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
-        baglanti.forEach((it) => {
-          if (it.type === 'heading') {
-            parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
-            return;
-          }
-          if (it.type === 'sep') {
-            parts.push('<div class="ctx-sep"></div>');
-            return;
-          }
-          const dis = it.enabled ? '' : 'disabled class="is-disabled"';
-          const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
-          parts.push(`<button type="button" role="menuitem" ${dis}${title}
-            data-list-ctx="baglanti:${escAttr(it.id)}"
-            data-open-screen="${escAttr(it.screenId || '')}"
-            data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
-        });
+      try {
+        const baglanti = await buildFormBaglantiMenuItems(screen, row);
+        if (baglanti.length) {
+          if (parts.length) parts.push('<div class="ctx-sep"></div>');
+          parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
+          baglanti.forEach((it) => {
+            if (it.type === 'heading') {
+              parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
+              return;
+            }
+            if (it.type === 'sep') {
+              parts.push('<div class="ctx-sep"></div>');
+              return;
+            }
+            const dis = it.enabled ? '' : 'disabled class="is-disabled"';
+            const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
+            parts.push(`<button type="button" role="menuitem" ${dis}${title}
+              data-list-ctx="baglanti:${escAttr(it.id)}"
+              data-open-screen="${escAttr(it.screenId || '')}"
+              data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
+          });
+        }
+      } catch (_) {
+        /* bağlantı yüklenemezse dışa aktar / ayarlar yine gelsin */
       }
     }
     if (parts.length) parts.push('<div class="ctx-sep"></div>');
@@ -11790,13 +11802,14 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
   menu.innerHTML = parts.join('');
   menu.hidden = false;
   positionCtxMenu(menu, clientX, clientY);
-  state.excelCtx = { kind: 'list', screenId: screen.id };
   if (!menu.dataset.bound) {
     menu.dataset.bound = '1';
+    // click + pointerup: capture kapanışından kaçınmak için menü içi eylemi burada tut
     menu.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-list-ctx]');
       if (!btn || btn.disabled) return;
       e.preventDefault();
+      e.stopPropagation();
       menu.hidden = true;
       const act = btn.getAttribute('data-list-ctx');
       const scr = findScreen(state.screenId);
@@ -24885,10 +24898,12 @@ function bindEvents() {
     });
   }
 
-  // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır (contextmenu sonrası click menüyü düşürmesin)
+  // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır.
+  // ÖNEMLİ: #listCtxMenu ve #formCtxMenu de hariç tutulmalı — aksi halde
+  // pointerdown (capture) menüyü click'ten önce kapatır ve hiçbir öğe çalışmaz.
   document.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('#tabCtxMenu')) return;
+    if (e.target.closest('#tabCtxMenu, #listCtxMenu, #formCtxMenu')) return;
     hideTabContextMenu();
   }, true);
 
