@@ -4564,11 +4564,31 @@ body.sql-splitting iframe { pointer-events: none; }
 .sql-kw { color: #7ecfbc; font-weight: 600; }
 .sql-str { color: #e0b56a; }
 .sql-num { color: #9bb7ef; }
+.sql-result-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  padding: 0.35rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-1, #fff);
+}
+.sql-result-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+.sql-result-actions[hidden] { display: none !important; }
 .sql-result-meta {
-  padding: 0.4rem 0.85rem;
+  padding: 0;
   font-size: 0.78rem;
   color: var(--muted);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
+  flex: 1 1 auto;
+  min-width: 0;
   background: var(--panel);
   min-height: 1.8rem;
 }

@@ -11261,6 +11261,7 @@ async function showFormContextMenu(clientX, clientY) {
       const btn = e.target.closest('[data-form-ctx]');
       if (!btn || btn.disabled) return;
       e.preventDefault();
+      e.stopPropagation();
       menu.hidden = true;
       const sid = btn.getAttribute('data-open-screen');
       const rid = btn.getAttribute('data-open-id');
@@ -11736,6 +11737,13 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
   const row = selectedRow() || {};
   const parts = [];
 
+  // Menüyü hemen göster (bağlantı API’si beklerken de görünür kalsın)
+  hideTabContextMenu();
+  menu.innerHTML = '<span class="ctx-heading">Menü yükleniyor…</span>';
+  menu.hidden = false;
+  positionCtxMenu(menu, clientX, clientY);
+  state.excelCtx = { kind: 'list', screenId: screen.id };
+
   if (mode === 'header') {
     parts.push('<button type="button" role="menuitem" data-list-ctx="liste-ayarlari">Liste ayarları…</button>');
     parts.push('<button type="button" role="menuitem" data-list-ctx="ayarlari-kaydet">Ayarları kaydet</button>');
@@ -11752,26 +11760,30 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
     });
     // Belge bağlantısı (form sağ tık ile aynı zincir) — aday→cari vb.
     if (row.id) {
-      const baglanti = await buildFormBaglantiMenuItems(screen, row);
-      if (baglanti.length) {
-        if (parts.length) parts.push('<div class="ctx-sep"></div>');
-        parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
-        baglanti.forEach((it) => {
-          if (it.type === 'heading') {
-            parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
-            return;
-          }
-          if (it.type === 'sep') {
-            parts.push('<div class="ctx-sep"></div>');
-            return;
-          }
-          const dis = it.enabled ? '' : 'disabled class="is-disabled"';
-          const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
-          parts.push(`<button type="button" role="menuitem" ${dis}${title}
-            data-list-ctx="baglanti:${escAttr(it.id)}"
-            data-open-screen="${escAttr(it.screenId || '')}"
-            data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
-        });
+      try {
+        const baglanti = await buildFormBaglantiMenuItems(screen, row);
+        if (baglanti.length) {
+          if (parts.length) parts.push('<div class="ctx-sep"></div>');
+          parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
+          baglanti.forEach((it) => {
+            if (it.type === 'heading') {
+              parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
+              return;
+            }
+            if (it.type === 'sep') {
+              parts.push('<div class="ctx-sep"></div>');
+              return;
+            }
+            const dis = it.enabled ? '' : 'disabled class="is-disabled"';
+            const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
+            parts.push(`<button type="button" role="menuitem" ${dis}${title}
+              data-list-ctx="baglanti:${escAttr(it.id)}"
+              data-open-screen="${escAttr(it.screenId || '')}"
+              data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
+          });
+        }
+      } catch (_) {
+        /* bağlantı yüklenemezse dışa aktar / ayarlar yine gelsin */
       }
     }
     if (parts.length) parts.push('<div class="ctx-sep"></div>');
@@ -11790,13 +11802,14 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
   menu.innerHTML = parts.join('');
   menu.hidden = false;
   positionCtxMenu(menu, clientX, clientY);
-  state.excelCtx = { kind: 'list', screenId: screen.id };
   if (!menu.dataset.bound) {
     menu.dataset.bound = '1';
+    // click + pointerup: capture kapanışından kaçınmak için menü içi eylemi burada tut
     menu.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-list-ctx]');
       if (!btn || btn.disabled) return;
       e.preventDefault();
+      e.stopPropagation();
       menu.hidden = true;
       const act = btn.getAttribute('data-list-ctx');
       const scr = findScreen(state.screenId);
@@ -24885,10 +24898,12 @@ function bindEvents() {
     });
   }
 
-  // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır (contextmenu sonrası click menüyü düşürmesin)
+  // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır.
+  // ÖNEMLİ: #listCtxMenu ve #formCtxMenu de hariç tutulmalı — aksi halde
+  // pointerdown (capture) menüyü click'ten önce kapatır ve hiçbir öğe çalışmaz.
   document.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('#tabCtxMenu')) return;
+    if (e.target.closest('#tabCtxMenu, #listCtxMenu, #formCtxMenu')) return;
     hideTabContextMenu();
   }, true);
 
@@ -26362,10 +26377,102 @@ function sqlSetDbModalOpen(open) {
   modal.hidden = !open;
 }
 
+function sqlResultExportable(payload) {
+  if (!payload || payload.hata) return false;
+  const fields = payload.fields || [];
+  return fields.length > 0;
+}
+
+function sqlFormatExportCell(v) {
+  if (v == null) return '';
+  if (typeof v === 'boolean') return v ? 'Evet' : 'Hayır';
+  if (typeof v === 'object') {
+    try { return JSON.stringify(v); } catch (_) { return String(v); }
+  }
+  return String(v);
+}
+
+function sqlGetExportPayload() {
+  const sheet = sqlActiveSheet();
+  const payload = sheet?.result || null;
+  if (!sqlResultExportable(payload)) {
+    toast('Aktarılacak sonuç yok. Önce bir SELECT çalıştırın.');
+    return null;
+  }
+  return payload;
+}
+
+function exportSqlResultAsExcel() {
+  const payload = sqlGetExportPayload();
+  if (!payload) return;
+  const XLSXlib = ensureXlsxLib();
+  const fields = payload.fields || [];
+  const rows = payload.rows || [];
+  const aoa = [
+    fields.slice(),
+    ...rows.map((r) => fields.map((f) => sqlFormatExportCell(r?.[f]))),
+  ];
+  const ws = XLSXlib.utils.aoa_to_sheet(aoa);
+  const wb = XLSXlib.utils.book_new();
+  const sheetName = (sqlActiveSheet()?.name || 'SQL').slice(0, 31) || 'SQL';
+  XLSXlib.utils.book_append_sheet(wb, ws, sheetName);
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  XLSXlib.writeFile(wb, `sql-sonuc-${stamp}.xlsx`);
+  toast(`Excel indirildi (${rows.length} satır).`);
+}
+
+function exportSqlResultAsPdf() {
+  const payload = sqlGetExportPayload();
+  if (!payload) return;
+  const fields = payload.fields || [];
+  const rows = payload.rows || [];
+  const sheet = sqlActiveSheet();
+  const title = sheet?.name ? `SQL Sorgu · ${sheet.name}` : 'SQL Sorgu — Sonuç';
+  const head = fields.map((f) => `<th>${escapeHtml(f)}</th>`).join('');
+  const body = rows.map((r) => {
+    const tds = fields.map((f) => `<td>${escapeHtml(sqlFormatExportCell(r?.[f]))}</td>`).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  const table = `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:11px;width:100%">
+    <thead style="background:#e8eef5"><tr>${head}</tr></thead>
+    <tbody>${body || `<tr><td colspan="${Math.max(fields.length, 1)}">Satır yok</td></tr>`}</tbody>
+  </table>`;
+  const w = window.open('', '_blank');
+  if (!w) {
+    toast('Pop-up engellendi — tarayıcıda izin verin.');
+    return;
+  }
+  const metaLine = [
+    `${rows.length} satır`,
+    payload.verb || '',
+    payload.ms != null ? `${payload.ms} ms` : '',
+    payload.truncated ? 'ilk 1000 satır' : '',
+    new Date().toLocaleString('tr-TR'),
+  ].filter(Boolean).join(' · ');
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"/><title>${escapeHtml(title)}</title>
+    <style>
+      body{font-family:Segoe UI,Arial,sans-serif;padding:16px;color:#1c2430}
+      h1{font-size:16px;margin:0 0 8px}
+      .meta{color:#667;font-size:12px;margin:0 0 12px}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid;page-break-after:auto}
+      th{background:#e8eef5;text-align:left}
+      @media print{body{padding:0}}
+    </style></head><body>
+    <h1>${escapeHtml(title)}</h1>
+    <p class="meta">${escapeHtml(metaLine)}</p>
+    ${table}
+    <script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script>
+    </body></html>`);
+  w.document.close();
+  toast('PDF için yazdır penceresi açıldı.');
+}
+
 function sqlRenderResult(payload) {
   const meta = $('#sqlResultMeta');
   const head = $('#sqlResultHead');
   const body = $('#sqlResultBody');
+  const actions = $('#sqlResultActions');
   if (!meta || !head || !body) return;
   const sheet = sqlActiveSheet();
   if (sheet) sheet.result = payload || null;
@@ -26373,12 +26480,14 @@ function sqlRenderResult(payload) {
     meta.innerHTML = `<span class="sql-error">${escAttr(payload.hata)}</span>`;
     head.innerHTML = '';
     body.innerHTML = '';
+    if (actions) actions.hidden = true;
     return;
   }
   if (!payload) {
     meta.innerHTML = '';
     head.innerHTML = '';
     body.innerHTML = '';
+    if (actions) actions.hidden = true;
     return;
   }
   const fields = payload.fields || [];
@@ -26393,6 +26502,7 @@ function sqlRenderResult(payload) {
   body.innerHTML = (payload.rows || []).map((row) =>
     `<tr>${fields.map((f) => `<td>${escAttr(row[f])}</td>`).join('')}</tr>`
   ).join('') || `<tr><td colspan="${Math.max(fields.length, 1)}" class="sql-empty">Satır yok</td></tr>`;
+  if (actions) actions.hidden = !sqlResultExportable(payload);
 }
 
 function sqlApplySplitRatio(ratio) {
@@ -26479,6 +26589,12 @@ function bindSqlConsoleEvents() {
     });
   }
   $('#sqlBtnRun')?.addEventListener('click', () => sqlRun());
+  $('#sqlBtnExportExcel')?.addEventListener('click', () => {
+    try { exportSqlResultAsExcel(); } catch (err) { toast(err.message || 'Excel aktarımı başarısız'); }
+  });
+  $('#sqlBtnExportPdf')?.addEventListener('click', () => {
+    try { exportSqlResultAsPdf(); } catch (err) { toast(err.message || 'PDF aktarımı başarısız'); }
+  });
   $('#sqlBtnDb')?.addEventListener('click', () => sqlSetDbModalOpen(true));
   $('#sqlDbModal')?.addEventListener('click', (e) => {
     if (e.target.closest('[data-sql-db-close]')) sqlSetDbModalOpen(false);

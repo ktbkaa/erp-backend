@@ -36,8 +36,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261115view1" />
-  <link rel="stylesheet" href="/styles-modern.css?v=20261115view1" />
+  <link rel="stylesheet" href="/styles.css?v=20261115ctx-fix1" />
+  <link rel="stylesheet" href="/styles-modern.css?v=20261115ctx-fix1" />
   <script>
     (function () {
       try {
@@ -362,7 +362,13 @@
                 </div>
                 <div class="sql-splitter" id="sqlSplitter" role="separator" aria-orientation="horizontal" title="Sürükleyerek boyutlandır"></div>
                 <div class="sql-result-pane" id="sqlResultPane">
-                  <div class="sql-result-meta" id="sqlResultMeta"></div>
+                  <div class="sql-result-bar">
+                    <div class="sql-result-meta" id="sqlResultMeta"></div>
+                    <div class="sql-result-actions" id="sqlResultActions" hidden>
+                      <button type="button" class="btn tiny ghost" id="sqlBtnExportExcel" title="Sonuç listesini Excel indir">Excel</button>
+                      <button type="button" class="btn tiny ghost" id="sqlBtnExportPdf" title="Sonuç listesini PDF / yazdır">PDF</button>
+                    </div>
+                  </div>
                   <div class="sql-result-scroll">
                     <table class="sql-result-table" id="sqlResultTable">
                       <thead id="sqlResultHead"></thead>
@@ -572,7 +578,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261115view1"></script>
+  <script src="/app.js?v=20261115ctx-fix1"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {
