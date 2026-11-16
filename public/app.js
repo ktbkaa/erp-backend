@@ -1447,7 +1447,7 @@ const MODULES = [
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
       { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'stok-hareket-raporu', 'transfer-emirleri', 'sayim-belgeleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
-      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
+      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar', 'mrp-hareket-raporu'] },
     ],
     screens: [
       {
@@ -2107,6 +2107,95 @@ const MODULES = [
           { key: 'suggested_quantity', label: 'Öneri miktar' },
           { key: 'suggestion', label: 'Öneri' },
           { key: 'planned_start', label: 'Plan baş.' },
+        ],
+      },
+      {
+        id: 'mrp-hareket-raporu',
+        techId: 'MFG-MRP-RPT-001',
+        businessNameEn: 'MrpMovementReportScreen',
+        title: 'MRP Hareket Raporu',
+        endpoint: '/mrp-hareket-raporu',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        listExportActions: true,
+        reportPdfAction: true,
+        banner: 'MRP çalışma no zorunlu. Tahmin, MPS, bağımsız ihtiyaç, öneri, stok hareketi ve açık SA/IE satırlarını birleştirir. PDF / Excel / Word araç çubuğundan veya sağ tık menüsünden alınır.',
+        filters: [
+          {
+            key: 'run_id',
+            label: 'MRP çalışma no',
+            type: 'lookup',
+            lookup: 'mrp-calismalar',
+            valueKey: 'id',
+            labelKey: 'description',
+            codeKey: 'run_no',
+            required: true,
+            queryParam: true,
+          },
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            queryParam: true,
+          },
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+          {
+            key: 'islem_tipi',
+            label: 'İşlem tipi',
+            type: 'select',
+            options: [
+              { value: 'Tahmin', label: 'Tahmin' },
+              { value: 'MPS', label: 'MPS' },
+              { value: 'BagimsizIhtiyac', label: 'Bağımsız ihtiyaç' },
+              { value: 'MrpOneri', label: 'MRP öneri' },
+              { value: 'MrpIhtiyac', label: 'MRP ihtiyaç bileşeni' },
+              { value: 'StokHareket', label: 'Stok hareket' },
+              { value: 'AcikSA', label: 'Açık SA' },
+              { value: 'AcikIE', label: 'Açık iş emri' },
+            ],
+            queryParam: true,
+          },
+          {
+            key: 'islem_turu',
+            label: 'İşlem türü',
+            type: 'select',
+            options: [
+              { value: 'Talep', label: 'Talep' },
+              { value: 'Arz', label: 'Arz' },
+              { value: 'Oneri', label: 'Öneri' },
+              { value: 'Oneri-SA', label: 'Öneri-SA' },
+              { value: 'Oneri-UE', label: 'Öneri-UE' },
+              { value: 'Yeterli', label: 'Yeterli' },
+              { value: 'Giris', label: 'Giriş' },
+              { value: 'Cikis', label: 'Çıkış' },
+            ],
+            queryParam: true,
+          },
+        ],
+        columns: [
+          { key: 'sira', label: '#', mono: true },
+          { key: 'hareket_tarihi', label: 'Tarih' },
+          { key: 'run_no', label: 'MRP no', mono: true },
+          { key: 'islem_tipi', label: 'İşlem tipi' },
+          { key: 'islem_turu', label: 'Tür' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'quantity', label: 'Miktar', mono: true },
+          { key: 'quantity_in', label: 'Giriş', mono: true },
+          { key: 'quantity_out', label: 'Çıkış', mono: true },
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'belge_tipi', label: 'Belge tipi' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'kaynak', label: 'Kaynak' },
         ],
       },
       {
@@ -14651,8 +14740,11 @@ function updateActionButtons(screen) {
       btn.hidden = !screen.tcmbFetchAction;
       btn.disabled = !screenPermission(screen.id, 'tcmb-cek');
     } else if (act === 'report-pdf') {
-      btn.hidden = !screen.reportPdfAction;
-      btn.disabled = !screen.reportPdfAction;
+      btn.hidden = !(screen.reportPdfAction || screen.listExportActions);
+      btn.disabled = btn.hidden;
+    } else if (act === 'export-excel' || act === 'export-word') {
+      btn.hidden = !screen.listExportActions;
+      btn.disabled = !screen.listExportActions;
     }
   });
   const mrpBtn = $('#btnMrpTalep');
@@ -15088,6 +15180,7 @@ const LOOKUP_ENDPOINTS = {
   'uretim-parametreleri': '/uretim-parametreleri',
   'uretim-parametre-dogrulama': '/uretim-parametreleri/dogrula',
   'mrp-parametreler': '/mrp/parametreler?is_active=true',
+  'mrp-calismalar': '/mrp/calismalar',
   'cari-mutabakat': '/cari-mutabakat',
   'e-belge-kuyruk': '/e-belge',
   'uretim-planlari': '/uretim-planlari',
@@ -20762,6 +20855,13 @@ function findFieldDefByKey(screen, key) {
 
 /** Lookup / select popup: tablo kolonları */
 const LOOKUP_BROWSER_COLUMNS = {
+  'mrp-calismalar': [
+    { key: 'run_no', label: 'Çalışma no', mono: true },
+    { key: 'status', label: 'Durum' },
+    { key: 'start_date', label: 'Ufuk baş.' },
+    { key: 'end_date', label: 'Ufuk bit.' },
+    { key: 'description', label: 'Açıklama' },
+  ],
   items: [
     { key: 'item_code', label: 'Stok kodu', mono: true },
     { key: 'item_name', label: 'Stok adı' },
@@ -20997,6 +21097,7 @@ const LOOKUP_TO_SCREEN = {
   'uretim-emri-tipleri': 'uretim-emri-tipleri',
   'uretim-emirleri': 'uretim-emirleri',
   'uretim-planlari': 'uretim-planlari',
+  'mrp-calismalar': 'mrp-calisma',
   'satin-alma-talepleri': 'satin-alma-talepleri',
   'satin-alma-teklifleri': 'satin-alma-teklifleri',
   'satin-alma-siparisleri': 'satin-alma-siparisleri',
@@ -25317,7 +25418,13 @@ function bindEvents() {
       const act = actionBtn.dataset.action;
       if (act === 'sil') deleteSelected();
       else if (act === 'export-csv') exportListCsv();
-      else if (act === 'report-pdf') openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+      else if (act === 'export-excel') exportListAsExcel();
+      else if (act === 'export-word') exportListAsWord();
+      else if (act === 'report-pdf') {
+        const scr = findScreen(state.screenId);
+        if (scr?.listExportActions) exportListAsPdf();
+        else openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+      }
       else if (act === 'mrp-talep') createMrpRequisitions().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
