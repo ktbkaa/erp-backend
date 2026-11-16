@@ -5992,6 +5992,17 @@ html[data-theme="yellow"] {
 .mrp-result-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .mrp-console-head--meta { align-items: flex-end; }
+.mrp-console-head--pick {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--panel, #fff); padding-top: 0.25rem;
+}
+.mrp-workspace-body {
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.mrp-workspace-empty {
+  padding: 1.5rem 1rem; text-align: center; color: var(--muted);
+  border: 1px dashed var(--line); border-radius: 8px; background: #fafbfd;
+}
 .mrp-scope-grid--2col {
   display: grid;
   grid-template-columns: 1fr 1fr;

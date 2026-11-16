@@ -1,6 +1,7 @@
 /**
  * MRP konsol: pasif form sekmeleri [hidden] ile gizlensin.
  * scrollable paneller display:block !important ile [hidden] ezmemeli.
+ * Konsol workspace tek panel kullanır.
  */
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
@@ -20,19 +21,19 @@ describe('mrp konsol sekme görünürlüğü', () => {
       css,
       /\.form-tab-panel--md\.form-tab-panel--scrollable\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s
     );
-    // Regresyon: gizli paneli zorla gösteren eski kural
     assert.doesNotMatch(
       css,
       /\.form-tab-panel--md\.form-tab-panel--scrollable\s*\{[^}]*display:\s*block\s*!important/s
     );
   });
 
-  it('mrp-calisma üç sekme + scrollable panel kullanır', () => {
+  it('mrp-calisma workspace paneli + parametre ekranı sekmeleri', () => {
     const js = fs.readFileSync(path.join(root, 'public/app.js'), 'utf8');
     assert.match(js, /id: 'mrp-calisma'/);
+    assert.match(js, /kind: 'mrp-workspace'/);
+    assert.match(js, /id: 'mrp-parametre'/);
     assert.match(js, /kind: 'mrp-parametre'/);
     assert.match(js, /kind: 'mrp-kapsam'/);
-    assert.match(js, /kind: 'mrp-sonuc'/);
     assert.match(js, /form-tab-panel--md form-tab-panel--scrollable/);
   });
 });

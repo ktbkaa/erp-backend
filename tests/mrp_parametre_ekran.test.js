@@ -1,5 +1,5 @@
 /**
- * MRP Parametreleri: Planlama menüsünde ayrı ekran + form erişimi.
+ * MRP Parametreleri kaydedilebilir + Konsol tepeden seçim akışı.
  */
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
@@ -8,29 +8,35 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const appJs = fs.readFileSync(path.join(root, 'public/app.js'), 'utf8');
+const mrpRoutes = fs.readFileSync(path.join(root, 'routes/mrp.js'), 'utf8');
+const migration = fs.readFileSync(path.join(root, 'db/migrations/088_mrp_parameter_sets.sql'), 'utf8');
 
-describe('mrp parametre ekranı', () => {
-  it('Planlama menüsünde mrp-parametre vardır', () => {
-    assert.match(appJs, /id: 'planlama'[\s\S]*?mrp-parametre/);
+describe('mrp parametre kaydet + konsol seçim', () => {
+  it('parametre seti tablosu ve API vardır', () => {
+    assert.match(migration, /CREATE TABLE IF NOT EXISTS mrp_parameter_sets/);
+    assert.match(mrpRoutes, /router\.get\('\/parametreler'/);
+    assert.match(mrpRoutes, /router\.post\('\/parametreler'/);
+    assert.match(mrpRoutes, /router\.put\('\/parametreler\/:id'/);
+    assert.match(mrpRoutes, /parameter_set_id/);
+  });
+
+  it('MRP Parametreleri ayrı endpoint ile kaydedilir', () => {
     assert.match(appJs, /id: 'mrp-parametre'/);
-    assert.match(appJs, /title: 'MRP Parametreleri'/);
-    assert.match(appJs, /openFormOnEnter: 'yeni'/);
+    assert.match(appJs, /endpoint: '\/mrp\/parametreler'/);
     assert.match(appJs, /mrpParametreScreen: true/);
+    assert.match(appJs, /screen\.mrpParametreScreen[\s\S]*?collectMrpParametreFromDom/);
   });
 
-  it('MRP Konsol İncele/çift tık sonuç form sekmesine gider (ayrı sonuç ekranına kaçmaz)', () => {
-    assert.doesNotMatch(
-      appJs,
-      /act === 'incele' && state\.screenId === 'mrp-calisma'[\s\S]{0,200}openScreen\('mrp-sonuclar'\)/
-    );
-    assert.match(appJs, /formActiveTab: tab/);
-    assert.match(appJs, /screenId === 'mrp-parametre' \|\| state\.screenId === 'mrp-calisma'/);
-  });
-
-  it('gölge runAndSaveMrp parametresiz sonuç ekranına atmaz', () => {
-    // Yerel gölgeleme kaldırıldı; tek (global) runAndSaveMrp parametre formunu kullanır
-    const localShadows = (appJs.match(/async function runAndSaveMrp\(\)/g) || []).length;
-    assert.equal(localShadows, 1);
-    assert.match(appJs, /screenId === 'mrp-parametre'/);
+  it('Konsol Yeni düzeni yok; tepeden parametre seçimi var', () => {
+    assert.match(appJs, /mrpKonsolWorkspace: true/);
+    assert.match(appJs, /openFormOnEnter: 'workspace'/);
+    assert.match(appJs, /kind: 'mrp-workspace'/);
+    assert.match(appJs, /renderMrpWorkspacePane/);
+    assert.match(appJs, /mrpWorkspaceParamSelect/);
+    assert.match(appJs, /applyMrpParametreSetToWorkspace/);
+    // mrp-calisma listActions içinde yeni yok
+    const calismaBlock = appJs.slice(appJs.indexOf("id: 'mrp-calisma'"), appJs.indexOf("id: 'mrp-hesap'"));
+    assert.match(calismaBlock, /listActions:\s*\['incele'\]/);
+    assert.doesNotMatch(calismaBlock, /listActions:\s*\[[^\]]*yeni/);
   });
 });

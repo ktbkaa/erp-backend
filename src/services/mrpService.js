@@ -813,6 +813,7 @@ async function mrpCalistir(client, {
     created_by = null,
     parametre = {},
     notes = null,
+    parameterSetId = null,
 } = {}) {
     const { nextSequenceCode } = require('../utils/kodUretici');
     const p = defaultMrpParametre(parametre);
@@ -821,6 +822,7 @@ async function mrpCalistir(client, {
     // Geçersiz firma / iş yeri FK kırılmasın
     let safeFirma = firmaId ? Number(firmaId) : null;
     let safeIsYeri = isYeriId ? Number(isYeriId) : null;
+    let safeParamSet = parameterSetId ? Number(parameterSetId) : null;
     if (safeFirma) {
         const f = await client.query('SELECT id FROM companies WHERE id=$1', [safeFirma]);
         if (!f.rows[0]) safeFirma = null;
@@ -829,17 +831,21 @@ async function mrpCalistir(client, {
         const iy = await client.query('SELECT id FROM plants WHERE id=$1', [safeIsYeri]);
         if (!iy.rows[0]) safeIsYeri = null;
     }
+    if (safeParamSet) {
+        const ps = await client.query('SELECT id FROM mrp_parameter_sets WHERE id=$1', [safeParamSet]);
+        if (!ps.rows[0]) safeParamSet = null;
+    }
 
     const no = await nextSequenceCode(client, 'MRP_CALISMA');
     const ins = await client.query(
         `INSERT INTO mrp_runs
             (run_no, company_id, plant_id, status, parameters_json, description, created_by,
-             start_date, end_date, notes)
-         VALUES ($1,$2,$3,'Calisiyor',$4::jsonb,$5,$6,$7::date,$8::date,$9)
+             start_date, end_date, notes, parameter_set_id)
+         VALUES ($1,$2,$3,'Calisiyor',$4::jsonb,$5,$6,$7::date,$8::date,$9,$10)
          RETURNING *`,
         [
             no, safeFirma, safeIsYeri, JSON.stringify(p), description, created_by,
-            p.start_date, p.end_date, p.notes || null,
+            p.start_date, p.end_date, p.notes || null, safeParamSet,
         ]
     );
     const calisma = ins.rows[0];

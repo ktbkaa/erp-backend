@@ -467,17 +467,13 @@
     "screenId": "mrp-parametre",
     "title": "MRP Parametreleri",
     "techId": "MFG-MRP-PAR-001",
-    "endpoint": "/mrp/calismalar",
+    "endpoint": "/mrp/parametreler",
     "auditTablo": "mrp",
-    "primaryTable": "mrp_runs",
+    "primaryTable": "mrp_parameter_sets",
     "tables": [
       {
-        "name": "mrp_runs",
+        "name": "mrp_parameter_sets",
         "role": "master"
-      },
-      {
-        "name": "mrp_results",
-        "role": "related"
       }
     ]
   },
