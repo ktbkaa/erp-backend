@@ -477,6 +477,32 @@
       }
     ]
   },
+  "mrp-hareket-raporu": {
+    "screenId": "mrp-hareket-raporu",
+    "title": "MRP Hareket Raporu",
+    "techId": "MFG-MRP-RPT-001",
+    "endpoint": "/mrp-hareket-raporu",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_results",
+    "tables": [
+      {
+        "name": "mrp_runs",
+        "role": "related"
+      },
+      {
+        "name": "mrp_results",
+        "role": "master"
+      },
+      {
+        "name": "mrp_independent_requirements",
+        "role": "related"
+      },
+      {
+        "name": "stock_movement_lines",
+        "role": "related"
+      }
+    ]
+  },
   "mrp-calisma": {
     "screenId": "mrp-calisma",
     "title": "MRP Çalıştır",

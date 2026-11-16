@@ -265,6 +265,8 @@
             <button type="button" class="btn action ghost" data-action="kopyala">Kopyala</button>
             <button type="button" class="btn action danger" data-action="sil">Sil</button>
             <button type="button" class="btn action ghost" data-action="export-csv" title="Filtrelenmiş listeyi CSV indir">CSV</button>
+            <button type="button" class="btn action ghost" data-action="export-excel" id="btnExportExcel" hidden title="Filtrelenmiş listeyi Excel indir">Excel</button>
+            <button type="button" class="btn action ghost" data-action="export-word" id="btnExportWord" hidden title="Filtrelenmiş listeyi Word indir">Word</button>
             <button type="button" class="btn action ghost" data-action="report-pdf" id="btnReportPdf" hidden title="Filtrelenmiş sonucu PDF / yazdır">PDF</button>
             <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
             <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
@@ -578,7 +580,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261116mrp-param-save"></script>
+  <script src="/app.js?v=20261116mrp-hareket-rapor"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {
