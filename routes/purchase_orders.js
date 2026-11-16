@@ -103,13 +103,21 @@ async function insertOrderLine(client, siparisId, s, sira, baslikKur) {
   return { ...hes, quantity: s.quantity, unit_price: Number(s.unit_price || 0) };
 }
 
-async function replaceOrderLines(client, siparisId, satirlar, baslikKur) {
+async function replaceOrderLines(client, siparisId, satirlar, baslikKur, baslikMeta = {}) {
   await client.query('DELETE FROM purchase_order_lines WHERE purchase_order_id=$1', [siparisId]);
   const hesapli = [];
   let sira = 1;
+  const hdrPb = baslikMeta.currency_code || null;
+  const hdrTip = baslikMeta.rate_type || null;
   for (const s of satirlar || []) {
     if (!s.item_id || s.quantity == null) continue;
-    const h = await insertOrderLine(client, siparisId, s, s.line_no || sira, baslikKur);
+    const h = await insertOrderLine(client, siparisId, {
+      ...s,
+      currency_code: hdrPb || s.currency_code || null,
+      rate_type: hdrTip || s.rate_type || null,
+      exchange_rate: baslikKur ?? s.exchange_rate ?? 1,
+      warehouse_id: null, // depo yalnız mal kabulde
+    }, s.line_no || sira, baslikKur);
     hesapli.push(h);
     sira += 1;
   }
@@ -196,7 +204,10 @@ router.post('/', async (req, res) => {
         ]
       );
       const siparisId = siparis.rows[0].id;
-      await replaceOrderLines(client, siparisId, satirlar, b.exchange_rate ?? 1);
+      await replaceOrderLines(client, siparisId, satirlar, b.exchange_rate ?? 1, {
+        currency_code: b.currency_code || 'TRY',
+        rate_type: b.rate_type || null,
+      });
       return siparisId;
     });
 
@@ -249,15 +260,18 @@ router.post('/talep-donustur', async (req, res) => {
         unit_price: Number(
           fiyatMap[sat.item_id] ?? fiyatMap[String(sat.item_id)] ?? sat.estimated_unit_price ?? 0
         ),
-        currency_code: sat.currency_code || t.currency_code,
-        exchange_rate: sat.exchange_rate ?? t.exchange_rate ?? 1,
-        rate_type: sat.rate_type || t.rate_type,
-        warehouse_id: sat.warehouse_id || t.warehouse_id,
+        currency_code: t.currency_code || 'TRY',
+        exchange_rate: t.exchange_rate ?? 1,
+        rate_type: t.rate_type || null,
+        warehouse_id: null,
         project_code: sat.project_code || t.project_code,
         region: sat.region || t.region,
         delivery_date: sat.delivery_date || t.target_delivery_date,
       }));
-      await replaceOrderLines(client, siparisId, mapped, t.exchange_rate ?? 1);
+      await replaceOrderLines(client, siparisId, mapped, t.exchange_rate ?? 1, {
+        currency_code: t.currency_code || 'TRY',
+        rate_type: t.rate_type || null,
+      });
       await client.query(`UPDATE purchase_requisitions SET status = 'SipariseDonustu' WHERE id = $1`, [requisition_id]);
       return siparisId;
     });
@@ -329,7 +343,10 @@ router.put('/:id', async (req, res) => {
         submitted: b.satirlar, orderBy: 'COALESCE(line_no, id), id', label: 'Siparişin',
       })) {
         const exchange_rate = b.exchange_rate ?? mevcut.rows[0].exchange_rate ?? 1;
-        await replaceOrderLines(client, Number(req.params.id), b.satirlar, exchange_rate);
+        await replaceOrderLines(client, Number(req.params.id), b.satirlar, exchange_rate, {
+          currency_code: b.currency_code || mevcut.rows[0].currency_code || 'TRY',
+          rate_type: b.rate_type || mevcut.rows[0].rate_type || null,
+        });
       }
       return Number(req.params.id);
     });
