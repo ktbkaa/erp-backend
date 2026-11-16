@@ -3368,7 +3368,7 @@ tr.selected td { background: var(--accent-soft); }
   }
 }
 
-/* --- UX: sabit form başlığı + kompakt detay satırları --- */
+/* --- UX: form başlığı sabit; liste ekranında sticky çakışmasın --- */
 .form-topbar {
   position: sticky;
   top: 0;
@@ -3376,18 +3376,17 @@ tr.selected td { background: var(--accent-soft); }
   box-shadow: 0 1px 0 var(--line);
 }
 .workspace-bar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 9;
+  flex: 0 0 auto;
 }
+/* Liste view kendi içinde kayar; banner+aksiyon ikisi de top:0 sticky olursa üst üste biner */
 .screen-banner,
 .action-bar {
-  position: sticky;
+  position: relative;
   z-index: 4;
   background: #fff;
 }
-.screen-banner { top: 0; }
-.action-bar { top: 0; }
 
 /* --- Klasik ERP: detay tablosu + kod–ad lookup --- */
 .btn.sm {
@@ -6710,4 +6709,272 @@ body.sidebar-resizing iframe {
 }
 .filter-pane-home:empty {
   display: none;
+}
+
+/* ============================================================================
+   Responsive / kısa viewport — iç içe binmeyi önle
+   ============================================================================ */
+
+:root {
+  --workspace-bar-h: 4.25rem;
+  --screen-chrome-gap: 0.65rem;
+}
+
+/* Kısa yükseklik: sabit min-height’ler listeyi sıkıştırıp taşırıyordu */
+@media (max-height: 720px) {
+  .workspace-bar {
+    min-height: 0;
+    padding: 0.45rem 0.85rem;
+  }
+  .user-chip-avatar { width: 1.9rem; height: 1.9rem; }
+  .user-chip-name { font-size: 0.85rem; max-width: 8rem; }
+  .user-chip-title { display: none; }
+
+  .screen-view {
+    grid-template-rows: auto auto minmax(min-content, auto) minmax(8rem, 1fr);
+  }
+  #viewScreen.screen-view.filter-docked {
+    grid-template-rows: auto auto minmax(8rem, 1fr);
+  }
+  .screen-banner {
+    margin: 0.4rem 0.65rem 0;
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+  .action-bar {
+    margin: 0.4rem 0.65rem 0;
+    padding: 0.4rem 0.65rem !important;
+    gap: 0.3rem !important;
+  }
+  .action-bar .btn.action {
+    min-width: 0;
+    padding: 0.28rem 0.5rem !important;
+    font-size: 0.78rem !important;
+  }
+  .filter-pane {
+    margin: 0.4rem 0.65rem 0;
+    padding: 0.45rem 0.7rem 0.5rem;
+    max-height: min(38vh, 16rem);
+    overflow: auto;
+  }
+  .list-pane {
+    padding: 0.5rem 0.7rem 0.65rem;
+  }
+  .list-pane .table-scroll,
+  #listTableScroll.table-scroll {
+    min-height: 6rem;
+  }
+  .list-work {
+    min-height: 8rem;
+    padding: 0.4rem 0.65rem 0.65rem;
+  }
+  .form-topbar {
+    padding: 0.4rem 0.75rem;
+  }
+  .form-compact-master {
+    max-height: min(28vh, 10rem);
+    overflow: auto;
+  }
+  .doc-tabs {
+    height: 1.65rem;
+  }
+  .sidebar-brand { min-height: 3.2rem; padding-top: 0.45rem; padding-bottom: 0.45rem; }
+}
+
+@media (max-height: 560px) {
+  .screen-banner { display: none; }
+  .screen-view {
+    grid-template-rows: auto minmax(min-content, auto) minmax(5rem, 1fr);
+  }
+  #viewScreen.screen-view.filter-docked {
+    grid-template-rows: auto minmax(5rem, 1fr);
+  }
+  .filter-pane {
+    max-height: min(30vh, 10rem);
+  }
+  .workspace-bar .bar-center { display: none; }
+  .mrp-console-head--pick {
+    position: relative;
+  }
+}
+
+/* Dar + kısa birlikte */
+@media (max-width: 900px) and (max-height: 720px) {
+  .workspace-bar {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+  }
+  .bar-right {
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+  }
+}
+
+/* Genişlik: üst bar ve form chrome çakışmasın */
+@media (max-width: 1100px) {
+  .workspace-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+  .bar-center {
+    max-width: none;
+    flex: 1 1 12rem;
+  }
+  .bar-right {
+    max-width: none;
+    flex: 1 1 14rem;
+  }
+  .user-chip-name,
+  .user-chip-title { max-width: 8rem; }
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    min-height: 0;
+  }
+  .workspace-main {
+    /* mobil menü drawer; ana alan tam genişlik */
+    min-height: 0;
+  }
+  .action-bar {
+    position: relative;
+    top: auto;
+  }
+  .screen-banner {
+    position: relative;
+    top: auto;
+  }
+  .form-topbar {
+    position: sticky;
+    top: 0;
+  }
+  .form-actions {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .form-actions .btn {
+    min-width: 0;
+  }
+  .list-work {
+    grid-template-columns: 1fr;
+  }
+  .list-side-nav:not([hidden]) {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    max-height: none;
+    overflow: auto;
+  }
+  .erp-pairs-layout,
+  .form-tab-fields.erp-pairs-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .md-split--grid {
+    grid-template-rows: auto minmax(10rem, 1fr);
+  }
+  .form-compact-master .form-tab-fields--compact {
+    grid-template-columns: 1fr;
+  }
+  /* Overlay menü açıkken arkayı kilitle */
+  .sidebar.open ~ .workspace,
+  .app-shell:has(.sidebar.open) .workspace {
+    pointer-events: none;
+  }
+  .sidebar.open {
+    pointer-events: auto;
+    box-shadow: 8px 0 28px rgba(15, 30, 40, 0.18);
+  }
+}
+
+@media (max-width: 640px) {
+  :root { --sidebar-w: 100vw; }
+  .workspace-bar {
+    padding: 0.5rem 0.65rem;
+  }
+  .bar-left .btn,
+  #btnMenu {
+    padding: 0.35rem 0.55rem;
+  }
+  .user-chip-text { display: none; }
+  .screen-banner,
+  .action-bar,
+  .filter-pane,
+  .list-work {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+  .list-work { padding-left: 0.5rem; padding-right: 0.5rem; }
+  .action-bar .btn.action {
+    flex: 1 1 auto;
+    min-width: calc(33% - 0.4rem);
+  }
+  .form-topbar-left,
+  .form-topbar {
+    gap: 0.35rem;
+  }
+  .form-module-label { display: none; }
+  .lookup-panel,
+  .tab-ctx-menu,
+  .list-ctx-menu,
+  .form-ctx-menu {
+    max-width: calc(100vw - 1rem);
+  }
+  .mrp-console-head,
+  .mrp-console-head--meta,
+  .mrp-console-head--pick {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .mrp-console-actions {
+    margin-left: 0;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .mrp-field { min-width: 0; width: 100%; }
+}
+
+/* Form gövdesi her zaman kalan alanı kullansın; taşma kaydırılsın */
+.form-view {
+  overflow: hidden;
+}
+.form-view > .form-tabs-layout,
+.form-view > #formTabsLayout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.form-tab-body {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.form-tab-panel--scrollable {
+  max-height: 100%;
+}
+
+/* Popup / dialog taşması */
+.list-settings-dlg .list-settings-card,
+.app-msg-card,
+.lookup-browser-card {
+  max-height: min(90vh, 90dvh);
+  overflow: auto;
+}
+
+/* Çok dar yükseklik + genişlik: tek sütun güvenli mod */
+@media (max-width: 480px), (max-height: 480px) {
+  .app-shell {
+    height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+  .sidebar {
+    height: 100%;
+    height: 100dvh;
+  }
+  .toast {
+    left: 0.75rem;
+    right: 0.75rem;
+    max-width: none;
+  }
 }
