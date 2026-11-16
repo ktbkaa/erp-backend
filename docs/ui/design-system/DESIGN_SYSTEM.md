@@ -13,7 +13,7 @@ Kurumsal ERP için **sade, okunabilir, uzun süreli kullanıma uygun** bir görs
 |--------|--------|-------|
 | Renk teması | `html[data-theme]` | `public/styles.css` |
 | Parlaklık | `html[data-appearance]` | `public/styles.css` |
-| Görünüm | `html[data-view]` | classic → `styles.css`; modern → `styles-modern.css` |
+| Görünüm | `html[data-view]` | classic → `styles.css`; modern → `styles-modern.css`; steel → `styles-steel.css`; cards → `styles-cards.css` |
 
 ## Tokenler
 

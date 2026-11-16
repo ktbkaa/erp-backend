@@ -594,6 +594,9 @@ html[data-view="modern"] .theme-card.active {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
 }
+@media (min-width: 720px) {
+  .view-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .view-mode-card {
   border: 1px solid var(--line);
   border-radius: 0.55rem;
@@ -681,6 +684,47 @@ html[data-view="modern"] .theme-card.active {
 .view-mode-preview.is-modern .vp-main {
   border-color: #e3e8ef;
   box-shadow: none;
+}
+.view-mode-preview.is-steel {
+  background: #d8dde5;
+}
+.view-mode-preview.is-steel .vp-side {
+  background: linear-gradient(180deg, #f7f8fa, #d9dee6);
+  border-right-color: #b8c0cc;
+}
+.view-mode-preview.is-steel .vp-top,
+.view-mode-preview.is-steel .vp-main {
+  background: linear-gradient(180deg, #f7f8fa, #e6e9ee);
+  border-color: #b8c0cc;
+  border-radius: 2px;
+  box-shadow: none;
+}
+.view-mode-preview.is-cards {
+  background: #eef2f7;
+}
+.view-mode-preview.is-cards .vp-side {
+  background: #fff;
+  border-right: 0;
+  box-shadow: 2px 0 10px rgba(21, 32, 51, 0.08);
+  width: 30%;
+}
+.view-mode-preview.is-cards .vp-top {
+  left: 34%;
+  border: 0;
+  border-radius: 8px;
+  height: 16%;
+  top: 6%;
+  right: 6%;
+  box-shadow: 0 2px 8px rgba(21, 32, 51, 0.08);
+}
+.view-mode-preview.is-cards .vp-main {
+  left: 34%;
+  right: 6%;
+  top: 28%;
+  bottom: 8%;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(21, 32, 51, 0.1);
 }
 .view-mode-card-name {
   display: block;

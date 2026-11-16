@@ -36,8 +36,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261116responsive1" />
-  <link rel="stylesheet" href="/styles-modern.css?v=20261116mrp-tab" />
+  <link rel="stylesheet" href="/styles.css?v=20261116gorunum4" />
+  <link rel="stylesheet" href="/styles-modern.css?v=20261116gorunum4" />
+  <link rel="stylesheet" href="/styles-steel.css?v=20261116gorunum4" />
+  <link rel="stylesheet" href="/styles-cards.css?v=20261116gorunum4" />
   <script>
     (function () {
       try {
@@ -45,7 +47,8 @@
         var l = localStorage.getItem('ktb_ui_lang') || 'tr';
         var a = localStorage.getItem('ktb_ui_appearance') || 'light';
         var v = localStorage.getItem('ktb_ui_view') || 'modern';
-        if (v !== 'classic' && v !== 'modern') v = 'modern';
+        var ok = { modern: 1, classic: 1, steel: 1, cards: 1 };
+        if (!ok[v]) v = 'modern';
         document.documentElement.setAttribute('data-theme', t);
         document.documentElement.setAttribute('data-appearance', a === 'dark' ? 'dark' : 'light');
         document.documentElement.setAttribute('data-view', v);
@@ -580,7 +583,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261116mrp-hareket-rapor"></script>
+  <script src="/app.js?v=20261116gorunum4"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

@@ -8814,6 +8814,21 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
       : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'];
   }
 
+  // Liste dışa aktarma: araç çubuğu Excel/Word/PDF — meta/SQL/gözlem hariç varsayılan açık
+  if (raw.listExportActions == null) {
+    s.listExportActions = Boolean(
+      s.endpoint
+      && !s.metaExplorer
+      && !s.pageQueryExplorer
+      && !s.sqlConsole
+      && s.id !== 'sql-sorgu'
+      && s.id !== 'tablo-bilgileri'
+      && s.id !== 'sayfa-sorgulari'
+    );
+  } else {
+    s.listExportActions = Boolean(raw.listExportActions);
+  }
+
   if (!s.masterFields || !s.masterFields.length) {
     s.masterFields = (s.columns || []).map((c) => ({
       key: c.key,
@@ -9454,7 +9469,7 @@ const UI_THEME_DEFS = [
   { id: 'yellow', nameTr: 'Ayçiçeği', nameEn: 'Sunflower', swatchA: '#c9a227', swatchB: '#e6d089', hintTr: 'Sarı', hintEn: 'Yellow' },
 ];
 
-/** Görünüm 1 = modern (varsayılan), Görünüm 2 = classic (mevcut tasarım) */
+/** Görünüm katmanı — CSS skins; JS ekranı yeniden çizmez */
 const UI_VIEW_DEFS = [
   {
     id: 'modern',
@@ -9462,6 +9477,7 @@ const UI_VIEW_DEFS = [
     nameEn: 'View 1 — Modern',
     hintTr: 'Sade, düşük yoğunluklu SaaS ERP arayüzü (varsayılan)',
     hintEn: 'Clean, low-density SaaS ERP layout (default)',
+    previewClass: 'is-modern',
   },
   {
     id: 'classic',
@@ -9469,8 +9485,26 @@ const UI_VIEW_DEFS = [
     nameEn: 'View 2 — Classic',
     hintTr: 'Mevcut arayüz — değişiklik yok',
     hintEn: 'Current UI — unchanged',
+    previewClass: 'is-classic',
+  },
+  {
+    id: 'steel',
+    nameTr: 'Görünüm 3 — Metalik',
+    nameEn: 'View 3 — Metallic',
+    hintTr: 'Sade klasik, metalik tonlar, hafif ve rahat',
+    hintEn: 'Simple classic, metallic tones, light and calm',
+    previewClass: 'is-steel',
+  },
+  {
+    id: 'cards',
+    nameTr: 'Görünüm 4 — Kartlar',
+    nameEn: 'View 4 — Cards',
+    hintTr: 'Canlı kart/kutu düzeni, mobil ve pop-up odaklı',
+    hintEn: 'Lively card/box layout, mobile and popup-first',
+    previewClass: 'is-cards',
   },
 ];
+const UI_VIEW_IDS = new Set(UI_VIEW_DEFS.map((v) => v.id));
 
 const MODULE_TITLE_EN = {
   'fixed-tanimlar': 'Master Data (Fixed)',
@@ -9682,12 +9716,22 @@ function applyUiAppearance(mode, { persist = true } = {}) {
 }
 
 function applyUiView(viewId, { persist = true } = {}) {
-  const id = viewId === 'classic' ? 'classic' : 'modern';
+  const id = UI_VIEW_IDS.has(viewId) ? viewId : 'modern';
   state.uiView = id;
   document.documentElement.setAttribute('data-view', id);
   if (persist) {
     try { localStorage.setItem('ktb_ui_view', id); } catch (_) { /* ignore */ }
   }
+  // Görünüm değişince açık menü/overlay kalmasın; buton durumu yenilensin
+  try {
+    hideTabContextMenu?.();
+    const listMenu = $('#listCtxMenu');
+    if (listMenu) listMenu.hidden = true;
+    const formMenu = $('#formCtxMenu');
+    if (formMenu) formMenu.hidden = true;
+  } catch (_) { /* ignore */ }
+  const scr = findScreen(state.screenId);
+  if (scr) updateActionButtons(scr);
   renderViewModeGrid();
   syncSettingsMenu();
 }
@@ -9846,10 +9890,10 @@ function renderViewModeGrid() {
   const grid = $('#viewModeGrid');
   if (!grid) return;
   const en = state.uiLang === 'en';
-  const current = state.uiView === 'classic' ? 'classic' : 'modern';
+  const current = UI_VIEW_IDS.has(state.uiView) ? state.uiView : 'modern';
   grid.innerHTML = UI_VIEW_DEFS.map((v) => `
     <button type="button" class="view-mode-card${current === v.id ? ' active' : ''}" data-view-pick="${v.id}">
-      <div class="view-mode-preview ${v.id === 'modern' ? 'is-modern' : 'is-classic'}" aria-hidden="true">
+      <div class="view-mode-preview ${v.previewClass || ''}" aria-hidden="true">
         <div class="vp-side"></div>
         <div class="vp-top"></div>
         <div class="vp-main"></div>
@@ -14694,7 +14738,16 @@ function screenPermission(screenId, action = null) {
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
-  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir' || action === 'tcmb-cek') {
+  if (
+    action === 'export-csv'
+    || action === 'export-excel'
+    || action === 'export-word'
+    || action === 'report-pdf'
+    || action === 'mrp-talep'
+    || action === 'mrp-uretim'
+    || action === 'mrp-calistir'
+    || action === 'tcmb-cek'
+  ) {
     return Boolean(row.incele || row.duzelt || row.yeni);
   }
   return Boolean(row[action]);
@@ -14740,11 +14793,13 @@ function updateActionButtons(screen) {
       btn.hidden = !screen.tcmbFetchAction;
       btn.disabled = !screenPermission(screen.id, 'tcmb-cek');
     } else if (act === 'report-pdf') {
-      btn.hidden = !(screen.reportPdfAction || screen.listExportActions);
-      btn.disabled = btn.hidden;
+      const showPdf = Boolean(screen.reportPdfAction || screen.listExportActions);
+      btn.hidden = !showPdf;
+      btn.disabled = !showPdf || !screenPermission(screen.id, 'report-pdf');
     } else if (act === 'export-excel' || act === 'export-word') {
-      btn.hidden = !screen.listExportActions;
-      btn.disabled = !screen.listExportActions;
+      const showEx = Boolean(screen.listExportActions);
+      btn.hidden = !showEx;
+      btn.disabled = !showEx || !screenPermission(screen.id, act);
     }
   });
   const mrpBtn = $('#btnMrpTalep');
@@ -14755,8 +14810,13 @@ function updateActionButtons(screen) {
   if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
   const tcmbBtn = $('#btnTcmbCek');
   if (tcmbBtn) tcmbBtn.hidden = !screen.tcmbFetchAction;
+  // PDF: listExport veya reportPdf — önceki override yalnızca reportPdf bırakıyordu
   const pdfBtn = $('#btnReportPdf');
-  if (pdfBtn) pdfBtn.hidden = !screen.reportPdfAction;
+  if (pdfBtn) {
+    const showPdf = Boolean(screen.reportPdfAction || screen.listExportActions);
+    pdfBtn.hidden = !showPdf;
+    pdfBtn.disabled = !showPdf || !screenPermission(screen.id, 'report-pdf');
+  }
 }
 
 async function openScreen(id, opts = {}) {
@@ -25422,8 +25482,16 @@ function bindEvents() {
       else if (act === 'export-word') exportListAsWord();
       else if (act === 'report-pdf') {
         const scr = findScreen(state.screenId);
-        if (scr?.listExportActions) exportListAsPdf();
-        else openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+        // Sunucu raporu (cari ekstre vb.) öncelikli; aksi halde istemci liste PDF
+        if (scr?.reportPdfAction && !scr.listExportActions) {
+          openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+        } else if (scr?.listExportActions) {
+          try { exportListAsPdf(); } catch (err) { toast(err.message || 'PDF açılamadı'); }
+        } else if (scr?.reportPdfAction) {
+          openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+        } else {
+          toast('Bu ekranda PDF yok.');
+        }
       }
       else if (act === 'mrp-talep') createMrpRequisitions().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
