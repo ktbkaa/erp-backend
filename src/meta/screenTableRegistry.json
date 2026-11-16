@@ -365,6 +365,36 @@
       }
     ]
   },
+  "stok-hareket-raporu": {
+    "screenId": "stok-hareket-raporu",
+    "title": "Stok Hareket Raporu",
+    "techId": "INV-MVT-RPT-001",
+    "endpoint": "/stok-hareket-raporu",
+    "auditTablo": "stok-hareket-raporu",
+    "primaryTable": "stock_movement_lines",
+    "tables": [
+      {
+        "name": "stock_movement_lines",
+        "role": "master"
+      },
+      {
+        "name": "stock_movements",
+        "role": "related"
+      },
+      {
+        "name": "items",
+        "role": "related"
+      },
+      {
+        "name": "warehouses",
+        "role": "related"
+      },
+      {
+        "name": "companies",
+        "role": "related"
+      }
+    ]
+  },
   "transfer-emirleri": {
     "screenId": "transfer-emirleri",
     "title": "Transfer Emirleri",

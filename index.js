@@ -61,6 +61,7 @@ app.use('/olcu-birimleri', require('./routes/units_of_measure'));
 app.use('/items', require('./routes/items'));
 app.use('/stok-hareketleri', require('./routes/stock_movements'));
 app.use('/stok-bakiyeleri', require('./routes/stok_bakiyeleri'));
+app.use('/stok-hareket-raporu', require('./routes/stok_hareket_raporu'));
 app.use('/partners', require('./routes/partners'));
 app.use('/invoices', require('./routes/invoices'));
 app.use('/users', require('./routes/users'));

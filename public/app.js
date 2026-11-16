@@ -1446,7 +1446,7 @@ const MODULES = [
     title: 'Stok',
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
-      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'transfer-emirleri', 'sayim-belgeleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
+      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'stok-hareket-raporu', 'transfer-emirleri', 'sayim-belgeleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
       { id: 'planlama', title: 'Planlama', screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
     ],
     screens: [
@@ -1657,6 +1657,75 @@ const MODULES = [
           { key: 'yolda', label: 'Yolda', mono: true },
           { key: 'kullanilabilir', label: 'Kullanılabilir', mono: true },
           { key: 'safety_stock', label: 'Emniyet' },
+        ],
+      },
+      {
+        id: 'stok-hareket-raporu',
+        techId: 'INV-MVT-RPT-001',
+        businessNameEn: 'StockMovementReportScreen',
+        title: 'Stok Hareket Raporu',
+        endpoint: '/stok-hareket-raporu',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        banner: 'Seçilen stok için tüm hareketleri işlem sırasıyla listeler. Depo ve firma isteğe bağlıdır. Sağ tık → hareket kaynağı.',
+        contextMenu: [
+          { id: 'kaynak-belge', label: 'Hareket kaynağına git' },
+          { id: 'stok-hareket-ac', label: 'Stok hareketini aç' },
+        ],
+        filters: [
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            required: true,
+            queryParam: true,
+          },
+          {
+            key: 'warehouse_id',
+            label: 'Depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            queryParam: true,
+          },
+          {
+            key: 'company_id',
+            label: 'Firma',
+            type: 'lookup',
+            lookup: 'companies',
+            valueKey: 'id',
+            labelKey: 'company_name',
+            codeKey: 'company_code',
+            queryParam: true,
+          },
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+        ],
+        columns: [
+          { key: 'sira', label: '#', mono: true },
+          { key: 'movement_date', label: 'Tarih' },
+          { key: 'movement_no', label: 'Hareket', mono: true },
+          { key: 'movement_code', label: 'Kod', mono: true },
+          { key: 'movement_type', label: 'Tip' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'quantity_in', label: 'Giriş', mono: true },
+          { key: 'quantity_out', label: 'Çıkış', mono: true },
+          { key: 'quantity_signed', label: 'Net', mono: true, signed: true },
+          { key: 'bakiye', label: 'Bakiye', mono: true },
+          { key: 'lot_no', label: 'Parti', mono: true },
+          { key: 'stock_status', label: 'Statü' },
+          { key: 'kaynak_etiket', label: 'Kaynak' },
+          { key: 'document_type', label: 'Belge tipi' },
+          { key: 'ref_no', label: 'Referans', mono: true },
+          { key: 'user_code', label: 'Kullanıcı' },
         ],
       },
       {
@@ -11651,6 +11720,53 @@ async function importExcelIntoList(ctx) {
 }
 
 
+/** Stok hareket satırı → kaynak belge ekranı */
+const STOK_HAREKET_KAYNAK_EKRAN = {
+  IRSALIYE: 'irsaliye-yonetimi',
+  MAL_KABUL: 'mal-kabuller',
+  URETIM_GIRIS: 'uretim-girisleri',
+  URETIM_EMRI: 'uretim-emirleri',
+  URETIM_EMRI_OP: 'uretim-emirleri',
+  SAYIM: 'sayim-belgeleri',
+  SAYIM_BELGE: 'sayim-belgeleri',
+  TRANSFER: 'stok-hareketleri', // manuel transfer: document_id eş hareket
+  TRANSFER_EMRI: 'transfer-emirleri',
+  STOK_HAREKET: 'stok-hareketleri',
+  STOK_GIRIS: 'stok-hareketleri',
+  STOK_CIKIS: 'stok-hareketleri',
+  ALIS_IADE: 'mal-kabuller',
+  KK_EMIR: 'kk-emirleri-gkk',
+};
+
+function resolveStokHareketKaynak(row) {
+  if (!row) return null;
+  const tip = String(row.document_type || '').trim().toUpperCase();
+  const docId = row.document_id != null && row.document_id !== '' ? Number(row.document_id) : null;
+  if (tip && docId && Number.isFinite(docId) && docId > 0) {
+    const screenId = STOK_HAREKET_KAYNAK_EKRAN[tip];
+    if (screenId === 'stok-hareketleri') {
+      return { screenId: 'stok-hareketleri', id: docId, label: `Stok hareketi #${docId}` };
+    }
+    if (screenId) {
+      return { screenId, id: docId, label: `${tip} #${docId}` };
+    }
+  }
+  const mid = row.movement_id != null ? Number(row.movement_id) : Number(row.id);
+  if (mid && Number.isFinite(mid) && mid > 0) {
+    return { screenId: 'stok-hareketleri', id: mid, label: `Stok hareketi ${row.movement_no || `#${mid}`}` };
+  }
+  return null;
+}
+
+async function openStokHareketKaynak(row) {
+  const hedef = resolveStokHareketKaynak(row);
+  if (!hedef) {
+    toast('Bu satır için kaynak belge bulunamadı.');
+    return;
+  }
+  await openRecordById(hedef.screenId, hedef.id, 'incele');
+}
+
 async function showStokHareketOnizle(row) {
   if (!row?.id) {
     toast('Önce bir stok hareketi seçin.');
@@ -11755,8 +11871,13 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
     parts.push('<button type="button" role="menuitem" data-list-ctx="export-word">Word</button>');
   } else {
     (screen.contextMenu || []).forEach((item) => {
+      let label = item.label;
+      if (item.id === 'kaynak-belge' && screen.id === 'stok-hareket-raporu') {
+        const hedef = resolveStokHareketKaynak(row);
+        label = hedef ? `Hareket kaynağı · ${hedef.label}` : 'Hareket kaynağına git';
+      }
       parts.push(`<button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
-        data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(item.label)}</button>`);
+        data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(label)}</button>`);
     });
     // Belge bağlantısı (form sağ tık ile aynı zincir) — aday→cari vb.
     if (row.id) {
@@ -11815,6 +11936,20 @@ async function showListContextMenu(screen, clientX, clientY, opts = {}) {
       const scr = findScreen(state.screenId);
       if (act === 'onizle') {
         showStokHareketOnizle(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'kaynak-belge') {
+        openStokHareketKaynak(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'stok-hareket-ac') {
+        const sel = selectedRow();
+        const mid = sel?.movement_id || sel?.id;
+        if (!mid) {
+          toast('Hareket kaydı seçili değil');
+          return;
+        }
+        openRecordById('stok-hareketleri', mid, 'incele').catch((err) => toast(err.message));
         return;
       }
       if (act === 'export-pdf') {
@@ -25102,6 +25237,15 @@ function bindEvents() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     readFilterState(screen);
+    const missingReq = (screen.filters || []).find((f) => {
+      if (!f.required) return false;
+      const st = state.filterState?.[f.key];
+      return !st || st.a == null || String(st.a).trim() === '';
+    });
+    if (missingReq) {
+      toast(`${missingReq.label || missingReq.key} seçimi zorunlu.`);
+      return;
+    }
     // queryParam filtreleri sunucuya gider — listeyi yeniden yükle
     if ((screen.filters || []).some((f) => f.queryParam)) {
       try {
