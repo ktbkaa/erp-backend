@@ -4129,9 +4129,6 @@ const MODULES = [
           { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
@@ -4183,8 +4180,6 @@ const MODULES = [
           { key: 'quantity', label: 'Miktar', type: 'number' },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
@@ -4215,7 +4210,6 @@ const MODULES = [
           { key: 'requisition_date', label: 'Talep tarihi', type: 'date' },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'supplier_partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
           { key: 'target_delivery_date', label: 'Hedef teslim', type: 'date' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
@@ -4233,14 +4227,10 @@ const MODULES = [
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
           { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short' },
           { key: 'estimated_unit_price', label: 'Tahmini fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
           { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'discount_rate', label: 'İsk %', type: 'number', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'supplier_item_code', label: 'Ted. stok kodu' },
@@ -4291,7 +4281,6 @@ const MODULES = [
           { key: 'order_date', label: 'Sipariş tarihi', type: 'date', lead: true, group: 'kimlik' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
           { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
           { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar', group: 'kimlik' },
           { key: 'quotation_id', label: 'Satınalma teklifi', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'sa-teklif-satirlar', group: 'kimlik' },
           { key: 'supplier_order_no', label: 'Tedarikçi sipariş no', group: 'kimlik' },
@@ -4316,20 +4305,16 @@ const MODULES = [
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short', group: 'olcu' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', required: true, size: 'short', lead: true, group: 'finans' },
           { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short', group: 'kimlik' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short', group: 'finans' },
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short', group: 'finans' },
           { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short', group: 'finans' },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short', group: 'finans' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short', group: 'finans' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short', group: 'finans' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short', group: 'finans' },
           { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short', group: 'finans' },
           { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short', group: 'finans' },
           { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short', group: 'finans' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short', group: 'planlama' },
           { key: 'ship_date', label: 'Sevk', type: 'date', size: 'short', group: 'planlama' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short', group: 'organizasyon' },
           { key: 'region', label: 'Bölge', size: 'short', group: 'organizasyon' },
           { key: 'supplier_item_code', label: 'Ted. stok kodu', group: 'kimlik' },
@@ -4380,7 +4365,7 @@ const MODULES = [
           { key: 'receipt_no', label: 'Kabul no', code: true },
           { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', required: true, fillFrom: 'siparis-satirlar' },
           { key: 'vendor_delivery_note_id', label: 'Tedarikçi irsaliyesi', type: 'lookup', lookup: 'tedarikci-irsaliyeleri', valueKey: 'id', labelKey: 'delivery_note_no', fillFrom: 'tedarikci-irsaliye-satirlar' },
-          { key: 'warehouse_id', label: 'Depo (bilgi)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'warehouse_id', label: 'Giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
           { key: 'receipt_date', label: 'Kabul tarihi', type: 'date' },
           { key: 'vendor_delivery_note_no', label: 'Tedarikçi irsaliye no' },
           { key: 'delivery_date', label: 'İrsaliye tarihi', type: 'date' },
@@ -5729,9 +5714,6 @@ const MODULES = [
           { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
@@ -5811,6 +5793,9 @@ const MODULES = [
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
           { key: 'payment_term_code', label: 'Ödeme koşulu', lead: true },
           { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', lead: true },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', lead: true },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], lead: true },
+          { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
           // Alt şerit (Belge notu alanı)
           { key: 'public_note', label: 'Müşteri notu' },
           { key: 'internal_note', label: 'Dahili not' },
@@ -5825,9 +5810,6 @@ const MODULES = [
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'line_description', label: 'Açıklama' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
           { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
@@ -6043,9 +6025,6 @@ const MODULES = [
           { key: 'line_description_3', label: 'Açıklama 3' },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
           { key: 'local_unit_price', label: 'Yerel br.fiyat', type: 'number', size: 'short', readOnly: true },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
@@ -6302,9 +6281,6 @@ const MODULES = [
           { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short', required: true },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
           { key: 'local_unit_price', label: 'Yerel br.fiyat', type: 'number', size: 'short', readOnly: true },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
           { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
@@ -8590,8 +8566,8 @@ const COMPACT_DROP_KEYS = new Set([
   'order_source', 'teklif_kaynak', 'source', 'belge_kaynak',
 ]);
 const COMPACT_ADDR_RE = /^(sevk_|fatura_adres)/i;
-const COMPACT_TO_LINE_RE = /^(currency_code|exchange_rate|rate_type|discount_rate|discount_rate_2|discount_rate_3|vat_rate|vat_mode|excise_rate|withholding_rate|price_list_id|valid_date|project_code|region)$/i;
-const COMPACT_HEADER_LEAD_RE = /^(company_id|plant_id|partner_id|supplier_partner_id|status|movement_code_id|payment_term_code|payment_method|delivery_term_code|order_type|.*_tarihi$|.*_no$)$/i;
+const COMPACT_TO_LINE_RE = /^(discount_rate|discount_rate_2|discount_rate_3|vat_rate|vat_mode|excise_rate|withholding_rate|price_list_id|valid_date|project_code|region)$/i;
+const COMPACT_HEADER_LEAD_RE = /^(company_id|plant_id|partner_id|supplier_partner_id|status|movement_code_id|payment_term_code|payment_method|delivery_term_code|order_type|currency_code|exchange_rate|rate_type|.*_tarihi$|.*_no$)$/i;
 
 /**
  * Satış siparişi düzeni: kompakt başlık + Kalemler (+ Adres) + not alt şerit.
@@ -13045,6 +13021,11 @@ async function fillLinesFromSource(kind, sourceId) {
         state.formRecord.delivery_date = talep.target_delivery_date;
       }
       state.formRecord.requisition_id = Number(sourceId);
+      if (talep.currency_code && !state.formRecord.currency_code) state.formRecord.currency_code = talep.currency_code;
+      if (talep.exchange_rate != null && (state.formRecord.exchange_rate == null || state.formRecord.exchange_rate === '')) {
+        state.formRecord.exchange_rate = talep.exchange_rate;
+      }
+      if (talep.rate_type && !state.formRecord.rate_type) state.formRecord.rate_type = talep.rate_type;
       state.formRecord[detailKey] = (talep.satirlar || []).map((s) => ({
         requisition_line_id: s.id,
         line_type: s.line_type || 'S',
@@ -13054,16 +13035,15 @@ async function fillLinesFromSource(kind, sourceId) {
         quantity: s.quantity,
         uom_code: s.uom_code,
         unit_price: s.estimated_unit_price ?? s.unit_price ?? 0,
-        currency_code: s.currency_code || talep.currency_code || null,
-        exchange_rate: s.exchange_rate ?? talep.exchange_rate ?? 1,
-        rate_type: s.rate_type || talep.rate_type || null,
+        currency_code: talep.currency_code || null,
+        exchange_rate: talep.exchange_rate ?? 1,
+        rate_type: talep.rate_type || null,
         vat_rate: s.vat_rate ?? 20,
         vat_mode: s.vat_mode || 'Haric',
         discount_rate: s.discount_rate ?? 0,
         discount_rate_2: s.discount_rate_2 ?? 0,
         discount_rate_3: s.discount_rate_3 ?? 0,
         delivery_date: s.delivery_date || talep.target_delivery_date || null,
-        warehouse_id: s.warehouse_id || talep.warehouse_id || null,
         project_code: s.project_code || talep.project_code || null,
         region: s.region || talep.region || null,
         supplier_item_code: s.supplier_item_code || null,
@@ -13152,9 +13132,9 @@ async function fillLinesFromSource(kind, sourceId) {
         quantity: s.quantity,
         uom_code: s.uom_code,
         unit_price: s.unit_price ?? 0,
-        currency_code: s.currency_code || teklif.currency_code || null,
-        exchange_rate: s.exchange_rate ?? teklif.exchange_rate ?? 1,
-        rate_type: s.rate_type || teklif.rate_type || null,
+        currency_code: teklif.currency_code || null,
+        exchange_rate: teklif.exchange_rate ?? 1,
+        rate_type: teklif.rate_type || null,
         vat_rate: s.vat_rate ?? 20,
         vat_mode: s.vat_mode || 'Haric',
         discount_rate: s.discount_rate ?? 0,
@@ -13194,9 +13174,9 @@ async function fillLinesFromSource(kind, sourceId) {
         quantity: s.quantity,
         uom_code: s.uom_code,
         unit_price: s.unit_price ?? 0,
-        currency_code: s.currency_code || teklif.currency_code || null,
-        exchange_rate: s.exchange_rate ?? teklif.exchange_rate ?? 1,
-        rate_type: s.rate_type || teklif.rate_type || null,
+        currency_code: teklif.currency_code || null,
+        exchange_rate: teklif.exchange_rate ?? 1,
+        rate_type: teklif.rate_type || null,
         vat_rate: s.vat_rate ?? 20,
         vat_mode: s.vat_mode || 'Haric',
         discount_rate: s.discount_rate ?? 0,
@@ -23145,9 +23125,9 @@ function applyRoutingCompSelection(screen, { addAnother = false } = {}) {
   return true;
 }
 
-/** Başlıktan düşürülen PB/exchange_rate/depo gibi alanları ilk kalemden geri doldur (API bekler). */
+/** Başlıktan düşürülen alanları ilk kalemden geri doldur (API bekler). PB artık master’da kalır. */
 function backfillHeaderFromLines(out, screen) {
-  const lineKeys = ['currency_code', 'exchange_rate', 'rate_type', 'warehouse_id', 'project_code', 'region', 'delivery_date', 'ship_date', 'discount_rate', 'price_list_id', 'valid_date'];
+  const lineKeys = ['warehouse_id', 'project_code', 'region', 'delivery_date', 'ship_date', 'discount_rate', 'price_list_id', 'valid_date'];
   let lines = null;
   (screen.formTabs || []).forEach((tab) => {
     if (lines) return;
@@ -23164,6 +23144,37 @@ function backfillHeaderFromLines(out, screen) {
       if (first[k] != null && first[k] !== '') out[k] = first[k];
       else if (screen.defaults && screen.defaults[k] != null) out[k] = screen.defaults[k];
     }
+  });
+}
+
+/** Tek belge = tek para birimi: satır PB/kur alanlarını master’dan zorla. */
+function applyHeaderCurrencyToLines(out, screen) {
+  const hdrPb = out.currency_code != null && out.currency_code !== ''
+    ? out.currency_code
+    : (screen?.defaults?.currency_code || null);
+  const hdrKur = out.exchange_rate != null && out.exchange_rate !== ''
+    ? out.exchange_rate
+    : (screen?.defaults?.exchange_rate ?? null);
+  const hdrTip = out.rate_type != null && out.rate_type !== ''
+    ? out.rate_type
+    : (screen?.defaults?.rate_type || null);
+  const keys = [];
+  if (screen?.detailKey) keys.push(screen.detailKey);
+  keys.push('satirlar', 'kalemler', '_detail');
+  (screen?.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'grid' && tab.key) keys.push(tab.key);
+    if (tab.kind === 'master-grid') keys.push(tab.grid?.key || tab.key);
+  });
+  [...new Set(keys.filter(Boolean))].forEach((k) => {
+    if (!Array.isArray(out[k])) return;
+    out[k] = out[k].map((row) => {
+      if (!row || typeof row !== 'object') return row;
+      const next = { ...row };
+      if (hdrPb != null) next.currency_code = hdrPb;
+      if (hdrKur != null) next.exchange_rate = hdrKur;
+      if (hdrTip != null) next.rate_type = hdrTip;
+      return next;
+    });
   });
 }
 
@@ -23197,6 +23208,7 @@ function readTabbedPayload(screen) {
     }
   });
   backfillHeaderFromLines(out, screen);
+  applyHeaderCurrencyToLines(out, screen);
   return out;
 }
 
