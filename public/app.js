@@ -1447,7 +1447,7 @@ const MODULES = [
     sections: [
       { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
       { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'stok-hareket-raporu', 'transfer-emirleri', 'sayim-belgeleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
-      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
+      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
     ],
     screens: [
       {
@@ -1998,6 +1998,45 @@ const MODULES = [
         ],
         detailKey: null,
         detailAsFields: true,
+      },
+      {
+        id: 'mrp-parametre',
+        techId: 'MFG-MRP-PAR-001',
+        businessNameEn: 'MrpParameterScreen',
+        title: 'MRP Parametreleri',
+        endpoint: '/mrp/calismalar',
+        crud: true,
+        readOnly: false,
+        listActions: ['yeni', 'incele', 'duzelt'],
+        mrpKonsol: true,
+        mrpParametreScreen: true,
+        mrpCalistirAction: true,
+        openFormOnEnter: 'yeni',
+        codeField: 'run_no',
+        filters: [
+          { key: 'run_no', label: 'Çalışma no' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'run_no', label: 'No', mono: true },
+          { key: 'status', label: 'Durum' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'status', label: 'Durum', readonly: true },
+        ],
+        formTabs: [
+          { id: 'param', label: 'MRP 2 Parametreleri', kind: 'mrp-parametre' },
+          { id: 'kapsam', label: 'Depo/İşemirleri/Siparişler/MPS/Satış Tahminleri', kind: 'mrp-kapsam' },
+          { id: 'sonuc', label: 'MRP Sonuçları', kind: 'mrp-sonuc' },
+        ],
+        banner: 'MRP çalışma parametreleri. Kapsamı ayarlayıp «MRP Çalıştır» ile sonuç üretin.',
       },
       {
         id: 'mrp-calisma',
@@ -14812,6 +14851,11 @@ async function openScreen(id, opts = {}) {
     if (screen.visualGantt) renderVisualGantt(screen, state.rows, state.ganttMeta || data);
     else clearVisualGantt();
     renderTabBar();
+    if (screen.openFormOnEnter && !opts.skipOpenForm) {
+      const mode = screen.openFormOnEnter === true ? 'yeni' : String(screen.openFormOnEnter);
+      state.formActiveTab = screen.formTabs?.[0]?.id || 'param';
+      await openForm(mode, { inPlace: true });
+    }
   } catch (err) {
     console.error(err);
     toast(err.message || 'Ekran açılamadı');
@@ -18061,14 +18105,18 @@ async function openMrpRaporWindow() {
 }
 
 async function runAndSaveMrp() {
-  const konsol = findScreen('mrp-calisma');
-  const formOpen = state.screenId === 'mrp-calisma'
+  const screenId = (state.screenId === 'mrp-parametre' || state.screenId === 'mrp-calisma')
+    ? state.screenId
+    : 'mrp-parametre';
+  const konsol = findScreen(screenId) || findScreen('mrp-parametre') || findScreen('mrp-calisma');
+  const formOpen = (state.screenId === 'mrp-parametre' || state.screenId === 'mrp-calisma')
     && state.formMode
     && $('#viewForm') && !$('#viewForm').hidden;
 
-  // Liste / başka ekrandan: önce konsol formunu aç
+  // Liste / başka ekrandan: önce parametre formunu aç
   if (!formOpen) {
-    state.screenId = 'mrp-calisma';
+    state.screenId = screenId;
+    state.formActiveTab = 'param';
     await openForm('yeni', { inPlace: true });
     toast('Parametreleri ayarlayıp «MRP Çalıştır»a basın.');
     return;
@@ -18099,12 +18147,12 @@ async function runAndSaveMrp() {
   state.formActiveTab = 'sonuc';
   toast(`MRP tamam: ${result.calisma?.run_no || ''} · net>0: ${result.calisma?.net_positive_only ?? '?'}`);
   renderForm(konsol);
-  const tab = state.openTabs?.find((t) => t.screenId === 'mrp-calisma' && t.kind === 'form');
+  const tab = state.openTabs?.find((t) => t.screenId === screenId && t.kind === 'form');
   if (tab) {
     tab.formMode = 'incele';
     tab.formRecord = state.formRecord;
     tab.formActiveTab = 'sonuc';
-    tab.title = `MRP Konsol · ${result.calisma?.run_no || ''}`;
+    tab.title = `${konsol?.title || 'MRP'} · ${result.calisma?.run_no || ''}`;
     renderTabBar();
   }
 }
@@ -23553,7 +23601,13 @@ async function openForm(mode, opts = {}) {
   state.nestedLink = null;
 
   state.formMode = mode;
-  state.formActiveTab = screen.formTabs?.[0]?.id || null;
+  {
+    const preferred = opts.formActiveTab || state.formActiveTab;
+    const tabs = screen.formTabs || [];
+    state.formActiveTab = (preferred && tabs.some((t) => t.id === preferred))
+      ? preferred
+      : (tabs[0]?.id || null);
+  }
   state.gridSel = { key: null, idx: null };
   state.treeSel = null;
   state.treeExpanded = {};
@@ -25074,11 +25128,12 @@ function bindEvents() {
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
       else if (act === 'tcmb-cek') fetchTcmbRates().catch((err) => toast(err.message));
-      else if (act === 'incele' && state.screenId === 'mrp-calisma') {
+      else if (act === 'incele' && (state.screenId === 'mrp-calisma' || state.screenId === 'mrp-parametre')) {
         const sel = selectedRow();
         if (sel?.id) {
           state.mrpCalismaId = sel.id;
-          openScreen('mrp-sonuclar');
+          const tab = state.screenId === 'mrp-parametre' ? 'param' : 'sonuc';
+          openForm('incele', { formActiveTab: tab }).catch((err) => toast(err.message));
         } else toast('Önce bir MRP çalışması seçin.');
       } else openForm(act).catch((err) => toast(err.message));
       return;
@@ -25096,9 +25151,10 @@ function bindEvents() {
         if (screen) updateActionButtons(screen);
       }
       if (e.detail >= 2) {
-        if (screen?.id === 'mrp-calisma') {
+        if (screen?.id === 'mrp-calisma' || screen?.id === 'mrp-parametre') {
           state.mrpCalismaId = Number(row.dataset.id) || row.dataset.id;
-          openScreen('mrp-sonuclar');
+          const tab = screen.id === 'mrp-parametre' ? 'param' : 'sonuc';
+          openForm(screen.readOnly ? 'incele' : 'duzelt', { formActiveTab: tab }).catch((err) => toast(err.message));
         } else {
           openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
         }
@@ -25421,44 +25477,6 @@ function bindEvents() {
     if (!w) throw new Error('Açılır pencere engellendi — tarayıcı izin verin.');
     w.document.write(body);
     w.document.close();
-  }
-
-  async function createMrpRequisitions() {
-    const screen = findScreen(state.screenId);
-    const sel = selectedRow();
-    const body = {};
-    if (sel?.item_id) body.stok_idler = [sel.item_id];
-    if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
-    if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
-    const result = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
-    toast(`SA talep oluştu: ${result.requisition_no || result.id}`);
-    openScreen('satin-alma-talepleri');
-  }
-
-  async function createMrpProductionOrders() {
-    const screen = findScreen(state.screenId);
-    const sel = selectedRow();
-    const body = {};
-    if (sel?.item_id) body.stok_idler = [sel.item_id];
-    if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
-    if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
-    const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
-    toast(`${result.olusan || 0} üretim emri oluştu`);
-    openScreen('uretim-emirleri');
-  }
-
-  async function runAndSaveMrp() {
-    const body = {
-      description: 'UI MRP çalışması',
-      company_id: getActiveCompanyId() || null,
-      plant_id: state.activeIsYeriId || null,
-    };
-    const result = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
-    state.mrpCalismaId = result.calisma?.id || null;
-    toast(`MRP tamam: ${result.calisma?.run_no || ''} · net>0: ${result.calisma?.net_positive_only ?? '?'}`);
-    openScreen('mrp-sonuclar');
   }
 
   const btnSecondary = $('#btnFormSecondary');

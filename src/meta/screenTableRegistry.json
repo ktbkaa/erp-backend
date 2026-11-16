@@ -463,6 +463,24 @@
       }
     ]
   },
+  "mrp-parametre": {
+    "screenId": "mrp-parametre",
+    "title": "MRP Parametreleri",
+    "techId": "MFG-MRP-PAR-001",
+    "endpoint": "/mrp/calismalar",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_runs",
+    "tables": [
+      {
+        "name": "mrp_runs",
+        "role": "master"
+      },
+      {
+        "name": "mrp_results",
+        "role": "related"
+      }
+    ]
+  },
   "mrp-calisma": {
     "screenId": "mrp-calisma",
     "title": "MRP Çalıştır",
