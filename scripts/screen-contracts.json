@@ -55,24 +55,37 @@
       "requiredFlags": { "crud": true },
       "requiredFieldKeys": ["create_incoming_qc_order", "create_outgoing_qc_order", "movement_code", "document_type"]
     },
+    "mrp-parametre": {
+      "title": "MRP Parametreleri",
+      "requiredTabs": ["param", "kapsam"],
+      "requiredKinds": ["mrp-parametre", "mrp-kapsam"],
+      "requiredFlags": { "mrpKonsol": true, "mrpParametreScreen": true, "crud": true },
+      "requiredFieldKeys": ["parameter_code"],
+      "requiredText": [
+        "renderMrpParametrePane",
+        "renderMrpKapsamPane",
+        "/mrp/parametreler"
+      ]
+    },
     "mrp-calisma": {
       "title": "MRP Konsol",
-      "requiredTabs": ["param", "kapsam", "sonuc"],
-      "requiredKinds": ["mrp-parametre", "mrp-kapsam", "mrp-sonuc"],
-      "requiredFlags": { "mrpKonsol": true, "crud": true, "mrpCalistirAction": true },
+      "requiredTabs": ["workspace"],
+      "requiredKinds": ["mrp-workspace"],
+      "requiredFlags": { "mrpKonsol": true, "mrpKonsolWorkspace": true, "mrpCalistirAction": true },
       "requiredFieldKeys": [],
       "requiredText": [
         "mrpToggle",
         "mrpSelect",
         "mrpDate",
         "mrpScopeTable",
+        "renderMrpWorkspacePane",
         "renderMrpParametrePane",
         "renderMrpKapsamPane",
         "renderMrpSonucPane",
-        "MRP 2 Parametreleri",
+        "applyMrpParametreSetToWorkspace",
+        "mrpWorkspaceParamSelect",
         "btnMrpSonucRapor",
-        "target_average",
-        "sistem geneli"
+        "target_average"
       ]
     },
     "cari-kartlari": {
