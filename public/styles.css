@@ -2122,8 +2122,9 @@ tr.selected td { background: var(--accent-soft); }
   display: flex;
   flex-direction: column;
 }
-/* Kullanıcı kartı: gövde ile birlikte kayar */
-.form-tab-panel--md.form-tab-panel--scrollable {
+/* Kullanıcı kartı / MRP konsol: gövde ile birlikte kayar.
+   display:block !important, [hidden] kuralını ezmesin — pasif sekmeler kapalı kalsın. */
+.form-tab-panel--md.form-tab-panel--scrollable:not([hidden]) {
   overflow: visible !important;
   padding: 0.85rem 1.1rem 1.5rem;
   display: block !important;
@@ -2131,6 +2132,9 @@ tr.selected td { background: var(--accent-soft); }
   max-height: none;
   flex: 0 0 auto;
   min-height: 0;
+}
+.form-tab-panel--md.form-tab-panel--scrollable[hidden] {
+  display: none !important;
 }
 .form-tab-body:has(.form-tab-panel--scrollable) {
   overflow: auto;
