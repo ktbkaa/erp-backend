@@ -4037,9 +4037,10 @@ select.lookup-pick::-ms-expand { display: none; }
   gap: 0.35rem;
   font-size: 0.85rem;
 }
-#listCtxMenu {
+#listCtxMenu,
+#formCtxMenu {
   position: fixed;
-  z-index: 60;
+  z-index: 1300; /* sticky chrome / toast altında kalmasın */
   min-width: 11rem;
 }
 

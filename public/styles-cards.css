@@ -1,0 +1,398 @@
+/**
+ * KTB ERP — Görünüm 4 (Kartlar)
+ * Yalnızca html[data-view="cards"] altında.
+ * Canlı, kutu/kart yoğun, mobil öncelikli, pop-up ve büyük dokunma alanları.
+ */
+
+html[data-view="cards"] {
+  --primary: var(--accent);
+  --primary-hover: var(--accent-hover);
+  --primary-soft: var(--accent-soft);
+  --background: #eef2f7;
+  --surface: #ffffff;
+  --surface-secondary: #e8eef6;
+  --border: #d5deea;
+  --text-primary: #152033;
+  --text-secondary: #5a6b82;
+  --radius: 0.95rem;
+  --radius-sm: 0.65rem;
+  --shadow-card: 0 4px 18px rgba(21, 32, 51, 0.08), 0 1px 3px rgba(21, 32, 51, 0.04);
+  --shadow-soft: 0 8px 28px rgba(21, 32, 51, 0.12);
+  --page: var(--background);
+  --panel: var(--surface);
+  --line: var(--border);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --sidebar: #ffffff;
+  --erp-card-radius: 0.95rem;
+  --erp-card-border: transparent;
+  --erp-form-bg: #eef2f7;
+  --erp-field-gap-x: 1rem;
+  --erp-field-gap-y: 0.7rem;
+  --lookup-bg: #fff8e8;
+  --lookup-border: #f0c96a;
+  --required-mark: #e04545;
+  --logo-filter: saturate(1.05);
+}
+
+html[data-view="cards"][data-appearance="dark"] {
+  --background: #12151c;
+  --surface: #1c2130;
+  --surface-secondary: #262c3d;
+  --border: #323a4e;
+  --text-primary: #f0f3f8;
+  --text-secondary: #9aa6bc;
+  --page: var(--background);
+  --panel: var(--surface);
+  --line: var(--border);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --sidebar: #161a24;
+  --erp-form-bg: #12151c;
+  --lookup-bg: #2a2618;
+  --lookup-border: #6b5a2a;
+  --shadow-card: 0 6px 22px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 12px 36px rgba(0, 0, 0, 0.45);
+  --logo-filter: brightness(1.12) saturate(1.05);
+}
+
+html[data-view="cards"][data-theme="green"],
+html[data-view="cards"][data-theme="red"],
+html[data-view="cards"][data-theme="orange"],
+html[data-view="cards"][data-theme="purple"],
+html[data-view="cards"][data-theme="yellow"],
+html[data-view="cards"][data-theme="blue"] {
+  --page: var(--background);
+  --panel: var(--surface);
+  --erp-form-bg: var(--background);
+}
+
+html[data-view="cards"] body {
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+html[data-view="cards"] .app-shell { background: var(--background); }
+html[data-view="cards"] .sidebar {
+  background: var(--sidebar);
+  border-right: 0;
+  box-shadow: var(--shadow-card);
+  z-index: 20;
+}
+html[data-view="cards"] .sidebar-brand {
+  padding: 1rem 1.1rem;
+  min-height: 4rem;
+  border-bottom: 0;
+  background: var(--surface) !important;
+}
+html[data-view="cards"] .sidebar-nav {
+  padding: 0.55rem 0.65rem 1rem;
+  gap: 0.35rem;
+}
+html[data-view="cards"] .mod-group {
+  background: var(--surface-secondary);
+  border-radius: var(--radius);
+  padding: 0.45rem;
+  margin-bottom: 0.55rem;
+  box-shadow: none;
+}
+html[data-view="cards"] .mod-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.45rem;
+}
+html[data-view="cards"] .mod-item {
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.65rem;
+  font-weight: 600;
+  min-height: 2.35rem;
+}
+html[data-view="cards"] .mod-item.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--accent-glow, rgba(63, 135, 245, 0.35));
+}
+html[data-view="cards"] .mod-item:hover:not(.active) {
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+html[data-view="cards"] .workspace-bar {
+  margin: 0.65rem 0.85rem 0;
+  padding: 0.65rem 1rem;
+  min-height: 3.6rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+html[data-view="cards"] .workspace-main {
+  background: transparent;
+  padding: 0 0.35rem;
+}
+
+html[data-view="cards"] .screen-view {
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem 1rem;
+  overflow-y: auto;
+}
+html[data-view="cards"] .screen-banner {
+  margin: 0;
+  padding: 0.85rem 1.1rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--primary-soft), var(--surface));
+  box-shadow: var(--shadow-card);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+html[data-view="cards"] .action-bar {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  position: sticky;
+  top: 0.35rem;
+  z-index: 6;
+}
+html[data-view="cards"] .action-bar .btn,
+html[data-view="cards"] .btn {
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 650;
+  min-height: 2.35rem;
+  padding: 0.45rem 1rem;
+  box-shadow: none;
+}
+html[data-view="cards"] .action-bar [data-action="yeni"],
+html[data-view="cards"] .btn.primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 16px var(--accent-glow, rgba(63, 135, 245, 0.28));
+}
+html[data-view="cards"] .btn.ghost,
+html[data-view="cards"] .btn.action.ghost {
+  background: var(--surface-secondary);
+  border: 0;
+  color: var(--ink);
+}
+html[data-view="cards"] .btn.ghost:hover:not(:disabled),
+html[data-view="cards"] .btn.action.ghost:hover:not(:disabled) {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+html[data-view="cards"] .filter-pane,
+html[data-view="cards"] .list-pane,
+html[data-view="cards"] .list-work {
+  margin: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+html[data-view="cards"] .filter-pane {
+  padding: 0.85rem 1rem;
+}
+html[data-view="cards"] .filter-pane-head h2,
+html[data-view="cards"] .list-pane-head h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+html[data-view="cards"] .list-pane {
+  padding: 0.85rem 1rem 1rem;
+}
+html[data-view="cards"] .list-pane .table-scroll,
+html[data-view="cards"] #listTableScroll.table-scroll {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-secondary);
+}
+html[data-view="cards"] #dataTable {
+  border-collapse: separate;
+  border-spacing: 0 0.35rem;
+  font-size: 0.86rem;
+}
+html[data-view="cards"] #dataTable thead th {
+  background: transparent;
+  border: 0 !important;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.75rem !important;
+}
+html[data-view="cards"] #dataTable tbody tr td {
+  background: var(--surface);
+  border: 0 !important;
+  border-top: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 0.65rem 0.75rem !important;
+}
+html[data-view="cards"] #dataTable tbody tr td:first-child {
+  border-left: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+html[data-view="cards"] #dataTable tbody tr td:last-child {
+  border-right: 1px solid var(--border) !important;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+html[data-view="cards"] #dataTable tbody tr:hover td {
+  background: var(--primary-soft);
+}
+html[data-view="cards"] #dataTable tbody tr.selected td {
+  background: var(--primary-soft);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+html[data-view="cards"] .form-view,
+html[data-view="cards"] .form-view.erp-form--master,
+html[data-view="cards"] .form-view.erp-form--document {
+  background: var(--erp-form-bg);
+}
+html[data-view="cards"] .form-topbar {
+  margin: 0.65rem 0.85rem 0;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  position: sticky;
+  top: 0.35rem;
+  z-index: 8;
+}
+html[data-view="cards"] .form-tabs-layout {
+  margin: 0.65rem 0.85rem 0.85rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+html[data-view="cards"] .form-tab-nav {
+  background: var(--surface-secondary);
+  border-right: 0;
+  padding: 0.55rem;
+  gap: 0.35rem;
+}
+html[data-view="cards"] .form-tab-nav button,
+html[data-view="cards"] .form-tab-nav .form-tab-btn {
+  border-radius: var(--radius-sm);
+  min-height: 2.4rem;
+  font-weight: 650;
+}
+html[data-view="cards"] .form-tab-body {
+  padding: 0.85rem;
+}
+html[data-view="cards"] .erp-master-panel,
+html[data-view="cards"] .md-detail,
+html[data-view="cards"] .md-footer,
+html[data-view="cards"] .form-compact-master,
+html[data-view="cards"] .field-group {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-secondary);
+  box-shadow: none;
+  padding: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+html[data-view="cards"] .field-group + .field-group {
+  border-top: 0;
+  padding-top: 0.75rem;
+}
+html[data-view="cards"] .field input,
+html[data-view="cards"] .field select,
+html[data-view="cards"] .field textarea {
+  border-radius: var(--radius-sm);
+  min-height: 2.35rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
+/* Pop-up / dialog yoğunluğu */
+html[data-view="cards"] .tab-ctx-menu,
+html[data-view="cards"] .list-settings-card,
+html[data-view="cards"] .app-msg-card,
+html[data-view="cards"] .theme-modal-card,
+html[data-view="cards"] .lookup-browser-card,
+html[data-view="cards"] .user-chip-menu {
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 0.55rem;
+}
+html[data-view="cards"] .tab-ctx-menu button {
+  border-radius: var(--radius-sm);
+  min-height: 2.35rem;
+  font-weight: 600;
+  padding: 0.55rem 0.75rem;
+}
+html[data-view="cards"] .list-settings-dlg .list-settings-card {
+  width: min(36rem, calc(100vw - 1.25rem));
+}
+html[data-view="cards"] .doc-tabs {
+  gap: 0.35rem;
+  height: auto;
+  min-height: 2.35rem;
+  padding: 0.35rem 0.55rem;
+  background: transparent;
+  border: 0;
+}
+html[data-view="cards"] .doc-tabs .tab-item {
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  height: 2.1rem;
+  font-size: 0.78rem;
+}
+html[data-view="cards"] .doc-tabs .tab-item.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--accent-glow, rgba(63, 135, 245, 0.3));
+}
+
+/* Mobil: tek sütun kart yığını, daha az kaydırma ihtiyacı */
+@media (max-width: 960px) {
+  html[data-view="cards"] .workspace-bar {
+    margin: 0.45rem 0.55rem 0;
+  }
+  html[data-view="cards"] .screen-view {
+    padding: 0.55rem;
+    gap: 0.55rem;
+  }
+  html[data-view="cards"] .form-tabs-layout {
+    margin: 0.45rem 0.55rem 0.75rem;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
+  html[data-view="cards"] .form-tab-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-bottom: 0;
+  }
+  html[data-view="cards"] .action-bar .btn.action {
+    flex: 1 1 auto;
+    min-width: calc(45% - 0.4rem);
+  }
+  html[data-view="cards"] .form-topbar {
+    margin: 0.45rem 0.55rem 0;
+  }
+}
+
+@media (max-width: 640px) {
+  html[data-view="cards"] .sidebar {
+    width: min(92vw, 22rem);
+  }
+  html[data-view="cards"] .user-chip-text { display: none; }
+  html[data-view="cards"] #dataTable {
+    border-spacing: 0 0.45rem;
+  }
+}
