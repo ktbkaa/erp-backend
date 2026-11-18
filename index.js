@@ -145,6 +145,7 @@ app.use('/e-belge', require('./routes/e_belge'));
 app.use('/fiyat-listeleri', require('./routes/price_lists'));
 app.use('/kokpit', require('./routes/kokpit'));
 app.use('/audit-log', require('./routes/audit_logs'));
+app.use('/sistem-guncelleme', require('./routes/sistem_guncelleme'));
 app.use('/meta', require('./routes/meta_ekran'));
 app.use('/sql-console', require('./routes/sql_console'));
 app.use('/stok-rezervasyonlari', require('./routes/item_reservations'));
