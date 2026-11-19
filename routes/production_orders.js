@@ -154,8 +154,10 @@ async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, b
             `
             INSERT INTO production_order_operations
                 (order_id, line_no, operation_code, operation_name, work_center_id,
-                 output_item_id, next_line_no, planned_quantity, status)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+                 output_item_id, next_line_no, planned_quantity, status,
+                 is_subcontract, subcontractor_partner_id, subcontract_status,
+                 estimated_unit_price, currency_code)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
             RETURNING id
             `,
             [
@@ -168,6 +170,11 @@ async function fillOrderOperations(client, emirId, { rotaOps, planlananMiktar, b
                 op.next_line_no,
                 plan,
                 ilk ? 'Hazir' : 'Bekliyor',
+                Boolean(op.is_subcontract),
+                op.default_subcontractor_partner_id || op.subcontractor_partner_id || null,
+                op.is_subcontract ? 'Planlandi' : 'Yok',
+                op.subcontract_unit_price != null ? Number(op.subcontract_unit_price) : null,
+                op.subcontract_currency_code || null,
             ],
         );
         ilk = false;

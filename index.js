@@ -128,6 +128,7 @@ app.use('/transfer-emirleri', require('./routes/transfer_orders'));
 app.use('/sayim-belgeleri', require('./routes/inventory_counts'));
 app.use('/uretim-girisleri', require('./routes/production_receipts'));
 app.use('/uretim-parametreleri', require('./routes/production_parameters'));
+app.use('/fason', require('./routes/fason'));
 app.use('/muhasebe-hesaplari', require('./routes/gl_accounts'));
 app.use('/muhasebe-belgeleri', require('./routes/journal_entries'));
 app.use('/mizan', require('./routes/mizan'));
