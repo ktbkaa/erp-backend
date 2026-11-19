@@ -65,6 +65,11 @@ router.get('/:id', async (req, res) => {
     try {
         const e = await getQcOrder(pool, req.params.id);
         if (!e) return res.status(404).json({ hata: 'KK emri bulunamadı.' });
+        const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(require('../db'), 'qc_orders', e.id, firmaId))) {
+            return res.status(404).json({ hata: 'KK emri bulunamadı (firma kapsamı).' });
+        }
         res.json(e);
     } catch (err) {
         if (err.code === '23503') {

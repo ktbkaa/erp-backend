@@ -282,15 +282,19 @@ async function approveQcOrder(client, emirId, {
             statuCikisIzin: true,
             depoZorunluAtla: true,
         });
-        // Hedefte Kullanilabilir yapmak: Kalitede giriş oldu — statü düzelt
-        // depoTransfer aynı statüyü korur; hedefe Kullanilabilir için ikinci adım:
-        await client.query(
-            `
-            UPDATE stock_movement_lines SET stock_status='Kullanilabilir'
-            WHERE movement_id=$1 AND direction=1
-            `,
-            [tr.giris.hareket.id]
-        );
+        // BUG-009: hedefte Kalitede→Kullanilabilir audit izli (raw UPDATE yerine)
+        const { transferStockStatus } = require('./stokHareketService');
+        await transferStockStatus(client, {
+            depoId: hedef,
+            stokId: emir.item_id,
+            quantity: accepted,
+            partiId: emir.lot_id,
+            kaynakStatu: 'Kalitede',
+            hedefStatu: 'Kullanilabilir',
+            belgeTipi: 'KK_EMIR',
+            belgeId: emirId,
+            description: `KK onay → Kullanilabilir ${emir.order_no}`,
+        });
         transferId = tr.giris.hareket.id;
     }
 
@@ -433,6 +437,7 @@ async function createQcOrdersFromMovementCode(client, {
             let partiId = s.lot_id || null;
 
             if (Number(depoId) !== Number(kaliteDepo.id)) {
+                // BUG-009: lot_id aktarımda korunmalı (parti düşürülmesin)
                 const tr = await transferBetweenWarehouses(client, {
                     kaynakDepoId: depoId,
                     hedefDepoId: kaliteDepo.id,
@@ -440,6 +445,7 @@ async function createQcOrdersFromMovementCode(client, {
                     stokId: s.item_id,
                     quantity: Number(s.quantity),
                     uom_code: s.uom_code,
+                    partiId: s.lot_id || null,
                     stokStatu: 'Kullanilabilir',
                     belgeTipi: yon === 'GKK' ? 'GKK_AKTAR' : 'CKK_AKTAR',
                     belgeId: hareket.id,
@@ -448,12 +454,22 @@ async function createQcOrdersFromMovementCode(client, {
                 });
                 stokHareketId = tr.giris.hareket.id;
                 depoId = kaliteDepo.id;
-                partiId = tr.giris.satirlar?.[0]?.lot_id || partiId;
-                await client.query(
-                    `UPDATE stock_movement_lines SET stock_status='Kalitede'
-                     WHERE movement_id=$1 AND direction=1`,
-                    [stokHareketId]
-                );
+                partiId = tr.giris.satirlar?.[0]?.lot_id || s.lot_id || partiId;
+                // Kullanilabilir giriş → Kalitede (audit izli statü transferi)
+                const { transferStockStatus } = require('./stokHareketService');
+                await transferStockStatus(client, {
+                    depoId,
+                    isYeriId: isYeri,
+                    stokId: s.item_id,
+                    quantity: Number(s.quantity),
+                    uom_code: s.uom_code,
+                    partiId,
+                    kaynakStatu: 'Kullanilabilir',
+                    hedefStatu: 'Kalitede',
+                    belgeTipi: yon === 'GKK' ? 'GKK_AKTAR' : 'CKK_AKTAR',
+                    belgeId: hareket.id,
+                    description: `${yon} statü → Kalitede`,
+                });
             } else {
                 await client.query(
                     `UPDATE stock_movement_lines SET stock_status='Kalitede'

@@ -166,9 +166,25 @@ async function sendOrSimulate(client, queueId, { simulate = true } = {}) {
       `UPDATE e_document_queue
        SET status='Hata', last_error=$2, updated_at=CURRENT_TIMESTAMP
        WHERE id=$1 RETURNING *`,
-      [queueId, 'Harici e-belge sağlayıcısı tanımlı değil (provider_code boş).']
+      [queueId, 'Harici e-belge sağlayıcısı tanımlı değil (provider_code boş). Canlı Gonderildi yazılmaz.']
     );
-    return { row: upd.rows[0], simulated: false };
+    return { row: upd.rows[0], simulated: false, live_blocked: true };
+  }
+
+  // Canlı + provider: henüz gerçek GİB/entegratör yok → Beklemede (sahte Gonderildi yok)
+  if (!simulate && row.provider_code) {
+    const upd = await client.query(
+      `UPDATE e_document_queue
+       SET status='Kuyrukta', last_error=$2, updated_at=CURRENT_TIMESTAMP,
+           payload_json = COALESCE(payload_json,'{}'::jsonb) || $3::jsonb
+       WHERE id=$1 RETURNING *`,
+      [
+        queueId,
+        `Sağlayıcı ${row.provider_code} için canlı adapter henüz bağlı değil. Entegratör sözleşmesi sonrası tamamlanacak.`,
+        JSON.stringify({ simulated: false, sent_mode: 'live-pending', provider_code: row.provider_code }),
+      ]
+    );
+    return { row: upd.rows[0], simulated: false, live_pending: true };
   }
 
   const ettn = row.uuid_ettn || `SIM-${Date.now()}-${queueId}`;
@@ -180,7 +196,7 @@ async function sendOrSimulate(client, queueId, { simulate = true } = {}) {
          last_error=NULL,
          payload_json = COALESCE(payload_json,'{}'::jsonb) || $4::jsonb
      WHERE id=$1 RETURNING *`,
-    [queueId, ettn, gib, JSON.stringify({ simulated: true, sent_mode: simulate ? 'simulate' : 'live-pending' })]
+    [queueId, ettn, gib, JSON.stringify({ simulated: true, sent_mode: 'simulate' })]
   );
 
   if (row.document_type === 'Fatura') {
