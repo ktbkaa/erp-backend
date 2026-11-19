@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261116gorunum4" />
+  <link rel="stylesheet" href="/styles.css?v=20261118sistem-guncelleme" />
   <link rel="stylesheet" href="/styles-modern.css?v=20261116gorunum4" />
   <link rel="stylesheet" href="/styles-steel.css?v=20261116gorunum4" />
   <link rel="stylesheet" href="/styles-cards.css?v=20261116gorunum4" />
@@ -420,6 +420,54 @@
           </div>
         </section>
 
+        <section id="viewSysUpdate" class="view sys-update-view" hidden>
+          <div class="sup-head">
+            <div class="sup-head-text">
+              <strong id="supBanner">Sistem Güncelleme</strong>
+              <p class="sup-lead">Canlı sisteme yedirilecek yenilikleri seçin. İncele ile önizleme ve kod farkını görün; bilgi ile neden eklendiğini okuyun.</p>
+            </div>
+            <div class="sup-head-actions">
+              <label class="sup-select-all">
+                <input type="checkbox" id="supSelectAll" />
+                <span>Tümünü seç <em>(önerilir)</em></span>
+              </label>
+              <button type="button" class="btn action" id="supBtnApply" disabled>Seçilenleri uygula</button>
+              <button type="button" class="btn ghost" id="supBtnRefresh">Yenile</button>
+            </div>
+          </div>
+          <div class="sup-toolbar-note" id="supStatusNote">Bekleyen paketler yükleniyor…</div>
+          <div class="sup-list" id="supList" role="list"></div>
+        </section>
+
+        <div class="sup-dialog" id="supReviewDialog" hidden>
+          <div class="sup-dialog-backdrop" data-sup-close></div>
+          <div class="sup-dialog-card" role="dialog" aria-modal="true" aria-labelledby="supReviewTitle">
+            <div class="sup-dialog-head">
+              <strong id="supReviewTitle">Yenilik inceleme</strong>
+              <button type="button" class="btn tiny ghost" data-sup-close aria-label="Kapat">✕</button>
+            </div>
+            <div class="sup-dialog-tabs" role="tablist">
+              <button type="button" class="sup-dialog-tab active" role="tab" data-sup-tab="preview" aria-selected="true">Önizleme</button>
+              <button type="button" class="sup-dialog-tab" role="tab" data-sup-tab="code" aria-selected="false">Kodlar ve sorgular</button>
+            </div>
+            <div class="sup-dialog-body">
+              <div class="sup-pane" id="supPanePreview" data-sup-pane="preview" role="tabpanel"></div>
+              <div class="sup-pane" id="supPaneCode" data-sup-pane="code" role="tabpanel" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sup-dialog" id="supInfoDialog" hidden>
+          <div class="sup-dialog-backdrop" data-sup-info-close></div>
+          <div class="sup-dialog-card sup-dialog-card--info" role="dialog" aria-modal="true" aria-labelledby="supInfoTitle">
+            <div class="sup-dialog-head">
+              <strong id="supInfoTitle">Yenilik bilgisi</strong>
+              <button type="button" class="btn tiny ghost" data-sup-info-close aria-label="Kapat">✕</button>
+            </div>
+            <div class="sup-dialog-body" id="supInfoBody"></div>
+          </div>
+        </div>
+
         <section id="viewForm" class="view form-view" hidden>
           <div class="form-topbar">
             <div class="form-topbar-left">
@@ -583,7 +631,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261118rota-bom-num"></script>
+  <script src="/app.js?v=20261118sistem-guncelleme"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

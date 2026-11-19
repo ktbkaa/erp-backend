@@ -146,6 +146,19 @@
       "requiredKinds": [],
       "requiredFlags": { "crud": true, "kullaniciYetkiPaneli": true },
       "requiredFieldKeys": []
+    },
+    "sistem-guncelleme": {
+      "title": "Sistem Güncelleme",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "systemUpdateConsole": true, "hideActions": true },
+      "requiredFieldKeys": [],
+      "requiredText": [
+        "openSystemUpdateConsole",
+        "openSupReview",
+        "viewSysUpdate",
+        "/sistem-guncelleme"
+      ]
     }
   }
 }

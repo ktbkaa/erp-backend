@@ -1037,6 +1037,7 @@ const MODULES = [
       { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar', 'kullanici-gruplari'] },
       { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri', 'zorunlu-alan-tanimlari'] },
       { id: 'iletisim', title: 'İletişim', screenIds: ['eposta-gonderimleri'] },
+      { id: 'guncelleme', title: 'Güncelleme', screenIds: ['sistem-guncelleme'] },
       { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log', 'tablo-bilgileri', 'sql-sorgu', 'sayfa-sorgulari'] },
     ],
     screens: [
@@ -1317,6 +1318,26 @@ const MODULES = [
           { key: 'title', label: 'Ekran' },
           { key: 'endpoint', label: 'Endpoint', mono: true },
           { key: 'routeFile', label: 'Route', mono: true },
+        ],
+      },
+      {
+        id: 'sistem-guncelleme',
+        techId: 'SYS-UPD-SCR-001',
+        businessNameEn: 'SystemUpdateScreen',
+        title: 'Sistem Güncelleme',
+        endpoint: '/sistem-guncelleme',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        systemUpdateConsole: true,
+        banner: 'Canlıya alındıktan sonra geliştirmeleri seçip inceleyerek sisteme yedirmek için kullanılır. «Tümünü seç» önerilir.',
+        filters: [],
+        columns: [
+          { key: 'package_code', label: 'Kod', mono: true },
+          { key: 'title', label: 'Yenilik' },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'severity', label: 'Önem' },
+          { key: 'status', label: 'Durum' },
         ],
       },
 
@@ -8823,9 +8844,11 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
       && !s.metaExplorer
       && !s.pageQueryExplorer
       && !s.sqlConsole
+      && !s.systemUpdateConsole
       && s.id !== 'sql-sorgu'
       && s.id !== 'tablo-bilgileri'
       && s.id !== 'sayfa-sorgulari'
+      && s.id !== 'sistem-guncelleme'
     );
   } else {
     s.listExportActions = Boolean(raw.listExportActions);
@@ -11059,6 +11082,7 @@ function showView(name) {
   const meta = $('#viewMeta');
   const sql = $('#viewSql');
   const pq = $('#viewPageQuery');
+  const sup = $('#viewSysUpdate');
   if (!home || !screen || !form) {
     console.error('KTB ERP: view element missing', { home: !!home, screen: !!screen, form: !!form });
     return;
@@ -11075,6 +11099,7 @@ function showView(name) {
   if (meta) meta.hidden = name !== 'meta';
   if (sql) sql.hidden = name !== 'sql';
   if (pq) pq.hidden = name !== 'pageQuery';
+  if (sup) sup.hidden = name !== 'sysUpdate';
 
   home.style.display = name === 'home' ? 'grid' : 'none';
   screen.style.display = name === 'screen' ? 'grid' : 'none';
@@ -11082,6 +11107,7 @@ function showView(name) {
   if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
   if (sql) sql.style.display = name === 'sql' ? 'grid' : 'none';
   if (pq) pq.style.display = name === 'pageQuery' ? 'grid' : 'none';
+  if (sup) sup.style.display = name === 'sysUpdate' ? 'flex' : 'none';
   if (typeof syncMenuButtonLabel === 'function') syncMenuButtonLabel();
 }
 
@@ -14878,6 +14904,30 @@ async function openScreen(id, opts = {}) {
           : screen.title;
       }
       await openSqlConsole();
+      return;
+    }
+
+    if (screen.systemUpdateConsole) {
+      state.screenId = id;
+      state.formMode = null;
+      state.selectedId = null;
+      if (location.hash !== `#${id}`) {
+        history.pushState({ screenId: id }, '', `#${id}`);
+      }
+      if (!opts.skipTab) addListTab(screen);
+      else {
+        state.activeTabKey = `list:${screen.id}`;
+        renderTabBar();
+      }
+      ensureSidebarPath(screen);
+      showView('sysUpdate');
+      const banner = $('#supBanner');
+      if (banner) {
+        banner.textContent = screen.techId
+          ? `${screen.title} · ${screen.techId}`
+          : screen.title;
+      }
+      await openSystemUpdateConsole();
       return;
     }
 
@@ -25393,6 +25443,7 @@ function bindUiPrefsEvents() {
 
 function bindEvents() {
   bindUiPrefsEvents();
+  bindSystemUpdateEvents();
   // LDAP anahtar
   $('#loginPassToggle')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -27184,6 +27235,284 @@ function sqlBindSplitter() {
   window.addEventListener('touchmove', onMove, { passive: false });
   window.addEventListener('mouseup', onUp);
   window.addEventListener('touchend', onUp);
+}
+
+/* ========== Sistem Güncelleme konsolu ========== */
+const sysUpdateState = {
+  rows: [],
+  selected: new Set(),
+  current: null,
+};
+
+function highlightCodeDiff(text, changed = []) {
+  const esc = escapeHtml(String(text || ''));
+  if (!changed?.length) return esc;
+  let out = esc;
+  changed.forEach((token) => {
+    const t = String(token || '').trim();
+    if (!t) return;
+    const re = new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    out = out.replace(re, (m) => `<mark class="sup-hl">${m}</mark>`);
+  });
+  return out;
+}
+
+function severityLabel(s) {
+  const map = { dusuk: 'Düşük', orta: 'Orta', yuksek: 'Yüksek', kritik: 'Kritik' };
+  return map[s] || s || '—';
+}
+
+function statusLabel(s) {
+  const map = { pending: 'Bekliyor', applied: 'Uygulandı', skipped: 'Atlandı' };
+  return map[s] || s || '—';
+}
+
+function syncSupSelectAllUi() {
+  const box = $('#supSelectAll');
+  const btn = $('#supBtnApply');
+  const pending = sysUpdateState.rows.filter((r) => r.status === 'pending');
+  const selectedPending = pending.filter((r) => sysUpdateState.selected.has(r.id));
+  if (box) {
+    box.checked = pending.length > 0 && selectedPending.length === pending.length;
+    box.indeterminate = selectedPending.length > 0 && selectedPending.length < pending.length;
+  }
+  if (btn) btn.disabled = selectedPending.length === 0;
+  const note = $('#supStatusNote');
+  if (note) {
+    const applied = sysUpdateState.rows.filter((r) => r.status === 'applied').length;
+    note.textContent = `${sysUpdateState.rows.length} paket · ${pending.length} bekliyor · ${applied} uygulandı · ${selectedPending.length} seçili`;
+  }
+}
+
+function renderSystemUpdateList() {
+  const host = $('#supList');
+  if (!host) return;
+  if (!sysUpdateState.rows.length) {
+    host.innerHTML = '<div class="sup-empty">Henüz güncelleme paketi yok. Deploy ile paketler eklendiğinde burada listelenir.</div>';
+    syncSupSelectAllUi();
+    return;
+  }
+  host.innerHTML = sysUpdateState.rows.map((r) => {
+    const disabled = r.status !== 'pending';
+    const checked = sysUpdateState.selected.has(r.id) ? 'checked' : '';
+    const rec = r.recommended ? '<span class="sup-pill sup-pill--rec">Önerilir</span>' : '';
+    const sev = `<span class="sup-pill sup-pill--${escAttr(r.severity || 'orta')}">${escapeHtml(severityLabel(r.severity))}</span>`;
+    const st = `<span class="sup-status sup-status--${escAttr(r.status)}">${escapeHtml(statusLabel(r.status))}</span>`;
+    return `
+      <article class="sup-row${disabled ? ' is-applied' : ''}" role="listitem" data-sup-id="${r.id}">
+        <div class="sup-row-left">
+          <button type="button" class="btn sm action ghost" data-sup-review="${r.id}" title="İncele">İncele</button>
+          <label class="sup-check">
+            <input type="checkbox" data-sup-check="${r.id}" ${checked} ${disabled ? 'disabled' : ''} />
+          </label>
+        </div>
+        <div class="sup-row-main">
+          <div class="sup-row-top">
+            <code class="sup-code">${escapeHtml(r.package_code)}</code>
+            ${sev}${rec}${st}
+            <button type="button" class="sup-info-btn" data-sup-info="${r.id}" title="Bilgi" aria-label="Bilgi">ℹ</button>
+          </div>
+          <strong class="sup-title">${escapeHtml(r.title)}</strong>
+          <p class="sup-summary">${escapeHtml(r.summary || '')}</p>
+          <div class="sup-meta">Modül: ${escapeHtml(r.module_code || '—')}</div>
+        </div>
+      </article>`;
+  }).join('');
+  syncSupSelectAllUi();
+}
+
+async function openSystemUpdateConsole() {
+  const note = $('#supStatusNote');
+  if (note) note.textContent = 'Paketler yükleniyor…';
+  try {
+    const rows = await api('/sistem-guncelleme');
+    sysUpdateState.rows = Array.isArray(rows) ? rows : [];
+    sysUpdateState.selected = new Set(
+      sysUpdateState.rows.filter((r) => r.status === 'pending' && r.recommended).map((r) => r.id),
+    );
+    renderSystemUpdateList();
+  } catch (err) {
+    sysUpdateState.rows = [];
+    renderSystemUpdateList();
+    if (note) note.textContent = err.message || 'Paketler yüklenemedi';
+    toast(err.message || 'Sistem güncelleme listesi alınamadı');
+  }
+}
+
+function openSupReview(id) {
+  const row = sysUpdateState.rows.find((r) => String(r.id) === String(id));
+  if (!row) return;
+  sysUpdateState.current = row;
+  const dlg = $('#supReviewDialog');
+  const title = $('#supReviewTitle');
+  if (title) title.textContent = `${row.package_code} — ${row.title}`;
+  const prev = $('#supPanePreview');
+  const code = $('#supPaneCode');
+  if (prev) {
+    prev.innerHTML = `
+      <div class="sup-preview-grid">
+        <figure class="sup-preview-card">
+          <figcaption>Güncellemeden önce</figcaption>
+          <div class="sup-preview-frame">${row.preview_before || '<div class="sup-empty">Önizleme yok</div>'}</div>
+        </figure>
+        <figure class="sup-preview-card">
+          <figcaption>Güncellemeden sonra</figcaption>
+          <div class="sup-preview-frame">${row.preview_after || '<div class="sup-empty">Önizleme yok</div>'}</div>
+        </figure>
+      </div>`;
+  }
+  if (code) {
+    const snippets = Array.isArray(row.code_snippets) ? row.code_snippets : [];
+    const sql = String(row.sql_script || '').trim();
+    const blocks = snippets.map((s) => `
+      <div class="sup-code-block">
+        <div class="sup-code-head">
+          <strong>${escapeHtml(s.label || s.file || 'Değişiklik')}</strong>
+          <code>${escapeHtml(s.file || '')}</code>
+        </div>
+        <div class="sup-code-cols">
+          <div>
+            <div class="sup-code-label">Orijinal</div>
+            <pre class="sup-pre">${highlightCodeDiff(s.before, s.changed)}</pre>
+          </div>
+          <div>
+            <div class="sup-code-label">Yenilik</div>
+            <pre class="sup-pre sup-pre--after">${highlightCodeDiff(s.after, s.changed)}</pre>
+          </div>
+        </div>
+      </div>`).join('');
+    const sqlBlock = sql ? `
+      <div class="sup-code-block">
+        <div class="sup-code-head"><strong>SQL / sorgu</strong></div>
+        <pre class="sup-pre sup-pre--after">${escapeHtml(sql)}</pre>
+      </div>` : '';
+    code.innerHTML = (blocks || '<div class="sup-empty">Kod farkı tanımlanmamış.</div>') + sqlBlock;
+  }
+  setSupReviewTab('preview');
+  if (dlg) dlg.hidden = false;
+}
+
+function setSupReviewTab(tab) {
+  const which = tab === 'code' ? 'code' : 'preview';
+  document.querySelectorAll('[data-sup-tab]').forEach((btn) => {
+    const on = btn.getAttribute('data-sup-tab') === which;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-sup-pane]').forEach((pane) => {
+    pane.hidden = pane.getAttribute('data-sup-pane') !== which;
+  });
+}
+
+function openSupInfo(id) {
+  const row = sysUpdateState.rows.find((r) => String(r.id) === String(id));
+  if (!row) return;
+  const dlg = $('#supInfoDialog');
+  const title = $('#supInfoTitle');
+  const body = $('#supInfoBody');
+  if (title) title.textContent = row.title;
+  const impacts = Array.isArray(row.impacts) ? row.impacts : [];
+  if (body) {
+    body.innerHTML = `
+      <p class="sup-info-reason"><strong>Neden eklendi?</strong><br/>${escapeHtml(row.reason || '—')}</p>
+      <p><strong>Özet</strong><br/>${escapeHtml(row.summary || '—')}</p>
+      <p><strong>Etkilediği alanlar</strong></p>
+      <ul class="sup-impact-list">${impacts.length
+    ? impacts.map((x) => `<li>${escapeHtml(x)}</li>`).join('')
+    : '<li>—</li>'}</ul>
+      <p class="sup-info-meta">Kod: <code>${escapeHtml(row.package_code)}</code> · Modül: ${escapeHtml(row.module_code || '—')} · Önem: ${escapeHtml(severityLabel(row.severity))}</p>`;
+  }
+  if (dlg) dlg.hidden = false;
+}
+
+function bindSystemUpdateEvents() {
+  const root = $('#viewSysUpdate');
+  if (!root || root.dataset.bound) return;
+  root.dataset.bound = '1';
+
+  $('#supBtnRefresh')?.addEventListener('click', () => {
+    openSystemUpdateConsole().catch((err) => toast(err.message));
+  });
+
+  $('#supSelectAll')?.addEventListener('change', (e) => {
+    const on = e.target.checked;
+    sysUpdateState.rows.forEach((r) => {
+      if (r.status !== 'pending') return;
+      if (on) sysUpdateState.selected.add(r.id);
+      else sysUpdateState.selected.delete(r.id);
+    });
+    renderSystemUpdateList();
+  });
+
+  $('#supBtnApply')?.addEventListener('click', async () => {
+    const ids = [...sysUpdateState.selected].filter((id) => {
+      const row = sysUpdateState.rows.find((r) => r.id === id);
+      return row && row.status === 'pending';
+    });
+    if (!ids.length) return;
+    if (!window.confirm(`${ids.length} güncelleme paketi uygulansın mı?\n\nSQL içeren paketler çalıştırılır; UI dosya dağıtımı deploy ile tamamlanır.`)) {
+      return;
+    }
+    try {
+      const res = await api('/sistem-guncelleme/uygula', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      });
+      toast(res.mesaj || 'Uygulandı');
+      await openSystemUpdateConsole();
+    } catch (err) {
+      toast(err.message || 'Uygulama başarısız');
+    }
+  });
+
+  $('#supList')?.addEventListener('click', (e) => {
+    const review = e.target.closest('[data-sup-review]');
+    if (review) {
+      e.preventDefault();
+      openSupReview(review.getAttribute('data-sup-review'));
+      return;
+    }
+    const info = e.target.closest('[data-sup-info]');
+    if (info) {
+      e.preventDefault();
+      openSupInfo(info.getAttribute('data-sup-info'));
+      return;
+    }
+  });
+
+  $('#supList')?.addEventListener('change', (e) => {
+    const box = e.target.closest('[data-sup-check]');
+    if (!box) return;
+    const id = Number(box.getAttribute('data-sup-check'));
+    if (!Number.isFinite(id)) return;
+    if (box.checked) sysUpdateState.selected.add(id);
+    else sysUpdateState.selected.delete(id);
+    syncSupSelectAllUi();
+  });
+
+  const reviewDlg = $('#supReviewDialog');
+  if (reviewDlg && !reviewDlg.dataset.bound) {
+    reviewDlg.dataset.bound = '1';
+    reviewDlg.addEventListener('click', (e) => {
+      if (e.target.closest('[data-sup-close]')) {
+        reviewDlg.hidden = true;
+        return;
+      }
+      const tab = e.target.closest('[data-sup-tab]');
+      if (tab) {
+        e.preventDefault();
+        setSupReviewTab(tab.getAttribute('data-sup-tab'));
+      }
+    });
+  }
+
+  const infoDlg = $('#supInfoDialog');
+  if (infoDlg && !infoDlg.dataset.bound) {
+    infoDlg.dataset.bound = '1';
+    infoDlg.addEventListener('click', (e) => {
+      if (e.target.closest('[data-sup-info-close]')) infoDlg.hidden = true;
+    });
+  }
 }
 
 async function openSqlConsole() {
