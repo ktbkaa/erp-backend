@@ -27,6 +27,97 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * CSV import — gövde: { csv: "tarih;tutar;yon;aciklama;ref\\n...", bank_account_id, ... }
+ * Ayırıcı ; veya ,. İlk satır başlık olabilir (tarih|valör|amount|tutar).
+ * MT940 desteklenmez (bilinçli).
+ */
+router.post('/import-csv', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const csv = String(b.csv || b.content || '');
+    if (!csv.trim()) return res.status(400).json({ hata: 'csv içeriği zorunlu.' });
+    const firmaId = companyIdFromReq(req) || b.company_id || null;
+    const sep = csv.includes(';') ? ';' : ',';
+    const rawLines = csv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (!rawLines.length) return res.status(400).json({ hata: 'CSV satırı yok.' });
+
+    let start = 0;
+    const header = rawLines[0].toLowerCase();
+    if (/tarih|valör|valor|date|tutar|amount/.test(header)) start = 1;
+
+    const satirlar = [];
+    for (let i = start; i < rawLines.length; i += 1) {
+      const cols = rawLines[i].split(sep).map((c) => c.trim().replace(/^"|"$/g, ''));
+      if (cols.length < 2) continue;
+      const valueDate = cols[0];
+      // TR: 1.234,56 veya 1234.56
+      let amount = Number(String(cols[1]).replace(',', '.'));
+      if (Number.isNaN(amount)) {
+        amount = Number(String(cols[1]).replace(/\./g, '').replace(',', '.'));
+      }
+      if (!Number.isFinite(amount) || amount === 0) continue;
+      let direction = 1;
+      if (cols[2]) {
+        const d = cols[2].toLowerCase();
+        if (d === '-1' || d === 'cikis' || d === 'çıkış' || d === 'out' || d === 'borc' || d === 'debt') direction = -1;
+        else if (amount < 0) { direction = -1; amount = Math.abs(amount); }
+      } else if (amount < 0) {
+        direction = -1;
+        amount = Math.abs(amount);
+      }
+      satirlar.push({
+        value_date: valueDate,
+        amount: Math.abs(amount),
+        direction,
+        description: cols[3] || null,
+        external_ref: cols[4] || null,
+        counterparty_name: cols[5] || null,
+      });
+    }
+    if (!satirlar.length) return res.status(400).json({ hata: 'İçe aktarılacak satır parse edilemedi.' });
+
+    const row = await withTransaction(pool, async (client) => {
+      const h = await client.query(
+        `INSERT INTO bank_statements
+          (company_id, bank_account_id, statement_date, reference_no, opening_balance,
+           closing_balance, currency_code, status, description)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8) RETURNING *`,
+        [
+          firmaId, b.bank_account_id || null,
+          b.statement_date || satirlar[0].value_date || new Date().toISOString().slice(0, 10),
+          b.reference_no || `CSV-${Date.now()}`,
+          Number(b.opening_balance) || 0,
+          b.closing_balance != null ? Number(b.closing_balance) : null,
+          b.currency_code || 'TRY',
+          b.description || 'CSV import',
+        ],
+      );
+      const headerRow = h.rows[0];
+      let n = 1;
+      for (const s of satirlar) {
+        await client.query(
+          `INSERT INTO bank_statement_lines
+            (statement_id, line_no, value_date, amount, direction, counterparty_name, description, external_ref)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            headerRow.id, n++, s.value_date, s.amount, s.direction,
+            s.counterparty_name, s.description, s.external_ref,
+          ],
+        );
+      }
+      const lines = await client.query(
+        `SELECT * FROM bank_statement_lines WHERE statement_id=$1 ORDER BY line_no`,
+        [headerRow.id],
+      );
+      return { ...headerRow, satirlar: lines.rows, imported: lines.rows.length };
+    });
+    res.status(201).json(row);
+  } catch (err) {
+    res.status(400).json({ hata: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const h = await pool.query(`SELECT * FROM bank_statements WHERE id=$1`, [req.params.id]);

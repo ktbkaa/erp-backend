@@ -66,6 +66,11 @@ router.get('/:id', async (req, res) => {
   try {
     const belge = await getDocument(req.params.id);
     if (!belge) return res.status(404).json({ hata: 'Belge bulunamadı.' });
+    const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(require('../db'), 'journal_entries', belge.id, firmaId))) {
+      return res.status(404).json({ hata: 'Belge bulunamadı (firma kapsamı).' });
+    }
     res.json(belge);
   } catch (err) {
     if (err.code === '23503') {

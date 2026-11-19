@@ -633,6 +633,11 @@ router.get('/:id', async (req, res) => {
     try {
         let emir = await getQcOrder(req.params.id);
         if (!emir) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(pool, 'production_orders', emir.id, firmaId))) {
+            return res.status(404).json({ hata: 'Üretim emri bulunamadı (firma kapsamı).' });
+        }
 
         // Malzeme/rota boşsa ve emir henüz üretime geçmediyse BOM+rotadan otomatik doldur
         const malEmpty = !(emir.malzemeler || []).length;
