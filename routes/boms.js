@@ -281,6 +281,11 @@ router.get('/:id', async (req, res) => {
   try {
     const agac = await getBomTree(req.params.id);
     if (!agac) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
+    const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(require('../db'), 'boms', agac.id, firmaId))) {
+      return res.status(404).json({ hata: 'Ürün ağacı bulunamadı (firma kapsamı).' });
+    }
     res.json(agac);
   } catch (err) {
     if (err.code === '23503') {

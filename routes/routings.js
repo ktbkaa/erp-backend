@@ -301,6 +301,11 @@ router.get('/:id', async (req, res) => {
   try {
     const rota = await getRouting(req.params.id);
     if (!rota) return res.status(404).json({ hata: 'Rota bulunamadı.' });
+    const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(require('../db'), 'routings', rota.id, firmaId))) {
+      return res.status(404).json({ hata: 'Rota bulunamadı (firma kapsamı).' });
+    }
     res.json(rota);
   } catch (err) {
     if (err.code === '23503') {

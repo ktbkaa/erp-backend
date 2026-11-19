@@ -68,6 +68,10 @@ function createApp() {
   app.use('/prj-riskler', require('../../routes/prj_risks'));
   app.use('/finans-yaslandirma', require('../../routes/finans_yaslandirma'));
   app.use('/banka-mutabakat', require('../../routes/banka_mutabakat'));
+  app.use('/sabit-kiymetler', require('../../routes/fixed_assets'));
+  app.use('/gl-butceler', require('../../routes/gl_budgets'));
+  app.use('/bakim-emirleri', require('../../routes/maintenance_orders'));
+  app.use('/is-merkezi-yuku', require('../../routes/work_center_load'));
   app.use('/invoices', require('../../routes/invoices'));
   app.use(auditMiddleware(pool));
 
