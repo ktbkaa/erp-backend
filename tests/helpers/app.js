@@ -1,8 +1,10 @@
 /**
  * Test helper — Express app'i dinlemeden require eder.
  * DB: mevcut .env / migrate edilmiş postgres.
+ * AUTH: testlerde soft kimlik (ERP_AUTH_SOFT=1); auth.test.js zorunluluğu ayrıca doğrular.
  */
 require('dotenv').config();
+if (process.env.ERP_AUTH_SOFT == null) process.env.ERP_AUTH_SOFT = '1';
 
 function createApp() {
   // index.js listen eder; test için router-only mini app
@@ -64,6 +66,9 @@ function createApp() {
   app.use('/prj-sablonlar', require('../../routes/prj_templates'));
   app.use('/prj-automations', require('../../routes/prj_automations'));
   app.use('/prj-riskler', require('../../routes/prj_risks'));
+  app.use('/finans-yaslandirma', require('../../routes/finans_yaslandirma'));
+  app.use('/banka-mutabakat', require('../../routes/banka_mutabakat'));
+  app.use('/invoices', require('../../routes/invoices'));
   app.use(auditMiddleware(pool));
 
   const { errorHandler, notFoundHandler } = require('../../src/middleware/errorHandler');

@@ -636,4 +636,69 @@ router.post('/is-emri/:id/siparis-olustur', async (req, res) => {
   }
 });
 
+/**
+ * Fason sipariş → taslak alış faturası (hizmet bedeli).
+ * Mükerrer: aynı sipariş için açık Alis fatura varsa 409.
+ */
+router.post('/siparisler/:id/fatura-olustur', async (req, res) => {
+  try {
+    const order = await fason.fetchOrder(pool, req.params.id);
+    if (!order) return res.status(404).json({ hata: 'Fason sipariş bulunamadı.' });
+    const mevcut = await pool.query(
+      `SELECT id, invoice_no FROM invoices
+       WHERE source_document_type='FASON_SIPARIS' AND source_document_id=$1
+         AND COALESCE(status,'') <> 'Iptal'
+       LIMIT 1`,
+      [order.id],
+    );
+    if (mevcut.rows[0]) {
+      return res.status(409).json({
+        hata: `Bu fason sipariş için fatura zaten var: ${mevcut.rows[0].invoice_no}`,
+        invoice_id: mevcut.rows[0].id,
+      });
+    }
+    const qty = Number(order.qty_accepted) || Number(order.qty_received) || Number(order.qty_ordered) || 0;
+    const price = Number(order.unit_price) || Number(order.estimated_unit_price) || 0;
+    const net = Math.round(qty * price * 100) / 100;
+    if (!(qty > 0) || !(price >= 0)) {
+      return res.status(400).json({ hata: 'Fatura için kabul/teslim miktarı ve birim fiyat gerekli.' });
+    }
+    const { nextDocumentNo } = require('../src/utils/belgeNo');
+    const fatura = await withTransaction(pool, async (client) => {
+      const no = await nextDocumentNo(client, 'ALIS_FATURA').catch(() => `AF${Date.now()}`);
+      const h = await client.query(
+        `INSERT INTO invoices
+          (invoice_no, partner_id, invoice_type, invoice_date, status, company_id,
+           currency_code, net_amount, payable_amount, total_amount, description,
+           source_document_type, source_document_id)
+         VALUES ($1,$2,'Alis',CURRENT_DATE,'Taslak',$3,$4,$5,$5,$5,$6,'FASON_SIPARIS',$7)
+         RETURNING *`,
+        [
+          no, order.partner_id, order.company_id || companyId(req),
+          order.currency_code || 'TRY', net,
+          `Fason hizmet ${order.order_no}`, order.id,
+        ],
+      );
+      const inv = h.rows[0];
+      await client.query(
+        `INSERT INTO invoice_lines
+          (invoice_id, line_no, item_id, quantity, unit_price, net_unit_price, total_amount, line_description)
+         VALUES ($1,1,$2,$3,$4,$4,$5,$6)`,
+        [
+          inv.id, order.item_id || null, qty, price, net,
+          `Fason ${order.operation_name || order.operation_code || 'hizmet'}`,
+        ],
+      );
+      await client.query(
+        `UPDATE subcontract_orders SET invoiced_amount=COALESCE(invoiced_amount,0)+$2, updated_at=NOW() WHERE id=$1`,
+        [order.id, net],
+      ).catch(() => {});
+      return inv;
+    });
+    res.status(201).json(fatura);
+  } catch (err) {
+    res.status(err.status || 500).json({ hata: err.message });
+  }
+});
+
 module.exports = router;

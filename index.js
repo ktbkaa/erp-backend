@@ -136,6 +136,8 @@ app.use('/finans-country', require('./routes/finans_ulke'));
 app.use('/muhasebe-donemleri', require('./routes/accounting_periods'));
 app.use('/finans-raporlar', require('./routes/finans_raporlar'));
 app.use('/finans-nakit', require('./routes/finans_nakit'));
+app.use('/finans-yaslandirma', require('./routes/finans_yaslandirma'));
+app.use('/banka-mutabakat', require('./routes/banka_mutabakat'));
 app.use('/finans-vergi-kodlari', require('./routes/fin_tax_codes'));
 app.use('/auth', require('./routes/auth'));
 app.use('/kk-uygunsuzluklar', require('./routes/qc_nonconformances'));

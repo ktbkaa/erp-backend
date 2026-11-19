@@ -107,6 +107,10 @@ async function createStockMovement(client, {
         }
 
         let partiId = s.lot_id || null;
+        const { itemLotPolicy } = require('./partiService');
+        const stokPolitika = await itemLotPolicy(client, s.item_id);
+        const lotPolitika = stokPolitika.lot_policy || 'Takipsiz';
+
         if (Number(s.direction) === 1) {
             const coz = await resolveLot(client, {
                 stokId: s.item_id,
@@ -123,6 +127,35 @@ async function createStockMovement(client, {
                 [partiId, s.item_id]
             );
             if (!p.rows[0]) throw new Error(`Çıkış partisi stok ile uyuşmuyor: ${partiId}`);
+        } else if (lotPolitika === 'Zorunlu') {
+            // BUG-008: parti zorunlu stokta lotsuz çıkış engeli
+            const err = new Error(
+                `Parti zorunlu stokta çıkış için lot_id gerekli. item_id=${s.item_id} (${stokPolitika.item_code})`
+            );
+            err.code = 'PARTI_ZORUNLU';
+            err.status = 400;
+            throw err;
+        } else if (lotPolitika !== 'Takipsiz') {
+            // Lot'lu bakiye varken lotsuz çıkış → negatif null-lot kovası (BUG-008)
+            const lotlu = await client.query(
+                `
+                SELECT COALESCE(SUM(s.quantity * s.direction), 0)::numeric AS bakiye
+                FROM stock_movement_lines s
+                JOIN stock_movements h ON h.id = s.movement_id
+                WHERE h.warehouse_id=$1 AND s.item_id=$2 AND s.lot_id IS NOT NULL
+                  AND COALESCE(s.stock_status,'Kullanilabilir')=$3
+                `,
+                [depoId, s.item_id, s.stock_status || 'Kullanilabilir']
+            );
+            if (Number(lotlu.rows[0].bakiye) > 1e-9) {
+                const err = new Error(
+                    `Lot'lu stok bakiyesi varken lotsuz çıkış engellendi (BUG-008). `
+                    + `item_id=${s.item_id}, depo=${depoId}, lotlu_bakiye=${lotlu.rows[0].bakiye}. lot_id seçin.`
+                );
+                err.code = 'PARTI_CIKIS_ENGEL';
+                err.status = 400;
+                throw err;
+            }
         }
 
         // Çıkış: yalnızca Kullanilabilir (veya açıkça verilen statü bakiyesi)
@@ -139,6 +172,8 @@ async function createStockMovement(client, {
                 const bakiye = await warehouseItemBalance(client, depoId, s.item_id, {
                     stokStatu: cikisStatu,
                     partiId,
+                    // parti yoksa yalnız lot_id IS NULL kovası (lot'lu stoku fungible sayma)
+                    matchNullLot: partiId == null,
                 });
                 if (bakiye + 1e-9 < Number(s.quantity)) {
                     const oneriler = await onerilenDepolar(client, s.item_id, Number(s.quantity), depoId);
@@ -179,6 +214,16 @@ async function createStockMovement(client, {
                 });
             } catch (_) { /* maliyet tablosu yoksa sessiz */ }
         }
+
+        // Stok → GL (parametre STOK_MUHASEBE=Evet)
+        try {
+            const { maybePostStockJournal } = require('./stokMuhasebeService');
+            await maybePostStockJournal(client, {
+                hareket,
+                satir: { ...s, lot_id: partiId, id: eklenen[eklenen.length - 1]?.id },
+                kullaniciKodu,
+            });
+        } catch (_) { /* hesap/parametre yoksa sessiz */ }
     }
 
     // PRJ otomatik maliyet (çıkış → proje)
@@ -216,16 +261,23 @@ async function assertItemWarehouseAllowed(client, stokId, depoId) {
     }
 }
 
-async function warehouseItemBalance(clientOrPool, depoId, stokId, { stokStatu = null, partiId = null } = {}) {
+async function warehouseItemBalance(clientOrPool, depoId, stokId, {
+    stokStatu = null,
+    partiId = null,
+    matchNullLot = false,
+} = {}) {
     const params = [depoId, stokId];
     let extra = '';
     if (stokStatu) {
         params.push(stokStatu);
         extra += ` AND COALESCE(s.stock_status,'Kullanilabilir') = $${params.length}`;
     }
-    if (partiId) {
+    if (partiId != null) {
         params.push(partiId);
         extra += ` AND s.lot_id = $${params.length}`;
+    } else if (matchNullLot) {
+        // BUG-008: lotsuz çıkış yalnız null-lot bakiyesinden düşülür
+        extra += ` AND s.lot_id IS NULL`;
     }
     const res = await clientOrPool.query(
         `

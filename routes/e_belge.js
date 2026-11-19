@@ -26,6 +26,11 @@ router.get('/:id', async (req, res) => {
   try {
     const r = await pool.query(`SELECT * FROM e_document_queue WHERE id=$1`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kuyruk kaydı bulunamadı.' });
+    const { assertCompanyRecord } = require('../src/utils/firmaScope');
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(pool, 'e_document_queue', r.rows[0].id, firmaId))) {
+      return res.status(404).json({ hata: 'Kuyruk kaydı bulunamadı (firma kapsamı).' });
+    }
     res.json(r.rows[0]);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -74,12 +79,25 @@ router.post('/:id/kuyruga-al', async (req, res) => {
   }
 });
 
-/** Simüle gönder (provider yokken demo) */
+/**
+ * Gönderim: varsayılan simülasyon.
+ * Canlı: body.simulate=false VE GIB_CANLI=Evet VE provider_code dolu.
+ * Provider yokken canlı Gonderildi yazılmaz (Hata).
+ */
 router.post('/:id/gonder', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const simulate = req.body?.simulate !== false;
+    const { parametreAl } = require('../src/utils/yetki');
+    const gibCanli = String(await parametreAl(client, 'GIB_CANLI', 'Hayir')).toLowerCase() === 'evet';
+    let simulate = req.body?.simulate !== false;
+    if (!simulate && !gibCanli) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        hata: 'GIB_CANLI=Hayir. Canlı gönderim kapalı; simulate=true kullanın veya sağlayıcı entegrasyonu + GIB_CANLI=Evet.',
+        kod: 'GIB_CANLI_KAPALI',
+      });
+    }
     const result = await sendOrSimulate(client, Number(req.params.id), { simulate });
     await client.query('COMMIT');
     res.json(result);

@@ -14,7 +14,8 @@ async function matchInvoice(client, faturaId) {
     [faturaId]
   );
 
-  let siparisId = fatura.sales_order_id || null;
+  // purchase_order_id asıl alan; sales_order_id eski isimlendirme kalıntısı
+  let siparisId = fatura.purchase_order_id || fatura.sales_order_id || null;
   let malKabulId = fatura.goods_receipt_id || null;
   let fiyatFark = 0;
   let miktarFark = 0;
