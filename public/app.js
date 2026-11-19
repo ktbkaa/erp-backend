@@ -3058,7 +3058,7 @@ const MODULES = [
         title: 'İş Merkezleri',
         endpoint: '/is-merkezleri',
         crud: true,
-        numeratorSeri: null,
+        numeratorSeri: 'IS_MERKEZI',
         codeField: 'center_code',
         nameField: 'center_name',
         filters: [
@@ -3074,8 +3074,8 @@ const MODULES = [
           { key: 'efficiency_pct', label: 'Verim %' },
         ],
         masterFields: [
-          { key: 'center_code', label: 'Kod', code: true, editableOnNew: true },
-          { key: 'center_name', label: 'Ad', name: true },
+          { key: 'center_code', label: 'Kod', code: true, required: true },
+          { key: 'center_name', label: 'Ad', name: true, required: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
           { key: 'daily_capacity_hours', label: 'Günlük kapasite (saat)', type: 'number' },
           { key: 'efficiency_pct', label: 'Verimlilik %', type: 'number' },
@@ -3118,7 +3118,7 @@ const MODULES = [
         title: 'İş İstasyonları',
         endpoint: '/is-istasyonlari',
         crud: true,
-        numeratorSeri: null,
+        numeratorSeri: 'IS_ISTASYONU',
         codeField: 'station_code',
         nameField: 'station_name',
         filters: [
@@ -3134,7 +3134,7 @@ const MODULES = [
           { key: 'is_active', label: 'Aktif' },
         ],
         masterFields: [
-          { key: 'station_code', label: 'Kod', code: true, editableOnNew: true },
+          { key: 'station_code', label: 'Kod', code: true, required: true },
           { key: 'station_name', label: 'Ad', name: true, required: true },
           { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', required: true },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -3217,6 +3217,8 @@ const MODULES = [
           item_id: [
             { field: 'product_bom_id', pick: 'bomForItem' },
             { field: 'brand_code', fromItem: 'brand_name' },
+            { field: 'route_name', fromItem: 'item_name', onlyIfEmpty: true, asRouteName: true },
+            { field: 'plant_id', fromItem: 'plant_id', onlyIfEmpty: true },
           ],
         },
         formTabs: [
@@ -19911,6 +19913,75 @@ async function loadBomRecordForRouting(bomId) {
   return bomRec || null;
 }
 
+/**
+ * Rota oluştururken: ürün ağacı + ad + varsayılan operasyon/malzeme.
+ * Stok veya ağaç seçilince çağrılır.
+ */
+async function autoFillRoutingFromBom(screen, { quiet = false, forceMaterials = false } = {}) {
+  const tab = findRoutingTab(screen);
+  if (!tab || !screen || screen.id !== 'routings') return false;
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+
+  // Stok seçili ama ağaç boşsa API’den varsayılanı bul
+  if (state.formRecord.item_id && !state.formRecord.product_bom_id) {
+    const bom = await ensureDefaultBomForItem(state.formRecord.item_id);
+    if (bom?.id) {
+      state.formRecord.product_bom_id = bom.id;
+      const bomEl = document.querySelector('[data-master="product_bom_id"]');
+      if (bomEl instanceof HTMLSelectElement) {
+        setLinkedSelectValue(bomEl, bom.id, 'product_bom_id');
+      }
+    }
+  }
+
+  // Rota adı boşsa stok adından doldur
+  if (!(String(state.formRecord.route_name || '').trim()) && state.formRecord.item_id) {
+    const st = itemLookupById(state.formRecord.item_id);
+    if (st?.item_name) {
+      state.formRecord.route_name = `${st.item_name} Rotası`;
+      const nameEl = document.querySelector('[data-master="route_name"]');
+      if (nameEl) nameEl.value = state.formRecord.route_name;
+    }
+  }
+
+  persistFlowEditor(state.formRecord, tab);
+  let ops = Array.isArray(state.formRecord.operasyonlar) ? [...state.formRecord.operasyonlar] : [];
+  if (!ops.length) {
+    ops = [emptyRoutingOperation(10, {
+      item_id: state.formRecord.item_id,
+      product_bom_id: state.formRecord.product_bom_id,
+    })];
+  } else {
+    ops = ops.map((o) => ({
+      ...o,
+      item_id: o.item_id || state.formRecord.item_id || '',
+      product_bom_id: o.product_bom_id || state.formRecord.product_bom_id || '',
+      bilesenler: Array.isArray(o.bilesenler) ? [...o.bilesenler] : [],
+      ekipmanlar: Array.isArray(o.ekipmanlar) ? [...o.ekipmanlar] : [],
+    }));
+  }
+
+  const bomId = state.formRecord.product_bom_id;
+  if (bomId) {
+    const bomRec = await loadBomRecordForRouting(bomId);
+    const materials = collectBomMaterialsForRouting(bomRec);
+    const anyMats = ops.some((o) => (o.bilesenler || []).some((b) => b.item_id));
+    if (materials.length && (!anyMats || forceMaterials)) {
+      ops = distributeBomMaterialsToOps(ops, materials, { replace: true });
+      if (!quiet) {
+        toast(`${materials.length} malzeme ürün ağacından operasyonlara aktarıldı`);
+      }
+    } else if (!materials.length && !quiet && !anyMats) {
+      toast('Ürün ağacında aktarılacak malzeme satırı yok — ağaç satırlarını kontrol edin.');
+    }
+  }
+
+  state.formRecord.operasyonlar = ops;
+  if (state.flowSel == null || state.flowSel < 0) state.flowSel = 0;
+  return true;
+}
+
 /** Başlık ürün ağacından seçili operasyona malzeme aktar. */
 async function applyBomMaterialsToRouting(screen, { quiet = false, force = false, opIdx = null } = {}) {
   const tab = findRoutingTab(screen);
@@ -22353,12 +22424,12 @@ let _formLinking = false;
 
 function pickDefaultBomForItem(itemId) {
   if (itemId == null || itemId === '') return null;
+  const matchItem = (r) => String(r.finished_good_item_id) === String(itemId)
+    || String(r.item_id) === String(itemId);
   const rows = (state.lookupCache['urun-agaclari'] || [])
-    .filter((r) => String(r.finished_good_item_id) === String(itemId)
-      && r.is_active !== false && !r.is_deleted);
+    .filter((r) => matchItem(r) && r.is_active !== false && !r.is_deleted);
   if (!rows.length) {
-    const any = (state.lookupCache['urun-agaclari'] || [])
-      .filter((r) => String(r.finished_good_item_id) === String(itemId));
+    const any = (state.lookupCache['urun-agaclari'] || []).filter(matchItem);
     if (!any.length) return null;
     return any.slice().sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
   }
@@ -22370,6 +22441,25 @@ function pickDefaultBomForItem(itemId) {
     if (aa !== bb) return aa.localeCompare(bb, 'tr');
     return Number(b.id) - Number(a.id);
   })[0] || null;
+}
+
+/** Cache boşsa API’den mamule bağlı ürün ağacını çekip varsayılanı seç. */
+async function ensureDefaultBomForItem(itemId) {
+  let hit = pickDefaultBomForItem(itemId);
+  if (hit || itemId == null || itemId === '') return hit;
+  try {
+    const rows = await api(`/urun-agaclari?finished_good_item_id=${encodeURIComponent(itemId)}&type=hepsi`);
+    if (Array.isArray(rows) && rows.length) {
+      const cache = state.lookupCache['urun-agaclari'] || [];
+      rows.forEach((r) => {
+        const i = cache.findIndex((x) => String(x.id) === String(r.id));
+        if (i >= 0) cache[i] = { ...cache[i], ...r };
+        else cache.push(r);
+      });
+      state.lookupCache['urun-agaclari'] = cache;
+    }
+  } catch (_) { /* ignore */ }
+  return pickDefaultBomForItem(itemId);
 }
 
 function pickDefaultRouteForItem(itemId, bomId = null) {
@@ -22430,6 +22520,11 @@ function resolveFormLinkValue(rule, ctx) {
       const cur = ctx.bom_name;
       if (cur && String(cur).trim()) return cur;
       return `${v} Ağacı`;
+    }
+    if (rule.asRouteName && rule.fromItem === 'item_name' && v) {
+      const cur = ctx.route_name;
+      if (cur && String(cur).trim()) return cur;
+      return `${v} Rotası`;
     }
     return v == null ? '' : v;
   }
@@ -22536,6 +22631,11 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
         fetchLookupKey('items'),
         fetchLookupKey('items-mamul'),
       ]);
+    }
+    // Rota: stok seçildiğinde mamule özel ağacı da zorla tazele
+    if (screen.id === 'routings' && changedKey === 'item_id' && !isDetail && !isBomField && !isFlowComp) {
+      const itemVal = changedEl.type === 'checkbox' ? changedEl.checked : changedEl.value;
+      if (itemVal) await ensureDefaultBomForItem(itemVal);
     }
 
     const { ctx } = cascadeScopeContext(changedEl);
@@ -22834,8 +22934,9 @@ function bindCascadeLookups(_screen) {
       await applyFormLinkages(scr, fieldKey, el);
     }
 
-    // Rota: başlık stok / ürün ağacı değişince yan paneli yenile
+    // Rota: stok / ürün ağacı → otodoldur + malzemeleri operasyonlara aktar
     if (scr.id === 'routings' && ['product_bom_id', 'item_id'].includes(masterKey) && state.formMode !== 'incele') {
+      await autoFillRoutingFromBom(scr, { forceMaterials: masterKey === 'product_bom_id' });
       renderForm(scr);
       persistActiveFormTab();
       return;
