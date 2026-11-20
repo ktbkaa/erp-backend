@@ -2970,6 +2970,7 @@ const MODULES = [
   },
   {
     id: 'satis',
+    title: 'Satış',
     sections: [
       {
         id: 'teklif',
