@@ -352,23 +352,201 @@ router.get('/parametre-varsayilan', async (_req, res) => {
     res.json(defaultMrpParametre({}));
 });
 
-/** MRP çalıştır ve kaydet */
-router.post('/calistir', async (req, res, next) => {
+function mapParametreSetRow(row) {
+    if (!row) return null;
+    const parametre = defaultMrpParametre({
+        ...(row.parameters_json || {}),
+        parameter_code: row.parameter_code || (row.parameters_json || {}).parameter_code,
+        start_date: row.start_date || (row.parameters_json || {}).start_date,
+        end_date: row.end_date || (row.parameters_json || {}).end_date,
+        notes: row.notes != null ? row.notes : (row.parameters_json || {}).notes,
+    });
+    return {
+        ...row,
+        parametre,
+        parameters_json: parametre,
+    };
+}
+
+/** Kaydedilebilir MRP parametre setleri */
+router.get('/parametreler', async (req, res, next) => {
+    try {
+        const where = ['1=1'];
+        const params = [];
+        if (req.query.is_active === 'true') where.push('is_active = TRUE');
+        if (req.query.is_active === 'false') where.push('is_active = FALSE');
+        if (req.query.company_id) {
+            params.push(Number(req.query.company_id));
+            where.push(`(company_id = $${params.length} OR company_id IS NULL)`);
+        }
+        const r = await pool.query(
+            `SELECT * FROM mrp_parameter_sets
+             WHERE ${where.join(' AND ')}
+             ORDER BY parameter_code`,
+            params
+        );
+        res.json(r.rows.map(mapParametreSetRow));
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.get('/parametreler/:id', async (req, res, next) => {
+    try {
+        const r = await pool.query('SELECT * FROM mrp_parameter_sets WHERE id=$1', [req.params.id]);
+        if (!r.rows[0]) return res.status(404).json({ hata: 'MRP parametre seti bulunamadı.' });
+        res.json(mapParametreSetRow(r.rows[0]));
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/parametreler', async (req, res, next) => {
     try {
         const bodyParam = req.body.parametre && typeof req.body.parametre === 'object'
             ? req.body.parametre
+            : (req.body.parameters_json && typeof req.body.parameters_json === 'object'
+                ? req.body.parameters_json
+                : {});
+        if (req.body.start_date) bodyParam.start_date = req.body.start_date;
+        if (req.body.end_date) bodyParam.end_date = req.body.end_date;
+        if (req.body.notes != null) bodyParam.notes = req.body.notes;
+        if (req.body.parameter_code) bodyParam.parameter_code = req.body.parameter_code;
+        const parametre = defaultMrpParametre(bodyParam);
+        const row = await withTransaction(pool, async (client) => {
+            const kod = trimOrNull(req.body.parameter_code)
+                || trimOrNull(parametre.parameter_code)
+                || (await nextSequenceCode(client, 'MRP_PARAM'));
+            parametre.parameter_code = kod;
+            const ins = await client.query(
+                `INSERT INTO mrp_parameter_sets
+                    (parameter_code, description, company_id, plant_id, parameters_json,
+                     start_date, end_date, notes, is_active, created_by)
+                 VALUES ($1,$2,$3,$4,$5::jsonb,$6::date,$7::date,$8,COALESCE($9,TRUE),$10)
+                 RETURNING *`,
+                [
+                    kod,
+                    trimOrNull(req.body.description),
+                    num(req.body.company_id) || companyIdFromReq(req),
+                    num(req.body.plant_id),
+                    JSON.stringify(parametre),
+                    parametre.start_date,
+                    parametre.end_date,
+                    parametre.notes || null,
+                    typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
+                    trimOrNull(req.headers['x-kullanici-kodu']) || trimOrNull(req.body.created_by),
+                ]
+            );
+            return ins.rows[0];
+        });
+        res.status(201).json(mapParametreSetRow(row));
+    } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'Parametre kodu zaten var.' });
+        next(err);
+    }
+});
+
+router.put('/parametreler/:id', async (req, res, next) => {
+    try {
+        const existing = await pool.query('SELECT * FROM mrp_parameter_sets WHERE id=$1', [req.params.id]);
+        if (!existing.rows[0]) return res.status(404).json({ hata: 'MRP parametre seti bulunamadı.' });
+        const prev = existing.rows[0];
+        const bodyParam = req.body.parametre && typeof req.body.parametre === 'object'
+            ? req.body.parametre
+            : (req.body.parameters_json && typeof req.body.parameters_json === 'object'
+                ? req.body.parameters_json
+                : (prev.parameters_json || {}));
+        if (req.body.start_date) bodyParam.start_date = req.body.start_date;
+        if (req.body.end_date) bodyParam.end_date = req.body.end_date;
+        if (req.body.notes != null) bodyParam.notes = req.body.notes;
+        if (req.body.parameter_code) bodyParam.parameter_code = req.body.parameter_code;
+        const parametre = defaultMrpParametre(bodyParam);
+        const kod = trimOrNull(req.body.parameter_code) || prev.parameter_code;
+        parametre.parameter_code = kod;
+        const upd = await pool.query(
+            `UPDATE mrp_parameter_sets SET
+                parameter_code = $2,
+                description = $3,
+                company_id = $4,
+                plant_id = $5,
+                parameters_json = $6::jsonb,
+                start_date = $7::date,
+                end_date = $8::date,
+                notes = $9,
+                is_active = COALESCE($10, is_active),
+                updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1
+             RETURNING *`,
+            [
+                req.params.id,
+                kod,
+                trimOrNull(req.body.description),
+                num(req.body.company_id) != null ? num(req.body.company_id) : prev.company_id,
+                num(req.body.plant_id) != null ? num(req.body.plant_id) : prev.plant_id,
+                JSON.stringify(parametre),
+                parametre.start_date,
+                parametre.end_date,
+                parametre.notes || null,
+                typeof req.body.is_active === 'boolean' ? req.body.is_active : null,
+            ]
+        );
+        res.json(mapParametreSetRow(upd.rows[0]));
+    } catch (err) {
+        if (err.code === '23505') return res.status(409).json({ hata: 'Parametre kodu zaten var.' });
+        next(err);
+    }
+});
+
+router.delete('/parametreler/:id', async (req, res, next) => {
+    try {
+        const del = await pool.query(
+            'DELETE FROM mrp_parameter_sets WHERE id=$1 RETURNING id, parameter_code',
+            [req.params.id]
+        );
+        if (!del.rows[0]) return res.status(404).json({ hata: 'MRP parametre seti bulunamadı.' });
+        res.json({ ok: true, ...del.rows[0] });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** MRP çalıştır ve kaydet */
+router.post('/calistir', async (req, res, next) => {
+    try {
+        let bodyParam = req.body.parametre && typeof req.body.parametre === 'object'
+            ? { ...req.body.parametre }
             : {};
+        let parameterSetId = num(req.body.parameter_set_id);
+        let setRow = null;
+        if (parameterSetId) {
+            const pr = await pool.query('SELECT * FROM mrp_parameter_sets WHERE id=$1', [parameterSetId]);
+            setRow = pr.rows[0] || null;
+            if (!setRow) return res.status(400).json({ hata: 'Seçilen MRP parametre seti bulunamadı.' });
+            bodyParam = {
+                ...(setRow.parameters_json || {}),
+                ...bodyParam,
+                parameter_code: setRow.parameter_code,
+                start_date: bodyParam.start_date || setRow.start_date,
+                end_date: bodyParam.end_date || setRow.end_date,
+                notes: bodyParam.notes != null ? bodyParam.notes : setRow.notes,
+            };
+        }
         // Üst seviye ufuk alanlarını parametreye taşı
         if (req.body.start_date) bodyParam.start_date = req.body.start_date;
         if (req.body.end_date) bodyParam.end_date = req.body.end_date;
         if (req.body.notes != null) bodyParam.notes = req.body.notes;
         const result = await withTransaction(pool, async (client) => mrpCalistir(client, {
-            firmaId: num(req.body.company_id) || (req.headers['x-firma-id'] ? Number(req.headers['x-firma-id']) : null),
-            isYeriId: num(req.body.plant_id),
-            description: trimOrNull(req.body.description),
+            firmaId: num(req.body.company_id)
+                || (setRow && setRow.company_id)
+                || (req.headers['x-firma-id'] ? Number(req.headers['x-firma-id']) : null),
+            isYeriId: num(req.body.plant_id) || (setRow && setRow.plant_id) || null,
+            description: trimOrNull(req.body.description)
+                || (setRow && setRow.description)
+                || null,
             created_by: trimOrNull(req.headers['x-kullanici-kodu']) || trimOrNull(req.body.created_by),
             parametre: bodyParam,
-            notes: trimOrNull(req.body.notes),
+            notes: trimOrNull(req.body.notes) || (setRow && setRow.notes) || null,
+            parameterSetId,
         }));
         res.status(201).json(result);
     } catch (err) {

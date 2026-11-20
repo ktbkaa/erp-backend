@@ -172,10 +172,19 @@ router.post('/', async (req, res) => {
         ]
       );
       const talepId = baslik.rows[0].id;
+      const hdrPb = p.currency_code || 'TRY';
+      const hdrKur = p.exchange_rate ?? 1;
+      const hdrTip = p.rate_type || null;
       let sira = 1;
       for (const s of satirlar) {
         if (!s.item_id || s.quantity == null) continue;
-        await insertRequisitionLine(client, talepId, s, s.line_no || sira);
+        await insertRequisitionLine(client, talepId, {
+          ...s,
+          currency_code: hdrPb,
+          exchange_rate: hdrKur,
+          rate_type: hdrTip,
+          warehouse_id: null, // depo yalnız mal kabulde
+        }, s.line_no || sira);
         sira += 1;
       }
       return talepId;
@@ -240,11 +249,20 @@ router.put('/:id', async (req, res) => {
         ]
       );
       if (Array.isArray(satirlar)) {
+        const hdrPb = p.currency_code || body.currency_code || 'TRY';
+        const hdrKur = p.exchange_rate ?? body.exchange_rate ?? 1;
+        const hdrTip = p.rate_type || body.rate_type || null;
         const keepIds = [];
         let sira = 1;
         for (const s of satirlar) {
           if (!s.item_id || s.quantity == null) continue;
-          const lineId = await insertRequisitionLine(client, Number(req.params.id), s, s.line_no || sira);
+          const lineId = await insertRequisitionLine(client, Number(req.params.id), {
+            ...s,
+            currency_code: hdrPb,
+            exchange_rate: hdrKur,
+            rate_type: hdrTip,
+            warehouse_id: null,
+          }, s.line_no || sira);
           if (lineId != null) keepIds.push(lineId);
           sira += 1;
         }

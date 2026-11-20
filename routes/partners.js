@@ -296,7 +296,7 @@ function syncInvoice(m) {
 
 router.get('/', async (req, res) => {
     try {
-        const { tur, is_active } = req.query;
+        const { tur, is_active, is_subcontractor } = req.query;
         const { companyIdFromReq, andPartnerCompany } = require('../src/utils/firmaScope');
         const where = [];
         const params = [];
@@ -309,6 +309,8 @@ router.get('/', async (req, res) => {
 
         if (is_active === 'true') where.push('is_active = TRUE');
         if (is_active === 'false') where.push('is_active = FALSE');
+        if (is_subcontractor === 'true') where.push('is_subcontractor = TRUE');
+        if (is_subcontractor === 'false') where.push('is_subcontractor = FALSE');
 
         const companyClause = andPartnerCompany('partners', companyIdFromReq(req), params);
         if (companyClause) where.push(companyClause.replace(/^\s*AND\s+/i, ''));
@@ -515,6 +517,29 @@ router.post('/', async (req, res) => {
                 ]
             );
             const cariId = cariSonuc.rows[0].id;
+            if (m.is_subcontractor || m.subcontract_capacity_daily != null || m.subcontract_lead_days != null) {
+                await client.query(
+                    `
+                    UPDATE partners SET
+                      is_subcontractor = COALESCE($2, is_subcontractor),
+                      subcontract_capacity_daily = COALESCE($3, subcontract_capacity_daily),
+                      subcontract_lead_days = COALESCE($4, subcontract_lead_days),
+                      subcontract_min_qty = COALESCE($5, subcontract_min_qty),
+                      subcontract_pricing_method = COALESCE($6, subcontract_pricing_method),
+                      subcontract_quality_score = COALESCE($7, subcontract_quality_score)
+                    WHERE id=$1
+                    `,
+                    [
+                        cariId,
+                        typeof m.is_subcontractor === 'boolean' ? m.is_subcontractor : null,
+                        m.subcontract_capacity_daily ?? null,
+                        m.subcontract_lead_days ?? null,
+                        m.subcontract_min_qty ?? null,
+                        trimOrNull(m.subcontract_pricing_method),
+                        m.subcontract_quality_score ?? null,
+                    ],
+                );
+            }
             await saveChildren(client, cariId, req.body);
             const slots = collectPartnerSlots(req.body);
             await client.query(
@@ -601,7 +626,13 @@ router.put('/:id', async (req, res) => {
                     region_code = $37,
                     nace_code = $38,
                     founded_date = $39,
-                    capital = $40
+                    capital = $40,
+                    is_subcontractor = COALESCE($41, is_subcontractor),
+                    subcontract_capacity_daily = COALESCE($42, subcontract_capacity_daily),
+                    subcontract_lead_days = COALESCE($43, subcontract_lead_days),
+                    subcontract_min_qty = COALESCE($44, subcontract_min_qty),
+                    subcontract_pricing_method = COALESCE($45, subcontract_pricing_method),
+                    subcontract_quality_score = COALESCE($46, subcontract_quality_score)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -646,6 +677,12 @@ router.put('/:id', async (req, res) => {
                     trimOrNull(m.nace_code),
                     trimOrNull(m.founded_date),
                     m.capital ?? null,
+                    typeof m.is_subcontractor === 'boolean' ? m.is_subcontractor : null,
+                    m.subcontract_capacity_daily ?? null,
+                    m.subcontract_lead_days ?? null,
+                    m.subcontract_min_qty ?? null,
+                    trimOrNull(m.subcontract_pricing_method),
+                    m.subcontract_quality_score ?? null,
                 ]
             );
 

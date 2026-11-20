@@ -125,7 +125,9 @@ router.post('/login', async (req, res, next) => {
         return res.status(401).json({ hata: 'Parola hatalı.' });
       }
     } else {
-      const zorunlu = String(await parametreAl(pool, 'AUTH_ZORUNLU', 'Hayir')).toLowerCase() === 'evet';
+      const soft = String(process.env.ERP_AUTH_SOFT || '').trim() === '1';
+      const zorunlu = !soft
+        && String(await parametreAl(pool, 'AUTH_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
       if (zorunlu && !parola) {
         return res.status(401).json({ hata: 'Parola tanımlı değil; yönetici parola atamalı.' });
       }

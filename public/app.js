@@ -435,898 +435,39 @@ function buildKkOrderScreen({ id, techId, businessNameEn, title, direction }) {
  *  Kritik sekmeler/kind/flag kaybını CI ile yakalar (paralel dal sürüklenmesini önler). */
 const MODULES = [
   {
-    id: 'fixed-tanimlar',
-    title: 'Sabit Tanımlar',
-    // Genel tanımlar — alt başlık yok (tek liste)
-    screens: [
-      {
-        id: 'numarator-tanimi',
-        techId: 'SYS-NUM-SCR-001',
-        businessNameEn: 'NumberSeriesScreen',
-        title: 'Numaratör Tanımı',
-        endpoint: '/kod-serileri',
-        crud: true,
-        codeField: 'series_code',
-        nameField: 'description',
-        numeratorSeri: null,
-        filters: [
-          { key: 'series_code', label: 'Seri kodu' },
-          { key: 'screen_name', label: 'Ekran adı' },
-          { key: 'prefix', label: 'Önek' },
-        ],
-        columns: [
-          { key: 'series_code', label: 'Seri', mono: true },
-          { key: 'prefix', label: 'Önek', mono: true },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'screen_name', label: 'Ekran' },
-          { key: 'last_number', label: 'Son no' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'series_code', label: 'Seri kodu', code: true, editableOnNew: true, required: true },
-          { key: 'prefix', label: 'Önek' },
-          { key: 'description', label: 'Açıklama', name: true, required: true },
-        ],
-        detailFields: [
-          {
-            key: 'screen_code',
-            label: 'Ekran kodu',
-            type: 'lookup',
-            lookup: 'ekranlar',
-            valueKey: 'screen_code',
-            labelKey: 'screen_name',
-            codeKey: 'screen_code',
-            autoFillName: 'screen_name',
-          },
-          { key: 'screen_name', label: 'Ekran adı', readOnly: true },
-          { key: 'last_number', label: 'Son numara', type: 'number' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'olcu-birimleri',
-        techId: 'MDM-UOM-SCR-001',
-        businessNameEn: 'UnitOfMeasureScreen',
-        title: 'Ölçü Birimleri',
-        endpoint: '/olcu-birimleri',
-        crud: true,
-        codeField: 'uom_code',
-        nameField: 'uom_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'uom_code', label: 'Birim kodu' },
-          { key: 'uom_name', label: 'Birim adı' },
-        ],
-        columns: [
-          { key: 'uom_code', label: 'Kod', mono: true },
-          { key: 'uom_name', label: 'Ad' },
-        ],
-        masterFields: [
-          { key: 'uom_code', label: 'Birim kodu', code: true, editableOnNew: true, required: true },
-          { key: 'uom_name', label: 'Birim adı', name: true, required: true },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'kategori-tip-tanimi',
-        techId: 'MDM-CATTYPE-SCR-001',
-        businessNameEn: 'CategoryTypeDefinitionScreen',
-        title: 'Kategori Tip Tanımı',
-        endpoint: '/kategori-tipleri',
-        crud: true,
-        codeField: 'type_code',
-        nameField: 'type_name',
-        numeratorSeri: 'KATEGORI_TIPI',
-        filters: [
-          { key: 'type_code', label: 'Tip kodu' },
-          { key: 'type_name', label: 'Tip adı' },
-          { key: 'applies_to', label: 'Kapsam' },
-        ],
-        columns: [
-          { key: 'type_code', label: 'Kod', mono: true },
-          { key: 'type_name', label: 'Ad' },
-          { key: 'applies_to', label: 'Kapsam' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'type_code', label: 'Tip kodu', code: true, required: true, editableOnNew: true },
-          { key: 'type_name', label: 'Tip adı', name: true, required: true },
-          { key: 'applies_to', label: 'Kapsam', type: 'select', options: ['Genel', 'Stok', 'Cari', 'Hepsi'], required: true },
-        ],
-        detailFields: [
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'kategori-tanimi',
-        techId: 'MDM-CAT-SCR-001',
-        businessNameEn: 'CategoryDefinitionScreen',
-        title: 'Kategori Tanımı',
-        endpoint: '/kategoriler',
-        crud: true,
-        codeField: 'category_code',
-        nameField: 'category_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'category_code', label: 'Kategori kodu' },
-          { key: 'category_name', label: 'Kategori adı' },
-          { key: 'category_type', label: 'Tip' },
-        ],
-        columns: [
-          { key: 'category_code', label: 'Kod', mono: true },
-          { key: 'category_name', label: 'Ad' },
-          { key: 'category_type', label: 'Tip' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'category_code', label: 'Kategori kodu', code: true, editableOnNew: true, required: true },
-          { key: 'category_name', label: 'Kategori adı', name: true, required: true },
-          {
-            key: 'category_type',
-            label: 'Kategori tipi',
-            type: 'lookup',
-            lookup: 'kategori-tipleri',
-            valueKey: 'type_code',
-            labelKey: 'type_name',
-            codeKey: 'type_code',
-            required: true,
-          },
-        ],
-        detailFields: [
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'country-tanimi',
-        techId: 'MDM-CTRY-SCR-001',
-        businessNameEn: 'CountryDefinitionScreen',
-        title: 'Ülke Tanımı',
-        endpoint: '/countries',
-        crud: true,
-        codeField: 'country_code',
-        nameField: 'country_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'country_code', label: 'Ülke kodu' },
-          { key: 'country_name', label: 'Ülke adı' },
-        ],
-        columns: [
-          { key: 'country_code', label: 'Kod', mono: true },
-          { key: 'country_name', label: 'Ad' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'country_code', label: 'Ülke kodu', code: true, editableOnNew: true, required: true },
-          { key: 'country_name', label: 'Ülke adı', name: true, required: true },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'para-birimi-tanimi',
-        techId: 'MDM-CUR-SCR-001',
-        businessNameEn: 'CurrencyDefinitionScreen',
-        title: 'Para Birimi Tanımı',
-        endpoint: '/para-birimleri',
-        crud: true,
-        codeField: 'currency_code',
-        nameField: 'currency_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'currency_code', label: 'PB kodu' },
-          { key: 'currency_name', label: 'PB adı' },
-        ],
-        columns: [
-          { key: 'currency_code', label: 'Kod', mono: true },
-          { key: 'currency_name', label: 'Ad' },
-          { key: 'symbol', label: 'Sembol' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'currency_code', label: 'Para birimi kodu', code: true, editableOnNew: true, required: true },
-          { key: 'currency_name', label: 'Para birimi adı', name: true, required: true },
-          { key: 'symbol', label: 'Sembol' },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'sehir-tanimi',
-        techId: 'MDM-CITY-SCR-001',
-        businessNameEn: 'CityProvinceScreen',
-        title: 'Şehir / İl Tanımı',
-        endpoint: '/cities',
-        crud: true,
-        codeField: 'city_code',
-        nameField: 'city_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'city_code', label: 'Şehir kodu' },
-          { key: 'city_name', label: 'Şehir adı' },
-          { key: 'country_code', label: 'Ülke' },
-        ],
-        columns: [
-          { key: 'city_code', label: 'Kod', mono: true },
-          { key: 'city_name', label: 'Ad' },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'city_code', label: 'Şehir kodu', code: true, editableOnNew: true, required: true },
-          { key: 'city_name', label: 'Şehir adı', name: true, required: true },
-          { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        // Districts live under the city card (no standalone district screen)
-        detailKey: 'districts',
-        detailSlots: 3,
-        detailAsFields: false,
-        detailFields: [
-          { key: 'district_code', label: 'İlçe kodu', code: true, mono: true, size: 'short' },
-          { key: 'district_name', label: 'İlçe adı', name: true, required: true },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        // Row ✓ / Sil writes to /districts right away
-        detailPersist: {
-          districts: {
-            endpoint: '/districts',
-            parentFields: { city_code: 'city_code' },
-          },
-        },
-        defaults: { is_active: true, districts: [] },
-      },
-      {
-        id: 'odeme-kosulu-tanimi',
-        techId: 'MDM-PAYT-SCR-001',
-        businessNameEn: 'PaymentTermsScreen',
-        title: 'Ödeme Koşulu',
-        endpoint: '/odeme-kosullari',
-        crud: true,
-        codeField: 'term_code',
-        nameField: 'term_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'term_code', label: 'Kod' },
-          { key: 'term_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'term_code', label: 'Kod', mono: true },
-          { key: 'term_name', label: 'Ad' },
-          { key: 'due_days', label: 'Vade (gün)' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'term_code', label: 'Koşul kodu', code: true, editableOnNew: true, required: true },
-          { key: 'term_name', label: 'Koşul adı', name: true, required: true },
-          { key: 'due_days', label: 'Vade gün', type: 'number' },
-        ],
-        detailFields: [
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'teslimat-kosulu-tanimi',
-        techId: 'MDM-DLVT-SCR-001',
-        businessNameEn: 'DeliveryTermsScreen',
-        title: 'Teslimat Koşulu',
-        endpoint: '/teslimat-kosullari',
-        crud: true,
-        codeField: 'term_code',
-        nameField: 'term_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'term_code', label: 'Kod' },
-          { key: 'term_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'term_code', label: 'Kod', mono: true },
-          { key: 'term_name', label: 'Ad' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'term_code', label: 'Koşul kodu', code: true, editableOnNew: true, required: true },
-          { key: 'term_name', label: 'Koşul adı', name: true, required: true },
-        ],
-        detailFields: [
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'dil-tanimi',
-        techId: 'MDM-LANG-SCR-001',
-        businessNameEn: 'LanguageDefinitionScreen',
-        title: 'Dil Tanımı',
-        endpoint: '/languages',
-        crud: true,
-        codeField: 'language_code',
-        nameField: 'language_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'language_code', label: 'Kod' },
-          { key: 'language_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'language_code', label: 'Kod', mono: true },
-          { key: 'language_name', label: 'Ad' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'language_code', label: 'Dil kodu', code: true, editableOnNew: true, required: true, autoFillLanguageName: true },
-          { key: 'language_name', label: 'Dil adı', name: true, required: true, readOnlyWhen: 'auto-dil' },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'banka-tanimi',
-        techId: 'MDM-BANK-SCR-001',
-        businessNameEn: 'BankDefinitionScreen',
-        title: 'Banka Tanımı',
-        endpoint: '/banks',
-        crud: true,
-        codeField: 'bank_code',
-        nameField: 'bank_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'bank_code', label: 'Kod' },
-          { key: 'bank_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'bank_code', label: 'Kod', mono: true },
-          { key: 'bank_name', label: 'Ad' },
-          { key: 'swift_code', label: 'SWIFT' },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'bank_code', label: 'Banka kodu', code: true, editableOnNew: true, required: true },
-          { key: 'bank_name', label: 'Banka adı', name: true, required: true },
-          { key: 'swift_code', label: 'SWIFT' },
-          { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'doviz-exchange_rate-tanimi',
-        techId: 'FIN-FX-SCR-001',
-        businessNameEn: 'ExchangeRateScreen',
-        title: 'Döviz Kurları',
-        endpoint: '/doviz-kurlari',
-        crud: true,
-        codeField: 'source_currency',
-        nameField: 'target_currency',
-        tcmbFetchAction: true,
-        filters: [
-          { key: 'source_currency', label: 'Kaynak PB' },
-          { key: 'target_currency', label: 'Hedef PB' },
-          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel', 'Seed'] },
-        ],
-        columns: [
-          { key: 'rate_date', label: 'Tarih' },
-          { key: 'source_currency', label: 'Kaynak PB', mono: true },
-          { key: 'target_currency', label: 'Hedef PB', mono: true },
-          { key: 'buy_rate', label: 'Alış' },
-          { key: 'sell_rate', label: 'Satış' },
-          { key: 'source', label: 'Kur kaynağı' },
-        ],
-        masterFields: [
-          { key: 'rate_date', label: 'Kur tarihi', type: 'date', required: true },
-          { key: 'source_currency', label: 'Kaynak PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
-          { key: 'target_currency', label: 'Hedef PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
-          {
-            key: 'buy_rate',
-            label: 'Alış kuru',
-            type: 'number',
-            required: true,
-            info: 'Döviz alış (Forex Buying): Kaydi/hesaplar arası işlemde kurumun sizden döviz aldığı kur. TCMB seçiliyse bültenden gelir; Manuel’de banka veya sözleşmenize göre girin. Belgede «Kur tipi = Alış» bu değeri kullanır.',
-          },
-          {
-            key: 'sell_rate',
-            label: 'Satış kuru',
-            type: 'number',
-            required: true,
-            info: 'Döviz satış (Forex Selling): Kaydi işlemde kurumun size döviz sattığı kur. Genelde alıştan yüksektir (makas). Satış belgelerinde sıkça bu tip seçilir. TCMB gösterge niteliğindedir; banka kurunuz farklı olabilir.',
-          },
-        ],
-        detailFields: [
-          {
-            key: 'effective_buy_rate',
-            label: 'Efektif alış',
-            type: 'number',
-            info: 'Efektif alış (Banknote Buying): Nakit banknot dövizi kurumun sizden aldığı kur. Elden döviz bozdurma senaryosu. TCMB’de bazı paralarda boş olabilir; o zaman döviz alışa düşülür.',
-          },
-          {
-            key: 'effective_sell_rate',
-            label: 'Efektif satış',
-            type: 'number',
-            info: 'Efektif satış (Banknote Selling): Nakit banknotu kurumdan alırken kullanılan kur. Nakit makası genelde kaydi makastan geniştir. Manuel tanımlarken fiilen uyguladığınız gişe/banka kurunu yazın.',
-          },
-          {
-            key: 'source',
-            label: 'Kur kaynağı',
-            type: 'select',
-            options: ['TCMB', 'Manuel'],
-            info: 'TCMB: Sistem Parametreleri’ndeki TCMB_KUR_URL (today.xml) ile iş günü bülteni çekilir; TCMB_KUR_AUTO=true ise günde bir kez otomatik güncellenir. Manuel: TCMB’de olmayan pariteler (ör. MXN) veya kendi banka kurunuz.',
-          },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-
-      {
-        id: 'hareket-kodlari',
-        techId: 'INV-MVTC-SCR-001',
-        businessNameEn: 'MovementCodeScreen',
-        title: 'Hareket Kodları',
-        endpoint: '/hareket-kodlari',
-        crud: true,
-        codeField: 'movement_code',
-        nameField: 'movement_name',
-        numeratorSeri: null,
-        // Sol kategori yerine tepe filtre (Belge Tipleri + stok etkili yeni tipler)
-        listCategories: null,
-        categoryKey: null,
-        filters: [
-          {
-            key: 'document_type',
-            label: 'Belge tipi',
-            type: 'lookup',
-            lookup: 'hareket-belge-tipleri',
-            valueKey: 'id',
-            labelKey: 'label',
-            codeKey: 'document_type',
-          },
-          { key: 'movement_code', label: 'Hareket kodu' },
-          { key: 'movement_name', label: 'Hareket adı' },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'] },
-          { key: 'affects_stock', label: 'Stok etkisi', type: 'bool' },
-        ],
-        columns: [
-          { key: 'movement_code', label: 'Kod', mono: true },
-          { key: 'movement_name', label: 'Ad' },
-          { key: 'document_type', label: 'Belge tipi' },
-          { key: 'direction', label: 'Yön' },
-          { key: 'affects_stock', label: 'Stok' },
-          { key: 'create_incoming_qc_order', label: 'GKK' },
-          { key: 'create_outgoing_qc_order', label: 'CKK' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'movement_code', label: 'Hareket kodu', code: true, editableOnNew: true, required: true },
-          { key: 'movement_name', label: 'Hareket adı', name: true, required: true },
-          {
-            key: 'document_type',
-            label: 'Belge tipi',
-            type: 'lookup',
-            lookup: 'hareket-belge-tipleri',
-            valueKey: 'id',
-            labelKey: 'label',
-            codeKey: 'document_type',
-            required: true,
-          },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'], required: true },
-        ],
-        detailFields: [
-          { key: 'affects_stock', label: 'Stok etkisi', type: 'checkbox' },
-          { key: 'partner_required', label: 'Cari zorunlu', type: 'checkbox' },
-          { key: 'warehouse_required', label: 'Depo zorunlu', type: 'checkbox' },
-          { key: 'allow_negative_balance', label: 'Eksi bakiye izin', type: 'checkbox' },
-          { key: 'gl_account_code', label: 'Muhasebe hesap kodu' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'create_incoming_qc_order', label: 'Giriş kalite emri oluşsun', type: 'checkbox' },
-          { key: 'create_outgoing_qc_order', label: 'Çıkış kalite emri oluşsun', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        defaults: {
-          is_active: true,
-          affects_stock: true,
-          warehouse_required: true,
-          partner_required: false,
-          allow_negative_balance: false,
-          create_incoming_qc_order: false,
-          create_outgoing_qc_order: false,
-        },
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'belge-tipleri',
-        techId: 'MDM-DOCTYPE-SCR-001',
-        businessNameEn: 'DocumentTypeScreen',
-        title: 'Belge Tipleri',
-        endpoint: '/belge-tipleri',
-        crud: true,
-        codeField: 'document_type_code',
-        nameField: 'document_type_name',
-        filters: [
-          { key: 'document_type_code', label: 'Kod' },
-          { key: 'module', label: 'Modül' },
-        ],
-        columns: [
-          { key: 'document_type_code', label: 'Kod', mono: true },
-          { key: 'document_type_name', label: 'Ad' },
-          { key: 'module', label: 'Modül' },
-          { key: 'affects_stock', label: 'Stok etkisi' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'document_type_code', label: 'Belge tipi kodu', code: true, required: true, editableOnNew: true },
-          { key: 'document_type_name', label: 'Belge tipi adı', name: true, required: true },
-          { key: 'module', label: 'Modül' },
-          { key: 'affects_stock', label: 'Stok etkisi', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        defaults: { is_active: true },
-      },
-
-      {
-        id: 'mesaj-tanimlari',
-        techId: 'SYS-MSG-SCR-001',
-        businessNameEn: 'MessageDefinitionScreen',
-        title: 'Mesaj Tanımları',
-        endpoint: '/mesaj-tanimlari',
-        crud: true,
-        codeField: 'message_code',
-        nameField: 'title',
-        numeratorSeri: null,
-        filters: [
-          { key: 'message_code', label: 'Mesaj kodu' },
-          { key: 'message_type', label: 'Tip', type: 'select', options: ['Hata', 'Bilgi', 'Uyari'] },
-          { key: 'title', label: 'Başlık' },
-        ],
-        columns: [
-          { key: 'message_code', label: 'Kod', mono: true },
-          { key: 'message_type', label: 'Tip' },
-          { key: 'title', label: 'Başlık' },
-          { key: 'body', label: 'Metin' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'message_code', label: 'Mesaj kodu', code: true, editableOnNew: true, required: true },
-          { key: 'title', label: 'Başlık', name: true, required: true },
-          { key: 'message_type', label: 'Tip', type: 'select', options: ['Hata', 'Bilgi', 'Uyari'], required: true },
-        ],
-        detailFields: [
-          { key: 'body', label: 'Mesaj metni' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: { message_type: 'Bilgi', is_active: true },
-      },
-
-
-    ],
-  },
-
-  {
-    id: 'sistem',
-    title: 'Sistem',
-    sections: [
-      { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar', 'kullanici-gruplari'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri', 'zorunlu-alan-tanimlari'] },
-      { id: 'iletisim', title: 'İletişim', screenIds: ['eposta-gonderimleri'] },
-      { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log', 'tablo-bilgileri', 'sql-sorgu', 'sayfa-sorgulari'] },
-    ],
-    screens: [
-      {
-        id: 'kullanicilar',
-        techId: 'SYS-USR-SCR-001',
-        businessNameEn: 'UsersScreen',
-        title: 'Kullanıcılar',
-        endpoint: '/kullanicilar',
-        crud: true,
-        codeField: 'username',
-        nameField: 'first_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'username', label: 'Kullanıcı adı' },
-          { key: 'first_name', label: 'Ad' },
-          { key: 'role', label: 'Rol' },
-          { key: 'group_code', label: 'Grup' },
-        ],
-        columns: [
-          { key: 'username', label: 'Kullanıcı adı', mono: true },
-          { key: 'first_name', label: 'Ad' },
-          { key: 'last_name', label: 'Soyad' },
-          { key: 'role', label: 'Rol' },
-          { key: 'group_code', label: 'Grup', mono: true },
-          { key: 'parola_var', label: 'Şifre' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'username', label: 'Kullanıcı adı', required: true },
-          { key: 'sifre', label: 'Şifre', type: 'password', requiredOnNew: true },
-          { key: 'first_name', label: 'Ad', name: true, required: true },
-          { key: 'last_name', label: 'Soyad', required: true },
-          { key: 'title', label: 'Ünvan' },
-          { key: 'role', label: 'Rol', type: 'select', options: ['Yonetici', 'Personel', 'Satinalma', 'Uretim', 'Finans'] },
-          {
-            key: 'group_code',
-            label: 'Grup',
-            type: 'lookup',
-            lookup: 'kullanici-gruplari',
-            valueKey: 'group_code',
-            labelKey: 'group_name',
-            codeKey: 'group_code',
-            required: true,
-          },
-        ],
-        detailFields: [
-          { key: 'email_address', label: 'E-posta' },
-          { key: 'phone', label: 'Telefon' },
-          { key: 'user_code', label: 'Kullanıcı kodu (opsiyonel)' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: {
-          role: 'Yonetici',
-          group_code: 'ADMIN',
-          is_active: true,
-          yetkiler: [],
-          sql_permissions: { can_select: true, can_insert: false, can_update: false, can_delete: false },
-        },
-        kullaniciYetkiPaneli: true,
-      },
-      {
-        id: 'kullanici-gruplari',
-        techId: 'SYS-GRP-SCR-001',
-        businessNameEn: 'UserGroupsScreen',
-        title: 'Kullanıcı Grupları',
-        endpoint: '/kullanici-gruplari',
-        crud: true,
-        codeField: 'group_code',
-        nameField: 'group_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'group_code', label: 'Grup kodu' },
-          { key: 'group_name', label: 'Grup adı' },
-        ],
-        columns: [
-          { key: 'group_code', label: 'Kod', mono: true },
-          { key: 'group_name', label: 'Ad' },
-          { key: 'can_approve_purchase', label: 'SA onay' },
-          { key: 'can_quality_control', label: 'Kalite' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'group_code', label: 'Grup kodu', code: true, editableOnNew: true, required: true },
-          { key: 'group_name', label: 'Grup adı', name: true, required: true },
-        ],
-        detailFields: [
-          { key: 'description', label: 'Açıklama' },
-          { key: 'purchase_requisition_ref', label: 'SA talep oluşturabilir', type: 'checkbox' },
-          { key: 'can_approve_purchase', label: 'SA onay yetkisi', type: 'checkbox' },
-          { key: 'can_quality_control', label: 'Kalite kontrol yetkisi', type: 'checkbox' },
-          { key: 'module_permissions', label: 'Modül yetkileri JSON (["*"] veya ["stok","satis"])' },
-          { key: 'warehouse_permissions', label: 'Depo yetkileri JSON (["*"] veya depo kodları)' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'sistem-parametreleri',
-        techId: 'SYS-PRM-SCR-001',
-        businessNameEn: 'SystemParametersScreen',
-        title: 'Sistem Parametreleri',
-        endpoint: '/sistem-parametreleri',
-        crud: true,
-        codeField: 'parameter_code',
-        nameField: 'parameter_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'parameter_code', label: 'Parametre' },
-          { key: 'module', label: 'Modül' },
-        ],
-        columns: [
-          { key: 'parameter_code', label: 'Kod', mono: true },
-          { key: 'parameter_name', label: 'Ad' },
-          { key: 'value', label: 'Değer' },
-          { key: 'module', label: 'Modül' },
-        ],
-        masterFields: [
-          { key: 'parameter_code', label: 'Parametre kodu', code: true, editableOnNew: true, required: true },
-          { key: 'parameter_name', label: 'Parametre adı', name: true, required: true },
-          { key: 'value', label: 'Değer' },
-        ],
-        detailFields: [
-          { key: 'module', label: 'Modül' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-
-      {
-        id: 'audit-log',
-        techId: 'SYS-AUD-SCR-001',
-        businessNameEn: 'AuditLogScreen',
-        title: 'Audit Log',
-        endpoint: '/audit-log',
-        crud: false,
-        readOnly: true,
-        filters: [
-          { key: 'table_name', label: 'Tablo', queryParam: true },
-          { key: 'ekran', label: 'Ekran / yol', queryParam: true },
-          { key: 'user_code', label: 'Kullanıcı', queryParam: true },
-          { key: 'action', label: 'İşlem', queryParam: true },
-        ],
-        columns: [
-          { key: 'created_at', label: 'Zaman' },
-          { key: 'user_code', label: 'Kullanıcı', mono: true },
-          { key: 'table_name', label: 'Tablo', mono: true },
-          { key: 'record_id', label: 'Kayıt' },
-          { key: 'action', label: 'İşlem' },
-          { key: 'request_path', label: 'Yol' },
-        ],
-      },
-      {
-        id: 'tablo-bilgileri',
-        techId: 'SYS-META-SCR-001',
-        businessNameEn: 'ScreenTableCatalogScreen',
-        title: 'Tablo Bilgileri',
-        endpoint: '/meta/ekranlar',
-        crud: false,
-        readOnly: true,
-        metaExplorer: true,
-        filters: [],
-        columns: [
-          { key: 'title', label: 'Ekran' },
-          { key: 'techId', label: 'Teknik kimlik', mono: true },
-          { key: 'primaryTable', label: 'Ana tablo', mono: true },
-        ],
-      },
-      {
-        id: 'sql-sorgu',
-        techId: 'SYS-SQL-SCR-001',
-        businessNameEn: 'SqlQueryScreen',
-        title: 'SQL Sorgu',
-        endpoint: '/sql-console',
-        crud: false,
-        sqlConsole: true,
-        filters: [],
-        columns: [],
-      },
-      {
-        id: 'eposta-gonderimleri',
-        techId: 'SYS-MAIL-SCR-001',
-        businessNameEn: 'EmailDispatchScreen',
-        title: 'E-posta Gönderimleri',
-        endpoint: '/eposta-gonderimleri',
-        crud: false,
-        readOnly: true,
-        filters: [
-          { key: 'status', label: 'Durum' },
-          { key: 'recipient', label: 'Alıcı' },
-          { key: 'source_type', label: 'Kaynak' },
-        ],
-        columns: [
-          { key: 'id', label: 'ID', mono: true },
-          { key: 'source_type', label: 'Kaynak' },
-          { key: 'recipient', label: 'Alıcı' },
-          { key: 'subject', label: 'Konu' },
-          { key: 'status', label: 'Durum' },
-          { key: 'attempt_count', label: 'Deneme' },
-          { key: 'sent_date', label: 'Gönderim' },
-          { key: 'last_error', label: 'Hata' },
-        ],
-      },
-
-
-      {
-        id: 'zorunlu-alan-tanimlari',
-        techId: 'SYS-REQ-SCR-001',
-        businessNameEn: 'RequiredFieldDefinitionScreen',
-        title: 'Zorunlu Alan Tanımı',
-        endpoint: '/zorunlu-alan-tanimlari',
-        crud: true,
-        codeField: 'field_key',
-        nameField: 'field_label',
-        numeratorSeri: null,
-        filters: [
-          { key: 'screen_title', label: 'Ekran' },
-          { key: 'field_key', label: 'Alan' },
-          { key: 'is_required', label: 'Zorunlu', type: 'bool' },
-        ],
-        columns: [
-          { key: 'screen_title', label: 'Ekran' },
-          { key: 'screen_id', label: 'Ekran kodu', mono: true },
-          { key: 'field_label', label: 'Alan adı' },
-          { key: 'field_key', label: 'Alan kodu', mono: true },
-          { key: 'is_required', label: 'Zorunlu' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          {
-            key: 'screen_id',
-            label: 'Ekran',
-            type: 'lookup',
-            lookup: 'ekranlar',
-            valueKey: 'screen_code',
-            labelKey: 'screen_name',
-            codeKey: 'screen_code',
-            autoFillName: 'screen_title',
-            required: true,
-            lead: true,
-          },
-          { key: 'screen_title', label: 'Ekran adı', readOnly: true },
-          {
-            key: 'field_key',
-            label: 'Alan',
-            type: 'select',
-            options: [],
-            required: true,
-            editableOnNew: true,
-            hint: 'Bağlı ekranın alanları',
-          },
-          { key: 'field_label', label: 'Alan adı', name: true, required: true },
-        ],
-        detailFields: [
-          { key: 'is_required', label: 'Zorunlu yap', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: { is_required: true, is_active: true },
-      },
-      {
-        id: 'sayfa-sorgulari',
-        techId: 'SYS-QRY-SCR-001',
-        businessNameEn: 'PageQueryScreen',
-        title: 'Sayfa Sorgu',
-        endpoint: '/meta/sorgular',
-        crud: false,
-        readOnly: true,
-        pageQueryExplorer: true,
-        filters: [],
-        columns: [
-          { key: 'title', label: 'Ekran' },
-          { key: 'endpoint', label: 'Endpoint', mono: true },
-          { key: 'routeFile', label: 'Route', mono: true },
-        ],
-      },
-
-    ],
-  },
-  {
     id: 'ana-veri',
     title: 'Ana Veri',
     sections: [
-      { id: 'organizasyon', title: 'Organizasyon', screenIds: ['companies', 'is-yerleri', 'warehouses'] },
+      {
+        id: 'organizasyon',
+        title: 'Organizasyon',
+        screenIds: ['companies', 'is-yerleri', 'warehouses'],
+      },
+      {
+        id: 'cografya',
+        title: 'Coğrafya',
+        screenIds: ['country-tanimi', 'sehir-tanimi'],
+      },
+      {
+        id: 'olcu-dil',
+        title: 'Ölçü ve Dil',
+        screenIds: ['olcu-birimleri', 'dil-tanimi'],
+      },
+      {
+        id: 'para-kur',
+        title: 'Para ve Kur',
+        screenIds: ['para-birimi-tanimi', 'doviz-exchange_rate-tanimi', 'banka-tanimi'],
+      },
+      {
+        id: 'ticari-tanimlar',
+        title: 'Ticari Tanımlamalar',
+        screenIds: ['odeme-kosulu-tanimi', 'teslimat-kosulu-tanimi', 'belge-tipleri', 'hareket-kodlari', 'kategori-tip-tanimi', 'kategori-tanimi'],
+      },
+      {
+        id: 'numarator',
+        title: 'Numaratör',
+        screenIds: ['numarator-tanimi'],
+      },
     ],
     screens: [
       {
@@ -1439,22 +580,904 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
+      {
+        id: 'country-tanimi',
+        techId: 'MDM-CTRY-SCR-001',
+        businessNameEn: 'CountryDefinitionScreen',
+        title: 'Ülkeler',
+        endpoint: '/countries',
+        crud: true,
+        codeField: 'country_code',
+        nameField: 'country_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'country_code', label: 'Ülke kodu' },
+          { key: 'country_name', label: 'Ülke adı' },
+        ],
+        columns: [
+          { key: 'country_code', label: 'Kod', mono: true },
+          { key: 'country_name', label: 'Ad' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'country_code', label: 'Ülke kodu', code: true, editableOnNew: true, required: true },
+          { key: 'country_name', label: 'Ülke adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'sehir-tanimi',
+        techId: 'MDM-CITY-SCR-001',
+        businessNameEn: 'CityProvinceScreen',
+        title: 'Şehir / İl',
+        endpoint: '/cities',
+        crud: true,
+        codeField: 'city_code',
+        nameField: 'city_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'city_code', label: 'Şehir kodu' },
+          { key: 'city_name', label: 'Şehir adı' },
+          { key: 'country_code', label: 'Ülke' },
+        ],
+        columns: [
+          { key: 'city_code', label: 'Kod', mono: true },
+          { key: 'city_name', label: 'Ad' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'city_code', label: 'Şehir kodu', code: true, editableOnNew: true, required: true },
+          { key: 'city_name', label: 'Şehir adı', name: true, required: true },
+          { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        // Districts live under the city card (no standalone district screen)
+        detailKey: 'districts',
+        detailSlots: 3,
+        detailAsFields: false,
+        detailFields: [
+          { key: 'district_code', label: 'İlçe kodu', code: true, mono: true, size: 'short' },
+          { key: 'district_name', label: 'İlçe adı', name: true, required: true },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        // Row ✓ / Sil writes to /districts right away
+        detailPersist: {
+          districts: {
+            endpoint: '/districts',
+            parentFields: { city_code: 'city_code' },
+          },
+        },
+        defaults: { is_active: true, districts: [] },
+      },
+      {
+        id: 'olcu-birimleri',
+        techId: 'MDM-UOM-SCR-001',
+        businessNameEn: 'UnitOfMeasureScreen',
+        title: 'Ölçü Birimleri',
+        endpoint: '/olcu-birimleri',
+        crud: true,
+        codeField: 'uom_code',
+        nameField: 'uom_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'uom_code', label: 'Birim kodu' },
+          { key: 'uom_name', label: 'Birim adı' },
+        ],
+        columns: [
+          { key: 'uom_code', label: 'Kod', mono: true },
+          { key: 'uom_name', label: 'Ad' },
+        ],
+        masterFields: [
+          { key: 'uom_code', label: 'Birim kodu', code: true, editableOnNew: true, required: true },
+          { key: 'uom_name', label: 'Birim adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'dil-tanimi',
+        techId: 'MDM-LANG-SCR-001',
+        businessNameEn: 'LanguageDefinitionScreen',
+        title: 'Diller',
+        endpoint: '/languages',
+        crud: true,
+        codeField: 'language_code',
+        nameField: 'language_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'language_code', label: 'Kod' },
+          { key: 'language_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'language_code', label: 'Kod', mono: true },
+          { key: 'language_name', label: 'Ad' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'language_code', label: 'Dil kodu', code: true, editableOnNew: true, required: true, autoFillLanguageName: true },
+          { key: 'language_name', label: 'Dil adı', name: true, required: true, readOnlyWhen: 'auto-dil' },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'para-birimi-tanimi',
+        techId: 'MDM-CUR-SCR-001',
+        businessNameEn: 'CurrencyDefinitionScreen',
+        title: 'Para Birimleri',
+        endpoint: '/para-birimleri',
+        crud: true,
+        codeField: 'currency_code',
+        nameField: 'currency_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'currency_code', label: 'PB kodu' },
+          { key: 'currency_name', label: 'PB adı' },
+        ],
+        columns: [
+          { key: 'currency_code', label: 'Kod', mono: true },
+          { key: 'currency_name', label: 'Ad' },
+          { key: 'symbol', label: 'Sembol' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'currency_code', label: 'Para birimi kodu', code: true, editableOnNew: true, required: true },
+          { key: 'currency_name', label: 'Para birimi adı', name: true, required: true },
+          { key: 'symbol', label: 'Sembol' },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'doviz-exchange_rate-tanimi',
+        techId: 'FIN-FX-SCR-001',
+        businessNameEn: 'ExchangeRateScreen',
+        title: 'Döviz Kurları',
+        endpoint: '/doviz-kurlari',
+        crud: true,
+        codeField: 'source_currency',
+        nameField: 'target_currency',
+        tcmbFetchAction: true,
+        filters: [
+          { key: 'source_currency', label: 'Kaynak PB' },
+          { key: 'target_currency', label: 'Hedef PB' },
+          { key: 'source', label: 'Kur kaynağı', type: 'select', options: ['TCMB', 'Manuel', 'Seed'] },
+        ],
+        columns: [
+          { key: 'rate_date', label: 'Tarih' },
+          { key: 'source_currency', label: 'Kaynak PB', mono: true },
+          { key: 'target_currency', label: 'Hedef PB', mono: true },
+          { key: 'buy_rate', label: 'Alış' },
+          { key: 'sell_rate', label: 'Satış' },
+          { key: 'source', label: 'Kur kaynağı' },
+        ],
+        masterFields: [
+          { key: 'rate_date', label: 'Kur tarihi', type: 'date', required: true },
+          { key: 'source_currency', label: 'Kaynak PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
+          { key: 'target_currency', label: 'Hedef PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
+          {
+            key: 'buy_rate',
+            label: 'Alış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz alış (Forex Buying): Kaydi/hesaplar arası işlemde kurumun sizden döviz aldığı kur. TCMB seçiliyse bültenden gelir; Manuel’de banka veya sözleşmenize göre girin. Belgede «Kur tipi = Alış» bu değeri kullanır.',
+          },
+          {
+            key: 'sell_rate',
+            label: 'Satış kuru',
+            type: 'number',
+            required: true,
+            info: 'Döviz satış (Forex Selling): Kaydi işlemde kurumun size döviz sattığı kur. Genelde alıştan yüksektir (makas). Satış belgelerinde sıkça bu tip seçilir. TCMB gösterge niteliğindedir; banka kurunuz farklı olabilir.',
+          },
+        ],
+        detailFields: [
+          {
+            key: 'effective_buy_rate',
+            label: 'Efektif alış',
+            type: 'number',
+            info: 'Efektif alış (Banknote Buying): Nakit banknot dövizi kurumun sizden aldığı kur. Elden döviz bozdurma senaryosu. TCMB’de bazı paralarda boş olabilir; o zaman döviz alışa düşülür.',
+          },
+          {
+            key: 'effective_sell_rate',
+            label: 'Efektif satış',
+            type: 'number',
+            info: 'Efektif satış (Banknote Selling): Nakit banknotu kurumdan alırken kullanılan kur. Nakit makası genelde kaydi makastan geniştir. Manuel tanımlarken fiilen uyguladığınız gişe/banka kurunu yazın.',
+          },
+          {
+            key: 'source',
+            label: 'Kur kaynağı',
+            type: 'select',
+            options: ['TCMB', 'Manuel'],
+            info: 'TCMB: Sistem Parametreleri’ndeki TCMB_KUR_URL (today.xml) ile iş günü bülteni çekilir; TCMB_KUR_AUTO=true ise günde bir kez otomatik güncellenir. Manuel: TCMB’de olmayan pariteler (ör. MXN) veya kendi banka kurunuz.',
+          },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'banka-tanimi',
+        techId: 'MDM-BANK-SCR-001',
+        businessNameEn: 'BankDefinitionScreen',
+        title: 'Bankalar',
+        endpoint: '/banks',
+        crud: true,
+        codeField: 'bank_code',
+        nameField: 'bank_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'bank_code', label: 'Kod' },
+          { key: 'bank_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'bank_code', label: 'Kod', mono: true },
+          { key: 'bank_name', label: 'Ad' },
+          { key: 'swift_code', label: 'SWIFT' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'bank_code', label: 'Banka kodu', code: true, editableOnNew: true, required: true },
+          { key: 'bank_name', label: 'Banka adı', name: true, required: true },
+          { key: 'swift_code', label: 'SWIFT' },
+          { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name' },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'odeme-kosulu-tanimi',
+        techId: 'MDM-PAYT-SCR-001',
+        businessNameEn: 'PaymentTermsScreen',
+        title: 'Ödeme Koşulları',
+        endpoint: '/odeme-kosullari',
+        crud: true,
+        codeField: 'term_code',
+        nameField: 'term_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'term_code', label: 'Kod' },
+          { key: 'term_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'term_code', label: 'Kod', mono: true },
+          { key: 'term_name', label: 'Ad' },
+          { key: 'due_days', label: 'Vade (gün)' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'term_code', label: 'Koşul kodu', code: true, editableOnNew: true, required: true },
+          { key: 'term_name', label: 'Koşul adı', name: true, required: true },
+          { key: 'due_days', label: 'Vade gün', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'teslimat-kosulu-tanimi',
+        techId: 'MDM-DLVT-SCR-001',
+        businessNameEn: 'DeliveryTermsScreen',
+        title: 'Teslimat Koşulları',
+        endpoint: '/teslimat-kosullari',
+        crud: true,
+        codeField: 'term_code',
+        nameField: 'term_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'term_code', label: 'Kod' },
+          { key: 'term_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'term_code', label: 'Kod', mono: true },
+          { key: 'term_name', label: 'Ad' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'term_code', label: 'Koşul kodu', code: true, editableOnNew: true, required: true },
+          { key: 'term_name', label: 'Koşul adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'belge-tipleri',
+        techId: 'MDM-DOCTYPE-SCR-001',
+        businessNameEn: 'DocumentTypeScreen',
+        title: 'Belge Tipleri',
+        endpoint: '/belge-tipleri',
+        crud: true,
+        codeField: 'document_type_code',
+        nameField: 'document_type_name',
+        filters: [
+          { key: 'document_type_code', label: 'Kod' },
+          { key: 'module', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'document_type_code', label: 'Kod', mono: true },
+          { key: 'document_type_name', label: 'Ad' },
+          { key: 'module', label: 'Modül' },
+          { key: 'affects_stock', label: 'Stok etkisi' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'document_type_code', label: 'Belge tipi kodu', code: true, required: true, editableOnNew: true },
+          { key: 'document_type_name', label: 'Belge tipi adı', name: true, required: true },
+          { key: 'module', label: 'Modül' },
+          { key: 'affects_stock', label: 'Stok etkisi', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: { is_active: true },
+      },
+      {
+        id: 'hareket-kodlari',
+        techId: 'INV-MVTC-SCR-001',
+        businessNameEn: 'MovementCodeScreen',
+        title: 'Hareket Kodları',
+        endpoint: '/hareket-kodlari',
+        crud: true,
+        codeField: 'movement_code',
+        nameField: 'movement_name',
+        numeratorSeri: null,
+        // Sol kategori yerine tepe filtre (Belge Tipleri + stok etkili yeni tipler)
+        listCategories: null,
+        categoryKey: null,
+        filters: [
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+          },
+          { key: 'movement_code', label: 'Hareket kodu' },
+          { key: 'movement_name', label: 'Hareket adı' },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'] },
+          { key: 'affects_stock', label: 'Stok etkisi', type: 'bool' },
+        ],
+        columns: [
+          { key: 'movement_code', label: 'Kod', mono: true },
+          { key: 'movement_name', label: 'Ad' },
+          { key: 'document_type', label: 'Belge tipi' },
+          { key: 'direction', label: 'Yön' },
+          { key: 'affects_stock', label: 'Stok' },
+          { key: 'create_incoming_qc_order', label: 'GKK' },
+          { key: 'create_outgoing_qc_order', label: 'CKK' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'movement_code', label: 'Hareket kodu', code: true, editableOnNew: true, required: true },
+          { key: 'movement_name', label: 'Hareket adı', name: true, required: true },
+          {
+            key: 'document_type',
+            label: 'Belge tipi',
+            type: 'lookup',
+            lookup: 'hareket-belge-tipleri',
+            valueKey: 'id',
+            labelKey: 'label',
+            codeKey: 'document_type',
+            required: true,
+          },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Transfer', 'Bilgi'], required: true },
+        ],
+        detailFields: [
+          { key: 'affects_stock', label: 'Stok etkisi', type: 'checkbox' },
+          { key: 'partner_required', label: 'Cari zorunlu', type: 'checkbox' },
+          { key: 'warehouse_required', label: 'Depo zorunlu', type: 'checkbox' },
+          { key: 'allow_negative_balance', label: 'Eksi bakiye izin', type: 'checkbox' },
+          { key: 'gl_account_code', label: 'Muhasebe hesap kodu' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'create_incoming_qc_order', label: 'Giriş kalite emri oluşsun', type: 'checkbox' },
+          { key: 'create_outgoing_qc_order', label: 'Çıkış kalite emri oluşsun', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: {
+          is_active: true,
+          affects_stock: true,
+          warehouse_required: true,
+          partner_required: false,
+          allow_negative_balance: false,
+          create_incoming_qc_order: false,
+          create_outgoing_qc_order: false,
+        },
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'kategori-tip-tanimi',
+        techId: 'MDM-CATTYPE-SCR-001',
+        businessNameEn: 'CategoryTypeDefinitionScreen',
+        title: 'Kategori Tip Tanımı',
+        endpoint: '/kategori-tipleri',
+        crud: true,
+        codeField: 'type_code',
+        nameField: 'type_name',
+        numeratorSeri: 'KATEGORI_TIPI',
+        filters: [
+          { key: 'type_code', label: 'Tip kodu' },
+          { key: 'type_name', label: 'Tip adı' },
+          { key: 'applies_to', label: 'Kapsam' },
+        ],
+        columns: [
+          { key: 'type_code', label: 'Kod', mono: true },
+          { key: 'type_name', label: 'Ad' },
+          { key: 'applies_to', label: 'Kapsam' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'type_code', label: 'Tip kodu', code: true, required: true, editableOnNew: true },
+          { key: 'type_name', label: 'Tip adı', name: true, required: true },
+          { key: 'applies_to', label: 'Kapsam', type: 'select', options: ['Genel', 'Stok', 'Cari', 'Hepsi'], required: true },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'kategori-tanimi',
+        techId: 'MDM-CAT-SCR-001',
+        businessNameEn: 'CategoryDefinitionScreen',
+        title: 'Kategori Tanımı',
+        endpoint: '/kategoriler',
+        crud: true,
+        codeField: 'category_code',
+        nameField: 'category_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'category_code', label: 'Kategori kodu' },
+          { key: 'category_name', label: 'Kategori adı' },
+          { key: 'category_type', label: 'Tip' },
+        ],
+        columns: [
+          { key: 'category_code', label: 'Kod', mono: true },
+          { key: 'category_name', label: 'Ad' },
+          { key: 'category_type', label: 'Tip' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'category_code', label: 'Kategori kodu', code: true, editableOnNew: true, required: true },
+          { key: 'category_name', label: 'Kategori adı', name: true, required: true },
+          {
+            key: 'category_type',
+            label: 'Kategori tipi',
+            type: 'lookup',
+            lookup: 'kategori-tipleri',
+            valueKey: 'type_code',
+            labelKey: 'type_name',
+            codeKey: 'type_code',
+            required: true,
+          },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'numarator-tanimi',
+        techId: 'SYS-NUM-SCR-001',
+        businessNameEn: 'NumberSeriesScreen',
+        title: 'Numaratörler',
+        endpoint: '/kod-serileri',
+        crud: true,
+        codeField: 'series_code',
+        nameField: 'description',
+        numeratorSeri: null,
+        filters: [
+          { key: 'series_code', label: 'Seri kodu' },
+          { key: 'screen_name', label: 'Ekran adı' },
+          { key: 'prefix', label: 'Önek' },
+        ],
+        columns: [
+          { key: 'series_code', label: 'Seri', mono: true },
+          { key: 'prefix', label: 'Önek', mono: true },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'screen_name', label: 'Ekran' },
+          { key: 'last_number', label: 'Son no' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'series_code', label: 'Seri kodu', code: true, editableOnNew: true, required: true },
+          { key: 'prefix', label: 'Önek' },
+          { key: 'description', label: 'Açıklama', name: true, required: true },
+        ],
+        detailFields: [
+          {
+            key: 'screen_code',
+            label: 'Ekran kodu',
+            type: 'lookup',
+            lookup: 'ekranlar',
+            valueKey: 'screen_code',
+            labelKey: 'screen_name',
+            codeKey: 'screen_code',
+            autoFillName: 'screen_name',
+          },
+          { key: 'screen_name', label: 'Ekran adı', readOnly: true },
+          { key: 'last_number', label: 'Son numara', type: 'number' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+    ],
+  },
+  {
+    id: 'cari',
+    title: 'Cari',
+    sections: [
+      {
+        id: 'kartlar',
+        title: 'Cari Kartlar',
+        screenIds: ['cari-kartlari'],
+      },
+      {
+        id: 'islemler',
+        title: 'Cari İşlemler',
+        screenIds: ['tahsilat-odemeler', 'cari-ekstre', 'cari-mutabakat'],
+      },
+      {
+        id: 'e-belge',
+        title: 'e-Belge',
+        screenIds: ['e-belge-kuyruk'],
+      },
+    ],
+    screens: [
+      {
+        id: 'cari-kartlari',
+        techId: 'MDM-BP-SCR-001',
+        businessNameEn: 'BusinessPartnerScreen',
+        title: 'Cari Kartları',
+        endpoint: '/partners',
+        crud: true,
+        codeField: 'partner_code',
+        nameField: 'partner_name',
+        numeratorSeri: 'MUSTERI',
+        numeratorFromField: { field: 'partner_type', map: {
+          Musteri: 'MUSTERI',
+          Tedarikci: 'TEDARIKCI',
+          HerIkisi: 'CARI_HERIKISI',
+        } },
+        filters: [
+          { key: 'plant_code', label: 'İş yeri' },
+          { key: 'partner_code', label: 'Cari kodu' },
+          { key: 'partner_name', label: 'Cari adı' },
+          { key: 'partner_type', label: 'Tür' },
+        ],
+        columns: [
+          { key: 'partner_code', label: 'Kod', mono: true },
+          { key: 'partner_name', label: 'Ad' },
+          { key: 'partner_type', label: 'Tür' },
+          { key: 'plant_code', label: 'İş yeri', mono: true },
+          { key: 'phone', label: 'Telefon' },
+          { key: 'province', label: 'İl' },
+        ],
+        masterFields: [
+          { key: 'partner_type', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, lead: true },
+          { key: 'partner_code', label: 'Cari kodu', code: true, required: true },
+          { key: 'partner_name', label: 'Cari adı', name: true, required: true },
+          { key: 'tax_id', label: 'VKN / TCKN' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [
+          { key: 'address', label: 'Adres' },
+          { key: 'billing_address', label: 'Fatura adresi' },
+          { key: 'authorized_person', label: 'Yetkili' },
+          { key: 'authorized_phone', label: 'Yetkili tel' },
+        ],
+        detailKey: 'partner_details',
+        defaults: { is_active: true, firma_parametreleri: [] },
+        formTabs: [
+          {
+            id: 'ana', label: 'Cari Kart', kind: 'master-detail',
+            masterFields: [
+              // Üst: olmazsa olmaz / master (görsel: firma + iş yeri, kod/ad, VKN, pasif)
+              { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', groupLabel: 'Organizasyon', lead: true },
+              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'partner_type', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'partner_code', label: 'Cari kod', code: true, required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'partner_name', label: 'Cari adı', name: true, required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'tax_id', label: 'VKN / TCKN', required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'is_active', label: 'Pasif', type: 'checkbox', group: 'organizasyon', groupLabel: 'Organizasyon' },
+            ],
+            detailFields: [
+              { key: 'partner_name_2', label: 'Cari adı 2', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'first_name', label: 'Ad', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'last_name', label: 'Soyad', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'passport_no', label: 'Pasaport no', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'tax_office', label: 'Vergi dairesi', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'payment_due_days', label: 'Vade (gün)', type: 'number', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'is_subcontractor', label: 'Fasoncu', type: 'checkbox', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'subcontract_capacity_daily', label: 'Fason günlük kapasite', type: 'number', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'subcontract_lead_days', label: 'Fason teslim süresi (gün)', type: 'number', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'subcontract_min_qty', label: 'Fason min. sipariş', type: 'number', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'subcontract_pricing_method', label: 'Fason fiyat yöntemi', type: 'select', options: ['Adet','Kg','Metre','Saat','Operasyon','Parti','Sabit','Ozel'], group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'subcontract_quality_score', label: 'Fason kalite skoru', type: 'number', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'country', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name', group: 'address', groupLabel: 'Adres' },
+              { key: 'province', label: 'İl', group: 'address', groupLabel: 'Adres' },
+              { key: 'district', label: 'İlçe', group: 'address', groupLabel: 'Adres' },
+              { key: 'postal_code', label: 'Posta kodu', group: 'address', groupLabel: 'Adres' },
+              { key: 'bill_address_1', label: 'Adres 1', group: 'address', groupLabel: 'Adres' },
+              { key: 'bill_address_2', label: 'Adres 2', group: 'address', groupLabel: 'Adres' },
+              { key: 'bill_address_3', label: 'Adres 3', group: 'address', groupLabel: 'Adres' },
+              { key: 'phone', label: 'Telefon 1', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'phone_2', label: 'Telefon 2', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'mobile_phone', label: 'Cep tel', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'email', label: 'E-posta', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'website', label: 'Website', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'fax', label: 'Fax', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'authorized_person', label: 'Yetkili', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'authorized_phone', label: 'Yetkili tel', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'description', label: 'Açıklama', group: 'status', groupLabel: 'Notlar' },
+              { key: 'notes', label: 'Notlar', group: 'status', groupLabel: 'Notlar' },
+              { key: 'is_deleted', label: 'Silindi', type: 'checkbox', group: 'status', groupLabel: 'Notlar' },
+            ],
+          },
+          {
+            id: 'firma-param',
+            label: 'Firma Parametreleri',
+            kind: 'cari-firmalar',
+          },
+          {
+            id: 'banka', label: 'Banka Bilgisi', kind: 'grid', key: 'banka_bilgileri', slots: 3,
+            fields: [
+              { key: 'iban', label: 'IBAN' },
+              { key: 'bank_code', label: 'Banka kodu' },
+              { key: 'bank_name', label: 'Banka adı' },
+              { key: 'swift_no', label: 'SWIFT' },
+              { key: 'currency_code', label: 'Para birimi' },
+              { key: 'branch_code', label: 'Şube kodu' },
+              { key: 'branch_name', label: 'Şube adı' },
+              { key: 'account_no', label: 'Hesap no' },
+              { key: 'correspondent_account_no', label: 'Muhabir hesap' },
+              { key: 'description', label: 'Açıklama' },
+              { key: 'is_inactive', label: 'Pasif', type: 'checkbox' },
+            ],
+          },
+          {
+            id: 'sevk', label: 'Sevk Adresleri', kind: 'grid', key: 'sevk_adresleri', slots: 3,
+            fields: [
+              { key: 'address_name', label: 'Adres adı' },
+              { key: 'address_line_1', label: 'Adres 1' },
+              { key: 'address_line_2', label: 'Adres 2' },
+              { key: 'address_line_3', label: 'Adres 3' },
+              { key: 'country', label: 'Ülke' },
+              { key: 'province', label: 'İl' },
+              { key: 'district', label: 'İlçe' },
+              { key: 'postal_code', label: 'Posta kodu' },
+              { key: 'phone', label: 'Telefon' },
+              { key: 'authorized_person', label: 'Yetkili' },
+              { key: 'is_default', label: 'Varsayılan', type: 'checkbox' },
+              { key: 'is_inactive', label: 'Pasif', type: 'checkbox' },
+            ],
+          },
+          {
+            id: 'genel', label: 'Genel Bilgiler', kind: 'fields',
+            fields: [
+              { key: 'founded_date', label: 'Kuruluş tarihi', type: 'date' },
+              { key: 'industry_code', label: 'Sektör', type: 'lookup', lookup: 'kategoriler-sektor', valueKey: 'category_code', labelKey: 'category_name' },
+              { key: 'region_code', label: 'Bölge', type: 'lookup', lookup: 'kategoriler-region', valueKey: 'category_code', labelKey: 'category_name' },
+              { key: 'nace_code', label: 'NACE kodu' },
+              { key: 'capital', label: 'Sermaye', type: 'number' },
+            ],
+          },
+          {
+            id: 'dil', label: 'Dil Tanımları', kind: 'grid', key: 'dil_tanimlari', slots: 2,
+            fields: [
+              { key: 'language_code', label: 'Dil kodu', type: 'lookup', lookup: 'languages', valueKey: 'language_code', labelKey: 'language_name', autoFillName: 'language_name' },
+              { key: 'partner_name', label: 'Cari adı (dil)' },
+              { key: 'description', label: 'Açıklama' },
+              { key: 'is_default', label: 'Varsayılan', type: 'checkbox' },
+            ],
+          },
+          {
+            id: 'kategori',
+            label: 'Kategoriler',
+            kind: 'fields',
+            layout: 'pairs',
+            fields: [...CARI_KATEGORI_FIELDS],
+          },
+          {
+            id: 'ekalan',
+            label: 'Ek Alanlar',
+            kind: 'fields',
+            layout: 'pairs',
+            fields: [...CARI_EK_ALAN_FIELDS],
+          },
+        ],
+      },
+      {
+        id: 'tahsilat-odemeler',
+        techId: 'FIN-APAR-SCR-001',
+        businessNameEn: 'CollectionPaymentScreen',
+        title: 'Tahsilat ve Ödemeler',
+        endpoint: '/tahsilat-odemeler',
+        crud: true,
+        codeField: 'document_no',
+        nameField: 'partner_name',
+        numeratorSeri: 'TAHSILAT',
+        filters: [
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'type', label: 'Tip' },
+          { key: 'partner_name', label: 'Cari' },
+        ],
+        columns: [
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'type', label: 'Tip' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'exchange_rate', label: 'Kur' },
+          { key: 'payment_method', label: 'Ödeme' },
+          { key: 'cash_account_code', label: 'Kasa', mono: true },
+          { key: 'bank_account_code', label: 'Banka', mono: true },
+          { key: 'cheque_no', label: 'Çek no' },
+          { key: 'due_date', label: 'Vade' },
+          { key: 'document_date', label: 'Tarih' },
+          { key: 'status', label: 'Durum' },
+          { key: 'project_code', label: 'Proje', mono: true },
+        ],
+        masterFields: [
+          { key: 'document_no', label: 'Belge no', code: true },
+          { key: 'type', label: 'Tip', type: 'select', options: ['Tahsilat', 'Odeme'], required: true },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'amount', label: 'Tutar', type: 'number', required: true },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti'] },
+          { key: 'document_date', label: 'Tarih', type: 'date' },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli'] },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'cari-ekstre',
+        techId: 'FIN-BPST-SCR-001',
+        businessNameEn: 'BusinessPartnerStatementScreen',
+        title: 'Cari Ekstre',
+        endpoint: '/cari-hareketleri',
+        crud: false,
+        readOnly: true,
+        reportPdfAction: true,
+        reportPdfUrl: '/cari-hareketleri',
+        filters: [
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
+          { key: 'partner_code', label: 'Cari kod', queryParam: true },
+          { key: 'direction', label: 'Yön' },
+          { key: 'document_type', label: 'Belge tipi' },
+        ],
+        columns: [
+          { key: 'partner_code', label: 'Cari', mono: true },
+          { key: 'partner_name', label: 'Cari adı' },
+          { key: 'movement_no', label: 'No', mono: true },
+          { key: 'movement_date', label: 'Tarih' },
+          { key: 'direction', label: 'Yön' },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'document_type', label: 'Belge' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'cari-mutabakat',
+        techId: 'FIN-BP-REC-001',
+        businessNameEn: 'PartnerReconciliationScreen',
+        title: 'Cari Mutabakat',
+        endpoint: '/cari-mutabakat',
+        crud: false,
+        readOnly: true,
+        banner: 'Açık fatura bakiyesi ile cari hareket net bakiyesini karşılaştırır. Muhasebeleştirilmemiş faturalar ayrıca işaretlenir.',
+        filters: [
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
+          { key: 'only_diff', label: 'Sadece farklar (true)', queryParam: true },
+        ],
+        columns: [
+          { key: 'partner_code', label: 'Cari', mono: true },
+          { key: 'partner_name', label: 'Ad' },
+          { key: 'open_invoice_balance', label: 'Açık fatura' },
+          { key: 'ledger_balance', label: 'Cari bakiye' },
+          { key: 'difference', label: 'Fark' },
+          { key: 'unposted_invoice_count', label: 'Muhasebesiz fatura' },
+          { key: 'posted_invoice_count', label: 'Muhasebeli' },
+          { key: 'match_status', label: 'Durum' },
+        ],
+      },
+      {
+        id: 'e-belge-kuyruk',
+        techId: 'FIN-EDOC-QUE-001',
+        businessNameEn: 'EDocumentQueueScreen',
+        title: 'e-Belge Kuyruğu',
+        endpoint: '/e-belge',
+        crud: false,
+        readOnly: true,
+        banner: 'e-Fatura / e-İrsaliye kuyruk iskeleti. Harici gönderim adaptörü bağlanana kadar simülasyon ile durum ilerletilir.',
+        filters: [
+          { key: 'status', label: 'Durum', queryParam: true },
+        ],
+        columns: [
+          { key: 'id', label: 'ID', mono: true },
+          { key: 'document_type', label: 'Tip' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'direction', label: 'Yön' },
+          { key: 'status', label: 'Durum' },
+          { key: 'uuid_ettn', label: 'ETTN', mono: true },
+          { key: 'gib_number', label: 'GİB no', mono: true },
+          { key: 'last_error', label: 'Hata' },
+          { key: 'queued_at', label: 'Kuyruk' },
+          { key: 'sent_at', label: 'Gönderim' },
+        ],
+      },
     ],
   },
   {
     id: 'stok',
     title: 'Stok',
     sections: [
-      { id: 'kartlar', title: 'Kartlar', screenIds: ['stok-karti'] },
-      { id: 'bakiye-hareket', title: 'Bakiye & Hareket', screenIds: ['depo-bakiye', 'stok-hareketleri', 'transfer-emirleri', 'sayim-belgeleri', 'stok-partileri', 'stok-rezervasyonlari', 'stok-serileri', 'stok-ikame'] },
-      { id: 'planlama', title: 'Planlama', screenIds: ['mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar'] },
+      {
+        id: 'kartlar',
+        title: 'Stok Kartları',
+        screenIds: ['stok-karti'],
+      },
+      {
+        id: 'hareketler',
+        title: 'Stok Hareketleri',
+        screenIds: ['stok-hareketleri', 'stok-hareket-raporu', 'depo-bakiye'],
+      },
+      {
+        id: 'depo-islemleri',
+        title: 'Depo İşlemleri',
+        screenIds: ['transfer-emirleri', 'sayim-belgeleri', 'stok-depo'],
+      },
+      {
+        id: 'parti-seri',
+        title: 'Parti, Seri ve Rezervasyon',
+        screenIds: ['stok-partileri', 'stok-serileri', 'stok-rezervasyonlari', 'stok-ikame'],
+      },
+      {
+        id: 'mrp',
+        title: 'MRP Planlama',
+        screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar', 'mrp-hareket-raporu'],
+      },
     ],
     screens: [
       {
         id: 'stok-karti',
         techId: 'INV-ITM-SCR-001',
         businessNameEn: 'ItemMasterScreen',
-        title: 'Stok Kartı',
+        title: 'Stok Kartları',
         endpoint: '/items',
         crud: true,
         codeField: 'item_code',
@@ -1623,43 +1646,6 @@ const MODULES = [
         ],
       },
       {
-        id: 'depo-bakiye',
-        techId: 'INV-BAL-SCR-001',
-        businessNameEn: 'WarehouseBalanceScreen',
-        title: 'Depo Bakiye',
-        endpoint: '/stok-bakiyeleri',
-        crud: false,
-        readOnly: true,
-        hideActions: true,
-        contextMenu: [
-          { id: 'stok-hareketleri', label: 'Stok Hareketleri', openScreen: 'stok-hareketleri', passFilters: ['item_code', 'warehouse_code', 'item_id', 'warehouse_id'] },
-        ],
-        filters: [
-          { key: 'warehouse_code', label: 'Depo kodu' },
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'item_name', label: 'Stok adı' },
-          { key: 'item_type', label: 'Stok tipi' },
-          { key: 'stock_status', label: 'Stok statü' },
-          { key: 'lot_no', label: 'Parti no' },
-          { key: 'yalnizca_stokta', label: 'Yalnızca stokta olanları göster', type: 'checkbox', default: true, queryParam: true },
-        ],
-        columns: [
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'item_type', label: 'Tip' },
-          { key: 'stock_status', label: 'Statü' },
-          { key: 'lot_no', label: 'Parti', mono: true },
-          { key: 'bakiye', label: 'Bakiye', mono: true },
-          { key: 'rezerve', label: 'Rezerve', mono: true },
-          { key: 'bloke', label: 'Bloke', mono: true },
-          { key: 'tahsis', label: 'Tahsis', mono: true },
-          { key: 'yolda', label: 'Yolda', mono: true },
-          { key: 'kullanilabilir', label: 'Kullanılabilir', mono: true },
-          { key: 'safety_stock', label: 'Emniyet' },
-        ],
-      },
-      {
         id: 'stok-hareketleri',
         techId: 'INV-MVT-SCR-001',
         businessNameEn: 'StockMovementScreen',
@@ -1778,6 +1764,112 @@ const MODULES = [
         },
       },
       {
+        id: 'stok-hareket-raporu',
+        techId: 'INV-MVT-RPT-001',
+        businessNameEn: 'StockMovementReportScreen',
+        title: 'Stok Hareket Raporu',
+        endpoint: '/stok-hareket-raporu',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        banner: 'Seçilen stok için tüm hareketleri işlem sırasıyla listeler. Depo ve firma isteğe bağlıdır. Sağ tık → hareket kaynağı.',
+        contextMenu: [
+          { id: 'kaynak-belge', label: 'Hareket kaynağına git' },
+          { id: 'stok-hareket-ac', label: 'Stok hareketini aç' },
+        ],
+        filters: [
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            required: true,
+            queryParam: true,
+          },
+          {
+            key: 'warehouse_id',
+            label: 'Depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            queryParam: true,
+          },
+          {
+            key: 'company_id',
+            label: 'Firma',
+            type: 'lookup',
+            lookup: 'companies',
+            valueKey: 'id',
+            labelKey: 'company_name',
+            codeKey: 'company_code',
+            queryParam: true,
+          },
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+        ],
+        columns: [
+          { key: 'sira', label: '#', mono: true },
+          { key: 'movement_date', label: 'Tarih' },
+          { key: 'movement_no', label: 'Hareket', mono: true },
+          { key: 'movement_code', label: 'Kod', mono: true },
+          { key: 'movement_type', label: 'Tip' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'quantity_in', label: 'Giriş', mono: true },
+          { key: 'quantity_out', label: 'Çıkış', mono: true },
+          { key: 'quantity_signed', label: 'Net', mono: true, signed: true },
+          { key: 'bakiye', label: 'Bakiye', mono: true },
+          { key: 'lot_no', label: 'Parti', mono: true },
+          { key: 'stock_status', label: 'Statü' },
+          { key: 'kaynak_etiket', label: 'Kaynak' },
+          { key: 'document_type', label: 'Belge tipi' },
+          { key: 'ref_no', label: 'Referans', mono: true },
+          { key: 'user_code', label: 'Kullanıcı' },
+        ],
+      },
+      {
+        id: 'depo-bakiye',
+        techId: 'INV-BAL-SCR-001',
+        businessNameEn: 'WarehouseBalanceScreen',
+        title: 'Depo Bakiyeleri',
+        endpoint: '/stok-bakiyeleri',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        contextMenu: [
+          { id: 'stok-hareketleri', label: 'Stok Hareketleri', openScreen: 'stok-hareketleri', passFilters: ['item_code', 'warehouse_code', 'item_id', 'warehouse_id'] },
+        ],
+        filters: [
+          { key: 'warehouse_code', label: 'Depo kodu' },
+          { key: 'item_code', label: 'Stok kodu' },
+          { key: 'item_name', label: 'Stok adı' },
+          { key: 'item_type', label: 'Stok tipi' },
+          { key: 'stock_status', label: 'Stok statü' },
+          { key: 'lot_no', label: 'Parti no' },
+          { key: 'yalnizca_stokta', label: 'Yalnızca stokta olanları göster', type: 'checkbox', default: true, queryParam: true },
+        ],
+        columns: [
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'item_type', label: 'Tip' },
+          { key: 'stock_status', label: 'Statü' },
+          { key: 'lot_no', label: 'Parti', mono: true },
+          { key: 'bakiye', label: 'Bakiye', mono: true },
+          { key: 'rezerve', label: 'Rezerve', mono: true },
+          { key: 'bloke', label: 'Bloke', mono: true },
+          { key: 'tahsis', label: 'Tahsis', mono: true },
+          { key: 'yolda', label: 'Yolda', mono: true },
+          { key: 'kullanilabilir', label: 'Kullanılabilir', mono: true },
+          { key: 'safety_stock', label: 'Emniyet' },
+        ],
+      },
+      {
         id: 'transfer-emirleri',
         techId: 'WMS-XFER-SCR-001',
         businessNameEn: 'TransferOrderScreen',
@@ -1856,6 +1948,41 @@ const MODULES = [
         detailSlots: 5,
       },
       {
+        id: 'stok-depo',
+        techId: 'INV-WHL-SCR-001',
+        businessNameEn: 'ItemWarehouseLinkScreen',
+        title: 'Depo Stok Bağları',
+        endpoint: '/stok-depo',
+        crud: true,
+        codeField: 'item_code',
+        nameField: 'warehouse_code',
+        filters: [
+          { key: 'item_code', label: 'Stok' },
+          { key: 'warehouse_code', label: 'Depo' },
+          { key: 'plant_code', label: 'İş yeri' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Stok adı' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'warehouse_name', label: 'Depo adı' },
+          { key: 'plant_code', label: 'İş yeri', mono: true },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+        ],
+        detailFields: [
+          { key: 'is_default_receipt', label: 'Varsayılan giriş', type: 'checkbox' },
+          { key: 'is_default_issue', label: 'Varsayılan çıkış', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
         id: 'stok-partileri',
         techId: 'INV-LOT-SCR-001',
         businessNameEn: 'LotBatchScreen',
@@ -1890,145 +2017,37 @@ const MODULES = [
         detailAsFields: true,
       },
       {
-        id: 'mrp-bagimsiz-ihtiyac',
-        techId: 'MFG-IR-SCR-001',
-        businessNameEn: 'IndependentRequirementsScreen',
-        title: 'MRP Bağımsız İhtiyaç',
-        endpoint: '/mrp/bagimsiz-ihtiyaclar',
+        id: 'stok-serileri',
+        techId: 'INV-SER-SCR-001',
+        businessNameEn: 'SerialNumberScreen',
+        title: 'Stok Serileri',
+        endpoint: '/stok-serileri',
         crud: true,
-        codeField: 'requirement_no',
+        codeField: 'serial_no',
         nameField: 'item_name',
-        numeratorSeri: 'MRP_BI',
+        numeratorSeri: 'SERI',
         filters: [
-          { key: 'requirement_no', label: 'No' },
+          { key: 'serial_no', label: 'Seri no' },
           { key: 'item_code', label: 'Stok' },
-          { key: 'source', label: 'Kaynak' },
+          { key: 'status', label: 'Durum' },
         ],
         columns: [
-          { key: 'requirement_no', label: 'No', mono: true },
+          { key: 'serial_no', label: 'Seri', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
           { key: 'item_name', label: 'Ad' },
-          { key: 'quantity', label: 'Miktar' },
-          { key: 'requirement_date', label: 'İhtiyaç tar.' },
-          { key: 'source', label: 'Kaynak' },
-          { key: 'is_active', label: 'Aktif' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'lot_no', label: 'Parti', mono: true },
+          { key: 'status', label: 'Durum' },
         ],
         masterFields: [
-          { key: 'requirement_no', label: 'İhtiyaç no', code: true, required: true },
+          { key: 'serial_no', label: 'Seri no', code: true },
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
-          { key: 'requirement_date', label: 'İhtiyaç tarihi', type: 'date', required: true },
-          { key: 'source', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Depoda', 'SevkEdildi', 'Hurda', 'Serviste'] },
         ],
-        detailFields: [
-          { key: 'uom_code', label: 'Birim' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
+        detailFields: [],
         detailKey: null,
         detailAsFields: true,
-      },
-      {
-        id: 'mrp-calisma',
-        techId: 'MFG-MRP-SCR-001',
-        businessNameEn: 'MrpRunScreen',
-        title: 'MRP Konsol',
-        endpoint: '/mrp/calismalar',
-        crud: true,
-        readOnly: false,
-        mrpKonsol: true,
-        mrpCalistirAction: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        codeField: 'run_no',
-        filters: [
-          { key: 'run_no', label: 'Çalışma no' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'run_no', label: 'No', mono: true },
-          { key: 'status', label: 'Durum' },
-          { key: 'start_date', label: 'Ufuk baş.' },
-          { key: 'end_date', label: 'Ufuk bit.' },
-          { key: 'start_ts', label: 'Başlangıç' },
-          { key: 'end_ts', label: 'Bitiş' },
-          { key: 'line_count', label: 'Satır' },
-          { key: 'net_positive_only', label: 'Net>0' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        masterFields: [
-          { key: 'run_no', label: 'Çalışma no', code: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'status', label: 'Durum', readonly: true },
-        ],
-        formTabs: [
-          { id: 'param', label: 'MRP 2 Parametreleri', kind: 'mrp-parametre' },
-          { id: 'kapsam', label: 'Depo/İşemirleri/Siparişler/MPS/Satış Tahminleri', kind: 'mrp-kapsam' },
-          { id: 'sonuc', label: 'MRP Sonuçları', kind: 'mrp-sonuc' },
-        ],
-        nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
-      },
-      {
-        id: 'mrp-hesap',
-        techId: 'MFG-MRP-SCR-002',
-        businessNameEn: 'MrpInstantCalcScreen',
-        title: 'MRP Anlık Hesap',
-        endpoint: '/mrp',
-        crud: false,
-        readOnly: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        mrpCalistirAction: true,
-        filters: [
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'suggestion', label: 'Öneri' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'independent_demand', label: 'Bağımsız' },
-          { key: 'dependent_demand', label: 'Bağımlı' },
-          { key: 'safety_stock', label: 'Emniyet' },
-          { key: 'available_stock', label: 'Eldeki' },
-          { key: 'open_purchase_qty', label: 'Açık SA' },
-          { key: 'planned_production', label: 'Açık UE' },
-          { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri miktar' },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'planned_start', label: 'Plan baş.' },
-        ],
-      },
-      {
-        id: 'mrp-sonuclar',
-        techId: 'MFG-MRP-RES-001',
-        businessNameEn: 'MrpResultsScreen',
-        title: 'MRP Sonuçları',
-        endpoint: '/mrp/calismalar',
-        crud: false,
-        readOnly: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        mrpSonucMode: true,
-        filters: [
-          { key: 'item_code', label: 'Stok' },
-          { key: 'suggestion', label: 'Öneri' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'independent_demand', label: 'Bağımsız' },
-          { key: 'dependent_demand', label: 'Bağımlı' },
-          { key: 'available_stock', label: 'Eldeki' },
-          { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri miktar' },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'donusturuldu', label: 'Dönüştü' },
-          { key: 'donusum_document_no', label: 'Belge' },
-        ],
       },
       {
         id: 'stok-rezervasyonlari',
@@ -2129,39 +2148,6 @@ const MODULES = [
         detailKey: 'satirlar',
         detailSlots: 5,
         defaults: { satirlar: [] },
-      },,
-      {
-        id: 'stok-serileri',
-        techId: 'INV-SER-SCR-001',
-        businessNameEn: 'SerialNumberScreen',
-        title: 'Stok Serileri',
-        endpoint: '/stok-serileri',
-        crud: true,
-        codeField: 'serial_no',
-        nameField: 'item_name',
-        numeratorSeri: 'SERI',
-        filters: [
-          { key: 'serial_no', label: 'Seri no' },
-          { key: 'item_code', label: 'Stok' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'serial_no', label: 'Seri', mono: true },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'lot_no', label: 'Parti', mono: true },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'serial_no', label: 'Seri no', code: true },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Depoda', 'SevkEdildi', 'Hurda', 'Serviste'] },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
       },
       {
         id: 'stok-ikame',
@@ -2193,249 +2179,1614 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
-
+      {
+        id: 'mrp-parametre',
+        techId: 'MFG-MRP-PAR-001',
+        businessNameEn: 'MrpParameterScreen',
+        title: 'MRP Parametreleri',
+        endpoint: '/mrp/parametreler',
+        crud: true,
+        readOnly: false,
+        listActions: ['yeni', 'incele', 'duzelt', 'sil'],
+        mrpKonsol: true,
+        mrpParametreScreen: true,
+        numeratorSeri: 'MRP_PARAM',
+        codeField: 'parameter_code',
+        filters: [
+          { key: 'parameter_code', label: 'Parametre kodu' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        columns: [
+          { key: 'parameter_code', label: 'Kod', mono: true },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        masterFields: [
+          { key: 'parameter_code', label: 'Parametre kodu', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: { is_active: true },
+        formTabs: [
+          { id: 'param', label: 'MRP 2 Parametreleri', kind: 'mrp-parametre' },
+          { id: 'kapsam', label: 'Depo/İşemirleri/Siparişler/MPS/Satış Tahminleri', kind: 'mrp-kapsam' },
+        ],
+        banner: 'Kaydedilebilir MRP parametre seti. Konsolda bu seti seçerek çalıştırın.',
+      },
+      {
+        id: 'mrp-bagimsiz-ihtiyac',
+        techId: 'MFG-IR-SCR-001',
+        businessNameEn: 'IndependentRequirementsScreen',
+        title: 'MRP Bağımsız İhtiyaç',
+        endpoint: '/mrp/bagimsiz-ihtiyaclar',
+        crud: true,
+        codeField: 'requirement_no',
+        nameField: 'item_name',
+        numeratorSeri: 'MRP_BI',
+        filters: [
+          { key: 'requirement_no', label: 'No' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'source', label: 'Kaynak' },
+        ],
+        columns: [
+          { key: 'requirement_no', label: 'No', mono: true },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'quantity', label: 'Miktar' },
+          { key: 'requirement_date', label: 'İhtiyaç tar.' },
+          { key: 'source', label: 'Kaynak' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'requirement_no', label: 'İhtiyaç no', code: true, required: true },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
+          { key: 'requirement_date', label: 'İhtiyaç tarihi', type: 'date', required: true },
+          { key: 'source', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+        ],
+        detailFields: [
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'mrp-calisma',
+        techId: 'MFG-MRP-SCR-001',
+        businessNameEn: 'MrpRunScreen',
+        title: 'MRP Konsol',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        listActions: ['incele'],
+        mrpKonsol: true,
+        mrpKonsolWorkspace: true,
+        mrpCalistirAction: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        openFormOnEnter: 'workspace',
+        codeField: 'run_no',
+        filters: [
+          { key: 'run_no', label: 'Çalışma no' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'run_no', label: 'No', mono: true },
+          { key: 'status', label: 'Durum' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
+          { key: 'start_ts', label: 'Başlangıç' },
+          { key: 'end_ts', label: 'Bitiş' },
+          { key: 'line_count', label: 'Satır' },
+          { key: 'net_positive_only', label: 'Net>0' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true, readonly: true },
+          { key: 'description', label: 'Açıklama', readonly: true },
+          { key: 'status', label: 'Durum', readonly: true },
+        ],
+        formTabs: [
+          { id: 'workspace', label: 'MRP Konsol', kind: 'mrp-workspace' },
+        ],
+        nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
+        banner: 'Üstten parametre seti seçin; kapsam ve sonuçlar otomatik oluşur. Yeni kayıt yok — parametreleri «MRP Parametreleri»nden kaydedin.',
+      },
+      {
+        id: 'mrp-hesap',
+        techId: 'MFG-MRP-SCR-002',
+        businessNameEn: 'MrpInstantCalcScreen',
+        title: 'MRP Anlık Hesap',
+        endpoint: '/mrp',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpCalistirAction: true,
+        filters: [
+          { key: 'item_code', label: 'Stok kodu' },
+          { key: 'suggestion', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'independent_demand', label: 'Bağımsız' },
+          { key: 'dependent_demand', label: 'Bağımlı' },
+          { key: 'safety_stock', label: 'Emniyet' },
+          { key: 'available_stock', label: 'Eldeki' },
+          { key: 'open_purchase_qty', label: 'Açık SA' },
+          { key: 'planned_production', label: 'Açık UE' },
+          { key: 'net_requirement', label: 'Net' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'planned_start', label: 'Plan baş.' },
+        ],
+      },
+      {
+        id: 'mrp-sonuclar',
+        techId: 'MFG-MRP-RES-001',
+        businessNameEn: 'MrpResultsScreen',
+        title: 'MRP Sonuçları',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpSonucMode: true,
+        filters: [
+          { key: 'item_code', label: 'Stok' },
+          { key: 'suggestion', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'independent_demand', label: 'Bağımsız' },
+          { key: 'dependent_demand', label: 'Bağımlı' },
+          { key: 'available_stock', label: 'Eldeki' },
+          { key: 'net_requirement', label: 'Net' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'donusturuldu', label: 'Dönüştü' },
+          { key: 'donusum_document_no', label: 'Belge' },
+        ],
+      },
+      {
+        id: 'mrp-hareket-raporu',
+        techId: 'MFG-MRP-RPT-001',
+        businessNameEn: 'MrpMovementReportScreen',
+        title: 'MRP Hareket Raporu',
+        endpoint: '/mrp-hareket-raporu',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        listExportActions: true,
+        reportPdfAction: true,
+        banner: 'MRP çalışma no zorunlu. Tahmin, MPS, bağımsız ihtiyaç, öneri, stok hareketi ve açık SA/IE satırlarını birleştirir. PDF / Excel / Word araç çubuğundan veya sağ tık menüsünden alınır.',
+        filters: [
+          {
+            key: 'run_id',
+            label: 'MRP çalışma no',
+            type: 'lookup',
+            lookup: 'mrp-calismalar',
+            valueKey: 'id',
+            labelKey: 'description',
+            codeKey: 'run_no',
+            required: true,
+            queryParam: true,
+          },
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            queryParam: true,
+          },
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+          {
+            key: 'islem_tipi',
+            label: 'İşlem tipi',
+            type: 'select',
+            options: [
+              { value: 'Tahmin', label: 'Tahmin' },
+              { value: 'MPS', label: 'MPS' },
+              { value: 'BagimsizIhtiyac', label: 'Bağımsız ihtiyaç' },
+              { value: 'MrpOneri', label: 'MRP öneri' },
+              { value: 'MrpIhtiyac', label: 'MRP ihtiyaç bileşeni' },
+              { value: 'StokHareket', label: 'Stok hareket' },
+              { value: 'AcikSA', label: 'Açık SA' },
+              { value: 'AcikIE', label: 'Açık iş emri' },
+            ],
+            queryParam: true,
+          },
+          {
+            key: 'islem_turu',
+            label: 'İşlem türü',
+            type: 'select',
+            options: [
+              { value: 'Talep', label: 'Talep' },
+              { value: 'Arz', label: 'Arz' },
+              { value: 'Oneri', label: 'Öneri' },
+              { value: 'Oneri-SA', label: 'Öneri-SA' },
+              { value: 'Oneri-UE', label: 'Öneri-UE' },
+              { value: 'Yeterli', label: 'Yeterli' },
+              { value: 'Giris', label: 'Giriş' },
+              { value: 'Cikis', label: 'Çıkış' },
+            ],
+            queryParam: true,
+          },
+        ],
+        columns: [
+          { key: 'sira', label: '#', mono: true },
+          { key: 'hareket_tarihi', label: 'Tarih' },
+          { key: 'run_no', label: 'MRP no', mono: true },
+          { key: 'islem_tipi', label: 'İşlem tipi' },
+          { key: 'islem_turu', label: 'Tür' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'quantity', label: 'Miktar', mono: true },
+          { key: 'quantity_in', label: 'Giriş', mono: true },
+          { key: 'quantity_out', label: 'Çıkış', mono: true },
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'belge_tipi', label: 'Belge tipi' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'kaynak', label: 'Kaynak' },
+        ],
+      },
     ],
   },
   {
-    id: 'cari',
-    title: 'Cari',
+    id: 'satinalma',
+    title: 'Satınalma',
     sections: [
-      { id: 'kartlar', title: 'Kartlar', screenIds: ['cari-kartlari'] },
-      { id: 'finans', title: 'Finans', screenIds: ['cari-ekstre', 'tahsilat-odemeler'] },
+      {
+        id: 'talepler',
+        title: 'Talepler',
+        screenIds: ['satin-alma-talepleri'],
+      },
+      {
+        id: 'teklif',
+        title: 'Teklif ve Anlaşmalar',
+        screenIds: ['satin-alma-teklifleri', 'satin-alma-anlasmalari'],
+      },
+      {
+        id: 'siparis',
+        title: 'Siparişler',
+        screenIds: ['satin-alma-siparisleri'],
+      },
+      {
+        id: 'mal-kabul',
+        title: 'Mal Kabul',
+        screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri', 'alis-iade-faturalari'],
+      },
+
     ],
     screens: [
       {
-        id: 'cari-kartlari',
-        techId: 'MDM-BP-SCR-001',
-        businessNameEn: 'BusinessPartnerScreen',
-        title: 'Cari Kartları',
-        endpoint: '/partners',
+        id: 'satin-alma-talepleri',
+        techId: 'PUR-REQ-SCR-001',
+        businessNameEn: 'PurchaseRequisitionScreen',
+        title: 'Satınalma Talepleri',
+        endpoint: '/satin-alma-talepleri',
         crud: true,
-        codeField: 'partner_code',
-        nameField: 'partner_name',
-        numeratorSeri: 'MUSTERI',
-        numeratorFromField: { field: 'partner_type', map: {
-          Musteri: 'MUSTERI',
-          Tedarikci: 'TEDARIKCI',
-          HerIkisi: 'CARI_HERIKISI',
-        } },
+        numeratorSeri: 'SATINALMA_TALEP',
+        codeField: 'requisition_no',
+        nameField: 'description',
+        approveAction: { label: 'Onayla + E-posta', path: '/satin-alma-talepleri/{id}/onayla' },
         filters: [
-          { key: 'plant_code', label: 'İş yeri' },
-          { key: 'partner_code', label: 'Cari kodu' },
-          { key: 'partner_name', label: 'Cari adı' },
-          { key: 'partner_type', label: 'Tür' },
+          { key: 'requisition_no', label: 'Talep no' },
+          { key: 'status', label: 'Durum' },
         ],
         columns: [
-          { key: 'partner_code', label: 'Kod', mono: true },
-          { key: 'partner_name', label: 'Ad' },
-          { key: 'partner_type', label: 'Tür' },
-          { key: 'plant_code', label: 'İş yeri', mono: true },
-          { key: 'phone', label: 'Telefon' },
-          { key: 'province', label: 'İl' },
-        ],
-        masterFields: [
-          { key: 'partner_type', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, lead: true },
-          { key: 'partner_code', label: 'Cari kodu', code: true, required: true },
-          { key: 'partner_name', label: 'Cari adı', name: true, required: true },
-          { key: 'tax_id', label: 'VKN / TCKN' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailFields: [
-          { key: 'address', label: 'Adres' },
-          { key: 'billing_address', label: 'Fatura adresi' },
-          { key: 'authorized_person', label: 'Yetkili' },
-          { key: 'authorized_phone', label: 'Yetkili tel' },
-        ],
-        detailKey: 'partner_details',
-        defaults: { is_active: true, firma_parametreleri: [] },
-        formTabs: [
-          {
-            id: 'ana', label: 'Cari Kart', kind: 'master-detail',
-            masterFields: [
-              // Üst: olmazsa olmaz / master (görsel: firma + iş yeri, kod/ad, VKN, pasif)
-              { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', groupLabel: 'Organizasyon', lead: true },
-              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', groupLabel: 'Organizasyon' },
-              { key: 'partner_type', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
-              { key: 'partner_code', label: 'Cari kod', code: true, required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
-              { key: 'partner_name', label: 'Cari adı', name: true, required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
-              { key: 'tax_id', label: 'VKN / TCKN', required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
-              { key: 'is_active', label: 'Pasif', type: 'checkbox', group: 'organizasyon', groupLabel: 'Organizasyon' },
-            ],
-            detailFields: [
-              { key: 'partner_name_2', label: 'Cari adı 2', group: 'kimlik', groupLabel: 'Genel bilgiler' },
-              { key: 'first_name', label: 'Ad', group: 'kimlik', groupLabel: 'Genel bilgiler' },
-              { key: 'last_name', label: 'Soyad', group: 'kimlik', groupLabel: 'Genel bilgiler' },
-              { key: 'passport_no', label: 'Pasaport no', group: 'kimlik', groupLabel: 'Genel bilgiler' },
-              { key: 'tax_office', label: 'Vergi dairesi', group: 'finans', groupLabel: 'Genel bilgiler' },
-              { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'finans', groupLabel: 'Genel bilgiler' },
-              { key: 'payment_due_days', label: 'Vade (gün)', type: 'number', group: 'finans', groupLabel: 'Genel bilgiler' },
-              { key: 'country', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name', group: 'address', groupLabel: 'Adres' },
-              { key: 'province', label: 'İl', group: 'address', groupLabel: 'Adres' },
-              { key: 'district', label: 'İlçe', group: 'address', groupLabel: 'Adres' },
-              { key: 'postal_code', label: 'Posta kodu', group: 'address', groupLabel: 'Adres' },
-              { key: 'bill_address_1', label: 'Adres 1', group: 'address', groupLabel: 'Adres' },
-              { key: 'bill_address_2', label: 'Adres 2', group: 'address', groupLabel: 'Adres' },
-              { key: 'bill_address_3', label: 'Adres 3', group: 'address', groupLabel: 'Adres' },
-              { key: 'phone', label: 'Telefon 1', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'phone_2', label: 'Telefon 2', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'mobile_phone', label: 'Cep tel', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'email', label: 'E-posta', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'website', label: 'Website', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'fax', label: 'Fax', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'authorized_person', label: 'Yetkili', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'authorized_phone', label: 'Yetkili tel', group: 'iletisim', groupLabel: 'İletişim' },
-              { key: 'description', label: 'Açıklama', group: 'status', groupLabel: 'Notlar' },
-              { key: 'notes', label: 'Notlar', group: 'status', groupLabel: 'Notlar' },
-              { key: 'is_deleted', label: 'Silindi', type: 'checkbox', group: 'status', groupLabel: 'Notlar' },
-            ],
-          },
-          {
-            id: 'firma-param',
-            label: 'Firma Parametreleri',
-            kind: 'cari-firmalar',
-          },
-          {
-            id: 'banka', label: 'Banka Bilgisi', kind: 'grid', key: 'banka_bilgileri', slots: 3,
-            fields: [
-              { key: 'iban', label: 'IBAN' },
-              { key: 'bank_code', label: 'Banka kodu' },
-              { key: 'bank_name', label: 'Banka adı' },
-              { key: 'swift_no', label: 'SWIFT' },
-              { key: 'currency_code', label: 'Para birimi' },
-              { key: 'branch_code', label: 'Şube kodu' },
-              { key: 'branch_name', label: 'Şube adı' },
-              { key: 'account_no', label: 'Hesap no' },
-              { key: 'correspondent_account_no', label: 'Muhabir hesap' },
-              { key: 'description', label: 'Açıklama' },
-              { key: 'is_inactive', label: 'Pasif', type: 'checkbox' },
-            ],
-          },
-          {
-            id: 'sevk', label: 'Sevk Adresleri', kind: 'grid', key: 'sevk_adresleri', slots: 3,
-            fields: [
-              { key: 'address_name', label: 'Adres adı' },
-              { key: 'address_line_1', label: 'Adres 1' },
-              { key: 'address_line_2', label: 'Adres 2' },
-              { key: 'address_line_3', label: 'Adres 3' },
-              { key: 'country', label: 'Ülke' },
-              { key: 'province', label: 'İl' },
-              { key: 'district', label: 'İlçe' },
-              { key: 'postal_code', label: 'Posta kodu' },
-              { key: 'phone', label: 'Telefon' },
-              { key: 'authorized_person', label: 'Yetkili' },
-              { key: 'is_default', label: 'Varsayılan', type: 'checkbox' },
-              { key: 'is_inactive', label: 'Pasif', type: 'checkbox' },
-            ],
-          },
-          {
-            id: 'genel', label: 'Genel Bilgiler', kind: 'fields',
-            fields: [
-              { key: 'founded_date', label: 'Kuruluş tarihi', type: 'date' },
-              { key: 'industry_code', label: 'Sektör', type: 'lookup', lookup: 'kategoriler-sektor', valueKey: 'category_code', labelKey: 'category_name' },
-              { key: 'region_code', label: 'Bölge', type: 'lookup', lookup: 'kategoriler-region', valueKey: 'category_code', labelKey: 'category_name' },
-              { key: 'nace_code', label: 'NACE kodu' },
-              { key: 'capital', label: 'Sermaye', type: 'number' },
-            ],
-          },
-          {
-            id: 'dil', label: 'Dil Tanımları', kind: 'grid', key: 'dil_tanimlari', slots: 2,
-            fields: [
-              { key: 'language_code', label: 'Dil kodu', type: 'lookup', lookup: 'languages', valueKey: 'language_code', labelKey: 'language_name', autoFillName: 'language_name' },
-              { key: 'partner_name', label: 'Cari adı (dil)' },
-              { key: 'description', label: 'Açıklama' },
-              { key: 'is_default', label: 'Varsayılan', type: 'checkbox' },
-            ],
-          },
-          {
-            id: 'kategori',
-            label: 'Kategoriler',
-            kind: 'fields',
-            layout: 'pairs',
-            fields: [...CARI_KATEGORI_FIELDS],
-          },
-          {
-            id: 'ekalan',
-            label: 'Ek Alanlar',
-            kind: 'fields',
-            layout: 'pairs',
-            fields: [...CARI_EK_ALAN_FIELDS],
-          },
-        ],
-      },
-      {
-        id: 'cari-ekstre',
-        techId: 'FIN-BPST-SCR-001',
-        businessNameEn: 'BusinessPartnerStatementScreen',
-        title: 'Cari Ekstre',
-        endpoint: '/cari-hareketleri',
-        crud: false,
-        readOnly: true,
-        reportPdfAction: true,
-        reportPdfUrl: '/cari-hareketleri',
-        filters: [
-          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
-          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
-          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
-          { key: 'partner_code', label: 'Cari kod', queryParam: true },
-          { key: 'direction', label: 'Yön' },
-          { key: 'document_type', label: 'Belge tipi' },
-        ],
-        columns: [
-          { key: 'partner_code', label: 'Cari', mono: true },
-          { key: 'partner_name', label: 'Cari adı' },
-          { key: 'movement_no', label: 'No', mono: true },
-          { key: 'movement_date', label: 'Tarih' },
-          { key: 'direction', label: 'Yön' },
-          { key: 'amount', label: 'Tutar' },
-          { key: 'document_type', label: 'Belge' },
+          { key: 'requisition_no', label: 'Talep', mono: true },
+          { key: 'status', label: 'Durum' },
           { key: 'description', label: 'Açıklama' },
         ],
+        masterFields: [
+          { key: 'requisition_no', label: 'Talep no', code: true },
+          { key: 'requisition_date', label: 'Talep tarihi', type: 'date' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'supplier_partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
+          { key: 'target_delivery_date', label: 'Hedef teslim', type: 'date' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
+          { key: 'region', label: 'Bölge' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
+          { key: 'exchange_rate', label: 'Kur', type: 'number' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'] },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'internal_note', label: 'Dahili not' },
+        ],
+        detailFields: [
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short' },
+          { key: 'estimated_unit_price', label: 'Tahmini fiyat', type: 'number', size: 'short' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'discount_rate', label: 'İsk %', type: 'number', size: 'short' },
+          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
+          { key: 'region', label: 'Bölge', size: 'short' },
+          { key: 'supplier_item_code', label: 'Ted. stok kodu' },
+          { key: 'supplier_item_name', label: 'Ted. stok adı' },
+          { key: 'line_description', label: 'Açıklama' },
+          { key: 'reservation_type', label: 'Rezervasyon tipi' },
+          { key: 'reservation_link_no', label: 'Rezervasyon ilişki no' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: {
+          currency_code: 'TRY', exchange_rate: 1, status: 'Acik', rate_type: 'TCMB-ALIS',
+          vat_rate: 20, vat_mode: 'Haric', line_type: 'S',
+        },
       },
       {
-        id: 'tahsilat-odemeler',
-        techId: 'FIN-APAR-SCR-001',
-        businessNameEn: 'CollectionPaymentScreen',
-        title: 'Tahsilat / Ödeme',
-        endpoint: '/tahsilat-odemeler',
+        id: 'satin-alma-teklifleri',
+        techId: 'PUR-QUO-SCR-001',
+        businessNameEn: 'PurchaseQuotationScreen',
+        title: 'Satınalma Teklifleri',
+        endpoint: '/satin-alma-teklifleri',
         crud: true,
-        codeField: 'document_no',
+        numeratorSeri: 'SATINALMA_TEKLIF',
+        codeField: 'quotation_no',
         nameField: 'partner_name',
-        numeratorSeri: 'TAHSILAT',
+        approveAction: {
+          label: 'Teklifi Onayla',
+          path: '/satin-alma-teklifleri/{id}/onayla',
+        },
+        convertAction: {
+          label: 'Siparişe Dönüştür',
+          path: '/satin-alma-teklifleri/{id}/siparise-donustur',
+          nested: { screenId: 'satin-alma-siparisleri', link: 'sa-teklif-siparis' },
+        },
         filters: [
-          { key: 'document_no', label: 'Belge no' },
-          { key: 'type', label: 'Tip' },
+          { key: 'quotation_no', label: 'Teklif no' },
           { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
         ],
         columns: [
-          { key: 'document_no', label: 'Belge', mono: true },
-          { key: 'type', label: 'Tip' },
+          { key: 'quotation_no', label: 'Teklif', mono: true },
           { key: 'partner_name', label: 'Cari' },
-          { key: 'amount', label: 'Tutar' },
+          { key: 'requisition_no', label: 'Talep', mono: true },
           { key: 'currency_code', label: 'PB' },
-          { key: 'exchange_rate', label: 'Kur' },
-          { key: 'payment_method', label: 'Ödeme' },
-          { key: 'cash_account_code', label: 'Kasa', mono: true },
-          { key: 'bank_account_code', label: 'Banka', mono: true },
-          { key: 'cheque_no', label: 'Çek no' },
-          { key: 'due_date', label: 'Vade' },
-          { key: 'document_date', label: 'Tarih' },
+          { key: 'valid_date', label: 'Geçerlilik' },
           { key: 'status', label: 'Durum' },
           { key: 'project_code', label: 'Proje', mono: true },
         ],
         masterFields: [
-          { key: 'document_no', label: 'Belge no', code: true },
-          { key: 'type', label: 'Tip', type: 'select', options: ['Tahsilat', 'Odeme'], required: true },
-          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'amount', label: 'Tutar', type: 'number', required: true },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti'] },
-          { key: 'document_date', label: 'Tarih', type: 'date' },
+          { key: 'quotation_no', label: 'Teklif no', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar' },
+          { key: 'rfq_id', label: 'Eski teklif isteği', type: 'number' },
+          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
+          { key: 'exchange_rate', label: 'Kur', type: 'number' },
+          { key: 'valid_date', label: 'Geçerlilik', type: 'date' },
+          { key: 'payment_term_code', label: 'Ödeme koşulu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
+          { key: 'region', label: 'Bölge' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'] },
           { key: 'description', label: 'Açıklama', name: true },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli'] },
+          { key: 'public_note', label: 'Tedarikçi notu' },
+          { key: 'internal_note', label: 'Dahili not' },
         ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
+        detailFields: [
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
+          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
+          { key: 'region', label: 'Bölge', size: 'short' },
+          { key: 'line_description', label: 'Açıklama' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { currency_code: 'TRY', exchange_rate: 1, rate_type: 'TCMB-ALIS', vat_mode: 'Haric', line_type: 'S' },
+      },
+      {
+        id: 'satin-alma-anlasmalari',
+        techId: 'PUR-AGR-SCR-001',
+        businessNameEn: 'PurchaseAgreementScreen',
+        title: 'Satınalma Anlaşmaları',
+        endpoint: '/satin-alma-anlasmalari',
+        crud: true,
+        numeratorSeri: 'SATINALMA_ANLASMA',
+        codeField: 'agreement_no',
+        nameField: 'partner_name',
+        filters: [
+          { key: 'agreement_no', label: 'Anlaşma no' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'agreement_no', label: 'Anlaşma', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'agreement_no', label: 'Anlaşma no', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'quotation_id', label: 'Teklif', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no' },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'exchange_rate', label: 'Kur', type: 'number' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kapali', 'Iptal'] },
+          { key: 'description', label: 'Açıklama', name: true },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { currency_code: 'TRY', exchange_rate: 1, status: 'Taslak' },
+      },
+      {
+        id: 'satin-alma-siparisleri',
+        techId: 'PUR-ORD-SCR-001',
+        businessNameEn: 'PurchaseOrderScreen',
+        title: 'Satınalma Siparişleri',
+        endpoint: '/satin-alma-siparisleri',
+        crud: true,
+        numeratorSeri: 'SATINALMA_SIPARIS',
+        codeField: 'order_no',
+        nameField: 'partner_name',
+        filters: [
+          { key: 'order_no', label: 'Sipariş no' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'supplier_order_no', label: 'Ted. sip. no', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'order_date', label: 'Tarih' },
+          { key: 'delivery_date', label: 'Teslim' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'subtotal', label: 'Ara top.' },
+          { key: 'tax_amount', label: 'KDV' },
+          { key: 'grand_total', label: 'Genel' },
+          { key: 'payment_term_code', label: 'Ödeme koş.' },
+          { key: 'status', label: 'Durum' },
+          { key: 'project_code', label: 'Proje', mono: true },
+        ],
+        masterFields: [
+          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, critical: true, group: 'kimlik' },
+          { key: 'order_no', label: 'Sipariş no', code: true, lead: true, group: 'kimlik' },
+          { key: 'order_date', label: 'Sipariş tarihi', type: 'date', lead: true, group: 'kimlik' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
+          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
+          { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar', group: 'kimlik' },
+          { key: 'quotation_id', label: 'Satınalma teklifi', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'sa-teklif-satirlar', group: 'kimlik' },
+          { key: 'supplier_order_no', label: 'Tedarikçi sipariş no', group: 'kimlik' },
+          { key: 'ship_date', label: 'Sevk tarihi', type: 'date', group: 'planlama' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'finans' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], group: 'finans' },
+          { key: 'exchange_rate', label: 'Kur', type: 'number', group: 'finans' },
+          { key: 'payment_term_code', label: 'Ödeme koşulu', group: 'finans' },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'AcikHesap'], group: 'finans' },
+          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', group: 'planlama' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'organizasyon' },
+          { key: 'region', label: 'Bölge', group: 'organizasyon' },
+          { key: 'description', label: 'Açıklama', group: 'status' },
+          { key: 'public_note', label: 'Tedarikçi notu', group: 'status' },
+          { key: 'internal_note', label: 'Dahili not', group: 'status' },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short', lead: true, group: 'olcu' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short', group: 'olcu' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', required: true, size: 'short', lead: true, group: 'finans' },
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short', group: 'kimlik' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short', group: 'finans' },
+          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short', group: 'finans' },
+          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short', group: 'finans' },
+          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short', group: 'planlama' },
+          { key: 'ship_date', label: 'Sevk', type: 'date', size: 'short', group: 'planlama' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short', group: 'organizasyon' },
+          { key: 'region', label: 'Bölge', size: 'short', group: 'organizasyon' },
+          { key: 'supplier_item_code', label: 'Ted. stok kodu', group: 'kimlik' },
+          { key: 'supplier_item_name', label: 'Ted. stok adı', group: 'kimlik' },
+          { key: 'line_description', label: 'Açıklama', group: 'status' },
+          { key: 'reservation_type', label: 'Rezervasyon tipi', group: 'status' },
+          { key: 'reservation_link_no', label: 'Rezervasyon ilişki no', group: 'status' },
+          { key: 'received_quantity', label: 'Giren', type: 'number', size: 'short', group: 'olcu' },
+          { key: 'remaining_quantity', label: 'Bekleyen', type: 'number', size: 'short', group: 'olcu' },
+          { key: 'amount_ex_tax', label: 'Tutar HT', type: 'number', size: 'short', group: 'finans' },
+          { key: 'amount_ttc', label: 'Tutar TTC', type: 'number', size: 'short', group: 'finans' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { currency_code: 'TRY', exchange_rate: 1, status: 'Taslak', rate_type: 'TCMB-ALIS', vat_mode: 'Haric' },
+      },
+      {
+        id: 'mal-kabuller',
+        techId: 'PUR-GR-SCR-001',
+        businessNameEn: 'GoodsReceiptScreen',
+        title: 'Mal Kabuller',
+        endpoint: '/mal-kabuller',
+        crud: true,
+        numeratorSeri: 'MAL_KABUL',
+        codeField: 'receipt_no',
+        nameField: 'order_no',
+        convertAction: {
+          label: 'Alış Faturası Oluştur',
+          path: '/mal-kabuller/{id}/fatura-olustur',
+          nested: { screenId: 'fatura-yonetimi', link: 'mal-kabul-fatura' },
+        },
+        secondaryAction: { label: 'Tedarikçiye İade', path: '/mal-kabuller/{id}/iade', method: 'POST' },
+        filters: [
+          { key: 'receipt_no', label: 'Kabul no' },
+          { key: 'order_no', label: 'Sipariş no' },
+          { key: 'warehouse_code', label: 'Depo' },
+        ],
+        columns: [
+          { key: 'receipt_no', label: 'Kabul', mono: true },
+          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'vendor_delivery_note_no', label: 'Ted. irsaliye', mono: true },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'receipt_date', label: 'Tarih' },
+          { key: 'status', label: 'Durum' },
+          { key: 'received_by', label: 'Kabul eden' },
+          { key: 'incoming_qc_required', label: 'GKK' },
+        ],
+        masterFields: [
+          { key: 'receipt_no', label: 'Kabul no', code: true },
+          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', required: true, fillFrom: 'siparis-satirlar' },
+          { key: 'vendor_delivery_note_id', label: 'Tedarikçi irsaliyesi', type: 'lookup', lookup: 'tedarikci-irsaliyeleri', valueKey: 'id', labelKey: 'delivery_note_no', fillFrom: 'tedarikci-irsaliye-satirlar' },
+          { key: 'warehouse_id', label: 'Giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
+          { key: 'receipt_date', label: 'Kabul tarihi', type: 'date' },
+          { key: 'vendor_delivery_note_no', label: 'Tedarikçi irsaliye no' },
+          { key: 'delivery_date', label: 'İrsaliye tarihi', type: 'date' },
+          { key: 'vendor_invoice_no', label: 'Tedarikçi fatura no (opsiyonel)' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Iptal', 'Kapali'] },
+          { key: 'incoming_qc_required', label: 'GKK gerekli', type: 'checkbox' },
+          { key: 'received_by', label: 'Kabul eden' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'internal_note', label: 'Dahili not' },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'accepted_flag', label: 'Kabul edilen', type: 'number' },
+          { key: 'rejected_qty', label: 'Reddedilen', type: 'number' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
+          { key: 'lot_no', label: 'Parti no' },
+          { key: 'serial_no', label: 'Seri no' },
+          { key: 'stock_status', label: 'Statü', type: 'select', options: ['Kalitede', 'Kullanilabilir', 'Bloke'] },
+          { key: 'bin_code', label: 'Raf' },
+          { key: 'expiry_date', label: 'SKT', type: 'date' },
+          { key: 'line_description', label: 'Açıklama' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'tedarikci-irsaliyeleri',
+        techId: 'PUR-DLV-SCR-001',
+        businessNameEn: 'SupplierDeliveryNoteScreen',
+        title: 'Alış İrsaliyeleri',
+        endpoint: '/tedarikci-irsaliyeleri',
+        crud: true,
+        codeField: 'delivery_note_no',
+        nameField: 'partner_name',
+        numeratorSeri: 'TEDARIKCI_IRSALIYE',
+        filters: [
+          { key: 'delivery_note_no', label: 'İrsaliye no' },
+          { key: 'partner_name', label: 'Tedarikçi' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'delivery_note_no', label: 'İrsaliye', mono: true },
+          { key: 'partner_name', label: 'Tedarikçi' },
+          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'delivery_date', label: 'Tarih' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'delivery_note_no', label: 'İrsaliye no', code: true },
+          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-satirlar' },
+          { key: 'delivery_date', label: 'İrsaliye tarihi', type: 'date' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kismi', 'Kapali', 'Iptal'] },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'accepted_flag', label: 'Kabul edilen', type: 'number' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
+          { key: 'line_description', label: 'Açıklama' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { status: 'Acik' },
+      },
+      {
+        id: 'giris-kontrolleri',
+        techId: 'QLT-INC-SCR-001',
+        businessNameEn: 'IncomingInspectionScreen',
+        title: 'Giriş Kontrolleri',
+        endpoint: '/giris-kontrolleri',
+        crud: false,
+        codeField: 'inspection_no',
+        nameField: 'order_no',
+        approveAction: { label: 'Onayla → Giriş Kalite', path: '/giris-kontrolleri/{id}/onayla' },
+        filters: [
+          { key: 'inspection_no', label: 'Kontrol no' },
+          { key: 'order_no', label: 'Sipariş' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'inspection_no', label: 'Kontrol', mono: true },
+          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'receipt_no', label: 'Mal kabul', mono: true },
+          { key: 'kaynak_depo_kodu', label: 'Giriş depo', mono: true },
+          { key: 'hedef_depo_kodu', label: 'Kalite depo', mono: true },
+          { key: 'inspection_date', label: 'Tarih' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'inspection_no', label: 'Kontrol no', code: true },
+          { key: 'order_no', label: 'Sipariş no' },
+          { key: 'receipt_no', label: 'Mal kabul no' },
+          { key: 'kaynak_depo_kodu', label: 'Giriş depo' },
+          { key: 'hedef_depo_kodu', label: 'Giriş kalite depo' },
+          { key: 'status', label: 'Durum' },
+          { key: 'inspected_by', label: 'Kontrol eden' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'item_code', label: 'Stok kodu' },
+          { key: 'item_name', label: 'Stok adı' },
+          { key: 'ordered_quantity', label: 'Sipariş miktarı', type: 'number' },
+          { key: 'received_quantity', label: 'Gelen miktar', type: 'number' },
+          { key: 'accepted_quantity', label: 'Kabul miktarı', type: 'number' },
+          { key: 'rejected_quantity', label: 'Red miktarı', type: 'number' },
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'match_ok', label: 'Tutarlı', type: 'checkbox' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        readOnly: false,
+      },
+      {
+        id: 'satin-alma-teklif-istekleri',
+        techId: 'PUR-RFQ-SCR-001',
+        businessNameEn: 'RequestForQuotationScreen',
+        title: 'Satınalma Teklif İstekleri',
+        endpoint: '/satin-alma-teklif-istekleri',
+        hidden: true,
+        deprecated: true,
+        crud: true,
+        numeratorSeri: 'SATINALMA_TEKLIF_ISTEK',
+        codeField: 'rfq_no',
+        nameField: 'description',
+        filters: [
+          { key: 'rfq_no', label: 'İstek no' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'rfq_no', label: 'İstek', mono: true },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'rfq_no', label: 'İstek no', code: true },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'TeklifeDonustu', 'Iptal', 'Kapali'] },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+      },
+      {
+        id: 'alis-iade-faturalari',
+        techId: 'PUR-RET-SCR-001',
+        businessNameEn: 'PurchaseReturnInvoiceScreen',
+        title: 'Alış İade Faturaları',
+        endpoint: '/invoices?invoice_type=AlisIade',
+        crud: true,
+        numeratorSeri: 'ALIS_FATURA',
+        codeField: 'invoice_no',
+        nameField: 'partner_name',
+        helpText: 'Tedarikçiye iade faturaları. Kaynak: mal kabul / alış faturası üzerinden İade aksiyonu.',
+        secondaryAction: { label: 'Muhasebeleştir', path: '/invoices/{id}/muhasebelestir', method: 'POST' },
+        filters: [
+          { key: 'invoice_no', label: 'Fatura no' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'invoice_no', label: 'Fatura', mono: true },
+          { key: 'invoice_type', label: 'Tür' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'invoice_date', label: 'Tarih' },
+          { key: 'payable_amount', label: 'Tutar' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'invoice_no', label: 'Fatura no', code: true },
+          { key: 'invoice_type', label: 'Tür', type: 'select', options: ['AlisIade'], readOnly: true },
+          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'invoice_date', label: 'Tarih', type: 'date', required: true },
+          { key: 'goods_receipt_id', label: 'Kaynak mal kabul', type: 'lookup', lookup: 'mal-kabuller', valueKey: 'id', labelKey: 'receipt_no' },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal'] },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
+        ],
+        detailKey: 'kalemler',
+        defaults: { invoice_type: 'AlisIade', status: 'Taslak', currency_code: 'TRY' },
+      },
+    ],
+  },
+  {
+    id: 'satis',
+    title: 'Satış',
+    sections: [
+      {
+        id: 'teklif',
+        title: 'Teklifler',
+        screenIds: ['satis-teklifleri'],
+      },
+      {
+        id: 'siparis',
+        title: 'Siparişler',
+        screenIds: ['satis-siparisleri'],
+      },
+      {
+        id: 'sevkiyat',
+        title: 'Sevkiyat',
+        screenIds: ['sevk-emirleri'],
+      },
+      {
+        id: 'belgeler',
+        title: 'Satış Belgeleri',
+        screenIds: ['irsaliye-yonetimi', 'fatura-yonetimi', 'satis-iade-faturalari'],
+      },
+    ],
+    screens: [
+      {
+        id: 'satis-teklifleri',
+        techId: 'SAL-QUO-SCR-001',
+        businessNameEn: 'SalesQuotationScreen',
+        title: 'Satış Teklifleri',
+        endpoint: '/satis-teklifleri',
+        crud: true,
+        numeratorSeri: 'SATIS_TEKLIF',
+        codeField: 'quotation_no',
+        nameField: 'partner_name',
+        convertAction: {
+          label: 'Siparişe Dönüştür',
+          path: '/satis-teklifleri/{id}/siparise-donustur',
+          nested: { screenId: 'satis-siparisleri', link: 'teklif-siparis' },
+        },
+        filters: [
+          { key: 'quotation_no', label: 'Teklif no' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'quotation_no', label: 'Teklif', mono: true },
+          { key: 'customer_quotation_no', label: 'Müş. ref', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'quotation_date', label: 'Tarih' },
+          { key: 'valid_date', label: 'Geçerlilik' },
+          { key: 'delivery_date', label: 'Teslim' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'subtotal', label: 'Ara' },
+          { key: 'tax_amount', label: 'KDV' },
+          { key: 'grand_total', label: 'Genel' },
+          { key: 'status', label: 'Durum' },
+          { key: 'opportunity_code', label: 'Fırsat', mono: true },
+          { key: 'project_code', label: 'Proje', mono: true },
+        ],
+        masterFields: [
+          { key: 'quotation_no', label: 'Teklif no', code: true },
+          { key: 'customer_quotation_no', label: 'Müşteri teklif ref' },
+          { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'opportunity_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'opportunity_name', codeKey: 'opportunity_code' },
+          { key: 'lead_id', label: 'Aday', type: 'lookup', lookup: 'crm-adaylar', valueKey: 'id', labelKey: 'lead_name', codeKey: 'lead_code' },
+          { key: 'quotation_date', label: 'Teklif tarihi', type: 'date' },
+          { key: 'valid_date', label: 'Geçerlilik', type: 'date' },
+          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
+          { key: 'exchange_rate', label: 'Kur', type: 'number' },
+          { key: 'discount_rate', label: 'İskonto %', type: 'number' },
+          { key: 'payment_term_code', label: 'Ödeme koşulu' },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'] },
+          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
+          { key: 'region', label: 'Bölge' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'] },
+          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-teklif', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code' },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'public_note', label: 'Müşteri notu' },
+          { key: 'internal_note', label: 'Dahili not' },
+        ],
+        detailFields: [
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'line_description', label: 'Açıklama' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
+          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
+          { key: 'region', label: 'Bölge', size: 'short' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { currency_code: 'TRY', exchange_rate: 1, rate_type: 'TCMB-SATIS', vat_mode: 'Haric', line_type: 'S', status: 'Taslak' },
+      },
+      {
+        id: 'satis-siparisleri',
+        techId: 'SAL-ORD-SCR-001',
+        businessNameEn: 'SalesOrderScreen',
+        title: 'Satış Siparişleri',
+        endpoint: '/sales_orders',
+        crud: true,
+        numeratorSeri: 'SATIS_SIPARIS',
+        codeField: 'order_no',
+        nameField: 'partner_name',
+        compactMaster: true,
+        masterPrimaryMax: 16,
+        convertAction: {
+          label: 'Sevk Emri Oluştur',
+          path: '/sales_orders/{id}/sevk-emri-olustur',
+          needs: ['warehouse_id'],
+          dialog: 'depo',
+          nested: { screenId: 'sevk-emirleri', link: 'siparis-sevk' },
+        },
+        approveAction: {
+          label: 'Stok Rezerve Et',
+          path: '/sales_orders/{id}/rezerve',
+          dialog: 'depo',
+        },
+        secondaryAction: {
+          label: 'İş Emri Ekranı',
+          openScreen: 'siparis-is-emri',
+        },
+        filters: [
+          { key: 'order_no', label: 'Sipariş no' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'customer_order_no', label: 'Müş. sip. no', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'order_type', label: 'Tür' },
+          { key: 'order_date', label: 'Tarih' },
+          { key: 'delivery_date', label: 'Teslim' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'subtotal', label: 'Ara top.' },
+          { key: 'tax_amount', label: 'KDV' },
+          { key: 'grand_total', label: 'Genel top.' },
+          { key: 'payment_term_code', label: 'Ödeme koş.' },
+          { key: 'payment_method', label: 'Ödeme şekli' },
+          { key: 'status', label: 'Durum' },
+          { key: 'is_invoiced', label: 'Faturalandı' },
+          { key: 'project_code', label: 'Proje', mono: true },
+        ],
+        // Kompakt başlık — notlar alt şeritte; finans/geçerlilik kalemde; address ayrı sekme
+        masterFields: [
+          { key: 'order_no', label: 'Sipariş no', code: true, lead: true },
+          { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, fillCariAdres: true },
+          { key: 'order_date', label: 'Tarih', type: 'date', lead: true },
+          { key: 'delivery_date', label: 'Teslim', type: 'date', lead: true },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'], lead: true },
+          { key: 'order_type', label: 'Tür', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true, lead: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', lead: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
+          { key: 'quotation_id', label: 'Teklif', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'teklif-satirlar' },
+          { key: 'customer_order_no', label: 'Müş. sip. no' },
+          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
+          { key: 'payment_term_code', label: 'Ödeme koşulu', lead: true },
+          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', lead: true },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', lead: true },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], lead: true },
+          { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
+          // Alt şerit (Belge notu alanı)
+          { key: 'public_note', label: 'Müşteri notu' },
+          { key: 'internal_note', label: 'Dahili not' },
+        ],
+        // Finans + geçerlilik/fiyat listesi kalem formunda
+        // Kalem sırası: stok → birim → miktar → depo (bağlantı / önem)
+        detailFields: [
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'line_description', label: 'Açıklama' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
+          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
+          { key: 'valid_date', label: 'Geçerlilik', type: 'date', size: 'short' },
+          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
+          { key: 'region', label: 'Bölge', size: 'short' },
+          { key: 'shipped_quantity', label: 'Sevk edilen', type: 'number', size: 'short' },
+          { key: 'invoiced_quantity', label: 'Fatura edilen', type: 'number', size: 'short' },
+          { key: 'reserved_quantity', label: 'Rezerve', type: 'number', size: 'short' },
+          { key: 'pending_quantity', label: 'Bekleyen', type: 'number', size: 'short' },
+          { key: 'kalan_sevk_miktar', label: 'Kalan sevk', type: 'number', size: 'short' },
+        ],
+        detailKey: 'kalemler',
+        detailSlots: 5,
+        defaults: { currency_code: 'TRY', exchange_rate: 1, rate_type: 'TCMB-SATIS', vat_mode: 'Haric', order_type: 'SatisSiparis', status: 'Taslak' },
+        formTabs: [
+          {
+            id: 'kalemler',
+            label: 'Kalemler',
+            kind: 'master-grid',
+            masterFields: null, // screen.masterFields (normalize)
+            grid: {
+              key: 'kalemler',
+              slots: 5,
+              fields: null, // detailFields (normalize)
+            },
+          },
+          {
+            id: 'address',
+            label: 'Adres',
+            kind: 'fields',
+            fields: [
+              { key: 'ship_to_address', label: 'Sevk adresi', size: 'wide' },
+              { key: 'ship_city', label: 'İl' },
+              { key: 'ship_district', label: 'İlçe' },
+              { key: 'ship_country', label: 'Ülke' },
+              { key: 'ship_postal_code', label: 'Posta kodu' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'sevk-emirleri',
+        techId: 'SAL-SHP-SCR-001',
+        businessNameEn: 'ShipmentScreen',
+        title: 'Sevk Emirleri',
+        endpoint: '/sevk-emirleri',
+        crud: true,
+        numeratorSeri: 'SEVK_EMRI',
+        codeField: 'shipment_no',
+        nameField: 'partner_name',
+        convertAction: {
+          label: 'İrsaliye Oluştur',
+          path: '/delivery_notes/sevk-emrinden',
+          bodyKey: 'shipment_order_id',
+          dialog: 'irsaliye',
+          nested: { screenId: 'irsaliye-yonetimi', link: 'sevk-irsaliye' },
+        },
+        filters: [
+          { key: 'shipment_no', label: 'Sevk no' },
+          { key: 'order_no', label: 'Sipariş' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'shipment_no', label: 'Sevk', mono: true },
+          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'ship_date', label: 'Sevk tar.' },
+          { key: 'planned_ship_date', label: 'Plan' },
+          { key: 'priority', label: 'Öncelik' },
+          { key: 'carrier_title', label: 'Taşıyıcı' },
+          { key: 'vehicle_plate', label: 'Plaka' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'shipment_no', label: 'Sevk no', code: true },
+          { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', required: true, fillFrom: 'siparis-kalemler' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
+          { key: 'ship_date', label: 'Sevk tarihi', type: 'date' },
+          { key: 'planned_ship_date', label: 'Planlanan sevk', type: 'date' },
+          { key: 'priority', label: 'Öncelik', type: 'select', options: ['Dusuk', 'Normal', 'Yuksek', 'Acil'] },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'IrsaliyeDonustu', 'Iptal', 'Kapali'] },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
+          { key: 'region', label: 'Bölge' },
+          { key: 'ship_to_address', label: 'Sevk adresi' },
+          { key: 'ship_city', label: 'İl' },
+          { key: 'ship_district', label: 'İlçe' },
+          { key: 'ship_country', label: 'Ülke' },
+          { key: 'ship_postal_code', label: 'Posta kodu' },
+          { key: 'carrier_title', label: 'Taşıyıcı unvan' },
+          { key: 'carrier_tax_id', label: 'Taşıyıcı VKN' },
+          { key: 'vehicle_plate', label: 'Araç plaka' },
+          { key: 'driver_name', label: 'Şoför' },
+          { key: 'driver_phone', label: 'Şoför tel' },
+          { key: 'package_count', label: 'Paket adet', type: 'number' },
+          { key: 'gross_weight', label: 'Brüt kg', type: 'number' },
+          { key: 'net_weight', label: 'Net kg', type: 'number' },
+          { key: 'volume', label: 'Hacim', type: 'number' },
+          { key: 'public_note', label: 'Müşteri notu' },
+          { key: 'internal_note', label: 'Dahili not' },
+          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-sevk', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code' },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'line_description', label: 'Açıklama' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'lot_id', label: 'Parti', type: 'lookup', lookup: 'stok-partileri', valueKey: 'id', labelKey: 'lot_no' },
+          { key: 'serial_no', label: 'Seri no' },
+          { key: 'bin_code', label: 'Raf' },
+          { key: 'shipped_quantity', label: 'Sevk edilen', type: 'number', size: 'short' },
+          { key: 'remaining_quantity', label: 'Bekleyen', type: 'number', size: 'short' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { priority: 'Normal', status: 'Taslak' },
+      },
+      {
+        id: 'irsaliye-yonetimi',
+        techId: 'SAL-DLV-SCR-001',
+        businessNameEn: 'DeliveryNoteManagementScreen',
+        title: 'Satış İrsaliyeleri',
+        endpoint: '/delivery_notes',
+        crud: true,
+        numeratorSeri: 'IRSALIYE',
+        codeField: 'delivery_note_no',
+        nameField: 'partner_name',
+        compactMaster: false,
+        masterPrimaryMax: 18,
+        helpText: 'Satış irsaliyelerinin oluşturulması, onayı, e-İrsaliye durumu ve faturalandırması bu ekrandan yönetilir.',
+        convertAction: {
+          label: 'Fatura Oluştur',
+          path: '/delivery_notes/{id}/fatura-olustur',
+          dialog: 'fatura-olustur',
+          openTarget: { screenId: 'fatura-yonetimi', mode: 'duzelt' },
+        },
+        approveAction: { label: 'Onayla (Stok Çıkış)', path: '/delivery_notes/{id}/onayla', dialog: 'onay-depo' },
+        secondaryAction: { label: 'İade İrsaliyesi', path: '/delivery_notes/{id}/iade', method: 'POST' },
+        filters: [
+          { key: 'delivery_note_no', label: 'İrsaliye no' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+          { key: 'e_document_status', label: 'e-Belge' },
+        ],
+        columns: [
+          { key: 'delivery_note_no', label: 'İrsaliye', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'delivery_date', label: 'İrs. tar.' },
+          { key: 'actual_ship_date', label: 'Fiili sevk' },
+          { key: 'vehicle_plate', label: 'Plaka' },
+          { key: 'e_document_status', label: 'e-Belge' },
+          { key: 'subtotal', label: 'Mal' },
+          { key: 'grand_total', label: 'Genel' },
+          { key: 'invoice_status', label: 'Fatura' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'delivery_note_no', label: 'İrsaliye no', code: true, lead: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
+          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
+          { key: 'delivery_date', label: 'Belge tarihi', type: 'date', lead: true },
+          { key: 'delivery_time', label: 'Belge saati', lead: true },
+          { key: 'document_series', label: 'Seri', lead: true },
+          { key: 'document_sequence', label: 'Sıra', lead: true },
+          { key: 'gib_number', label: 'GİB no' },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, fillCariAdres: true },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, lead: true },
+          { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-kalemler' },
+          { key: 'shipment_order_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'shipment_no', fillFrom: 'sevk-satirlar' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', lead: true },
+          { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
+          { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['SevkTarihi', 'BelgeTarihi', 'Serbest'] },
+          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
+          { key: 'actual_ship_date', label: 'Fiili sevk tarihi', type: 'date', lead: true },
+          { key: 'actual_ship_time', label: 'Fiili sevk saati' },
+          { key: 'due_date', label: 'Vade tarihi', type: 'date' },
+          { key: 'due_days', label: 'Vade gün', type: 'number' },
+          { key: 'payment_plan', label: 'Ödeme planı' },
+          { key: 'payment_method', label: 'Ödeme şekli' },
+          { key: 'delivery_term_code', label: 'Teslim şekli', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
+          { key: 'carrier_company', label: 'Nakliye şirketi' },
+          { key: 'carrier', label: 'Nakliyeci' },
+          { key: 'sales_rep', label: 'Satış temsilcisi' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
+          { key: 'region', label: 'Bölge' },
+          { key: 'invoice_status', label: 'Fatura durumu', type: 'select', options: ['Irsaliye', 'Kismi', 'Faturalandi'] },
+          { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox' },
+          { key: 'print_local_currency', label: 'Çıktı yerel PB', type: 'checkbox' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'], lead: true },
+          { key: 'description', label: 'Açıklama 1' },
+          { key: 'description_2', label: 'Açıklama 2' },
+          { key: 'description_3', label: 'Açıklama 3' },
+          { key: 'delivery_footer_discount', label: 'İrs. altı iskonto', type: 'number' },
+          { key: 'public_note', label: 'Müşteri notu' },
+          { key: 'internal_note', label: 'Dahili not' },
+        ],
+        detailFields: [
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', size: 'short' },
+          { key: 'line_description', label: 'Açıklama' },
+          { key: 'line_description_2', label: 'Açıklama 2' },
+          { key: 'line_description_3', label: 'Açıklama 3' },
+          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
+          { key: 'local_unit_price', label: 'Yerel br.fiyat', type: 'number', size: 'short', readOnly: true },
+          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_code', label: 'KDV kodu', size: 'short' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short' },
+          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short' },
+          { key: 'excise_code', label: 'ÖTV kodu', size: 'short' },
+          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short' },
+          { key: 'stamp_tax_rate', label: 'Bandrol %', type: 'number', size: 'short' },
+          { key: 'tax_schema', label: 'Vergi şeması', size: 'short' },
+          { key: 'due_date', label: 'Vade', type: 'date', size: 'short' },
+          { key: 'due_days', label: 'Vade gün', type: 'number', size: 'short' },
+          { key: 'customer_ref_code', label: 'Müş. ref' },
+          { key: 'lot_no', label: 'Parti', size: 'short' },
+          { key: 'serial_no', label: 'Seri', size: 'short' },
+          { key: 'sales_order_line_id', label: 'Sip. satır id', type: 'number', size: 'short' },
+          { key: 'order_no', label: 'Sipariş no', size: 'short' },
+          { key: 'invoiced_quantity', label: 'Fatura edilen', type: 'number', size: 'short', readOnly: true },
+          { key: 'amount_ex_tax', label: 'Tutar', type: 'number', size: 'short', readOnly: true },
+          { key: 'stock_status', label: 'Statü', type: 'select', options: ['Kullanilabilir', 'Kalitede', 'Bloke'], size: 'short' },
+        ],
+        detailKey: 'satirlar',
+        detailSlots: 6,
+        detailAsFields: false,
+        defaults: {
+          currency_code: 'TRY',
+          exchange_rate: 1,
+          rate_type: 'TCMB-SATIS',
+          rate_option: 'SevkTarihi',
+          scenario: 'TEMELIRSALIYE',
+          delivery_note_type: 'SEVK',
+          e_document_status: 'Hazir',
+          invoice_status: 'Irsaliye',
+          status: 'Taslak',
+          is_printed: false,
+          print_local_currency: false,
+          ship_country: 'TR',
+        },
+        formTabs: [
+          {
+            id: 'giris',
+            label: 'İrsaliye Giriş',
+            kind: 'master-grid',
+            masterFields: null,
+            grid: {
+              key: 'satirlar',
+              slots: 6,
+              fields: null,
+            },
+          },
+          {
+            id: 'genel',
+            label: 'Genel Bilgiler',
+            kind: 'fields',
+            fields: [
+              { key: 'ship_to_partner_id', label: 'Sevk cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
+              { key: 'ship_address_type', label: 'Sevk adres tipi' },
+              { key: 'ship_name', label: 'Sevk ad' },
+              { key: 'ship_last_name', label: 'Sevk soyad' },
+              { key: 'ship_address_1', label: 'Sevk adres 1', size: 'wide' },
+              { key: 'ship_address_2', label: 'Sevk adres 2', size: 'wide' },
+              { key: 'ship_address_3', label: 'Sevk adres 3', size: 'wide' },
+              { key: 'ship_country', label: 'Sevk ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
+              { key: 'ship_city', label: 'Sevk il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
+              { key: 'ship_district', label: 'Sevk ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
+              { key: 'ship_postal_code', label: 'Sevk posta kodu' },
+              { key: 'ship_phone_1', label: 'Sevk tel 1' },
+              { key: 'ship_phone_2', label: 'Sevk tel 2' },
+              { key: 'customs', label: 'Gümrük' },
+              { key: 'ship_to_address', label: 'Sevk adresi (özet)', size: 'wide' },
+              { key: 'withholding_code', label: 'Tevkifat kodu' },
+              { key: 'withholding_rate', label: 'Tevkifat oranı', type: 'number' },
+              { key: 'withholding_amount', label: 'Tevkifat tutarı', type: 'number' },
+              { key: 'tax_schema', label: 'Vergi şeması' },
+              { key: 'special_movement_type', label: 'Özel hareket tipi' },
+              { key: 'fin_due_date', label: 'Fin. vade tarih', type: 'date' },
+              { key: 'fin_due_days', label: 'Fin. vade gün', type: 'number' },
+              { key: 'stock_date', label: 'Stok tarihi', type: 'date' },
+              { key: 'bill_address_1', label: 'Fatura adres 1', size: 'wide' },
+              { key: 'bill_address_2', label: 'Fatura adres 2', size: 'wide' },
+              { key: 'bill_address_3', label: 'Fatura adres 3', size: 'wide' },
+              { key: 'bill_postal_code', label: 'Fatura posta kodu' },
+              { key: 'bill_country', label: 'Fatura ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
+              { key: 'bill_city', label: 'Fatura il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
+              { key: 'bill_district', label: 'Fatura ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
+              { key: 'contract_code', label: 'Sözleşme kodu' },
+              { key: 'partner_title', label: 'Cari unvan', size: 'wide' },
+              { key: 'partner_title_2', label: 'Cari unvan 2', size: 'wide' },
+              { key: 'tax_office', label: 'Vergi dairesi' },
+              { key: 'tax_id', label: 'Vergi no' },
+            ],
+          },
+          {
+            id: 'e-irsaliye',
+            label: 'e-İrsaliye',
+            kind: 'fields',
+            fields: [
+              { key: 'delivery_note_type', label: 'e-İrsaliye tipi', type: 'select', options: ['SEVK', 'MATBU', 'IADE'] },
+              { key: 'scenario', label: 'İrsaliye senaryosu', type: 'select', options: ['TEMELIRSALIYE', 'TICARIIRSALIYE'] },
+              { key: 'uuid_ettn', label: 'ETTN', readOnly: true },
+              { key: 'mailbox_alias', label: 'Posta kutusu (alias)' },
+              { key: 'purchase_pre_delivery', label: 'Alış ön irsaliye' },
+              { key: 'paper_series', label: 'Matbu seri' },
+              { key: 'paper_sequence', label: 'Matbu sıra' },
+              { key: 'paper_document_date', label: 'Matbu belge tarih', type: 'date' },
+              { key: 'portal_sent_date', label: 'Portala iletilen tarih', type: 'date' },
+              { key: 'ecommerce_web', label: 'e-Ticaret web adresi', size: 'wide' },
+              { key: 'ecommerce_name', label: 'e-Ticaret ad' },
+              { key: 'ecommerce_last_name', label: 'e-Ticaret soyad' },
+              { key: 'ecommerce_email', label: 'e-Ticaret email' },
+            ],
+          },
+          {
+            id: 'arac',
+            label: 'Araç Bilgileri',
+            kind: 'fields',
+            fields: [
+              { key: 'delivered_by', label: 'Teslim eden' },
+              { key: 'vehicle_code', label: 'Araç kodu' },
+              { key: 'vehicle_plate', label: 'Araç plaka' },
+              { key: 'driver_national_id', label: 'TCKN' },
+              { key: 'driver_name', label: 'Şoför adı' },
+              { key: 'driver_last_name', label: 'Şoför soyadı' },
+              { key: 'driver_mobile', label: 'Cep no' },
+              { key: 'vehicle_description', label: 'Açıklama', size: 'wide' },
+              { key: 'trailer_plate', label: 'Dorse plaka no' },
+              { key: 'cargo_no', label: 'Kargo numarası' },
+              { key: 'carrier_title', label: 'Taşıyıcı ünvan', size: 'wide' },
+              { key: 'carrier_tax_id', label: 'Taşıyıcı VKN' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'fatura-yonetimi',
+        techId: 'SAL-INV-SCR-001',
+        businessNameEn: 'InvoiceManagementScreen',
+        title: 'Satış Faturaları',
+        endpoint: '/invoices',
+        crud: true,
+        numeratorSeri: 'FATURA',
+        numeratorFromField: {
+          field: 'invoice_type',
+          map: {
+            Satis: 'FATURA',
+            Iade: 'FATURA',
+            SatisIade: 'FATURA',
+            Alis: 'ALIS_FATURA',
+            AlisIade: 'ALIS_FATURA',
+          },
+        },
+        codeField: 'invoice_no',
+        nameField: 'partner_name',
+        compactMaster: false,
+        masterPrimaryMax: 18,
+        helpText: 'Alış ve satış faturaları tek ekranda yönetilir. Tür filtresiyle yön seçin; alışta mal kabul / 3-way eşleştirme, satışta e-Fatura alanları kullanılır.',
+        approveAction: { label: '3-way Eşleştir', path: '/invoices/{id}/eslestir' },
+        convertAction: { label: 'Muhasebeleştir', path: '/invoices/{id}/muhasebelestir' },
+        secondaryAction: { label: 'İade Faturası', path: '/invoices/{id}/iade', method: 'POST' },
+        filters: [
+          { key: 'invoice_no', label: 'Fatura no' },
+          { key: 'partner_name', label: 'Cari' },
+          {
+            key: 'invoice_type',
+            label: 'Tür',
+            type: 'select',
+            options: ['', 'Satis', 'Iade', 'Alis', 'AlisIade'],
+            queryParam: true,
+          },
+          { key: 'e_document_status', label: 'e-Belge' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'invoice_no', label: 'Fatura', mono: true },
+          { key: 'invoice_type', label: 'Tür' },
+          { key: 'customer_invoice_ref', label: 'Müş./Ted. ref', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'invoice_date', label: 'Tarih' },
+          { key: 'due_date', label: 'Vade' },
+          { key: 'scenario', label: 'Senaryo' },
+          { key: 'e_document_status', label: 'e-Belge' },
+          { key: 'net_amount', label: 'Ara top.' },
+          { key: 'tax_amount', label: 'KDV' },
+          { key: 'payable_amount', label: 'Ödenecek' },
+          { key: 'payment_status', label: 'Ödeme' },
+          { key: 'payment_method', label: 'Şekli' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'status', label: 'Durum' },
+          { key: 'project_code', label: 'Proje', mono: true },
+        ],
+        masterFields: [
+          { key: 'invoice_no', label: 'Fatura no', code: true, lead: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
+          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-fatura', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
+          { key: 'invoice_date', label: 'Belge tarihi', type: 'date', required: true, lead: true },
+          { key: 'document_series', label: 'Seri', lead: true },
+          { key: 'document_sequence', label: 'Sıra', lead: true },
+          { key: 'gib_number', label: 'GİB no' },
+          { key: 'customer_invoice_ref', label: 'Müşteri / tedarikçi fatura ref' },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, fillCariAdres: true },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', lead: true },
+          {
+            key: 'invoice_type',
+            label: 'Fatura türü',
+            type: 'select',
+            options: ['Satis', 'Iade', 'Alis', 'AlisIade'],
+            required: true,
+            lead: true,
+          },
+          { key: 'scenario', label: 'Senaryo', type: 'select', options: ['TICARIFATURA', 'TEMELFATURA'], required: true, lead: true },
+          { key: 'invoice_category', label: 'Fatura tipi', type: 'select', options: ['SATIS', 'IADE'], required: true },
+          { key: 'delivery_note_id', label: 'İrsaliye', type: 'lookup', lookup: 'delivery_notes', valueKey: 'id', labelKey: 'delivery_note_no', fillFrom: 'irsaliye-satirlar' },
+          { key: 'goods_receipt_id', label: 'Mal kabul (alış)', type: 'lookup', lookup: 'mal-kabuller', valueKey: 'id', labelKey: 'receipt_no', fillFrom: 'mal-kabul-satirlar' },
+          { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-kalemler' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true, lead: true },
+          { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
+          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
+          { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['BelgeTarihi', 'SevkTarihi', 'Serbest'] },
+          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
+          { key: 'due_date', label: 'Vade tarihi', type: 'date', required: true },
+          { key: 'due_days', label: 'Vade gün', type: 'number' },
+          { key: 'payment_due_days', label: 'Vade (gün)', type: 'number' },
+          { key: 'payment_plan', label: 'Ödeme planı' },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'], required: true },
+          { key: 'payment_term_code', label: 'Ödeme koşulu' },
+          { key: 'payment_status', label: 'Ödeme durumu', type: 'select', options: ['Odenmedi', 'Kismi', 'Odendi', 'Iptal'] },
+          { key: 'delivery_term_code', label: 'Teslim şekli', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
+          { key: 'sales_rep', label: 'Satış temsilcisi' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
+          { key: 'region', label: 'Bölge' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
+          { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox' },
+          { key: 'print_local_currency', label: 'Çıktı yerel PB', type: 'checkbox' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal', 'Kapali'], lead: true },
+          { key: 'description', label: 'Açıklama 1' },
+          { key: 'description_2', label: 'Açıklama 2' },
+          { key: 'description_3', label: 'Açıklama 3' },
+          { key: 'invoice_footer_discount', label: 'Fatura altı iskonto', type: 'number' },
+          { key: 'public_note', label: 'Müşteri notu' },
+          { key: 'internal_note', label: 'Dahili not' },
+          { key: 'is_posted', label: 'Muhasebeleşti', type: 'checkbox', readOnly: true },
+        ],
+        detailFields: [
+          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', size: 'short' },
+          { key: 'item_id', label: 'Ürün', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'line_description', label: 'Açıklama' },
+          { key: 'line_description_2', label: 'Açıklama 2' },
+          { key: 'line_description_3', label: 'Açıklama 3' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
+          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short', required: true },
+          { key: 'local_unit_price', label: 'Yerel br.fiyat', type: 'number', size: 'short', readOnly: true },
+          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
+          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
+          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
+          { key: 'vat_code', label: 'KDV kodu', size: 'short' },
+          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
+          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short' },
+          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short' },
+          { key: 'excise_code', label: 'ÖTV kodu', size: 'short' },
+          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short' },
+          { key: 'stamp_tax_rate', label: 'Bandrol %', type: 'number', size: 'short' },
+          { key: 'tax_schema', label: 'Vergi şeması', size: 'short' },
+          { key: 'due_date', label: 'Vade', type: 'date', size: 'short' },
+          { key: 'due_days', label: 'Vade gün', type: 'number', size: 'short' },
+          { key: 'customer_ref_code', label: 'Müş. ref' },
+          { key: 'unit_cost', label: 'Maliyet', type: 'number', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
+          { key: 'serial_no', label: 'Seri no', size: 'short' },
+          { key: 'order_no', label: 'Sipariş no', size: 'short' },
+          { key: 'amount_ex_tax', label: 'Tutar', type: 'number', size: 'short', readOnly: true },
+        ],
+        detailKey: 'kalemler',
+        detailSlots: 6,
+        detailAsFields: false,
+        defaults: {
+          invoice_type: 'Satis',
+          scenario: 'TICARIFATURA',
+          invoice_category: 'SATIS',
+          currency_code: 'TRY',
+          exchange_rate: 1,
+          rate_type: 'TCMB-SATIS',
+          rate_option: 'BelgeTarihi',
+          vat_mode: 'Haric',
+          e_document_status: 'Hazir',
+          payment_status: 'Odenmedi',
+          status: 'Taslak',
+          is_printed: false,
+          print_local_currency: false,
+          ship_country: 'TR',
+        },
+        formTabs: [
+          {
+            id: 'giris',
+            label: 'Fatura Giriş',
+            kind: 'master-grid',
+            masterFields: null,
+            grid: {
+              key: 'kalemler',
+              slots: 6,
+              fields: null,
+            },
+          },
+          {
+            id: 'genel',
+            label: 'Genel Bilgiler',
+            kind: 'fields',
+            fields: [
+              { key: 'ship_to_partner_id', label: 'Sevk cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
+              { key: 'ship_address_type', label: 'Sevk adres tipi' },
+              { key: 'ship_name', label: 'Sevk ad' },
+              { key: 'ship_last_name', label: 'Sevk soyad' },
+              { key: 'ship_address_1', label: 'Sevk adres 1', size: 'wide' },
+              { key: 'ship_address_2', label: 'Sevk adres 2', size: 'wide' },
+              { key: 'ship_address_3', label: 'Sevk adres 3', size: 'wide' },
+              { key: 'ship_country', label: 'Sevk ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
+              { key: 'ship_city', label: 'Sevk il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
+              { key: 'ship_district', label: 'Sevk ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
+              { key: 'ship_postal_code', label: 'Sevk posta kodu' },
+              { key: 'ship_phone_1', label: 'Sevk tel 1' },
+              { key: 'ship_phone_2', label: 'Sevk tel 2' },
+              { key: 'customs', label: 'Gümrük' },
+              { key: 'ship_to_address', label: 'Sevk adresi (özet)', size: 'wide' },
+              { key: 'withholding_code', label: 'Tevkifat kodu' },
+              { key: 'withholding_rate', label: 'Tevkifat oranı', type: 'number' },
+              { key: 'withholding_amount', label: 'Tevkifat tutarı', type: 'number' },
+              { key: 'tax_schema', label: 'Vergi şeması' },
+              { key: 'special_movement_type', label: 'Özel hareket tipi' },
+              { key: 'fin_due_date', label: 'Fin. vade tarih', type: 'date' },
+              { key: 'fin_due_days', label: 'Fin. vade gün', type: 'number' },
+              { key: 'stock_date', label: 'Stok tarihi', type: 'date' },
+              { key: 'bill_address_1', label: 'Fatura adres 1', size: 'wide' },
+              { key: 'bill_address_2', label: 'Fatura adres 2', size: 'wide' },
+              { key: 'bill_address_3', label: 'Fatura adres 3', size: 'wide' },
+              { key: 'bill_postal_code', label: 'Fatura posta kodu' },
+              { key: 'bill_country', label: 'Fatura ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
+              { key: 'bill_city', label: 'Fatura il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
+              { key: 'bill_district', label: 'Fatura ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
+              { key: 'contract_code', label: 'Sözleşme kodu' },
+              { key: 'partner_title', label: 'Cari unvan', size: 'wide' },
+              { key: 'partner_title_2', label: 'Cari unvan 2', size: 'wide' },
+              { key: 'tax_office', label: 'Vergi dairesi', required: true },
+              { key: 'tax_id', label: 'Vergi no', required: true },
+            ],
+          },
+          {
+            id: 'e-fatura',
+            label: 'e-Fatura',
+            kind: 'fields',
+            fields: [
+              { key: 'scenario', label: 'e-Fatura senaryosu', type: 'select', options: ['TICARIFATURA', 'TEMELFATURA'] },
+              { key: 'invoice_category', label: 'Fatura tipi', type: 'select', options: ['SATIS', 'IADE'] },
+              { key: 'uuid_ettn', label: 'ETTN', readOnly: true },
+              { key: 'mailbox_alias', label: 'Posta kutusu (alias)' },
+              { key: 'portal_sent_date', label: 'Portala iletilen tarih', type: 'date' },
+              { key: 'ecommerce_web', label: 'e-Ticaret web adresi', size: 'wide' },
+              { key: 'ecommerce_name', label: 'e-Ticaret ad' },
+              { key: 'ecommerce_last_name', label: 'e-Ticaret soyad' },
+              { key: 'ecommerce_email', label: 'e-Ticaret email' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'satis-iade-faturalari',
+        techId: 'SAL-RET-SCR-001',
+        businessNameEn: 'SalesReturnInvoiceScreen',
+        title: 'Satış İade Faturaları',
+        endpoint: '/invoices?invoice_type=Iade',
+        crud: true,
+        numeratorSeri: 'FATURA',
+        codeField: 'invoice_no',
+        nameField: 'partner_name',
+        helpText: 'Müşteri iade faturaları. Kaynak irsaliye/fatura üzerindeki İade aksiyonundan da üretilebilir.',
+        secondaryAction: { label: 'Muhasebeleştir', path: '/invoices/{id}/muhasebelestir', method: 'POST' },
+        filters: [
+          { key: 'invoice_no', label: 'Fatura no' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'invoice_no', label: 'Fatura', mono: true },
+          { key: 'invoice_type', label: 'Tür' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'invoice_date', label: 'Tarih' },
+          { key: 'payable_amount', label: 'Tutar' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'invoice_no', label: 'Fatura no', code: true },
+          { key: 'invoice_type', label: 'Tür', type: 'select', options: ['Iade', 'SatisIade'], required: true },
+          { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'invoice_date', label: 'Tarih', type: 'date', required: true },
+          { key: 'delivery_note_id', label: 'Kaynak irsaliye', type: 'lookup', lookup: 'delivery_notes', valueKey: 'id', labelKey: 'delivery_note_no' },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal'] },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
+        ],
+        detailKey: 'kalemler',
+        defaults: { invoice_type: 'Iade', invoice_category: 'IADE', status: 'Taslak', currency_code: 'TRY' },
       },
     ],
   },
@@ -2443,10 +3794,46 @@ const MODULES = [
     id: 'uretim',
     title: 'Üretim',
     sections: [
-      { id: 'urun-agaci', title: 'Ürün Ağacı', screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'] },
-      { id: 'is-emri', title: 'İş Emri', screenIds: ['uretim-planlari', 'uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri'] },
-      { id: 'depo', title: 'Depo', screenIds: ['stok-depo'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri'] },
+      {
+        id: 'urun-agaci',
+        title: 'Ürün Ağacı',
+        screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'],
+      },
+      {
+        id: 'planlama',
+        title: 'Üretim Planlama',
+        screenIds: ['uretim-planlari'],
+      },
+      {
+        id: 'is-emri',
+        title: 'İş Emirleri',
+        screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'],
+      },
+      
+      {
+        id: 'fason',
+        title: 'Fason Operasyon',
+        screenIds: ['fason-operasyon-takip', 'fason-siparisleri', 'fason-operasyonlari', 'fason-fiyatlari', 'fason-parametreleri', 'fason-sevkiyatlar', 'fason-tuketimler', 'fason-teslimatlar', 'fason-emanet-stok'],
+      },{
+        id: 'gerceklesme',
+        title: 'Üretim Gerçekleşme',
+        screenIds: ['uretim-girisleri', 'hizli-uretim-girisi'],
+      },
+      {
+        id: 'kapasite',
+        title: 'Kapasite',
+        screenIds: ['is-merkezi-yuku'],
+      },
+      {
+        id: 'bakim',
+        title: 'Bakım (CMMS)',
+        screenIds: ['bakim-emirleri'],
+      },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: ['sinif-tanimi', 'is-merkezleri', 'is-istasyonlari', 'routings', 'uretim-emri-tipleri', 'uretim-parametreleri', 'uretim-parametre-dogrulama'],
+      },
     ],
     screens: [
       {
@@ -2774,290 +4161,6 @@ const MODULES = [
         detailKey: null,
       },
       {
-        id: 'sinif-tanimi',
-        techId: 'MFG-CLS-SCR-001',
-        businessNameEn: 'ClassDefinitionScreen',
-        title: 'Sınıf Tanımı',
-        endpoint: '/stok-siniflari',
-        crud: true,
-        codeField: 'class_code',
-        nameField: 'class_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'class_code', label: 'Sınıf kodu' },
-          { key: 'class_name', label: 'Sınıf adı' },
-        ],
-        columns: [
-          { key: 'class_code', label: 'Kod', mono: true },
-          { key: 'class_name', label: 'Ad' },
-          { key: 'parent_class_code', label: 'Üst', mono: true },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'class_code', label: 'Sınıf kodu', code: true, editableOnNew: true, required: true },
-          { key: 'class_name', label: 'Sınıf adı', name: true, required: true },
-          { key: 'parent_class_code', label: 'Üst sınıf kodu' },
-        ],
-        detailFields: [
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'is-merkezleri',
-        techId: 'MFG-WC-SCR-001',
-        businessNameEn: 'WorkCenterScreen',
-        title: 'İş Merkezleri',
-        endpoint: '/is-merkezleri',
-        crud: true,
-        numeratorSeri: null,
-        codeField: 'center_code',
-        nameField: 'center_name',
-        filters: [
-          { key: 'center_code', label: 'Merkez kodu' },
-          { key: 'center_name', label: 'Merkez adı' },
-          { key: 'plant_name', label: 'İş yeri' },
-        ],
-        columns: [
-          { key: 'center_code', label: 'Kod', mono: true },
-          { key: 'center_name', label: 'Ad' },
-          { key: 'plant_name', label: 'İş yeri' },
-        ],
-        masterFields: [
-          { key: 'center_code', label: 'Kod', code: true, editableOnNew: true },
-          { key: 'center_name', label: 'Ad', name: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-        ],
-        detailFields: [],
-      },
-      {
-        id: 'is-istasyonlari',
-        techId: 'MFG-WS-SCR-001',
-        businessNameEn: 'WorkStationScreen',
-        title: 'İş İstasyonları',
-        endpoint: '/is-istasyonlari',
-        crud: true,
-        numeratorSeri: null,
-        codeField: 'station_code',
-        nameField: 'station_name',
-        filters: [
-          { key: 'station_code', label: 'İstasyon kodu' },
-          { key: 'station_name', label: 'İstasyon adı' },
-          { key: 'center_name', label: 'İş merkezi' },
-        ],
-        columns: [
-          { key: 'station_code', label: 'Kod', mono: true },
-          { key: 'station_name', label: 'Ad' },
-          { key: 'center_code', label: 'Merkez', mono: true },
-          { key: 'center_name', label: 'Merkez adı' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'station_code', label: 'Kod', code: true, editableOnNew: true },
-          { key: 'station_name', label: 'Ad', name: true, required: true },
-          { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', required: true },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailFields: [],
-        defaults: { is_active: true },
-      },
-      {
-        id: 'routings',
-        techId: 'MFG-ROUT-SCR-001',
-        businessNameEn: 'RoutingScreen',
-        title: 'Rotalar',
-        endpoint: '/routings',
-        crud: true,
-        numeratorSeri: 'ROTA',
-        codeField: 'route_code',
-        nameField: 'route_name',
-        filters: [
-          { key: 'route_code', label: 'Rota kodu' },
-          { key: 'route_name', label: 'Rota adı' },
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'plant_id', label: 'Tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'route_type', label: 'Tip', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'] },
-          { key: 'alternative_no', label: 'Alt no' },
-        ],
-        columns: [
-          { key: 'route_code', label: 'Kod', mono: true },
-          { key: 'route_name', label: 'Ad' },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'alternative_no', label: 'Alt', mono: true },
-          { key: 'route_type', label: 'Tip' },
-          { key: 'bom_code', label: 'Ürün ağacı', mono: true },
-          { key: 'plant_code', label: 'Tesis', mono: true },
-          { key: 'is_default', label: 'Varsayılan' },
-          { key: 'template', label: 'Şablon' },
-          { key: 'is_reverse', label: 'Ters' },
-        ],
-        masterFields: [
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
-          { key: 'plant_id', label: 'İş yeri / tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
-          { key: 'route_code', label: 'Kod', code: true, required: true, group: 'kimlik' },
-          { key: 'route_name', label: 'Ad', name: true, required: true, group: 'kimlik' },
-          { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'], required: true, group: 'kimlik' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, group: 'kimlik' },
-          {
-            key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
-            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
-            dependsOn: 'item_id', filterKey: 'finished_good_item_id',
-          },
-          { key: 'alternative_no', label: 'Alternatif no', group: 'kimlik' },
-          { key: 'alternative_description', label: 'Alternatif açıklama', group: 'kimlik' },
-          { key: 'revision', label: 'Revizyon', group: 'kimlik' },
-          { key: 'brand_code', label: 'Marka', group: 'kimlik' },
-          { key: 'attr3_code', label: 'Özellik 3', group: 'kimlik' },
-          { key: 'min_quantity', label: 'Min. miktar', type: 'number', group: 'olcu' },
-          { key: 'max_quantity', label: 'Maks. miktar', type: 'number', group: 'olcu' },
-          { key: 'valid_from', label: 'Geçerlilik baş.', type: 'date', group: 'planlama' },
-          { key: 'valid_to', label: 'Geçerlilik bitiş', type: 'date', group: 'planlama' },
-          { key: 'wo_change_mode', label: 'İE değişiklik izni', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'], group: 'status' },
-          { key: 'is_default', label: 'Varsayılan ürün rotası', type: 'checkbox', group: 'status' },
-          { key: 'template', label: 'Şablon', type: 'checkbox', group: 'status' },
-          { key: 'is_reverse', label: 'Ters rota', type: 'checkbox', group: 'status' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
-          { key: 'notes', label: 'Not', size: 'wide', group: 'status' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        defaults: {
-          route_type: 'Uretim',
-          alternative_no: '00',
-          min_quantity: 0,
-          max_quantity: 999999999,
-          wo_change_mode: 'Serbest',
-          is_default: false,
-          template: false,
-          is_reverse: false,
-          is_active: true,
-        },
-        formLinks: {
-          item_id: [
-            { field: 'product_bom_id', pick: 'bomForItem' },
-            { field: 'brand_code', fromItem: 'brand_name' },
-          ],
-        },
-        formTabs: [
-          {
-            id: 'rota',
-            label: 'Rota',
-            kind: 'rota-workspace',
-            key: 'operasyonlar',
-            headerFields: [
-              { key: 'item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, critical: true, group: 'kimlik' },
-              {
-                key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
-                valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, lead: true, critical: true, group: 'kimlik',
-                dependsOn: 'item_id', filterKey: 'finished_good_item_id',
-              },
-              { key: 'route_code', label: 'Kod', code: true, required: true, lead: true, group: 'kimlik' },
-              { key: 'route_name', label: 'Ad', name: true, required: true, lead: true, group: 'kimlik' },
-              { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'], group: 'kimlik' },
-              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
-              { key: 'alternative_no', label: 'Alt no', group: 'kimlik' },
-              { key: 'is_default', label: 'Varsayılan', type: 'checkbox', group: 'status' },
-              { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
-            ],
-            // Üst alanlar (malzemeler ayrı render) → sonra planlama / gelişmiş accordion
-            fields: [
-              { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', lead: true, group: 'organizasyon' },
-              {
-                key: 'work_station_id', label: 'İş istasyonu', type: 'lookup', lookup: 'is-istasyonlari',
-                valueKey: 'id', labelKey: 'station_name', codeKey: 'station_code', lead: true, group: 'organizasyon',
-                dependsOn: 'work_center_id', filterKey: 'work_center_id',
-              },
-              { key: 'line_no', label: 'Operasyon no', type: 'number', required: true, size: 'short', lead: true, group: 'kimlik' },
-              { key: 'operation_code', label: 'Operasyon kodu', required: true, size: 'short', lead: true, group: 'kimlik' },
-              { key: 'operation_name', label: 'Operasyon', required: true, lead: true, group: 'kimlik' },
-              {
-                key: 'item_id', label: 'Adım stoğu (mamul / yarı mamul)', type: 'lookup', lookup: 'items-mamul',
-                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', lead: true, group: 'kimlik',
-              },
-              { key: 'op_time', label: 'Op birim süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'op_time_uom', label: 'Op. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'setup_time', label: 'Hazırlık süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'setup_time_uom', label: 'H. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'wait_time', label: 'Bekleme süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'wait_time_uom', label: 'B. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'unload_time', label: 'Boşaltma süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'unload_time_uom', label: 'Boş. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'duration_minutes', label: 'Süre dk (eski)', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
-              { key: 'description', label: 'Açıklama', group: 'status', section: 'gelismis' },
-              {
-                key: 'output_item_id', label: 'Çıktı', type: 'lookup', lookup: 'items',
-                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', group: 'olcu', section: 'gelismis',
-                filterByBomKey: 'product_bom_id', includeBomRoot: true,
-              },
-              { key: 'cost_factor_1', label: 'Maliyet katsayısı 1', type: 'number', size: 'short', group: 'finans', section: 'gelismis' },
-              { key: 'cost_factor_2', label: 'Maliyet katsayısı 2', type: 'number', size: 'short', group: 'finans', section: 'gelismis' },
-              { key: 'include_precost', label: 'Ön maliyet', type: 'checkbox', group: 'finans', section: 'gelismis' },
-              { key: 'include_std_cost', label: 'Standart maliyet', type: 'checkbox', group: 'finans', section: 'gelismis' },
-              { key: 'include_actual_cost', label: 'Fiili maliyette dikkate al', type: 'checkbox', group: 'finans', section: 'gelismis' },
-              { key: 'is_disassemble', label: 'Demonte operasyon', type: 'checkbox', group: 'status', section: 'gelismis' },
-              { key: 'is_subcontract', label: 'Fason operasyon', type: 'checkbox', group: 'status', section: 'gelismis' },
-              { key: 'is_shared_op', label: 'Ortak operasyonda kullanılır', type: 'checkbox', group: 'status', section: 'gelismis' },
-              { key: 'require_qc', label: 'Kalite kontrolü yapılacak', type: 'checkbox', group: 'status', section: 'gelismis' },
-              { key: 'require_spc', label: 'SPC kontrolü yapılacak', type: 'checkbox', group: 'status', section: 'gelismis' },
-              { key: 'note1', label: 'Not 1', group: 'status', section: 'gelismis' },
-              { key: 'note2', label: 'Not 2', group: 'status', section: 'gelismis' },
-            ],
-            componentFields: [
-              {
-                key: 'item_id', label: 'Malzeme', type: 'lookup', lookup: 'items',
-                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code',
-                filterByBomKey: 'product_bom_id',
-              },
-              { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-              { key: 'quantity', label: 'Miktar', type: 'number' },
-            ],
-            equipmentFields: [
-              { key: 'line_no', label: 'Satır no', type: 'number', size: 'short' },
-              { key: 'equipment_code', label: 'Ekipman kodu', required: true, size: 'short' },
-              { key: 'equipment_name', label: 'Ekipman adı' },
-              { key: 'cavity_count', label: 'Göz sayısı', type: 'number', size: 'short' },
-              { key: 'used_cavity_count', label: 'Kullanılan göz', type: 'number', size: 'short' },
-              { key: 'notes', label: 'Not' },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'uretim-emri-tipleri',
-        techId: 'MFG-WOT-SCR-001',
-        businessNameEn: 'WorkOrderTypeScreen',
-        title: 'Üretim Emri Tipleri',
-        endpoint: '/uretim-emri-tipleri',
-        crud: true,
-        numeratorSeri: null,
-        codeField: 'type_code',
-        nameField: 'type_name',
-        filters: [
-          { key: 'type_code', label: 'Tip kodu' },
-          { key: 'type_name', label: 'Tip adı' },
-          { key: 'planned_firm', label: 'Planlı/Kesin' },
-        ],
-        columns: [
-          { key: 'type_code', label: 'Kod', mono: true },
-          { key: 'type_name', label: 'Ad' },
-          { key: 'planned_firm', label: 'Planlı/Kesin' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'type_code', label: 'Tip kodu', code: true, editableOnNew: true, required: true },
-          { key: 'type_name', label: 'Tip adı', name: true, required: true },
-          { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], required: true },
-        ],
-        detailFields: [
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
         id: 'uretim-planlari',
         techId: 'MFG-PLN-SCR-001',
         businessNameEn: 'ProductionPlanScreen',
@@ -3142,6 +4245,7 @@ const MODULES = [
         ],
         masterFields: [
           // 1) Organizasyon
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', lead: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', lead: true },
           { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
           // 2) Üretim kimliği — stok → ağaç → rota (önem / bağımlılık sırası)
@@ -3163,6 +4267,8 @@ const MODULES = [
           },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
           { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik' },
+          { key: 'is_subcontract', label: 'Fason emri', type: 'checkbox', group: 'kimlik' },
+          { key: 'subcontractor_partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', group: 'kimlik' },
           { key: 'produced_quantity', label: 'Üretilen miktar', type: 'number', readOnly: true, group: 'kimlik' },
           { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', group: 'kimlik' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'kimlik' },
@@ -3170,10 +4276,10 @@ const MODULES = [
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
-          // 4) Planlama
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', group: 'planlama' },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'date', group: 'planlama' },
-          { key: 'end_date', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+          // 4) Planlama — tarih + saat
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
+          { key: 'end_date', label: 'Bitiş tarihi', type: 'datetime', group: 'planlama' },
           { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama' },
           { key: 'issue_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
           { key: 'receipt_type', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
@@ -3374,50 +4480,18 @@ const MODULES = [
         },
       },
       {
-        id: 'stok-depo',
-        techId: 'INV-WHL-SCR-001',
-        businessNameEn: 'ItemWarehouseLinkScreen',
-        title: 'Depo Stok Bağ',
-        endpoint: '/stok-depo',
-        crud: true,
-        codeField: 'item_code',
-        nameField: 'warehouse_code',
-        filters: [
-          { key: 'item_code', label: 'Stok' },
-          { key: 'warehouse_code', label: 'Depo' },
-          { key: 'plant_code', label: 'İş yeri' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Stok adı' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'warehouse_name', label: 'Depo adı' },
-          { key: 'plant_code', label: 'İş yeri', mono: true },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-        ],
-        detailFields: [
-          { key: 'is_default_receipt', label: 'Varsayılan giriş', type: 'checkbox' },
-          { key: 'is_default_issue', label: 'Varsayılan çıkış', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
         id: 'uretim-girisleri',
         techId: 'MFG-RCPT-SCR-001',
-        businessNameEn: 'ProductionReceiptScreen',
-        title: 'Üretim Girişleri',
+        businessNameEn: 'OperationalProductionEntryScreen',
+        title: 'Operasyonel Üretim Girişi',
         endpoint: '/uretim-girisleri',
         crud: true,
+        listActions: ['yeni', 'incele'],
+        listSourceType: 'Operasyonel',
         codeField: 'receipt_no',
         nameField: 'order_no',
-        numeratorSeri: null,
+        numeratorSeri: 'URETIM_GIRIS',
+        banner: 'İş emri + operasyon seçip «Detayları Getir» deyin. Operasyon kalanı ve maks. izin (toleranslı) alanları üretim parametrelerine göre dolar; aşım kayıttan önce engellenir.',
         filters: [
           { key: 'receipt_no', label: 'Giriş no' },
           { key: 'order_no', label: 'Emir no' },
@@ -3426,489 +4500,2161 @@ const MODULES = [
         columns: [
           { key: 'receipt_no', label: 'Giriş', mono: true },
           { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'operation_code', label: 'Op', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
           { key: 'quantity', label: 'Miktar' },
+          { key: 'source_type', label: 'Kaynak' },
           { key: 'created_at', label: 'Tarih' },
         ],
         masterFields: [
-          { key: 'order_id', label: 'Üretim emri', type: 'lookup', lookup: 'uretim-emirleri', valueKey: 'id', labelKey: 'order_no', required: true },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
+          {
+            key: 'order_id',
+            label: 'İş emri',
+            type: 'lookup',
+            lookup: 'uretim-emirleri',
+            valueKey: 'id',
+            labelKey: 'order_no',
+            required: true,
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          {
+            key: 'operation_id',
+            label: 'Operasyon',
+            type: 'lookup',
+            lookup: 'uretim-emir-operasyonlari',
+            valueKey: 'id',
+            labelKey: 'operation_name',
+            codeKey: 'operation_code',
+            dependsOn: 'order_id',
+            filterKey: 'order_id',
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          {
+            key: 'plant_id',
+            label: 'İş yeri',
+            type: 'lookup',
+            lookup: 'is-yerleri',
+            valueKey: 'id',
+            labelKey: 'plant_name',
+            codeKey: 'plant_code',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          { key: 'item_code', label: 'Ürün kodu', readOnly: true, group: 'genel', groupLabel: 'Genel bilgiler' },
+          { key: 'item_name', label: 'Ürün', readOnly: true, group: 'genel', groupLabel: 'Genel bilgiler' },
+          {
+            key: 'work_center_id',
+            label: 'Planlanan iş ist.',
+            type: 'lookup',
+            lookup: 'is-merkezleri',
+            valueKey: 'id',
+            labelKey: 'center_name',
+            codeKey: 'center_code',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          {
+            key: 'actual_work_center_id',
+            label: 'Gerçekleşen iş ist.',
+            type: 'lookup',
+            lookup: 'is-merkezleri',
+            valueKey: 'id',
+            labelKey: 'center_name',
+            codeKey: 'center_code',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          { key: 'started_at', label: 'Op. baş. tarihi', type: 'date', group: 'genel', groupLabel: 'Genel bilgiler' },
+          { key: 'ended_at', label: 'Op. bit. tarihi', type: 'date', group: 'genel', groupLabel: 'Genel bilgiler' },
+          {
+            key: 'source_type',
+            label: 'Kaynak',
+            type: 'select',
+            options: ['Operasyonel', 'Hizli', 'Barkod', 'Manuel'],
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          {
+            key: 'consume_materials',
+            label: 'Hammadde/yarı mamul tüket',
+            type: 'checkbox',
+            group: 'genel',
+            groupLabel: 'Genel bilgiler',
+          },
+          { key: 'net_quantity', label: 'Net miktar', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'gross_quantity', label: 'Brüt miktar', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          {
+            key: 'uom_code',
+            label: 'Birim',
+            type: 'lookup',
+            lookup: 'olcu-birimleri',
+            valueKey: 'uom_code',
+            labelKey: 'uom_name',
+            group: 'miktar',
+            groupLabel: 'Miktarlar',
+          },
+          { key: 'scrap_quantity', label: 'Toplam hurda', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'rework_quantity', label: 'Yeniden işlem', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'planned_quantity', label: 'İş emri miktarı', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'op_remaining_quantity', label: 'Operasyon kalan', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'max_allowed_quantity', label: 'Maks. izin (toleranslı)', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'serial_no', label: 'Seri no', group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'shift_code', label: 'Vardiya kodu', group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'receipt_no', label: 'Giriş no', code: true, editableOnNew: true, group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'description', label: 'Açıklama', group: 'diger', groupLabel: 'Diğer bilgiler' },
         ],
         detailFields: [],
         detailKey: null,
-      },
-    ],
-  },
-  {
-    id: 'satinalma',
-    title: 'Satınalma',
-    sections: [
-      { id: 'teklif', title: 'Teklif', screenIds: ['satin-alma-teklifleri', 'satin-alma-anlasmalari'] },
-      { id: 'siparis', title: 'Sipariş', screenIds: ['satin-alma-talepleri', 'satin-alma-siparisleri'] },
-      { id: 'mal-kabul', title: 'Mal Kabul', screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri'] },
-    ],
-    screens: [
-      {
-        id: 'satin-alma-teklif-istekleri',
-        techId: 'PUR-RFQ-SCR-001',
-        businessNameEn: 'RequestForQuotationScreen',
-        title: 'Satınalma Teklif İstekleri',
-        endpoint: '/satin-alma-teklif-istekleri',
-        hidden: true,
-        deprecated: true,
-        crud: true,
-        numeratorSeri: 'SATINALMA_TEKLIF_ISTEK',
-        codeField: 'rfq_no',
-        nameField: 'description',
-        filters: [
-          { key: 'rfq_no', label: 'İstek no' },
-          { key: 'status', label: 'Durum' },
+        formTabs: [
+          { id: 'urun', label: 'Ürün Giriş Bilgileri', kind: 'fields', fields: null },
+          {
+            id: 'depolar',
+            label: 'Depolar',
+            kind: 'fields',
+            fields: [
+              {
+                key: 'product_warehouse_id',
+                label: 'Ürün giriş depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'material_warehouse_id',
+                label: 'Malzeme çıkış depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'wip_warehouse_id',
+                label: 'Yarı mamul çıkış depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'scrap_warehouse_id',
+                label: 'Malzeme hurda giriş depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              {
+                key: 'byproduct_warehouse_id',
+                label: 'Yan ürün giriş depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+            ],
+          },
+          {
+            id: 'malzemeler',
+            label: 'Malzemeler',
+            kind: 'grid',
+            key: 'malzemeler',
+            slots: 8,
+            fields: [
+              { key: 'line_no', label: 'Sıra No', type: 'number', size: 'short' },
+              { key: 'line_type', label: 'Tip', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Sarf'], size: 'short' },
+              {
+                key: 'item_id',
+                label: 'Stok',
+                type: 'lookup',
+                lookup: 'items',
+                valueKey: 'id',
+                labelKey: 'item_name',
+                codeKey: 'item_code',
+                required: true,
+              },
+              { key: 'alternative_no', label: 'Alternatif No', size: 'short' },
+              { key: 'quantity_type', label: 'Miktar Tipi', type: 'select', options: ['Net', 'Brüt', 'Sabit'], size: 'short' },
+              { key: 'unit_quantity', label: 'Birim Miktar', type: 'number', size: 'short' },
+              { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
+              { key: 'scrap_quantity', label: 'Hurda Miktarı', type: 'number', size: 'short' },
+              { key: 'rework_quantity', label: 'Yeniden İşlem Miktarı', type: 'number', size: 'short' },
+              { key: 'gross_quantity', label: 'Brüt Miktar', type: 'number', size: 'short' },
+              { key: 'net_quantity', label: 'Net Miktar', type: 'number', size: 'short' },
+              {
+                key: 'uom_code',
+                label: 'Birim',
+                type: 'lookup',
+                lookup: 'olcu-birimleri',
+                valueKey: 'uom_code',
+                labelKey: 'uom_name',
+                size: 'short',
+              },
+              {
+                key: 'warehouse_id',
+                label: 'Depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
+              { key: 'warehouse_balance', label: 'Depo Mik.', type: 'number', size: 'short', readOnly: true },
+              { key: 'lot_no', label: 'Parti Kod', size: 'short' },
+              { key: 'note', label: 'Not' },
+              { key: 'revision', label: 'Revizyon', size: 'short' },
+              { key: 'brand', label: 'Marka', size: 'short' },
+              { key: 'feature_3', label: 'Özellik3', size: 'short' },
+              { key: 'general_feature_1', label: 'Gnl.Özellik1', size: 'short' },
+              { key: 'entry_mode', label: 'Giriş Şekli', size: 'short' },
+              { key: 'source_ref', label: 'Kaynak', size: 'short' },
+            ],
+          },
+          {
+            id: 'duruslar',
+            label: 'İş Emri Duruşları',
+            kind: 'grid',
+            key: 'duruslar',
+            slots: 2,
+            fields: [
+              { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
+              { key: 'downtime_code', label: 'Duruş kodu', size: 'short' },
+              { key: 'downtime_name', label: 'Duruş adı' },
+              { key: 'duration_min', label: 'Süre (dk)', type: 'number', size: 'short' },
+              { key: 'note', label: 'Not' },
+            ],
+          },
         ],
-        columns: [
-          { key: 'rfq_no', label: 'İstek', mono: true },
-          { key: 'status', label: 'Durum' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        masterFields: [
-          { key: 'rfq_no', label: 'İstek no', code: true },
-          { key: 'description', label: 'Açıklama', name: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'TeklifeDonustu', 'Iptal', 'Kapali'] },
-        ],
-        detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
-      },
-      {
-        id: 'satin-alma-teklifleri',
-        techId: 'PUR-QUO-SCR-001',
-        businessNameEn: 'PurchaseQuotationScreen',
-        title: 'Satınalma Teklifleri',
-        endpoint: '/satin-alma-teklifleri',
-        crud: true,
-        numeratorSeri: 'SATINALMA_TEKLIF',
-        codeField: 'quotation_no',
-        nameField: 'partner_name',
-        approveAction: {
-          label: 'Teklifi Onayla',
-          path: '/satin-alma-teklifleri/{id}/onayla',
-        },
-        convertAction: {
-          label: 'Siparişe Dönüştür',
-          path: '/satin-alma-teklifleri/{id}/siparise-donustur',
-          nested: { screenId: 'satin-alma-siparisleri', link: 'sa-teklif-siparis' },
-        },
-        filters: [
-          { key: 'quotation_no', label: 'Teklif no' },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'quotation_no', label: 'Teklif', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'requisition_no', label: 'Talep', mono: true },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'valid_date', label: 'Geçerlilik' },
-          { key: 'status', label: 'Durum' },
-          { key: 'project_code', label: 'Proje', mono: true },
-        ],
-        masterFields: [
-          { key: 'quotation_no', label: 'Teklif no', code: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar' },
-          { key: 'rfq_id', label: 'Eski teklif isteği', type: 'number' },
-          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
-          { key: 'valid_date', label: 'Geçerlilik', type: 'date' },
-          { key: 'payment_term_code', label: 'Ödeme koşulu' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'region', label: 'Bölge' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'] },
-          { key: 'description', label: 'Açıklama', name: true },
-          { key: 'public_note', label: 'Tedarikçi notu' },
-          { key: 'internal_note', label: 'Dahili not' },
-        ],
-        detailFields: [
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
-          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
-          { key: 'region', label: 'Bölge', size: 'short' },
-          { key: 'line_description', label: 'Açıklama' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
-        defaults: { currency_code: 'TRY', exchange_rate: 1, rate_type: 'TCMB-ALIS', vat_mode: 'Haric', line_type: 'S' },
-      },
-      {
-        id: 'satin-alma-anlasmalari',
-        techId: 'PUR-AGR-SCR-001',
-        businessNameEn: 'PurchaseAgreementScreen',
-        title: 'Satınalma Anlaşmaları',
-        endpoint: '/satin-alma-anlasmalari',
-        crud: true,
-        numeratorSeri: 'SATINALMA_ANLASMA',
-        codeField: 'agreement_no',
-        nameField: 'partner_name',
-        filters: [
-          { key: 'agreement_no', label: 'Anlaşma no' },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'agreement_no', label: 'Anlaşma', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'agreement_no', label: 'Anlaşma no', code: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'quotation_id', label: 'Teklif', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no' },
-          { key: 'start_date', label: 'Başlangıç', type: 'date' },
-          { key: 'end_date', label: 'Bitiş', type: 'date' },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kapali', 'Iptal'] },
-          { key: 'description', label: 'Açıklama', name: true },
-        ],
-        detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
-        defaults: { currency_code: 'TRY', exchange_rate: 1, status: 'Taslak' },
-      },
-      {
-        id: 'satin-alma-talepleri',
-        techId: 'PUR-REQ-SCR-001',
-        businessNameEn: 'PurchaseRequisitionScreen',
-        title: 'Satınalma Talepleri',
-        endpoint: '/satin-alma-talepleri',
-        crud: true,
-        numeratorSeri: 'SATINALMA_TALEP',
-        codeField: 'requisition_no',
-        nameField: 'description',
-        approveAction: { label: 'Onayla + E-posta', path: '/satin-alma-talepleri/{id}/onayla' },
-        filters: [
-          { key: 'requisition_no', label: 'Talep no' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'requisition_no', label: 'Talep', mono: true },
-          { key: 'status', label: 'Durum' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        masterFields: [
-          { key: 'requisition_no', label: 'Talep no', code: true },
-          { key: 'requisition_date', label: 'Talep tarihi', type: 'date' },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'supplier_partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-          { key: 'target_delivery_date', label: 'Hedef teslim', type: 'date' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'region', label: 'Bölge' },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Onayli', 'SipariseDonustu', 'Iptal', 'Kapali'] },
-          { key: 'description', label: 'Açıklama', name: true },
-          { key: 'internal_note', label: 'Dahili not' },
-        ],
-        detailFields: [
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short' },
-          { key: 'estimated_unit_price', label: 'Tahmini fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'discount_rate', label: 'İsk %', type: 'number', size: 'short' },
-          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
-          { key: 'region', label: 'Bölge', size: 'short' },
-          { key: 'supplier_item_code', label: 'Ted. stok kodu' },
-          { key: 'supplier_item_name', label: 'Ted. stok adı' },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'reservation_type', label: 'Rezervasyon tipi' },
-          { key: 'reservation_link_no', label: 'Rezervasyon ilişki no' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
+        detailFillAction: { label: 'Detayları Getir', client: 'uretim-giris-onizleme' },
         defaults: {
-          currency_code: 'TRY', exchange_rate: 1, status: 'Acik', rate_type: 'TCMB-ALIS',
-          vat_rate: 20, vat_mode: 'Haric', line_type: 'S',
+          source_type: 'Operasyonel',
+          consume_materials: true,
+          scrap_quantity: 0,
+          rework_quantity: 0,
+          quantity: 1,
+          net_quantity: 1,
+          gross_quantity: 1,
+          malzemeler: [],
+          duruslar: [],
         },
       },
       {
-        id: 'satin-alma-siparisleri',
-        techId: 'PUR-ORD-SCR-001',
-        businessNameEn: 'PurchaseOrderScreen',
-        title: 'Satınalma Siparişleri',
-        endpoint: '/satin-alma-siparisleri',
+        id: 'hizli-uretim-girisi',
+        techId: 'MFG-RCPT-SCR-002',
+        businessNameEn: 'QuickProductionEntryScreen',
+        title: 'Hızlı Üretim Girişi',
+        endpoint: '/uretim-girisleri',
+        createEndpoint: '/uretim-girisleri',
         crud: true,
-        numeratorSeri: 'SATINALMA_SIPARIS',
+        listActions: ['yeni', 'incele'],
+        listSourceType: 'Hizli',
+        codeField: 'receipt_no',
+        nameField: 'order_no',
+        banner: 'Hızlı giriş: emir seç → Detayları Getir → kalan / max izin kontrolü otomatik. Fazla üretim üretim parametrelerine göre reddedilir.',
+        detailFillAction: { label: 'Detayları Getir', client: 'uretim-giris-onizleme' },
+        filters: [
+          { key: 'receipt_no', label: 'Giriş no' },
+          { key: 'order_no', label: 'Emir no' },
+          { key: 'item_code', label: 'Stok' },
+        ],
+        columns: [
+          { key: 'receipt_no', label: 'Giriş', mono: true },
+          { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'operation_code', label: 'Op', mono: true },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'quantity', label: 'Miktar' },
+          { key: 'source_type', label: 'Kaynak' },
+          { key: 'created_at', label: 'Tarih' },
+        ],
+        masterFields: [
+          {
+            key: 'order_id',
+            label: 'İş emri',
+            type: 'lookup',
+            lookup: 'uretim-emirleri',
+            valueKey: 'id',
+            labelKey: 'order_no',
+            required: true,
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          {
+            key: 'operation_id',
+            label: 'Operasyon (boş = aktif)',
+            type: 'lookup',
+            lookup: 'uretim-emir-operasyonlari',
+            valueKey: 'id',
+            labelKey: 'operation_name',
+            codeKey: 'operation_code',
+            dependsOn: 'order_id',
+            filterKey: 'order_id',
+            lead: true,
+            fillFrom: 'uretim-giris-onizleme',
+            group: 'kaynak-belge',
+            groupLabel: 'İş emri',
+          },
+          { key: 'item_code', label: 'Ürün', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'item_name', label: 'Ürün adı', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'planned_quantity', label: 'Emir miktarı', type: 'number', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'genel', groupLabel: 'Ürün / miktar' },
+          { key: 'consume_materials', label: 'Malzeme tüket', type: 'checkbox', group: 'genel', groupLabel: 'Ürün / miktar' },
+          {
+            key: 'product_warehouse_id',
+            label: 'Ürün giriş depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            group: 'depo',
+            groupLabel: 'Depolar',
+          },
+          {
+            key: 'material_warehouse_id',
+            label: 'Malzeme çıkış depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            group: 'depo',
+            groupLabel: 'Depolar',
+          },
+          { key: 'description', label: 'Açıklama', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'quick', label: 'Hızlı onay', type: 'checkbox', readOnly: true, group: 'diger', groupLabel: 'Diğer' },
+          { key: 'source_type', label: 'Kaynak', type: 'select', options: ['Hizli', 'Operasyonel'], readOnly: true, group: 'diger', groupLabel: 'Diğer' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: {
+          quantity: 1,
+          consume_materials: true,
+          quick: true,
+          source_type: 'Hizli',
+        },
+      },
+      {
+        id: 'is-merkezi-yuku',
+        techId: 'MFG-WCL-RPT-001',
+        businessNameEn: 'WorkCenterLoadReport',
+        title: 'İş Merkezi Yükü',
+        endpoint: '/is-merkezi-yuku',
+        crud: false,
+        readOnly: true,
+        banner: 'Açık iş emri operasyonlarından kapasite / yük. CRP_OP_TIME=Evet iken rota op_time kullanılır (finite çizelge değil).',
+        filters: [
+          { key: 'horizon_days', label: 'Ufuk (gün)', type: 'number', queryParam: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', queryParam: true },
+        ],
+        columns: [
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'plant_code', label: 'İş yeri', mono: true },
+          { key: 'center_code', label: 'Merkez', mono: true },
+          { key: 'center_name', label: 'Ad' },
+          { key: 'open_op_count', label: 'Açık op' },
+          { key: 'remaining_qty', label: 'Kalan miktar' },
+          { key: 'available_hours', label: 'Uygun saat' },
+          { key: 'rough_load_hours', label: 'Yük (s)' },
+          { key: 'load_pct', label: 'Yük %' },
+          { key: 'load_band', label: 'Bant' },
+          { key: 'uses_route_time', label: 'Rota süresi' },
+        ],
+      },
+      {
+        id: 'bakim-emirleri',
+        techId: 'MNT-WO-SCR-001',
+        businessNameEn: 'MaintenanceOrderScreen',
+        title: 'Bakım Emirleri',
+        endpoint: '/bakim-emirleri',
+        crud: true,
+        numeratorSeri: 'BAKIM_EMIR',
+        codeField: 'order_no',
+        nameField: 'equipment_name',
+        approveAction: { label: 'Kapat', path: '/bakim-emirleri/{id}/kapat', method: 'POST' },
+        filters: [
+          { key: 'order_no', label: 'Emir no' },
+          { key: 'status', label: 'Durum' },
+          { key: 'order_type', label: 'Tip', type: 'select', options: ['', 'Ariza', 'Periyodik', 'Prediktif'], queryParam: true },
+        ],
+        columns: [
+          { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'order_type', label: 'Tip' },
+          { key: 'equipment_code', label: 'Ekipman', mono: true },
+          { key: 'equipment_name', label: 'Ad' },
+          { key: 'center_code', label: 'İş merkezi', mono: true },
+          { key: 'priority', label: 'Öncelik' },
+          { key: 'due_date', label: 'Termin' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'order_no', label: 'Emir no', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'order_type', label: 'Tip', type: 'select', options: ['Ariza', 'Periyodik', 'Prediktif'], required: true },
+          { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
+          { key: 'equipment_code', label: 'Ekipman kodu' },
+          { key: 'equipment_name', label: 'Ekipman adı', name: true },
+          { key: 'priority', label: 'Öncelik', type: 'select', options: ['Dusuk', 'Normal', 'Yuksek', 'Kritik'] },
+          { key: 'due_date', label: 'Termin', type: 'date' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Devam', 'Tamam', 'Kapali', 'Iptal'] },
+          { key: 'description', label: 'Açıklama', size: 'wide' },
+          { key: 'resolution_notes', label: 'Çözüm notu', size: 'wide' },
+        ],
+        defaults: { order_type: 'Ariza', status: 'Acik', priority: 'Normal' },
+      },
+      {
+        id: 'sinif-tanimi',
+        techId: 'MFG-CLS-SCR-001',
+        businessNameEn: 'ClassDefinitionScreen',
+        title: 'Sınıf Tanımı',
+        endpoint: '/stok-siniflari',
+        crud: true,
+        codeField: 'class_code',
+        nameField: 'class_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'class_code', label: 'Sınıf kodu' },
+          { key: 'class_name', label: 'Sınıf adı' },
+        ],
+        columns: [
+          { key: 'class_code', label: 'Kod', mono: true },
+          { key: 'class_name', label: 'Ad' },
+          { key: 'parent_class_code', label: 'Üst', mono: true },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'class_code', label: 'Sınıf kodu', code: true, editableOnNew: true, required: true },
+          { key: 'class_name', label: 'Sınıf adı', name: true, required: true },
+          { key: 'parent_class_code', label: 'Üst sınıf kodu' },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'is-merkezleri',
+        techId: 'MFG-WC-SCR-001',
+        businessNameEn: 'WorkCenterScreen',
+        title: 'İş Merkezleri',
+        endpoint: '/is-merkezleri',
+        crud: true,
+        numeratorSeri: 'IS_MERKEZI',
+        codeField: 'center_code',
+        nameField: 'center_name',
+        filters: [
+          { key: 'center_code', label: 'Merkez kodu' },
+          { key: 'center_name', label: 'Merkez adı' },
+          { key: 'plant_name', label: 'İş yeri' },
+        ],
+        columns: [
+          { key: 'center_code', label: 'Kod', mono: true },
+          { key: 'center_name', label: 'Ad' },
+          { key: 'plant_name', label: 'İş yeri' },
+          { key: 'daily_capacity_hours', label: 'Günlük kap. (s)' },
+          { key: 'efficiency_pct', label: 'Verim %' },
+        ],
+        masterFields: [
+          { key: 'center_code', label: 'Kod', code: true, required: true },
+          { key: 'center_name', label: 'Ad', name: true, required: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'daily_capacity_hours', label: 'Günlük kapasite (saat)', type: 'number' },
+          { key: 'efficiency_pct', label: 'Verimlilik %', type: 'number' },
+          { key: 'description', label: 'Açıklama', size: 'wide' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        defaults: { daily_capacity_hours: 8, efficiency_pct: 100, is_active: true },
+      },
+      {
+        id: 'is-istasyonlari',
+        techId: 'MFG-WS-SCR-001',
+        businessNameEn: 'WorkStationScreen',
+        title: 'İş İstasyonları',
+        endpoint: '/is-istasyonlari',
+        crud: true,
+        numeratorSeri: 'IS_ISTASYONU',
+        codeField: 'station_code',
+        nameField: 'station_name',
+        filters: [
+          { key: 'station_code', label: 'İstasyon kodu' },
+          { key: 'station_name', label: 'İstasyon adı' },
+          { key: 'center_name', label: 'İş merkezi' },
+        ],
+        columns: [
+          { key: 'station_code', label: 'Kod', mono: true },
+          { key: 'station_name', label: 'Ad' },
+          { key: 'center_code', label: 'Merkez', mono: true },
+          { key: 'center_name', label: 'Merkez adı' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'station_code', label: 'Kod', code: true, required: true },
+          { key: 'station_name', label: 'Ad', name: true, required: true },
+          { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', required: true },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        defaults: { is_active: true },
+      },
+      {
+        id: 'routings',
+        techId: 'MFG-ROUT-SCR-001',
+        businessNameEn: 'RoutingScreen',
+        title: 'Rotalar',
+        endpoint: '/routings',
+        crud: true,
+        numeratorSeri: 'ROTA',
+        codeField: 'route_code',
+        nameField: 'route_name',
+        filters: [
+          { key: 'route_code', label: 'Rota kodu' },
+          { key: 'route_name', label: 'Rota adı' },
+          { key: 'item_code', label: 'Stok kodu' },
+          { key: 'plant_id', label: 'Tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'route_type', label: 'Tip', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'] },
+          { key: 'alternative_no', label: 'Alt no' },
+        ],
+        columns: [
+          { key: 'route_code', label: 'Kod', mono: true },
+          { key: 'route_name', label: 'Ad' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'alternative_no', label: 'Alt', mono: true },
+          { key: 'route_type', label: 'Tip' },
+          { key: 'bom_code', label: 'Ürün ağacı', mono: true },
+          { key: 'plant_code', label: 'Tesis', mono: true },
+          { key: 'is_default', label: 'Varsayılan' },
+          { key: 'template', label: 'Şablon' },
+          { key: 'is_reverse', label: 'Ters' },
+        ],
+        masterFields: [
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
+          { key: 'plant_id', label: 'İş yeri / tesis', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+          { key: 'route_code', label: 'Kod', code: true, required: true, group: 'kimlik' },
+          { key: 'route_name', label: 'Ad', name: true, required: true, group: 'kimlik' },
+          { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'], required: true, group: 'kimlik' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, group: 'kimlik' },
+          {
+            key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
+            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
+            dependsOn: 'item_id', filterKey: 'finished_good_item_id',
+          },
+          { key: 'alternative_no', label: 'Alternatif no', group: 'kimlik' },
+          { key: 'alternative_description', label: 'Alternatif açıklama', group: 'kimlik' },
+          { key: 'revision', label: 'Revizyon', group: 'kimlik' },
+          { key: 'brand_code', label: 'Marka', group: 'kimlik' },
+          { key: 'attr3_code', label: 'Özellik 3', group: 'kimlik' },
+          { key: 'min_quantity', label: 'Min. miktar', type: 'number', group: 'olcu' },
+          { key: 'max_quantity', label: 'Maks. miktar', type: 'number', group: 'olcu' },
+          { key: 'valid_from', label: 'Geçerlilik baş.', type: 'date', group: 'planlama' },
+          { key: 'valid_to', label: 'Geçerlilik bitiş', type: 'date', group: 'planlama' },
+          { key: 'wo_change_mode', label: 'İE değişiklik izni', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'], group: 'status' },
+          { key: 'is_default', label: 'Varsayılan ürün rotası', type: 'checkbox', group: 'status' },
+          { key: 'template', label: 'Şablon', type: 'checkbox', group: 'status' },
+          { key: 'is_reverse', label: 'Ters rota', type: 'checkbox', group: 'status' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
+          { key: 'notes', label: 'Not', size: 'wide', group: 'status' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        defaults: {
+          route_type: 'Uretim',
+          alternative_no: '00',
+          min_quantity: 0,
+          max_quantity: 999999999,
+          wo_change_mode: 'Serbest',
+          is_default: false,
+          template: false,
+          is_reverse: false,
+          is_active: true,
+        },
+        formLinks: {
+          item_id: [
+            { field: 'product_bom_id', pick: 'bomForItem' },
+            { field: 'brand_code', fromItem: 'brand_name' },
+            { field: 'route_name', fromItem: 'item_name', onlyIfEmpty: true, asRouteName: true },
+            { field: 'plant_id', fromItem: 'plant_id', onlyIfEmpty: true },
+          ],
+        },
+        formTabs: [
+          {
+            id: 'rota',
+            label: 'Rota',
+            kind: 'rota-workspace',
+            key: 'operasyonlar',
+            headerFields: [
+              { key: 'item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, critical: true, group: 'kimlik' },
+              {
+                key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
+                valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, lead: true, critical: true, group: 'kimlik',
+                dependsOn: 'item_id', filterKey: 'finished_good_item_id',
+              },
+              { key: 'route_code', label: 'Kod', code: true, required: true, lead: true, group: 'kimlik' },
+              { key: 'route_name', label: 'Ad', name: true, required: true, lead: true, group: 'kimlik' },
+              { key: 'route_type', label: 'Rota tipi', type: 'select', options: ['Uretim', 'Demontaj', 'Fason', 'Prototype'], group: 'kimlik' },
+              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+              { key: 'alternative_no', label: 'Alt no', group: 'kimlik' },
+              { key: 'is_default', label: 'Varsayılan', type: 'checkbox', group: 'status' },
+              { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
+            ],
+            // Üst alanlar (malzemeler ayrı render) → sonra planlama / gelişmiş accordion
+            fields: [
+              { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code', lead: true, group: 'organizasyon' },
+              {
+                key: 'work_station_id', label: 'İş istasyonu', type: 'lookup', lookup: 'is-istasyonlari',
+                valueKey: 'id', labelKey: 'station_name', codeKey: 'station_code', lead: true, group: 'organizasyon',
+                dependsOn: 'work_center_id', filterKey: 'work_center_id',
+              },
+              { key: 'line_no', label: 'Operasyon no', type: 'number', required: true, size: 'short', lead: true, group: 'kimlik' },
+              { key: 'operation_code', label: 'Operasyon kodu', required: true, size: 'short', lead: true, group: 'kimlik' },
+              { key: 'operation_name', label: 'Operasyon', required: true, lead: true, group: 'kimlik' },
+              {
+                key: 'item_id', label: 'Adım stoğu (mamul / yarı mamul)', type: 'lookup', lookup: 'items-mamul',
+                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', lead: true, group: 'kimlik',
+              },
+              { key: 'op_time', label: 'Op birim süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'op_time_uom', label: 'Op. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'setup_time', label: 'Hazırlık süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'setup_time_uom', label: 'H. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'wait_time', label: 'Bekleme süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'wait_time_uom', label: 'B. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'unload_time', label: 'Boşaltma süre', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'unload_time_uom', label: 'Boş. birim', type: 'select', options: ['dk', 'sn', 'saat'], size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'duration_minutes', label: 'Süre dk (eski)', type: 'number', size: 'short', group: 'planlama', section: 'planlama' },
+              { key: 'description', label: 'Açıklama', group: 'status', section: 'gelismis' },
+              {
+                key: 'output_item_id', label: 'Çıktı', type: 'lookup', lookup: 'items',
+                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', group: 'olcu', section: 'gelismis',
+                filterByBomKey: 'product_bom_id', includeBomRoot: true,
+              },
+              { key: 'cost_factor_1', label: 'Maliyet katsayısı 1', type: 'number', size: 'short', group: 'finans', section: 'gelismis' },
+              { key: 'cost_factor_2', label: 'Maliyet katsayısı 2', type: 'number', size: 'short', group: 'finans', section: 'gelismis' },
+              { key: 'include_precost', label: 'Ön maliyet', type: 'checkbox', group: 'finans', section: 'gelismis' },
+              { key: 'include_std_cost', label: 'Standart maliyet', type: 'checkbox', group: 'finans', section: 'gelismis' },
+              { key: 'include_actual_cost', label: 'Fiili maliyette dikkate al', type: 'checkbox', group: 'finans', section: 'gelismis' },
+              { key: 'is_disassemble', label: 'Demonte operasyon', type: 'checkbox', group: 'status', section: 'gelismis' },
+              { key: 'is_subcontract', label: 'Fason operasyon', type: 'checkbox', group: 'status', section: 'gelismis' },
+              { key: 'default_subcontractor_partner_id', label: 'Varsayılan fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', group: 'status', section: 'gelismis' },
+              { key: 'subcontract_unit_price', label: 'Fason birim fiyat', type: 'number', group: 'status', section: 'gelismis' },
+              { key: 'subcontract_currency_code', label: 'Fason PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'status', section: 'gelismis' },
+              { key: 'subcontract_lead_days', label: 'Fason lead (gün)', type: 'number', group: 'status', section: 'gelismis' },
+              { key: 'is_shared_op', label: 'Ortak operasyonda kullanılır', type: 'checkbox', group: 'status', section: 'gelismis' },
+              { key: 'require_qc', label: 'Kalite kontrolü yapılacak', type: 'checkbox', group: 'status', section: 'gelismis' },
+              { key: 'require_spc', label: 'SPC kontrolü yapılacak', type: 'checkbox', group: 'status', section: 'gelismis' },
+              { key: 'note1', label: 'Not 1', group: 'status', section: 'gelismis' },
+              { key: 'note2', label: 'Not 2', group: 'status', section: 'gelismis' },
+            ],
+            componentFields: [
+              {
+                key: 'item_id', label: 'Malzeme', type: 'lookup', lookup: 'items',
+                valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code',
+                filterByBomKey: 'product_bom_id',
+              },
+              { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+              { key: 'quantity', label: 'Miktar', type: 'number' },
+            ],
+            equipmentFields: [
+              { key: 'line_no', label: 'Satır no', type: 'number', size: 'short' },
+              { key: 'equipment_code', label: 'Ekipman kodu', required: true, size: 'short' },
+              { key: 'equipment_name', label: 'Ekipman adı' },
+              { key: 'cavity_count', label: 'Göz sayısı', type: 'number', size: 'short' },
+              { key: 'used_cavity_count', label: 'Kullanılan göz', type: 'number', size: 'short' },
+              { key: 'notes', label: 'Not' },
+            ],
+          },
+        ],
+      },
+      {
+        id: 'uretim-emri-tipleri',
+        techId: 'MFG-WOT-SCR-001',
+        businessNameEn: 'WorkOrderTypeScreen',
+        title: 'Üretim Emri Tipleri',
+        endpoint: '/uretim-emri-tipleri',
+        crud: true,
+        numeratorSeri: null,
+        codeField: 'type_code',
+        nameField: 'type_name',
+        filters: [
+          { key: 'type_code', label: 'Tip kodu' },
+          { key: 'type_name', label: 'Tip adı' },
+          { key: 'planned_firm', label: 'Planlı/Kesin' },
+        ],
+        columns: [
+          { key: 'type_code', label: 'Kod', mono: true },
+          { key: 'type_name', label: 'Ad' },
+          { key: 'planned_firm', label: 'Planlı/Kesin' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'type_code', label: 'Tip kodu', code: true, editableOnNew: true, required: true },
+          { key: 'type_name', label: 'Tip adı', name: true, required: true },
+          { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], required: true },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'uretim-parametreleri',
+        techId: 'MFG-PRM-SCR-001',
+        businessNameEn: 'ProductionParametersScreen',
+        title: 'Üretim Parametreleri',
+        endpoint: '/uretim-parametreleri',
+        crud: true,
+        numeratorSeri: null,
+        codeField: 'company_code',
+        nameField: 'company_name',
+        banner: 'Firma / iş yeri üretim kuralları — fazla-eksik üretim, operasyon sırası, malzeme tüketimi.',
+        filters: [
+          { key: 'company_code', label: 'Firma' },
+          { key: 'plant_code', label: 'İş yeri' },
+        ],
+        columns: [
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'plant_code', label: 'İş yeri', mono: true },
+          { key: 'allow_over_production', label: 'Fazla üretim' },
+          { key: 'over_production_pct', label: 'Fazla %' },
+          { key: 'allow_under_production', label: 'Eksik üretim' },
+          { key: 'under_production_pct', label: 'Eksik %' },
+          { key: 'enforce_op_sequence', label: 'Op. sırası' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          {
+            key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies',
+            valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true, group: 'kapsam',
+          },
+          {
+            key: 'plant_id', label: 'İş yeri (opsiyonel)', type: 'lookup', lookup: 'is-yerleri',
+            valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'kapsam',
+            dependsOn: 'company_id', filterKey: 'company_id',
+          },
+          {
+            key: 'allow_over_production', label: 'Fazla üretime izin ver', type: 'checkbox', group: 'miktar',
+          },
+          {
+            key: 'over_production_pct', label: 'Fazla üretim toleransı %', type: 'number', group: 'miktar',
+          },
+          {
+            key: 'allow_under_production', label: 'Eksik üretime izin ver (kısmi / kapatma)', type: 'checkbox', group: 'miktar',
+          },
+          {
+            key: 'under_production_pct', label: 'Eksik üretim toleransı %', type: 'number', group: 'miktar',
+          },
+          {
+            key: 'enforce_op_sequence', label: 'Operasyon sırasını zorunlu tut', type: 'checkbox', group: 'surec',
+          },
+          {
+            key: 'require_material_consume', label: 'Malzeme tüketimi zorunlu', type: 'checkbox', group: 'surec',
+          },
+          {
+            key: 'auto_close_on_complete', label: 'Tüm operasyonlar bitince emri kapat', type: 'checkbox', group: 'surec',
+          },
+          { key: 'description', label: 'Açıklama', size: 'wide', group: 'status' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        defaults: {
+          allow_over_production: false,
+          over_production_pct: 0,
+          allow_under_production: true,
+          under_production_pct: 0,
+          enforce_op_sequence: true,
+          require_material_consume: true,
+          auto_close_on_complete: true,
+          is_active: true,
+        },
+      },
+      {
+        id: 'uretim-parametre-dogrulama',
+        techId: 'MFG-PRM-RPT-001',
+        businessNameEn: 'ProductionParametersValidation',
+        title: 'Üretim Parametre Doğrulama',
+        endpoint: '/uretim-parametreleri/dogrula',
+        crud: false,
+        readOnly: true,
+        listResponseKey: 'satirlar',
+        banner: 'Tüm firmalarda parametre kapsamı ve fazla üretim engeli senaryosu (plan=100, üretilen=90, giriş=15).',
+        columns: [
+          { key: 'company_code', label: 'Firma', mono: true },
+          { key: 'has_firma_param', label: 'Parametre var' },
+          { key: 'allow_over_production', label: 'Fazla izin' },
+          { key: 'over_production_pct', label: 'Fazla %' },
+          { key: 'over_rejected', label: 'Aşım reddi' },
+          { key: 'scenario_ok', label: 'Senaryo OK' },
+          { key: 'using_defaults', label: 'Varsayılan' },
+        ],
+      },
+      {
+        id: 'fason-parametreleri',
+        techId: 'SUB-PAR-SCR-001',
+        businessNameEn: 'SubcontractParametersScreen',
+        title: 'Fason Parametreleri',
+        endpoint: '/fason/parametreler',
+        crud: true,
+        codeField: 'id',
+        nameField: 'notes',
+        filters: [],
+        columns: [
+          { key: 'company_id', label: 'Firma' },
+          { key: 'max_scrap_pct', label: 'Max fire %' },
+          { key: 'qc_on_receipt', label: 'Teslimatta GKK' },
+          { key: 'block_production_until_qc', label: 'KK sonrası üretim' },
+          { key: 'require_qc_before_consume', label: 'GKK→tüketim' },
+          { key: 'allow_partial_delivery', label: 'Kısmi teslim' },
+        ],
+        masterFields: [
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true },
+          { key: 'ship_warehouse_id', label: 'Varsayılan sevk depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+          { key: 'default_scrap_tolerance_pct', label: 'Fire toleransı %', type: 'number' },
+          { key: 'max_scrap_pct', label: 'Max fire %', type: 'number' },
+          { key: 'allow_partial_delivery', label: 'Kısmi teslimat', type: 'checkbox' },
+          { key: 'allow_over_receipt', label: 'Fazla teslimat', type: 'checkbox' },
+          { key: 'over_receipt_tolerance_pct', label: 'Fazla teslim %', type: 'number' },
+          { key: 'qc_required', label: 'KK zorunlu (genel)', type: 'checkbox' },
+          { key: 'qc_on_receipt', label: 'Teslimatta GKK aç', type: 'checkbox' },
+          { key: 'block_production_until_qc', label: 'KK onayı olmadan üretime yansıma', type: 'checkbox' },
+          { key: 'require_qc_before_consume', label: 'GKK tamamlanmadan tüketim yok (5→GKK→6)', type: 'checkbox' },
+          { key: 'order_approval_required', label: 'Sipariş onayı', type: 'checkbox' },
+          { key: 'auto_create_po', label: 'Otomatik SA sipariş', type: 'checkbox' },
+          { key: 'auto_create_op_demand', label: 'Otomatik fason ihtiyacı', type: 'checkbox' },
+          { key: 'notes', label: 'Notlar' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        defaults: {
+          qc_required: true,
+          qc_on_receipt: true,
+          block_production_until_qc: true,
+          require_qc_before_consume: false,
+          allow_partial_delivery: true,
+          max_scrap_pct: 5,
+        },
+      },
+      {
+        id: 'fason-operasyonlari',
+        techId: 'SUB-OPD-SCR-001',
+        businessNameEn: 'SubcontractOperationDefScreen',
+        title: 'Fason Operasyon Tanımları',
+        endpoint: '/fason/operasyonlar',
+        crud: true,
+        codeField: 'operation_code',
+        nameField: 'operation_name',
+        filters: [
+          { key: 'operation_code', label: 'Kod' },
+          { key: 'operation_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'operation_code', label: 'Kod', mono: true },
+          { key: 'operation_name', label: 'Ad' },
+          { key: 'pricing_method', label: 'Fiyat yöntemi' },
+          { key: 'qc_required', label: 'KK' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'operation_code', label: 'Operasyon kodu', code: true, required: true },
+          { key: 'operation_name', label: 'Operasyon adı', name: true, required: true },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+          { key: 'std_time_hours', label: 'Std süre (saat)', type: 'number' },
+          { key: 'pricing_method', label: 'Fiyat yöntemi', type: 'select', options: ['Adet','Kg','Metre','Saat','Operasyon','Parti','Sabit','Ozel'] },
+          { key: 'qc_required', label: 'KK gerekli', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        defaults: { pricing_method: 'Adet', qc_required: true, is_active: true },
+      },
+      {
+        id: 'fason-fiyatlari',
+        techId: 'SUB-PRC-SCR-001',
+        businessNameEn: 'SubcontractPriceScreen',
+        title: 'Fason Fiyat Tarifeleri',
+        endpoint: '/fason/fiyatlar',
+        crud: true,
+        codeField: 'id',
+        nameField: 'partner_name',
+        filters: [
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
+        ],
+        columns: [
+          { key: 'partner_code', label: 'Fasoncu', mono: true },
+          { key: 'operation_code', label: 'Operasyon' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'unit_price', label: 'Fiyat' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'valid_from', label: 'Başlangıç' },
+          { key: 'valid_to', label: 'Bitiş' },
+        ],
+        masterFields: [
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
+          { key: 'operation_def_id', label: 'Operasyon', type: 'lookup', lookup: 'fason-operasyonlari', valueKey: 'id', labelKey: 'operation_name', codeKey: 'operation_code' },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'pricing_method', label: 'Yöntem', type: 'select', options: ['Adet','Kg','Metre','Saat','Operasyon','Parti','Sabit','Ozel'] },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number', required: true },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'valid_from', label: 'Geçerlilik başı', type: 'date' },
+          { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
+          { key: 'min_qty', label: 'Min miktar', type: 'number' },
+          { key: 'notes', label: 'Not' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        defaults: { pricing_method: 'Adet', currency_code: 'TRY', is_active: true },
+      },
+      {
+        id: 'fason-siparisleri',
+        techId: 'SUB-ORD-SCR-001',
+        businessNameEn: 'SubcontractOrderScreen',
+        title: 'Fason Siparişleri',
+        endpoint: '/fason/siparisler',
+        crud: true,
+        numeratorSeri: 'FASON_SIPARIS',
         codeField: 'order_no',
         nameField: 'partner_name',
         filters: [
           { key: 'order_no', label: 'Sipariş no' },
-          { key: 'partner_name', label: 'Cari' },
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
           { key: 'status', label: 'Durum' },
         ],
         columns: [
           { key: 'order_no', label: 'Sipariş', mono: true },
-          { key: 'supplier_order_no', label: 'Ted. sip. no', mono: true },
-          { key: 'partner_name', label: 'Cari' },
           { key: 'order_date', label: 'Tarih' },
-          { key: 'delivery_date', label: 'Teslim' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'subtotal', label: 'Ara top.' },
-          { key: 'tax_amount', label: 'KDV' },
-          { key: 'grand_total', label: 'Genel' },
-          { key: 'payment_term_code', label: 'Ödeme koş.' },
+          { key: 'partner_code', label: 'Fasoncu', mono: true },
+          { key: 'production_order_no', label: 'İş emri', mono: true },
+          { key: 'order_mode', label: 'Mod' },
           { key: 'status', label: 'Durum' },
-          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'estimated_amount', label: 'Tahmini' },
+          { key: 'actual_amount', label: 'Gerçekleşen' },
+          { key: 'invoiced_amount', label: 'Faturalanan' },
         ],
         masterFields: [
-          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, critical: true, group: 'kimlik' },
-          { key: 'order_no', label: 'Sipariş no', code: true, lead: true, group: 'kimlik' },
-          { key: 'order_date', label: 'Sipariş tarihi', type: 'date', lead: true, group: 'kimlik' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
-          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
-          { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar', group: 'kimlik' },
-          { key: 'quotation_id', label: 'Satınalma teklifi', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'sa-teklif-satirlar', group: 'kimlik' },
-          { key: 'supplier_order_no', label: 'Tedarikçi sipariş no', group: 'kimlik' },
-          { key: 'ship_date', label: 'Sevk tarihi', type: 'date', group: 'planlama' },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'finans' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], group: 'finans' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', group: 'finans' },
-          { key: 'payment_term_code', label: 'Ödeme koşulu', group: 'finans' },
-          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'AcikHesap'], group: 'finans' },
-          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', group: 'planlama' },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'organizasyon' },
-          { key: 'region', label: 'Bölge', group: 'organizasyon' },
-          { key: 'description', label: 'Açıklama', group: 'status' },
-          { key: 'public_note', label: 'Tedarikçi notu', group: 'status' },
-          { key: 'internal_note', label: 'Dahili not', group: 'status' },
-        ],
-        detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true, size: 'short', lead: true, group: 'olcu' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short', group: 'olcu' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number', required: true, size: 'short', lead: true, group: 'finans' },
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short', group: 'kimlik' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short', group: 'finans' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short', group: 'finans' },
-          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short', group: 'finans' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short', group: 'finans' },
-          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short', group: 'finans' },
-          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short', group: 'finans' },
-          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short', group: 'planlama' },
-          { key: 'ship_date', label: 'Sevk', type: 'date', size: 'short', group: 'planlama' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short', group: 'organizasyon' },
-          { key: 'region', label: 'Bölge', size: 'short', group: 'organizasyon' },
-          { key: 'supplier_item_code', label: 'Ted. stok kodu', group: 'kimlik' },
-          { key: 'supplier_item_name', label: 'Ted. stok adı', group: 'kimlik' },
-          { key: 'line_description', label: 'Açıklama', group: 'status' },
-          { key: 'reservation_type', label: 'Rezervasyon tipi', group: 'status' },
-          { key: 'reservation_link_no', label: 'Rezervasyon ilişki no', group: 'status' },
-          { key: 'received_quantity', label: 'Giren', type: 'number', size: 'short', group: 'olcu' },
-          { key: 'remaining_quantity', label: 'Bekleyen', type: 'number', size: 'short', group: 'olcu' },
-          { key: 'amount_ex_tax', label: 'Tutar HT', type: 'number', size: 'short', group: 'finans' },
-          { key: 'amount_ttc', label: 'Tutar TTC', type: 'number', size: 'short', group: 'finans' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
-        defaults: { currency_code: 'TRY', exchange_rate: 1, status: 'Taslak', rate_type: 'TCMB-ALIS', vat_mode: 'Haric' },
-      },
-      {
-        id: 'mal-kabuller',
-        techId: 'PUR-GR-SCR-001',
-        businessNameEn: 'GoodsReceiptScreen',
-        title: 'Mal Kabuller',
-        endpoint: '/mal-kabuller',
-        crud: true,
-        numeratorSeri: 'MAL_KABUL',
-        codeField: 'receipt_no',
-        nameField: 'order_no',
-        convertAction: {
-          label: 'Alış Faturası Oluştur',
-          path: '/mal-kabuller/{id}/fatura-olustur',
-          nested: { screenId: 'fatura-yonetimi', link: 'mal-kabul-fatura' },
-        },
-        filters: [
-          { key: 'receipt_no', label: 'Kabul no' },
-          { key: 'order_no', label: 'Sipariş no' },
-          { key: 'warehouse_code', label: 'Depo' },
-        ],
-        columns: [
-          { key: 'receipt_no', label: 'Kabul', mono: true },
-          { key: 'order_no', label: 'Sipariş', mono: true },
-          { key: 'vendor_delivery_note_no', label: 'Ted. irsaliye', mono: true },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'receipt_date', label: 'Tarih' },
-          { key: 'status', label: 'Durum' },
-          { key: 'received_by', label: 'Kabul eden' },
-          { key: 'incoming_qc_required', label: 'GKK' },
-        ],
-        masterFields: [
-          { key: 'receipt_no', label: 'Kabul no', code: true },
-          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', required: true, fillFrom: 'siparis-satirlar' },
-          { key: 'vendor_delivery_note_id', label: 'Tedarikçi irsaliyesi', type: 'lookup', lookup: 'tedarikci-irsaliyeleri', valueKey: 'id', labelKey: 'delivery_note_no', fillFrom: 'tedarikci-irsaliye-satirlar' },
-          { key: 'warehouse_id', label: 'Depo (bilgi)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'receipt_date', label: 'Kabul tarihi', type: 'date' },
-          { key: 'vendor_delivery_note_no', label: 'Tedarikçi irsaliye no' },
-          { key: 'delivery_date', label: 'İrsaliye tarihi', type: 'date' },
-          { key: 'vendor_invoice_no', label: 'Tedarikçi fatura no (opsiyonel)' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Iptal', 'Kapali'] },
-          { key: 'incoming_qc_required', label: 'GKK gerekli', type: 'checkbox' },
-          { key: 'received_by', label: 'Kabul eden' },
+          { key: 'order_no', label: 'Sipariş no', code: true },
+          { key: 'order_date', label: 'Tarih', type: 'date', required: true },
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true },
+          { key: 'production_order_id', label: 'İş emri', type: 'lookup', lookup: 'uretim-emirleri', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no' },
+          { key: 'order_mode', label: 'Mod', type: 'select', options: ['Operasyon', 'Komple'], required: true },
+          { key: 'planned_delivery_date', label: 'Planlanan teslim', type: 'date' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'exchange_rate', label: 'Kur', type: 'number' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak','Acik','SevkEdildi','KismiSevk','KaliteKontrolBekliyor','KismiTeslim','TeslimAlindi','Tamamlandi','Iptal'] },
+          { key: 'estimated_amount', label: 'Tahmini tutar', type: 'number', readOnly: true },
+          { key: 'actual_amount', label: 'Gerçekleşen tutar', type: 'number', readOnly: true },
+          { key: 'invoiced_amount', label: 'Faturalanan', type: 'number', readOnly: true },
           { key: 'description', label: 'Açıklama' },
-          { key: 'internal_note', label: 'Dahili not' },
         ],
         detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'accepted_flag', label: 'Kabul edilen', type: 'number' },
-          { key: 'rejected_qty', label: 'Reddedilen', type: 'number' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
+          { key: 'operation_code', label: 'Op. kod' },
+          { key: 'operation_name', label: 'Op. adı' },
+          { key: 'item_id', label: 'Ürün', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'ordered_qty', label: 'Sipariş miktar', type: 'number' },
+          { key: 'sent_qty', label: 'Gönderilen', type: 'number', readOnly: true },
+          { key: 'consumed_qty', label: 'Tüketilen', type: 'number', readOnly: true },
+          { key: 'scrap_qty', label: 'Fire', type: 'number', readOnly: true },
+          { key: 'received_qty', label: 'Teslim alınan', type: 'number', readOnly: true },
+          { key: 'accepted_qty', label: 'Kabul', type: 'number', readOnly: true },
+          { key: 'rejected_qty', label: 'Ret', type: 'number', readOnly: true },
+          { key: 'remaining_qty', label: 'Kalan', type: 'number', readOnly: true },
+          { key: 'emanet_qty', label: 'Emanette', type: 'number', readOnly: true },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
-          { key: 'lot_no', label: 'Parti no' },
-          { key: 'serial_no', label: 'Seri no' },
-          { key: 'stock_status', label: 'Statü', type: 'select', options: ['Kalitede', 'Kullanilabilir', 'Bloke'] },
-          { key: 'bin_code', label: 'Raf' },
-          { key: 'expiry_date', label: 'SKT', type: 'date' },
-          { key: 'line_description', label: 'Açıklama' },
+          { key: 'line_amount', label: 'Tutar', type: 'number', readOnly: true },
+          { key: 'due_date', label: 'Termin', type: 'date' },
+          { key: 'notes', label: 'Not' },
         ],
         detailKey: 'satirlar',
-        detailSlots: 5,
+        defaults: { order_mode: 'Operasyon', status: 'Acik', currency_code: 'TRY', exchange_rate: 1 },
+        secondaryAction: { label: 'Sevk', path: '/fason/siparisler/{id}/sevk', method: 'POST' },
+        approveAction: { label: 'Teslimat', path: '/fason/siparisler/{id}/teslimat', method: 'POST' },
       },
       {
-        id: 'tedarikci-irsaliyeleri',
-        techId: 'PUR-DLV-SCR-001',
-        businessNameEn: 'SupplierDeliveryNoteScreen',
-        title: 'Tedarikçi İrsaliyeleri',
-        endpoint: '/tedarikci-irsaliyeleri',
+        id: 'fason-operasyon-takip',
+        techId: 'SUB-TRK-SCR-001',
+        businessNameEn: 'SubcontractOperationTrackScreen',
+        title: 'Fason Operasyon Takibi',
+        endpoint: '/fason/siparisler',
         crud: true,
-        codeField: 'delivery_note_no',
+        codeField: 'order_no',
         nameField: 'partner_name',
-        numeratorSeri: 'TEDARIKCI_IRSALIYE',
         filters: [
-          { key: 'delivery_note_no', label: 'İrsaliye no' },
-          { key: 'partner_name', label: 'Tedarikçi' },
           { key: 'status', label: 'Durum' },
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
         ],
         columns: [
-          { key: 'delivery_note_no', label: 'İrsaliye', mono: true },
-          { key: 'partner_name', label: 'Tedarikçi' },
           { key: 'order_no', label: 'Sipariş', mono: true },
-          { key: 'delivery_date', label: 'Tarih' },
+          { key: 'partner_name', label: 'Fasoncu' },
+          { key: 'production_order_no', label: 'İş emri' },
           { key: 'status', label: 'Durum' },
+          { key: 'planned_delivery_date', label: 'Termin' },
+          { key: 'estimated_amount', label: 'Tahmini' },
+          { key: 'actual_amount', label: 'Gerçekleşen' },
         ],
         masterFields: [
-          { key: 'delivery_note_no', label: 'İrsaliye no', code: true },
-          { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-satirlar' },
-          { key: 'delivery_date', label: 'İrsaliye tarihi', type: 'date' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kismi', 'Kapali', 'Iptal'] },
-          { key: 'description', label: 'Açıklama' },
+          { key: 'order_no', label: 'Sipariş', code: true, readOnly: true },
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', readOnly: true },
+          { key: 'status', label: 'Durum', readOnly: true },
+          { key: 'description', label: 'Açıklama', readOnly: true },
         ],
         detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'accepted_flag', label: 'Kabul edilen', type: 'number' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
-          { key: 'line_description', label: 'Açıklama' },
+          { key: 'operation_name', label: 'Operasyon' },
+          { key: 'ordered_qty', label: 'Sipariş' },
+          { key: 'sent_qty', label: 'Sevk' },
+          { key: 'consumed_qty', label: 'Tüketim' },
+          { key: 'received_qty', label: 'Teslim' },
+          { key: 'accepted_qty', label: 'Kabul' },
+          { key: 'rejected_qty', label: 'Ret' },
+          { key: 'emanet_qty', label: 'Emanet' },
         ],
         detailKey: 'satirlar',
-        detailSlots: 5,
-        defaults: { status: 'Acik' },
       },
       {
-        id: 'giris-kontrolleri',
-        techId: 'QLT-INC-SCR-001',
-        businessNameEn: 'IncomingInspectionScreen',
-        title: 'Giriş Kontrolleri',
-        endpoint: '/giris-kontrolleri',
-        crud: false,
-        codeField: 'inspection_no',
-        nameField: 'order_no',
-        approveAction: { label: 'Onayla → Giriş Kalite', path: '/giris-kontrolleri/{id}/onayla' },
-        filters: [
-          { key: 'inspection_no', label: 'Kontrol no' },
+        id: 'fason-sevkiyatlar',
+        techId: 'SUB-SHP-SCR-001',
+        businessNameEn: 'SubcontractShipmentScreen',
+        title: 'Fasona Malzeme Sevki',
+        endpoint: '/fason/sevkiyatlar',
+        crud: true,
+        codeField: 'shipment_no',
+        nameField: 'partner_name',
+        filters: [{ key: 'shipment_no', label: 'Sevk no' }],
+        columns: [
+          { key: 'shipment_no', label: 'Sevk', mono: true },
+          { key: 'shipment_date', label: 'Tarih' },
+          { key: 'partner_code', label: 'Fasoncu' },
           { key: 'order_no', label: 'Sipariş' },
           { key: 'status', label: 'Durum' },
         ],
+        masterFields: [
+          { key: 'shipment_no', label: 'Sevk no', code: true, readOnly: true },
+          { key: 'shipment_date', label: 'Tarih', type: 'date', readOnly: true },
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', readOnly: true },
+          { key: 'order_id', label: 'Fason sipariş', type: 'lookup', lookup: 'fason-siparisleri', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', readOnly: true },
+          { key: 'description', label: 'Açıklama', readOnly: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+      },
+      {
+        id: 'fason-tuketimler',
+        techId: 'SUB-CNS-SCR-001',
+        businessNameEn: 'SubcontractConsumptionScreen',
+        title: 'Fason Malzeme Tüketimi',
+        endpoint: '/fason/tuketimler',
+        crud: true,
+        codeField: 'consumption_no',
+        nameField: 'partner_name',
+        filters: [{ key: 'consumption_no', label: 'Belge no' }],
         columns: [
-          { key: 'inspection_no', label: 'Kontrol', mono: true },
-          { key: 'order_no', label: 'Sipariş', mono: true },
-          { key: 'receipt_no', label: 'Mal kabul', mono: true },
-          { key: 'kaynak_depo_kodu', label: 'Giriş depo', mono: true },
-          { key: 'hedef_depo_kodu', label: 'Kalite depo', mono: true },
-          { key: 'inspection_date', label: 'Tarih' },
+          { key: 'consumption_no', label: 'Belge', mono: true },
+          { key: 'consumption_date', label: 'Tarih' },
+          { key: 'partner_code', label: 'Fasoncu' },
+          { key: 'order_no', label: 'Sipariş' },
+        ],
+        masterFields: [
+          { key: 'consumption_no', label: 'Belge no', code: true, readOnly: true },
+          { key: 'consumption_date', label: 'Tarih', type: 'date', readOnly: true },
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', readOnly: true },
+          { key: 'description', label: 'Açıklama', readOnly: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+      },
+      {
+        id: 'fason-teslimatlar',
+        techId: 'SUB-RCV-SCR-001',
+        businessNameEn: 'SubcontractReceiptScreen',
+        title: 'Fason Ürün Teslim Alma',
+        endpoint: '/fason/teslimatlar',
+        crud: true,
+        codeField: 'receipt_no',
+        nameField: 'partner_name',
+        filters: [{ key: 'receipt_no', label: 'Teslim no' }],
+        columns: [
+          { key: 'receipt_no', label: 'Teslim', mono: true },
+          { key: 'receipt_date', label: 'Tarih' },
+          { key: 'partner_code', label: 'Fasoncu' },
+          { key: 'order_no', label: 'Sipariş' },
+          { key: 'status', label: 'Durum' },
+          { key: 'qc_order_no', label: 'GKK emri', mono: true },
+          { key: 'qc_status', label: 'GKK durum' },
+        ],
+        masterFields: [
+          { key: 'receipt_no', label: 'Teslim no', code: true, readOnly: true },
+          { key: 'receipt_date', label: 'Tarih', type: 'date', readOnly: true },
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', readOnly: true },
+          { key: 'status', label: 'Durum', readOnly: true },
+          { key: 'qc_order_no', label: 'GKK emir no', readOnly: true },
+          { key: 'qc_status', label: 'GKK durum', readOnly: true },
+          { key: 'description', label: 'Açıklama', readOnly: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        hint: 'GKK zorunlu firmalarda teslimat sonrası stok Kalitede bekler. Onay: Kalite → GKK Emirleri.',
+      },
+      {
+        id: 'fason-emanet-stok',
+        techId: 'SUB-STK-SCR-001',
+        businessNameEn: 'SubcontractConsignmentStockScreen',
+        title: 'Fasoncu Emanet Stokları',
+        endpoint: '/fason/emanet-stok',
+        crud: false,
+        codeField: 'item_code',
+        nameField: 'item_name',
+        filters: [
+          { key: 'partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
+        ],
+        columns: [
+          { key: 'partner_code', label: 'Fasoncu', mono: true },
+          { key: 'partner_name', label: 'Unvan' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'bakiye', label: 'Emanet bakiye' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+      },
+,
+    ],
+  },
+  {
+    id: 'kalite',
+    title: 'Kalite',
+    sections: [
+      {
+        id: 'giris-kk',
+        title: 'Giriş Kalite',
+        screenIds: ['kk-emirleri-gkk'],
+      },
+      {
+        id: 'cikis-kk',
+        title: 'Çıkış Kalite',
+        screenIds: ['kk-emirleri-ckk'],
+      },
+      {
+        id: 'uygunsuzluk',
+        title: 'Uygunsuzluk ve CAPA',
+        screenIds: ['kk-uygunsuzluklar', 'kk-capa'],
+      },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: ['kk-kontrol-planlari', 'kk-stok-planlari', 'kk-ret-nedenleri'],
+      },
+    ],
+    screens: [
+      buildKkOrderScreen({
+        id: 'kk-emirleri-gkk',
+        techId: 'QLT-IQC-SCR-001',
+        businessNameEn: 'IncomingQcOrderScreen',
+        title: 'Giriş Kalite Emirleri',
+        direction: 'GKK',
+      }),
+      buildKkOrderScreen({
+        id: 'kk-emirleri-ckk',
+        techId: 'QLT-OQC-SCR-001',
+        businessNameEn: 'OutgoingQcOrderScreen',
+        title: 'Çıkış Kalite Emirleri',
+        direction: 'CKK',
+      }),
+      {
+        id: 'kk-uygunsuzluklar',
+        techId: 'QLT-NCR-SCR-001',
+        businessNameEn: 'NonconformanceScreen',
+        title: 'Uygunsuzluklar',
+        endpoint: '/kk-uygunsuzluklar',
+        crud: true,
+        codeField: 'id',
+        nameField: 'description',
+        filters: [
+          { key: 'order_no', label: 'Emir no' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'id', label: 'ID', mono: true },
+          { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'direction', label: 'Yön' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'ret_kodu', label: 'Ret kodu', mono: true },
+          { key: 'quantity', label: 'Miktar' },
           { key: 'status', label: 'Durum' },
         ],
         masterFields: [
-          { key: 'inspection_no', label: 'Kontrol no', code: true },
-          { key: 'order_no', label: 'Sipariş no' },
-          { key: 'receipt_no', label: 'Mal kabul no' },
-          { key: 'kaynak_depo_kodu', label: 'Giriş depo' },
-          { key: 'hedef_depo_kodu', label: 'Giriş kalite depo' },
+          { key: 'order_id', label: 'Emir ID', type: 'number', required: true },
+          { key: 'rejection_reason_id', label: 'Ret nedeni', type: 'lookup', lookup: 'kk-ret-nedenleri', valueKey: 'id', labelKey: 'reason_name', codeKey: 'reason_code' },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'corrective_action', label: 'Düzeltici faaliyet' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kapali', 'Iptal'] },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'kk-capa',
+        techId: 'QLT-CAPA-SCR-001',
+        businessNameEn: 'CapaScreen',
+        title: 'CAPA',
+        endpoint: '/kk-capa',
+        crud: true,
+        codeField: 'capa_no',
+        nameField: 'title',
+        numeratorSeri: 'CAPA',
+        filters: [
+          { key: 'capa_no', label: 'CAPA no' },
           { key: 'status', label: 'Durum' },
-          { key: 'inspected_by', label: 'Kontrol eden' },
+          { key: 'title', label: 'Başlık' },
+        ],
+        columns: [
+          { key: 'capa_no', label: 'No', mono: true },
+          { key: 'title', label: 'Başlık' },
+          { key: 'uygunsuzluk_no', label: 'Uygunsuzluk', mono: true },
+          { key: 'target_date', label: 'Hedef' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'capa_no', label: 'CAPA no', code: true },
+          { key: 'title', label: 'Başlık', name: true, required: true },
+          { key: 'nonconformance_id', label: 'Uygunsuzluk ID', type: 'number' },
           { key: 'description', label: 'Açıklama' },
+          { key: 'target_date', label: 'Hedef tarih', type: 'date' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Devam', 'Kapali', 'Iptal'] },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'kk-kontrol-planlari',
+        techId: 'QLT-PLAN-SCR-001',
+        businessNameEn: 'ControlPlanScreen',
+        title: 'Kontrol Planları',
+        endpoint: '/kk-kontrol-planlari',
+        crud: true,
+        numeratorSeri: 'KK_PLAN',
+        codeField: 'plan_code',
+        nameField: 'plan_name',
+        filters: [
+          { key: 'plan_code', label: 'Plan kodu' },
+          { key: 'plan_name', label: 'Plan adı' },
+          { key: 'direction', label: 'Yön' },
+        ],
+        columns: [
+          { key: 'plan_code', label: 'Kod', mono: true },
+          { key: 'plan_name', label: 'Ad' },
+          { key: 'direction', label: 'Yön' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'plan_code', label: 'Plan kodu', code: true, required: true },
+          { key: 'plan_name', label: 'Plan adı', name: true, required: true },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['GKK', 'CKK', 'HerIkisi'], required: true },
         ],
         detailFields: [
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'item_name', label: 'Stok adı' },
-          { key: 'ordered_quantity', label: 'Sipariş miktarı', type: 'number' },
-          { key: 'received_quantity', label: 'Gelen miktar', type: 'number' },
-          { key: 'accepted_quantity', label: 'Kabul miktarı', type: 'number' },
-          { key: 'rejected_quantity', label: 'Red miktarı', type: 'number' },
+          { key: 'criterion_code', label: 'Kriter kodu' },
+          { key: 'criterion_name', label: 'Kriter adı' },
+          { key: 'measurement_type', label: 'Ölçüm tipi', type: 'select', options: ['Sayisal', 'Metin', 'EvetHayir'] },
+          { key: 'min_value', label: 'Min', type: 'number' },
+          { key: 'max_value', label: 'Max', type: 'number' },
           { key: 'uom_code', label: 'Birim' },
-          { key: 'match_ok', label: 'Tutarlı', type: 'checkbox' },
+          { key: 'is_required', label: 'Zorunlu', type: 'checkbox' },
+        ],
+        detailKey: 'kriterler',
+        detailSlots: 5,
+      },
+      {
+        id: 'kk-stok-planlari',
+        techId: 'QLT-ITMP-SCR-001',
+        businessNameEn: 'ItemControlPlanLinkScreen',
+        title: 'Stok Plan Bağları',
+        endpoint: '/kk-stok-planlari',
+        crud: true,
+        codeField: 'id',
+        nameField: 'item_code',
+        filters: [
+          { key: 'item_code', label: 'Stok' },
+          { key: 'direction', label: 'Yön' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'direction', label: 'Yön' },
+          { key: 'plan_code', label: 'Plan', mono: true },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'plan_id', label: 'Plan', type: 'lookup', lookup: 'kk-kontrol-planlari', valueKey: 'id', labelKey: 'plan_name', codeKey: 'plan_code', required: true },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['GKK', 'CKK'], required: true },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'kk-ret-nedenleri',
+        techId: 'QLT-REJ-SCR-001',
+        businessNameEn: 'RejectionReasonScreen',
+        title: 'Ret Nedenleri',
+        endpoint: '/kk-ret-nedenleri',
+        crud: true,
+        codeField: 'reason_code',
+        nameField: 'reason_name',
+        filters: [
+          { key: 'reason_code', label: 'Kod' },
+          { key: 'reason_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'reason_code', label: 'Kod', mono: true },
+          { key: 'reason_name', label: 'Ad' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'reason_code', label: 'Neden kodu', code: true, required: true },
+          { key: 'reason_name', label: 'Neden adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+    ],
+  },
+  {
+    id: 'finans',
+    title: 'Finans',
+    sections: [
+      {
+        id: 'tanimlamalar',
+        title: 'Muhasebe Tanımlamaları',
+        screenIds: ['hesap-plani', 'hesap-belirleme-kurallari', 'finans-vergi-kodlari', 'finans-ulke-paketleri', 'mali-yillar', 'muhasebe-donemleri', 'fiyat-listeleri'],
+      },
+      {
+        id: 'belgeler',
+        title: 'Muhasebe Belgeleri',
+        screenIds: ['muhasebe-belgeleri', 'fatura-kontrolleri'],
+      },
+      {
+        id: 'nakit',
+        title: 'Banka ve Kasa',
+        screenIds: ['finans-banka-hesaplari', 'finans-kasa-hesaplari', 'finans-nakit-hareketleri', 'banka-mutabakat'],
+      },
+      {
+        id: 'kiymet-butce',
+        title: 'Sabit Kıymet ve Bütçe',
+        screenIds: ['sabit-kiymetler', 'gl-butceler'],
+      },
+      {
+        id: 'raporlar',
+        title: 'Finansal Raporlar',
+        screenIds: ['mizan', 'finans-yevmiye', 'finans-bilanco', 'finans-gelir-tablosu', 'finans-yaslandirma', 'kokpit'],
+      },
+    ],
+    screens: [
+      {
+        id: 'hesap-plani',
+        techId: 'FIN-COA-SCR-001',
+        businessNameEn: 'ChartOfAccountsScreen',
+        title: 'Hesap Planı',
+        endpoint: '/muhasebe-hesaplari',
+        crud: true,
+        codeField: 'account_code',
+        nameField: 'account_name',
+        numeratorSeri: null,
+        helpText: 'Ana/Üst hesaplar sınıflandırma içindir; fiş yalnızca Doğrudan (yaprak) hesaplara yazılır. Ülke paketi şirketin muhasebe ülkesine göre filtrelenir.',
+        filters: [
+          { key: 'account_code', label: 'Hesap kodu' },
+          { key: 'account_name', label: 'Hesap adı' },
+          { key: 'account_type', label: 'Tip' },
+          { key: 'country_code', label: 'Ülke', queryParam: true },
+        ],
+        columns: [
+          { key: 'account_code', label: 'Kod', mono: true },
+          { key: 'account_name', label: 'Ad' },
+          { key: 'account_type', label: 'Tip' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'account_class', label: 'Sınıf' },
+          { key: 'parent_account_code', label: 'Üst', mono: true },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'account_code', label: 'Hesap kodu', code: true, editableOnNew: true, required: true },
+          { key: 'account_name', label: 'Hesap adı', name: true, required: true },
+          { key: 'account_type', label: 'Hesap tipi', type: 'select', options: ['Ana', 'Ust', 'Dogrudan'], required: true },
+          { key: 'country_code', label: 'Ülke', type: 'select', options: ['TR', 'AZ', 'DE', 'NL'], required: true },
+          { key: 'chart_of_accounts_code', label: 'Hesap planı' },
+          { key: 'account_class', label: 'Sınıf (1–6)' },
+          { key: 'normal_balance', label: 'Normal bakiye', type: 'select', options: ['Borc', 'Alacak'] },
+        ],
+        detailFields: [
+          { key: 'parent_account_code', label: 'Üst hesap kodu' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'is_control_account', label: 'Kontrol hesabı', type: 'checkbox' },
+          { key: 'reconciliation_type', label: 'Mutabakat', type: 'select', options: ['', 'Cari', 'Banka', 'Kasa', 'Stok', 'SabitKiymet'] },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'marked_for_deletion', label: 'Silinecek', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { country_code: 'TR', chart_of_accounts_code: 'TDHP', account_type: 'Dogrudan', normal_balance: 'Borc', is_active: true },
+      },
+      {
+        id: 'hesap-belirleme-kurallari',
+        techId: 'FIN-ACR-SCR-001',
+        businessNameEn: 'AccountDeterminationRuleScreen',
+        title: 'Hesap Belirleme Kuralları',
+        endpoint: '/hesap-belirleme-kurallari',
+        crud: true,
+        codeField: 'rule_code',
+        nameField: 'description',
+        filters: [
+          { key: 'rule_code', label: 'Kural' },
+          { key: 'document_type', label: 'Belge tipi' },
+        ],
+        columns: [
+          { key: 'rule_code', label: 'Kod', mono: true },
+          { key: 'document_type', label: 'Belge' },
+          { key: 'debit_account_code', label: 'Borç', mono: true },
+          { key: 'credit_account_code', label: 'Alacak', mono: true },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'rule_code', label: 'Kural kodu', code: true, required: true },
+          { key: 'document_type', label: 'Belge tipi', type: 'select', options: ['Satis', 'Alis'], required: true },
+          { key: 'debit_account_code', label: 'Borç hesap' },
+          { key: 'credit_account_code', label: 'Alacak hesap' },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'finans-vergi-kodlari',
+        techId: 'FIN-TAX-SCR-001',
+        businessNameEn: 'TaxCodeScreen',
+        title: 'Vergi Kodları',
+        endpoint: '/finans-vergi-kodlari',
+        crud: true,
+        codeField: 'tax_code',
+        nameField: 'tax_name',
+        filters: [
+          { key: 'country_code', label: 'Ülke', queryParam: true },
+          { key: 'tax_code', label: 'Kod' },
+        ],
+        columns: [
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'tax_code', label: 'Kod', mono: true },
+          { key: 'tax_name', label: 'Ad' },
+          { key: 'tax_type', label: 'Tür' },
+          { key: 'rate', label: 'Oran %' },
+          { key: 'output_tax_account_code', label: 'Hesaplanan' },
+          { key: 'input_tax_account_code', label: 'İndirilecek' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
+          { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
+          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
+          { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
+          { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: 'oranlar',
+        detailSlots: 4,
+        formTabs: [
+          {
+            id: 'oranlar',
+            label: 'Oranlar',
+            kind: 'grid',
+            key: 'oranlar',
+            slots: 4,
+            fields: [
+              { key: 'rate', label: 'Oran %', type: 'number', required: true },
+              { key: 'valid_from', label: 'Geçerlilik başı', type: 'date', required: true },
+              { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
+              { key: 'source_note', label: 'Kaynak' },
+            ],
+          },
+        ],
+        defaults: { country_code: 'TR', tax_type: 'KDV', is_active: true },
+      },
+      {
+        id: 'finans-ulke-paketleri',
+        techId: 'FIN-CPK-SCR-001',
+        businessNameEn: 'CountryPackScreen',
+        title: 'Finans Ülke Paketleri',
+        endpoint: '/finans-country/paketler',
+        crud: true,
+        codeField: 'country_code',
+        nameField: 'country_name',
+        columns: [
+          { key: 'country_code', label: 'Ülke', mono: true },
+          { key: 'country_name', label: 'Ad' },
+          { key: 'local_currency', label: 'PB' },
+          { key: 'chart_of_accounts_code', label: 'Hesap planı' },
+          { key: 'reporting_framework', label: 'Raporlama' },
+          { key: 'retention_years', label: 'Saklama (yıl)' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'country_code', label: 'Ülke kodu', code: true, required: true, editableOnNew: true },
+          { key: 'country_name', label: 'Ülke adı', name: true, required: true },
+          { key: 'local_currency', label: 'Yerel para birimi' },
+          { key: 'chart_of_accounts_code', label: 'Hesap planı kodu' },
+          { key: 'reporting_framework', label: 'Raporlama çerçevesi' },
+          { key: 'retention_years', label: 'Saklama süresi (yıl)', type: 'number' },
+          { key: 'e_document_note', label: 'e-Belge notu' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: { is_active: true, retention_years: 10 },
+      },
+      {
+        id: 'mali-yillar',
+        techId: 'FIN-FY-SCR-001',
+        businessNameEn: 'FiscalYearScreen',
+        title: 'Mali Yıllar',
+        endpoint: '/muhasebe-donemleri/mali-yillar',
+        crud: true,
+        codeField: 'year',
+        nameField: 'year',
+        columns: [
+          { key: 'year', label: 'Yıl' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'year', label: 'Yıl', type: 'number', required: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kapali'] },
+        ],
+        defaults: { status: 'Acik' },
+      },
+      {
+        id: 'muhasebe-donemleri',
+        techId: 'FIN-PER-SCR-001',
+        businessNameEn: 'AccountingPeriodScreen',
+        title: 'Muhasebe Dönemleri',
+        endpoint: '/muhasebe-donemleri',
+        crud: false,
+        codeField: 'period_no',
+        nameField: 'status',
+        approveAction: { label: 'Dönemi Kapat', path: '/muhasebe-donemleri/{id}/kapat' },
+        convertAction: { label: 'Yeniden Aç', path: '/muhasebe-donemleri/{id}/yeniden-ac' },
+        helpText: 'Kapalı döneme kesin fiş yazılamaz. Yeniden açma yetki ve audit ile izlenir.',
+        filters: [
+          { key: 'mali_yil', label: 'Mali yıl' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'mali_yil', label: 'Yıl' },
+          { key: 'period_no', label: 'Dönem' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'status', label: 'Durum' },
+          { key: 'closed_by', label: 'Kapatan' },
+        ],
+        masterFields: [
+          { key: 'mali_yil', label: 'Mali yıl', readOnly: true },
+          { key: 'period_no', label: 'Dönem no', readOnly: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date', readOnly: true },
+          { key: 'end_date', label: 'Bitiş', type: 'date', readOnly: true },
+          { key: 'status', label: 'Durum', readOnly: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'fiyat-listeleri',
+        techId: 'FIN-PRC-SCR-001',
+        businessNameEn: 'PriceListScreen',
+        title: 'Fiyat Listeleri',
+        endpoint: '/fiyat-listeleri',
+        crud: true,
+        codeField: 'list_code',
+        nameField: 'list_name',
+        numeratorSeri: 'FIYAT_LISTE',
+        filters: [
+          { key: 'list_code', label: 'Liste kodu' },
+          { key: 'list_name', label: 'Liste adı' },
+        ],
+        columns: [
+          { key: 'list_code', label: 'Kod', mono: true },
+          { key: 'list_name', label: 'Ad' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'list_code', label: 'Liste kodu', code: true },
+          { key: 'list_name', label: 'Liste adı', name: true, required: true },
+          { key: 'currency_code', label: 'Para birimi' },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
+          { key: 'min_quantity', label: 'Min miktar', type: 'number' },
+          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
+          { key: 'discount_rate', label: 'İskonto %', type: 'number' },
         ],
         detailKey: 'satirlar',
         detailSlots: 5,
-        readOnly: false,
+      },
+      {
+        id: 'muhasebe-belgeleri',
+        techId: 'FIN-JE-SCR-001',
+        businessNameEn: 'AccountingDocumentScreen',
+        title: 'Muhasebe Belgeleri',
+        endpoint: '/muhasebe-belgeleri',
+        crud: true,
+        codeField: 'document_no',
+        nameField: 'description',
+        numeratorSeri: 'MUHASEBE_BELGE',
+        approveAction: { label: 'Kesinleştir', path: '/muhasebe-belgeleri/{id}/kesinlestir' },
+        convertAction: { label: 'Ters Kayıt', path: '/muhasebe-belgeleri/{id}/ters-kayit' },
+        helpText: 'Toplam borç = toplam alacak olmalıdır. Kesinleşmiş fiş değiştirilemez; hata için ters kayıt kullanın.',
+        filters: [
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'status', label: 'Durum' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'voucher_type', label: 'Fiş tipi' },
+        ],
+        columns: [
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'journal_number', label: 'Yevmiye' },
+          { key: 'document_date', label: 'Tarih' },
+          { key: 'voucher_type', label: 'Tip' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'status', label: 'Durum' },
+          { key: 'toplam_borc', label: 'Borç' },
+          { key: 'toplam_alacak', label: 'Alacak' },
+        ],
+        masterFields: [
+          { key: 'document_no', label: 'Belge no', code: true },
+          { key: 'document_date', label: 'Belge tarihi', type: 'date', required: true },
+          { key: 'voucher_type', label: 'Fiş tipi', type: 'select', options: ['Mahsup', 'Tahsilat', 'Tediye', 'Acilis', 'Kapanis', 'Ters'], required: true },
+          { key: 'country_code', label: 'Muhasebe ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL'], required: true },
+          { key: 'transaction_country_code', label: 'İşlem ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL', ''] },
+          { key: 'tax_country_code', label: 'Vergi ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL', ''] },
+          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'exchange_rate', label: 'Kur', type: 'number' },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal'], readOnly: true },
+          { key: 'journal_number', label: 'Yevmiye no', readOnly: true },
+        ],
+        detailFields: [
+          { key: 'account_id', label: 'Hesap', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code', required: true },
+          { key: 'debit', label: 'Borç', type: 'number', help: 'Hesabın sol tarafı (varlık/gider artışı genelde borç).' },
+          { key: 'credit', label: 'Alacak', type: 'number', help: 'Hesabın sağ tarafı (kaynak/gelir artışı genelde alacak).' },
+          { key: 'tax_code', label: 'Vergi kodu' },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
+          { key: 'description', label: 'Kalem açıklama' },
+        ],
+        detailKey: 'kalemler',
+        detailSlots: 8,
+        defaults: { voucher_type: 'Mahsup', country_code: 'TR', currency_code: 'TRY', exchange_rate: 1, status: 'Taslak' },
+      },
+      {
+        id: 'fatura-kontrolleri',
+        techId: 'FIN-3WAY-SCR-001',
+        businessNameEn: 'ThreeWayMatchScreen',
+        title: 'Fatura Kontrolleri',
+        endpoint: '/fatura-kontrolleri',
+        crud: false,
+        readOnly: true,
+        filters: [
+          { key: 'invoice_no', label: 'Fatura' },
+          { key: 'result', label: 'Sonuç' },
+        ],
+        columns: [
+          { key: 'invoice_no', label: 'Fatura', mono: true },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'receipt_no', label: 'Mal kabul', mono: true },
+          { key: 'order_no', label: 'SA sipariş', mono: true },
+          { key: 'price_variance', label: 'Fiyat fark' },
+          { key: 'quantity_variance', label: 'Miktar fark' },
+          { key: 'result', label: 'Sonuç' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'invoice_id', label: 'Alış faturası', type: 'lookup', lookup: 'alis-faturalari', valueKey: 'id', labelKey: 'invoice_no' },
+          { key: 'goods_receipt_id', label: 'Mal kabul', type: 'lookup', lookup: 'mal-kabuller', valueKey: 'id', labelKey: 'receipt_no' },
+          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no' },
+          { key: 'invoice_no', label: 'Fatura no', code: true },
+          { key: 'receipt_no', label: 'Mal kabul no' },
+          { key: 'order_no', label: 'Sipariş no' },
+          { key: 'partner_name', label: 'Cari', name: true },
+          { key: 'price_variance', label: 'Fiyat farkı', type: 'number' },
+          { key: 'quantity_variance', label: 'Miktar farkı', type: 'number' },
+          { key: 'result', label: 'Sonuç', type: 'select', options: ['Bekliyor', 'Uyumlu', 'FiyatFark', 'MiktarFark', 'Askida'] },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
+        id: 'finans-banka-hesaplari',
+        techId: 'FIN-BNK-SCR-001',
+        businessNameEn: 'BankAccountScreen',
+        title: 'Banka Hesapları',
+        endpoint: '/finans-nakit/banka-hesaplari',
+        crud: true,
+        codeField: 'account_code',
+        nameField: 'account_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'account_code', label: 'Kod' },
+          { key: 'account_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'account_code', label: 'Kod', mono: true },
+          { key: 'account_name', label: 'Ad' },
+          { key: 'iban', label: 'IBAN', mono: true },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'bank_name', label: 'Banka' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'account_code', label: 'Hesap kodu', code: true, editableOnNew: true },
+          { key: 'account_name', label: 'Hesap adı', name: true, required: true },
+          { key: 'bank_id', label: 'Banka', type: 'lookup', lookup: 'banks', valueKey: 'id', labelKey: 'bank_name', codeKey: 'bank_code' },
+          { key: 'iban', label: 'IBAN' },
+          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
+          { key: 'gl_account_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { currency_code: 'TRY', is_active: true },
+      },
+      {
+        id: 'finans-kasa-hesaplari',
+        techId: 'FIN-CSH-SCR-001',
+        businessNameEn: 'CashAccountScreen',
+        title: 'Kasa Hesapları',
+        endpoint: '/finans-nakit/kasa-hesaplari',
+        crud: true,
+        codeField: 'cash_code',
+        nameField: 'cash_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'cash_code', label: 'Kod' },
+          { key: 'cash_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'cash_code', label: 'Kod', mono: true },
+          { key: 'cash_name', label: 'Ad' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'cash_code', label: 'Kasa kodu', code: true, editableOnNew: true },
+          { key: 'cash_name', label: 'Kasa adı', name: true, required: true },
+          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
+          { key: 'gl_account_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { currency_code: 'TRY', is_active: true },
+      },
+      {
+        id: 'finans-nakit-hareketleri',
+        techId: 'FIN-CSHMV-SCR-001',
+        businessNameEn: 'CashMovementScreen',
+        title: 'Nakit Hareketleri',
+        endpoint: '/finans-nakit/hareketler',
+        crud: true,
+        codeField: 'movement_no',
+        nameField: 'description',
+        numeratorSeri: 'FIN_NAKIT_HAREKET',
+        filters: [
+          { key: 'movement_no', label: 'No' },
+          { key: 'direction', label: 'Yön' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'movement_no', label: 'No', mono: true },
+          { key: 'movement_date', label: 'Tarih' },
+          { key: 'direction', label: 'Yön' },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'partner_name', label: 'Cari' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'movement_no', label: 'Hareket no', code: true },
+          { key: 'movement_date', label: 'Tarih', type: 'date', required: true },
+          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Virman'], required: true },
+          { key: 'amount', label: 'Tutar', type: 'number', required: true },
+          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'bank_account_id', label: 'Banka hesabı', type: 'number' },
+          { key: 'cash_account_id', label: 'Kasa', type: 'number' },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
+          { key: 'muhasebelestir', label: 'Muhasebeleştir', type: 'checkbox' },
+          { key: 'karsi_hesap_kodu', label: 'Karşı hesap kodu' },
+          { key: 'description', label: 'Açıklama', name: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { direction: 'Giris', currency_code: 'TRY', muhasebelestir: true },
+      },
+      {
+        id: 'banka-mutabakat',
+        techId: 'FIN-BRECON-SCR-001',
+        businessNameEn: 'BankReconciliationScreen',
+        title: 'Banka Mutabakatı',
+        endpoint: '/banka-mutabakat',
+        crud: true,
+        codeField: 'reference_no',
+        nameField: 'description',
+        approveAction: { label: 'Otomatik Eşleştir', path: '/banka-mutabakat/{id}/otomatik-eslestir', method: 'POST' },
+        convertAction: { label: 'CSV İçe Aktar', path: '/banka-mutabakat/import-csv', method: 'POST', dialog: 'csv-import' },
+        helpText: 'CSV gövde alanı: csv (tarih;tutar;yon;aciklama;ref). MT940 bu sürümde yok.',
+        filters: [
+          { key: 'reference_no', label: 'Referans' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'id', label: 'ID', mono: true },
+          { key: 'statement_date', label: 'Ekstre tar.' },
+          { key: 'reference_no', label: 'Referans', mono: true },
+          { key: 'opening_balance', label: 'Açılış' },
+          { key: 'closing_balance', label: 'Kapanış' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'bank_account_id', label: 'Banka hesabı', type: 'number', required: true },
+          { key: 'statement_date', label: 'Ekstre tarihi', type: 'date', required: true },
+          { key: 'reference_no', label: 'Referans' },
+          { key: 'opening_balance', label: 'Açılış bakiye', type: 'number' },
+          { key: 'closing_balance', label: 'Kapanış bakiye', type: 'number' },
+          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Eslesiyor', 'Kapali'] },
+          { key: 'description', label: 'Açıklama', name: true },
+          { key: 'csv', label: 'CSV içeriği (import)', size: 'wide' },
+        ],
+        detailFields: [
+          { key: 'value_date', label: 'Valör', type: 'date' },
+          { key: 'amount', label: 'Tutar', type: 'number', required: true },
+          { key: 'direction', label: 'Yön', type: 'number' },
+          { key: 'counterparty_name', label: 'Karşı taraf' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'external_ref', label: 'Dış ref' },
+          { key: 'match_status', label: 'Eşleşme', readOnly: true },
+        ],
+        detailKey: 'satirlar',
+        defaults: { currency_code: 'TRY', status: 'Taslak', opening_balance: 0 },
+      },
+      {
+        id: 'finans-yaslandirma',
+        techId: 'FIN-AGING-RPT-001',
+        businessNameEn: 'ReceivablesPayablesAgingReport',
+        title: 'Cari Yaşlandırma',
+        endpoint: '/finans-yaslandirma',
+        crud: false,
+        codeField: 'partner_code',
+        nameField: 'partner_name',
+        listDataKey: 'satirlar',
+        filters: [
+          {
+            key: 'yon',
+            label: 'Yön',
+            type: 'select',
+            options: [
+              { value: 'alacak', label: 'Alacak (müşteri)' },
+              { value: 'borc', label: 'Borç (tedarikçi)' },
+            ],
+            queryParam: true,
+          },
+        ],
+        columns: [
+          { key: 'partner_code', label: 'Cari', mono: true },
+          { key: 'partner_name', label: 'Unvan' },
+          { key: 'fatura_sayisi', label: 'Fatura #' },
+          { key: 'toplam', label: 'Toplam' },
+          { key: 'vadesi_gelmemis', label: 'Vadesi gelmemiş' },
+          { key: 'd_1_30', label: '1–30' },
+          { key: 'd_31_60', label: '31–60' },
+          { key: 'd_61_90', label: '61–90' },
+          { key: 'd_90_plus', label: '90+' },
+        ],
+      },
+      {
+        id: 'sabit-kiymetler',
+        techId: 'FIN-FA-SCR-001',
+        businessNameEn: 'FixedAssetScreen',
+        title: 'Sabit Kıymetler',
+        endpoint: '/sabit-kiymetler',
+        crud: true,
+        numeratorSeri: 'SABIT_KIYMET',
+        codeField: 'asset_code',
+        nameField: 'asset_name',
+        approveAction: { label: 'Amortisman Çalıştır', path: '/sabit-kiymetler/{id}/amortisman', method: 'POST' },
+        filters: [
+          { key: 'asset_code', label: 'Kod' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'asset_code', label: 'Kod', mono: true },
+          { key: 'asset_name', label: 'Ad' },
+          { key: 'acquisition_date', label: 'İktisap' },
+          { key: 'acquisition_cost', label: 'Maliyet' },
+          { key: 'accumulated_depreciation', label: 'Birikmiş amort.' },
+          { key: 'net_value', label: 'Net' },
+          { key: 'useful_life_months', label: 'Ömür (ay)' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'asset_code', label: 'Kıymet kodu', code: true },
+          { key: 'asset_name', label: 'Ad', name: true, required: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'class_code', label: 'Sınıf' },
+          { key: 'acquisition_date', label: 'İktisap tarihi', type: 'date' },
+          { key: 'acquisition_cost', label: 'İktisap maliyeti', type: 'number', required: true },
+          { key: 'depreciation_method', label: 'Amortisman yöntemi', type: 'select', options: ['DuzHat', 'Azalan'] },
+          { key: 'useful_life_months', label: 'Faydalı ömür (ay)', type: 'number' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Aktif', 'Pasif', 'AmortiTamam'] },
+        ],
+        defaults: { depreciation_method: 'DuzHat', useful_life_months: 60, status: 'Aktif' },
+      },
+      {
+        id: 'gl-butceler',
+        techId: 'FIN-BUD-SCR-001',
+        businessNameEn: 'GlBudgetScreen',
+        title: 'GL Bütçeler',
+        endpoint: '/gl-butceler',
+        crud: true,
+        codeField: 'budget_code',
+        nameField: 'budget_name',
+        convertAction: { label: 'Karşılaştır', path: '/gl-butceler/{id}/karsilastirma', method: 'GET' },
+        filters: [
+          { key: 'budget_code', label: 'Kod' },
+          { key: 'fiscal_year', label: 'Yıl', queryParam: true },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'budget_code', label: 'Kod', mono: true },
+          { key: 'budget_name', label: 'Ad' },
+          { key: 'fiscal_year', label: 'Yıl' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'budget_code', label: 'Bütçe kodu', code: true, required: true },
+          { key: 'budget_name', label: 'Ad', name: true, required: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'fiscal_year', label: 'Mali yıl', type: 'number', required: true },
+          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kapali'] },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'account_code', label: 'Hesap kodu' },
+          { key: 'period_no', label: 'Dönem (1-12)', type: 'number' },
+          { key: 'budget_amount', label: 'Bütçe tutarı', type: 'number' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailKey: 'satirlar',
+        defaults: { currency_code: 'TRY', status: 'Taslak', fiscal_year: new Date().getFullYear() },
+      },
+      {
+        id: 'mizan',
+        techId: 'FIN-TB-RPT-001',
+        businessNameEn: 'TrialBalanceReport',
+        title: 'Mizan',
+        endpoint: '/mizan',
+        crud: false,
+        codeField: 'account_code',
+        nameField: 'account_name',
+        filters: [
+          { key: 'account_code', label: 'Hesap kodu' },
+          { key: 'account_name', label: 'Hesap adı' },
+          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', queryParam: true },
+        ],
+        columns: [
+          { key: 'account_code', label: 'Hesap', mono: true },
+          { key: 'account_name', label: 'Ad' },
+          { key: 'debit', label: 'Borç' },
+          { key: 'credit', label: 'Alacak' },
+          { key: 'bakiye', label: 'Bakiye' },
+        ],
+      },
+      {
+        id: 'finans-yevmiye',
+        techId: 'FIN-JL-RPT-001',
+        businessNameEn: 'JournalReport',
+        title: 'Yevmiye Defteri',
+        endpoint: '/finans-raporlar/yevmiye',
+        crud: false,
+        codeField: 'document_no',
+        nameField: 'account_code',
+        filters: [
+          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', queryParam: true },
+        ],
+        columns: [
+          { key: 'document_date', label: 'Tarih' },
+          { key: 'journal_number', label: 'Yevmiye' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'account_code', label: 'Hesap', mono: true },
+          { key: 'account_name', label: 'Ad' },
+          { key: 'debit', label: 'Borç' },
+          { key: 'credit', label: 'Alacak' },
+        ],
+      },
+      {
+        id: 'finans-bilanco',
+        techId: 'FIN-BS-RPT-001',
+        businessNameEn: 'BalanceSheetReport',
+        title: 'Bilanço',
+        endpoint: '/finans-raporlar/bilanco',
+        crud: false,
+        codeField: 'sinif',
+        nameField: 'first_name',
+        listResponseKey: 'satirlar',
+        filters: [
+          { key: 'bitis', label: 'Tarih', queryParam: true },
+          { key: 'country_code', label: 'Ülke', queryParam: true },
+        ],
+        columns: [
+          { key: 'sinif', label: 'Sınıf' },
+          { key: 'first_name', label: 'Kalem' },
+          { key: 'amount', label: 'Tutar' },
+        ],
+      },
+      {
+        id: 'finans-gelir-tablosu',
+        techId: 'FIN-PL-RPT-001',
+        businessNameEn: 'IncomeStatementReport',
+        title: 'Gelir Tablosu',
+        endpoint: '/finans-raporlar/gelir-tablosu',
+        crud: false,
+        codeField: 'account_code',
+        nameField: 'account_name',
+        listResponseKey: 'satirlar',
+        filters: [
+          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', queryParam: true },
+          { key: 'country_code', label: 'Ülke', queryParam: true },
+        ],
+        columns: [
+          { key: 'account_code', label: 'Hesap', mono: true },
+          { key: 'account_name', label: 'Ad' },
+          { key: 'debit', label: 'Borç' },
+          { key: 'credit', label: 'Alacak' },
+          { key: 'net', label: 'Net' },
+        ],
+      },
+      {
+        id: 'kokpit',
+        techId: 'RPT-CPIT-SCR-001',
+        businessNameEn: 'CockpitDashboardScreen',
+        title: 'Kokpit',
+        endpoint: '/kokpit',
+        crud: false,
+        readOnly: true,
+        filters: [
+          { key: 'metrik', label: 'Metrik' },
+        ],
+        columns: [
+          { key: 'metrik', label: 'Metrik' },
+          { key: 'value', label: 'Değer', mono: true },
+        ],
+      },
+      {
+        id: 'vergi-kodlari',
+        techId: 'MDM-TAX-SCR-001',
+        businessNameEn: 'TaxTypeDefinitionScreen',
+        title: 'Vergi Kodları',
+        endpoint: '/finans-vergi-kodlari',
+        // Menü dışı: finans-vergi-kodlari ile aynı endpoint — mükerrer kayıt (silinmedi)
+        hidden: true,
+        deprecated: true,
+        crud: true,
+        codeField: 'tax_code',
+        nameField: 'tax_name',
+        filters: [
+          { key: 'country_code', label: 'Ülke', queryParam: true },
+          { key: 'tax_code', label: 'Kod' },
+          { key: 'tax_type', label: 'Tür' },
+        ],
+        columns: [
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'tax_code', label: 'Kod', mono: true },
+          { key: 'tax_name', label: 'Ad' },
+          { key: 'tax_type', label: 'Tür' },
+          { key: 'rate', label: 'Oran %' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
+          { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
+          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
+          { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
+          { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: 'oranlar',
+        detailSlots: 4,
+        formTabs: [
+          {
+            id: 'oranlar',
+            label: 'Oranlar',
+            kind: 'grid',
+            key: 'oranlar',
+            slots: 4,
+            fields: [
+              { key: 'rate', label: 'Oran %', type: 'number', required: true },
+              { key: 'valid_from', label: 'Geçerlilik başı', type: 'date', required: true },
+              { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
+              { key: 'source_note', label: 'Kaynak' },
+            ],
+          },
+        ],
+        defaults: { country_code: 'TR', tax_type: 'KDV', is_active: true },
       },
     ],
   },
@@ -3916,73 +6662,23 @@ const MODULES = [
     id: 'crm',
     title: 'CRM',
     sections: [
-      { id: 'pipeline', title: 'Pipeline', screenIds: ['crm-adaylar', 'crm-kontaklar', 'crm-firsatlar'] },
-      { id: 'faaliyet', title: 'Faaliyet', screenIds: ['crm-faaliyet-planlari', 'crm-faaliyetler', 'crm-gorevler', 'crm-ajanda'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['crm-firsat-asamalari', 'crm-faaliyet-tipleri'] },
+      {
+        id: 'musteri',
+        title: 'Müşteri Yönetimi',
+        screenIds: ['crm-adaylar', 'crm-kontaklar', 'crm-firsatlar'],
+      },
+      {
+        id: 'faaliyet',
+        title: 'Faaliyet ve Görevler',
+        screenIds: ['crm-faaliyet-planlari', 'crm-faaliyetler', 'crm-gorevler', 'crm-ajanda'],
+      },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: ['crm-firsat-asamalari', 'crm-faaliyet-tipleri'],
+      },
     ],
     screens: [
-      {
-        id: 'crm-firsat-asamalari',
-        techId: 'CRM-STG-SCR-001',
-        businessNameEn: 'OpportunityStageScreen',
-        title: 'Fırsat Aşamaları',
-        endpoint: '/crm-firsat-asamalari',
-        crud: true,
-        codeField: 'stage_code',
-        nameField: 'stage_name',
-        filters: [
-          { key: 'stage_code', label: 'Kod' },
-          { key: 'stage_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'stage_code', label: 'Kod', mono: true },
-          { key: 'stage_name', label: 'Ad' },
-          { key: 'line_no', label: 'Sıra' },
-          { key: 'is_won', label: 'Kazanan' },
-          { key: 'is_lost', label: 'Kaybeden' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'stage_code', label: 'Aşama kodu', code: true, required: true },
-          { key: 'stage_name', label: 'Aşama adı', name: true, required: true },
-          { key: 'line_no', label: 'Sıra', type: 'number' },
-        ],
-        detailFields: [
-          { key: 'is_won', label: 'Kazanan aşama', type: 'checkbox' },
-          { key: 'is_lost', label: 'Kaybeden aşama', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'crm-faaliyet-tipleri',
-        techId: 'CRM-ACTT-SCR-001',
-        businessNameEn: 'ActivityTypeScreen',
-        title: 'Faaliyet Tipleri',
-        endpoint: '/crm-faaliyet-tipleri',
-        crud: true,
-        codeField: 'type_code',
-        nameField: 'type_name',
-        filters: [
-          { key: 'type_code', label: 'Kod' },
-          { key: 'type_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'type_code', label: 'Kod', mono: true },
-          { key: 'type_name', label: 'Ad' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'type_code', label: 'Tip kodu', code: true, editableOnNew: true, required: true },
-          { key: 'type_name', label: 'Tip adı', name: true, required: true },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
       {
         id: 'crm-adaylar',
         techId: 'CRM-LEAD-SCR-001',
@@ -4318,30 +7014,98 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
+      {
+        id: 'crm-firsat-asamalari',
+        techId: 'CRM-STG-SCR-001',
+        businessNameEn: 'OpportunityStageScreen',
+        title: 'Fırsat Aşamaları',
+        endpoint: '/crm-firsat-asamalari',
+        crud: true,
+        codeField: 'stage_code',
+        nameField: 'stage_name',
+        filters: [
+          { key: 'stage_code', label: 'Kod' },
+          { key: 'stage_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'stage_code', label: 'Kod', mono: true },
+          { key: 'stage_name', label: 'Ad' },
+          { key: 'line_no', label: 'Sıra' },
+          { key: 'is_won', label: 'Kazanan' },
+          { key: 'is_lost', label: 'Kaybeden' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'stage_code', label: 'Aşama kodu', code: true, required: true },
+          { key: 'stage_name', label: 'Aşama adı', name: true, required: true },
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'is_won', label: 'Kazanan aşama', type: 'checkbox' },
+          { key: 'is_lost', label: 'Kaybeden aşama', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'crm-faaliyet-tipleri',
+        techId: 'CRM-ACTT-SCR-001',
+        businessNameEn: 'ActivityTypeScreen',
+        title: 'Faaliyet Tipleri',
+        endpoint: '/crm-faaliyet-tipleri',
+        crud: true,
+        codeField: 'type_code',
+        nameField: 'type_name',
+        filters: [
+          { key: 'type_code', label: 'Kod' },
+          { key: 'type_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'type_code', label: 'Kod', mono: true },
+          { key: 'type_name', label: 'Ad' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'type_code', label: 'Tip kodu', code: true, editableOnNew: true, required: true },
+          { key: 'type_name', label: 'Tip adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
     ],
   },
   {
     id: 'proje',
     title: 'Proje Yönetimi',
     sections: [
-      { id: 'projeler', title: 'Projeler', screenIds: ['prj-projeler', 'prj-isler', 'prj-dashboard', 'prj-portfolio'] },
-      { id: 'agile', title: 'Agile / Plan', screenIds: ['prj-board', 'prj-backlog', 'prj-sprintler', 'prj-gantt', 'prj-workload'] },
-      { id: 'finans', title: 'Bütçe / Risk', screenIds: ['prj-butce', 'prj-riskler'] },
-      { id: 'yapilandirma', title: 'Şablon / Otomasyon', screenIds: ['prj-sablonlar', 'prj-automations'] },
       {
-        id: 'tanimlar',
-        title: 'Tanımlar',
-        screenIds: [
-          'prj-project-types',
-          'prj-project-categories',
-          'prj-project-statuses',
-          'prj-project-priorities',
-          'prj-work-item-types',
-          'prj-work-item-statuses',
-          'prj-work-item-priorities',
-          'prj-project-roles',
-          'prj-relation-types',
-        ],
+        id: 'projeler',
+        title: 'Proje ve Portföy',
+        screenIds: ['prj-projeler', 'prj-isler', 'prj-dashboard', 'prj-portfolio'],
+      },
+      {
+        id: 'agile',
+        title: 'Agile ve Planlama',
+        screenIds: ['prj-board', 'prj-backlog', 'prj-sprintler', 'prj-gantt', 'prj-workload'],
+      },
+      {
+        id: 'butce-risk',
+        title: 'Bütçe ve Risk',
+        screenIds: ['prj-butce', 'prj-riskler'],
+      },
+      {
+        id: 'otomasyon',
+        title: 'Şablon ve Otomasyon',
+        screenIds: ['prj-sablonlar', 'prj-automations'],
+      },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: ['prj-project-types', 'prj-project-categories', 'prj-project-statuses', 'prj-project-priorities', 'prj-work-item-types', 'prj-work-item-statuses', 'prj-work-item-priorities', 'prj-project-roles', 'prj-relation-types'],
       },
     ],
     screens: [
@@ -4349,7 +7113,7 @@ const MODULES = [
         id: 'prj-projeler',
         techId: 'PRJ-PRJ-SCR-001',
         businessNameEn: 'ProjectListScreen',
-        title: 'Proje Listesi',
+        title: 'Projeler',
         endpoint: '/prj-projeler',
         crud: true,
         numeratorSeri: 'PRJ_PROJECT',
@@ -4403,7 +7167,7 @@ const MODULES = [
         id: 'prj-isler',
         techId: 'PRJ-WI-SCR-001',
         businessNameEn: 'WorkItemListScreen',
-        title: 'İş Listesi',
+        title: 'İşler',
         endpoint: '/prj-isler',
         crud: true,
         numeratorSeri: 'PRJ_WORK_ITEM',
@@ -4448,6 +7212,342 @@ const MODULES = [
         ],
         detailKey: null,
         detailAsFields: true,
+      },
+      {
+        id: 'prj-dashboard',
+        techId: 'PRJ-RPT-SCR-001',
+        businessNameEn: 'ProjectDashboardScreen',
+        title: 'Proje Özeti',
+        endpoint: '/prj-dashboard/overview',
+        crud: false,
+        codeField: 'project_code',
+        nameField: 'project_name',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        listFromResponse: (d) => (d?.project ? [{
+          ...d.project,
+          project_id: d.project.id,
+          percent_complete: d.progress?.percent_complete,
+          total: d.progress?.total,
+          open_count: d.progress?.open_count,
+          in_progress: d.progress?.in_progress,
+          done_count: d.progress?.done_count,
+          overdue_count: (d.overdue || []).length,
+          risk_count: (d.risks || []).length,
+          milestone_count: (d.upcoming_milestones || []).length,
+          budget_planned: d.budget?.planned,
+          budget_actual: d.budget?.actual,
+          budget_variance: d.budget?.variance,
+        }] : []),
+        columns: [
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'project_name', label: 'Ad' },
+          { key: 'percent_complete', label: '%' },
+          { key: 'total', label: 'İş' },
+          { key: 'open_count', label: 'Açık' },
+          { key: 'in_progress', label: 'Devam' },
+          { key: 'done_count', label: 'Biten' },
+          { key: 'overdue_count', label: 'Geciken' },
+          { key: 'risk_count', label: 'Risk' },
+          { key: 'milestone_count', label: 'Kilometre taşı' },
+          { key: 'budget_planned', label: 'Bütçe' },
+          { key: 'budget_actual', label: 'Gerçek' },
+          { key: 'budget_variance', label: 'Sapma' },
+        ],
+        masterFields: [{ key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code' }],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-portfolio',
+        techId: 'PRJ-RPT-SCR-002',
+        businessNameEn: 'ProjectPortfolioScreen',
+        title: 'Portföy Özeti',
+        endpoint: '/prj-dashboard/portfolio',
+        crud: false,
+        codeField: 'project_code',
+        nameField: 'project_name',
+        filters: [],
+        columns: [
+          { key: 'project_code', label: 'Kod', mono: true },
+          { key: 'project_name', label: 'Ad' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'type_name', label: 'Tür' },
+          { key: 'percent_complete', label: '%' },
+          { key: 'planned_budget', label: 'Bütçe' },
+          { key: 'actual_cost', label: 'Maliyet' },
+          { key: 'work_count', label: 'İş' },
+          { key: 'overdue_count', label: 'Geciken' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-board',
+        techId: 'PRJ-AGL-SCR-001',
+        businessNameEn: 'ProjectBoardScreen',
+        title: 'Kanban',
+        endpoint: '/prj-board',
+        crud: false,
+        codeField: 'board_code',
+        nameField: 'board_name',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        listFromResponse: (d) => (d?.board ? (d.columns || []).map((c) => ({
+          id: c.id,
+          board_code: d.board.board_code,
+          board_name: d.board.board_name,
+          board_type: d.board.board_type,
+          project_id: d.board.project_id,
+          line_no: c.line_no,
+          column_name: c.column_name,
+          status_name: c.status_name,
+          card_count: c.card_count,
+          wip_limit: c.wip_limit,
+          wip_exceeded: c.wip_exceeded,
+          cards: (c.cards || []).map((k) => k.work_item_no || k.title).filter(Boolean).join(', '),
+        })) : []),
+        columns: [
+          { key: 'board_code', label: 'Board', mono: true },
+          { key: 'board_name', label: 'Ad' },
+          { key: 'board_type', label: 'Tip' },
+          { key: 'line_no', label: 'Sıra' },
+          { key: 'column_name', label: 'Kolon' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'card_count', label: 'Kart' },
+          { key: 'wip_limit', label: 'WIP limiti' },
+          { key: 'wip_exceeded', label: 'WIP aşımı' },
+          { key: 'cards', label: 'Kartlar' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-backlog',
+        techId: 'PRJ-AGL-SCR-002',
+        businessNameEn: 'ProjectBacklogScreen',
+        title: 'Backlog',
+        endpoint: '/prj-planning/backlog',
+        crud: false,
+        codeField: 'work_item_no',
+        nameField: 'title',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        columns: [
+          { key: 'work_item_no', label: 'No', mono: true },
+          { key: 'title', label: 'Başlık' },
+          { key: 'type_name', label: 'Tür' },
+          { key: 'priority_code', label: 'Öncelik' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'backlog_rank', label: 'Sıra' },
+          { key: 'estimated_hours', label: 'Tahmini sa' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-sprintler',
+        techId: 'PRJ-AGL-SCR-003',
+        businessNameEn: 'SprintScreen',
+        title: 'Sprintler',
+        endpoint: '/prj-sprintler',
+        crud: true,
+        numeratorSeri: 'PRJ_SPRINT',
+        codeField: 'sprint_code',
+        nameField: 'sprint_name',
+        filters: [
+          { key: 'project_id', label: 'Proje id' },
+        ],
+        columns: [
+          { key: 'sprint_code', label: 'Kod', mono: true },
+          { key: 'sprint_name', label: 'Ad' },
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'item_count', label: 'İş' },
+          { key: 'capacity_hours', label: 'Kapasite' },
+        ],
+        masterFields: [
+          { key: 'sprint_code', label: 'Sprint kodu', code: true },
+          { key: 'sprint_name', label: 'Sprint adı', name: true, required: true },
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+          { key: 'goal', label: 'Hedef' },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'capacity_hours', label: 'Kapasite (sa)', type: 'number' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-gantt',
+        techId: 'PRJ-PLN-SCR-001',
+        businessNameEn: 'ProjectGanttScreen',
+        title: 'Gantt / Zaman Çizelgesi',
+        endpoint: '/prj-planning/gantt',
+        listResponseKey: 'tasks',
+        visualGantt: true,
+        crud: false,
+        codeField: 'code',
+        nameField: 'name',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        columns: [
+          { key: 'code', label: 'Kod', mono: true },
+          { key: 'name', label: 'İş' },
+          { key: 'start', label: 'Başlangıç' },
+          { key: 'end', label: 'Bitiş' },
+          { key: 'progress', label: '%' },
+          { key: 'status_name', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-workload',
+        techId: 'PRJ-RES-SCR-001',
+        businessNameEn: 'ProjectWorkloadScreen',
+        title: 'Kaynak İş Yükü',
+        endpoint: '/prj-planning/workload',
+        crud: false,
+        codeField: 'user_code',
+        nameField: 'user_name',
+        filters: [{ key: 'project_id', label: 'Proje id' }],
+        columns: [
+          { key: 'user_code', label: 'Kullanıcı', mono: true },
+          { key: 'user_name', label: 'Ad' },
+          { key: 'open_tasks', label: 'Açık iş' },
+          { key: 'estimated_hours', label: 'Tahmini sa' },
+          { key: 'actual_hours', label: 'Gerçek sa' },
+          { key: 'overload_warning', label: 'Aşım' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-butce',
+        techId: 'PRJ-FIN-SCR-001',
+        businessNameEn: 'ProjectBudgetScreen',
+        title: 'Proje Bütçesi',
+        endpoint: '/prj-budget',
+        crud: false,
+        codeField: 'project_code',
+        nameField: 'project_code',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        columns: [
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'planned_budget', label: 'Plan' },
+          { key: 'actual_cost', label: 'Gerçek' },
+          { key: 'variance', label: 'Sapma' },
+          { key: 'gross_result', label: 'Brüt sonuç' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-riskler',
+        techId: 'PRJ-RSK-SCR-001',
+        businessNameEn: 'ProjectRiskScreen',
+        title: 'Riskler',
+        endpoint: '/prj-riskler',
+        crud: true,
+        numeratorSeri: 'PRJ_RISK',
+        codeField: 'risk_code',
+        nameField: 'title',
+        filters: [{ key: 'project_id', label: 'Proje id' }],
+        columns: [
+          { key: 'risk_code', label: 'Kod', mono: true },
+          { key: 'title', label: 'Başlık' },
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'probability', label: 'Olasılık' },
+          { key: 'impact', label: 'Etki' },
+          { key: 'score', label: 'Skor' },
+          { key: 'status_code', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'risk_code', label: 'Risk kodu', code: true },
+          { key: 'title', label: 'Başlık', name: true, required: true },
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+          { key: 'probability', label: 'Olasılık', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
+          { key: 'impact', label: 'Etki', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
+          { key: 'mitigation', label: 'Önlem' },
+          { key: 'contingency', label: 'Acil plan' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-sablonlar',
+        techId: 'PRJ-DEF-SCR-030',
+        businessNameEn: 'ProjectTemplateScreen',
+        title: 'Proje Şablonları',
+        endpoint: '/prj-sablonlar',
+        crud: false,
+        codeField: 'template_code',
+        nameField: 'template_name',
+        filters: [],
+        columns: [
+          { key: 'template_code', label: 'Kod', mono: true },
+          { key: 'template_name', label: 'Ad' },
+          { key: 'approach', label: 'Yaklaşım' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-automations',
+        techId: 'PRJ-AUTO-SCR-001',
+        businessNameEn: 'ProjectAutomationScreen',
+        title: 'Otomasyon Kuralları',
+        endpoint: '/prj-automations',
+        crud: false,
+        codeField: 'automation_code',
+        nameField: 'automation_name',
+        filters: [],
+        columns: [
+          { key: 'automation_code', label: 'Kod', mono: true },
+          { key: 'automation_name', label: 'Ad' },
+          { key: 'trigger_code', label: 'Tetik' },
+          { key: 'is_enabled', label: 'Aktif' },
+          { key: 'priority', label: 'Öncelik' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
       },
       {
         id: 'prj-project-types',
@@ -4724,2438 +7824,41 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
-      {
-        id: 'prj-dashboard',
-        techId: 'PRJ-RPT-SCR-001',
-        businessNameEn: 'ProjectDashboardScreen',
-        title: 'Proje Özeti',
-        endpoint: '/prj-dashboard/overview',
-        crud: false,
-        codeField: 'project_code',
-        nameField: 'project_name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
-        listFromResponse: (d) => (d?.project ? [{
-          ...d.project,
-          project_id: d.project.id,
-          percent_complete: d.progress?.percent_complete,
-          total: d.progress?.total,
-          open_count: d.progress?.open_count,
-          in_progress: d.progress?.in_progress,
-          done_count: d.progress?.done_count,
-          overdue_count: (d.overdue || []).length,
-          risk_count: (d.risks || []).length,
-          milestone_count: (d.upcoming_milestones || []).length,
-          budget_planned: d.budget?.planned,
-          budget_actual: d.budget?.actual,
-          budget_variance: d.budget?.variance,
-        }] : []),
-        columns: [
-          { key: 'project_code', label: 'Proje', mono: true },
-          { key: 'project_name', label: 'Ad' },
-          { key: 'percent_complete', label: '%' },
-          { key: 'total', label: 'İş' },
-          { key: 'open_count', label: 'Açık' },
-          { key: 'in_progress', label: 'Devam' },
-          { key: 'done_count', label: 'Biten' },
-          { key: 'overdue_count', label: 'Geciken' },
-          { key: 'risk_count', label: 'Risk' },
-          { key: 'milestone_count', label: 'Kilometre taşı' },
-          { key: 'budget_planned', label: 'Bütçe' },
-          { key: 'budget_actual', label: 'Gerçek' },
-          { key: 'budget_variance', label: 'Sapma' },
-        ],
-        masterFields: [{ key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code' }],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-portfolio',
-        techId: 'PRJ-RPT-SCR-002',
-        businessNameEn: 'ProjectPortfolioScreen',
-        title: 'Portföy Özeti',
-        endpoint: '/prj-dashboard/portfolio',
-        crud: false,
-        codeField: 'project_code',
-        nameField: 'project_name',
-        filters: [],
-        columns: [
-          { key: 'project_code', label: 'Kod', mono: true },
-          { key: 'project_name', label: 'Ad' },
-          { key: 'status_name', label: 'Durum' },
-          { key: 'type_name', label: 'Tür' },
-          { key: 'percent_complete', label: '%' },
-          { key: 'planned_budget', label: 'Bütçe' },
-          { key: 'actual_cost', label: 'Maliyet' },
-          { key: 'work_count', label: 'İş' },
-          { key: 'overdue_count', label: 'Geciken' },
-        ],
-        masterFields: [],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-board',
-        techId: 'PRJ-AGL-SCR-001',
-        businessNameEn: 'ProjectBoardScreen',
-        title: 'Kanban Board',
-        endpoint: '/prj-board',
-        crud: false,
-        codeField: 'board_code',
-        nameField: 'board_name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
-        listFromResponse: (d) => (d?.board ? (d.columns || []).map((c) => ({
-          id: c.id,
-          board_code: d.board.board_code,
-          board_name: d.board.board_name,
-          board_type: d.board.board_type,
-          project_id: d.board.project_id,
-          line_no: c.line_no,
-          column_name: c.column_name,
-          status_name: c.status_name,
-          card_count: c.card_count,
-          wip_limit: c.wip_limit,
-          wip_exceeded: c.wip_exceeded,
-          cards: (c.cards || []).map((k) => k.work_item_no || k.title).filter(Boolean).join(', '),
-        })) : []),
-        columns: [
-          { key: 'board_code', label: 'Board', mono: true },
-          { key: 'board_name', label: 'Ad' },
-          { key: 'board_type', label: 'Tip' },
-          { key: 'line_no', label: 'Sıra' },
-          { key: 'column_name', label: 'Kolon' },
-          { key: 'status_name', label: 'Durum' },
-          { key: 'card_count', label: 'Kart' },
-          { key: 'wip_limit', label: 'WIP limiti' },
-          { key: 'wip_exceeded', label: 'WIP aşımı' },
-          { key: 'cards', label: 'Kartlar' },
-        ],
-        masterFields: [
-          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-backlog',
-        techId: 'PRJ-AGL-SCR-002',
-        businessNameEn: 'ProjectBacklogScreen',
-        title: 'Backlog',
-        endpoint: '/prj-planning/backlog',
-        crud: false,
-        codeField: 'work_item_no',
-        nameField: 'title',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
-        columns: [
-          { key: 'work_item_no', label: 'No', mono: true },
-          { key: 'title', label: 'Başlık' },
-          { key: 'type_name', label: 'Tür' },
-          { key: 'priority_code', label: 'Öncelik' },
-          { key: 'status_name', label: 'Durum' },
-          { key: 'backlog_rank', label: 'Sıra' },
-          { key: 'estimated_hours', label: 'Tahmini sa' },
-        ],
-        masterFields: [
-          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-sprintler',
-        techId: 'PRJ-AGL-SCR-003',
-        businessNameEn: 'SprintScreen',
-        title: 'Sprintler',
-        endpoint: '/prj-sprintler',
-        crud: true,
-        numeratorSeri: 'PRJ_SPRINT',
-        codeField: 'sprint_code',
-        nameField: 'sprint_name',
-        filters: [
-          { key: 'project_id', label: 'Proje id' },
-        ],
-        columns: [
-          { key: 'sprint_code', label: 'Kod', mono: true },
-          { key: 'sprint_name', label: 'Ad' },
-          { key: 'project_code', label: 'Proje', mono: true },
-          { key: 'start_date', label: 'Başlangıç' },
-          { key: 'end_date', label: 'Bitiş' },
-          { key: 'status_code', label: 'Durum' },
-          { key: 'item_count', label: 'İş' },
-          { key: 'capacity_hours', label: 'Kapasite' },
-        ],
-        masterFields: [
-          { key: 'sprint_code', label: 'Sprint kodu', code: true },
-          { key: 'sprint_name', label: 'Sprint adı', name: true, required: true },
-          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
-          { key: 'goal', label: 'Hedef' },
-          { key: 'start_date', label: 'Başlangıç', type: 'date' },
-          { key: 'end_date', label: 'Bitiş', type: 'date' },
-          { key: 'capacity_hours', label: 'Kapasite (sa)', type: 'number' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'prj-gantt',
-        techId: 'PRJ-PLN-SCR-001',
-        businessNameEn: 'ProjectGanttScreen',
-        title: 'Gantt / Zaman Çizelgesi',
-        endpoint: '/prj-planning/gantt',
-        listResponseKey: 'tasks',
-        visualGantt: true,
-        crud: false,
-        codeField: 'code',
-        nameField: 'name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
-        columns: [
-          { key: 'code', label: 'Kod', mono: true },
-          { key: 'name', label: 'İş' },
-          { key: 'start', label: 'Başlangıç' },
-          { key: 'end', label: 'Bitiş' },
-          { key: 'progress', label: '%' },
-          { key: 'status_name', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-workload',
-        techId: 'PRJ-RES-SCR-001',
-        businessNameEn: 'ProjectWorkloadScreen',
-        title: 'Kaynak İş Yükü',
-        endpoint: '/prj-planning/workload',
-        crud: false,
-        codeField: 'user_code',
-        nameField: 'user_name',
-        filters: [{ key: 'project_id', label: 'Proje id' }],
-        columns: [
-          { key: 'user_code', label: 'Kullanıcı', mono: true },
-          { key: 'user_name', label: 'Ad' },
-          { key: 'open_tasks', label: 'Açık iş' },
-          { key: 'estimated_hours', label: 'Tahmini sa' },
-          { key: 'actual_hours', label: 'Gerçek sa' },
-          { key: 'overload_warning', label: 'Aşım' },
-        ],
-        masterFields: [],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-butce',
-        techId: 'PRJ-FIN-SCR-001',
-        businessNameEn: 'ProjectBudgetScreen',
-        title: 'Proje Bütçe Özeti',
-        endpoint: '/prj-budget',
-        crud: false,
-        codeField: 'project_code',
-        nameField: 'project_code',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
-        columns: [
-          { key: 'project_code', label: 'Proje', mono: true },
-          { key: 'planned_budget', label: 'Plan' },
-          { key: 'actual_cost', label: 'Gerçek' },
-          { key: 'variance', label: 'Sapma' },
-          { key: 'gross_result', label: 'Brüt sonuç' },
-        ],
-        masterFields: [
-          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-riskler',
-        techId: 'PRJ-RSK-SCR-001',
-        businessNameEn: 'ProjectRiskScreen',
-        title: 'Riskler',
-        endpoint: '/prj-riskler',
-        crud: true,
-        numeratorSeri: 'PRJ_RISK',
-        codeField: 'risk_code',
-        nameField: 'title',
-        filters: [{ key: 'project_id', label: 'Proje id' }],
-        columns: [
-          { key: 'risk_code', label: 'Kod', mono: true },
-          { key: 'title', label: 'Başlık' },
-          { key: 'project_code', label: 'Proje', mono: true },
-          { key: 'probability', label: 'Olasılık' },
-          { key: 'impact', label: 'Etki' },
-          { key: 'score', label: 'Skor' },
-          { key: 'status_code', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'risk_code', label: 'Risk kodu', code: true },
-          { key: 'title', label: 'Başlık', name: true, required: true },
-          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
-          { key: 'probability', label: 'Olasılık', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
-          { key: 'impact', label: 'Etki', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
-          { key: 'mitigation', label: 'Önlem' },
-          { key: 'contingency', label: 'Acil plan' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'prj-sablonlar',
-        techId: 'PRJ-DEF-SCR-030',
-        businessNameEn: 'ProjectTemplateScreen',
-        title: 'Proje Şablonları',
-        endpoint: '/prj-sablonlar',
-        crud: false,
-        codeField: 'template_code',
-        nameField: 'template_name',
-        filters: [],
-        columns: [
-          { key: 'template_code', label: 'Kod', mono: true },
-          { key: 'template_name', label: 'Ad' },
-          { key: 'approach', label: 'Yaklaşım' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        masterFields: [],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
-      {
-        id: 'prj-automations',
-        techId: 'PRJ-AUTO-SCR-001',
-        businessNameEn: 'ProjectAutomationScreen',
-        title: 'Otomasyon Kuralları',
-        endpoint: '/prj-automations',
-        crud: false,
-        codeField: 'automation_code',
-        nameField: 'automation_name',
-        filters: [],
-        columns: [
-          { key: 'automation_code', label: 'Kod', mono: true },
-          { key: 'automation_name', label: 'Ad' },
-          { key: 'trigger_code', label: 'Tetik' },
-          { key: 'is_enabled', label: 'Aktif' },
-          { key: 'priority', label: 'Öncelik' },
-        ],
-        masterFields: [],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: true,
-      },
     ],
   },
-  {
-    id: 'satis',
-    title: 'Satış',
-    sections: [
-      { id: 'siparis', title: 'Sipariş', screenIds: ['satis-teklifleri', 'satis-siparisleri'] },
-      { id: 'sevk', title: 'Sevk', screenIds: ['sevk-emirleri'] },
-      { id: 'belge-yonetim', title: 'Belge Yönetimi', screenIds: ['irsaliye-yonetimi', 'fatura-yonetimi'] },
-    ],
-    screens: [
-      {
-        id: 'satis-teklifleri',
-        techId: 'SAL-QUO-SCR-001',
-        businessNameEn: 'SalesQuotationScreen',
-        title: 'Satış Teklifleri',
-        endpoint: '/satis-teklifleri',
-        crud: true,
-        numeratorSeri: 'SATIS_TEKLIF',
-        codeField: 'quotation_no',
-        nameField: 'partner_name',
-        convertAction: {
-          label: 'Siparişe Dönüştür',
-          path: '/satis-teklifleri/{id}/siparise-donustur',
-          nested: { screenId: 'satis-siparisleri', link: 'teklif-siparis' },
-        },
-        filters: [
-          { key: 'quotation_no', label: 'Teklif no' },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'quotation_no', label: 'Teklif', mono: true },
-          { key: 'customer_quotation_no', label: 'Müş. ref', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'quotation_date', label: 'Tarih' },
-          { key: 'valid_date', label: 'Geçerlilik' },
-          { key: 'delivery_date', label: 'Teslim' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'subtotal', label: 'Ara' },
-          { key: 'tax_amount', label: 'KDV' },
-          { key: 'grand_total', label: 'Genel' },
-          { key: 'status', label: 'Durum' },
-          { key: 'opportunity_code', label: 'Fırsat', mono: true },
-          { key: 'project_code', label: 'Proje', mono: true },
-        ],
-        masterFields: [
-          { key: 'quotation_no', label: 'Teklif no', code: true },
-          { key: 'customer_quotation_no', label: 'Müşteri teklif ref' },
-          { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true },
-          { key: 'opportunity_id', label: 'Fırsat', type: 'lookup', lookup: 'crm-firsatlar', valueKey: 'id', labelKey: 'opportunity_name', codeKey: 'opportunity_code' },
-          { key: 'lead_id', label: 'Aday', type: 'lookup', lookup: 'crm-adaylar', valueKey: 'id', labelKey: 'lead_name', codeKey: 'lead_code' },
-          { key: 'quotation_date', label: 'Teklif tarihi', type: 'date' },
-          { key: 'valid_date', label: 'Geçerlilik', type: 'date' },
-          { key: 'delivery_date', label: 'Teslim tarihi', type: 'date' },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
-          { key: 'discount_rate', label: 'İskonto %', type: 'number' },
-          { key: 'payment_term_code', label: 'Ödeme koşulu' },
-          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'] },
-          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'region', label: 'Bölge' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'] },
-          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-teklif', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code' },
-          { key: 'description', label: 'Açıklama', name: true },
-          { key: 'public_note', label: 'Müşteri notu' },
-          { key: 'internal_note', label: 'Dahili not' },
-        ],
-        detailFields: [
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
-          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
-          { key: 'region', label: 'Bölge', size: 'short' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
-        defaults: { currency_code: 'TRY', exchange_rate: 1, rate_type: 'TCMB-SATIS', vat_mode: 'Haric', line_type: 'S', status: 'Taslak' },
-      },
-      {
-        id: 'satis-siparisleri',
-        techId: 'SAL-ORD-SCR-001',
-        businessNameEn: 'SalesOrderScreen',
-        title: 'Satış Siparişleri',
-        endpoint: '/sales_orders',
-        crud: true,
-        numeratorSeri: 'SATIS_SIPARIS',
-        codeField: 'order_no',
-        nameField: 'partner_name',
-        compactMaster: true,
-        masterPrimaryMax: 16,
-        convertAction: {
-          label: 'Sevk Emri Oluştur',
-          path: '/sales_orders/{id}/sevk-emri-olustur',
-          needs: ['warehouse_id'],
-          dialog: 'depo',
-          nested: { screenId: 'sevk-emirleri', link: 'siparis-sevk' },
-        },
-        approveAction: {
-          label: 'Stok Rezerve Et',
-          path: '/sales_orders/{id}/rezerve',
-          dialog: 'depo',
-        },
-        secondaryAction: {
-          label: 'İş Emri Ekranı',
-          openScreen: 'siparis-is-emri',
-        },
-        filters: [
-          { key: 'order_no', label: 'Sipariş no' },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'order_no', label: 'Sipariş', mono: true },
-          { key: 'customer_order_no', label: 'Müş. sip. no', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'order_type', label: 'Tür' },
-          { key: 'order_date', label: 'Tarih' },
-          { key: 'delivery_date', label: 'Teslim' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'subtotal', label: 'Ara top.' },
-          { key: 'tax_amount', label: 'KDV' },
-          { key: 'grand_total', label: 'Genel top.' },
-          { key: 'payment_term_code', label: 'Ödeme koş.' },
-          { key: 'payment_method', label: 'Ödeme şekli' },
-          { key: 'status', label: 'Durum' },
-          { key: 'is_invoiced', label: 'Faturalandı' },
-          { key: 'project_code', label: 'Proje', mono: true },
-        ],
-        // Kompakt başlık — notlar alt şeritte; finans/geçerlilik kalemde; address ayrı sekme
-        masterFields: [
-          { key: 'order_no', label: 'Sipariş no', code: true, lead: true },
-          { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, fillCariAdres: true },
-          { key: 'order_date', label: 'Tarih', type: 'date', lead: true },
-          { key: 'delivery_date', label: 'Teslim', type: 'date', lead: true },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'], lead: true },
-          { key: 'order_type', label: 'Tür', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true, lead: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', lead: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
-          { key: 'quotation_id', label: 'Teklif', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'teklif-satirlar' },
-          { key: 'customer_order_no', label: 'Müş. sip. no' },
-          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
-          { key: 'payment_term_code', label: 'Ödeme koşulu', lead: true },
-          { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', lead: true },
-          // Alt şerit (Belge notu alanı)
-          { key: 'public_note', label: 'Müşteri notu' },
-          { key: 'internal_note', label: 'Dahili not' },
-        ],
-        // Finans + geçerlilik/fiyat listesi kalem formunda
-        // Kalem sırası: stok → birim → miktar → depo (bağlantı / önem)
-        detailFields: [
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
-          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
-          { key: 'valid_date', label: 'Geçerlilik', type: 'date', size: 'short' },
-          { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
-          { key: 'region', label: 'Bölge', size: 'short' },
-          { key: 'shipped_quantity', label: 'Sevk edilen', type: 'number', size: 'short' },
-          { key: 'invoiced_quantity', label: 'Fatura edilen', type: 'number', size: 'short' },
-          { key: 'reserved_quantity', label: 'Rezerve', type: 'number', size: 'short' },
-          { key: 'pending_quantity', label: 'Bekleyen', type: 'number', size: 'short' },
-          { key: 'kalan_sevk_miktar', label: 'Kalan sevk', type: 'number', size: 'short' },
-        ],
-        detailKey: 'kalemler',
-        detailSlots: 5,
-        defaults: { currency_code: 'TRY', exchange_rate: 1, rate_type: 'TCMB-SATIS', vat_mode: 'Haric', order_type: 'SatisSiparis', status: 'Taslak' },
-        formTabs: [
-          {
-            id: 'kalemler',
-            label: 'Kalemler',
-            kind: 'master-grid',
-            masterFields: null, // screen.masterFields (normalize)
-            grid: {
-              key: 'kalemler',
-              slots: 5,
-              fields: null, // detailFields (normalize)
-            },
-          },
-          {
-            id: 'address',
-            label: 'Adres',
-            kind: 'fields',
-            fields: [
-              { key: 'ship_to_address', label: 'Sevk adresi', size: 'wide' },
-              { key: 'ship_city', label: 'İl' },
-              { key: 'ship_district', label: 'İlçe' },
-              { key: 'ship_country', label: 'Ülke' },
-              { key: 'ship_postal_code', label: 'Posta kodu' },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'sevk-emirleri',
-        techId: 'SAL-SHP-SCR-001',
-        businessNameEn: 'ShipmentScreen',
-        title: 'Sevk Emirleri',
-        endpoint: '/sevk-emirleri',
-        crud: true,
-        numeratorSeri: 'SEVK_EMRI',
-        codeField: 'shipment_no',
-        nameField: 'partner_name',
-        convertAction: {
-          label: 'İrsaliye Oluştur',
-          path: '/delivery_notes/sevk-emrinden',
-          bodyKey: 'shipment_order_id',
-          dialog: 'irsaliye',
-          nested: { screenId: 'irsaliye-yonetimi', link: 'sevk-irsaliye' },
-        },
-        filters: [
-          { key: 'shipment_no', label: 'Sevk no' },
-          { key: 'order_no', label: 'Sipariş' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'shipment_no', label: 'Sevk', mono: true },
-          { key: 'order_no', label: 'Sipariş', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'ship_date', label: 'Sevk tar.' },
-          { key: 'planned_ship_date', label: 'Plan' },
-          { key: 'priority', label: 'Öncelik' },
-          { key: 'carrier_title', label: 'Taşıyıcı' },
-          { key: 'vehicle_plate', label: 'Plaka' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'shipment_no', label: 'Sevk no', code: true },
-          { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', required: true, fillFrom: 'siparis-kalemler' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true },
-          { key: 'ship_date', label: 'Sevk tarihi', type: 'date' },
-          { key: 'planned_ship_date', label: 'Planlanan sevk', type: 'date' },
-          { key: 'priority', label: 'Öncelik', type: 'select', options: ['Dusuk', 'Normal', 'Yuksek', 'Acil'] },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'IrsaliyeDonustu', 'Iptal', 'Kapali'] },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'region', label: 'Bölge' },
-          { key: 'ship_to_address', label: 'Sevk adresi' },
-          { key: 'ship_city', label: 'İl' },
-          { key: 'ship_district', label: 'İlçe' },
-          { key: 'ship_country', label: 'Ülke' },
-          { key: 'ship_postal_code', label: 'Posta kodu' },
-          { key: 'carrier_title', label: 'Taşıyıcı unvan' },
-          { key: 'carrier_tax_id', label: 'Taşıyıcı VKN' },
-          { key: 'vehicle_plate', label: 'Araç plaka' },
-          { key: 'driver_name', label: 'Şoför' },
-          { key: 'driver_phone', label: 'Şoför tel' },
-          { key: 'package_count', label: 'Paket adet', type: 'number' },
-          { key: 'gross_weight', label: 'Brüt kg', type: 'number' },
-          { key: 'net_weight', label: 'Net kg', type: 'number' },
-          { key: 'volume', label: 'Hacim', type: 'number' },
-          { key: 'public_note', label: 'Müşteri notu' },
-          { key: 'internal_note', label: 'Dahili not' },
-          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-sevk', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code' },
-        ],
-        detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'lot_id', label: 'Parti', type: 'lookup', lookup: 'stok-partileri', valueKey: 'id', labelKey: 'lot_no' },
-          { key: 'serial_no', label: 'Seri no' },
-          { key: 'bin_code', label: 'Raf' },
-          { key: 'shipped_quantity', label: 'Sevk edilen', type: 'number', size: 'short' },
-          { key: 'remaining_quantity', label: 'Bekleyen', type: 'number', size: 'short' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
-        defaults: { priority: 'Normal', status: 'Taslak' },
-      },
-      {
-        id: 'irsaliye-yonetimi',
-        techId: 'SAL-DLV-SCR-001',
-        businessNameEn: 'DeliveryNoteManagementScreen',
-        title: 'İrsaliye Yönetimi',
-        endpoint: '/delivery_notes',
-        crud: true,
-        numeratorSeri: 'IRSALIYE',
-        codeField: 'delivery_note_no',
-        nameField: 'partner_name',
-        compactMaster: false,
-        masterPrimaryMax: 18,
-        helpText: 'Satış irsaliyelerinin oluşturulması, onayı, e-İrsaliye durumu ve faturalandırması bu ekrandan yönetilir.',
-        convertAction: {
-          label: 'Fatura Oluştur',
-          path: '/delivery_notes/{id}/fatura-olustur',
-          dialog: 'fatura-olustur',
-          openTarget: { screenId: 'fatura-yonetimi', mode: 'duzelt' },
-        },
-        approveAction: { label: 'Onayla (Stok Çıkış)', path: '/delivery_notes/{id}/onayla', dialog: 'onay-depo' },
-        filters: [
-          { key: 'delivery_note_no', label: 'İrsaliye no' },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'status', label: 'Durum' },
-          { key: 'e_document_status', label: 'e-Belge' },
-        ],
-        columns: [
-          { key: 'delivery_note_no', label: 'İrsaliye', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'delivery_date', label: 'İrs. tar.' },
-          { key: 'actual_ship_date', label: 'Fiili sevk' },
-          { key: 'vehicle_plate', label: 'Plaka' },
-          { key: 'e_document_status', label: 'e-Belge' },
-          { key: 'subtotal', label: 'Mal' },
-          { key: 'grand_total', label: 'Genel' },
-          { key: 'invoice_status', label: 'Fatura' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'delivery_note_no', label: 'İrsaliye no', code: true, lead: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
-          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-irsaliye', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
-          { key: 'delivery_date', label: 'Belge tarihi', type: 'date', lead: true },
-          { key: 'delivery_time', label: 'Belge saati', lead: true },
-          { key: 'document_series', label: 'Seri', lead: true },
-          { key: 'document_sequence', label: 'Sıra', lead: true },
-          { key: 'gib_number', label: 'GİB no' },
-          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, fillCariAdres: true },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, lead: true },
-          { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-kalemler' },
-          { key: 'shipment_order_id', label: 'Sevk emri', type: 'lookup', lookup: 'sevk-emirleri', valueKey: 'id', labelKey: 'shipment_no', fillFrom: 'sevk-satirlar' },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', lead: true },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['SevkTarihi', 'BelgeTarihi', 'Serbest'] },
-          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
-          { key: 'actual_ship_date', label: 'Fiili sevk tarihi', type: 'date', lead: true },
-          { key: 'actual_ship_time', label: 'Fiili sevk saati' },
-          { key: 'due_date', label: 'Vade tarihi', type: 'date' },
-          { key: 'due_days', label: 'Vade gün', type: 'number' },
-          { key: 'payment_plan', label: 'Ödeme planı' },
-          { key: 'payment_method', label: 'Ödeme şekli' },
-          { key: 'delivery_term_code', label: 'Teslim şekli', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
-          { key: 'carrier_company', label: 'Nakliye şirketi' },
-          { key: 'carrier', label: 'Nakliyeci' },
-          { key: 'sales_rep', label: 'Satış temsilcisi' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'region', label: 'Bölge' },
-          { key: 'invoice_status', label: 'Fatura durumu', type: 'select', options: ['Irsaliye', 'Kismi', 'Faturalandi'] },
-          { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox' },
-          { key: 'print_local_currency', label: 'Çıktı yerel PB', type: 'checkbox' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'FaturayaDonustu', 'Iptal', 'Kapali'], lead: true },
-          { key: 'description', label: 'Açıklama 1' },
-          { key: 'description_2', label: 'Açıklama 2' },
-          { key: 'description_3', label: 'Açıklama 3' },
-          { key: 'delivery_footer_discount', label: 'İrs. altı iskonto', type: 'number' },
-          { key: 'public_note', label: 'Müşteri notu' },
-          { key: 'internal_note', label: 'Dahili not' },
-        ],
-        detailFields: [
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', size: 'short' },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'line_description_2', label: 'Açıklama 2' },
-          { key: 'line_description_3', label: 'Açıklama 3' },
-          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
-          { key: 'local_unit_price', label: 'Yerel br.fiyat', type: 'number', size: 'short', readOnly: true },
-          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'vat_code', label: 'KDV kodu', size: 'short' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short' },
-          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short' },
-          { key: 'excise_code', label: 'ÖTV kodu', size: 'short' },
-          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short' },
-          { key: 'stamp_tax_rate', label: 'Bandrol %', type: 'number', size: 'short' },
-          { key: 'tax_schema', label: 'Vergi şeması', size: 'short' },
-          { key: 'due_date', label: 'Vade', type: 'date', size: 'short' },
-          { key: 'due_days', label: 'Vade gün', type: 'number', size: 'short' },
-          { key: 'customer_ref_code', label: 'Müş. ref' },
-          { key: 'lot_no', label: 'Parti', size: 'short' },
-          { key: 'serial_no', label: 'Seri', size: 'short' },
-          { key: 'sales_order_line_id', label: 'Sip. satır id', type: 'number', size: 'short' },
-          { key: 'order_no', label: 'Sipariş no', size: 'short' },
-          { key: 'invoiced_quantity', label: 'Fatura edilen', type: 'number', size: 'short', readOnly: true },
-          { key: 'amount_ex_tax', label: 'Tutar', type: 'number', size: 'short', readOnly: true },
-          { key: 'stock_status', label: 'Statü', type: 'select', options: ['Kullanilabilir', 'Kalitede', 'Bloke'], size: 'short' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 6,
-        detailAsFields: false,
-        defaults: {
-          currency_code: 'TRY',
-          exchange_rate: 1,
-          rate_type: 'TCMB-SATIS',
-          rate_option: 'SevkTarihi',
-          scenario: 'TEMELIRSALIYE',
-          delivery_note_type: 'SEVK',
-          e_document_status: 'Hazir',
-          invoice_status: 'Irsaliye',
-          status: 'Taslak',
-          is_printed: false,
-          print_local_currency: false,
-          ship_country: 'TR',
-        },
-        formTabs: [
-          {
-            id: 'giris',
-            label: 'İrsaliye Giriş',
-            kind: 'master-grid',
-            masterFields: null,
-            grid: {
-              key: 'satirlar',
-              slots: 6,
-              fields: null,
-            },
-          },
-          {
-            id: 'genel',
-            label: 'Genel Bilgiler',
-            kind: 'fields',
-            fields: [
-              { key: 'ship_to_partner_id', label: 'Sevk cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-              { key: 'ship_address_type', label: 'Sevk adres tipi' },
-              { key: 'ship_name', label: 'Sevk ad' },
-              { key: 'ship_last_name', label: 'Sevk soyad' },
-              { key: 'ship_address_1', label: 'Sevk adres 1', size: 'wide' },
-              { key: 'ship_address_2', label: 'Sevk adres 2', size: 'wide' },
-              { key: 'ship_address_3', label: 'Sevk adres 3', size: 'wide' },
-              { key: 'ship_country', label: 'Sevk ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
-              { key: 'ship_city', label: 'Sevk il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
-              { key: 'ship_district', label: 'Sevk ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
-              { key: 'ship_postal_code', label: 'Sevk posta kodu' },
-              { key: 'ship_phone_1', label: 'Sevk tel 1' },
-              { key: 'ship_phone_2', label: 'Sevk tel 2' },
-              { key: 'customs', label: 'Gümrük' },
-              { key: 'ship_to_address', label: 'Sevk adresi (özet)', size: 'wide' },
-              { key: 'withholding_code', label: 'Tevkifat kodu' },
-              { key: 'withholding_rate', label: 'Tevkifat oranı', type: 'number' },
-              { key: 'withholding_amount', label: 'Tevkifat tutarı', type: 'number' },
-              { key: 'tax_schema', label: 'Vergi şeması' },
-              { key: 'special_movement_type', label: 'Özel hareket tipi' },
-              { key: 'fin_due_date', label: 'Fin. vade tarih', type: 'date' },
-              { key: 'fin_due_days', label: 'Fin. vade gün', type: 'number' },
-              { key: 'stock_date', label: 'Stok tarihi', type: 'date' },
-              { key: 'bill_address_1', label: 'Fatura adres 1', size: 'wide' },
-              { key: 'bill_address_2', label: 'Fatura adres 2', size: 'wide' },
-              { key: 'bill_address_3', label: 'Fatura adres 3', size: 'wide' },
-              { key: 'bill_postal_code', label: 'Fatura posta kodu' },
-              { key: 'bill_country', label: 'Fatura ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
-              { key: 'bill_city', label: 'Fatura il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
-              { key: 'bill_district', label: 'Fatura ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
-              { key: 'contract_code', label: 'Sözleşme kodu' },
-              { key: 'partner_title', label: 'Cari unvan', size: 'wide' },
-              { key: 'partner_title_2', label: 'Cari unvan 2', size: 'wide' },
-              { key: 'tax_office', label: 'Vergi dairesi' },
-              { key: 'tax_id', label: 'Vergi no' },
-            ],
-          },
-          {
-            id: 'e-irsaliye',
-            label: 'e-İrsaliye',
-            kind: 'fields',
-            fields: [
-              { key: 'delivery_note_type', label: 'e-İrsaliye tipi', type: 'select', options: ['SEVK', 'MATBU', 'IADE'] },
-              { key: 'scenario', label: 'İrsaliye senaryosu', type: 'select', options: ['TEMELIRSALIYE', 'TICARIIRSALIYE'] },
-              { key: 'uuid_ettn', label: 'ETTN', readOnly: true },
-              { key: 'mailbox_alias', label: 'Posta kutusu (alias)' },
-              { key: 'purchase_pre_delivery', label: 'Alış ön irsaliye' },
-              { key: 'paper_series', label: 'Matbu seri' },
-              { key: 'paper_sequence', label: 'Matbu sıra' },
-              { key: 'paper_document_date', label: 'Matbu belge tarih', type: 'date' },
-              { key: 'portal_sent_date', label: 'Portala iletilen tarih', type: 'date' },
-              { key: 'ecommerce_web', label: 'e-Ticaret web adresi', size: 'wide' },
-              { key: 'ecommerce_name', label: 'e-Ticaret ad' },
-              { key: 'ecommerce_last_name', label: 'e-Ticaret soyad' },
-              { key: 'ecommerce_email', label: 'e-Ticaret email' },
-            ],
-          },
-          {
-            id: 'arac',
-            label: 'Araç Bilgileri',
-            kind: 'fields',
-            fields: [
-              { key: 'delivered_by', label: 'Teslim eden' },
-              { key: 'vehicle_code', label: 'Araç kodu' },
-              { key: 'vehicle_plate', label: 'Araç plaka' },
-              { key: 'driver_national_id', label: 'TCKN' },
-              { key: 'driver_name', label: 'Şoför adı' },
-              { key: 'driver_last_name', label: 'Şoför soyadı' },
-              { key: 'driver_mobile', label: 'Cep no' },
-              { key: 'vehicle_description', label: 'Açıklama', size: 'wide' },
-              { key: 'trailer_plate', label: 'Dorse plaka no' },
-              { key: 'cargo_no', label: 'Kargo numarası' },
-              { key: 'carrier_title', label: 'Taşıyıcı ünvan', size: 'wide' },
-              { key: 'carrier_tax_id', label: 'Taşıyıcı VKN' },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'fatura-yonetimi',
-        techId: 'SAL-INV-SCR-001',
-        businessNameEn: 'InvoiceManagementScreen',
-        title: 'Fatura Yönetimi',
-        endpoint: '/invoices',
-        crud: true,
-        numeratorSeri: 'FATURA',
-        numeratorFromField: {
-          field: 'invoice_type',
-          map: {
-            Satis: 'FATURA',
-            Iade: 'FATURA',
-            SatisIade: 'FATURA',
-            Alis: 'ALIS_FATURA',
-            AlisIade: 'ALIS_FATURA',
-          },
-        },
-        codeField: 'invoice_no',
-        nameField: 'partner_name',
-        compactMaster: false,
-        masterPrimaryMax: 18,
-        helpText: 'Alış ve satış faturaları tek ekranda yönetilir. Tür filtresiyle yön seçin; alışta mal kabul / 3-way eşleştirme, satışta e-Fatura alanları kullanılır.',
-        approveAction: { label: '3-way Eşleştir', path: '/invoices/{id}/eslestir' },
-        convertAction: { label: 'Muhasebeleştir', path: '/invoices/{id}/muhasebelestir' },
-        filters: [
-          { key: 'invoice_no', label: 'Fatura no' },
-          { key: 'partner_name', label: 'Cari' },
-          {
-            key: 'invoice_type',
-            label: 'Tür',
-            type: 'select',
-            options: ['', 'Satis', 'Iade', 'Alis', 'AlisIade'],
-            queryParam: true,
-          },
-          { key: 'e_document_status', label: 'e-Belge' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'invoice_no', label: 'Fatura', mono: true },
-          { key: 'invoice_type', label: 'Tür' },
-          { key: 'customer_invoice_ref', label: 'Müş./Ted. ref', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'invoice_date', label: 'Tarih' },
-          { key: 'due_date', label: 'Vade' },
-          { key: 'scenario', label: 'Senaryo' },
-          { key: 'e_document_status', label: 'e-Belge' },
-          { key: 'net_amount', label: 'Ara top.' },
-          { key: 'tax_amount', label: 'KDV' },
-          { key: 'payable_amount', label: 'Ödenecek' },
-          { key: 'payment_status', label: 'Ödeme' },
-          { key: 'payment_method', label: 'Şekli' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'status', label: 'Durum' },
-          { key: 'project_code', label: 'Proje', mono: true },
-        ],
-        masterFields: [
-          { key: 'invoice_no', label: 'Fatura no', code: true, lead: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
-          { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-fatura', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
-          { key: 'invoice_date', label: 'Belge tarihi', type: 'date', required: true, lead: true },
-          { key: 'document_series', label: 'Seri', lead: true },
-          { key: 'document_sequence', label: 'Sıra', lead: true },
-          { key: 'gib_number', label: 'GİB no' },
-          { key: 'customer_invoice_ref', label: 'Müşteri / tedarikçi fatura ref' },
-          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, fillCariAdres: true },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', lead: true },
-          {
-            key: 'invoice_type',
-            label: 'Fatura türü',
-            type: 'select',
-            options: ['Satis', 'Iade', 'Alis', 'AlisIade'],
-            required: true,
-            lead: true,
-          },
-          { key: 'scenario', label: 'Senaryo', type: 'select', options: ['TICARIFATURA', 'TEMELFATURA'], required: true, lead: true },
-          { key: 'invoice_category', label: 'Fatura tipi', type: 'select', options: ['SATIS', 'IADE'], required: true },
-          { key: 'delivery_note_id', label: 'İrsaliye', type: 'lookup', lookup: 'delivery_notes', valueKey: 'id', labelKey: 'delivery_note_no', fillFrom: 'irsaliye-satirlar' },
-          { key: 'goods_receipt_id', label: 'Mal kabul (alış)', type: 'lookup', lookup: 'mal-kabuller', valueKey: 'id', labelKey: 'receipt_no', fillFrom: 'mal-kabul-satirlar' },
-          { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', fillFrom: 'siparis-kalemler' },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true, lead: true },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
-          { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['BelgeTarihi', 'SevkTarihi', 'Serbest'] },
-          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
-          { key: 'due_date', label: 'Vade tarihi', type: 'date', required: true },
-          { key: 'due_days', label: 'Vade gün', type: 'number' },
-          { key: 'payment_due_days', label: 'Vade (gün)', type: 'number' },
-          { key: 'payment_plan', label: 'Ödeme planı' },
-          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'], required: true },
-          { key: 'payment_term_code', label: 'Ödeme koşulu' },
-          { key: 'payment_status', label: 'Ödeme durumu', type: 'select', options: ['Odenmedi', 'Kismi', 'Odendi', 'Iptal'] },
-          { key: 'delivery_term_code', label: 'Teslim şekli', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
-          { key: 'sales_rep', label: 'Satış temsilcisi' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'region', label: 'Bölge' },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
-          { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox' },
-          { key: 'print_local_currency', label: 'Çıktı yerel PB', type: 'checkbox' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal', 'Kapali'], lead: true },
-          { key: 'description', label: 'Açıklama 1' },
-          { key: 'description_2', label: 'Açıklama 2' },
-          { key: 'description_3', label: 'Açıklama 3' },
-          { key: 'invoice_footer_discount', label: 'Fatura altı iskonto', type: 'number' },
-          { key: 'public_note', label: 'Müşteri notu' },
-          { key: 'internal_note', label: 'Dahili not' },
-          { key: 'is_posted', label: 'Muhasebeleşti', type: 'checkbox', readOnly: true },
-        ],
-        detailFields: [
-          { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', size: 'short' },
-          { key: 'item_id', label: 'Ürün', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'line_description', label: 'Açıklama' },
-          { key: 'line_description_2', label: 'Açıklama 2' },
-          { key: 'line_description_3', label: 'Açıklama 3' },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-          { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
-          { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short', required: true },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', size: 'short' },
-          { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], size: 'short' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number', size: 'short' },
-          { key: 'local_unit_price', label: 'Yerel br.fiyat', type: 'number', size: 'short', readOnly: true },
-          { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_2', label: 'İsk2 %', type: 'number', size: 'short' },
-          { key: 'discount_rate_3', label: 'İsk3 %', type: 'number', size: 'short' },
-          { key: 'vat_mode', label: 'KDV durumu', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
-          { key: 'vat_code', label: 'KDV kodu', size: 'short' },
-          { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
-          { key: 'withholding_code', label: 'Tevkifat kodu', size: 'short' },
-          { key: 'withholding_rate', label: 'Tevkifat %', type: 'number', size: 'short' },
-          { key: 'excise_code', label: 'ÖTV kodu', size: 'short' },
-          { key: 'excise_rate', label: 'ÖTV %', type: 'number', size: 'short' },
-          { key: 'stamp_tax_rate', label: 'Bandrol %', type: 'number', size: 'short' },
-          { key: 'tax_schema', label: 'Vergi şeması', size: 'short' },
-          { key: 'due_date', label: 'Vade', type: 'date', size: 'short' },
-          { key: 'due_days', label: 'Vade gün', type: 'number', size: 'short' },
-          { key: 'customer_ref_code', label: 'Müş. ref' },
-          { key: 'unit_cost', label: 'Maliyet', type: 'number', size: 'short' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
-          { key: 'serial_no', label: 'Seri no', size: 'short' },
-          { key: 'order_no', label: 'Sipariş no', size: 'short' },
-          { key: 'amount_ex_tax', label: 'Tutar', type: 'number', size: 'short', readOnly: true },
-        ],
-        detailKey: 'kalemler',
-        detailSlots: 6,
-        detailAsFields: false,
-        defaults: {
-          invoice_type: 'Satis',
-          scenario: 'TICARIFATURA',
-          invoice_category: 'SATIS',
-          currency_code: 'TRY',
-          exchange_rate: 1,
-          rate_type: 'TCMB-SATIS',
-          rate_option: 'BelgeTarihi',
-          vat_mode: 'Haric',
-          e_document_status: 'Hazir',
-          payment_status: 'Odenmedi',
-          status: 'Taslak',
-          is_printed: false,
-          print_local_currency: false,
-          ship_country: 'TR',
-        },
-        formTabs: [
-          {
-            id: 'giris',
-            label: 'Fatura Giriş',
-            kind: 'master-grid',
-            masterFields: null,
-            grid: {
-              key: 'kalemler',
-              slots: 6,
-              fields: null,
-            },
-          },
-          {
-            id: 'genel',
-            label: 'Genel Bilgiler',
-            kind: 'fields',
-            fields: [
-              { key: 'ship_to_partner_id', label: 'Sevk cari', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-              { key: 'ship_address_type', label: 'Sevk adres tipi' },
-              { key: 'ship_name', label: 'Sevk ad' },
-              { key: 'ship_last_name', label: 'Sevk soyad' },
-              { key: 'ship_address_1', label: 'Sevk adres 1', size: 'wide' },
-              { key: 'ship_address_2', label: 'Sevk adres 2', size: 'wide' },
-              { key: 'ship_address_3', label: 'Sevk adres 3', size: 'wide' },
-              { key: 'ship_country', label: 'Sevk ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
-              { key: 'ship_city', label: 'Sevk il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
-              { key: 'ship_district', label: 'Sevk ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
-              { key: 'ship_postal_code', label: 'Sevk posta kodu' },
-              { key: 'ship_phone_1', label: 'Sevk tel 1' },
-              { key: 'ship_phone_2', label: 'Sevk tel 2' },
-              { key: 'customs', label: 'Gümrük' },
-              { key: 'ship_to_address', label: 'Sevk adresi (özet)', size: 'wide' },
-              { key: 'withholding_code', label: 'Tevkifat kodu' },
-              { key: 'withholding_rate', label: 'Tevkifat oranı', type: 'number' },
-              { key: 'withholding_amount', label: 'Tevkifat tutarı', type: 'number' },
-              { key: 'tax_schema', label: 'Vergi şeması' },
-              { key: 'special_movement_type', label: 'Özel hareket tipi' },
-              { key: 'fin_due_date', label: 'Fin. vade tarih', type: 'date' },
-              { key: 'fin_due_days', label: 'Fin. vade gün', type: 'number' },
-              { key: 'stock_date', label: 'Stok tarihi', type: 'date' },
-              { key: 'bill_address_1', label: 'Fatura adres 1', size: 'wide' },
-              { key: 'bill_address_2', label: 'Fatura adres 2', size: 'wide' },
-              { key: 'bill_address_3', label: 'Fatura adres 3', size: 'wide' },
-              { key: 'bill_postal_code', label: 'Fatura posta kodu' },
-              { key: 'bill_country', label: 'Fatura ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_name', labelKey: 'country_name' },
-              { key: 'bill_city', label: 'Fatura il', type: 'lookup', lookup: 'cities', valueKey: 'city_name', labelKey: 'city_name' },
-              { key: 'bill_district', label: 'Fatura ilçe', type: 'lookup', lookup: 'districts', valueKey: 'district_name', labelKey: 'district_name' },
-              { key: 'contract_code', label: 'Sözleşme kodu' },
-              { key: 'partner_title', label: 'Cari unvan', size: 'wide' },
-              { key: 'partner_title_2', label: 'Cari unvan 2', size: 'wide' },
-              { key: 'tax_office', label: 'Vergi dairesi', required: true },
-              { key: 'tax_id', label: 'Vergi no', required: true },
-            ],
-          },
-          {
-            id: 'e-fatura',
-            label: 'e-Fatura',
-            kind: 'fields',
-            fields: [
-              { key: 'scenario', label: 'e-Fatura senaryosu', type: 'select', options: ['TICARIFATURA', 'TEMELFATURA'] },
-              { key: 'invoice_category', label: 'Fatura tipi', type: 'select', options: ['SATIS', 'IADE'] },
-              { key: 'uuid_ettn', label: 'ETTN', readOnly: true },
-              { key: 'mailbox_alias', label: 'Posta kutusu (alias)' },
-              { key: 'portal_sent_date', label: 'Portala iletilen tarih', type: 'date' },
-              { key: 'ecommerce_web', label: 'e-Ticaret web adresi', size: 'wide' },
-              { key: 'ecommerce_name', label: 'e-Ticaret ad' },
-              { key: 'ecommerce_last_name', label: 'e-Ticaret soyad' },
-              { key: 'ecommerce_email', label: 'e-Ticaret email' },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-
-  {
-    id: 'kalite',
-    title: 'Kalite',
-    sections: [
-      { id: 'emirler', title: 'Emirler', screenIds: ['kk-emirleri-gkk', 'kk-emirleri-ckk', 'kk-uygunsuzluklar', 'kk-capa'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['kk-kontrol-planlari', 'kk-stok-planlari', 'kk-ret-nedenleri'] },
-    ],
-    screens: [
-      buildKkOrderScreen({
-        id: 'kk-emirleri-gkk',
-        techId: 'QLT-IQC-SCR-001',
-        businessNameEn: 'IncomingQcOrderScreen',
-        title: 'Giriş Kalite Emirleri',
-        direction: 'GKK',
-      }),
-      buildKkOrderScreen({
-        id: 'kk-emirleri-ckk',
-        techId: 'QLT-OQC-SCR-001',
-        businessNameEn: 'OutgoingQcOrderScreen',
-        title: 'Çıkış Kalite Emirleri',
-        direction: 'CKK',
-      }),
-      {
-        id: 'kk-uygunsuzluklar',
-        techId: 'QLT-NCR-SCR-001',
-        businessNameEn: 'NonconformanceScreen',
-        title: 'KK Uygunsuzluklar',
-        endpoint: '/kk-uygunsuzluklar',
-        crud: true,
-        codeField: 'id',
-        nameField: 'description',
-        filters: [
-          { key: 'order_no', label: 'Emir no' },
-          { key: 'item_code', label: 'Stok' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'id', label: 'ID', mono: true },
-          { key: 'order_no', label: 'Emir', mono: true },
-          { key: 'direction', label: 'Yön' },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'ret_kodu', label: 'Ret kodu', mono: true },
-          { key: 'quantity', label: 'Miktar' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'order_id', label: 'Emir ID', type: 'number', required: true },
-          { key: 'rejection_reason_id', label: 'Ret nedeni', type: 'lookup', lookup: 'kk-ret-nedenleri', valueKey: 'id', labelKey: 'reason_name', codeKey: 'reason_code' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'description', label: 'Açıklama', name: true },
-          { key: 'corrective_action', label: 'Düzeltici faaliyet' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kapali', 'Iptal'] },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'kk-capa',
-        techId: 'QLT-CAPA-SCR-001',
-        businessNameEn: 'CapaScreen',
-        title: 'CAPA',
-        endpoint: '/kk-capa',
-        crud: true,
-        codeField: 'capa_no',
-        nameField: 'title',
-        numeratorSeri: 'CAPA',
-        filters: [
-          { key: 'capa_no', label: 'CAPA no' },
-          { key: 'status', label: 'Durum' },
-          { key: 'title', label: 'Başlık' },
-        ],
-        columns: [
-          { key: 'capa_no', label: 'No', mono: true },
-          { key: 'title', label: 'Başlık' },
-          { key: 'uygunsuzluk_no', label: 'Uygunsuzluk', mono: true },
-          { key: 'target_date', label: 'Hedef' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'capa_no', label: 'CAPA no', code: true },
-          { key: 'title', label: 'Başlık', name: true, required: true },
-          { key: 'nonconformance_id', label: 'Uygunsuzluk ID', type: 'number' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'target_date', label: 'Hedef tarih', type: 'date' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Devam', 'Kapali', 'Iptal'] },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'kk-kontrol-planlari',
-        techId: 'QLT-PLAN-SCR-001',
-        businessNameEn: 'ControlPlanScreen',
-        title: 'KK Kontrol Planları',
-        endpoint: '/kk-kontrol-planlari',
-        crud: true,
-        numeratorSeri: 'KK_PLAN',
-        codeField: 'plan_code',
-        nameField: 'plan_name',
-        filters: [
-          { key: 'plan_code', label: 'Plan kodu' },
-          { key: 'plan_name', label: 'Plan adı' },
-          { key: 'direction', label: 'Yön' },
-        ],
-        columns: [
-          { key: 'plan_code', label: 'Kod', mono: true },
-          { key: 'plan_name', label: 'Ad' },
-          { key: 'direction', label: 'Yön' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'plan_code', label: 'Plan kodu', code: true, required: true },
-          { key: 'plan_name', label: 'Plan adı', name: true, required: true },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['GKK', 'CKK', 'HerIkisi'], required: true },
-        ],
-        detailFields: [
-          { key: 'criterion_code', label: 'Kriter kodu' },
-          { key: 'criterion_name', label: 'Kriter adı' },
-          { key: 'measurement_type', label: 'Ölçüm tipi', type: 'select', options: ['Sayisal', 'Metin', 'EvetHayir'] },
-          { key: 'min_value', label: 'Min', type: 'number' },
-          { key: 'max_value', label: 'Max', type: 'number' },
-          { key: 'uom_code', label: 'Birim' },
-          { key: 'is_required', label: 'Zorunlu', type: 'checkbox' },
-        ],
-        detailKey: 'kriterler',
-        detailSlots: 5,
-      },
-      {
-        id: 'kk-stok-planlari',
-        techId: 'QLT-ITMP-SCR-001',
-        businessNameEn: 'ItemControlPlanLinkScreen',
-        title: 'KK Stok Plan Bağları',
-        endpoint: '/kk-stok-planlari',
-        crud: true,
-        codeField: 'id',
-        nameField: 'item_code',
-        filters: [
-          { key: 'item_code', label: 'Stok' },
-          { key: 'direction', label: 'Yön' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'direction', label: 'Yön' },
-          { key: 'plan_code', label: 'Plan', mono: true },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'plan_id', label: 'Plan', type: 'lookup', lookup: 'kk-kontrol-planlari', valueKey: 'id', labelKey: 'plan_name', codeKey: 'plan_code', required: true },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['GKK', 'CKK'], required: true },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'kk-ret-nedenleri',
-        techId: 'QLT-REJ-SCR-001',
-        businessNameEn: 'RejectionReasonScreen',
-        title: 'KK Ret Nedenleri',
-        endpoint: '/kk-ret-nedenleri',
-        crud: true,
-        codeField: 'reason_code',
-        nameField: 'reason_name',
-        filters: [
-          { key: 'reason_code', label: 'Kod' },
-          { key: 'reason_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'reason_code', label: 'Kod', mono: true },
-          { key: 'reason_name', label: 'Ad' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'reason_code', label: 'Neden kodu', code: true, required: true },
-          { key: 'reason_name', label: 'Neden adı', name: true, required: true },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-    ],
-  },
-  {
-    id: 'onay',
-    title: 'Onay Yönetimi',
-    sections: [
-      {
-        id: 'action',
-        title: 'Onay',
-        screenIds: ['onaylarim', 'onay-izleme', 'onay-yetki-devri'],
-      },
-      {
-        id: 'tanimlar',
-        title: 'Sabit Tanımlar',
-        screenIds: [
-          'onay-role-tanim',
-          'onay-kural-tanim',
-          'onay-rota-tanim',
-          'onay-message-template',
-          'onay-status-tanim',
-          'onay-modul-kullanimlari',
-        ],
-      },
-    ],
-    screens: [
-      {
-        id: 'onay-modul-kullanimlari',
-        techId: 'SYS-APR-SCR-USG',
-        businessNameEn: 'ApprovalModuleUsageScreen',
-        title: 'Onay Modül Kullanımları',
-        endpoint: '/onay-module-kullanimlari',
-        crud: true,
-        numeratorSeri: 'ONAY_KULLANIM',
-        codeField: 'usage_code',
-        nameField: 'usage_name',
-        columns: [
-          { key: 'usage_code', label: 'Kod', mono: true },
-          { key: 'usage_name', label: 'Ad' },
-          { key: 'module_code', label: 'Modül' },
-          { key: 'screen_id', label: 'Ekran' },
-          { key: 'route_code', label: 'Rota' },
-          { key: 'company_name', label: 'Firma' },
-          { key: 'min_amount', label: 'Min tutar' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'usage_code', label: 'Kullanım kodu', code: true },
-          { key: 'usage_name', label: 'Ad', name: true, required: true },
-          { key: 'module_code', label: 'Modül kodu', required: true },
-          { key: 'screen_id', label: 'Ekran id', required: true },
-          { key: 'route_id', label: 'Onay rotası', type: 'lookup', lookup: 'onay-rota-tanim', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true },
-          { key: 'company_id', label: 'Firma (opsiyonel)', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'template_id', label: 'Mesaj şablonu', type: 'lookup', lookup: 'onay-message-template', valueKey: 'id', labelKey: 'template_name', codeKey: 'template_code' },
-          { key: 'min_amount', label: 'Min tutar', type: 'number' },
-          { key: 'auto_send', label: 'Otomatik gönder', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        defaults: { is_active: true, min_amount: 0 },
-      },
-      {
-        id: 'onaylarim',
-        techId: 'SYS-APR-SCR-001',
-        businessNameEn: 'MyApprovalsScreen',
-        title: 'Onaylarım',
-        endpoint: '/onay-kayitlari?benim=true',
-        crud: false,
-        readOnly: false,
-        codeField: 'approval_no',
-        nameField: 'document_summary',
-        approveAction: { label: 'Onayla', path: '/onay-kayitlari/{id}/onayla' },
-        banner: 'Size (rolünüz / yetki devri) atanmış bekleyen onaylar. İncele → Onayla veya Reddet.',
-        filters: [
-          { key: 'approval_no', label: 'Onay no' },
-          { key: 'document_no', label: 'Belge no' },
-          { key: 'module_code', label: 'Modül' },
-        ],
-        columns: [
-          { key: 'approval_no', label: 'Onay', mono: true },
-          { key: 'module_code', label: 'Modül' },
-          { key: 'document_no', label: 'Belge', mono: true },
-          { key: 'document_summary', label: 'Özet' },
-          { key: 'amount', label: 'Tutar' },
-          { key: 'status_name', label: 'Durum' },
-          { key: 'active_step_no', label: 'Adım' },
-          { key: 'start_date', label: 'Başlama' },
-        ],
-        masterFields: [
-          { key: 'approval_no', label: 'Onay no', code: true },
-          { key: 'module_code', label: 'Modül' },
-          { key: 'screen_id', label: 'Ekran' },
-          { key: 'document_no', label: 'Belge no' },
-          { key: 'document_summary', label: 'Özet', name: true },
-          { key: 'amount', label: 'Tutar', type: 'number' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'status_code', label: 'Durum' },
-          { key: 'route_name', label: 'Rota' },
-          { key: 'baslatan_adi', label: 'Başlatan' },
-          { key: 'description', label: 'Açıklama / not' },
-        ],
-        detailFields: [
-          { key: 'line_no', label: 'Sıra', type: 'number' },
-          { key: 'step_name', label: 'Adım' },
-          { key: 'role_name', label: 'Rol' },
-          { key: 'status_code', label: 'Durum' },
-          { key: 'onaylayan_adi', label: 'Onaylayan' },
-          { key: 'notes', label: 'Not' },
-        ],
-        detailKey: 'adimlar',
-      },
-      {
-        id: 'onay-izleme',
-        techId: 'SYS-APR-SCR-002',
-        businessNameEn: 'ApprovalMonitoringScreen',
-        title: 'Onay İzleme',
-        endpoint: '/onay-kayitlari',
-        crud: false,
-        readOnly: true,
-        codeField: 'approval_no',
-        nameField: 'document_summary',
-        banner: 'Tüm onay kayıtları — durum, belge ve rota izi.',
-        filters: [
-          { key: 'approval_no', label: 'Onay no' },
-          { key: 'document_no', label: 'Belge no' },
-          { key: 'module_code', label: 'Modül' },
-          { key: 'status_code', label: 'Durum' },
-          { key: 'screen_id', label: 'Ekran' },
-        ],
-        columns: [
-          { key: 'approval_no', label: 'Onay', mono: true },
-          { key: 'module_code', label: 'Modül' },
-          { key: 'screen_id', label: 'Ekran', mono: true },
-          { key: 'document_no', label: 'Belge', mono: true },
-          { key: 'amount', label: 'Tutar' },
-          { key: 'status_name', label: 'Durum' },
-          { key: 'route_name', label: 'Rota' },
-          { key: 'baslatan_adi', label: 'Başlatan' },
-          { key: 'start_date', label: 'Başlama' },
-          { key: 'closed_at', label: 'Kapanış' },
-        ],
-        masterFields: [
-          { key: 'approval_no', label: 'Onay no', code: true },
-          { key: 'module_code', label: 'Modül' },
-          { key: 'screen_id', label: 'Ekran' },
-          { key: 'document_no', label: 'Belge no' },
-          { key: 'document_summary', label: 'Özet', name: true },
-          { key: 'amount', label: 'Tutar', type: 'number' },
-          { key: 'status_code', label: 'Durum' },
-          { key: 'route_name', label: 'Rota' },
-          { key: 'usage_name', label: 'Kullanım' },
-          { key: 'baslatan_adi', label: 'Başlatan' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        detailFields: [
-          { key: 'line_no', label: 'Sıra', type: 'number' },
-          { key: 'step_name', label: 'Adım' },
-          { key: 'role_name', label: 'Rol' },
-          { key: 'status_code', label: 'Durum' },
-          { key: 'onaylayan_adi', label: 'Onaylayan' },
-          { key: 'action_date', label: 'İşlem' },
-          { key: 'notes', label: 'Not' },
-        ],
-        detailKey: 'adimlar',
-      },
-      {
-        id: 'onay-yetki-devri',
-        techId: 'SYS-APR-SCR-003',
-        businessNameEn: 'ApprovalDelegationScreen',
-        title: 'Onay Yetki Devri',
-        endpoint: '/onay-yetki-devirleri',
-        crud: true,
-        numeratorSeri: 'ONAY_DEVIR',
-        codeField: 'delegation_code',
-        nameField: 'description',
-        filters: [
-          { key: 'delegation_code', label: 'Devir kodu' },
-          { key: 'veren_kodu', label: 'Veren' },
-          { key: 'alan_kodu', label: 'Alan' },
-        ],
-        columns: [
-          { key: 'delegation_code', label: 'Kod', mono: true },
-          { key: 'veren_adi', label: 'Veren' },
-          { key: 'alan_adi', label: 'Alan' },
-          { key: 'role_name', label: 'Rol' },
-          { key: 'start_date', label: 'Başlangıç' },
-          { key: 'end_date', label: 'Bitiş' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'delegation_code', label: 'Devir kodu', code: true },
-          { key: 'delegator_user_id', label: 'Yetkiyi veren', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code', required: true },
-          { key: 'delegate_user_id', label: 'Yetkiyi alan', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code', required: true },
-          { key: 'role_id', label: 'Rol (boş = tüm roller)', type: 'lookup', lookup: 'onay-rolleri', valueKey: 'id', labelKey: 'role_name', codeKey: 'role_code' },
-          { key: 'start_date', label: 'Başlangıç', type: 'date', required: true },
-          { key: 'end_date', label: 'Bitiş', type: 'date' },
-        ],
-        detailFields: [
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'onay-role-tanim',
-        techId: 'SYS-APR-SCR-004',
-        businessNameEn: 'ApprovalRoleScreen',
-        title: 'Onay Rolü',
-        endpoint: '/onay-rolleri',
-        crud: true,
-        numeratorSeri: 'ONAY_ROL',
-        codeField: 'role_code',
-        nameField: 'role_name',
-        banner: 'Bir kişiye, firma ve iş yeri kapsamında onay rolü verilir. Rotadaki adımlar bu rol adına bakar.',
-        filters: [
-          { key: 'role_name', label: 'Rol adı' },
-          { key: 'kisi_adi', label: 'Kişi' },
-          { key: 'company_code', label: 'Firma' },
-        ],
-        columns: [
-          { key: 'role_name', label: 'Rol adı' },
-          { key: 'kisi_adi', label: 'Kişi' },
-          { key: 'user_code', label: 'Kullanıcı', mono: true },
-          { key: 'company_name', label: 'Firma' },
-          { key: 'plant_name', label: 'İş yeri' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'user_id', label: 'Kişi', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code', required: true },
-          { key: 'role_name', label: 'Onay rol adı', name: true, required: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', required: true },
-        ],
-        detailFields: [
-          { key: 'role_code', label: 'Kayıt kodu', code: true },
-          { key: 'description', label: 'Not' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: { is_active: true },
-      },
-      {
-        id: 'onay-kural-tanim',
-        techId: 'SYS-APR-SCR-005',
-        businessNameEn: 'ApprovalRuleScreen',
-        title: 'Onay Kuralı',
-        endpoint: '/onay-kurallari',
-        crud: true,
-        numeratorSeri: 'ONAY_KURAL',
-        codeField: 'rule_code',
-        nameField: 'rule_name',
-        banner: 'Hangi ekranda onay devreye girer? Koşullar VE mantığıyla çalışır — işaretlediklerinizin / doldurduklarınızın tümü sağlanmalı.',
-        filters: [
-          { key: 'rule_name', label: 'Kural adı' },
-          { key: 'screen_id', label: 'Ekran' },
-          { key: 'company_code', label: 'Firma' },
-        ],
-        columns: [
-          { key: 'line_no', label: 'Sıra' },
-          { key: 'rule_code', label: 'Kod', mono: true },
-          { key: 'rule_name', label: 'Ad' },
-          { key: 'screen_id', label: 'Ekran', mono: true },
-          { key: 'company_name', label: 'Firma' },
-          { key: 'plant_name', label: 'İş yeri' },
-          { key: 'template_name', label: 'Mesaj' },
-          { key: 'auto_approve', label: 'Oto. onay' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'line_no', label: 'Öncelik sırası', type: 'number', required: true },
-          { key: 'rule_code', label: 'Kural kodu', code: true },
-          { key: 'rule_name', label: 'Kural adı', name: true, required: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          {
-            key: 'screen_id',
-            label: 'Ekran (onaylanacak belge)',
-            type: 'lookup',
-            lookup: 'onay-ekranlari',
-            valueKey: 'screen_id',
-            labelKey: 'screen_name',
-            codeKey: 'screen_id',
-            required: true,
-          },
-          {
-            key: 'template_id',
-            label: 'Mesaj şablonu',
-            type: 'lookup',
-            lookup: 'onay-message-sablonlari',
-            valueKey: 'id',
-            labelKey: 'template_name',
-            codeKey: 'template_code',
-          },
-          { key: 'term_direction', label: 'Belge yönü', type: 'select', options: ['Hepsi', 'Alis', 'Satis'] },
-          { key: 'term_min_amount', label: 'Min. tutar', type: 'number' },
-          { key: 'term_max_amount', label: 'Max. tutar', type: 'number' },
-          { key: 'condition_statuses', label: 'Belge durumları (virgülle; boş = tümü)' },
-          { key: 'auto_approve', label: 'Koşul sağlanırsa otomatik onayla', type: 'checkbox' },
-          { key: 'activate_on_approval', label: 'Onaylanınca belgeyi aktif et', type: 'checkbox' },
-          { key: 'is_active', label: 'Kural aktif', type: 'checkbox' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        detailFields: [
-          {
-            key: 'movement_code_id',
-            label: 'Hareket kodu',
-            type: 'lookup',
-            lookup: 'hareket-kodlari',
-            valueKey: 'id',
-            labelKey: 'movement_name',
-            codeKey: 'movement_code',
-            required: true,
-          },
-        ],
-        detailKey: 'hareketler',
-        defaults: {
-          line_no: 10,
-          term_direction: 'Hepsi',
-          auto_approve: false,
-          activate_on_approval: true,
-          is_active: true,
-          hareketler: [],
-        },
-      },
-      {
-        id: 'onay-rota-tanim',
-        techId: 'SYS-APR-SCR-006',
-        businessNameEn: 'ApprovalRouteScreen',
-        title: 'Onay Rotası',
-        endpoint: '/onay-rotalari',
-        crud: true,
-        numeratorSeri: 'ONAY_ROTA',
-        codeField: 'route_code',
-        nameField: 'route_name',
-        banner: 'Kural + ekran bağlandıktan sonra onayın kimden kime gideceği burada adım adım kurulur.',
-        filters: [
-          { key: 'route_name', label: 'Rota adı' },
-          { key: 'screen_id', label: 'Ekran' },
-          { key: 'rule_name', label: 'Kural' },
-        ],
-        columns: [
-          { key: 'route_code', label: 'Kod', mono: true },
-          { key: 'route_name', label: 'Ad' },
-          { key: 'version_no', label: 'Sürüm' },
-          { key: 'screen_id', label: 'Ekran', mono: true },
-          { key: 'rule_name', label: 'Kural' },
-          { key: 'company_name', label: 'Firma' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'route_code', label: 'Rota kodu', code: true },
-          { key: 'route_name', label: 'Rota adı', name: true, required: true },
-          { key: 'version_no', label: 'Sürüm', type: 'number' },
-          {
-            key: 'screen_id',
-            label: 'Ekran',
-            type: 'lookup',
-            lookup: 'onay-ekranlari',
-            valueKey: 'screen_id',
-            labelKey: 'screen_name',
-            codeKey: 'screen_id',
-          },
-          {
-            key: 'rule_id',
-            label: 'Bağlı kural',
-            type: 'lookup',
-            lookup: 'onay-kurallari',
-            valueKey: 'id',
-            labelKey: 'rule_name',
-            codeKey: 'rule_code',
-          },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          {
-            key: 'first_message_template_id',
-            label: 'İlk onay mesajı',
-            type: 'lookup',
-            lookup: 'onay-message-sablonlari',
-            valueKey: 'id',
-            labelKey: 'template_name',
-            codeKey: 'template_code',
-          },
-          {
-            key: 'reject_message_template_id',
-            label: 'Red mesajı',
-            type: 'lookup',
-            lookup: 'onay-message-sablonlari',
-            valueKey: 'id',
-            labelKey: 'template_name',
-            codeKey: 'template_code',
-          },
-          {
-            key: 'extra_message_template_id',
-            label: 'Ek message',
-            type: 'lookup',
-            lookup: 'onay-message-sablonlari',
-            valueKey: 'id',
-            labelKey: 'template_name',
-            codeKey: 'template_code',
-          },
-          { key: 'cancel_role_name', label: 'İptali onaylayacak rol adı' },
-          { key: 'attach_file_to_mail', label: 'Ekleri mail ile gönder', type: 'checkbox' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailFields: [
-          { key: 'line_no', label: 'Adım no', type: 'number', required: true },
-          { key: 'step_name', label: 'Adım açıklaması' },
-          { key: 'role_name', label: 'Onay rol adı', required: true },
-          { key: 'send_mail', label: 'Mail gönder', type: 'checkbox' },
-          { key: 'send_sms', label: 'SMS gönder', type: 'checkbox' },
-          { key: 'value_editable', label: 'Değer değiştirebilir', type: 'checkbox' },
-          { key: 'min_amount', label: 'Bu adım için min. tutar', type: 'number' },
-          { key: 'send_back_line', label: 'Düzeltmede dönülecek adım no', type: 'number' },
-          { key: 'is_required', label: 'Zorunlu', type: 'checkbox' },
-          { key: 'description', label: 'Not' },
-        ],
-        detailKey: 'adimlar',
-        defaults: { version_no: 1, is_active: true, attach_file_to_mail: false, adimlar: [] },
-      },
-      {
-        id: 'onay-message-template',
-        techId: 'SYS-APR-SCR-007',
-        businessNameEn: 'ApprovalMessageTemplateScreen',
-        title: 'Onay Mesaj Şablonu',
-        endpoint: '/onay-message-sablonlari',
-        crud: true,
-        numeratorSeri: 'ONAY_SABLON',
-        codeField: 'template_code',
-        nameField: 'template_name',
-        filters: [
-          { key: 'template_code', label: 'Kod' },
-          { key: 'event_code', label: 'Olay' },
-        ],
-        columns: [
-          { key: 'template_code', label: 'Kod', mono: true },
-          { key: 'template_name', label: 'Ad' },
-          { key: 'event_code', label: 'Olay' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'template_code', label: 'Şablon kodu', code: true },
-          { key: 'template_name', label: 'Şablon adı', name: true, required: true },
-          { key: 'event_code', label: 'Olay', type: 'select', options: ['Bekleme', 'Onay', 'Red', 'Devret', 'Iptal', 'Tamam'], required: true },
-          { key: 'subject', label: 'Konu' },
-        ],
-        detailFields: [
-          { key: 'body_text', label: 'Gövde ({{document_no}}, {{module}}, {{amount}}, {{onayci}}, {{gerekce}})' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'onay-status-tanim',
-        techId: 'SYS-APR-SCR-008',
-        businessNameEn: 'ApprovalStatusScreen',
-        title: 'Onay Durum Tanımı',
-        endpoint: '/onay-durumlari',
-        crud: true,
-        codeField: 'status_code',
-        nameField: 'status_name',
-        filters: [
-          { key: 'status_code', label: 'Kod' },
-          { key: 'status_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'status_code', label: 'Kod', mono: true },
-          { key: 'status_name', label: 'Ad' },
-          { key: 'line_no', label: 'Sıra' },
-          { key: 'is_final', label: 'Nihai' },
-          { key: 'is_positive', label: 'Olumlu' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'status_code', label: 'Durum kodu', code: true, required: true },
-          { key: 'status_name', label: 'Durum adı', name: true, required: true },
-          { key: 'line_no', label: 'Sıra', type: 'number' },
-        ],
-        detailFields: [
-          { key: 'is_final', label: 'Nihai durum', type: 'checkbox' },
-          { key: 'is_positive', label: 'Olumlu (onay)', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-    ],
-  },
-  {
-    id: 'finans',
-    title: 'Finans',
-    sections: [
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['hesap-plani', 'hesap-belirleme-kurallari', 'finans-vergi-kodlari', 'finans-ulke-paketleri', 'mali-yillar', 'muhasebe-donemleri', 'fiyat-listeleri'] },
-      { id: 'belgeler', title: 'Belgeler', screenIds: ['muhasebe-belgeleri', 'finans-nakit-hareketleri', 'fatura-kontrolleri'] },
-      { id: 'nakit', title: 'Banka / Kasa', screenIds: ['finans-banka-hesaplari', 'finans-kasa-hesaplari'] },
-      { id: 'raporlar', title: 'Raporlar', screenIds: ['mizan', 'finans-yevmiye', 'finans-bilanco', 'finans-gelir-tablosu', 'kokpit'] },
-    ],
-    screens: [
-      {
-        id: 'hesap-plani',
-        techId: 'FIN-COA-SCR-001',
-        businessNameEn: 'ChartOfAccountsScreen',
-        title: 'Hesap Planı',
-        endpoint: '/muhasebe-hesaplari',
-        crud: true,
-        codeField: 'account_code',
-        nameField: 'account_name',
-        numeratorSeri: null,
-        helpText: 'Ana/Üst hesaplar sınıflandırma içindir; fiş yalnızca Doğrudan (yaprak) hesaplara yazılır. Ülke paketi şirketin muhasebe ülkesine göre filtrelenir.',
-        filters: [
-          { key: 'account_code', label: 'Hesap kodu' },
-          { key: 'account_name', label: 'Hesap adı' },
-          { key: 'account_type', label: 'Tip' },
-          { key: 'country_code', label: 'Ülke', queryParam: true },
-        ],
-        columns: [
-          { key: 'account_code', label: 'Kod', mono: true },
-          { key: 'account_name', label: 'Ad' },
-          { key: 'account_type', label: 'Tip' },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'account_class', label: 'Sınıf' },
-          { key: 'parent_account_code', label: 'Üst', mono: true },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'account_code', label: 'Hesap kodu', code: true, editableOnNew: true, required: true },
-          { key: 'account_name', label: 'Hesap adı', name: true, required: true },
-          { key: 'account_type', label: 'Hesap tipi', type: 'select', options: ['Ana', 'Ust', 'Dogrudan'], required: true },
-          { key: 'country_code', label: 'Ülke', type: 'select', options: ['TR', 'AZ', 'DE', 'NL'], required: true },
-          { key: 'chart_of_accounts_code', label: 'Hesap planı' },
-          { key: 'account_class', label: 'Sınıf (1–6)' },
-          { key: 'normal_balance', label: 'Normal bakiye', type: 'select', options: ['Borc', 'Alacak'] },
-        ],
-        detailFields: [
-          { key: 'parent_account_code', label: 'Üst hesap kodu' },
-          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'is_control_account', label: 'Kontrol hesabı', type: 'checkbox' },
-          { key: 'reconciliation_type', label: 'Mutabakat', type: 'select', options: ['', 'Cari', 'Banka', 'Kasa', 'Stok', 'SabitKiymet'] },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-          { key: 'marked_for_deletion', label: 'Silinecek', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: { country_code: 'TR', chart_of_accounts_code: 'TDHP', account_type: 'Dogrudan', normal_balance: 'Borc', is_active: true },
-      },
-      {
-        id: 'muhasebe-belgeleri',
-        techId: 'FIN-JE-SCR-001',
-        businessNameEn: 'AccountingDocumentScreen',
-        title: 'Muhasebe Belgeleri',
-        endpoint: '/muhasebe-belgeleri',
-        crud: true,
-        codeField: 'document_no',
-        nameField: 'description',
-        numeratorSeri: 'MUHASEBE_BELGE',
-        approveAction: { label: 'Kesinleştir', path: '/muhasebe-belgeleri/{id}/kesinlestir' },
-        convertAction: { label: 'Ters Kayıt', path: '/muhasebe-belgeleri/{id}/ters-kayit' },
-        helpText: 'Toplam borç = toplam alacak olmalıdır. Kesinleşmiş fiş değiştirilemez; hata için ters kayıt kullanın.',
-        filters: [
-          { key: 'document_no', label: 'Belge no' },
-          { key: 'status', label: 'Durum' },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'voucher_type', label: 'Fiş tipi' },
-        ],
-        columns: [
-          { key: 'document_no', label: 'Belge', mono: true },
-          { key: 'journal_number', label: 'Yevmiye' },
-          { key: 'document_date', label: 'Tarih' },
-          { key: 'voucher_type', label: 'Tip' },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'status', label: 'Durum' },
-          { key: 'toplam_borc', label: 'Borç' },
-          { key: 'toplam_alacak', label: 'Alacak' },
-        ],
-        masterFields: [
-          { key: 'document_no', label: 'Belge no', code: true },
-          { key: 'document_date', label: 'Belge tarihi', type: 'date', required: true },
-          { key: 'voucher_type', label: 'Fiş tipi', type: 'select', options: ['Mahsup', 'Tahsilat', 'Tediye', 'Acilis', 'Kapanis', 'Ters'], required: true },
-          { key: 'country_code', label: 'Muhasebe ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL'], required: true },
-          { key: 'transaction_country_code', label: 'İşlem ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL', ''] },
-          { key: 'tax_country_code', label: 'Vergi ülkesi', type: 'select', options: ['TR', 'AZ', 'DE', 'NL', ''] },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'exchange_rate', label: 'Kur', type: 'number' },
-          { key: 'description', label: 'Açıklama', name: true },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Iptal'], readOnly: true },
-          { key: 'journal_number', label: 'Yevmiye no', readOnly: true },
-        ],
-        detailFields: [
-          { key: 'account_id', label: 'Hesap', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code', required: true },
-          { key: 'debit', label: 'Borç', type: 'number', help: 'Hesabın sol tarafı (varlık/gider artışı genelde borç).' },
-          { key: 'credit', label: 'Alacak', type: 'number', help: 'Hesabın sağ tarafı (kaynak/gelir artışı genelde alacak).' },
-          { key: 'tax_code', label: 'Vergi kodu' },
-          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-          { key: 'description', label: 'Kalem açıklama' },
-        ],
-        detailKey: 'kalemler',
-        detailSlots: 8,
-        defaults: { voucher_type: 'Mahsup', country_code: 'TR', currency_code: 'TRY', exchange_rate: 1, status: 'Taslak' },
-      },
-      {
-        id: 'muhasebe-donemleri',
-        techId: 'FIN-PER-SCR-001',
-        businessNameEn: 'AccountingPeriodScreen',
-        title: 'Muhasebe Dönemleri',
-        endpoint: '/muhasebe-donemleri',
-        crud: false,
-        codeField: 'period_no',
-        nameField: 'status',
-        approveAction: { label: 'Dönemi Kapat', path: '/muhasebe-donemleri/{id}/kapat' },
-        convertAction: { label: 'Yeniden Aç', path: '/muhasebe-donemleri/{id}/yeniden-ac' },
-        helpText: 'Kapalı döneme kesin fiş yazılamaz. Yeniden açma yetki ve audit ile izlenir.',
-        filters: [
-          { key: 'mali_yil', label: 'Mali yıl' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'mali_yil', label: 'Yıl' },
-          { key: 'period_no', label: 'Dönem' },
-          { key: 'start_date', label: 'Başlangıç' },
-          { key: 'end_date', label: 'Bitiş' },
-          { key: 'status', label: 'Durum' },
-          { key: 'closed_by', label: 'Kapatan' },
-        ],
-        masterFields: [
-          { key: 'mali_yil', label: 'Mali yıl', readOnly: true },
-          { key: 'period_no', label: 'Dönem no', readOnly: true },
-          { key: 'start_date', label: 'Başlangıç', type: 'date', readOnly: true },
-          { key: 'end_date', label: 'Bitiş', type: 'date', readOnly: true },
-          { key: 'status', label: 'Durum', readOnly: true },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'finans-vergi-kodlari',
-        techId: 'FIN-TAX-SCR-001',
-        businessNameEn: 'TaxCodeScreen',
-        title: 'Vergi Kodları',
-        endpoint: '/finans-vergi-kodlari',
-        crud: true,
-        codeField: 'tax_code',
-        nameField: 'tax_name',
-        filters: [
-          { key: 'country_code', label: 'Ülke', queryParam: true },
-          { key: 'tax_code', label: 'Kod' },
-        ],
-        columns: [
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'tax_code', label: 'Kod', mono: true },
-          { key: 'tax_name', label: 'Ad' },
-          { key: 'tax_type', label: 'Tür' },
-          { key: 'rate', label: 'Oran %' },
-          { key: 'output_tax_account_code', label: 'Hesaplanan' },
-          { key: 'input_tax_account_code', label: 'İndirilecek' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
-          { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
-          { key: 'country_code', label: 'Ülke', required: true },
-          { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
-          { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
-          { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: 'oranlar',
-        detailSlots: 4,
-        formTabs: [
-          {
-            id: 'oranlar',
-            label: 'Oranlar',
-            kind: 'grid',
-            key: 'oranlar',
-            slots: 4,
-            fields: [
-              { key: 'rate', label: 'Oran %', type: 'number', required: true },
-              { key: 'valid_from', label: 'Geçerlilik başı', type: 'date', required: true },
-              { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
-              { key: 'source_note', label: 'Kaynak' },
-            ],
-          },
-        ],
-        defaults: { country_code: 'TR', tax_type: 'KDV', is_active: true },
-      },
-      {
-        id: 'vergi-kodlari',
-        techId: 'MDM-TAX-SCR-001',
-        businessNameEn: 'TaxTypeDefinitionScreen',
-        title: 'Vergi Kodları',
-        endpoint: '/finans-vergi-kodlari',
-        crud: true,
-        codeField: 'tax_code',
-        nameField: 'tax_name',
-        filters: [
-          { key: 'country_code', label: 'Ülke', queryParam: true },
-          { key: 'tax_code', label: 'Kod' },
-          { key: 'tax_type', label: 'Tür' },
-        ],
-        columns: [
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'tax_code', label: 'Kod', mono: true },
-          { key: 'tax_name', label: 'Ad' },
-          { key: 'tax_type', label: 'Tür' },
-          { key: 'rate', label: 'Oran %' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
-          { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
-          { key: 'country_code', label: 'Ülke', required: true },
-          { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
-          { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
-          { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: 'oranlar',
-        detailSlots: 4,
-        formTabs: [
-          {
-            id: 'oranlar',
-            label: 'Oranlar',
-            kind: 'grid',
-            key: 'oranlar',
-            slots: 4,
-            fields: [
-              { key: 'rate', label: 'Oran %', type: 'number', required: true },
-              { key: 'valid_from', label: 'Geçerlilik başı', type: 'date', required: true },
-              { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
-              { key: 'source_note', label: 'Kaynak' },
-            ],
-          },
-        ],
-        defaults: { country_code: 'TR', tax_type: 'KDV', is_active: true },
-      },
-      {
-        id: 'finans-ulke-paketleri',
-        techId: 'FIN-CPK-SCR-001',
-        businessNameEn: 'CountryPackScreen',
-        title: 'Finans Ülke Paketleri',
-        endpoint: '/finans-country/paketler',
-        crud: true,
-        codeField: 'country_code',
-        nameField: 'country_name',
-        columns: [
-          { key: 'country_code', label: 'Ülke', mono: true },
-          { key: 'country_name', label: 'Ad' },
-          { key: 'local_currency', label: 'PB' },
-          { key: 'chart_of_accounts_code', label: 'Hesap planı' },
-          { key: 'reporting_framework', label: 'Raporlama' },
-          { key: 'retention_years', label: 'Saklama (yıl)' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'country_code', label: 'Ülke kodu', code: true, required: true, editableOnNew: true },
-          { key: 'country_name', label: 'Ülke adı', name: true, required: true },
-          { key: 'local_currency', label: 'Yerel para birimi' },
-          { key: 'chart_of_accounts_code', label: 'Hesap planı kodu' },
-          { key: 'reporting_framework', label: 'Raporlama çerçevesi' },
-          { key: 'retention_years', label: 'Saklama süresi (yıl)', type: 'number' },
-          { key: 'e_document_note', label: 'e-Belge notu' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        defaults: { is_active: true, retention_years: 10 },
-      },
-      {
-        id: 'mali-yillar',
-        techId: 'FIN-FY-SCR-001',
-        businessNameEn: 'FiscalYearScreen',
-        title: 'Mali Yıllar',
-        endpoint: '/muhasebe-donemleri/mali-yillar',
-        crud: true,
-        codeField: 'year',
-        nameField: 'year',
-        columns: [
-          { key: 'year', label: 'Yıl' },
-          { key: 'start_date', label: 'Başlangıç' },
-          { key: 'end_date', label: 'Bitiş' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'year', label: 'Yıl', type: 'number', required: true },
-          { key: 'start_date', label: 'Başlangıç', type: 'date' },
-          { key: 'end_date', label: 'Bitiş', type: 'date' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Kapali'] },
-        ],
-        defaults: { status: 'Acik' },
-      },
-      {
-        id: 'finans-banka-hesaplari',
-        techId: 'FIN-BNK-SCR-001',
-        businessNameEn: 'BankAccountScreen',
-        title: 'Banka Hesapları',
-        endpoint: '/finans-nakit/banka-hesaplari',
-        crud: true,
-        codeField: 'account_code',
-        nameField: 'account_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'account_code', label: 'Kod' },
-          { key: 'account_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'account_code', label: 'Kod', mono: true },
-          { key: 'account_name', label: 'Ad' },
-          { key: 'iban', label: 'IBAN', mono: true },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'bank_name', label: 'Banka' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'account_code', label: 'Hesap kodu', code: true, editableOnNew: true },
-          { key: 'account_name', label: 'Hesap adı', name: true, required: true },
-          { key: 'bank_id', label: 'Banka', type: 'lookup', lookup: 'banks', valueKey: 'id', labelKey: 'bank_name', codeKey: 'bank_code' },
-          { key: 'iban', label: 'IBAN' },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
-          { key: 'gl_account_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: { currency_code: 'TRY', is_active: true },
-      },
-      {
-        id: 'finans-kasa-hesaplari',
-        techId: 'FIN-CSH-SCR-001',
-        businessNameEn: 'CashAccountScreen',
-        title: 'Kasa Hesapları',
-        endpoint: '/finans-nakit/kasa-hesaplari',
-        crud: true,
-        codeField: 'cash_code',
-        nameField: 'cash_name',
-        numeratorSeri: null,
-        filters: [
-          { key: 'cash_code', label: 'Kod' },
-          { key: 'cash_name', label: 'Ad' },
-        ],
-        columns: [
-          { key: 'cash_code', label: 'Kod', mono: true },
-          { key: 'cash_name', label: 'Ad' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'cash_code', label: 'Kasa kodu', code: true, editableOnNew: true },
-          { key: 'cash_name', label: 'Kasa adı', name: true, required: true },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', required: true },
-          { key: 'gl_account_id', label: 'Muhasebe hesabı', type: 'lookup', lookup: 'muhasebe-hesaplari', valueKey: 'id', labelKey: 'account_name', codeKey: 'account_code' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: { currency_code: 'TRY', is_active: true },
-      },
-      {
-        id: 'finans-nakit-hareketleri',
-        techId: 'FIN-CSHMV-SCR-001',
-        businessNameEn: 'CashMovementScreen',
-        title: 'Nakit Hareketleri',
-        endpoint: '/finans-nakit/hareketler',
-        crud: true,
-        codeField: 'movement_no',
-        nameField: 'description',
-        numeratorSeri: 'FIN_NAKIT_HAREKET',
-        filters: [
-          { key: 'movement_no', label: 'No' },
-          { key: 'direction', label: 'Yön' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'movement_no', label: 'No', mono: true },
-          { key: 'movement_date', label: 'Tarih' },
-          { key: 'direction', label: 'Yön' },
-          { key: 'amount', label: 'Tutar' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'movement_no', label: 'Hareket no', code: true },
-          { key: 'movement_date', label: 'Tarih', type: 'date', required: true },
-          { key: 'direction', label: 'Yön', type: 'select', options: ['Giris', 'Cikis', 'Virman'], required: true },
-          { key: 'amount', label: 'Tutar', type: 'number', required: true },
-          { key: 'currency_code', label: 'PB', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'bank_account_id', label: 'Banka hesabı', type: 'number' },
-          { key: 'cash_account_id', label: 'Kasa', type: 'number' },
-          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-          { key: 'muhasebelestir', label: 'Muhasebeleştir', type: 'checkbox' },
-          { key: 'karsi_hesap_kodu', label: 'Karşı hesap kodu' },
-          { key: 'description', label: 'Açıklama', name: true },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        defaults: { direction: 'Giris', currency_code: 'TRY', muhasebelestir: true },
-      },
-      {
-        id: 'mizan',
-        techId: 'FIN-TB-RPT-001',
-        businessNameEn: 'TrialBalanceReport',
-        title: 'Mizan',
-        endpoint: '/mizan',
-        crud: false,
-        codeField: 'account_code',
-        nameField: 'account_name',
-        filters: [
-          { key: 'account_code', label: 'Hesap kodu' },
-          { key: 'account_name', label: 'Hesap adı' },
-          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
-          { key: 'bitis', label: 'Bitiş', queryParam: true },
-        ],
-        columns: [
-          { key: 'account_code', label: 'Hesap', mono: true },
-          { key: 'account_name', label: 'Ad' },
-          { key: 'debit', label: 'Borç' },
-          { key: 'credit', label: 'Alacak' },
-          { key: 'bakiye', label: 'Bakiye' },
-        ],
-      },
-      {
-        id: 'finans-yevmiye',
-        techId: 'FIN-JL-RPT-001',
-        businessNameEn: 'JournalReport',
-        title: 'Yevmiye Defteri',
-        endpoint: '/finans-raporlar/yevmiye',
-        crud: false,
-        codeField: 'document_no',
-        nameField: 'account_code',
-        filters: [
-          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
-          { key: 'bitis', label: 'Bitiş', queryParam: true },
-        ],
-        columns: [
-          { key: 'document_date', label: 'Tarih' },
-          { key: 'journal_number', label: 'Yevmiye' },
-          { key: 'document_no', label: 'Belge', mono: true },
-          { key: 'account_code', label: 'Hesap', mono: true },
-          { key: 'account_name', label: 'Ad' },
-          { key: 'debit', label: 'Borç' },
-          { key: 'credit', label: 'Alacak' },
-        ],
-      },
-      {
-        id: 'finans-bilanco',
-        techId: 'FIN-BS-RPT-001',
-        businessNameEn: 'BalanceSheetReport',
-        title: 'Bilanço (Özet)',
-        endpoint: '/finans-raporlar/bilanco',
-        crud: false,
-        codeField: 'sinif',
-        nameField: 'first_name',
-        listResponseKey: 'satirlar',
-        filters: [
-          { key: 'bitis', label: 'Tarih', queryParam: true },
-          { key: 'country_code', label: 'Ülke', queryParam: true },
-        ],
-        columns: [
-          { key: 'sinif', label: 'Sınıf' },
-          { key: 'first_name', label: 'Kalem' },
-          { key: 'amount', label: 'Tutar' },
-        ],
-      },
-      {
-        id: 'finans-gelir-tablosu',
-        techId: 'FIN-PL-RPT-001',
-        businessNameEn: 'IncomeStatementReport',
-        title: 'Gelir Tablosu',
-        endpoint: '/finans-raporlar/gelir-tablosu',
-        crud: false,
-        codeField: 'account_code',
-        nameField: 'account_name',
-        listResponseKey: 'satirlar',
-        filters: [
-          { key: 'baslangic', label: 'Başlangıç', queryParam: true },
-          { key: 'bitis', label: 'Bitiş', queryParam: true },
-          { key: 'country_code', label: 'Ülke', queryParam: true },
-        ],
-        columns: [
-          { key: 'account_code', label: 'Hesap', mono: true },
-          { key: 'account_name', label: 'Ad' },
-          { key: 'debit', label: 'Borç' },
-          { key: 'credit', label: 'Alacak' },
-          { key: 'net', label: 'Net' },
-        ],
-      },
-      {
-        id: 'hesap-belirleme-kurallari',
-        techId: 'FIN-ACR-SCR-001',
-        businessNameEn: 'AccountDeterminationRuleScreen',
-        title: 'Hesap Belirleme Kuralları',
-        endpoint: '/hesap-belirleme-kurallari',
-        crud: true,
-        codeField: 'rule_code',
-        nameField: 'description',
-        filters: [
-          { key: 'rule_code', label: 'Kural' },
-          { key: 'document_type', label: 'Belge tipi' },
-        ],
-        columns: [
-          { key: 'rule_code', label: 'Kod', mono: true },
-          { key: 'document_type', label: 'Belge' },
-          { key: 'debit_account_code', label: 'Borç', mono: true },
-          { key: 'credit_account_code', label: 'Alacak', mono: true },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'rule_code', label: 'Kural kodu', code: true, required: true },
-          { key: 'document_type', label: 'Belge tipi', type: 'select', options: ['Satis', 'Alis'], required: true },
-          { key: 'debit_account_code', label: 'Borç hesap' },
-          { key: 'credit_account_code', label: 'Alacak hesap' },
-          { key: 'description', label: 'Açıklama', name: true },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'fiyat-listeleri',
-        techId: 'FIN-PRC-SCR-001',
-        businessNameEn: 'PriceListScreen',
-        title: 'Fiyat Listeleri',
-        endpoint: '/fiyat-listeleri',
-        crud: true,
-        codeField: 'list_code',
-        nameField: 'list_name',
-        numeratorSeri: 'FIYAT_LISTE',
-        filters: [
-          { key: 'list_code', label: 'Liste kodu' },
-          { key: 'list_name', label: 'Liste adı' },
-        ],
-        columns: [
-          { key: 'list_code', label: 'Kod', mono: true },
-          { key: 'list_name', label: 'Ad' },
-          { key: 'currency_code', label: 'PB' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'list_code', label: 'Liste kodu', code: true },
-          { key: 'list_name', label: 'Liste adı', name: true, required: true },
-          { key: 'currency_code', label: 'Para birimi' },
-          { key: 'start_date', label: 'Başlangıç', type: 'date' },
-          { key: 'end_date', label: 'Bitiş', type: 'date' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailFields: [
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
-          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
-          { key: 'min_quantity', label: 'Min miktar', type: 'number' },
-          { key: 'unit_price', label: 'Birim fiyat', type: 'number' },
-          { key: 'discount_rate', label: 'İskonto %', type: 'number' },
-        ],
-        detailKey: 'satirlar',
-        detailSlots: 5,
-      },
-      {
-        id: 'fatura-kontrolleri',
-        techId: 'FIN-3WAY-SCR-001',
-        businessNameEn: 'ThreeWayMatchScreen',
-        title: 'Fatura Kontrolleri (3-way)',
-        endpoint: '/fatura-kontrolleri',
-        crud: false,
-        readOnly: true,
-        filters: [
-          { key: 'invoice_no', label: 'Fatura' },
-          { key: 'result', label: 'Sonuç' },
-        ],
-        columns: [
-          { key: 'invoice_no', label: 'Fatura', mono: true },
-          { key: 'partner_name', label: 'Cari' },
-          { key: 'receipt_no', label: 'Mal kabul', mono: true },
-          { key: 'order_no', label: 'SA sipariş', mono: true },
-          { key: 'price_variance', label: 'Fiyat fark' },
-          { key: 'quantity_variance', label: 'Miktar fark' },
-          { key: 'result', label: 'Sonuç' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        masterFields: [
-          { key: 'invoice_id', label: 'Alış faturası', type: 'lookup', lookup: 'alis-faturalari', valueKey: 'id', labelKey: 'invoice_no' },
-          { key: 'goods_receipt_id', label: 'Mal kabul', type: 'lookup', lookup: 'mal-kabuller', valueKey: 'id', labelKey: 'receipt_no' },
-          { key: 'purchase_order_id', label: 'Satınalma siparişi', type: 'lookup', lookup: 'satin-alma-siparisleri', valueKey: 'id', labelKey: 'order_no' },
-          { key: 'invoice_no', label: 'Fatura no', code: true },
-          { key: 'receipt_no', label: 'Mal kabul no' },
-          { key: 'order_no', label: 'Sipariş no' },
-          { key: 'partner_name', label: 'Cari', name: true },
-          { key: 'price_variance', label: 'Fiyat farkı', type: 'number' },
-          { key: 'quantity_variance', label: 'Miktar farkı', type: 'number' },
-          { key: 'result', label: 'Sonuç', type: 'select', options: ['Bekliyor', 'Uyumlu', 'FiyatFark', 'MiktarFark', 'Askida'] },
-          { key: 'description', label: 'Açıklama' },
-        ],
-      },
-      {
-        id: 'kokpit',
-        techId: 'RPT-CPIT-SCR-001',
-        businessNameEn: 'CockpitDashboardScreen',
-        title: 'Kokpit',
-        endpoint: '/kokpit',
-        crud: false,
-        readOnly: true,
-        filters: [
-          { key: 'metrik', label: 'Metrik' },
-        ],
-        columns: [
-          { key: 'metrik', label: 'Metrik' },
-          { key: 'value', label: 'Değer', mono: true },
-        ],
-      },
-    ],
-  },
-
   {
     id: 'insan-kaynaklari',
     title: 'İnsan Kaynakları',
     sections: [
-      { id: 'ozluk', title: 'Özlük', screenIds: ['hr-personel'] },
-      { id: 'zaman', title: 'Zaman & İzin', screenIds: ['hr-izin-talepleri', 'hr-izin-bakiyeleri', 'hr-puantaj', 'hr-vardiya-atamalari'] },
-      { id: 'bordro', title: 'Ücret & Bordro', screenIds: ['hr-ucretler', 'hr-avanslar', 'hr-bordro-donemleri', 'hr-bordro-calismalari'] },
-      { id: 'ise-alim', title: 'İşe Alım & Çıkış', screenIds: ['hr-is-ilanlari', 'hr-adaylar', 'hr-onboarding', 'hr-zimmetler', 'hr-isten-cikis'] },
       {
-        id: 'tanimlar',
-        title: 'Tanımlar / Parametreler',
-        screenIds: [
-          'hr-departmanlar',
-          'hr-pozisyonlar',
-          'hr-calisma-takvimleri',
-          'hr-vardiyalar',
-          'hr-resmi-tatiller',
-          'hr-izin-turleri',
-          'hr-bordro-parametreleri',
-          'hr-cikis-nedenleri',
-        ],
+        id: 'ozluk',
+        title: 'Özlük',
+        screenIds: ['hr-personel'],
+      },
+      {
+        id: 'organizasyon',
+        title: 'Organizasyon',
+        screenIds: ['hr-departmanlar', 'hr-pozisyonlar'],
+      },
+      {
+        id: 'zaman',
+        title: 'Zaman ve Devam',
+        screenIds: ['hr-calisma-takvimleri', 'hr-vardiyalar', 'hr-vardiya-atamalari', 'hr-puantaj', 'hr-resmi-tatiller'],
+      },
+      {
+        id: 'izin',
+        title: 'İzin Yönetimi',
+        screenIds: ['hr-izin-turleri', 'hr-izin-talepleri', 'hr-izin-bakiyeleri'],
+      },
+      {
+        id: 'bordro',
+        title: 'Ücret ve Bordro',
+        screenIds: ['hr-ucretler', 'hr-avanslar', 'hr-bordro-parametreleri', 'hr-bordro-donemleri', 'hr-bordro-calismalari'],
+      },
+      {
+        id: 'ise-alim',
+        title: 'İşe Alım ve Çıkış',
+        screenIds: ['hr-is-ilanlari', 'hr-adaylar', 'hr-onboarding', 'hr-zimmetler', 'hr-isten-cikis', 'hr-cikis-nedenleri'],
       },
     ],
     screens: [
@@ -7334,6 +8037,56 @@ const MODULES = [
         ],
       },
       {
+        id: 'hr-vardiya-atamalari',
+        techId: 'HR-SHA-SCR-001',
+        businessNameEn: 'ShiftAssignmentScreen',
+        title: 'Vardiya Atamaları',
+        endpoint: '/hr-takvim/vardiya-atamalari',
+        crud: true,
+        columns: [
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'shift_code', label: 'Vardiya', mono: true },
+          { key: 'shift_name', label: 'Vardiya adı' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+        ],
+        masterFields: [
+          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
+          { key: 'shift_id', label: 'Vardiya', type: 'lookup', lookup: 'hr-vardiyalar', valueKey: 'id', labelKey: 'shift_name', codeKey: 'shift_code', required: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date', required: true },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+        ],
+      },
+      {
+        id: 'hr-puantaj',
+        techId: 'HR-ATT-SCR-001',
+        businessNameEn: 'AttendanceDayScreen',
+        title: 'Günlük Puantaj',
+        endpoint: '/hr-puantaj/gunluk',
+        crud: false,
+        readOnly: true,
+        columns: [
+          { key: 'work_date', label: 'Tarih' },
+          { key: 'employee_no', label: 'Sicil', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'planned_minutes', label: 'Plan (dk)' },
+          { key: 'actual_minutes', label: 'Gerçek (dk)' },
+          { key: 'overtime_minutes', label: 'FM (dk)' },
+          { key: 'status', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'work_date', label: 'Tarih' },
+          { key: 'planned_minutes', label: 'Plan' },
+          { key: 'actual_minutes', label: 'Gerçek' },
+          { key: 'overtime_minutes', label: 'Fazla mesai' },
+          { key: 'status', label: 'Durum' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
         id: 'hr-resmi-tatiller',
         techId: 'HR-HOL-SCR-001',
         businessNameEn: 'PublicHolidayScreen',
@@ -7353,40 +8106,6 @@ const MODULES = [
           { key: 'country_code', label: 'Ülke' },
           { key: 'year_no', label: 'Yıl', type: 'number' },
           { key: 'is_half_day', label: 'Yarım gün', type: 'checkbox' },
-        ],
-      },
-      {
-        id: 'hr-izin-talepleri',
-        techId: 'HR-LV-SCR-001',
-        businessNameEn: 'LeaveRequestScreen',
-        title: 'İzin Talepleri',
-        endpoint: '/hr-izin/talepler',
-        crud: true,
-        numeratorSeri: 'HR_LEAVE_REQ',
-        codeField: 'request_no',
-        approveAction: { label: 'Onayla', path: '/hr-izin/talepler/{id}/onayla' },
-        convertAction: { label: 'Gönder', path: '/hr-izin/talepler/{id}/gonder' },
-        columns: [
-          { key: 'request_no', label: 'No', mono: true },
-          { key: 'employee_no', label: 'Sicil', mono: true },
-          { key: 'first_name', label: 'Ad' },
-          { key: 'last_name', label: 'Soyad' },
-          { key: 'leave_name', label: 'İzin türü' },
-          { key: 'start_date', label: 'Başlangıç' },
-          { key: 'end_date', label: 'Bitiş' },
-          { key: 'quantity', label: 'Süre' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'request_no', label: 'Talep no', code: true },
-          { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
-          { key: 'leave_type_id', label: 'İzin türü', type: 'lookup', lookup: 'hr-izin-turleri', valueKey: 'id', labelKey: 'leave_name', codeKey: 'leave_code', required: true },
-          { key: 'start_date', label: 'Başlangıç', type: 'date', required: true },
-          { key: 'end_date', label: 'Bitiş', type: 'date', required: true },
-          { key: 'unit', label: 'Birim', type: 'select', options: ['Gun', 'Saat', 'YarimGun'] },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'status', label: 'Durum' },
-          { key: 'description', label: 'Açıklama' },
         ],
       },
       {
@@ -7436,57 +8155,38 @@ const MODULES = [
         },
       },
       {
-        id: 'hr-vardiya-atamalari',
-        techId: 'HR-SHA-SCR-001',
-        businessNameEn: 'ShiftAssignmentScreen',
-        title: 'Vardiya Atamaları',
-        endpoint: '/hr-takvim/vardiya-atamalari',
+        id: 'hr-izin-talepleri',
+        techId: 'HR-LV-SCR-001',
+        businessNameEn: 'LeaveRequestScreen',
+        title: 'İzin Talepleri',
+        endpoint: '/hr-izin/talepler',
         crud: true,
+        numeratorSeri: 'HR_LEAVE_REQ',
+        codeField: 'request_no',
+        approveAction: { label: 'Onayla', path: '/hr-izin/talepler/{id}/onayla' },
+        convertAction: { label: 'Gönder', path: '/hr-izin/talepler/{id}/gonder' },
         columns: [
+          { key: 'request_no', label: 'No', mono: true },
           { key: 'employee_no', label: 'Sicil', mono: true },
           { key: 'first_name', label: 'Ad' },
           { key: 'last_name', label: 'Soyad' },
-          { key: 'shift_code', label: 'Vardiya', mono: true },
-          { key: 'shift_name', label: 'Vardiya adı' },
+          { key: 'leave_name', label: 'İzin türü' },
           { key: 'start_date', label: 'Başlangıç' },
           { key: 'end_date', label: 'Bitiş' },
+          { key: 'quantity', label: 'Süre' },
+          { key: 'status', label: 'Durum' },
         ],
         masterFields: [
+          { key: 'request_no', label: 'Talep no', code: true },
           { key: 'employee_id', label: 'Personel', type: 'lookup', lookup: 'hr-personel', valueKey: 'id', labelKey: 'first_name', codeKey: 'employee_no', required: true },
-          { key: 'shift_id', label: 'Vardiya', type: 'lookup', lookup: 'hr-vardiyalar', valueKey: 'id', labelKey: 'shift_name', codeKey: 'shift_code', required: true },
+          { key: 'leave_type_id', label: 'İzin türü', type: 'lookup', lookup: 'hr-izin-turleri', valueKey: 'id', labelKey: 'leave_name', codeKey: 'leave_code', required: true },
           { key: 'start_date', label: 'Başlangıç', type: 'date', required: true },
-          { key: 'end_date', label: 'Bitiş', type: 'date' },
-        ],
-      },
-      {
-        id: 'hr-cikis-nedenleri',
-        techId: 'HR-TRR-SCR-001',
-        businessNameEn: 'TerminationReasonScreen',
-        title: 'Çıkış Nedenleri',
-        endpoint: '/hr-ise-alim/cikis-nedenleri',
-        crud: true,
-        codeField: 'reason_code',
-        nameField: 'reason_name',
-        columns: [
-          { key: 'reason_code', label: 'Kod', mono: true },
-          { key: 'reason_name', label: 'Ad' },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'severance_default', label: 'Kıdem varsayılan' },
-          { key: 'notice_default', label: 'İhbar varsayılan' },
-          { key: 'requires_document', label: 'Belge' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'reason_code', label: 'Kod', code: true, required: true, editableOnNew: true },
-          { key: 'reason_name', label: 'Ad', name: true, required: true },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'severance_default', label: 'Kıdem uygun varsayılan', type: 'checkbox' },
-          { key: 'notice_default', label: 'İhbar uygun varsayılan', type: 'checkbox' },
-          { key: 'requires_document', label: 'Belge zorunlu', type: 'checkbox' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'end_date', label: 'Bitiş', type: 'date', required: true },
+          { key: 'unit', label: 'Birim', type: 'select', options: ['Gun', 'Saat', 'YarimGun'] },
+          { key: 'quantity', label: 'Miktar', type: 'number' },
+          { key: 'status', label: 'Durum' },
           { key: 'description', label: 'Açıklama' },
         ],
-        defaults: { country_code: 'TR', is_active: true },
       },
       {
         id: 'hr-izin-bakiyeleri',
@@ -7511,33 +8211,6 @@ const MODULES = [
           { key: 'leave_name', label: 'İzin türü' },
           { key: 'year_no', label: 'Yıl' },
           { key: 'closing_balance', label: 'Kalan' },
-        ],
-      },
-      {
-        id: 'hr-puantaj',
-        techId: 'HR-ATT-SCR-001',
-        businessNameEn: 'AttendanceDayScreen',
-        title: 'Günlük Puantaj',
-        endpoint: '/hr-puantaj/gunluk',
-        crud: false,
-        readOnly: true,
-        columns: [
-          { key: 'work_date', label: 'Tarih' },
-          { key: 'employee_no', label: 'Sicil', mono: true },
-          { key: 'first_name', label: 'Ad' },
-          { key: 'last_name', label: 'Soyad' },
-          { key: 'planned_minutes', label: 'Plan (dk)' },
-          { key: 'actual_minutes', label: 'Gerçek (dk)' },
-          { key: 'overtime_minutes', label: 'FM (dk)' },
-          { key: 'status', label: 'Durum' },
-        ],
-        masterFields: [
-          { key: 'work_date', label: 'Tarih' },
-          { key: 'planned_minutes', label: 'Plan' },
-          { key: 'actual_minutes', label: 'Gerçek' },
-          { key: 'overtime_minutes', label: 'Fazla mesai' },
-          { key: 'status', label: 'Durum' },
-          { key: 'description', label: 'Açıklama' },
         ],
       },
       {
@@ -7594,65 +8267,6 @@ const MODULES = [
           { key: 'amount', label: 'Tutar', type: 'number', required: true },
           { key: 'currency_code', label: 'PB' },
           { key: 'status', label: 'Durum' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-      },
-      {
-        id: 'hr-bordro-donemleri',
-        techId: 'HR-PRP-SCR-001',
-        businessNameEn: 'PayrollPeriodScreen',
-        title: 'Bordro Dönemleri',
-        endpoint: '/hr-bordro/donemler',
-        crud: true,
-        codeField: 'period_code',
-        columns: [
-          { key: 'period_code', label: 'Dönem', mono: true },
-          { key: 'year_no', label: 'Yıl' },
-          { key: 'month_no', label: 'Ay' },
-          { key: 'start_date', label: 'Başlangıç' },
-          { key: 'end_date', label: 'Bitiş' },
-          { key: 'status', label: 'Durum' },
-          { key: 'country_code', label: 'Ülke' },
-        ],
-        masterFields: [
-          { key: 'period_code', label: 'Dönem kodu', code: true },
-          { key: 'year_no', label: 'Yıl', type: 'number', required: true },
-          { key: 'month_no', label: 'Ay', type: 'number', required: true },
-          { key: 'start_date', label: 'Başlangıç', type: 'date' },
-          { key: 'end_date', label: 'Bitiş', type: 'date' },
-          { key: 'country_code', label: 'Ülke' },
-          { key: 'status', label: 'Durum' },
-        ],
-      },
-      {
-        id: 'hr-bordro-calismalari',
-        techId: 'HR-PRR-SCR-001',
-        businessNameEn: 'PayrollRunScreen',
-        title: 'Bordro Çalışmaları',
-        endpoint: '/hr-bordro/calismalar',
-        crud: true,
-        numeratorSeri: 'HR_PAYROLL_RUN',
-        codeField: 'run_no',
-        approveAction: { label: 'Onayla', path: '/hr-bordro/calismalar/{id}/onayla' },
-        convertAction: { label: 'Kesinleştir', path: '/hr-bordro/calismalar/{id}/kesinlestir' },
-        secondaryAction: { label: 'Hesapla', path: '/hr-bordro/calismalar/{id}/hesapla' },
-        columns: [
-          { key: 'run_no', label: 'No', mono: true },
-          { key: 'period_code', label: 'Dönem' },
-          { key: 'status', label: 'Durum' },
-          { key: 'employee_count', label: 'Kişi' },
-          { key: 'total_gross', label: 'Toplam brüt' },
-          { key: 'total_net', label: 'Toplam net' },
-          { key: 'total_employer_cost', label: 'İşveren maliyeti' },
-        ],
-        masterFields: [
-          { key: 'run_no', label: 'Çalışma no', code: true },
-          { key: 'period_id', label: 'Dönem', type: 'lookup', lookup: 'hr-bordro-donemleri', valueKey: 'id', labelKey: 'period_code', required: true },
-          { key: 'status', label: 'Durum' },
-          { key: 'employee_count', label: 'Personel sayısı', type: 'number' },
-          { key: 'total_gross', label: 'Toplam brüt', type: 'number' },
-          { key: 'total_net', label: 'Toplam net', type: 'number' },
-          { key: 'total_employer_cost', label: 'İşveren maliyeti', type: 'number' },
           { key: 'description', label: 'Açıklama' },
         ],
       },
@@ -7719,6 +8333,65 @@ const MODULES = [
         defaults: { country_code: 'TR', is_active: true },
       },
       {
+        id: 'hr-bordro-donemleri',
+        techId: 'HR-PRP-SCR-001',
+        businessNameEn: 'PayrollPeriodScreen',
+        title: 'Bordro Dönemleri',
+        endpoint: '/hr-bordro/donemler',
+        crud: true,
+        codeField: 'period_code',
+        columns: [
+          { key: 'period_code', label: 'Dönem', mono: true },
+          { key: 'year_no', label: 'Yıl' },
+          { key: 'month_no', label: 'Ay' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'status', label: 'Durum' },
+          { key: 'country_code', label: 'Ülke' },
+        ],
+        masterFields: [
+          { key: 'period_code', label: 'Dönem kodu', code: true },
+          { key: 'year_no', label: 'Yıl', type: 'number', required: true },
+          { key: 'month_no', label: 'Ay', type: 'number', required: true },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'status', label: 'Durum' },
+        ],
+      },
+      {
+        id: 'hr-bordro-calismalari',
+        techId: 'HR-PRR-SCR-001',
+        businessNameEn: 'PayrollRunScreen',
+        title: 'Bordro Çalışmaları',
+        endpoint: '/hr-bordro/calismalar',
+        crud: true,
+        numeratorSeri: 'HR_PAYROLL_RUN',
+        codeField: 'run_no',
+        approveAction: { label: 'Onayla', path: '/hr-bordro/calismalar/{id}/onayla' },
+        convertAction: { label: 'Kesinleştir', path: '/hr-bordro/calismalar/{id}/kesinlestir' },
+        secondaryAction: { label: 'Hesapla', path: '/hr-bordro/calismalar/{id}/hesapla' },
+        columns: [
+          { key: 'run_no', label: 'No', mono: true },
+          { key: 'period_code', label: 'Dönem' },
+          { key: 'status', label: 'Durum' },
+          { key: 'employee_count', label: 'Kişi' },
+          { key: 'total_gross', label: 'Toplam brüt' },
+          { key: 'total_net', label: 'Toplam net' },
+          { key: 'total_employer_cost', label: 'İşveren maliyeti' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true },
+          { key: 'period_id', label: 'Dönem', type: 'lookup', lookup: 'hr-bordro-donemleri', valueKey: 'id', labelKey: 'period_code', required: true },
+          { key: 'status', label: 'Durum' },
+          { key: 'employee_count', label: 'Personel sayısı', type: 'number' },
+          { key: 'total_gross', label: 'Toplam brüt', type: 'number' },
+          { key: 'total_net', label: 'Toplam net', type: 'number' },
+          { key: 'total_employer_cost', label: 'İşveren maliyeti', type: 'number' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+      },
+      {
         id: 'hr-is-ilanlari',
         techId: 'HR-JOB-SCR-001',
         businessNameEn: 'JobRequisitionScreen',
@@ -7779,7 +8452,7 @@ const MODULES = [
         id: 'hr-onboarding',
         techId: 'HR-ONB-SCR-001',
         businessNameEn: 'OnboardingTaskScreen',
-        title: 'Onboarding Görevleri',
+        title: 'İşe Giriş Görevleri',
         endpoint: '/hr-ise-alim/onboarding',
         crud: false,
         readOnly: true,
@@ -7866,12 +8539,886 @@ const MODULES = [
           { key: 'description', label: 'Açıklama' },
         ],
       },
+      {
+        id: 'hr-cikis-nedenleri',
+        techId: 'HR-TRR-SCR-001',
+        businessNameEn: 'TerminationReasonScreen',
+        title: 'Çıkış Nedenleri',
+        endpoint: '/hr-ise-alim/cikis-nedenleri',
+        crud: true,
+        codeField: 'reason_code',
+        nameField: 'reason_name',
+        columns: [
+          { key: 'reason_code', label: 'Kod', mono: true },
+          { key: 'reason_name', label: 'Ad' },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'severance_default', label: 'Kıdem varsayılan' },
+          { key: 'notice_default', label: 'İhbar varsayılan' },
+          { key: 'requires_document', label: 'Belge' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'reason_code', label: 'Kod', code: true, required: true, editableOnNew: true },
+          { key: 'reason_name', label: 'Ad', name: true, required: true },
+          { key: 'country_code', label: 'Ülke' },
+          { key: 'severance_default', label: 'Kıdem uygun varsayılan', type: 'checkbox' },
+          { key: 'notice_default', label: 'İhbar uygun varsayılan', type: 'checkbox' },
+          { key: 'requires_document', label: 'Belge zorunlu', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        defaults: { country_code: 'TR', is_active: true },
+      },
     ],
   },
-
+  {
+    id: 'onay',
+    title: 'Onay Yönetimi',
+    sections: [
+      {
+        id: 'operasyon',
+        title: 'Onay İşlemleri',
+        screenIds: ['onaylarim', 'onay-izleme', 'onay-yetki-devri'],
+      },
+      {
+        id: 'tanimlamalar',
+        title: 'Tanımlamalar',
+        screenIds: ['onay-role-tanim', 'onay-kural-tanim', 'onay-rota-tanim', 'onay-message-template', 'onay-status-tanim', 'onay-modul-kullanimlari'],
+      },
+    ],
+    screens: [
+      {
+        id: 'onaylarim',
+        techId: 'SYS-APR-SCR-001',
+        businessNameEn: 'MyApprovalsScreen',
+        title: 'Onaylarım',
+        endpoint: '/onay-kayitlari?benim=true',
+        crud: false,
+        readOnly: false,
+        codeField: 'approval_no',
+        nameField: 'document_summary',
+        approveAction: { label: 'Onayla', path: '/onay-kayitlari/{id}/onayla' },
+        banner: 'Size (rolünüz / yetki devri) atanmış bekleyen onaylar. İncele → Onayla veya Reddet.',
+        filters: [
+          { key: 'approval_no', label: 'Onay no' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'module_code', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'approval_no', label: 'Onay', mono: true },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'document_summary', label: 'Özet' },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'active_step_no', label: 'Adım' },
+          { key: 'start_date', label: 'Başlama' },
+        ],
+        masterFields: [
+          { key: 'approval_no', label: 'Onay no', code: true },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'screen_id', label: 'Ekran' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'document_summary', label: 'Özet', name: true },
+          { key: 'amount', label: 'Tutar', type: 'number' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'route_name', label: 'Rota' },
+          { key: 'baslatan_adi', label: 'Başlatan' },
+          { key: 'description', label: 'Açıklama / not' },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+          { key: 'step_name', label: 'Adım' },
+          { key: 'role_name', label: 'Rol' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'onaylayan_adi', label: 'Onaylayan' },
+          { key: 'notes', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+      },
+      {
+        id: 'onay-izleme',
+        techId: 'SYS-APR-SCR-002',
+        businessNameEn: 'ApprovalMonitoringScreen',
+        title: 'Onay İzleme',
+        endpoint: '/onay-kayitlari',
+        crud: false,
+        readOnly: true,
+        codeField: 'approval_no',
+        nameField: 'document_summary',
+        banner: 'Tüm onay kayıtları — durum, belge ve rota izi.',
+        filters: [
+          { key: 'approval_no', label: 'Onay no' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'screen_id', label: 'Ekran' },
+        ],
+        columns: [
+          { key: 'approval_no', label: 'Onay', mono: true },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'screen_id', label: 'Ekran', mono: true },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'route_name', label: 'Rota' },
+          { key: 'baslatan_adi', label: 'Başlatan' },
+          { key: 'start_date', label: 'Başlama' },
+          { key: 'closed_at', label: 'Kapanış' },
+        ],
+        masterFields: [
+          { key: 'approval_no', label: 'Onay no', code: true },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'screen_id', label: 'Ekran' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'document_summary', label: 'Özet', name: true },
+          { key: 'amount', label: 'Tutar', type: 'number' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'route_name', label: 'Rota' },
+          { key: 'usage_name', label: 'Kullanım' },
+          { key: 'baslatan_adi', label: 'Başlatan' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+          { key: 'step_name', label: 'Adım' },
+          { key: 'role_name', label: 'Rol' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'onaylayan_adi', label: 'Onaylayan' },
+          { key: 'action_date', label: 'İşlem' },
+          { key: 'notes', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+      },
+      {
+        id: 'onay-yetki-devri',
+        techId: 'SYS-APR-SCR-003',
+        businessNameEn: 'ApprovalDelegationScreen',
+        title: 'Onay Yetki Devri',
+        endpoint: '/onay-yetki-devirleri',
+        crud: true,
+        numeratorSeri: 'ONAY_DEVIR',
+        codeField: 'delegation_code',
+        nameField: 'description',
+        filters: [
+          { key: 'delegation_code', label: 'Devir kodu' },
+          { key: 'veren_kodu', label: 'Veren' },
+          { key: 'alan_kodu', label: 'Alan' },
+        ],
+        columns: [
+          { key: 'delegation_code', label: 'Kod', mono: true },
+          { key: 'veren_adi', label: 'Veren' },
+          { key: 'alan_adi', label: 'Alan' },
+          { key: 'role_name', label: 'Rol' },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'delegation_code', label: 'Devir kodu', code: true },
+          { key: 'delegator_user_id', label: 'Yetkiyi veren', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code', required: true },
+          { key: 'delegate_user_id', label: 'Yetkiyi alan', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code', required: true },
+          { key: 'role_id', label: 'Rol (boş = tüm roller)', type: 'lookup', lookup: 'onay-rolleri', valueKey: 'id', labelKey: 'role_name', codeKey: 'role_code' },
+          { key: 'start_date', label: 'Başlangıç', type: 'date', required: true },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+        ],
+        detailFields: [
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'onay-role-tanim',
+        techId: 'SYS-APR-SCR-004',
+        businessNameEn: 'ApprovalRoleScreen',
+        title: 'Onay Rolleri',
+        endpoint: '/onay-rolleri',
+        crud: true,
+        numeratorSeri: 'ONAY_ROL',
+        codeField: 'role_code',
+        nameField: 'role_name',
+        banner: 'Bir kişiye, firma ve iş yeri kapsamında onay rolü verilir. Rotadaki adımlar bu rol adına bakar.',
+        filters: [
+          { key: 'role_name', label: 'Rol adı' },
+          { key: 'kisi_adi', label: 'Kişi' },
+          { key: 'company_code', label: 'Firma' },
+        ],
+        columns: [
+          { key: 'role_name', label: 'Rol adı' },
+          { key: 'kisi_adi', label: 'Kişi' },
+          { key: 'user_code', label: 'Kullanıcı', mono: true },
+          { key: 'company_name', label: 'Firma' },
+          { key: 'plant_name', label: 'İş yeri' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'user_id', label: 'Kişi', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'first_name', codeKey: 'user_code', required: true },
+          { key: 'role_name', label: 'Onay rol adı', name: true, required: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', required: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', required: true },
+        ],
+        detailFields: [
+          { key: 'role_code', label: 'Kayıt kodu', code: true },
+          { key: 'description', label: 'Not' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { is_active: true },
+      },
+      {
+        id: 'onay-kural-tanim',
+        techId: 'SYS-APR-SCR-005',
+        businessNameEn: 'ApprovalRuleScreen',
+        title: 'Onay Kuralları',
+        endpoint: '/onay-kurallari',
+        crud: true,
+        numeratorSeri: 'ONAY_KURAL',
+        codeField: 'rule_code',
+        nameField: 'rule_name',
+        banner: 'Hangi ekranda onay devreye girer? Koşullar VE mantığıyla çalışır — işaretlediklerinizin / doldurduklarınızın tümü sağlanmalı.',
+        filters: [
+          { key: 'rule_name', label: 'Kural adı' },
+          { key: 'screen_id', label: 'Ekran' },
+          { key: 'company_code', label: 'Firma' },
+        ],
+        columns: [
+          { key: 'line_no', label: 'Sıra' },
+          { key: 'rule_code', label: 'Kod', mono: true },
+          { key: 'rule_name', label: 'Ad' },
+          { key: 'screen_id', label: 'Ekran', mono: true },
+          { key: 'company_name', label: 'Firma' },
+          { key: 'plant_name', label: 'İş yeri' },
+          { key: 'template_name', label: 'Mesaj' },
+          { key: 'auto_approve', label: 'Oto. onay' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'line_no', label: 'Öncelik sırası', type: 'number', required: true },
+          { key: 'rule_code', label: 'Kural kodu', code: true },
+          { key: 'rule_name', label: 'Kural adı', name: true, required: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          {
+            key: 'screen_id',
+            label: 'Ekran (onaylanacak belge)',
+            type: 'lookup',
+            lookup: 'onay-ekranlari',
+            valueKey: 'screen_id',
+            labelKey: 'screen_name',
+            codeKey: 'screen_id',
+            required: true,
+          },
+          {
+            key: 'template_id',
+            label: 'Mesaj şablonu',
+            type: 'lookup',
+            lookup: 'onay-message-sablonlari',
+            valueKey: 'id',
+            labelKey: 'template_name',
+            codeKey: 'template_code',
+          },
+          { key: 'term_direction', label: 'Belge yönü', type: 'select', options: ['Hepsi', 'Alis', 'Satis'] },
+          { key: 'term_min_amount', label: 'Min. tutar', type: 'number' },
+          { key: 'term_max_amount', label: 'Max. tutar', type: 'number' },
+          { key: 'condition_statuses', label: 'Belge durumları (virgülle; boş = tümü)' },
+          { key: 'auto_approve', label: 'Koşul sağlanırsa otomatik onayla', type: 'checkbox' },
+          { key: 'activate_on_approval', label: 'Onaylanınca belgeyi aktif et', type: 'checkbox' },
+          { key: 'is_active', label: 'Kural aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          {
+            key: 'movement_code_id',
+            label: 'Hareket kodu',
+            type: 'lookup',
+            lookup: 'hareket-kodlari',
+            valueKey: 'id',
+            labelKey: 'movement_name',
+            codeKey: 'movement_code',
+            required: true,
+          },
+        ],
+        detailKey: 'hareketler',
+        defaults: {
+          line_no: 10,
+          term_direction: 'Hepsi',
+          auto_approve: false,
+          activate_on_approval: true,
+          is_active: true,
+          hareketler: [],
+        },
+      },
+      {
+        id: 'onay-rota-tanim',
+        techId: 'SYS-APR-SCR-006',
+        businessNameEn: 'ApprovalRouteScreen',
+        title: 'Onay Rotaları',
+        endpoint: '/onay-rotalari',
+        crud: true,
+        numeratorSeri: 'ONAY_ROTA',
+        codeField: 'route_code',
+        nameField: 'route_name',
+        banner: 'Kural + ekran bağlandıktan sonra onayın kimden kime gideceği burada adım adım kurulur.',
+        filters: [
+          { key: 'route_name', label: 'Rota adı' },
+          { key: 'screen_id', label: 'Ekran' },
+          { key: 'rule_name', label: 'Kural' },
+        ],
+        columns: [
+          { key: 'route_code', label: 'Kod', mono: true },
+          { key: 'route_name', label: 'Ad' },
+          { key: 'version_no', label: 'Sürüm' },
+          { key: 'screen_id', label: 'Ekran', mono: true },
+          { key: 'rule_name', label: 'Kural' },
+          { key: 'company_name', label: 'Firma' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'route_code', label: 'Rota kodu', code: true },
+          { key: 'route_name', label: 'Rota adı', name: true, required: true },
+          { key: 'version_no', label: 'Sürüm', type: 'number' },
+          {
+            key: 'screen_id',
+            label: 'Ekran',
+            type: 'lookup',
+            lookup: 'onay-ekranlari',
+            valueKey: 'screen_id',
+            labelKey: 'screen_name',
+            codeKey: 'screen_id',
+          },
+          {
+            key: 'rule_id',
+            label: 'Bağlı kural',
+            type: 'lookup',
+            lookup: 'onay-kurallari',
+            valueKey: 'id',
+            labelKey: 'rule_name',
+            codeKey: 'rule_code',
+          },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          {
+            key: 'first_message_template_id',
+            label: 'İlk onay mesajı',
+            type: 'lookup',
+            lookup: 'onay-message-sablonlari',
+            valueKey: 'id',
+            labelKey: 'template_name',
+            codeKey: 'template_code',
+          },
+          {
+            key: 'reject_message_template_id',
+            label: 'Red mesajı',
+            type: 'lookup',
+            lookup: 'onay-message-sablonlari',
+            valueKey: 'id',
+            labelKey: 'template_name',
+            codeKey: 'template_code',
+          },
+          {
+            key: 'extra_message_template_id',
+            label: 'Ek message',
+            type: 'lookup',
+            lookup: 'onay-message-sablonlari',
+            valueKey: 'id',
+            labelKey: 'template_name',
+            codeKey: 'template_code',
+          },
+          { key: 'cancel_role_name', label: 'İptali onaylayacak rol adı' },
+          { key: 'attach_file_to_mail', label: 'Ekleri mail ile gönder', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Adım no', type: 'number', required: true },
+          { key: 'step_name', label: 'Adım açıklaması' },
+          { key: 'role_name', label: 'Onay rol adı', required: true },
+          { key: 'send_mail', label: 'Mail gönder', type: 'checkbox' },
+          { key: 'send_sms', label: 'SMS gönder', type: 'checkbox' },
+          { key: 'value_editable', label: 'Değer değiştirebilir', type: 'checkbox' },
+          { key: 'min_amount', label: 'Bu adım için min. tutar', type: 'number' },
+          { key: 'send_back_line', label: 'Düzeltmede dönülecek adım no', type: 'number' },
+          { key: 'is_required', label: 'Zorunlu', type: 'checkbox' },
+          { key: 'description', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+        defaults: { version_no: 1, is_active: true, attach_file_to_mail: false, adimlar: [] },
+      },
+      {
+        id: 'onay-message-template',
+        techId: 'SYS-APR-SCR-007',
+        businessNameEn: 'ApprovalMessageTemplateScreen',
+        title: 'Onay Mesaj Şablonları',
+        endpoint: '/onay-message-sablonlari',
+        crud: true,
+        numeratorSeri: 'ONAY_SABLON',
+        codeField: 'template_code',
+        nameField: 'template_name',
+        filters: [
+          { key: 'template_code', label: 'Kod' },
+          { key: 'event_code', label: 'Olay' },
+        ],
+        columns: [
+          { key: 'template_code', label: 'Kod', mono: true },
+          { key: 'template_name', label: 'Ad' },
+          { key: 'event_code', label: 'Olay' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'template_code', label: 'Şablon kodu', code: true },
+          { key: 'template_name', label: 'Şablon adı', name: true, required: true },
+          { key: 'event_code', label: 'Olay', type: 'select', options: ['Bekleme', 'Onay', 'Red', 'Devret', 'Iptal', 'Tamam'], required: true },
+          { key: 'subject', label: 'Konu' },
+        ],
+        detailFields: [
+          { key: 'body_text', label: 'Gövde ({{document_no}}, {{module}}, {{amount}}, {{onayci}}, {{gerekce}})' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'onay-status-tanim',
+        techId: 'SYS-APR-SCR-008',
+        businessNameEn: 'ApprovalStatusScreen',
+        title: 'Onay Durumları',
+        endpoint: '/onay-durumlari',
+        crud: true,
+        codeField: 'status_code',
+        nameField: 'status_name',
+        filters: [
+          { key: 'status_code', label: 'Kod' },
+          { key: 'status_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'status_code', label: 'Kod', mono: true },
+          { key: 'status_name', label: 'Ad' },
+          { key: 'line_no', label: 'Sıra' },
+          { key: 'is_final', label: 'Nihai' },
+          { key: 'is_positive', label: 'Olumlu' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'status_code', label: 'Durum kodu', code: true, required: true },
+          { key: 'status_name', label: 'Durum adı', name: true, required: true },
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+        ],
+        detailFields: [
+          { key: 'is_final', label: 'Nihai durum', type: 'checkbox' },
+          { key: 'is_positive', label: 'Olumlu (onay)', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'onay-modul-kullanimlari',
+        techId: 'SYS-APR-SCR-USG',
+        businessNameEn: 'ApprovalModuleUsageScreen',
+        title: 'Onay Modül Kullanımları',
+        endpoint: '/onay-module-kullanimlari',
+        crud: true,
+        numeratorSeri: 'ONAY_KULLANIM',
+        codeField: 'usage_code',
+        nameField: 'usage_name',
+        columns: [
+          { key: 'usage_code', label: 'Kod', mono: true },
+          { key: 'usage_name', label: 'Ad' },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'screen_id', label: 'Ekran' },
+          { key: 'route_code', label: 'Rota' },
+          { key: 'company_name', label: 'Firma' },
+          { key: 'min_amount', label: 'Min tutar' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'usage_code', label: 'Kullanım kodu', code: true },
+          { key: 'usage_name', label: 'Ad', name: true, required: true },
+          { key: 'module_code', label: 'Modül kodu', required: true },
+          { key: 'screen_id', label: 'Ekran id', required: true },
+          { key: 'route_id', label: 'Onay rotası', type: 'lookup', lookup: 'onay-rota-tanim', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true },
+          { key: 'company_id', label: 'Firma (opsiyonel)', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'template_id', label: 'Mesaj şablonu', type: 'lookup', lookup: 'onay-message-template', valueKey: 'id', labelKey: 'template_name', codeKey: 'template_code' },
+          { key: 'min_amount', label: 'Min tutar', type: 'number' },
+          { key: 'auto_send', label: 'Otomatik gönder', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        defaults: { is_active: true, min_amount: 0 },
+      },
+    ],
+  },
+  {
+    id: 'sistem',
+    title: 'Sistem',
+    sections: [
+      {
+        id: 'kullanicilar',
+        title: 'Kullanıcılar ve Yetkiler',
+        screenIds: ['kullanicilar', 'kullanici-gruplari'],
+      },
+      {
+        id: 'parametreler',
+        title: 'Parametreler',
+        screenIds: ['sistem-parametreleri', 'zorunlu-alan-tanimlari', 'mesaj-tanimlari'],
+      },
+      {
+        id: 'iletisim',
+        title: 'İletişim',
+        screenIds: ['eposta-gonderimleri'],
+      },
+      {
+        id: 'guncelleme',
+        title: 'Güncelleme',
+        screenIds: ['sistem-guncelleme'],
+      },
+      {
+        id: 'gozlem',
+        title: 'Teknik Gözlem',
+        screenIds: ['audit-log', 'tablo-bilgileri', 'sql-sorgu', 'sayfa-sorgulari'],
+      },
+    ],
+    screens: [
+      {
+        id: 'kullanicilar',
+        techId: 'SYS-USR-SCR-001',
+        businessNameEn: 'UsersScreen',
+        title: 'Kullanıcılar',
+        endpoint: '/kullanicilar',
+        crud: true,
+        codeField: 'username',
+        nameField: 'first_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'username', label: 'Kullanıcı adı' },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'role', label: 'Rol' },
+          { key: 'group_code', label: 'Grup' },
+        ],
+        columns: [
+          { key: 'username', label: 'Kullanıcı adı', mono: true },
+          { key: 'first_name', label: 'Ad' },
+          { key: 'last_name', label: 'Soyad' },
+          { key: 'role', label: 'Rol' },
+          { key: 'group_code', label: 'Grup', mono: true },
+          { key: 'parola_var', label: 'Şifre' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'username', label: 'Kullanıcı adı', required: true },
+          { key: 'sifre', label: 'Şifre', type: 'password', requiredOnNew: true },
+          { key: 'first_name', label: 'Ad', name: true, required: true },
+          { key: 'last_name', label: 'Soyad', required: true },
+          { key: 'title', label: 'Ünvan' },
+          { key: 'role', label: 'Rol', type: 'select', options: ['Yonetici', 'Personel', 'Satinalma', 'Uretim', 'Finans'] },
+          {
+            key: 'group_code',
+            label: 'Grup',
+            type: 'lookup',
+            lookup: 'kullanici-gruplari',
+            valueKey: 'group_code',
+            labelKey: 'group_name',
+            codeKey: 'group_code',
+            required: true,
+          },
+        ],
+        detailFields: [
+          { key: 'email_address', label: 'E-posta' },
+          { key: 'phone', label: 'Telefon' },
+          { key: 'user_code', label: 'Kullanıcı kodu (opsiyonel)' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: {
+          role: 'Yonetici',
+          group_code: 'ADMIN',
+          is_active: true,
+          yetkiler: [],
+          sql_permissions: { can_select: true, can_insert: false, can_update: false, can_delete: false },
+        },
+        kullaniciYetkiPaneli: true,
+      },
+      {
+        id: 'kullanici-gruplari',
+        techId: 'SYS-GRP-SCR-001',
+        businessNameEn: 'UserGroupsScreen',
+        title: 'Kullanıcı Grupları',
+        endpoint: '/kullanici-gruplari',
+        crud: true,
+        codeField: 'group_code',
+        nameField: 'group_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'group_code', label: 'Grup kodu' },
+          { key: 'group_name', label: 'Grup adı' },
+        ],
+        columns: [
+          { key: 'group_code', label: 'Kod', mono: true },
+          { key: 'group_name', label: 'Ad' },
+          { key: 'can_approve_purchase', label: 'SA onay' },
+          { key: 'can_quality_control', label: 'Kalite' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'group_code', label: 'Grup kodu', code: true, editableOnNew: true, required: true },
+          { key: 'group_name', label: 'Grup adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'purchase_requisition_ref', label: 'SA talep oluşturabilir', type: 'checkbox' },
+          { key: 'can_approve_purchase', label: 'SA onay yetkisi', type: 'checkbox' },
+          { key: 'can_quality_control', label: 'Kalite kontrol yetkisi', type: 'checkbox' },
+          { key: 'module_permissions', label: 'Modül yetkileri JSON (["*"] veya ["stok","satis"])' },
+          { key: 'warehouse_permissions', label: 'Depo yetkileri JSON (["*"] veya depo kodları)' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'sistem-parametreleri',
+        techId: 'SYS-PRM-SCR-001',
+        businessNameEn: 'SystemParametersScreen',
+        title: 'Sistem Parametreleri',
+        endpoint: '/sistem-parametreleri',
+        crud: true,
+        codeField: 'parameter_code',
+        nameField: 'parameter_name',
+        numeratorSeri: null,
+        filters: [
+          { key: 'parameter_code', label: 'Parametre' },
+          { key: 'module', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'parameter_code', label: 'Kod', mono: true },
+          { key: 'parameter_name', label: 'Ad' },
+          { key: 'value', label: 'Değer' },
+          { key: 'module', label: 'Modül' },
+        ],
+        masterFields: [
+          { key: 'parameter_code', label: 'Parametre kodu', code: true, editableOnNew: true, required: true },
+          { key: 'parameter_name', label: 'Parametre adı', name: true, required: true },
+          { key: 'value', label: 'Değer' },
+        ],
+        detailFields: [
+          { key: 'module', label: 'Modül' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'zorunlu-alan-tanimlari',
+        techId: 'SYS-REQ-SCR-001',
+        businessNameEn: 'RequiredFieldDefinitionScreen',
+        title: 'Zorunlu Alanlar',
+        endpoint: '/zorunlu-alan-tanimlari',
+        crud: true,
+        codeField: 'field_key',
+        nameField: 'field_label',
+        numeratorSeri: null,
+        filters: [
+          { key: 'screen_title', label: 'Ekran' },
+          { key: 'field_key', label: 'Alan' },
+          { key: 'is_required', label: 'Zorunlu', type: 'bool' },
+        ],
+        columns: [
+          { key: 'screen_title', label: 'Ekran' },
+          { key: 'screen_id', label: 'Ekran kodu', mono: true },
+          { key: 'field_label', label: 'Alan adı' },
+          { key: 'field_key', label: 'Alan kodu', mono: true },
+          { key: 'is_required', label: 'Zorunlu' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          {
+            key: 'screen_id',
+            label: 'Ekran',
+            type: 'lookup',
+            lookup: 'ekranlar',
+            valueKey: 'screen_code',
+            labelKey: 'screen_name',
+            codeKey: 'screen_code',
+            autoFillName: 'screen_title',
+            required: true,
+            lead: true,
+          },
+          { key: 'screen_title', label: 'Ekran adı', readOnly: true },
+          {
+            key: 'field_key',
+            label: 'Alan',
+            type: 'select',
+            options: [],
+            required: true,
+            editableOnNew: true,
+            hint: 'Bağlı ekranın alanları',
+          },
+          { key: 'field_label', label: 'Alan adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'is_required', label: 'Zorunlu yap', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { is_required: true, is_active: true },
+      },
+      {
+        id: 'mesaj-tanimlari',
+        techId: 'SYS-MSG-SCR-001',
+        businessNameEn: 'MessageDefinitionScreen',
+        title: 'Mesaj Tanımları',
+        endpoint: '/mesaj-tanimlari',
+        crud: true,
+        codeField: 'message_code',
+        nameField: 'title',
+        numeratorSeri: null,
+        filters: [
+          { key: 'message_code', label: 'Mesaj kodu' },
+          { key: 'message_type', label: 'Tip', type: 'select', options: ['Hata', 'Bilgi', 'Uyari'] },
+          { key: 'title', label: 'Başlık' },
+        ],
+        columns: [
+          { key: 'message_code', label: 'Kod', mono: true },
+          { key: 'message_type', label: 'Tip' },
+          { key: 'title', label: 'Başlık' },
+          { key: 'body', label: 'Metin' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'message_code', label: 'Mesaj kodu', code: true, editableOnNew: true, required: true },
+          { key: 'title', label: 'Başlık', name: true, required: true },
+          { key: 'message_type', label: 'Tip', type: 'select', options: ['Hata', 'Bilgi', 'Uyari'], required: true },
+        ],
+        detailFields: [
+          { key: 'body', label: 'Mesaj metni' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { message_type: 'Bilgi', is_active: true },
+      },
+      {
+        id: 'eposta-gonderimleri',
+        techId: 'SYS-MAIL-SCR-001',
+        businessNameEn: 'EmailDispatchScreen',
+        title: 'E-posta Gönderimleri',
+        endpoint: '/eposta-gonderimleri',
+        crud: false,
+        readOnly: true,
+        filters: [
+          { key: 'status', label: 'Durum' },
+          { key: 'recipient', label: 'Alıcı' },
+          { key: 'source_type', label: 'Kaynak' },
+        ],
+        columns: [
+          { key: 'id', label: 'ID', mono: true },
+          { key: 'source_type', label: 'Kaynak' },
+          { key: 'recipient', label: 'Alıcı' },
+          { key: 'subject', label: 'Konu' },
+          { key: 'status', label: 'Durum' },
+          { key: 'attempt_count', label: 'Deneme' },
+          { key: 'sent_date', label: 'Gönderim' },
+          { key: 'last_error', label: 'Hata' },
+        ],
+      },
+      {
+        id: 'sistem-guncelleme',
+        techId: 'SYS-UPD-SCR-001',
+        businessNameEn: 'SystemUpdateScreen',
+        title: 'Sistem Güncelleme',
+        endpoint: '/sistem-guncelleme',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        systemUpdateConsole: true,
+        banner: 'Canlıya alındıktan sonra geliştirmeleri seçip inceleyerek sisteme yedirmek için kullanılır. «Tümünü seç» önerilir.',
+        filters: [],
+        columns: [
+          { key: 'package_code', label: 'Kod', mono: true },
+          { key: 'title', label: 'Yenilik' },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'severity', label: 'Önem' },
+          { key: 'status', label: 'Durum' },
+        ],
+      },
+      {
+        id: 'audit-log',
+        techId: 'SYS-AUD-SCR-001',
+        businessNameEn: 'AuditLogScreen',
+        title: 'Audit Log',
+        endpoint: '/audit-log',
+        crud: false,
+        readOnly: true,
+        filters: [
+          { key: 'table_name', label: 'Tablo', queryParam: true },
+          { key: 'ekran', label: 'Ekran / yol', queryParam: true },
+          { key: 'user_code', label: 'Kullanıcı', queryParam: true },
+          { key: 'action', label: 'İşlem', queryParam: true },
+        ],
+        columns: [
+          { key: 'created_at', label: 'Zaman' },
+          { key: 'user_code', label: 'Kullanıcı', mono: true },
+          { key: 'table_name', label: 'Tablo', mono: true },
+          { key: 'record_id', label: 'Kayıt' },
+          { key: 'action', label: 'İşlem' },
+          { key: 'request_path', label: 'Yol' },
+        ],
+      },
+      {
+        id: 'tablo-bilgileri',
+        techId: 'SYS-META-SCR-001',
+        businessNameEn: 'ScreenTableCatalogScreen',
+        title: 'Tablo Bilgileri',
+        endpoint: '/meta/ekranlar',
+        crud: false,
+        readOnly: true,
+        metaExplorer: true,
+        filters: [],
+        columns: [
+          { key: 'title', label: 'Ekran' },
+          { key: 'techId', label: 'Teknik kimlik', mono: true },
+          { key: 'primaryTable', label: 'Ana tablo', mono: true },
+        ],
+      },
+      {
+        id: 'sql-sorgu',
+        techId: 'SYS-SQL-SCR-001',
+        businessNameEn: 'SqlQueryScreen',
+        title: 'SQL Sorgu',
+        endpoint: '/sql-console',
+        crud: false,
+        sqlConsole: true,
+        filters: [],
+        columns: [],
+      },
+      {
+        id: 'sayfa-sorgulari',
+        techId: 'SYS-QRY-SCR-001',
+        businessNameEn: 'PageQueryScreen',
+        title: 'Sayfa Sorguları',
+        endpoint: '/meta/sorgular',
+        crud: false,
+        readOnly: true,
+        pageQueryExplorer: true,
+        filters: [],
+        columns: [
+          { key: 'title', label: 'Ekran' },
+          { key: 'endpoint', label: 'Endpoint', mono: true },
+          { key: 'routeFile', label: 'Route', mono: true },
+        ],
+      },
+    ],
+  },
 ];
 
-/** Modül menü bölümleri — sections yoksa düz liste (Sabit Tanımlar). */
+/** Modül menü bölümleri — sections yoksa düz liste. */
 function moduleMenuSections(mod) {
   const screens = (mod.screens || []).filter((s) => s && s.id && !s.hidden && !s.deprecated);
   const byId = Object.fromEntries(screens.map((s) => [s.id, s]));
@@ -8002,8 +9549,8 @@ const COMPACT_DROP_KEYS = new Set([
   'order_source', 'teklif_kaynak', 'source', 'belge_kaynak',
 ]);
 const COMPACT_ADDR_RE = /^(sevk_|fatura_adres)/i;
-const COMPACT_TO_LINE_RE = /^(currency_code|exchange_rate|rate_type|discount_rate|discount_rate_2|discount_rate_3|vat_rate|vat_mode|excise_rate|withholding_rate|price_list_id|valid_date|project_code|region)$/i;
-const COMPACT_HEADER_LEAD_RE = /^(company_id|plant_id|partner_id|supplier_partner_id|status|movement_code_id|payment_term_code|payment_method|delivery_term_code|order_type|.*_tarihi$|.*_no$)$/i;
+const COMPACT_TO_LINE_RE = /^(discount_rate|discount_rate_2|discount_rate_3|vat_rate|vat_mode|excise_rate|withholding_rate|price_list_id|valid_date|project_code|region)$/i;
+const COMPACT_HEADER_LEAD_RE = /^(company_id|plant_id|partner_id|supplier_partner_id|status|movement_code_id|payment_term_code|payment_method|delivery_term_code|order_type|currency_code|exchange_rate|rate_type|.*_tarihi$|.*_no$)$/i;
 
 /**
  * Satış siparişi düzeni: kompakt başlık + Kalemler (+ Adres) + not alt şerit.
@@ -8121,6 +9668,23 @@ function normalizeScreen(raw, moduleId, moduleTitle) {
     s.listActions = Array.isArray(raw.listActions)
       ? raw.listActions
       : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'];
+  }
+
+  // Liste dışa aktarma: araç çubuğu Excel/Word/PDF — meta/SQL/gözlem hariç varsayılan açık
+  if (raw.listExportActions == null) {
+    s.listExportActions = Boolean(
+      s.endpoint
+      && !s.metaExplorer
+      && !s.pageQueryExplorer
+      && !s.sqlConsole
+      && !s.systemUpdateConsole
+      && s.id !== 'sql-sorgu'
+      && s.id !== 'tablo-bilgileri'
+      && s.id !== 'sayfa-sorgulari'
+      && s.id !== 'sistem-guncelleme'
+    );
+  } else {
+    s.listExportActions = Boolean(raw.listExportActions);
   }
 
   if (!s.masterFields || !s.masterFields.length) {
@@ -8444,8 +10008,9 @@ function applyDefinitionLookup(field) {
   if (!field || !field.key) return field;
   const def = TANIM_LOOKUP_BY_KEY[field.key];
   if (!def) return field;
-  // select/checkbox/number/date veya zaten doğru lookup ise dokunma (label/required koru)
-  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date' || field.type === 'password') {
+  // select/checkbox/number/date/datetime veya zaten doğru lookup ise dokunma (label/required koru)
+  if (field.type === 'checkbox' || field.type === 'number' || field.type === 'date'
+    || field.type === 'datetime' || field.type === 'password') {
     return field;
   }
   if (field.type === 'select' && Array.isArray(field.options) && field.options.length) {
@@ -8579,8 +10144,16 @@ function buildLookupOptionsHtml(field, value, rows) {
     if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı —';
     else if (field.dependsOn) emptyLabel = '— önce üst alan —';
   }
+  const list = Array.isArray(rows) ? [...rows] : [];
+  // Seçili değer listede yoksa (firma filtresi / autofill) yine de göster
+  if (value != null && value !== ''
+    && !list.some((r) => String(r?.[vk]) === String(value))) {
+    const stub = { [vk]: value, [lk]: String(value) };
+    if (ck) stub[ck] = String(value);
+    list.unshift(stub);
+  }
   const opts = [`<option value="">${emptyLabel}</option>`].concat(
-    rows.map((r) => {
+    list.map((r) => {
       const val = r[vk];
       // Kod–first_name: select’te kod, title’da tam metin (dar kutu)
       const code = ck ? String(r[ck] || val || '') : '';
@@ -8591,6 +10164,15 @@ function buildLookupOptionsHtml(field, value, rows) {
     })
   );
   return opts.join('');
+}
+
+/** Autofill / çapraz firma: lookup cache’e satır ekle (yoksa) */
+function ensureLookupCacheRow(lookupKey, row, valueKey = 'id') {
+  if (!lookupKey || !row || row[valueKey] == null || row[valueKey] === '') return;
+  if (!state.lookupCache[lookupKey]) state.lookupCache[lookupKey] = [];
+  const list = state.lookupCache[lookupKey];
+  if (list.some((r) => String(r[valueKey]) === String(row[valueKey]))) return;
+  list.push(row);
 }
 
 function lookupNameOnly(field, value) {
@@ -8725,12 +10307,14 @@ const MODE_LABELS_TR = {
   incele: 'İncele',
   duzelt: 'Düzelt',
   kopyala: 'Kopyala',
+  workspace: 'Konsol',
 };
 const MODE_LABELS_EN = {
   yeni: 'New',
   incele: 'View',
   duzelt: 'Edit',
   kopyala: 'Copy',
+  workspace: 'Console',
 };
 const MODE_LABELS = { ...MODE_LABELS_TR };
 
@@ -8743,15 +10327,55 @@ const UI_THEME_DEFS = [
   { id: 'yellow', nameTr: 'Ayçiçeği', nameEn: 'Sunflower', swatchA: '#c9a227', swatchB: '#e6d089', hintTr: 'Sarı', hintEn: 'Yellow' },
 ];
 
+/** Görünüm katmanı — CSS skins; JS ekranı yeniden çizmez */
+const UI_VIEW_DEFS = [
+  {
+    id: 'modern',
+    nameTr: 'Görünüm 1 — Modern',
+    nameEn: 'View 1 — Modern',
+    hintTr: 'Sade, düşük yoğunluklu SaaS ERP arayüzü (varsayılan)',
+    hintEn: 'Clean, low-density SaaS ERP layout (default)',
+    previewClass: 'is-modern',
+  },
+  {
+    id: 'classic',
+    nameTr: 'Görünüm 2 — Klasik',
+    nameEn: 'View 2 — Classic',
+    hintTr: 'Mevcut arayüz — değişiklik yok',
+    hintEn: 'Current UI — unchanged',
+    previewClass: 'is-classic',
+  },
+  {
+    id: 'steel',
+    nameTr: 'Görünüm 3 — Metalik',
+    nameEn: 'View 3 — Metallic',
+    hintTr: 'Sade klasik, metalik tonlar, hafif ve rahat',
+    hintEn: 'Simple classic, metallic tones, light and calm',
+    previewClass: 'is-steel',
+  },
+  {
+    id: 'cards',
+    nameTr: 'Görünüm 4 — Kartlar',
+    nameEn: 'View 4 — Cards',
+    hintTr: 'Canlı kart/kutu düzeni, mobil ve pop-up odaklı',
+    hintEn: 'Lively card/box layout, mobile and popup-first',
+    previewClass: 'is-cards',
+  },
+];
+const UI_VIEW_IDS = new Set(UI_VIEW_DEFS.map((v) => v.id));
+
 const MODULE_TITLE_EN = {
-  'fixed-tanimlar': 'Master Data (Fixed)',
+  // fixed-tanimlar kaldırıldı → ortak tanımlar Ana Veri / Sistem altında
+  'fixed-tanimlar': 'Master Data',
   sistem: 'System',
   'ana-veri': 'Master Data',
   stok: 'Inventory',
   cari: 'Partners',
   uretim: 'Production',
+  satinalma: 'Purchasing',
   'satin-alma': 'Purchasing',
   crm: 'CRM',
+  proje: 'Project Management',
   satis: 'Sales',
   kalite: 'Quality',
   finans: 'Finance',
@@ -8765,13 +10389,65 @@ const MODULE_TITLE_EN = {
 const SECTION_TITLE_EN = {
   Emirler: 'Orders',
   Tanımlar: 'Definitions',
+  Tanımlamalar: 'Definitions',
   Kullanıcılar: 'Users',
+  'Kullanıcılar ve Yetkiler': 'Users & Permissions',
   Gözlem: 'Observability',
+  'Teknik Gözlem': 'Technical Observability',
   İletişim: 'Communications',
   'Mal Kabul': 'Goods Receipt',
   Belgeler: 'Documents',
+  'Satış Belgeleri': 'Sales Documents',
+  'Muhasebe Belgeleri': 'Accounting Documents',
   Planlama: 'Planning',
+  'MRP Planlama': 'MRP Planning',
+  'Üretim Planlama': 'Production Planning',
   Operasyon: 'Operations',
+  Organizasyon: 'Organization',
+  Coğrafya: 'Geography',
+  'Ölçü ve Dil': 'Units & Language',
+  'Para ve Kur': 'Currency & Rates',
+  'Ticari Tanımlamalar': 'Commercial Definitions',
+  Numaratör: 'Number Series',
+  'Cari Kartlar': 'Partner Cards',
+  'Cari İşlemler': 'Partner Transactions',
+  'e-Belge': 'e-Documents',
+  'Stok Kartları': 'Item Cards',
+  'Stok Hareketleri': 'Stock Movements',
+  'Depo İşlemleri': 'Warehouse Operations',
+  'Parti, Seri ve Rezervasyon': 'Lot, Serial & Reservation',
+  Talepler: 'Requisitions',
+  'Teklif ve Anlaşmalar': 'Quotes & Agreements',
+  Siparişler: 'Orders',
+  Teklifler: 'Quotes',
+  Sevkiyat: 'Shipments',
+  'Ürün Ağacı': 'Bill of Materials',
+  'İş Emirleri': 'Work Orders',
+  'Üretim Gerçekleşme': 'Production Confirmations',
+  Kapasite: 'Capacity',
+  'Giriş Kalite': 'Incoming QC',
+  'Çıkış Kalite': 'Outgoing QC',
+  'Uygunsuzluk ve CAPA': 'Nonconformity & CAPA',
+  'Muhasebe Tanımlamaları': 'Accounting Setup',
+  'Banka ve Kasa': 'Bank & Cash',
+  'Finansal Raporlar': 'Financial Reports',
+  'Müşteri Yönetimi': 'Customer Management',
+  'Faaliyet ve Görevler': 'Activities & Tasks',
+  'Proje ve Portföy': 'Projects & Portfolio',
+  'Agile ve Planlama': 'Agile & Planning',
+  'Bütçe ve Risk': 'Budget & Risk',
+  'Şablon ve Otomasyon': 'Templates & Automation',
+  Özlük: 'Personnel',
+  'Zaman ve Devam': 'Time & Attendance',
+  'İzin Yönetimi': 'Leave Management',
+  'Ücret ve Bordro': 'Payroll',
+  'İşe Alım ve Çıkış': 'Recruitment & Exit',
+  'Onay İşlemleri': 'Approval Operations',
+  Parametreler: 'Parameters',
+  Güncelleme: 'Updates',
+  'Fason Operasyon': 'Subcontract Operations',
+  'Fason Sipariş': 'Subcontract Orders',
+  'Fason Stok': 'Subcontract Stock',
 };
 
 /** UI chrome + sık alan etiketleri (TR → EN) */
@@ -8779,8 +10455,12 @@ const UI_EN = {
   Ayarlar: 'Settings',
   'Sistem dili': 'System language',
   'Temalar…': 'Themes…',
+  'Tema ve Görünüm…': 'Theme & View…',
   'Tema seçin': 'Choose a theme',
-  Görünüm: 'Appearance',
+  'Tema ve Görünüm': 'Theme & View',
+  'Renk Teması': 'Color theme',
+  Parlaklık: 'Brightness',
+  Görünüm: 'View',
   Açık: 'Light',
   Koyu: 'Dark',
   'Koyu tema': 'Dark theme',
@@ -8934,6 +10614,7 @@ function applyUiTheme(themeId, { persist = true } = {}) {
     try { localStorage.setItem('ktb_ui_theme', id); } catch (_) { /* ignore */ }
   }
   renderThemeGrid();
+  renderViewModeGrid();
   syncSettingsMenu();
 }
 
@@ -8947,14 +10628,37 @@ function applyUiAppearance(mode, { persist = true } = {}) {
   syncSettingsMenu();
 }
 
+function applyUiView(viewId, { persist = true } = {}) {
+  const id = UI_VIEW_IDS.has(viewId) ? viewId : 'modern';
+  state.uiView = id;
+  document.documentElement.setAttribute('data-view', id);
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_view', id); } catch (_) { /* ignore */ }
+  }
+  // Görünüm değişince açık menü/overlay kalmasın; buton durumu yenilensin
+  try {
+    hideTabContextMenu?.();
+    const listMenu = $('#listCtxMenu');
+    if (listMenu) listMenu.hidden = true;
+    const formMenu = $('#formCtxMenu');
+    if (formMenu) formMenu.hidden = true;
+  } catch (_) { /* ignore */ }
+  const scr = findScreen(state.screenId);
+  if (scr) updateActionButtons(scr);
+  renderViewModeGrid();
+  syncSettingsMenu();
+}
+
 function syncStaticChromeLabels() {
   document.querySelectorAll('[data-i18n]').forEach((el) => {
     const key = el.getAttribute('data-i18n');
     const map = {
       'settings.language': L('Sistem dili'),
-      'settings.appearance': L('Görünüm'),
-      'settings.themes': L('Temalar…'),
-      'settings.themesTitle': L('Tema seçin'),
+      'settings.appearance': L('Parlaklık'),
+      'settings.themes': L('Tema ve Görünüm…'),
+      'settings.themesTitle': L('Tema ve Görünüm'),
+      'settings.tabColors': L('Renk Teması'),
+      'settings.tabView': L('Görünüm'),
       'settings.light': L('Açık'),
       'settings.dark': L('Koyu'),
     };
@@ -9095,6 +10799,39 @@ function renderThemeGrid() {
   `).join('');
 }
 
+function renderViewModeGrid() {
+  const grid = $('#viewModeGrid');
+  if (!grid) return;
+  const en = state.uiLang === 'en';
+  const current = UI_VIEW_IDS.has(state.uiView) ? state.uiView : 'modern';
+  grid.innerHTML = UI_VIEW_DEFS.map((v) => `
+    <button type="button" class="view-mode-card${current === v.id ? ' active' : ''}" data-view-pick="${v.id}">
+      <div class="view-mode-preview ${v.previewClass || ''}" aria-hidden="true">
+        <div class="vp-side"></div>
+        <div class="vp-top"></div>
+        <div class="vp-main"></div>
+      </div>
+      <span class="view-mode-card-name">${en ? v.nameEn : v.nameTr}</span>
+      <span class="view-mode-card-hint">${en ? v.hintEn : v.hintTr}</span>
+    </button>
+  `).join('');
+}
+
+function setThemeModalTab(tab) {
+  const which = tab === 'view' ? 'view' : 'colors';
+  document.querySelectorAll('[data-theme-tab]').forEach((btn) => {
+    const on = btn.getAttribute('data-theme-tab') === which;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-theme-pane]').forEach((pane) => {
+    const on = pane.getAttribute('data-theme-pane') === which;
+    pane.hidden = !on;
+  });
+  if (which === 'colors') renderThemeGrid();
+  else renderViewModeGrid();
+}
+
 function toggleSettingsMenu(force) {
   const menu = $('#settingsMenu');
   const btn = $('#btnSettings');
@@ -9108,7 +10845,9 @@ function openThemeModal(show = true) {
   const modal = $('#themeModal');
   if (!modal) return;
   if (show) {
+    setThemeModalTab('colors');
     renderThemeGrid();
+    renderViewModeGrid();
     modal.hidden = false;
     toggleSettingsMenu(false);
   } else {
@@ -9120,13 +10859,16 @@ function initUiPrefs() {
   let theme = 'blue';
   let lang = 'tr';
   let appearance = 'light';
+  let view = 'modern';
   try {
     theme = localStorage.getItem('ktb_ui_theme') || 'blue';
     lang = localStorage.getItem('ktb_ui_lang') || 'tr';
     appearance = localStorage.getItem('ktb_ui_appearance') || 'light';
+    view = localStorage.getItem('ktb_ui_view') || 'modern';
   } catch (_) { /* ignore */ }
   applyUiTheme(theme, { persist: false });
   applyUiAppearance(appearance, { persist: false });
+  applyUiView(view, { persist: false });
   applyUiLanguage(lang, { persist: false, refresh: false });
 }
 
@@ -9134,6 +10876,7 @@ const state = {
   uiLang: 'tr',
   uiTheme: 'blue',
   uiAppearance: 'light',
+  uiView: 'modern',
   screenId: null,
   rows: [],
   filtered: [],
@@ -9173,6 +10916,8 @@ const state = {
   isYerleri: [],
   requiredFieldDefs: [],
   listPage: 1,
+  /** Liste kolon altı arama: { [screenId]: { [colKey]: string } } — LIKE %…%; `;` ile VEYA */
+  listColFilters: {},
   excelCtx: null,
   pageQueryOpenMods: {},
   pageQueryFocusScreenId: null,
@@ -10225,6 +11970,7 @@ function showView(name) {
   const meta = $('#viewMeta');
   const sql = $('#viewSql');
   const pq = $('#viewPageQuery');
+  const sup = $('#viewSysUpdate');
   if (!home || !screen || !form) {
     console.error('KTB ERP: view element missing', { home: !!home, screen: !!screen, form: !!form });
     return;
@@ -10241,6 +11987,7 @@ function showView(name) {
   if (meta) meta.hidden = name !== 'meta';
   if (sql) sql.hidden = name !== 'sql';
   if (pq) pq.hidden = name !== 'pageQuery';
+  if (sup) sup.hidden = name !== 'sysUpdate';
 
   home.style.display = name === 'home' ? 'grid' : 'none';
   screen.style.display = name === 'screen' ? 'grid' : 'none';
@@ -10248,6 +11995,7 @@ function showView(name) {
   if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
   if (sql) sql.style.display = name === 'sql' ? 'grid' : 'none';
   if (pq) pq.style.display = name === 'pageQuery' ? 'grid' : 'none';
+  if (sup) sup.style.display = name === 'sysUpdate' ? 'flex' : 'none';
   if (typeof syncMenuButtonLabel === 'function') syncMenuButtonLabel();
 }
 
@@ -10647,6 +12395,7 @@ async function showFormContextMenu(clientX, clientY) {
       const btn = e.target.closest('[data-form-ctx]');
       if (!btn || btn.disabled) return;
       e.preventDefault();
+      e.stopPropagation();
       menu.hidden = true;
       const sid = btn.getAttribute('data-open-screen');
       const rid = btn.getAttribute('data-open-id');
@@ -11036,6 +12785,53 @@ async function importExcelIntoList(ctx) {
 }
 
 
+/** Stok hareket satırı → kaynak belge ekranı */
+const STOK_HAREKET_KAYNAK_EKRAN = {
+  IRSALIYE: 'irsaliye-yonetimi',
+  MAL_KABUL: 'mal-kabuller',
+  URETIM_GIRIS: 'uretim-girisleri',
+  URETIM_EMRI: 'uretim-emirleri',
+  URETIM_EMRI_OP: 'uretim-emirleri',
+  SAYIM: 'sayim-belgeleri',
+  SAYIM_BELGE: 'sayim-belgeleri',
+  TRANSFER: 'stok-hareketleri', // manuel transfer: document_id eş hareket
+  TRANSFER_EMRI: 'transfer-emirleri',
+  STOK_HAREKET: 'stok-hareketleri',
+  STOK_GIRIS: 'stok-hareketleri',
+  STOK_CIKIS: 'stok-hareketleri',
+  ALIS_IADE: 'mal-kabuller',
+  KK_EMIR: 'kk-emirleri-gkk',
+};
+
+function resolveStokHareketKaynak(row) {
+  if (!row) return null;
+  const tip = String(row.document_type || '').trim().toUpperCase();
+  const docId = row.document_id != null && row.document_id !== '' ? Number(row.document_id) : null;
+  if (tip && docId && Number.isFinite(docId) && docId > 0) {
+    const screenId = STOK_HAREKET_KAYNAK_EKRAN[tip];
+    if (screenId === 'stok-hareketleri') {
+      return { screenId: 'stok-hareketleri', id: docId, label: `Stok hareketi #${docId}` };
+    }
+    if (screenId) {
+      return { screenId, id: docId, label: `${tip} #${docId}` };
+    }
+  }
+  const mid = row.movement_id != null ? Number(row.movement_id) : Number(row.id);
+  if (mid && Number.isFinite(mid) && mid > 0) {
+    return { screenId: 'stok-hareketleri', id: mid, label: `Stok hareketi ${row.movement_no || `#${mid}`}` };
+  }
+  return null;
+}
+
+async function openStokHareketKaynak(row) {
+  const hedef = resolveStokHareketKaynak(row);
+  if (!hedef) {
+    toast('Bu satır için kaynak belge bulunamadı.');
+    return;
+  }
+  await openRecordById(hedef.screenId, hedef.id, 'incele');
+}
+
 async function showStokHareketOnizle(row) {
   if (!row?.id) {
     toast('Önce bir stok hareketi seçin.');
@@ -11115,58 +12911,137 @@ async function showStokHareketOnizle(row) {
   });
 }
 
-async function showListContextMenu(screen, clientX, clientY) {
+async function showListContextMenu(screen, clientX, clientY, opts = {}) {
   const menu = $('#listCtxMenu');
   if (!menu || !screen) return;
+  const mode = opts.mode || 'list'; // list | header
   const row = selectedRow() || {};
   const parts = [];
-  (screen.contextMenu || []).forEach((item) => {
-    parts.push(`<button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
-      data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(item.label)}</button>`);
-  });
-  // Belge bağlantısı (form sağ tık ile aynı zincir) — aday→cari vb.
-  if (row.id) {
-    const baglanti = await buildFormBaglantiMenuItems(screen, row);
-    if (baglanti.length) {
-      if (parts.length) parts.push('<div class="ctx-sep"></div>');
-      parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
-      baglanti.forEach((it) => {
-        if (it.type === 'heading') {
-          parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
-          return;
-        }
-        if (it.type === 'sep') {
-          parts.push('<div class="ctx-sep"></div>');
-          return;
-        }
-        const dis = it.enabled ? '' : 'disabled class="is-disabled"';
-        const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
-        parts.push(`<button type="button" role="menuitem" ${dis}${title}
-          data-list-ctx="baglanti:${escAttr(it.id)}"
-          data-open-screen="${escAttr(it.screenId || '')}"
-          data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
-      });
-    }
-  }
-  // Excel — her listede sağ tık
-  if (parts.length) parts.push('<div class="ctx-sep"></div>');
-  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-sablon">Excel şablon indir</button>');
-  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-al">Excel’den veri al</button>');
-  if (!parts.length) return;
-  menu.innerHTML = parts.join('');
+
+  // Menüyü hemen göster (bağlantı API’si beklerken de görünür kalsın)
+  hideTabContextMenu();
+  menu.innerHTML = '<span class="ctx-heading">Menü yükleniyor…</span>';
   menu.hidden = false;
   positionCtxMenu(menu, clientX, clientY);
   state.excelCtx = { kind: 'list', screenId: screen.id };
+
+  if (mode === 'header') {
+    parts.push('<button type="button" role="menuitem" data-list-ctx="liste-ayarlari">Liste ayarları…</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="ayarlari-kaydet">Ayarları kaydet</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="varsayilan-duzen">Varsayılan düzene dön</button>');
+    parts.push('<div class="ctx-sep"></div>');
+    parts.push('<span class="ctx-heading">Dışarı al</span>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-pdf">PDF</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-excel">Excel</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-word">Word</button>');
+  } else {
+    (screen.contextMenu || []).forEach((item) => {
+      let label = item.label;
+      if (item.id === 'kaynak-belge' && screen.id === 'stok-hareket-raporu') {
+        const hedef = resolveStokHareketKaynak(row);
+        label = hedef ? `Hareket kaynağı · ${hedef.label}` : 'Hareket kaynağına git';
+      }
+      parts.push(`<button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
+        data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(label)}</button>`);
+    });
+    // Belge bağlantısı (form sağ tık ile aynı zincir) — aday→cari vb.
+    if (row.id) {
+      try {
+        const baglanti = await buildFormBaglantiMenuItems(screen, row);
+        if (baglanti.length) {
+          if (parts.length) parts.push('<div class="ctx-sep"></div>');
+          parts.push('<span class="ctx-heading">Belge bağlantısı</span>');
+          baglanti.forEach((it) => {
+            if (it.type === 'heading') {
+              parts.push(`<span class="ctx-heading">${escAttr(it.label)}</span>`);
+              return;
+            }
+            if (it.type === 'sep') {
+              parts.push('<div class="ctx-sep"></div>');
+              return;
+            }
+            const dis = it.enabled ? '' : 'disabled class="is-disabled"';
+            const title = it.hint ? ` title="${escAttr(it.hint)}"` : '';
+            parts.push(`<button type="button" role="menuitem" ${dis}${title}
+              data-list-ctx="baglanti:${escAttr(it.id)}"
+              data-open-screen="${escAttr(it.screenId || '')}"
+              data-open-id="${escAttr(it.targetId != null ? String(it.targetId) : '')}">${escAttr(it.label)}</button>`);
+          });
+        }
+      } catch (_) {
+        /* bağlantı yüklenemezse dışa aktar / ayarlar yine gelsin */
+      }
+    }
+    if (parts.length) parts.push('<div class="ctx-sep"></div>');
+    parts.push('<span class="ctx-heading">Dışarı al</span>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-pdf">PDF</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-excel">Excel</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="export-word">Word</button>');
+    parts.push('<div class="ctx-sep"></div>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="liste-ayarlari">Liste ayarları…</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="ayarlari-kaydet">Ayarları kaydet</button>');
+    parts.push('<div class="ctx-sep"></div>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="excel-sablon">Excel şablon indir</button>');
+    parts.push('<button type="button" role="menuitem" data-list-ctx="excel-al">Excel’den veri al</button>');
+  }
+
+  menu.innerHTML = parts.join('');
+  menu.hidden = false;
+  positionCtxMenu(menu, clientX, clientY);
   if (!menu.dataset.bound) {
     menu.dataset.bound = '1';
+    // click + pointerup: capture kapanışından kaçınmak için menü içi eylemi burada tut
     menu.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-list-ctx]');
       if (!btn || btn.disabled) return;
       e.preventDefault();
+      e.stopPropagation();
       menu.hidden = true;
       const act = btn.getAttribute('data-list-ctx');
+      const scr = findScreen(state.screenId);
       if (act === 'onizle') {
         showStokHareketOnizle(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'kaynak-belge') {
+        openStokHareketKaynak(selectedRow()).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'stok-hareket-ac') {
+        const sel = selectedRow();
+        const mid = sel?.movement_id || sel?.id;
+        if (!mid) {
+          toast('Hareket kaydı seçili değil');
+          return;
+        }
+        openRecordById('stok-hareketleri', mid, 'incele').catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'export-pdf') {
+        try { exportListAsPdf(); } catch (err) { toast(err.message); }
+        return;
+      }
+      if (act === 'export-excel') {
+        try { exportListAsExcel(); } catch (err) { toast(err.message); }
+        return;
+      }
+      if (act === 'export-word') {
+        try { exportListAsWord(); } catch (err) { toast(err.message); }
+        return;
+      }
+      if (act === 'liste-ayarlari') {
+        openListSettingsPopup(scr);
+        return;
+      }
+      if (act === 'ayarlari-kaydet') {
+        persistCurrentListLayout(state.screenId);
+        return;
+      }
+      if (act === 'varsayilan-duzen') {
+        clearListLayout(state.screenId);
+        if (state._listLayoutOverride) delete state._listLayoutOverride[state.screenId];
+        if (scr) renderList(scr);
+        toast('Varsayılan liste düzenine dönüldü.');
         return;
       }
       if (act === 'excel-sablon') {
@@ -11283,7 +13158,8 @@ function closeOpenTab(tabKey) {
 }
 
 const MOD_ICONS = {
-  'fixed-tanimlar': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  // Sabit Tanımlar modülü kaldırıldı; ikon geriye dönük alias olarak tutulur
+  'fixed-tanimlar': '<svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h12"/></svg>',
   sistem: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4"/></svg>',
   'ana-veri': '<svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h12"/></svg>',
   stok: '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg>',
@@ -11294,6 +13170,8 @@ const MOD_ICONS = {
   satis: '<svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
   kalite: '<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>',
   finans: '<svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>',
+  proje: '<svg viewBox="0 0 24 24"><path d="M4 5h16v4H4zM4 11h10v4H4zM4 17h7v4H4z"/></svg>',
+  onay: '<svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M12 3l2.1 2.1L17 4l-.5 3.1L19 8.5l-2.4 1.2.5 3.1-2.9-1.1L12 14l-2.1-2.3-2.9 1.1.5-3.1L5 8.5l2.5-1.4L7 4l2.9 1.1z"/></svg>',
   'insan-kaynaklari': '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
 };
 
@@ -11380,7 +13258,10 @@ function modulYetkiliMi(modId) {
   }
   const mods = s.module_permissions;
   if (!mods || !mods.length || mods.includes('*')) return true;
-  return mods.includes(modId);
+  if (mods.includes(modId)) return true;
+  // Geriye dönük: Sabit Tanımlar → Ana Veri / Sistem (mesaj tanımları)
+  if (mods.includes('fixed-tanimlar') && (modId === 'ana-veri' || modId === 'sistem')) return true;
+  return false;
 }
 
 function isScreenVisibleInMenu(screenId) {
@@ -11853,6 +13734,9 @@ function listRowsFromResponse(screen, data) {
 function buildListEndpoint(screen) {
   let url = screen.endpoint || '';
   const extras = [];
+  if (screen.listSourceType) {
+    extras.push(`source_type=${encodeURIComponent(screen.listSourceType)}`);
+  }
   (screen.filters || []).forEach((f) => {
     if (!f.queryParam) return;
     const st = state.filterState?.[f.key];
@@ -11925,12 +13809,12 @@ function setControlDisabled(el, disabled, title = '') {
  */
 async function applyExchangeRateForCurrency(pbKod, kurEl, { force = false, rateType = null, rateTypeEl = null } = {}) {
   const pb = String(pbKod || 'TRY').toUpperCase();
+  // Yalnızca belge/satır kur tipi — stok Vergi.Tip (rate_type) ile karıştırma
   const tipEl = rateTypeEl
-    || findAttrControl('data-master', 'rate_type')
-    || findAttrControl('data-detail', 'rate_type');
+    || findAttrControl('data-master', 'rate_type');
   const tip = rateType != null
     ? rateType
-    : (tipEl ? (tipEl.type === 'radio' ? readMasterDetailValue('rate_type') : tipEl.value) : null)
+    : (tipEl ? (tipEl.type === 'radio' ? tipEl.value : tipEl.value) : null)
       || state.formRecord?.rate_type
       || 'TCMB-SATIS';
 
@@ -11978,10 +13862,19 @@ async function syncDocumentRateFields(force = true) {
 }
 
 function readMasterDetailValue(key) {
-  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"], input[type="radio"][data-detail="${key}"]`)];
+  const radios = [...document.querySelectorAll(`input[type="radio"][data-master="${key}"]`)];
   if (radios.length) return radios.find((r) => r.checked)?.value ?? (state.formRecord?.[key] ?? '');
-  const el = findAttrControl('data-master', key) || findAttrControl('data-detail', key);
-  if (!el) return state.formRecord?.[key] ?? '';
+  // rate_type / exchange_rate: stok Vergi grid’indeki rate_type ile karışmasın → önce master
+  const preferMaster = key === 'rate_type' || key === 'exchange_rate' || key === 'currency_code';
+  const el = preferMaster
+    ? (findAttrControl('data-master', key) || null)
+    : (findAttrControl('data-master', key) || findAttrControl('data-detail', key));
+  if (!el) {
+    if (preferMaster) return state.formRecord?.[key] ?? '';
+    const detailEl = findAttrControl('data-detail', key);
+    if (!detailEl) return state.formRecord?.[key] ?? '';
+    return detailEl.value;
+  }
   return el.value;
 }
 
@@ -12137,6 +14030,66 @@ async function fillAddressFromPartner(cariId, { force = false } = {}) {
   }
 }
 
+/** İş emri / operasyon seçilince üretim girişi formunu önizleme ile doldur */
+async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = null, quantity = null } = {}) {
+  if (!state.formRecord) return;
+  const oid = Number(orderId || state.formRecord.order_id || document.querySelector('[data-master="order_id"]')?.value);
+  if (!oid) {
+    toast('Önce iş emri seçin.');
+    return;
+  }
+  const opEl = document.querySelector('[data-master="operation_id"]');
+  const qtyEl = document.querySelector('[data-master="quantity"]');
+  const opId = operationId != null
+    ? operationId
+    : (state.formRecord.operation_id || opEl?.value || '');
+  const qty = quantity != null
+    ? quantity
+    : (state.formRecord.quantity || qtyEl?.value || '');
+  const q = new URLSearchParams({ order_id: String(oid) });
+  if (opId) q.set('operation_id', String(opId));
+  if (qty !== '' && qty != null && Number(qty) > 0) q.set('quantity', String(qty));
+  const prev = { ...(state.formRecord || {}) };
+  const data = await api(`/uretim-girisleri/onizleme?${q}`);
+  const keepSource = screen.id === 'hizli-uretim-girisi' ? 'Hizli' : (prev.source_type || 'Operasyonel');
+  state.formRecord = {
+    ...prev,
+    ...data,
+    id: prev.id,
+    receipt_no: prev.receipt_no,
+    source_type: keepSource,
+    quick: screen.id === 'hizli-uretim-girisi' ? true : Boolean(prev.quick),
+    consume_materials: prev.consume_materials != null ? prev.consume_materials : true,
+    serial_no: prev.serial_no || data.serial_no || '',
+    shift_code: prev.shift_code || '',
+    description: prev.description || data.description || '',
+    malzemeler: data.malzemeler || [],
+    duruslar: prev.duruslar || [],
+  };
+  invalidateLookups('uretim-emir-operasyonlari');
+  await fetchLookupKey('uretim-emir-operasyonlari', { order_id: oid }).catch(() => {});
+  const nMal = (data.malzemeler || []).length;
+  const kalan = data.op_remaining_quantity != null ? Number(data.op_remaining_quantity) : null;
+  const maxA = data.max_allowed_quantity != null ? Number(data.max_allowed_quantity) : null;
+  const allowOver = data.production_params?.allow_over_production === true;
+  const overPct = data.production_params?.over_production_pct != null
+    ? Number(data.production_params.over_production_pct)
+    : 0;
+  // Eğitim / operatör: form üst bandında kalan ve max izin her zaman görünsün
+  screen._runtimeBanner = [
+    `Emir ${data.order_no || oid}`,
+    data.operation_code ? `Op ${data.operation_code}` : null,
+    kalan != null ? `Kalan: ${kalan}` : null,
+    maxA != null ? `Max izin: ${maxA}` : null,
+    allowOver ? `Fazla üretim açık (%${overPct})` : 'Fazla üretim kapalı',
+  ].filter(Boolean).join(' · ');
+  renderForm(screen);
+  const qtyHint = (kalan != null && maxA != null)
+    ? ` · kalan ${kalan}, max ${maxA}`
+    : '';
+  toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme${qtyHint}`);
+}
+
 async function fillLinesFromSource(kind, sourceId) {
   if (!sourceId || !state.formRecord) return;
   const screen = findScreen(state.screenId);
@@ -12163,6 +14116,11 @@ async function fillLinesFromSource(kind, sourceId) {
         state.formRecord.delivery_date = talep.target_delivery_date;
       }
       state.formRecord.requisition_id = Number(sourceId);
+      if (talep.currency_code && !state.formRecord.currency_code) state.formRecord.currency_code = talep.currency_code;
+      if (talep.exchange_rate != null && (state.formRecord.exchange_rate == null || state.formRecord.exchange_rate === '')) {
+        state.formRecord.exchange_rate = talep.exchange_rate;
+      }
+      if (talep.rate_type && !state.formRecord.rate_type) state.formRecord.rate_type = talep.rate_type;
       state.formRecord[detailKey] = (talep.satirlar || []).map((s) => ({
         requisition_line_id: s.id,
         line_type: s.line_type || 'S',
@@ -12172,16 +14130,15 @@ async function fillLinesFromSource(kind, sourceId) {
         quantity: s.quantity,
         uom_code: s.uom_code,
         unit_price: s.estimated_unit_price ?? s.unit_price ?? 0,
-        currency_code: s.currency_code || talep.currency_code || null,
-        exchange_rate: s.exchange_rate ?? talep.exchange_rate ?? 1,
-        rate_type: s.rate_type || talep.rate_type || null,
+        currency_code: talep.currency_code || null,
+        exchange_rate: talep.exchange_rate ?? 1,
+        rate_type: talep.rate_type || null,
         vat_rate: s.vat_rate ?? 20,
         vat_mode: s.vat_mode || 'Haric',
         discount_rate: s.discount_rate ?? 0,
         discount_rate_2: s.discount_rate_2 ?? 0,
         discount_rate_3: s.discount_rate_3 ?? 0,
         delivery_date: s.delivery_date || talep.target_delivery_date || null,
-        warehouse_id: s.warehouse_id || talep.warehouse_id || null,
         project_code: s.project_code || talep.project_code || null,
         region: s.region || talep.region || null,
         supplier_item_code: s.supplier_item_code || null,
@@ -12270,9 +14227,9 @@ async function fillLinesFromSource(kind, sourceId) {
         quantity: s.quantity,
         uom_code: s.uom_code,
         unit_price: s.unit_price ?? 0,
-        currency_code: s.currency_code || teklif.currency_code || null,
-        exchange_rate: s.exchange_rate ?? teklif.exchange_rate ?? 1,
-        rate_type: s.rate_type || teklif.rate_type || null,
+        currency_code: teklif.currency_code || null,
+        exchange_rate: teklif.exchange_rate ?? 1,
+        rate_type: teklif.rate_type || null,
         vat_rate: s.vat_rate ?? 20,
         vat_mode: s.vat_mode || 'Haric',
         discount_rate: s.discount_rate ?? 0,
@@ -12312,9 +14269,9 @@ async function fillLinesFromSource(kind, sourceId) {
         quantity: s.quantity,
         uom_code: s.uom_code,
         unit_price: s.unit_price ?? 0,
-        currency_code: s.currency_code || teklif.currency_code || null,
-        exchange_rate: s.exchange_rate ?? teklif.exchange_rate ?? 1,
-        rate_type: s.rate_type || teklif.rate_type || null,
+        currency_code: teklif.currency_code || null,
+        exchange_rate: teklif.exchange_rate ?? 1,
+        rate_type: teklif.rate_type || null,
         vat_rate: s.vat_rate ?? 20,
         vat_mode: s.vat_mode || 'Haric',
         discount_rate: s.discount_rate ?? 0,
@@ -12514,13 +14471,25 @@ async function fillLinesFromSource(kind, sourceId) {
       }));
       toast(`Mal kabul ${mk.receipt_no || sourceId} satırları yüklendi`);
       renderForm(screen);
+    } else if (kind === 'uretim-giris-onizleme') {
+      // sourceId çoğu zaman order_id; operasyon alanından da tetiklenebilir — emri formdan oku
+      const orderFromForm = Number(
+        state.formRecord.order_id
+        || document.querySelector('[data-master="order_id"]')?.value
+        || 0
+      );
+      const looksLikeOrder = orderFromForm && Number(sourceId) === orderFromForm;
+      await fillUretimGirisOnizleme(screen, {
+        orderId: looksLikeOrder ? sourceId : (orderFromForm || sourceId),
+        operationId: looksLikeOrder ? undefined : (sourceId || undefined),
+      });
     }
     // Bağlı belge / kaynak satırları toplu gelir — satır ✓ sonrası boş satır açılmaz
     const sourceKinds = new Set([
       'talep-satirlar', 'siparis-satirlar', 'tedarikci-irsaliye-satirlar',
       'teklif-satirlar', 'sa-teklif-satirlar', 'siparis-kalemler',
       'rezervasyon-siparis-kalemler', 'sevk-satirlar', 'irsaliye-satirlar',
-      'mal-kabul-satirlar',
+      'mal-kabul-satirlar', 'uretim-giris-onizleme',
     ]);
     if (sourceKinds.has(kind)) {
       const loaded = state.formRecord?.[detailKey];
@@ -12825,10 +14794,185 @@ function renderFilterPane(screen) {
   syncBetweenInputs(screen);
 }
 
-/** Tüm listelerde ilk sütun: satır ID (ekran kolonlarında yoksa eklenir). */
-function listColumns(screen) {
-  const cols = (screen.columns || []).filter((c) => c.key !== 'id');
+/** Liste kolon düzeni — kullanıcı tercihi (sıra + gizlenenler), ekran bazında. */
+const LIST_LAYOUT_STORAGE_KEY = 'ktb_list_layout_v1';
+
+function listLayoutStorageKey(screenId) {
+  const user = state.session?.user_code || state.user?.user_code || localStorage.getItem('ktb_kullanici_kodu') || 'anon';
+  return `${LIST_LAYOUT_STORAGE_KEY}:${user}:${screenId}`;
+}
+
+function loadListLayout(screenId) {
+  if (!screenId) return null;
+  if (state._listLayoutOverride?.[screenId]) return state._listLayoutOverride[screenId];
+  try {
+    const raw = localStorage.getItem(listLayoutStorageKey(screenId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.order)) return null;
+    return {
+      order: parsed.order.map(String),
+      hidden: Array.isArray(parsed.hidden) ? parsed.hidden.map(String) : [],
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveListLayout(screenId, layout) {
+  if (!screenId || !layout) return;
+  const payload = {
+    order: (layout.order || []).map(String),
+    hidden: (layout.hidden || []).map(String),
+    savedAt: new Date().toISOString(),
+  };
+  localStorage.setItem(listLayoutStorageKey(screenId), JSON.stringify(payload));
+}
+
+function clearListLayout(screenId) {
+  if (!screenId) return;
+  localStorage.removeItem(listLayoutStorageKey(screenId));
+}
+
+function humanizeListFieldKey(key) {
+  const map = {
+    id: 'ID',
+    item_code: 'Stok kodu',
+    item_name: 'Stok adı',
+    warehouse_code: 'Depo kodu',
+    warehouse_name: 'Depo adı',
+    plant_code: 'İş yeri kodu',
+    plant_name: 'İş yeri adı',
+    company_code: 'Firma kodu',
+    company_name: 'Firma adı',
+    partner_code: 'Cari kodu',
+    partner_name: 'Cari adı',
+    order_no: 'Belge no',
+    uom_code: 'Birim',
+    status: 'Durum',
+    description: 'Açıklama',
+  };
+  if (map[key]) return map[key];
+  return String(key || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toLocaleUpperCase('tr-TR'));
+}
+
+/** Ekran tanımı + master alanlardan tüm bilinen kolon adayları. */
+function listColumnCatalog(screen) {
+  const byKey = new Map();
+  const add = (key, label, extra = {}) => {
+    if (!key || key === 'id') return;
+    if (!byKey.has(key)) byKey.set(key, { key, label: label || humanizeListFieldKey(key), ...extra });
+  };
+  (screen.columns || []).forEach((c) => add(c.key, c.label, { mono: c.mono, type: c.type }));
+  (screen.masterFields || []).forEach((f) => {
+    if (!f?.key || f.type === 'static') return;
+    add(f.key, f.label, { type: f.type, mono: Boolean(f.code) });
+    if (f.codeKey && f.codeKey !== f.key) add(f.codeKey, `${f.label || f.key} kodu`, { mono: true });
+    if (f.labelKey && f.labelKey !== f.key) add(f.labelKey, `${f.label || f.key} adı`);
+  });
+  (screen.filters || []).forEach((f) => add(f.key, f.label, { type: f.type }));
+  // Satır verisinden gelen ek alanlar (API join)
+  const sample = (state.rows || []).slice(0, 25);
+  sample.forEach((row) => {
+    if (!row || typeof row !== 'object') return;
+    Object.keys(row).forEach((k) => {
+      if (k.startsWith('_')) return;
+      if (typeof row[k] === 'object' && row[k] !== null) return;
+      add(k, humanizeListFieldKey(k));
+    });
+  });
+  return byKey;
+}
+
+function defaultListColumnDefs(screen) {
+  const catalog = listColumnCatalog(screen);
+  const cols = (screen.columns || [])
+    .filter((c) => c.key && c.key !== 'id')
+    .map((c) => {
+      const meta = catalog.get(c.key) || {};
+      return { ...meta, ...c, key: c.key, label: c.label || meta.label || humanizeListFieldKey(c.key) };
+    });
   return [{ key: 'id', label: 'ID', mono: true }, ...cols];
+}
+
+/**
+ * Stok kodu ve stok adı tüm listelerde ayrı kolon.
+ * item_code varsa hemen ardından item_name gelir (yoksa eklenir / yanına taşınır).
+ */
+function ensureStockCodeNameColumns(cols) {
+  const nameColRaw = cols.find((c) => c.key === 'item_name');
+  const nameLabel = (!nameColRaw?.label || nameColRaw.label === 'Ad' || nameColRaw.label === 'Stok' || nameColRaw.label === 'Malzeme')
+    ? 'Stok adı'
+    : nameColRaw.label;
+  const nameCol = { ...(nameColRaw || {}), key: 'item_name', label: nameLabel };
+  const out = [];
+  let namePlaced = false;
+  cols.forEach((c) => {
+    if (c.key === 'item_name') return; // kodun hemen ardından yerleştirilecek
+    if (c.key === 'item_code') {
+      const label = (!c.label || c.label === 'Stok' || c.label === 'Malzeme')
+        ? 'Stok kodu'
+        : c.label;
+      out.push({ ...c, key: 'item_code', label, mono: true });
+      out.push(nameCol);
+      namePlaced = true;
+      return;
+    }
+    out.push(c);
+  });
+  if (!namePlaced && nameColRaw) out.push(nameCol);
+  return out;
+}
+
+/**
+ * Tüm listelerde ilk sütun: satır ID.
+ * Kayıtlı düzen varsa sıra/görünürlük uygulanır.
+ * Stok varsa Stok kodu + Stok adı ayrı kolonlardır.
+ */
+function listColumns(screen) {
+  const defaults = ensureStockCodeNameColumns(defaultListColumnDefs(screen));
+  const catalog = listColumnCatalog(screen);
+  const layout = loadListLayout(screen.id);
+  let cols;
+  if (layout?.order?.length) {
+    // Stok kodu görünürken stok adını gizlemeyi engelle (ayrı kolon kuralı)
+    const hidden = new Set((layout.hidden || []).filter((k) => k !== 'item_name' || !layout.order.includes('item_code')));
+    if (layout.order.includes('item_code')) hidden.delete('item_name');
+    const defMap = new Map(defaults.map((c) => [c.key, c]));
+    const ordered = [];
+    const seen = new Set();
+    layout.order.forEach((key) => {
+      if (hidden.has(key) || seen.has(key)) return;
+      const base = defMap.get(key) || catalog.get(key);
+      if (!base) return;
+      ordered.push({ ...base, key });
+      seen.add(key);
+      // Kayıtlı düzende kod var, ad yoksa kodun hemen ardına ad ekle
+      if (key === 'item_code' && !layout.order.includes('item_name') && !seen.has('item_name')) {
+        ordered.push(defMap.get('item_name') || { key: 'item_name', label: 'Stok adı' });
+        seen.add('item_name');
+      }
+    });
+    // Yeni varsayılan kolonlar (kayıtta yoksa) sonda eklenir
+    defaults.forEach((c) => {
+      if (seen.has(c.key) || hidden.has(c.key)) return;
+      ordered.push(c);
+      seen.add(c.key);
+    });
+    if (!ordered.some((c) => c.key === 'id')) {
+      ordered.unshift({ key: 'id', label: 'ID', mono: true });
+    } else {
+      const idCol = ordered.find((c) => c.key === 'id');
+      ordered.splice(ordered.findIndex((c) => c.key === 'id'), 1);
+      ordered.unshift(idCol);
+    }
+    cols = ensureStockCodeNameColumns(ordered);
+  } else {
+    cols = defaults;
+  }
+  return cols;
 }
 
 const ISO_DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z$/;
@@ -12862,6 +15006,8 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
+  } else if (Array.isArray(val)) {
+    val = val.length ? val.join('; ') : '—';
   } else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) {
     val = formatListDateTime(val);
   } else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
@@ -12889,12 +15035,64 @@ function renderListSideNav(screen) {
   `).join('');
 }
 
+function getListColFilters(screenId) {
+  const id = screenId || state.screenId;
+  if (!id) return {};
+  if (!state.listColFilters || typeof state.listColFilters !== 'object') state.listColFilters = {};
+  if (!state.listColFilters[id]) state.listColFilters[id] = {};
+  return state.listColFilters[id];
+}
+
+function clearListColFilters(screenId) {
+  const id = screenId || state.screenId;
+  if (!id || !state.listColFilters) return;
+  state.listColFilters[id] = {};
+}
+
+/** `;` ile ayrılmış terimler — her biri LIKE %terim% (VEYA) */
+function listColFilterTerms(raw) {
+  return String(raw || '')
+    .split(';')
+    .map((t) => normalizeLikeNeedle(t))
+    .filter(Boolean);
+}
+
+function listCellSearchText(col, row, index = 0) {
+  let val = col?.key === 'id' ? rowKey(row, index) : row?.[col?.key];
+  if (col?.key === 'is_active' && typeof val === 'boolean') val = val ? 'Hayır' : 'Evet';
+  else if (col?.key === 'parola_var') val = val ? 'Var' : 'Yok';
+  else if (typeof val === 'boolean') val = val ? 'Evet' : 'Hayır';
+  else if (Array.isArray(val)) val = val.length ? val.join('; ') : '';
+  else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) val = formatListDateTime(val);
+  else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
+    && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
+    val = formatListDateOnly(val) || val;
+  }
+  if (val === null || val === undefined || val === '') return '';
+  return String(val);
+}
+
+function applyListColFilters(rows, screen) {
+  const filters = getListColFilters(screen?.id);
+  const active = Object.entries(filters).filter(([, v]) => String(v || '').trim() !== '');
+  if (!active.length) return rows;
+  const cols = listColumns(screen);
+  const colMap = new Map(cols.map((c) => [c.key, c]));
+  return rows.filter((row, index) => active.every(([key, raw]) => {
+    const terms = listColFilterTerms(raw);
+    if (!terms.length) return true;
+    const text = listCellSearchText(colMap.get(key) || { key }, row, index);
+    return terms.some((term) => likeIncludes(text, term));
+  }));
+}
+
 function rowsForList(screen) {
   let rows = state.rows || [];
   if (screen.listCategories?.length && screen.categoryKey && state.listCategory) {
     rows = rows.filter((r) => String(r[screen.categoryKey]) === String(state.listCategory));
   }
-  return applyFilters(rows, screen);
+  rows = applyFilters(rows, screen);
+  return applyListColFilters(rows, screen);
 }
 
 /** Liste satır anahtarı — id yoksa bileşik anahtar (depo bakiye vb. tüm satır seçimini önler). */
@@ -13007,7 +15205,20 @@ function renderList(screen) {
   const { page, pageSize } = clampListPage(total);
   const start = (page - 1) * pageSize;
   const pageRows = state.filtered.slice(start, start + pageSize);
-  head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
+  const colFilters = getListColFilters(screen.id);
+  const labelRow = `<tr class="list-col-labels">${cols.map((c) => {
+    const drag = c.key === 'id' ? '' : 'draggable="true"';
+    return `<th data-col-key="${escapeAttr(c.key)}" ${drag} title="${c.key === 'id' ? 'ID' : 'Sürükleyerek sıralayın'}">${escapeHtml(c.label)}</th>`;
+  }).join('')}</tr>`;
+  const filterRow = `<tr class="list-col-filters">${cols.map((c) => {
+    const val = colFilters[c.key] || '';
+    return `<th class="list-col-filter-th" data-col-key="${escapeAttr(c.key)}">
+      <input type="search" class="list-col-filter" data-col-key="${escapeAttr(c.key)}"
+        value="${escapeAttr(val)}" placeholder="%…%" autocomplete="off" spellcheck="false"
+        title="LIKE %metin% — birden fazla terim için ; kullanın" />
+    </th>`;
+  }).join('')}</tr>`;
+  head.innerHTML = labelRow + filterRow;
   if (!total) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
@@ -13024,9 +15235,394 @@ function renderList(screen) {
   const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
     ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
     : (state.rows || []).length;
-  $('#listMeta').textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa`;
+  const layoutSaved = Boolean(loadListLayout(screen.id) && !state._listLayoutOverride?.[screen.id]);
+  const draft = Boolean(state._listLayoutOverride?.[screen.id]);
+  $('#listMeta').textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa${draft ? ' · düzen değişti (kaydedilmedi)' : (layoutSaved ? ' · kayıtlı düzen' : '')}`;
   renderListPager(total);
   updateActionButtons(screen);
+  bindListColumnDrag(screen);
+  bindListColFilterUi();
+  // Listeler / sayfalar arası geçişte eski scroll kalıntısı (ghost scrollbar) kalmasın
+  const listScroll = $('#listTableScroll');
+  if (listScroll) {
+    listScroll.scrollTop = 0;
+    listScroll.scrollLeft = 0;
+  }
+}
+
+/** Kolon altı arama — input’ta odak kaybolmasın diye yalnız gövdeyi yenile */
+function refreshListBodyFromColFilters(screen) {
+  if (!screen) return;
+  const body = $('#dataBody');
+  if (!body) return;
+  state.filtered = rowsForList(screen);
+  const total = state.filtered.length;
+  const cols = listColumns(screen);
+  const { page, pageSize } = clampListPage(total);
+  const start = (page - 1) * pageSize;
+  const pageRows = state.filtered.slice(start, start + pageSize);
+  if (!total) {
+    body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
+  } else {
+    body.innerHTML = pageRows.map((row, i) => {
+      const index = start + i;
+      const key = rowKey(row, index);
+      const selected = state.selectedId != null && String(key) === String(state.selectedId);
+      return `
+      <tr data-id="${escapeAttr(key)}" class="${selected ? 'selected' : ''}">
+        ${cols.map((c) => `<td>${cellHtml(c, row, index)}</td>`).join('')}
+      </tr>`;
+    }).join('');
+  }
+  const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
+    ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
+    : (state.rows || []).length;
+  const layoutSaved = Boolean(loadListLayout(screen.id) && !state._listLayoutOverride?.[screen.id]);
+  const draft = Boolean(state._listLayoutOverride?.[screen.id]);
+  const meta = $('#listMeta');
+  if (meta) {
+    meta.textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa${draft ? ' · düzen değişti (kaydedilmedi)' : (layoutSaved ? ' · kayıtlı düzen' : '')}`;
+  }
+  renderListPager(total);
+  updateActionButtons(screen);
+}
+
+function bindListColFilterUi() {
+  if (document.documentElement.dataset.listColFilterBound === '1') return;
+  document.documentElement.dataset.listColFilterBound = '1';
+  const onFilterInput = (e) => {
+    const inp = e.target?.closest?.('.list-col-filter');
+    if (!inp) return;
+    const screen = findScreen(state.screenId);
+    if (!screen) return;
+    const key = inp.getAttribute('data-col-key');
+    if (!key) return;
+    const filters = getListColFilters(screen.id);
+    filters[key] = inp.value;
+    state.listPage = 1;
+    refreshListBodyFromColFilters(screen);
+  };
+  document.addEventListener('input', onFilterInput);
+  document.addEventListener('search', onFilterInput); // type=search clear (x)
+  document.addEventListener('keydown', (e) => {
+    const inp = e.target?.closest?.('.list-col-filter');
+    if (!inp) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      inp.value = '';
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
+}
+
+function bindListColumnDrag(screen) {
+  const head = $('#dataHead');
+  if (!head || !screen) return;
+  head.querySelectorAll('tr.list-col-labels th[data-col-key][draggable="true"]').forEach((th) => {
+    th.addEventListener('dragstart', (e) => {
+      const key = th.getAttribute('data-col-key');
+      e.dataTransfer.setData('text/plain', key);
+      e.dataTransfer.effectAllowed = 'move';
+      th.classList.add('col-dragging');
+      state._draggingColKey = key;
+    });
+    th.addEventListener('dragend', () => {
+      th.classList.remove('col-dragging');
+      head.querySelectorAll('th.col-drop-target').forEach((x) => x.classList.remove('col-drop-target'));
+      state._draggingColKey = null;
+    });
+    th.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      th.classList.add('col-drop-target');
+    });
+    th.addEventListener('dragleave', () => th.classList.remove('col-drop-target'));
+    th.addEventListener('drop', (e) => {
+      e.preventDefault();
+      th.classList.remove('col-drop-target');
+      const fromKey = e.dataTransfer.getData('text/plain') || state._draggingColKey;
+      const toKey = th.getAttribute('data-col-key');
+      if (!fromKey || !toKey || fromKey === toKey) return;
+      applyListColumnReorder(screen.id, fromKey, toKey);
+    });
+  });
+}
+
+function applyListColumnReorder(screenId, fromKey, toKey) {
+  if (!screenId || !fromKey || !toKey || fromKey === toKey || fromKey === 'id') return;
+  const screen = findScreen(screenId);
+  if (!screen) return;
+  const cols = listColumns(screen).map((c) => c.key);
+  const fromIdx = cols.indexOf(fromKey);
+  let toIdx = cols.indexOf(toKey);
+  if (fromIdx < 0 || toIdx < 0) return;
+  cols.splice(fromIdx, 1);
+  toIdx = cols.indexOf(toKey);
+  if (toIdx < 0) toIdx = cols.length;
+  cols.splice(toIdx, 0, fromKey);
+  const prev = loadListLayout(screenId) || { order: cols, hidden: [] };
+  const layout = { order: cols, hidden: [...(prev.hidden || [])] };
+  state._listLayoutOverride = state._listLayoutOverride || {};
+  state._listLayoutOverride[screenId] = layout;
+  renderList(screen);
+}
+
+function persistCurrentListLayout(screenId, { toastOk = true } = {}) {
+  const screen = findScreen(screenId || state.screenId);
+  if (!screen) return;
+  const cols = listColumns(screen).map((c) => c.key);
+  const prev = loadListLayout(screen.id) || { order: cols, hidden: [] };
+  const layout = {
+    order: cols,
+    hidden: [...(prev.hidden || [])],
+  };
+  // Override'daki hidden öncelikli
+  if (state._listLayoutOverride?.[screen.id]?.hidden) {
+    layout.hidden = [...state._listLayoutOverride[screen.id].hidden];
+  }
+  saveListLayout(screen.id, layout);
+  if (state._listLayoutOverride) delete state._listLayoutOverride[screen.id];
+  renderList(screen);
+  if (toastOk) toast('Liste ayarları kaydedildi.');
+}
+
+function exportListAsExcel() {
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const XLSXlib = ensureXlsxLib();
+  const cols = listColumns(screen);
+  const rows = state.filtered || [];
+  const aoa = [
+    cols.map((c) => c.label),
+    ...rows.map((r, i) => cols.map((c) => {
+      if (c.key === 'id') return rowKey(r, i);
+      let v = r[c.key];
+      if (typeof v === 'boolean') v = v ? 'Evet' : 'Hayır';
+      if (v == null) v = '';
+      return v;
+    })),
+  ];
+  const ws = XLSXlib.utils.aoa_to_sheet(aoa);
+  const wb = XLSXlib.utils.book_new();
+  XLSXlib.utils.book_append_sheet(wb, ws, String(screen.id || 'Liste').slice(0, 31));
+  XLSXlib.writeFile(wb, `${screen.id || 'liste'}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  toast('Excel indirildi.');
+}
+
+function buildListExportTableHtml(screen, cols, rows) {
+  const head = cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join('');
+  const body = rows.map((r, i) => {
+    const tds = cols.map((c) => {
+      let text;
+      if (c.key === 'id') text = rowKey(r, i);
+      else {
+        let v = r[c.key];
+        if (typeof v === 'boolean') v = v ? 'Evet' : 'Hayır';
+        text = v == null || v === '' ? '—' : String(v);
+      }
+      return `<td>${escapeHtml(String(text))}</td>`;
+    }).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  return `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:11px;width:100%">
+    <thead style="background:#e8eef5"><tr>${head}</tr></thead>
+    <tbody>${body || `<tr><td colspan="${cols.length}">Kayıt yok</td></tr>`}</tbody>
+  </table>`;
+}
+
+function exportListAsPdf() {
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const cols = listColumns(screen);
+  const rows = state.filtered || [];
+  const table = buildListExportTableHtml(screen, cols, rows);
+  const w = window.open('', '_blank');
+  if (!w) {
+    toast('Pop-up engellendi — tarayıcıda izin verin.');
+    return;
+  }
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"/><title>${escapeHtml(screen.title || screen.id)}</title>
+    <style>body{font-family:Segoe UI,Arial,sans-serif;padding:16px} h1{font-size:16px;margin:0 0 12px}
+    @media print{body{padding:0}}</style></head><body>
+    <h1>${escapeHtml(screen.title || screen.id)} — Liste</h1>
+    <p style="color:#666;font-size:12px">${rows.length} kayıt · ${new Date().toLocaleString('tr-TR')}</p>
+    ${table}
+    <script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script>
+    </body></html>`);
+  w.document.close();
+  toast('PDF için yazdır penceresi açıldı.');
+}
+
+function exportListAsWord() {
+  const screen = findScreen(state.screenId);
+  if (!screen) return;
+  const cols = listColumns(screen);
+  const rows = state.filtered || [];
+  const table = buildListExportTableHtml(screen, cols, rows);
+  const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office"
+    xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"/><title>${escapeHtml(screen.title || screen.id)}</title></head>
+    <body><h2>${escapeHtml(screen.title || screen.id)}</h2>
+    <p>${rows.length} kayıt · ${new Date().toLocaleString('tr-TR')}</p>${table}</body></html>`;
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${screen.id || 'liste'}-${new Date().toISOString().slice(0, 10)}.doc`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Word dosyası indirildi.');
+}
+
+function openListSettingsPopup(screen) {
+  if (!screen) screen = findScreen(state.screenId);
+  if (!screen) return;
+  const catalog = listColumnCatalog(screen);
+  const visible = listColumns(screen).filter((c) => c.key !== 'id');
+  const visibleKeys = new Set(visible.map((c) => c.key));
+  const layout = loadListLayout(screen.id) || { order: [], hidden: [] };
+  const hiddenSet = new Set(layout.hidden || []);
+  const available = [];
+  catalog.forEach((meta, key) => {
+    if (key === 'id') return;
+    if (visibleKeys.has(key)) return;
+    available.push({ key, label: meta.label || humanizeListFieldKey(key) });
+  });
+  // Gizlenenler de available'da olsun
+  (layout.hidden || []).forEach((key) => {
+    if (visibleKeys.has(key) || available.some((a) => a.key === key)) return;
+    const meta = catalog.get(key);
+    available.push({ key, label: meta?.label || humanizeListFieldKey(key) });
+  });
+  available.sort((a, b) => a.label.localeCompare(b.label, 'tr'));
+
+  document.getElementById('listSettingsDlg')?.remove();
+  const html = `
+  <div class="list-settings-dlg" id="listSettingsDlg" role="dialog" aria-modal="true" aria-labelledby="listSettingsTitle">
+    <div class="list-settings-backdrop" data-ls-close="1"></div>
+    <div class="list-settings-card">
+      <header class="list-settings-head">
+        <strong id="listSettingsTitle">Liste ayarları — ${escapeHtml(screen.title || screen.id)}</strong>
+        <button type="button" class="btn tiny ghost" data-ls-close="1" aria-label="Kapat">✕</button>
+      </header>
+      <p class="list-settings-hint">Soldaki görünür kolonları sürükleyerek sıralayın. Sağdaki alanları sola sürükleyerek listeye ekleyin; soldakileri sağa sürükleyerek çıkarın.</p>
+      <div class="list-settings-cols">
+        <div class="list-settings-pane">
+          <h3>Görünen kolonlar</h3>
+          <ul class="list-settings-list" id="lsVisible" data-ls-zone="visible">
+            ${visible.map((c) => `<li draggable="true" data-ls-key="${escapeAttr(c.key)}">${escapeHtml(c.label)} <span class="mono dim">${escapeHtml(c.key)}</span></li>`).join('') || '<li class="ls-empty">Kolon yok</li>'}
+          </ul>
+        </div>
+        <div class="list-settings-pane">
+          <h3>Eklenebilir alanlar</h3>
+          <ul class="list-settings-list" id="lsAvailable" data-ls-zone="available">
+            ${available.map((c) => `<li draggable="true" data-ls-key="${escapeAttr(c.key)}">${escapeHtml(c.label)} <span class="mono dim">${escapeHtml(c.key)}</span></li>`).join('') || '<li class="ls-empty">Hepsi görünür</li>'}
+          </ul>
+        </div>
+      </div>
+      <footer class="list-settings-foot">
+        <button type="button" class="btn ghost" data-ls-reset="1">Varsayılana dön</button>
+        <div class="list-settings-foot-right">
+          <button type="button" class="btn ghost" data-ls-close="1">İptal</button>
+          <button type="button" class="btn" data-ls-apply="1">Uygula</button>
+          <button type="button" class="btn action" data-ls-save="1">Kaydet</button>
+        </div>
+      </footer>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  const dlg = document.getElementById('listSettingsDlg');
+  let dragKey = null;
+  let dragFrom = null;
+
+  const bindZone = (ul) => {
+    ul.addEventListener('dragstart', (e) => {
+      const li = e.target.closest('li[data-ls-key]');
+      if (!li) return;
+      dragKey = li.getAttribute('data-ls-key');
+      dragFrom = ul.getAttribute('data-ls-zone');
+      e.dataTransfer.setData('text/plain', dragKey);
+      e.dataTransfer.effectAllowed = 'move';
+      li.classList.add('ls-dragging');
+    });
+    ul.addEventListener('dragend', () => {
+      ul.querySelectorAll('.ls-dragging').forEach((x) => x.classList.remove('ls-dragging'));
+      dlg.querySelectorAll('.ls-drop').forEach((x) => x.classList.remove('ls-drop'));
+      dragKey = null;
+      dragFrom = null;
+    });
+    ul.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      ul.classList.add('ls-drop');
+    });
+    ul.addEventListener('dragleave', () => ul.classList.remove('ls-drop'));
+    ul.addEventListener('drop', (e) => {
+      e.preventDefault();
+      ul.classList.remove('ls-drop');
+      const key = e.dataTransfer.getData('text/plain') || dragKey;
+      if (!key) return;
+      const targetZone = ul.getAttribute('data-ls-zone');
+      const escKey = (typeof CSS !== 'undefined' && CSS.escape)
+        ? CSS.escape(key)
+        : String(key).replace(/["\\]/g, '\\$&');
+      const li = dlg.querySelector(`li[data-ls-key="${escKey}"]`);
+      if (!li) return;
+      const empty = ul.querySelector('.ls-empty');
+      if (empty) empty.remove();
+      const overLi = e.target.closest('li[data-ls-key]');
+      if (overLi && overLi !== li && targetZone === 'visible') {
+        ul.insertBefore(li, overLi);
+      } else {
+        ul.appendChild(li);
+      }
+      // Boş kalan listeye empty yaz
+      ['lsVisible', 'lsAvailable'].forEach((id) => {
+        const zone = document.getElementById(id);
+        if (zone && !zone.querySelector('li[data-ls-key]')) {
+          zone.innerHTML = `<li class="ls-empty">${id === 'lsVisible' ? 'Kolon yok' : 'Hepsi görünür'}</li>`;
+        }
+      });
+    });
+  };
+  bindZone(document.getElementById('lsVisible'));
+  bindZone(document.getElementById('lsAvailable'));
+
+  const readLayoutFromDlg = () => {
+    const order = ['id', ...[...document.querySelectorAll('#lsVisible li[data-ls-key]')].map((li) => li.getAttribute('data-ls-key'))];
+    const hidden = [...document.querySelectorAll('#lsAvailable li[data-ls-key]')].map((li) => li.getAttribute('data-ls-key'));
+    return { order, hidden };
+  };
+
+  dlg.addEventListener('click', (e) => {
+    if (e.target.closest('[data-ls-close]')) {
+      dlg.remove();
+      return;
+    }
+    if (e.target.closest('[data-ls-reset]')) {
+      clearListLayout(screen.id);
+      if (state._listLayoutOverride) delete state._listLayoutOverride[screen.id];
+      dlg.remove();
+      renderList(screen);
+      toast('Liste varsayılan düzene döndü.');
+      return;
+    }
+    if (e.target.closest('[data-ls-apply]')) {
+      const layout = readLayoutFromDlg();
+      state._listLayoutOverride = state._listLayoutOverride || {};
+      state._listLayoutOverride[screen.id] = layout;
+      dlg.remove();
+      renderList(screen);
+      toast('Liste düzeni uygulandı (henüz kaydedilmedi).');
+      return;
+    }
+    if (e.target.closest('[data-ls-save]')) {
+      const layout = readLayoutFromDlg();
+      saveListLayout(screen.id, layout);
+      if (state._listLayoutOverride) delete state._listLayoutOverride[screen.id];
+      dlg.remove();
+      renderList(screen);
+      toast('Liste ayarları kaydedildi.');
+    }
+  });
 }
 
 function isSessionTamYetkili() {
@@ -13064,7 +15660,16 @@ function screenPermission(screenId, action = null) {
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
-  if (action === 'export-csv' || action === 'mrp-talep' || action === 'mrp-uretim' || action === 'mrp-calistir' || action === 'tcmb-cek') {
+  if (
+    action === 'export-csv'
+    || action === 'export-excel'
+    || action === 'export-word'
+    || action === 'report-pdf'
+    || action === 'mrp-talep'
+    || action === 'mrp-uretim'
+    || action === 'mrp-calistir'
+    || action === 'tcmb-cek'
+  ) {
     return Boolean(row.incele || row.duzelt || row.yeni);
   }
   return Boolean(row[action]);
@@ -13110,8 +15715,13 @@ function updateActionButtons(screen) {
       btn.hidden = !screen.tcmbFetchAction;
       btn.disabled = !screenPermission(screen.id, 'tcmb-cek');
     } else if (act === 'report-pdf') {
-      btn.hidden = !screen.reportPdfAction;
-      btn.disabled = !screen.reportPdfAction;
+      const showPdf = Boolean(screen.reportPdfAction || screen.listExportActions);
+      btn.hidden = !showPdf;
+      btn.disabled = !showPdf || !screenPermission(screen.id, 'report-pdf');
+    } else if (act === 'export-excel' || act === 'export-word') {
+      const showEx = Boolean(screen.listExportActions);
+      btn.hidden = !showEx;
+      btn.disabled = !showEx || !screenPermission(screen.id, act);
     }
   });
   const mrpBtn = $('#btnMrpTalep');
@@ -13122,8 +15732,13 @@ function updateActionButtons(screen) {
   if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
   const tcmbBtn = $('#btnTcmbCek');
   if (tcmbBtn) tcmbBtn.hidden = !screen.tcmbFetchAction;
+  // PDF: listExport veya reportPdf — önceki override yalnızca reportPdf bırakıyordu
   const pdfBtn = $('#btnReportPdf');
-  if (pdfBtn) pdfBtn.hidden = !screen.reportPdfAction;
+  if (pdfBtn) {
+    const showPdf = Boolean(screen.reportPdfAction || screen.listExportActions);
+    pdfBtn.hidden = !showPdf;
+    pdfBtn.disabled = !showPdf || !screenPermission(screen.id, 'report-pdf');
+  }
 }
 
 async function openScreen(id, opts = {}) {
@@ -13186,6 +15801,30 @@ async function openScreen(id, opts = {}) {
       return;
     }
 
+    if (screen.systemUpdateConsole) {
+      state.screenId = id;
+      state.formMode = null;
+      state.selectedId = null;
+      if (location.hash !== `#${id}`) {
+        history.pushState({ screenId: id }, '', `#${id}`);
+      }
+      if (!opts.skipTab) addListTab(screen);
+      else {
+        state.activeTabKey = `list:${screen.id}`;
+        renderTabBar();
+      }
+      ensureSidebarPath(screen);
+      showView('sysUpdate');
+      const banner = $('#supBanner');
+      if (banner) {
+        banner.textContent = screen.techId
+          ? `${screen.title} · ${screen.techId}`
+          : screen.title;
+      }
+      await openSystemUpdateConsole();
+      return;
+    }
+
     if (screen.pageQueryExplorer) {
       state.screenId = id;
       state.formMode = null;
@@ -13213,6 +15852,7 @@ async function openScreen(id, opts = {}) {
     state.screenId = screen.id;
     state.selectedId = null;
     state.formMode = null;
+    state.listPage = 1;
     state.listCategory = screen.listCategories?.[0]?.id || null;
     if (!state.isYerleri.length && getActiveCompanyId()) {
       await loadPlantsForActiveCompany();
@@ -13299,6 +15939,9 @@ async function openScreen(id, opts = {}) {
     if (screen.id === 'numarator-tanimi') {
       rows = rows.map((r) => ({ ...r, id: r.series_code }));
     }
+    if (screen.listSourceType) {
+      rows = rows.filter((r) => String(r.source_type || 'Operasyonel') === String(screen.listSourceType));
+    }
     state.rows = ensureRowIds(rows);
     if (screen.visualGantt && data && typeof data === 'object' && !Array.isArray(data)) {
       state.ganttMeta = data;
@@ -13307,6 +15950,15 @@ async function openScreen(id, opts = {}) {
     if (screen.visualGantt) renderVisualGantt(screen, state.rows, state.ganttMeta || data);
     else clearVisualGantt();
     renderTabBar();
+    if (screen.openFormOnEnter && !opts.skipOpenForm) {
+      const mode = screen.openFormOnEnter === true ? 'yeni' : String(screen.openFormOnEnter);
+      state.formActiveTab = screen.formTabs?.[0]?.id || 'param';
+      if (mode === 'workspace' && screen.mrpKonsolWorkspace) {
+        await openMrpKonsolWorkspace({ inPlace: true });
+      } else {
+        await openForm(mode, { inPlace: true });
+      }
+    }
   } catch (err) {
     console.error(err);
     toast(err.message || 'Ekran açılamadı');
@@ -13525,9 +16177,18 @@ const LOOKUP_ENDPOINTS = {
   'fatura-yonetimi': '/invoices',
   'irsaliye-yonetimi': '/delivery_notes',
   'is-merkezleri': '/is-merkezleri',
+  'is-merkezi-yuku': '/is-merkezi-yuku',
   'is-istasyonlari': '/is-istasyonlari?is_active=true',
   'rota-sablonlari': '/routings?type=hepsi&template=true',
   'uretim-emirleri': '/uretim-emirleri',
+  'uretim-emir-operasyonlari': '/uretim-emirleri/operasyon-lookup',
+  'uretim-girisleri': '/uretim-girisleri',
+  'uretim-parametreleri': '/uretim-parametreleri',
+  'uretim-parametre-dogrulama': '/uretim-parametreleri/dogrula',
+  'mrp-parametreler': '/mrp/parametreler?is_active=true',
+  'mrp-calismalar': '/mrp/calismalar',
+  'cari-mutabakat': '/cari-mutabakat',
+  'e-belge-kuyruk': '/e-belge',
   'uretim-planlari': '/uretim-planlari',
   'uretim-emri-tipleri': '/uretim-emri-tipleri?is_active=true',
   'stok-depo': '/stok-depo?is_active=true',
@@ -13560,6 +16221,9 @@ const LOOKUP_ENDPOINTS = {
   partners: '/partners?is_active=true',
   'partners-musteri': '/partners?tur=Musteri&is_active=true',
   'partners-tedarikci': '/partners?tur=Tedarikci&is_active=true',
+  'partners-fasoncu': '/partners?is_subcontractor=true&is_active=true',
+  'fason-operasyonlari': '/fason/operasyonlar',
+  'fason-siparisleri': '/fason/siparisler',
   'kategoriler-abc': '/kategoriler?type=ABC&is_active=true',
   'kategoriler-marka': '/kategoriler?type=Marka&is_active=true',
   'kategoriler-temin': '/kategoriler?type=TeminSekli&is_active=true',
@@ -13728,7 +16392,7 @@ function buildScreenLookupRows() {
   })).sort((a, b) => String(a.screen_name).localeCompare(String(b.screen_name), 'tr'));
 }
 
-async function fetchLookupKey(key) {
+async function fetchLookupKey(key, query = null) {
   // UI ekran kataloğu — API’ye gitmeden MODULES’ten
   if (key === 'ekranlar' || key === 'screens' || key === 'onay-ekranlari') {
     if (key === 'onay-ekranlari') {
@@ -13747,10 +16411,18 @@ async function fetchLookupKey(key) {
     state.lookupCache[key] = buildScreenLookupRows();
     return state.lookupCache[key];
   }
-  const ep = resolveLookupEndpoint(key);
+  let ep = resolveLookupEndpoint(key);
   if (!ep) {
     state.lookupCache[key] = state.lookupCache[key] || [];
     return state.lookupCache[key];
+  }
+  if (query && typeof query === 'object') {
+    const qs = new URLSearchParams();
+    Object.entries(query).forEach(([k, v]) => {
+      if (v != null && String(v).trim() !== '') qs.set(k, String(v));
+    });
+    const qstr = qs.toString();
+    if (qstr) ep = ep.includes('?') ? `${ep}&${qstr}` : `${ep}?${qstr}`;
   }
   try {
     // Firmalar her zaman tam liste (backend zaten izolasyonsuz).
@@ -13834,8 +16506,9 @@ function normalizeLikeNeedle(q) {
 }
 
 function likeIncludes(haystack, needle) {
-  if (!needle) return true;
-  return String(haystack ?? '').toLocaleLowerCase('tr').includes(needle);
+  const n = normalizeLikeNeedle(needle);
+  if (!n) return true;
+  return String(haystack ?? '').toLocaleLowerCase('tr').includes(n);
 }
 
 function wrapLookupPick(innerHtml, disabled = false) {
@@ -13913,10 +16586,11 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
   }
   if (field.type === 'select') {
     let opts = field.options || [];
-    // Rate type: readable labels instead of codes (Alış / Satış / Efektif…)
+    // Döviz kur tipi: kod → okunur etiket (TCMB-ALIS → Alış).
+    // Stok Vergi Tip (Alış/Satış/…) aynı key’i kullanır; kod listesinde yoksa olduğu gibi bırak.
     if (field.key === 'rate_type' && opts.length && typeof opts[0] === 'string') {
-      opts = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
-      if (!opts.length) opts = RATE_TYPE_OPTIONS.slice();
+      const asCodes = RATE_TYPE_OPTIONS.filter((o) => opts.includes(o.value));
+      if (asCodes.length) opts = asCodes;
     }
     const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
     const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.l ?? optVal(o)) : o);
@@ -13963,7 +16637,24 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
     const dv = v ? String(v).slice(0, 10) : '';
     return `<input type="date" ${name} value="${escAttr(dv)}" ${dis} ${req} />`;
   }
+  if (field.type === 'datetime') {
+    return `<input type="datetime-local" step="60" ${name} value="${escAttr(toDatetimeLocalValue(v))}" ${dis} ${req} />`;
+  }
   return `<input type="text" ${name} value="${escAttr(v)}" ${dis} ${req} />`;
+}
+
+/** datetime-local value (YYYY-MM-DDTHH:mm) — API ISO / Postgres timestamp */
+function toDatetimeLocalValue(v) {
+  if (v == null || v === '') return '';
+  const s = String(v).trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) return s.slice(0, 16);
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) return `${s.slice(0, 10)}T${s.slice(11, 16)}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return `${s}T00:00`;
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function detailFieldControl(field, value, idx, gridKey = null, rowCtx = null) {
@@ -14648,6 +17339,152 @@ async function refreshQcMeasurementsFromPlan(screen) {
   // Plan değişince ölçüm değerlerini sıfırla; satır iskeleti yeni kriterlerden gelir
   state.formRecord.olcumler = buildQcMeasurementRows(state.formRecord.kriterler, []);
   renderForm(screen);
+}
+
+/** Ürün ağacı satırlarından iş emri malzeme grid’i (miktar ölçekli) */
+function buildWoMaterialsFromBom(bom, { plannedQty, warehouseId } = {}) {
+  const baseQty = Number(bom?.quantity) || 1;
+  const plan = Number(plannedQty);
+  const carpan = (Number.isFinite(plan) ? plan : 0) / (baseQty || 1);
+  const lines = Array.isArray(bom?.satirlar) ? bom.satirlar : [];
+  let nextNo = 1;
+  const rows = [];
+  lines.forEach((s) => {
+    if (!s?.component_item_id) return;
+    const lineNo = s.line_no != null && s.line_no !== '' ? Number(s.line_no) : nextNo;
+    nextNo = Math.max(nextNo, (Number.isFinite(lineNo) ? lineNo : nextNo) + 1);
+    const rawQty = Number(s.quantity != null && s.quantity !== '' ? s.quantity : s.net_quantity) || 0;
+    const qty = s.is_fixed_qty ? rawQty : rawQty * carpan;
+    rows.push({
+      line_no: Number.isFinite(lineNo) ? lineNo : rows.length + 1,
+      item_id: Number(s.component_item_id),
+      uom_code: s.uom_code || s.item_uom_code || '',
+      planned_quantity: qty,
+      consumed_quantity: 0,
+      warehouse_id: s.warehouse_id || warehouseId || null,
+    });
+  });
+  return rows;
+}
+
+/** Rota operasyonlarından iş emri rota grid’i */
+function buildWoOperationsFromRoute(route, { plannedQty } = {}) {
+  const plan = Number(plannedQty);
+  const planQty = Number.isFinite(plan) ? plan : 0;
+  const ops = Array.isArray(route?.operasyonlar) ? route.operasyonlar : [];
+  return ops.map((op, i) => ({
+    line_no: op.line_no != null && op.line_no !== '' ? Number(op.line_no) : (i + 1) * 10,
+    operation_code: op.operation_code || '',
+    operation_name: op.operation_name || '',
+    work_center_id: op.work_center_id || null,
+    planned_quantity: planQty,
+    produced_quantity: Number(op.produced_quantity) || 0,
+    status: op.status || (i === 0 ? 'Hazir' : 'Bekliyor'),
+    ilk_operasyon: i === 0,
+    son_operasyon: i === ops.length - 1,
+  }));
+}
+
+function canAutoFillUretimEmriDetails(rec) {
+  if (!rec || state.formMode === 'incele') return false;
+  if (rec.is_started || Number(rec.produced_quantity) > 0) return false;
+  const mals = Array.isArray(rec.malzemeler) ? rec.malzemeler : [];
+  if (mals.some((m) => Number(m.consumed_quantity) > 0)) return false;
+  const ops = Array.isArray(rec.operasyonlar) ? rec.operasyonlar : [];
+  if (ops.some((o) => Number(o.produced_quantity) > 0)) return false;
+  return true;
+}
+
+/**
+ * Üretim emri: ürün ağacı → malzemeler; rota → operasyonlar (formda anında).
+ * Grid DOM’u yeniden okumadan master’ı birleştirir (lookup firma filtresi item_id’yi silmesin).
+ */
+async function autoFillUretimEmriDetails(screen, { materials = false, operations = false } = {}) {
+  if (screen?.id !== 'uretim-emirleri' || !state.formRecord) return;
+  if (!materials && !operations) return;
+  const master = readMasterFromForm(screen);
+  const prevMal = state.formRecord.malzemeler;
+  const prevOps = state.formRecord.operasyonlar;
+  state.formRecord = {
+    ...state.formRecord,
+    ...master,
+    malzemeler: prevMal,
+    operasyonlar: prevOps,
+  };
+  if (!canAutoFillUretimEmriDetails(state.formRecord)) return;
+
+  const rec = state.formRecord;
+  const msgs = [];
+  let changed = false;
+
+  if (materials) {
+    const bomId = Number(rec.product_bom_id);
+    if (!bomId) {
+      if ((rec.malzemeler || []).length) {
+        rec.malzemeler = [];
+        changed = true;
+      }
+    } else {
+      try {
+        let bom = (state.lookupCache['urun-agaclari'] || [])
+          .find((b) => Number(b.id) === bomId);
+        if (!bom?.satirlar?.length) bom = await api(`/urun-agaclari/${bomId}`);
+        (bom.satirlar || []).forEach((s) => {
+          if (!s?.component_item_id) return;
+          ensureLookupCacheRow('items', {
+            id: Number(s.component_item_id),
+            item_code: s.item_code || String(s.component_item_id),
+            item_name: s.item_name || s.line_description || '',
+            uom_code: s.uom_code || s.item_uom_code || '',
+            item_type: s.item_type || '',
+          });
+        });
+        rec.malzemeler = buildWoMaterialsFromBom(bom, {
+          plannedQty: rec.planned_quantity,
+          warehouseId: rec.component_warehouse_id,
+        });
+        msgs.push(`${rec.malzemeler.length} malzeme`);
+        changed = true;
+      } catch (err) {
+        toast(err.message || 'Ürün ağacı malzemeleri okunamadı');
+      }
+    }
+  }
+
+  if (operations) {
+    const routeId = Number(rec.route_id);
+    if (!routeId) {
+      if ((rec.operasyonlar || []).length) {
+        rec.operasyonlar = [];
+        changed = true;
+      }
+    } else {
+      try {
+        let route = (state.lookupCache.routings || [])
+          .find((r) => Number(r.id) === routeId);
+        if (!route?.operasyonlar?.length) route = await api(`/routings/${routeId}`);
+        (route.operasyonlar || []).forEach((op) => {
+          if (!op?.work_center_id) return;
+          ensureLookupCacheRow('is-merkezleri', {
+            id: Number(op.work_center_id),
+            center_code: op.center_code || String(op.work_center_id),
+            center_name: op.center_name || op.work_center_name || '',
+          });
+        });
+        rec.operasyonlar = buildWoOperationsFromRoute(route, {
+          plannedQty: rec.planned_quantity,
+        });
+        msgs.push(`${rec.operasyonlar.length} operasyon`);
+        changed = true;
+      } catch (err) {
+        toast(err.message || 'Rota operasyonları okunamadı');
+      }
+    }
+  }
+
+  if (!changed) return;
+  renderForm(screen);
+  if (msgs.length) toast(`İş emri detay: ${msgs.join(', ')} dolduruldu`);
 }
 
 function hydrateItemCompanyPlant(rec) {
@@ -15972,10 +18809,12 @@ function collectMrpParametreFromDom() {
   return p;
 }
 
-function renderMrpParametrePane(rec) {
+function renderMrpParametrePane(rec, opts = {}) {
   const p = ensureMrpFormParametre(rec);
-  const readonly = state.formMode === 'incele';
-  const disRun = readonly ? 'disabled' : '';
+  const screen = findScreen(state.screenId);
+  const forceReadonly = Boolean(opts.forceReadonly);
+  const readonly = forceReadonly || state.formMode === 'incele' || state.formMode === 'workspace';
+  const showRun = Boolean(opts.showRun) || Boolean(screen?.mrpKonsolWorkspace);
   const firmaId = rec?.company_id || getActiveCompanyId() || '';
   const firmaRows = state.lookupCache?.companies || state.firmalar || [];
   const firma = firmaRows.find((f) => Number(f.id) === Number(firmaId));
@@ -15995,7 +18834,7 @@ function renderMrpParametrePane(rec) {
       </label>
       <label class="mrp-field">
         <span>Parametre kodu</span>
-        <input type="text" data-mrp-param="parameter_code" value="${escapeHtml(p.parameter_code || '')}" ${readonly ? 'readonly' : ''} placeholder="örn. MRP-STD" />
+        <input type="text" data-mrp-param="parameter_code" value="${escapeHtml(p.parameter_code || rec?.parameter_code || '')}" ${readonly ? 'readonly' : ''} placeholder="örn. MRP-STD" />
       </label>
       ${mrpDate('start_date', 'Ufuk başlangıç', p.start_date, readonly)}
       ${mrpDate('end_date', 'Ufuk bitiş', p.end_date, readonly)}
@@ -16007,11 +18846,13 @@ function renderMrpParametrePane(rec) {
         <span>Not</span>
         <textarea data-mrp-param="notes" rows="2" ${readonly ? 'readonly' : ''}>${escapeHtml(p.notes || '')}</textarea>
       </label>
-      <div class="mrp-console-actions">
-        <button type="button" class="btn primary" id="btnMrpKonsolCalistir" ${disRun}>MRP Çalıştır (sistem geneli)</button>
-      </div>
+      ${showRun ? `<div class="mrp-console-actions">
+        <button type="button" class="btn primary" id="btnMrpKonsolCalistir" ${rec?.parameter_set_id || rec?.id ? '' : 'disabled'}>MRP Çalıştır (sistem geneli)</button>
+      </div>` : ''}
     </div>
-    <p class="hint">MRP, tek stok yerine seçili parametre/kapsama göre <b>tüm sistemde</b> çalışır. Öneri miktarı stok kartı min/max ortalaması + ufuk içi talep/arz ile hesaplanır.</p>
+    <p class="hint">${showRun
+      ? 'Üstten parametre seti seçildiğinde kapsam ve bayraklar aşağıda otomatik dolar. MRP tüm sistemde seçili kapsama göre çalışır.'
+      : 'Bu ekranda parametre setini kaydedin. Konsolda seti seçerek MRP çalıştırın.'}</p>
 
     <details class="mrp-section" open>
       <summary>Stok parametreleri</summary>
@@ -16145,9 +18986,9 @@ function renderMrpEditableScopeRows(key, rows, codeKey, nameKey, readonly) {
   </div>`;
 }
 
-function renderMrpKapsamPane(rec) {
+function renderMrpKapsamPane(rec, opts = {}) {
   const p = ensureMrpFormParametre(rec);
-  const readonly = state.formMode === 'incele';
+  const readonly = Boolean(opts.forceReadonly) || state.formMode === 'incele' || state.formMode === 'workspace';
   const cache = state.mrpKapsamCache || {};
   const wh = cache.warehouses || [];
   const wot = cache.woTypes || [];
@@ -16226,7 +19067,7 @@ function renderMrpSonucPane(rec) {
         <td class="num">${escapeHtml(fmt(r.suggested_quantity))}</td>
         <td>${escapeHtml(r.suggestion || '')}</td>
       </tr>`).join('')
-    : '<tr><td colspan="15" class="detail-empty">Sonuç satırı yok. Parametreleri ayarlayıp «MRP Çalıştır»a basın.</td></tr>';
+    : '<tr><td colspan="15" class="detail-empty">Sonuç satırı yok. Üstten parametre seçip «MRP Çalıştır»a basın.</td></tr>';
 
   return `
   <section class="mrp-console" data-mrp-pane="sonuc">
@@ -16257,6 +19098,138 @@ function renderMrpSonucPane(rec) {
       </table>
     </div>
   </section>`;
+}
+
+function renderMrpWorkspacePane(rec) {
+  const sets = Array.isArray(state.mrpParametreSets) ? state.mrpParametreSets : [];
+  const selectedId = rec?.parameter_set_id || '';
+  const opts = sets.map((s) => {
+    const label = `${s.parameter_code || ''}${s.description ? ' — ' + s.description : ''}`;
+    return `<option value="${escapeHtml(String(s.id))}" ${String(s.id) === String(selectedId) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+  }).join('');
+  const hasSet = Boolean(selectedId);
+  return `
+  <section class="mrp-console mrp-console--workspace" data-mrp-pane="workspace">
+    <div class="mrp-console-head mrp-console-head--pick">
+      <label class="mrp-field mrp-field--grow">
+        <span>MRP parametre seti</span>
+        <select id="mrpWorkspaceParamSelect" data-mrp-workspace-param>
+          <option value="">— Parametre seçin —</option>
+          ${opts}
+        </select>
+      </label>
+      <div class="mrp-console-actions">
+        <button type="button" class="btn ghost" id="btnMrpParametreEkran">Parametreleri düzenle</button>
+        <button type="button" class="btn primary" id="btnMrpKonsolCalistir" ${hasSet ? '' : 'disabled'}>MRP Çalıştır</button>
+      </div>
+    </div>
+    ${hasSet ? `
+      <div class="mrp-workspace-body">
+        ${renderMrpParametrePane(rec, { forceReadonly: true, showRun: false })}
+        ${renderMrpKapsamPane(rec, { forceReadonly: true })}
+        ${renderMrpSonucPane(rec)}
+      </div>
+    ` : `
+      <div class="detail-empty mrp-workspace-empty">
+        Üstten bir parametre seti seçin. Seçilen sete ait ufuk, bayraklar ve kapsam aşağıda otomatik oluşur.
+      </div>
+    `}
+  </section>`;
+}
+
+async function loadMrpParametreSets(force = false) {
+  if (!force && Array.isArray(state.mrpParametreSets) && state.mrpParametreSets.length) {
+    return state.mrpParametreSets;
+  }
+  const rows = await api('/mrp/parametreler?is_active=true').catch(() => []);
+  state.mrpParametreSets = Array.isArray(rows) ? rows : [];
+  return state.mrpParametreSets;
+}
+
+async function applyMrpParametreSetToWorkspace(setId) {
+  const screen = findScreen('mrp-calisma') || findScreen(state.screenId);
+  state.formMode = 'workspace';
+  state.formActiveTab = 'workspace';
+  if (!setId) {
+    state.formRecord = {
+      parameter_set_id: null,
+      parametre: defaultMrpParametreClient(),
+      messages: [],
+      sonuclar: [],
+    };
+    showView('form');
+    if (screen) renderForm(screen);
+    return;
+  }
+  const set = await api(`/mrp/parametreler/${setId}`);
+  const parametre = ensureMrpFormParametre(set);
+  state.formRecord = {
+    ...set,
+    id: null,
+    run_no: null,
+    status: null,
+    parameter_set_id: set.id,
+    parameter_code: set.parameter_code,
+    description: set.description,
+    company_id: set.company_id || getActiveCompanyId() || null,
+    plant_id: set.plant_id || state.activeIsYeriId || null,
+    parametre,
+    messages: [],
+    sonuclar: [],
+  };
+  showView('form');
+  if (screen) renderForm(screen);
+}
+
+async function openMrpKonsolWorkspace(_opts = {}) {
+  const screen = findScreen('mrp-calisma');
+  if (!screen) return;
+  state.screenId = 'mrp-calisma';
+  state.formMode = 'workspace';
+  state.formActiveTab = 'workspace';
+  state.formRecord = {
+    parameter_set_id: null,
+    parametre: defaultMrpParametreClient(),
+    messages: [],
+    sonuclar: [],
+  };
+  if (!state.formSolo) addListTab(screen, { activate: false });
+  addFormTab(screen, 'workspace', state.formRecord);
+  await loadMrpParametreSets(true);
+  await ensureMrpKapsamCache();
+  const first = state.mrpParametreSets?.[0];
+  if (first?.id) await applyMrpParametreSetToWorkspace(first.id);
+  else {
+    showView('form');
+    renderForm(screen);
+  }
+  renderTabBar();
+}
+
+async function openMrpRunInWorkspace(runId) {
+  const screen = findScreen('mrp-calisma');
+  if (!screen || !runId) return;
+  const run = await api(`/mrp/calismalar/${runId}`);
+  state.screenId = 'mrp-calisma';
+  state.mrpCalismaId = runId;
+  state.formMode = 'workspace';
+  state.formActiveTab = 'workspace';
+  await loadMrpParametreSets();
+  await ensureMrpKapsamCache();
+  const parametre = ensureMrpFormParametre(run);
+  state.formRecord = {
+    ...run,
+    parameter_set_id: run.parameter_set_id || null,
+    parameter_code: parametre.parameter_code || run.parameter_code,
+    parametre,
+    messages: run.messages || [],
+    sonuclar: run.sonuclar || [],
+  };
+  if (!state.formSolo) addListTab(screen, { activate: false });
+  addFormTab(screen, 'workspace', state.formRecord);
+  showView('form');
+  renderForm(screen);
+  renderTabBar();
 }
 
 async function ensureMrpKapsamCache() {
@@ -16293,6 +19266,22 @@ async function bindMrpKonsolEvents() {
     const pane = document.querySelector('[data-tab-panel="kapsam"]');
     if (pane) pane.innerHTML = renderMrpKapsamPane(state.formRecord || {});
   }
+  if (state.formActiveTab === 'workspace') {
+    await loadMrpParametreSets();
+    const pane = document.querySelector('[data-tab-panel="workspace"]');
+    if (pane && !pane.querySelector('[data-mrp-pane="workspace"]')) {
+      pane.innerHTML = renderMrpWorkspacePane(state.formRecord || {});
+    }
+  }
+  $('#mrpWorkspaceParamSelect')?.addEventListener('change', (e) => {
+    const id = e.target.value;
+    applyMrpParametreSetToWorkspace(id || null).catch((err) => toast(err.message || 'Parametre yüklenemedi'));
+  });
+  $('#btnMrpParametreEkran')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openScreen('mrp-parametre').catch((err) => toast(err.message));
+  });
   $('#btnMrpKonsolCalistir')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -16377,23 +19366,26 @@ async function openMrpRaporWindow() {
 
 async function runAndSaveMrp() {
   const konsol = findScreen('mrp-calisma');
-  const formOpen = state.screenId === 'mrp-calisma'
+  const onKonsol = state.screenId === 'mrp-calisma'
     && state.formMode
     && $('#viewForm') && !$('#viewForm').hidden;
 
-  // Liste / başka ekrandan: önce konsol formunu aç
-  if (!formOpen) {
-    state.screenId = 'mrp-calisma';
-    await openForm('yeni', { inPlace: true });
-    toast('Parametreleri ayarlayıp «MRP Çalıştır»a basın.');
+  if (!onKonsol) {
+    await openMrpKonsolWorkspace({ inPlace: true });
+    toast('Parametre setini seçip «MRP Çalıştır»a basın.');
     return;
   }
 
-  collectMrpParametreFromDom();
   const rec = state.formRecord || {};
+  if (!rec.parameter_set_id) {
+    toast('Önce üstten bir MRP parametre seti seçin.');
+    return;
+  }
+  // Workspace readonly — DOM’dan zorla toplama; kayıtlı seti kullan
   const parametre = ensureMrpFormParametre(rec);
   const body = {
-    description: rec.description || 'UI MRP çalışması',
+    parameter_set_id: rec.parameter_set_id,
+    description: rec.description || `MRP · ${rec.parameter_code || ''}`.trim(),
     company_id: rec.company_id || getActiveCompanyId() || null,
     plant_id: rec.plant_id || state.activeIsYeriId || null,
     start_date: parametre.start_date,
@@ -16404,22 +19396,25 @@ async function runAndSaveMrp() {
   toast('MRP çalışıyor…');
   const result = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
   state.mrpCalismaId = result.calisma?.id || null;
-  state.formMode = 'incele';
+  state.formMode = 'workspace';
   state.formRecord = {
+    ...rec,
     ...(result.calisma || {}),
+    parameter_set_id: rec.parameter_set_id,
+    parameter_code: rec.parameter_code,
     parametre: result.parametre || parametre,
     messages: result.messages || [],
     sonuclar: result.sonuclar || [],
   };
-  state.formActiveTab = 'sonuc';
+  state.formActiveTab = 'workspace';
   toast(`MRP tamam: ${result.calisma?.run_no || ''} · net>0: ${result.calisma?.net_positive_only ?? '?'}`);
   renderForm(konsol);
   const tab = state.openTabs?.find((t) => t.screenId === 'mrp-calisma' && t.kind === 'form');
   if (tab) {
-    tab.formMode = 'incele';
+    tab.formMode = 'workspace';
     tab.formRecord = state.formRecord;
-    tab.formActiveTab = 'sonuc';
-    tab.title = `MRP Konsol · ${result.calisma?.run_no || ''}`;
+    tab.formActiveTab = 'workspace';
+    tab.title = `MRP Konsol · ${result.calisma?.run_no || rec.parameter_code || ''}`;
     renderTabBar();
   }
 }
@@ -16490,6 +19485,8 @@ function detailColClass(f) {
 
 /** Don’t Make Me Think: detay alanlarını tarama bloklarına ayır (kimlik / address / …). */
 const FIELD_GROUP_DEFS = [
+  // İş emri seçimi üretim girişinde önce gelmeli (order_id aksi halde «Diğer»e düşüyordu)
+  { id: 'kaynak-belge', title: 'İş emri', re: /^(order_id|operation_id|production_order_id)$/i },
   { id: 'organizasyon', title: 'Organizasyon', re: /^(company_id|plant_id|hedef_depo|bolge_|sektor_|nace_|is_merkezi|work_center|work_station|emir_tipi|order_type_id|asama_|sorumlu_|takip_eden)/i },
   { id: 'kimlik', title: 'Genel bilgiler', re: /^(cari_|stok_|aday_|firsat_|kontak_|kisi_|seri_|emir_|talep_|siparis_|fatura_|irsaliye_|teklif_|kabul_|parti_|agac_|rota_|hareket_|operation_|line_no|order_no|quotation_no|partner_|item_code|item_name|kod|adi|turu|tipi|vergi_|pasaport|uzun_stok|uzun_item|procurement_type|item_type|customer_type|first_name$|last_name$|title|order_type|order_date|item_id$|product_bom|route_id|sales_order|uretici_|old_item|original_code|gtip_|class_code|output_item)/i },
   { id: 'olcu', title: 'Ölçü / miktar', re: /^(uom_code|quantity|agirlik|hacim|yogunluk|stok_takip|cevrilecek|olcu|produced_quantity|planned_quantity)/i },
@@ -17863,6 +20860,75 @@ async function loadBomRecordForRouting(bomId) {
   return bomRec || null;
 }
 
+/**
+ * Rota oluştururken: ürün ağacı + ad + varsayılan operasyon/malzeme.
+ * Stok veya ağaç seçilince çağrılır.
+ */
+async function autoFillRoutingFromBom(screen, { quiet = false, forceMaterials = false } = {}) {
+  const tab = findRoutingTab(screen);
+  if (!tab || !screen || screen.id !== 'routings') return false;
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...(state.formRecord || {}), ...master };
+
+  // Stok seçili ama ağaç boşsa API’den varsayılanı bul
+  if (state.formRecord.item_id && !state.formRecord.product_bom_id) {
+    const bom = await ensureDefaultBomForItem(state.formRecord.item_id);
+    if (bom?.id) {
+      state.formRecord.product_bom_id = bom.id;
+      const bomEl = document.querySelector('[data-master="product_bom_id"]');
+      if (bomEl instanceof HTMLSelectElement) {
+        setLinkedSelectValue(bomEl, bom.id, 'product_bom_id');
+      }
+    }
+  }
+
+  // Rota adı boşsa stok adından doldur
+  if (!(String(state.formRecord.route_name || '').trim()) && state.formRecord.item_id) {
+    const st = itemLookupById(state.formRecord.item_id);
+    if (st?.item_name) {
+      state.formRecord.route_name = `${st.item_name} Rotası`;
+      const nameEl = document.querySelector('[data-master="route_name"]');
+      if (nameEl) nameEl.value = state.formRecord.route_name;
+    }
+  }
+
+  persistFlowEditor(state.formRecord, tab);
+  let ops = Array.isArray(state.formRecord.operasyonlar) ? [...state.formRecord.operasyonlar] : [];
+  if (!ops.length) {
+    ops = [emptyRoutingOperation(10, {
+      item_id: state.formRecord.item_id,
+      product_bom_id: state.formRecord.product_bom_id,
+    })];
+  } else {
+    ops = ops.map((o) => ({
+      ...o,
+      item_id: o.item_id || state.formRecord.item_id || '',
+      product_bom_id: o.product_bom_id || state.formRecord.product_bom_id || '',
+      bilesenler: Array.isArray(o.bilesenler) ? [...o.bilesenler] : [],
+      ekipmanlar: Array.isArray(o.ekipmanlar) ? [...o.ekipmanlar] : [],
+    }));
+  }
+
+  const bomId = state.formRecord.product_bom_id;
+  if (bomId) {
+    const bomRec = await loadBomRecordForRouting(bomId);
+    const materials = collectBomMaterialsForRouting(bomRec);
+    const anyMats = ops.some((o) => (o.bilesenler || []).some((b) => b.item_id));
+    if (materials.length && (!anyMats || forceMaterials)) {
+      ops = distributeBomMaterialsToOps(ops, materials, { replace: true });
+      if (!quiet) {
+        toast(`${materials.length} malzeme ürün ağacından operasyonlara aktarıldı`);
+      }
+    } else if (!materials.length && !quiet && !anyMats) {
+      toast('Ürün ağacında aktarılacak malzeme satırı yok — ağaç satırlarını kontrol edin.');
+    }
+  }
+
+  state.formRecord.operasyonlar = ops;
+  if (state.flowSel == null || state.flowSel < 0) state.flowSel = 0;
+  return true;
+}
+
 /** Başlık ürün ağacından seçili operasyona malzeme aktar. */
 async function applyBomMaterialsToRouting(screen, { quiet = false, force = false, opIdx = null } = {}) {
   const tab = findRoutingTab(screen);
@@ -18182,6 +21248,18 @@ function renderForm(screen) {
   }
   const screenLabel = $('#formScreenLabel');
   if (screenLabel) screenLabel.textContent = screen.title;
+  // Üretim girişi vb.: runtime banner (kalan / max izin) form üst bandına
+  {
+    const banner = $('#screenBanner');
+    if (banner) {
+      const runtime = screen._runtimeBanner;
+      if (runtime) {
+        banner.textContent = `${screen.title} — ${runtime}`;
+      } else if (screen.banner) {
+        banner.textContent = `${screen.title} — ${screen.banner}${screen.techId ? ' · ' + screen.techId : ''}`;
+      }
+    }
+  }
   const chip = $('#formRecordChip');
   if (chip) {
     const codeKey = screen.codeField;
@@ -18405,6 +21483,7 @@ function renderForm(screen) {
   }
 
   // İş emri: Detayları Doldur + BOM/Rota Uygula (başlatılmamış, açık emir)
+  // Üretim girişi: Detayları Getir (iş emrinden malzeme/depo önizleme)
   const fillBtn = $('#btnFormDetailFill');
   const bomBtn = $('#btnFormBomRota');
   const woCanRefill = screen.id === 'uretim-emirleri'
@@ -18414,8 +21493,13 @@ function renderForm(screen) {
     && !rec.is_started
     && Number(rec.produced_quantity || 0) <= 0
     && !['Kapali', 'Iptal'].includes(rec.status);
+  const uretimGirisFill = (screen.id === 'uretim-girisleri' || screen.id === 'hizli-uretim-girisi')
+    && screen.detailFillAction?.client === 'uretim-giris-onizleme'
+    && state.formMode !== 'incele'
+    && !readonly
+    && Boolean(rec.order_id || document.querySelector('[data-master="order_id"]')?.value);
   if (fillBtn) {
-    const showFill = woCanRefill && screen.detailFillAction;
+    const showFill = (woCanRefill && screen.detailFillAction) || uretimGirisFill;
     fillBtn.hidden = !showFill;
     if (showFill) fillBtn.textContent = screen.detailFillAction.label;
   }
@@ -18535,6 +21619,11 @@ function renderForm(screen) {
         ${renderMrpSonucPane(rec)}
       </div>`;
     }
+    if (tab.kind === 'mrp-workspace') {
+      return `<div class="form-tab-panel form-tab-panel--md form-tab-panel--scrollable" data-tab-panel="${tab.id}" ${hide}>
+        ${renderMrpWorkspacePane(rec)}
+      </div>`;
+    }
     const masterLike = tab.id === 'master' || tab.id === 'ana' || tab.id === 'kart'
       || tab.id === 'title' || tab.id === 'bilgiler';
     const tabFields = tab.fields || [];
@@ -18578,12 +21667,13 @@ function renderForm(screen) {
     bindItemWarehousePermissionEvents();
   }
   if (screen.mrpKonsol) {
+    const hideSave = !screen.mrpParametreScreen || state.formMode === 'workspace' || state.formMode === 'incele';
     ['btnFormSave', 'btnFormSaveClose', 'btnFormSaveNew'].forEach((id) => {
       const el = document.getElementById(id);
-      if (el) el.hidden = true;
+      if (el) el.hidden = hideSave;
     });
     const saveGroup = document.getElementById('formSaveGroup') || document.querySelector('#formSaveGroup');
-    if (saveGroup) saveGroup.hidden = true;
+    if (saveGroup) saveGroup.hidden = hideSave;
     ensureMrpFormParametre(state.formRecord || {});
     bindMrpKonsolEvents().catch(() => {});
   }
@@ -18837,11 +21927,19 @@ function collectLookupFieldDefs(screen) {
 
 function findFieldDefByKey(screen, key) {
   return collectLookupFieldDefs(screen).find((f) => f.key === key)
+    || collectScreenFormFields(screen).find((f) => f.key === key)
     || (TANIM_LOOKUP_BY_KEY[key] ? applyDefinitionLookup({ key, label: key }) : null);
 }
 
 /** Lookup / select popup: tablo kolonları */
 const LOOKUP_BROWSER_COLUMNS = {
+  'mrp-calismalar': [
+    { key: 'run_no', label: 'Çalışma no', mono: true },
+    { key: 'status', label: 'Durum' },
+    { key: 'start_date', label: 'Ufuk baş.' },
+    { key: 'end_date', label: 'Ufuk bit.' },
+    { key: 'description', label: 'Açıklama' },
+  ],
   items: [
     { key: 'item_code', label: 'Stok kodu', mono: true },
     { key: 'item_name', label: 'Stok adı' },
@@ -18977,6 +22075,13 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'type_code', label: 'Tip kodu', mono: true },
     { key: 'type_name', label: 'Tip adı' },
   ],
+  'uretim-emir-operasyonlari': [
+    { key: 'line_no', label: 'Sıra', mono: true },
+    { key: 'operation_code', label: 'Op kod', mono: true },
+    { key: 'operation_name', label: 'Operasyon' },
+    { key: 'status', label: 'Durum' },
+    { key: 'order_no', label: 'Emir', mono: true },
+  ],
   ekranlar: [
     { key: 'screen_code', label: 'Ekran kodu', mono: true },
     { key: 'screen_name', label: 'Ekran adı' },
@@ -18988,6 +22093,18 @@ const LOOKUP_BROWSER_COLUMNS = {
     { key: 'screen_name', label: 'Ekran adı' },
     { key: 'module_title', label: 'Modül' },
     { key: 'tech_id', label: 'Tech ID', mono: true },
+  ],
+  'vergi-kodlari': [
+    { key: 'tax_code', label: 'Vergi kodu', mono: true },
+    { key: 'tax_name', label: 'Vergi adı' },
+    { key: 'rate', label: 'Oran %', num: true },
+    { key: 'tax_type', label: 'Tip' },
+  ],
+  'finans-vergi-kodlari': [
+    { key: 'tax_code', label: 'Vergi kodu', mono: true },
+    { key: 'tax_name', label: 'Vergi adı' },
+    { key: 'rate', label: 'Oran %', num: true },
+    { key: 'tax_type', label: 'Tip' },
   ],
 };
 
@@ -19058,6 +22175,7 @@ const LOOKUP_TO_SCREEN = {
   'uretim-emri-tipleri': 'uretim-emri-tipleri',
   'uretim-emirleri': 'uretim-emirleri',
   'uretim-planlari': 'uretim-planlari',
+  'mrp-calismalar': 'mrp-calisma',
   'satin-alma-talepleri': 'satin-alma-talepleri',
   'satin-alma-teklifleri': 'satin-alma-teklifleri',
   'satin-alma-siparisleri': 'satin-alma-siparisleri',
@@ -19120,6 +22238,7 @@ const LOOKUP_TO_SCREEN = {
   'hr-cikis-nedenleri': 'hr-cikis-nedenleri',
   'belge-tipleri': 'belge-tipleri',
   'finans-vergi-kodlari': 'finans-vergi-kodlari',
+  'vergi-kodlari': 'finans-vergi-kodlari',
   'finans-ulke-paketleri': 'finans-ulke-paketleri',
   'mali-yillar': 'mali-yillar',
   'muhasebe-donemleri': 'muhasebe-donemleri',
@@ -19228,11 +22347,13 @@ async function enrichLookupRowsWithQty(field, rows, ctx) {
 
 function lookupBrowserRowValue(row, valueKey) {
   if (!row) return '';
-  if (row._opt != null) return row._opt;
+  if (row._opt != null) {
+    return typeof row._opt === 'object' ? (row._opt.value ?? row._opt.id ?? '') : row._opt;
+  }
   return row[valueKey];
 }
 
-function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = false, checkedIds = null) {
+function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = false, checkedIds = null, indexOffset = 0) {
   if (!rows.length) {
     return '<div class="lookup-browser-empty">Kayıt bulunamadı.</div>';
   }
@@ -19241,7 +22362,8 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = fal
     ? `<th class="lookup-browser-check"><span class="sr-only">Seç</span></th>`
     : '';
   const head = checkHead + cols.map((c) => `<th class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(c.label)}</th>`).join('');
-  const body = rows.map((r, idx) => {
+  const body = rows.map((r, i) => {
+    const idx = indexOffset + i;
     const val = lookupBrowserRowValue(r, valueKey);
     const rid = r.id != null ? String(r.id) : String(val ?? '');
     const isChecked = multi && checked.has(String(rid));
@@ -19251,7 +22373,9 @@ function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = fal
       : '';
     const cells = cols.map((c) => {
       let raw = r[c.key];
-      if (c.key === '_opt') raw = r._opt;
+      if (c.key === '_opt') {
+        raw = typeof r._opt === 'object' ? (r._opt?.label ?? r._opt?.value ?? r._label) : r._opt;
+      }
       if (raw == null || raw === '') raw = '—';
       if (c.num && raw !== '—' && !Number.isNaN(Number(raw))) {
         raw = Number(raw).toLocaleString('tr-TR', { maximumFractionDigits: 4 });
@@ -19331,15 +22455,35 @@ function paintLookupBrowser() {
   if (!body) return;
   const filtered = filterLookupBrowserRows(st.allRows, st.cols, search?.value || '');
   st.filteredRows = filtered;
-  if (count) count.textContent = `${filtered.length} kayıt`;
-  body.innerHTML = renderLookupBrowserTable(
-    filtered,
+  const pageSize = LOOKUP_SUGGEST_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize) || 1);
+  let pageNo = Number(st.page) || 0;
+  if (pageNo > totalPages - 1) pageNo = totalPages - 1;
+  if (pageNo < 0) pageNo = 0;
+  st.page = pageNo;
+  const start = pageNo * pageSize;
+  const pageRows = filtered.slice(start, start + pageSize);
+  const from = filtered.length ? start + 1 : 0;
+  const to = Math.min(start + pageRows.length, filtered.length);
+  if (count) count.textContent = filtered.length
+    ? `${from}–${to} / ${filtered.length} kayıt`
+    : '0 kayıt';
+  const tableHtml = renderLookupBrowserTable(
+    pageRows,
     st.cols,
     st.selectedVal,
     st.valueKey,
     Boolean(st.multi),
     st.checkedIds,
+    start,
   );
+  const pagerHtml = `
+    <div class="lookup-suggest-pager lookup-browser-pager" data-lb-pager="1">
+      <button type="button" class="btn ghost" data-lb-page="-1" ${pageNo <= 0 ? 'disabled' : ''}>← Geri</button>
+      <span class="lookup-suggest-pager-info">Sayfa ${pageNo + 1} / ${totalPages}</span>
+      <button type="button" class="btn ghost" data-lb-page="1" ${pageNo >= totalPages - 1 ? 'disabled' : ''}>İleri →</button>
+    </div>`;
+  body.innerHTML = tableHtml + pagerHtml;
   updateLookupBrowserActionButtons();
 }
 
@@ -19359,13 +22503,22 @@ async function reloadLookupBrowserRows() {
   let rows = [];
   if (field.type === 'lookup' && field.lookup) {
     invalidateLookups(field.lookup);
-    await fetchLookupKey(field.lookup);
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
     // Formdaki select seçeneklerini de taze tut
     const html = buildLookupOptionsHtml(field, st.sel.value, rows);
     st.sel.innerHTML = html;
   } else if (Array.isArray(field.options) && field.options.length) {
-    rows = field.options.map((o) => ({ _opt: o }));
+    rows = field.options.map((o) => {
+      if (typeof o === 'object' && o != null) {
+        const v = o.value ?? o.id ?? o.v;
+        return { _opt: v, _label: o.label ?? o.l ?? v };
+      }
+      return { _opt: o, _label: o };
+    });
   } else {
     rows = [...st.sel.options]
       .filter((o) => o.value !== '')
@@ -19392,11 +22545,31 @@ async function openLookupBrowserForSelect(sel) {
   let valueKey = field.valueKey || 'id';
 
   if (field.type === 'lookup' && field.lookup) {
-    await fetchLookupKey(field.lookup);
+    if (field.dependsOn) {
+      const parentVal = ctx?.[field.dependsOn];
+      if (parentVal == null || String(parentVal).trim() === '') {
+        const parentField = findScreen(state.screenId)?.masterFields?.find((f) => f.key === field.dependsOn)
+          || findScreen(state.screenId)?.detailFields?.find((f) => f.key === field.dependsOn);
+        toast(`Önce «${parentField?.label || field.dependsOn}» seçin.`);
+        return;
+      }
+    }
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    if (depQuery) invalidateLookups(field.lookup);
+    await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
     valueKey = field.valueKey || 'id';
   } else if (Array.isArray(field.options) && field.options.length) {
-    rows = field.options.map((o) => ({ _opt: o }));
+    rows = field.options.map((o) => {
+      if (typeof o === 'object' && o != null) {
+        const v = o.value ?? o.id ?? o.v;
+        const lab = o.label ?? o.l ?? v;
+        return { _opt: v, _label: lab };
+      }
+      return { _opt: o, _label: o };
+    });
     valueKey = '_opt';
   } else {
     rows = [...sel.options]
@@ -19440,19 +22613,22 @@ async function openLookupBrowserForSelect(sel) {
   if (!dlg) return;
   const screenTitle = targetScreen?.title || field.label || 'Kayıt';
   if (title) title.textContent = multi ? `${screenTitle} · çoklu seç` : `${screenTitle}`;
-  // Çoklu seçte arama kutusu boş açılsın
-  const typed = multi ? '' : (sel.closest('.lookup-widget')?.querySelector('.lookup-typeahead')?.value || '');
+  // Pop-up: seçili etiketle filtreleme — tüm liste görünsün; kullanıcı arar
   if (search) {
-    search.value = typed.trim();
+    search.value = '';
     search.placeholder = 'Ara — LIKE %metin% …';
   }
+  _lookupBrowserState.page = 0;
   paintLookupBrowser();
   dlg.hidden = false;
   search?.focus();
   if (search && !search.dataset.bound) {
     search.dataset.bound = '1';
     search.addEventListener('input', () => {
-      if (_lookupBrowserState) paintLookupBrowser();
+      if (_lookupBrowserState) {
+        _lookupBrowserState.page = 0;
+        paintLookupBrowser();
+      }
     });
   }
   if (!_lookupBrowserFocusBound) {
@@ -19671,34 +22847,173 @@ async function lookupBrowserCrudAction(act) {
   }
 }
 
+const LOOKUP_SUGGEST_PAGE_SIZE = 10;
+
 function closeLookupSuggest(widget) {
-  const box = widget?.querySelector('.lookup-suggest');
-  if (box) {
+  const suggestId = widget?.dataset?.suggestId || '';
+  const portal = suggestId
+    ? document.querySelector(`.lookup-suggest[data-suggest-for="${CSS.escape(suggestId)}"]`)
+    : null;
+  const inline = widget?.querySelector?.('.lookup-suggest');
+  [portal, inline].filter(Boolean).forEach((box) => {
     box.hidden = true;
     box.innerHTML = '';
+    box.classList.remove('lookup-suggest--portal');
+    if (box.dataset.portal === '1') box.remove();
+  });
+  if (widget) {
+    delete widget._suggestPage;
+    delete widget._suggestMatches;
+    delete widget._suggestNeedle;
   }
 }
 
-function paintLookupSuggest(widget, sel, needle) {
-  const box = widget?.querySelector('.lookup-suggest');
-  if (!box || !sel) return;
+function ensureLookupSuggestBox(widget) {
+  if (!widget) return null;
+  let box = widget.querySelector('.lookup-suggest');
+  // Detay tablosu overflow yüzünden kesilmesin → body portal
+  const inGrid = Boolean(widget.closest('.detail-table, .detail-table-wrap, .filter-pane, td, th'));
+  if (!widget.dataset.suggestId) {
+    widget.dataset.suggestId = `ls${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+  }
+  if (inGrid) {
+    let portal = document.querySelector(`.lookup-suggest[data-suggest-for="${widget.dataset.suggestId}"]`);
+    if (!portal) {
+      portal = document.createElement('div');
+      portal.className = 'lookup-suggest lookup-suggest--portal';
+      portal.dataset.suggestFor = widget.dataset.suggestId;
+      portal.dataset.portal = '1';
+      portal.hidden = true;
+      portal.setAttribute('role', 'listbox');
+      document.body.appendChild(portal);
+    }
+    return portal;
+  }
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'lookup-suggest';
+    box.hidden = true;
+    box.setAttribute('role', 'listbox');
+    widget.querySelector('.lookup-combo-main')?.appendChild(box);
+  }
+  return box;
+}
+
+function positionLookupSuggestPortal(widget, box) {
+  if (!box?.classList.contains('lookup-suggest--portal')) return;
+  const ta = widget?.querySelector('.lookup-typeahead');
+  if (!ta) return;
+  const r = ta.getBoundingClientRect();
+  const width = Math.max(r.width, 240);
+  let left = r.left;
+  if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - width - 8);
+  let top = r.bottom + 2;
+  const estH = 280;
+  if (top + estH > window.innerHeight - 8 && r.top > estH) {
+    top = Math.max(8, r.top - estH - 2);
+  }
+  box.style.left = `${Math.round(left)}px`;
+  box.style.top = `${Math.round(top)}px`;
+  box.style.width = `${Math.round(width)}px`;
+}
+
+/** Lookup / select seçeneklerini tazeleyerek doldurur (API veya statik options) */
+async function ensureSelectLookupOptions(sel) {
+  if (!sel || sel.disabled) return;
+  const field = resolveSelectFieldDef(sel);
+  if (field?.type === 'lookup' && field.lookup) {
+    const { ctx } = cascadeScopeContext(sel);
+    if (field.dependsOn) {
+      const parentVal = ctx?.[field.dependsOn];
+      if (parentVal == null || String(parentVal).trim() === '') return;
+    }
+    const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
+      ? { [field.filterKey]: ctx[field.dependsOn] }
+      : null;
+    await fetchLookupKey(field.lookup, depQuery);
+    const rows = lookupRowsForField(field, ctx);
+    const keep = sel.value;
+    sel.innerHTML = buildLookupOptionsHtml(field, keep, rows);
+    if (keep) sel.value = keep;
+    syncLookupTypeaheadFromSelect(sel);
+    return;
+  }
+  // Statik select: option’lar boşsa alan tanımından yeniden bas
+  if (Array.isArray(field?.options) && field.options.length) {
+    const existing = [...sel.options].filter((o) => o.value !== '').length;
+    if (existing >= field.options.length) return;
+    const keep = sel.value;
+    const optVal = (o) => (typeof o === 'object' ? (o.value ?? o.id ?? o.v) : o);
+    const optLabel = (o) => (typeof o === 'object' ? (o.label ?? o.l ?? optVal(o)) : o);
+    sel.innerHTML = `<option value="">—</option>${field.options.map((o) => {
+      const ov = optVal(o);
+      return `<option value="${escAttr(ov)}" ${String(keep) === String(ov) ? 'selected' : ''}>${escAttr(optLabel(o) || '—')}</option>`;
+    }).join('')}`;
+    if (keep) sel.value = keep;
+    syncLookupTypeaheadFromSelect(sel);
+  }
+}
+
+function paintLookupSuggest(widget, sel, needle, { page } = {}) {
+  if (!widget || !sel) return;
+  const box = ensureLookupSuggestBox(widget);
+  if (!box) return;
   const n = normalizeLikeNeedle(needle);
   const opts = [...sel.options].filter((o) => o.value !== '');
   const matches = n
     ? opts.filter((o) => likeIncludes(o.getAttribute('title') || o.textContent, n)
       || likeIncludes(o.value, n))
-    : opts.slice(0, 40);
-  const limited = matches.slice(0, 40);
-  if (!limited.length) {
-    box.innerHTML = `<div class="lookup-suggest-empty">Eşleşme yok (LIKE %${escAttr(n || '')}% )</div>`;
+    : opts.slice();
+  widget._suggestMatches = matches;
+  widget._suggestNeedle = n;
+  const pageSize = LOOKUP_SUGGEST_PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(matches.length / pageSize) || 1);
+  let pageNo = page != null ? Number(page) : (widget._suggestPage || 0);
+  if (!Number.isFinite(pageNo) || pageNo < 0) pageNo = 0;
+  if (pageNo > totalPages - 1) pageNo = totalPages - 1;
+  widget._suggestPage = pageNo;
+  const start = pageNo * pageSize;
+  const pageRows = matches.slice(start, start + pageSize);
+
+  if (!matches.length) {
+    box.innerHTML = `<div class="lookup-suggest-empty">${
+      opts.length
+        ? `Eşleşme yok (LIKE %${escAttr(n || '')}%)`
+        : 'Liste boş — veri yüklenemedi veya kayıt yok.'
+    }</div>`;
     box.hidden = false;
+    positionLookupSuggestPortal(widget, box);
     return;
   }
-  box.innerHTML = limited.map((o) => {
+
+  const listHtml = pageRows.map((o, i) => {
     const label = o.getAttribute('title') || o.textContent || o.value;
-    return `<button type="button" class="lookup-suggest-item" role="option" data-lookup-pick="${escAttr(o.value)}" title="${escAttr(label)}">${escAttr(label)}</button>`;
+    return `<button type="button" class="lookup-suggest-item${i === 0 ? ' is-active' : ''}" role="option" data-lookup-pick="${escAttr(o.value)}" title="${escAttr(label)}">${escAttr(label)}</button>`;
   }).join('');
+  const from = start + 1;
+  const to = Math.min(start + pageRows.length, matches.length);
+  const pagerHtml = `
+    <div class="lookup-suggest-pager" data-suggest-pager="1">
+      <button type="button" class="btn ghost" data-suggest-page="-1" ${pageNo <= 0 ? 'disabled' : ''} title="Önceki 10">← Geri</button>
+      <span class="lookup-suggest-pager-info">${from}–${to} / ${matches.length}</span>
+      <button type="button" class="btn ghost" data-suggest-page="1" ${pageNo >= totalPages - 1 ? 'disabled' : ''} title="Sonraki 10">İleri →</button>
+    </div>`;
+  box.innerHTML = `<div class="lookup-suggest-list">${listHtml}</div>${pagerHtml}`;
   box.hidden = false;
+  positionLookupSuggestPortal(widget, box);
+}
+
+function moveLookupSuggestActive(widget, delta) {
+  const box = ensureLookupSuggestBox(widget);
+  if (!box || box.hidden) return;
+  const items = [...box.querySelectorAll('.lookup-suggest-item')];
+  if (!items.length) return;
+  let idx = items.findIndex((el) => el.classList.contains('is-active'));
+  if (idx < 0) idx = 0;
+  else idx = (idx + delta + items.length) % items.length;
+  items.forEach((el, i) => el.classList.toggle('is-active', i === idx));
+  items[idx].focus({ preventScroll: true });
+  items[idx].scrollIntoView({ block: 'nearest' });
 }
 
 function applyLookupTypeaheadPick(widget, val) {
@@ -19723,7 +23038,8 @@ function bindLookupBrowseUi() {
     const widget = ta.closest('.lookup-widget');
     const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
     if (!sel || sel.disabled) return;
-    paintLookupSuggest(widget, sel, ta.value);
+    widget._suggestPage = 0;
+    paintLookupSuggest(widget, sel, ta.value, { page: 0 });
   });
   document.addEventListener('focusin', (e) => {
     const ta = e.target?.closest?.('.lookup-typeahead');
@@ -19731,48 +23047,102 @@ function bindLookupBrowseUi() {
     const widget = ta.closest('.lookup-widget');
     const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
     if (!sel || sel.disabled) return;
-    // Seçili değeri göster; boşsa öneri aç
-    if (!ta.value) paintLookupSuggest(widget, sel, '');
+    // Boşsa veya odaklanınca öneriyi hazırla (veri yoksa API’den doldur)
+    ensureSelectLookupOptions(sel).then(() => {
+      if (!ta.value) paintLookupSuggest(widget, sel, '', { page: widget._suggestPage || 0 });
+    }).catch(() => {
+      if (!ta.value) paintLookupSuggest(widget, sel, '', { page: 0 });
+    });
   });
   document.addEventListener('keydown', (e) => {
     const ta = e.target?.closest?.('.lookup-typeahead');
     if (!ta) return;
     const widget = ta.closest('.lookup-widget');
-    const box = widget?.querySelector('.lookup-suggest');
+    const box = ensureLookupSuggestBox(widget);
+    const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
     if (e.key === 'Escape') {
       closeLookupSuggest(widget);
       return;
     }
     if (e.key === 'Enter') {
       e.preventDefault();
-      const first = box && !box.hidden ? box.querySelector('.lookup-suggest-item') : null;
-      if (first) {
-        applyLookupTypeaheadPick(widget, first.getAttribute('data-lookup-pick'));
+      const active = box && !box.hidden
+        ? (box.querySelector('.lookup-suggest-item.is-active') || box.querySelector('.lookup-suggest-item'))
+        : null;
+      if (active) {
+        applyLookupTypeaheadPick(widget, active.getAttribute('data-lookup-pick'));
         return;
       }
-      // Öneri yoksa liste popup’ı aç (yazılan metin LIKE aramasına gider)
-      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
       if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
       return;
     }
-    if (e.key === 'ArrowDown' && (e.altKey || box?.hidden)) {
+    // ↓ : alt listeyi aç / satır gezin · Alt+↓ : tam liste popup
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
-      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+      if (!sel) return;
+      if (e.altKey) {
+        openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+        return;
+      }
+      const open = box && !box.hidden;
+      if (!open) {
+        const selectedLabel = (sel.selectedOptions?.[0]?.getAttribute('title')
+          || sel.selectedOptions?.[0]?.textContent
+          || '').trim();
+        const typed = (ta.value || '').trim();
+        // Seçili etiket aynen duruyorsa tüm liste; kullanıcı yazıyorsa LIKE filtre
+        const needle = (typed && typed !== selectedLabel) ? typed : '';
+        ensureSelectLookupOptions(sel).then(() => {
+          paintLookupSuggest(widget, sel, needle, { page: 0 });
+        }).catch(() => {
+          paintLookupSuggest(widget, sel, needle, { page: 0 });
+        });
+      } else {
+        moveLookupSuggestActive(widget, 1);
+      }
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      const open = box && !box.hidden;
+      if (!open) return;
+      e.preventDefault();
+      moveLookupSuggestActive(widget, -1);
     }
   });
   document.addEventListener('mousedown', (e) => {
+    const pageBtn = e.target.closest?.('[data-suggest-page]');
+    if (pageBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const box = pageBtn.closest('.lookup-suggest');
+      const suggestId = box?.dataset?.suggestFor;
+      const widget = suggestId
+        ? document.querySelector(`.lookup-widget[data-suggest-id="${CSS.escape(suggestId)}"]`)
+        : pageBtn.closest('.lookup-widget');
+      const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
+      if (!widget || !sel) return;
+      const delta = Number(pageBtn.getAttribute('data-suggest-page') || 0);
+      const next = (widget._suggestPage || 0) + delta;
+      paintLookupSuggest(widget, sel, widget._suggestNeedle || '', { page: next });
+      return;
+    }
     const item = e.target.closest?.('.lookup-suggest-item');
     if (item) {
       e.preventDefault();
-      const widget = item.closest('.lookup-widget');
+      const box = item.closest('.lookup-suggest');
+      const suggestId = box?.dataset?.suggestFor;
+      const widget = suggestId
+        ? document.querySelector(`.lookup-widget[data-suggest-id="${CSS.escape(suggestId)}"]`)
+        : item.closest('.lookup-widget');
       applyLookupTypeaheadPick(widget, item.getAttribute('data-lookup-pick'));
       return;
     }
-    if (!e.target.closest?.('.lookup-combobox')) {
-      document.querySelectorAll('.lookup-suggest:not([hidden])').forEach((box) => {
+    if (!e.target.closest?.('.lookup-combobox') && !e.target.closest?.('.lookup-suggest')) {
+      document.querySelectorAll('.lookup-widget').forEach((w) => closeLookupSuggest(w));
+      document.querySelectorAll('.lookup-suggest[data-portal="1"]').forEach((box) => {
         box.hidden = true;
         box.innerHTML = '';
+        box.remove();
       });
     }
   });
@@ -19784,12 +23154,31 @@ function bindLookupBrowseUi() {
       e.stopPropagation();
       const widget = btn.closest('.lookup-widget');
       const sel = widget?.querySelector('select.lookup-pick, select.lookup-select, select[data-filter-a]');
-      if (sel) openLookupBrowserForSelect(sel).catch((err) => toast(err.message || String(err)));
+      if (!sel || !widget) return;
+      closeLookupSuggest(widget);
+      // Yuvarlak buton → pop-up liste; ↓ tuşu → alanın altında öneri
+      ensureSelectLookupOptions(sel).then(() => {
+        const n = [...sel.options].filter((o) => o.value !== '').length;
+        if (!n) {
+          toast('Listelenecek kayıt yok.');
+          return;
+        }
+        return openLookupBrowserForSelect(sel);
+      }).catch((err) => toast(err.message || String(err)));
       return;
     }
 
     const dlg = $('#lookupBrowserDialog');
     if (!dlg || dlg.hidden) return;
+
+    const pageBtn = e.target.closest?.('[data-lb-page]');
+    if (pageBtn && _lookupBrowserState) {
+      e.preventDefault();
+      const delta = Number(pageBtn.getAttribute('data-lb-page') || 0);
+      _lookupBrowserState.page = (Number(_lookupBrowserState.page) || 0) + delta;
+      paintLookupBrowser();
+      return;
+    }
 
     const actBtn = e.target.closest?.('#lookupBrowserActions [data-lb-act]');
     if (actBtn && !actBtn.disabled) {
@@ -19901,6 +23290,16 @@ function bindLookupBrowseUi() {
     e.preventDefault();
     sel.focus();
   }, true);
+
+  const repositionPortals = () => {
+    document.querySelectorAll('.lookup-suggest.lookup-suggest--portal:not([hidden])').forEach((box) => {
+      const id = box.dataset.suggestFor;
+      const widget = id ? document.querySelector(`.lookup-widget[data-suggest-id="${CSS.escape(id)}"]`) : null;
+      if (widget) positionLookupSuggestPortal(widget, box);
+    });
+  };
+  window.addEventListener('resize', repositionPortals);
+  window.addEventListener('scroll', repositionPortals, true);
 }
 
 function cascadeScopeContext(el) {
@@ -19972,12 +23371,12 @@ let _formLinking = false;
 
 function pickDefaultBomForItem(itemId) {
   if (itemId == null || itemId === '') return null;
+  const matchItem = (r) => String(r.finished_good_item_id) === String(itemId)
+    || String(r.item_id) === String(itemId);
   const rows = (state.lookupCache['urun-agaclari'] || [])
-    .filter((r) => String(r.finished_good_item_id) === String(itemId)
-      && r.is_active !== false && !r.is_deleted);
+    .filter((r) => matchItem(r) && r.is_active !== false && !r.is_deleted);
   if (!rows.length) {
-    const any = (state.lookupCache['urun-agaclari'] || [])
-      .filter((r) => String(r.finished_good_item_id) === String(itemId));
+    const any = (state.lookupCache['urun-agaclari'] || []).filter(matchItem);
     if (!any.length) return null;
     return any.slice().sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
   }
@@ -19989,6 +23388,25 @@ function pickDefaultBomForItem(itemId) {
     if (aa !== bb) return aa.localeCompare(bb, 'tr');
     return Number(b.id) - Number(a.id);
   })[0] || null;
+}
+
+/** Cache boşsa API’den mamule bağlı ürün ağacını çekip varsayılanı seç. */
+async function ensureDefaultBomForItem(itemId) {
+  let hit = pickDefaultBomForItem(itemId);
+  if (hit || itemId == null || itemId === '') return hit;
+  try {
+    const rows = await api(`/urun-agaclari?finished_good_item_id=${encodeURIComponent(itemId)}&type=hepsi`);
+    if (Array.isArray(rows) && rows.length) {
+      const cache = state.lookupCache['urun-agaclari'] || [];
+      rows.forEach((r) => {
+        const i = cache.findIndex((x) => String(x.id) === String(r.id));
+        if (i >= 0) cache[i] = { ...cache[i], ...r };
+        else cache.push(r);
+      });
+      state.lookupCache['urun-agaclari'] = cache;
+    }
+  } catch (_) { /* ignore */ }
+  return pickDefaultBomForItem(itemId);
 }
 
 function pickDefaultRouteForItem(itemId, bomId = null) {
@@ -20049,6 +23467,11 @@ function resolveFormLinkValue(rule, ctx) {
       const cur = ctx.bom_name;
       if (cur && String(cur).trim()) return cur;
       return `${v} Ağacı`;
+    }
+    if (rule.asRouteName && rule.fromItem === 'item_name' && v) {
+      const cur = ctx.route_name;
+      if (cur && String(cur).trim()) return cur;
+      return `${v} Rotası`;
     }
     return v == null ? '' : v;
   }
@@ -20129,12 +23552,22 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
 
   const rules = [...(links || []), ...detailStokRules];
   const kkPlanRefresh = isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail;
-  if (!rules.length && !kkPlanRefresh) return;
+  const woDetailRefresh = screen.id === 'uretim-emirleri'
+    && !isDetail && !isBomField && !isFlowComp
+    && ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey);
+  if (!rules.length && !kkPlanRefresh && !woDetailRefresh) return;
 
   _formLinking = true;
   try {
     if (kkPlanRefresh && !rules.length) {
       await refreshQcMeasurementsFromPlan(screen);
+      return;
+    }
+    if (woDetailRefresh && !rules.length) {
+      await autoFillUretimEmriDetails(screen, {
+        materials: ['item_id', 'product_bom_id', 'planned_quantity'].includes(changedKey),
+        operations: ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey),
+      });
       return;
     }
     // BOM/rota listeleri güncel olsun
@@ -20145,6 +23578,11 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
         fetchLookupKey('items'),
         fetchLookupKey('items-mamul'),
       ]);
+    }
+    // Rota: stok seçildiğinde mamule özel ağacı da zorla tazele
+    if (screen.id === 'routings' && changedKey === 'item_id' && !isDetail && !isBomField && !isFlowComp) {
+      const itemVal = changedEl.type === 'checkbox' ? changedEl.checked : changedEl.value;
+      if (itemVal) await ensureDefaultBomForItem(itemVal);
     }
 
     const { ctx } = cascadeScopeContext(changedEl);
@@ -20240,6 +23678,14 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
     // KK emri: plan değişince ölçüm satırlarını kriterlerden yenile
     if (isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail) {
       await refreshQcMeasurementsFromPlan(screen);
+    }
+
+    // Üretim emri: ürün ağacı → malzemeler; rota → operasyonlar
+    if (woDetailRefresh) {
+      await autoFillUretimEmriDetails(screen, {
+        materials: ['item_id', 'product_bom_id', 'planned_quantity'].includes(changedKey),
+        operations: ['item_id', 'product_bom_id', 'route_id', 'planned_quantity'].includes(changedKey),
+      });
     }
   } finally {
     _formLinking = false;
@@ -20435,8 +23881,9 @@ function bindCascadeLookups(_screen) {
       await applyFormLinkages(scr, fieldKey, el);
     }
 
-    // Rota: başlık stok / ürün ağacı değişince yan paneli yenile
+    // Rota: stok / ürün ağacı → otodoldur + malzemeleri operasyonlara aktar
     if (scr.id === 'routings' && ['product_bom_id', 'item_id'].includes(masterKey) && state.formMode !== 'incele') {
+      await autoFillRoutingFromBom(scr, { forceMaterials: masterKey === 'product_bom_id' });
       renderForm(scr);
       persistActiveFormTab();
       return;
@@ -20511,6 +23958,7 @@ function bindCascadeLookups(_screen) {
     }
 
     // Para birimi / kur tipi → exchange_rate (TRY ise kur kilitli)
+    // Stok Vergi.Tip de rate_type kullanır; yalnızca gerçek kur satırlarında uygula
     if (fieldKey === 'currency_code' || fieldKey === 'rate_type') {
       if (masterKey) {
         await syncDocumentRateFields(true);
@@ -20528,9 +23976,15 @@ function bindCascadeLookups(_screen) {
         );
         const kurEl = sel('exchange_rate');
         const tipEl = sel('rate_type');
-        const pb = fieldKey === 'currency_code' ? el.value : (sel('currency_code')?.value || '');
-        const tip = fieldKey === 'rate_type' ? el.value : (tipEl?.value || 'TCMB-SATIS');
-        await applyExchangeRateForCurrency(pb, kurEl, { force: true, rateType: tip, rateTypeEl: tipEl });
+        const pbEl = sel('currency_code');
+        // Vergi / diğer rate_type satırları (kur yok) — dokunma
+        if (!kurEl && !pbEl) {
+          /* skip */
+        } else {
+          const pb = fieldKey === 'currency_code' ? el.value : (pbEl?.value || '');
+          const tip = fieldKey === 'rate_type' ? el.value : (tipEl?.value || 'TCMB-SATIS');
+          await applyExchangeRateForCurrency(pb, kurEl, { force: true, rateType: tip, rateTypeEl: tipEl });
+        }
       }
     }
 
@@ -20596,7 +24050,28 @@ function syncGridRowFromDom(tab, idx, baseRow = {}) {
   return { row, any, missing };
 }
 
-function readGridFromForm(tab) {
+/** Görünen tüm düzenlenebilir satırları DOM’dan oku — bir satır ✓ iken diğerleri silinmesin */
+function syncAllEditableGridRowsFromDom(tab, rows) {
+  const key = tab?.key;
+  const out = (Array.isArray(rows) ? rows : []).map((r) => ({ ...(r || {}) }));
+  if (!key) return out;
+  const domRows = [...document.querySelectorAll(`tr[data-grid-row="${CSS.escape(key)}"]`)];
+  domRows.forEach((tr) => {
+    const idx = Number(tr.getAttribute('data-grid-idx'));
+    if (!Number.isFinite(idx) || idx < 0) return;
+    // Salt okunur satırda input yok — formRecord’daki değeri koru
+    const editable = tr.classList.contains('detail-row--editing')
+      || tr.classList.contains('detail-row--draft')
+      || Boolean(tr.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])'));
+    if (!editable) return;
+    while (out.length <= idx) out.push(emptyRowFromFields(tab.fields));
+    const { row } = syncGridRowFromDom(tab, idx, out[idx] || {});
+    out[idx] = row;
+  });
+  return out;
+}
+
+function readGridFromForm(tab, { forApi = false } = {}) {
   const existing = Array.isArray(state.formRecord?.[tab.key]) ? state.formRecord[tab.key] : [];
   const count = Math.max(
     existing.length,
@@ -20604,7 +24079,8 @@ function readGridFromForm(tab) {
   );
   const rows = [];
   for (let idx = 0; idx < count; idx += 1) {
-    const { row, any } = syncGridRowFromDom(tab, idx, existing[idx] || {});
+    const base = existing[idx] || {};
+    const { row, any } = syncGridRowFromDom(tab, idx, base);
     const hasContent = any || Object.keys(row).some((k) => {
       if (k === 'bilesenler' || k === 'alt_satirlar' || k.startsWith('_')) return false;
       // Varsayılan katsayı 1 boş satır sayılmaz
@@ -20612,13 +24088,21 @@ function readGridFromForm(tab) {
       const v = row[k];
       return v !== '' && v != null && v !== false;
     });
-    if (hasContent) {
+    // Sabit slots / kayıtlı satır: boş görünse bile sırayı koru (vergi Tip satırları vb.)
+    const keepSlot = Number(tab.slots) > 0 && idx < count && (base.rate_type || base.id != null || base._satir_kayitli);
+    if (hasContent || keepSlot) {
       if (Array.isArray(existing[idx]?.bilesenler)) row.bilesenler = existing[idx].bilesenler;
-      // UI-only alanları API'ye gönderme
       delete row._esittir;
-      delete row._satir_kayitli;
-      delete row._satir_duzenleniyor;
-      delete row._satir_toplu;
+      if (forApi) {
+        delete row._satir_kayitli;
+        delete row._satir_duzenleniyor;
+        delete row._satir_toplu;
+      } else {
+        // Sekme değişiminde UI bayraklarını koru
+        if (base._satir_kayitli != null) row._satir_kayitli = base._satir_kayitli;
+        if (base._satir_duzenleniyor != null) row._satir_duzenleniyor = base._satir_duzenleniyor;
+        if (base._satir_toplu != null) row._satir_toplu = base._satir_toplu;
+      }
       rows.push(row);
     }
   }
@@ -21064,9 +24548,9 @@ function applyRoutingCompSelection(screen, { addAnother = false } = {}) {
   return true;
 }
 
-/** Başlıktan düşürülen PB/exchange_rate/depo gibi alanları ilk kalemden geri doldur (API bekler). */
+/** Başlıktan düşürülen alanları ilk kalemden geri doldur (API bekler). PB artık master’da kalır. */
 function backfillHeaderFromLines(out, screen) {
-  const lineKeys = ['currency_code', 'exchange_rate', 'rate_type', 'warehouse_id', 'project_code', 'region', 'delivery_date', 'ship_date', 'discount_rate', 'price_list_id', 'valid_date'];
+  const lineKeys = ['warehouse_id', 'project_code', 'region', 'delivery_date', 'ship_date', 'discount_rate', 'price_list_id', 'valid_date'];
   let lines = null;
   (screen.formTabs || []).forEach((tab) => {
     if (lines) return;
@@ -21083,6 +24567,37 @@ function backfillHeaderFromLines(out, screen) {
       if (first[k] != null && first[k] !== '') out[k] = first[k];
       else if (screen.defaults && screen.defaults[k] != null) out[k] = screen.defaults[k];
     }
+  });
+}
+
+/** Tek belge = tek para birimi: satır PB/kur alanlarını master’dan zorla. */
+function applyHeaderCurrencyToLines(out, screen) {
+  const hdrPb = out.currency_code != null && out.currency_code !== ''
+    ? out.currency_code
+    : (screen?.defaults?.currency_code || null);
+  const hdrKur = out.exchange_rate != null && out.exchange_rate !== ''
+    ? out.exchange_rate
+    : (screen?.defaults?.exchange_rate ?? null);
+  const hdrTip = out.rate_type != null && out.rate_type !== ''
+    ? out.rate_type
+    : (screen?.defaults?.rate_type || null);
+  const keys = [];
+  if (screen?.detailKey) keys.push(screen.detailKey);
+  keys.push('satirlar', 'kalemler', '_detail');
+  (screen?.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'grid' && tab.key) keys.push(tab.key);
+    if (tab.kind === 'master-grid') keys.push(tab.grid?.key || tab.key);
+  });
+  [...new Set(keys.filter(Boolean))].forEach((k) => {
+    if (!Array.isArray(out[k])) return;
+    out[k] = out[k].map((row) => {
+      if (!row || typeof row !== 'object') return row;
+      const next = { ...row };
+      if (hdrPb != null) next.currency_code = hdrPb;
+      if (hdrKur != null) next.exchange_rate = hdrKur;
+      if (hdrTip != null) next.rate_type = hdrTip;
+      return next;
+    });
   });
 }
 
@@ -21116,6 +24631,7 @@ function readTabbedPayload(screen) {
     }
   });
   backfillHeaderFromLines(out, screen);
+  applyHeaderCurrencyToLines(out, screen);
   return out;
 }
 
@@ -21416,11 +24932,16 @@ async function openForm(mode, opts = {}) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
   applyRequiredFieldOverrides(screen);
+  if (mode === 'workspace' && screen.mrpKonsolWorkspace) {
+    await openMrpKonsolWorkspace(opts);
+    return;
+  }
   if (screen.readOnly && mode !== 'incele') {
     toast('Bu ekran yalnızca incelenebilir.');
     return;
   }
-  if (!screenPermission(screen.id, mode)) {
+  const permMode = mode === 'workspace' ? 'incele' : mode;
+  if (!screenPermission(screen.id, permMode)) {
     toast(`Bu ekranda «${MODE_LABELS[mode] || mode}» yetkiniz yok.`);
     return;
   }
@@ -21460,7 +24981,13 @@ async function openForm(mode, opts = {}) {
   state.nestedLink = null;
 
   state.formMode = mode;
-  state.formActiveTab = screen.formTabs?.[0]?.id || null;
+  {
+    const preferred = opts.formActiveTab || state.formActiveTab;
+    const tabs = screen.formTabs || [];
+    state.formActiveTab = (preferred && tabs.some((t) => t.id === preferred))
+      ? preferred
+      : (tabs[0]?.id || null);
+  }
   state.gridSel = { key: null, idx: null };
   state.treeSel = null;
   state.treeExpanded = {};
@@ -21615,6 +25142,14 @@ async function openForm(mode, opts = {}) {
     record = { ...full };
     state.formNumeratorSeri = null;
     initSpecialTabs(full);
+  }
+
+  if (screen.mrpParametreScreen) {
+    if (record.parameter_code && (!record.parametre || !record.parametre.parameter_code)) {
+      record.parametre = { ...(record.parametre || {}), parameter_code: record.parameter_code };
+    }
+    ensureMrpFormParametre(record);
+    await ensureMrpKapsamCache();
   }
 
   if (screen.id === 'numarator-tanimi' && (mode === 'yeni' || mode === 'kopyala')) {
@@ -21774,9 +25309,24 @@ async function finishSaveForm(screen, saved, after = 'stay') {
 
 async function saveForm({ after = 'stay' } = {}) {
   const screen = findScreen(state.screenId);
-  if (!screen || state.formMode === 'incele') return;
+  if (!screen || state.formMode === 'incele' || state.formMode === 'workspace') return;
 
   const master = readTabbedPayload(screen);
+
+  // MRP parametre seti: pane alanlarını parameters_json olarak yaz
+  if (screen.mrpParametreScreen) {
+    collectMrpParametreFromDom();
+    const rec = state.formRecord || {};
+    const parametre = ensureMrpFormParametre(rec);
+    master.parameter_code = parametre.parameter_code || master.parameter_code || rec.parameter_code;
+    master.description = rec.description != null ? rec.description : master.description;
+    master.start_date = parametre.start_date;
+    master.end_date = parametre.end_date;
+    master.notes = parametre.notes || null;
+    master.parametre = parametre;
+    master.parameters_json = parametre;
+    if (master.is_active == null && rec.is_active != null) master.is_active = rec.is_active;
+  }
 
   // Fırsat: müşteri adayı odaklı — tip/partner formda yok; lead zorunlu, cari dönüşümden gelir
   if (screen.id === 'crm-firsatlar') {
@@ -21917,6 +25467,41 @@ async function saveForm({ after = 'stay' } = {}) {
     }
     master.satirlar = clean;
     master.warehouse_id = defWh;
+  }
+
+  // Üretim girişi: kaynak tipi + hızlı bayrak + fazla üretim istemci kontrolü
+  if (screen.id === 'hizli-uretim-girisi' || screen.id === 'uretim-girisleri') {
+    const qty = Number(master.quantity);
+    const maxA = master.max_allowed_quantity != null && master.max_allowed_quantity !== ''
+      ? Number(master.max_allowed_quantity)
+      : null;
+    if (maxA != null && Number.isFinite(maxA) && Number.isFinite(qty) && qty - maxA > 1e-9) {
+      toast(
+        `Fazla üretim engellendi. Maksimum izin ${maxA}`
+        + (master.op_remaining_quantity != null ? ` (kalan ${master.op_remaining_quantity})` : '')
+        + '. Üretim Parametreleri ekranından tolerans ayarlanabilir.',
+        { type: 'Hata', code: 'ERR-MFG-OVERPROD' }
+      );
+      return;
+    }
+  }
+  if (screen.id === 'hizli-uretim-girisi') {
+    master.quick = true;
+    master.source_type = 'Hizli';
+    if (master.net_quantity == null || master.net_quantity === '') master.net_quantity = master.quantity;
+    if (master.gross_quantity == null || master.gross_quantity === '') master.gross_quantity = master.quantity;
+  }
+  if (screen.id === 'uretim-girisleri') {
+    master.quick = false;
+    master.source_type = master.source_type || 'Operasyonel';
+    if (master.net_quantity == null || master.net_quantity === '') master.net_quantity = master.quantity;
+    if (master.gross_quantity == null || master.gross_quantity === '') master.gross_quantity = master.quantity;
+  }
+
+  // Üretim emri: aktif firma / iş yeri kayda yazılsın (liste filtresi için zorunlu)
+  if (screen.id === 'uretim-emirleri') {
+    if (!master.company_id && getActiveCompanyId()) master.company_id = getActiveCompanyId();
+    if (!master.plant_id && state.activeIsYeriId) master.plant_id = state.activeIsYeriId;
   }
 
   // Kullanıcı kartı: giriş adı + şifre + yetki + profil
@@ -22715,11 +26300,24 @@ function bindUiPrefsEvents() {
         openThemeModal(false);
         return;
       }
+      const tabBtn = e.target.closest('[data-theme-tab]');
+      if (tabBtn) {
+        e.preventDefault();
+        setThemeModalTab(tabBtn.getAttribute('data-theme-tab'));
+        return;
+      }
       const pick = e.target.closest('[data-theme-pick]');
       if (pick) {
         e.preventDefault();
         applyUiTheme(pick.getAttribute('data-theme-pick'));
-        openThemeModal(false);
+        // Renk değişince görünüm korunur; modal açık kalabilir (sekme 1)
+        return;
+      }
+      const viewPick = e.target.closest('[data-view-pick]');
+      if (viewPick) {
+        e.preventDefault();
+        applyUiView(viewPick.getAttribute('data-view-pick'));
+        // Görünüm değişince renk korunur
       }
     });
   }
@@ -22742,6 +26340,7 @@ function bindUiPrefsEvents() {
 
 function bindEvents() {
   bindUiPrefsEvents();
+  bindSystemUpdateEvents();
   // LDAP anahtar
   $('#loginPassToggle')?.addEventListener('click', (e) => {
     e.preventDefault();
@@ -22842,25 +26441,47 @@ function bindEvents() {
     });
   }
 
-  // Liste satırı sağ tık — contextMenu + belge bağlantısı (aday→cari vb.)
+  // Liste satırı / tablo alanı sağ tık — dışa aktar, liste ayarları, belge bağlantısı
   const dataBody = $('#dataBody');
   if (dataBody && !dataBody.dataset.ctxBound) {
     dataBody.dataset.ctxBound = '1';
     dataBody.addEventListener('contextmenu', (e) => {
-      const tr = e.target.closest('tr[data-id]');
-      if (!tr) return;
       const screen = findScreen(state.screenId);
       if (!screen) return;
-      const hasCtx = Boolean(screen.contextMenu?.length);
-      const hasBaglanti = Boolean(BELGE_BAGLANTI[screen.id] || screen.documentNav);
-      if (!hasCtx && !hasBaglanti) return;
+      const tr = e.target.closest('tr[data-id]');
       e.preventDefault();
       e.stopPropagation();
-      state.selectedId = tr.getAttribute('data-id');
-      document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
-      tr.classList.add('selected');
-      updateActionButtons(screen);
-      showListContextMenu(screen, e.clientX, e.clientY).catch((err) => toast(err.message));
+      if (tr) {
+        state.selectedId = tr.getAttribute('data-id');
+        document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
+        tr.classList.add('selected');
+        updateActionButtons(screen);
+      }
+      showListContextMenu(screen, e.clientX, e.clientY, { mode: 'list' }).catch((err) => toast(err.message));
+    });
+  }
+
+  // Liste başlığı / kolon başlığı sağ tık — ayarları kaydet
+  const listPaneHead = $('#listPane .list-pane-head');
+  if (listPaneHead && !listPaneHead.dataset.ctxBound) {
+    listPaneHead.dataset.ctxBound = '1';
+    listPaneHead.addEventListener('contextmenu', (e) => {
+      const screen = findScreen(state.screenId);
+      if (!screen) return;
+      e.preventDefault();
+      e.stopPropagation();
+      showListContextMenu(screen, e.clientX, e.clientY, { mode: 'header' }).catch((err) => toast(err.message));
+    });
+  }
+  const dataHead = $('#dataHead');
+  if (dataHead && !dataHead.dataset.ctxBound) {
+    dataHead.dataset.ctxBound = '1';
+    dataHead.addEventListener('contextmenu', (e) => {
+      const screen = findScreen(state.screenId);
+      if (!screen) return;
+      e.preventDefault();
+      e.stopPropagation();
+      showListContextMenu(screen, e.clientX, e.clientY, { mode: 'header' }).catch((err) => toast(err.message));
     });
   }
 
@@ -22882,10 +26503,12 @@ function bindEvents() {
     });
   }
 
-  // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır (contextmenu sonrası click menüyü düşürmesin)
+  // Sağ tık menüsü: yalnızca sol tık / menü dışı kapatır.
+  // ÖNEMLİ: #listCtxMenu ve #formCtxMenu de hariç tutulmalı — aksi halde
+  // pointerdown (capture) menüyü click'ten önce kapatır ve hiçbir öğe çalışmaz.
   document.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
-    if (e.target.closest('#tabCtxMenu')) return;
+    if (e.target.closest('#tabCtxMenu, #listCtxMenu, #formCtxMenu')) return;
     hideTabContextMenu();
   }, true);
 
@@ -22904,7 +26527,21 @@ function bindEvents() {
       const act = actionBtn.dataset.action;
       if (act === 'sil') deleteSelected();
       else if (act === 'export-csv') exportListCsv();
-      else if (act === 'report-pdf') openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+      else if (act === 'export-excel') exportListAsExcel();
+      else if (act === 'export-word') exportListAsWord();
+      else if (act === 'report-pdf') {
+        const scr = findScreen(state.screenId);
+        // Sunucu raporu (cari ekstre vb.) öncelikli; aksi halde istemci liste PDF
+        if (scr?.reportPdfAction && !scr.listExportActions) {
+          openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+        } else if (scr?.listExportActions) {
+          try { exportListAsPdf(); } catch (err) { toast(err.message || 'PDF açılamadı'); }
+        } else if (scr?.reportPdfAction) {
+          openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
+        } else {
+          toast('Bu ekranda PDF yok.');
+        }
+      }
       else if (act === 'mrp-talep') createMrpRequisitions().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
@@ -22912,8 +26549,7 @@ function bindEvents() {
       else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
-          state.mrpCalismaId = sel.id;
-          openScreen('mrp-sonuclar');
+          openMrpRunInWorkspace(sel.id).catch((err) => toast(err.message));
         } else toast('Önce bir MRP çalışması seçin.');
       } else openForm(act).catch((err) => toast(err.message));
       return;
@@ -22932,8 +26568,7 @@ function bindEvents() {
       }
       if (e.detail >= 2) {
         if (screen?.id === 'mrp-calisma') {
-          state.mrpCalismaId = Number(row.dataset.id) || row.dataset.id;
-          openScreen('mrp-sonuclar');
+          openMrpRunInWorkspace(Number(row.dataset.id) || row.dataset.id).catch((err) => toast(err.message));
         } else {
           openForm(screen?.readOnly ? 'incele' : 'duzelt').catch((err) => toast(err.message));
         }
@@ -23084,6 +26719,15 @@ function bindEvents() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     readFilterState(screen);
+    const missingReq = (screen.filters || []).find((f) => {
+      if (!f.required) return false;
+      const st = state.filterState?.[f.key];
+      return !st || st.a == null || String(st.a).trim() === '';
+    });
+    if (missingReq) {
+      toast(`${missingReq.label || missingReq.key} seçimi zorunlu.`);
+      return;
+    }
     // queryParam filtreleri sunucuya gider — listeyi yeniden yükle
     if ((screen.filters || []).some((f) => f.queryParam)) {
       try {
@@ -23142,6 +26786,7 @@ function bindEvents() {
     const screen = findScreen(state.screenId);
     if (!screen) return;
     state.filterState = buildDefaultFilterState(screen);
+    clearListColFilters(screen.id);
     renderFilterPane(screen);
     if (screen.id === 'bom-patlatma') {
       try {
@@ -23151,7 +26796,7 @@ function bindEvents() {
         toast(err.message || 'Liste yenilenemedi');
       }
     }
-    state.filtered = applyFilters(state.rows, screen);
+    state.listPage = 1;
     state.selectedId = null;
     renderList(screen);
   });
@@ -23248,44 +26893,6 @@ function bindEvents() {
     w.document.close();
   }
 
-  async function createMrpRequisitions() {
-    const screen = findScreen(state.screenId);
-    const sel = selectedRow();
-    const body = {};
-    if (sel?.item_id) body.stok_idler = [sel.item_id];
-    if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
-    if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
-    const result = await api('/mrp/talep-olustur', { method: 'POST', body: JSON.stringify(body) });
-    toast(`SA talep oluştu: ${result.requisition_no || result.id}`);
-    openScreen('satin-alma-talepleri');
-  }
-
-  async function createMrpProductionOrders() {
-    const screen = findScreen(state.screenId);
-    const sel = selectedRow();
-    const body = {};
-    if (sel?.item_id) body.stok_idler = [sel.item_id];
-    if (screen?.mrpSonucMode && state.mrpCalismaId) body.run_id = state.mrpCalismaId;
-    if (getActiveCompanyId()) body.company_id = getActiveCompanyId();
-    if (state.activeIsYeriId) body.plant_id = state.activeIsYeriId;
-    const result = await api('/mrp/uretim-emri-olustur', { method: 'POST', body: JSON.stringify(body) });
-    toast(`${result.olusan || 0} üretim emri oluştu`);
-    openScreen('uretim-emirleri');
-  }
-
-  async function runAndSaveMrp() {
-    const body = {
-      description: 'UI MRP çalışması',
-      company_id: getActiveCompanyId() || null,
-      plant_id: state.activeIsYeriId || null,
-    };
-    const result = await api('/mrp/calistir', { method: 'POST', body: JSON.stringify(body) });
-    state.mrpCalismaId = result.calisma?.id || null;
-    toast(`MRP tamam: ${result.calisma?.run_no || ''} · net>0: ${result.calisma?.net_positive_only ?? '?'}`);
-    openScreen('mrp-sonuclar');
-  }
-
   const btnSecondary = $('#btnFormSecondary');
   if (btnSecondary) {
     btnSecondary.addEventListener('click', async () => {
@@ -23336,7 +26943,17 @@ function bindEvents() {
     btnDetailFill.addEventListener('click', async () => {
       const screen = findScreen(state.screenId);
       const rec = state.formRecord;
-      if (!screen?.detailFillAction || !rec?.id) return;
+      if (!screen?.detailFillAction) return;
+      if (screen.detailFillAction.client === 'uretim-giris-onizleme') {
+        try {
+          state.formRecord = { ...rec, ...readTabbedPayload(screen) };
+          await fillUretimGirisOnizleme(screen);
+        } catch (err) {
+          toast(err.message || 'Detaylar getirilemedi');
+        }
+        return;
+      }
+      if (!rec?.id) return;
       if (!window.confirm('Malzeme ve rota satırları ürün ağacı + rotadan yeniden doldurulacak. Devam?')) return;
       try {
         const path = screen.detailFillAction.path.replace('{id}', rec.id);
@@ -23528,10 +27145,7 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
-        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
-        rows[state.gridSel.idx] = row;
-      }
+      rows = syncAllEditableGridRowsFromDom(tab, rows);
       if (act === 'yeni') {
         rows.forEach((r) => { if (r) r._satir_duzenleniyor = false; });
         const blank = emptyRowFromFields(tab.fields);
@@ -23566,7 +27180,7 @@ function bindEvents() {
             state.formRecord[key] = rows;
             state.gridSel = { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır silmede başarı toast’ı yok — yalnız hata gösterilir
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -23590,14 +27204,8 @@ function bindEvents() {
       const masterSnap = readMasterFromForm(screen);
       state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
       let rows = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
-      // Aktif satır DOM’dan oku (manuel yazılan değerler kaybolmasın)
-      if (rows[idx]) {
-        const { row } = syncGridRowFromDom(tab, idx, rows[idx]);
-        rows[idx] = row;
-      } else if (state.gridSel.key === key && state.gridSel.idx != null && rows[state.gridSel.idx]) {
-        const { row } = syncGridRowFromDom(tab, state.gridSel.idx, rows[state.gridSel.idx]);
-        rows[state.gridSel.idx] = row;
-      }
+      // Tüm düzenlenebilir satırları DOM’dan oku — sıra sıra ✓ iken önceki yazılar silinmesin
+      rows = syncAllEditableGridRowsFromDom(tab, rows);
       if (act === 'duzelt') {
         rows.forEach((r, i) => {
           if (!r) return;
@@ -23620,7 +27228,7 @@ function bindEvents() {
               ? { key, idx: Math.min(idx, rows.length - 1) }
               : { key: null, idx: null };
             renderForm(screen);
-            toast(doomed?.id != null ? 'Satır silindi.' : 'Satır kaldırıldı.');
+            // Satır silmede başarı toast’ı yok
           } catch (err) {
             toast(err.message || 'Satır silinemedi');
           }
@@ -23637,7 +27245,7 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: idx + 1 };
         renderForm(screen);
-        toast('Satır kopyalandı — Kaydet ile onaylayın.');
+        // Satır kopyala başarı toast’ı yok
         return;
       }
       if (act === 'kaydet') {
@@ -23677,26 +27285,33 @@ function bindEvents() {
           row._satir_duzenleniyor = false;
           if (wasBulk) row._satir_toplu = true;
           else delete row._satir_toplu;
-          // Onaylanan satır alta; boş satır yalnız manuel girişte
-          rows.splice(idx, 1);
-          rows.push(row);
-          if (!wasBulk) {
+          // Satırı yerinde onayla (sıra/veri kaybı olmasın)
+          rows[idx] = row;
+          const otherOpen = rows.some((r, i) => i !== idx && r && (
+            r._satir_duzenleniyor === true
+            || (r._satir_kayitli !== true && r.id == null)
+          ));
+          const fixedSlots = Number(tab.slots) > 0;
+          // Yeni boş satır: yalnız tek satırlık manuel akışta; çok satır / slots / toplu → ekleme
+          const shouldAddBlank = !wasBulk && !fixedSlots && !otherOpen && rows.length <= 1;
+          if (shouldAddBlank) {
             const blank = emptyRowFromFields(tab.fields);
             blank._satir_kayitli = false;
             blank._satir_duzenleniyor = true;
             if (key === 'districts') blank.is_active = true;
-            rows.unshift(blank);
-            state.gridSel = { key, idx: 0 };
-          } else {
+            rows.push(blank);
             state.gridSel = { key, idx: rows.length - 1 };
+          } else {
+            state.gridSel = { key, idx };
           }
           state.formRecord[key] = rows;
           renderForm(screen);
-          if (!wasBulk) {
+          if (shouldAddBlank) {
             requestAnimationFrame(() => {
+              const focusIdx = rows.length - 1;
               const first = document.querySelector(
-                `tr[data-grid-row="${key}"][data-grid-idx="0"] input:not([disabled]):not([type="checkbox"]), `
-                + `tr[data-grid-row="${key}"][data-grid-idx="0"] select:not([disabled])`
+                `tr[data-grid-row="${key}"][data-grid-idx="${focusIdx}"] input:not([disabled]):not([type="checkbox"]), `
+                + `tr[data-grid-row="${key}"][data-grid-idx="${focusIdx}"] select:not([disabled])`
               );
               if (first) {
                 first.focus();
@@ -23704,15 +27319,12 @@ function bindEvents() {
               }
             });
           }
-          toast(screen.detailPersist?.[key]
-            ? 'Satır veritabanına kaydedildi.'
-            : 'Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
+          // Satır kaydet/onay başarı toast’ı yok
           return;
         }
         state.formRecord[key] = rows;
         state.gridSel = { key, idx };
         renderForm(screen);
-        toast('Satır onaylandı — belgeyi kaydetmek için üstteki Kaydet’i kullanın.');
         return;
       }
     }
@@ -24353,10 +27965,102 @@ function sqlSetDbModalOpen(open) {
   modal.hidden = !open;
 }
 
+function sqlResultExportable(payload) {
+  if (!payload || payload.hata) return false;
+  const fields = payload.fields || [];
+  return fields.length > 0;
+}
+
+function sqlFormatExportCell(v) {
+  if (v == null) return '';
+  if (typeof v === 'boolean') return v ? 'Evet' : 'Hayır';
+  if (typeof v === 'object') {
+    try { return JSON.stringify(v); } catch (_) { return String(v); }
+  }
+  return String(v);
+}
+
+function sqlGetExportPayload() {
+  const sheet = sqlActiveSheet();
+  const payload = sheet?.result || null;
+  if (!sqlResultExportable(payload)) {
+    toast('Aktarılacak sonuç yok. Önce bir SELECT çalıştırın.');
+    return null;
+  }
+  return payload;
+}
+
+function exportSqlResultAsExcel() {
+  const payload = sqlGetExportPayload();
+  if (!payload) return;
+  const XLSXlib = ensureXlsxLib();
+  const fields = payload.fields || [];
+  const rows = payload.rows || [];
+  const aoa = [
+    fields.slice(),
+    ...rows.map((r) => fields.map((f) => sqlFormatExportCell(r?.[f]))),
+  ];
+  const ws = XLSXlib.utils.aoa_to_sheet(aoa);
+  const wb = XLSXlib.utils.book_new();
+  const sheetName = (sqlActiveSheet()?.name || 'SQL').slice(0, 31) || 'SQL';
+  XLSXlib.utils.book_append_sheet(wb, ws, sheetName);
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  XLSXlib.writeFile(wb, `sql-sonuc-${stamp}.xlsx`);
+  toast(`Excel indirildi (${rows.length} satır).`);
+}
+
+function exportSqlResultAsPdf() {
+  const payload = sqlGetExportPayload();
+  if (!payload) return;
+  const fields = payload.fields || [];
+  const rows = payload.rows || [];
+  const sheet = sqlActiveSheet();
+  const title = sheet?.name ? `SQL Sorgu · ${sheet.name}` : 'SQL Sorgu — Sonuç';
+  const head = fields.map((f) => `<th>${escapeHtml(f)}</th>`).join('');
+  const body = rows.map((r) => {
+    const tds = fields.map((f) => `<td>${escapeHtml(sqlFormatExportCell(r?.[f]))}</td>`).join('');
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  const table = `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-family:Segoe UI,Arial,sans-serif;font-size:11px;width:100%">
+    <thead style="background:#e8eef5"><tr>${head}</tr></thead>
+    <tbody>${body || `<tr><td colspan="${Math.max(fields.length, 1)}">Satır yok</td></tr>`}</tbody>
+  </table>`;
+  const w = window.open('', '_blank');
+  if (!w) {
+    toast('Pop-up engellendi — tarayıcıda izin verin.');
+    return;
+  }
+  const metaLine = [
+    `${rows.length} satır`,
+    payload.verb || '',
+    payload.ms != null ? `${payload.ms} ms` : '',
+    payload.truncated ? 'ilk 1000 satır' : '',
+    new Date().toLocaleString('tr-TR'),
+  ].filter(Boolean).join(' · ');
+  w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"/><title>${escapeHtml(title)}</title>
+    <style>
+      body{font-family:Segoe UI,Arial,sans-serif;padding:16px;color:#1c2430}
+      h1{font-size:16px;margin:0 0 8px}
+      .meta{color:#667;font-size:12px;margin:0 0 12px}
+      table{page-break-inside:auto}
+      tr{page-break-inside:avoid;page-break-after:auto}
+      th{background:#e8eef5;text-align:left}
+      @media print{body{padding:0}}
+    </style></head><body>
+    <h1>${escapeHtml(title)}</h1>
+    <p class="meta">${escapeHtml(metaLine)}</p>
+    ${table}
+    <script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script>
+    </body></html>`);
+  w.document.close();
+  toast('PDF için yazdır penceresi açıldı.');
+}
+
 function sqlRenderResult(payload) {
   const meta = $('#sqlResultMeta');
   const head = $('#sqlResultHead');
   const body = $('#sqlResultBody');
+  const actions = $('#sqlResultActions');
   if (!meta || !head || !body) return;
   const sheet = sqlActiveSheet();
   if (sheet) sheet.result = payload || null;
@@ -24364,12 +28068,14 @@ function sqlRenderResult(payload) {
     meta.innerHTML = `<span class="sql-error">${escAttr(payload.hata)}</span>`;
     head.innerHTML = '';
     body.innerHTML = '';
+    if (actions) actions.hidden = true;
     return;
   }
   if (!payload) {
     meta.innerHTML = '';
     head.innerHTML = '';
     body.innerHTML = '';
+    if (actions) actions.hidden = true;
     return;
   }
   const fields = payload.fields || [];
@@ -24384,6 +28090,7 @@ function sqlRenderResult(payload) {
   body.innerHTML = (payload.rows || []).map((row) =>
     `<tr>${fields.map((f) => `<td>${escAttr(row[f])}</td>`).join('')}</tr>`
   ).join('') || `<tr><td colspan="${Math.max(fields.length, 1)}" class="sql-empty">Satır yok</td></tr>`;
+  if (actions) actions.hidden = !sqlResultExportable(payload);
 }
 
 function sqlApplySplitRatio(ratio) {
@@ -24425,6 +28132,284 @@ function sqlBindSplitter() {
   window.addEventListener('touchmove', onMove, { passive: false });
   window.addEventListener('mouseup', onUp);
   window.addEventListener('touchend', onUp);
+}
+
+/* ========== Sistem Güncelleme konsolu ========== */
+const sysUpdateState = {
+  rows: [],
+  selected: new Set(),
+  current: null,
+};
+
+function highlightCodeDiff(text, changed = []) {
+  const esc = escapeHtml(String(text || ''));
+  if (!changed?.length) return esc;
+  let out = esc;
+  changed.forEach((token) => {
+    const t = String(token || '').trim();
+    if (!t) return;
+    const re = new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    out = out.replace(re, (m) => `<mark class="sup-hl">${m}</mark>`);
+  });
+  return out;
+}
+
+function severityLabel(s) {
+  const map = { dusuk: 'Düşük', orta: 'Orta', yuksek: 'Yüksek', kritik: 'Kritik' };
+  return map[s] || s || '—';
+}
+
+function statusLabel(s) {
+  const map = { pending: 'Bekliyor', applied: 'Uygulandı', skipped: 'Atlandı' };
+  return map[s] || s || '—';
+}
+
+function syncSupSelectAllUi() {
+  const box = $('#supSelectAll');
+  const btn = $('#supBtnApply');
+  const pending = sysUpdateState.rows.filter((r) => r.status === 'pending');
+  const selectedPending = pending.filter((r) => sysUpdateState.selected.has(r.id));
+  if (box) {
+    box.checked = pending.length > 0 && selectedPending.length === pending.length;
+    box.indeterminate = selectedPending.length > 0 && selectedPending.length < pending.length;
+  }
+  if (btn) btn.disabled = selectedPending.length === 0;
+  const note = $('#supStatusNote');
+  if (note) {
+    const applied = sysUpdateState.rows.filter((r) => r.status === 'applied').length;
+    note.textContent = `${sysUpdateState.rows.length} paket · ${pending.length} bekliyor · ${applied} uygulandı · ${selectedPending.length} seçili`;
+  }
+}
+
+function renderSystemUpdateList() {
+  const host = $('#supList');
+  if (!host) return;
+  if (!sysUpdateState.rows.length) {
+    host.innerHTML = '<div class="sup-empty">Henüz güncelleme paketi yok. Deploy ile paketler eklendiğinde burada listelenir.</div>';
+    syncSupSelectAllUi();
+    return;
+  }
+  host.innerHTML = sysUpdateState.rows.map((r) => {
+    const disabled = r.status !== 'pending';
+    const checked = sysUpdateState.selected.has(r.id) ? 'checked' : '';
+    const rec = r.recommended ? '<span class="sup-pill sup-pill--rec">Önerilir</span>' : '';
+    const sev = `<span class="sup-pill sup-pill--${escAttr(r.severity || 'orta')}">${escapeHtml(severityLabel(r.severity))}</span>`;
+    const st = `<span class="sup-status sup-status--${escAttr(r.status)}">${escapeHtml(statusLabel(r.status))}</span>`;
+    return `
+      <article class="sup-row${disabled ? ' is-applied' : ''}" role="listitem" data-sup-id="${r.id}">
+        <div class="sup-row-left">
+          <button type="button" class="btn sm action ghost" data-sup-review="${r.id}" title="İncele">İncele</button>
+          <label class="sup-check">
+            <input type="checkbox" data-sup-check="${r.id}" ${checked} ${disabled ? 'disabled' : ''} />
+          </label>
+        </div>
+        <div class="sup-row-main">
+          <div class="sup-row-top">
+            <code class="sup-code">${escapeHtml(r.package_code)}</code>
+            ${sev}${rec}${st}
+            <button type="button" class="sup-info-btn" data-sup-info="${r.id}" title="Bilgi" aria-label="Bilgi">ℹ</button>
+          </div>
+          <strong class="sup-title">${escapeHtml(r.title)}</strong>
+          <p class="sup-summary">${escapeHtml(r.summary || '')}</p>
+          <div class="sup-meta">Modül: ${escapeHtml(r.module_code || '—')}</div>
+        </div>
+      </article>`;
+  }).join('');
+  syncSupSelectAllUi();
+}
+
+async function openSystemUpdateConsole() {
+  const note = $('#supStatusNote');
+  if (note) note.textContent = 'Paketler yükleniyor…';
+  try {
+    const rows = await api('/sistem-guncelleme');
+    sysUpdateState.rows = Array.isArray(rows) ? rows : [];
+    sysUpdateState.selected = new Set(
+      sysUpdateState.rows.filter((r) => r.status === 'pending' && r.recommended).map((r) => r.id),
+    );
+    renderSystemUpdateList();
+  } catch (err) {
+    sysUpdateState.rows = [];
+    renderSystemUpdateList();
+    if (note) note.textContent = err.message || 'Paketler yüklenemedi';
+    toast(err.message || 'Sistem güncelleme listesi alınamadı');
+  }
+}
+
+function openSupReview(id) {
+  const row = sysUpdateState.rows.find((r) => String(r.id) === String(id));
+  if (!row) return;
+  sysUpdateState.current = row;
+  const dlg = $('#supReviewDialog');
+  const title = $('#supReviewTitle');
+  if (title) title.textContent = `${row.package_code} — ${row.title}`;
+  const prev = $('#supPanePreview');
+  const code = $('#supPaneCode');
+  if (prev) {
+    prev.innerHTML = `
+      <div class="sup-preview-grid">
+        <figure class="sup-preview-card">
+          <figcaption>Güncellemeden önce</figcaption>
+          <div class="sup-preview-frame">${row.preview_before || '<div class="sup-empty">Önizleme yok</div>'}</div>
+        </figure>
+        <figure class="sup-preview-card">
+          <figcaption>Güncellemeden sonra</figcaption>
+          <div class="sup-preview-frame">${row.preview_after || '<div class="sup-empty">Önizleme yok</div>'}</div>
+        </figure>
+      </div>`;
+  }
+  if (code) {
+    const snippets = Array.isArray(row.code_snippets) ? row.code_snippets : [];
+    const sql = String(row.sql_script || '').trim();
+    const blocks = snippets.map((s) => `
+      <div class="sup-code-block">
+        <div class="sup-code-head">
+          <strong>${escapeHtml(s.label || s.file || 'Değişiklik')}</strong>
+          <code>${escapeHtml(s.file || '')}</code>
+        </div>
+        <div class="sup-code-cols">
+          <div>
+            <div class="sup-code-label">Orijinal</div>
+            <pre class="sup-pre">${highlightCodeDiff(s.before, s.changed)}</pre>
+          </div>
+          <div>
+            <div class="sup-code-label">Yenilik</div>
+            <pre class="sup-pre sup-pre--after">${highlightCodeDiff(s.after, s.changed)}</pre>
+          </div>
+        </div>
+      </div>`).join('');
+    const sqlBlock = sql ? `
+      <div class="sup-code-block">
+        <div class="sup-code-head"><strong>SQL / sorgu</strong></div>
+        <pre class="sup-pre sup-pre--after">${escapeHtml(sql)}</pre>
+      </div>` : '';
+    code.innerHTML = (blocks || '<div class="sup-empty">Kod farkı tanımlanmamış.</div>') + sqlBlock;
+  }
+  setSupReviewTab('preview');
+  if (dlg) dlg.hidden = false;
+}
+
+function setSupReviewTab(tab) {
+  const which = tab === 'code' ? 'code' : 'preview';
+  document.querySelectorAll('[data-sup-tab]').forEach((btn) => {
+    const on = btn.getAttribute('data-sup-tab') === which;
+    btn.classList.toggle('active', on);
+    btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-sup-pane]').forEach((pane) => {
+    pane.hidden = pane.getAttribute('data-sup-pane') !== which;
+  });
+}
+
+function openSupInfo(id) {
+  const row = sysUpdateState.rows.find((r) => String(r.id) === String(id));
+  if (!row) return;
+  const dlg = $('#supInfoDialog');
+  const title = $('#supInfoTitle');
+  const body = $('#supInfoBody');
+  if (title) title.textContent = row.title;
+  const impacts = Array.isArray(row.impacts) ? row.impacts : [];
+  if (body) {
+    body.innerHTML = `
+      <p class="sup-info-reason"><strong>Neden eklendi?</strong><br/>${escapeHtml(row.reason || '—')}</p>
+      <p><strong>Özet</strong><br/>${escapeHtml(row.summary || '—')}</p>
+      <p><strong>Etkilediği alanlar</strong></p>
+      <ul class="sup-impact-list">${impacts.length
+    ? impacts.map((x) => `<li>${escapeHtml(x)}</li>`).join('')
+    : '<li>—</li>'}</ul>
+      <p class="sup-info-meta">Kod: <code>${escapeHtml(row.package_code)}</code> · Modül: ${escapeHtml(row.module_code || '—')} · Önem: ${escapeHtml(severityLabel(row.severity))}</p>`;
+  }
+  if (dlg) dlg.hidden = false;
+}
+
+function bindSystemUpdateEvents() {
+  const root = $('#viewSysUpdate');
+  if (!root || root.dataset.bound) return;
+  root.dataset.bound = '1';
+
+  $('#supBtnRefresh')?.addEventListener('click', () => {
+    openSystemUpdateConsole().catch((err) => toast(err.message));
+  });
+
+  $('#supSelectAll')?.addEventListener('change', (e) => {
+    const on = e.target.checked;
+    sysUpdateState.rows.forEach((r) => {
+      if (r.status !== 'pending') return;
+      if (on) sysUpdateState.selected.add(r.id);
+      else sysUpdateState.selected.delete(r.id);
+    });
+    renderSystemUpdateList();
+  });
+
+  $('#supBtnApply')?.addEventListener('click', async () => {
+    const ids = [...sysUpdateState.selected].filter((id) => {
+      const row = sysUpdateState.rows.find((r) => r.id === id);
+      return row && row.status === 'pending';
+    });
+    if (!ids.length) return;
+    if (!window.confirm(`${ids.length} güncelleme paketi uygulansın mı?\n\nSQL içeren paketler çalıştırılır; UI dosya dağıtımı deploy ile tamamlanır.`)) {
+      return;
+    }
+    try {
+      const res = await api('/sistem-guncelleme/uygula', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+      });
+      toast(res.mesaj || 'Uygulandı');
+      await openSystemUpdateConsole();
+    } catch (err) {
+      toast(err.message || 'Uygulama başarısız');
+    }
+  });
+
+  $('#supList')?.addEventListener('click', (e) => {
+    const review = e.target.closest('[data-sup-review]');
+    if (review) {
+      e.preventDefault();
+      openSupReview(review.getAttribute('data-sup-review'));
+      return;
+    }
+    const info = e.target.closest('[data-sup-info]');
+    if (info) {
+      e.preventDefault();
+      openSupInfo(info.getAttribute('data-sup-info'));
+      return;
+    }
+  });
+
+  $('#supList')?.addEventListener('change', (e) => {
+    const box = e.target.closest('[data-sup-check]');
+    if (!box) return;
+    const id = Number(box.getAttribute('data-sup-check'));
+    if (!Number.isFinite(id)) return;
+    if (box.checked) sysUpdateState.selected.add(id);
+    else sysUpdateState.selected.delete(id);
+    syncSupSelectAllUi();
+  });
+
+  const reviewDlg = $('#supReviewDialog');
+  if (reviewDlg && !reviewDlg.dataset.bound) {
+    reviewDlg.dataset.bound = '1';
+    reviewDlg.addEventListener('click', (e) => {
+      if (e.target.closest('[data-sup-close]')) {
+        reviewDlg.hidden = true;
+        return;
+      }
+      const tab = e.target.closest('[data-sup-tab]');
+      if (tab) {
+        e.preventDefault();
+        setSupReviewTab(tab.getAttribute('data-sup-tab'));
+      }
+    });
+  }
+
+  const infoDlg = $('#supInfoDialog');
+  if (infoDlg && !infoDlg.dataset.bound) {
+    infoDlg.dataset.bound = '1';
+    infoDlg.addEventListener('click', (e) => {
+      if (e.target.closest('[data-sup-info-close]')) infoDlg.hidden = true;
+    });
+  }
 }
 
 async function openSqlConsole() {
@@ -24470,6 +28455,12 @@ function bindSqlConsoleEvents() {
     });
   }
   $('#sqlBtnRun')?.addEventListener('click', () => sqlRun());
+  $('#sqlBtnExportExcel')?.addEventListener('click', () => {
+    try { exportSqlResultAsExcel(); } catch (err) { toast(err.message || 'Excel aktarımı başarısız'); }
+  });
+  $('#sqlBtnExportPdf')?.addEventListener('click', () => {
+    try { exportSqlResultAsPdf(); } catch (err) { toast(err.message || 'PDF aktarımı başarısız'); }
+  });
   $('#sqlBtnDb')?.addEventListener('click', () => sqlSetDbModalOpen(true));
   $('#sqlDbModal')?.addEventListener('click', (e) => {
     if (e.target.closest('[data-sql-db-close]')) sqlSetDbModalOpen(false);

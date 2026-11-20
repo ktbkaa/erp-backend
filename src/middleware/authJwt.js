@@ -3,8 +3,25 @@ const { verifyToken } = require('../utils/jwt');
 const { parametreAl, getUser, reqUserCode } = require('../utils/yetki');
 
 /**
- * JWT veya X-Kullanici-Kodu ile kimlik.
- * AUTH_ZORUNLU=Evet ise kimlik zorunlu (health/static hariç).
+ * AUTH zorunluluğu:
+ * - ERP_AUTH_SOFT=1 → her zaman soft (lokal/CI)
+ * - NODE_ENV=production veya ERP_AUTH_REQUIRED=true → zorunlu (parametreye bakmadan)
+ * - Aksi halde system_parameters.AUTH_ZORUNLU (varsayılan Evet)
+ */
+async function isAuthRequired() {
+  if (String(process.env.ERP_AUTH_SOFT || '').trim() === '1') return false;
+  if (
+    String(process.env.ERP_AUTH_REQUIRED || '').toLowerCase() === 'true'
+    || String(process.env.NODE_ENV || '').toLowerCase() === 'production'
+  ) {
+    return true;
+  }
+  const v = String(await parametreAl(pool, 'AUTH_ZORUNLU', 'Evet')).toLowerCase();
+  return v === 'evet';
+}
+
+/**
+ * JWT veya (soft modda) X-Kullanici-Kodu ile kimlik.
  */
 async function authOptional(req, res, next) {
   try {
@@ -21,8 +38,8 @@ async function authOptional(req, res, next) {
         /* geçersiz token — zorunluluk aşağıda */
       }
     }
-    const zorunlu = String(await parametreAl(pool, 'AUTH_ZORUNLU', 'Hayir')).toLowerCase() === 'evet';
-    // AUTH_ZORUNLU iken yalnız JWT; header spoof kapalı
+    const zorunlu = await isAuthRequired();
+    // Soft modda header kimlik; zorunlu iken yalnız JWT
     if (!req.user && !zorunlu) {
       const kod = reqUserCode(req);
       if (kod) {
@@ -37,16 +54,16 @@ async function authOptional(req, res, next) {
 }
 
 async function authRequired(req, res, next) {
-  // health / auth login her zaman açık
   const p = req.path || '';
   if (p === '/health' || p.startsWith('/auth/')) return next();
-  const zorunlu = String(await parametreAl(pool, 'AUTH_ZORUNLU', 'Hayir')).toLowerCase() === 'evet';
+  const zorunlu = await isAuthRequired();
   if (!req.user && zorunlu) {
     return res.status(401).json({ hata: 'Kimlik doğrulama gerekli (Bearer JWT).' });
   }
-  // Header-only spoof engeli (AUTH_ZORUNLU)
   if (zorunlu && req.auth?.type === 'header') {
-    return res.status(403).json({ hata: 'AUTH_ZORUNLU açıkken X-Kullanici-Kodu yeterli değil; JWT gerekli.' });
+    return res.status(403).json({
+      hata: 'AUTH_ZORUNLU açıkken X-Kullanici-Kodu yeterli değil; JWT gerekli.',
+    });
   }
   next();
 }
@@ -63,7 +80,6 @@ async function assertWarehousePermission(req, depoId) {
   if (!req.user || !depoId) return true;
   const list = parseJsonArr(req.user.warehouse_permissions, ['*']);
   if (list.includes('*')) {
-    // satır bazlı kullanıcı_depo varsa onu da kontrol et
     const r = await pool.query(
       `SELECT 1 FROM user_warehouses WHERE user_id=$1 LIMIT 1`,
       [req.user.id]
@@ -71,7 +87,6 @@ async function assertWarehousePermission(req, depoId) {
     if (!r.rows[0]) return true;
   }
   if (list.includes('*') === false) {
-    // depo kodu veya id
     const d = await pool.query(`SELECT id, warehouse_code FROM warehouses WHERE id=$1`, [depoId]);
     const kod = d.rows[0]?.warehouse_code;
     if (list.includes(String(depoId)) || (kod && list.includes(kod))) return true;
@@ -102,4 +117,5 @@ module.exports = {
   assertWarehousePermission,
   assertModulePermission,
   parseJsonArr,
+  isAuthRequired,
 };

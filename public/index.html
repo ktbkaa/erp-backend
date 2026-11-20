@@ -36,15 +36,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261111filtreyan3" />
+  <link rel="stylesheet" href="/styles.css?v=20261118sistem-guncelleme" />
+  <link rel="stylesheet" href="/styles-modern.css?v=20261116gorunum4" />
+  <link rel="stylesheet" href="/styles-steel.css?v=20261116gorunum4" />
+  <link rel="stylesheet" href="/styles-cards.css?v=20261116gorunum4" />
   <script>
     (function () {
       try {
         var t = localStorage.getItem('ktb_ui_theme') || 'blue';
         var l = localStorage.getItem('ktb_ui_lang') || 'tr';
         var a = localStorage.getItem('ktb_ui_appearance') || 'light';
+        var v = localStorage.getItem('ktb_ui_view') || 'modern';
+        var ok = { modern: 1, classic: 1, steel: 1, cards: 1 };
+        if (!ok[v]) v = 'modern';
         document.documentElement.setAttribute('data-theme', t);
         document.documentElement.setAttribute('data-appearance', a === 'dark' ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-view', v);
         document.documentElement.setAttribute('lang', l === 'en' ? 'en' : 'tr');
       } catch (e) { /* ignore */ }
     })();
@@ -199,7 +206,7 @@
               </div>
               <div class="settings-menu-sep" role="separator"></div>
               <div class="settings-menu-section">
-                <div class="settings-menu-label" data-i18n="settings.appearance">Görünüm</div>
+                <div class="settings-menu-label" data-i18n="settings.appearance">Parlaklık</div>
                 <button type="button" class="settings-menu-item" role="menuitemradio" data-set-appearance="light" aria-checked="true">
                   <span data-i18n="settings.light">Açık</span><span class="settings-check" aria-hidden="true">✓</span>
                 </button>
@@ -209,7 +216,7 @@
               </div>
               <div class="settings-menu-sep" role="separator"></div>
               <button type="button" class="settings-menu-item settings-menu-item--action" role="menuitem" id="btnOpenThemes" data-i18n="settings.themes">
-                Temalar…
+                Tema ve Görünüm…
               </button>
             </div>
           </div>
@@ -219,12 +226,23 @@
 
       <div class="theme-modal" id="themeModal" hidden>
         <div class="theme-modal-backdrop" data-theme-close></div>
-        <div class="theme-modal-card" role="dialog" aria-labelledby="themeModalTitle">
+        <div class="theme-modal-card theme-modal-card--wide" role="dialog" aria-labelledby="themeModalTitle">
           <div class="theme-modal-head">
-            <strong id="themeModalTitle" data-i18n="settings.themesTitle">Tema seçin</strong>
+            <strong id="themeModalTitle" data-i18n="settings.themesTitle">Tema ve Görünüm</strong>
             <button type="button" class="btn tiny ghost" data-theme-close aria-label="Kapat">✕</button>
           </div>
-          <div class="theme-grid" id="themeGrid"></div>
+          <div class="theme-modal-tabs" role="tablist">
+            <button type="button" class="theme-modal-tab active" role="tab" id="themeTabColors" data-theme-tab="colors" aria-selected="true" data-i18n="settings.tabColors">Renk Teması</button>
+            <button type="button" class="theme-modal-tab" role="tab" id="themeTabView" data-theme-tab="view" aria-selected="false" data-i18n="settings.tabView">Görünüm</button>
+          </div>
+          <div class="theme-modal-body">
+            <div class="theme-modal-pane" id="themePaneColors" data-theme-pane="colors" role="tabpanel">
+              <div class="theme-grid" id="themeGrid"></div>
+            </div>
+            <div class="theme-modal-pane" id="themePaneView" data-theme-pane="view" role="tabpanel" hidden>
+              <div class="view-mode-grid" id="viewModeGrid"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -250,6 +268,8 @@
             <button type="button" class="btn action ghost" data-action="kopyala">Kopyala</button>
             <button type="button" class="btn action danger" data-action="sil">Sil</button>
             <button type="button" class="btn action ghost" data-action="export-csv" title="Filtrelenmiş listeyi CSV indir">CSV</button>
+            <button type="button" class="btn action ghost" data-action="export-excel" id="btnExportExcel" hidden title="Filtrelenmiş listeyi Excel indir">Excel</button>
+            <button type="button" class="btn action ghost" data-action="export-word" id="btnExportWord" hidden title="Filtrelenmiş listeyi Word indir">Word</button>
             <button type="button" class="btn action ghost" data-action="report-pdf" id="btnReportPdf" hidden title="Filtrelenmiş sonucu PDF / yazdır">PDF</button>
             <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
             <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
@@ -347,7 +367,13 @@
                 </div>
                 <div class="sql-splitter" id="sqlSplitter" role="separator" aria-orientation="horizontal" title="Sürükleyerek boyutlandır"></div>
                 <div class="sql-result-pane" id="sqlResultPane">
-                  <div class="sql-result-meta" id="sqlResultMeta"></div>
+                  <div class="sql-result-bar">
+                    <div class="sql-result-meta" id="sqlResultMeta"></div>
+                    <div class="sql-result-actions" id="sqlResultActions" hidden>
+                      <button type="button" class="btn tiny ghost" id="sqlBtnExportExcel" title="Sonuç listesini Excel indir">Excel</button>
+                      <button type="button" class="btn tiny ghost" id="sqlBtnExportPdf" title="Sonuç listesini PDF / yazdır">PDF</button>
+                    </div>
+                  </div>
                   <div class="sql-result-scroll">
                     <table class="sql-result-table" id="sqlResultTable">
                       <thead id="sqlResultHead"></thead>
@@ -393,6 +419,54 @@
             </div>
           </div>
         </section>
+
+        <section id="viewSysUpdate" class="view sys-update-view" hidden>
+          <div class="sup-head">
+            <div class="sup-head-text">
+              <strong id="supBanner">Sistem Güncelleme</strong>
+              <p class="sup-lead">Canlı sisteme yedirilecek yenilikleri seçin. İncele ile önizleme ve kod farkını görün; bilgi ile neden eklendiğini okuyun.</p>
+            </div>
+            <div class="sup-head-actions">
+              <label class="sup-select-all">
+                <input type="checkbox" id="supSelectAll" />
+                <span>Tümünü seç <em>(önerilir)</em></span>
+              </label>
+              <button type="button" class="btn action" id="supBtnApply" disabled>Seçilenleri uygula</button>
+              <button type="button" class="btn ghost" id="supBtnRefresh">Yenile</button>
+            </div>
+          </div>
+          <div class="sup-toolbar-note" id="supStatusNote">Bekleyen paketler yükleniyor…</div>
+          <div class="sup-list" id="supList" role="list"></div>
+        </section>
+
+        <div class="sup-dialog" id="supReviewDialog" hidden>
+          <div class="sup-dialog-backdrop" data-sup-close></div>
+          <div class="sup-dialog-card" role="dialog" aria-modal="true" aria-labelledby="supReviewTitle">
+            <div class="sup-dialog-head">
+              <strong id="supReviewTitle">Yenilik inceleme</strong>
+              <button type="button" class="btn tiny ghost" data-sup-close aria-label="Kapat">✕</button>
+            </div>
+            <div class="sup-dialog-tabs" role="tablist">
+              <button type="button" class="sup-dialog-tab active" role="tab" data-sup-tab="preview" aria-selected="true">Önizleme</button>
+              <button type="button" class="sup-dialog-tab" role="tab" data-sup-tab="code" aria-selected="false">Kodlar ve sorgular</button>
+            </div>
+            <div class="sup-dialog-body">
+              <div class="sup-pane" id="supPanePreview" data-sup-pane="preview" role="tabpanel"></div>
+              <div class="sup-pane" id="supPaneCode" data-sup-pane="code" role="tabpanel" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sup-dialog" id="supInfoDialog" hidden>
+          <div class="sup-dialog-backdrop" data-sup-info-close></div>
+          <div class="sup-dialog-card sup-dialog-card--info" role="dialog" aria-modal="true" aria-labelledby="supInfoTitle">
+            <div class="sup-dialog-head">
+              <strong id="supInfoTitle">Yenilik bilgisi</strong>
+              <button type="button" class="btn tiny ghost" data-sup-info-close aria-label="Kapat">✕</button>
+            </div>
+            <div class="sup-dialog-body" id="supInfoBody"></div>
+          </div>
+        </div>
 
         <section id="viewForm" class="view form-view" hidden>
           <div class="form-topbar">
@@ -557,7 +631,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261111filtreyan3"></script>
+  <script src="/app.js?v=20261118sistem-guncelleme"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

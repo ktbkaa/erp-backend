@@ -123,6 +123,11 @@ router.get('/:id', async (req, res) => {
     try {
         const siparis = await getOrder(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+        const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(require('../db'), 'sales_orders', siparis.id, firmaId))) {
+            return res.status(404).json({ hata: 'Sipariş bulunamadı (firma kapsamı).' });
+        }
         res.json(siparis);
     } catch (err) {
         if (err.code === '23503') {

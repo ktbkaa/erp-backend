@@ -68,16 +68,28 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { plant_id, center_code, center_name } = req.body;
+        const {
+            plant_id, center_code, center_name,
+            daily_capacity_hours, efficiency_pct, description, is_active,
+        } = req.body;
         if (!plant_id || !center_name) {
             return res.status(400).json({ hata: 'plant_id ve center_name zorunlu.' });
         }
         const id = await withTransaction(pool, async (client) => {
             const kod = center_code || (await nextSequenceCode(client, 'IS_MERKEZI'));
             const result = await client.query(
-                `INSERT INTO work_centers (plant_id, center_code, center_name)
-                 VALUES ($1,$2,$3) RETURNING id`,
-                [plant_id, kod, center_name]
+                `INSERT INTO work_centers (
+                   plant_id, center_code, center_name,
+                   daily_capacity_hours, efficiency_pct, description, is_active
+                 ) VALUES ($1,$2,$3,COALESCE($4,8),COALESCE($5,100),$6,COALESCE($7,TRUE))
+                 RETURNING id`,
+                [
+                    plant_id, kod, center_name,
+                    daily_capacity_hours != null ? Number(daily_capacity_hours) : null,
+                    efficiency_pct != null ? Number(efficiency_pct) : null,
+                    description || null,
+                    typeof is_active === 'boolean' ? is_active : null,
+                ]
             );
             return result.rows[0].id;
         });
@@ -95,17 +107,31 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { plant_id, center_name } = req.body;
+        const {
+            plant_id, center_name, daily_capacity_hours, efficiency_pct, description, is_active,
+        } = req.body;
         if (!center_name) return res.status(400).json({ hata: 'center_name zorunlu.' });
         const upd = await pool.query(
             `
             UPDATE work_centers SET
                 plant_id = COALESCE($2, plant_id),
-                center_name = $3
+                center_name = $3,
+                daily_capacity_hours = COALESCE($4, daily_capacity_hours),
+                efficiency_pct = COALESCE($5, efficiency_pct),
+                description = COALESCE($6, description),
+                is_active = COALESCE($7, is_active)
             WHERE id = $1
             RETURNING id
             `,
-            [req.params.id, plant_id || null, center_name]
+            [
+                req.params.id,
+                plant_id || null,
+                center_name,
+                daily_capacity_hours != null && daily_capacity_hours !== '' ? Number(daily_capacity_hours) : null,
+                efficiency_pct != null && efficiency_pct !== '' ? Number(efficiency_pct) : null,
+                description !== undefined ? description : null,
+                typeof is_active === 'boolean' ? is_active : null,
+            ]
         );
         if (!upd.rows[0]) return res.status(404).json({ hata: 'İş merkezi bulunamadı.' });
         res.json(await getWorkCenter(upd.rows[0].id));

@@ -13,6 +13,7 @@ async function api(method, urlPath, body, firmaId) {
     'Content-Type': 'application/json',
     'X-Kullanici-Kodu': 'owner',
   };
+  if (global.__TOKEN) headers.Authorization = `Bearer ${global.__TOKEN}`;
   if (firmaId) headers['X-Firma-Id'] = String(firmaId);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 120000);

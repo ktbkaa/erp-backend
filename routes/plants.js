@@ -37,6 +37,11 @@ router.get('/:id', async (req, res) => {
     try {
         const row = await getPlant(req.params.id);
         if (!row) return res.status(404).json({ hata: 'İş yeri bulunamadı.' });
+        const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(require('../db'), 'plants', row.id, firmaId))) {
+            return res.status(404).json({ hata: 'İş yeri bulunamadı (firma kapsamı).' });
+        }
         res.json(row);
     } catch (err) {
         if (err.code === '23503') {
