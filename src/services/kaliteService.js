@@ -269,33 +269,50 @@ async function approveQcOrder(client, emirId, {
 
     let transferId = null;
     if (accepted > 0 && onay !== false) {
-        const tr = await transferBetweenWarehouses(client, {
-            kaynakDepoId: emir.warehouse_id,
-            hedefDepoId: hedef,
-            stokId: emir.item_id,
-            quantity: accepted,
-            partiId: emir.lot_id,
-            stokStatu: 'Kalitede',
-            belgeTipi: 'KK_EMIR',
-            belgeId: emirId,
-            description: `KK onay transfer ${emir.order_no}`,
-            statuCikisIzin: true,
-            depoZorunluAtla: true,
-        });
-        // BUG-009: hedefte Kalitede→Kullanilabilir audit izli (raw UPDATE yerine)
         const { transferStockStatus } = require('./stokHareketService');
-        await transferStockStatus(client, {
-            depoId: hedef,
-            stokId: emir.item_id,
-            quantity: accepted,
-            partiId: emir.lot_id,
-            kaynakStatu: 'Kalitede',
-            hedefStatu: 'Kullanilabilir',
-            belgeTipi: 'KK_EMIR',
-            belgeId: emirId,
-            description: `KK onay → Kullanilabilir ${emir.order_no}`,
-        });
-        transferId = tr.giris.hareket.id;
+        const sameWh = Number(emir.warehouse_id) === Number(hedef);
+        if (sameWh) {
+            // Aynı depoda yalnız statü: Kalitede → Kullanilabilir (fason GKK fallback)
+            await transferStockStatus(client, {
+                depoId: hedef,
+                stokId: emir.item_id,
+                quantity: accepted,
+                partiId: emir.lot_id,
+                kaynakStatu: 'Kalitede',
+                hedefStatu: 'Kullanilabilir',
+                belgeTipi: 'KK_EMIR',
+                belgeId: emirId,
+                description: `KK onay → Kullanilabilir ${emir.order_no}`,
+            });
+            transferId = emir.item_movement_id || null;
+        } else {
+            const tr = await transferBetweenWarehouses(client, {
+                kaynakDepoId: emir.warehouse_id,
+                hedefDepoId: hedef,
+                stokId: emir.item_id,
+                quantity: accepted,
+                partiId: emir.lot_id,
+                stokStatu: 'Kalitede',
+                belgeTipi: 'KK_EMIR',
+                belgeId: emirId,
+                description: `KK onay transfer ${emir.order_no}`,
+                statuCikisIzin: true,
+                depoZorunluAtla: true,
+            });
+            // BUG-009: hedefte Kalitede→Kullanilabilir audit izli (raw UPDATE yerine)
+            await transferStockStatus(client, {
+                depoId: hedef,
+                stokId: emir.item_id,
+                quantity: accepted,
+                partiId: emir.lot_id,
+                kaynakStatu: 'Kalitede',
+                hedefStatu: 'Kullanilabilir',
+                belgeTipi: 'KK_EMIR',
+                belgeId: emirId,
+                description: `KK onay → Kullanilabilir ${emir.order_no}`,
+            });
+            transferId = tr.giris.hareket.id;
+        }
     }
 
     if (uygunsuz > 0) {
@@ -364,6 +381,39 @@ async function approveQcOrder(client, emirId, {
             const refreshed = await client.query(`SELECT * FROM qc_orders WHERE id=$1`, [emirId]);
             await fromQcOrder(client, { order: refreshed.rows[0] });
         } catch (_) { /* PRJ yoksa sessiz */ }
+    }
+
+    // Fason teslimat → GKK onayını sipariş/operasyon kabul miktarına yansıt
+    if (emir.source_type === 'FASON_TESLIMAT' && emir.source_id) {
+        try {
+            const { applyQcResult } = require('./fasonService');
+            let rl = await client.query(
+                `SELECT id FROM subcontract_receipt_lines WHERE qc_order_id=$1 ORDER BY id LIMIT 1`,
+                [emirId],
+            );
+            if (!rl.rows[0]) {
+                rl = await client.query(
+                    `
+                    SELECT id FROM subcontract_receipt_lines
+                    WHERE receipt_id=$1 AND item_id=$2 AND (lot_id IS NOT DISTINCT FROM $3)
+                    ORDER BY id LIMIT 1
+                    `,
+                    [emir.source_id, emir.item_id, emir.lot_id || null],
+                );
+            }
+            if (rl.rows[0]) {
+                await applyQcResult(client, {
+                    receiptLineId: rl.rows[0].id,
+                    acceptedQty: accepted,
+                    rejectedQty: uygunsuz,
+                    userCode: kullanici?.user_code || null,
+                });
+            }
+        } catch (err) {
+            // Stok transferi oldu; fason yansıması başarısızsa işlemi düşürme — logla
+            console.error('[kalite] FASON_TESLIMAT applyQcResult:', err.message);
+            throw err;
+        }
     }
 
     return emirId;
