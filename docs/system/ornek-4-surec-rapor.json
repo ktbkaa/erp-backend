@@ -1,0 +1,467 @@
+{
+  "generated_at": "20.11.2026 15:28:54",
+  "base_url": "http://127.0.0.1:3000",
+  "how_to_view": {
+    "ui": [
+      "Üst bardan firma seçin: ADGIDA veya EGEPACK.",
+      "Listelerde proje / açıklama filtresine ADGIDA-MAN, ADGIDA-MRP, EGEPACK-MAN veya EGEPACK-MRP yazın.",
+      "Satış → Siparişler, Satınalma → Siparişler, Üretim → İş Emirleri, Planlama → MRP Sonuçları / Bağımsız İhtiyaç.",
+      "Sevkiyat / İrsaliye / Fatura ekranlarında aynı etiketle belge numaralarını arayın."
+    ],
+    "sql": "WHERE company_id IN (<ADGIDA>,<EGEPACK>) AND (project_code IN ('ADGIDA-MAN','ADGIDA-MRP','EGEPACK-MAN','EGEPACK-MRP') OR description ILIKE '%ADGIDA-MAN%' OR description ILIKE '%ADGIDA-MRP%' OR description ILIKE '%EGEPACK-MAN%' OR description ILIKE '%EGEPACK-MRP%')"
+  },
+  "scenarios": {
+    "ADGIDA-MAN": {
+      "tag": "ADGIDA-MAN",
+      "title": "Elma suyu — manuel planlama",
+      "mrp_used": false,
+      "company": "ADGIDA",
+      "plant": "IY-GIDA-FAB1",
+      "finished_good": "GIDA-MM-01",
+      "qty": 80,
+      "sales_quotation": "ST00050",
+      "sales_order": "B00166",
+      "purchase_requisition": "L00062",
+      "purchase_order": "P00128",
+      "sa_approval": "NK00158",
+      "goods_receipt": "R00111",
+      "purchase_invoice": "AF00089",
+      "production_order": "E00261",
+      "shipment": "SE00108",
+      "delivery_note": "IR00119",
+      "sales_invoice": "FA00074",
+      "screens": [
+        "satis-teklifleri",
+        "satis-siparisleri",
+        "satin-alma-talepleri",
+        "satin-alma-siparisleri",
+        "mal-kabuller",
+        "giris-kontrolleri",
+        "kk-emirleri",
+        "uretim-emirleri",
+        "sevk-emirleri",
+        "irsaliyeler",
+        "faturalar",
+        "stok-hareketleri",
+        "depo-bakiye"
+      ]
+    },
+    "ADGIDA-MRP": {
+      "tag": "ADGIDA-MRP",
+      "title": "Kuru kayısı — MRP planlama",
+      "mrp_used": true,
+      "company": "ADGIDA",
+      "plant": "IY-GIDA-FAB2",
+      "finished_good": "GIDA-MM-02",
+      "qty": 60,
+      "sales_order": "B00167",
+      "independent_requirement": "BI00039",
+      "mrp_run": "MR00046",
+      "mrp_net_lines": 3,
+      "purchase_requisition": "L00063",
+      "purchase_order": "P00129",
+      "sa_approval": "NK00159",
+      "goods_receipt": "R00112",
+      "purchase_invoice": "AF00090",
+      "production_orders": [
+        "E00263",
+        "E00262"
+      ],
+      "shipment": "SE00109",
+      "delivery_note": "IR00120",
+      "sales_invoice": "FA00075",
+      "screens": [
+        "satis-siparisleri",
+        "mrp-bagimsiz-ihtiyac",
+        "mrp-sonuclari",
+        "mrp-calismalari",
+        "satin-alma-talepleri",
+        "satin-alma-siparisleri",
+        "mal-kabuller",
+        "kk-emirleri",
+        "uretim-emirleri",
+        "sevk-emirleri",
+        "irsaliyeler",
+        "faturalar",
+        "stok-hareketleri"
+      ]
+    },
+    "EGEPACK-MAN": {
+      "tag": "EGEPACK-MAN",
+      "title": "Doy-Pack poşet — manuel planlama",
+      "mrp_used": false,
+      "company": "EGEPACK",
+      "plant": "IY-AMB-FAB1",
+      "finished_good": "AMB-MM-01",
+      "qty": 500,
+      "sales_quotation": "ST00051",
+      "sales_order": "B00168",
+      "purchase_requisition": "L00064",
+      "purchase_order": "P00130",
+      "sa_approval": "NK00160",
+      "goods_receipt": "R00113",
+      "purchase_invoice": "AF00091",
+      "production_order": "E00264",
+      "shipment": "SE00110",
+      "delivery_note": "IR00121",
+      "sales_invoice": "FA00076",
+      "screens": [
+        "satis-teklifleri",
+        "satis-siparisleri",
+        "satin-alma-talepleri",
+        "satin-alma-siparisleri",
+        "mal-kabuller",
+        "giris-kontrolleri",
+        "kk-emirleri",
+        "uretim-emirleri",
+        "sevk-emirleri",
+        "irsaliyeler",
+        "faturalar",
+        "stok-hareketleri",
+        "depo-bakiye"
+      ]
+    },
+    "EGEPACK-MRP": {
+      "tag": "EGEPACK-MRP",
+      "title": "Shrink film — MRP planlama",
+      "mrp_used": true,
+      "company": "EGEPACK",
+      "plant": "IY-AMB-FAB1",
+      "finished_good": "AMB-MM-02",
+      "qty": 200,
+      "sales_order": "B00169",
+      "independent_requirement": "BI00040",
+      "mrp_run": "MR00047",
+      "mrp_net_lines": 2,
+      "purchase_requisition": "L00065",
+      "purchase_order": "P00131",
+      "sa_approval": "NK00161",
+      "goods_receipt": "R00114",
+      "purchase_invoice": "AF00092",
+      "production_orders": [
+        "E00266",
+        "E00265"
+      ],
+      "shipment": "SE00111",
+      "delivery_note": "IR00122",
+      "sales_invoice": "FA00077",
+      "screens": [
+        "satis-siparisleri",
+        "mrp-bagimsiz-ihtiyac",
+        "mrp-sonuclari",
+        "mrp-calismalari",
+        "satin-alma-talepleri",
+        "satin-alma-siparisleri",
+        "mal-kabuller",
+        "kk-emirleri",
+        "uretim-emirleri",
+        "sevk-emirleri",
+        "irsaliyeler",
+        "faturalar",
+        "stok-hareketleri"
+      ]
+    }
+  },
+  "timeline": [
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "4 örnek süreç → http://127.0.0.1:3000"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "AUTH: owner JWT alındı"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "\n=== ADGIDA-MAN — Elma suyu — manuel planlama (MRP YOK) ==="
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SO: B00166"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SA onay: NK00158 (ONAYLANDI)"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Giriş kontrol: GK00096"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00241"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00242"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00243"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00244"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00245"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Alış fatura: AF00089"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00261 #1"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00261 #2"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00261 #3"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  CKK: QE00246"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Sevk: SE00108"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  İrsaliye: IR00119 (Onayli)"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Satış fatura: FA00074"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  ✓ ADGIDA-MAN tamam"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "\n=== ADGIDA-MRP — Kuru kayısı — MRP planlama (MRP VAR) ==="
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SO: B00167"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  BI: BI00039"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP: MR00046 satır=14"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "    net GIDA-HM-03 = 910.45 → Satınalma"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "    net GIDA-AMB-02 = 466 → Satınalma"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "    net GIDA-YM-02 = 75 → Üretim emri"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP→SA talep: L00063"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP→UE: E00262"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Giriş deposu hazır: GIDAFAB2-GIR"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SA onay: NK00159 (ONAYLANDI)"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Giriş kontrol: GK00097"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00247"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00248"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP PO: P00129 / MK: R00112"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00263 #1"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00263 #2"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00263 #3"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  CKK: QE00249"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Sevk: SE00109"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  İrsaliye: IR00120 (Onayli)"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Satış fatura: FA00075"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  ✓ ADGIDA-MRP tamam"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "\n=== EGEPACK-MAN — Doy-Pack poşet — manuel planlama (MRP YOK) ==="
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SO: B00168"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SA onay: NK00160 (ONAYLANDI)"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Giriş kontrol: GK00098"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00250"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00251"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00252"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Alış fatura: AF00091"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00264 #1"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  CKK: QE00253"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Sevk: SE00110"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  İrsaliye: IR00121 (Onayli)"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Satış fatura: FA00076"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  ✓ EGEPACK-MAN tamam"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "\n=== EGEPACK-MRP — Shrink film — MRP planlama (MRP VAR) ==="
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SO: B00169"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  BI: BI00040"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP: MR00047 satır=5"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "    net AMB-HM-01 = 1538 → Satınalma"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "    net AMB-MM-02 = 200 → Üretim emri"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP→SA talep: L00065"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP→UE: E00265"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  SA onay: NK00161 (ONAYLANDI)"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Giriş kontrol: GK00099"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  GKK: QE00254"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  MRP PO: P00131 / MK: R00114"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  op tamam E00266 #1"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  CKK: QE00255"
+    },
+    {
+      "at": "20.11.2026 15:28:54",
+      "msg": "  Sevk: SE00111"
+    },
+    {
+      "at": "20.11.2026 15:28:55",
+      "msg": "  İrsaliye: IR00122 (Onayli)"
+    },
+    {
+      "at": "20.11.2026 15:28:55",
+      "msg": "  Satış fatura: FA00077"
+    },
+    {
+      "at": "20.11.2026 15:28:55",
+      "msg": "  ✓ EGEPACK-MRP tamam"
+    }
+  ]
+}
