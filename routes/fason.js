@@ -40,9 +40,10 @@ router.post('/parametreler', async (req, res) => {
       INSERT INTO subcontract_parameters (
         company_id, ship_warehouse_id, default_scrap_tolerance_pct, max_scrap_pct,
         allow_partial_delivery, allow_over_receipt, over_receipt_tolerance_pct,
-        under_delivery_tolerance_pct, qc_required, order_approval_required,
+        under_delivery_tolerance_pct, qc_required, qc_on_receipt, block_production_until_qc,
+        require_qc_before_consume, order_approval_required,
         price_approval_limit, auto_create_po, auto_create_op_demand, notes
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
       ON CONFLICT (company_id) DO UPDATE SET
         ship_warehouse_id=EXCLUDED.ship_warehouse_id,
         default_scrap_tolerance_pct=EXCLUDED.default_scrap_tolerance_pct,
@@ -52,6 +53,9 @@ router.post('/parametreler', async (req, res) => {
         over_receipt_tolerance_pct=EXCLUDED.over_receipt_tolerance_pct,
         under_delivery_tolerance_pct=EXCLUDED.under_delivery_tolerance_pct,
         qc_required=EXCLUDED.qc_required,
+        qc_on_receipt=EXCLUDED.qc_on_receipt,
+        block_production_until_qc=EXCLUDED.block_production_until_qc,
+        require_qc_before_consume=EXCLUDED.require_qc_before_consume,
         order_approval_required=EXCLUDED.order_approval_required,
         price_approval_limit=EXCLUDED.price_approval_limit,
         auto_create_po=EXCLUDED.auto_create_po,
@@ -65,7 +69,11 @@ router.post('/parametreler', async (req, res) => {
         b.default_scrap_tolerance_pct ?? 2, b.max_scrap_pct ?? 5,
         b.allow_partial_delivery !== false, Boolean(b.allow_over_receipt),
         b.over_receipt_tolerance_pct ?? 0, b.under_delivery_tolerance_pct ?? 0,
-        b.qc_required !== false, Boolean(b.order_approval_required),
+        b.qc_required !== false,
+        b.qc_on_receipt != null ? Boolean(b.qc_on_receipt) : b.qc_required !== false,
+        b.block_production_until_qc !== false,
+        Boolean(b.require_qc_before_consume),
+        Boolean(b.order_approval_required),
         b.price_approval_limit ?? null, Boolean(b.auto_create_po),
         b.auto_create_op_demand !== false, b.notes || null,
       ],
@@ -90,18 +98,22 @@ router.put('/parametreler/:id', async (req, res) => {
         over_receipt_tolerance_pct=COALESCE($7,over_receipt_tolerance_pct),
         under_delivery_tolerance_pct=COALESCE($8,under_delivery_tolerance_pct),
         qc_required=COALESCE($9,qc_required),
-        order_approval_required=COALESCE($10,order_approval_required),
-        price_approval_limit=COALESCE($11,price_approval_limit),
-        auto_create_po=COALESCE($12,auto_create_po),
-        auto_create_op_demand=COALESCE($13,auto_create_op_demand),
-        notes=COALESCE($14,notes),
+        qc_on_receipt=COALESCE($10,qc_on_receipt),
+        block_production_until_qc=COALESCE($11,block_production_until_qc),
+        require_qc_before_consume=COALESCE($12,require_qc_before_consume),
+        order_approval_required=COALESCE($13,order_approval_required),
+        price_approval_limit=COALESCE($14,price_approval_limit),
+        auto_create_po=COALESCE($15,auto_create_po),
+        auto_create_op_demand=COALESCE($16,auto_create_op_demand),
+        notes=COALESCE($17,notes),
         updated_at=NOW()
       WHERE id=$1 RETURNING *
       `,
       [
         req.params.id, b.ship_warehouse_id, b.default_scrap_tolerance_pct, b.max_scrap_pct,
         b.allow_partial_delivery, b.allow_over_receipt, b.over_receipt_tolerance_pct,
-        b.under_delivery_tolerance_pct, b.qc_required, b.order_approval_required,
+        b.under_delivery_tolerance_pct, b.qc_required, b.qc_on_receipt,
+        b.block_production_until_qc, b.require_qc_before_consume, b.order_approval_required,
         b.price_approval_limit, b.auto_create_po, b.auto_create_op_demand, b.notes,
       ],
     );
@@ -580,10 +592,12 @@ router.get('/teslimatlar', async (req, res) => {
   try {
     const r = await pool.query(
       `
-      SELECT t.*, c.partner_code, c.partner_name, o.order_no
+      SELECT t.*, c.partner_code, c.partner_name, o.order_no,
+             q.order_no AS qc_order_no, q.status AS qc_status
       FROM subcontract_receipts t
       JOIN partners c ON c.id=t.partner_id
       JOIN subcontract_orders o ON o.id=t.order_id
+      LEFT JOIN qc_orders q ON q.id=t.qc_order_id
       ORDER BY t.id DESC LIMIT 300
       `,
     );

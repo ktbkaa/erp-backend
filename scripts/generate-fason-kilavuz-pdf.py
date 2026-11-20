@@ -283,10 +283,10 @@ def build():
         ("3. Fason siparişi", "Fason Siparişleri → Yeni. Fasoncu, ürün/op, miktar, birim hizmet fiyatı, termin. İlgili iş emrini bağlayın. Numara FS* serisinden üretilir."),
         ("4. Malzeme sevki", "Sipariş üzerinde Sevk. Çıkış deposu → fasoncu emanet deposu (FasonEmanet). Lot/seri girilebilir. Şirket kullanılabilir stok azalır; emanet artar. Bu adım tüketim değildir."),
         ("5. Emanet kontrol", "Fasoncu Emanet Stokları ekranından fasoncuda bekleyen miktarı doğrulayın. Bakiye gerçek stok motorundadır."),
-        ("6. Tüketim / fire", "Tüketim bildirimi: tüketilen + fire + (varsa) iade tutarlı olmalıdır. Emanet azalır; üretim malzeme tüketimi ve fire kaydı oluşur. Stok «silinmez»."),
-        ("7. Ürün teslimatı", "Kısmi teslimat desteklenir (ör. 400 + 350 + 250). Kalan miktar hesaplanır. Sipariş+tolerans üstü teslimat engellenir."),
-        ("8. Kalite kontrol", "Teslim alınan ≠ kabul edilen. GKK sonucu: Kabul / Şartlı / Ret / Kısmi. Ret sonrası iade, yeniden işleme veya hurda."),
-        ("9. Üretim güncelleme", "Kabul miktarı operasyona yansır; fason op tamamlanmadan bağlı sonraki iç operasyon başlatılmamalıdır."),
+        ("6. Giriş kalite kontrol (GKK)", "Fasoncudan gelen ürünler önce GKK’dan geçer; hemen üretime çıkmaz. Firma parametreleri: <b>qc_on_receipt</b> (teslimatta GKK emri), <b>block_production_until_qc</b> (kabul öncesi produced_qty yok), <b>require_qc_before_consume</b> (açıksa GKK bitmeden tüketim engeli — 5→GKK→6 sırası). Stok Kalitede bekler; onay Kalite → GKK Emirleri ekranından yapılır."),
+        ("7. Tüketim / fire", "Tüketim bildirimi: tüketilen + fire + (varsa) iade tutarlı olmalıdır. Emanet azalır; üretim malzeme tüketimi ve fire kaydı oluşur. Stok «silinmez»."),
+        ("8. Ürün teslimatı", "Kısmi teslimat desteklenir (ör. 400 + 350 + 250). Kalan miktar hesaplanır. Sipariş+tolerans üstü teslimat engellenir. GKK açıksa teslimat adımı 6 ile birlikte GKK emri üretir."),
+        ("9. Üretim güncelleme", "Yalnızca GKK kabul miktarı operasyona yansır; fason op tamamlanmadan bağlı sonraki iç operasyon başlatılmamalıdır."),
         ("10. Fatura ve maliyet", "Alış faturası ile hizmet bedeli. Tahmini (sipariş) ile gerçekleşen (kabul×fiyat / fatura) ayrı izlenir; WO maliyetine fason bileşeni eklenir."),
     ]
     for title, body in steps:
@@ -298,7 +298,7 @@ def build():
     story.append(Paragraph(
         "Ürünün tamamı dış üreticiye yaptırıldığında sipariş modu <b>Komple</b> seçilir. "
         "Akış aynıdır: fasoncu ve fiyat → sipariş → malzeme sevki (veya fasoncu kendi malzemesi) "
-        "→ kısmi tüketim → kısmi teslimatlar → KK → fatura → maliyet. "
+        "→ kısmi teslimat + GKK → (opsiyonel sıkı) tüketim → fatura → maliyet. "
         "Örnek: 1.000 adet tekstil; 1. teslimat 400, 2. teslimat 600.",
         s["body"],
     ))

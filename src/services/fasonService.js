@@ -94,7 +94,7 @@ async function refreshOrderLineTotals(client, orderId) {
   );
 }
 
-async function syncOperationStatus(client, opId) {
+async function syncOperationStatus(client, opId, opts = {}) {
   if (!opId) return;
   const r = await client.query(`SELECT * FROM production_order_operations WHERE id=$1`, [opId]);
   const op = r.rows[0];
@@ -103,19 +103,31 @@ async function syncOperationStatus(client, opId) {
   const recv = Number(op.qty_received || 0);
   const acc = Number(op.qty_accepted || 0);
   const plan = Number(op.planned_quantity || 0);
+  const blockUntilQc = opts.blockUntilQc !== false;
   let status = OP_STATUS.PLANLANDI;
   if (acc >= plan && plan > 0) status = OP_STATUS.TAMAMLANDI;
+  else if (blockUntilQc && recv > 0 && acc + 1e-9 < recv) status = OP_STATUS.KK_BEKLIYOR;
   else if (recv > 0 && recv < plan) status = OP_STATUS.KISMI_TESLIM;
   else if (recv >= plan && plan > 0) status = OP_STATUS.TESLIM;
   else if (sent > 0 && sent < plan) status = OP_STATUS.KISMI_GONDERILDI;
   else if (sent >= plan && plan > 0) status = OP_STATUS.FASONDDA;
   else if (sent === 0) status = OP_STATUS.SEVKE_HAZIR;
+  // KK beklerken produced_qty kabul miktarını aşmasın
+  const produced = blockUntilQc ? acc : Math.max(acc, recv);
   await client.query(
     `UPDATE production_order_operations SET subcontract_status=$2,
       produced_quantity = GREATEST(COALESCE(produced_quantity,0), $3)
      WHERE id=$1`,
-    [opId, status, acc],
+    [opId, status, produced],
   );
+}
+
+/** Firma + operasyon + istek gövdesinden GKK isteği */
+function resolveWantQc({ createQc, params, opDefQc }) {
+  if (createQc != null) return Boolean(createQc);
+  if (opDefQc != null) return Boolean(opDefQc);
+  if (params?.qc_on_receipt != null) return Boolean(params.qc_on_receipt);
+  return params?.qc_required !== false; // varsayılan açık
 }
 
 async function addCostEntry(client, row) {
@@ -270,6 +282,25 @@ async function reportConsumption(client, {
   if (!ord.rows[0]) throw Object.assign(new Error('Fason siparişi bulunamadı.'), { status: 404 });
   const order = ord.rows[0];
   const params = await getParams(client, order.company_id || companyId);
+
+  // Firma seçeneği: 5→GKK→6 — bekleyen giriş KK varken emanet tüketimi yok
+  if (params?.require_qc_before_consume) {
+    const pending = await client.query(
+      `
+      SELECT COUNT(*)::int AS n
+      FROM subcontract_receipts
+      WHERE order_id=$1 AND status='KaliteKontrolBekliyor'
+      `,
+      [orderId],
+    );
+    if (Number(pending.rows[0]?.n || 0) > 0) {
+      throw Object.assign(
+        new Error('Giriş kalite kontrolü bekleyen teslimat var — tüketim engellendi (require_qc_before_consume).'),
+        { status: 409, code: 'FASON_GKK_BEKLIYOR' },
+      );
+    }
+  }
+
   const emanet = await ensureEmanetWarehouse(client, {
     companyId: order.company_id,
     plantId: order.plant_id,
@@ -522,6 +553,30 @@ async function receiveProduct(client, {
   if (!toWarehouseId) throw new Error('Teslim depo zorunlu.');
   if (!Array.isArray(lines) || !lines.length) throw new Error('Teslimat satırları zorunlu.');
 
+  // Operasyon tanımı KK bayrağı (satır bazında; yoksa firma)
+  let opDefQc = null;
+  for (const l of lines) {
+    if (!l.order_line_id) continue;
+    const ol = await client.query(
+      `
+      SELECT sol.*, od.qc_required AS op_qc
+      FROM subcontract_order_lines sol
+      LEFT JOIN subcontract_operation_defs od
+        ON od.operation_code = sol.operation_code
+       AND (od.company_id IS NULL OR od.company_id = $2)
+      WHERE sol.id=$1
+      LIMIT 1
+      `,
+      [l.order_line_id, order.company_id],
+    );
+    if (ol.rows[0]?.op_qc != null) {
+      opDefQc = Boolean(ol.rows[0].op_qc);
+      break;
+    }
+  }
+  const wantQc = resolveWantQc({ createQc, params, opDefQc });
+  const blockUntilQc = params?.block_production_until_qc !== false;
+
   for (const l of lines) {
     if (!l.order_line_id) continue;
     const ol = await client.query(`SELECT * FROM subcontract_order_lines WHERE id=$1 FOR UPDATE`, [l.order_line_id]);
@@ -540,14 +595,40 @@ async function receiveProduct(client, {
     }
   }
 
+  const {
+    createQcOrder,
+    resolveIncomingQcWarehouse,
+  } = require('./kaliteService');
+
+  // GKK zorunluysa mümkünse giriş kalite deposuna al; yoksa hedef depoda Kalitede beklet
+  let receiptWarehouseId = toWarehouseId;
+  if (wantQc) {
+    const gkk = await resolveIncomingQcWarehouse(client, order.plant_id);
+    if (gkk?.id) receiptWarehouseId = gkk.id;
+  }
+
+  // Stok-depo izinleri
+  for (const wid of [...new Set([receiptWarehouseId, toWarehouseId].filter(Boolean))]) {
+    for (const l of lines) {
+      await client.query(
+        `
+        INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+        SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+          SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
+        )
+        `,
+        [l.item_id, wid, order.plant_id],
+      );
+    }
+  }
+
   const hkId = await movementCodeId(client, 'FAS-TESLIM');
   const no = await nextDocumentNo(client, 'FASON_TESLIM');
-  const wantQc = createQc != null ? Boolean(createQc) : Boolean(params?.qc_required);
 
   const mv = await createStockMovement(client, {
     hareketTipi: 'URETIM_GIRIS',
     isYeriId: order.plant_id,
-    depoId: toWarehouseId,
+    depoId: receiptWarehouseId,
     belgeTipi: 'FasonTeslimat',
     description: description || `Fason teslimat ${no}`,
     hareketKoduId: hkId,
@@ -567,19 +648,6 @@ async function receiveProduct(client, {
     })),
   });
 
-  let qcOrderId = null;
-  if (wantQc) {
-    try {
-      const { createQcFromMovement } = require('./kaliteService');
-      if (typeof createQcFromMovement === 'function') {
-        const qc = await createQcFromMovement(client, { hareket: mv.hareket, direction: 'GKK' });
-        qcOrderId = qc?.id || null;
-      }
-    } catch (_) {
-      // kaliteService farklı imza olabilir — sessiz; KK emri ekrandan da açılabilir
-    }
-  }
-
   const rec = await client.query(
     `
     INSERT INTO subcontract_receipts
@@ -590,25 +658,52 @@ async function receiveProduct(client, {
     `,
     [
       order.company_id, no, order.partner_id, order.id, order.production_order_id,
-      toWarehouseId, mv.hareket.id, qcOrderId,
+      toWarehouseId, mv.hareket.id, null,
       wantQc ? 'KaliteKontrolBekliyor' : 'TeslimAlindi',
       description || null, userCode || null,
     ],
   );
 
-  for (const l of lines) {
+  let firstQcOrderId = null;
+  const qcOrders = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const mvLine = mv.satirlar?.[i];
     const accepted = wantQc ? 0 : Number(l.received_qty);
+    let lineQcId = null;
+
+    if (wantQc) {
+      const emir = await createQcOrder(client, {
+        direction: 'GKK',
+        stokId: l.item_id,
+        partiId: mvLine?.lot_id || l.lot_id || null,
+        depoId: receiptWarehouseId,
+        hedefDepoId: toWarehouseId,
+        quantity: Number(l.received_qty),
+        kaynakTipi: 'FASON_TESLIMAT',
+        kaynakId: rec.rows[0].id,
+        stokHareketId: mv.hareket.id,
+        description: `Fason teslimat ${no} — giriş kalite`,
+        companyId: order.company_id,
+      });
+      lineQcId = emir.id;
+      if (!firstQcOrderId) firstQcOrderId = emir.id;
+      qcOrders.push(emir);
+    }
+
     await client.query(
       `
       INSERT INTO subcontract_receipt_lines
         (receipt_id, order_line_id, production_order_operation_id, item_id, lot_id,
-         received_qty, accepted_qty, rejected_qty, uom_code, unit_price, notes)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         received_qty, accepted_qty, rejected_qty, uom_code, unit_price, notes, qc_order_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
       `,
       [
         rec.rows[0].id, l.order_line_id || null, l.production_order_operation_id || null,
-        l.item_id, l.lot_id || null, Number(l.received_qty), accepted, 0,
+        l.item_id, mvLine?.lot_id || l.lot_id || null, Number(l.received_qty), accepted, 0,
         l.uom_code || null, l.unit_price != null ? Number(l.unit_price) : null, l.notes || null,
+        lineQcId,
       ],
     );
     if (l.order_line_id) {
@@ -634,7 +729,7 @@ async function receiveProduct(client, {
           `,
           [opId, Number(l.received_qty), accepted],
         );
-        await syncOperationStatus(client, opId);
+        await syncOperationStatus(client, opId, { blockUntilQc });
       }
       const unitPrice = Number(l.unit_price != null ? l.unit_price : row?.unit_price || 0);
       await addCostEntry(client, {
@@ -648,15 +743,24 @@ async function receiveProduct(client, {
         quantity: Number(l.received_qty),
         unit_price: unitPrice,
         currency_code: order.currency_code,
-        notes: wantQc ? 'Teslimat — KK bekliyor' : 'Teslimat kabul',
+        notes: wantQc ? 'Teslimat — GKK bekliyor' : 'Teslimat kabul',
       });
     }
+  }
+
+  if (firstQcOrderId) {
+    await client.query(
+      `UPDATE subcontract_receipts SET qc_order_id=$2 WHERE id=$1`,
+      [rec.rows[0].id, firstQcOrderId],
+    );
+    rec.rows[0].qc_order_id = firstQcOrderId;
   }
 
   await refreshOrderLineTotals(client, order.id);
   await client.query(
     `
     UPDATE subcontract_orders SET status = CASE
+      WHEN $2::boolean THEN 'KaliteKontrolBekliyor'
       WHEN (SELECT COALESCE(SUM(received_qty),0) FROM subcontract_order_lines WHERE order_id=$1)
          >= (SELECT COALESCE(SUM(ordered_qty),0) FROM subcontract_order_lines WHERE order_id=$1)
       THEN 'TeslimAlindi'
@@ -664,10 +768,16 @@ async function receiveProduct(client, {
     END, updated_at=NOW()
     WHERE id=$1 AND status NOT IN ('Iptal','Tamamlandi')
     `,
-    [order.id],
+    [order.id, wantQc],
   );
 
-  return { receipt: rec.rows[0], movement: mv.hareket, qcOrderId };
+  return {
+    receipt: rec.rows[0],
+    movement: mv.hareket,
+    qcOrderId: firstQcOrderId,
+    qcOrders,
+    wantQc,
+  };
 }
 
 /** KK sonucu sonrası kabul/ret güncelle */
@@ -724,8 +834,12 @@ async function applyQcResult(client, {
     const ol = row.order_line_id
       ? (await client.query(`SELECT unit_price FROM subcontract_order_lines WHERE id=$1`, [row.order_line_id])).rows[0]
       : null;
+    const companyId = (await client.query(
+      `SELECT company_id FROM subcontract_orders WHERE id=$1`,
+      [row.order_id],
+    )).rows[0]?.company_id || null;
     await addCostEntry(client, {
-      company_id: null,
+      company_id: companyId,
       order_id: row.order_id,
       order_line_id: row.order_line_id,
       production_order_id: row.production_order_id,
@@ -734,11 +848,58 @@ async function applyQcResult(client, {
       amount: Number(ol?.unit_price || row.unit_price || 0) * deltaAcc,
       quantity: deltaAcc,
       unit_price: Number(ol?.unit_price || row.unit_price || 0),
-      notes: `KK kabul (${userCode || ''})`,
+      notes: `GKK kabul (${userCode || ''})`,
     });
   }
+
+  // Teslimat başlık durumu
+  const sums = await client.query(
+    `
+    SELECT
+      COALESCE(SUM(received_qty),0)::numeric AS recv,
+      COALESCE(SUM(accepted_qty),0)::numeric AS acc,
+      COALESCE(SUM(rejected_qty),0)::numeric AS rej
+    FROM subcontract_receipt_lines WHERE receipt_id=$1
+    `,
+    [row.receipt_id],
+  );
+  const s = sums.rows[0];
+  let receiptStatus = 'KaliteKontrolBekliyor';
+  if (Number(s.acc) + Number(s.rej) + 1e-9 >= Number(s.recv) && Number(s.recv) > 0) {
+    receiptStatus = Number(s.rej) > 0 && Number(s.acc) > 0 ? 'KismiKabul'
+      : Number(s.acc) <= 0 ? 'Red'
+      : 'TeslimAlindi';
+  }
+  await client.query(
+    `UPDATE subcontract_receipts SET status=$2 WHERE id=$1`,
+    [row.receipt_id, receiptStatus],
+  );
+
+  // Sipariş: bekleyen GKK kalmadıysa teslim durumuna geç
+  const pending = await client.query(
+    `
+    SELECT COUNT(*)::int AS n FROM subcontract_receipts
+    WHERE order_id=$1 AND status='KaliteKontrolBekliyor'
+    `,
+    [row.order_id],
+  );
+  if (Number(pending.rows[0]?.n || 0) === 0) {
+    await client.query(
+      `
+      UPDATE subcontract_orders SET status = CASE
+        WHEN (SELECT COALESCE(SUM(accepted_qty),0) FROM subcontract_order_lines WHERE order_id=$1)
+           >= (SELECT COALESCE(SUM(ordered_qty),0) FROM subcontract_order_lines WHERE order_id=$1)
+        THEN 'TeslimAlindi'
+        ELSE 'KismiTeslim'
+      END, updated_at=NOW()
+      WHERE id=$1 AND status NOT IN ('Iptal','Tamamlandi')
+      `,
+      [row.order_id],
+    );
+  }
+
   await refreshOrderLineTotals(client, row.order_id);
-  return { ok: true, accepted_qty: acc, rejected_qty: rej };
+  return { ok: true, accepted_qty: acc, rejected_qty: rej, receipt_status: receiptStatus };
 }
 
 async function createOrderFromWorkOrder(client, {

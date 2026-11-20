@@ -1,61 +1,36 @@
 # Fason Test Raporu
 
-**Tarih:** 19 Kasım 2026 (Europe/Istanbul)  
-**Script:** `scripts/test-fason-e2e.mjs`  
-**Sonuç:** **BAŞARILI — 17/17**
+**Tarih:** 20 Kasım 2026 (Europe/Istanbul)  
+**Script:** `scripts/test-fason-e2e.mjs` + `tests/fason_gkk.test.js`  
+**Sonuç:** E2E önceki 17/17; GKK kapısı **2/2 PASS**
 
-## Senaryo özeti (E2E)
+## GKK kapısı (093)
 
 | Test | Sonuç | Detay |
 |------|--------|-------|
-| API health | PASS | |
-| Fasoncu | PASS | T00001 |
-| partners-fasoncu | PASS | n≥1 |
-| Operasyon | PASS | BOYAMA-* |
-| Fiyat | PASS | birim fiyat |
-| Parametre | PASS | |
-| Test stok | PASS | 500 |
-| Sipariş | PASS | FSO* |
-| Sevk | PASS | FSV* |
-| Emanet ≥100 | PASS | 100 |
-| Tüketim | PASS | FTK* |
-| Teslim 40 | PASS | kısmi |
-| Teslim 60 | PASS | kalan |
-| Fazla teslim engeli | PASS | 110 > 100 red |
-| Miktar tutarlı | PASS | sevk/tüketim/teslim/kabul |
-| Maliyet | PASS | cost entries |
-| İptal | PASS | |
+| Teslimatta GKK emri | PASS | `source_type=FASON_TESLIMAT`, `accepted_qty=0` |
+| Tüketim kilidi | PASS | `require_qc_before_consume` → `FASON_GKK_BEKLIYOR` |
+| GKK onay → kabul | PASS | `approveQcOrder` → `accepted_qty` + receipt `TeslimAlindi` |
+| `create_qc:false` atlama | PASS | doğrudan kabul |
 
-## Kabul kriterleri eşlemesi
+## Firma parametreleri
 
-| Kriter | Durum |
-|--------|-------|
-| Operasyon + komple fason | ✅ order_mode |
-| Rota bağlantısı | ✅ |
-| Sipariş ↔ WO | ✅ |
-| Emanet stok gerçek bakiye | ✅ FasonEmanet |
-| Sevk ≠ tüketim | ✅ |
-| Kısmi sevk/teslim | ✅ |
-| Lot/seri alanları | ✅ satırlarda |
-| Kalite bağlantısı | ✅ teslimat/kalite API |
-| Fatura ilişkisi | ⚠ mevcut alış fatura ile manuel bağ (otomatik PO kapalı) |
-| Maliyet aktarımı | ✅ |
-| MRP fason öneri | ⏳ lead/kapasite hazır; öneri tipi sonraki |
-| Onay kuralları | ⚠ parametre + mevcut onay; özel route seed sınırlı |
-| Belge ilişkileri DB | ✅ FK |
-| Mükerrer hareket engeli | ✅ fazla teslim + transaction |
-| Mevcut modüller bozulmadı | ✅ E2E + mevcut API |
+| Alan | Varsayılan | Anlam |
+|------|------------|--------|
+| `qc_on_receipt` | true | Teslimatta GKK emri |
+| `block_production_until_qc` | true | KK öncesi üretim yansımaz |
+| `require_qc_before_consume` | false | Açıkken 5→GKK→6 sıkı sıra |
+
+## Senaryo özeti (E2E — önceki)
+
+| Test | Sonuç |
+|------|--------|
+| Sevk ≠ tüketim | PASS |
+| Emanet / kısmi teslim / fazla engeli | PASS |
+| Maliyet / iptal | PASS |
 
 ## Başarısız / tamamlanmamış
 
-- Otomatik alış faturası oluşturma (bilinçli: mevcut fatura ekranı)
-- MRP’de ayrı “fason önerisi” tipi
-- Browser UI click-through (spend limit / ortam); API+DB doğrulandı
-
-## Teslimat envanteri
-
-- Migration `090_fason_yonetim.sql`
-- `routes/fason.js`, `src/services/fasonService.js`
-- `public/app.js` ekranlar + cari/rota/WO alanları
-- `routes/partners.js`, `routes/production_orders.js` genişletme
-- `docs/subcontracting/*` + PDF kılavuz
+- Otomatik alış faturası (kısmi API var)
+- MRP ayrı fason öneri tipi
+- Browser UI E2E
