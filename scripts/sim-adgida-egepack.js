@@ -15,6 +15,7 @@ const { withTransaction } = require('../src/utils/withTransaction');
 const { createStockMovement } = require('../src/services/stokHareketService');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { hashParola } = require('../src/utils/parola');
+const { runFullCoverage } = require('./lib/sim-full-coverage');
 
 const BASE = process.env.ERP_BASE || 'http://127.0.0.1:3000';
 const AUDIT = [];
@@ -482,6 +483,16 @@ async function main() {
   // Health
   await api('GET', '/health');
   log('SYS', 'health', 'API ayakta');
+
+  // Diğer firmaları kaldır (veri kalabalığı)
+  try {
+    execSync('node scripts/keep-only-companies.js ADGIDA,EGEPACK', {
+      stdio: 'inherit', cwd: path.join(__dirname, '..'),
+    });
+    log('PURGE', 'keep-only-companies', 'Yalnız ADGIDA + EGEPACK bırakıldı');
+  } catch (e) {
+    log('PURGE', 'keep-only-companies', `Uyarı: ${e.message}`);
+  }
 
   // Purge if re-run
   for (const code of ['ADGIDA', 'EGEPACK']) {
@@ -1620,6 +1631,12 @@ async function main() {
     log('FAZ-C', 'satis-iade-faturalari', `İade: ${e.message}`);
   }
 
+  // ─── Excel ekran kapsamı (CRM/HR/PRJ/MRP/Kalite/Fason/Finans/MDM) ───
+  log('COVER', 'sistem', 'Sistem tanıtım Excel ekran kapsamı başlıyor');
+  const coverage = await runFullCoverage({
+    log, api, org, gidaMaster, ambMaster,
+  });
+
   // Snapshot + detay rapor sorguları
   const snap = await pool.query(`
     SELECT 'companies' t, count(*)::int n FROM companies WHERE company_code IN ('ADGIDA','EGEPACK')
@@ -1676,6 +1693,71 @@ async function main() {
 
   const outDir = path.join(__dirname, '../docs/system');
   fs.mkdirSync(outDir, { recursive: true });
+  const coveredScreens = [...new Set([
+    ...AUDIT.map((a) => a.screen).filter(Boolean),
+    ...(coverage?.covered || []).map((c) => c.screen),
+  ])];
+  const ALIAS = {
+    sales_orders: 'satis-siparisleri',
+    delivery_notes: 'irsaliye-yonetimi',
+    'satis-faturalari': 'fatura-yonetimi',
+    'satis-iade-faturalari': 'satis-iade-faturalari',
+    rotalar: 'routings',
+    'uretim-girisi': 'uretim-girisleri',
+    'uretim-emirleri': 'uretim-emirleri',
+    'urun-agaci': 'urun-agaci',
+    'stok-karti': 'stok-karti',
+    'stok-hareketleri': 'stok-hareketleri',
+    'cari-kartlari': 'cari-kartlari',
+    'satin-alma-siparisleri': 'satin-alma-siparisleri',
+    'tahsilat-odemeler': 'tahsilat-odemeler',
+    'finans-nakit': 'finans-nakit-hareketleri',
+    'finans-kasa': 'finans-kasa-hesaplari',
+    'finans-banka-hesaplari': 'finans-banka-hesaplari',
+    'olcu-birimleri': 'olcu-birimleri',
+    'transfer-emirleri': 'transfer-emirleri',
+    'sevk-emirleri': 'sevk-emirleri',
+    'mal-kabuller': 'mal-kabuller',
+    'kk-emirleri-ckk': 'kk-emirleri-ckk',
+    'kk-emirleri-gkk': 'kk-emirleri-gkk',
+    companies: 'companies',
+    'is-yerleri': 'is-yerleri',
+    warehouses: 'warehouses',
+    kullanicilar: 'kullanicilar',
+    'is-istasyonlari': 'is-istasyonlari',
+    'is-merkezleri': 'is-merkezleri',
+  };
+  const coveredCanon = new Set();
+  for (const s of coveredScreens) {
+    coveredCanon.add(s);
+    if (ALIAS[s]) coveredCanon.add(ALIAS[s]);
+  }
+  // Excel ekran listesiyle karşılaştır
+  let excelScreens = [];
+  try {
+    const XLSX = require('../public/vendor/xlsx.full.min.js');
+    const excelPath = [
+      path.join(__dirname, '../docs/system/KTB_ERP_Sistem_Tanitim.xlsx'),
+      '/home/ubuntu/.cursor/projects/workspace/uploads/KTB_ERP_Sistem_Tanitim_1589.xlsx',
+    ].find((p) => fs.existsSync(p));
+    if (excelPath) {
+      const wb = XLSX.read(fs.readFileSync(excelPath));
+      const shName = wb.SheetNames.find((n) => /Ekran/i.test(n)) || wb.SheetNames[1];
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[shName], { header: 1, defval: '' });
+      const hdrIdx = aoa.findIndex((r) => Array.isArray(r) && r.includes('Ekran ID'));
+      if (hdrIdx >= 0) {
+        const idCol = aoa[hdrIdx].indexOf('Ekran ID');
+        excelScreens = aoa.slice(hdrIdx + 1)
+          .map((r) => r[idCol])
+          .filter((x) => x && String(x).trim());
+      }
+    }
+  } catch (_) { /* ignore */ }
+
+  const firmsLeft = (await pool.query(
+    `SELECT company_code, company_name FROM companies ORDER BY company_code`,
+  )).rows;
+
   const payload = {
     generatedAt: new Date().toISOString(),
     timezone: 'Europe/Istanbul',
@@ -1684,10 +1766,19 @@ async function main() {
       ADGIDA: { id: org.gida.id, name: org.gida.company_name },
       EGEPACK: { id: org.amb.id, name: org.amb.company_name },
     },
+    firms_in_db: firmsLeft,
     counts: Object.fromEntries(snap.rows.map((r) => [r.t, r.n])),
     production_orders: woRows.rows,
     stock_balances: stockBal.rows,
     partners: partnerBal.rows,
+    coverage: {
+      touched_screens: [...coveredCanon].sort(),
+      touched_count: coveredCanon.size,
+      excel_screen_count: excelScreens.length,
+      excel_hit: excelScreens.filter((s) => coveredCanon.has(s)),
+      excel_miss: excelScreens.filter((s) => !coveredCanon.has(s)),
+      steps: coverage?.covered || [],
+    },
     audit: AUDIT,
   };
   const outJson = path.join(outDir, 'sim-adgida-egepack-audit.json');
@@ -1717,6 +1808,18 @@ async function main() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(woRows.rows.length ? woRows.rows : [{ not: 'yok' }]), '3_Uretim');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockBal.rows.length ? stockBal.rows : [{ not: 'yok' }]), '4_StokBakiye');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(partnerBal.rows.length ? partnerBal.rows : [{ not: 'yok' }]), '5_Cari');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      coveredScreens.map((s) => ({
+        Ekran: s,
+        Excelde: excelScreens.includes(s) ? 'EVET' : 'alias/ek',
+        Durum: 'dokunuldu',
+      })),
+    ), '6_Kapsam');
+    if (payload.coverage.excel_miss.length) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+        payload.coverage.excel_miss.map((s) => ({ Ekran: s, Durum: 'excelde_var_simde_yok' })),
+      ), '7_Eksik');
+    }
     const outXlsx = path.join(outDir, 'sim-adgida-egepack-audit.xlsx');
     const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
     fs.writeFileSync(outXlsx, buf);
@@ -1765,9 +1868,25 @@ async function main() {
     '## 6. Bütünlük Notları',
     '',
     '- Firma kapsamlı purge + yeniden seed (TRUNCATE değil).',
+    '- ADGIDA/EGEPACK dışındaki firmalar `keep-only-companies` ile silindi.',
     '- Üretim emirleri API alanları: item_id, product_bom_id, route_id, component/fg warehouse, planned_quantity.',
     '- B2B: SA sipariş + satış sipariş + irsaliye/fatura + tahsilat/ödeme.',
     '- Fire çıkışında lot_id zorunluluğu (BUG-008) uygulandı.',
+    '',
+    '## 7. Ekran Kapsamı (Sistem Tanıtım Excel)',
+    '',
+    `- Dokunulan ekran: **${coveredScreens.length}**`,
+    `- Excel ekran sayısı: **${excelScreens.length}**`,
+    `- Excel eşleşen: **${payload.coverage.excel_hit.length}**`,
+    `- Excelde olup simde dokunulmayan: **${payload.coverage.excel_miss.length}**`,
+    '',
+    '### Dokunulan ekranlar',
+    '',
+    ...coveredScreens.map((s) => `- \`${s}\``),
+    '',
+    firmsLeft.length === 2
+      ? '### DB firmaları: yalnızca ADGIDA + EGEPACK'
+      : `### UYARI — beklenmeyen firmalar: ${firmsLeft.map((f) => f.company_code).join(', ')}`,
     '',
   ].join('\n');
   const outMd = path.join(outDir, 'sim-adgida-egepack-audit.md');
