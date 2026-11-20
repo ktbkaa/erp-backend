@@ -1,0 +1,1394 @@
+{
+  "generatedAt": "2026-11-20T07:09:10.340Z",
+  "timezone": "Europe/Istanbul",
+  "duration_ms": 1949,
+  "firms": {
+    "ADGIDA": {
+      "id": 15,
+      "name": "Anadolu Doğa Gıda Sanayi ve Ticaret A.Ş."
+    },
+    "EGEPACK": {
+      "id": 16,
+      "name": "EgePack Plastik ve Ambalaj Sanayi Ticaret A.Ş."
+    }
+  },
+  "counts": {
+    "companies": 2,
+    "plants": 7,
+    "warehouses": 20,
+    "items": 21,
+    "partners": 9,
+    "boms": 8,
+    "routings": 8,
+    "production_orders": 8,
+    "sales_orders": 2,
+    "purchase_orders": 1,
+    "delivery_notes": 2,
+    "invoices": 2,
+    "stock_movements": 55
+  },
+  "production_orders": [
+    {
+      "company_code": "EGEPACK",
+      "order_no": "E00221",
+      "item_code": "AMB-YM-01",
+      "planned_quantity": "200.000",
+      "produced_quantity": "200.000",
+      "status": "Kapali"
+    },
+    {
+      "company_code": "EGEPACK",
+      "order_no": "E00222",
+      "item_code": "AMB-MM-01",
+      "planned_quantity": "10000.000",
+      "produced_quantity": "10000.000",
+      "status": "Kapali"
+    },
+    {
+      "company_code": "EGEPACK",
+      "order_no": "E00223",
+      "item_code": "AMB-MM-02",
+      "planned_quantity": "500.000",
+      "produced_quantity": "500.000",
+      "status": "Kapali"
+    },
+    {
+      "company_code": "ADGIDA",
+      "order_no": "E00224",
+      "item_code": "GIDA-YM-01",
+      "planned_quantity": "2000.000",
+      "produced_quantity": "2000.000",
+      "status": "Kapali"
+    },
+    {
+      "company_code": "ADGIDA",
+      "order_no": "E00225",
+      "item_code": "GIDA-MM-01",
+      "planned_quantity": "1500.000",
+      "produced_quantity": "1500.000",
+      "status": "Kapali"
+    },
+    {
+      "company_code": "ADGIDA",
+      "order_no": "E00226",
+      "item_code": "GIDA-YM-02",
+      "planned_quantity": "800.000",
+      "produced_quantity": "800.000",
+      "status": "Kapali"
+    },
+    {
+      "company_code": "ADGIDA",
+      "order_no": "E00227",
+      "item_code": "GIDA-MM-02",
+      "planned_quantity": "2000.000",
+      "produced_quantity": "2000.000",
+      "status": "Kapali"
+    },
+    {
+      "company_code": "ADGIDA",
+      "order_no": "E00228",
+      "item_code": "GIDA-MM-03",
+      "planned_quantity": "500.000",
+      "produced_quantity": "500.000",
+      "status": "Kapali"
+    }
+  ],
+  "stock_balances": [
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-AMB-01",
+      "item_name": "1L Aseptik Cam Şişe + Metal Kapak + Etiket Seti",
+      "warehouse_code": "GIDA-FAB1-HMD",
+      "qty": 3500,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-AMB-02",
+      "item_name": "250g Kilitli Doy-Pack Kuru Gıda Poşeti (EgePack)",
+      "warehouse_code": "GIDA-FAB2-HMD",
+      "qty": 7450,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-AMB-03",
+      "item_name": "1L Meyve Suyu 6'lı Shrink Paket Filmi (EgePack)",
+      "warehouse_code": "GIDA-FAB1-GIR",
+      "qty": 50,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-AMB-03",
+      "item_name": "1L Meyve Suyu 6'lı Shrink Paket Filmi (EgePack)",
+      "warehouse_code": "GIDA-FAB1-HMD",
+      "qty": 420,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-AMB-04",
+      "item_name": "12'li Oluklu Mukavva Sevkiyat Kolisi",
+      "warehouse_code": "GIDA-FAB1-HMD",
+      "qty": 375.5,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-HM-01",
+      "item_name": "Taze Sıkmalık Amasya Elması",
+      "warehouse_code": "GIDA-FAB1-HMD",
+      "qty": 5400,
+      "safety_stock": "2000.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-HM-02",
+      "item_name": "Şeftali Püresi",
+      "warehouse_code": "GIDA-FAB1-HMD",
+      "qty": 500,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-HM-03",
+      "item_name": "Natürel Gün Kurusu Kayısı",
+      "warehouse_code": "GIDA-FAB2-HMD",
+      "qty": 2160,
+      "safety_stock": "800.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-HM-04",
+      "item_name": "Kavrulmuş Giresun Fındık İçi",
+      "warehouse_code": "GIDA-FAB2-HMD",
+      "qty": 325,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-HM-05",
+      "item_name": "Doğal Pancar Şekeri & Sitrik Asit",
+      "warehouse_code": "GIDA-FAB1-HMD",
+      "qty": 200,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-MM-01",
+      "item_name": "1L %100 Doğal Sıkma Elma Suyu (Cam Şişe)",
+      "warehouse_code": "GIDA-FAB1-MAM",
+      "qty": 1500,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-MM-02",
+      "item_name": "250g Kilitli Paket Gün Kurusu Kayısı",
+      "warehouse_code": "GIDA-FAB2-MAM",
+      "qty": 2000,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-MM-03",
+      "item_name": "500g Kilitli Paket Lüks Kayısı & Fındık Karışımı",
+      "warehouse_code": "GIDA-FAB2-MAM",
+      "qty": 500,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-YM-01",
+      "item_name": "Pastörize %100 Elma Suyu Konsantresi",
+      "warehouse_code": "GIDA-FAB1-YM",
+      "qty": 500,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "ADGIDA",
+      "item_code": "GIDA-YM-02",
+      "item_name": "Yıkanmış Boylanmış Nem Dengelenmiş Kuru Kayısı",
+      "warehouse_code": "GIDA-FAB2-YM",
+      "qty": 125,
+      "safety_stock": "0.0000"
+    },
+    {
+      "company_code": "EGEPACK",
+      "item_code": "AMB-HM-01",
+      "item_name": "Alçak Yoğunluklu Polietilen Granül (LDPE)",
+      "warehouse_code": "AMB-FAB-HMD",
+      "qty": 2075,
+      "safety_stock": "500.0000"
+    },
+    {
+      "company_code": "EGEPACK",
+      "item_code": "AMB-HM-02",
+      "item_name": "Gıda Temasına Uygun Flekso Baskı Mürekkebi",
+      "warehouse_code": "AMB-FAB-HMD",
+      "qty": 120,
+      "safety_stock": "50.0000"
+    },
+    {
+      "company_code": "EGEPACK",
+      "item_code": "AMB-HM-03",
+      "item_name": "Kilitli Poşet Fermuar Şeridi",
+      "warehouse_code": "AMB-FAB-HMD",
+      "qty": 17600,
+      "safety_stock": "1000.0000"
+    }
+  ],
+  "partners": [],
+  "audit": [
+    {
+      "seq": 1,
+      "elapsed_ms": 1,
+      "at": "20.11.2026 10:09:08",
+      "step": "START",
+      "screen": "sistem",
+      "detail": "ADGIDA + EGEPACK simülasyon başladı"
+    },
+    {
+      "seq": 2,
+      "elapsed_ms": 79,
+      "at": "20.11.2026 10:09:08",
+      "step": "AUTH",
+      "screen": "auth/login",
+      "detail": "owner JWT alındı"
+    },
+    {
+      "seq": 3,
+      "elapsed_ms": 84,
+      "at": "20.11.2026 10:09:08",
+      "step": "SYS",
+      "screen": "health",
+      "detail": "API ayakta"
+    },
+    {
+      "seq": 4,
+      "elapsed_ms": 543,
+      "at": "20.11.2026 10:09:08",
+      "step": "PURGE",
+      "screen": "purge-firma-veri",
+      "detail": "ADGIDA işlem verisi temizlendi"
+    },
+    {
+      "seq": 5,
+      "elapsed_ms": 959,
+      "at": "20.11.2026 10:09:09",
+      "step": "PURGE",
+      "screen": "purge-firma-veri",
+      "detail": "EGEPACK işlem verisi temizlendi"
+    },
+    {
+      "seq": 6,
+      "elapsed_ms": 963,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "olcu-birimleri",
+      "detail": "AD/KG/LT/MT/RL/PK/KL hazır"
+    },
+    {
+      "seq": 7,
+      "elapsed_ms": 965,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "companies",
+      "detail": "Firma güncellendi: ADGIDA",
+      "id": 15
+    },
+    {
+      "seq": 8,
+      "elapsed_ms": 966,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "companies",
+      "detail": "Firma güncellendi: EGEPACK",
+      "id": 16
+    },
+    {
+      "seq": 9,
+      "elapsed_ms": 971,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-YIK",
+      "id": 94
+    },
+    {
+      "seq": 10,
+      "elapsed_ms": 971,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-PAS",
+      "id": 95
+    },
+    {
+      "seq": 11,
+      "elapsed_ms": 972,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-DOL",
+      "id": 96
+    },
+    {
+      "seq": 12,
+      "elapsed_ms": 972,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-BOY",
+      "id": 97
+    },
+    {
+      "seq": 13,
+      "elapsed_ms": 973,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-KUR",
+      "id": 98
+    },
+    {
+      "seq": 14,
+      "elapsed_ms": 974,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-PKT",
+      "id": 99
+    },
+    {
+      "seq": 15,
+      "elapsed_ms": 974,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-EXT",
+      "id": 100
+    },
+    {
+      "seq": 16,
+      "elapsed_ms": 975,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-BSK",
+      "id": 101
+    },
+    {
+      "seq": 17,
+      "elapsed_ms": 975,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "is-istasyonlari",
+      "detail": "İş merkezi: IST-KSM",
+      "id": 102
+    },
+    {
+      "seq": 18,
+      "elapsed_ms": 1265,
+      "at": "20.11.2026 10:09:09",
+      "step": "ORG",
+      "screen": "kullanicilar",
+      "detail": "Personel + owner/ADMIN firma yetkileri verildi"
+    },
+    {
+      "seq": 19,
+      "elapsed_ms": 1266,
+      "at": "20.11.2026 10:09:09",
+      "step": "FINANS",
+      "screen": "finans-kasa",
+      "detail": "Kasa: ADGIDA-KASA",
+      "id": 40
+    },
+    {
+      "seq": 20,
+      "elapsed_ms": 1267,
+      "at": "20.11.2026 10:09:09",
+      "step": "FINANS",
+      "screen": "finans-banka-hesaplari",
+      "detail": "Banka: ADGIDA-GAR",
+      "id": 44
+    },
+    {
+      "seq": 21,
+      "elapsed_ms": 1268,
+      "at": "20.11.2026 10:09:09",
+      "step": "FINANS",
+      "screen": "finans-kasa",
+      "detail": "Kasa: EGEPACK-KASA",
+      "id": 41
+    },
+    {
+      "seq": 22,
+      "elapsed_ms": 1268,
+      "at": "20.11.2026 10:09:09",
+      "step": "FINANS",
+      "screen": "finans-banka-hesaplari",
+      "detail": "Banka: EGEPACK-GAR",
+      "id": 45
+    },
+    {
+      "seq": 23,
+      "elapsed_ms": 1270,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-PETRO (Tedarikci)",
+      "id": 313,
+      "belge": "CAR-PETRO"
+    },
+    {
+      "seq": 24,
+      "elapsed_ms": 1271,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-MUREKKEP (Tedarikci)",
+      "id": 314,
+      "belge": "CAR-MUREKKEP"
+    },
+    {
+      "seq": 25,
+      "elapsed_ms": 1272,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-ANADOLU (Musteri)",
+      "id": 315,
+      "belge": "CAR-ANADOLU"
+    },
+    {
+      "seq": 26,
+      "elapsed_ms": 1273,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-PERAKENDE (Musteri)",
+      "id": 316,
+      "belge": "CAR-PERAKENDE"
+    },
+    {
+      "seq": 27,
+      "elapsed_ms": 1276,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: AMB-HM-01 (Hammadde/KG)",
+      "id": 568,
+      "belge": "AMB-HM-01"
+    },
+    {
+      "seq": 28,
+      "elapsed_ms": 1277,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: AMB-HM-02 (Hammadde/KG)",
+      "id": 569,
+      "belge": "AMB-HM-02"
+    },
+    {
+      "seq": 29,
+      "elapsed_ms": 1279,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: AMB-HM-03 (Hammadde/MT)",
+      "id": 570,
+      "belge": "AMB-HM-03"
+    },
+    {
+      "seq": 30,
+      "elapsed_ms": 1282,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: AMB-YM-01 (YariMamul/RL)",
+      "id": 571,
+      "belge": "AMB-YM-01"
+    },
+    {
+      "seq": 31,
+      "elapsed_ms": 1284,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: AMB-MM-01 (Mamul/AD)",
+      "id": 572,
+      "belge": "AMB-MM-01"
+    },
+    {
+      "seq": 32,
+      "elapsed_ms": 1287,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: AMB-MM-02 (Mamul/KG)",
+      "id": 573,
+      "belge": "AMB-MM-02"
+    },
+    {
+      "seq": 33,
+      "elapsed_ms": 1288,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: AMB-MM-03 (Mamul/AD)",
+      "id": 574,
+      "belge": "AMB-MM-03"
+    },
+    {
+      "seq": 34,
+      "elapsed_ms": 1294,
+      "at": "20.11.2026 10:09:09",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "Açılış girişi: EGEPACK hammadde açılış",
+      "belge": "STG-01-00046",
+      "id": 1478
+    },
+    {
+      "seq": 35,
+      "elapsed_ms": 1296,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-AMB-YM01",
+      "id": 121,
+      "belge": "BOM-AMB-YM01"
+    },
+    {
+      "seq": 36,
+      "elapsed_ms": 1297,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-AMB-MM01",
+      "id": 122,
+      "belge": "BOM-AMB-MM01"
+    },
+    {
+      "seq": 37,
+      "elapsed_ms": 1297,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-AMB-MM02",
+      "id": 123,
+      "belge": "BOM-AMB-MM02"
+    },
+    {
+      "seq": 38,
+      "elapsed_ms": 1299,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-YM-FILM",
+      "id": 115,
+      "belge": "ROTA-YM-FILM"
+    },
+    {
+      "seq": 39,
+      "elapsed_ms": 1300,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-DOYPACK",
+      "id": 116,
+      "belge": "ROTA-DOYPACK"
+    },
+    {
+      "seq": 40,
+      "elapsed_ms": 1301,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-SHRINK",
+      "id": 117,
+      "belge": "ROTA-SHRINK"
+    },
+    {
+      "seq": 41,
+      "elapsed_ms": 1303,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-TARIM (Tedarikci)",
+      "id": 317,
+      "belge": "CAR-TARIM"
+    },
+    {
+      "seq": 42,
+      "elapsed_ms": 1303,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-CAM (Tedarikci)",
+      "id": 318,
+      "belge": "CAR-CAM"
+    },
+    {
+      "seq": 43,
+      "elapsed_ms": 1304,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-EGEPACK (Tedarikci)",
+      "id": 319,
+      "belge": "CAR-EGEPACK"
+    },
+    {
+      "seq": 44,
+      "elapsed_ms": 1305,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-MARKET (Musteri)",
+      "id": 320,
+      "belge": "CAR-MARKET"
+    },
+    {
+      "seq": 45,
+      "elapsed_ms": 1305,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "cari-kartlari",
+      "detail": "Cari: CAR-GURME (Musteri)",
+      "id": 321,
+      "belge": "CAR-GURME"
+    },
+    {
+      "seq": 46,
+      "elapsed_ms": 1308,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-HM-01 (Hammadde/KG)",
+      "id": 575,
+      "belge": "GIDA-HM-01"
+    },
+    {
+      "seq": 47,
+      "elapsed_ms": 1309,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-HM-02 (Hammadde/KG)",
+      "id": 576,
+      "belge": "GIDA-HM-02"
+    },
+    {
+      "seq": 48,
+      "elapsed_ms": 1311,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-HM-03 (Hammadde/KG)",
+      "id": 577,
+      "belge": "GIDA-HM-03"
+    },
+    {
+      "seq": 49,
+      "elapsed_ms": 1313,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-HM-04 (Hammadde/KG)",
+      "id": 578,
+      "belge": "GIDA-HM-04"
+    },
+    {
+      "seq": 50,
+      "elapsed_ms": 1314,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-HM-05 (Hammadde/KG)",
+      "id": 579,
+      "belge": "GIDA-HM-05"
+    },
+    {
+      "seq": 51,
+      "elapsed_ms": 1316,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-AMB-01 (Hammadde/AD)",
+      "id": 580,
+      "belge": "GIDA-AMB-01"
+    },
+    {
+      "seq": 52,
+      "elapsed_ms": 1317,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-AMB-02 (Hammadde/AD)",
+      "id": 581,
+      "belge": "GIDA-AMB-02"
+    },
+    {
+      "seq": 53,
+      "elapsed_ms": 1319,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-AMB-03 (Hammadde/KG)",
+      "id": 582,
+      "belge": "GIDA-AMB-03"
+    },
+    {
+      "seq": 54,
+      "elapsed_ms": 1320,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-AMB-04 (Hammadde/AD)",
+      "id": 583,
+      "belge": "GIDA-AMB-04"
+    },
+    {
+      "seq": 55,
+      "elapsed_ms": 1321,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-YM-01 (YariMamul/LT)",
+      "id": 584,
+      "belge": "GIDA-YM-01"
+    },
+    {
+      "seq": 56,
+      "elapsed_ms": 1323,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-YM-02 (YariMamul/KG)",
+      "id": 585,
+      "belge": "GIDA-YM-02"
+    },
+    {
+      "seq": 57,
+      "elapsed_ms": 1324,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-MM-01 (Mamul/AD)",
+      "id": 586,
+      "belge": "GIDA-MM-01"
+    },
+    {
+      "seq": 58,
+      "elapsed_ms": 1327,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-MM-02 (Mamul/PK)",
+      "id": 587,
+      "belge": "GIDA-MM-02"
+    },
+    {
+      "seq": 59,
+      "elapsed_ms": 1328,
+      "at": "20.11.2026 10:09:09",
+      "step": "MDM",
+      "screen": "stok-karti",
+      "detail": "Stok: GIDA-MM-03 (Mamul/PK)",
+      "id": 588,
+      "belge": "GIDA-MM-03"
+    },
+    {
+      "seq": 60,
+      "elapsed_ms": 1333,
+      "at": "20.11.2026 10:09:09",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "Açılış girişi: ADGIDA Bursa hammadde açılış",
+      "belge": "STG-01-00047",
+      "id": 1479
+    },
+    {
+      "seq": 61,
+      "elapsed_ms": 1335,
+      "at": "20.11.2026 10:09:09",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "Açılış girişi: ADGIDA Malatya hammadde açılış",
+      "belge": "STG-01-00048",
+      "id": 1480
+    },
+    {
+      "seq": 62,
+      "elapsed_ms": 1336,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-GIDA-YM01",
+      "id": 124,
+      "belge": "BOM-GIDA-YM01"
+    },
+    {
+      "seq": 63,
+      "elapsed_ms": 1337,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-GIDA-MM01",
+      "id": 125,
+      "belge": "BOM-GIDA-MM01"
+    },
+    {
+      "seq": 64,
+      "elapsed_ms": 1337,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-GIDA-YM02",
+      "id": 126,
+      "belge": "BOM-GIDA-YM02"
+    },
+    {
+      "seq": 65,
+      "elapsed_ms": 1338,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-GIDA-MM02",
+      "id": 127,
+      "belge": "BOM-GIDA-MM02"
+    },
+    {
+      "seq": 66,
+      "elapsed_ms": 1339,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "urun-agaci",
+      "detail": "BOM: BOM-GIDA-MM03",
+      "id": 128,
+      "belge": "BOM-GIDA-MM03"
+    },
+    {
+      "seq": 67,
+      "elapsed_ms": 1340,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-GIDA-YM-ELMA",
+      "id": 118,
+      "belge": "ROTA-GIDA-YM-ELMA"
+    },
+    {
+      "seq": 68,
+      "elapsed_ms": 1341,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-GIDA-ELMA",
+      "id": 119,
+      "belge": "ROTA-GIDA-ELMA"
+    },
+    {
+      "seq": 69,
+      "elapsed_ms": 1342,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-GIDA-YM-KAY",
+      "id": 120,
+      "belge": "ROTA-GIDA-YM-KAY"
+    },
+    {
+      "seq": 70,
+      "elapsed_ms": 1343,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-GIDA-KAY",
+      "id": 121,
+      "belge": "ROTA-GIDA-KAY"
+    },
+    {
+      "seq": 71,
+      "elapsed_ms": 1344,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "rotalar",
+      "detail": "Rota: ROTA-GIDA-KAR",
+      "id": 122,
+      "belge": "ROTA-GIDA-KAR"
+    },
+    {
+      "seq": 72,
+      "elapsed_ms": 1344,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-A",
+      "screen": "uretim-emirleri",
+      "detail": "EGEPACK yarı mamul + mamul üretimi başlıyor"
+    },
+    {
+      "seq": 73,
+      "elapsed_ms": 1359,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00221",
+      "id": 208,
+      "belge": "E00221"
+    },
+    {
+      "seq": 74,
+      "elapsed_ms": 1411,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00197"
+    },
+    {
+      "seq": 75,
+      "elapsed_ms": 1411,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "YM film 200 RL OK (2 op)",
+      "belge": "E00221"
+    },
+    {
+      "seq": 76,
+      "elapsed_ms": 1426,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00222",
+      "id": 209,
+      "belge": "E00222"
+    },
+    {
+      "seq": 77,
+      "elapsed_ms": 1467,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00198"
+    },
+    {
+      "seq": 78,
+      "elapsed_ms": 1468,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "Doy-pack 10000 AD OK (1 op)",
+      "belge": "E00222"
+    },
+    {
+      "seq": 79,
+      "elapsed_ms": 1474,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00223",
+      "id": 210,
+      "belge": "E00223"
+    },
+    {
+      "seq": 80,
+      "elapsed_ms": 1506,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00199"
+    },
+    {
+      "seq": 81,
+      "elapsed_ms": 1506,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "Shrink 500 KG OK (1 op)",
+      "belge": "E00223"
+    },
+    {
+      "seq": 82,
+      "elapsed_ms": 1507,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "satin-alma-siparisleri",
+      "detail": "ADGIDA → EGEPACK ambalaj siparişi"
+    },
+    {
+      "seq": 83,
+      "elapsed_ms": 1512,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "satin-alma-siparisleri",
+      "detail": "SA sipariş P00120",
+      "id": 117,
+      "belge": "P00120"
+    },
+    {
+      "seq": 84,
+      "elapsed_ms": 1518,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "sales_orders",
+      "detail": "Satış sipariş B00151",
+      "id": 177,
+      "belge": "B00151"
+    },
+    {
+      "seq": 85,
+      "elapsed_ms": 1524,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "sevk-emirleri",
+      "detail": "Sevk emri B00151",
+      "id": 96
+    },
+    {
+      "seq": 86,
+      "elapsed_ms": 1532,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "delivery_notes",
+      "detail": "Satış irsaliye 102",
+      "id": 102
+    },
+    {
+      "seq": 87,
+      "elapsed_ms": 1548,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "delivery_notes",
+      "detail": "İrsaliye onaylandı"
+    },
+    {
+      "seq": 88,
+      "elapsed_ms": 1560,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "satis-faturalari",
+      "detail": "Satış fatura FA00066",
+      "id": 198,
+      "belge": "FA00066"
+    },
+    {
+      "seq": 89,
+      "elapsed_ms": 1568,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "satis-faturalari",
+      "detail": "Fatura muhasebeleştirildi"
+    },
+    {
+      "seq": 90,
+      "elapsed_ms": 1574,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "tahsilat-odemeler",
+      "detail": "ADGIDA ödeme havale 27300 + kasa 11700"
+    },
+    {
+      "seq": 91,
+      "elapsed_ms": 1579,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "tahsilat-odemeler",
+      "detail": "EGEPACK tahsilat havale 27300 + kasa 11700"
+    },
+    {
+      "seq": 92,
+      "elapsed_ms": 1584,
+      "at": "20.11.2026 10:09:09",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "Açılış girişi: ADGIDA EgePack ambalaj mal kabul (FAB1 shrink)",
+      "belge": "STG-01-00049",
+      "id": 1498
+    },
+    {
+      "seq": 93,
+      "elapsed_ms": 1585,
+      "at": "20.11.2026 10:09:09",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "Açılış girişi: ADGIDA EgePack ambalaj mal kabul (FAB2 doypack)",
+      "belge": "STG-01-00050",
+      "id": 1499
+    },
+    {
+      "seq": 94,
+      "elapsed_ms": 1586,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "mal-kabuller",
+      "detail": "Ambalajlar ADGIDA depolarına alındı (B2B stok girişi)"
+    },
+    {
+      "seq": 95,
+      "elapsed_ms": 1590,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-B",
+      "screen": "transfer-emirleri",
+      "detail": "Transfer TE00046",
+      "id": 47,
+      "belge": "TE00046"
+    },
+    {
+      "seq": 96,
+      "elapsed_ms": 1595,
+      "at": "20.11.2026 10:09:09",
+      "step": "FAZ-C",
+      "screen": "uretim-emirleri",
+      "detail": "ADGIDA çok seviyeli üretim"
+    },
+    {
+      "seq": 97,
+      "elapsed_ms": 1604,
+      "at": "20.11.2026 10:09:09",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00224",
+      "id": 211,
+      "belge": "E00224"
+    },
+    {
+      "seq": 98,
+      "elapsed_ms": 1643,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00200"
+    },
+    {
+      "seq": 99,
+      "elapsed_ms": 1643,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "YM elma 2000 LT OK (2 op)",
+      "belge": "E00224"
+    },
+    {
+      "seq": 100,
+      "elapsed_ms": 1657,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00225",
+      "id": 212,
+      "belge": "E00225"
+    },
+    {
+      "seq": 101,
+      "elapsed_ms": 1710,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00201"
+    },
+    {
+      "seq": 102,
+      "elapsed_ms": 1710,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "MM elma suyu 1500 AD OK (3 op)",
+      "belge": "E00225"
+    },
+    {
+      "seq": 103,
+      "elapsed_ms": 1718,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00226",
+      "id": 213,
+      "belge": "E00226"
+    },
+    {
+      "seq": 104,
+      "elapsed_ms": 1755,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00202"
+    },
+    {
+      "seq": 105,
+      "elapsed_ms": 1755,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "YM kayısı 800 KG OK (2 op)",
+      "belge": "E00226"
+    },
+    {
+      "seq": 106,
+      "elapsed_ms": 1763,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00227",
+      "id": 214,
+      "belge": "E00227"
+    },
+    {
+      "seq": 107,
+      "elapsed_ms": 1808,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00203"
+    },
+    {
+      "seq": 108,
+      "elapsed_ms": 1808,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "MM kayısı 2000 PK OK (3 op)",
+      "belge": "E00227"
+    },
+    {
+      "seq": 109,
+      "elapsed_ms": 1816,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "İş emri: E00228",
+      "id": 215,
+      "belge": "E00228"
+    },
+    {
+      "seq": 110,
+      "elapsed_ms": 1855,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "kk-emirleri-ckk",
+      "detail": "CKK onay QE00204"
+    },
+    {
+      "seq": 111,
+      "elapsed_ms": 1855,
+      "at": "20.11.2026 10:09:10",
+      "step": "URETIM",
+      "screen": "uretim-girisi",
+      "detail": "MM kayısı-fındık 500 PK OK (2 op)",
+      "belge": "E00228"
+    },
+    {
+      "seq": 112,
+      "elapsed_ms": 1859,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "stok-hareketleri",
+      "detail": "Fire: 50 adet doy-pack poşet (lot n/a)"
+    },
+    {
+      "seq": 113,
+      "elapsed_ms": 1867,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "sales_orders",
+      "detail": "Market SO B00152",
+      "belge": "B00152",
+      "id": 178
+    },
+    {
+      "seq": 114,
+      "elapsed_ms": 1872,
+      "at": "20.11.2026 10:09:10",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "Açılış girişi: ADGIDA mamul dağıtım deposu takviye",
+      "belge": "STG-01-00051",
+      "id": 1531
+    },
+    {
+      "seq": 115,
+      "elapsed_ms": 1879,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "sevk-emirleri",
+      "detail": "Market sevk B00152"
+    },
+    {
+      "seq": 116,
+      "elapsed_ms": 1887,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "delivery_notes",
+      "detail": "Market irsaliye 103",
+      "id": 103
+    },
+    {
+      "seq": 117,
+      "elapsed_ms": 1919,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "satis-faturalari",
+      "detail": "Market fatura FA00067",
+      "id": 199,
+      "belge": "FA00067"
+    },
+    {
+      "seq": 118,
+      "elapsed_ms": 1933,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "tahsilat-odemeler",
+      "detail": "Market tahsilat 67104+44736"
+    },
+    {
+      "seq": 119,
+      "elapsed_ms": 1935,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "finans-nakit",
+      "detail": "Banka→Kasa virman 5000 TL"
+    },
+    {
+      "seq": 120,
+      "elapsed_ms": 1938,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "finans-nakit",
+      "detail": "Genel gider 3500 TL (elektrik/nakliye)"
+    },
+    {
+      "seq": 121,
+      "elapsed_ms": 1943,
+      "at": "20.11.2026 10:09:10",
+      "step": "FAZ-C",
+      "screen": "satis-iade-faturalari",
+      "detail": "İade irsaliye/belge denemesi"
+    },
+    {
+      "seq": 122,
+      "elapsed_ms": 1947,
+      "at": "20.11.2026 10:09:10",
+      "step": "SNAP",
+      "screen": "rapor",
+      "detail": "Tablo sayıları",
+      "counts": {
+        "companies": 2,
+        "plants": 7,
+        "warehouses": 20,
+        "items": 21,
+        "partners": 9,
+        "boms": 8,
+        "routings": 8,
+        "production_orders": 8,
+        "sales_orders": 2,
+        "purchase_orders": 1,
+        "delivery_notes": 2,
+        "invoices": 2,
+        "stock_movements": 55
+      }
+    }
+  ]
+}
