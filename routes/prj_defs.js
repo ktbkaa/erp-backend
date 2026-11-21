@@ -97,6 +97,7 @@ async function defaultExtraValue(client, table, col, raw) {
     return nextSeqNo(client, table, col);
   }
   if (col === 'hierarchy_level') return 'task';
+  if (col === 'category') return 'todo';
   if (BOOL_DEFAULTS.has(col)) return false;
   return null;
 }

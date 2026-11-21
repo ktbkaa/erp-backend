@@ -497,8 +497,8 @@ async function coverUnusedScreens(ctx, priorMiss) {
 
   // Üretim / BOM araçları
   if (priorMiss.includes('bom-level-listesi')) {
-    await tryMark(fid, 'GET', `/bom/level-listesi?item_id=${fg.id}`, null, 'bom-level-listesi', 'Seviye listesi');
-    await tryMark(fid, 'POST', '/bom/level-listesi', { item_id: fg.id, company_id: fid }, 'bom-level-listesi', 'Seviye POST');
+    // Salt okunur rapor — POST yok
+    await tryMark(fid, 'GET', `/bom/level-listesi?item_id=${fg.id}`, null, 'bom-level-listesi', 'Seviye listesi (salt okunur)');
   }
   if (priorMiss.includes('bom-malzeme-degisikligi')) {
     const oldId = items.hm?.id || items.hm1?.id;
@@ -516,8 +516,9 @@ async function coverUnusedScreens(ctx, priorMiss) {
   }
   if (priorMiss.includes('sinif-tanimi')) {
     await tryMark(fid, 'GET', '/stok-siniflari', null, 'sinif-tanimi', 'Sınıf listesi');
+    const sfx = Date.now().toString().slice(-4);
     await tryMark(fid, 'POST', '/stok-siniflari', {
-      class_code: `${firma.company_code}-S1`,
+      class_code: `${firma.company_code}-S${sfx}`.slice(0, 40),
       class_name: `${firma.company_code} Ana Sınıf`,
       company_id: fid,
     }, 'sinif-tanimi', 'Sınıf oluştur');
@@ -546,12 +547,21 @@ async function coverUnusedScreens(ctx, priorMiss) {
   // Kalite
   if (priorMiss.includes('kk-stok-planlari')) {
     await tryMark(fid, 'GET', '/kk-stok-planlari', null, 'kk-stok-planlari', 'Stok plan bağları');
-    await tryMark(fid, 'POST', '/kk-stok-planlari', {
-      item_id: fg.id,
-      company_id: fid,
-      plan_type: 'GKK',
-      description: `[${tag}] stok-plan`,
-    }, 'kk-stok-planlari', 'Stok-plan bağı');
+    let planId = null;
+    try {
+      const plans = await api('GET', '/kk-kontrol-planlari', null, fid);
+      planId = (Array.isArray(plans) ? plans : plans?.rows || [])[0]?.id || null;
+    } catch (_) { /* ignore */ }
+    if (planId) {
+      await tryMark(fid, 'POST', '/kk-stok-planlari', {
+        item_id: fg.id,
+        plan_id: planId,
+        direction: 'GKK',
+        is_active: true,
+      }, 'kk-stok-planlari', 'Stok-plan bağı');
+    } else {
+      await tryMark(fid, 'GET', '/kk-stok-planlari', null, 'kk-stok-planlari', 'Stok-plan (plan yok, yalnız liste)');
+    }
   }
 
   // Finans
@@ -562,36 +572,39 @@ async function coverUnusedScreens(ctx, priorMiss) {
     await tryMark(fid, 'GET', '/finans-vergi-kodlari', null, 'finans-vergi-kodlari', 'Vergi kodları');
     await tryMark(fid, 'GET', '/finans-vergi-kodlari', null, 'vergi-kodlari', 'Vergi kodları (alias)');
     await tryMark(fid, 'POST', '/finans-vergi-kodlari', {
-      tax_code: `${firma.company_code}-KDV20`,
+      tax_code: `${firma.company_code}-K${Date.now().toString().slice(-4)}`,
       tax_name: 'KDV %20',
-      rate: 20,
-      company_id: fid,
+      tax_type: 'KDV',
+      oranlar: [{ rate: 20, valid_from: '2020-01-01' }],
     }, 'finans-vergi-kodlari', 'Vergi kodu oluştur');
   }
   if (priorMiss.includes('mali-yillar')) {
     await tryMark(fid, 'GET', '/muhasebe-donemleri/mali-yillar', null, 'mali-yillar', 'Mali yıllar');
+    const myYear = 2030 + (Number(String(fid).slice(-2)) % 5);
     await tryMark(fid, 'POST', '/muhasebe-donemleri/mali-yillar', {
-      year: 2026,
+      year: myYear,
       company_id: fid,
-      description: `[${tag}] mali yıl`,
+      description: `[${tag}] mali yıl ${myYear}`,
     }, 'mali-yillar', 'Mali yıl oluştur');
   }
   if (priorMiss.includes('gl-butceler')) {
     await tryMark(fid, 'GET', '/gl-butceler', null, 'gl-butceler', 'GL bütçe listesi');
+    const bud = `${firma.company_code}-BUD-${Date.now().toString().slice(-5)}`;
     await tryMark(fid, 'POST', '/gl-butceler', {
       company_id: fid,
-      budget_code: `${firma.company_code}-BUD-2026`,
-      budget_name: `${firma.company_code} 2026 Bütçe`,
-      fiscal_year: 2026,
+      budget_code: bud.slice(0, 40),
+      budget_name: `${firma.company_code} Bütçe`,
+      fiscal_year: 2027,
       description: `[${tag}] bütçe`,
     }, 'gl-butceler', 'GL bütçe oluştur');
   }
 
   // CRM tanımlar
+  const uniq = Date.now().toString().slice(-5);
   if (priorMiss.includes('crm-firsat-asamalari')) {
     await tryMark(fid, 'GET', '/crm-firsat-asamalari', null, 'crm-firsat-asamalari', 'Fırsat aşamaları');
     await tryMark(fid, 'POST', '/crm-firsat-asamalari', {
-      stage_code: `${firma.company_code}-S1`,
+      stage_code: `${firma.company_code}-S${uniq}`.slice(0, 40),
       stage_name: 'Keşif',
       sort_order: 10,
       company_id: fid,
@@ -600,23 +613,23 @@ async function coverUnusedScreens(ctx, priorMiss) {
   if (priorMiss.includes('crm-faaliyet-tipleri')) {
     await tryMark(fid, 'GET', '/crm-faaliyet-tipleri', null, 'crm-faaliyet-tipleri', 'Faaliyet tipleri');
     await tryMark(fid, 'POST', '/crm-faaliyet-tipleri', {
-      type_code: `${firma.company_code}-CALL`,
+      type_code: `${firma.company_code}-C${uniq}`.slice(0, 40),
       type_name: 'Telefon',
       company_id: fid,
     }, 'crm-faaliyet-tipleri', 'Faaliyet tipi');
   }
 
-  // Proje tanımları + paneller
+  // Proje tanımları + paneller (kodlar benzersiz; line_no/rank/hierarchy sunucu varsayılanı)
   const prjDefs = [
-    ['prj-project-types', '/prj-project-types', { type_code: `${firma.company_code}-PT`, type_name: 'Yatırım' }],
-    ['prj-project-categories', '/prj-project-categories', { category_code: `${firma.company_code}-PC`, category_name: 'Üretim' }],
-    ['prj-project-statuses', '/prj-project-statuses', { status_code: `${firma.company_code}-PS`, status_name: 'Aktif' }],
-    ['prj-project-priorities', '/prj-project-priorities', { priority_code: `${firma.company_code}-PP`, priority_name: 'Yüksek' }],
-    ['prj-work-item-types', '/prj-work-item-types', { type_code: `${firma.company_code}-WIT`, type_name: 'Görev' }],
-    ['prj-work-item-statuses', '/prj-work-item-statuses', { status_code: `${firma.company_code}-WIS`, status_name: 'Açık' }],
-    ['prj-work-item-priorities', '/prj-work-item-priorities', { priority_code: `${firma.company_code}-WIP`, priority_name: 'Normal' }],
-    ['prj-project-roles', '/prj-project-roles', { role_code: `${firma.company_code}-PR`, role_name: 'Yönetici' }],
-    ['prj-relation-types', '/prj-relation-types', { relation_code: `${firma.company_code}-RT`, relation_name: 'Bağımlı' }],
+    ['prj-project-types', '/prj-project-types', { type_code: `${firma.company_code}-PT${uniq}`.slice(0, 40), type_name: 'Yatırım' }],
+    ['prj-project-categories', '/prj-project-categories', { category_code: `${firma.company_code}-PC${uniq}`.slice(0, 40), category_name: 'Üretim' }],
+    ['prj-project-statuses', '/prj-project-statuses', { status_code: `${firma.company_code}-PS${uniq}`.slice(0, 40), status_name: 'Aktif' }],
+    ['prj-project-priorities', '/prj-project-priorities', { priority_code: `${firma.company_code}-PP${uniq}`.slice(0, 40), priority_name: 'Yüksek' }],
+    ['prj-work-item-types', '/prj-work-item-types', { type_code: `${firma.company_code}-WT${uniq}`.slice(0, 40), type_name: 'Görev' }],
+    ['prj-work-item-statuses', '/prj-work-item-statuses', { status_code: `${firma.company_code}-WS${uniq}`.slice(0, 40), status_name: 'Açık' }],
+    ['prj-work-item-priorities', '/prj-work-item-priorities', { priority_code: `${firma.company_code}-WP${uniq}`.slice(0, 40), priority_name: 'Normal' }],
+    ['prj-project-roles', '/prj-project-roles', { role_code: `${firma.company_code}-PR${uniq}`.slice(0, 40), role_name: 'Yönetici' }],
+    ['prj-relation-types', '/prj-relation-types', { relation_code: `${firma.company_code}-RT${uniq}`.slice(0, 40), relation_name: 'Bağımlı' }],
   ];
   for (const [screen, ep, body] of prjDefs) {
     if (!priorMiss.includes(screen)) continue;
@@ -649,9 +662,12 @@ async function coverUnusedScreens(ctx, priorMiss) {
   }
   if (priorMiss.includes('prj-automations')) {
     await tryMark(fid, 'GET', '/prj-automations', null, 'prj-automations', 'Otomasyonlar');
+    const aCode = `${firma.company_code}-A${Date.now().toString().slice(-4)}`.slice(0, 40);
     await tryMark(fid, 'POST', '/prj-automations', {
-      rule_name: `${firma.company_code} otomatik atama`,
-      is_active: true,
+      automation_code: aCode,
+      automation_name: `${firma.company_code} otomatik atama`,
+      trigger_code: 'ON_STATUS',
+      is_enabled: true,
       company_id: fid,
       description: `[${tag}] otomasyon`,
     }, 'prj-automations', 'Otomasyon kuralı');
@@ -665,7 +681,7 @@ async function coverUnusedScreens(ctx, priorMiss) {
     await tryMark(fid, 'GET', '/hr-takvim/vardiyalar', null, 'hr-vardiyalar', 'Vardiyalar');
     await tryMark(fid, 'POST', '/hr-takvim/vardiyalar', {
       company_id: fid,
-      shift_code: `${firma.company_code}-G`,
+      shift_code: `${firma.company_code}-G${Date.now().toString().slice(-4)}`.slice(0, 40),
       shift_name: 'Gündüz',
       start_time: '08:00',
       end_time: '17:00',
@@ -686,7 +702,7 @@ async function coverUnusedScreens(ctx, priorMiss) {
     await tryMark(fid, 'GET', '/hr-izin/turler', null, 'hr-izin-turleri', 'İzin türleri');
     await tryMark(fid, 'POST', '/hr-izin/turler', {
       company_id: fid,
-      leave_code: `${firma.company_code}-MZ`,
+      leave_code: `${firma.company_code}-MZ${Date.now().toString().slice(-4)}`.slice(0, 40),
       leave_name: 'Mazeret',
       is_paid: true,
     }, 'hr-izin-turleri', 'İzin türü');
@@ -703,10 +719,9 @@ async function coverUnusedScreens(ctx, priorMiss) {
   if (priorMiss.includes('hr-bordro-parametreleri')) {
     await tryMark(fid, 'GET', '/hr-bordro/parametreler', null, 'hr-bordro-parametreleri', 'Bordro parametreleri');
     await tryMark(fid, 'POST', '/hr-bordro/parametreler', {
-      company_id: fid,
-      parameter_code: `${firma.company_code}-SGK`,
-      parameter_name: 'SGK işveren',
-      rate: 20.5,
+      set_code: `${firma.company_code}-SGK-${Date.now().toString().slice(-4)}`,
+      set_name: 'SGK işveren',
+      // country_code / effective_from sunucu varsayılanı (TR / bugün)
     }, 'hr-bordro-parametreleri', 'Parametre');
   }
   if (priorMiss.includes('hr-bordro-donemleri')) {
@@ -731,7 +746,7 @@ async function coverUnusedScreens(ctx, priorMiss) {
     await tryMark(fid, 'GET', '/hr-ise-alim/cikis-nedenleri', null, 'hr-cikis-nedenleri', 'Çıkış nedenleri');
     await tryMark(fid, 'POST', '/hr-ise-alim/cikis-nedenleri', {
       company_id: fid,
-      reason_code: `${firma.company_code}-IST`,
+      reason_code: `${firma.company_code}-I${Date.now().toString().slice(-4)}`.slice(0, 40),
       reason_name: 'İstifa',
     }, 'hr-cikis-nedenleri', 'Çıkış nedeni');
   }
