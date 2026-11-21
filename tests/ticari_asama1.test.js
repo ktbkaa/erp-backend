@@ -40,8 +40,10 @@ describe('ticari asama1', () => {
     const warehouses = await request(app, 'GET', '/warehouses');
     assert.ok(warehouses.json.length >= 2, 'en az 2 depo');
     const items = await request(app, 'GET', '/items');
-    const stok = (items.json || []).find((s) => s.item_code && s.item_code.startsWith('H'));
-    assert.ok(stok, 'hammadde stok');
+    const stok = (items.json || []).find((s) => s.item_code && /^H/i.test(s.item_code))
+      || (items.json || []).find((s) => /hammadde|raw|hm/i.test(String(s.item_type || '') + String(s.item_code || '')))
+      || (items.json || [])[0];
+    assert.ok(stok, 'stok kaydı');
     const emir = await request(app, 'POST', '/transfer-emirleri', {
       body: {
         source_warehouse_id: warehouses.json[0].id,

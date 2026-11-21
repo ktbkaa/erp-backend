@@ -19,6 +19,25 @@ function notFoundHandler(req, res) {
   });
 }
 
+function uniqueViolationMessage(err) {
+  const detail = String(err?.detail || '');
+  const constraint = String(err?.constraint || '');
+  // Key (col)=(val) already exists.
+  const m = detail.match(/\(([^)]+)\)=\(([^)]+)\)/);
+  if (m) {
+    const cols = m[1].split(',').map((s) => s.trim());
+    const vals = m[2].split(',').map((s) => s.trim());
+    if (cols.length === 1) {
+      return `Bu kod zaten kayıtlı (${cols[0]}=${vals[0]}).`;
+    }
+    return `Bu kayıt zaten var (${cols.join(', ')}).`;
+  }
+  if (/code|kod|_code/i.test(constraint)) {
+    return 'Bu kod zaten kayıtlı.';
+  }
+  return 'Bu kayıt zaten var (benzersiz alan çakışması).';
+}
+
 function errorHandler(err, req, res, next) {
   if (res.headersSent) return next(err);
   // Postgres FK violation → readable conflict instead of raw 500
@@ -26,6 +45,14 @@ function errorHandler(err, req, res, next) {
     return res.status(409).json({
       hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
       kod: 'ERR-FK-23503',
+    });
+  }
+  // Postgres unique violation → 409 with Turkish message
+  if (err && err.code === '23505') {
+    return res.status(409).json({
+      hata: uniqueViolationMessage(err),
+      kod: 'ERR-UQ-23505',
+      constraint: err.constraint || undefined,
     });
   }
   const status = err.status || err.statusCode || 500;
@@ -45,4 +72,4 @@ function asyncHandler(fn) {
   return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 }
 
-module.exports = { errorHandler, notFoundHandler, asyncHandler };
+module.exports = { errorHandler, notFoundHandler, asyncHandler, uniqueViolationMessage };

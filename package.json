@@ -18,6 +18,7 @@
     "demo:elek-dongu": "node scripts/demo-elek-tam-dongu.js",
     "demo:gida-dongu": "node scripts/demo-gida-tam-dongu.js",
     "demo:adgida-egepack-4ornek": "node scripts/demo-adgida-egepack-4ornek.js",
+    "demo:iki-sektor-eksik-ekran": "node scripts/sim-iki-sektor-eksik-ekran.js",
     "demo:kilif-dongu": "node scripts/demo-kilif-tam-dongu.js",
     "demo:dokum-prj": "node scripts/demo-dokum-prj.js",
     "demo:teks": "node scripts/demo-teks-tam-dongu.js",

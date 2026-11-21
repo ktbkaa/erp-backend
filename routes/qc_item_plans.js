@@ -38,7 +38,12 @@ router.post('/', async (req, res) => {
     try {
         const { item_id, plan_id, direction, is_active } = req.body;
         if (!item_id || !plan_id || !direction) {
-            return res.status(400).json({ hata: 'item_id, plan_id, direction zorunlu.' });
+            return res.status(400).json({
+                hata: 'Stok (item_id), kontrol planı (plan_id) ve yön (direction: GKK/CKK) zorunlu. Formda stok ve plan lookup ile seçilmelidir.',
+            });
+        }
+        if (!['GKK', 'CKK'].includes(String(direction))) {
+            return res.status(400).json({ hata: 'direction yalnızca GKK veya CKK olabilir.' });
         }
         const r = await pool.query(
             `

@@ -265,6 +265,19 @@ async function createOrder(client, opts) {
     });
 
     const stok = await client.query('SELECT uom_code FROM items WHERE id=$1', [item_id]);
+    // Stok-depo bağı zorunlu: mamul → mamul/WIP depo; bileşenler → hammadde depo
+    const { assertItemWarehouseAllowed } = require('../src/services/stokHareketService');
+    if (fg_warehouse_id) await assertItemWarehouseAllowed(client, item_id, fg_warehouse_id);
+    if (wip_warehouse_id) await assertItemWarehouseAllowed(client, item_id, wip_warehouse_id);
+    if (component_warehouse_id) {
+      const comps = await client.query(
+        `SELECT DISTINCT component_item_id AS item_id FROM bom_lines WHERE product_bom_id=$1`,
+        [product_bom_id],
+      );
+      for (const c of comps.rows) {
+        if (c.item_id) await assertItemWarehouseAllowed(client, c.item_id, component_warehouse_id);
+      }
+    }
     const no = await nextDocumentNo(client, 'URETIM_EMRI');
     const durumVal = status || (sales_order_id ? 'OnayBekliyor' : 'Acik');
     const emir = await client.query(
@@ -974,16 +987,10 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_role=CKK).');
                 const ciktiDepo = ckk.id;
                 const hedefDepo = await resolveOutgoingQcTargetWarehouse(client, op.output_item_id, emir.plant_id);
-                // CKK/hedef depo izinlerini otomatik aç (kalite akışı)
-                for (const wid of [ciktiDepo, hedefDepo?.id].filter(Boolean)) {
-                    await client.query(
-                        `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
-                         SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
-                           SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
-                         )`,
-                        [op.output_item_id, wid, emir.plant_id]
-                    );
-                }
+                // Stok-depo bağı zorunlu (otomatik oluşturma yok); CKK + hedef depo önceden tanımlanmış olmalı
+                const { assertItemWarehouseAllowed } = require('../src/services/stokHareketService');
+                await assertItemWarehouseAllowed(client, op.output_item_id, ciktiDepo);
+                if (hedefDepo?.id) await assertItemWarehouseAllowed(client, op.output_item_id, hedefDepo.id);
                 const h = await createStockMovement(client, {
                     hareketTipi: 'URETIM_GIRIS',
                     isYeriId: emir.plant_id,
@@ -991,7 +998,6 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                     belgeTipi: 'URETIM_EMRI_OP',
                     belgeId: op.id,
                     description: `${emir.order_no} / ${op.operation_code} çıktı → Çıkış Kalite`,
-                    depoZorunluAtla: true,
                     satirlar: [{
                         item_id: op.output_item_id,
                         quantity,
@@ -1308,15 +1314,9 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
             }
             productWarehouseId = girisDepoId;
             const hedefDepo = await resolveOutgoingQcTargetWarehouse(client, op.output_item_id, emir.plant_id);
-            for (const wid of [girisDepoId, hedefDepo?.id].filter(Boolean)) {
-                await client.query(
-                    `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
-                     SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
-                       SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
-                     )`,
-                    [op.output_item_id, wid, emir.plant_id]
-                );
-            }
+            const { assertItemWarehouseAllowed } = require('../src/services/stokHareketService');
+            await assertItemWarehouseAllowed(client, op.output_item_id, girisDepoId);
+            if (hedefDepo?.id) await assertItemWarehouseAllowed(client, op.output_item_id, hedefDepo.id);
             const h = await createStockMovement(client, {
                 hareketTipi: 'URETIM_GIRIS',
                 isYeriId: emir.plant_id,
@@ -1324,7 +1324,6 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                 belgeTipi: 'URETIM_EMRI_OP',
                 belgeId: op.id,
                 description: `${emir.order_no} / ${op.operation_code} çıktı`,
-                depoZorunluAtla: true,
                 satirlar: [{
                     item_id: op.output_item_id,
                     quantity,

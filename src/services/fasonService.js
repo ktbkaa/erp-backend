@@ -607,18 +607,11 @@ async function receiveProduct(client, {
     if (gkk?.id) receiptWarehouseId = gkk.id;
   }
 
-  // Stok-depo izinleri
+  // Stok-depo bağı zorunlu (otomatik oluşturma yok)
+  const { assertItemWarehouseAllowed } = require('./stokHareketService');
   for (const wid of [...new Set([receiptWarehouseId, toWarehouseId].filter(Boolean))]) {
     for (const l of lines) {
-      await client.query(
-        `
-        INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
-        SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
-          SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
-        )
-        `,
-        [l.item_id, wid, order.plant_id],
-      );
+      await assertItemWarehouseAllowed(client, l.item_id, wid);
     }
   }
 
@@ -635,7 +628,6 @@ async function receiveProduct(client, {
     firmaId: order.company_id,
     cariId: order.partner_id,
     kullaniciKodu: userCode,
-    depoZorunluAtla: true,
     satirlar: lines.map((l) => ({
       item_id: l.item_id,
       quantity: Number(l.received_qty),

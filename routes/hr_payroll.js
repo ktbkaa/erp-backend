@@ -99,8 +99,12 @@ router.get('/parametreler/:id', async (req, res) => {
 router.post('/parametreler', async (req, res) => {
   try {
     const b = req.body || {};
-    if (!b.country_code || !b.set_code || !b.set_name || !b.effective_from) {
-      return res.status(400).json({ hata: 'country_code, set_code, set_name, effective_from zorunlu.' });
+    const country = String(b.country_code || 'TR').trim().toUpperCase() || 'TR';
+    const effectiveFrom = b.effective_from || new Date().toISOString().slice(0, 10);
+    if (!b.set_code || !b.set_name) {
+      return res.status(400).json({
+        hata: 'Set kodu (set_code) ve set adı (set_name) zorunlu. Ülke boşsa TR, geçerlilik başı boşsa bugün kullanılır.',
+      });
     }
     const id = await withTransaction(pool, async (client) => {
       const ins = await client.query(
@@ -110,7 +114,7 @@ router.post('/parametreler', async (req, res) => {
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,TRUE))
          RETURNING id`,
         [
-          b.country_code, b.set_code, b.set_name, b.effective_from, b.effective_to || null,
+          country, b.set_code, b.set_name, effectiveFrom, b.effective_to || null,
           b.source_url || null, b.source_note || null, b.is_active,
         ],
       );
