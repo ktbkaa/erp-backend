@@ -27,7 +27,11 @@ describe('action bar listActions', () => {
   });
 
   it('iş akışı ekranları crud:false + incele için açık', () => {
-    for (const id of ['kk-emirleri-gkk', 'kk-emirleri-ckk', 'giris-kontrolleri', 'onaylarim']) {
+    // KK emirleri buildKkOrderScreen factory üzerinden (id çağrıda, crud factory'de)
+    assert.match(appJs, /function buildKkOrderScreen[\s\S]{0,500}?crud:\s*false/);
+    assert.match(appJs, /id:\s*'kk-emirleri-gkk'/);
+    assert.match(appJs, /id:\s*'kk-emirleri-ckk'/);
+    for (const id of ['giris-kontrolleri', 'onaylarim']) {
       assert.match(appJs, new RegExp(`id:\\s*'${id}'[\\s\\S]{0,400}?crud:\\s*false`));
     }
   });

@@ -267,7 +267,8 @@ function buildKkOrderScreen({ id, techId, businessNameEn, title, direction }) {
     businessNameEn,
     title,
     endpoint: `/kk-emirleri?direction=${direction}`,
-    crud: true,
+    // İş akışı: Yeni/Sil kapalı; İncele/Düzelt + Onayla açık
+    crud: false,
     listActions: ['yeni', 'incele', 'duzelt'],
     numeratorSeri: 'KK_EMIR',
     codeField: 'order_no',
