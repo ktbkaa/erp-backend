@@ -104,14 +104,28 @@ describe('fason GKK kapısı', () => {
       return { ...o.rows[0], line: line.rows[0] };
     });
 
-    // Sevk
-    await withTransaction(pool, (client) => fason.shipMaterials(client, {
-      orderId: order.id,
-      fromWarehouseId: wh.id,
-      lines: [{ item_id: item.id, quantity: 50, order_line_id: order.line.id }],
-      companyId: company.id,
-      userCode: 'owner',
-    }));
+    // Emanet deposu + stok-depo bağı (otomatik item_warehouses yok)
+    await withTransaction(pool, async (client) => {
+      const emanet = await fason.ensureEmanetWarehouse(client, {
+        companyId: company.id,
+        plantId: plant?.id || null,
+        partnerId: partner.id,
+      });
+      await client.query(
+        `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+         SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+           SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
+         )`,
+        [item.id, emanet.id, plant?.id || null],
+      );
+      await fason.shipMaterials(client, {
+        orderId: order.id,
+        fromWarehouseId: wh.id,
+        lines: [{ item_id: item.id, quantity: 50, order_line_id: order.line.id }],
+        companyId: company.id,
+        userCode: 'owner',
+      });
+    });
 
     // Teslimat — GKK beklenir
     const recv = await withTransaction(pool, (client) => fason.receiveProduct(client, {
