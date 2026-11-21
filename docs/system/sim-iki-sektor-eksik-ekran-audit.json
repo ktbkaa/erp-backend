@@ -1,0 +1,3107 @@
+{
+  "generatedAt": "2026-11-21T11:45:24.957Z",
+  "timezone": "Europe/Istanbul",
+  "duration_ms": 1410,
+  "firms": {
+    "NORMAK": {
+      "id": 19,
+      "name": "NorMak Metal İşleme Sanayi ve Ticaret A.Ş."
+    },
+    "LAVANDE": {
+      "id": 20,
+      "name": "Lavande Kozmetik Üretim A.Ş."
+    }
+  },
+  "prior": {
+    "excel_total": 182,
+    "prior_hit_estimate": 143,
+    "prior_miss": [
+      "mrp-hesap",
+      "satin-alma-teklif-istekleri",
+      "bom-level-listesi",
+      "bom-malzeme-degisikligi",
+      "siparis-is-emri",
+      "toplu-is-emri",
+      "sinif-tanimi",
+      "uretim-parametre-dogrulama",
+      "fason-operasyon-takip",
+      "kk-stok-planlari",
+      "hesap-belirleme-kurallari",
+      "finans-vergi-kodlari",
+      "mali-yillar",
+      "gl-butceler",
+      "vergi-kodlari",
+      "crm-firsat-asamalari",
+      "crm-faaliyet-tipleri",
+      "prj-dashboard",
+      "prj-portfolio",
+      "prj-board",
+      "prj-backlog",
+      "prj-gantt",
+      "prj-workload",
+      "prj-butce",
+      "prj-sablonlar",
+      "prj-automations",
+      "prj-project-types",
+      "prj-project-categories",
+      "prj-project-statuses",
+      "prj-project-priorities",
+      "prj-work-item-types",
+      "prj-work-item-statuses",
+      "prj-work-item-priorities",
+      "prj-project-roles",
+      "prj-relation-types",
+      "hr-calisma-takvimleri",
+      "hr-vardiyalar",
+      "hr-vardiya-atamalari",
+      "hr-resmi-tatiller",
+      "hr-izin-turleri",
+      "hr-izin-bakiyeleri",
+      "hr-ucretler",
+      "hr-avanslar",
+      "hr-bordro-parametreleri",
+      "hr-bordro-donemleri",
+      "hr-is-ilanlari",
+      "hr-adaylar",
+      "hr-onboarding",
+      "hr-zimmetler",
+      "hr-isten-cikis",
+      "hr-cikis-nedenleri",
+      "onay-message-template",
+      "onay-status-tanim",
+      "onay-modul-kullanimlari",
+      "zorunlu-alan-tanimlari",
+      "eposta-gonderimleri",
+      "sistem-guncelleme",
+      "tablo-bilgileri",
+      "sql-sorgu",
+      "sayfa-sorgulari"
+    ],
+    "prior_miss_count": 60,
+    "prior_miss_by_module": {
+      "Stok": [
+        {
+          "module": "Stok",
+          "section": "MRP Planlama",
+          "id": "mrp-hesap",
+          "techId": "MFG-MRP-SCR-002",
+          "title": "MRP Anlık Hesap",
+          "endpoint": "/mrp"
+        }
+      ],
+      "Satınalma": [
+        {
+          "module": "Satınalma",
+          "section": "—",
+          "id": "satin-alma-teklif-istekleri",
+          "techId": "PUR-RFQ-SCR-001",
+          "title": "Satınalma Teklif İstekleri",
+          "endpoint": "/satin-alma-teklif-istekleri"
+        }
+      ],
+      "Üretim": [
+        {
+          "module": "Üretim",
+          "section": "Ürün Ağacı",
+          "id": "bom-level-listesi",
+          "techId": "MFG-BOM-SCR-003",
+          "title": "Ürün Ağacı Seviye Listesi",
+          "endpoint": "/bom/level-listesi"
+        },
+        {
+          "module": "Üretim",
+          "section": "Ürün Ağacı",
+          "id": "bom-malzeme-degisikligi",
+          "techId": "MFG-BOM-SCR-004",
+          "title": "Malzeme Değişikliği",
+          "endpoint": "/bom/malzeme-degisikligi"
+        },
+        {
+          "module": "Üretim",
+          "section": "İş Emirleri",
+          "id": "siparis-is-emri",
+          "techId": "MFG-WO-SCR-002",
+          "title": "Siparişten İş Emri",
+          "endpoint": "/uretim-emirleri/siparis-adaylari"
+        },
+        {
+          "module": "Üretim",
+          "section": "İş Emirleri",
+          "id": "toplu-is-emri",
+          "techId": "MFG-WO-SCR-003",
+          "title": "Toplu İş Emri",
+          "endpoint": "/uretim-emirleri/siparis-adaylari"
+        },
+        {
+          "module": "Üretim",
+          "section": "Tanımlamalar",
+          "id": "sinif-tanimi",
+          "techId": "MFG-CLS-SCR-001",
+          "title": "Sınıf Tanımı",
+          "endpoint": "/stok-siniflari"
+        },
+        {
+          "module": "Üretim",
+          "section": "Tanımlamalar",
+          "id": "uretim-parametre-dogrulama",
+          "techId": "MFG-PRM-RPT-001",
+          "title": "Üretim Parametre Doğrulama",
+          "endpoint": "/uretim-parametreleri/dogrula"
+        },
+        {
+          "module": "Üretim",
+          "section": "Fason Operasyon",
+          "id": "fason-operasyon-takip",
+          "techId": "SUB-TRK-SCR-001",
+          "title": "Fason Operasyon Takibi",
+          "endpoint": "/fason/siparisler"
+        }
+      ],
+      "Kalite": [
+        {
+          "module": "Kalite",
+          "section": "Tanımlamalar",
+          "id": "kk-stok-planlari",
+          "techId": "QLT-ITMP-SCR-001",
+          "title": "Stok Plan Bağları",
+          "endpoint": "/kk-stok-planlari"
+        }
+      ],
+      "Finans": [
+        {
+          "module": "Finans",
+          "section": "Muhasebe Tanımlamaları",
+          "id": "hesap-belirleme-kurallari",
+          "techId": "FIN-ACR-SCR-001",
+          "title": "Hesap Belirleme Kuralları",
+          "endpoint": "/hesap-belirleme-kurallari"
+        },
+        {
+          "module": "Finans",
+          "section": "Muhasebe Tanımlamaları",
+          "id": "finans-vergi-kodlari",
+          "techId": "FIN-TAX-SCR-001",
+          "title": "Vergi Kodları",
+          "endpoint": "/finans-vergi-kodlari"
+        },
+        {
+          "module": "Finans",
+          "section": "Muhasebe Tanımlamaları",
+          "id": "mali-yillar",
+          "techId": "FIN-FY-SCR-001",
+          "title": "Mali Yıllar",
+          "endpoint": "/muhasebe-donemleri/mali-yillar"
+        },
+        {
+          "module": "Finans",
+          "section": "Sabit Kıymet ve Bütçe",
+          "id": "gl-butceler",
+          "techId": "FIN-BUD-SCR-001",
+          "title": "GL Bütçeler",
+          "endpoint": "/gl-butceler"
+        },
+        {
+          "module": "Finans",
+          "section": "—",
+          "id": "vergi-kodlari",
+          "techId": "MDM-TAX-SCR-001",
+          "title": "Vergi Kodları",
+          "endpoint": "/finans-vergi-kodlari"
+        }
+      ],
+      "CRM": [
+        {
+          "module": "CRM",
+          "section": "Tanımlamalar",
+          "id": "crm-firsat-asamalari",
+          "techId": "CRM-STG-SCR-001",
+          "title": "Fırsat Aşamaları",
+          "endpoint": "/crm-firsat-asamalari"
+        },
+        {
+          "module": "CRM",
+          "section": "Tanımlamalar",
+          "id": "crm-faaliyet-tipleri",
+          "techId": "CRM-ACTT-SCR-001",
+          "title": "Faaliyet Tipleri",
+          "endpoint": "/crm-faaliyet-tipleri"
+        }
+      ],
+      "Proje Yönetimi": [
+        {
+          "module": "Proje Yönetimi",
+          "section": "Proje ve Portföy",
+          "id": "prj-dashboard",
+          "techId": "PRJ-RPT-SCR-001",
+          "title": "Proje Özeti",
+          "endpoint": "/prj-dashboard/overview"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Proje ve Portföy",
+          "id": "prj-portfolio",
+          "techId": "PRJ-RPT-SCR-002",
+          "title": "Portföy Özeti",
+          "endpoint": "/prj-dashboard/portfolio"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-board",
+          "techId": "PRJ-AGL-SCR-001",
+          "title": "Kanban",
+          "endpoint": "/prj-board"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-backlog",
+          "techId": "PRJ-AGL-SCR-002",
+          "title": "Backlog",
+          "endpoint": "/prj-planning/backlog"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-gantt",
+          "techId": "PRJ-PLN-SCR-001",
+          "title": "Gantt / Zaman Çizelgesi",
+          "endpoint": "/prj-planning/gantt"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-workload",
+          "techId": "PRJ-RES-SCR-001",
+          "title": "Kaynak İş Yükü",
+          "endpoint": "/prj-planning/workload"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Bütçe ve Risk",
+          "id": "prj-butce",
+          "techId": "PRJ-FIN-SCR-001",
+          "title": "Proje Bütçesi",
+          "endpoint": "/prj-budget"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Şablon ve Otomasyon",
+          "id": "prj-sablonlar",
+          "techId": "PRJ-DEF-SCR-030",
+          "title": "Proje Şablonları",
+          "endpoint": "/prj-sablonlar"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Şablon ve Otomasyon",
+          "id": "prj-automations",
+          "techId": "PRJ-AUTO-SCR-001",
+          "title": "Otomasyon Kuralları",
+          "endpoint": "/prj-automations"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-types",
+          "techId": "PRJ-DEF-SCR-001",
+          "title": "Proje Türleri",
+          "endpoint": "/prj-project-types"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-categories",
+          "techId": "PRJ-DEF-SCR-002",
+          "title": "Proje Kategorileri",
+          "endpoint": "/prj-project-categories"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-statuses",
+          "techId": "PRJ-DEF-SCR-003",
+          "title": "Proje Durumları",
+          "endpoint": "/prj-project-statuses"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-priorities",
+          "techId": "PRJ-DEF-SCR-004",
+          "title": "Proje Öncelikleri",
+          "endpoint": "/prj-project-priorities"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-work-item-types",
+          "techId": "PRJ-DEF-SCR-010",
+          "title": "İş Türleri",
+          "endpoint": "/prj-work-item-types"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-work-item-statuses",
+          "techId": "PRJ-DEF-SCR-011",
+          "title": "İş Durumları",
+          "endpoint": "/prj-work-item-statuses"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-work-item-priorities",
+          "techId": "PRJ-DEF-SCR-012",
+          "title": "İş Öncelikleri",
+          "endpoint": "/prj-work-item-priorities"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-roles",
+          "techId": "PRJ-DEF-SCR-020",
+          "title": "Proje Rolleri",
+          "endpoint": "/prj-project-roles"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-relation-types",
+          "techId": "PRJ-DEF-SCR-021",
+          "title": "İş İlişki Türleri",
+          "endpoint": "/prj-relation-types"
+        }
+      ],
+      "İnsan Kaynakları": [
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-calisma-takvimleri",
+          "techId": "HR-CAL-SCR-001",
+          "title": "Çalışma Takvimleri",
+          "endpoint": "/hr-takvim/takvimler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-vardiyalar",
+          "techId": "HR-SHF-SCR-001",
+          "title": "Vardiyalar",
+          "endpoint": "/hr-takvim/vardiyalar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-vardiya-atamalari",
+          "techId": "HR-SHA-SCR-001",
+          "title": "Vardiya Atamaları",
+          "endpoint": "/hr-takvim/vardiya-atamalari"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-resmi-tatiller",
+          "techId": "HR-HOL-SCR-001",
+          "title": "Resmî Tatiller",
+          "endpoint": "/hr-takvim/tatiller"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İzin Yönetimi",
+          "id": "hr-izin-turleri",
+          "techId": "HR-LVT-SCR-001",
+          "title": "İzin Türleri",
+          "endpoint": "/hr-izin/turler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İzin Yönetimi",
+          "id": "hr-izin-bakiyeleri",
+          "techId": "HR-LVB-SCR-001",
+          "title": "İzin Bakiyeleri",
+          "endpoint": "/hr-izin/bakiyeler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-ucretler",
+          "techId": "HR-SAL-SCR-001",
+          "title": "Ücret Tanımları",
+          "endpoint": "/hr-bordro/ucretler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-avanslar",
+          "techId": "HR-ADV-SCR-001",
+          "title": "Avanslar",
+          "endpoint": "/hr-bordro/avanslar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-bordro-parametreleri",
+          "techId": "HR-PRM-SCR-001",
+          "title": "Bordro Parametreleri",
+          "endpoint": "/hr-bordro/parametreler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-bordro-donemleri",
+          "techId": "HR-PRP-SCR-001",
+          "title": "Bordro Dönemleri",
+          "endpoint": "/hr-bordro/donemler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-is-ilanlari",
+          "techId": "HR-JOB-SCR-001",
+          "title": "İş İlanları",
+          "endpoint": "/hr-ise-alim/ilanlar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-adaylar",
+          "techId": "HR-CAND-SCR-001",
+          "title": "Adaylar",
+          "endpoint": "/hr-ise-alim/adaylar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-onboarding",
+          "techId": "HR-ONB-SCR-001",
+          "title": "İşe Giriş Görevleri",
+          "endpoint": "/hr-ise-alim/onboarding"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-zimmetler",
+          "techId": "HR-AST-SCR-001",
+          "title": "Zimmetler",
+          "endpoint": "/hr-ise-alim/zimmetler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-isten-cikis",
+          "techId": "HR-TRM-SCR-001",
+          "title": "İşten Çıkış",
+          "endpoint": "/hr-ise-alim/cikislar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-cikis-nedenleri",
+          "techId": "HR-TRR-SCR-001",
+          "title": "Çıkış Nedenleri",
+          "endpoint": "/hr-ise-alim/cikis-nedenleri"
+        }
+      ],
+      "Onay Yönetimi": [
+        {
+          "module": "Onay Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "onay-message-template",
+          "techId": "SYS-APR-SCR-007",
+          "title": "Onay Mesaj Şablonları",
+          "endpoint": "/onay-message-sablonlari"
+        },
+        {
+          "module": "Onay Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "onay-status-tanim",
+          "techId": "SYS-APR-SCR-008",
+          "title": "Onay Durumları",
+          "endpoint": "/onay-durumlari"
+        },
+        {
+          "module": "Onay Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "onay-modul-kullanimlari",
+          "techId": "SYS-APR-SCR-USG",
+          "title": "Onay Modül Kullanımları",
+          "endpoint": "/onay-module-kullanimlari"
+        }
+      ],
+      "Sistem": [
+        {
+          "module": "Sistem",
+          "section": "Parametreler",
+          "id": "zorunlu-alan-tanimlari",
+          "techId": "SYS-REQ-SCR-001",
+          "title": "Zorunlu Alanlar",
+          "endpoint": "/zorunlu-alan-tanimlari"
+        },
+        {
+          "module": "Sistem",
+          "section": "İletişim",
+          "id": "eposta-gonderimleri",
+          "techId": "SYS-MAIL-SCR-001",
+          "title": "E-posta Gönderimleri",
+          "endpoint": "/eposta-gonderimleri"
+        },
+        {
+          "module": "Sistem",
+          "section": "Güncelleme",
+          "id": "sistem-guncelleme",
+          "techId": "SYS-UPD-SCR-001",
+          "title": "Sistem Güncelleme",
+          "endpoint": "/sistem-guncelleme"
+        },
+        {
+          "module": "Sistem",
+          "section": "Teknik Gözlem",
+          "id": "tablo-bilgileri",
+          "techId": "SYS-META-SCR-001",
+          "title": "Tablo Bilgileri",
+          "endpoint": "/meta/ekranlar"
+        },
+        {
+          "module": "Sistem",
+          "section": "Teknik Gözlem",
+          "id": "sql-sorgu",
+          "techId": "SYS-SQL-SCR-001",
+          "title": "SQL Sorgu",
+          "endpoint": "/sql-console"
+        },
+        {
+          "module": "Sistem",
+          "section": "Teknik Gözlem",
+          "id": "sayfa-sorgulari",
+          "techId": "SYS-QRY-SCR-001",
+          "title": "Sayfa Sorguları",
+          "endpoint": "/meta/sorgular"
+        }
+      ]
+    }
+  },
+  "this_run": {
+    "covered_screens": [
+      "auth/login",
+      "bom-level-listesi",
+      "bom-malzeme-degisikligi",
+      "companies",
+      "crm-adaylar",
+      "crm-faaliyet-tipleri",
+      "crm-firsat-asamalari",
+      "eposta-gonderimleri",
+      "fason-operasyon-takip",
+      "finans-vergi-kodlari",
+      "gl-butceler",
+      "hesap-belirleme-kurallari",
+      "hr-adaylar",
+      "hr-avanslar",
+      "hr-bordro-donemleri",
+      "hr-bordro-parametreleri",
+      "hr-calisma-takvimleri",
+      "hr-cikis-nedenleri",
+      "hr-is-ilanlari",
+      "hr-isten-cikis",
+      "hr-izin-bakiyeleri",
+      "hr-izin-turleri",
+      "hr-onboarding",
+      "hr-personel",
+      "hr-resmi-tatiller",
+      "hr-ucretler",
+      "hr-vardiya-atamalari",
+      "hr-vardiyalar",
+      "hr-zimmetler",
+      "kk-stok-planlari",
+      "mal-kabuller",
+      "mali-yillar",
+      "mrp-bagimsiz-ihtiyac",
+      "mrp-calismalari",
+      "mrp-hesap",
+      "onay-message-template",
+      "onay-modul-kullanimlari",
+      "onay-status-tanim",
+      "prj-automations",
+      "prj-backlog",
+      "prj-board",
+      "prj-butce",
+      "prj-dashboard",
+      "prj-gantt",
+      "prj-portfolio",
+      "prj-project-categories",
+      "prj-project-priorities",
+      "prj-project-roles",
+      "prj-project-statuses",
+      "prj-project-types",
+      "prj-relation-types",
+      "prj-sablonlar",
+      "prj-work-item-priorities",
+      "prj-work-item-statuses",
+      "prj-work-item-types",
+      "prj-workload",
+      "satin-alma-siparisleri",
+      "satin-alma-teklif-istekleri",
+      "satis-siparisleri",
+      "sayfa-sorgulari",
+      "sevk-emirleri",
+      "sinif-tanimi",
+      "siparis-is-emri",
+      "sistem",
+      "sistem-guncelleme",
+      "sql-sorgu",
+      "stok-hareketleri",
+      "tablo-bilgileri",
+      "toplu-is-emri",
+      "uretim-emirleri",
+      "uretim-parametre-dogrulama",
+      "uretim-parametreleri",
+      "vergi-kodlari",
+      "zorunlu-alan-tanimlari"
+    ],
+    "newly_hit_from_prior_miss": [
+      "mrp-hesap",
+      "satin-alma-teklif-istekleri",
+      "bom-level-listesi",
+      "bom-malzeme-degisikligi",
+      "siparis-is-emri",
+      "toplu-is-emri",
+      "sinif-tanimi",
+      "uretim-parametre-dogrulama",
+      "fason-operasyon-takip",
+      "kk-stok-planlari",
+      "hesap-belirleme-kurallari",
+      "finans-vergi-kodlari",
+      "mali-yillar",
+      "gl-butceler",
+      "vergi-kodlari",
+      "crm-firsat-asamalari",
+      "crm-faaliyet-tipleri",
+      "prj-dashboard",
+      "prj-portfolio",
+      "prj-board",
+      "prj-backlog",
+      "prj-gantt",
+      "prj-workload",
+      "prj-butce",
+      "prj-sablonlar",
+      "prj-automations",
+      "prj-project-types",
+      "prj-project-categories",
+      "prj-project-statuses",
+      "prj-project-priorities",
+      "prj-work-item-types",
+      "prj-work-item-statuses",
+      "prj-work-item-priorities",
+      "prj-project-roles",
+      "prj-relation-types",
+      "hr-calisma-takvimleri",
+      "hr-vardiyalar",
+      "hr-vardiya-atamalari",
+      "hr-resmi-tatiller",
+      "hr-izin-turleri",
+      "hr-izin-bakiyeleri",
+      "hr-ucretler",
+      "hr-avanslar",
+      "hr-bordro-parametreleri",
+      "hr-bordro-donemleri",
+      "hr-is-ilanlari",
+      "hr-adaylar",
+      "hr-onboarding",
+      "hr-zimmetler",
+      "hr-isten-cikis",
+      "hr-cikis-nedenleri",
+      "onay-message-template",
+      "onay-status-tanim",
+      "onay-modul-kullanimlari",
+      "zorunlu-alan-tanimlari",
+      "eposta-gonderimleri",
+      "sistem-guncelleme",
+      "tablo-bilgileri",
+      "sql-sorgu",
+      "sayfa-sorgulari"
+    ],
+    "still_miss_from_prior": [],
+    "still_miss_all_excel": [],
+    "errors": [
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "bom-level-listesi",
+        "error": "POST /bom/level-listesi → 404: Endpoint bulunamadı."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "sinif-tanimi",
+        "error": "POST /stok-siniflari → 500: duplicate key value violates unique constraint \"item_classes_class_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "kk-stok-planlari",
+        "error": "POST /kk-stok-planlari → 400: item_id, plan_id, direction zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "finans-vergi-kodlari",
+        "error": "POST /finans-vergi-kodlari → 400: country_code, tax_code, tax_name zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "crm-firsat-asamalari",
+        "error": "POST /crm-firsat-asamalari → 500: duplicate key value violates unique constraint \"crm_opportunity_stages_stage_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "crm-faaliyet-tipleri",
+        "error": "POST /crm-faaliyet-tipleri → 500: duplicate key value violates unique constraint \"crm_activity_types_type_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-project-types",
+        "error": "POST /prj-project-types → 500: null value in column \"line_no\" of relation \"prj_project_types\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-project-categories",
+        "error": "POST /prj-project-categories → 500: null value in column \"line_no\" of relation \"prj_project_categories\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-project-statuses",
+        "error": "POST /prj-project-statuses → 500: null value in column \"line_no\" of relation \"prj_project_statuses\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-project-priorities",
+        "error": "POST /prj-project-priorities → 500: null value in column \"rank_no\" of relation \"prj_project_priorities\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-work-item-types",
+        "error": "POST /prj-work-item-types → 500: null value in column \"hierarchy_level\" of relation \"prj_work_item_types\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-work-item-statuses",
+        "error": "POST /prj-work-item-statuses → 500: null value in column \"line_no\" of relation \"prj_work_item_statuses\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-work-item-priorities",
+        "error": "POST /prj-work-item-priorities → 500: null value in column \"rank_no\" of relation \"prj_work_item_priorities\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-project-roles",
+        "error": "POST /prj-project-roles → 500: null value in column \"can_view_budget\" of relation \"prj_project_roles\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-relation-types",
+        "error": "POST /prj-relation-types → 500: null value in column \"blocks_schedule\" of relation \"prj_relation_types\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-dashboard",
+        "error": "GET /prj-dashboard/overview → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-board",
+        "error": "GET /prj-board → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-backlog",
+        "error": "GET /prj-planning/backlog → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-gantt",
+        "error": "GET /prj-planning/gantt → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "prj-automations",
+        "error": "POST /prj-automations → 404: Endpoint bulunamadı."
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "hr-vardiyalar",
+        "error": "POST /hr-takvim/vardiyalar → 500: duplicate key value violates unique constraint \"hr_shifts_company_id_shift_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "hr-izin-turleri",
+        "error": "POST /hr-izin/turler → 500: duplicate key value violates unique constraint \"uq_hr_leave_types_leave_code_expr\""
+      },
+      {
+        "at": "21.11.2026 14:45:23",
+        "screen": "hr-bordro-parametreleri",
+        "error": "POST /hr-bordro/parametreler → 400: country_code, set_code, set_name, effective_from zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "hr-cikis-nedenleri",
+        "error": "POST /hr-ise-alim/cikis-nedenleri → 500: duplicate key value violates unique constraint \"uq_hr_termination_reasons_country_code_reason_code_expr\""
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "bom-level-listesi",
+        "error": "POST /bom/level-listesi → 404: Endpoint bulunamadı."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "sinif-tanimi",
+        "error": "POST /stok-siniflari → 500: duplicate key value violates unique constraint \"item_classes_class_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "kk-stok-planlari",
+        "error": "POST /kk-stok-planlari → 400: item_id, plan_id, direction zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "finans-vergi-kodlari",
+        "error": "POST /finans-vergi-kodlari → 400: country_code, tax_code, tax_name zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "crm-firsat-asamalari",
+        "error": "POST /crm-firsat-asamalari → 500: duplicate key value violates unique constraint \"crm_opportunity_stages_stage_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "crm-faaliyet-tipleri",
+        "error": "POST /crm-faaliyet-tipleri → 500: duplicate key value violates unique constraint \"crm_activity_types_type_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-project-types",
+        "error": "POST /prj-project-types → 500: null value in column \"line_no\" of relation \"prj_project_types\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-project-categories",
+        "error": "POST /prj-project-categories → 500: null value in column \"line_no\" of relation \"prj_project_categories\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-project-statuses",
+        "error": "POST /prj-project-statuses → 500: null value in column \"line_no\" of relation \"prj_project_statuses\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-project-priorities",
+        "error": "POST /prj-project-priorities → 500: null value in column \"rank_no\" of relation \"prj_project_priorities\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-work-item-types",
+        "error": "POST /prj-work-item-types → 500: null value in column \"hierarchy_level\" of relation \"prj_work_item_types\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-work-item-statuses",
+        "error": "POST /prj-work-item-statuses → 500: null value in column \"line_no\" of relation \"prj_work_item_statuses\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-work-item-priorities",
+        "error": "POST /prj-work-item-priorities → 500: null value in column \"rank_no\" of relation \"prj_work_item_priorities\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-project-roles",
+        "error": "POST /prj-project-roles → 500: null value in column \"can_view_budget\" of relation \"prj_project_roles\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-relation-types",
+        "error": "POST /prj-relation-types → 500: null value in column \"blocks_schedule\" of relation \"prj_relation_types\" violates not-null constraint"
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-dashboard",
+        "error": "GET /prj-dashboard/overview → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-board",
+        "error": "GET /prj-board → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-backlog",
+        "error": "GET /prj-planning/backlog → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-gantt",
+        "error": "GET /prj-planning/gantt → 400: project_id zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "prj-automations",
+        "error": "POST /prj-automations → 404: Endpoint bulunamadı."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "hr-vardiyalar",
+        "error": "POST /hr-takvim/vardiyalar → 500: duplicate key value violates unique constraint \"hr_shifts_company_id_shift_code_key\""
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "hr-izin-turleri",
+        "error": "POST /hr-izin/turler → 500: duplicate key value violates unique constraint \"uq_hr_leave_types_leave_code_expr\""
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "hr-bordro-parametreleri",
+        "error": "POST /hr-bordro/parametreler → 400: country_code, set_code, set_name, effective_from zorunlu."
+      },
+      {
+        "at": "21.11.2026 14:45:24",
+        "screen": "hr-cikis-nedenleri",
+        "error": "POST /hr-ise-alim/cikis-nedenleri → 500: duplicate key value violates unique constraint \"uq_hr_termination_reasons_country_code_reason_code_expr\""
+      }
+    ]
+  },
+  "remaining_reasons": [],
+  "audit": [
+    {
+      "seq": 1,
+      "elapsed_ms": 0,
+      "at": "21.11.2026 14:45:23",
+      "step": "START",
+      "screen": "sistem",
+      "detail": "İki sektör + eksik ekran simülasyonu"
+    },
+    {
+      "seq": 2,
+      "elapsed_ms": 87,
+      "at": "21.11.2026 14:45:23",
+      "step": "AUTH",
+      "screen": "auth/login",
+      "detail": "owner JWT"
+    },
+    {
+      "seq": 3,
+      "elapsed_ms": 166,
+      "at": "21.11.2026 14:45:23",
+      "step": "GAP",
+      "screen": "sistem",
+      "detail": "Önceki miss: 60 / Excel 182"
+    },
+    {
+      "seq": 4,
+      "elapsed_ms": 173,
+      "at": "21.11.2026 14:45:23",
+      "step": "ORG",
+      "screen": "companies",
+      "detail": "Firma güncellendi: NORMAK",
+      "id": 19
+    },
+    {
+      "seq": 5,
+      "elapsed_ms": 185,
+      "at": "21.11.2026 14:45:23",
+      "step": "ORG",
+      "screen": "companies",
+      "detail": "Firma güncellendi: LAVANDE",
+      "id": 20
+    },
+    {
+      "seq": 6,
+      "elapsed_ms": 194,
+      "at": "21.11.2026 14:45:23",
+      "step": "GAP",
+      "screen": "sistem",
+      "detail": "NORMAK: 60 hedef ekran"
+    },
+    {
+      "seq": 7,
+      "elapsed_ms": 206,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "mrp-hesap",
+      "detail": "MRP anlık hesap (stok)",
+      "id": 655
+    },
+    {
+      "seq": 8,
+      "elapsed_ms": 211,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ listesi"
+    },
+    {
+      "seq": 9,
+      "elapsed_ms": 217,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ oluştur",
+      "id": 4
+    },
+    {
+      "seq": 10,
+      "elapsed_ms": 222,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "bom-level-listesi",
+      "detail": "Seviye listesi"
+    },
+    {
+      "seq": 11,
+      "elapsed_ms": 225,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "bom-level-listesi",
+      "detail": "POST /bom/level-listesi → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 12,
+      "elapsed_ms": 225,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "bom-level-listesi",
+      "detail": "Seviye POST: POST /bom/level-listesi → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 13,
+      "elapsed_ms": 227,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği UI/GET"
+    },
+    {
+      "seq": 14,
+      "elapsed_ms": 231,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği POST",
+      "id": 1
+    },
+    {
+      "seq": 15,
+      "elapsed_ms": 235,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "Sipariş adayları"
+    },
+    {
+      "seq": 16,
+      "elapsed_ms": 238,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "Toplu iş emri adayları"
+    },
+    {
+      "seq": 17,
+      "elapsed_ms": 240,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf listesi"
+    },
+    {
+      "seq": 18,
+      "elapsed_ms": 242,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "sinif-tanimi",
+      "detail": "POST /stok-siniflari → 500: duplicate key value violates unique constraint \"item_classes_class_code_key\""
+    },
+    {
+      "seq": 19,
+      "elapsed_ms": 242,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf oluştur: POST /stok-siniflari → 500: duplicate key value violates unique constraint \"item_classes_class_code_key\""
+    },
+    {
+      "seq": 20,
+      "elapsed_ms": 245,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "uretim-parametreleri",
+      "detail": "Parametreler"
+    },
+    {
+      "seq": 21,
+      "elapsed_ms": 250,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Parametre eksikleri tamamla/doğrula"
+    },
+    {
+      "seq": 22,
+      "elapsed_ms": 255,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Doğrulama GET"
+    },
+    {
+      "seq": 23,
+      "elapsed_ms": 260,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "fason-operasyon-takip",
+      "detail": "Fason sipariş listesi"
+    },
+    {
+      "seq": 24,
+      "elapsed_ms": 265,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "fason-operasyon-takip",
+      "detail": "Fason sipariş oluştur",
+      "id": 6,
+      "belge": "FSO00004"
+    },
+    {
+      "seq": 25,
+      "elapsed_ms": 267,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok plan bağları"
+    },
+    {
+      "seq": 26,
+      "elapsed_ms": 270,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "kk-stok-planlari",
+      "detail": "POST /kk-stok-planlari → 400: item_id, plan_id, direction zorunlu."
+    },
+    {
+      "seq": 27,
+      "elapsed_ms": 270,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok-plan bağı: POST /kk-stok-planlari → 400: item_id, plan_id, direction zorunlu."
+    },
+    {
+      "seq": 28,
+      "elapsed_ms": 272,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hesap-belirleme-kurallari",
+      "detail": "Hesap kuralları"
+    },
+    {
+      "seq": 29,
+      "elapsed_ms": 274,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodları"
+    },
+    {
+      "seq": 30,
+      "elapsed_ms": 276,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "vergi-kodlari",
+      "detail": "Vergi kodları (alias)"
+    },
+    {
+      "seq": 31,
+      "elapsed_ms": 278,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "finans-vergi-kodlari",
+      "detail": "POST /finans-vergi-kodlari → 400: country_code, tax_code, tax_name zorunlu."
+    },
+    {
+      "seq": 32,
+      "elapsed_ms": 278,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodu oluştur: POST /finans-vergi-kodlari → 400: country_code, tax_code, tax_name zorunlu."
+    },
+    {
+      "seq": 33,
+      "elapsed_ms": 280,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıllar"
+    },
+    {
+      "seq": 34,
+      "elapsed_ms": 282,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıl oluştur",
+      "id": 3
+    },
+    {
+      "seq": 35,
+      "elapsed_ms": 284,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe listesi"
+    },
+    {
+      "seq": 36,
+      "elapsed_ms": 288,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe oluştur",
+      "id": 1
+    },
+    {
+      "seq": 37,
+      "elapsed_ms": 290,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Fırsat aşamaları"
+    },
+    {
+      "seq": 38,
+      "elapsed_ms": 292,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "crm-firsat-asamalari",
+      "detail": "POST /crm-firsat-asamalari → 500: duplicate key value violates unique constraint \"crm_opportunity_stages_stage_code_key\""
+    },
+    {
+      "seq": 39,
+      "elapsed_ms": 292,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Aşama oluştur: POST /crm-firsat-asamalari → 500: duplicate key value violates unique constraint \"crm_opportunity_stages_stage_code_key\""
+    },
+    {
+      "seq": 40,
+      "elapsed_ms": 300,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipleri"
+    },
+    {
+      "seq": 41,
+      "elapsed_ms": 303,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "POST /crm-faaliyet-tipleri → 500: duplicate key value violates unique constraint \"crm_activity_types_type_code_key\""
+    },
+    {
+      "seq": 42,
+      "elapsed_ms": 303,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipi: POST /crm-faaliyet-tipleri → 500: duplicate key value violates unique constraint \"crm_activity_types_type_code_key\""
+    },
+    {
+      "seq": 43,
+      "elapsed_ms": 309,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 44,
+      "elapsed_ms": 312,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-project-types",
+      "detail": "POST /prj-project-types → 500: null value in column \"line_no\" of relation \"prj_project_types\" violates not-null constraint"
+    },
+    {
+      "seq": 45,
+      "elapsed_ms": 312,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Oluştur: POST /prj-project-types → 500: null value in column \"line_no\" of relation \"prj_project_types\" violates not-null constraint"
+    },
+    {
+      "seq": 46,
+      "elapsed_ms": 320,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Liste"
+    },
+    {
+      "seq": 47,
+      "elapsed_ms": 323,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-project-categories",
+      "detail": "POST /prj-project-categories → 500: null value in column \"line_no\" of relation \"prj_project_categories\" violates not-null constraint"
+    },
+    {
+      "seq": 48,
+      "elapsed_ms": 323,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Oluştur: POST /prj-project-categories → 500: null value in column \"line_no\" of relation \"prj_project_categories\" violates not-null constraint"
+    },
+    {
+      "seq": 49,
+      "elapsed_ms": 330,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 50,
+      "elapsed_ms": 334,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-project-statuses",
+      "detail": "POST /prj-project-statuses → 500: null value in column \"line_no\" of relation \"prj_project_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 51,
+      "elapsed_ms": 334,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Oluştur: POST /prj-project-statuses → 500: null value in column \"line_no\" of relation \"prj_project_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 52,
+      "elapsed_ms": 341,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 53,
+      "elapsed_ms": 343,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-project-priorities",
+      "detail": "POST /prj-project-priorities → 500: null value in column \"rank_no\" of relation \"prj_project_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 54,
+      "elapsed_ms": 343,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Oluştur: POST /prj-project-priorities → 500: null value in column \"rank_no\" of relation \"prj_project_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 55,
+      "elapsed_ms": 350,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 56,
+      "elapsed_ms": 353,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-work-item-types",
+      "detail": "POST /prj-work-item-types → 500: null value in column \"hierarchy_level\" of relation \"prj_work_item_types\" violates not-null constraint"
+    },
+    {
+      "seq": 57,
+      "elapsed_ms": 354,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Oluştur: POST /prj-work-item-types → 500: null value in column \"hierarchy_level\" of relation \"prj_work_item_types\" violates not-null constraint"
+    },
+    {
+      "seq": 58,
+      "elapsed_ms": 360,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 59,
+      "elapsed_ms": 363,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-work-item-statuses",
+      "detail": "POST /prj-work-item-statuses → 500: null value in column \"line_no\" of relation \"prj_work_item_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 60,
+      "elapsed_ms": 363,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Oluştur: POST /prj-work-item-statuses → 500: null value in column \"line_no\" of relation \"prj_work_item_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 61,
+      "elapsed_ms": 369,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 62,
+      "elapsed_ms": 371,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-work-item-priorities",
+      "detail": "POST /prj-work-item-priorities → 500: null value in column \"rank_no\" of relation \"prj_work_item_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 63,
+      "elapsed_ms": 371,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Oluştur: POST /prj-work-item-priorities → 500: null value in column \"rank_no\" of relation \"prj_work_item_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 64,
+      "elapsed_ms": 378,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Liste"
+    },
+    {
+      "seq": 65,
+      "elapsed_ms": 380,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-project-roles",
+      "detail": "POST /prj-project-roles → 500: null value in column \"can_view_budget\" of relation \"prj_project_roles\" violates not-null constraint"
+    },
+    {
+      "seq": 66,
+      "elapsed_ms": 380,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Oluştur: POST /prj-project-roles → 500: null value in column \"can_view_budget\" of relation \"prj_project_roles\" violates not-null constraint"
+    },
+    {
+      "seq": 67,
+      "elapsed_ms": 387,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 68,
+      "elapsed_ms": 390,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-relation-types",
+      "detail": "POST /prj-relation-types → 500: null value in column \"blocks_schedule\" of relation \"prj_relation_types\" violates not-null constraint"
+    },
+    {
+      "seq": 69,
+      "elapsed_ms": 390,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Oluştur: POST /prj-relation-types → 500: null value in column \"blocks_schedule\" of relation \"prj_relation_types\" violates not-null constraint"
+    },
+    {
+      "seq": 70,
+      "elapsed_ms": 396,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-dashboard",
+      "detail": "GET /prj-dashboard/overview → 400: project_id zorunlu."
+    },
+    {
+      "seq": 71,
+      "elapsed_ms": 396,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-dashboard",
+      "detail": "Proje özeti: GET /prj-dashboard/overview → 400: project_id zorunlu."
+    },
+    {
+      "seq": 72,
+      "elapsed_ms": 399,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-portfolio",
+      "detail": "Portföy"
+    },
+    {
+      "seq": 73,
+      "elapsed_ms": 401,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-board",
+      "detail": "GET /prj-board → 400: project_id zorunlu."
+    },
+    {
+      "seq": 74,
+      "elapsed_ms": 401,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-board",
+      "detail": "Kanban: GET /prj-board → 400: project_id zorunlu."
+    },
+    {
+      "seq": 75,
+      "elapsed_ms": 403,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-backlog",
+      "detail": "GET /prj-planning/backlog → 400: project_id zorunlu."
+    },
+    {
+      "seq": 76,
+      "elapsed_ms": 403,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-backlog",
+      "detail": "Backlog: GET /prj-planning/backlog → 400: project_id zorunlu."
+    },
+    {
+      "seq": 77,
+      "elapsed_ms": 405,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-gantt",
+      "detail": "GET /prj-planning/gantt → 400: project_id zorunlu."
+    },
+    {
+      "seq": 78,
+      "elapsed_ms": 405,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-gantt",
+      "detail": "Gantt: GET /prj-planning/gantt → 400: project_id zorunlu."
+    },
+    {
+      "seq": 79,
+      "elapsed_ms": 407,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-workload",
+      "detail": "İş yükü"
+    },
+    {
+      "seq": 80,
+      "elapsed_ms": 409,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-butce",
+      "detail": "Bütçe listesi"
+    },
+    {
+      "seq": 81,
+      "elapsed_ms": 411,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-sablonlar",
+      "detail": "Şablonlar"
+    },
+    {
+      "seq": 82,
+      "elapsed_ms": 413,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyonlar"
+    },
+    {
+      "seq": 83,
+      "elapsed_ms": 415,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "prj-automations",
+      "detail": "POST /prj-automations → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 84,
+      "elapsed_ms": 415,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyon kuralı: POST /prj-automations → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 85,
+      "elapsed_ms": 417,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-calisma-takvimleri",
+      "detail": "Takvimler"
+    },
+    {
+      "seq": 86,
+      "elapsed_ms": 419,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiyalar"
+    },
+    {
+      "seq": 87,
+      "elapsed_ms": 421,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "hr-vardiyalar",
+      "detail": "POST /hr-takvim/vardiyalar → 500: duplicate key value violates unique constraint \"hr_shifts_company_id_shift_code_key\""
+    },
+    {
+      "seq": 88,
+      "elapsed_ms": 422,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiya oluştur: POST /hr-takvim/vardiyalar → 500: duplicate key value violates unique constraint \"hr_shifts_company_id_shift_code_key\""
+    },
+    {
+      "seq": 89,
+      "elapsed_ms": 424,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-vardiya-atamalari",
+      "detail": "Vardiya atamaları"
+    },
+    {
+      "seq": 90,
+      "elapsed_ms": 426,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatiller"
+    },
+    {
+      "seq": 91,
+      "elapsed_ms": 428,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatil oluştur",
+      "id": 36
+    },
+    {
+      "seq": 92,
+      "elapsed_ms": 431,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türleri"
+    },
+    {
+      "seq": 93,
+      "elapsed_ms": 433,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "hr-izin-turleri",
+      "detail": "POST /hr-izin/turler → 500: duplicate key value violates unique constraint \"uq_hr_leave_types_leave_code_expr\""
+    },
+    {
+      "seq": 94,
+      "elapsed_ms": 433,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türü: POST /hr-izin/turler → 500: duplicate key value violates unique constraint \"uq_hr_leave_types_leave_code_expr\""
+    },
+    {
+      "seq": 95,
+      "elapsed_ms": 440,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-izin-bakiyeleri",
+      "detail": "İzin bakiyeleri"
+    },
+    {
+      "seq": 96,
+      "elapsed_ms": 443,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-ucretler",
+      "detail": "Ücretler"
+    },
+    {
+      "seq": 97,
+      "elapsed_ms": 446,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-avanslar",
+      "detail": "Avanslar"
+    },
+    {
+      "seq": 98,
+      "elapsed_ms": 448,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Bordro parametreleri"
+    },
+    {
+      "seq": 99,
+      "elapsed_ms": 450,
+      "at": "21.11.2026 14:45:23",
+      "step": "HATA",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "POST /hr-bordro/parametreler → 400: country_code, set_code, set_name, effective_from zorunlu."
+    },
+    {
+      "seq": 100,
+      "elapsed_ms": 450,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Parametre: POST /hr-bordro/parametreler → 400: country_code, set_code, set_name, effective_from zorunlu."
+    },
+    {
+      "seq": 101,
+      "elapsed_ms": 452,
+      "at": "21.11.2026 14:45:23",
+      "step": "COVER",
+      "screen": "hr-bordro-donemleri",
+      "detail": "Bordro dönemleri"
+    },
+    {
+      "seq": 102,
+      "elapsed_ms": 454,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-is-ilanlari",
+      "detail": "İş ilanları"
+    },
+    {
+      "seq": 103,
+      "elapsed_ms": 456,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-adaylar",
+      "detail": "Adaylar"
+    },
+    {
+      "seq": 104,
+      "elapsed_ms": 458,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-onboarding",
+      "detail": "Onboarding"
+    },
+    {
+      "seq": 105,
+      "elapsed_ms": 460,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-zimmetler",
+      "detail": "Zimmetler"
+    },
+    {
+      "seq": 106,
+      "elapsed_ms": 462,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-isten-cikis",
+      "detail": "İşten çıkış"
+    },
+    {
+      "seq": 107,
+      "elapsed_ms": 464,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedenleri"
+    },
+    {
+      "seq": 108,
+      "elapsed_ms": 466,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "POST /hr-ise-alim/cikis-nedenleri → 500: duplicate key value violates unique constraint \"uq_hr_termination_reasons_country_code_reason_code_expr\""
+    },
+    {
+      "seq": 109,
+      "elapsed_ms": 466,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedeni: POST /hr-ise-alim/cikis-nedenleri → 500: duplicate key value violates unique constraint \"uq_hr_termination_reasons_country_code_reason_code_expr\""
+    },
+    {
+      "seq": 110,
+      "elapsed_ms": 472,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "onay-message-template",
+      "detail": "Mesaj şablonları"
+    },
+    {
+      "seq": 111,
+      "elapsed_ms": 475,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "onay-status-tanim",
+      "detail": "Onay durumları"
+    },
+    {
+      "seq": 112,
+      "elapsed_ms": 478,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "onay-modul-kullanimlari",
+      "detail": "Modül kullanımları"
+    },
+    {
+      "seq": 113,
+      "elapsed_ms": 479,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "zorunlu-alan-tanimlari",
+      "detail": "Zorunlu alanlar"
+    },
+    {
+      "seq": 114,
+      "elapsed_ms": 482,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "eposta-gonderimleri",
+      "detail": "E-posta gönderimleri"
+    },
+    {
+      "seq": 115,
+      "elapsed_ms": 485,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sistem-guncelleme",
+      "detail": "Sistem güncelleme"
+    },
+    {
+      "seq": 116,
+      "elapsed_ms": 488,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "tablo-bilgileri",
+      "detail": "Tablo/meta ekranlar"
+    },
+    {
+      "seq": 117,
+      "elapsed_ms": 513,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL konsol meta"
+    },
+    {
+      "seq": 118,
+      "elapsed_ms": 517,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL SELECT 1"
+    },
+    {
+      "seq": 119,
+      "elapsed_ms": 521,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sayfa-sorgulari",
+      "detail": "Sayfa sorgusu (companies)"
+    },
+    {
+      "seq": 120,
+      "elapsed_ms": 521,
+      "at": "21.11.2026 14:45:24",
+      "step": "GAP",
+      "screen": "sistem",
+      "detail": "LAVANDE: 60 hedef ekran"
+    },
+    {
+      "seq": 121,
+      "elapsed_ms": 528,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "mrp-hesap",
+      "detail": "MRP anlık hesap (stok)",
+      "id": 658
+    },
+    {
+      "seq": 122,
+      "elapsed_ms": 530,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ listesi"
+    },
+    {
+      "seq": 123,
+      "elapsed_ms": 534,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ oluştur",
+      "id": 5
+    },
+    {
+      "seq": 124,
+      "elapsed_ms": 537,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "bom-level-listesi",
+      "detail": "Seviye listesi"
+    },
+    {
+      "seq": 125,
+      "elapsed_ms": 539,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "bom-level-listesi",
+      "detail": "POST /bom/level-listesi → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 126,
+      "elapsed_ms": 539,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "bom-level-listesi",
+      "detail": "Seviye POST: POST /bom/level-listesi → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 127,
+      "elapsed_ms": 541,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği UI/GET"
+    },
+    {
+      "seq": 128,
+      "elapsed_ms": 543,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği POST",
+      "id": 2
+    },
+    {
+      "seq": 129,
+      "elapsed_ms": 546,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "Sipariş adayları"
+    },
+    {
+      "seq": 130,
+      "elapsed_ms": 549,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "Toplu iş emri adayları"
+    },
+    {
+      "seq": 131,
+      "elapsed_ms": 551,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf listesi"
+    },
+    {
+      "seq": 132,
+      "elapsed_ms": 554,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "sinif-tanimi",
+      "detail": "POST /stok-siniflari → 500: duplicate key value violates unique constraint \"item_classes_class_code_key\""
+    },
+    {
+      "seq": 133,
+      "elapsed_ms": 554,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf oluştur: POST /stok-siniflari → 500: duplicate key value violates unique constraint \"item_classes_class_code_key\""
+    },
+    {
+      "seq": 134,
+      "elapsed_ms": 562,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "uretim-parametreleri",
+      "detail": "Parametreler"
+    },
+    {
+      "seq": 135,
+      "elapsed_ms": 564,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Parametre eksikleri tamamla/doğrula"
+    },
+    {
+      "seq": 136,
+      "elapsed_ms": 567,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Doğrulama GET"
+    },
+    {
+      "seq": 137,
+      "elapsed_ms": 570,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "fason-operasyon-takip",
+      "detail": "Fason sipariş listesi"
+    },
+    {
+      "seq": 138,
+      "elapsed_ms": 572,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok plan bağları"
+    },
+    {
+      "seq": 139,
+      "elapsed_ms": 574,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "kk-stok-planlari",
+      "detail": "POST /kk-stok-planlari → 400: item_id, plan_id, direction zorunlu."
+    },
+    {
+      "seq": 140,
+      "elapsed_ms": 574,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok-plan bağı: POST /kk-stok-planlari → 400: item_id, plan_id, direction zorunlu."
+    },
+    {
+      "seq": 141,
+      "elapsed_ms": 575,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hesap-belirleme-kurallari",
+      "detail": "Hesap kuralları"
+    },
+    {
+      "seq": 142,
+      "elapsed_ms": 577,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodları"
+    },
+    {
+      "seq": 143,
+      "elapsed_ms": 579,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "vergi-kodlari",
+      "detail": "Vergi kodları (alias)"
+    },
+    {
+      "seq": 144,
+      "elapsed_ms": 581,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "finans-vergi-kodlari",
+      "detail": "POST /finans-vergi-kodlari → 400: country_code, tax_code, tax_name zorunlu."
+    },
+    {
+      "seq": 145,
+      "elapsed_ms": 581,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodu oluştur: POST /finans-vergi-kodlari → 400: country_code, tax_code, tax_name zorunlu."
+    },
+    {
+      "seq": 146,
+      "elapsed_ms": 583,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıllar"
+    },
+    {
+      "seq": 147,
+      "elapsed_ms": 585,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıl oluştur",
+      "id": 4
+    },
+    {
+      "seq": 148,
+      "elapsed_ms": 587,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe listesi"
+    },
+    {
+      "seq": 149,
+      "elapsed_ms": 589,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe oluştur",
+      "id": 2
+    },
+    {
+      "seq": 150,
+      "elapsed_ms": 591,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Fırsat aşamaları"
+    },
+    {
+      "seq": 151,
+      "elapsed_ms": 593,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "crm-firsat-asamalari",
+      "detail": "POST /crm-firsat-asamalari → 500: duplicate key value violates unique constraint \"crm_opportunity_stages_stage_code_key\""
+    },
+    {
+      "seq": 152,
+      "elapsed_ms": 593,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Aşama oluştur: POST /crm-firsat-asamalari → 500: duplicate key value violates unique constraint \"crm_opportunity_stages_stage_code_key\""
+    },
+    {
+      "seq": 153,
+      "elapsed_ms": 601,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipleri"
+    },
+    {
+      "seq": 154,
+      "elapsed_ms": 603,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "POST /crm-faaliyet-tipleri → 500: duplicate key value violates unique constraint \"crm_activity_types_type_code_key\""
+    },
+    {
+      "seq": 155,
+      "elapsed_ms": 603,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipi: POST /crm-faaliyet-tipleri → 500: duplicate key value violates unique constraint \"crm_activity_types_type_code_key\""
+    },
+    {
+      "seq": 156,
+      "elapsed_ms": 610,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 157,
+      "elapsed_ms": 613,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-project-types",
+      "detail": "POST /prj-project-types → 500: null value in column \"line_no\" of relation \"prj_project_types\" violates not-null constraint"
+    },
+    {
+      "seq": 158,
+      "elapsed_ms": 613,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Oluştur: POST /prj-project-types → 500: null value in column \"line_no\" of relation \"prj_project_types\" violates not-null constraint"
+    },
+    {
+      "seq": 159,
+      "elapsed_ms": 619,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Liste"
+    },
+    {
+      "seq": 160,
+      "elapsed_ms": 622,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-project-categories",
+      "detail": "POST /prj-project-categories → 500: null value in column \"line_no\" of relation \"prj_project_categories\" violates not-null constraint"
+    },
+    {
+      "seq": 161,
+      "elapsed_ms": 622,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Oluştur: POST /prj-project-categories → 500: null value in column \"line_no\" of relation \"prj_project_categories\" violates not-null constraint"
+    },
+    {
+      "seq": 162,
+      "elapsed_ms": 628,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 163,
+      "elapsed_ms": 630,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-project-statuses",
+      "detail": "POST /prj-project-statuses → 500: null value in column \"line_no\" of relation \"prj_project_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 164,
+      "elapsed_ms": 630,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Oluştur: POST /prj-project-statuses → 500: null value in column \"line_no\" of relation \"prj_project_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 165,
+      "elapsed_ms": 637,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 166,
+      "elapsed_ms": 640,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-project-priorities",
+      "detail": "POST /prj-project-priorities → 500: null value in column \"rank_no\" of relation \"prj_project_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 167,
+      "elapsed_ms": 640,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Oluştur: POST /prj-project-priorities → 500: null value in column \"rank_no\" of relation \"prj_project_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 168,
+      "elapsed_ms": 646,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 169,
+      "elapsed_ms": 648,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-work-item-types",
+      "detail": "POST /prj-work-item-types → 500: null value in column \"hierarchy_level\" of relation \"prj_work_item_types\" violates not-null constraint"
+    },
+    {
+      "seq": 170,
+      "elapsed_ms": 649,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Oluştur: POST /prj-work-item-types → 500: null value in column \"hierarchy_level\" of relation \"prj_work_item_types\" violates not-null constraint"
+    },
+    {
+      "seq": 171,
+      "elapsed_ms": 655,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 172,
+      "elapsed_ms": 657,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-work-item-statuses",
+      "detail": "POST /prj-work-item-statuses → 500: null value in column \"line_no\" of relation \"prj_work_item_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 173,
+      "elapsed_ms": 657,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Oluştur: POST /prj-work-item-statuses → 500: null value in column \"line_no\" of relation \"prj_work_item_statuses\" violates not-null constraint"
+    },
+    {
+      "seq": 174,
+      "elapsed_ms": 663,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 175,
+      "elapsed_ms": 666,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-work-item-priorities",
+      "detail": "POST /prj-work-item-priorities → 500: null value in column \"rank_no\" of relation \"prj_work_item_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 176,
+      "elapsed_ms": 666,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Oluştur: POST /prj-work-item-priorities → 500: null value in column \"rank_no\" of relation \"prj_work_item_priorities\" violates not-null constraint"
+    },
+    {
+      "seq": 177,
+      "elapsed_ms": 672,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Liste"
+    },
+    {
+      "seq": 178,
+      "elapsed_ms": 675,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-project-roles",
+      "detail": "POST /prj-project-roles → 500: null value in column \"can_view_budget\" of relation \"prj_project_roles\" violates not-null constraint"
+    },
+    {
+      "seq": 179,
+      "elapsed_ms": 675,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Oluştur: POST /prj-project-roles → 500: null value in column \"can_view_budget\" of relation \"prj_project_roles\" violates not-null constraint"
+    },
+    {
+      "seq": 180,
+      "elapsed_ms": 682,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 181,
+      "elapsed_ms": 686,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-relation-types",
+      "detail": "POST /prj-relation-types → 500: null value in column \"blocks_schedule\" of relation \"prj_relation_types\" violates not-null constraint"
+    },
+    {
+      "seq": 182,
+      "elapsed_ms": 686,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Oluştur: POST /prj-relation-types → 500: null value in column \"blocks_schedule\" of relation \"prj_relation_types\" violates not-null constraint"
+    },
+    {
+      "seq": 183,
+      "elapsed_ms": 691,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-dashboard",
+      "detail": "GET /prj-dashboard/overview → 400: project_id zorunlu."
+    },
+    {
+      "seq": 184,
+      "elapsed_ms": 691,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-dashboard",
+      "detail": "Proje özeti: GET /prj-dashboard/overview → 400: project_id zorunlu."
+    },
+    {
+      "seq": 185,
+      "elapsed_ms": 695,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-portfolio",
+      "detail": "Portföy"
+    },
+    {
+      "seq": 186,
+      "elapsed_ms": 696,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-board",
+      "detail": "GET /prj-board → 400: project_id zorunlu."
+    },
+    {
+      "seq": 187,
+      "elapsed_ms": 696,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-board",
+      "detail": "Kanban: GET /prj-board → 400: project_id zorunlu."
+    },
+    {
+      "seq": 188,
+      "elapsed_ms": 698,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-backlog",
+      "detail": "GET /prj-planning/backlog → 400: project_id zorunlu."
+    },
+    {
+      "seq": 189,
+      "elapsed_ms": 698,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-backlog",
+      "detail": "Backlog: GET /prj-planning/backlog → 400: project_id zorunlu."
+    },
+    {
+      "seq": 190,
+      "elapsed_ms": 700,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-gantt",
+      "detail": "GET /prj-planning/gantt → 400: project_id zorunlu."
+    },
+    {
+      "seq": 191,
+      "elapsed_ms": 700,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-gantt",
+      "detail": "Gantt: GET /prj-planning/gantt → 400: project_id zorunlu."
+    },
+    {
+      "seq": 192,
+      "elapsed_ms": 702,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-workload",
+      "detail": "İş yükü"
+    },
+    {
+      "seq": 193,
+      "elapsed_ms": 704,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-butce",
+      "detail": "Bütçe listesi"
+    },
+    {
+      "seq": 194,
+      "elapsed_ms": 707,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-sablonlar",
+      "detail": "Şablonlar"
+    },
+    {
+      "seq": 195,
+      "elapsed_ms": 709,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyonlar"
+    },
+    {
+      "seq": 196,
+      "elapsed_ms": 711,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "prj-automations",
+      "detail": "POST /prj-automations → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 197,
+      "elapsed_ms": 711,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyon kuralı: POST /prj-automations → 404: Endpoint bulunamadı."
+    },
+    {
+      "seq": 198,
+      "elapsed_ms": 713,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-calisma-takvimleri",
+      "detail": "Takvimler"
+    },
+    {
+      "seq": 199,
+      "elapsed_ms": 715,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiyalar"
+    },
+    {
+      "seq": 200,
+      "elapsed_ms": 718,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "hr-vardiyalar",
+      "detail": "POST /hr-takvim/vardiyalar → 500: duplicate key value violates unique constraint \"hr_shifts_company_id_shift_code_key\""
+    },
+    {
+      "seq": 201,
+      "elapsed_ms": 718,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiya oluştur: POST /hr-takvim/vardiyalar → 500: duplicate key value violates unique constraint \"hr_shifts_company_id_shift_code_key\""
+    },
+    {
+      "seq": 202,
+      "elapsed_ms": 720,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-vardiya-atamalari",
+      "detail": "Vardiya atamaları"
+    },
+    {
+      "seq": 203,
+      "elapsed_ms": 722,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatiller"
+    },
+    {
+      "seq": 204,
+      "elapsed_ms": 724,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatil oluştur",
+      "id": 37
+    },
+    {
+      "seq": 205,
+      "elapsed_ms": 726,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türleri"
+    },
+    {
+      "seq": 206,
+      "elapsed_ms": 728,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "hr-izin-turleri",
+      "detail": "POST /hr-izin/turler → 500: duplicate key value violates unique constraint \"uq_hr_leave_types_leave_code_expr\""
+    },
+    {
+      "seq": 207,
+      "elapsed_ms": 728,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türü: POST /hr-izin/turler → 500: duplicate key value violates unique constraint \"uq_hr_leave_types_leave_code_expr\""
+    },
+    {
+      "seq": 208,
+      "elapsed_ms": 735,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-izin-bakiyeleri",
+      "detail": "İzin bakiyeleri"
+    },
+    {
+      "seq": 209,
+      "elapsed_ms": 737,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-ucretler",
+      "detail": "Ücretler"
+    },
+    {
+      "seq": 210,
+      "elapsed_ms": 740,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-avanslar",
+      "detail": "Avanslar"
+    },
+    {
+      "seq": 211,
+      "elapsed_ms": 742,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Bordro parametreleri"
+    },
+    {
+      "seq": 212,
+      "elapsed_ms": 746,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "POST /hr-bordro/parametreler → 400: country_code, set_code, set_name, effective_from zorunlu."
+    },
+    {
+      "seq": 213,
+      "elapsed_ms": 746,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Parametre: POST /hr-bordro/parametreler → 400: country_code, set_code, set_name, effective_from zorunlu."
+    },
+    {
+      "seq": 214,
+      "elapsed_ms": 748,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-bordro-donemleri",
+      "detail": "Bordro dönemleri"
+    },
+    {
+      "seq": 215,
+      "elapsed_ms": 750,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-is-ilanlari",
+      "detail": "İş ilanları"
+    },
+    {
+      "seq": 216,
+      "elapsed_ms": 752,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-adaylar",
+      "detail": "Adaylar"
+    },
+    {
+      "seq": 217,
+      "elapsed_ms": 753,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-onboarding",
+      "detail": "Onboarding"
+    },
+    {
+      "seq": 218,
+      "elapsed_ms": 755,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-zimmetler",
+      "detail": "Zimmetler"
+    },
+    {
+      "seq": 219,
+      "elapsed_ms": 757,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-isten-cikis",
+      "detail": "İşten çıkış"
+    },
+    {
+      "seq": 220,
+      "elapsed_ms": 759,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedenleri"
+    },
+    {
+      "seq": 221,
+      "elapsed_ms": 761,
+      "at": "21.11.2026 14:45:24",
+      "step": "HATA",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "POST /hr-ise-alim/cikis-nedenleri → 500: duplicate key value violates unique constraint \"uq_hr_termination_reasons_country_code_reason_code_expr\""
+    },
+    {
+      "seq": 222,
+      "elapsed_ms": 761,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedeni: POST /hr-ise-alim/cikis-nedenleri → 500: duplicate key value violates unique constraint \"uq_hr_termination_reasons_country_code_reason_code_expr\""
+    },
+    {
+      "seq": 223,
+      "elapsed_ms": 767,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "onay-message-template",
+      "detail": "Mesaj şablonları"
+    },
+    {
+      "seq": 224,
+      "elapsed_ms": 769,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "onay-status-tanim",
+      "detail": "Onay durumları"
+    },
+    {
+      "seq": 225,
+      "elapsed_ms": 772,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "onay-modul-kullanimlari",
+      "detail": "Modül kullanımları"
+    },
+    {
+      "seq": 226,
+      "elapsed_ms": 774,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "zorunlu-alan-tanimlari",
+      "detail": "Zorunlu alanlar"
+    },
+    {
+      "seq": 227,
+      "elapsed_ms": 777,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "eposta-gonderimleri",
+      "detail": "E-posta gönderimleri"
+    },
+    {
+      "seq": 228,
+      "elapsed_ms": 779,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sistem-guncelleme",
+      "detail": "Sistem güncelleme"
+    },
+    {
+      "seq": 229,
+      "elapsed_ms": 782,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "tablo-bilgileri",
+      "detail": "Tablo/meta ekranlar"
+    },
+    {
+      "seq": 230,
+      "elapsed_ms": 805,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL konsol meta"
+    },
+    {
+      "seq": 231,
+      "elapsed_ms": 808,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL SELECT 1"
+    },
+    {
+      "seq": 232,
+      "elapsed_ms": 815,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "sayfa-sorgulari",
+      "detail": "Sayfa sorgusu (companies)"
+    },
+    {
+      "seq": 233,
+      "elapsed_ms": 824,
+      "at": "21.11.2026 14:45:24",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "NORMAK-MAN açılış stok"
+    },
+    {
+      "seq": 234,
+      "elapsed_ms": 839,
+      "at": "21.11.2026 14:45:24",
+      "step": "SATIS",
+      "screen": "satis-siparisleri",
+      "detail": "SO B00170",
+      "id": 196
+    },
+    {
+      "seq": 235,
+      "elapsed_ms": 847,
+      "at": "21.11.2026 14:45:24",
+      "step": "SA",
+      "screen": "satin-alma-siparisleri",
+      "detail": "PO P00132",
+      "id": 129
+    },
+    {
+      "seq": 236,
+      "elapsed_ms": 861,
+      "at": "21.11.2026 14:45:24",
+      "step": "SA",
+      "screen": "mal-kabuller",
+      "detail": "MK R00115",
+      "id": 115
+    },
+    {
+      "seq": 237,
+      "elapsed_ms": 876,
+      "at": "21.11.2026 14:45:24",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "UE E00267",
+      "id": 254
+    },
+    {
+      "seq": 238,
+      "elapsed_ms": 910,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "SO sonrası adaylar"
+    },
+    {
+      "seq": 239,
+      "elapsed_ms": 912,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "SO sonrası toplu"
+    },
+    {
+      "seq": 240,
+      "elapsed_ms": 924,
+      "at": "21.11.2026 14:45:24",
+      "step": "SATIS",
+      "screen": "sevk-emirleri",
+      "detail": "SE SE00112"
+    },
+    {
+      "seq": 241,
+      "elapsed_ms": 928,
+      "at": "21.11.2026 14:45:24",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "LAVANDE-MRP açılış stok"
+    },
+    {
+      "seq": 242,
+      "elapsed_ms": 933,
+      "at": "21.11.2026 14:45:24",
+      "step": "SATIS",
+      "screen": "satis-siparisleri",
+      "detail": "SO B00171",
+      "id": 197
+    },
+    {
+      "seq": 243,
+      "elapsed_ms": 938,
+      "at": "21.11.2026 14:45:24",
+      "step": "SA",
+      "screen": "satin-alma-siparisleri",
+      "detail": "PO P00133",
+      "id": 130
+    },
+    {
+      "seq": 244,
+      "elapsed_ms": 948,
+      "at": "21.11.2026 14:45:24",
+      "step": "SA",
+      "screen": "mal-kabuller",
+      "detail": "MK R00116",
+      "id": 116
+    },
+    {
+      "seq": 245,
+      "elapsed_ms": 951,
+      "at": "21.11.2026 14:45:24",
+      "step": "MRP",
+      "screen": "mrp-bagimsiz-ihtiyac",
+      "detail": "BI00041"
+    },
+    {
+      "seq": 246,
+      "elapsed_ms": 970,
+      "at": "21.11.2026 14:45:24",
+      "step": "MRP",
+      "screen": "mrp-calismalari",
+      "detail": "MR00048"
+    },
+    {
+      "seq": 247,
+      "elapsed_ms": 979,
+      "at": "21.11.2026 14:45:24",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "UE E00268",
+      "id": 255
+    },
+    {
+      "seq": 248,
+      "elapsed_ms": 1013,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "SO sonrası adaylar"
+    },
+    {
+      "seq": 249,
+      "elapsed_ms": 1015,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "SO sonrası toplu"
+    },
+    {
+      "seq": 250,
+      "elapsed_ms": 1024,
+      "at": "21.11.2026 14:45:24",
+      "step": "SATIS",
+      "screen": "sevk-emirleri",
+      "detail": "SE SE00113"
+    },
+    {
+      "seq": 251,
+      "elapsed_ms": 1213,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-personel",
+      "detail": "NORMAK extended seed"
+    },
+    {
+      "seq": 252,
+      "elapsed_ms": 1370,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "crm-adaylar",
+      "detail": "LAVANDE extended seed"
+    },
+    {
+      "seq": 253,
+      "elapsed_ms": 1374,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-ucretler",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 254,
+      "elapsed_ms": 1376,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-avanslar",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 255,
+      "elapsed_ms": 1378,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-vardiya-atamalari",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 256,
+      "elapsed_ms": 1380,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-onboarding",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 257,
+      "elapsed_ms": 1382,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-zimmetler",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 258,
+      "elapsed_ms": 1384,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "hr-isten-cikis",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 259,
+      "elapsed_ms": 1386,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-butce",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 260,
+      "elapsed_ms": 1388,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-workload",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 261,
+      "elapsed_ms": 1398,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-dashboard",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 262,
+      "elapsed_ms": 1403,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-board",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 263,
+      "elapsed_ms": 1406,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-backlog",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 264,
+      "elapsed_ms": 1410,
+      "at": "21.11.2026 14:45:24",
+      "step": "COVER",
+      "screen": "prj-gantt",
+      "detail": "post-seed doğrulama"
+    }
+  ]
+}
