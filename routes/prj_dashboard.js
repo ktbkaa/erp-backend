@@ -6,7 +6,46 @@ const { companyIdFromReq, andCompany } = require('../src/utils/firmaScope');
 router.get('/overview', async (req, res, next) => {
   try {
     const projectId = req.query.project_id;
-    if (!projectId) return res.status(400).json({ hata: 'project_id zorunlu.' });
+    // Proje seçilmeden açılış: firma portföy özeti (ekran hata vermesin)
+    if (!projectId) {
+      const firmaId = companyIdFromReq(req);
+      const params = [];
+      let where = 'WHERE p.is_archived=FALSE AND p.is_active=TRUE';
+      where += andCompany('p.company_id', firmaId, params);
+      const r = await pool.query(
+        `
+        SELECT p.id, p.project_code, p.project_name, p.percent_complete,
+               p.planned_budget, p.actual_cost, p.plan_start_date, p.plan_end_date,
+               s.status_name, s.status_code, t.type_name,
+               (SELECT COUNT(*)::int FROM work_items w WHERE w.project_id=p.id AND w.is_active) AS work_count,
+               (SELECT COUNT(*)::int FROM work_items w
+                 JOIN prj_work_item_statuses st ON st.id=w.status_id
+                WHERE w.project_id=p.id AND w.is_active AND w.plan_end_date < CURRENT_DATE
+                  AND COALESCE(st.is_done,FALSE)=FALSE) AS overdue_count
+        FROM projects p
+        LEFT JOIN prj_project_statuses s ON s.id=p.status_id
+        LEFT JOIN prj_project_types t ON t.id=p.type_id
+        ${where}
+        ORDER BY p.id DESC
+        LIMIT 200
+        `,
+        params
+      );
+      return res.json({
+        needs_project: true,
+        message: 'Proje seçiniz veya listeden bir proje açın.',
+        projects: r.rows,
+        project: null,
+        progress: null,
+        overdue: [],
+        critical: [],
+        upcoming_milestones: [],
+        risks: [],
+        budget: null,
+        team: [],
+        recent_activity: [],
+      });
+    }
     const p = await pool.query(
       `
       SELECT p.*, s.status_name, s.status_code, t.type_name,

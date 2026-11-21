@@ -73,6 +73,10 @@ function createApp() {
   app.use('/bakim-emirleri', require('../../routes/maintenance_orders'));
   app.use('/is-merkezi-yuku', require('../../routes/work_center_load'));
   app.use('/invoices', require('../../routes/invoices'));
+  app.use('/finans-vergi-kodlari', require('../../routes/fin_tax_codes'));
+  app.use('/hr-bordro', require('../../routes/hr_payroll'));
+  app.use('/kk-stok-planlari', require('../../routes/qc_item_plans'));
+  app.use('/uretim-emirleri', require('../../routes/production_orders'));
   app.use(auditMiddleware(pool));
 
   const { errorHandler, notFoundHandler } = require('../../src/middleware/errorHandler');

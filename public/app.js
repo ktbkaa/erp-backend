@@ -4113,9 +4113,12 @@ const MODULES = [
         endpoint: '/bom/level-listesi',
         crud: false,
         readOnly: true,
+        hideSave: true,
+        hideNew: true,
+        hideDelete: true,
         codeField: 'list_code',
         nameField: 'description',
-        banner: 'Tüm ürün ağaçlarının düz seviye dökümü (where-used / seviye raporu). Miktarlı patlatma için «Ürün Ağacı Patlatma» ekranını kullanın.',
+        banner: 'Salt okunur seviye raporu (kayıt oluşturulmaz). Miktarlı patlatma için «Ürün Ağacı Patlatma» ekranını kullanın.',
         filters: [
           { key: 'bom_code', label: 'Ağaç kodu' },
           { key: 'item_code', label: 'Stok kodu' },
@@ -5813,12 +5816,12 @@ const MODULES = [
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
           { key: 'plan_id', label: 'Plan', type: 'lookup', lookup: 'kk-kontrol-planlari', valueKey: 'id', labelKey: 'plan_name', codeKey: 'plan_code', required: true },
           { key: 'direction', label: 'Yön', type: 'select', options: ['GKK', 'CKK'], required: true },
-        ],
-        detailFields: [
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
+        detailFields: [],
         detailKey: null,
         detailAsFields: true,
+        defaults: { direction: 'GKK', is_active: true },
       },
       {
         id: 'kk-ret-nedenleri',
@@ -5986,7 +5989,7 @@ const MODULES = [
         masterFields: [
           { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
           { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
-          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'country-tanimi', valueKey: 'country_code', labelKey: 'country_name', codeKey: 'country_code', required: true },
           { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
           { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
           { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
@@ -6631,7 +6634,7 @@ const MODULES = [
         masterFields: [
           { key: 'tax_code', label: 'Vergi kodu', code: true, required: true, editableOnNew: true },
           { key: 'tax_name', label: 'Vergi adı', name: true, required: true },
-          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'country-tanimi', valueKey: 'country_code', labelKey: 'country_name', codeKey: 'country_code', required: true },
           { key: 'tax_type', label: 'Tür', type: 'select', options: ['KDV', 'OTV', 'Stopaj', 'Diger'] },
           { key: 'output_tax_account_code', label: 'Hesaplanan KDV hesabı' },
           { key: 'input_tax_account_code', label: 'İndirilecek KDV hesabı' },
@@ -7222,22 +7225,36 @@ const MODULES = [
         crud: false,
         codeField: 'project_code',
         nameField: 'project_name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
-        listFromResponse: (d) => (d?.project ? [{
-          ...d.project,
-          project_id: d.project.id,
-          percent_complete: d.progress?.percent_complete,
-          total: d.progress?.total,
-          open_count: d.progress?.open_count,
-          in_progress: d.progress?.in_progress,
-          done_count: d.progress?.done_count,
-          overdue_count: (d.overdue || []).length,
-          risk_count: (d.risks || []).length,
-          milestone_count: (d.upcoming_milestones || []).length,
-          budget_planned: d.budget?.planned,
-          budget_actual: d.budget?.actual,
-          budget_variance: d.budget?.variance,
-        }] : []),
+        filters: [{ key: 'project_id', label: 'Proje', queryParam: true }],
+        banner: 'Proje seçilmeden firma portföy özeti gösterilir; detay için proje seçin.',
+        listFromResponse: (d) => {
+          if (d?.needs_project && Array.isArray(d.projects)) {
+            return d.projects.map((p) => ({
+              ...p,
+              project_id: p.id,
+              total: p.work_count,
+              overdue_count: p.overdue_count,
+            }));
+          }
+          if (d?.project) {
+            return [{
+              ...d.project,
+              project_id: d.project.id,
+              percent_complete: d.progress?.percent_complete,
+              total: d.progress?.total,
+              open_count: d.progress?.open_count,
+              in_progress: d.progress?.in_progress,
+              done_count: d.progress?.done_count,
+              overdue_count: (d.overdue || []).length,
+              risk_count: (d.risks || []).length,
+              milestone_count: (d.upcoming_milestones || []).length,
+              budget_planned: d.budget?.planned,
+              budget_actual: d.budget?.actual,
+              budget_variance: d.budget?.variance,
+            }];
+          }
+          return [];
+        },
         columns: [
           { key: 'project_code', label: 'Proje', mono: true },
           { key: 'project_name', label: 'Ad' },
@@ -7295,21 +7312,34 @@ const MODULES = [
         crud: false,
         codeField: 'board_code',
         nameField: 'board_name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
-        listFromResponse: (d) => (d?.board ? (d.columns || []).map((c) => ({
-          id: c.id,
-          board_code: d.board.board_code,
-          board_name: d.board.board_name,
-          board_type: d.board.board_type,
-          project_id: d.board.project_id,
-          line_no: c.line_no,
-          column_name: c.column_name,
-          status_name: c.status_name,
-          card_count: c.card_count,
-          wip_limit: c.wip_limit,
-          wip_exceeded: c.wip_exceeded,
-          cards: (c.cards || []).map((k) => k.work_item_no || k.title).filter(Boolean).join(', '),
-        })) : []),
+        filters: [{ key: 'project_id', label: 'Proje', queryParam: true }],
+        banner: 'Kanban için üstteki filtreden veya formdan proje seçin.',
+        listFromResponse: (d) => {
+          if (d?.needs_project && Array.isArray(d.projects)) {
+            return d.projects.map((p) => ({
+              id: p.id,
+              board_code: p.project_code,
+              board_name: p.project_name,
+              column_name: 'Proje seçin',
+              card_count: null,
+            }));
+          }
+          if (!d?.board) return [];
+          return (d.columns || []).map((c) => ({
+            id: c.id,
+            board_code: d.board.board_code,
+            board_name: d.board.board_name,
+            board_type: d.board.board_type,
+            project_id: d.board.project_id,
+            line_no: c.line_no,
+            column_name: c.column_name,
+            status_name: c.status_name,
+            card_count: c.card_count,
+            wip_limit: c.wip_limit,
+            wip_exceeded: c.wip_exceeded,
+            cards: (c.cards || []).map((k) => k.work_item_no || k.title).filter(Boolean).join(', '),
+          }));
+        },
         columns: [
           { key: 'board_code', label: 'Board', mono: true },
           { key: 'board_name', label: 'Ad' },
@@ -7339,7 +7369,8 @@ const MODULES = [
         crud: false,
         codeField: 'work_item_no',
         nameField: 'title',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        filters: [{ key: 'project_id', label: 'Proje', queryParam: true }],
+        banner: 'Backlog için proje seçin (filtre veya lookup).',
         columns: [
           { key: 'work_item_no', label: 'No', mono: true },
           { key: 'title', label: 'Başlık' },
@@ -7350,7 +7381,7 @@ const MODULES = [
           { key: 'estimated_hours', label: 'Tahmini sa' },
         ],
         masterFields: [
-          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code' },
         ],
         detailFields: [],
         detailKey: null,
@@ -7404,7 +7435,11 @@ const MODULES = [
         crud: false,
         codeField: 'code',
         nameField: 'name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        filters: [{ key: 'project_id', label: 'Proje', queryParam: true }],
+        banner: 'Gantt için proje seçin; seçilmeden boş zaman çizelgesi açılır.',
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code' },
+        ],
         columns: [
           { key: 'code', label: 'Kod', mono: true },
           { key: 'name', label: 'İş' },
@@ -7532,10 +7567,13 @@ const MODULES = [
         businessNameEn: 'ProjectAutomationScreen',
         title: 'Otomasyon Kuralları',
         endpoint: '/prj-automations',
-        crud: false,
+        crud: true,
         codeField: 'automation_code',
         nameField: 'automation_name',
-        filters: [],
+        filters: [
+          { key: 'automation_code', label: 'Kod' },
+          { key: 'trigger_code', label: 'Tetik' },
+        ],
         columns: [
           { key: 'automation_code', label: 'Kod', mono: true },
           { key: 'automation_name', label: 'Ad' },
@@ -7543,11 +7581,18 @@ const MODULES = [
           { key: 'is_enabled', label: 'Aktif' },
           { key: 'priority', label: 'Öncelik' },
         ],
-        masterFields: [],
+        masterFields: [
+          { key: 'automation_code', label: 'Otomasyon kodu', code: true, required: true, editableOnNew: true },
+          { key: 'automation_name', label: 'Ad', name: true, required: true },
+          { key: 'trigger_code', label: 'Tetik kodu', required: true },
+          { key: 'priority', label: 'Öncelik', type: 'number' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_enabled', label: 'Aktif', type: 'checkbox' },
+        ],
         detailFields: [],
         detailKey: null,
         detailAsFields: true,
-        readOnly: true,
+        defaults: { is_enabled: true, priority: 100, trigger_code: 'WORK_ITEM_CREATED' },
       },
       {
         id: 'prj-project-types',
@@ -8294,7 +8339,7 @@ const MODULES = [
         masterFields: [
           { key: 'set_code', label: 'Set kodu', code: true, required: true, editableOnNew: true },
           { key: 'set_name', label: 'Set adı', name: true, required: true },
-          { key: 'country_code', label: 'Ülke', required: true },
+          { key: 'country_code', label: 'Ülke', type: 'lookup', lookup: 'country-tanimi', valueKey: 'country_code', labelKey: 'country_name', codeKey: 'country_code', required: true },
           { key: 'effective_from', label: 'Geçerlilik başı', type: 'date', required: true },
           { key: 'effective_to', label: 'Geçerlilik sonu', type: 'date' },
           { key: 'source_url', label: 'Kaynak URL' },
@@ -8330,7 +8375,7 @@ const MODULES = [
             ],
           },
         ],
-        defaults: { country_code: 'TR', is_active: true },
+        defaults: { country_code: 'TR', is_active: true, effective_from: 'today' },
       },
       {
         id: 'hr-bordro-donemleri',
@@ -25075,6 +25120,11 @@ async function openForm(mode, opts = {}) {
 
   if (mode === 'yeni') {
     record = { ...(screen.defaults || {}) };
+    Object.keys(record).forEach((k) => {
+      if (record[k] === 'today') {
+        record[k] = new Date().toISOString().slice(0, 10);
+      }
+    });
     if (screen.categoryKey && state.listCategory) {
       record[screen.categoryKey] = state.listCategory;
     }

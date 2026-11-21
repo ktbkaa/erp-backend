@@ -1,6 +1,5 @@
 const { nextDocumentNo, nextStockMovementNo } = require('../utils/belgeNo');
 const { isNegativeStockAllowed, onerilenDepolar } = require('../utils/belgeOmurga');
-const { parametreAl } = require('../utils/yetki');
 const { resolveLot } = require('./partiService');
 
 const STATULER = ['Kullanilabilir', 'Kalitede', 'Bloke'];
@@ -44,8 +43,10 @@ async function createStockMovement(client, {
 
     const paramNegatif = await isNegativeStockAllowed(client);
     const eksiIzin = Boolean(hareketKodu?.allow_negative_balance) || paramNegatif;
-    const depoZorunlu = !depoZorunluAtla
-        && String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
+    // Kural: stok o depoya tanımlı değilse işlem yapılamaz.
+    // depoZorunluAtla artık atlamaz (geriye dönük imza korunur).
+    void depoZorunluAtla;
+    const depoZorunlu = true;
 
     let hareketNo = String(hareketNoOpt || '').trim() || null;
     if (hareketNo) {
@@ -251,12 +252,31 @@ async function assertItemWarehouseAllowed(client, stokId, depoId) {
         [stokId, depoId]
     );
     if (!r.rows[0]) {
-        // Tanım hiç yoksa: malzeme için hiç item_warehouses yoksa da engelle
+        const meta = await client.query(
+            `SELECT s.item_code, s.item_name, w.warehouse_code, w.warehouse_name
+             FROM items s
+             CROSS JOIN warehouses w
+             WHERE s.id=$1 AND w.id=$2`,
+            [stokId, depoId]
+        );
+        const m = meta.rows[0] || {};
+        const stokLabel = m.item_code
+            ? `${m.item_code}${m.item_name ? ` (${m.item_name})` : ''}`
+            : `item_id=${stokId}`;
+        const depoLabel = m.warehouse_code
+            ? `${m.warehouse_code}${m.warehouse_name ? ` (${m.warehouse_name})` : ''}`
+            : `warehouse_id=${depoId}`;
         const err = new Error(
-            `Malzeme-depo tanımı yok veya pasif. item_id=${stokId}, warehouse_id=${depoId}`
+            `Stok bu depoya tanımlı değil: ${stokLabel} → ${depoLabel}. `
+            + 'İşlem yapılamaz. Tanımlamak için Stok → Depo (stok-depo) ekranından '
+            + 'stok-depo bağını ekleyin veya stok kartındaki varsayılan giriş/çıkış depolarını kaydedin.'
         );
         err.code = 'STOK_DEPO_YOK';
         err.status = 400;
+        err.item_id = stokId;
+        err.warehouse_id = depoId;
+        err.item_code = m.item_code || null;
+        err.warehouse_code = m.warehouse_code || null;
         throw err;
     }
 }

@@ -556,7 +556,21 @@ async function loadCompanyContext(client, companyCode, plantCode, whCodes) {
   return { firma, plant, wh, ted, mus, partners };
 }
 
+async function ensureItemWarehouse(client, itemId, warehouseId, plantId) {
+  if (!itemId || !warehouseId) return;
+  await client.query(
+    `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+     SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+       SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
+     )`,
+    [itemId, warehouseId, plantId || null],
+  );
+}
+
 async function stockIn(client, { plant, warehouseId, firmaId, tag, lines, desc }) {
+  for (const l of lines) {
+    await ensureItemWarehouse(client, l.item_id, warehouseId, plant.id);
+  }
   await createStockMovement(client, {
     hareketTipi: 'STOK_GIRIS',
     isYeriId: plant.id,
@@ -582,6 +596,7 @@ async function zeroStocks(client, { plant, firmaId, tag, itemIds }) {
   );
   for (const b of bakiyeler) {
     try {
+      await ensureItemWarehouse(client, b.item_id, b.warehouse_id, plant.id);
       await createStockMovement(client, {
         hareketTipi: 'STOK_CIKIS',
         isYeriId: plant.id,
@@ -603,6 +618,26 @@ async function zeroStocks(client, { plant, firmaId, tag, itemIds }) {
 }
 
 async function runWo(firmaId, { item, bom, route, plant, wh, qty, tag, salesOrderId, extraDesc }) {
+  const client = await pool.connect();
+  try {
+    await ensureItemWarehouse(client, item.id, wh.mam.id, plant.id);
+    await ensureItemWarehouse(client, item.id, (wh.ym || wh.hmd).id, plant.id);
+    const comps = (await client.query(
+      `SELECT DISTINCT component_item_id AS item_id FROM bom_lines WHERE product_bom_id=$1`,
+      [bom.id],
+    )).rows;
+    for (const c of comps) {
+      await ensureItemWarehouse(client, c.item_id, wh.hmd.id, plant.id);
+      if (wh.ym) await ensureItemWarehouse(client, c.item_id, wh.ym.id, plant.id);
+      // CKK / GKK depoları (kalite çıkış/giriş) varsa mamul+bileşen bağla
+      for (const roleWh of Object.values(wh)) {
+        if (roleWh?.id) await ensureItemWarehouse(client, item.id, roleWh.id, plant.id);
+        if (roleWh?.id && c.item_id) await ensureItemWarehouse(client, c.item_id, roleWh.id, plant.id);
+      }
+    }
+  } finally {
+    client.release();
+  }
   const ue = await api('POST', '/uretim-emirleri', {
     item_id: item.id,
     product_bom_id: bom.id,

@@ -29,6 +29,18 @@ async function seedBasics() {
   )).rows[0];
   assert.ok(item && wh, 'stok/depo yok');
 
+  // Stok-depo bağları (otomatik oluşturma yok; test önceden tanımlar)
+  const allWh = (await pool.query(`SELECT id, plant_id FROM warehouses`)).rows;
+  for (const w of allWh) {
+    await pool.query(
+      `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+       SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+         SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2
+       )`,
+      [item.id, w.id, w.plant_id || plant?.id || null],
+    );
+  }
+
   // Parametre: GKK açık + sıkı tüketim kilidi
   await pool.query(
     `
@@ -55,7 +67,6 @@ async function seedBasics() {
         belgeTipi: 'Test',
         hareketKoduId: hk.id,
         firmaId: company.id,
-        depoZorunluAtla: true,
         satirlar: [{ item_id: item.id, quantity: 200, direction: 1, stock_status: 'Kullanilabilir' }],
       });
     });

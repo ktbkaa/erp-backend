@@ -66,6 +66,12 @@ const RESOURCES = {
   },
 };
 
+const BOOL_DEFAULTS = new Set([
+  'is_terminal', 'is_cancelled', 'is_done',
+  'can_view_budget', 'can_edit_budget', 'can_view_costs',
+  'can_manage_team', 'can_close_project', 'blocks_schedule',
+]);
+
 function trimOrNull(v) {
   if (v === undefined || v === null) return null;
   if (typeof v === 'string') {
@@ -73,6 +79,26 @@ function trimOrNull(v) {
     return t === '' ? null : t;
   }
   return v;
+}
+
+async function nextSeqNo(client, table, col) {
+  const r = await client.query(
+    `SELECT COALESCE(MAX(${col}), 0)::int + 10 AS n FROM ${table}`
+  );
+  return Number(r.rows[0]?.n) || 10;
+}
+
+async function defaultExtraValue(client, table, col, raw) {
+  if (raw !== undefined && raw !== null && raw !== '') {
+    if (BOOL_DEFAULTS.has(col)) return !!raw;
+    return raw;
+  }
+  if (col === 'line_no' || col === 'rank_no') {
+    return nextSeqNo(client, table, col);
+  }
+  if (col === 'hierarchy_level') return 'task';
+  if (BOOL_DEFAULTS.has(col)) return false;
+  return null;
 }
 
 function createPrjDefRouter(resourceKey) {
@@ -111,7 +137,9 @@ function createPrjDefRouter(resourceKey) {
       if (!code || !name) return res.status(400).json({ hata: `${codeCol} ve ${nameCol} zorunlu.` });
       const cols = [codeCol, nameCol, ...extra, 'is_active'];
       const vals = [code, name];
-      for (const c of extra) vals.push(req.body[c] ?? null);
+      for (const c of extra) {
+        vals.push(await defaultExtraValue(pool, table, c, req.body[c]));
+      }
       vals.push(req.body.is_active !== false);
       const ph = cols.map((_, i) => `$${i + 1}`).join(',');
       const r = await pool.query(
