@@ -293,7 +293,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                 );
             }
             await client.query(
-                `UPDATE sales_quotations SET status='SipariseDonustu' WHERE id=$1`,
+                `UPDATE sales_quotations SET status='Kapali' WHERE id=$1`,
                 [teklif.id]
             );
             return sid;

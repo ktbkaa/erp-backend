@@ -949,7 +949,7 @@ router.post('/sevk-emrinden', async (req, res) => {
                 );
             }
             await client.query(
-                `UPDATE shipment_orders SET status='IrsaliyeDonustu' WHERE id=$1`,
+                `UPDATE shipment_orders SET status='Kapali' WHERE id=$1`,
                 [sevk.id]
             );
             return iid;
@@ -1185,7 +1185,7 @@ router.post('/:id/fatura-olustur', async (req, res) => {
             }
             await client.query(
                 `UPDATE delivery_notes
-                 SET status='FaturayaDonustu', invoice_status='Faturalandi'
+                 SET status='Kapali', invoice_status='Faturalandi'
                  WHERE id=$1`,
                 [ir.id]
             );

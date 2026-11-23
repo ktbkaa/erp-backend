@@ -277,7 +277,7 @@ router.post('/talep-donustur', async (req, res) => {
         currency_code: t.currency_code || 'TRY',
         rate_type: t.rate_type || null,
       });
-      await client.query(`UPDATE purchase_requisitions SET status = 'SipariseDonustu' WHERE id = $1`, [requisition_id]);
+      await client.query(`UPDATE purchase_requisitions SET status = 'Kapali' WHERE id = $1`, [requisition_id]);
       return siparisId;
     });
 

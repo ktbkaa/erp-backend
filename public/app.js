@@ -12269,10 +12269,10 @@ const BELGE_BAGLANTI = {
       { id: 'aday', label: 'Müşteri adayı (kaynak)', field: 'lead_id', screenId: 'crm-adaylar' },
     ],
     sonrakiler: [
-      { id: 'satis-siparis', label: 'Satış siparişi', screenId: 'sales_orders', findBy: ['quotation_id'] },
+      { id: 'satis-siparis', label: 'Satış siparişi', screenId: 'satis-siparisleri', findBy: ['quotation_id'] },
     ],
   },
-  'sales_orders': {
+  'satis-siparisleri': {
     kaynaklar: [
       { id: 'teklif', label: 'Satış teklifi (kaynak)', field: 'quotation_id', screenId: 'satis-teklifleri' },
     ],
@@ -12284,7 +12284,7 @@ const BELGE_BAGLANTI = {
   },
   'sevk-emirleri': {
     kaynaklar: [
-      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'sales_orders' },
+      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'satis-siparisleri' },
     ],
     sonrakiler: [
       { id: 'irsaliye', label: 'Satış irsaliyesi', screenId: 'irsaliye-yonetimi', findBy: ['shipment_order_id'] },
@@ -12292,7 +12292,7 @@ const BELGE_BAGLANTI = {
   },
   'irsaliye-yonetimi': {
     kaynaklar: [
-      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'sales_orders' },
+      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'satis-siparisleri' },
       { id: 'sevk', label: 'Sevk emri (kaynak)', field: 'shipment_order_id', screenId: 'sevk-emirleri' },
     ],
     sonrakiler: [
@@ -12307,7 +12307,7 @@ const BELGE_BAGLANTI = {
   'fatura-yonetimi': {
     kaynaklar: [
       { id: 'irsaliye', label: 'İrsaliye (kaynak)', field: 'delivery_note_id', screenId: 'irsaliye-yonetimi' },
-      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'sales_orders' },
+      { id: 'siparis', label: 'Satış siparişi (kaynak)', field: 'sales_order_id', screenId: 'satis-siparisleri' },
       { id: 'mal-kabul', label: 'Mal kabul (kaynak)', field: 'goods_receipt_id', screenId: 'mal-kabuller' },
     ],
     sonrakiler: [],
