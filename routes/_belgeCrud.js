@@ -49,7 +49,10 @@ function createBelgeRouter(cfg) {
             const firmaId = firmaIdFromReq(req);
             if (firmaId) {
                 params.push(firmaId);
-                sql += ` WHERE firma_id = $${params.length}`;
+                // firma_id doğrudan veya is_yeri üzerinden (eski kayıtlarda firma_id boş olabilir)
+                sql += ` WHERE (firma_id = $${params.length}
+                  OR (firma_id IS NULL AND is_yeri_id IN (
+                        SELECT id FROM is_yerleri WHERE firma_id = $${params.length})))`;
             }
             sql += ' ORDER BY id DESC';
             const liste = await pool.query(sql, params);

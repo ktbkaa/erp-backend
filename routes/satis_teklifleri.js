@@ -51,7 +51,18 @@ function hazirSatirlar(raw) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM satis_teklifleri'; if (firmaId) { params.push(firmaId); sql += ' WHERE firma_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        const liste = await (() => {
+            const firmaId = firmaIdFromReq(req);
+            const params = [];
+            let sql = 'SELECT id FROM satis_teklifleri';
+            if (firmaId) {
+                params.push(firmaId);
+                sql += ` WHERE (firma_id = $${params.length}
+                  OR (firma_id IS NULL AND is_yeri_id IN (SELECT id FROM is_yerleri WHERE firma_id = $${params.length})))`;
+            }
+            sql += ' ORDER BY id DESC';
+            return pool.query(sql, params);
+        })();
         const sonuc = [];
         for (const r of liste.rows) sonuc.push(await teklifGetir(r.id));
         res.json(sonuc);
@@ -75,12 +86,14 @@ router.post('/', async (req, res) => {
         const {
             cari_id, teklif_tarihi, gecerlilik_tarihi, para_birimi, aciklama,
             hareket_kodu_id, durum, firsat_id, aday_id, kaynak_belge_tipi, kaynak_belge_id,
+            firma_id, is_yeri_id,
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         if (!cari_id) return res.status(400).json({ hata: 'cari_id zorunlu.' });
         if (!Array.isArray(raw) || !raw.length) return res.status(400).json({ hata: 'satirlar zorunlu.' });
         const satirlar = hazirSatirlar(raw);
         const top = belgelerToplam(satirlar);
+        const firmaId = firma_id || firmaIdFromReq(req) || null;
 
         const id = await withTransaction(pool, async (client) => {
             const no = await sonrakiBelgeNo(client, 'SATIS_TEKLIF');
@@ -96,9 +109,10 @@ router.post('/', async (req, res) => {
                 INSERT INTO satis_teklifleri
                     (teklif_no, cari_id, teklif_tarihi, gecerlilik_tarihi, para_birimi,
                      durum, hareket_kodu_id, aciklama, toplam_tutar,
-                     firsat_id, aday_id, kaynak_belge_tipi, kaynak_belge_id)
+                     firsat_id, aday_id, kaynak_belge_tipi, kaynak_belge_id,
+                     firma_id, is_yeri_id)
                 VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,COALESCE($5,'TRY'),
-                        COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13)
+                        COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13,$14,$15)
                 RETURNING id
                 `,
                 [
@@ -107,6 +121,7 @@ router.post('/', async (req, res) => {
                     firsat_id || null, aday_id || null,
                     kaynak_belge_tipi || (firsat_id ? 'CRM_FIRSAT' : null),
                     kaynak_belge_id || firsat_id || null,
+                    firmaId, is_yeri_id || null,
                 ]
             );
             const tid = baslik.rows[0].id;
@@ -248,8 +263,9 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                     ]
                 );
             }
+            // Dönüşen teklif listede kalır; durum Kapalı (sunum / izlenebilirlik)
             await client.query(
-                `UPDATE satis_teklifleri SET durum='SipariseDonustu' WHERE id=$1`,
+                `UPDATE satis_teklifleri SET durum='Kapali' WHERE id=$1`,
                 [teklif.id]
             );
             return sid;

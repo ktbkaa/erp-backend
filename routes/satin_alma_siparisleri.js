@@ -245,7 +245,7 @@ router.post('/talep-donustur', async (req, res) => {
         teslim_tarihi: sat.teslim_tarihi || t.hedef_teslim_tarihi,
       }));
       await replaceSiparisSatirlar(client, siparisId, mapped, t.kur ?? 1);
-      await client.query(`UPDATE satin_alma_talepleri SET durum = 'SipariseDonustu' WHERE id = $1`, [talep_id]);
+      await client.query(`UPDATE satin_alma_talepleri SET durum = 'Kapali' WHERE id = $1`, [talep_id]);
       return siparisId;
     });
 

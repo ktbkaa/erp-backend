@@ -131,7 +131,8 @@ router.get('/', async (req, res) => {
         const firmaId = firmaIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
-            where.push(`f.firma_id = $${params.length}`);
+            where.push(`(f.firma_id = $${params.length}
+              OR (f.firma_id IS NULL AND f.is_yeri_id IN (SELECT id FROM is_yerleri WHERE firma_id = $${params.length})))`);
         }
         const liste = await pool.query(
             `
@@ -182,14 +183,15 @@ router.post('/', async (req, res) => {
             if (!asamaId) throw new Error('Fırsat aşaması tanımlı değil.');
 
             const kod = b.firsat_kodu || (await sonrakiKod(client, 'CRM_FIRSAT'));
+            const firmaId = b.firma_id || firmaIdFromReq(req) || null;
             const ins = await client.query(
                 `
                 INSERT INTO crm_firsatlar
                     (firsat_kodu, firsat_adi, konu, musteri_tipi, cari_id, aday_id, asama_id,
                      olusturan_id, takip_eden_id, beklenen_gelir, para_birimi, degerlendirme,
-                     hedef_kapatma_tarihi, ulke, is_yeri_id, aciklama, durum)
+                     hedef_kapatma_tarihi, ulke, is_yeri_id, firma_id, aciklama, durum)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),COALESCE($11,'TRY'),$12,
-                        $13,COALESCE($14,'TR'),$15,$16,'Acik')
+                        $13,COALESCE($14,'TR'),$15,$16,$17,'Acik')
                 RETURNING id
                 `,
                 [
@@ -199,7 +201,7 @@ router.post('/', async (req, res) => {
                     asamaId, b.olusturan_id || null, b.takip_eden_id || null,
                     b.beklenen_gelir, b.para_birimi, b.degerlendirme ?? null,
                     b.hedef_kapatma_tarihi || null, b.ulke || null, b.is_yeri_id || null,
-                    b.aciklama || null,
+                    firmaId, b.aciklama || null,
                 ]
             );
             const firsatId = ins.rows[0].id;

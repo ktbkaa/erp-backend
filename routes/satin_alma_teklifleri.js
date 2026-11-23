@@ -108,8 +108,9 @@ router.post('/:id/siparise-donustur', async (req, res, next) => {
         `UPDATE satin_alma_siparisleri SET toplam_tutar = $1 WHERE id = $2`,
         [toplam, id]
       );
+      // Dönüşen teklif listede kalır; durum Kapalı
       await client.query(
-        `UPDATE satin_alma_teklifleri SET durum = 'SipariseDonustu' WHERE id = $1`,
+        `UPDATE satin_alma_teklifleri SET durum = 'Kapali' WHERE id = $1`,
         [teklifId]
       );
       return id;

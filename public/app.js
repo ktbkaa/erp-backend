@@ -6133,12 +6133,79 @@ function hideTabContextMenu() {
   if (listMenu) listMenu.hidden = true;
 }
 
+/** Belge tipi → ekran id (sağ tık «Kaynağına git») */
+const KAYNAK_BELGE_EKRAN = {
+  SATIS_TEKLIF: 'satis-teklifleri',
+  SATINALMA_TEKLIF: 'satin-alma-teklifleri',
+  SATINALMA_TALEP: 'satin-alma-talepleri',
+  SATINALMA_TEKLIF_ISTEK: 'satin-alma-teklif-istekleri',
+  SATIS_SIPARIS: 'satis-siparisleri',
+  SATINALMA_SIPARIS: 'satin-alma-siparisleri',
+  SEVK_EMRI: 'sevk-emirleri',
+  IRSALIYE: 'irsaliyeler',
+  MAL_KABUL: 'mal-kabuller',
+  CRM_FIRSAT: 'crm-firsatlar',
+  CRM_ADAY: 'crm-adaylar',
+  URETIM_EMRI: 'uretim-emirleri',
+  FATURA: 'satis-faturalari',
+};
+
+function resolveKaynakNav(screen, row) {
+  if (!row || !screen) return null;
+  const sid = screen.id || '';
+  const isSa = /satin-alma|mal-kabul|alis-fatura|tedarikci/i.test(sid);
+  const tryField = (field, targetScreen, label) => {
+    const v = row[field];
+    if (v == null || v === '' || targetScreen === sid) return null;
+    return { screenId: targetScreen, id: Number(v) || v, label: label || 'Kaynağına git', filterKey: 'id' };
+  };
+  return (
+    tryField('teklif_id', isSa ? 'satin-alma-teklifleri' : 'satis-teklifleri', 'Teklife git')
+    || tryField('talep_id', 'satin-alma-talepleri', 'Talebe git')
+    || tryField('istek_id', 'satin-alma-teklif-istekleri', 'Teklif isteğine git')
+    || tryField('firsat_id', 'crm-firsatlar', 'Fırsata git')
+    || tryField('aday_id', 'crm-adaylar', 'Adaya git')
+    || tryField('sevk_emri_id', 'sevk-emirleri', 'Sevk emrine git')
+    || tryField('siparis_id', isSa ? 'satin-alma-siparisleri' : 'satis-siparisleri', 'Siparişe git')
+    || tryField('mal_kabul_id', 'mal-kabuller', 'Mal kabule git')
+    || tryField('irsaliye_id', 'irsaliyeler', 'İrsaliyeye git')
+    || tryField('anlasma_id', 'satin-alma-anlasmalari', 'Anlaşmaya git')
+    || (() => {
+      const tip = row.kaynak_belge_tipi || row.kaynak_tipi;
+      const kid = row.kaynak_belge_id || row.kaynak_id;
+      if (!tip || kid == null || kid === '') return null;
+      const target = KAYNAK_BELGE_EKRAN[String(tip).toUpperCase()] || KAYNAK_BELGE_EKRAN[tip];
+      if (!target || target === sid) return null;
+      return { screenId: target, id: Number(kid) || kid, label: 'Kaynağına git', filterKey: 'id' };
+    })()
+  );
+}
+
+function effectiveListContextMenu(screen, row) {
+  const items = [...(screen?.contextMenu || [])];
+  const kaynak = resolveKaynakNav(screen, row);
+  if (kaynak) {
+    items.unshift({
+      id: 'kaynak-git',
+      label: kaynak.label,
+      openScreen: kaynak.screenId,
+      sourceId: kaynak.id,
+      passFilters: [],
+    });
+  }
+  return items;
+}
+
 function showListContextMenu(screen, clientX, clientY) {
   const menu = $('#listCtxMenu');
-  if (!menu || !screen?.contextMenu?.length) return;
-  menu.innerHTML = screen.contextMenu.map((item) => `
+  const row = selectedRow();
+  const items = effectiveListContextMenu(screen, row);
+  if (!menu || !items.length) return;
+  menu.innerHTML = items.map((item) => `
     <button type="button" role="menuitem" data-list-ctx="${escAttr(item.id)}"
-      data-open-screen="${escAttr(item.openScreen || '')}">${escAttr(item.label)}</button>
+      data-open-screen="${escAttr(item.openScreen || '')}"
+      data-source-id="${escAttr(item.sourceId != null ? String(item.sourceId) : '')}"
+      >${escAttr(item.label)}</button>
   `).join('');
   menu.hidden = false;
   const pad = 6;
@@ -6158,31 +6225,52 @@ function showListContextMenu(screen, clientX, clientY) {
       e.preventDefault();
       menu.hidden = true;
       const openId = btn.getAttribute('data-open-screen');
-      const item = (findScreen(state.screenId)?.contextMenu || [])
-        .find((x) => x.id === btn.getAttribute('data-list-ctx'));
-      const row = selectedRow();
+      const ctxId = btn.getAttribute('data-list-ctx');
+      const sourceId = btn.getAttribute('data-source-id');
+      const curScreen = findScreen(state.screenId);
+      const rowNow = selectedRow();
+      const item = effectiveListContextMenu(curScreen, rowNow)
+        .find((x) => x.id === ctxId);
       if (openId) {
-        // Hedef ekrana filtre/query geçir
         const pass = item?.passFilters || [];
-        const qs = [];
-        pass.forEach((k) => {
-          if (row?.[k] != null && row[k] !== '') qs.push(`${encodeURIComponent(k)}=${encodeURIComponent(row[k])}`);
-        });
-        openScreen(openId).then(() => {
+        const jumpId = sourceId || (item?.sourceId != null ? String(item.sourceId) : '');
+        openScreen(openId).then(async () => {
           const target = findScreen(openId);
-          if (!target || !row) return;
+          if (!target) return;
+          if (jumpId) {
+            state.selectedId = jumpId;
+            // Kaynak kaydı öne çıkar: id filtresi + seçim
+            const codeCol = target.codeField || 'id';
+            const match = (state.rows || []).find((r) => String(r.id) === String(jumpId));
+            if (match && target.codeField && match[target.codeField] != null) {
+              state.filterState = state.filterState || {};
+              state.filterState[codeCol] = { op: 'esit', a: String(match[codeCol]), b: '' };
+              state.filtered = applyFilters(state.rows, target);
+            } else {
+              state.filtered = (state.rows || []).filter((r) => String(r.id) === String(jumpId));
+              if (!state.filtered.length) state.filtered = applyFilters(state.rows || [], target);
+            }
+            renderList(target);
+            renderFilterPane(target);
+            updateActionButtons(target);
+            toast(`${item?.label || 'Kaynak'}: kayıt seçildi`);
+            return;
+          }
           pass.forEach((k) => {
-            if (row[k] == null || row[k] === '') return;
+            if (rowNow?.[k] == null || rowNow[k] === '') return;
             if (!state.filterState) state.filterState = {};
-            state.filterState[k] = { op: 'esit', a: String(row[k]), b: '' };
+            state.filterState[k] = { op: 'esit', a: String(rowNow[k]), b: '' };
           });
-          if (target.filters?.some((f) => f.queryParam) || qs.length) {
-            api(buildListEndpoint(target)).then((data) => {
+          if (target.filters?.some((f) => f.queryParam) || pass.length) {
+            try {
+              const data = await api(buildListEndpoint(target));
               state.rows = ensureRowIds(Array.isArray(data) ? data : []);
               state.filtered = applyFilters(state.rows, target);
               renderList(target);
               renderFilterPane(target);
-            }).catch((err) => toast(err.message));
+            } catch (err) {
+              toast(err.message);
+            }
           } else {
             state.filtered = applyFilters(state.rows, target);
             renderList(target);
@@ -11410,7 +11498,7 @@ function bindEvents() {
     });
   }
 
-  // Liste satırı sağ tık — ekran contextMenu (depo bakiye → stok hareketleri)
+  // Liste satırı sağ tık — contextMenu + otomatik «Kaynağına git»
   const dataBody = $('#dataBody');
   if (dataBody && !dataBody.dataset.ctxBound) {
     dataBody.dataset.ctxBound = '1';
@@ -11418,13 +11506,15 @@ function bindEvents() {
       const tr = e.target.closest('tr[data-id]');
       if (!tr) return;
       const screen = findScreen(state.screenId);
-      if (!screen?.contextMenu?.length) return;
-      e.preventDefault();
-      e.stopPropagation();
+      if (!screen) return;
       state.selectedId = tr.getAttribute('data-id');
       document.querySelectorAll('#dataBody tr.selected').forEach((x) => x.classList.remove('selected'));
       tr.classList.add('selected');
       updateActionButtons(screen);
+      const row = selectedRow();
+      if (!effectiveListContextMenu(screen, row).length) return;
+      e.preventDefault();
+      e.stopPropagation();
       showListContextMenu(screen, e.clientX, e.clientY);
     });
   }

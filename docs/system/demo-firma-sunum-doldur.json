@@ -1,0 +1,203 @@
+{
+  "generated_at": "23.11.2026 08:40:13",
+  "firma": "DEMO",
+  "filled": [
+    {
+      "name": "Depolar",
+      "detail": "ana=D00001 gkk=DEMO-GKK ckk=DEMO-CKK"
+    },
+    {
+      "name": "Stok bakiyeleri"
+    },
+    {
+      "name": "firma_id backfill"
+    },
+    {
+      "name": "Cariler",
+      "detail": "M00001 / T00001"
+    },
+    {
+      "name": "CRM Adaylar",
+      "detail": "AD00005"
+    },
+    {
+      "name": "CRM Kontaklar",
+      "detail": 1
+    },
+    {
+      "name": "CRM Fırsatlar",
+      "detail": "FS00005"
+    },
+    {
+      "name": "CRM Faaliyet Planları"
+    },
+    {
+      "name": "CRM Faaliyetler"
+    },
+    {
+      "name": "CRM Görevler"
+    },
+    {
+      "name": "Satış Teklifleri"
+    },
+    {
+      "name": "Satış Siparişleri",
+      "detail": "B00009"
+    },
+    {
+      "name": "Stok Rezervasyonları"
+    },
+    {
+      "name": "Sevk Emirleri",
+      "detail": "SE00009"
+    },
+    {
+      "name": "İrsaliyeler",
+      "detail": "IR00005"
+    },
+    {
+      "name": "Satış Faturaları",
+      "detail": "FA00009"
+    },
+    {
+      "name": "Tahsilat / Ödeme"
+    },
+    {
+      "name": "SA Teklif İstekleri",
+      "detail": "QI00005"
+    },
+    {
+      "name": "SA Teklifleri",
+      "detail": "QF00005"
+    },
+    {
+      "name": "SA Anlaşmaları",
+      "detail": "QA00003"
+    },
+    {
+      "name": "SA Talepleri",
+      "detail": "L00014"
+    },
+    {
+      "name": "SA Siparişleri (tekliften)",
+      "detail": "P00010 · teklif=Kapali"
+    },
+    {
+      "name": "Mal Kabuller",
+      "detail": "R00010"
+    },
+    {
+      "name": "Tedarikçi İrsaliyeleri"
+    },
+    {
+      "name": "Alış Faturaları"
+    },
+    {
+      "name": "Transfer Emirleri"
+    },
+    {
+      "name": "Sayım Belgeleri"
+    },
+    {
+      "name": "Stok Partileri",
+      "detail": "DEMO-LOT-13409"
+    },
+    {
+      "name": "Stok Serileri"
+    },
+    {
+      "name": "Stok İkame"
+    },
+    {
+      "name": "KK Kontrol Planları",
+      "detail": "STD-GKK"
+    },
+    {
+      "name": "KK Stok Plan Bağları"
+    },
+    {
+      "name": "KK Ret Nedenleri"
+    },
+    {
+      "name": "ÇKK Emirleri",
+      "detail": "QE00007"
+    },
+    {
+      "name": "KK Uygunsuzluklar"
+    },
+    {
+      "name": "CAPA"
+    },
+    {
+      "name": "GKK Emirleri"
+    },
+    {
+      "name": "Ürün Ağacı",
+      "detail": "UA-MAMUL"
+    },
+    {
+      "name": "Rotalar / İş Merkezleri",
+      "detail": "ROT-MAMUL"
+    },
+    {
+      "name": "Üretim Planları"
+    },
+    {
+      "name": "Üretim Emirleri",
+      "detail": "E00006"
+    },
+    {
+      "name": "Üretim Girişleri"
+    },
+    {
+      "name": "MRP Bağımsız İhtiyaç"
+    },
+    {
+      "name": "MRP Çalışma",
+      "detail": "MR00005"
+    },
+    {
+      "name": "Fiyat Listeleri"
+    },
+    {
+      "name": "Döviz Kurları"
+    },
+    {
+      "name": "Muhasebe Belgeleri"
+    },
+    {
+      "name": "Hesap Belirleme Kuralları"
+    },
+    {
+      "name": "Tedarikçi Değerlendirme"
+    },
+    {
+      "name": "Onay Rolleri"
+    },
+    {
+      "name": "Stok Hareketleri"
+    }
+  ],
+  "errors": [
+    {
+      "label": "Satış teklifi",
+      "error": "POST /satis-teklifleri → 500: column \"depo_id\" of relation \"satis_teklifleri\" does not exist"
+    },
+    {
+      "label": "Tedarikçi irsaliye",
+      "error": "POST /tedarikci-irsaliyeleri → 400: Kod serisi tanımlı değil: TEDARIKCI_IRSALIYE"
+    },
+    {
+      "label": "Üretim girişi",
+      "error": "POST /uretim-girisleri → 400: emir_id ve miktar zorunlu."
+    },
+    {
+      "label": "Hesap belirleme",
+      "error": "POST /hesap-belirleme-kurallari → 400: kural_kodu ve belge_tipi zorunlu."
+    },
+    {
+      "label": "Onay rol",
+      "error": "POST /onay-rolleri → 400: Kişi seçimi zorunlu."
+    }
+  ]
+}

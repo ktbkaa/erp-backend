@@ -501,7 +501,7 @@ router.post('/sevk-emrinden', async (req, res) => {
                 );
             }
             await client.query(
-                `UPDATE sevk_emirleri SET durum='IrsaliyeDonustu' WHERE id=$1`,
+                `UPDATE sevk_emirleri SET durum='Kapali' WHERE id=$1`,
                 [sevk.id]
             );
             return iid;
@@ -608,7 +608,7 @@ router.post('/:id/fatura-olustur', async (req, res) => {
                 }
             }
             await client.query(
-                `UPDATE irsaliyeler SET durum='FaturayaDonustu' WHERE id=$1`,
+                `UPDATE irsaliyeler SET durum='Kapali' WHERE id=$1`,
                 [ir.id]
             );
             return fid;
