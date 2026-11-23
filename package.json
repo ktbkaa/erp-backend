@@ -43,7 +43,8 @@
     "qa:pdf": "node scripts/qa/build-qa-pdf.mjs",
     "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf",
     "db:restore-demo": "node scripts/db-restore-demo.js",
-    "demo:xelek-surec": "node scripts/demo-xelek-surec.js"
+    "demo:xelek-surec": "node scripts/demo-xelek-surec.js",
+    "docs:xelek-pdf": "node scripts/build-xelek-surec-pdf.js"
   },
   "keywords": [
     "erp",
@@ -61,5 +62,8 @@
     "ldapts": "^9.2.0",
     "nodemailer": "^6.10.1",
     "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.18.1"
   }
 }
