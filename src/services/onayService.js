@@ -378,6 +378,17 @@ async function onaylaAdim(client, kayitId, kullanici, { notes: notlar = null } =
       `,
       [kayitId],
     );
+    // Satış siparişi onay kapısı: OnayBekliyor → Onayli
+    if (
+      kayit.document_id
+      && ['satis-siparisleri', 'sales_orders'].includes(String(kayit.screen_id || ''))
+    ) {
+      await client.query(
+        `UPDATE sales_orders SET status='Onayli'
+         WHERE id=$1 AND status='OnayBekliyor'`,
+        [kayit.document_id],
+      );
+    }
   }
 
   return getRecord(client, kayitId);

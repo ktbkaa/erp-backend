@@ -1250,8 +1250,8 @@ router.post('/:id/iade', async (req, res) => {
     try {
         const source = await getDeliveryNote(req.params.id);
         if (!source) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
-        if (source.status !== 'Onayli' && source.status !== 'FaturayaDonustu') {
-            return res.status(400).json({ hata: 'Yalnızca onaylı irsaliyeden iade oluşturulur.' });
+        if (!['Onayli', 'FaturayaDonustu', 'Kapali'].includes(source.status)) {
+            return res.status(400).json({ hata: 'Yalnızca onaylı/faturalanmış irsaliyeden iade oluşturulur.' });
         }
         const depoId = Number(req.body.warehouse_id || source.warehouse_id);
         const id = await withTransaction(pool, async (client) => {

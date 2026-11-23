@@ -417,8 +417,11 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
         const { warehouseItemBalance } = require('../src/services/stokHareketService');
         const siparis = await getOrder(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
-        if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.status)) {
-            return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.status}` });
+        // OnayBekliyor sipariş sevk edilemez — satış müdürü onayı şart
+        if (!['Onayli', 'Kismi'].includes(siparis.status)) {
+            return res.status(400).json({
+                hata: `Sipariş durumu sevk için uygun değil: ${siparis.status}. Onaylı sipariş gerekir.`,
+            });
         }
         const warehouse_id = Number(req.body.warehouse_id);
         if (!warehouse_id) return res.status(400).json({ hata: 'warehouse_id zorunlu.' });

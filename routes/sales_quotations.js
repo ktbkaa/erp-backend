@@ -244,6 +244,17 @@ router.post('/:id/siparise-donustur', async (req, res) => {
             const no = await nextDocumentNo(client, 'SATIS_SIPARIS');
             const hk = await findMovementCode(client, BELGE_TIPI.SATIS_SIPARIS);
 
+            // Onay modülü tanımlıysa sipariş OnayBekliyor kalır; aksi halde Onayli.
+            const onayKullanim = await client.query(
+                `SELECT 1 FROM approval_module_usages
+                 WHERE is_active=TRUE
+                   AND screen_id IN ('satis-siparisleri','sales_orders')
+                   AND (company_id IS NULL OR company_id=$1)
+                 LIMIT 1`,
+                [teklif.company_id || null]
+            );
+            const soStatus = onayKullanim.rows[0] ? 'OnayBekliyor' : 'Onayli';
+
             const sip = await client.query(
                 `
                 INSERT INTO sales_orders
@@ -253,13 +264,13 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                      delivery_date, payment_term_code, payment_method, delivery_term_code,
                      exchange_rate, discount_rate, subtotal, tax_amount, grand_total,
                      public_note, internal_note, project_code)
-                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9,$10,$11,
-                        $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,$6,$7,$8,$9,$10,$11,$12,
+                        $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
                 RETURNING id
                 `,
                 [
                     no, teklif.partner_id, teklif.partner_code, teklif.partner_name, teklif.total_amount,
-                    teklif.id, hk?.id || null, teklif.currency_code || 'TRY',
+                    soStatus, teklif.id, hk?.id || null, teklif.currency_code || 'TRY',
                     `Teklif ${teklif.quotation_no} dönüşümü`,
                     BELGE_TIPI.SATIS_TEKLIF, teklif.id,
                     teklif.company_id || null, teklif.plant_id || null,
@@ -293,17 +304,45 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                 );
             }
             await client.query(
-                `UPDATE sales_quotations SET status='SipariseDonustu' WHERE id=$1`,
+                `UPDATE sales_quotations SET status='Kapali' WHERE id=$1`,
                 [teklif.id]
             );
             return sid;
         });
 
+        // OnayBekliyor sipariş için onay kaydı başlat
         const siparis = await pool.query('SELECT * FROM sales_orders WHERE id=$1', [siparisId]);
+        let onayKayit = null;
+        if (siparis.rows[0]?.status === 'OnayBekliyor') {
+            try {
+                const { startApproval } = require('../src/services/onayService');
+                const initiator = req.user?.id
+                    || (await pool.query(`SELECT id FROM users WHERE user_code='owner' LIMIT 1`)).rows[0]?.id
+                    || null;
+                onayKayit = await withTransaction(pool, async (client) => startApproval(client, {
+                    company_id: siparis.rows[0].company_id,
+                    screen_id: 'satis-siparisleri',
+                    module_code: 'SATIS',
+                    document_id: siparisId,
+                    document_no: siparis.rows[0].order_no,
+                    document_summary: `Satış siparişi ${siparis.rows[0].order_no}`,
+                    amount: Number(siparis.rows[0].total_amount) || 0,
+                    currency_code: siparis.rows[0].currency_code || 'TRY',
+                    initiator_user_id: initiator,
+                    description: 'Tekliften dönüşen satış siparişi — müdür onayı bekleniyor',
+                }));
+            } catch (onayErr) {
+                // Onay başlatılamazsa sipariş yine OnayBekliyor kalır; sevk engellenir
+                console.warn('Satış siparişi onay başlatılamadı:', onayErr.message);
+            }
+        }
+
         res.status(201).json({
             ok: true,
             sales_order_id: siparisId,
             order_no: siparis.rows[0].order_no,
+            status: siparis.rows[0].status,
+            onay_kayit: onayKayit,
             teklif: await getQuotation(teklif.id),
         });
     } catch (err) {

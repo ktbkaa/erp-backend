@@ -42,7 +42,8 @@
     "qa:dashboard": "node scripts/qa/build-qa-dashboard.mjs",
     "qa:pdf": "node scripts/qa/build-qa-pdf.mjs",
     "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf",
-    "db:restore-demo": "node scripts/db-restore-demo.js"
+    "db:restore-demo": "node scripts/db-restore-demo.js",
+    "demo:xelek-surec": "node scripts/demo-xelek-surec.js"
   },
   "keywords": [
     "erp",
@@ -53,6 +54,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",

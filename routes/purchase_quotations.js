@@ -109,7 +109,7 @@ router.post('/:id/siparise-donustur', async (req, res, next) => {
         [toplam, id]
       );
       await client.query(
-        `UPDATE purchase_quotations SET status = 'SipariseDonustu' WHERE id = $1`,
+        `UPDATE purchase_quotations SET status = 'Kapali' WHERE id = $1`,
         [teklifId]
       );
       return id;

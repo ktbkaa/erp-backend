@@ -1,0 +1,200 @@
+{
+  "summary": {
+    "firma": "XELEK",
+    "proje": "X Firması",
+    "tag": "XELEK-SUREC",
+    "steps": [
+      {
+        "name": "Firma kurulumu",
+        "detail": "XELEK #11 / XELEK-MR / 8 depo",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "Proje",
+        "detail": "X-FIRMASI — X Firması",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "CRM",
+        "detail": "Aday AD00013 → faaliyet → fırsat FS00013 kazanıldı → cari",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "X mamul master",
+        "detail": "U00011 + HM(H00029,H00030,H00031) + YM(Y00010)",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "Satış siparişi onayı",
+        "detail": "B00018: OnayBekliyor→Onayli (sevk engeli doğrulandı), teklif Kapalı",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "MRP",
+        "detail": "çalışma #12 — 46 satır, satınalma önerisi: 24",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "SA teklif→sipariş",
+        "detail": "PO #23 (müdür onaylı tekliften)",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "GKK ilk tur",
+        "detail": "bir HM stoğa, bir HM red",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "Yeniden sipariş + GKK",
+        "detail": "PO2 #24 / MK2 #21 — red HM stoğa girdi",
+        "at": "23.11.2026 12:48:11"
+      },
+      {
+        "name": "Üretim + ÇKK",
+        "detail": "UE #9 → mamul depo 10 adet",
+        "at": "23.11.2026 12:48:12"
+      },
+      {
+        "name": "Kısmi + kalan sevk/fatura",
+        "detail": "½=5 irs 7/fat 11; kalan=5 irs 8/fat 12",
+        "at": "23.11.2026 12:48:12"
+      },
+      {
+        "name": "Müşteri iade",
+        "detail": "1 adet ← irsaliye #8 / iade #9",
+        "at": "23.11.2026 12:48:12"
+      },
+      {
+        "name": "Yeniden üretim + sevk",
+        "detail": "UE #10 / SO B00019 / irs 10 / fat 14",
+        "at": "23.11.2026 12:48:12"
+      }
+    ],
+    "errors": [],
+    "result": {
+      "company_id": 11,
+      "plant": "XELEK-MR",
+      "project": "X-FIRMASI",
+      "fg": "U00011",
+      "sales_order": "B00018",
+      "mrp_run": 12,
+      "production_order": 9,
+      "return": 9,
+      "remake_so": "B00019"
+    }
+  },
+  "audit": [
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "XELEK süreç başlıyor — 23.11.2026 12:48:11"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "\n=== 1. Firma + mecburi kurulum ==="
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ Firma kurulumu — XELEK #11 / XELEK-MR / 8 depo"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "\n=== 2. Proje: X Firması ==="
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ Proje — X-FIRMASI — X Firması"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "\n=== 3–5. CRM → fırsat → teklif (geçici satır / sonra X mamul) ==="
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ CRM — Aday AD00013 → faaliyet → fırsat FS00013 kazanıldı → cari"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "\n=== 6. X mamul + HM + YM + BOM + rota ==="
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ X mamul master — U00011 + HM(H00029,H00030,H00031) + YM(Y00010)"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "\n=== 4. Satış teklifi → sipariş (OnayBekliyor) → müdür onayı ==="
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ Satış siparişi onayı — B00018: OnayBekliyor→Onayli (sevk engeli doğrulandı), teklif Kapalı"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "\n=== 7–8. MRP → SA teklif → onay → sipariş → GKK (pass/fail/iade) ==="
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ MRP — çalışma #12 — 46 satır, satınalma önerisi: 24"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ SA teklif→sipariş — PO #23 (müdür onaylı tekliften)"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "  GKK OK: QE00030 (H00029)"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "  GKK RED: QE00031 (H00030)"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "  GKK OK: QE00032 (H00031)"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ GKK ilk tur — bir HM stoğa, bir HM red"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "  mal-kabul iade uyarısı: POST /mal-kabuller/20/iade → 500: Yetersiz kullanılabilir stok. Depo=44, item_id=74, statu=Kullanilabilir, bakiye=0, istenen=12. — stok çıkış ile telafi"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "✓ Yeniden sipariş + GKK — PO2 #24 / MK2 #21 — red HM stoğa girdi"
+    },
+    {
+      "at": "23.11.2026 12:48:11",
+      "msg": "\n=== 9. Üretim → ÇKK → mamul depo ==="
+    },
+    {
+      "at": "23.11.2026 12:48:12",
+      "msg": "✓ Üretim + ÇKK — UE #9 → mamul depo 10 adet"
+    },
+    {
+      "at": "23.11.2026 12:48:12",
+      "msg": "\n=== 10. Kısmi sevk %50 → irsaliye → fatura; kalan sevk ==="
+    },
+    {
+      "at": "23.11.2026 12:48:12",
+      "msg": "✓ Kısmi + kalan sevk/fatura — ½=5 irs 7/fat 11; kalan=5 irs 8/fat 12"
+    },
+    {
+      "at": "23.11.2026 12:48:12",
+      "msg": "\n=== 11. Müşteri 1 adet iade ==="
+    },
+    {
+      "at": "23.11.2026 12:48:12",
+      "msg": "✓ Müşteri iade — 1 adet ← irsaliye #8 / iade #9"
+    },
+    {
+      "at": "23.11.2026 12:48:12",
+      "msg": "\n=== 12. 1 adet yeniden üretim + manuel satış siparişi ==="
+    },
+    {
+      "at": "23.11.2026 12:48:12",
+      "msg": "✓ Yeniden üretim + sevk — UE #10 / SO B00019 / irs 10 / fat 14"
+    }
+  ]
+}
