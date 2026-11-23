@@ -58,12 +58,25 @@ function findDump() {
   return hits[0]?.full || null;
 }
 
+function sslConfig(hostname) {
+  const isLocal = /localhost|127\.0\.0\.1/.test(hostname || '');
+  if (isLocal) return undefined;
+  // Prefer verified TLS. Opt-in insecure only via explicit env (ops/debug).
+  if (String(process.env.DB_SSL_INSECURE || '').toLowerCase() === 'true') {
+    // nosemgrep: bypass-tls-verification -- explicit operator opt-in for managed DB restores
+    return { rejectUnauthorized: false };
+  }
+  if (process.env.DB_SSL_CA) {
+    return { rejectUnauthorized: true, ca: process.env.DB_SSL_CA };
+  }
+  return { rejectUnauthorized: true };
+}
+
 function baseConfig(database) {
   if (process.env.DATABASE_URL) {
     const u = new URL(process.env.DATABASE_URL);
     u.pathname = `/${database}`;
-    const isLocal = /localhost|127\.0\.0\.1/.test(u.hostname);
-    return { connectionString: u.toString(), ssl: isLocal ? undefined : { rejectUnauthorized: false } };
+    return { connectionString: u.toString(), ssl: sslConfig(u.hostname) };
   }
   return {
     host: process.env.DB_HOST || 'localhost',
@@ -71,6 +84,7 @@ function baseConfig(database) {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database,
+    ssl: sslConfig(process.env.DB_HOST || 'localhost'),
   };
 }
 

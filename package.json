@@ -42,7 +42,9 @@
     "qa:dashboard": "node scripts/qa/build-qa-dashboard.mjs",
     "qa:pdf": "node scripts/qa/build-qa-pdf.mjs",
     "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf",
-    "db:restore-demo": "node scripts/db-restore-demo.js"
+    "db:restore-demo": "node scripts/db-restore-demo.js",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
   },
   "keywords": [
     "erp",
@@ -57,7 +59,14 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "ldapts": "^9.2.0",
-    "nodemailer": "^6.10.1",
+    "nodemailer": "^10.6.1",
     "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  },
+  "overrides": {
+    "body-parser": "2.4.0",
+    "qs": "6.17.1"
   }
 }

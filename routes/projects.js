@@ -24,6 +24,23 @@ function toBool(v, fallback = false) {
   return fallback;
 }
 
+/** Firma kapsamı: proje yoksa 404, başka firmaya aitse 403. */
+async function loadProjectForFirma(req, projectId) {
+  const r = await pool.query(`SELECT id, company_id FROM projects WHERE id=$1`, [projectId]);
+  if (!r.rows[0]) {
+    const err = new Error('Proje bulunamadı.');
+    err.status = 404;
+    throw err;
+  }
+  const firmaId = companyIdFromReq(req);
+  if (firmaId && Number(r.rows[0].company_id) !== Number(firmaId)) {
+    const err = new Error('Bu firma için proje erişimi yok.');
+    err.status = 403;
+    throw err;
+  }
+  return r.rows[0];
+}
+
 async function syncMembers(client, projectId, rows) {
   const list = Array.isArray(rows) ? rows : [];
   const keepIds = [];
@@ -634,6 +651,7 @@ router.put('/:id', async (req, res, next) => {
 
 router.post('/:id/archive', async (req, res, next) => {
   try {
+    await loadProjectForFirma(req, req.params.id);
     const r = await pool.query(
       `UPDATE projects SET is_archived=TRUE, updated_at=CURRENT_TIMESTAMP, updated_by=$2 WHERE id=$1 RETURNING id`,
       [req.params.id, req.user?.id || null]
@@ -641,12 +659,14 @@ router.post('/:id/archive', async (req, res, next) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'Proje bulunamadı.' });
     res.json(await projectDetail(req.params.id));
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
   }
 });
 
 router.post('/:id/members', async (req, res, next) => {
   try {
+    await loadProjectForFirma(req, req.params.id);
     const { user_id, role_id, can_view_budget, can_edit_budget, can_view_costs } = req.body;
     if (!user_id) return res.status(400).json({ hata: 'user_id zorunlu.' });
     const r = await pool.query(
@@ -665,12 +685,14 @@ router.post('/:id/members', async (req, res, next) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
   }
 });
 
 router.delete('/:id/members/:memberId', async (req, res, next) => {
   try {
+    await loadProjectForFirma(req, req.params.id);
     const r = await pool.query(
       `
       UPDATE project_members SET is_active=FALSE
@@ -682,14 +704,14 @@ router.delete('/:id/members/:memberId', async (req, res, next) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'Üye bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.memberId) });
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
   }
 });
 
 router.post('/:id/phases', async (req, res, next) => {
   try {
-    const p = await pool.query(`SELECT company_id FROM projects WHERE id=$1`, [req.params.id]);
-    if (!p.rows[0]) return res.status(404).json({ hata: 'Proje bulunamadı.' });
+    const p = await loadProjectForFirma(req, req.params.id);
     const phase_name = trimOrNull(req.body.phase_name);
     if (!phase_name) return res.status(400).json({ hata: 'phase_name zorunlu.' });
     const code =
@@ -705,7 +727,7 @@ router.post('/:id/phases', async (req, res, next) => {
       `,
       [
         req.params.id,
-        p.rows[0].company_id,
+        p.company_id,
         code,
         phase_name,
         req.body.parent_phase_id || null,
@@ -717,12 +739,14 @@ router.post('/:id/phases', async (req, res, next) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
   }
 });
 
 router.delete('/:id', async (req, res, next) => {
   try {
+    await loadProjectForFirma(req, req.params.id);
     const r = await pool.query(
       `UPDATE projects SET is_active=FALSE, is_archived=TRUE, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id`,
       [req.params.id]
@@ -730,6 +754,7 @@ router.delete('/:id', async (req, res, next) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'Proje bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
   }
 });
