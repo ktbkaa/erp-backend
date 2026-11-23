@@ -2,7 +2,14 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 function jwtSecret() {
-  return process.env.JWT_SECRET || process.env.JWT_SECRET_FALLBACK || 'ktb-erp-dev-secret-change-me';
+  const secret = process.env.JWT_SECRET || process.env.JWT_SECRET_FALLBACK;
+  if (secret) return secret;
+  const env = String(process.env.NODE_ENV || '').toLowerCase();
+  if (env === 'production' || env === 'prod') {
+    throw new Error('JWT_SECRET (veya JWT_SECRET_FALLBACK) production ortamında zorunlu.');
+  }
+  // Dev-only fallback — never used when NODE_ENV=production
+  return 'ktb-erp-dev-secret-change-me';
 }
 
 function signAccess(payload, ttlDk = 480) {

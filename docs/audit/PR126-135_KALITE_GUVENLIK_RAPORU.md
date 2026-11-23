@@ -64,19 +64,16 @@ SQL injection / secrets paketlerinde ek bulgu çıkmadı.
 
 ### 4.1 Yüksek — firma kapsamı (IDOR) — **düzeltildi**
 
-**PR:** #135 (mevcut uçlar tip stack’te de vardı)  
-**Dosya:** `routes/projects.js`  
-**Etkilenen uçlar:**
+| Alan | Dosya | Uçlar | Durum |
+|------|-------|-------|--------|
+| Projeler | `routes/projects.js` | archive, members, phases, delete | `loadProjectForFirma()` |
+| Fason | `routes/fason.js` | `/teslimatlar`, `/rapor/ozet` | `company_id` WHERE |
+| PRJ otomasyon | `routes/prj_automations.js` | GET/PUT/DELETE/:id, run, toggle, logs | firma assert |
+| Satış siparişi | `routes/sales_orders.js` | `sevk-emri-olustur`, rezerve, rezervasyon-iptal | `assertCompanyRecord` |
+| Satış teklifi | `routes/sales_quotations.js` | `siparise-donustur` | `assertCompanyRecord` |
+| JWT | `src/utils/jwt.js` | production secret | hard-fail if missing |
 
-- `POST /:id/archive`
-- `POST /:id/members`
-- `DELETE /:id/members/:memberId` (#135)
-- `POST /:id/phases` (firma karşılaştırması eksikti)
-- `DELETE /:id`
-
-**Sorun:** Proje kimliği ile mutasyon yapılıyor, `companyIdFromReq` ile `projects.company_id` doğrulanmıyordu. Yanlış `X-Firma-Id` ile başka firmanın projesine üye/faz/arşiv işlemi mümkün olabilirdi.
-
-**Düzeltme:** `loadProjectForFirma()` eklendi; yukarıdaki uçlarda 404/403 uygulanıyor. Regresyon testi: `tests/projects_firma_scope.test.js`.
+Regresyon: `tests/projects_firma_scope.test.js`.
 
 ### 4.2 Stok–depo kuralı
 
@@ -148,11 +145,21 @@ Rapora gerçek parola değerleri yazılmamıştır.
 | Madde | Dosya(lar) |
 |-------|------------|
 | Proje firma kapsamı | `routes/projects.js` |
+| Fason teslimat/rapor firma filtresi | `routes/fason.js` (`/teslimatlar`, `/rapor/ozet`) |
+| PRJ otomasyon ID/run/toggle firma kontrolü | `routes/prj_automations.js` |
+| Satış siparişi sevk + rezervasyon firma assert | `routes/sales_orders.js` |
+| Teklif→sipariş firma assert | `routes/sales_quotations.js` |
+| Sipariş liste `status` parametre bağlama düzeltmesi | `routes/sales_orders.js` (~94–96) |
+| JWT production’da varsayılan secret yasağı | `src/utils/jwt.js` |
 | TLS varsayılanı | `scripts/db-restore-demo.js` |
 | npm yüksek açıklar | `package.json`, `package-lock.json` |
 | Playwright smoke | `playwright.config.js`, `tests/e2e/*` |
 | IDOR regresyon testi | `tests/projects_firma_scope.test.js` |
 | Bu rapor | `docs/audit/PR126-135_KALITE_GUVENLIK_RAPORU.md` |
+
+### Takip (alt ajan incelemesi)
+
+[Review PR security diffs](bc-cdb561f2-8a57-5291-9038-aa2a7f460cae) çıktısındaki kalan **yüksek** maddeler bu PR’da kapatıldı. PR #126’daki fason IW auto-INSERT’i canlı ağaçta PR #129 ile zaten yok; ek kod değişikliği gerekmedi.
 
 ---
 
