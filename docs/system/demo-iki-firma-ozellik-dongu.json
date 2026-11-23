@@ -1,0 +1,199 @@
+{
+  "generated_at": "23.11.2026 07:11:25",
+  "base": "http://127.0.0.1:3000",
+  "DEMO": {
+    "features": [
+      {
+        "name": "CRM Aday",
+        "detail": "AD00004"
+      },
+      {
+        "name": "CRM Fırsat",
+        "detail": "FS00004"
+      },
+      {
+        "name": "CRM Faaliyet"
+      },
+      {
+        "name": "CRM Görev"
+      },
+      {
+        "name": "Satış Teklifi",
+        "detail": "ST00004"
+      },
+      {
+        "name": "Satış Siparişi",
+        "detail": "B00007"
+      },
+      {
+        "name": "Stok Rezervasyon",
+        "detail": "B00007"
+      },
+      {
+        "name": "RFQ / Teklif İstek",
+        "detail": "QI00004"
+      },
+      {
+        "name": "SA Teklif",
+        "detail": "QF00004"
+      },
+      {
+        "name": "SA Anlaşma",
+        "detail": "QA00002"
+      },
+      {
+        "name": "SA Talep",
+        "detail": "L00011"
+      },
+      {
+        "name": "SA Sipariş",
+        "detail": "P00008"
+      },
+      {
+        "name": "Mal Kabul",
+        "detail": "R00008"
+      },
+      {
+        "name": "Transfer Emri",
+        "detail": "TE00007"
+      },
+      {
+        "name": "Sayım Belgesi",
+        "detail": "SB00004"
+      },
+      {
+        "name": "Sevk Emri",
+        "detail": "SE00007"
+      },
+      {
+        "name": "İrsaliye",
+        "detail": "IR00004"
+      },
+      {
+        "name": "Fatura"
+      },
+      {
+        "name": "Tahsilat/Ödeme"
+      },
+      {
+        "name": "Döviz Kuru",
+        "detail": "USD/TRY"
+      },
+      {
+        "name": "Muhasebe Belgesi"
+      },
+      {
+        "name": "Fiyat Listesi"
+      }
+    ],
+    "docs": {
+      "crm_aday": "AD00004",
+      "crm_firsat": "FS00004",
+      "satis_teklif": "ST00004",
+      "satis_siparis": "B00007",
+      "rfq": "QI00004",
+      "sa_talep": "L00011",
+      "sa_siparis": "P00008",
+      "mal_kabul": "R00008",
+      "transfer": "TE00007",
+      "sayim": "SB00004",
+      "sevk": "SE00007",
+      "irsaliye": "IR00004"
+    }
+  },
+  "GIDA": {
+    "features": [
+      {
+        "name": "Master veri",
+        "detail": "stok+BOM+rota+4 depo"
+      },
+      {
+        "name": "Lot/Parti",
+        "detail": "SUT-086120"
+      },
+      {
+        "name": "KK Kontrol Planı",
+        "detail": "STD-GKK"
+      },
+      {
+        "name": "KK Stok-Plan Bağı"
+      },
+      {
+        "name": "SA Talep",
+        "detail": "L00012"
+      },
+      {
+        "name": "SA Sipariş",
+        "detail": "P00009"
+      },
+      {
+        "name": "Mal Kabul (GKK depoya)",
+        "detail": "R00009"
+      },
+      {
+        "name": "GKK Emri",
+        "detail": "QE00006"
+      },
+      {
+        "name": "GKK Onay"
+      },
+      {
+        "name": "KK Uygunsuzluk"
+      },
+      {
+        "name": "Stok Açılış Hareketi"
+      },
+      {
+        "name": "MRP Bağımsız İhtiyaç",
+        "detail": "BI00004"
+      },
+      {
+        "name": "MRP Çalışması",
+        "detail": "MR00004 net=2"
+      },
+      {
+        "name": "MRP → SA Talep"
+      },
+      {
+        "name": "Üretim Emri",
+        "detail": "E00005"
+      },
+      {
+        "name": "Üretim Operasyonları",
+        "detail": "1 adım"
+      },
+      {
+        "name": "Transfer (soğuk zincir)"
+      },
+      {
+        "name": "Satış Siparişi",
+        "detail": "B00008"
+      },
+      {
+        "name": "Sevk Emri"
+      },
+      {
+        "name": "Fatura",
+        "detail": "FA00008"
+      },
+      {
+        "name": "Fiyat Listesi"
+      },
+      {
+        "name": "Tedarikçi Değerlendirme"
+      }
+    ],
+    "docs": {
+      "parti": "SUT-086120",
+      "sa_siparis": "P00009",
+      "mal_kabul": "R00009",
+      "gkk": "QE00006",
+      "mrp_bi": "BI00004",
+      "mrp": "MR00004",
+      "uretim_emri": "E00005",
+      "satis_siparis": "B00008",
+      "fatura": "FA00008"
+    }
+  },
+  "errors": []
+}

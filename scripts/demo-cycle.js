@@ -29,6 +29,17 @@ async function ensureStokIsYeri(client, stokId, isYeriId) {
     );
 }
 
+async function ensureStokDepo(client, stokId, depoId, isYeriId) {
+    if (!stokId || !depoId) return;
+    await client.query(
+        `INSERT INTO stok_depo (stok_id, depo_id, is_yeri_id, aktif)
+         SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+           SELECT 1 FROM stok_depo WHERE stok_id=$1 AND depo_id=$2
+         )`,
+        [stokId, depoId, isYeriId || null]
+    );
+}
+
 async function ensureStok(client, row) {
     const mevcut = await client.query('SELECT id, stok_kodu FROM stoklar WHERE stok_adi = $1', [row.stok_adi]);
     if (mevcut.rows[0]) {
@@ -411,6 +422,13 @@ async function main() {
         const mm1r = await ensureStok(client, { ...stokBag, stok_adi: 'Mamul - Demo Cihaz', satis_fiyati: 1500, stok_tipi: 'Mamul', tedarik_tipi: 'Uretim' });
         const hm1 = hm1r.id, hm2 = hm2r.id, hm3 = hm3r.id, hm4 = hm4r.id;
         const ym1 = ym1r.id, ym2 = ym2r.id, mm1 = mm1r.id;
+
+        // Stok-depo bağı zorunlu (otomatik oluşturulmaz)
+        for (const sid of [hm1, hm2, hm3, hm4, ym1, ym2, mm1]) {
+            for (const did of [anaDepoId, ymDepoId, mmDepoId]) {
+                await ensureStokDepo(client, sid, did, isYeriId);
+            }
+        }
 
         const bomId = await ensureMamulBom(client, mm1, ym1, ym2, hm1, hm2, hm3, hm4);
 
