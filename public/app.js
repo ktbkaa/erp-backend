@@ -22485,47 +22485,83 @@ function lookupBrowserRowValue(row, valueKey) {
   return row[valueKey];
 }
 
-function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = false, checkedIds = null, indexOffset = 0) {
-  if (!rows.length) {
-    return '<div class="lookup-browser-empty">Kayıt bulunamadı.</div>';
+function lookupBrowserCellText(col, row) {
+  if (!col || !row) return '';
+  let raw = row[col.key];
+  if (col.key === '_opt') {
+    raw = typeof row._opt === 'object'
+      ? (row._opt?.label ?? row._opt?.value ?? row._label)
+      : (row._opt ?? row._label);
   }
+  if (raw == null || raw === '') return '';
+  if (typeof raw === 'boolean') return raw ? 'Evet' : 'Hayır';
+  if (Array.isArray(raw)) return raw.join('; ');
+  return String(raw);
+}
+
+function renderLookupBrowserTable(rows, cols, selectedVal, valueKey, multi = false, checkedIds = null, indexOffset = 0, colFilters = {}) {
   const checked = checkedIds instanceof Set ? checkedIds : new Set();
   const checkHead = multi
     ? `<th class="lookup-browser-check"><span class="sr-only">Seç</span></th>`
     : '';
-  const head = checkHead + cols.map((c) => `<th class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(c.label)}</th>`).join('');
-  const body = rows.map((r, i) => {
-    const idx = indexOffset + i;
-    const val = lookupBrowserRowValue(r, valueKey);
-    const rid = r.id != null ? String(r.id) : String(val ?? '');
-    const isChecked = multi && checked.has(String(rid));
-    const sel = (!multi && String(val) === String(selectedVal)) || isChecked ? ' is-selected' : '';
-    const checkCell = multi
-      ? `<td class="lookup-browser-check"><input type="checkbox" data-lookup-check="1" data-lookup-id="${escAttr(rid)}" ${isChecked ? 'checked' : ''} /></td>`
-      : '';
-    const cells = cols.map((c) => {
-      let raw = r[c.key];
-      if (c.key === '_opt') {
-        raw = typeof r._opt === 'object' ? (r._opt?.label ?? r._opt?.value ?? r._label) : r._opt;
-      }
-      if (raw == null || raw === '') raw = '—';
-      if (c.num && raw !== '—' && !Number.isNaN(Number(raw))) {
-        raw = Number(raw).toLocaleString('tr-TR', { maximumFractionDigits: 4 });
-      }
-      return `<td class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(String(raw))}</td>`;
+  const checkFilter = multi
+    ? `<th class="lookup-browser-check lookup-col-filter-th"></th>`
+    : '';
+  const labelRow = `<tr class="lookup-col-labels">${checkHead}${cols.map((c) =>
+    `<th class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(c.label)}</th>`
+  ).join('')}</tr>`;
+  const filterRow = `<tr class="lookup-col-filters">${checkFilter}${cols.map((c) => {
+    const val = colFilters[c.key] || '';
+    return `<th class="lookup-col-filter-th${c.num ? ' num' : ''}" data-col-key="${escAttr(c.key)}">
+      <input type="search" class="lookup-col-filter" data-col-key="${escAttr(c.key)}"
+        value="${escAttr(val)}" placeholder="%…%" autocomplete="off" spellcheck="false"
+        title="LIKE %metin% — birden fazla terim için ; kullanın" />
+    </th>`;
+  }).join('')}</tr>`;
+  let body;
+  if (!rows.length) {
+    const span = cols.length + (multi ? 1 : 0);
+    body = `<tr class="lookup-browser-empty-row"><td colspan="${span}">Kayıt bulunamadı.</td></tr>`;
+  } else {
+    body = rows.map((r, i) => {
+      const idx = indexOffset + i;
+      const val = lookupBrowserRowValue(r, valueKey);
+      const rid = r.id != null ? String(r.id) : String(val ?? '');
+      const isChecked = multi && checked.has(String(rid));
+      const sel = (!multi && String(val) === String(selectedVal)) || isChecked ? ' is-selected' : '';
+      const checkCell = multi
+        ? `<td class="lookup-browser-check"><input type="checkbox" data-lookup-check="1" data-lookup-id="${escAttr(rid)}" ${isChecked ? 'checked' : ''} /></td>`
+        : '';
+      const cells = cols.map((c) => {
+        let raw = lookupBrowserCellText(c, r);
+        if (raw === '') raw = '—';
+        else if (c.num && !Number.isNaN(Number(raw))) {
+          raw = Number(raw).toLocaleString('tr-TR', { maximumFractionDigits: 4 });
+        }
+        return `<td class="${c.mono ? 'mono' : ''}${c.num ? ' num' : ''}">${escAttr(String(raw))}</td>`;
+      }).join('');
+      return `<tr class="lookup-browser-row${sel}" data-lookup-val="${escAttr(val)}" data-lookup-id="${escAttr(rid)}" data-lookup-idx="${idx}" tabindex="0">${checkCell}${cells}</tr>`;
     }).join('');
-    return `<tr class="lookup-browser-row${sel}" data-lookup-val="${escAttr(val)}" data-lookup-id="${escAttr(rid)}" data-lookup-idx="${idx}" tabindex="0">${checkCell}${cells}</tr>`;
-  }).join('');
-  return `<div class="lookup-browser-table-wrap"><table class="lookup-browser-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+  return `<div class="lookup-browser-table-wrap"><table class="lookup-browser-table"><thead>${labelRow}${filterRow}</thead><tbody>${body}</tbody></table></div>`;
 }
 
-function filterLookupBrowserRows(rows, cols, q) {
-  // Arka plan: yazılan metin LIKE %metin% olarak uygulanır
+function filterLookupBrowserRows(rows, cols, q, colFilters = {}) {
+  // Genel arama: herhangi bir kolonda LIKE %metin%
+  let out = rows;
   const needle = normalizeLikeNeedle(q);
-  if (!needle) return rows;
-  return rows.filter((r) => cols.some((c) => {
-    const v = c.key === '_opt' ? r._opt : r[c.key];
-    return likeIncludes(v, needle);
+  if (needle) {
+    out = out.filter((r) => cols.some((c) => likeIncludes(lookupBrowserCellText(c, r), needle)));
+  }
+  // Kolon altı filtreler — AND; her kolonda `;` ile VEYA terimler
+  const active = Object.entries(colFilters || {}).filter(([, v]) => String(v || '').trim() !== '');
+  if (!active.length) return out;
+  const colMap = new Map(cols.map((c) => [c.key, c]));
+  return out.filter((r) => active.every(([key, raw]) => {
+    const terms = listColFilterTerms(raw);
+    if (!terms.length) return true;
+    const text = lookupBrowserCellText(colMap.get(key) || { key }, r);
+    return terms.some((term) => likeIncludes(text, term));
   }));
 }
 
@@ -22585,7 +22621,15 @@ function paintLookupBrowser() {
   const search = $('#lookupBrowserSearch');
   const count = $('#lookupBrowserCount');
   if (!body) return;
-  const filtered = filterLookupBrowserRows(st.allRows, st.cols, search?.value || '');
+  if (!st.colFilters || typeof st.colFilters !== 'object') st.colFilters = {};
+  const activeFilter = document.activeElement?.classList?.contains('lookup-col-filter')
+    ? document.activeElement
+    : null;
+  const focusKey = activeFilter?.getAttribute('data-col-key') || null;
+  const focusPos = activeFilter && typeof activeFilter.selectionStart === 'number'
+    ? activeFilter.selectionStart
+    : null;
+  const filtered = filterLookupBrowserRows(st.allRows, st.cols, search?.value || '', st.colFilters);
   st.filteredRows = filtered;
   const pageSize = LOOKUP_SUGGEST_PAGE_SIZE;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize) || 1);
@@ -22608,6 +22652,7 @@ function paintLookupBrowser() {
     Boolean(st.multi),
     st.checkedIds,
     start,
+    st.colFilters,
   );
   const pagerHtml = `
     <div class="lookup-suggest-pager lookup-browser-pager" data-lb-pager="1">
@@ -22616,7 +22661,43 @@ function paintLookupBrowser() {
       <button type="button" class="btn ghost" data-lb-page="1" ${pageNo >= totalPages - 1 ? 'disabled' : ''}>İleri →</button>
     </div>`;
   body.innerHTML = tableHtml + pagerHtml;
+  if (focusKey) {
+    const inp = body.querySelector(`.lookup-col-filter[data-col-key="${CSS.escape(focusKey)}"]`);
+    if (inp) {
+      inp.focus();
+      if (focusPos != null) {
+        try { inp.setSelectionRange(focusPos, focusPos); } catch (_) { /* ignore */ }
+      }
+    }
+  }
   updateLookupBrowserActionButtons();
+}
+
+function bindLookupBrowserColFilterUi() {
+  if (document.documentElement.dataset.lookupColFilterBound === '1') return;
+  document.documentElement.dataset.lookupColFilterBound = '1';
+  const onFilter = (e) => {
+    const inp = e.target?.closest?.('.lookup-col-filter');
+    if (!inp || !_lookupBrowserState) return;
+    const key = inp.getAttribute('data-col-key');
+    if (!key) return;
+    if (!_lookupBrowserState.colFilters) _lookupBrowserState.colFilters = {};
+    _lookupBrowserState.colFilters[key] = inp.value;
+    _lookupBrowserState.page = 0;
+    paintLookupBrowser();
+  };
+  document.addEventListener('input', onFilter);
+  document.addEventListener('search', onFilter);
+  document.addEventListener('keydown', (e) => {
+    const inp = e.target?.closest?.('.lookup-col-filter');
+    if (!inp || !_lookupBrowserState) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      inp.value = '';
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
 }
 
 function setLookupBrowserSelection(val, row) {
@@ -22737,7 +22818,9 @@ async function openLookupBrowserForSelect(sel) {
     targetScreen,
     multi,
     checkedIds,
+    colFilters: {},
   };
+  bindLookupBrowserColFilterUi();
 
   const dlg = $('#lookupBrowserDialog');
   const title = $('#lookupBrowserTitle');
