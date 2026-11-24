@@ -16560,8 +16560,12 @@ async function fetchLookupKey(key, query = null) {
     state.lookupCache[key] = Array.isArray(rows) ? rows : [];
     if (key === 'companies') state.companies = state.lookupCache[key];
     if (key === 'is-yerleri') state.isYerleri = state.lookupCache[key];
-  } catch (_) {
+  } catch (err) {
     state.lookupCache[key] = [];
+    console.warn('Lookup yüklenemedi', key, err);
+    if (typeof toast === 'function') {
+      toast(err?.message || `Lookup yüklenemedi: ${key}`);
+    }
   }
   return state.lookupCache[key];
 }

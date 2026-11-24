@@ -388,14 +388,15 @@ router.post('/:id/teklife-donustur', async (req, res) => {
                 );
                 hk = d.rows[0]?.id || null;
             }
+            const firmaId = firsat.company_id || companyIdFromReq(req) || null;
             const baslik = await client.query(
                 `
                 INSERT INTO sales_quotations
                     (quotation_no, partner_id, quotation_date, valid_date, currency_code,
                      status, movement_code_id, description, total_amount,
-                     source_document_type, source_document_id, opportunity_id, lead_id)
+                     source_document_type, source_document_id, opportunity_id, lead_id, company_id)
                 VALUES ($1,$2,CURRENT_DATE,$3,COALESCE($4,'TRY'),'Taslak',$5,$6,$7,
-                        'CRM_FIRSAT',$8,$8,$9)
+                        'CRM_FIRSAT',$8,$8,$9,$10)
                 RETURNING id
                 `,
                 [
@@ -403,6 +404,7 @@ router.post('/:id/teklife-donustur', async (req, res) => {
                     firsat.currency_code || 'TRY', hk,
                     req.body.description || `Fırsat ${firsat.opportunity_code}`,
                     top.total_amount, firsat.id, firsat.lead_id || null,
+                    firmaId,
                 ]
             );
             const tid = baslik.rows[0].id;

@@ -148,7 +148,11 @@ function buildListWhere(req) {
 
   if (firmaId) {
     params.push(firmaId);
-    where.push(`(ua.company_id = $${params.length} OR s.company_id = $${params.length})`);
+    const p = `$${params.length}`;
+    where.push(`(ua.company_id = ${p} OR s.company_id = ${p} OR EXISTS (
+      SELECT 1 FROM item_company_params fp
+      WHERE fp.item_id = s.id AND fp.company_id = ${p} AND fp.is_active IS DISTINCT FROM FALSE
+    ))`);
   }
 
   const onlyMamul = q.type !== 'hepsi';
@@ -281,9 +285,11 @@ router.get('/:id', async (req, res) => {
   try {
     const agac = await getBomTree(req.params.id);
     if (!agac) return res.status(404).json({ hata: 'Ürün ağacı bulunamadı.' });
-    const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+    const { companyIdFromReq, assertDocOrItemCompany } = require('../src/utils/firmaScope');
     const firmaId = companyIdFromReq(req);
-    if (firmaId && !(await assertCompanyRecord(require('../db'), 'boms', agac.id, firmaId))) {
+    if (firmaId && !(await assertDocOrItemCompany(require('../db'), {
+      table: 'boms', id: agac.id, firmaId, itemFk: 'finished_good_item_id',
+    }))) {
       return res.status(404).json({ hata: 'Ürün ağacı bulunamadı (firma kapsamı).' });
     }
     res.json(agac);

@@ -4,7 +4,7 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { addPartnerLedgerEntry } = require('../src/services/cariHareketService');
-const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq, andPartnerCompany } = require('../src/utils/firmaScope');
 
 async function fetchById(id) {
   const r = await pool.query(
@@ -32,10 +32,8 @@ router.get('/', async (req, res, next) => {
       where.push(`t.type = $${params.length}`);
     }
     const firmaId = companyIdFromReq(req);
-    if (firmaId) {
-      params.push(firmaId);
-      where.push(`c.company_id = $${params.length}`);
-    }
+    const companyClause = andPartnerCompany('c', firmaId, params);
+    if (companyClause) where.push(companyClause.replace(/^\s*AND\s+/i, ''));
     const sql = `
       SELECT t.*, c.partner_code, c.partner_name
       FROM receipts_payments t

@@ -11,6 +11,16 @@ function companyIdFromReq(req) {
   return Number.isFinite(id) && id > 0 ? id : null;
 }
 
+/** Belge kaydı: body.company_id (geçerliyse) yoksa X-Firma-Id */
+function resolveDocumentCompanyId(req, body = {}) {
+  const raw = body?.company_id;
+  if (raw != null && raw !== '' && raw !== 'null' && raw !== 'undefined') {
+    const id = Number(raw);
+    if (Number.isFinite(id) && id > 0) return id;
+  }
+  return companyIdFromReq(req);
+}
+
 /**
  * Liste sorgularına firma filtresi ekler.
  * @param {string} expr SQL ifadesi, örn. "sp.company_id" veya "iy.company_id"
@@ -162,8 +172,41 @@ function requireCompanyRecord(table, opts = {}) {
   };
 }
 
+/**
+ * Ürün ağacı / rota: belge company_id VEYA mamul stok company_id
+ * (liste filtresi ile aynı — aksi halde listede görünen kayıt GET’te 404).
+ */
+async function assertDocOrItemCompany(clientOrPool, {
+  table,
+  id,
+  firmaId,
+  itemFk = 'finished_good_item_id',
+  alias = 'd',
+} = {}) {
+  if (!firmaId || !id) return true;
+  const r = await clientOrPool.query(
+    `SELECT 1 FROM ${table} ${alias}
+     JOIN items s ON s.id = ${alias}.${itemFk}
+     WHERE ${alias}.id = $1
+       AND (
+         ${alias}.company_id = $2
+         OR s.company_id = $2
+         OR EXISTS (
+           SELECT 1 FROM item_company_params fp
+           WHERE fp.item_id = s.id
+             AND fp.company_id = $2
+             AND fp.is_active IS DISTINCT FROM FALSE
+         )
+       )
+     LIMIT 1`,
+    [id, firmaId]
+  );
+  return r.rows.length > 0;
+}
+
 module.exports = {
   companyIdFromReq,
+  resolveDocumentCompanyId,
   andCompany,
   andCompanyViaPlant,
   andItemCompany,
@@ -171,5 +214,6 @@ module.exports = {
   assertCompanyRecord,
   assertItemCompanyRecord,
   assertPartnerCompanyRecord,
+  assertDocOrItemCompany,
   requireCompanyRecord,
 };

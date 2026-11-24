@@ -466,6 +466,10 @@ router.post('/', async (req, res) => {
         }
 
         const m = syncInvoice({ ...req.body, partner_name, partner_type });
+        const { companyIdFromReq } = require('../src/utils/firmaScope');
+        if (m.company_id == null || m.company_id === '') {
+            m.company_id = companyIdFromReq(req);
+        }
 
         const id = await withTransaction(pool, async (client) => {
             const isYeriId = await assertLookup(client, 'plants', m.plant_id, 'İş yeri');

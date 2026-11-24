@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+const { companyIdFromReq, assertCompanyRecord, resolveDocumentCompanyId } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { matchInvoice } = require('../src/services/faturaEslestirmeService');
@@ -150,6 +150,9 @@ router.post('/', async (req, res, next) => {
 
       const extras = { ...ekstra };
       delete extras.vat_rate_default;
+      if (extras.company_id == null) {
+        extras.company_id = resolveDocumentCompanyId(req, req.body);
+      }
 
       if (extras.remaining_amount == null) extras.remaining_amount = total_amount + tax_amount;
       const baslik = appendInsert(
@@ -390,12 +393,14 @@ router.post('/:id/iade', async (req, res, next) => {
       const tur = alis ? 'AlisIade' : 'SatisIade';
       const seri = alis ? 'ALIS_FATURA' : 'FATURA';
       const no = await nextDocumentNo(client, seri);
+      const firmaId = source.company_id || companyIdFromReq(req) || null;
+      const plantId = source.plant_id || null;
       const r = await client.query(
         `
         INSERT INTO invoices
           (invoice_no, partner_id, invoice_type, total_amount, net_amount, tax_amount, payable_amount,
-           status, source_document_type, source_document_id, description)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8,$9,$10)
+           status, source_document_type, source_document_id, description, company_id, plant_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8,$9,$10,$11,$12)
         RETURNING id
         `,
         [
@@ -407,6 +412,7 @@ router.post('/:id/iade', async (req, res, next) => {
           alis ? 'ALIS_IADE' : 'SATIS_IADE',
           source.id,
           `İade ← ${source.invoice_no}`,
+          firmaId, plantId,
         ]
       );
       const iadeId = r.rows[0].id;
