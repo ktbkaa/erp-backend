@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<title>KTB ERP — İade Süreçleri</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "DejaVu Sans", Arial, sans-serif;
+    color: #1a2332;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    margin: 0;
+  }
+  h1 { font-size: 20pt; margin: 0 0 6pt; color: #0b3d5c; }
+  h2 {
+    font-size: 13pt; margin: 22pt 0 8pt; padding-bottom: 3pt;
+    border-bottom: 2px solid #0b3d5c; color: #0b3d5c; page-break-after: avoid;
+  }
+  h3 { font-size: 11pt; margin: 14pt 0 6pt; color: #1e4d6b; page-break-after: avoid; }
+  p { margin: 0 0 8pt; }
+  .meta { color: #556; font-size: 9.5pt; margin-bottom: 14pt; }
+  .hero {
+    background: linear-gradient(135deg, #0b3d5c 0%, #1a6b8a 100%);
+    color: #fff; padding: 22pt 18pt; border-radius: 6pt; margin-bottom: 16pt;
+  }
+  .hero h1 { color: #fff; margin-bottom: 4pt; }
+  .hero p { margin: 0; opacity: .92; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 8pt 0 12pt;
+    font-size: 9.5pt; page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #c5d0da; padding: 5pt 7pt; vertical-align: top; text-align: left;
+  }
+  th { background: #e8f1f6; color: #0b3d5c; }
+  tr:nth-child(even) td { background: #f7fafc; }
+  .flow {
+    background: #f4f8fb; border-left: 4px solid #1a6b8a;
+    padding: 8pt 10pt; margin: 8pt 0 12pt; font-family: ui-monospace, Consolas, monospace;
+    font-size: 9pt; white-space: pre-wrap; page-break-inside: avoid;
+  }
+  .note {
+    background: #fff8e8; border: 1px solid #e6d3a0; padding: 8pt 10pt;
+    margin: 8pt 0 12pt; border-radius: 4pt; font-size: 9.5pt;
+  }
+  .ok {
+    background: #eef8f0; border: 1px solid #a8d5b5; padding: 8pt 10pt;
+    margin: 8pt 0 12pt; border-radius: 4pt; font-size: 9.5pt;
+  }
+  ul { margin: 4pt 0 10pt 16pt; padding: 0; }
+  li { margin-bottom: 3pt; }
+  .toc a { color: #0b3d5c; text-decoration: none; }
+  .toc li { margin-bottom: 4pt; }
+  .tag {
+    display: inline-block; background: #dceaf2; color: #0b3d5c;
+    padding: 1pt 6pt; border-radius: 3pt; font-size: 8.5pt; font-weight: 600;
+  }
+  .muted { color: #667; font-size: 9pt; }
+  footer {
+    margin-top: 24pt; padding-top: 8pt; border-top: 1px solid #ccd;
+    font-size: 8.5pt; color: #778;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>KTB ERP — İade Süreçlerinin Tamamı</h1>
+  <p>Satış, satınalma, fason, kalite ve İK zimmet iade akışları · ekran · API · stok etkisi</p>
+</div>
+<p class="meta">Belge tarihi: 24 Kasım 2026 (Europe/Istanbul) · Dal: güncel ERP stack · Kaynak: uygulama kodu ve ekran tanımları</p>
+
+<h2>1. Özet harita</h2>
+<p>Sistemde “iade” tek bir belge tipi değil; <strong>beş ayrı iş alanına</strong> yayılmış süreçlerdir. Ortak nokta: kaynak belgeye bağlı ters hareket (stok ve/veya tutar) üretmektir.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Alan</th>
+      <th>Ne iade edilir?</th>
+      <th>Ana ekran / aksiyon</th>
+      <th>API</th>
+      <th>Stok etkisi</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Satış</strong></td>
+      <td>Müşteriye sevk edilen mal</td>
+      <td>İrsaliye → İade İrsaliyesi<br>Fatura → İade Faturası<br>Satış İade Faturaları</td>
+      <td><code>POST /delivery_notes/:id/iade</code><br><code>POST /invoices/:id/iade</code></td>
+      <td>İrsaliye: <span class="tag">IADE_GIRIS</span> (+1)<br>Fatura: tutar ters (stok yok)</td>
+    </tr>
+    <tr>
+      <td><strong>Satınalma</strong></td>
+      <td>Tedarikçiden giren mal</td>
+      <td>Mal Kabul → Tedarikçiye İade<br>Alış İade Faturaları</td>
+      <td><code>POST /mal-kabuller/:id/iade</code><br><code>POST /invoices/:id/iade</code></td>
+      <td>Mal kabul: <span class="tag">IADE_CIKIS</span> (−1)<br>Fatura: tutar ters</td>
+    </tr>
+    <tr>
+      <td><strong>Fason</strong></td>
+      <td>Emanette kullanılmayan malzeme</td>
+      <td>Fason sipariş → İade</td>
+      <td><code>POST /fason/siparisler/:id/iade</code></td>
+      <td>Emanet çıkış + firma depoya giriş (çift hareket)</td>
+    </tr>
+    <tr>
+      <td><strong>Kalite</strong></td>
+      <td>GKK/ÇKK ret sonrası yönlendirme</td>
+      <td>Kalite emirleri / ret nedeni</td>
+      <td>Kalite servisi (ret / yeniden işleme / hurda)</td>
+      <td>Doğrudan “iade belgesi” değil; karar sonrası satış/alış/fason iadesine bağlanır</td>
+    </tr>
+    <tr>
+      <td><strong>İK</strong></td>
+      <td>Personele zimmetli demirbaş</td>
+      <td>Zimmetler → İade Al</td>
+      <td><code>POST /hr-ise-alim/zimmetler/:id/iade</code></td>
+      <td>Stok yok; zimmet durumu <code>Iade</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="ok">
+  <strong>Stok–depo kuralı:</strong> İade stok hareketleri de <code>assertItemWarehouseAllowed</code> kuralına tabidir.
+  Stok ilgili depoya tanımlı değilse işlem engellenir; <code>item_warehouses</code> otomatik oluşturulmaz.
+</div>
+
+<h2>2. Satış iadesi (müşteri → firma)</h2>
+
+<h3>2.1 İade irsaliyesi (fiziksel mal geri dönüşü)</h3>
+<p><span class="tag">Ekran</span> İrsaliye Yönetimi · aksiyon: <em>İade İrsaliyesi</em></p>
+<p><span class="tag">API</span> <code>POST /delivery_notes/:id/iade</code> · body: isteğe bağlı <code>warehouse_id</code>, <code>miktarlar[{satırId}]</code></p>
+
+<div class="flow">Kaynak irsaliye (Onaylı veya Faturaya Dönüştü)
+        │
+        ▼
+  İade irsaliyesi (Taslak → Onaylı)
+  source_document_type = SATIS_IADE
+        │
+        ▼
+  Stok hareketi IADE_GIRIS (direction +1)
+  belgeTipi = SATIS_IADE
+        │
+        ▼
+  Depo bakiyesi artar (iade girişi)</div>
+
+<ul>
+  <li>Kaynak durum: yalnızca <strong>Onayli</strong> veya <strong>FaturayaDonustu</strong>.</li>
+  <li>Depo: body’deki <code>warehouse_id</code> veya kaynak irsaliye deposu.</li>
+  <li>Miktar: satır bazında kısmi iade desteklenir; verilmezse kaynak miktarın tamamı.</li>
+  <li>Yeni belge açıklaması: <code>İade ← {kaynak_irsaliye_no}</code>.</li>
+</ul>
+
+<h3>2.2 Satış iade faturası (mali ters kayıt)</h3>
+<p><span class="tag">Ekran</span> Fatura Yönetimi → <em>İade Faturası</em> · ayrı liste: <strong>Satış İade Faturaları</strong> (<code>invoice_type=Iade / SatisIade</code>)</p>
+<p><span class="tag">API</span> <code>POST /invoices/:id/iade</code></p>
+
+<div class="flow">Kaynak satış faturası
+        │
+        ▼
+  Yeni fatura: invoice_type = SatisIade
+  tutarlar negatif (total / net / tax / payable)
+  source_document_type = SATIS_IADE
+        │
+        ▼
+  Durum: Taslak (muhasebe/onay süreci ayrı)</div>
+
+<div class="note">
+  İade faturası <strong>stok hareketi üretmez</strong>. Fiziksel mal için önce (veya ayrıca) iade irsaliyesi gerekir.
+  Tipik zincir: <em>Sevk irsaliyesi → (iade irsaliyesi) → (iade faturası)</em>.
+</div>
+
+<h2>3. Satınalma iadesi (firma → tedarikçi)</h2>
+
+<h3>3.1 Mal kabulden tedarikçiye iade (fiziksel çıkış)</h3>
+<p><span class="tag">Ekran</span> Mal Kabuller · aksiyon: <em>Tedarikçiye İade</em></p>
+<p><span class="tag">API</span> <code>POST /mal-kabuller/:id/iade</code></p>
+
+<div class="flow">Mal kabul (satırlar mevcut)
+        │
+        ▼
+  Stok hareketi IADE_CIKIS (direction −1)
+  belgeTipi = ALIS_IADE
+  belgeId = mal_kabul_id
+        │
+        ▼
+  Depo bakiyesi azalır (tedarikçiye çıkış)</div>
+
+<ul>
+  <li>Depo: body <code>warehouse_id</code> veya mal kabul deposu.</li>
+  <li>Kısmi miktar: <code>miktarlar[{satırId}]</code>.</li>
+  <li>Yanıt: <code>goods_receipt_id</code>, <code>stock_movement_id</code>, <code>movement_no</code>.</li>
+</ul>
+
+<h3>3.2 Alış iade faturası</h3>
+<p><span class="tag">Ekran</span> <strong>Alış İade Faturaları</strong> (<code>invoice_type=AlisIade</code>) · kaynak alış faturasından <em>İade Faturası</em></p>
+<p><span class="tag">API</span> aynı uç: <code>POST /invoices/:id/iade</code> — kaynak tipinde “Alis” geçiyorsa <code>AlisIade</code> üretir.</p>
+
+<div class="flow">Kaynak alış faturası
+        │
+        ▼
+  Yeni fatura: invoice_type = AlisIade
+  tutarlar negatif · source = ALIS_IADE
+        │
+        ▼
+  Taslak iade faturası (mali)</div>
+
+<div class="note">
+  Fiziksel iade (mal kabul → IADE_CIKIS) ile mali iade (AlisIade faturası) birbirinden ayrılmıştır.
+  Her ikisi de aynı tedarikçi sürecinin parçasıdır; sırayla veya ihtiyaca göre kullanılır.
+</div>
+
+<h2>4. Fason iadesi (emanet → firma deposu)</h2>
+<p><span class="tag">Modül</span> Fason Yönetimi · <span class="tag">API</span> <code>POST /fason/siparisler/:id/iade</code></p>
+<p>Fasoncuya sevk edilip <strong>kullanılmayan malzemenin</strong> geri alınmasıdır. Emnet deposundan çıkış + hedef firmaya giriş yapılır.</p>
+
+<div class="flow">Fason sipariş
+        │
+        ▼
+  Emanet depo (partner emanet)  ──IADE_CIKIS──►  çıkış
+        │
+        ▼
+  Hedef depo (to_warehouse_id)  ◄──IADE_GIRIS──  giriş
+        │
+        ▼
+  subcontract_returns kaydı
+  (isteğe bağlı quarantine → stok_status = Kalitede)</div>
+
+<ul>
+  <li>Zorunlu: <code>to_warehouse_id</code> / <code>warehouse_id</code>, satır listesi (<code>satirlar</code> / <code>lines</code>).</li>
+  <li>Hareket kodu: <code>FAS-IADE</code> · belge tipi: <code>FasonIade</code>.</li>
+  <li><code>quarantine</code> / <code>qc_required</code> true ise giriş stoğu <strong>Kalitede</strong> statüsünde açılır.</li>
+  <li>Açıklama / reason alanları desteklenir.</li>
+</ul>
+
+<h2>5. Kalite ile iade ilişkisi</h2>
+<p>Kalite modülü tek başına “iade belgesi” üretmez; <strong>karar kapısı</strong>dır.</p>
+<ul>
+  <li><strong>GKK (giriş kalite):</strong> Mal kabul / fason teslimat sonrası ret → tedarikçiye iade veya yeniden sevk / hurda seçenekleri.</li>
+  <li><strong>ÇKK (çıkış kalite):</strong> Üretim sonrası ret → yeniden işleme veya müşteriye sevk engeli.</li>
+  <li>Ret nedeni kalite emrine yazılır; fiziksel/mali iade ilgili satış veya satınalma iade uçlarıyla tamamlanır.</li>
+</ul>
+<div class="flow">GKK/ÇKK emri → Ret
+        │
+        ├── Satınalma tarafı → Mal kabul iadesi / Alış iade faturası
+        ├── Satış tarafı     → İade irsaliyesi / Satış iade faturası
+        └── Fason tarafı     → Fason malzeme iadesi (quarantine opsiyonu)</div>
+
+<h2>6. İK zimmet iadesi</h2>
+<p><span class="tag">Ekran</span> İK İşe Alım / Zimmetler · aksiyon: <em>İade Al</em></p>
+<p><span class="tag">API</span> <code>POST /hr-ise-alim/zimmetler/:id/iade</code></p>
+<ul>
+  <li>Durum <code>Zimmette</code> → <code>Iade</code>; <code>returned_at</code> set edilir.</li>
+  <li>İşten çıkış onayında açık zimmet varsa engellenir (“önce iade edin”).</li>
+  <li>ERP stok kartına bağlı hareket üretmez; demirbaş zimmet kaydıdır.</li>
+</ul>
+
+<h2>7. Belge tipleri ve stok hareket kodları</h2>
+<table>
+  <thead>
+    <tr><th>Kod / tip</th><th>Anlam</th><th>Yön</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>SATIS_IADE</code> / <code>SatisIade</code> / <code>Iade</code></td><td>Satış iade irsaliye veya fatura</td><td>Stok +1 (irsaliye) / tutar − (fatura)</td></tr>
+    <tr><td><code>ALIS_IADE</code> / <code>AlisIade</code></td><td>Alış iade</td><td>Stok −1 (mal kabul) / tutar − (fatura)</td></tr>
+    <tr><td><code>IADE_GIRIS</code></td><td>Stok iade girişi</td><td>+1</td></tr>
+    <tr><td><code>IADE_CIKIS</code></td><td>Stok iade çıkışı</td><td>−1</td></tr>
+    <tr><td><code>FAS-IADE</code> / <code>FasonIade</code></td><td>Fason emanet iadesi</td><td>Çıkış + giriş çifti</td></tr>
+  </tbody>
+</table>
+
+<h2>8. Ekran envanteri (UI)</h2>
+<table>
+  <thead>
+    <tr><th>Ekran id</th><th>Başlık</th><th>Rolü</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>irsaliye-yonetimi</code></td><td>İrsaliye Yönetimi</td><td>Kaynak satış irsaliyesinden <em>İade İrsaliyesi</em></td></tr>
+    <tr><td><code>fatura-yonetimi</code></td><td>Fatura Yönetimi</td><td>Kaynak faturadan <em>İade Faturası</em></td></tr>
+    <tr><td><code>satis-iade-faturalari</code></td><td>Satış İade Faturaları</td><td>Müşteri iade faturaları listesi/CRUD</td></tr>
+    <tr><td><code>mal-kabuller</code></td><td>Mal Kabuller</td><td><em>Tedarikçiye İade</em></td></tr>
+    <tr><td><code>alis-iade-faturalari</code></td><td>Alış İade Faturaları</td><td>Tedarikçi iade faturaları listesi/CRUD</td></tr>
+    <tr><td>Fason sipariş ekranı</td><td>Fason Yönetimi</td><td>Sipariş üzerinden malzeme iadesi</td></tr>
+    <tr><td>KK emirleri (GKK/ÇKK)</td><td>Kalite</td><td>Ret kararı → iade yönlendirme</td></tr>
+    <tr><td>HR zimmetler</td><td>İşe Alım / Zimmet</td><td><em>İade Al</em></td></tr>
+  </tbody>
+</table>
+
+<h2>9. Uçtan uca tipik senaryolar</h2>
+
+<h3>A) Müşteri mal iade etti</h3>
+<ol>
+  <li>Satış irsaliyesini aç → <em>İade İrsaliyesi</em> (gerekirse kısmi miktar).</li>
+  <li>Depoya giriş ve bakiye kontrolü.</li>
+  <li>Gerekirse satış faturasından <em>İade Faturası</em> (mali kapanış).</li>
+  <li>Liste: Satış İade Faturaları.</li>
+</ol>
+
+<h3>B) Tedarikçiye mal iade</h3>
+<ol>
+  <li>Mal kabulü aç → <em>Tedarikçiye İade</em> (stok çıkışı).</li>
+  <li>Gerekirse alış faturasından iade faturası (AlisIade).</li>
+  <li>Liste: Alış İade Faturaları.</li>
+</ol>
+
+<h3>C) Fasoncuya fazla sevk edilen malzeme geri</h3>
+<ol>
+  <li>Fason siparişte iade satırlarını ve hedef depoyu ver.</li>
+  <li>Kaliteye düşecekse <code>quarantine</code> işaretle.</li>
+  <li>Emanet bakiyesi ve firma depo bakiyesini doğrula.</li>
+</ol>
+
+<h3>D) Personel zimmet iadesi</h3>
+<ol>
+  <li>Zimmet kaydında <em>İade Al</em>.</li>
+  <li>İşten çıkış öncesi açık zimmet kalmamalı.</li>
+</ol>
+
+<h2>10. Sınırlar ve dikkat noktaları</h2>
+<ul>
+  <li>İade irsaliyesi yalnızca onaylı / faturaya dönüşmüş satış irsaliyesinden.</li>
+  <li>İade faturaları varsayılan <strong>Taslak</strong>; onay/muhasebe ayrı adımdır.</li>
+  <li>Satış iade faturası stok üretmez; stok için irsaliye iadesi şarttır.</li>
+  <li>Mal kabul iadesi ayrı bir “iade irsaliye belgesi” yerine doğrudan stok çıkışı üretir.</li>
+  <li>Firma kapsamı (<code>X-Firma-Id</code>) belge ve stok işlemlerinde geçerlidir.</li>
+  <li>Kalite ret’i otomatik iade belgesi açmaz; operatör ilgili iade aksiyonunu seçer.</li>
+</ul>
+
+<footer>
+  KTB ERP · İade Süreçleri Rehberi · Bu belge uygulama kodundaki mevcut davranışa göre üretilmiştir.
+  Kaynak uçlar: delivery_notes, goods_receipts, invoices, fason, hr_recruitment, kaliteService.
+</footer>
+
+</body>
+</html>
