@@ -225,20 +225,43 @@ router.post('/:id/cariye-donustur', async (req, res) => {
 
         const result = await withTransaction(pool, async (client) => {
             const kod = req.body.partner_code || (await nextSequenceCode(client, 'MUSTERI'));
+            // Firma kapsamı: adayın firması / istek başlığı — yoksa lookup’ta görünmez
+            const firmaId = aday.company_id || companyIdFromReq(req) || null;
+            let plantId = null;
+            if (firmaId) {
+                const iy = await client.query(
+                    `SELECT id FROM plants WHERE company_id = $1 ORDER BY id LIMIT 1`,
+                    [firmaId]
+                );
+                plantId = iy.rows[0]?.id || null;
+            }
             const cari = await client.query(
                 `
                 INSERT INTO partners
                     (partner_code, partner_name, partner_type, phone, email, address, province, district, country,
-                     postal_code, website, fax, mobile_phone, is_active, notes)
-                VALUES ($1,$2,'Musteri',$3,$4,$5,$6,$7,COALESCE($8,'TR'),$9,$10,$11,$12,TRUE,$13)
+                     postal_code, website, fax, mobile_phone, is_active, notes, company_id, plant_id)
+                VALUES ($1,$2,'Musteri',$3,$4,$5,$6,$7,COALESCE($8,'TR'),$9,$10,$11,$12,TRUE,$13,$14,$15)
                 RETURNING id, partner_code, partner_name
                 `,
                 [
                     kod, aday.lead_name, aday.phone, aday.email, aday.address, aday.province, aday.district,
                     aday.country, aday.postal_code, aday.website, aday.fax, aday.mobile_phone, aday.notes,
+                    firmaId, plantId,
                 ]
             );
             const cariId = cari.rows[0].id;
+            if (firmaId) {
+                await client.query(
+                    `
+                    INSERT INTO partner_company_params (partner_id, company_id, plant_id, is_active)
+                    VALUES ($1, $2, $3, TRUE)
+                    ON CONFLICT (partner_id, company_id) DO UPDATE SET
+                      plant_id = COALESCE(EXCLUDED.plant_id, partner_company_params.plant_id),
+                      is_active = TRUE
+                    `,
+                    [cariId, firmaId, plantId]
+                );
+            }
             await client.query(
                 `
                 UPDATE crm_leads SET
