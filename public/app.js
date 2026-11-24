@@ -25482,17 +25482,17 @@ async function finishSaveForm(screen, saved, after = 'stay') {
       state.rows = state.rows.map((r) => (String(r.id) === String(id) ? { ...r, ...(saved || {}) } : r));
     }
     state.filtered = applyFilters(state.rows, screen);
-    // Aynı sekmede Düzelt’e geç — yeni sekme açma
+    // Kaydet → İncele: Kaydet grubu kalkar, Düzelt görünür (tüm ekranlar)
     let record = { ...(saved || {}), id };
     try {
       record = await api(`${screenApiBase(screen.endpoint)}/${id}`);
     } catch (_) { /* kaydedilen haliyle devam */ }
-    state.formMode = 'duzelt';
+    state.formMode = 'incele';
     state.formRecord = record;
     state.formActiveTab = state.formActiveTab || screen.formTabs?.[0]?.id || null;
     const tab = state.openTabs.find((t) => t.key === formKey);
     if (tab) {
-      tab.formMode = 'duzelt';
+      tab.formMode = 'incele';
       tab.formRecord = record;
       const code = record?.[screen.codeField] || '';
       tab.title = code ? `${screen.title} · ${code}` : screen.title;
@@ -25500,7 +25500,7 @@ async function finishSaveForm(screen, saved, after = 'stay') {
     showView('form');
     ensureSearchBarVisible();
     const titleEl = $('#screenTitle');
-    if (titleEl) titleEl.textContent = `${screen.title} · ${MODE_LABELS.duzelt}`;
+    if (titleEl) titleEl.textContent = `${screen.title} · ${MODE_LABELS.incele}`;
     renderForm(screen);
     renderTabBar();
     return;
