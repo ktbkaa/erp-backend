@@ -1,24 +1,22 @@
-#!/usr/bin/env node
 /**
- * Metal Marvel Figür Sanayi — kapsamlı demo simülasyonu
+ * Metal Marvel Figür Sanayi — orta-büyük ölçekli tam süreç simülasyonu
  *
- * Kullanım:
+ * Firma: MARVEL (döküm + CNC süperkahraman figürleri)
+ * ~120 beyaz yaka + ~400 mavi yaka; departman ERP kullanıcıları
+ * 3 haftalık süreç (MMARVEL-W1/W2/W3) + lisans + kalibrasyon
+ *
  *   node scripts/demo-metal-marvel-sim.js
  *   npm run demo:marvel
- *
- * Çıktı: docs/metal-marvel/evidence/marvel-sim-ozet.json
- *
- * Önkoşul: ERP sunucusu çalışıyor olmalı (npm start), migrate güncel.
  */
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { purgeMarvelIfExists } = require('./lib/marvel-purge');
 const {
-  FIRMA_KODU, FIRMA_ADI, TAG, log, ensureOwnerLogin, evidencePath,
+  FIRMA_KODU, TAG, log, ensureOwnerLogin, evidencePath,
 } = require('./lib/marvel-common');
+const { purgeMarvelIfExists } = require('./lib/marvel-purge');
 const {
   ensureCompany,
   ensurePlantAndWarehouses,
@@ -27,167 +25,204 @@ const {
   seedLicense,
   seedCalibration,
   ensurePoApprovalRule,
+  upsertErpUser,
 } = require('./lib/marvel-org');
 const { seedMasterData } = require('./lib/marvel-master');
 const { runWeek1, runWeek2, runWeek3 } = require('./lib/marvel-process');
 
-const summary = {
-  firma: FIRMA_KODU,
-  firma_adi: FIRMA_ADI,
-  tags: TAG,
-  started_at: new Date().toISOString(),
-  errors: [],
-  counts: {},
-  users: {},
-  process_docs: {},
-};
+const OUT_DIR = path.join(__dirname, '..', 'docs', 'metal-marvel', 'evidence');
 
 async function main() {
-  log(`\n${'='.repeat(60)}\n  METAL MARVEL DEMO SIM — ${TAG.LABEL}\n${'='.repeat(60)}\n`);
-
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  log('=== Metal Marvel simülasyonu ===');
   await ensureOwnerLogin();
 
-  let existing = null;
-  try {
-    existing = await purgeMarvelIfExists();
-  } catch (err) {
-    log(`Purge uyarısı: ${err.message}`);
-  }
+  await purgeMarvelIfExists();
 
-  let firma = null;
-  let org = null;
-  let master = null;
-  let hr = null;
-  let license = null;
-  let calibration = null;
+  // purge pool'u kapatmış olabilir
+  delete require.cache[require.resolve('../db')];
+  const db = require('../db');
 
-  try {
-    await withTransaction(pool, async (client) => {
-      firma = await ensureCompany(client);
-      if (!firma?.id) throw new Error('Firma oluşturulamadı');
-      summary.firma_id = firma.id;
-
-      const { plant, wh } = await ensurePlantAndWarehouses(client, firma.id);
-      const wc = await ensureWorkCenters(client, plant.id);
-      org = { firma, plant, wh, wc };
-      log('Org: Gebze + 7 depo + 3 iş merkezi hazır');
-    });
-  } catch (err) {
-    console.error('FATAL: Firma/org oluşturma başarısız:', err.message);
-    summary.fatal = err.message;
-    writeSummary();
-    process.exitCode = 1;
-    await safeEnd();
-    return;
-  }
-
-  try {
-    await withTransaction(pool, async (client) => {
-      master = await seedMasterData(client, { ...org, tag: TAG.W1 });
-    });
-    summary.counts.items = Object.keys(master.items).length;
-    summary.counts.partners = Object.keys(master.partners).length;
-  } catch (err) {
-    log(`Master data hatası: ${err.message}`);
-    summary.errors.push({ step: 'master', hata: err.message });
-  }
-
-  try {
-    hr = await seedHrOrg(pool, firma.id, org);
-    summary.users = hr.users;
-    summary.counts.hr = hr.counts.hr;
-    const finUser = hr.users['marvel.finans']?.id;
-    await withTransaction(pool, async (client) => {
-      await ensurePoApprovalRule(client, firma.id, finUser);
-    });
-  } catch (err) {
-    log(`İK/org API hatası: ${err.message}`);
-    summary.errors.push({ step: 'hr', hata: err.message });
-    hr = hr || { depts: {}, users: {}, employees: {} };
-  }
-
-  try {
-    license = await seedLicense(firma.id);
-    summary.license = license;
-  } catch (err) {
-    log(`Lisans: ${err.message}`);
-    summary.errors.push({ step: 'license', hata: err.message });
-  }
-
-  try {
-    const kaliteUid = hr.users['marvel.kalite']?.id;
-    calibration = await seedCalibration(firma.id, org.plant.id, kaliteUid);
-    summary.calibration_devices = calibration?.map((d) => d.instrument_code || d.id);
-  } catch (err) {
-    log(`Kalibrasyon: ${err.message}`);
-    summary.errors.push({ step: 'calibration', hata: err.message });
-  }
-
-  const ctx = {
-    firma: org.firma,
-    plant: org.plant,
-    wh: org.wh,
-    wc: org.wc,
-    master,
-    hr,
-    calibration,
-    out: summary.process_docs,
+  const summary = {
+    firma: null,
+    tags: TAG,
+    org: {},
+    hr: {},
+    license: null,
+    calibration: [],
+    master: {},
+    week1: {},
+    week2: {},
+    week3: {},
+    errors: [],
+    users: {},
   };
 
-  await runWeek1(ctx).catch((e) => {
-    log(`W1 fatal wrap: ${e.message}`);
-    summary.errors.push({ step: TAG.W1, hata: e.message });
-  });
-  await runWeek2(ctx).catch((e) => {
-    log(`W2 fatal wrap: ${e.message}`);
-    summary.errors.push({ step: TAG.W2, hata: e.message });
-  });
-  await runWeek3(ctx, pool).catch((e) => {
-    log(`W3 fatal wrap: ${e.message}`);
-    summary.errors.push({ step: TAG.W3, hata: e.message });
+  let firma;
+  let plant;
+  let wh;
+  let wc;
+  let hr;
+  let master;
+
+  await withTransaction(db, async (client) => {
+    firma = await ensureCompany(client);
+    ({ plant, wh } = await ensurePlantAndWarehouses(client, firma.id));
+    wc = await ensureWorkCenters(client, plant.id);
+    log(`Firma ${firma.company_code}#${firma.id} · ${plant.plant_code}`);
   });
 
-  // Sayımlar
+  await db.query(
+    `INSERT INTO user_company_permissions (user_id, company_id)
+     SELECT u.id, $1 FROM users u
+     WHERE LOWER(COALESCE(u.user_code,'')) IN ('owner','admin','tester')
+     ON CONFLICT DO NOTHING`,
+    [firma.id],
+  );
+  await upsertErpUser(db, {
+    userCode: 'owner',
+    first: 'Kagan',
+    last: 'Admin',
+    title: 'Sistem',
+    role: 'ADMIN',
+    companyId: firma.id,
+  }).catch(() => null);
+
+  // seedHrOrg HTTP API + SQL karışık; transaction kullanma (user_id görünürlüğü)
   try {
-    const c = await pool.query(
-      `SELECT
-         (SELECT COUNT(*)::int FROM hr_employees WHERE company_id=$1) AS employees,
-         (SELECT COUNT(*)::int FROM hr_employees WHERE company_id=$1 AND collar_type='BeyazYaka') AS white,
-         (SELECT COUNT(*)::int FROM hr_employees WHERE company_id=$1 AND collar_type='MaviYaka') AS blue,
-         (SELECT COUNT(*)::int FROM items WHERE company_id=$1) AS items,
-         (SELECT COUNT(*)::int FROM sales_orders WHERE company_id=$1) AS sales_orders,
-         (SELECT COUNT(*)::int FROM purchase_orders WHERE company_id=$1) AS purchase_orders,
-         (SELECT COUNT(*)::int FROM production_orders WHERE company_id=$1) AS production_orders,
-         (SELECT COUNT(*)::int FROM qc_instruments WHERE company_id=$1) AS instruments`,
-      [firma.id],
-    );
-    summary.counts.final = c.rows[0];
-  } catch (err) {
-    summary.errors.push({ step: 'counts', hata: err.message });
+    hr = await seedHrOrg(db, firma.id, { plant });
+  } catch (e) {
+    log(`İK seed hata: ${e.message}`);
+    summary.errors.push({ step: 'hr', hata: e.message });
+    hr = { depts: {}, users: {}, employees: {}, counts: {}, shifts: {}, calendar: null };
   }
 
-  summary.finished_at = new Date().toISOString();
-  summary.ok = summary.errors.length === 0;
-  writeSummary();
-  log(`\nBitti. Özet: ${evidencePath()}`);
-  log(`Filtre: project_code IN ('${TAG.W1}','${TAG.W2}','${TAG.W3}') OR description ILIKE '%${TAG.LABEL}%'`);
-  await safeEnd();
+  try {
+    summary.license = await seedLicense(firma.id);
+    log('Lisans OK');
+  } catch (e) {
+    log(`Lisans hata: ${e.message}`);
+    summary.errors.push({ step: 'lisans', hata: e.message });
+  }
+
+  try {
+    summary.calibration = await seedCalibration(
+      firma.id,
+      plant.id,
+      hr.users['marvel.kalibrasyon']?.id || hr.users['marvel.kalite']?.id,
+    );
+    log(`Kalibrasyon cihazları: ${summary.calibration.length}`);
+  } catch (e) {
+    log(`Kalibrasyon hata: ${e.message}`);
+    summary.errors.push({ step: 'kalibrasyon', hata: e.message });
+  }
+
+  try {
+    await ensurePoApprovalRule(db, firma.id, hr.users['marvel.finans']?.id);
+  } catch (e) {
+    log(`Onay kuralı: ${e.message}`);
+    summary.errors.push({ step: 'onay-kural', hata: e.message });
+  }
+
+  try {
+    await withTransaction(db, async (client) => {
+      master = await seedMasterData(client, {
+        firma, plant, wh, wc, tag: TAG.LABEL,
+      });
+    });
+  } catch (e) {
+    log(`Master hata: ${e.message}`);
+    summary.errors.push({ step: 'master', hata: e.message });
+    master = { items: {}, partners: {}, boms: {} };
+  }
+
+  summary.firma = { id: firma.id, code: firma.company_code, name: firma.company_name };
+  summary.org = {
+    plant: { id: plant.id, code: plant.plant_code },
+    warehouses: Object.fromEntries(
+      Object.entries(wh).filter(([k]) => !/^\d+$/.test(k)).map(([k, v]) => [k, { id: v.id, code: v.warehouse_code }]),
+    ),
+    work_centers: Object.fromEntries(
+      Object.entries(wc).map(([k, v]) => [k, { id: v.id, code: v.center_code }]),
+    ),
+  };
+  summary.hr = { counts: hr.counts, departments: Object.keys(hr.depts) };
+  summary.users = hr.users;
+  summary.master = {
+    items: Object.keys(master.items || {}),
+    partners: Object.keys(master.partners || {}),
+    boms: Object.keys(master.boms || {}),
+  };
+
+  const ctx = {
+    firma,
+    plant,
+    wh,
+    wc,
+    hr,
+    master,
+    users: hr.users,
+    calibration: summary.calibration,
+    summary,
+    out: summary,
+  };
+
+  log('\n--- Hafta 1 (CRM → satış → SA talep/direkt) ---');
+  try {
+    summary.week1 = await runWeek1(ctx);
+  } catch (e) {
+    log(`W1 fatal: ${e.message}`);
+    summary.errors.push({ step: 'W1', hata: e.message });
+  }
+
+  log('\n--- Hafta 2 (üretim / proje / kalite) ---');
+  try {
+    summary.week2 = await runWeek2(ctx);
+  } catch (e) {
+    log(`W2 fatal: ${e.message}`);
+    summary.errors.push({ step: 'W2', hata: e.message });
+  }
+
+  log('\n--- Hafta 3 (sevk / fatura / İK / CAPA / MRP) ---');
+  try {
+    await withTransaction(db, async (client) => {
+      summary.week3 = await runWeek3(ctx, client);
+    });
+  } catch (e) {
+    log(`W3 fatal: ${e.message}`);
+    summary.errors.push({ step: 'W3', hata: e.message });
+  }
+
+  const shotIds = {
+    firmaId: firma.id,
+    item: master.items?.iron || master.items?.fgIron || Object.values(master.items || {})[0],
+    bom: master.boms?.iron || Object.values(master.boms || {})[0],
+    partner: master.partners?.musCollector || Object.values(master.partners || {})[0],
+    so: summary.week1?.so || summary.week1?.salesOrder,
+    po: summary.week1?.poReq || summary.week1?.poDirect,
+    wo: summary.week2?.woDokum || summary.week2?.production,
+    project: summary.week2?.project,
+    cihaz: summary.calibration?.[0],
+    fatura: summary.week3?.invoice || summary.week3?.fatura,
+    emp: hr.employees?.IK?.[0] || hr.employees?.Satis?.[0],
+    license: summary.license,
+  };
+
+  fs.writeFileSync(path.join(OUT_DIR, 'shot-ids.json'), JSON.stringify(shotIds, null, 2));
+  const ozetPath = evidencePath();
+  fs.mkdirSync(path.dirname(ozetPath), { recursive: true });
+  fs.writeFileSync(ozetPath, JSON.stringify(summary, null, 2));
+  fs.writeFileSync(path.join(OUT_DIR, 'marvel-sim-ozet.json'), JSON.stringify(summary, null, 2));
+
+  log(`\nÖzet: ${ozetPath}`);
+  log(`Hatalar: ${summary.errors.length}`);
+  log(`İK: ${JSON.stringify(summary.hr.counts)}`);
+  await db.end().catch(() => null);
+  process.exit(0);
 }
 
-function writeSummary() {
-  const outPath = evidencePath();
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(summary, null, 2), 'utf8');
-}
-
-async function safeEnd() {
+main().catch(async (e) => {
+  console.error(e);
   try { await pool.end(); } catch { /* */ }
-}
-
-main().catch(async (err) => {
-  console.error('MARVEL_SIM_FAIL', err);
-  summary.errors.push({ step: 'main', hata: err.message });
-  writeSummary();
-  process.exitCode = 1;
-  await safeEnd();
+  process.exit(1);
 });

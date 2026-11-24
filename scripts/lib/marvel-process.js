@@ -266,9 +266,10 @@ async function runWeek1(ctx) {
   }
   docs.poAlloy = poAlloy;
 
+  const mkWh = wh.giris || wh.hmd;
   const mk = await apiAsUser(userSa, 'POST', '/mal-kabuller', {
     purchase_order_id: poAlloy.id,
-    warehouse_id: wh.hmd.id,
+    warehouse_id: mkWh.id,
     company_id: firma.id,
     description: `[${tag}] Mal kabul alaşım`,
     incoming_qc_required: true,
@@ -303,6 +304,18 @@ async function runWeek2(ctx) {
   log(`\n=== ${tag} — Üretim Döküm/CNC + Proje + Onay ===`);
   const docs = {};
 
+  // Mamul + CKK depo bağlarını garanti et
+  for (const it of [master.fgCast, master.fgCnc]) {
+    for (const w of [wh.mam, wh.ckk, wh.svk].filter(Boolean)) {
+      await pool.query(
+        `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+         SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+           SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2)`,
+        [it.id, w.id, plant.id],
+      ).catch(() => null);
+    }
+  }
+
   const ueDok = await apiAsUser('marvel.uretim.dokum', 'POST', '/uretim-emirleri', {
     item_id: master.fgCast.id,
     product_bom_id: master.bomCast.id,
@@ -310,7 +323,7 @@ async function runWeek2(ctx) {
     plant_id: plant.id,
     company_id: firma.id,
     component_warehouse_id: wh.hmd.id,
-    fg_warehouse_id: wh.ckk.id,
+    fg_warehouse_id: wh.mam.id,
     wip_warehouse_id: wh.dok_wip.id,
     planned_quantity: 100,
     order_type_id: 3,
@@ -334,7 +347,7 @@ async function runWeek2(ctx) {
     plant_id: plant.id,
     company_id: firma.id,
     component_warehouse_id: wh.hmd.id,
-    fg_warehouse_id: wh.ckk.id,
+    fg_warehouse_id: wh.mam.id,
     wip_warehouse_id: wh.cnc_wip.id,
     planned_quantity: 40,
     order_type_id: 3,
@@ -374,7 +387,11 @@ async function runWeek2(ctx) {
   docs.project = proj;
 
   const wiTypes = await pool.query(`SELECT id FROM prj_work_item_types ORDER BY id LIMIT 1`);
-  const wiStatus = await pool.query(`SELECT id FROM prj_work_item_statuses WHERE is_initial LIMIT 1`);
+  const wiStatus = await pool.query(
+    `SELECT id FROM prj_work_item_statuses
+     WHERE UPPER(COALESCE(status_code,'')) IN ('TODO','OPEN','DRAFT','BACKLOG')
+     ORDER BY id LIMIT 1`,
+  );
   const assignees = ['marvel.arge', 'marvel.uretim.dokum', 'marvel.kalite', 'marvel.sa'];
   for (let i = 0; i < assignees.length; i++) {
     const u = (await pool.query(`SELECT id FROM users WHERE user_code=$1`, [assignees[i]])).rows[0];

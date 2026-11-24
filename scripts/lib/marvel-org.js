@@ -27,6 +27,7 @@ const DEPTS = [
 ];
 
 const WH_SPECS = [
+  { code: 'MARVEL-GIRIS', name: 'Mal Kabul Giriş', role: 'Giris' },
   { code: 'MARVEL-HMD', name: 'Hammadde', role: 'Hammadde' },
   { code: 'MARVEL-DOK-WIP', name: 'Döküm WIP', role: 'YariMamul' },
   { code: 'MARVEL-CNC-WIP', name: 'CNC WIP', role: 'YariMamul' },
@@ -72,8 +73,8 @@ async function ensurePlantAndWarehouses(client, firmaId) {
   )).rows[0];
   if (!plant) {
     plant = (await client.query(
-      `INSERT INTO plants (company_id, plant_code, plant_name, address, city)
-       VALUES ($1,'MARVEL-GEBZE','Gebze Fabrika','OSB 4. Cad. Gebze','Kocaeli') RETURNING *`,
+      `INSERT INTO plants (company_id, plant_code, plant_name, address)
+       VALUES ($1,'MARVEL-GEBZE','Gebze Fabrika','OSB 4. Cad. Gebze / Kocaeli') RETURNING *`,
       [firmaId],
     )).rows[0];
   }
@@ -91,6 +92,7 @@ async function ensurePlantAndWarehouses(client, firmaId) {
       )).rows[0];
     }
     wh[spec.code.replace('MARVEL-', '').replace(/-/g, '_').toLowerCase()] = w;
+    if (spec.code.endsWith('GIRIS')) wh.giris = w;
     if (spec.code.endsWith('HMD')) wh.hmd = w;
     if (spec.code.endsWith('MAM')) wh.mam = w;
     if (spec.code.endsWith('GKK')) wh.gkk = w;
@@ -128,22 +130,24 @@ async function ensureWorkCenters(client, plantId) {
   return out;
 }
 
-async function upsertErpUser(client, { userCode, first, last, title, role, companyId }) {
+async function upsertErpUser(_client, { userCode, first, last, title, role, companyId }) {
+  // API ile personel bağlarken görünür olsun diye pool üzerinden commit
+  const db = require('../../db');
   const hash = hashParola('Demo123!');
-  let u = (await client.query(`SELECT * FROM users WHERE user_code=$1`, [userCode])).rows[0];
+  let u = (await db.query(`SELECT * FROM users WHERE user_code=$1`, [userCode])).rows[0];
   if (!u) {
-    u = (await client.query(
+    u = (await db.query(
       `INSERT INTO users (user_code, username, first_name, last_name, role, title, is_active, password_hash, group_code)
-       VALUES ($1,$1,$2,$3,$4,$5,TRUE,$6,'ADMIN') RETURNING *`,
+       VALUES ($1,$1,$2,$3,$4,$5,TRUE,$6,'GENEL') RETURNING *`,
       [userCode, first, last, role || 'USER', title, hash],
     )).rows[0];
   } else {
-    await client.query(
+    await db.query(
       `UPDATE users SET first_name=$2, last_name=$3, title=$4, password_hash=$5, is_active=TRUE WHERE id=$1`,
       [u.id, first, last, title, hash],
     );
   }
-  await client.query(
+  await db.query(
     `INSERT INTO user_company_permissions (user_id, company_id)
      SELECT $1,$2 WHERE NOT EXISTS (
        SELECT 1 FROM user_company_permissions WHERE user_id=$1 AND company_id=$2)`,
@@ -265,8 +269,8 @@ async function seedHrOrg(client, firmaId, apiCtx) {
       `INSERT INTO hr_employees (
          company_id, employee_no, first_name, last_name, hire_date,
          department_id, position_id, work_calendar_id, collar_type, badge_no,
-         education_level, work_location, employment_status, is_active, gross_amount
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'BeyazYaka',$9,'Lisans','Gebze','Aktif',TRUE,65000)
+         education_level, work_location, employment_status, is_active
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'BeyazYaka',$9,'Lisans','Gebze','Aktif',TRUE)
        ON CONFLICT (company_id, employee_no) DO NOTHING`,
       [
         firmaId, kod, f, l, DATES.w1Start,
@@ -287,7 +291,7 @@ async function seedHrOrg(client, firmaId, apiCtx) {
     `INSERT INTO hr_employees (
        company_id, employee_no, first_name, last_name, hire_date,
        department_id, position_id, work_calendar_id, shift_id,
-       collar_type, badge_no, work_location, employment_status, is_active, gross_amount, union_member
+       collar_type, badge_no, work_location, employment_status, is_active, union_member
      )
      SELECT
        $1,
@@ -303,7 +307,6 @@ async function seedHrOrg(client, firmaId, apiCtx) {
        'PD' || lpad(g::text, 5, '0'),
        'Gebze Üretim Sahası',
        'Aktif', TRUE,
-       42000 + (g % 5) * 500,
        (g % 7 = 0)
      FROM generate_series(1, 400) g
      ON CONFLICT (company_id, employee_no) DO NOTHING`,
@@ -394,16 +397,18 @@ async function ensurePoApprovalRule(client, firmaId, finansUserId) {
   ]) {
     await client.query(
       `INSERT INTO approval_roles (role_code, role_name, description, user_id, company_id, is_active)
-       SELECT $1,$2,$3,$4,$5,TRUE WHERE NOT EXISTS (
-         SELECT 1 FROM approval_roles WHERE role_code=$1 AND company_id=$5)`,
+       SELECT $1::varchar,$2::varchar,$3::varchar,$4::int,$5::int,TRUE WHERE NOT EXISTS (
+         SELECT 1 FROM approval_roles WHERE role_code=$1::varchar AND company_id=$5::int)`,
       [kod, adi, TAG.LABEL, uid, firmaId],
     );
   }
   await client.query(
     `INSERT INTO approval_rules (
        rule_code, rule_name, description, screen_id, company_id, is_active, line_no, term_min_amount
-     ) SELECT 'OM-SA-MARVEL', 'MARVEL SA >50K', $1, 'satin-alma-siparisleri', $2, TRUE, 10, 50000
-     WHERE NOT EXISTS (SELECT 1 FROM approval_rules WHERE rule_code='OM-SA-MARVEL' AND company_id=$2)`,
+     ) SELECT 'OM-SA-MARVEL'::varchar, 'MARVEL SA >50K'::varchar, $1::varchar,
+              'satin-alma-siparisleri'::varchar, $2::int, TRUE, 10, 50000
+     WHERE NOT EXISTS (
+       SELECT 1 FROM approval_rules WHERE rule_code='OM-SA-MARVEL' AND company_id=$2::int)`,
     [TAG.LABEL, firmaId],
   );
 }

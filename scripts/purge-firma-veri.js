@@ -36,7 +36,9 @@ const firmaKodu = (CODE_ALIASES[rawArg.toUpperCase()] || rawArg).toUpperCase();
 /** company_id kolonlu tablolar — çocuk → ebeveyn silme sırası */
 const COMPANY_TABLES = [
   // kalite / giriş kontrol
+  'qc_calibrations', 'qc_instruments',
   'qc_capa', 'qc_nonconformances', 'qc_orders', 'incoming_inspections',
+  'license_module_seats', 'company_licenses',
   // stok
   'item_lots', 'item_barcode_scans', 'stock_movements',
   'inventory_counts', 'transfer_orders',

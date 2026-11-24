@@ -45,7 +45,9 @@
     "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf",
     "db:restore-demo": "node scripts/db-restore-demo.js",
     "test:e2e": "playwright test",
-    "test:e2e:install": "playwright install chromium"
+    "test:e2e:install": "playwright install chromium",
+    "demo:marvel-shots": "node scripts/capture-metal-marvel-shots.js",
+    "demo:marvel-pdf": "node scripts/build-metal-marvel-pdf.js"
   },
   "keywords": [
     "erp",
@@ -64,7 +66,8 @@
     "pg": "^8.23.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.56.1"
+    "@playwright/test": "^1.56.1",
+    "puppeteer-core": "^24.0.0"
   },
   "overrides": {
     "body-parser": "2.4.0",

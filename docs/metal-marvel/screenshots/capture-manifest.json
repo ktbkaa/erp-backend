@@ -1,0 +1,140 @@
+[
+  {
+    "file": "00-firma-picker.png",
+    "list": "companies",
+    "ok": true
+  },
+  {
+    "file": "01-hr-personel.png",
+    "list": "hr-personel",
+    "ok": true
+  },
+  {
+    "file": "01b-hr-personel-form.png",
+    "form": "hr-personel",
+    "id": 2608,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "02-hr-departmanlar.png",
+    "list": "hr-departmanlar",
+    "ok": true
+  },
+  {
+    "file": "03-lisanslar.png",
+    "list": "sistem-lisanslar",
+    "ok": true
+  },
+  {
+    "file": "03b-firma-lisans.png",
+    "list": "firma-lisanslar",
+    "ok": true
+  },
+  {
+    "file": "04-stok.png",
+    "list": "stok-karti",
+    "ok": true
+  },
+  {
+    "file": "04b-stok-form.png",
+    "form": "stok-karti",
+    "id": 136,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "05-bom.png",
+    "list": "urun-agaci",
+    "ok": true
+  },
+  {
+    "file": "06-cari.png",
+    "list": "cari-kartlari",
+    "ok": true
+  },
+  {
+    "file": "07-crm-aday.png",
+    "list": "crm-adaylar",
+    "ok": true
+  },
+  {
+    "file": "08-satis-teklif.png",
+    "list": "satis-teklifleri",
+    "ok": true
+  },
+  {
+    "file": "09-satis-siparis.png",
+    "list": "satis-siparisleri",
+    "ok": true
+  },
+  {
+    "file": "09b-satis-siparis-form.png",
+    "form": "satis-siparisleri",
+    "id": 24,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "10-sa-talep.png",
+    "list": "satin-alma-talepleri",
+    "ok": true
+  },
+  {
+    "file": "11-sa-siparis.png",
+    "list": "satin-alma-siparisleri",
+    "ok": true
+  },
+  {
+    "file": "12-mal-kabul.png",
+    "list": "mal-kabuller",
+    "ok": true
+  },
+  {
+    "file": "13-uretim.png",
+    "list": "uretim-emirleri",
+    "ok": true
+  },
+  {
+    "file": "13b-uretim-form.png",
+    "form": "uretim-emirleri",
+    "id": 13,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "14-proje.png",
+    "list": "prj-projeler",
+    "ok": true
+  },
+  {
+    "file": "15-kk-cihaz.png",
+    "list": "kk-cihazlar",
+    "ok": true
+  },
+  {
+    "file": "16-kk-kalibrasyon.png",
+    "list": "kk-kalibrasyonlar",
+    "ok": true
+  },
+  {
+    "file": "17-kk-capa.png",
+    "list": "kk-capa",
+    "ok": true
+  },
+  {
+    "file": "18-irsaliye.png",
+    "list": "irsaliye-yonetimi",
+    "ok": true
+  },
+  {
+    "file": "19-fatura.png",
+    "list": "fatura-yonetimi",
+    "ok": true
+  },
+  {
+    "file": "20-depolar.png",
+    "list": "warehouses",
+    "ok": true
+  }
+]

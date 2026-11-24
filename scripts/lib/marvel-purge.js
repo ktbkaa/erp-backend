@@ -17,9 +17,7 @@ async function purgeMarvelIfExists() {
   }
   const firma = r.rows[0];
   log(`MARVEL (id=${firma.id}) mevcut — transactional veri temizleniyor...`);
-  try {
-    await pool.end();
-  } catch { /* */ }
+  // Alt process'te purge — ana pool'u kapatma
   const root = path.join(__dirname, '../..');
   const proc = spawnSync('node', ['scripts/purge-firma-veri.js', FIRMA_KODU], {
     cwd: root,
@@ -29,8 +27,6 @@ async function purgeMarvelIfExists() {
   if (proc.status !== 0) {
     log('Purge script uyarı kodu döndü — devam ediliyor.');
   }
-  delete require.cache[require.resolve('../../db')];
-  pool = require('../../db');
   const check = await pool.query(`SELECT id FROM companies WHERE id=$1`, [firma.id]);
   return check.rows[0] ? { ...firma, id: check.rows[0].id } : null;
 }

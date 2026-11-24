@@ -35,21 +35,21 @@ async function createItem(client, {
   )).rows[0];
   if (existing) return existing;
   const tedarik = type === 'Mamul' || type === 'YariMamul' ? 'Uretim' : 'Satinalma';
+  const lotPolicy = (type === 'Mamul' || type === 'Hammadde') ? 'IstegeBagli' : 'Takipsiz';
   const ins = (await client.query(
     `INSERT INTO items (
-       item_code, item_name, uom_code, sales_price, purchase_price, item_type, procurement_type,
+       item_code, item_name, uom_code, sales_price, item_type, procurement_type,
        is_active, company_id, default_receipt_warehouse_id, default_issue_warehouse_id,
        quality_control_required, description, lead_time_days, safety_stock, lot_policy
-     ) VALUES ($1,$2,$3,$4,$4,$5,$6,TRUE,$7,$8,$9,$10,$11,3,50,
-       CASE WHEN $5 IN ('Mamul','Hammadde') THEN 'IstegeBagli' ELSE 'Takipsiz' END)
+     ) VALUES ($1,$2,$3,$4,$5,$6,TRUE,$7,$8,$9,$10,$11,3,50,$12)
      RETURNING *`,
-    [kod, name, uom, price || 0, type, tedarik, companyId, girisWh, cikisWh, qc, `[${tag}] ${name}`],
+    [kod, name, uom, price || 0, type, tedarik, companyId, girisWh, cikisWh, !!qc, `[${tag}] ${name}`, lotPolicy],
   )).rows[0];
   await client.query(
     `INSERT INTO item_plants (item_id, plant_id, is_active) VALUES ($1,$2,TRUE)
      ON CONFLICT (item_id, plant_id) DO UPDATE SET is_active=TRUE`,
     [ins.id, plantId],
-  );
+  ).catch(() => null);
   for (const wid of [girisWh, cikisWh].filter(Boolean)) {
     await client.query(
       `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
@@ -260,9 +260,22 @@ async function seedMasterData(client, ctx) {
           `INSERT INTO price_list_lines (list_id, item_id, unit_price)
            SELECT $1,$2,COALESCE($3,0) WHERE NOT EXISTS (
              SELECT 1 FROM price_list_lines WHERE list_id=$1 AND item_id=$2)`,
-          [pl.id, it.id, it.sales_price],
+          [pl.id, it.id, Number(it.sales_price) || 0],
         );
       }
+    }
+  }
+
+  // Tüm stokları firma depolarına bağla (mal kabul / WIP / CKK vb.)
+  const allWh = [wh.giris, wh.hmd, wh.dok_wip, wh.cnc_wip, wh.mam, wh.gkk, wh.ckk, wh.svk].filter(Boolean);
+  for (const it of Object.values(items)) {
+    for (const w of allWh) {
+      await client.query(
+        `INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active)
+         SELECT $1,$2,$3,TRUE WHERE NOT EXISTS (
+           SELECT 1 FROM item_warehouses WHERE item_id=$1 AND warehouse_id=$2)`,
+        [it.id, w.id, plant.id],
+      ).catch(() => null);
     }
   }
 

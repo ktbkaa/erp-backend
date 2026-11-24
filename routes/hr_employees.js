@@ -60,14 +60,15 @@ router.get('/', async (req, res) => {
     const sql = `
       SELECT e.id, e.employee_no, e.first_name, e.last_name, e.employment_status,
              e.hire_date, e.department_id, e.position_id, e.manager_employee_id,
-             e.company_id, e.is_active, e.email, e.phone,
+             e.company_id, e.is_active, e.email, e.phone, e.collar_type, e.badge_no,
+             e.employee_type, e.work_location,
              d.department_name, p.position_name
       FROM hr_employees e
       LEFT JOIN hr_departments d ON d.id = e.department_id
       LEFT JOIN hr_positions p ON p.id = e.position_id
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY e.employee_no
-      LIMIT 1000
+      LIMIT 5000
     `;
     const r = await pool.query(sql, params);
     res.json(r.rows);
@@ -153,6 +154,39 @@ router.post('/', async (req, res) => {
       );
       const empId = ins.rows[0].id;
       await client.query(
+        `UPDATE hr_employees SET
+           collar_type = COALESCE($2, collar_type),
+           education_level = COALESCE($3, education_level),
+           education_school = COALESCE($4, education_school),
+           education_field = COALESCE($5, education_field),
+           military_status = COALESCE($6, military_status),
+           disability_status = COALESCE($7, disability_status),
+           work_location = COALESCE($8, work_location),
+           city_code = COALESCE($9, city_code),
+           district_code = COALESCE($10, district_code),
+           postal_code = COALESCE($11, postal_code),
+           driver_license_class = COALESCE($12, driver_license_class),
+           emergency_contact_relation = COALESCE($13, emergency_contact_relation),
+           union_member = COALESCE($14, union_member),
+           payroll_group_code = COALESCE($15, payroll_group_code),
+           badge_no = COALESCE($16, badge_no),
+           gender = COALESCE($17, gender),
+           marital_status = COALESCE($18, marital_status),
+           blood_type = COALESCE($19, blood_type)
+         WHERE id=$1`,
+        [
+          empId,
+          b.collar_type || null, b.education_level || null, b.education_school || null,
+          b.education_field || null, b.military_status || null, b.disability_status || null,
+          b.work_location || null, b.city_code || null, b.district_code || null,
+          b.postal_code || null, b.driver_license_class || null,
+          b.emergency_contact_relation || null,
+          b.union_member != null ? !!b.union_member : null,
+          b.payroll_group_code || null, b.badge_no || null,
+          b.gender || null, b.marital_status || null, b.blood_type || null,
+        ],
+      );
+      await client.query(
         `INSERT INTO hr_employment_history (
            employee_id, company_id, change_type, effective_date, department_id, position_id,
            manager_employee_id, plant_id, cost_center_code, description
@@ -236,6 +270,22 @@ router.put('/:id', async (req, res) => {
           marital_status = COALESCE($27, marital_status),
           blood_type = COALESCE($28, blood_type),
           is_active = COALESCE($29, is_active),
+          collar_type = COALESCE($30, collar_type),
+          education_level = COALESCE($31, education_level),
+          education_school = COALESCE($32, education_school),
+          education_field = COALESCE($33, education_field),
+          military_status = COALESCE($34, military_status),
+          disability_status = COALESCE($35, disability_status),
+          work_location = COALESCE($36, work_location),
+          city_code = COALESCE($37, city_code),
+          district_code = COALESCE($38, district_code),
+          postal_code = COALESCE($39, postal_code),
+          driver_license_class = COALESCE($40, driver_license_class),
+          emergency_contact_relation = COALESCE($41, emergency_contact_relation),
+          union_member = COALESCE($42, union_member),
+          payroll_group_code = COALESCE($43, payroll_group_code),
+          badge_no = COALESCE($44, badge_no),
+          gender = COALESCE($45, gender),
           updated_at = CURRENT_TIMESTAMP
         WHERE id=$1
         `,
@@ -246,6 +296,11 @@ router.put('/:id', async (req, res) => {
           b.employment_status, b.work_calendar_id, b.shift_id, b.cost_center_code, b.employee_type,
           b.iban, b.bank_name, b.social_security_no, b.description, b.marital_status, b.blood_type,
           b.is_active,
+          b.collar_type, b.education_level, b.education_school, b.education_field,
+          b.military_status, b.disability_status, b.work_location, b.city_code, b.district_code,
+          b.postal_code, b.driver_license_class, b.emergency_contact_relation,
+          b.union_member != null ? !!b.union_member : null,
+          b.payroll_group_code, b.badge_no, b.gender,
         ],
       );
 
