@@ -26,6 +26,7 @@
     "purge:firma": "node scripts/purge-firma-veri.js",
     "ensure:firma-yetki": "node scripts/ensure-firma-yetkileri.js",
     "demo:dokum-dongu": "node scripts/demo-dokum-tam-dongu.js",
+    "demo:marvel": "node scripts/demo-metal-marvel-sim.js",
     "qa:inventory": "node scripts/qa/extract-screen-inventory.mjs",
     "qa:smoke": "node scripts/qa/api-smoke.mjs",
     "qa:db": "node scripts/qa/db-integrity-audit.mjs",
