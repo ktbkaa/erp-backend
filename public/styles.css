@@ -360,6 +360,8 @@ body.is-login {
 }
 /* Sol menü araçlarının hemen bitişiği (workspace sol-alt) — sağa + yukarı ok */
 .doc-tabs-dock {
+  --doc-tabs-row: 1.75rem;
+  --doc-tabs-scroll: 0.75rem;
   display: flex;
   align-items: flex-start; /* sekmelerle hizala; scrollbar altta kalsın */
   gap: 0;
@@ -456,43 +458,57 @@ body.doc-tabs-open .sidebar-tabs-toggle {
   overflow: hidden;
 }
 
-/* Alt belge sekmeleri — ince şerit, yuvarlak üst köşe; varsayılan açık, isteğe göre gizlenir */
-.doc-tabs {
-  display: flex;
-  gap: 0.22rem;
-  align-items: flex-start;
-  box-sizing: border-box;
-  /* Sekme yüksekliği + alt scrollbar boşluğu (overlay scrollbar sekmeyi örtmesin) */
-  --doc-tabs-row: 1.75rem;
-  --doc-tabs-scroll: 0.7rem;
-  min-height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
-  height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
-  padding: 0 0.45rem var(--doc-tabs-scroll) 0.2rem;
-  background: #fff;
-  border-top: 1px solid var(--line);
-  border-bottom: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+/* Alt belge sekmeleri — kaydırma sarmalayıcı (scrollbar sekmelerin ALTINDA) */
+.doc-tabs-scroll {
   flex: 1 1 auto;
   min-width: 0;
+  box-sizing: border-box;
+  height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
+  max-height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #fff;
   scrollbar-width: thin;
   scrollbar-color: #9aa6b2 #e8edf3;
-  transition: height 0.16s ease, min-height 0.16s ease, padding 0.16s ease, opacity 0.12s ease;
 }
-.doc-tabs::-webkit-scrollbar {
+.doc-tabs-scroll::-webkit-scrollbar {
   height: 8px;
 }
-.doc-tabs::-webkit-scrollbar-track {
+.doc-tabs-scroll::-webkit-scrollbar-track {
   background: #e8edf3;
   border-radius: 4px;
   margin: 0 0.2rem;
 }
-.doc-tabs::-webkit-scrollbar-thumb {
+.doc-tabs-scroll::-webkit-scrollbar-thumb {
   background: #9aa6b2;
   border-radius: 4px;
 }
-.doc-tabs::-webkit-scrollbar-thumb:hover {
+.doc-tabs-scroll::-webkit-scrollbar-thumb:hover {
   background: #7a8694;
+}
+body:not(.doc-tabs-open) .doc-tabs-scroll,
+.doc-tabs-scroll:has(.doc-tabs[hidden]),
+.doc-tabs-scroll:has(.doc-tabs:empty) {
+  display: none;
+}
+/* Alt belge sekmeleri — ince şerit, yuvarlak üst köşe; varsayılan açık, isteğe göre gizlenir */
+.doc-tabs {
+  display: flex;
+  gap: 0.22rem;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: var(--doc-tabs-row, 1.75rem);
+  height: var(--doc-tabs-row, 1.75rem);
+  width: max-content;
+  min-width: 100%;
+  padding: 0 0.45rem 0 0.2rem;
+  margin: 0;
+  background: transparent;
+  border-top: 0;
+  border-bottom: 0;
+  overflow: visible;
+  flex: 0 0 auto;
+  transition: height 0.16s ease, min-height 0.16s ease, padding 0.16s ease, opacity 0.12s ease;
 }
 .doc-tabs:empty,
 .doc-tabs[hidden] {
@@ -504,6 +520,12 @@ body:not(.doc-tabs-open) .doc-tabs:not(:empty) {
 body.doc-tabs-open .doc-tabs-dock {
   background: #fff;
   border-top: 1px solid var(--line);
+  align-items: stretch;
+}
+body.doc-tabs-open .sidebar-tabs-toggle {
+  align-self: flex-start;
+  height: var(--doc-tabs-row, 1.75rem);
+  margin-top: 0;
 }
 body:not(.doc-tabs-open) .doc-tabs-dock {
   background: transparent;
@@ -5203,9 +5225,8 @@ body.sql-splitting iframe { pointer-events: none; }
   opacity: 0.55;
 }
 .sidebar-brand:hover .brand-name { color: var(--accent); }
-.doc-tabs {
+.doc-tabs-scroll {
   background: #fff;
-  border-top: 1px solid var(--line);
 }
 body.doc-tabs-open .doc-tabs-dock {
   background: #fff;
@@ -6835,11 +6856,13 @@ body.sidebar-resizing iframe {
     max-height: min(28vh, 10rem);
     overflow: auto;
   }
-  .doc-tabs {
+  .doc-tabs-scroll {
     --doc-tabs-row: 1.55rem;
     --doc-tabs-scroll: 0.65rem;
-    height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
-    min-height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
+  }
+  .doc-tabs {
+    height: var(--doc-tabs-row, 1.55rem);
+    min-height: var(--doc-tabs-row, 1.55rem);
   }
   .sidebar-brand { min-height: 3.2rem; padding-top: 0.45rem; padding-bottom: 0.45rem; }
 }

@@ -203,13 +203,15 @@ html[data-view="modern"] .doc-tabs-dock {
   background: var(--surface);
   border-top: 1px solid var(--border);
 }
+html[data-view="modern"] .doc-tabs-scroll {
+  --doc-tabs-row: 1.85rem;
+  --doc-tabs-scroll: 0.75rem;
+}
 html[data-view="modern"] .doc-tabs {
   gap: 0.15rem;
-  --doc-tabs-row: 1.85rem;
-  --doc-tabs-scroll: 0.7rem;
-  padding: 0.15rem 0.45rem var(--doc-tabs-scroll);
-  height: calc(0.15rem + var(--doc-tabs-row) + var(--doc-tabs-scroll));
-  min-height: calc(0.15rem + var(--doc-tabs-row) + var(--doc-tabs-scroll));
+  padding: 0.1rem 0.45rem 0;
+  height: var(--doc-tabs-row, 1.85rem);
+  min-height: var(--doc-tabs-row, 1.85rem);
 }
 html[data-view="modern"] .doc-tab,
 html[data-view="modern"] .tab-item {
