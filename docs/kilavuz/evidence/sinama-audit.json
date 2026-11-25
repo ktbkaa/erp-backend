@@ -1,0 +1,3474 @@
+{
+  "started": "2026-11-25T08:38:09.996Z",
+  "base": "http://127.0.0.1:3000",
+  "user": "kagantalha.b",
+  "firms": [
+    {
+      "id": 12,
+      "code": "MARVEL",
+      "name": "Metal Marvel Figür Sanayi A.Ş.",
+      "endpoints": [
+        {
+          "path": "/companies",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 4,
+          "count": 10,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-yerleri",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 5,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/warehouses",
+          "mod": "stok",
+          "status": 200,
+          "ms": 3,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/olcu-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 2,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/para-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 4,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/users",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 18,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/items",
+          "mod": "stok",
+          "status": 200,
+          "ms": 49,
+          "count": 13,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/partners",
+          "mod": "cari",
+          "status": 200,
+          "ms": 13,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/stok-hareketleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 11,
+          "count": 6,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/stok-bakiyeleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 4,
+          "count": 3,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satis-teklifleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/sales_orders",
+          "mod": "satis",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/sevk-emirleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/delivery_notes",
+          "mod": "satis",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/invoices",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-talepleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklif-istekleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklifleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-siparisleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 6,
+          "count": 3,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mal-kabuller",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/urun-agaclari",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 8,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/bom/patlatma",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 10,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/routings",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 10,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-merkezleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 3,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/uretim-emirleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 10,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/uretim-girisleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/uretim-parametreleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/fason/siparisler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/operasyonlar",
+          "mod": "fason",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/parametreler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=GKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=CKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 4,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/cihazlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 3,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/kalibrasyonlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/kk-capa",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-uygunsuzluklar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mrp/calismalar",
+          "mod": "mrp",
+          "status": 200,
+          "ms": 2,
+          "count": 13,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-adaylar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-firsatlar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 4,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-faaliyetler",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-projeler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/prj-isler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/hr-personel",
+          "mod": "hr",
+          "status": 200,
+          "ms": 7,
+          "count": 521,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/hr-org/departmanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 16,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/hr-ise-alim/ilanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/hr-bordro/calismalar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/kasa-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/banka-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/tahsilat-odemeler",
+          "mod": "finans",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/onay-rotalari",
+          "mod": "onay",
+          "status": 200,
+          "ms": 6,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/lisanslar",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        }
+      ],
+      "flows": [
+        {
+          "name": "Üretim girişi önizleme",
+          "ok": 16,
+          "detail": {
+            "order_no": "E00019",
+            "malzemeler": 4,
+            "yan_urunler": 0,
+            "kalan": 40
+          }
+        },
+        {
+          "name": "Rota aktarılan alanı",
+          "ok": true,
+          "detail": {
+            "ops": 2
+          }
+        },
+        {
+          "name": "Malzeme tüketilen/kalan",
+          "ok": true,
+          "detail": {
+            "sample": {
+              "planned": "18.000",
+              "consumed": "0.000",
+              "remaining": 18
+            }
+          }
+        },
+        {
+          "name": "BOM patlatma",
+          "ok": true,
+          "detail": {
+            "satır": 5
+          }
+        },
+        {
+          "name": "Satış siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 1,
+            "status": 200
+          }
+        },
+        {
+          "name": "SA siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 3,
+            "status": 200
+          }
+        },
+        {
+          "name": "Mal kabuller",
+          "ok": true,
+          "detail": {
+            "n": 1,
+            "status": 200
+          }
+        },
+        {
+          "name": "Health",
+          "ok": true,
+          "detail": {
+            "status": "ok",
+            "zaman": "2026-11-25T08:38:10.331Z",
+            "veritabani": "bagli"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "code": "ELEK",
+      "name": "Kompanzasyon Röle Elektronik A.Ş.",
+      "endpoints": [
+        {
+          "path": "/companies",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 10,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-yerleri",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 1,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/warehouses",
+          "mod": "stok",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/olcu-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 1,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/para-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 2,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/users",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 18,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/items",
+          "mod": "stok",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/partners",
+          "mod": "cari",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/stok-hareketleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/stok-bakiyeleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satis-teklifleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/sales_orders",
+          "mod": "satis",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/sevk-emirleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/delivery_notes",
+          "mod": "satis",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/invoices",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-talepleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklif-istekleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklifleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-siparisleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/mal-kabuller",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/urun-agaclari",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/bom/patlatma",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/routings",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/is-merkezleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-emirleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-girisleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-parametreleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/fason/siparisler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/operasyonlar",
+          "mod": "fason",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/parametreler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=GKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=CKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/cihazlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/kalibrasyonlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-capa",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-uygunsuzluklar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mrp/calismalar",
+          "mod": "mrp",
+          "status": 200,
+          "ms": 2,
+          "count": 13,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-adaylar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-firsatlar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-faaliyetler",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-projeler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-isler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-personel",
+          "mod": "hr",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-org/departmanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-ise-alim/ilanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-bordro/calismalar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/kasa-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/banka-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/tahsilat-odemeler",
+          "mod": "finans",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/onay-rotalari",
+          "mod": "onay",
+          "status": 200,
+          "ms": 5,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/lisanslar",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        }
+      ],
+      "flows": [
+        {
+          "name": "Üretim girişi önizleme",
+          "ok": false,
+          "detail": {
+            "hata": "Üretim emri yok"
+          }
+        },
+        {
+          "name": "BOM patlatma",
+          "ok": false,
+          "detail": {
+            "hata": "BOM yok"
+          }
+        },
+        {
+          "name": "Satış siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "SA siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "Mal kabuller",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "Health",
+          "ok": true,
+          "detail": {
+            "status": "ok",
+            "zaman": "2026-11-25T08:38:10.432Z",
+            "veritabani": "bagli"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "code": "TEKS",
+      "name": "Denim Tekstil Üretim A.Ş.",
+      "endpoints": [
+        {
+          "path": "/companies",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 10,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-yerleri",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 1,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/warehouses",
+          "mod": "stok",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/olcu-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 1,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/para-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 1,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/users",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 1,
+          "count": 18,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/items",
+          "mod": "stok",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/partners",
+          "mod": "cari",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/stok-hareketleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/stok-bakiyeleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satis-teklifleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/sales_orders",
+          "mod": "satis",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/sevk-emirleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/delivery_notes",
+          "mod": "satis",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/invoices",
+          "mod": "finans",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-talepleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklif-istekleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklifleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-siparisleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/mal-kabuller",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/urun-agaclari",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/bom/patlatma",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/routings",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/is-merkezleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-emirleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-girisleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-parametreleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/fason/siparisler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/operasyonlar",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/parametreler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=GKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=CKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/cihazlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/kalibrasyonlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-capa",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-uygunsuzluklar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mrp/calismalar",
+          "mod": "mrp",
+          "status": 200,
+          "ms": 2,
+          "count": 13,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-adaylar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-firsatlar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-faaliyetler",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-projeler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-isler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-personel",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-org/departmanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-ise-alim/ilanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-bordro/calismalar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/kasa-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/banka-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/tahsilat-odemeler",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/onay-rotalari",
+          "mod": "onay",
+          "status": 200,
+          "ms": 4,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/lisanslar",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        }
+      ],
+      "flows": [
+        {
+          "name": "Üretim girişi önizleme",
+          "ok": false,
+          "detail": {
+            "hata": "Üretim emri yok"
+          }
+        },
+        {
+          "name": "BOM patlatma",
+          "ok": false,
+          "detail": {
+            "hata": "BOM yok"
+          }
+        },
+        {
+          "name": "Satış siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "SA siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "Mal kabuller",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "Health",
+          "ok": true,
+          "detail": {
+            "status": "ok",
+            "zaman": "2026-11-25T08:38:10.533Z",
+            "veritabani": "bagli"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "code": "DOKUM",
+      "name": "Anadolu Döküm Sanayi A.Ş.",
+      "endpoints": [
+        {
+          "path": "/companies",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 10,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-yerleri",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/warehouses",
+          "mod": "stok",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/olcu-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 2,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/para-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 2,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/users",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 3,
+          "count": 18,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/items",
+          "mod": "stok",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/partners",
+          "mod": "cari",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/stok-hareketleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/stok-bakiyeleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satis-teklifleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/sales_orders",
+          "mod": "satis",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/sevk-emirleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 5,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/delivery_notes",
+          "mod": "satis",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/invoices",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-talepleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklif-istekleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklifleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-siparisleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/mal-kabuller",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/urun-agaclari",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/bom/patlatma",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 4,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/routings",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/is-merkezleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-emirleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-girisleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-parametreleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/fason/siparisler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/operasyonlar",
+          "mod": "fason",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/parametreler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=GKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=CKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/cihazlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/kalibrasyonlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-capa",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-uygunsuzluklar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mrp/calismalar",
+          "mod": "mrp",
+          "status": 200,
+          "ms": 3,
+          "count": 13,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-adaylar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-firsatlar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-faaliyetler",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-projeler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-isler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-personel",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-org/departmanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-ise-alim/ilanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 5,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-bordro/calismalar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 12,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/kasa-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 6,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/banka-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 5,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/tahsilat-odemeler",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/onay-rotalari",
+          "mod": "onay",
+          "status": 200,
+          "ms": 7,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/lisanslar",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        }
+      ],
+      "flows": [
+        {
+          "name": "Üretim girişi önizleme",
+          "ok": false,
+          "detail": {
+            "hata": "Üretim emri yok"
+          }
+        },
+        {
+          "name": "BOM patlatma",
+          "ok": false,
+          "detail": {
+            "hata": "BOM yok"
+          }
+        },
+        {
+          "name": "Satış siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "SA siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "Mal kabuller",
+          "ok": true,
+          "detail": {
+            "n": 0,
+            "status": 200
+          }
+        },
+        {
+          "name": "Health",
+          "ok": true,
+          "detail": {
+            "status": "ok",
+            "zaman": "2026-11-25T08:38:10.678Z",
+            "veritabani": "bagli"
+          }
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "code": "DEMO",
+      "name": "Demo Firma A.Ş.",
+      "endpoints": [
+        {
+          "path": "/companies",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 10,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-yerleri",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 4,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/warehouses",
+          "mod": "stok",
+          "status": 200,
+          "ms": 2,
+          "count": 7,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/olcu-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 1,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/para-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 2,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/users",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 18,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/items",
+          "mod": "stok",
+          "status": 200,
+          "ms": 39,
+          "count": 7,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/partners",
+          "mod": "cari",
+          "status": 200,
+          "ms": 14,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/stok-hareketleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 33,
+          "count": 12,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/stok-bakiyeleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 7,
+          "count": 6,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satis-teklifleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 11,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/sales_orders",
+          "mod": "satis",
+          "status": 200,
+          "ms": 6,
+          "count": 6,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/sevk-emirleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 7,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/delivery_notes",
+          "mod": "satis",
+          "status": 200,
+          "ms": 16,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/invoices",
+          "mod": "finans",
+          "status": 200,
+          "ms": 3,
+          "count": 6,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-talepleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 6,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklif-istekleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 3,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklifleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 3,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-siparisleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 6,
+          "count": 6,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mal-kabuller",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 5,
+          "count": 6,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/urun-agaclari",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 4,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/bom/patlatma",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 7,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/routings",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/is-merkezleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/uretim-emirleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 11,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/uretim-girisleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-parametreleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/fason/siparisler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/operasyonlar",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/parametreler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=GKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=CKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 3,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/cihazlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/kalibrasyonlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-capa",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-uygunsuzluklar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mrp/calismalar",
+          "mod": "mrp",
+          "status": 200,
+          "ms": 1,
+          "count": 13,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-adaylar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-firsatlar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 13,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-faaliyetler",
+          "mod": "crm",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-projeler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-isler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-personel",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-org/departmanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 4,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-ise-alim/ilanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-bordro/calismalar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/kasa-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/banka-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/tahsilat-odemeler",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/onay-rotalari",
+          "mod": "onay",
+          "status": 200,
+          "ms": 9,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/lisanslar",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        }
+      ],
+      "flows": [
+        {
+          "name": "Üretim girişi önizleme",
+          "ok": 6,
+          "detail": {
+            "order_no": "E00006",
+            "malzemeler": 2,
+            "yan_urunler": 0,
+            "kalan": 40
+          }
+        },
+        {
+          "name": "Rota aktarılan alanı",
+          "ok": true,
+          "detail": {
+            "ops": 3
+          }
+        },
+        {
+          "name": "Malzeme tüketilen/kalan",
+          "ok": true,
+          "detail": {
+            "sample": {
+              "planned": "40.000",
+              "consumed": "0.000",
+              "remaining": 40
+            }
+          }
+        },
+        {
+          "name": "BOM patlatma",
+          "ok": true,
+          "detail": {
+            "satır": 7
+          }
+        },
+        {
+          "name": "Satış siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 6,
+            "status": 200
+          }
+        },
+        {
+          "name": "SA siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 6,
+            "status": 200
+          }
+        },
+        {
+          "name": "Mal kabuller",
+          "ok": true,
+          "detail": {
+            "n": 6,
+            "status": 200
+          }
+        },
+        {
+          "name": "Health",
+          "ok": true,
+          "detail": {
+            "status": "ok",
+            "zaman": "2026-11-25T08:38:11.001Z",
+            "veritabani": "bagli"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "code": "GIDA",
+      "name": "Gıda Demo A.Ş.",
+      "endpoints": [
+        {
+          "path": "/companies",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 10,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-yerleri",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 1,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/warehouses",
+          "mod": "stok",
+          "status": 200,
+          "ms": 2,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/olcu-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 2,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/para-birimleri",
+          "mod": "tanim",
+          "status": 200,
+          "ms": 2,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/users",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 1,
+          "count": 18,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/items",
+          "mod": "stok",
+          "status": 200,
+          "ms": 27,
+          "count": 17,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/partners",
+          "mod": "cari",
+          "status": 200,
+          "ms": 10,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/stok-hareketleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 23,
+          "count": 27,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/stok-bakiyeleri",
+          "mod": "stok",
+          "status": 200,
+          "ms": 6,
+          "count": 9,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satis-teklifleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/sales_orders",
+          "mod": "satis",
+          "status": 200,
+          "ms": 5,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/sevk-emirleri",
+          "mod": "satis",
+          "status": 200,
+          "ms": 5,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/delivery_notes",
+          "mod": "satis",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/invoices",
+          "mod": "finans",
+          "status": 200,
+          "ms": 4,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-talepleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 3,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklif-istekleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-teklifleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/satin-alma-siparisleri",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 4,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mal-kabuller",
+          "mod": "satinalma",
+          "status": 200,
+          "ms": 4,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/urun-agaclari",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 6,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/bom/patlatma",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 9,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/routings",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 5,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/is-merkezleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 2,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/uretim-emirleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 14,
+          "count": 4,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/uretim-girisleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/uretim-parametreleri",
+          "mod": "uretim",
+          "status": 200,
+          "ms": 3,
+          "count": 8,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/fason/siparisler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/operasyonlar",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/fason/parametreler",
+          "mod": "fason",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=GKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 6,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/kk-emirleri?direction=CKK",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/cihazlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-kalite/kalibrasyonlar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-capa",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/kk-uygunsuzluklar",
+          "mod": "kalite",
+          "status": 200,
+          "ms": 1,
+          "count": 1,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/mrp/calismalar",
+          "mod": "mrp",
+          "status": 200,
+          "ms": 2,
+          "count": 13,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/crm-adaylar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-firsatlar",
+          "mod": "crm",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/crm-faaliyetler",
+          "mod": "crm",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-projeler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 7,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/prj-isler",
+          "mod": "prj",
+          "status": 200,
+          "ms": 3,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-personel",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-org/departmanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-ise-alim/ilanlar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 1,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/hr-bordro/calismalar",
+          "mod": "hr",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/kasa-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/finans-nakit/banka-hesaplari",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/tahsilat-odemeler",
+          "mod": "finans",
+          "status": 200,
+          "ms": 2,
+          "count": 0,
+          "ok": true,
+          "empty": true,
+          "hata": null
+        },
+        {
+          "path": "/onay-rotalari",
+          "mod": "onay",
+          "status": 200,
+          "ms": 9,
+          "count": 5,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        },
+        {
+          "path": "/lisanslar",
+          "mod": "sistem",
+          "status": 200,
+          "ms": 2,
+          "count": 2,
+          "ok": true,
+          "empty": false,
+          "hata": null
+        }
+      ],
+      "flows": [
+        {
+          "name": "Üretim girişi önizleme",
+          "ok": 5,
+          "detail": {
+            "order_no": "E00005",
+            "malzemeler": 3,
+            "yan_urunler": 0,
+            "kalan": 0
+          }
+        },
+        {
+          "name": "Rota aktarılan alanı",
+          "ok": true,
+          "detail": {
+            "ops": 3
+          }
+        },
+        {
+          "name": "Malzeme tüketilen/kalan",
+          "ok": true,
+          "detail": {
+            "sample": {
+              "planned": "204.000",
+              "consumed": "0.000",
+              "remaining": 204
+            }
+          }
+        },
+        {
+          "name": "BOM patlatma",
+          "ok": true,
+          "detail": {
+            "satır": 5
+          }
+        },
+        {
+          "name": "Satış siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 4,
+            "status": 200
+          }
+        },
+        {
+          "name": "SA siparişleri",
+          "ok": true,
+          "detail": {
+            "n": 4,
+            "status": 200
+          }
+        },
+        {
+          "name": "Mal kabuller",
+          "ok": true,
+          "detail": {
+            "n": 4,
+            "status": 200
+          }
+        },
+        {
+          "name": "Health",
+          "ok": true,
+          "detail": {
+            "status": "ok",
+            "zaman": "2026-11-25T08:38:11.255Z",
+            "veritabani": "bagli"
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "ok": 130,
+    "empty": 176,
+    "error": 0,
+    "flowOk": 36,
+    "flowFail": 6
+  },
+  "finished": "2026-11-25T08:38:11.255Z"
+}

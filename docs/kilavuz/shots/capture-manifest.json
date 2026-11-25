@@ -1,0 +1,212 @@
+{
+  "firma": {
+    "id": 12,
+    "company_code": "MARVEL",
+    "company_name": "Metal Marvel Figür Sanayi A.Ş."
+  },
+  "ids": {
+    "partner": 79,
+    "item": 156,
+    "so": 25,
+    "wo": 16,
+    "bom": 33,
+    "po": 36
+  },
+  "manifest": [
+    {
+      "file": "00-ana-sayfa.png",
+      "list": null,
+      "home": true,
+      "label": "Ana sayfa / kabuk",
+      "ok": true
+    },
+    {
+      "file": "01-firmalar-liste.png",
+      "list": "companies",
+      "label": "Firmalar listesi",
+      "ok": true
+    },
+    {
+      "file": "02-cari-liste.png",
+      "list": "cari-kartlari",
+      "label": "Cari kartları",
+      "ok": true
+    },
+    {
+      "file": "03-cari-form.png",
+      "form": "cari-kartlari",
+      "id": 79,
+      "label": "Cari kart formu",
+      "ok": true
+    },
+    {
+      "file": "04-stok-liste.png",
+      "list": "stok-karti",
+      "label": "Stok kartları",
+      "ok": true
+    },
+    {
+      "file": "05-stok-form.png",
+      "form": "stok-karti",
+      "id": 156,
+      "label": "Stok kart formu",
+      "ok": true
+    },
+    {
+      "file": "06-depo-bakiye.png",
+      "list": "depo-bakiye",
+      "label": "Depo bakiye",
+      "ok": true
+    },
+    {
+      "file": "07-stok-hareket.png",
+      "list": "stok-hareketleri",
+      "label": "Stok hareketleri",
+      "ok": true
+    },
+    {
+      "file": "08-sa-siparis-liste.png",
+      "list": "satin-alma-siparisleri",
+      "label": "SA siparişleri",
+      "ok": true
+    },
+    {
+      "file": "09-sa-siparis-form.png",
+      "form": "satin-alma-siparisleri",
+      "id": 36,
+      "label": "SA sipariş formu",
+      "ok": true
+    },
+    {
+      "file": "10-mal-kabul.png",
+      "list": "mal-kabuller",
+      "label": "Mal kabuller",
+      "ok": true
+    },
+    {
+      "file": "11-satis-siparis-liste.png",
+      "list": "satis-siparisleri",
+      "label": "Satış siparişleri",
+      "ok": true
+    },
+    {
+      "file": "12-satis-siparis-form.png",
+      "form": "satis-siparisleri",
+      "id": 25,
+      "label": "Satış siparişi",
+      "ok": true
+    },
+    {
+      "file": "13-bom-liste.png",
+      "list": "urun-agaci",
+      "label": "Ürün ağacı listesi",
+      "ok": true
+    },
+    {
+      "file": "14-bom-form.png",
+      "form": "urun-agaci",
+      "id": 33,
+      "label": "Ürün ağacı formu",
+      "ok": true
+    },
+    {
+      "file": "15-bom-patlatma.png",
+      "list": "bom-patlatma",
+      "label": "BOM patlatma",
+      "ok": true
+    },
+    {
+      "file": "16-rota-liste.png",
+      "list": "routings",
+      "label": "Rotalar",
+      "ok": true
+    },
+    {
+      "file": "17-isemri-liste.png",
+      "list": "uretim-emirleri",
+      "label": "İş emirleri",
+      "ok": true
+    },
+    {
+      "file": "18-isemri-form.png",
+      "form": "uretim-emirleri",
+      "id": 16,
+      "label": "İş emri formu",
+      "ok": true
+    },
+    {
+      "file": "19-uretim-giris.png",
+      "list": "uretim-girisleri",
+      "label": "Üretim girişleri",
+      "ok": true
+    },
+    {
+      "file": "20-fason.png",
+      "list": "fason-siparisleri",
+      "label": "Fason siparişler",
+      "ok": true
+    },
+    {
+      "file": "21-gkk.png",
+      "list": "kk-emirleri-gkk",
+      "label": "GKK emirleri",
+      "ok": true
+    },
+    {
+      "file": "22-ckk.png",
+      "list": "kk-emirleri-ckk",
+      "label": "ÇKK emirleri",
+      "ok": true
+    },
+    {
+      "file": "23-mrp.png",
+      "list": "mrp-calisma",
+      "label": "MRP çalışmaları",
+      "ok": true
+    },
+    {
+      "file": "24-irsaliye.png",
+      "list": "irsaliye-yonetimi",
+      "label": "Satış irsaliyeleri",
+      "ok": true
+    },
+    {
+      "file": "25-fatura.png",
+      "list": "fatura-yonetimi",
+      "label": "Satış faturaları",
+      "ok": true
+    },
+    {
+      "file": "26-crm.png",
+      "list": "crm-firsatlar",
+      "label": "CRM fırsatlar",
+      "ok": true
+    },
+    {
+      "file": "27-prj.png",
+      "list": "prj-projeler",
+      "label": "Projeler",
+      "ok": true
+    },
+    {
+      "file": "28-hr.png",
+      "list": "hr-personel",
+      "label": "İK personel",
+      "ok": true
+    },
+    {
+      "file": "29-finans.png",
+      "list": "tahsilat-odemeler",
+      "label": "Tahsilat / ödemeler",
+      "ok": true
+    },
+    {
+      "file": "30-onay.png",
+      "list": "onaylarim",
+      "label": "Onaylarım",
+      "ok": true
+    }
+  ],
+  "ok": 31,
+  "total": 31
+}

@@ -3,8 +3,12 @@
 Bu doküman, şu ana kadar yapılan arayüz ve fonksiyon çalışmalarının özetidir.  
 Her geliştirme turunun sonunda bu dosya güncellenir.
 
+> **Güncel birleşik kılavuz + sınama (2025-11-25):**  
+> `docs/kilavuz/KTB_ERP_Sistem_Kilavuz_Sinama.pdf` — sistem tanıtım, ekran kullanım, sınama raporu.  
+> Özet MD: `docs/kilavuz/01_SISTEM_TANITIM.md`, `02_EKRAN_KULLANIM_KILAVUZU.md`, `03_SINAMA_RAPORU.md`.
+
 - **Uygulama adresi:** `http://localhost:3000/`
-- **Dal (güncel UI):** `cursor/erp-kismi-eksik-tamamlama-4f63`
+- **Dal (güncel UI):** `cursor/erp-sinama-kilavuz-4f63`
 - **UI build işareti:** sol menü altında `UI build 20261016j`
 - **Cari/Stok eşleştirme:** `docs/10_CARI_STOK_ESLESTIRME.md`
 - **UX standardı:** `docs/11_UX_DONT_MAKE_ME_THINK.md` (Don’t Make Me Think)

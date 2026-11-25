@@ -1,150 +1,685 @@
 {
   "firmaId": 12,
   "item": {
-    "id": 136,
-    "item_code": "MM-MAM-IRONMAN",
-    "item_name": "Döküm Iron Man Figürü 1/6"
+    "id": 144,
+    "item_code": "MM-ZN-AL",
+    "item_name": "Zn-Al Döküm Alaşımı",
+    "uom_code": "KG",
+    "sales_price": "180.00",
+    "created_at": "2026-11-25T08:36:38.485Z",
+    "item_type": "Hammadde",
+    "procurement_type": "Satinalma",
+    "description": "[METAL-MARVEL-SIM] Zn-Al Döküm Alaşımı",
+    "item_name_2": null,
+    "long_item_code": null,
+    "stock_tracking_uom": null,
+    "is_active": true,
+    "abc_code": null,
+    "volume": null,
+    "density": null,
+    "volume_uom": null,
+    "density_uom": null,
+    "weight_uom": null,
+    "carton_gross_weight": null,
+    "box_gross_weight": null,
+    "box_width_mm": null,
+    "box_length_mm": null,
+    "box_height_mm": null,
+    "barcode": null,
+    "safety_stock": "50.0000",
+    "max_stock": null,
+    "country_of_origin": null,
+    "shelf_life_days": null,
+    "brand_name": null,
+    "procurement_method": null,
+    "quantity_precision": 3,
+    "class_code": null,
+    "lot_policy": "IstegeBagli",
+    "quality_control_required": true,
+    "default_receipt_warehouse_id": 46,
+    "default_issue_warehouse_id": 46,
+    "serial_policy": "Takipsiz",
+    "costing_method": "Ortalama",
+    "last_cost": "0.000000",
+    "company_id": 12,
+    "lead_time_days": 3,
+    "reorder_level": "0.0000",
+    "fixed_order_quantity": null,
+    "purchase_uom": null,
+    "sales_uom": null,
+    "hs_code": null,
+    "manufacturer_code": null,
+    "old_item_code": null,
+    "original_code": null,
+    "po_tolerance_min_pct": "0.00",
+    "po_tolerance_max_pct": "0.00",
+    "default_vat_rate": "20.00",
+    "min_stock": "0.0000",
+    "optimum_order_quantity": null,
+    "net_weight": null,
+    "gross_weight": null,
+    "is_deleted": false,
+    "issue_type": "Manuel",
+    "default_tax_code_id": null,
+    "currency_code": null,
+    "purchase_currency_code": null
   },
-  "itemCnc": {
-    "id": 139,
-    "item_code": "MM-MAM-SPIDER",
-    "item_name": "CNC Spider-Man Figürü 1/6"
-  },
-  "bom": {
-    "id": 31,
-    "bom_code": "A00025",
-    "bom_name": "Spider-Man CNC BOM"
-  },
-  "route": {
-    "id": 22,
-    "route_code": "O00017",
-    "route_name": "Spider-Man CNC Rotası"
-  },
-  "partnerMus": {
-    "id": 65,
-    "partner_code": "M00017",
-    "partner_name": "Kaplan Koleksiyon Dünyası"
-  },
-  "partnerTed": {
-    "id": 62,
-    "partner_code": "T00019",
-    "partner_name": "Anadolu Alaşım Tedarik A.Ş."
-  },
-  "lead": {
-    "id": 17,
-    "lead_name": "Kaplan Koleksiyon — Iron Man ön sipariş"
-  },
-  "opp": {
-    "id": 17,
-    "opportunity_name": "Iron Man Limited Run"
-  },
-  "sq": {
-    "id": 20,
-    "quotation_no": "ST00024"
+  "partner": {
+    "id": 75,
+    "partner_code": "T00022",
+    "partner_name": "Anadolu Alaşım Tedarik A.Ş.",
+    "partner_type": "Tedarikci",
+    "phone": "02125550200",
+    "created_at": "2026-11-25T08:36:38.485Z",
+    "email": "t00022@metalmarvel.demo",
+    "tax_id": null,
+    "tax_office": null,
+    "authorized_person": "Yetkili",
+    "authorized_phone": null,
+    "address": "Anadolu Alaşım Tedarik A.Ş. Sevk Adresi Gebze",
+    "billing_address": "Anadolu Alaşım Tedarik A.Ş. Fatura Adresi",
+    "province": "Kocaeli",
+    "district": null,
+    "country": "Türkiye",
+    "postal_code": null,
+    "currency_code": "TRY",
+    "payment_due_days": 30,
+    "is_active": true,
+    "notes": "METAL-MARVEL-SIM",
+    "plant_id": 14,
+    "partner_name_2": null,
+    "description": null,
+    "phone_2": null,
+    "mobile_phone": null,
+    "website": null,
+    "fax": null,
+    "passport_no": null,
+    "first_name": null,
+    "last_name": null,
+    "bill_address_1": null,
+    "bill_address_2": null,
+    "bill_address_3": null,
+    "latitude": null,
+    "longitude": null,
+    "industry_code": null,
+    "region_code": null,
+    "nace_code": null,
+    "founded_date": null,
+    "capital": null,
+    "company_id": 12,
+    "is_deleted": false,
+    "category_slots": {},
+    "extra_fields": {},
+    "is_subcontractor": false,
+    "subcontract_capacity_daily": null,
+    "subcontract_lead_days": null,
+    "subcontract_min_qty": null,
+    "subcontract_pricing_method": null,
+    "subcontract_quality_score": null
   },
   "so": {
-    "id": 24,
-    "order_no": "B00028"
-  },
-  "req": {
-    "id": 20,
-    "requisition_no": "L00018"
-  },
-  "pq": {
-    "id": 16,
-    "quotation_no": "QF00016"
-  },
-  "poDirect": {
-    "id": 31,
-    "order_no": "P00029",
-    "description": "[MMARVEL-W1] Direkt PO — paketleme"
-  },
-  "poAlloy": {
-    "id": 32,
-    "order_no": "P00030",
-    "description": "[MMARVEL-W1] Alaşım PO"
-  },
-  "gr": {
-    "id": 23,
-    "receipt_no": "R00023"
-  },
-  "woDok": {
-    "id": 13,
-    "order_no": "E00016"
-  },
-  "woCnc": {
-    "id": 14,
-    "order_no": "E00017"
+    "id": 25,
+    "order_no": "B00029",
+    "partner_id": 78,
+    "partner_code": "M00019",
+    "partner_name": "Kaplan Koleksiyon Dünyası",
+    "order_date": "2026-11-07T00:00:00.000Z",
+    "order_type": "SatisSiparis",
+    "total_amount": "420000.00",
+    "created_at": "2026-11-25T08:36:38.563Z",
+    "status": "Onayli",
+    "quotation_id": 21,
+    "movement_code_id": null,
+    "currency_code": "TRY",
+    "ship_to_address": null,
+    "description": "[MMARVEL-W1] Satış siparişi",
+    "source_document_type": null,
+    "source_document_id": null,
+    "payment_term_code": null,
+    "company_id": 12,
+    "customer_order_no": null,
+    "project_code": "MMARVEL-W1",
+    "plant_id": 14,
+    "warehouse_id": 49,
+    "price_list_id": 15,
+    "delivery_date": null,
+    "valid_date": null,
+    "exchange_rate": "1.000000",
+    "discount_rate": "0.00",
+    "discount_amount": "0.00",
+    "subtotal": "420000.00",
+    "tax_amount": "0.00",
+    "grand_total": "420000.00",
+    "payment_method": null,
+    "ship_city": null,
+    "ship_district": null,
+    "ship_country": "Türkiye",
+    "ship_postal_code": null,
+    "is_invoiced": false,
+    "shipment_completed": false,
+    "created_by": null,
+    "approved_by": null,
+    "approved_at": null,
+    "closed_at": null,
+    "public_note": null,
+    "internal_note": null,
+    "updated_at": "2026-11-25T08:36:38.563Z",
+    "order_source": "Manuel",
+    "delivery_term_code": null,
+    "is_deleted": false,
+    "cari_kodu_ref": "M00019",
+    "cari_adi_ref": "Kaplan Koleksiyon Dünyası",
+    "kalemler": [
+      {
+        "id": 25,
+        "sales_order_id": 25,
+        "item_code": "MM-MAM-IRONMAN",
+        "item_name": "Döküm Iron Man Figürü 1/6",
+        "stock_uom": "AD",
+        "quantity": "100.00",
+        "unit_price": "4200.00",
+        "total_amount": "420000.00",
+        "created_at": "2026-11-25T08:36:38.563Z",
+        "item_id": 149,
+        "discount_rate": "0.00",
+        "discount_amount": "0.00",
+        "vat_rate": "20.00",
+        "vat_amount": "0.00",
+        "line_no": 1,
+        "quotation_line_id": null,
+        "shipped_quantity": "0.000",
+        "delivered_quantity": "0.000",
+        "invoiced_quantity": "0.000",
+        "reserved_quantity": "0.0000",
+        "line_description": null,
+        "delivery_date": null,
+        "warehouse_id": 49,
+        "net_unit_price": "4200.0000",
+        "amount_ex_tax": "420000.00",
+        "amount_ttc": null,
+        "product_type": "Stok",
+        "unit_cost": "0.000000",
+        "profit_margin": null,
+        "reservation_status": "Yok",
+        "delivered_quantity_x": "0.0000",
+        "pending_quantity": null,
+        "stok_kodu_ref": "MM-MAM-IRONMAN",
+        "stok_adi_ref": "Döküm Iron Man Figürü 1/6",
+        "kalan_sevk_miktar": "100.000",
+        "kalan_irsaliye_miktar": "100.000",
+        "kalan_fatura_miktar": "100.000"
+      }
+    ],
+    "satirlar": [
+      {
+        "id": 25,
+        "sales_order_id": 25,
+        "item_code": "MM-MAM-IRONMAN",
+        "item_name": "Döküm Iron Man Figürü 1/6",
+        "stock_uom": "AD",
+        "quantity": "100.00",
+        "unit_price": "4200.00",
+        "total_amount": "420000.00",
+        "created_at": "2026-11-25T08:36:38.563Z",
+        "item_id": 149,
+        "discount_rate": "0.00",
+        "discount_amount": "0.00",
+        "vat_rate": "20.00",
+        "vat_amount": "0.00",
+        "line_no": 1,
+        "quotation_line_id": null,
+        "shipped_quantity": "0.000",
+        "delivered_quantity": "0.000",
+        "invoiced_quantity": "0.000",
+        "reserved_quantity": "0.0000",
+        "line_description": null,
+        "delivery_date": null,
+        "warehouse_id": 49,
+        "net_unit_price": "4200.0000",
+        "amount_ex_tax": "420000.00",
+        "amount_ttc": null,
+        "product_type": "Stok",
+        "unit_cost": "0.000000",
+        "profit_margin": null,
+        "reservation_status": "Yok",
+        "delivered_quantity_x": "0.0000",
+        "pending_quantity": null,
+        "stok_kodu_ref": "MM-MAM-IRONMAN",
+        "stok_adi_ref": "Döküm Iron Man Figürü 1/6",
+        "kalan_sevk_miktar": "100.000",
+        "kalan_irsaliye_miktar": "100.000",
+        "kalan_fatura_miktar": "100.000"
+      }
+    ],
+    "atp_uyari": [
+      {
+        "item_id": 149,
+        "item_code": "MM-MAM-IRONMAN",
+        "istenen": 100,
+        "bakiye": 0,
+        "rezerve": 0,
+        "kullanilabilir": 0
+      }
+    ]
   },
   "project": {
-    "id": 7,
+    "id": 8,
+    "company_id": 12,
     "project_code": "MM-KALIP-MMARVEL-W2",
-    "project_name": "Yeni Iron Man Kalıp Tooling"
+    "project_name": "Yeni Iron Man Kalıp Tooling",
+    "description": "[MMARVEL-W2] Ar-Ge + üretim iş paketleri",
+    "type_id": null,
+    "category_id": null,
+    "status_id": 1,
+    "priority_id": 4,
+    "partner_id": 78,
+    "manager_user_id": 1,
+    "sponsor_user_id": null,
+    "department_code": null,
+    "plant_id": 14,
+    "warehouse_id": null,
+    "plan_start_date": "2026-11-10T00:00:00.000Z",
+    "plan_end_date": "2026-11-21T00:00:00.000Z",
+    "actual_start_date": null,
+    "actual_end_date": null,
+    "currency_code": "TRY",
+    "planned_budget": "0.00",
+    "actual_cost": "0.00",
+    "expected_revenue": "0.00",
+    "actual_revenue": "0.00",
+    "percent_complete": "0.00",
+    "approach": "classic",
+    "portfolio_code": null,
+    "crm_opportunity_id": null,
+    "sales_order_id": null,
+    "sales_order_line_id": null,
+    "cost_center_code": null,
+    "is_archived": false,
+    "is_active": true,
+    "created_by": 1,
+    "updated_by": null,
+    "created_at": "2026-11-25T08:36:38.737Z",
+    "updated_at": "2026-11-25T08:36:38.737Z",
+    "workflow_id": null,
+    "closed_at": null,
+    "close_notes": null,
+    "type_code": null,
+    "type_name": null,
+    "category_code": null,
+    "category_name": null,
+    "status_code": "10",
+    "status_name": "Başlatıldı",
+    "priority_code": "MEDIUM",
+    "priority_name": "Medium",
+    "partner_code": "M00019",
+    "partner_name": "Kaplan Koleksiyon Dünyası",
+    "manager_name": "Kagan Admin",
+    "sponsor_name": "",
+    "members": [
+      {
+        "id": 7,
+        "project_id": 8,
+        "user_id": 1,
+        "role_id": 1,
+        "can_view_budget": true,
+        "can_edit_budget": true,
+        "can_view_costs": true,
+        "is_active": true,
+        "created_at": "2026-11-25T08:36:38.737Z",
+        "role_code": "PM",
+        "role_name": "Proje Yöneticisi",
+        "user_name": "Kagan Admin",
+        "user_code": "owner",
+        "first_name": "Kagan",
+        "last_name": "Admin"
+      }
+    ],
+    "phases": [],
+    "milestones": [],
+    "work_items": [],
+    "work_item_count": 0,
+    "member_count": 1
   },
   "cihaz": {
-    "id": 16,
-    "instrument_code": "CIH00016",
-    "instrument_name": "Mitutoyo Kumpas 0-300mm"
-  },
-  "kal": {
-    "id": 22,
-    "calibration_no": "KAL00022"
+    "id": 19,
+    "company_id": 12,
+    "plant_id": 14,
+    "instrument_code": "CIH00019",
+    "instrument_name": "Mitutoyo Kumpas 0-300mm",
+    "instrument_type": "Olcum",
+    "serial_no": null,
+    "manufacturer": null,
+    "model_name": null,
+    "measurement_range": null,
+    "accuracy_class": null,
+    "location_code": "Kalite Lab",
+    "responsible_user_id": 14,
+    "status": "Aktif",
+    "next_calibration_date": "2026-11-17T00:00:00.000Z",
+    "calibration_interval_days": 180,
+    "is_active": true,
+    "description": "METAL-MARVEL-SIM",
+    "created_at": "2026-11-25T08:36:38.464Z",
+    "updated_at": "2026-11-25T08:36:38.464Z",
+    "company_code": "MARVEL",
+    "plant_code": "MARVEL-GEBZE",
+    "plant_name": "Gebze Fabrika",
+    "responsible_user_code": "marvel.kalibrasyon"
   },
   "emp": {
-    "id": 2608,
-    "employee_no": "HE00167",
+    "id": 3149,
+    "company_id": 12,
+    "plant_id": null,
+    "employee_no": "HE00220",
     "first_name": "Ahmet",
-    "last_name": "Yılmaz"
-  },
-  "job": {
-    "id": 4,
-    "requisition_no": "JP00004",
-    "title": "Döküm Operatörü"
+    "last_name": "Yılmaz",
+    "national_id": null,
+    "birth_date": null,
+    "nationality_code": "TR",
+    "country_code": "TR",
+    "gender": null,
+    "marital_status": null,
+    "blood_type": null,
+    "email": "ahmet.yılmaz@metalmarvel.local",
+    "phone": null,
+    "mobile_phone": null,
+    "address": null,
+    "emergency_contact_name": null,
+    "emergency_contact_phone": null,
+    "department_id": 109,
+    "position_id": 109,
+    "manager_employee_id": null,
+    "user_id": 16,
+    "hire_date": "2026-11-03T00:00:00.000Z",
+    "contract_type": "BelirsizSureli",
+    "employment_status": "Aktif",
+    "probation_end_date": null,
+    "contract_end_date": null,
+    "termination_date": null,
+    "work_calendar_id": 8,
+    "shift_id": null,
+    "cost_center_code": null,
+    "employee_type": "Normal",
+    "iban": null,
+    "bank_name": null,
+    "social_security_no": null,
+    "is_active": true,
+    "description": null,
+    "created_at": "2026-11-25T08:36:38.238Z",
+    "updated_at": "2026-11-25T08:36:38.238Z",
+    "collar_type": "BeyazYaka",
+    "education_level": "Lisans",
+    "education_school": "Gebze Teknik Üniversitesi",
+    "education_field": "Endüstri Mühendisliği",
+    "military_status": null,
+    "disability_status": null,
+    "work_location": "Gebze Fabrika",
+    "city_code": null,
+    "district_code": null,
+    "postal_code": null,
+    "driver_license_class": null,
+    "emergency_contact_relation": null,
+    "union_member": false,
+    "payroll_group_code": null,
+    "badge_no": "BY1091",
+    "photo_url": null,
+    "department_code": "HD00109",
+    "department_name": "İK",
+    "position_code": "HZ00109",
+    "position_name": "İK Uzmanı",
+    "manager_employee_no": null,
+    "manager_name": " ",
+    "calendar_code": "HT00008",
+    "calendar_name": "Metal Marvel 5 Gün",
+    "shift_code": null,
+    "shift_name": null,
+    "user_code": "marvel.ik",
+    "username": "marvel.ik"
   },
   "license": {
-    "id": 2,
-    "license_code": "MARVEL-ENT-2026",
-    "license_name": "Metal Marvel Enterprise Suite"
-  },
-  "cand": {
-    "id": 4,
-    "first_name": "Serhat",
-    "last_name": "Güler"
-  },
-  "wi": {
-    "id": 7,
-    "title": "Kalıp iş paketi 4 [MMARVEL-W2]"
-  },
-  "ckk": {
-    "id": 39,
-    "order_no": "QE00039"
-  },
-  "payroll": {
-    "id": 4,
-    "run_no": "BR00004"
-  },
-  "rfq": {
-    "id": 9
-  },
-  "clic": {
-    "id": 6
-  },
-  "dept": {
-    "id": 83,
-    "department_code": "HD00083",
-    "department_name": "Yönetim"
-  },
-  "wc": {
-    "id": 26,
-    "center_code": "MM-DOKUM-01"
-  },
-  "ship": {
-    "id": 15,
-    "shipment_no": "SE00018"
-  },
-  "ncr": {
-    "id": 12,
-    "description": "[MMARVEL-W3] Boya ton farkı — NCR",
-    "status": "Acik"
+    "system_license_id": 2,
+    "company_license": {
+      "id": 7,
+      "company_id": 12,
+      "system_license_id": 2,
+      "seat_named": 40,
+      "seat_used": 0,
+      "is_active": true,
+      "assigned_at": "2026-11-25T08:36:38.457Z",
+      "notes": "METAL-MARVEL-SIM",
+      "license_code": "MARVEL-ENT-2026",
+      "license_name": "Metal Marvel Enterprise Suite",
+      "edition": "Enterprise",
+      "max_named_users": 50,
+      "valid_from": "2026-01-01T00:00:00.000Z",
+      "valid_until": "2027-12-31T00:00:00.000Z",
+      "modules_json": [
+        {
+          "enabled": true,
+          "module_code": "SATIS",
+          "module_name": "SATIS"
+        },
+        {
+          "enabled": true,
+          "module_code": "SATINALMA",
+          "module_name": "SATINALMA"
+        },
+        {
+          "enabled": true,
+          "module_code": "DEPO",
+          "module_name": "DEPO"
+        },
+        {
+          "enabled": true,
+          "module_code": "URETIM",
+          "module_name": "URETIM"
+        },
+        {
+          "enabled": true,
+          "module_code": "MRP",
+          "module_name": "MRP"
+        },
+        {
+          "enabled": true,
+          "module_code": "KALITE",
+          "module_name": "KALITE"
+        },
+        {
+          "enabled": true,
+          "module_code": "FINANS",
+          "module_name": "FINANS"
+        },
+        {
+          "enabled": true,
+          "module_code": "MUHASEBE",
+          "module_name": "MUHASEBE"
+        },
+        {
+          "enabled": true,
+          "module_code": "CRM",
+          "module_name": "CRM"
+        },
+        {
+          "enabled": true,
+          "module_code": "PROJE",
+          "module_name": "PROJE"
+        },
+        {
+          "enabled": true,
+          "module_code": "IK",
+          "module_name": "IK"
+        },
+        {
+          "enabled": true,
+          "module_code": "ONAY",
+          "module_name": "ONAY"
+        },
+        {
+          "enabled": true,
+          "module_code": "BAKIM",
+          "module_name": "BAKIM"
+        },
+        {
+          "enabled": true,
+          "module_code": "ARGE",
+          "module_name": "ARGE"
+        },
+        {
+          "enabled": true,
+          "module_code": "LISANS",
+          "module_name": "LISANS"
+        },
+        {
+          "enabled": true,
+          "module_code": "HR",
+          "module_name": "HR"
+        },
+        {
+          "enabled": true,
+          "module_code": "KALIBRASYON",
+          "module_name": "KALIBRASYON"
+        }
+      ],
+      "company_code": "MARVEL",
+      "company_name": "Metal Marvel Figür Sanayi A.Ş.",
+      "modules": [
+        {
+          "id": 116,
+          "company_license_id": 7,
+          "module_code": "ARGE",
+          "module_name": "ARGE",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 115,
+          "company_license_id": 7,
+          "module_code": "BAKIM",
+          "module_name": "BAKIM",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 111,
+          "company_license_id": 7,
+          "module_code": "CRM",
+          "module_name": "CRM",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 105,
+          "company_license_id": 7,
+          "module_code": "DEPO",
+          "module_name": "DEPO",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 109,
+          "company_license_id": 7,
+          "module_code": "FINANS",
+          "module_name": "FINANS",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 118,
+          "company_license_id": 7,
+          "module_code": "HR",
+          "module_name": "HR",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 113,
+          "company_license_id": 7,
+          "module_code": "IK",
+          "module_name": "IK",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 119,
+          "company_license_id": 7,
+          "module_code": "KALIBRASYON",
+          "module_name": "KALIBRASYON",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 108,
+          "company_license_id": 7,
+          "module_code": "KALITE",
+          "module_name": "KALITE",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 117,
+          "company_license_id": 7,
+          "module_code": "LISANS",
+          "module_name": "LISANS",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 107,
+          "company_license_id": 7,
+          "module_code": "MRP",
+          "module_name": "MRP",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 110,
+          "company_license_id": 7,
+          "module_code": "MUHASEBE",
+          "module_name": "MUHASEBE",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 114,
+          "company_license_id": 7,
+          "module_code": "ONAY",
+          "module_name": "ONAY",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 112,
+          "company_license_id": 7,
+          "module_code": "PROJE",
+          "module_name": "PROJE",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 104,
+          "company_license_id": 7,
+          "module_code": "SATINALMA",
+          "module_name": "SATINALMA",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 103,
+          "company_license_id": 7,
+          "module_code": "SATIS",
+          "module_name": "SATIS",
+          "enabled": true,
+          "max_users": null
+        },
+        {
+          "id": 106,
+          "company_license_id": 7,
+          "module_code": "URETIM",
+          "module_name": "URETIM",
+          "enabled": true,
+          "max_users": null
+        }
+      ]
+    }
   }
 }
