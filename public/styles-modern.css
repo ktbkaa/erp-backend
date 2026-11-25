@@ -205,7 +205,11 @@ html[data-view="modern"] .doc-tabs-dock {
 }
 html[data-view="modern"] .doc-tabs {
   gap: 0.15rem;
-  padding: 0.25rem 0.45rem;
+  --doc-tabs-row: 1.85rem;
+  --doc-tabs-scroll: 0.7rem;
+  padding: 0.15rem 0.45rem var(--doc-tabs-scroll);
+  height: calc(0.15rem + var(--doc-tabs-row) + var(--doc-tabs-scroll));
+  min-height: calc(0.15rem + var(--doc-tabs-row) + var(--doc-tabs-scroll));
 }
 html[data-view="modern"] .doc-tab,
 html[data-view="modern"] .tab-item {

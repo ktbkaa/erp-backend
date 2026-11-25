@@ -361,7 +361,7 @@ body.is-login {
 /* Sol menü araçlarının hemen bitişiği (workspace sol-alt) — sağa + yukarı ok */
 .doc-tabs-dock {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start; /* sekmelerle hizala; scrollbar altta kalsın */
   gap: 0;
   flex: 0 0 auto;
   min-height: 0;
@@ -461,9 +461,13 @@ body.doc-tabs-open .sidebar-tabs-toggle {
   display: flex;
   gap: 0.22rem;
   align-items: flex-start;
-  min-height: 0;
-  height: 1.85rem;
-  padding: 0 0.45rem 0 0.2rem;
+  box-sizing: border-box;
+  /* Sekme yüksekliği + alt scrollbar boşluğu (overlay scrollbar sekmeyi örtmesin) */
+  --doc-tabs-row: 1.75rem;
+  --doc-tabs-scroll: 0.7rem;
+  min-height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
+  height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
+  padding: 0 0.45rem var(--doc-tabs-scroll) 0.2rem;
   background: #fff;
   border-top: 1px solid var(--line);
   border-bottom: 0;
@@ -471,7 +475,24 @@ body.doc-tabs-open .sidebar-tabs-toggle {
   overflow-y: hidden;
   flex: 1 1 auto;
   min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #9aa6b2 #e8edf3;
   transition: height 0.16s ease, min-height 0.16s ease, padding 0.16s ease, opacity 0.12s ease;
+}
+.doc-tabs::-webkit-scrollbar {
+  height: 8px;
+}
+.doc-tabs::-webkit-scrollbar-track {
+  background: #e8edf3;
+  border-radius: 4px;
+  margin: 0 0.2rem;
+}
+.doc-tabs::-webkit-scrollbar-thumb {
+  background: #9aa6b2;
+  border-radius: 4px;
+}
+.doc-tabs::-webkit-scrollbar-thumb:hover {
+  background: #7a8694;
 }
 .doc-tabs:empty,
 .doc-tabs[hidden] {
@@ -6815,7 +6836,10 @@ body.sidebar-resizing iframe {
     overflow: auto;
   }
   .doc-tabs {
-    height: 1.65rem;
+    --doc-tabs-row: 1.55rem;
+    --doc-tabs-scroll: 0.65rem;
+    height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
+    min-height: calc(var(--doc-tabs-row) + var(--doc-tabs-scroll));
   }
   .sidebar-brand { min-height: 3.2rem; padding-top: 0.45rem; padding-bottom: 0.45rem; }
 }
