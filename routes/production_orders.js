@@ -39,6 +39,30 @@ function dateDay(v) {
     return null;
 }
 
+/** İş emri + (varsa) operasyon malzeme satırında tüketilen miktarı artır */
+async function bumpComponentConsumed(client, { orderId, operationId = null, itemId, qty }) {
+    const n = Number(qty) || 0;
+    if (!(n > 0) || !itemId || !orderId) return;
+    if (operationId) {
+        await client.query(
+            `
+            UPDATE production_order_operation_components
+            SET consumed_quantity = COALESCE(consumed_quantity, 0) + $1
+            WHERE operation_id = $2 AND item_id = $3
+            `,
+            [n, operationId, itemId],
+        );
+    }
+    await client.query(
+        `
+        UPDATE production_order_components
+        SET consumed_quantity = COALESCE(consumed_quantity, 0) + $1
+        WHERE order_id = $2 AND item_id = $3
+        `,
+        [n, orderId, itemId],
+    );
+}
+
 /** Plan / bitiş: tarih+saat — datetime-local veya ISO kabul eder */
 function dateTimeValue(v) {
     if (v == null || v === '') return null;
@@ -418,13 +442,20 @@ async function getQcOrder(id) {
     const is_active = operasyonlar.find((o) => o.status === 'Hazir') || null;
     const minSira = operasyonlar.length ? Math.min(...operasyonlar.map((o) => Number(o.line_no) || 0)) : null;
     const maxSira = operasyonlar.length ? Math.max(...operasyonlar.map((o) => Number(o.line_no) || 0)) : null;
-    const opsEnrich = operasyonlar.map((o) => ({
-        ...o,
-        ilk_operasyon: minSira != null && Number(o.line_no) === minSira,
-        son_operasyon: maxSira != null && Number(o.line_no) === maxSira,
-        is_merkezi_kodu: o.center_code || null,
-        is_merkezi_adi: o.center_name || null,
-    }));
+    const opsEnrich = operasyonlar.map((o) => {
+        const planned = Number(o.planned_quantity) || 0;
+        const produced = Number(o.produced_quantity) || 0;
+        const transferred = Number(o.transferred_quantity) || 0;
+        return {
+            ...o,
+            transferred_quantity: transferred,
+            remaining_quantity: Math.max(0, planned - produced),
+            ilk_operasyon: minSira != null && Number(o.line_no) === minSira,
+            son_operasyon: maxSira != null && Number(o.line_no) === maxSira,
+            is_merkezi_kodu: o.center_code || null,
+            is_merkezi_adi: o.center_name || null,
+        };
+    });
 
     const malz = await pool.query(
         `
@@ -438,12 +469,20 @@ async function getQcOrder(id) {
         `,
         [id],
     );
+    const malzemeler = malz.rows.map((m) => {
+        const planned = Number(m.planned_quantity) || 0;
+        const consumed = Number(m.consumed_quantity) || 0;
+        return {
+            ...m,
+            remaining_quantity: Math.max(0, planned - consumed),
+        };
+    });
 
     return {
         ...e.rows[0],
         operasyonlar: opsEnrich,
-        malzemeler: malz.rows,
-        bilesenler: malz.rows,
+        malzemeler,
+        bilesenler: malzemeler,
         aktif_operasyon: is_active,
     };
 }
@@ -955,11 +994,12 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                     direction: -1,
                     uom_code: b.uom_code || b.stock_uom,
                 });
-                await client.query(
-                    `UPDATE production_order_operation_components
-                     SET consumed_quantity = consumed_quantity + $1 WHERE id=$2`,
-                    [Number(b.planned_quantity) * rate, b.id]
-                );
+                await bumpComponentConsumed(client, {
+                    orderId: emirId,
+                    operationId: op.id,
+                    itemId: b.item_id,
+                    qty: Number(b.planned_quantity) * rate,
+                });
             }
 
             let tuketimHareketId = null;
@@ -1023,14 +1063,23 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
 
             const yeniUretilen = Number(op.produced_quantity) + quantity;
             const opDurum = yeniUretilen + 1e-9 >= Number(op.planned_quantity) ? 'Tamamlandi' : 'Hazir';
+            const hasNext = op.next_line_no != null && op.next_line_no !== '';
             await client.query(
-                `UPDATE production_order_operations
-                 SET produced_quantity=$1, status=$2 WHERE id=$3`,
-                [yeniUretilen, opDurum, op.id]
+                `
+                UPDATE production_order_operations
+                SET produced_quantity = $1,
+                    transferred_quantity = CASE
+                      WHEN $4::boolean THEN COALESCE(transferred_quantity, 0) + $5
+                      ELSE COALESCE(transferred_quantity, 0)
+                    END,
+                    status = $2
+                WHERE id = $3
+                `,
+                [yeniUretilen, opDurum, op.id, hasNext, quantity],
             );
 
             // Sıradaki operasyonu Hazir yap
-            if (opDurum === 'Tamamlandi' && op.next_line_no) {
+            if (opDurum === 'Tamamlandi' && hasNext) {
                 await client.query(
                     `
                     UPDATE production_order_operations
@@ -1209,6 +1258,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                 : [];
             if (manual.length) {
                 for (const [i, m] of manual.entries()) {
+                    const qty = Number(m.quantity);
                     const depoId = Number(m.warehouse_id)
                         || Number(opts.material_warehouse_id)
                         || pickConsumptionWarehouse(emir, m.line_type || m.item_type);
@@ -1216,17 +1266,41 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                     if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
                     depoGrup.get(depoId).push({
                         item_id: Number(m.item_id),
-                        quantity: Number(m.quantity),
+                        quantity: qty,
                         direction: -1,
                         uom_code: m.uom_code || null,
+                    });
+                    await bumpComponentConsumed(client, {
+                        orderId: emirId,
+                        operationId: op.id,
+                        itemId: Number(m.item_id),
+                        qty,
                     });
                     materialSnapshot.push({ ...m, line_no: m.line_no || i + 1, is_byproduct: false });
                 }
             } else {
-                for (const [i, b] of bilesenler.rows.entries()) {
+                let rows = bilesenler.rows;
+                // Operasyon bileşeni yoksa iş emri malzemelerine düş
+                if (!rows.length) {
+                    const ordComps = await client.query(
+                        `
+                        SELECT b.*, st.item_type, st.uom_code AS stock_uom, st.item_code, st.item_name
+                        FROM production_order_components b
+                        JOIN items st ON st.id = b.item_id
+                        WHERE b.order_id=$1
+                        ORDER BY COALESCE(b.line_no, b.id), b.id
+                        FOR UPDATE
+                        `,
+                        [emirId],
+                    );
+                    rows = ordComps.rows;
+                }
+                for (const [i, b] of rows.entries()) {
                     const qty = Number(b.planned_quantity) * rate;
-                    const depoId = Number(opts.material_warehouse_id)
+                    const depoId = Number(b.warehouse_id)
+                        || Number(opts.material_warehouse_id)
                         || pickConsumptionWarehouse(emir, b.item_type);
+                    if (!depoId) throw new Error('Malzeme çıkış deposu gerekli.');
                     if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
                     depoGrup.get(depoId).push({
                         item_id: b.item_id,
@@ -1234,11 +1308,12 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                         direction: -1,
                         uom_code: b.uom_code || b.stock_uom,
                     });
-                    await client.query(
-                        `UPDATE production_order_operation_components
-                         SET consumed_quantity = consumed_quantity + $1 WHERE id=$2`,
-                        [qty, b.id]
-                    );
+                    await bumpComponentConsumed(client, {
+                        orderId: emirId,
+                        operationId: op.id,
+                        itemId: b.item_id,
+                        qty,
+                    });
                     materialSnapshot.push({
                         line_no: b.line_no || i + 1,
                         line_type: b.item_type || 'Hammadde',
@@ -1349,15 +1424,25 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
             }
         }
 
+        const hasNext = op.next_line_no != null && op.next_line_no !== '';
         await client.query(
-            `UPDATE production_order_operations
-             SET produced_quantity = produced_quantity + $1,
-                 status=CASE WHEN produced_quantity + $1 + 1e-9 >= planned_quantity THEN 'Tamamlandi' ELSE 'Hazir' END
-             WHERE id=$2`,
-            [quantity, op.id]
+            `
+            UPDATE production_order_operations
+            SET produced_quantity = produced_quantity + $1,
+                transferred_quantity = CASE
+                  WHEN $3::boolean THEN COALESCE(transferred_quantity, 0) + $1
+                  ELSE COALESCE(transferred_quantity, 0)
+                END,
+                status = CASE
+                  WHEN produced_quantity + $1 + 1e-9 >= planned_quantity THEN 'Tamamlandi'
+                  ELSE 'Hazir'
+                END
+            WHERE id = $2
+            `,
+            [quantity, op.id, hasNext],
         );
 
-        if (op.next_line_no) {
+        if (hasNext) {
             await client.query(
                 `
                 UPDATE production_order_operations
