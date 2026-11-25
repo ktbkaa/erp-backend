@@ -4743,8 +4743,9 @@ const MODULES = [
           scrap_quantity: 0,
           rework_quantity: 0,
           quantity: 1,
-          net_quantity: 1,
-          gross_quantity: 1,
+          // Net/brüt opsiyonel: boş gelsin; kullanıcı yazmazsa kayıtta üretilen miktara eşitlenir
+          net_quantity: '',
+          gross_quantity: '',
           malzemeler: [],
           yan_urunler: [],
         },
@@ -14357,8 +14358,9 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
     // Önizleme operasyon/depo/miktar + malzemeleri her zaman yazar
     operation_id: data.operation_id || prev.operation_id || null,
     quantity: data.quantity != null ? data.quantity : (prev.quantity || 1),
-    net_quantity: data.net_quantity != null ? data.net_quantity : data.quantity,
-    gross_quantity: data.gross_quantity != null ? data.gross_quantity : data.quantity,
+    // Net/brüt otomatik doldurulmaz; kullanıcı fire varsa yazar, yoksa kayıtta quantity'ye eşitlenir
+    net_quantity: prev.net_quantity != null && prev.net_quantity !== '' ? prev.net_quantity : '',
+    gross_quantity: prev.gross_quantity != null && prev.gross_quantity !== '' ? prev.gross_quantity : '',
     malzemeler: Array.isArray(data.malzemeler) ? data.malzemeler : [],
     yan_urunler: Array.isArray(data.yan_urunler) ? data.yan_urunler : [],
   };
