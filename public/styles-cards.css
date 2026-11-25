@@ -102,20 +102,30 @@ html[data-view="cards"] .mod-title {
   letter-spacing: 0.03em;
   text-transform: uppercase;
   padding: 0.35rem 0.45rem;
+  color: var(--nav-title);
+}
+html[data-view="cards"] .mod-group.open > .mod-title {
+  color: var(--nav-title-open);
+  background: var(--nav-open-bg);
+}
+html[data-view="cards"] .mod-section-title {
+  color: var(--nav-section);
 }
 html[data-view="cards"] .mod-item {
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.65rem;
   font-weight: 600;
   min-height: 2.35rem;
+  color: var(--nav-item);
 }
 html[data-view="cards"] .mod-item.active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 14px var(--accent-glow, rgba(63, 135, 245, 0.35));
+  background: var(--nav-active-bg);
+  color: var(--nav-item-active);
+  box-shadow: none;
 }
 html[data-view="cards"] .mod-item:hover:not(.active) {
   background: var(--surface);
+  color: var(--nav-item-hover);
   box-shadow: var(--shadow-card);
 }
 

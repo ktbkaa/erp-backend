@@ -114,24 +114,25 @@ html[data-view="modern"] .mod-group {
 }
 html[data-view="modern"] .mod-title {
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 650;
   padding: 0.45rem 0.5rem;
   border-radius: 0.4rem;
-  color: var(--text-primary);
+  color: var(--nav-title);
 }
 html[data-view="modern"] .mod-title:hover {
-  background: var(--primary-soft);
+  background: var(--nav-hover-bg);
+  color: var(--nav-item-hover);
 }
 html[data-view="modern"] .mod-group.open > .mod-title {
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--nav-open-bg);
+  color: var(--nav-title-open);
 }
 html[data-view="modern"] .mod-section-title {
   font-size: 0.7rem;
   font-weight: 650;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.035em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--nav-section);
   padding: 0.45rem 0.55rem 0.2rem;
 }
 html[data-view="modern"] .mod-item,
@@ -139,19 +140,19 @@ html[data-view="modern"] .nav-link {
   border-radius: 0.35rem;
   padding: 0.38rem 0.55rem 0.38rem 1.65rem;
   font-size: 0.82rem;
-  color: var(--sidebar-ink);
+  color: var(--nav-item);
   border-left: 2px solid transparent;
 }
 html[data-view="modern"] .mod-item:hover,
 html[data-view="modern"] .nav-link:hover {
-  background: var(--surface-secondary);
-  color: var(--text-primary);
+  background: var(--nav-hover-bg);
+  color: var(--nav-item-hover);
 }
 html[data-view="modern"] .mod-item.active,
 html[data-view="modern"] .nav-link.active {
-  background: var(--primary-soft);
-  color: var(--primary);
-  border-left-color: var(--primary);
+  background: var(--nav-active-bg);
+  color: var(--nav-item-active);
+  border-left-color: var(--nav-active-bar);
   font-weight: 600;
 }
 html[data-view="modern"] .sidebar-foot {
