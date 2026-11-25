@@ -122,6 +122,43 @@ router.get('/onizleme', async (req, res) => {
             };
         });
 
+        // Yan ürünler: ürün ağacındaki is_byproduct / YanUrun satırları (üretim miktarına oranlı)
+        let yan_urunler = [];
+        if (emir.product_bom_id) {
+            const byp = await pool.query(
+                `
+                SELECT s.component_item_id AS item_id, s.quantity AS unit_qty, s.uom_code, s.line_no,
+                       st.item_code, st.item_name, st.item_type, st.uom_code AS stock_uom
+                FROM bom_lines s
+                JOIN items st ON st.id = s.component_item_id
+                WHERE s.product_bom_id = $1
+                  AND (COALESCE(s.is_byproduct, FALSE) = TRUE OR s.component_type = 'YanUrun')
+                ORDER BY COALESCE(s.line_no, s.id), s.id
+                `,
+                [emir.product_bom_id],
+            ).catch(() => ({ rows: [] }));
+            yan_urunler = (byp.rows || []).map((b, i) => {
+                const unit = Number(b.unit_qty) || 0;
+                const miktar = unit * qty; // mamul giriş miktarına göre
+                return {
+                    line_no: b.line_no != null ? b.line_no : 900 + i + 1,
+                    line_type: 'YanUrun',
+                    item_id: b.item_id,
+                    item_code: b.item_code,
+                    item_name: b.item_name,
+                    unit_quantity: unit,
+                    quantity: miktar,
+                    net_quantity: miktar,
+                    gross_quantity: miktar,
+                    scrap_quantity: 0,
+                    rework_quantity: 0,
+                    uom_code: b.uom_code || b.stock_uom,
+                    warehouse_id: emir.fg_warehouse_id || null,
+                    is_byproduct: true,
+                };
+            });
+        }
+
         res.json({
             order_id: orderId,
             order_no: emir.order_no,
@@ -145,6 +182,7 @@ router.get('/onizleme', async (req, res) => {
             product_warehouse_id: emir.fg_warehouse_id || null,
             material_warehouse_id: emir.component_warehouse_id || null,
             wip_warehouse_id: emir.wip_warehouse_id || null,
+            byproduct_warehouse_id: emir.fg_warehouse_id || null,
             op_planned_quantity: plannedOp,
             op_produced_quantity: producedOp,
             op_remaining_quantity: remainingOp,
@@ -158,7 +196,7 @@ router.get('/onizleme', async (req, res) => {
                 require_material_consume: prodParams.require_material_consume,
             },
             malzemeler,
-            yan_urunler: [],
+            yan_urunler,
             operasyonlar: emir.operasyonlar || [],
         });
     } catch (err) {

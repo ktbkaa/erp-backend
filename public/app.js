@@ -4639,6 +4639,15 @@ const MODULES = [
                 labelKey: 'warehouse_name',
                 codeKey: 'warehouse_code',
               },
+              {
+                key: 'byproduct_warehouse_id',
+                label: 'Yan ürün depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
             ],
           },
           {
@@ -4686,16 +4695,43 @@ const MODULES = [
             ],
           },
           {
-            id: 'duruslar',
-            label: 'Duruşlar',
+            id: 'yan-urunler',
+            label: 'Yan Ürünler',
             kind: 'grid',
-            key: 'duruslar',
-            slots: 2,
+            key: 'yan_urunler',
+            slots: 4,
             fields: [
               { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
-              { key: 'downtime_code', label: 'Kod', size: 'short' },
-              { key: 'downtime_name', label: 'Ad' },
-              { key: 'duration_min', label: 'Dk', type: 'number', size: 'short' },
+              {
+                key: 'item_id',
+                label: 'Stok',
+                type: 'lookup',
+                lookup: 'items',
+                valueKey: 'id',
+                labelKey: 'item_name',
+                codeKey: 'item_code',
+                required: true,
+              },
+              { key: 'unit_quantity', label: 'Birim mik.', type: 'number', size: 'short' },
+              { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
+              {
+                key: 'uom_code',
+                label: 'Birim',
+                type: 'lookup',
+                lookup: 'olcu-birimleri',
+                valueKey: 'uom_code',
+                labelKey: 'uom_name',
+                size: 'short',
+              },
+              {
+                key: 'warehouse_id',
+                label: 'Depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
               { key: 'note', label: 'Not' },
             ],
           },
@@ -4710,7 +4746,7 @@ const MODULES = [
           net_quantity: 1,
           gross_quantity: 1,
           malzemeler: [],
-          duruslar: [],
+          yan_urunler: [],
         },
       },
       {
@@ -14324,11 +14360,12 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
     net_quantity: data.net_quantity != null ? data.net_quantity : data.quantity,
     gross_quantity: data.gross_quantity != null ? data.gross_quantity : data.quantity,
     malzemeler: Array.isArray(data.malzemeler) ? data.malzemeler : [],
-    duruslar: Array.isArray(prev.duruslar) ? prev.duruslar : [],
+    yan_urunler: Array.isArray(data.yan_urunler) ? data.yan_urunler : [],
   };
   invalidateLookups('uretim-emir-operasyonlari');
   await fetchLookupKey('uretim-emir-operasyonlari', { order_id: oid }).catch(() => {});
   const nMal = (data.malzemeler || []).length;
+  const nYan = (data.yan_urunler || []).length;
   const kalan = data.op_remaining_quantity != null ? Number(data.op_remaining_quantity) : null;
   const maxA = data.max_allowed_quantity != null ? Number(data.max_allowed_quantity) : null;
   const allowOver = data.production_params?.allow_over_production === true;
@@ -14342,15 +14379,17 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
     maxA != null ? `Max izin: ${maxA}` : null,
     allowOver ? `Fazla üretim açık (%${overPct})` : 'Fazla üretim kapalı',
     nMal ? `${nMal} malzeme` : 'malzeme yok',
+    nYan ? `${nYan} yan ürün` : null,
   ].filter(Boolean).join(' · ');
   renderForm(screen);
   const qtyHint = (kalan != null && maxA != null)
     ? ` · kalan ${kalan}, max ${maxA}`
     : '';
+  const yanHint = nYan ? ` · ${nYan} yan ürün` : '';
   if (!nMal) {
-    toast(`Önizleme: ${data.order_no || oid} — malzeme satırı yok. Emirde «Detayları Doldur» ile BOM uygulayın.`);
+    toast(`Önizleme: ${data.order_no || oid} — malzeme satırı yok. Emirde «Detayları Doldur» ile BOM uygulayın.${yanHint}`);
   } else {
-    toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme${qtyHint}`);
+    toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme${yanHint}${qtyHint}`);
   }
 }
 
