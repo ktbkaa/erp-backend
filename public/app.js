@@ -3894,8 +3894,8 @@ const MODULES = [
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'olcu' },
           { key: 'min_quantity', label: 'Min. parti', type: 'number', group: 'olcu' },
           { key: 'max_quantity', label: 'Maks. parti', type: 'number', group: 'olcu' },
-          { key: 'valid_from', label: 'Başlangıç tarihi', type: 'date', group: 'planlama' },
-          { key: 'valid_to', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+          { key: 'valid_from', label: 'Başlangıç tarihi', type: 'datetime', group: 'planlama' },
+          { key: 'valid_to', label: 'Bitiş tarihi', type: 'datetime', group: 'planlama' },
           { key: 'bom_type', label: 'Ü.A. tipi', type: 'select', options: ['Uretim', 'Satis', 'Prototype', 'YariMamul'], required: true, group: 'kimlik' },
           { key: 'design_department', label: 'Tasarım bölümü', type: 'select', options: ['Standart', 'Muhendislik', 'Uretim', 'Kalite'], required: true, group: 'kimlik' },
           { key: 'bom_status', label: 'Ü.A. statüsü', type: 'select', options: ['Aktif', 'Taslak', 'Onayli', 'Pasif', 'TarihceYok'], required: true, group: 'status' },
@@ -3966,8 +3966,8 @@ const MODULES = [
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'olcu' },
               { key: 'min_quantity', label: 'Min. parti', type: 'number', group: 'olcu' },
               { key: 'max_quantity', label: 'Maks. parti', type: 'number', group: 'olcu' },
-              { key: 'valid_from', label: 'Başlangıç tarihi', type: 'date', group: 'planlama' },
-              { key: 'valid_to', label: 'Bitiş tarihi', type: 'date', group: 'planlama' },
+              { key: 'valid_from', label: 'Başlangıç tarihi', type: 'datetime', group: 'planlama' },
+              { key: 'valid_to', label: 'Bitiş tarihi', type: 'datetime', group: 'planlama' },
               { key: 'bom_type', label: 'Ü.A. tipi', type: 'select', options: ['Uretim', 'Satis', 'Prototype', 'YariMamul'], required: true, group: 'kimlik' },
               { key: 'design_department', label: 'Tasarım bölümü', type: 'select', options: ['Standart', 'Muhendislik', 'Uretim', 'Kalite'], required: true, group: 'kimlik' },
               { key: 'bom_status', label: 'Ü.A. statüsü', type: 'select', options: ['Aktif', 'Taslak', 'Onayli', 'Pasif', 'TarihceYok'], required: true, group: 'status' },
@@ -4007,8 +4007,8 @@ const MODULES = [
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name' },
               { key: 'min_quantity', label: 'Min. parti', type: 'number' },
               { key: 'max_quantity', label: 'Maks. parti', type: 'number' },
-              { key: 'valid_from', label: 'Başlangıç', type: 'date' },
-              { key: 'valid_to', label: 'Bitiş', type: 'date' },
+              { key: 'valid_from', label: 'Başlangıç', type: 'datetime' },
+              { key: 'valid_to', label: 'Bitiş', type: 'datetime' },
               { key: 'wo_change_mode', label: 'İE değişiklik', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'] },
               { key: 'lock_when_used_in_route', label: 'Rotada kilitli', type: 'checkbox' },
               { key: 'is_default_for_wo', label: 'İş emri varsayılan', type: 'checkbox' },
@@ -4167,7 +4167,7 @@ const MODULES = [
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
           { key: 'quantity', label: 'Miktar', type: 'number', required: true, group: 'kimlik' },
-          { key: 'planned_start', label: 'Planlanan başlangıç', type: 'date', group: 'planlama' },
+          { key: 'planned_start', label: 'Planlanan başlangıç', type: 'datetime', group: 'planlama' },
           { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
           { key: 'is_started', label: 'Başlatıldı', type: 'checkbox', group: 'status' },
           { key: 'is_fixed', label: 'Sabit', type: 'checkbox', group: 'status' },
@@ -4581,8 +4581,8 @@ const MODULES = [
           { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
           { key: 'op_remaining_quantity', label: 'Op. kalan', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
           { key: 'max_allowed_quantity', label: 'Maks. izin', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'started_at', label: 'Başlangıç', type: 'date', group: 'diger', groupLabel: 'Diğer' },
-          { key: 'ended_at', label: 'Bitiş', type: 'date', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'started_at', label: 'Başlangıç', type: 'datetime', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'ended_at', label: 'Bitiş', type: 'datetime', group: 'diger', groupLabel: 'Diğer' },
           {
             key: 'source_type',
             label: 'Kaynak tipi',
@@ -5067,8 +5067,8 @@ const MODULES = [
           { key: 'attr3_code', label: 'Özellik 3', group: 'kimlik' },
           { key: 'min_quantity', label: 'Min. miktar', type: 'number', group: 'olcu' },
           { key: 'max_quantity', label: 'Maks. miktar', type: 'number', group: 'olcu' },
-          { key: 'valid_from', label: 'Geçerlilik baş.', type: 'date', group: 'planlama' },
-          { key: 'valid_to', label: 'Geçerlilik bitiş', type: 'date', group: 'planlama' },
+          { key: 'valid_from', label: 'Geçerlilik baş.', type: 'datetime', group: 'planlama' },
+          { key: 'valid_to', label: 'Geçerlilik bitiş', type: 'datetime', group: 'planlama' },
           { key: 'wo_change_mode', label: 'İE değişiklik izni', type: 'select', options: ['Serbest', 'Yasak', 'Onayli'], group: 'status' },
           { key: 'is_default', label: 'Varsayılan ürün rotası', type: 'checkbox', group: 'status' },
           { key: 'template', label: 'Şablon', type: 'checkbox', group: 'status' },
@@ -5418,8 +5418,8 @@ const MODULES = [
           { key: 'pricing_method', label: 'Yöntem', type: 'select', options: ['Adet','Kg','Metre','Saat','Operasyon','Parti','Sabit','Ozel'] },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', required: true },
           { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
-          { key: 'valid_from', label: 'Geçerlilik başı', type: 'date' },
-          { key: 'valid_to', label: 'Geçerlilik sonu', type: 'date' },
+          { key: 'valid_from', label: 'Geçerlilik başı', type: 'datetime' },
+          { key: 'valid_to', label: 'Geçerlilik sonu', type: 'datetime' },
           { key: 'min_qty', label: 'Min miktar', type: 'number' },
           { key: 'notes', label: 'Not' },
           { key: 'is_active', label: 'Aktif', type: 'checkbox' },
@@ -11711,6 +11711,102 @@ function getActiveCompanyId() {
   return stored > 0 ? stored : null;
 }
 
+/* ——— Sekmeler arası liste tazeleme ———
+ * Yeni / Düzelt / Kopyala formları ayrı tarayıcı sekmesinde açılır. Orada kayıt (POST/PUT/PATCH/DELETE)
+ * başarılı olunca ana sekmeye haber verilir; açık liste ekranı sayfa yenilemeden kendini günceller. */
+const ERP_SYNC_KEY = 'ktb_erp_sync';
+const ERP_SYNC_SKIP = /^\/(auth|sql-console|kullanici-tercih|audit)/;
+const _erpTabId = Math.random().toString(36).slice(2);
+let _erpSyncChan = null;
+let _erpSyncTimer = null;
+let _erpSyncPending = null;
+let _erpListStale = false;
+
+function erpSyncChannel() {
+  if (_erpSyncChan || typeof BroadcastChannel === 'undefined') return _erpSyncChan;
+  try {
+    _erpSyncChan = new BroadcastChannel('ktb-erp-sync');
+    _erpSyncChan.onmessage = (ev) => onErpSyncMessage(ev.data);
+  } catch (_) { _erpSyncChan = null; }
+  return _erpSyncChan;
+}
+
+function erpSyncPost(msg) {
+  const payload = { ...msg, from: _erpTabId, ts: Date.now() };
+  const chan = erpSyncChannel();
+  if (chan) {
+    try { chan.postMessage(payload); return; } catch (_) { /* storage ile dene */ }
+  }
+  try { localStorage.setItem(ERP_SYNC_KEY, JSON.stringify(payload)); } catch (_) { /* ignore */ }
+}
+
+function notifyErpDataChanged(path, method) {
+  const m = String(method || 'GET').toUpperCase();
+  if (m === 'GET' || m === 'HEAD') return;
+  const p = String(path || '');
+  if (ERP_SYNC_SKIP.test(p)) return;
+  erpSyncPost({ type: 'data-changed', path: p, method: m });
+}
+
+function onErpSyncMessage(msg) {
+  if (!msg || msg.type !== 'data-changed' || msg.from === _erpTabId) return;
+  if (state.formSolo) return;
+  _erpListStale = true;
+  _erpSyncPending = { ...(_erpSyncPending || {}), ...msg };
+  clearTimeout(_erpSyncTimer);
+  _erpSyncTimer = setTimeout(() => {
+    const pending = _erpSyncPending;
+    _erpSyncPending = null;
+    refreshOpenListSilently(pending || {});
+  }, 350);
+}
+
+/** Açık liste ekranını yeniden çek; filtre / sayfa / kolon düzeni korunur. */
+async function refreshOpenListSilently(msg = {}) {
+  if (state.formSolo || state.formMode != null) return false;
+  const screen = findScreen(state.screenId);
+  if (!screen || !isListScreenOpen()) return false;
+  if (screen.sqlConsole || screen.systemUpdateConsole || screen.pageQueryExplorer
+    || screen.mrpSonucMode || screen.visualGantt || screen.openFormOnEnter) return false;
+  try {
+    const data = await api(
+      buildListEndpoint(screen),
+      screen.scopeFirma === false ? { skipFirma: true } : {},
+    );
+    if (state.screenId !== screen.id || state.formMode != null || !isListScreenOpen()) return false;
+    let rows = listRowsFromResponse(screen, data);
+    if (screen.id === 'numarator-tanimi') rows = rows.map((r) => ({ ...r, id: r.series_code }));
+    if (screen.listSourceType) {
+      rows = rows.filter((r) => String(r.source_type || 'Operasyonel') === String(screen.listSourceType));
+    }
+    state.rows = ensureRowIds(rows);
+    if (msg.id != null && msg.screenId === screen.id) state.selectedId = msg.id;
+    _erpListStale = false;
+    refreshListBodyFromColFilters(screen);
+    if (state.selectedId != null) {
+      const tr = document.querySelector(`#dataBody tr[data-id="${CSS.escape(String(state.selectedId))}"]`);
+      if (tr && typeof tr.scrollIntoView === 'function') tr.scrollIntoView({ block: 'nearest' });
+    }
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function initErpSync() {
+  erpSyncChannel();
+  window.addEventListener('storage', (e) => {
+    if (e.key !== ERP_SYNC_KEY || !e.newValue) return;
+    try { onErpSyncMessage(JSON.parse(e.newValue)); } catch (_) { /* ignore */ }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && _erpListStale) refreshOpenListSilently({});
+  });
+  window.addEventListener('focus', () => {
+    if (_erpListStale) refreshOpenListSilently({});
+  });
+}
+
 async function api(path, options = {}) {
   let res;
   try {
@@ -11746,6 +11842,7 @@ async function api(path, options = {}) {
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) { /* ignore */ }
+  if (res.ok) notifyErpDataChanged(path, options?.method);
   if (!res.ok) {
     const msg = (data && (data.hata || data.detay)) || text || res.statusText;
     const err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
@@ -15285,24 +15382,191 @@ function listColumns(screen) {
 
 const ISO_DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z$/;
 
-/** DATE kolonları JSON'da UTC gece yarısı gelir; formla aynı şekilde ilk 10 karakter tarih kabul edilir. */
-function formatListDateTime(val) {
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+/** Sistem genelinde tarih: gün/ay/yıl — gg/aa/yyyy */
+function fmtDMY(d) {
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+/** Tarih + saat: gg/aa/yyyy ss:dd */
+function fmtDMYHM(d) {
+  return `${fmtDMY(d)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/**
+ * DATE kolonları JSON'da UTC gece yarısı gelir; formla aynı şekilde ilk 10 karakter tarih kabul edilir.
+ * raw=true: kullanıcının girdiği (saat dilimsiz) tarih-saat, formdaki gibi çevirmeden gösterilir.
+ */
+function formatListDateTime(val, raw = false) {
   const m = ISO_DATETIME_RE.exec(val);
   if (!m) return val;
   if (m[4] === '00' && m[5] === '00' && m[6] === '00' && !/[1-9]/.test(m[7] || '')) {
-    return `${m[3]}.${m[2]}.${m[1]}`;
+    return `${m[3]}/${m[2]}/${m[1]}`;
   }
+  if (raw) return `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}`;
   const d = new Date(val);
   if (Number.isNaN(d.getTime())) return val;
-  return d.toLocaleString('tr-TR', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
+  return fmtDMYHM(d);
 }
 
 function formatListDateOnly(val) {
   const m = String(val || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return null;
-  return `${m[3]}.${m[2]}.${m[1]}`;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+/* ——— Tarih / saat girişi: gün/ay/yıl (gg/aa/yyyy) ———
+ * Tarayıcı yerel ayarı (aa/gg/yyyy) ne olursa olsun görünen biçim sabit kalır. Değeri tutan
+ * type=date / datetime-local girişi DOM'da durur (data-master / data-detail ve tüm okuyucular aynen
+ * çalışır); kullanıcı yanındaki metin kutusuna yazar veya takvim düğmesini kullanır. */
+const DMY_NATIVE_VALUE = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+
+function nativeToDmy(v, withTime) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(String(v || ''));
+  if (!m) return '';
+  const date = `${m[3]}/${m[2]}/${m[1]}`;
+  return withTime ? `${date} ${m[4] || '00'}:${m[5] || '00'}` : date;
+}
+
+/** gg/aa/yyyy [ss:dd] → ISO; boş → ''; geçersiz → null */
+function dmyToNative(text, withTime) {
+  const t = String(text || '').trim();
+  if (!t) return '';
+  const re = withTime
+    ? /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/
+    : /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const m = re.exec(t);
+  if (!m) return null;
+  const d = Number(m[1]);
+  const mo = Number(m[2]);
+  const y = Number(m[3]);
+  const hh = m[4] != null ? Number(m[4]) : 0;
+  const mi = m[5] != null ? Number(m[5]) : 0;
+  if (mo < 1 || mo > 12 || d < 1 || y < 1900 || y > 2999) return null;
+  if (d > new Date(y, mo, 0).getDate()) return null;
+  if (hh > 23 || mi > 59) return null;
+  const iso = `${m[3]}-${m[2]}-${m[1]}`;
+  return withTime ? `${iso}T${pad2(hh)}:${pad2(mi)}` : iso;
+}
+
+function maskDmy(raw, withTime) {
+  const digits = String(raw || '').replace(/\D/g, '').slice(0, withTime ? 12 : 8);
+  let out = digits.slice(0, 2);
+  if (digits.length > 2) out += `/${digits.slice(2, 4)}`;
+  if (digits.length > 4) out += `/${digits.slice(4, 8)}`;
+  if (withTime && digits.length > 8) out += ` ${digits.slice(8, 10)}`;
+  if (withTime && digits.length > 10) out += `:${digits.slice(10, 12)}`;
+  return out;
+}
+
+const DMY_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" '
+  + 'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+
+function enhanceDmyInput(native) {
+  if (!(native instanceof HTMLInputElement) || native.dataset.dmy === '1' || !native.parentNode) return;
+  const withTime = native.type === 'datetime-local';
+  native.dataset.dmy = '1';
+
+  const wrap = document.createElement('span');
+  wrap.className = `dmy-field${withTime ? ' dmy-field--time' : ''}`;
+  const text = document.createElement('input');
+  text.type = 'text';
+  text.className = 'dmy-text';
+  text.inputMode = 'numeric';
+  text.autocomplete = 'off';
+  text.spellcheck = false;
+  text.maxLength = withTime ? 16 : 10;
+  text.placeholder = withTime ? 'gg/aa/yyyy ss:dd' : 'gg/aa/yyyy';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'dmy-pick';
+  btn.tabIndex = -1;
+  btn.title = 'Takvim';
+  btn.setAttribute('aria-label', 'Takvim');
+  btn.innerHTML = DMY_ICON;
+
+  native.parentNode.insertBefore(wrap, native);
+  wrap.append(text, btn, native);
+  native.classList.add('dmy-native');
+  native.tabIndex = -1;
+  native.setAttribute('aria-hidden', 'true');
+
+  const getNative = () => DMY_NATIVE_VALUE.get.call(native);
+  const setNative = (v) => DMY_NATIVE_VALUE.set.call(native, v);
+  const showText = () => {
+    const next = nativeToDmy(getNative(), withTime);
+    if (text.value !== next) text.value = next;
+  };
+  Object.defineProperty(native, 'value', {
+    configurable: true,
+    get() { return getNative(); },
+    set(v) { setNative(v); showText(); },
+  });
+  native.focus = (...a) => text.focus(...a);
+  native.select = () => text.select();
+  showText();
+
+  const mirrorState = () => {
+    text.disabled = native.disabled;
+    text.readOnly = native.readOnly;
+    btn.disabled = native.disabled || native.readOnly;
+    text.required = native.required;
+    wrap.hidden = native.hidden;
+  };
+  mirrorState();
+  new MutationObserver(mirrorState).observe(native, {
+    attributes: true,
+    attributeFilter: ['disabled', 'readonly', 'hidden', 'required'],
+  });
+
+  const commit = (v) => {
+    if (getNative() === v) return;
+    setNative(v);
+    native.dispatchEvent(new Event('input', { bubbles: true }));
+    native.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  text.addEventListener('input', (e) => {
+    e.stopPropagation();
+    const masked = maskDmy(text.value, withTime);
+    if (masked !== text.value) text.value = masked;
+    text.classList.remove('dmy-invalid');
+    if (masked === '') { commit(''); return; }
+    const iso = dmyToNative(masked, withTime);
+    if (iso) commit(iso);
+  });
+  text.addEventListener('change', (e) => e.stopPropagation());
+  text.addEventListener('blur', () => {
+    const iso = dmyToNative(text.value, withTime);
+    if (text.value && iso === null) {
+      text.classList.add('dmy-invalid');
+      setTimeout(() => { text.classList.remove('dmy-invalid'); showText(); }, 900);
+    }
+  });
+  native.addEventListener('input', showText);
+  native.addEventListener('change', showText);
+  btn.addEventListener('click', () => {
+    if (native.disabled || native.readOnly) return;
+    try { native.showPicker(); } catch (_) { try { native.click(); } catch (__) { /* ignore */ } }
+  });
+}
+
+function enhanceDmyInputsIn(root) {
+  if (!root || root.nodeType !== 1) return;
+  if (root.matches?.('input[type="date"], input[type="datetime-local"]')) enhanceDmyInput(root);
+  root.querySelectorAll?.('input[type="date"], input[type="datetime-local"]').forEach(enhanceDmyInput);
+}
+
+function initDmyInputs() {
+  document.documentElement.lang = 'tr';
+  enhanceDmyInputsIn(document.body);
+  new MutationObserver((muts) => {
+    for (const mu of muts) mu.addedNodes.forEach((n) => enhanceDmyInputsIn(n));
+  }).observe(document.body, { childList: true, subtree: true });
 }
 
 function cellHtml(col, row, index = 0) {
@@ -15317,7 +15581,7 @@ function cellHtml(col, row, index = 0) {
   } else if (Array.isArray(val)) {
     val = val.length ? val.join('; ') : '—';
   } else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) {
-    val = formatListDateTime(val);
+    val = formatListDateTime(val, col?.type === 'datetime');
   } else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
     && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
     val = formatListDateOnly(val) || val;
@@ -15371,7 +15635,7 @@ function listCellSearchText(col, row, index = 0) {
   else if (col?.key === 'parola_var') val = val ? 'Var' : 'Yok';
   else if (typeof val === 'boolean') val = val ? 'Evet' : 'Hayır';
   else if (Array.isArray(val)) val = val.length ? val.join('; ') : '';
-  else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) val = formatListDateTime(val);
+  else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) val = formatListDateTime(val, col?.type === 'datetime');
   else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
     && (col?.type === 'date' || /(_date$|tarih|_at$)/i.test(String(col?.key || '')))) {
     val = formatListDateOnly(val) || val;
@@ -15753,7 +16017,7 @@ function exportListAsPdf() {
     <style>body{font-family:Segoe UI,Arial,sans-serif;padding:16px} h1{font-size:16px;margin:0 0 12px}
     @media print{body{padding:0}}</style></head><body>
     <h1>${escapeHtml(screen.title || screen.id)} — Liste</h1>
-    <p style="color:#666;font-size:12px">${rows.length} kayıt · ${new Date().toLocaleString('tr-TR')}</p>
+    <p style="color:#666;font-size:12px">${rows.length} kayıt · ${fmtDMYHM(new Date())}</p>
     ${table}
     <script>window.onload=function(){setTimeout(function(){window.print()},200)}<\/script>
     </body></html>`);
@@ -15771,7 +16035,7 @@ function exportListAsWord() {
     xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="utf-8"/><title>${escapeHtml(screen.title || screen.id)}</title></head>
     <body><h2>${escapeHtml(screen.title || screen.id)}</h2>
-    <p>${rows.length} kayıt · ${new Date().toLocaleString('tr-TR')}</p>${table}</body></html>`;
+    <p>${rows.length} kayıt · ${fmtDMYHM(new Date())}</p>${table}</body></html>`;
   const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -25763,6 +26027,7 @@ async function finishSaveForm(screen, saved, after = 'stay') {
     : screen.id;
   const formKey = state.activeTabKey;
   const id = saved?.id ?? state.formRecord?.id ?? null;
+  if (id != null) erpSyncPost({ type: 'data-changed', screenId: listScreenId, id });
 
   if (after === 'stay' && id != null && screen.id !== 'toplu-is-emri' && screen.id !== 'siparis-is-emri') {
     state.selectedId = id;
@@ -26262,7 +26527,7 @@ function fmtMetaTs(v) {
   try {
     const d = new Date(v);
     if (Number.isNaN(d.getTime())) return String(v);
-    return d.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
+    return fmtDMYHM(new Date(d.toLocaleString('en-US', { timeZone: 'Europe/Istanbul' })));
   } catch (_) {
     return String(v);
   }
@@ -28545,7 +28810,7 @@ function exportSqlResultAsPdf() {
     payload.verb || '',
     payload.ms != null ? `${payload.ms} ms` : '',
     payload.truncated ? 'ilk 1000 satır' : '',
-    new Date().toLocaleString('tr-TR'),
+    fmtDMYHM(new Date()),
   ].filter(Boolean).join(' · ');
   w.document.write(`<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"/><title>${escapeHtml(title)}</title>
     <style>
@@ -29160,6 +29425,8 @@ async function bootIntoApp() {
 
 function bootFromHash() {
   initUiPrefs();
+  initErpSync();
+  initDmyInputs();
   bindEvents();
   restoreSession()
     .then(() => bootIntoApp())
