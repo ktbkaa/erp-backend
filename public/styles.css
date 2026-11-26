@@ -7597,3 +7597,33 @@ html .screen-view > .screen-banner::after { display: none !important; }
 }
 .action-bar .info-tip:hover::after,
 .action-bar .info-tip:focus-visible::after { display: block; }
+
+/* Liste ekranı dikey boşlukları: düğmeler, filtre ve liste birbirine yakın */
+html .screen-view {
+  padding-top: 0.2rem !important;
+}
+html .screen-view > .action-bar {
+  margin-top: 0.15rem !important;
+  margin-bottom: 0 !important;
+  padding-top: 0.15rem !important;
+  padding-bottom: 0.15rem !important;
+}
+html .screen-view > .filter-pane-home,
+html .screen-view > #filterPaneHome {
+  margin-top: 0 !important;
+}
+html .screen-view .filter-pane {
+  margin-top: 0.3rem !important;
+  padding-top: 0.4rem !important;
+}
+html .screen-view .filter-pane-head {
+  margin-bottom: 0.2rem !important;
+}
+html .screen-view .filter-pane-home { padding-top: 0 !important; }
+html .screen-view .filter-pane { margin-top: 0.15rem !important; }
+html .screen-view { row-gap: 0 !important; gap: 0 !important; }
+html .screen-view > .filter-pane-home { margin-bottom: 0.3rem !important; }
+/* Filtre satırı içeriği kadar yüksek (80px'e sıkışıp listeyi üstüne bindirmesin) */
+html #viewScreen.screen-view:not(.filter-docked) {
+  grid-template-rows: auto auto auto minmax(12rem, 1fr) !important;
+}
