@@ -15561,6 +15561,24 @@ function enhanceDmyInputsIn(root) {
   root.querySelectorAll?.('input[type="date"], input[type="datetime-local"]').forEach(enhanceDmyInput);
 }
 
+/** Ekran bandı metni sayfada görünmez; sağ üstteki bilgi simgesinin pop-up'ında (CSS ::after) gösterilir. */
+function syncBannerInfo(el) {
+  const t = (el.textContent || '').trim();
+  if (!t) return;
+  el.dataset.info = t;
+  el.setAttribute('aria-label', t);
+  el.textContent = '';
+}
+
+function initBannerInfo() {
+  document.querySelectorAll('.screen-banner').forEach((el) => {
+    syncBannerInfo(el);
+    new MutationObserver(() => syncBannerInfo(el)).observe(el, {
+      childList: true, characterData: true, subtree: true,
+    });
+  });
+}
+
 function initDmyInputs() {
   document.documentElement.lang = 'tr';
   enhanceDmyInputsIn(document.body);
@@ -29427,6 +29445,7 @@ function bootFromHash() {
   initUiPrefs();
   initErpSync();
   initDmyInputs();
+  initBannerInfo();
   bindEvents();
   restoreSession()
     .then(() => bootIntoApp())
