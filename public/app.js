@@ -4281,6 +4281,7 @@ const MODULES = [
           { key: 'planned_quantity', label: 'Planlanan', type: 'number', size: 'short' },
           { key: 'produced_quantity', label: 'Üretilen', type: 'number', size: 'short', readOnly: true },
           { key: 'transferred_quantity', label: 'Aktarılan', type: 'number', size: 'short', readOnly: true },
+          { key: 'lot_source', label: 'Parti kaynak', size: 'short', readOnly: true },
           { key: 'status', label: 'Durum', type: 'select', options: ['Bekliyor', 'Hazir', 'Tamamlandi', 'Kapali'] },
           { key: 'ilk_operasyon', label: 'İlk op?', type: 'checkbox', readOnly: true },
           { key: 'son_operasyon', label: 'Son op?', type: 'checkbox', readOnly: true },
@@ -4308,6 +4309,7 @@ const MODULES = [
               { key: 'consumed_quantity', label: 'Tüketilen', type: 'number', size: 'short', readOnly: true },
               { key: 'remaining_quantity', label: 'Kalan', type: 'number', size: 'short', readOnly: true },
               { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
+              { key: 'lot_source', label: 'Parti kaynak', size: 'short', readOnly: true },
             ],
           },
           {
@@ -4690,7 +4692,8 @@ const MODULES = [
                 labelKey: 'warehouse_name',
                 codeKey: 'warehouse_code',
               },
-              { key: 'lot_no', label: 'Parti', size: 'short' },
+              { key: 'lot_no', label: 'Parti', size: 'short', hint: 'Boş bırakılırsa girilen miktar depodaki partilerden otomatik düşülür.' },
+              { key: 'lot_source', label: 'Parti kaynak', size: 'short', readOnly: true },
               { key: 'note', label: 'Not' },
             ],
           },
@@ -24260,6 +24263,24 @@ function bindCascadeLookups(_screen) {
     const detailKey = el.getAttribute('data-detail');
     const flowCompKey = el.getAttribute('data-flow-comp-field');
     const fieldKey = masterKey || detailKey || flowCompKey;
+
+    // Üretim girişi: Parti elle yazıldıysa kaynak "Manuel giriş"; boşsa otomatik (FIFO) kaynak
+    if (detailKey === 'lot_no' && el instanceof HTMLInputElement
+      && (scr.id === 'uretim-girisleri' || scr.id === 'hizli-uretim-girisi')) {
+      const didx = el.getAttribute('data-didx');
+      const grid = el.getAttribute('data-grid');
+      const srcEl = document.querySelector(
+        `[data-detail="lot_source"][data-didx="${didx}"]${grid != null ? `[data-grid="${grid}"]` : ''}`
+      );
+      if (srcEl) {
+        if (!('autoSource' in srcEl.dataset)) {
+          srcEl.dataset.autoSource = srcEl.value && srcEl.value !== 'Manuel giriş' ? srcEl.value : '';
+        }
+        srcEl.value = el.value.trim()
+          ? 'Manuel giriş'
+          : (srcEl.dataset.autoSource || 'Kayıtta otomatik belirlenir');
+      }
+    }
 
     // Barkod → stok eşleştirme (yanlış malzeme engeli)
     if (fieldKey === 'barcode' && el instanceof HTMLInputElement && el.value.trim()) {
