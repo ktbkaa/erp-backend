@@ -1471,11 +1471,6 @@ const MODULES = [
         title: 'Parti, Seri ve Rezervasyon',
         screenIds: ['stok-partileri', 'stok-serileri', 'stok-rezervasyonlari', 'stok-ikame'],
       },
-      {
-        id: 'mrp',
-        title: 'MRP Planlama',
-        screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar', 'mrp-hareket-raporu'],
-      },
     ],
     screens: [
       {
@@ -2184,274 +2179,6 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
-      {
-        id: 'mrp-parametre',
-        techId: 'MFG-MRP-PAR-001',
-        businessNameEn: 'MrpParameterScreen',
-        title: 'MRP Parametreleri',
-        endpoint: '/mrp/parametreler',
-        crud: true,
-        readOnly: false,
-        listActions: ['yeni', 'incele', 'duzelt', 'sil'],
-        mrpKonsol: true,
-        mrpParametreScreen: true,
-        numeratorSeri: 'MRP_PARAM',
-        codeField: 'parameter_code',
-        filters: [
-          { key: 'parameter_code', label: 'Parametre kodu' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        columns: [
-          { key: 'parameter_code', label: 'Kod', mono: true },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'start_date', label: 'Ufuk baş.' },
-          { key: 'end_date', label: 'Ufuk bit.' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        masterFields: [
-          { key: 'parameter_code', label: 'Parametre kodu', code: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        defaults: { is_active: true },
-        formTabs: [
-          { id: 'param', label: 'MRP 2 Parametreleri', kind: 'mrp-parametre' },
-          { id: 'kapsam', label: 'Depo/İşemirleri/Siparişler/MPS/Satış Tahminleri', kind: 'mrp-kapsam' },
-        ],
-        banner: 'Kaydedilebilir MRP parametre seti. Konsolda bu seti seçerek çalıştırın.',
-      },
-      {
-        id: 'mrp-bagimsiz-ihtiyac',
-        techId: 'MFG-IR-SCR-001',
-        businessNameEn: 'IndependentRequirementsScreen',
-        title: 'MRP Bağımsız İhtiyaç',
-        endpoint: '/mrp/bagimsiz-ihtiyaclar',
-        crud: true,
-        codeField: 'requirement_no',
-        nameField: 'item_name',
-        numeratorSeri: 'MRP_BI',
-        filters: [
-          { key: 'requirement_no', label: 'No' },
-          { key: 'item_code', label: 'Stok' },
-          { key: 'source', label: 'Kaynak' },
-        ],
-        columns: [
-          { key: 'requirement_no', label: 'No', mono: true },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'quantity', label: 'Miktar' },
-          { key: 'requirement_date', label: 'İhtiyaç tar.' },
-          { key: 'source', label: 'Kaynak' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'requirement_no', label: 'İhtiyaç no', code: true, required: true },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
-          { key: 'requirement_date', label: 'İhtiyaç tarihi', type: 'date', required: true },
-          { key: 'source', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-        ],
-        detailFields: [
-          { key: 'uom_code', label: 'Birim' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'mrp-calisma',
-        techId: 'MFG-MRP-SCR-001',
-        businessNameEn: 'MrpRunScreen',
-        title: 'MRP Konsol',
-        endpoint: '/mrp/calismalar',
-        crud: false,
-        readOnly: true,
-        listActions: ['incele'],
-        mrpKonsol: true,
-        mrpKonsolWorkspace: true,
-        mrpCalistirAction: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        openFormOnEnter: 'workspace',
-        codeField: 'run_no',
-        filters: [
-          { key: 'run_no', label: 'Çalışma no' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'run_no', label: 'No', mono: true },
-          { key: 'status', label: 'Durum' },
-          { key: 'start_date', label: 'Ufuk baş.' },
-          { key: 'end_date', label: 'Ufuk bit.' },
-          { key: 'start_ts', label: 'Başlangıç' },
-          { key: 'end_ts', label: 'Bitiş' },
-          { key: 'line_count', label: 'Satır' },
-          { key: 'net_positive_only', label: 'Net>0' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        masterFields: [
-          { key: 'run_no', label: 'Çalışma no', code: true, readonly: true },
-          { key: 'description', label: 'Açıklama', readonly: true },
-          { key: 'status', label: 'Durum', readonly: true },
-        ],
-        formTabs: [
-          { id: 'workspace', label: 'MRP Konsol', kind: 'mrp-workspace' },
-        ],
-        nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
-        banner: 'Üstten parametre seti seçin; kapsam ve sonuçlar otomatik oluşur. Yeni kayıt yok — parametreleri «MRP Parametreleri»nden kaydedin.',
-      },
-      {
-        id: 'mrp-hesap',
-        techId: 'MFG-MRP-SCR-002',
-        businessNameEn: 'MrpInstantCalcScreen',
-        title: 'MRP Anlık Hesap',
-        endpoint: '/mrp',
-        crud: false,
-        readOnly: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        mrpCalistirAction: true,
-        filters: [
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'suggestion', label: 'Öneri' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'independent_demand', label: 'Bağımsız' },
-          { key: 'dependent_demand', label: 'Bağımlı' },
-          { key: 'safety_stock', label: 'Emniyet' },
-          { key: 'available_stock', label: 'Eldeki' },
-          { key: 'open_purchase_qty', label: 'Açık SA' },
-          { key: 'planned_production', label: 'Açık UE' },
-          { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri miktar' },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'planned_start', label: 'Plan baş.' },
-        ],
-      },
-      {
-        id: 'mrp-sonuclar',
-        techId: 'MFG-MRP-RES-001',
-        businessNameEn: 'MrpResultsScreen',
-        title: 'MRP Sonuçları',
-        endpoint: '/mrp/calismalar',
-        crud: false,
-        readOnly: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        mrpSonucMode: true,
-        filters: [
-          { key: 'item_code', label: 'Stok' },
-          { key: 'suggestion', label: 'Öneri' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'independent_demand', label: 'Bağımsız' },
-          { key: 'dependent_demand', label: 'Bağımlı' },
-          { key: 'available_stock', label: 'Eldeki' },
-          { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri miktar' },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'donusturuldu', label: 'Dönüştü' },
-          { key: 'donusum_document_no', label: 'Belge' },
-        ],
-      },
-      {
-        id: 'mrp-hareket-raporu',
-        techId: 'MFG-MRP-RPT-001',
-        businessNameEn: 'MrpMovementReportScreen',
-        title: 'MRP Hareket Raporu',
-        endpoint: '/mrp-hareket-raporu',
-        crud: false,
-        readOnly: true,
-        hideActions: true,
-        listExportActions: true,
-        reportPdfAction: true,
-        banner: 'MRP çalışma no zorunlu. Tahmin, MPS, bağımsız ihtiyaç, öneri, stok hareketi ve açık SA/IE satırlarını birleştirir. PDF / Excel / Word araç çubuğundan veya sağ tık menüsünden alınır.',
-        filters: [
-          {
-            key: 'run_id',
-            label: 'MRP çalışma no',
-            type: 'lookup',
-            lookup: 'mrp-calismalar',
-            valueKey: 'id',
-            labelKey: 'description',
-            codeKey: 'run_no',
-            required: true,
-            queryParam: true,
-          },
-          {
-            key: 'item_id',
-            label: 'Stok',
-            type: 'lookup',
-            lookup: 'items',
-            valueKey: 'id',
-            labelKey: 'item_name',
-            codeKey: 'item_code',
-            queryParam: true,
-          },
-          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
-          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
-          {
-            key: 'islem_tipi',
-            label: 'İşlem tipi',
-            type: 'select',
-            options: [
-              { value: 'Tahmin', label: 'Tahmin' },
-              { value: 'MPS', label: 'MPS' },
-              { value: 'BagimsizIhtiyac', label: 'Bağımsız ihtiyaç' },
-              { value: 'MrpOneri', label: 'MRP öneri' },
-              { value: 'MrpIhtiyac', label: 'MRP ihtiyaç bileşeni' },
-              { value: 'StokHareket', label: 'Stok hareket' },
-              { value: 'AcikSA', label: 'Açık SA' },
-              { value: 'AcikIE', label: 'Açık iş emri' },
-            ],
-            queryParam: true,
-          },
-          {
-            key: 'islem_turu',
-            label: 'İşlem türü',
-            type: 'select',
-            options: [
-              { value: 'Talep', label: 'Talep' },
-              { value: 'Arz', label: 'Arz' },
-              { value: 'Oneri', label: 'Öneri' },
-              { value: 'Oneri-SA', label: 'Öneri-SA' },
-              { value: 'Oneri-UE', label: 'Öneri-UE' },
-              { value: 'Yeterli', label: 'Yeterli' },
-              { value: 'Giris', label: 'Giriş' },
-              { value: 'Cikis', label: 'Çıkış' },
-            ],
-            queryParam: true,
-          },
-        ],
-        columns: [
-          { key: 'sira', label: '#', mono: true },
-          { key: 'hareket_tarihi', label: 'Tarih' },
-          { key: 'run_no', label: 'MRP no', mono: true },
-          { key: 'islem_tipi', label: 'İşlem tipi' },
-          { key: 'islem_turu', label: 'Tür' },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'quantity', label: 'Miktar', mono: true },
-          { key: 'quantity_in', label: 'Giriş', mono: true },
-          { key: 'quantity_out', label: 'Çıkış', mono: true },
-          { key: 'uom_code', label: 'Birim' },
-          { key: 'belge_no', label: 'Belge', mono: true },
-          { key: 'belge_tipi', label: 'Belge tipi' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'aciklama', label: 'Açıklama' },
-          { key: 'kaynak', label: 'Kaynak' },
-        ],
-      },
     ],
   },
   {
@@ -2476,9 +2203,13 @@ const MODULES = [
       {
         id: 'mal-kabul',
         title: 'Mal Kabul',
-        screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri', 'alis-iade-faturalari'],
+        screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri'],
       },
-
+      {
+        id: 'faturalandirma',
+        title: 'Alış Faturaları',
+        screenIds: ['alis-faturalari', 'alis-iade-faturalari'],
+      },
     ],
     screens: [
       {
@@ -2994,9 +2725,14 @@ const MODULES = [
         screenIds: ['sevk-emirleri'],
       },
       {
-        id: 'belgeler',
-        title: 'Satış Belgeleri',
-        screenIds: ['irsaliye-yonetimi', 'fatura-yonetimi', 'satis-iade-faturalari'],
+        id: 'irsaliyeler',
+        title: 'Satış İrsaliyeleri',
+        screenIds: ['irsaliye-yonetimi'],
+      },
+      {
+        id: 'faturalandirma',
+        title: 'Satış Faturaları',
+        screenIds: ['satis-faturalari', 'satis-iade-faturalari'],
       },
     ],
     screens: [
@@ -3812,6 +3548,11 @@ const MODULES = [
         screenIds: ['uretim-planlari'],
       },
       {
+        id: 'mrp',
+        title: 'MRP Planlama',
+        screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar', 'mrp-hareket-raporu'],
+      },
+      {
         id: 'is-emri',
         title: 'İş Emirleri',
         screenIds: ['uretim-emirleri', 'kolay-is-emri-onayi', 'siparis-is-emri', 'toplu-is-emri'],
@@ -4187,6 +3928,274 @@ const MODULES = [
         detailFields: [],
         detailKey: null,
         defaults: { status: 'Acik', is_started: false, is_fixed: false, material: false },
+      },
+      {
+        id: 'mrp-parametre',
+        techId: 'MFG-MRP-PAR-001',
+        businessNameEn: 'MrpParameterScreen',
+        title: 'MRP Parametreleri',
+        endpoint: '/mrp/parametreler',
+        crud: true,
+        readOnly: false,
+        listActions: ['yeni', 'incele', 'duzelt', 'sil'],
+        mrpKonsol: true,
+        mrpParametreScreen: true,
+        numeratorSeri: 'MRP_PARAM',
+        codeField: 'parameter_code',
+        filters: [
+          { key: 'parameter_code', label: 'Parametre kodu' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        columns: [
+          { key: 'parameter_code', label: 'Kod', mono: true },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        masterFields: [
+          { key: 'parameter_code', label: 'Parametre kodu', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: { is_active: true },
+        formTabs: [
+          { id: 'param', label: 'MRP 2 Parametreleri', kind: 'mrp-parametre' },
+          { id: 'kapsam', label: 'Depo/İşemirleri/Siparişler/MPS/Satış Tahminleri', kind: 'mrp-kapsam' },
+        ],
+        banner: 'Kaydedilebilir MRP parametre seti. Konsolda bu seti seçerek çalıştırın.',
+      },
+      {
+        id: 'mrp-bagimsiz-ihtiyac',
+        techId: 'MFG-IR-SCR-001',
+        businessNameEn: 'IndependentRequirementsScreen',
+        title: 'MRP Bağımsız İhtiyaç',
+        endpoint: '/mrp/bagimsiz-ihtiyaclar',
+        crud: true,
+        codeField: 'requirement_no',
+        nameField: 'item_name',
+        numeratorSeri: 'MRP_BI',
+        filters: [
+          { key: 'requirement_no', label: 'No' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'source', label: 'Kaynak' },
+        ],
+        columns: [
+          { key: 'requirement_no', label: 'No', mono: true },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'quantity', label: 'Miktar' },
+          { key: 'requirement_date', label: 'İhtiyaç tar.' },
+          { key: 'source', label: 'Kaynak' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'requirement_no', label: 'İhtiyaç no', code: true, required: true },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
+          { key: 'requirement_date', label: 'İhtiyaç tarihi', type: 'date', required: true },
+          { key: 'source', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+        ],
+        detailFields: [
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'mrp-calisma',
+        techId: 'MFG-MRP-SCR-001',
+        businessNameEn: 'MrpRunScreen',
+        title: 'MRP Konsol',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        listActions: ['incele'],
+        mrpKonsol: true,
+        mrpKonsolWorkspace: true,
+        mrpCalistirAction: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        openFormOnEnter: 'workspace',
+        codeField: 'run_no',
+        filters: [
+          { key: 'run_no', label: 'Çalışma no' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'run_no', label: 'No', mono: true },
+          { key: 'status', label: 'Durum' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
+          { key: 'start_ts', label: 'Başlangıç' },
+          { key: 'end_ts', label: 'Bitiş' },
+          { key: 'line_count', label: 'Satır' },
+          { key: 'net_positive_only', label: 'Net>0' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true, readonly: true },
+          { key: 'description', label: 'Açıklama', readonly: true },
+          { key: 'status', label: 'Durum', readonly: true },
+        ],
+        formTabs: [
+          { id: 'workspace', label: 'MRP Konsol', kind: 'mrp-workspace' },
+        ],
+        nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
+        banner: 'Üstten parametre seti seçin; kapsam ve sonuçlar otomatik oluşur. Yeni kayıt yok — parametreleri «MRP Parametreleri»nden kaydedin.',
+      },
+      {
+        id: 'mrp-hesap',
+        techId: 'MFG-MRP-SCR-002',
+        businessNameEn: 'MrpInstantCalcScreen',
+        title: 'MRP Anlık Hesap',
+        endpoint: '/mrp',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpCalistirAction: true,
+        filters: [
+          { key: 'item_code', label: 'Stok kodu' },
+          { key: 'suggestion', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'independent_demand', label: 'Bağımsız' },
+          { key: 'dependent_demand', label: 'Bağımlı' },
+          { key: 'safety_stock', label: 'Emniyet' },
+          { key: 'available_stock', label: 'Eldeki' },
+          { key: 'open_purchase_qty', label: 'Açık SA' },
+          { key: 'planned_production', label: 'Açık UE' },
+          { key: 'net_requirement', label: 'Net' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'planned_start', label: 'Plan baş.' },
+        ],
+      },
+      {
+        id: 'mrp-sonuclar',
+        techId: 'MFG-MRP-RES-001',
+        businessNameEn: 'MrpResultsScreen',
+        title: 'MRP Sonuçları',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpSonucMode: true,
+        filters: [
+          { key: 'item_code', label: 'Stok' },
+          { key: 'suggestion', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'independent_demand', label: 'Bağımsız' },
+          { key: 'dependent_demand', label: 'Bağımlı' },
+          { key: 'available_stock', label: 'Eldeki' },
+          { key: 'net_requirement', label: 'Net' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'donusturuldu', label: 'Dönüştü' },
+          { key: 'donusum_document_no', label: 'Belge' },
+        ],
+      },
+      {
+        id: 'mrp-hareket-raporu',
+        techId: 'MFG-MRP-RPT-001',
+        businessNameEn: 'MrpMovementReportScreen',
+        title: 'MRP Hareket Raporu',
+        endpoint: '/mrp-hareket-raporu',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        listExportActions: true,
+        reportPdfAction: true,
+        banner: 'MRP çalışma no zorunlu. Tahmin, MPS, bağımsız ihtiyaç, öneri, stok hareketi ve açık SA/IE satırlarını birleştirir. PDF / Excel / Word araç çubuğundan veya sağ tık menüsünden alınır.',
+        filters: [
+          {
+            key: 'run_id',
+            label: 'MRP çalışma no',
+            type: 'lookup',
+            lookup: 'mrp-calismalar',
+            valueKey: 'id',
+            labelKey: 'description',
+            codeKey: 'run_no',
+            required: true,
+            queryParam: true,
+          },
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            queryParam: true,
+          },
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+          {
+            key: 'islem_tipi',
+            label: 'İşlem tipi',
+            type: 'select',
+            options: [
+              { value: 'Tahmin', label: 'Tahmin' },
+              { value: 'MPS', label: 'MPS' },
+              { value: 'BagimsizIhtiyac', label: 'Bağımsız ihtiyaç' },
+              { value: 'MrpOneri', label: 'MRP öneri' },
+              { value: 'MrpIhtiyac', label: 'MRP ihtiyaç bileşeni' },
+              { value: 'StokHareket', label: 'Stok hareket' },
+              { value: 'AcikSA', label: 'Açık SA' },
+              { value: 'AcikIE', label: 'Açık iş emri' },
+            ],
+            queryParam: true,
+          },
+          {
+            key: 'islem_turu',
+            label: 'İşlem türü',
+            type: 'select',
+            options: [
+              { value: 'Talep', label: 'Talep' },
+              { value: 'Arz', label: 'Arz' },
+              { value: 'Oneri', label: 'Öneri' },
+              { value: 'Oneri-SA', label: 'Öneri-SA' },
+              { value: 'Oneri-UE', label: 'Öneri-UE' },
+              { value: 'Yeterli', label: 'Yeterli' },
+              { value: 'Giris', label: 'Giriş' },
+              { value: 'Cikis', label: 'Çıkış' },
+            ],
+            queryParam: true,
+          },
+        ],
+        columns: [
+          { key: 'sira', label: '#', mono: true },
+          { key: 'hareket_tarihi', label: 'Tarih' },
+          { key: 'run_no', label: 'MRP no', mono: true },
+          { key: 'islem_tipi', label: 'İşlem tipi' },
+          { key: 'islem_turu', label: 'Tür' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'quantity', label: 'Miktar', mono: true },
+          { key: 'quantity_in', label: 'Giriş', mono: true },
+          { key: 'quantity_out', label: 'Çıkış', mono: true },
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'belge_tipi', label: 'Belge tipi' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'kaynak', label: 'Kaynak' },
+        ],
       },
       {
         id: 'uretim-emirleri',
@@ -9909,6 +9918,55 @@ const MODULES = [
   },
 ];
 
+/**
+ * Menü varyantları: aynı backend ekranı, farklı başlık + varsayılan filtre.
+ * Satış / satınalma fatura ayrımı (birleşik fatura-yonetimi menüde gizlenir).
+ */
+const KTB_MENU_SCREEN_VARIANTS = [
+  {
+    id: 'satis-faturalari',
+    baseId: 'fatura-yonetimi',
+    moduleId: 'satis',
+    title: 'Satış Faturaları',
+    presetFilters: { invoice_type: 'Satis' },
+    defaultsPatch: { invoice_type: 'Satis', invoice_category: 'SATIS', scenario: 'TICARIFATURA' },
+  },
+  {
+    id: 'alis-faturalari',
+    baseId: 'fatura-yonetimi',
+    moduleId: 'satinalma',
+    title: 'Alış Faturaları',
+    presetFilters: { invoice_type: 'Alis' },
+    defaultsPatch: { invoice_type: 'Alis', invoice_category: 'ALIS', rate_type: 'TCMB-ALIS' },
+  },
+];
+
+(function applyKtbMenuScreenVariants() {
+  const findIn = (id) => {
+    for (const mod of MODULES) {
+      const hit = (mod.screens || []).find((x) => x && x.id === id);
+      if (hit) return hit;
+    }
+    return null;
+  };
+  for (const v of KTB_MENU_SCREEN_VARIANTS) {
+    const base = findIn(v.baseId);
+    const mod = MODULES.find((m) => m.id === v.moduleId);
+    if (!base || !mod || findIn(v.id)) continue;
+    mod.screens.push({
+      ...base,
+      id: v.id,
+      title: v.title,
+      baseScreenId: v.baseId,
+      menuVariant: true,
+      presetFilters: { ...v.presetFilters },
+      defaults: { ...(base.defaults || {}), ...(v.defaultsPatch || {}) },
+    });
+  }
+  const unified = findIn('fatura-yonetimi');
+  if (unified) unified.hidden = true;
+})();
+
 /** Modül menü bölümleri — sections yoksa düz liste. */
 function moduleMenuSections(mod) {
   const screens = (mod.screens || []).filter((s) => s && s.id && !s.hidden && !s.deprecated);
@@ -10889,6 +10947,9 @@ const SECTION_TITLE_EN = {
   'Mal Kabul': 'Goods Receipt',
   Belgeler: 'Documents',
   'Satış Belgeleri': 'Sales Documents',
+  'Satış İrsaliyeleri': 'Sales Delivery Notes',
+  'Satış Faturaları': 'Sales Invoices',
+  'Alış Faturaları': 'Purchase Invoices',
   'Muhasebe Belgeleri': 'Accounting Documents',
   Planlama: 'Planning',
   'MRP Planlama': 'MRP Planning',
@@ -12367,7 +12428,16 @@ const SCREEN_ALIASES = {
 
 function resolveScreenId(id) {
   if (!id) return id;
+  if (typeof ALL_SCREENS !== 'undefined' && ALL_SCREENS.some((s) => s.id === id)) return id;
   return SCREEN_ALIASES[id] || id;
+}
+
+/** Menü varyantı ise taban ekran id'si (fatura-yonetimi vb.) */
+function canonicalScreenId(screenOrId) {
+  if (!screenOrId) return screenOrId;
+  if (typeof screenOrId === 'object') return screenOrId.baseScreenId || screenOrId.id;
+  const found = findScreen(screenOrId);
+  return found?.baseScreenId || resolveScreenId(screenOrId);
 }
 
 function findScreen(id) {
@@ -12376,13 +12446,11 @@ function findScreen(id) {
 }
 
 function isDeliveryNoteManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'irsaliye-yonetimi';
+  return canonicalScreenId(screenOrId) === 'irsaliye-yonetimi';
 }
 
 function isInvoiceManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'fatura-yonetimi';
+  return canonicalScreenId(screenOrId) === 'fatura-yonetimi';
 }
 
 function selectedRow() {
@@ -12876,7 +12944,7 @@ const BELGE_BAGLANTI = {
 
 function getDocumentLinks(screen) {
   if (!screen) return { kaynaklar: [], sonrakiler: [] };
-  const base = BELGE_BAGLANTI[screen.id] || { kaynaklar: [], sonrakiler: [] };
+  const base = BELGE_BAGLANTI[screen.id] || BELGE_BAGLANTI[screen.baseScreenId] || { kaynaklar: [], sonrakiler: [] };
   // Ekran özel override
   return {
     kaynaklar: screen.documentNav?.kaynaklar || base.kaynaklar || [],
@@ -14287,8 +14355,13 @@ async function loadPlantsForActiveCompany() {
 
 function buildDefaultFilterState(screen) {
   const fs = {};
+  const presets = screen?.presetFilters && typeof screen.presetFilters === 'object'
+    ? screen.presetFilters
+    : {};
   (screen.filters || []).forEach((f) => {
-    if (f.type === 'checkbox') {
+    if (presets[f.key] != null && String(presets[f.key]).trim() !== '') {
+      fs[f.key] = { op: 'esit', a: String(presets[f.key]), b: '' };
+    } else if (f.type === 'checkbox') {
       const on = f.default === true || f.default === 'true' || f.default === 1;
       fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
     } else if (f.key === 'is_active' || f.type === 'bool') {
@@ -16468,11 +16541,15 @@ function screenPermission(screenId, action = null) {
     // Yetki satırı yok + modül * veya tanımsız → aç
     return !mods || !mods.length || mods.includes('*');
   }
-  const canonical = resolveScreenId(screenId);
+  const found = findScreen(screenId);
+  const canonical = found?.baseScreenId || resolveScreenId(screenId);
   const aliasIds = Object.entries(SCREEN_ALIASES)
     .filter(([, v]) => v === canonical)
     .map(([k]) => k);
-  const candidates = [screenId, canonical, ...aliasIds];
+  const variantIds = ALL_SCREENS
+    .filter((x) => x.baseScreenId === canonical)
+    .map((x) => x.id);
+  const candidates = [screenId, found?.id, canonical, ...aliasIds, ...variantIds].filter(Boolean);
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
@@ -17229,7 +17306,7 @@ function invalidateLookups(...keys) {
 /** Bu ekrana kaydedilen veri hangi sarı alan listelerini besler? */
 function lookupsFedByScreen(screen) {
   if (!screen) return [];
-  const keys = new Set(SCREEN_LOOKUP_EXTRAS[screen.id] || []);
+  const keys = new Set(SCREEN_LOOKUP_EXTRAS[screen.id] || SCREEN_LOOKUP_EXTRAS[screen.baseScreenId] || []);
   const base = typeof screenApiBase === 'function'
     ? screenApiBase(screen.endpoint || '')
     : String(screen.endpoint || '').split('?')[0];
@@ -26803,7 +26880,7 @@ function runSearch(q) {
     return;
   }
   const hits = ALL_SCREENS.filter((s) =>
-    isScreenVisibleInMenu(s.id) && (
+    !s.hidden && isScreenVisibleInMenu(s.id) && (
       s.title.toLocaleLowerCase('tr').includes(query) ||
       s.moduleTitle.toLocaleLowerCase('tr').includes(query) ||
       (s.techId && s.techId.toLocaleLowerCase('tr').includes(query)) ||
