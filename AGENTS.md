@@ -34,7 +34,11 @@ npm run migrate        # eksik migration’ları uygular; tabloları silmez
 npm start              # varsayılan http://localhost:3000/
 ```
 
-Sağlık: `GET /health`. Konsol: `/`.
+Sağlık: `GET /health` (liveness, DB'siz) · `GET /ready` (DB + bekleyen migration). Konsol: `/`.
+
+### Canlı / operasyon
+
+Deploy, yedek ve geri dönüş runbook'ları: `docs/go-live/DEPLOY_RUNBOOK.md`, `docs/go-live/YEDEKLEME_GERI_DONUS_RUNBOOK.md`, `docs/go-live/ORTAMLAR_VE_IZLEME.md`. Migration uygulama açılışında çalışmaz; deploy ön adımı `npm run predeploy` (bekleyen migration varsa önce yedek). Docker: `docker compose up -d --build`. CI: `.github/workflows/ci.yml`.
 
 ### `.env` özeti
 
@@ -47,6 +51,8 @@ Sağlık: `GET /health`. Konsol: `/`.
 ```bash
 # Temiz DB doğrulama (örnek): boş veritabanı oluştur → DB_NAME=... npm run migrate
 npm run migrate
+# Yerel demo DB: demo firmalar + GIDA örnek veri (canlıda kullanmayın)
+SEED_DEMO_DATA=1 npm run migrate
 
 # Metal Marvel orta-büyük simülasyon (çok firma / üretim / stok)
 npm run demo:marvel
@@ -66,11 +72,15 @@ node scripts/marvel-stok-10000.js
 | Komut | Anlam |
 |-------|--------|
 | `npm test` | Ekran sözleşmeleri + `tests/**/*.test.js` |
+| `npm run test:isolated -- --docker --fresh` | `.env` DB'sine dokunmadan izole Postgres (docker-compose.test.yml) → migrate → seed → test |
+| `npm run test:ci` | CI test kapısı: yalnız `scripts/ci/known-test-failures.json` dışındaki hatalar kırar |
+| `npm run db:backup` / `db:restore` / `db:drill` | Yedek (+offsite) / geri yükleme / geri yükleme tatbikatı |
 | `npm run qa:smoke` | API duman (sunucu ayakta olmalı) |
 | `npm run qa:db` | DB bütünlük denetimi |
 | `npm run qa:all` | QA paketi (seed + inventory + smoke + …) |
+| `npm run test:ebelge` | e-Belge: UBL-TR XSD/kural doğrulama, adaptör sözleşmesi, PDF, DB akışı (`docs/go-live/GIB_STRATEGY.md`) |
 
-**Bilinen (eski) 2 başarısız test:** `go-live invariants` / BUG-008 (`STOK_DEPO_YOK` — lot senaryosunda stok-depo bağı eksik kalabiliyor) ve `sim partial fix` içindeki UI `bom-level hideSave` assertion. Yeni regresyon eklemeyin; düzeltirken bu ikisini hedefleyin.
+**Bilinen (eski) 2 başarısız test:** `go-live invariants` / BUG-008 (`STOK_DEPO_YOK` — lot senaryosunda stok-depo bağı eksik kalabiliyor) ve `sim partial fix` içindeki UI `bom-level hideSave` assertion. Yeni regresyon eklemeyin; düzeltirken bu ikisini hedefleyin. (Temiz + `scripts/ci/seed-test-db.js` fixture'lı DB'de BUG-008 geçiyor; yalnız bom-level kalıyor. Bu liste `scripts/ci/known-test-failures.json` içinde tutulur.)
 
 ## Alan kuralları (kritik)
 
@@ -79,6 +89,15 @@ node scripts/marvel-stok-10000.js
 3. Negatif stok varsayılan engelli; bakiye yalnız hareket belgelerinden değişir.
 4. Belge numaraları numaratörden; firma kapsamı kayıtlarda `company_id` ile damgalanır.
 5. Parti: çıkışta lot kaynağı (FIFO / manuel); lotsuz çıkış kuralları `partiService` / üretim girişinde uygulanır.
+6. **Firma izolasyonu:** `companyContext` X-Firma-Id / `?company_id` / gövde `company_id` için `user_company_permissions` yetkisini zorunlu kılar (403 `FIRMA_YETKI_YOK`; yönetici hariç). `/:id` ve alt aksiyon uçları `src/middleware/firmaKayitKapsami.js` SPEC kaydıyla korunur (404 `FIRMA_KAPSAM`) — yeni firma kapsamlı router eklerken SPEC’e de ekleyin.
+7. **Demo seed:** Demo firmalar / örnek veri / demo yetkileri yalnız `SEED_DEMO_DATA=1` iken yazılır (açılış heal’i + 082/083 migration’ları). Canlıda bayrak tanımlanmaz.
+
+## Yetkilendirme (backend)
+
+- Ekran ↔ modül ↔ route eşlemesinin tek kaynağı `src/auth/permissionMap.js`; global `authorizeRequest` (`src/middleware/authorize.js`) her API isteğini buna göre denetler. **Yeni route mount ederken haritaya ekleyin** — eklenmeyen prefix yalnız tam yetkili kullanıcıya açılır ve `tests/yetki_harita.test.js` kırılır. SPA’ya yeni ekran eklerken `MODULE_SCREENS` de güncellenmeli.
+- Semantik SPA `screenPermission` ile aynıdır: ADMIN grubu / Yönetici rolü / modül `*` → tam yetki; `user_screen_permissions` satırı varsa yalnız bayraklar (POST kök=yeni, PUT=duzelt, DELETE=sil, POST alt yol=yeni|duzelt); satır yoksa grup `module_permissions`.
+- Yönetici gerektiren işler (kullanıcı/grup/sistem parametresi yazma, numaratör yapısı, audit-log, sistem güncelleme, `force=1`) `requireAdmin` ile korunur; modül `*` yönetici sayılmaz. Route içi ek kontrol için `requireScreenPermission` / `requireModulePermission` kullanın.
+- `ERP_RBAC_MODE=audit` ekran/modül reddini yalnız loglar (geçiş dönemi); yönetici kontrolleri her modda zorunlu. Yönetici kalmazsa: `YETKI_ADMIN_PAROLA=... npm run yetki:admin-ata -- <user_code>`.
 
 ## Arayüz kuralları
 

@@ -2,6 +2,7 @@
  * Metal Marvel demo sim — ortak yardımcılar
  */
 const path = require('path');
+const { demoPassword } = require('./demoCredentials');
 
 const FIRMA_KODU = 'MARVEL';
 const FIRMA_ADI = 'Metal Marvel Figür Sanayi A.Ş.';
@@ -92,7 +93,7 @@ async function ensureOwnerLogin() {
     const r = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'owner', password: 'Demo123!' }),
+      body: JSON.stringify({ username: 'owner', password: demoPassword() }),
     });
     const j = await r.json();
     if (j.access_token) global.__MARVEL_TOKEN = j.access_token;

@@ -5,22 +5,16 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+const { qaLoginCandidates } = createRequire(import.meta.url)('../lib/demoCredentials.js');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const BASE = process.env.QA_BASE_URL || 'http://localhost:3000';
 const inv = JSON.parse(fs.readFileSync(path.join(root, 'docs/qa/screen-inventory.json'), 'utf8'));
 
 async function login() {
-  const candidates = [
-    ...(process.env.QA_USER
-      ? [{ username: process.env.QA_USER, password: process.env.QA_PASS || '' }]
-      : []),
-    { username: 'kagantalha.b', password: 'Demo123!' },
-    { username: 'ADMIN', password: 'admin' },
-    { username: 'admin', password: 'admin' },
-    { user_code: 'ADMIN', password: 'admin' },
-    { kullanici_kodu: 'ADMIN', parola: 'admin' },
-  ];
+  const candidates = qaLoginCandidates();
   for (const body of candidates) {
     try {
       const r = await fetch(`${BASE}/auth/login`, {

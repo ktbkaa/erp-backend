@@ -4,10 +4,13 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { allowedCompanyIdsForReq } = require('../src/utils/firmaYetki');
 const { ensureDemoFirms } = require('../src/bootstrap/ensureDemoFirms');
+const { isDemoSeedEnabled } = require('../src/bootstrap/demoSeedPolicy');
 
 let healOnce = null;
 function healInBackground() {
+    if (!isDemoSeedEnabled()) return null;
     if (healOnce) return healOnce;
     const { ensureDemoData } = require('../src/bootstrap/ensureDemoData');
     healOnce = (async () => {
@@ -37,13 +40,21 @@ function parseIsProfile(v) {
 
 router.get('/', async (req, res) => {
     try {
-        // İlk liste çağrısında demo profilleri / yetkileri sessizce onar (veri silmez)
+        // SEED_DEMO_DATA=1 ise ilk liste çağrısında demo profilleri onar (veri silmez)
         await healInBackground();
-        // X-Firma-Id varsa yalnız o firma; boş/yoksa tüm liste (profil seçici / org ekranı)
+        // X-Firma-Id varsa yalnız o firma; yoksa kullanıcının yetkili firmaları
+        // (yönetici / oturumsuz soft mod: tüm liste — profil seçici / org ekranı)
         const firmaId = companyIdFromReq(req);
-        const result = firmaId
-            ? await pool.query('SELECT * FROM companies WHERE id = $1 ORDER BY id DESC', [firmaId])
-            : await pool.query('SELECT * FROM companies ORDER BY id DESC');
+        const allowed = await allowedCompanyIdsForReq(req, pool);
+        let result;
+        if (firmaId) {
+            if (allowed != null && !allowed.includes(firmaId)) return res.json([]);
+            result = await pool.query('SELECT * FROM companies WHERE id = $1 ORDER BY id DESC', [firmaId]);
+        } else {
+            result = allowed == null
+                ? await pool.query('SELECT * FROM companies ORDER BY id DESC')
+                : await pool.query('SELECT * FROM companies WHERE id = ANY($1::int[]) ORDER BY id DESC', [allowed]);
+        }
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ hata: 'Firmaları çekerken bir pürüz çıktı.' });
@@ -74,6 +85,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: 'company_name zorunludur. company_code boşsa numaratörden üretilir.' });
         }
         const is_profile = parseIsProfile(req.body.is_profile) === true;
+        const allowed = await allowedCompanyIdsForReq(req, pool);
 
         const row = await withTransaction(pool, async (client) => {
             const kod = company_code_in || (await nextSequenceCode(client, 'FIRMA'));
@@ -98,6 +110,14 @@ router.post('/', async (req, res) => {
                  ) VALUES ($1, NULL, FALSE, 0, TRUE, 0, TRUE, TRUE, TRUE,
                            'Firma oluştururken otomatik', TRUE)`,
                 [firma.id]
+              );
+            }
+            // Kısıtlı kullanıcı oluşturduğu firmayı görebilsin
+            if (allowed != null && req.user?.id) {
+              await client.query(
+                `INSERT INTO user_company_permissions (user_id, company_id)
+                 VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+                [req.user.id, firma.id]
               );
             }
             return firma;

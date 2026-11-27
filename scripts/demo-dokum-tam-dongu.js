@@ -1637,6 +1637,8 @@ async function main() {
   let base;
   try {
     await client.query('BEGIN');
+    // Bilinçli temizlik: onaylı/muhasebeleşmiş belge silme kilidini (150) yalnız bu transaction için aç
+    await client.query("SELECT set_config('erp.belge_kilit_bypass', 'on', true)");
     org = await ensureOrg(client);
     summary.firma = { id: org.firma.id, code: org.firma.company_code, name: org.firma.company_name };
     await purgeGida(client, org.firma.id);

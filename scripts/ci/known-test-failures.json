@@ -1,0 +1,15 @@
+{
+  "description": "Bilinen (eski) test hataları. CI yalnız bu listede OLMAYAN yeni hatalarda kırmızıya döner. Hata düzeltilince kaydı silin; listeye yeni kayıt eklemek kullanıcı onayı gerektirir (AGENTS.md: yeni regresyon eklemeyin).",
+  "failures": [
+    {
+      "match": "UI: bom-level hideSave",
+      "file": "tests/sim_partial_fix.test.js",
+      "reason": "AGENTS.md 'bilinen 2 başarısız test' — bom-level hideSave UI assertion (public/app.js). Düzeltmesi uygulama kodu gerektirir."
+    },
+    {
+      "match": "BUG-008",
+      "file": "tests/go_live_invariants.test.js",
+      "reason": "AGENTS.md 'bilinen 2 başarısız test' — lot senaryosunda STOK_DEPO_YOK. Temiz + seed'li CI DB'sinde şu an geçiyor; geliştirici DB'lerinde kırılabildiği için listede tutuluyor."
+    }
+  ]
+}

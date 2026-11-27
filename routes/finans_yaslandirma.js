@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
           c.partner_name,
           f.invoice_date,
           COALESCE(f.due_date, f.invoice_date + INTERVAL '30 days')::date AS due_date,
-          COALESCE(f.payable_amount, f.total_amount, f.net_amount, 0)::numeric AS amount,
+          (COALESCE(f.payable_amount, f.total_amount, f.net_amount, 0) * COALESCE(NULLIF(f.exchange_rate, 0), 1))::numeric AS amount,
           GREATEST(
             CURRENT_DATE - COALESCE(f.due_date, f.invoice_date + INTERVAL '30 days')::date,
             0

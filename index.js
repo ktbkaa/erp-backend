@@ -1,4 +1,15 @@
 require('dotenv').config();
+const logger = require('./src/infra/logger').init();
+const lifecycle = require('./src/infra/lifecycle');
+
+const envCheck = lifecycle.checkEnvironment();
+envCheck.warnings.forEach((w) => logger.warn(`[config] ${w}`));
+if (envCheck.errors.length) {
+    envCheck.errors.forEach((e) => logger.error(`[config] ${e}`));
+    process.exit(1);
+}
+lifecycle.registerProcessHandlers(logger);
+
 const path = require('path');
 const express = require('express');
 const app = express();
@@ -7,16 +18,39 @@ const pool = require('./db');
 const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
 const { companyContext } = require('./src/middleware/firmaContext');
+const { authorizeRequest } = require('./src/middleware/authorize');
+const { firmaKayitKapsami } = require('./src/middleware/firmaKayitKapsami');
+const { isDemoSeedEnabled } = require('./src/bootstrap/demoSeedPolicy');
+const {
+    corsMiddleware,
+    helmetMiddleware,
+    bodyParsers,
+    trustProxySetting,
+} = require('./src/middleware/security');
+const { checkProductionConfig } = require('./src/utils/securityConfig');
+const { warnDbStoredSecrets } = require('./src/utils/secretSettings');
+const { httpLogger } = require('./src/infra/logger');
+const { createHealthRouter } = require('./src/infra/health');
 
-// Profil resmi (base64) + yetki JSON için varsayılan 100kb yetmez
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+const startupCheck = checkProductionConfig();
+startupCheck.warnings.forEach((w) => console.warn(`[güvenlik] ${w}`));
+if (startupCheck.errors.length) {
+    startupCheck.errors.forEach((e) => console.error(`[güvenlik] ${e}`));
+    console.error('[güvenlik] Canlı yapılandırma hatalı; sunucu başlatılmadı.');
+    process.exit(1);
+}
+
+// Ters vekil hop sayısı: TRUST_PROXY (canlıda varsayılan 1)
+app.set('trust proxy', trustProxySetting());
+app.disable('x-powered-by');
+app.use(httpLogger(logger));
+// Liveness / readiness: kimlik, firma bağlamı ve audit'ten önce
+app.use(createHealthRouter({ pool, logger }));
+app.use(helmetMiddleware());
+// ALLOWED_ORIGINS (canlı); boşken geliştirmede her origin (Cursor Ports / önizleme)
+app.use(corsMiddleware());
+bodyParsers(app);
 app.use((req, res, next) => {
-    // Önizleme / farklı origin (Cursor Ports) için CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Kullanici-Kodu, X-Firma-Id');
-    if (req.method === 'OPTIONS') return res.sendStatus(204);
     if (req.path === '/' || req.path.endsWith('.html') || req.path.endsWith('.js') || req.path.endsWith('.css')) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
@@ -30,29 +64,14 @@ app.use(express.static(path.join(__dirname, 'public'), {
     cacheControl: false,
 }));
 
-// JWT / header kimlik + firma bağlamı + audit (health ve static hariç API)
+// JWT / header kimlik + audit (başarısız kimlik denemeleri dahil) + firma bağlamı
+// + rol/ekran yetkisi (src/auth/permissionMap.js) + firma kayıt kapsamı (health ve static hariç API)
 app.use(authOptional);
+app.use(auditMiddleware(pool));
 app.use(authRequired);
 app.use(companyContext);
-app.use(auditMiddleware(pool));
-
-app.get('/health', async (req, res) => {
-    const pool = require('./db');
-    try {
-        await pool.query('SELECT 1');
-        res.json({
-            status: 'ok',
-            zaman: new Date().toISOString(),
-            veritabani: 'bagli',
-        });
-    } catch (err) {
-        res.status(500).json({
-            status: 'hata',
-            veritabani: 'baglantisiz',
-            detay: err.message,
-        });
-    }
-});
+app.use(authorizeRequest);
+app.use(firmaKayitKapsami());
 
 app.use('/companies', require('./routes/companies'));
 app.use('/is-yerleri', require('./routes/plants'));
@@ -147,6 +166,7 @@ app.use('/kk-uygunsuzluklar', require('./routes/qc_nonconformances'));
 app.use('/tahsilat-odemeler', require('./routes/receipts_payments'));
 app.use('/cari-hareketleri', require('./routes/partner_ledger_entries'));
 app.use('/cari-mutabakat', require('./routes/cari_mutabakat'));
+app.use('/kur-farki', require('./routes/kur_farki'));
 app.use('/e-belge', require('./routes/e_belge'));
 app.use('/fiyat-listeleri', require('./routes/price_lists'));
 app.use('/kokpit', require('./routes/kokpit'));
@@ -173,6 +193,9 @@ app.use('/onay-kurallari', require('./routes/approval_rules'));
 app.use('/onay-ekranlari', require('./routes/onay_ekranlari'));
 app.use('/onay-yetki-devirleri', require('./routes/approval_delegations'));
 app.use('/onay-kayitlari', require('./routes/approval_records'));
+app.use('/onay-belge-turleri', require('./routes/approval_document_types'));
+app.use('/onay-bekleyenler', require('./routes/approval_inbox'));
+app.use('/onay-izi', require('./routes/approval_audit'));
 
 // İK / HR
 app.use('/hr-personel', require('./routes/hr_employees'));
@@ -219,9 +242,13 @@ const host = process.env.HOST || (process.env.DATABASE_URL ? '0.0.0.0' : '::');
 const listenOpts = host === '::'
   ? { port, host: '::', ipv6Only: false }
   : { port, host };
+lifecycle.enableGracefulShutdown({ server, pool, logger });
 server.listen(listenOpts, () => {
     console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
+    if (startupCheck.production) {
+      warnDbStoredSecrets(pool).catch(() => {});
+    }
     if (process.env.NODE_ENV !== 'test' && process.env.TCMB_SCHEDULER !== 'off') {
       try {
         const { startTcmbScheduler } = require('./src/services/tcmbRateService');
@@ -230,8 +257,12 @@ server.listen(listenOpts, () => {
         console.error('[tcmb] zamanlayıcı başlatılamadı:', err.message);
       }
     }
-    // Demo firma + örnek veri (veri silmez). Haftalık senkron / yeniden açılışta yeter.
     if (process.env.NODE_ENV !== 'test') {
+      require('./src/services/eBelgeAdapterService').startQueueScheduler(pool, console)
+        .catch((err) => console.error('[e-belge] zamanlayıcı başlatılamadı:', err.message));
+    }
+    // Demo firma + örnek veri (veri silmez) — yalnız SEED_DEMO_DATA=1; canlıda kapalı.
+    if (process.env.NODE_ENV !== 'test' && isDemoSeedEnabled()) {
       setImmediate(async () => {
         try {
           const { ensureDemoFirms } = require('./src/bootstrap/ensureDemoFirms');

@@ -55,6 +55,17 @@ function errorHandler(err, req, res, next) {
       constraint: err.constraint || undefined,
     });
   }
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({
+      hata: `İstek gövdesi çok büyük (sınır: ${err.limit != null ? `${Math.round(err.limit / 1024)} KB` : '?'}).`,
+      kod: 'ERR-API-413',
+    });
+  }
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ hata: 'Geçersiz JSON gövdesi.', kod: 'ERR-API-400' });
+  }
+  const { kilitHatasiYanit } = require('../services/belgeKilitService');
+  if (kilitHatasiYanit(res, err, req)) return undefined;
   const status = err.status || err.statusCode || 500;
   const body = {
     hata: err.message || 'Sunucu hatası',

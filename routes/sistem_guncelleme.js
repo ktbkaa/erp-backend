@@ -3,11 +3,15 @@
 const express = require('express');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { requireAdmin } = require('../src/middleware/authorize');
+const { isSystemUpdateApplyEnabled, isSuperAdmin } = require('../src/utils/securityConfig');
+const { validateBody, schemas } = require('../src/utils/validate');
 
 const router = express.Router();
+router.use(requireAdmin);
 
 function userCode(req) {
-  return req.userCode || req.headers['x-kullanici-kodu'] || 'owner';
+  return req.user?.user_code || req.user?.username || null;
 }
 
 function mapRow(r) {
@@ -71,6 +75,22 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+function guardApply(req, res, next) {
+  if (!isSystemUpdateApplyEnabled()) {
+    return res.status(403).json({
+      hata: 'Paket uygulama bu ortamda kapalı (ENABLE_SYSTEM_UPDATE_APPLY). Şema değişiklikleri migration ile dağıtılır.',
+      kod: 'ERR-SUP-DISABLED',
+    });
+  }
+  if (!req.user) {
+    return res.status(401).json({ hata: 'Giriş gerekli.', kod: 'ERR-SUP-AUTH' });
+  }
+  if (!isSuperAdmin(req)) {
+    return res.status(403).json({ hata: 'Paket uygulama yalnız süper admin içindir.', kod: 'ERR-SUP-FORBIDDEN' });
+  }
+  next();
+}
+
 /**
  * Seçili paketleri uygula:
  * - SQL script varsa transaction içinde çalıştırır
@@ -78,11 +98,9 @@ router.get('/:id', async (req, res) => {
  * - uygulama günlüğü tutar
  * Not: UI/JS dosya dağıtımı deploy sürecidir; bu ekran seçim + SQL yedirme + kayıt içindir.
  */
-router.post('/uygula', async (req, res) => {
+router.post('/uygula', guardApply, validateBody(schemas.systemUpdateApply), async (req, res) => {
   try {
-    const ids = Array.isArray(req.body?.ids)
-      ? req.body.ids.map((x) => Number(x)).filter((n) => Number.isFinite(n))
-      : [];
+    const ids = req.body.ids;
     if (!ids.length) {
       return res.status(400).json({ hata: 'En az bir güncelleme seçin.', kod: 'ERR-SUP-EMPTY' });
     }

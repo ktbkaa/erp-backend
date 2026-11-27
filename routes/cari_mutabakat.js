@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
               WHEN inv.invoice_type ILIKE '%alis%' OR inv.invoice_type ILIKE '%alış%' OR inv.invoice_type = 'Alis'
                 THEN -COALESCE(inv.remaining_amount, inv.payable_amount, inv.total_amount, 0)
               ELSE COALESCE(inv.remaining_amount, inv.payable_amount, inv.total_amount, 0)
-            END
+            END * COALESCE(NULLIF(inv.exchange_rate, 0), 1)
           )
           FROM invoices inv
           WHERE inv.partner_id = p.id
@@ -55,10 +55,10 @@ router.get('/', async (req, res) => {
           SELECT SUM(
             CASE
               WHEN h.direction ILIKE 'borc%' OR h.direction ILIKE 'borç%' OR UPPER(h.direction) IN ('D','DEBIT','BORC')
-                THEN COALESCE(h.amount, 0)
+                THEN COALESCE(h.amount_try, h.amount * COALESCE(NULLIF(h.exchange_rate, 0), 1), 0)
               WHEN h.direction ILIKE 'alacak%' OR UPPER(h.direction) IN ('C','CREDIT','ALACAK')
-                THEN -COALESCE(h.amount, 0)
-              ELSE COALESCE(h.amount, 0)
+                THEN -COALESCE(h.amount_try, h.amount * COALESCE(NULLIF(h.exchange_rate, 0), 1), 0)
+              ELSE COALESCE(h.amount_try, h.amount * COALESCE(NULLIF(h.exchange_rate, 0), 1), 0)
             END
           )
           FROM partner_ledger_entries h

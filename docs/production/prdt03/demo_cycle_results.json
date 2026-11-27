@@ -1,0 +1,229 @@
+{
+  "generated_at": "2026-11-12T10:22:14.146Z",
+  "firma": {
+    "id": 9,
+    "company_code": "GIDA",
+    "company_name": "Anadolu Süt ve Süt Ürünleri A.Ş."
+  },
+  "tag": "PRDT03-UG-DONGU",
+  "cycles": [
+    {
+      "name": "Döngü 1 — Operasyonel Üretim Girişi",
+      "tag": "DONGU1-OP",
+      "mode": "operasyonel",
+      "product": {
+        "id": 345,
+        "code": "OG-M05",
+        "name": "Ayran 1L"
+      },
+      "qty": 10,
+      "steps": [
+        {
+          "step": "is_emri_olustur",
+          "order_id": 151,
+          "order_no": "E00150",
+          "status": "OnayBekliyor",
+          "ops": 4,
+          "mats": 3,
+          "at": "2026-11-12T10:22:14.220Z"
+        },
+        {
+          "step": "kolay_onay_aday_listesi",
+          "found": true,
+          "ready": true,
+          "blockers": [],
+          "warnings": [],
+          "at": "2026-11-12T10:22:14.234Z"
+        },
+        {
+          "step": "kolay_is_emri_onayi",
+          "order_id": 151,
+          "order_no": "E00150",
+          "status": "Acik",
+          "is_approved": true,
+          "approved_at": "2026-11-12T10:22:14.242Z",
+          "approved_by": "owner",
+          "at": "2026-11-12T10:22:14.246Z"
+        },
+        {
+          "step": "baslat",
+          "status": "Uretimde",
+          "is_started": true,
+          "at": "2026-11-12T10:22:14.257Z"
+        },
+        {
+          "step": "operasyonel_onizleme",
+          "operation_id": 515,
+          "operation_code": "OP10",
+          "material_lines": 3,
+          "at": "2026-11-12T10:22:14.265Z"
+        },
+        {
+          "step": "operasyonel_uretim_girisi",
+          "receipt_count": 4,
+          "receipts": [
+            {
+              "receipt_id": 224,
+              "receipt_no": "G00228",
+              "operation_code": "OP10"
+            },
+            {
+              "receipt_id": 225,
+              "receipt_no": "G00229",
+              "operation_code": "OP20"
+            },
+            {
+              "receipt_id": 226,
+              "receipt_no": "G00230",
+              "operation_code": "OP30"
+            },
+            {
+              "receipt_id": 227,
+              "receipt_no": "G00231",
+              "operation_code": "OP40"
+            }
+          ],
+          "final_status": "Kapali",
+          "at": "2026-11-12T10:22:14.337Z"
+        },
+        {
+          "step": "dogrulama",
+          "status": "Kapali",
+          "is_approved": true,
+          "is_started": true,
+          "produced_quantity": "0.000",
+          "receipt_count": 17,
+          "receipt_nos": [
+            "G00231",
+            "G00230",
+            "G00229",
+            "G00228",
+            "G00227",
+            "G00226",
+            "G00225",
+            "G00224",
+            "G00223",
+            "G00218",
+            "G00217",
+            "G00216",
+            "G00183",
+            "G00182",
+            "G00181",
+            "G00180",
+            "G00179"
+          ],
+          "at": "2026-11-12T10:22:14.363Z"
+        }
+      ],
+      "final": {
+        "order_id": 151,
+        "order_no": "E00150",
+        "status": "Kapali",
+        "is_approved": true,
+        "produced_quantity": "0.000"
+      }
+    },
+    {
+      "name": "Döngü 2 — Hızlı Üretim Girişi",
+      "tag": "DONGU2-HZ",
+      "mode": "hizli",
+      "product": {
+        "id": 343,
+        "code": "OG-M03",
+        "name": "Sade Yoğurt 1KG"
+      },
+      "qty": 8,
+      "steps": [
+        {
+          "step": "is_emri_olustur",
+          "order_id": 152,
+          "order_no": "E00151",
+          "status": "OnayBekliyor",
+          "ops": 4,
+          "mats": 3,
+          "at": "2026-11-12T10:22:14.372Z"
+        },
+        {
+          "step": "kolay_onay_aday_listesi",
+          "found": true,
+          "ready": true,
+          "blockers": [],
+          "warnings": [],
+          "at": "2026-11-12T10:22:14.382Z"
+        },
+        {
+          "step": "kolay_is_emri_onayi",
+          "order_id": 152,
+          "order_no": "E00151",
+          "status": "Acik",
+          "is_approved": true,
+          "approved_at": "2026-11-12T10:22:14.387Z",
+          "approved_by": "owner",
+          "at": "2026-11-12T10:22:14.392Z"
+        },
+        {
+          "step": "baslat",
+          "status": "Uretimde",
+          "is_started": true,
+          "at": "2026-11-12T10:22:14.399Z"
+        },
+        {
+          "step": "hizli_uretim_girisi",
+          "step_count": 4,
+          "receipt_ids": [
+            228,
+            229,
+            230,
+            231
+          ],
+          "final_status": "Kapali",
+          "produced": "0.000",
+          "at": "2026-11-12T10:22:14.445Z"
+        },
+        {
+          "step": "dogrulama",
+          "status": "Kapali",
+          "is_approved": true,
+          "is_started": true,
+          "produced_quantity": "0.000",
+          "receipt_count": 21,
+          "receipt_nos": [
+            "G00235",
+            "G00234",
+            "G00233",
+            "G00232",
+            "G00231",
+            "G00230",
+            "G00229",
+            "G00228",
+            "G00227",
+            "G00226",
+            "G00225",
+            "G00224",
+            "G00223",
+            "G00218",
+            "G00217",
+            "G00216",
+            "G00183",
+            "G00182",
+            "G00181",
+            "G00180",
+            "G00179"
+          ],
+          "at": "2026-11-12T10:22:14.469Z"
+        }
+      ],
+      "final": {
+        "order_id": 152,
+        "order_no": "E00151",
+        "status": "Kapali",
+        "is_approved": true,
+        "produced_quantity": "0.000"
+      }
+    }
+  ],
+  "how_to_filter": {
+    "ui": "Firma = GIDA. Üretim Emirleri / Kolay İş Emri Onayı / Üretim Girişleri listelerinde açıklamaya PRDT03-UG-DONGU yazın.",
+    "sql": "WHERE company_id=<GIDA> AND description ILIKE '%PRDT03-UG-DONGU%'"
+  }
+}

@@ -6,6 +6,8 @@ const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement } = require('../src/services/stokHareketService');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { trimOrNull } = require('../src/utils/tanimCrud');
+const { submitForApproval, assertNotPending } = require('../src/services/onayKapisiService');
+const { getUser, reqUserCode } = require('../src/utils/yetki');
 
 async function getQcOrder(id) {
   const e = await pool.query(
@@ -174,9 +176,15 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-/** Onayla → source depodan çıkış + hedef depoya giriş */
+/**
+ * Onayla → source depodan çıkış + hedef depoya giriş.
+ * DEPO_TRANSFER için aktif onay kuralı varsa Taslak emir önce onaya gönderilir;
+ * onay tamamlanınca (Onayli) aynı uç stok hareketini yapar.
+ */
 router.post('/:id/onayla', async (req, res, next) => {
   try {
+    const kullanici = req.user || (reqUserCode(req) ? await getUser(pool, reqUserCode(req)) : null);
+    let onayKapisi = null;
     const result = await withTransaction(pool, async (client) => {
       const lock = await client.query(
         `SELECT * FROM transfer_orders WHERE id=$1 FOR UPDATE`,
@@ -188,8 +196,22 @@ router.post('/:id/onayla', async (req, res, next) => {
         e.status = 404;
         throw e;
       }
-      if (emir.status !== 'Taslak') {
+      await assertNotPending(client, 'DEPO_TRANSFER', emir, 'stok transferi');
+      if (!['Taslak', 'Onayli'].includes(emir.status)) {
         throw Object.assign(new Error(`Durum ${emir.status}; yalnız Taslak onaylanır.`), { status: 400 });
+      }
+      if (emir.status === 'Taslak') {
+        const kapi = await submitForApproval(client, {
+          documentTypeCode: 'DEPO_TRANSFER',
+          documentId: emir.id,
+          user: kullanici,
+          notes: req.body?.notes || null,
+          fromStatuses: ['Taslak'],
+        });
+        if (kapi.gated) {
+          onayKapisi = kapi;
+          return emir.id;
+        }
       }
       const sat = await client.query(
         `SELECT * FROM transfer_order_lines WHERE order_id=$1`,
@@ -237,8 +259,8 @@ router.post('/:id/onayla', async (req, res, next) => {
       await client.query(
         `UPDATE transfer_orders SET
             status='Tamamlandi',
-            approved_at=CURRENT_TIMESTAMP,
-            approved_by=$2,
+            approved_at=COALESCE(approved_at, CURRENT_TIMESTAMP),
+            approved_by=COALESCE(approved_by, $2),
             source_movement_id=$3,
             target_movement_id=$4
          WHERE id=$1`,
@@ -246,7 +268,11 @@ router.post('/:id/onayla', async (req, res, next) => {
       );
       return emir.id;
     });
-    res.json(await getQcOrder(result));
+    const emir = await getQcOrder(result);
+    if (onayKapisi) {
+      return res.json({ ...emir, onay_bekliyor: true, onay_kayit: onayKapisi.record });
+    }
+    res.json(emir);
   } catch (err) {
     const status = err.status || (err.code === 'YETERSIZ_STOK' ? 400 : 500);
     res.status(status).json({
@@ -263,8 +289,8 @@ router.post('/:id/iptal', async (req, res, next) => {
     if (!mevcut || !assertCompany(mevcut, req)) {
       return res.status(404).json({ hata: 'Transfer emri bulunamadı.' });
     }
-    if (mevcut.status !== 'Taslak') {
-      return res.status(400).json({ hata: 'Yalnız Taslak emir iptal edilebilir.' });
+    if (!['Taslak', 'Onayli'].includes(mevcut.status)) {
+      return res.status(400).json({ hata: 'Yalnız Taslak (veya onaylanmış, uygulanmamış) emir iptal edilebilir.' });
     }
     await pool.query(`UPDATE transfer_orders SET status='Iptal' WHERE id=$1`, [req.params.id]);
     res.json(await getQcOrder(req.params.id));

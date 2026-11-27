@@ -12,12 +12,14 @@ function createApp() {
   const path = require('path');
   const pool = require('../../db');
   const { authOptional, authRequired } = require('../../src/middleware/authJwt');
+  const { authorizeRequest } = require('../../src/middleware/authorize');
   const { auditMiddleware } = require('../../src/services/auditService');
 
   const app = express();
   app.use(express.json());
   app.use(authOptional);
   app.use(authRequired);
+  app.use(authorizeRequest);
 
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
   app.use('/auth', require('../../routes/auth'));
@@ -42,6 +44,11 @@ function createApp() {
   app.use('/sql-console', require('../../routes/sql_console'));
   app.use('/users', require('../../routes/users'));
   app.use('/kullanicilar', require('../../routes/users'));
+  app.use('/kullanici-gruplari', require('../../routes/user_groups'));
+  app.use('/sistem-parametreleri', require('../../routes/system_parameters'));
+  app.use('/kod-serileri', require('../../routes/number_series'));
+  app.use('/sistem-guncelleme', require('../../routes/sistem_guncelleme'));
+  app.use('/partners', require('../../routes/partners'));
   const { createPrjDefRouter } = require('../../routes/prj_defs');
   app.use('/prj-project-types', createPrjDefRouter('project-types'));
   app.use('/prj-project-categories', createPrjDefRouter('project-categories'));

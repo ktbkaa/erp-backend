@@ -7,13 +7,27 @@ const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 const { documentHtml } = require('../src/services/belgePdfService');
-const { reqUserCode, parametreAl } = require('../src/utils/yetki');
+const { reqUserCode, parametreAl, isAdminUser } = require('../src/utils/yetki');
+const { belgeGuncellemeKontrol, belgeSil, belgeIptal } = require('../src/services/belgeKilitService');
+const { normalizeInvoiceCurrencyFields } = require('../src/services/kurService');
+const eBelge = require('../src/services/eBelgeAdapterService');
 const {
   pickFields,
   appendInsert,
   FATURA_BASLIK,
   FATURA_SATIR,
 } = require('../src/utils/belgeAlanlari');
+const { SPECS: FIRMA_KAPSAM, kayitKapsamParam } = require('../src/middleware/firmaKayitKapsami');
+
+// PUT/DELETE, /eslestir, /eslestirme-onay, /muhasebelestir, /yazdir, /pdf, /iade
+router.param('id', kayitKapsamParam(FIRMA_KAPSAM['/invoices']));
+
+/** 3-way kontrolünü aşma (force=1) yalnız yönetici; manuel eşleştirme onayı ayrıca satınalma onaycısı. */
+function canOverride3Way(req, { allowPurchaseApprover = false } = {}) {
+  if (!req.user) return true;
+  if (isAdminUser(req.user)) return true;
+  return allowPurchaseApprover && Boolean(req.user.can_approve_purchase);
+}
 
 const EBELGE_ALANLAR = [
   'scenario', 'invoice_category', 'customization_no', 'uuid_ettn',
@@ -135,6 +149,7 @@ router.post('/', async (req, res, next) => {
     const ekstra = headerUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
+      Object.assign(ekstra, await normalizeInvoiceCurrencyFields(client, ekstra));
       const tur = invoice_type || ekstra.invoice_category || 'Satis';
       const seri = String(tur).toLowerCase().includes('alis') ? 'ALIS_FATURA' : 'FATURA';
       const no = invoice_no || (await nextDocumentNo(client, seri));
@@ -208,9 +223,27 @@ router.put('/:id', async (req, res, next) => {
     const ekstra = headerUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
-      const mevcut = await client.query('SELECT id FROM invoices WHERE id=$1 FOR UPDATE', [req.params.id]);
+      const mevcut = await client.query(
+        'SELECT id, is_posted, currency_code, exchange_rate FROM invoices WHERE id=$1 FOR UPDATE',
+        [req.params.id]
+      );
       if (!mevcut.rows[0]) {
         throw Object.assign(new Error('Fatura bulunamadı.'), { status: 404 });
+      }
+      const kilit = await belgeGuncellemeKontrol(client, 'invoices', Number(req.params.id), req.body, { req });
+      if (kilit.uygulandi) return Number(req.params.id);
+      Object.assign(ekstra, await normalizeInvoiceCurrencyFields(client, ekstra));
+      if (mevcut.rows[0].is_posted) {
+        const pbDegisti = ekstra.currency_code !== undefined
+          && String(ekstra.currency_code) !== String(mevcut.rows[0].currency_code || 'TRY');
+        const kurDegisti = ekstra.exchange_rate !== undefined
+          && Number(ekstra.exchange_rate) !== Number(mevcut.rows[0].exchange_rate);
+        if (pbDegisti || kurDegisti) {
+          throw Object.assign(
+            new Error('Muhasebeleşmiş faturanın para birimi/kuru değiştirilemez. Önce fişe ters kayıt atın.'),
+            { status: 409, kod: 'KUR_KILIT' }
+          );
+        }
       }
 
       const sets = [];
@@ -299,6 +332,12 @@ router.post('/:id/eslestir', async (req, res, next) => {
 /** POST /invoices/:id/eslestirme-onay */
 router.post('/:id/eslestirme-onay', async (req, res, next) => {
   try {
+    if (!canOverride3Way(req, { allowPurchaseApprover: true })) {
+      return res.status(403).json({
+        hata: 'Manuel 3-way eşleştirme onayı için yönetici veya satınalma onay yetkisi gerekli.',
+        kod: 'YETKI_YOK',
+      });
+    }
     const r = await pool.query(
       `UPDATE invoice_matches SET result='Uyumlu', description=COALESCE(description,'') || ' [Manuel onay]'
        WHERE invoice_id=$1
@@ -319,12 +358,21 @@ router.post('/:id/eslestirme-onay', async (req, res, next) => {
 /** POST /invoices/:id/muhasebelestir — belge→fiş + cari (FIN-004/005) */
 router.post('/:id/muhasebelestir', async (req, res, next) => {
   try {
+    const force = String(req.query.force || req.body?.force || '') === '1'
+      || String(req.body?.force || '').toLowerCase() === 'true';
+    if (force && !canOverride3Way(req)) {
+      return res.status(403).json({
+        hata: 'force=1 (3-way kontrolünü aşma) yalnız yönetici (ADMIN) yetkisiyle kullanılabilir.',
+        kod: 'YETKI_YOK',
+      });
+    }
     const faturaId = Number(req.params.id);
     const fatura = await getInvoice(faturaId);
     if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    if (fatura.status === 'Iptal') {
+      return res.status(409).json({ hata: `Fatura ${fatura.invoice_no} iptal edilmiş; muhasebeleştirilemez.`, kod: 'BELGE_IPTAL_EDILMIS' });
+    }
     const isAlis = String(fatura.invoice_type || '').toLowerCase().includes('alis');
-    const force = String(req.query.force || req.body?.force || '') === '1'
-      || String(req.body?.force || '').toLowerCase() === 'true';
     const threeWay = String(await parametreAl(pool, 'ALIS_3WAY_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
     if (isAlis && threeWay && !force) {
       const m = await pool.query(
@@ -374,20 +422,44 @@ router.get('/:id/yazdir', async (req, res, next) => {
         payable_amount: f.payable_amount,
         total_amount: f.total_amount,
       },
-      ekstra: { uuid_ettn: f.uuid_ettn, description: f.description },
+      ekstra: {
+        uuid_ettn: f.uuid_ettn,
+        description: f.description,
+        qr_text: await eBelge.qrTextFor(pool, 'Fatura', f.id),
+        pdf_url: `/invoices/${f.id}/pdf`,
+      },
     });
     res.type('html').send(html);
   } catch (err) {
     next(err);
   }
 });
-router.get('/:id/pdf', (req, res) => res.redirect(302, `/invoices/${req.params.id}/yazdir`));
+
+/** GET /invoices/:id/pdf?sablon=standart|matbu — UTF-8 fontlu, GİB QR kodlu PDF (e-belge kaydı yoksa TASLAK). */
+router.get('/:id/pdf', async (req, res, next) => {
+  try {
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(pool, 'invoices', Number(req.params.id), firmaId))) {
+      return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    }
+    const out = await eBelge.documentPdf(pool, { documentType: 'Fatura', documentId: Number(req.params.id), template: req.query.sablon || null });
+    res.type('application/pdf');
+    res.set('Content-Disposition', `${req.query.indir ? 'attachment' : 'inline'}; filename="${encodeURIComponent(out.fileName)}"`);
+    res.send(out.buffer);
+  } catch (err) {
+    if (err.status === 404) return res.status(404).json({ hata: err.message });
+    next(err);
+  }
+});
 
 /** POST /invoices/:id/iade — iade faturası (ters amount) */
 router.post('/:id/iade', async (req, res, next) => {
   try {
     const source = await getInvoice(req.params.id);
     if (!source) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    if (source.status === 'Iptal') {
+      return res.status(409).json({ hata: `Fatura ${source.invoice_no} iptal edilmiş; iade faturası düzenlenemez.`, kod: 'BELGE_IPTAL_EDILMIS' });
+    }
     const id = await withTransaction(pool, async (client) => {
       const alis = String(source.invoice_type || '').toLowerCase().includes('alis');
       const tur = alis ? 'AlisIade' : 'SatisIade';
@@ -399,8 +471,9 @@ router.post('/:id/iade', async (req, res, next) => {
         `
         INSERT INTO invoices
           (invoice_no, partner_id, invoice_type, total_amount, net_amount, tax_amount, payable_amount,
-           status, source_document_type, source_document_id, description, company_id, plant_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8,$9,$10,$11,$12)
+           status, source_document_type, source_document_id, description, company_id, plant_id,
+           currency_code, exchange_rate, rate_type, rate_option, is_return, vat_rate_default)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8,$9,$10,$11,$12,$13,$14,$15,$16,TRUE,$17)
         RETURNING id
         `,
         [
@@ -413,6 +486,9 @@ router.post('/:id/iade', async (req, res, next) => {
           source.id,
           `İade ← ${source.invoice_no}`,
           firmaId, plantId,
+          source.currency_code || 'TRY', source.exchange_rate || 1,
+          source.rate_type || 'TCMB-SATIS', source.rate_option || 'BelgeTarihi',
+          source.vat_rate_default ?? 20,
         ]
       );
       const iadeId = r.rows[0].id;
@@ -440,10 +516,26 @@ router.post('/:id/iade', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /invoices/:id/iptal — silme yerine iptal.
+ * Muhasebeleşmişse ters fiş + ters cari hareket; e-belge gönderilmişse iade faturası gerekir.
+ */
+router.post('/:id/iptal', async (req, res, next) => {
+  try {
+    const r = await withTransaction(pool, (client) => belgeIptal(client, 'invoices', Number(req.params.id), {
+      req, aciklama: req.body?.aciklama || req.body?.description || null,
+    }));
+    if (!r) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    res.json({ ...(r.sonuc || {}), fatura: await getInvoice(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req, res, next) => {
   try {
-    const r = await pool.query('DELETE FROM invoices WHERE id=$1 RETURNING id', [req.params.id]);
-    if (!r.rows[0]) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    const r = await withTransaction(pool, (client) => belgeSil(client, 'invoices', Number(req.params.id), { req }));
+    if (!r) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);

@@ -17,6 +17,7 @@
  */
 require('dotenv').config();
 const fs = require('fs');
+const { demoPassword } = require('./lib/demoCredentials');
 const path = require('path');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
@@ -54,7 +55,7 @@ async function ensureLogin() {
     const r = await fetch(`${BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'owner', password: 'Demo123!' }),
+      body: JSON.stringify({ username: 'owner', password: demoPassword() }),
     });
     const j = await r.json();
     if (j.access_token) {

@@ -227,14 +227,17 @@ async function createJournalEntry(client, {
       `
       INSERT INTO journal_entry_lines
         (document_id, account_id, debit, credit, description, line_no, partner_id,
-         currency_code, exchange_rate, debit_yb, credit_yb, tax_code, cost_center, project_code)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         currency_code, exchange_rate, debit_yb, credit_yb, tax_code, cost_center, project_code,
+         debit_fc, credit_fc)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       `,
       [
         belgeId, hid, round2(k.debit), round2(k.credit), k.description || null, sira++,
         k.partner_id || null, k.currency_code || paraBirimi, k.exchange_rate != null ? k.exchange_rate : exchange_rate,
         round2(k.debit_yb || k.debit), round2(k.credit_yb || k.credit),
         k.tax_code || null, k.cost_center || null, k.project_code || null,
+        k.debit_fc != null ? round2(k.debit_fc) : null,
+        k.credit_fc != null ? round2(k.credit_fc) : null,
       ]
     );
   }
@@ -337,6 +340,10 @@ async function fisTersKayit(client, belgeId, { kullaniciKodu = null, description
     currency_code: k.currency_code,
     exchange_rate: k.exchange_rate,
     tax_code: k.tax_code,
+    debit_yb: k.credit_yb,
+    credit_yb: k.debit_yb,
+    debit_fc: k.credit_fc,
+    credit_fc: k.debit_fc,
   }));
   const ters = await createJournalEntry(client, {
     firmaId: bel.company_id,
@@ -360,6 +367,15 @@ async function fisTersKayit(client, belgeId, { kullaniciKodu = null, description
     `UPDATE journal_entries SET original_document_id=$2 WHERE id=$1`,
     [ters.id, belgeId]
   );
+  // Döngüsel bağımlılığı önlemek için tembel require (entegrasyon servisi bu modülü kullanır).
+  const { faturaTersKayitCari, FATURA_KAYNAK_TIPLERI } = require('./muhasebeEntegrasyonService');
+  if (FATURA_KAYNAK_TIPLERI.includes(bel.source_document_type)) {
+    await faturaTersKayitCari(client, {
+      kaynakTip: bel.source_document_type,
+      faturaId: bel.source_document_id,
+      kullaniciKodu,
+    });
+  }
   return ters;
 }
 

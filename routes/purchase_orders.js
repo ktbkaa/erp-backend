@@ -3,10 +3,12 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { submitForApproval, assertManualStatusChange } = require('../src/services/onayKapisiService');
 const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { isPartnerSupplier } = require('../src/utils/kodUretici');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
+const { belgeGuncellemeKontrol, belgeSil, belgeIptal, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 
 async function getOrder(id) {
   const s = await pool.query(`
@@ -308,7 +310,10 @@ router.put('/:id', async (req, res) => {
         err.status = 404;
         throw err;
       }
+      const kilit = await belgeGuncellemeKontrol(client, 'purchase_orders', Number(req.params.id), b, { req });
+      if (kilit.uygulandi) return Number(req.params.id);
       if (b.partner_id) await assertTedarikci(client, b.partner_id);
+      await assertManualStatusChange(client, 'SATINALMA_SIPARIS', mevcut.rows[0], b.status);
 
       await client.query(
         `UPDATE purchase_orders SET
@@ -362,6 +367,7 @@ router.put('/:id', async (req, res) => {
 
     res.json(await getOrder(id));
   } catch (err) {
+    if (kilitHatasiYanit(res, err, req)) return;
     if (err.code === '23503') {
                 return res.status(409).json({
                     hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
@@ -379,6 +385,21 @@ router.post('/:id/onayla', async (req, res) => {
     const kullanici = await getUser(pool, reqUserCode(req) || 'owner');
 
     const result = await withTransaction(pool, async (client) => {
+      const kapi = await submitForApproval(client, {
+        documentTypeCode: 'SATINALMA_SIPARIS',
+        documentId: Number(req.params.id),
+        user: kullanici,
+        notes: req.body?.notes || null,
+        fromStatuses: ['Taslak'],
+      }).catch((err) => {
+        if (err.status === 404) {
+          err.status = 400;
+          err.message = 'Sipariş onaylanamadı (bulunamadı veya durumu Taslak değil).';
+        }
+        throw err;
+      });
+      if (kapi.gated) return { id: Number(req.params.id), onayKayit: kapi.record, onayBekliyor: true };
+
       const upd = await client.query(
         `UPDATE purchase_orders SET status='Onayli', approved_at=CURRENT_TIMESTAMP
          WHERE id=$1 AND status='Taslak' RETURNING *`,
@@ -415,7 +436,7 @@ router.post('/:id/onayla', async (req, res) => {
     });
 
     const siparis = await getOrder(result.id);
-    res.json({ ...siparis, onay_kayit: result.onayKayit || null });
+    res.json({ ...siparis, onay_kayit: result.onayKayit || null, onay_bekliyor: Boolean(result.onayBekliyor) });
   } catch (err) {
     if (err.code === '23503') {
                 return res.status(409).json({
@@ -427,12 +448,27 @@ router.post('/:id/onayla', async (req, res) => {
   }
 });
 
+/** POST /satin-alma-siparisleri/:id/iptal — silme yerine iptal */
+router.post('/:id/iptal', async (req, res) => {
+  try {
+    const r = await withTransaction(pool, (client) => belgeIptal(client, 'purchase_orders', Number(req.params.id), {
+      req, aciklama: req.body?.aciklama || req.body?.description || null,
+    }));
+    if (!r) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+    res.json(await getOrder(req.params.id));
+  } catch (err) {
+    if (kilitHatasiYanit(res, err, req)) return;
+    res.status(err.status || 500).json({ hata: err.message });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
-    const result = await pool.query(`DELETE FROM purchase_orders WHERE id=$1 RETURNING id`, [req.params.id]);
-    if (!result.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+    const result = await withTransaction(pool, (client) => belgeSil(client, 'purchase_orders', Number(req.params.id), { req }));
+    if (!result) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (kilitHatasiYanit(res, err, req)) return;
     if (err.code === '23503') {
                 return res.status(409).json({
                     hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',

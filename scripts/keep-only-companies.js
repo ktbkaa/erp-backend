@@ -122,6 +122,8 @@ async function main() {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      // Bilinçli temizlik: onaylı/muhasebeleşmiş belge silme kilidini (150) yalnız bu transaction için aç
+      await client.query("SELECT set_config('erp.belge_kilit_bypass', 'on', true)");
       const code = await hardDeleteCompany(client, f.id);
       await client.query('COMMIT');
       console.log(code ? `SILINDI: ${code}` : `KALDI/HATA: ${f.company_code}`);

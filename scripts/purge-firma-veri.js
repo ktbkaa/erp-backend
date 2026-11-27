@@ -351,6 +351,8 @@ async function main() {
   };
   try {
     await client.query('BEGIN');
+    // Bilinçli temizlik: onaylı/muhasebeleşmiş belge silme kilidini (150) yalnız bu transaction için aç
+    await client.query("SELECT set_config('erp.belge_kilit_bypass', 'on', true)");
     const tables = await discoverCompanyTables(client);
     await purgeNullCompany(client, tables, log);
 

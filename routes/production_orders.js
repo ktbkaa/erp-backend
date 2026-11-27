@@ -3,8 +3,13 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const {
+    submitForApproval, findOpenRecord, assertManualStatusChange, logAudit,
+} = require('../src/services/onayKapisiService');
+const { getUser } = require('../src/utils/yetki');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement } = require('../src/services/stokHareketService');
+const { belgeGuncellemeKontrol, belgeSil, belgeIptal, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 const { allocateConsumptionLots } = require('../src/services/partiService');
 const { createQcOrder, resolveOutgoingQcWarehouse, resolveOutgoingQcTargetWarehouse } = require('../src/services/kaliteService');
 const {
@@ -295,6 +300,7 @@ async function createOrder(client, opts) {
         planned_quantity,
         sales_order_id,
         order_type_id,
+        order_no: orderNoOpt,
         status,
         is_started,
         issue_type,
@@ -340,7 +346,10 @@ async function createOrder(client, opts) {
         if (c.item_id) await assertItemWarehouseAllowed(client, c.item_id, component_warehouse_id);
       }
     }
-    const no = await nextDocumentNo(client, 'URETIM_EMRI');
+    const providedNo = orderNoOpt != null && String(orderNoOpt).trim() !== ''
+        ? String(orderNoOpt).trim()
+        : null;
+    const no = providedNo || await nextDocumentNo(client, 'URETIM_EMRI');
     const durumVal = status || (sales_order_id ? 'OnayBekliyor' : 'Acik');
     const emir = await client.query(
         `
@@ -649,6 +658,8 @@ router.get('/siparis-adaylari', async (req, res) => {
                 sd.quantity AS siparis_miktar,
                 COALESCE(ue_sum.uretim_plan, 0) AS uretim_planlanan,
                 GREATEST(sd.quantity - COALESCE(ue_sum.uretim_plan, 0), 0) AS remaining_quantity,
+                ue_last.order_no AS wo_order_no,
+                ue_last.id AS wo_order_id,
                 ua.id AS onerilen_agac_id,
                 ua.bom_code AS onerilen_agac_kodu,
                 r.id AS onerilen_rota_id,
@@ -663,6 +674,14 @@ router.get('/siparis-adaylari', async (req, res) => {
                 WHERE ue.sales_order_id = s.id AND ue.item_id = sd.item_id
                   AND ue.status NOT IN ('Iptal')
             ) ue_sum ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT ue3.id, ue3.order_no
+                FROM production_orders ue3
+                WHERE ue3.sales_order_id = s.id AND ue3.item_id = sd.item_id
+                  AND ue3.status NOT IN ('Iptal')
+                ORDER BY ue3.id DESC
+                LIMIT 1
+            ) ue_last ON TRUE
             LEFT JOIN LATERAL (
                 SELECT ua2.id, ua2.bom_code
                 FROM boms ua2
@@ -734,6 +753,232 @@ router.get('/siparis-adaylari/:id', async (req, res) => {
         res.status(500).json({ hata: err.message });
     }
 });
+
+/**
+ * PRDT03 — onay öncesi hazırlık kontrolü (stok yeterliliği zorlanmaz).
+ * @returns {{ ready: boolean, blockers: string[], warnings: string[] }}
+ */
+function evaluateApprovalReadiness(emir) {
+    const blockers = [];
+    const warnings = [];
+    if (!emir) {
+        return { ready: false, blockers: ['Üretim emri bulunamadı.'], warnings };
+    }
+    if (emir.is_deleted) blockers.push('Emir silinmiş.');
+    if (emir.status === 'Iptal') blockers.push('İptal edilmiş emir onaylanamaz.');
+    if (!['Taslak', 'OnayBekliyor'].includes(emir.status)) {
+        blockers.push(`Durum uygun değil: ${emir.status}`);
+    }
+    if (emir.is_approved) blockers.push('Emir zaten onaylı.');
+    if (!(Number(emir.planned_quantity) > 0)) blockers.push('Planlanan miktar > 0 olmalı.');
+    if (!emir.item_id) blockers.push('Ürün (stok) seçili değil.');
+    const ops = emir.operasyonlar || [];
+    if (!ops.length) blockers.push('Operasyon satırı yok — önce detay doldurun / BOM-rota uygulayın.');
+    if (!emir.product_bom_id) warnings.push('Ürün ağacı (BOM) bağlı değil.');
+    if (!emir.route_id) warnings.push('Rota bağlı değil.');
+    if (ops.some((o) => !o.work_center_id)) warnings.push('Bazı operasyonlarda iş merkezi boş.');
+    if (!(emir.malzemeler || emir.bilesenler || []).length) {
+        warnings.push('Malzeme satırı yok.');
+    }
+    return { ready: blockers.length === 0, blockers, warnings };
+}
+
+function userCodeFromReq(req) {
+    return req.user?.user_code
+        || req.user?.username
+        || req.get?.('x-kullanici-kodu')
+        || req.headers?.['x-kullanici-kodu']
+        || req.body?.user_code
+        || null;
+}
+
+/**
+ * Hazırlık kontrolünden geçen emri onaylar. URETIM_EMRI için aktif onay kuralı varsa emir
+ * onaya gönderilir (OnayBekliyor + onay kaydı); yoksa eskisi gibi doğrudan açılır.
+ */
+async function approveProductionOrder(emirId, { companyId = null, userCode = null } = {}) {
+    const emir = await getQcOrder(emirId);
+    if (!emir) {
+        const err = new Error('Üretim emri bulunamadı.');
+        err.status = 404;
+        throw err;
+    }
+    if (companyId && emir.company_id && Number(emir.company_id) !== Number(companyId)) {
+        const err = new Error('Emir aktif firma kapsamında değil.');
+        err.status = 403;
+        throw err;
+    }
+    const check = evaluateApprovalReadiness(emir);
+    if (!check.ready) {
+        const err = new Error(check.blockers.join(' '));
+        err.status = 400;
+        err.blockers = check.blockers;
+        err.warnings = check.warnings;
+        throw err;
+    }
+    const user = userCode ? await getUser(pool, userCode) : null;
+    const sonuc = await withTransaction(pool, async (client) => {
+        const kapi = await submitForApproval(client, {
+            documentTypeCode: 'URETIM_EMRI',
+            documentId: emirId,
+            user,
+            fromStatuses: ['Taslak', 'OnayBekliyor'],
+        });
+        if (kapi.existing) {
+            const err = new Error(`Emir onay sürecinde (${kapi.record?.approval_no || 'açık kayıt'}); Onay Bekleyenler ekranından onaylanır.`);
+            err.status = 409;
+            err.code = 'ONAY_BEKLIYOR';
+            throw err;
+        }
+        if (kapi.gated) return { onayKayit: kapi.record };
+        const upd = await client.query(
+            `
+            UPDATE production_orders
+            SET status = 'Acik',
+                is_approved = TRUE,
+                is_open = 'Acik'
+            WHERE id = $1
+              AND status IN ('Taslak', 'OnayBekliyor')
+              AND COALESCE(is_approved, FALSE) = FALSE
+              AND COALESCE(is_deleted, FALSE) = FALSE
+            RETURNING id
+            `,
+            [emirId]
+        );
+        if (!upd.rows[0]) {
+            const err = new Error('Emir onaylanamadı (eşzamanlı güncelleme veya durum değişti).');
+            err.status = 409;
+            throw err;
+        }
+        await logAudit(client, {
+            company_id: emir.company_id,
+            document_type_code: 'URETIM_EMRI',
+            screen_id: 'uretim-emirleri',
+            document_id: emirId,
+            document_no: emir.order_no,
+            action: 'DOGRUDAN_ONAY',
+            from_status: emir.status,
+            to_status: 'Acik',
+            user,
+            user_code: userCode,
+        });
+        return { onayKayit: null };
+    });
+    const refreshed = await getQcOrder(emirId);
+    return {
+        emir: refreshed,
+        warnings: check.warnings,
+        onayKayit: sonuc.onayKayit,
+        onayBekliyor: Boolean(sonuc.onayKayit),
+    };
+}
+
+/** PRDT03 — onay adayı listesi */
+router.get('/onay-adaylari', async (req, res) => {
+    try {
+        const params = [];
+        const where = [
+            `COALESCE(ue.is_deleted, FALSE) = FALSE`,
+            `ue.status IN ('Taslak', 'OnayBekliyor')`,
+        ];
+        const firmaId = companyIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`ue.company_id = $${params.length}`);
+        }
+        if (req.query.status) {
+            params.push(String(req.query.status));
+            where.push(`ue.status = $${params.length}`);
+        }
+        if (req.query.order_no) {
+            params.push(`%${String(req.query.order_no).trim()}%`);
+            where.push(`ue.order_no ILIKE $${params.length}`);
+        }
+        if (req.query.item_code) {
+            params.push(`%${String(req.query.item_code).trim()}%`);
+            where.push(`EXISTS (
+              SELECT 1 FROM items s WHERE s.id = ue.item_id AND s.item_code ILIKE $${params.length}
+            )`);
+        }
+        if (req.query.plant_id) {
+            params.push(Number(req.query.plant_id));
+            where.push(`ue.plant_id = $${params.length}`);
+        }
+        if (req.query.order_type_id) {
+            params.push(Number(req.query.order_type_id));
+            where.push(`ue.order_type_id = $${params.length}`);
+        }
+        const liste = await pool.query(
+            `
+            SELECT ue.id FROM production_orders ue
+            WHERE ${where.join(' AND ')}
+            ORDER BY ue.id DESC
+            LIMIT 500
+            `,
+            params
+        );
+        const result = [];
+        for (const r of liste.rows) {
+            const emir = await getQcOrder(r.id);
+            if (!emir) continue;
+            const check = evaluateApprovalReadiness(emir);
+            const acikKayitId = await findOpenRecord(pool, 'URETIM_EMRI', emir.id);
+            let onayNo = null;
+            if (acikKayitId) {
+                onayNo = (await pool.query('SELECT approval_no FROM approval_records WHERE id=$1', [acikKayitId])).rows[0]?.approval_no || null;
+                check.blockers.push(`Onay sürecinde (${onayNo || acikKayitId}) — Onay Bekleyenler.`);
+                check.ready = false;
+            }
+            result.push({
+                ...emir,
+                onay_no: onayNo,
+                ready: check.ready,
+                blockers: check.blockers,
+                warnings: check.warnings,
+            });
+        }
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
+/** PRDT03 — toplu onay (bağımsız kayıtlar; kısmi başarı OK) */
+router.post('/toplu-onay', async (req, res) => {
+    try {
+        const ids = Array.isArray(req.body?.ids)
+            ? req.body.ids.map((x) => Number(x)).filter((n) => Number.isFinite(n) && n > 0)
+            : [];
+        if (!ids.length) return res.status(400).json({ hata: 'ids[] zorunlu.' });
+        const firmaId = companyIdFromReq(req);
+        const userCode = userCodeFromReq(req);
+        const basarili = [];
+        const hatali = [];
+        for (const id of ids) {
+            try {
+                const r = await approveProductionOrder(id, { companyId: firmaId, userCode });
+                basarili.push({
+                    id,
+                    order_no: r.emir.order_no,
+                    status: r.emir.status,
+                    onay_bekliyor: r.onayBekliyor,
+                    warnings: r.warnings,
+                });
+            } catch (err) {
+                hatali.push({ id, hata: err.message, blockers: err.blockers || null });
+            }
+        }
+        res.json({
+            basarili,
+            hatali,
+            basarili_sayisi: basarili.length,
+            hata_sayisi: hatali.length,
+        });
+    } catch (err) {
+        res.status(500).json({ hata: err.message });
+    }
+});
+
 
 router.get('/:id', async (req, res) => {
     try {
@@ -811,6 +1056,10 @@ router.post('/satis-siparisinden', async (req, res) => {
             fg_warehouse_id,
             planned_quantity,
             order_type_id,
+            order_no,
+            plan_start,
+            plan_end,
+            uom_code,
         } = req.body;
         if (!sales_order_id || !item_id || !product_bom_id || !route_id || !component_warehouse_id || !fg_warehouse_id) {
             return res.status(400).json({
@@ -845,6 +1094,10 @@ router.post('/satis-siparisinden', async (req, res) => {
                 planned_quantity: quantity,
                 sales_order_id,
                 order_type_id,
+                order_no,
+                plan_start: plan_start || null,
+                plan_end: plan_end || null,
+                uom_code,
                 status: 'OnayBekliyor',
             })
         );
@@ -1659,7 +1912,10 @@ router.put('/:id', async (req, res) => {
                 err.status = 404;
                 throw err;
             }
+            const kilit = await belgeGuncellemeKontrol(client, 'production_orders', Number(req.params.id), b, { req });
+            if (kilit.uygulandi) return Number(req.params.id);
             const m = mevcut.rows[0];
+            await assertManualStatusChange(client, 'URETIM_EMRI', m, b.status);
             const yeniAgac = b.product_bom_id != null ? Number(b.product_bom_id) : Number(m.product_bom_id);
             const yeniRota = b.route_id != null ? Number(b.route_id) : Number(m.route_id);
             const yeniStok = b.item_id != null ? Number(b.item_id) : Number(m.item_id);
@@ -1808,6 +2064,7 @@ router.put('/:id', async (req, res) => {
 
         res.json(await getQcOrder(id));
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
@@ -1904,33 +2161,36 @@ router.post('/:id/bom-rota-degistir', async (req, res) => {
 /** PRDT02 / PRDT03 — iş emri onay */
 router.post('/:id/onayla', async (req, res) => {
     try {
-        const upd = await pool.query(
-            `
-            UPDATE production_orders
-            SET status = 'Acik', is_approved = TRUE, is_open = 'Acik'
-            WHERE id = $1 AND status IN ('Taslak', 'OnayBekliyor')
-            RETURNING id
-            `,
-            [req.params.id]
-        );
-        if (!upd.rows[0]) {
-            return res.status(400).json({
-                hata: 'Emir onaylanamadı (bulunamadı veya durumu Taslak/OnayBekliyor değil).',
-            });
-        }
-        res.json(await getQcOrder(upd.rows[0].id));
+        const r = await approveProductionOrder(Number(req.params.id), {
+            companyId: companyIdFromReq(req),
+            userCode: userCodeFromReq(req),
+        });
+        res.json({
+            ...r.emir,
+            _warnings: r.warnings,
+            ...(r.onayBekliyor ? { onay_bekliyor: true, onay_kayit: r.onayKayit } : {}),
+        });
     } catch (err) {
         if (err.code === '23503') {
-                    return res.status(409).json({
-                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
-                        kod: 'ERR-FK-23503',
-                    });
-                }
-        res.status(500).json({ hata: err.message });
+            return res.status(409).json({
+                hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                kod: 'ERR-FK-23503',
+            });
+        }
+        res.status(err.status || 400).json({
+            hata: err.message,
+            kod: typeof err.code === 'string' && err.code.startsWith('ONAY_') ? err.code : undefined,
+            blockers: err.blockers || undefined,
+            warnings: err.warnings || undefined,
+        });
     }
 });
 
-/** İş emrini başlat (is_started = true) */
+/**
+ * İş emrini başlat (is_started = true).
+ * OnayBekliyor/Taslak ile başlatma kapalı — önce onay.
+ * Manuel oluşturulan Acik emirler (is_approved=false) geriye uyum için başlatılabilir.
+ */
 router.post('/:id/baslat', async (req, res) => {
     try {
         const upd = await pool.query(
@@ -1940,14 +2200,14 @@ router.post('/:id/baslat', async (req, res) => {
                 status = CASE WHEN status = 'Acik' THEN 'Uretimde' ELSE status END
             WHERE id = $1
               AND COALESCE(is_started, FALSE) = FALSE
-              AND status IN ('Acik', 'Uretimde', 'OnayBekliyor')
+              AND status IN ('Acik', 'Uretimde')
             RETURNING id
             `,
             [req.params.id]
         );
         if (!upd.rows[0]) {
             return res.status(400).json({
-                hata: 'Emir başlatılamadı (bulunamadı, zaten başlatılmış veya durumu uygun değil).',
+                hata: 'Emir başlatılamadı (bulunamadı, onay bekliyor, zaten başlatılmış veya durumu uygun değil).',
             });
         }
         res.json(await getQcOrder(upd.rows[0].id));
@@ -1962,12 +2222,27 @@ router.post('/:id/baslat', async (req, res) => {
     }
 });
 
+/** POST /uretim-emirleri/:id/iptal — üretim/tüketim kaydı yoksa iptal; varsa Kapali önerilir */
+router.post('/:id/iptal', async (req, res) => {
+    try {
+        const r = await withTransaction(pool, (client) => belgeIptal(client, 'production_orders', Number(req.params.id), {
+            req, aciklama: req.body?.aciklama || req.body?.description || null,
+        }));
+        if (!r) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        res.json(await getQcOrder(req.params.id));
+    } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
 router.delete('/:id', async (req, res) => {
     try {
-        const result = await pool.query(`DELETE FROM production_orders WHERE id=$1 RETURNING id`, [req.params.id]);
-        if (!result.rows[0]) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        const result = await withTransaction(pool, (client) => belgeSil(client, 'production_orders', Number(req.params.id), { req }));
+        if (!result) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',

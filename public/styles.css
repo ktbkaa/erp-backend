@@ -6429,7 +6429,16 @@ body.sidebar-resizing .workspace {
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+.list-page-ellipsis {
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0 0.15rem;
+  user-select: none;
 }
 .list-page-btn:hover:not(:disabled) {
   background: var(--accent-soft);

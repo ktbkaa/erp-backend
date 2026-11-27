@@ -12,7 +12,7 @@ const pool = require('../db');
 const BASE = process.env.ERP_BASE || `http://127.0.0.1:${process.env.PORT || 3000}`;
 const OUT_DIR = path.join(__dirname, '..', 'docs', 'kilavuz', 'evidence');
 const USER = process.env.DEMO_USER || 'kagantalha.b';
-const PASS = process.env.DEMO_PASS || 'Demo123!';
+const PASS = require('./lib/demoCredentials').demoPassword();
 
 async function login() {
   const r = await fetch(`${BASE}/auth/login`, {

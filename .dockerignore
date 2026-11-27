@@ -1,5 +1,6 @@
 node_modules
 .git
+.github
 .env
 .env.*
 !.env.example
@@ -7,8 +8,14 @@ backups
 *.log
 erp.db
 .cursor
+.vscode
 tmp
 /opt
 docs
 tests
 **/*.test.js
+test-results
+playwright-report
+tools/erp-local-panel/erp-local-panel.zip
+tools/erp-local-panel/logs
+docker-compose*.yml

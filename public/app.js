@@ -1424,7 +1424,7 @@ const MODULES = [
         endpoint: '/e-belge',
         crud: false,
         readOnly: true,
-        banner: 'e-Fatura / e-İrsaliye kuyruk iskeleti. Harici gönderim adaptörü bağlanana kadar simülasyon ile durum ilerletilir.',
+        banner: 'e-Fatura / e-Arşiv / e-İrsaliye kuyruğu (UBL-TR 1.2). GIB_CANLI=Hayir iken gönderimler sandbox (mock/test) olarak işaretlenir; canlı mod GIB_CANLI=Evet ve entegratör kimlik bilgileri tamamken açılır. Durum: GET /e-belge/durum/ozet.',
         filters: [
           { key: 'status', label: 'Durum', queryParam: true },
         ],
@@ -1432,10 +1432,14 @@ const MODULES = [
           { key: 'id', label: 'ID', mono: true },
           { key: 'document_type', label: 'Tip' },
           { key: 'document_no', label: 'Belge', mono: true },
-          { key: 'direction', label: 'Yön' },
+          { key: 'profile_id', label: 'Senaryo' },
+          { key: 'invoice_type_code', label: 'Belge tipi' },
           { key: 'status', label: 'Durum' },
-          { key: 'uuid_ettn', label: 'ETTN', mono: true },
+          { key: 'send_mode', label: 'Mod' },
           { key: 'gib_number', label: 'GİB no', mono: true },
+          { key: 'uuid_ettn', label: 'ETTN', mono: true },
+          { key: 'attempt_count', label: 'Deneme' },
+          { key: 'last_error_code', label: 'Hata kodu', mono: true },
           { key: 'last_error', label: 'Hata' },
           { key: 'queued_at', label: 'Kuyruk' },
           { key: 'sent_at', label: 'Gönderim' },
@@ -1466,11 +1470,6 @@ const MODULES = [
         id: 'parti-seri',
         title: 'Parti, Seri ve Rezervasyon',
         screenIds: ['stok-partileri', 'stok-serileri', 'stok-rezervasyonlari', 'stok-ikame'],
-      },
-      {
-        id: 'mrp',
-        title: 'MRP Planlama',
-        screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar', 'mrp-hareket-raporu'],
       },
     ],
     screens: [
@@ -2180,274 +2179,6 @@ const MODULES = [
         detailKey: null,
         detailAsFields: true,
       },
-      {
-        id: 'mrp-parametre',
-        techId: 'MFG-MRP-PAR-001',
-        businessNameEn: 'MrpParameterScreen',
-        title: 'MRP Parametreleri',
-        endpoint: '/mrp/parametreler',
-        crud: true,
-        readOnly: false,
-        listActions: ['yeni', 'incele', 'duzelt', 'sil'],
-        mrpKonsol: true,
-        mrpParametreScreen: true,
-        numeratorSeri: 'MRP_PARAM',
-        codeField: 'parameter_code',
-        filters: [
-          { key: 'parameter_code', label: 'Parametre kodu' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        columns: [
-          { key: 'parameter_code', label: 'Kod', mono: true },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'start_date', label: 'Ufuk baş.' },
-          { key: 'end_date', label: 'Ufuk bit.' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        masterFields: [
-          { key: 'parameter_code', label: 'Parametre kodu', code: true },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        defaults: { is_active: true },
-        formTabs: [
-          { id: 'param', label: 'MRP 2 Parametreleri', kind: 'mrp-parametre' },
-          { id: 'kapsam', label: 'Depo/İşemirleri/Siparişler/MPS/Satış Tahminleri', kind: 'mrp-kapsam' },
-        ],
-        banner: 'Kaydedilebilir MRP parametre seti. Konsolda bu seti seçerek çalıştırın.',
-      },
-      {
-        id: 'mrp-bagimsiz-ihtiyac',
-        techId: 'MFG-IR-SCR-001',
-        businessNameEn: 'IndependentRequirementsScreen',
-        title: 'MRP Bağımsız İhtiyaç',
-        endpoint: '/mrp/bagimsiz-ihtiyaclar',
-        crud: true,
-        codeField: 'requirement_no',
-        nameField: 'item_name',
-        numeratorSeri: 'MRP_BI',
-        filters: [
-          { key: 'requirement_no', label: 'No' },
-          { key: 'item_code', label: 'Stok' },
-          { key: 'source', label: 'Kaynak' },
-        ],
-        columns: [
-          { key: 'requirement_no', label: 'No', mono: true },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'quantity', label: 'Miktar' },
-          { key: 'requirement_date', label: 'İhtiyaç tar.' },
-          { key: 'source', label: 'Kaynak' },
-          { key: 'is_active', label: 'Aktif' },
-        ],
-        masterFields: [
-          { key: 'requirement_no', label: 'İhtiyaç no', code: true, required: true },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
-          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
-          { key: 'requirement_date', label: 'İhtiyaç tarihi', type: 'date', required: true },
-          { key: 'source', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-        ],
-        detailFields: [
-          { key: 'uom_code', label: 'Birim' },
-          { key: 'description', label: 'Açıklama' },
-          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
-        ],
-        detailKey: null,
-        detailAsFields: true,
-      },
-      {
-        id: 'mrp-calisma',
-        techId: 'MFG-MRP-SCR-001',
-        businessNameEn: 'MrpRunScreen',
-        title: 'MRP Konsol',
-        endpoint: '/mrp/calismalar',
-        crud: false,
-        readOnly: true,
-        listActions: ['incele'],
-        mrpKonsol: true,
-        mrpKonsolWorkspace: true,
-        mrpCalistirAction: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        openFormOnEnter: 'workspace',
-        codeField: 'run_no',
-        filters: [
-          { key: 'run_no', label: 'Çalışma no' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'run_no', label: 'No', mono: true },
-          { key: 'status', label: 'Durum' },
-          { key: 'start_date', label: 'Ufuk baş.' },
-          { key: 'end_date', label: 'Ufuk bit.' },
-          { key: 'start_ts', label: 'Başlangıç' },
-          { key: 'end_ts', label: 'Bitiş' },
-          { key: 'line_count', label: 'Satır' },
-          { key: 'net_positive_only', label: 'Net>0' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        masterFields: [
-          { key: 'run_no', label: 'Çalışma no', code: true, readonly: true },
-          { key: 'description', label: 'Açıklama', readonly: true },
-          { key: 'status', label: 'Durum', readonly: true },
-        ],
-        formTabs: [
-          { id: 'workspace', label: 'MRP Konsol', kind: 'mrp-workspace' },
-        ],
-        nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
-        banner: 'Üstten parametre seti seçin; kapsam ve sonuçlar otomatik oluşur. Yeni kayıt yok — parametreleri «MRP Parametreleri»nden kaydedin.',
-      },
-      {
-        id: 'mrp-hesap',
-        techId: 'MFG-MRP-SCR-002',
-        businessNameEn: 'MrpInstantCalcScreen',
-        title: 'MRP Anlık Hesap',
-        endpoint: '/mrp',
-        crud: false,
-        readOnly: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        mrpCalistirAction: true,
-        filters: [
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'suggestion', label: 'Öneri' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'independent_demand', label: 'Bağımsız' },
-          { key: 'dependent_demand', label: 'Bağımlı' },
-          { key: 'safety_stock', label: 'Emniyet' },
-          { key: 'available_stock', label: 'Eldeki' },
-          { key: 'open_purchase_qty', label: 'Açık SA' },
-          { key: 'planned_production', label: 'Açık UE' },
-          { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri miktar' },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'planned_start', label: 'Plan baş.' },
-        ],
-      },
-      {
-        id: 'mrp-sonuclar',
-        techId: 'MFG-MRP-RES-001',
-        businessNameEn: 'MrpResultsScreen',
-        title: 'MRP Sonuçları',
-        endpoint: '/mrp/calismalar',
-        crud: false,
-        readOnly: true,
-        mrpTalepAction: true,
-        mrpUretimAction: true,
-        mrpSonucMode: true,
-        filters: [
-          { key: 'item_code', label: 'Stok' },
-          { key: 'suggestion', label: 'Öneri' },
-        ],
-        columns: [
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'independent_demand', label: 'Bağımsız' },
-          { key: 'dependent_demand', label: 'Bağımlı' },
-          { key: 'available_stock', label: 'Eldeki' },
-          { key: 'net_requirement', label: 'Net' },
-          { key: 'suggested_quantity', label: 'Öneri miktar' },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'donusturuldu', label: 'Dönüştü' },
-          { key: 'donusum_document_no', label: 'Belge' },
-        ],
-      },
-      {
-        id: 'mrp-hareket-raporu',
-        techId: 'MFG-MRP-RPT-001',
-        businessNameEn: 'MrpMovementReportScreen',
-        title: 'MRP Hareket Raporu',
-        endpoint: '/mrp-hareket-raporu',
-        crud: false,
-        readOnly: true,
-        hideActions: true,
-        listExportActions: true,
-        reportPdfAction: true,
-        banner: 'MRP çalışma no zorunlu. Tahmin, MPS, bağımsız ihtiyaç, öneri, stok hareketi ve açık SA/IE satırlarını birleştirir. PDF / Excel / Word araç çubuğundan veya sağ tık menüsünden alınır.',
-        filters: [
-          {
-            key: 'run_id',
-            label: 'MRP çalışma no',
-            type: 'lookup',
-            lookup: 'mrp-calismalar',
-            valueKey: 'id',
-            labelKey: 'description',
-            codeKey: 'run_no',
-            required: true,
-            queryParam: true,
-          },
-          {
-            key: 'item_id',
-            label: 'Stok',
-            type: 'lookup',
-            lookup: 'items',
-            valueKey: 'id',
-            labelKey: 'item_name',
-            codeKey: 'item_code',
-            queryParam: true,
-          },
-          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
-          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
-          {
-            key: 'islem_tipi',
-            label: 'İşlem tipi',
-            type: 'select',
-            options: [
-              { value: 'Tahmin', label: 'Tahmin' },
-              { value: 'MPS', label: 'MPS' },
-              { value: 'BagimsizIhtiyac', label: 'Bağımsız ihtiyaç' },
-              { value: 'MrpOneri', label: 'MRP öneri' },
-              { value: 'MrpIhtiyac', label: 'MRP ihtiyaç bileşeni' },
-              { value: 'StokHareket', label: 'Stok hareket' },
-              { value: 'AcikSA', label: 'Açık SA' },
-              { value: 'AcikIE', label: 'Açık iş emri' },
-            ],
-            queryParam: true,
-          },
-          {
-            key: 'islem_turu',
-            label: 'İşlem türü',
-            type: 'select',
-            options: [
-              { value: 'Talep', label: 'Talep' },
-              { value: 'Arz', label: 'Arz' },
-              { value: 'Oneri', label: 'Öneri' },
-              { value: 'Oneri-SA', label: 'Öneri-SA' },
-              { value: 'Oneri-UE', label: 'Öneri-UE' },
-              { value: 'Yeterli', label: 'Yeterli' },
-              { value: 'Giris', label: 'Giriş' },
-              { value: 'Cikis', label: 'Çıkış' },
-            ],
-            queryParam: true,
-          },
-        ],
-        columns: [
-          { key: 'sira', label: '#', mono: true },
-          { key: 'hareket_tarihi', label: 'Tarih' },
-          { key: 'run_no', label: 'MRP no', mono: true },
-          { key: 'islem_tipi', label: 'İşlem tipi' },
-          { key: 'islem_turu', label: 'Tür' },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'quantity', label: 'Miktar', mono: true },
-          { key: 'quantity_in', label: 'Giriş', mono: true },
-          { key: 'quantity_out', label: 'Çıkış', mono: true },
-          { key: 'uom_code', label: 'Birim' },
-          { key: 'belge_no', label: 'Belge', mono: true },
-          { key: 'belge_tipi', label: 'Belge tipi' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-          { key: 'suggestion', label: 'Öneri' },
-          { key: 'aciklama', label: 'Açıklama' },
-          { key: 'kaynak', label: 'Kaynak' },
-        ],
-      },
     ],
   },
   {
@@ -2472,9 +2203,13 @@ const MODULES = [
       {
         id: 'mal-kabul',
         title: 'Mal Kabul',
-        screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri', 'alis-iade-faturalari'],
+        screenIds: ['mal-kabuller', 'tedarikci-irsaliyeleri', 'giris-kontrolleri'],
       },
-
+      {
+        id: 'faturalandirma',
+        title: 'Alış Faturaları',
+        screenIds: ['alis-faturalari', 'alis-iade-faturalari'],
+      },
     ],
     screens: [
       {
@@ -2685,7 +2420,7 @@ const MODULES = [
           { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, critical: true, group: 'kimlik' },
           { key: 'order_no', label: 'Sipariş no', code: true, lead: true, group: 'kimlik' },
           { key: 'order_date', label: 'Sipariş tarihi', type: 'date', lead: true, group: 'kimlik' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
           { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
           { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar', group: 'kimlik' },
           { key: 'quotation_id', label: 'Satınalma teklifi', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'sa-teklif-satirlar', group: 'kimlik' },
@@ -2990,9 +2725,14 @@ const MODULES = [
         screenIds: ['sevk-emirleri'],
       },
       {
-        id: 'belgeler',
-        title: 'Satış Belgeleri',
-        screenIds: ['irsaliye-yonetimi', 'fatura-yonetimi', 'satis-iade-faturalari'],
+        id: 'irsaliyeler',
+        title: 'Satış İrsaliyeleri',
+        screenIds: ['irsaliye-yonetimi'],
+      },
+      {
+        id: 'faturalandirma',
+        title: 'Satış Faturaları',
+        screenIds: ['satis-faturalari', 'satis-iade-faturalari'],
       },
     ],
     screens: [
@@ -3136,7 +2876,7 @@ const MODULES = [
           { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, fillCariAdres: true },
           { key: 'order_date', label: 'Tarih', type: 'date', lead: true },
           { key: 'delivery_date', label: 'Teslim', type: 'date', lead: true },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Kismi', 'Kapali', 'Iptal'], lead: true },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Onayli', 'Kismi', 'Kapali', 'Iptal'], lead: true },
           { key: 'order_type', label: 'Tür', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true, lead: true },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', lead: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
@@ -3145,6 +2885,7 @@ const MODULES = [
           { key: 'customer_order_no', label: 'Müş. sip. no' },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
           { key: 'payment_term_code', label: 'Ödeme koşulu', lead: true },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'], lead: true },
           { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', lead: true },
           { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', lead: true },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], lead: true },
@@ -3343,7 +3084,7 @@ const MODULES = [
           { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
           { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['SevkTarihi', 'BelgeTarihi', 'Serbest'] },
-          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
+          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Kuyrukta', 'Bekliyor', 'Gonderildi', 'Red', 'Hata', 'Iptal'], lead: true },
           { key: 'actual_ship_date', label: 'Fiili sevk tarihi', type: 'date', lead: true },
           { key: 'actual_ship_time', label: 'Fiili sevk saati' },
           { key: 'due_date', label: 'Vade tarihi', type: 'date' },
@@ -3599,7 +3340,7 @@ const MODULES = [
           { key: 'exchange_rate', label: 'Kur', type: 'number', lead: true },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
           { key: 'rate_option', label: 'Kur seçeneği', type: 'select', options: ['BelgeTarihi', 'SevkTarihi', 'Serbest'] },
-          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Bekliyor', 'Gonderildi', 'Hata', 'Iptal'], lead: true },
+          { key: 'e_document_status', label: 'e-Belge durumu', type: 'select', options: ['Hazir', 'Kuyrukta', 'Bekliyor', 'Gonderildi', 'Red', 'Hata', 'Iptal'], lead: true },
           { key: 'due_date', label: 'Vade tarihi', type: 'date', required: true },
           { key: 'due_days', label: 'Vade gün', type: 'number' },
           { key: 'payment_due_days', label: 'Vade (gün)', type: 'number' },
@@ -3808,9 +3549,14 @@ const MODULES = [
         screenIds: ['uretim-planlari'],
       },
       {
+        id: 'mrp',
+        title: 'MRP Planlama',
+        screenIds: ['mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar', 'mrp-hareket-raporu'],
+      },
+      {
         id: 'is-emri',
         title: 'İş Emirleri',
-        screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'],
+        screenIds: ['uretim-emirleri', 'kolay-is-emri-onayi', 'siparis-is-emri', 'toplu-is-emri'],
       },
       {
         id: 'fason',
@@ -4185,6 +3931,274 @@ const MODULES = [
         defaults: { status: 'Acik', is_started: false, is_fixed: false, material: false },
       },
       {
+        id: 'mrp-parametre',
+        techId: 'MFG-MRP-PAR-001',
+        businessNameEn: 'MrpParameterScreen',
+        title: 'MRP Parametreleri',
+        endpoint: '/mrp/parametreler',
+        crud: true,
+        readOnly: false,
+        listActions: ['yeni', 'incele', 'duzelt', 'sil'],
+        mrpKonsol: true,
+        mrpParametreScreen: true,
+        numeratorSeri: 'MRP_PARAM',
+        codeField: 'parameter_code',
+        filters: [
+          { key: 'parameter_code', label: 'Parametre kodu' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        columns: [
+          { key: 'parameter_code', label: 'Kod', mono: true },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        masterFields: [
+          { key: 'parameter_code', label: 'Parametre kodu', code: true },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        defaults: { is_active: true },
+        formTabs: [
+          { id: 'param', label: 'MRP 2 Parametreleri', kind: 'mrp-parametre' },
+          { id: 'kapsam', label: 'Depo/İşemirleri/Siparişler/MPS/Satış Tahminleri', kind: 'mrp-kapsam' },
+        ],
+        banner: 'Kaydedilebilir MRP parametre seti. Konsolda bu seti seçerek çalıştırın.',
+      },
+      {
+        id: 'mrp-bagimsiz-ihtiyac',
+        techId: 'MFG-IR-SCR-001',
+        businessNameEn: 'IndependentRequirementsScreen',
+        title: 'MRP Bağımsız İhtiyaç',
+        endpoint: '/mrp/bagimsiz-ihtiyaclar',
+        crud: true,
+        codeField: 'requirement_no',
+        nameField: 'item_name',
+        numeratorSeri: 'MRP_BI',
+        filters: [
+          { key: 'requirement_no', label: 'No' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'source', label: 'Kaynak' },
+        ],
+        columns: [
+          { key: 'requirement_no', label: 'No', mono: true },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'quantity', label: 'Miktar' },
+          { key: 'requirement_date', label: 'İhtiyaç tar.' },
+          { key: 'source', label: 'Kaynak' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'requirement_no', label: 'İhtiyaç no', code: true, required: true },
+          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
+          { key: 'quantity', label: 'Miktar', type: 'number', required: true },
+          { key: 'requirement_date', label: 'İhtiyaç tarihi', type: 'date', required: true },
+          { key: 'source', label: 'Kaynak', type: 'select', options: ['Manuel', 'Siparis', 'Tahmin', 'Bütçe'] },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
+        ],
+        detailFields: [
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'mrp-calisma',
+        techId: 'MFG-MRP-SCR-001',
+        businessNameEn: 'MrpRunScreen',
+        title: 'MRP Konsol',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        listActions: ['incele'],
+        mrpKonsol: true,
+        mrpKonsolWorkspace: true,
+        mrpCalistirAction: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        openFormOnEnter: 'workspace',
+        codeField: 'run_no',
+        filters: [
+          { key: 'run_no', label: 'Çalışma no' },
+          { key: 'status', label: 'Durum' },
+        ],
+        columns: [
+          { key: 'run_no', label: 'No', mono: true },
+          { key: 'status', label: 'Durum' },
+          { key: 'start_date', label: 'Ufuk baş.' },
+          { key: 'end_date', label: 'Ufuk bit.' },
+          { key: 'start_ts', label: 'Başlangıç' },
+          { key: 'end_ts', label: 'Bitiş' },
+          { key: 'line_count', label: 'Satır' },
+          { key: 'net_positive_only', label: 'Net>0' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [
+          { key: 'run_no', label: 'Çalışma no', code: true, readonly: true },
+          { key: 'description', label: 'Açıklama', readonly: true },
+          { key: 'status', label: 'Durum', readonly: true },
+        ],
+        formTabs: [
+          { id: 'workspace', label: 'MRP Konsol', kind: 'mrp-workspace' },
+        ],
+        nested: { screenId: 'mrp-sonuclar', link: 'mrp-result' },
+        banner: 'Üstten parametre seti seçin; kapsam ve sonuçlar otomatik oluşur. Yeni kayıt yok — parametreleri «MRP Parametreleri»nden kaydedin.',
+      },
+      {
+        id: 'mrp-hesap',
+        techId: 'MFG-MRP-SCR-002',
+        businessNameEn: 'MrpInstantCalcScreen',
+        title: 'MRP Anlık Hesap',
+        endpoint: '/mrp',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpCalistirAction: true,
+        filters: [
+          { key: 'item_code', label: 'Stok kodu' },
+          { key: 'suggestion', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'independent_demand', label: 'Bağımsız' },
+          { key: 'dependent_demand', label: 'Bağımlı' },
+          { key: 'safety_stock', label: 'Emniyet' },
+          { key: 'available_stock', label: 'Eldeki' },
+          { key: 'open_purchase_qty', label: 'Açık SA' },
+          { key: 'planned_production', label: 'Açık UE' },
+          { key: 'net_requirement', label: 'Net' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'planned_start', label: 'Plan baş.' },
+        ],
+      },
+      {
+        id: 'mrp-sonuclar',
+        techId: 'MFG-MRP-RES-001',
+        businessNameEn: 'MrpResultsScreen',
+        title: 'MRP Sonuçları',
+        endpoint: '/mrp/calismalar',
+        crud: false,
+        readOnly: true,
+        mrpTalepAction: true,
+        mrpUretimAction: true,
+        mrpSonucMode: true,
+        filters: [
+          { key: 'item_code', label: 'Stok' },
+          { key: 'suggestion', label: 'Öneri' },
+        ],
+        columns: [
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'independent_demand', label: 'Bağımsız' },
+          { key: 'dependent_demand', label: 'Bağımlı' },
+          { key: 'available_stock', label: 'Eldeki' },
+          { key: 'net_requirement', label: 'Net' },
+          { key: 'suggested_quantity', label: 'Öneri miktar' },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'donusturuldu', label: 'Dönüştü' },
+          { key: 'donusum_document_no', label: 'Belge' },
+        ],
+      },
+      {
+        id: 'mrp-hareket-raporu',
+        techId: 'MFG-MRP-RPT-001',
+        businessNameEn: 'MrpMovementReportScreen',
+        title: 'MRP Hareket Raporu',
+        endpoint: '/mrp-hareket-raporu',
+        crud: false,
+        readOnly: true,
+        hideActions: true,
+        listExportActions: true,
+        reportPdfAction: true,
+        banner: 'MRP çalışma no zorunlu. Tahmin, MPS, bağımsız ihtiyaç, öneri, stok hareketi ve açık SA/IE satırlarını birleştirir. PDF / Excel / Word araç çubuğundan veya sağ tık menüsünden alınır.',
+        filters: [
+          {
+            key: 'run_id',
+            label: 'MRP çalışma no',
+            type: 'lookup',
+            lookup: 'mrp-calismalar',
+            valueKey: 'id',
+            labelKey: 'description',
+            codeKey: 'run_no',
+            required: true,
+            queryParam: true,
+          },
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            queryParam: true,
+          },
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+          {
+            key: 'islem_tipi',
+            label: 'İşlem tipi',
+            type: 'select',
+            options: [
+              { value: 'Tahmin', label: 'Tahmin' },
+              { value: 'MPS', label: 'MPS' },
+              { value: 'BagimsizIhtiyac', label: 'Bağımsız ihtiyaç' },
+              { value: 'MrpOneri', label: 'MRP öneri' },
+              { value: 'MrpIhtiyac', label: 'MRP ihtiyaç bileşeni' },
+              { value: 'StokHareket', label: 'Stok hareket' },
+              { value: 'AcikSA', label: 'Açık SA' },
+              { value: 'AcikIE', label: 'Açık iş emri' },
+            ],
+            queryParam: true,
+          },
+          {
+            key: 'islem_turu',
+            label: 'İşlem türü',
+            type: 'select',
+            options: [
+              { value: 'Talep', label: 'Talep' },
+              { value: 'Arz', label: 'Arz' },
+              { value: 'Oneri', label: 'Öneri' },
+              { value: 'Oneri-SA', label: 'Öneri-SA' },
+              { value: 'Oneri-UE', label: 'Öneri-UE' },
+              { value: 'Yeterli', label: 'Yeterli' },
+              { value: 'Giris', label: 'Giriş' },
+              { value: 'Cikis', label: 'Çıkış' },
+            ],
+            queryParam: true,
+          },
+        ],
+        columns: [
+          { key: 'sira', label: '#', mono: true },
+          { key: 'hareket_tarihi', label: 'Tarih' },
+          { key: 'run_no', label: 'MRP no', mono: true },
+          { key: 'islem_tipi', label: 'İşlem tipi' },
+          { key: 'islem_turu', label: 'Tür' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'quantity', label: 'Miktar', mono: true },
+          { key: 'quantity_in', label: 'Giriş', mono: true },
+          { key: 'quantity_out', label: 'Çıkış', mono: true },
+          { key: 'uom_code', label: 'Birim' },
+          { key: 'belge_no', label: 'Belge', mono: true },
+          { key: 'belge_tipi', label: 'Belge tipi' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
+          { key: 'suggestion', label: 'Öneri' },
+          { key: 'aciklama', label: 'Açıklama' },
+          { key: 'kaynak', label: 'Kaynak' },
+        ],
+      },
+      {
         id: 'uretim-emirleri',
         techId: 'MFG-WO-SCR-001',
         businessNameEn: 'WorkOrderScreen',
@@ -4348,6 +4362,77 @@ const MODULES = [
         },
       },
       {
+        id: 'kolay-is-emri-onayi',
+        techId: 'MFG-WO-APR-001',
+        businessNameEn: 'EasyWorkOrderApprovalScreen',
+        title: 'Kolay İş Emri Onayı',
+        endpoint: '/uretim-emirleri/onay-adaylari',
+        resourceEndpoint: '/uretim-emirleri',
+        crud: false,
+        listActions: ['incele'],
+        codeField: 'order_no',
+        nameField: 'item_name',
+        banner: 'Taslak / OnayBekliyor iş emirleri. Onay stok hareketi üretmez; üretime açar. İş emri için onay kuralı tanımlıysa onay, Onay Bekleyenler üzerinden ilerler.',
+        approveAction: { label: 'Onayla', path: '/uretim-emirleri/{id}/onayla' },
+        bulkActions: [
+          {
+            label: 'Uygunları Toplu Onayla',
+            path: '/uretim-emirleri/toplu-onay',
+            readyKey: 'ready',
+            emptyMessage: 'Onaya uygun kayıt yok (Hazır = Hayır).',
+          },
+        ],
+        filters: [
+          { key: 'order_no', label: 'Emir no' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'status', label: 'Durum' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', queryParam: true },
+        ],
+        columns: [
+          { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'order_date', label: 'Tarih' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'planned_quantity', label: 'Miktar' },
+          { key: 'uom_code', label: 'Birim', mono: true },
+          { key: 'plan_start', label: 'Plan baş.' },
+          { key: 'plan_end', label: 'Plan bit.' },
+          { key: 'plant_name', label: 'İş yeri' },
+          { key: 'status', label: 'Durum' },
+          { key: 'is_approved', label: 'Onaylı' },
+          { key: 'ready', label: 'Hazır' },
+          { key: 'blockers', label: 'Engeller' },
+        ],
+        masterFields: [
+          { key: 'order_no', label: 'Emir no', code: true, readOnly: true },
+          { key: 'status', label: 'Durum', readOnly: true },
+          { key: 'is_approved', label: 'Onaylı', type: 'checkbox', readOnly: true },
+          { key: 'item_code', label: 'Stok kodu', readOnly: true },
+          { key: 'item_name', label: 'Stok adı', readOnly: true },
+          { key: 'planned_quantity', label: 'Miktar', type: 'number', readOnly: true },
+          { key: 'uom_code', label: 'Birim', readOnly: true },
+          { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', readOnly: true },
+          { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', readOnly: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', readOnly: true },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', readOnly: true },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'date', readOnly: true },
+          { key: 'onay_no', label: 'Açık onay kaydı', readOnly: true },
+          { key: 'description', label: 'Açıklama', readOnly: true },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
+          { key: 'operation_code', label: 'Op', size: 'short' },
+          { key: 'operation_name', label: 'Operasyon' },
+          { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
+          { key: 'planned_quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'status', label: 'Durum', size: 'short' },
+        ],
+        detailKey: 'operasyonlar',
+        detailSlots: 0,
+        detailAsFields: false,
+        defaults: {},
+      },
+      {
         id: 'siparis-is-emri',
         techId: 'MFG-WO-SCR-002',
         businessNameEn: 'OrderToWorkOrderScreen',
@@ -4355,14 +4440,17 @@ const MODULES = [
         endpoint: '/uretim-emirleri/siparis-adaylari',
         createEndpoint: '/uretim-emirleri/satis-siparisinden',
         crud: true,
+        numeratorSeri: 'URETIM_EMRI',
         codeField: 'order_no',
         nameField: 'item_code',
         filters: [
+          { key: 'wo_order_no', label: 'İş emri no' },
           { key: 'order_no', label: 'Sipariş' },
           { key: 'item_code', label: 'Stok' },
           { key: 'partner_name', label: 'Cari' },
         ],
         columns: [
+          { key: 'wo_order_no', label: 'İş emri no', mono: true },
           { key: 'order_no', label: 'Sipariş', mono: true },
           { key: 'partner_name', label: 'Cari' },
           { key: 'item_code', label: 'Stok', mono: true },
@@ -4375,8 +4463,13 @@ const MODULES = [
         masterFields: [
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
           { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
+          { key: 'order_no', label: 'İş emri no', code: true, group: 'kimlik' },
           { key: 'sales_order_id', label: 'Sipariş', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', required: true, group: 'kimlik' },
-          { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik' },
+          {
+            key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items-mamul',
+            valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik',
+            dependsOn: 'sales_order_id', filterBySalesOrderKey: 'sales_order_id',
+          },
           {
             key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
             valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
@@ -4389,15 +4482,22 @@ const MODULES = [
           },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
           { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik' },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'fg_warehouse_id', label: 'Mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
         ],
         formLinks: {
+          sales_order_id: [
+            { field: 'order_type_id', pick: 'defaultOrderTypeSip' },
+            { field: 'item_id', pick: 'soleItemFromSalesOrder' },
+          ],
           item_id: [
             { field: 'product_bom_id', pick: 'bomForItem' },
             { field: 'route_id', pick: 'routeForItem' },
             { field: 'uom_code', fromItem: 'uom_code' },
+            { field: 'planned_quantity', pick: 'qtyFromSalesOrderLine' },
             { field: 'component_warehouse_id', fromItem: 'default_issue_warehouse_id' },
             { field: 'fg_warehouse_id', fromItem: 'default_receipt_warehouse_id' },
           ],
@@ -8795,15 +8895,107 @@ const MODULES = [
       {
         id: 'operasyon',
         title: 'Onay İşlemleri',
-        screenIds: ['onaylarim', 'onay-izleme', 'onay-yetki-devri'],
+        screenIds: ['onay-bekleyenler', 'onaylarim', 'onay-izleme', 'onay-izi', 'onay-yetki-devri'],
       },
       {
         id: 'tanimlamalar',
         title: 'Tanımlamalar',
-        screenIds: ['onay-role-tanim', 'onay-kural-tanim', 'onay-rota-tanim', 'onay-message-template', 'onay-status-tanim', 'onay-modul-kullanimlari'],
+        screenIds: ['onay-belge-turleri', 'onay-role-tanim', 'onay-kural-tanim', 'onay-rota-tanim', 'onay-message-template', 'onay-status-tanim', 'onay-modul-kullanimlari'],
       },
     ],
     screens: [
+      {
+        id: 'onay-bekleyenler',
+        techId: 'SYS-APR-SCR-010',
+        businessNameEn: 'ApprovalInboxScreen',
+        title: 'Onay Bekleyenler',
+        endpoint: '/onay-bekleyenler',
+        crud: false,
+        readOnly: false,
+        approvalInbox: true,
+        listActions: ['incele'],
+        codeField: 'approval_no',
+        nameField: 'document_summary',
+        approveAction: { label: 'Onayla', path: '/onay-kayitlari/{id}/onayla' },
+        bulkActions: [
+          { label: 'Listelenenleri Onayla', path: '/onay-bekleyenler/toplu-onayla' },
+          { label: 'Listelenenleri Reddet', path: '/onay-bekleyenler/toplu-reddet', notesPrompt: 'Red gerekçesi (opsiyonel):' },
+        ],
+        banner: 'Tüm belge türlerinde size düşen onaylar. Kolon filtresiyle daraltıp toplu onaylayabilir / reddedebilirsiniz.',
+        filters: [
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'active_role_name', label: 'Rol' },
+        ],
+        columns: [
+          { key: 'approval_no', label: 'Onay', mono: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'document_summary', label: 'Özet' },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'active_step_name', label: 'Adım' },
+          { key: 'active_role_name', label: 'Rol' },
+          { key: 'baslatan_adi', label: 'Gönderen' },
+          { key: 'start_date', label: 'Gönderim' },
+        ],
+        masterFields: [
+          { key: 'approval_no', label: 'Onay no', code: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'document_summary', label: 'Özet', name: true },
+          { key: 'amount', label: 'Tutar', type: 'number' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'rule_name', label: 'Kural' },
+          { key: 'route_name', label: 'Rota' },
+          { key: 'reject_outcome', label: 'Ret sonucu' },
+          { key: 'baslatan_adi', label: 'Gönderen' },
+          { key: 'description', label: 'Açıklama / not' },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+          { key: 'step_name', label: 'Adım' },
+          { key: 'role_name', label: 'Rol' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'onaylayan_adi', label: 'Onaylayan' },
+          { key: 'notes', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+      },
+      {
+        id: 'onay-izi',
+        techId: 'SYS-APR-SCR-011',
+        businessNameEn: 'ApprovalAuditTrailScreen',
+        title: 'Onay İzi',
+        endpoint: '/onay-izi',
+        crud: false,
+        readOnly: true,
+        listActions: [],
+        codeField: 'document_no',
+        nameField: 'action',
+        banner: 'Tüm belge türleri için onaya gönderme, adım onayı, onay, ret ve iptal izi.',
+        filters: [
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'action', label: 'İşlem' },
+        ],
+        columns: [
+          { key: 'created_at', label: 'Zaman' },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'approval_no', label: 'Onay', mono: true },
+          { key: 'step_line_no', label: 'Adım' },
+          { key: 'action', label: 'İşlem' },
+          { key: 'from_status', label: 'Önceki' },
+          { key: 'to_status', label: 'Sonraki' },
+          { key: 'user_code', label: 'Kullanıcı', mono: true },
+          { key: 'notes', label: 'Not' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+      },
       {
         id: 'onaylarim',
         techId: 'SYS-APR-SCR-001',
@@ -8812,6 +9004,7 @@ const MODULES = [
         endpoint: '/onay-kayitlari?benim=true',
         crud: false,
         readOnly: false,
+        approvalInbox: true,
         codeField: 'approval_no',
         nameField: 'document_summary',
         approveAction: { label: 'Onayla', path: '/onay-kayitlari/{id}/onayla' },
@@ -8948,6 +9141,37 @@ const MODULES = [
         detailAsFields: true,
       },
       {
+        id: 'onay-belge-turleri',
+        techId: 'SYS-APR-SCR-012',
+        businessNameEn: 'ApprovableDocumentTypeScreen',
+        title: 'Onaylanabilir Belge Türleri',
+        endpoint: '/onay-belge-turleri',
+        crud: false,
+        readOnly: true,
+        listActions: [],
+        codeField: 'document_type_code',
+        nameField: 'document_type_name',
+        banner: 'Onay kuralına bağlanabilen belge türleri. Kural yoksa belge onaysız akar; Onay Kuralları ekranında "Belge türü" seçerek onay açılır.',
+        filters: [
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'module_code', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'document_type_code', label: 'Kod', mono: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'screen_id', label: 'Ekran', mono: true },
+          { key: 'pending_status', label: 'Onay bekleyen durum' },
+          { key: 'approved_status', label: 'Onaylı durum' },
+          { key: 'outcome_codes', label: 'Ret/iptal sonuçları' },
+          { key: 'default_reject_outcome', label: 'Vars. ret' },
+          { key: 'active_rule_count', label: 'Aktif kural' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+      },
+      {
         id: 'onay-role-tanim',
         techId: 'SYS-APR-SCR-004',
         businessNameEn: 'ApprovalRoleScreen',
@@ -8996,7 +9220,7 @@ const MODULES = [
         numeratorSeri: 'ONAY_KURAL',
         codeField: 'rule_code',
         nameField: 'rule_name',
-        banner: 'Hangi ekranda onay devreye girer? Koşullar VE mantığıyla çalışır — işaretlediklerinizin / doldurduklarınızın tümü sağlanmalı.',
+        banner: 'Hangi belgede onay devreye girer? "Belge türü" seçilirse belge onaya takılır (onay bekleyen durum); boşsa yalnız ekran bazlı bilgi kaydı açılır. Koşullar VE mantığıyla çalışır.',
         filters: [
           { key: 'rule_name', label: 'Kural adı' },
           { key: 'screen_id', label: 'Ekran' },
@@ -9007,6 +9231,8 @@ const MODULES = [
           { key: 'rule_code', label: 'Kod', mono: true },
           { key: 'rule_name', label: 'Ad' },
           { key: 'screen_id', label: 'Ekran', mono: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'reject_outcome', label: 'Ret sonucu' },
           { key: 'company_name', label: 'Firma' },
           { key: 'plant_name', label: 'İş yeri' },
           { key: 'template_name', label: 'Mesaj' },
@@ -9020,14 +9246,24 @@ const MODULES = [
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
           {
+            key: 'document_type_code',
+            label: 'Belge türü (onay kapısı)',
+            type: 'lookup',
+            lookup: 'onay-belge-turleri',
+            valueKey: 'document_type_code',
+            labelKey: 'document_type_name',
+            codeKey: 'document_type_code',
+          },
+          { key: 'reject_outcome', label: 'Ret sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['TASLAK', 'IPTAL'] },
+          { key: 'cancel_outcome', label: 'İptal sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['TASLAK', 'IPTAL'] },
+          {
             key: 'screen_id',
-            label: 'Ekran (onaylanacak belge)',
+            label: 'Ekran (belge türü seçiliyse otomatik)',
             type: 'lookup',
             lookup: 'onay-ekranlari',
             valueKey: 'screen_id',
             labelKey: 'screen_name',
             codeKey: 'screen_id',
-            required: true,
           },
           {
             key: 'template_id',
@@ -9697,6 +9933,55 @@ const MODULES = [
     ],
   },
 ];
+
+/**
+ * Menü varyantları: aynı backend ekranı, farklı başlık + varsayılan filtre.
+ * Satış / satınalma fatura ayrımı (birleşik fatura-yonetimi menüde gizlenir).
+ */
+const KTB_MENU_SCREEN_VARIANTS = [
+  {
+    id: 'satis-faturalari',
+    baseId: 'fatura-yonetimi',
+    moduleId: 'satis',
+    title: 'Satış Faturaları',
+    presetFilters: { invoice_type: 'Satis' },
+    defaultsPatch: { invoice_type: 'Satis', invoice_category: 'SATIS', scenario: 'TICARIFATURA' },
+  },
+  {
+    id: 'alis-faturalari',
+    baseId: 'fatura-yonetimi',
+    moduleId: 'satinalma',
+    title: 'Alış Faturaları',
+    presetFilters: { invoice_type: 'Alis' },
+    defaultsPatch: { invoice_type: 'Alis', invoice_category: 'ALIS', rate_type: 'TCMB-ALIS' },
+  },
+];
+
+(function applyKtbMenuScreenVariants() {
+  const findIn = (id) => {
+    for (const mod of MODULES) {
+      const hit = (mod.screens || []).find((x) => x && x.id === id);
+      if (hit) return hit;
+    }
+    return null;
+  };
+  for (const v of KTB_MENU_SCREEN_VARIANTS) {
+    const base = findIn(v.baseId);
+    const mod = MODULES.find((m) => m.id === v.moduleId);
+    if (!base || !mod || findIn(v.id)) continue;
+    mod.screens.push({
+      ...base,
+      id: v.id,
+      title: v.title,
+      baseScreenId: v.baseId,
+      menuVariant: true,
+      presetFilters: { ...v.presetFilters },
+      defaults: { ...(base.defaults || {}), ...(v.defaultsPatch || {}) },
+    });
+  }
+  const unified = findIn('fatura-yonetimi');
+  if (unified) unified.hidden = true;
+})();
 
 /** Modül menü bölümleri — sections yoksa düz liste. */
 function moduleMenuSections(mod) {
@@ -10373,6 +10658,37 @@ function companiesForActiveScope(allRows) {
   return all.filter((r) => Number(r.id) === Number(aid));
 }
 
+function salesOrderLinesCacheKey(soId) {
+  return `sales-order-lines:${soId}`;
+}
+
+async function ensureSalesOrderLinesCache(soId) {
+  if (soId == null || soId === '') return [];
+  const key = salesOrderLinesCacheKey(soId);
+  if (Array.isArray(state.lookupCache[key])) return state.lookupCache[key];
+  try {
+    const order = await api(`/sales_orders/${encodeURIComponent(soId)}`);
+    const lines = Array.isArray(order?.kalemler)
+      ? order.kalemler
+      : (Array.isArray(order?.satirlar) ? order.satirlar : []);
+    const mapped = lines.map((l) => ({
+      ...l,
+      item_id: l.item_id,
+      item_code: l.item_code || l.stok_kodu_ref || '',
+      item_name: l.item_name || l.stok_adi_ref || '',
+      remaining_quantity: l.remaining_quantity
+        ?? l.kalan_sevk_miktar
+        ?? Math.max(0, Number(l.quantity || 0) - Number(l.shipped_quantity || 0)),
+      siparis_miktar: l.quantity,
+    }));
+    state.lookupCache[key] = mapped;
+    return mapped;
+  } catch (_) {
+    state.lookupCache[key] = [];
+    return [];
+  }
+}
+
 function lookupRowsForField(field, ctx = {}) {
   const all = state.lookupCache[field.lookup] || [];
   let rows = all;
@@ -10383,6 +10699,16 @@ function lookupRowsForField(field, ctx = {}) {
     if (bomId == null || bomId === '') return [];
     const ids = bomScopeItemIds(bomId, { includeRoot: Boolean(field.includeBomRoot) });
     rows = all.filter((r) => ids && ids.has(Number(r.id)));
+  }
+
+  if (field.filterBySalesOrderKey) {
+    const soId = ctx[field.filterBySalesOrderKey]
+      ?? state.formRecord?.[field.filterBySalesOrderKey];
+    if (soId == null || soId === '') return [];
+    const lines = state.lookupCache[salesOrderLinesCacheKey(soId)] || [];
+    const ids = new Set(lines.map((l) => String(l.item_id)).filter(Boolean));
+    if (!ids.size) return [];
+    rows = all.filter((r) => ids.has(String(r.id)));
   }
 
   if (field.lookup === 'companies' && !field.ignoreFirmaScope) {
@@ -10422,6 +10748,7 @@ function buildLookupOptionsHtml(field, value, rows) {
   let emptyLabel = '—';
   if (!(value || rows.length)) {
     if (field.filterByBomKey) emptyLabel = '— önce ürün ağacı —';
+    else if (field.filterBySalesOrderKey) emptyLabel = '— önce sipariş —';
     else if (field.dependsOn) emptyLabel = '— önce üst alan —';
   }
   const list = Array.isArray(rows) ? [...rows] : [];
@@ -10678,6 +11005,9 @@ const SECTION_TITLE_EN = {
   'Mal Kabul': 'Goods Receipt',
   Belgeler: 'Documents',
   'Satış Belgeleri': 'Sales Documents',
+  'Satış İrsaliyeleri': 'Sales Delivery Notes',
+  'Satış Faturaları': 'Sales Invoices',
+  'Alış Faturaları': 'Purchase Invoices',
   'Muhasebe Belgeleri': 'Accounting Documents',
   Planlama: 'Planning',
   'MRP Planlama': 'MRP Planning',
@@ -11965,12 +12295,12 @@ async function openConvertDialog(act, rec, kind) {
       <label>Depo
         <select id="cvtDepo">${depoOpts || '<option value="">Depo yok</option>'}</select>
       </label>
-      <label>Araç plaka <input id="cvtPlaka" value="${rec.vehicle_plate || ''}" /></label>
-      <label>Şoför adı <input id="cvtSoforAdi" value="${rec.driver_name || ''}" /></label>
-      <label>Şoför soyadı <input id="cvtSoforSoyadi" value="${rec.driver_last_name || ''}" /></label>
-      <label>Şoför TCKN <input id="cvtSoforTckn" value="${rec.driver_national_id || ''}" /></label>
-      <label>Taşıyıcı ünvan <input id="cvtTasiyici" value="${rec.carrier_title || ''}" /></label>
-      <label>Taşıyıcı VKN <input id="cvtTasiyiciVkn" value="${rec.carrier_tax_id || ''}" /></label>`;
+      <label>Araç plaka <input id="cvtPlaka" value="${escAttr(rec.vehicle_plate || '')}" /></label>
+      <label>Şoför adı <input id="cvtSoforAdi" value="${escAttr(rec.driver_name || '')}" /></label>
+      <label>Şoför soyadı <input id="cvtSoforSoyadi" value="${escAttr(rec.driver_last_name || '')}" /></label>
+      <label>Şoför TCKN <input id="cvtSoforTckn" value="${escAttr(rec.driver_national_id || '')}" /></label>
+      <label>Taşıyıcı ünvan <input id="cvtTasiyici" value="${escAttr(rec.carrier_title || '')}" /></label>
+      <label>Taşıyıcı VKN <input id="cvtTasiyiciVkn" value="${escAttr(rec.carrier_tax_id || '')}" /></label>`;
   } else if (dialog === 'onay-depo') {
     body.innerHTML = `
       <p>İrsaliye onayı stok çıkışı yapar. Depo bakiyesini doğrulayın.</p>
@@ -12156,7 +12486,16 @@ const SCREEN_ALIASES = {
 
 function resolveScreenId(id) {
   if (!id) return id;
+  if (typeof ALL_SCREENS !== 'undefined' && ALL_SCREENS.some((s) => s.id === id)) return id;
   return SCREEN_ALIASES[id] || id;
+}
+
+/** Menü varyantı ise taban ekran id'si (fatura-yonetimi vb.) */
+function canonicalScreenId(screenOrId) {
+  if (!screenOrId) return screenOrId;
+  if (typeof screenOrId === 'object') return screenOrId.baseScreenId || screenOrId.id;
+  const found = findScreen(screenOrId);
+  return found?.baseScreenId || resolveScreenId(screenOrId);
 }
 
 function findScreen(id) {
@@ -12165,13 +12504,11 @@ function findScreen(id) {
 }
 
 function isDeliveryNoteManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'irsaliye-yonetimi';
+  return canonicalScreenId(screenOrId) === 'irsaliye-yonetimi';
 }
 
 function isInvoiceManagementScreen(screenOrId) {
-  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
-  return resolveScreenId(id) === 'fatura-yonetimi';
+  return canonicalScreenId(screenOrId) === 'fatura-yonetimi';
 }
 
 function selectedRow() {
@@ -12665,7 +13002,7 @@ const BELGE_BAGLANTI = {
 
 function getDocumentLinks(screen) {
   if (!screen) return { kaynaklar: [], sonrakiler: [] };
-  const base = BELGE_BAGLANTI[screen.id] || { kaynaklar: [], sonrakiler: [] };
+  const base = BELGE_BAGLANTI[screen.id] || BELGE_BAGLANTI[screen.baseScreenId] || { kaynaklar: [], sonrakiler: [] };
   // Ekran özel override
   return {
     kaynaklar: screen.documentNav?.kaynaklar || base.kaynaklar || [],
@@ -14045,9 +14382,9 @@ function renderCompanyPicker() {
   menu.innerHTML = list.map((f) => `
     <li role="option">
       <button type="button" class="firma-picker-item ${Number(f.id) === Number(state.activeFirmaId) ? 'active' : ''}"
-        data-firma-id="${f.id}">
-        <span class="firma-kod">${f.company_code || ''}</span>
-        <span class="firma-adi">${f.company_name || ''}</span>
+        data-firma-id="${escAttr(f.id)}">
+        <span class="firma-kod">${escapeHtml(f.company_code || '')}</span>
+        <span class="firma-adi">${escapeHtml(f.company_name || '')}</span>
       </button>
     </li>`).join('');
 }
@@ -14076,8 +14413,13 @@ async function loadPlantsForActiveCompany() {
 
 function buildDefaultFilterState(screen) {
   const fs = {};
+  const presets = screen?.presetFilters && typeof screen.presetFilters === 'object'
+    ? screen.presetFilters
+    : {};
   (screen.filters || []).forEach((f) => {
-    if (f.type === 'checkbox') {
+    if (presets[f.key] != null && String(presets[f.key]).trim() !== '') {
+      fs[f.key] = { op: 'esit', a: String(presets[f.key]), b: '' };
+    } else if (f.type === 'checkbox') {
       const on = f.default === true || f.default === 'true' || f.default === 1;
       fs[f.key] = { op: 'esit', a: on ? 'evet' : '', b: '' };
     } else if (f.key === 'is_active' || f.type === 'bool') {
@@ -16257,11 +16599,15 @@ function screenPermission(screenId, action = null) {
     // Yetki satırı yok + modül * veya tanımsız → aç
     return !mods || !mods.length || mods.includes('*');
   }
-  const canonical = resolveScreenId(screenId);
+  const found = findScreen(screenId);
+  const canonical = found?.baseScreenId || resolveScreenId(screenId);
   const aliasIds = Object.entries(SCREEN_ALIASES)
     .filter(([, v]) => v === canonical)
     .map(([k]) => k);
-  const candidates = [screenId, canonical, ...aliasIds];
+  const variantIds = ALL_SCREENS
+    .filter((x) => x.baseScreenId === canonical)
+    .map((x) => x.id);
+  const candidates = [screenId, found?.id, canonical, ...aliasIds, ...variantIds].filter(Boolean);
   const row = list.find((y) => candidates.includes(y.screen_id) && y.erisim !== false);
   if (!row) return false;
   if (!action) return true;
@@ -16329,6 +16675,7 @@ function updateActionButtons(screen) {
       btn.disabled = !showEx || !screenPermission(screen.id, act);
     }
   });
+  syncBulkActionButtons(screen);
   const mrpBtn = $('#btnMrpTalep');
   if (mrpBtn) mrpBtn.hidden = !screen.mrpTalepAction;
   const mrpUe = $('#btnMrpUretim');
@@ -16344,6 +16691,59 @@ function updateActionButtons(screen) {
     pdfBtn.hidden = !showPdf;
     pdfBtn.disabled = !showPdf || !screenPermission(screen.id, 'report-pdf');
   }
+
+}
+
+/** screen.bulkActions: listelenen (kolon filtresinden geçen) kayıtlara toplu POST { ids, notes }. */
+function syncBulkActionButtons(screen) {
+  const bar = $('#actionBar');
+  if (!bar) return;
+  bar.querySelectorAll('[data-action="bulk"]').forEach((b) => b.remove());
+  (screen.bulkActions || []).forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn action';
+    btn.dataset.action = 'bulk';
+    btn.dataset.bulkIndex = String(i);
+    btn.textContent = a.label;
+    bar.appendChild(btn);
+  });
+}
+
+async function runBulkAction(index) {
+  const screen = findScreen(state.screenId);
+  const action = screen?.bulkActions?.[index];
+  if (!action) return;
+  const rows = (state.filtered || state.rows || [])
+    .filter((r) => r?.id && (!action.readyKey || r[action.readyKey]));
+  if (!rows.length) {
+    toast(action.emptyMessage || 'Toplu işleme uygun kayıt yok.');
+    return;
+  }
+  if (!window.confirm(`${rows.length} kayıt için "${action.label}" yapılacak. Devam?`)) return;
+  let notes = null;
+  if (action.notesPrompt) {
+    notes = window.prompt(action.notesPrompt, '');
+    if (notes === null) return;
+  }
+  const result = await api(action.path, {
+    method: 'POST',
+    body: JSON.stringify({ ids: rows.map((r) => r.id), notes: notes || null }),
+  });
+  const ok = result?.basarili_sayisi || 0;
+  const fail = result?.hata_sayisi || 0;
+  const failMsg = (result?.hatali || []).slice(0, 3).map((h) => `#${h.id}: ${h.hata}`).join(' · ');
+  toast(fail
+    ? `${action.label}: ${ok} başarılı, ${fail} hatalı${failMsg ? ` — ${failMsg}` : ''}`
+    : `${action.label}: ${ok} kayıt tamam.`);
+  invalidateLookups();
+  await refreshOpenListSilently();
+}
+
+function approvalResultMessage(result, fallback) {
+  if (!result?.onay_bekliyor) return fallback;
+  const no = result.onay_kayit?.approval_no;
+  return `Onaya gönderildi${no ? ` (${no})` : ''} — Onay Bekleyenler ekranında onaylanınca devam eder.`;
 }
 
 async function openScreen(id, opts = {}) {
@@ -16855,6 +17255,7 @@ const LOOKUP_ENDPOINTS = {
   'onay-modul-kullanimlari': '/onay-module-kullanimlari?is_active=true',
   'onay-kurallari': '/onay-kurallari?is_active=true',
   'onay-ekranlari': '/onay-ekranlari',
+  'onay-belge-turleri': '/onay-belge-turleri?is_active=true',
   'onay-rota-tanim': '/onay-rotalari',
   'onay-message-template': '/onay-message-sablonlari?is_active=true',
   // İK / HR tanımları
@@ -16963,7 +17364,7 @@ function invalidateLookups(...keys) {
 /** Bu ekrana kaydedilen veri hangi sarı alan listelerini besler? */
 function lookupsFedByScreen(screen) {
   if (!screen) return [];
-  const keys = new Set(SCREEN_LOOKUP_EXTRAS[screen.id] || []);
+  const keys = new Set(SCREEN_LOOKUP_EXTRAS[screen.id] || SCREEN_LOOKUP_EXTRAS[screen.baseScreenId] || []);
   const base = typeof screenApiBase === 'function'
     ? screenApiBase(screen.endpoint || '')
     : String(screen.endpoint || '').split('?')[0];
@@ -17047,7 +17448,15 @@ async function fetchLookupKey(key, query = null) {
     // İş yeri/depo lookup’ı aktif firmaya bağlı kalsın — org liste ekranları
     // openScreen’de skipFirma ile ayrı yüklenir; cache karışmasın.
     const rows = await api(ep, key === 'companies' ? { skipFirma: true } : {});
-    state.lookupCache[key] = Array.isArray(rows) ? rows : [];
+    let list = Array.isArray(rows) ? rows : [];
+    if (key === 'sales_orders') {
+      list = list.map((r) => ({
+        ...r,
+        partner_code: r.partner_code || r.cari_kodu_ref || '',
+        partner_name: r.partner_name || r.cari_adi_ref || '',
+      }));
+    }
+    state.lookupCache[key] = list;
     if (key === 'companies') state.companies = state.lookupCache[key];
     if (key === 'is-yerleri') state.isYerleri = state.lookupCache[key];
   } catch (err) {
@@ -17111,7 +17520,14 @@ async function ensureLookups(screen) {
 }
 
 function escAttr(v) {
-  return String(v ?? '').replace(/"/g, '&quot;');
+  return escapeAttr(v);
+}
+
+/** Rapor pencereleri: soft modda kimlik başlığı; varsayılan kullanıcıya düşülmez. */
+function reportUserHeader() {
+  const kod = state.user?.user_code || state.auth?.user_code
+    || (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_kullanici_kodu')) || '';
+  return kod ? { 'X-Kullanici-Kodu': kod } : {};
 }
 
 /** Noktalı halka — tıklanınca ekran benzeri liste/CRUD popup; ↓ tuşu native listeyi açar */
@@ -20007,11 +20423,11 @@ async function bindMrpKonsolEvents() {
 async function openMrpRaporWindow() {
   const runId = state.mrpCalismaId || state.formRecord?.id;
   if (!runId) throw new Error('Önce MRP çalıştırın.');
-  const token = state.auth?.access_token || state.accessToken || localStorage.getItem('erp_access_token');
+  const token = state.auth?.access_token || state.accessToken || localStorage.getItem('ktb_access_token');
   const res = await fetch(`/mrp/calismalar/${runId}/rapor?format=html`, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'X-Kullanici-Kodu': state.user?.user_code || state.auth?.user_code || 'owner',
+      ...reportUserHeader(),
       ...(getActiveCompanyId() ? { 'X-Firma-Id': String(getActiveCompanyId()) } : {}),
     },
   });
@@ -21100,13 +21516,14 @@ function renderCompactMasterBar(screen, rec) {
     ? Number(screen.masterPrimaryMax)
     : MASTER_PRIMARY_MAX;
   const fields = screen.masterFields || [];
-  const { primary } = partitionMasterFields(fields, maxPrimary);
+  const { primary, extras } = partitionMasterFields(fields, maxPrimary);
+  const headFields = [...primary, ...extras];
   el.hidden = false;
   el.innerHTML = `
     <div class="erp-doc-header" aria-label="Belge üst bilgileri">
       <div class="erp-doc-header-label">Belge üst bilgileri</div>
       <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact">
-        ${renderFieldGrid(primary, rec || {})}
+        ${renderFieldGrid(headFields, rec || {})}
       </div>
     </div>`;
 }
@@ -21894,6 +22311,15 @@ function renderZincirStrip(screen, rec) {
 }
 
 function renderForm(screen) {
+  try {
+    renderFormUnsafe(screen);
+  } catch (err) {
+    console.error('renderForm', err);
+    toast(err?.message ? `Form çizilemedi: ${err.message}` : 'Form çizilemedi.');
+  }
+}
+
+function renderFormUnsafe(screen) {
   // Segment radio name sayacı — her render’da sıfırla
   if (typeof fieldControl === 'function') fieldControl._segSeq = 0;
   const readonly = state.formMode === 'incele';
@@ -21982,7 +22408,7 @@ function renderForm(screen) {
       else if (['Acik', 'YenidenAcik'].includes(rec.status)) show = Boolean(screen.approveAction);
       else show = false;
     }
-    if (screen.id === 'uretim-emirleri') {
+    if (screen.id === 'uretim-emirleri' || screen.id === 'kolay-is-emri-onayi') {
       show = Boolean(
         screen.approveAction
         && rec.id
@@ -22033,7 +22459,7 @@ function renderForm(screen) {
         secShow = true;
         secLabel = 'Reddet';
         secBtn.dataset.secKind = 'kk-red';
-      } else if (screen.id === 'onaylarim' && rec.id && rec.status_code === 'BEKLIYOR') {
+      } else if (screen.approvalInbox && rec.id && rec.status_code === 'BEKLIYOR') {
         secShow = true;
         secLabel = 'Reddet';
         secBtn.dataset.secKind = 'onay-red';
@@ -22080,7 +22506,7 @@ function renderForm(screen) {
         && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status)
       );
     }
-    if (screen.id === 'onaylarim') {
+    if (screen.approvalInbox) {
       show = Boolean(screen.approveAction && rec.status_code === 'BEKLIYOR');
     }
     if (screen.id === 'hr-izin-talepleri') {
@@ -22121,13 +22547,14 @@ function renderForm(screen) {
           || (screen.id === 'muhasebe-belgeleri' && rec.status === 'Taslak')
           || (screen.id === 'muhasebe-donemleri' && ['Acik', 'YenidenAcik'].includes(rec.status))
           || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
+          || (screen.id === 'kolay-is-emri-onayi' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
           || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.status))
           || (screen.id === 'stok-rezervasyonlari' && rec.status === 'Aktif')
           || (screen.id === 'satin-alma-talepleri' && rec.status === 'Acik')
           || (screen.id === 'satin-alma-teklifleri' && rec.status === 'Taslak')
           || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
               && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status))
-          || (screen.id === 'onaylarim' && rec.status_code === 'BEKLIYOR')
+          || (screen.approvalInbox && rec.status_code === 'BEKLIYOR')
           || (screen.id === 'hr-izin-talepleri' && ['Gonderildi', 'YoneticiOnay', 'IkOnay'].includes(rec.status))
           || (screen.id === 'hr-avanslar' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
           || (screen.id === 'hr-bordro-calismalari' && rec.status === 'Hesaplandi')
@@ -22735,6 +23162,17 @@ const LOOKUP_BROWSER_COLUMNS = {
   ],
   sales_orders: [
     { key: 'order_no', label: 'Sipariş no', mono: true },
+    { key: 'partner_code', label: 'Cari kod', mono: true },
+    { key: 'partner_name', label: 'Cari adı' },
+    { key: 'order_date', label: 'Tarih' },
+    { key: 'status', label: 'Durum' },
+  ],
+  'uretim-emirleri': [
+    { key: 'order_no', label: 'Emir no', mono: true },
+    { key: 'item_code', label: 'Stok', mono: true },
+    { key: 'item_name', label: 'Stok adı' },
+    { key: 'planned_quantity', label: 'Miktar', num: true },
+    { key: 'status', label: 'Durum' },
   ],
   'uretim-emri-tipleri': [
     { key: 'type_code', label: 'Tip kodu', mono: true },
@@ -22773,9 +23211,49 @@ const LOOKUP_BROWSER_COLUMNS = {
   ],
 };
 
-function lookupBrowserColumnsFor(field) {
+/** Tanımlı kolon seti olmayan lookup'larda satır örneğinden kod / ad / miktar / belge kolonlarını çıkarır. */
+function inferLookupBrowserColumns(sampleRows, field) {
+  const sample = Array.isArray(sampleRows) ? sampleRows.find((r) => r && typeof r === 'object') : null;
+  const keys = sample ? Object.keys(sample).filter((k) => !k.startsWith('_')) : [];
+  const has = (re) => keys.find((k) => re.test(k));
+  const cols = [];
+  const push = (key, label, opts = {}) => {
+    if (!key || cols.some((c) => c.key === key)) return;
+    cols.push({ key, label, ...opts });
+  };
+
+  if (field?.codeKey) push(field.codeKey, 'Kod', { mono: true });
+  if (field?.labelKey && field.labelKey !== field.codeKey) push(field.labelKey, 'Ad');
+
+  const docKey = has(/_(no|number)$/i);
+  const partnerCode = has(/^partner_code$/i);
+  const partnerName = has(/^partner_name$/i);
+  const itemCode = has(/^item_code$/i);
+  const itemName = has(/^item_name$/i);
+  const qtyKey = has(/^(planned_|remaining_|ordered_|shipped_|quantity$|miktar|qty|grand_total|amount)/i);
+  const dateKey = has(/_date$/i);
+  const statusKey = has(/^status$/i) || has(/_status$/i);
+
+  if (!field?.codeKey && docKey) push(docKey, 'Belge no', { mono: true });
+  if (partnerCode) push(partnerCode, 'Cari kod', { mono: true });
+  if (partnerName) push(partnerName, 'Cari adı');
+  if (itemCode && itemCode !== field?.codeKey) push(itemCode, 'Stok', { mono: true });
+  if (itemName && itemName !== field?.labelKey) push(itemName, 'Stok adı');
+  if (qtyKey) push(qtyKey, /total|amount/i.test(qtyKey) ? 'Tutar' : 'Miktar', { num: true });
+  if (dateKey) push(dateKey, 'Tarih');
+  if (statusKey) push(statusKey, 'Durum');
+  return cols.slice(0, 6);
+}
+
+function lookupBrowserColumnsFor(field, sampleRows = null) {
   if (field?.lookup && LOOKUP_BROWSER_COLUMNS[field.lookup]) {
     return LOOKUP_BROWSER_COLUMNS[field.lookup].map((c) => ({ ...c }));
+  }
+  if (!Array.isArray(field?.options)) {
+    const inferred = inferLookupBrowserColumns(sampleRows, field);
+    if (inferred.length > (field?.codeKey ? 1 : 0) + (field?.labelKey && field.labelKey !== field.codeKey ? 1 : 0)) {
+      return inferred;
+    }
   }
   const cols = [];
   if (field?.codeKey) cols.push({ key: field.codeKey, label: 'Kod', mono: true });
@@ -23241,6 +23719,29 @@ function setLookupBrowserSelection(val, row) {
   paintLookupBrowser();
 }
 
+/** Siparişten iş emri: stok lookup satırlarına sipariş/kalan miktarını ekler. */
+function decorateRowsWithSalesOrderQty(field, rows, ctx) {
+  const lines = state.lookupCache[salesOrderLinesCacheKey(ctx?.[field.filterBySalesOrderKey])] || [];
+  const byItem = new Map(lines.map((l) => [String(l.item_id), l]));
+  return rows.map((r) => {
+    const l = byItem.get(String(r.id));
+    if (!l) return r;
+    return {
+      ...r,
+      _siparis_miktar: l.siparis_miktar ?? l.quantity ?? '',
+      _kalan_miktar: l.remaining_quantity ?? '',
+    };
+  });
+}
+
+function withSalesOrderQtyCols(field, cols) {
+  if (!field?.filterBySalesOrderKey) return cols;
+  const out = [...cols];
+  if (!out.some((c) => c.key === '_siparis_miktar')) out.push({ key: '_siparis_miktar', label: 'Sip. miktar', num: true });
+  if (!out.some((c) => c.key === '_kalan_miktar')) out.push({ key: '_kalan_miktar', label: 'Kalan', num: true });
+  return out;
+}
+
 async function reloadLookupBrowserRows() {
   const st = _lookupBrowserState;
   if (!st?.sel) return;
@@ -23249,11 +23750,15 @@ async function reloadLookupBrowserRows() {
   let rows = [];
   if (field.type === 'lookup' && field.lookup) {
     invalidateLookups(field.lookup);
+    if (field.filterBySalesOrderKey) {
+      await ensureSalesOrderLinesCache(ctx?.[field.filterBySalesOrderKey]);
+    }
     const depQuery = (field.dependsOn && field.filterKey && ctx?.[field.dependsOn] != null)
       ? { [field.filterKey]: ctx[field.dependsOn] }
       : null;
     await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
+    if (field.filterBySalesOrderKey) rows = decorateRowsWithSalesOrderQty(field, rows, ctx);
     // Formdaki select seçeneklerini de taze tut
     const html = buildLookupOptionsHtml(field, st.sel.value, rows);
     st.sel.innerHTML = html;
@@ -23270,13 +23775,16 @@ async function reloadLookupBrowserRows() {
       .filter((o) => o.value !== '')
       .map((o) => ({ _opt: o.value, _label: o.textContent }));
   }
-  let cols = lookupBrowserColumnsFor(field);
+  let cols = lookupBrowserColumnsFor(field, rows);
   if (st.valueKey === '_opt' && cols[0]?.key === '_opt') {
     cols = [{ key: '_opt', label: field.label || 'Seçenek' }];
   }
   const enriched = await enrichLookupRowsWithQty(field, rows, ctx);
   st.allRows = enriched.rows;
-  st.cols = enriched.qtyCol ? cols.concat([enriched.qtyCol]) : cols;
+  cols = withSalesOrderQtyCols(field, cols);
+  st.cols = enriched.qtyCol && !cols.some((c) => c.key === enriched.qtyCol.key)
+    ? cols.concat([enriched.qtyCol])
+    : cols;
   if (st.selectedVal) {
     st.selectedRow = st.allRows.find((r) => String(lookupBrowserRowValue(r, st.valueKey)) === String(st.selectedVal)) || null;
   }
@@ -23304,8 +23812,12 @@ async function openLookupBrowserForSelect(sel) {
       ? { [field.filterKey]: ctx[field.dependsOn] }
       : null;
     if (depQuery) invalidateLookups(field.lookup);
+    if (field.filterBySalesOrderKey) {
+      await ensureSalesOrderLinesCache(ctx?.[field.filterBySalesOrderKey]);
+    }
     await fetchLookupKey(field.lookup, depQuery);
     rows = lookupRowsForField(field, ctx);
+    if (field.filterBySalesOrderKey) rows = decorateRowsWithSalesOrderQty(field, rows, ctx);
     valueKey = field.valueKey || 'id';
   } else if (Array.isArray(field.options) && field.options.length) {
     rows = field.options.map((o) => {
@@ -23324,13 +23836,16 @@ async function openLookupBrowserForSelect(sel) {
     valueKey = '_opt';
   }
 
-  let cols = lookupBrowserColumnsFor(field);
+  let cols = lookupBrowserColumnsFor(field, rows);
   if (valueKey === '_opt' && cols[0]?.key === '_opt') {
     cols = [{ key: '_opt', label: field.label || 'Seçenek' }];
   }
   const enriched = await enrichLookupRowsWithQty(field, rows, ctx);
   rows = enriched.rows;
-  if (enriched.qtyCol) cols = cols.concat([enriched.qtyCol]);
+  cols = withSalesOrderQtyCols(field, cols);
+  if (enriched.qtyCol && !cols.some((c) => c.key === enriched.qtyCol.key)) {
+    cols = cols.concat([enriched.qtyCol]);
+  }
 
   const targetScreen = field.lookup ? screenForLookupKey(field.lookup) : null;
   const initialVal = sel.value || '';
@@ -24194,14 +24709,48 @@ function setLinkedSelectValue(sel, value, fieldKey) {
   }
   if (String(sel.value) === str) {
     syncLookupNameRo(sel);
+    syncLookupTypeaheadFromSelect(sel);
     return false;
   }
   sel.value = str;
   syncLookupNameRo(sel);
+  syncLookupTypeaheadFromSelect(sel);
   if (sel.hasAttribute('data-master') && state.formRecord && fieldKey) {
     state.formRecord[fieldKey] = str;
   }
   return true;
+}
+
+function pickDefaultOrderTypeSip() {
+  const rows = state.lookupCache['uretim-emri-tipleri'] || [];
+  const sip = rows.find((r) => String(r.type_code || '').toUpperCase() === 'SIP');
+  if (sip) return sip;
+  const aktif = rows.find((r) => r.is_active !== false);
+  return aktif || rows[0] || null;
+}
+
+function pickSoleItemFromSalesOrder(soId) {
+  const lines = state.lookupCache[salesOrderLinesCacheKey(soId)] || [];
+  const mamulIds = new Set((state.lookupCache['items-mamul'] || []).map((r) => String(r.id)));
+  const uniq = [];
+  const seen = new Set();
+  for (const l of lines) {
+    const id = l.item_id;
+    if (id == null || id === '' || seen.has(String(id))) continue;
+    if (mamulIds.size && !mamulIds.has(String(id))) continue;
+    seen.add(String(id));
+    uniq.push(id);
+  }
+  return uniq.length === 1 ? uniq[0] : '';
+}
+
+function pickQtyFromSalesOrderLine(soId, itemId) {
+  if (!soId || !itemId) return '';
+  const lines = state.lookupCache[salesOrderLinesCacheKey(soId)] || [];
+  const line = lines.find((l) => String(l.item_id) === String(itemId));
+  if (!line) return '';
+  const qty = line.remaining_quantity != null ? line.remaining_quantity : line.siparis_miktar;
+  return qty == null || qty === '' ? '' : qty;
 }
 
 function resolveFormLinkValue(rule, ctx) {
@@ -24234,6 +24783,15 @@ function resolveFormLinkValue(rule, ctx) {
   }
   if (rule.pick === 'routeForBom') {
     return pickDefaultRouteForItem(itemId, ctx.product_bom_id || ctx[rule.bomKey || 'product_bom_id'])?.id ?? '';
+  }
+  if (rule.pick === 'defaultOrderTypeSip') {
+    return pickDefaultOrderTypeSip()?.id ?? '';
+  }
+  if (rule.pick === 'soleItemFromSalesOrder') {
+    return pickSoleItemFromSalesOrder(ctx.sales_order_id) || '';
+  }
+  if (rule.pick === 'qtyFromSalesOrderLine') {
+    return pickQtyFromSalesOrderLine(ctx.sales_order_id, itemId);
   }
   if (rule.value != null) return rule.value;
   return '';
@@ -24324,6 +24882,15 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
         fetchLookupKey('urun-agaclari'),
         fetchLookupKey('routings'),
         fetchLookupKey('items'),
+        fetchLookupKey('items-mamul'),
+      ]);
+    }
+    if (changedKey === 'sales_order_id' && screen.id === 'siparis-is-emri') {
+      await Promise.all([
+        ensureSalesOrderLinesCache(changedEl.value),
+        fetchLookupKey('uretim-emri-tipleri'),
+        fetchLookupKey('urun-agaclari'),
+        fetchLookupKey('routings'),
         fetchLookupKey('items-mamul'),
       ]);
     }
@@ -24421,6 +24988,16 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
       });
       const uniq = [...new Set(labels)];
       toast(`Stok bağlantısı: ${uniq.join(', ')} dolduruldu`);
+    }
+
+    // Siparişten iş emri: stok otomatik seçildiyse ağaç/rota/miktar zincirini çalıştır
+    if (changedKey === 'sales_order_id' && screen.id === 'siparis-is-emri' && filled.includes('item_id')) {
+      const itemEl = findLinkedTargetEl('item_id', scope);
+      if (itemEl) {
+        _formLinking = false;
+        await applyFormLinkages(screen, 'item_id', itemEl);
+        return;
+      }
     }
 
     // KK emri: plan değişince ölçüm satırlarını kriterlerden yenile
@@ -24627,8 +25204,13 @@ function bindCascadeLookups(_screen) {
       return;
     }
 
-    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && fieldKey === 'language_code')) {
-      if (!(el instanceof HTMLSelectElement)) return;
+    const isSegmentRadio = el instanceof HTMLInputElement
+      && el.type === 'radio'
+      && (el.hasAttribute('data-master') || el.hasAttribute('data-detail'));
+    if (isSegmentRadio && !el.checked) return;
+    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && fieldKey === 'language_code')
+      && !isSegmentRadio) {
+      return;
     }
     if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')
         && !el.hasAttribute('data-flow-comp-field')) return;
@@ -24775,6 +25357,7 @@ function bindCascadeLookups(_screen) {
       const f = collectTabFields(scr).find((x) => x.key === masterKey)
         || (scr.masterFields || []).find((x) => x.key === masterKey);
       if (f?.fillFrom && el.value) {
+        state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
         await fillLinesFromSource(f.fillFrom, el.value);
         return;
       }
@@ -25800,7 +26383,8 @@ async function openForm(mode, opts = {}) {
 
   async function loadRecord(id) {
     try {
-      return await api(`${screenApiBase(screen.endpoint)}/${id}`);
+      const base = screen.resourceEndpoint || screenApiBase(screen.endpoint);
+      return await api(`${base}/${id}`);
     } catch (_) {
       return { ...row };
     }
@@ -25892,12 +26476,14 @@ async function openForm(mode, opts = {}) {
       if (!record.status) record.status = 'Acik';
     }
     if (adayPrefill && screen.id === 'siparis-is-emri') {
+      await fetchLookupKey('uretim-emri-tipleri');
       Object.assign(record, {
         sales_order_id: adayPrefill.sales_order_id,
         item_id: adayPrefill.item_id,
         product_bom_id: adayPrefill.onerilen_agac_id || '',
         route_id: adayPrefill.onerilen_rota_id || '',
         planned_quantity: adayPrefill.remaining_quantity || adayPrefill.siparis_miktar || '',
+        order_type_id: pickDefaultOrderTypeSip()?.id || '',
       });
     }
     if (adayPrefill && screen.id === 'toplu-is-emri') {
@@ -25992,6 +26578,10 @@ async function openForm(mode, opts = {}) {
       uom_code: record.stok_birim || record.uom_code || '',
       _satir_kayitli: true,
     }];
+  }
+
+  if (record.sales_order_id && screen.id === 'siparis-is-emri') {
+    await ensureSalesOrderLinesCache(record.sales_order_id);
   }
 
   state.formRecord = record;
@@ -26528,7 +27118,7 @@ function runSearch(q) {
     return;
   }
   const hits = ALL_SCREENS.filter((s) =>
-    isScreenVisibleInMenu(s.id) && (
+    !s.hidden && isScreenVisibleInMenu(s.id) && (
       s.title.toLocaleLowerCase('tr').includes(query) ||
       s.moduleTitle.toLocaleLowerCase('tr').includes(query) ||
       (s.techId && s.techId.toLocaleLowerCase('tr').includes(query)) ||
@@ -27354,7 +27944,9 @@ function bindEvents() {
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
       else if (act === 'tcmb-cek') fetchTcmbRates().catch((err) => toast(err.message));
-      else if (act === 'incele' && state.screenId === 'mrp-calisma') {
+      else if (act === 'bulk') {
+        runBulkAction(Number(actionBtn.dataset.bulkIndex)).catch((err) => toast(err.message || 'Toplu işlem başarısız'));
+      } else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
           openMrpRunInWorkspace(sel.id).catch((err) => toast(err.message));
@@ -27682,11 +28274,11 @@ function bindEvents() {
     const params = new URLSearchParams(qsStart);
     params.set('format', 'html');
     const url = `${base}?${params.toString()}`;
-    const token = state.auth?.access_token || state.accessToken || localStorage.getItem('erp_access_token');
+    const token = state.auth?.access_token || state.accessToken || localStorage.getItem('ktb_access_token');
     const res = await fetch(url, {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        'X-Kullanici-Kodu': state.user?.user_code || state.auth?.user_code || 'owner',
+        ...reportUserHeader(),
         ...(getActiveCompanyId() ? { 'X-Firma-Id': String(getActiveCompanyId()) } : {}),
       },
     });
@@ -27714,7 +28306,7 @@ function bindEvents() {
           if (bodyExtra === null) return;
           const path = screen.approveAction.path.replace('{id}', rec.id);
           const result = await api(path, { method: 'POST', body: JSON.stringify(bodyExtra || {}) });
-          toast(screen.approveAction.label + ' tamam.');
+          toast(approvalResultMessage(result, screen.approveAction.label + ' tamam.'));
           state.formRecord = result;
           renderForm(screen);
         } else if (kind === 'kk-red') {
@@ -27857,7 +28449,7 @@ function bindEvents() {
           toast('Uyarı: bazı kalemlerde depo bakiyesi yetersiz olabilir.');
         }
         if (kind === 'approve') {
-          toast(act.label + ' tamam.');
+          toast(approvalResultMessage(result, act.label + ' tamam.'));
           state.formRecord = result;
           renderForm(screen);
         } else if (act.openTarget?.screenId && result?.fatura?.id) {
@@ -27874,7 +28466,7 @@ function bindEvents() {
             openScreen(act.openTarget.screenId);
           }
         } else if (result?.sales_order_id) {
-          toast(act.label + ' tamam.');
+          toast(approvalResultMessage(result, act.label + ' tamam.'));
           openScreen('satis-siparisleri');
         } else if (result?.shipment_no) {
           toast(act.label + ' tamam.');
@@ -27965,20 +28557,14 @@ function bindEvents() {
         state.formRecord[key] = rows;
         state.gridSel = { key, idx: rows.length - 1 };
       } else if (act === 'duzelt') {
-        if (state.gridSel.key !== key || state.gridSel.idx == null) {
-          toast('Düzeltmek için önce bir satır seçin.');
-          return;
-        }
+        if (state.gridSel.key !== key || state.gridSel.idx == null) return;
         rows.forEach((r, i) => {
           if (!r) return;
           r._satir_duzenleniyor = i === state.gridSel.idx;
         });
         state.formRecord[key] = rows;
       } else if (act === 'sil') {
-        if (state.gridSel.key !== key || state.gridSel.idx == null) {
-          toast('Silmek için önce bir satır seçin.');
-          return;
-        }
+        if (state.gridSel.key !== key || state.gridSel.idx == null) return;
         const doomedIdx = state.gridSel.idx;
         const doomed = rows[doomedIdx];
         (async () => {
@@ -29237,8 +29823,27 @@ async function openSqlConsole() {
     const meta = await api('/sql-console/meta');
     sqlConsoleState.meta = meta;
     sqlFillConnectionForm(meta.connection, meta.profiles);
+    sqlApplyServerFlags(meta);
   } catch (err) {
     toast(err.message || 'SQL konsol yüklenemedi');
+  }
+}
+
+/** Sunucu bayrakları: harici bağlantı kapalıysa Test/Bağlan gizlenir; salt-okunur mod başlıkta belirtilir. */
+function sqlApplyServerFlags(meta) {
+  const external = meta?.external_connections !== false;
+  ['#sqlBtnTest', '#sqlBtnUse'].forEach((sel) => {
+    const el = $(sel);
+    if (el) {
+      el.hidden = !external;
+      el.disabled = !external;
+    }
+  });
+  const dbBtn = $('#sqlBtnDb');
+  if (dbBtn) {
+    dbBtn.title = meta?.read_only
+      ? 'Veritabanı bağlantısı · salt-okunur mod (yalnız SELECT)'
+      : 'Veritabanı bağlantısı';
   }
 }
 

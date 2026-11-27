@@ -6,12 +6,15 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+const { qaAdminPassword } = createRequire(import.meta.url)('../lib/demoCredentials.js');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE = process.env.BASE_URL || 'http://127.0.0.1:3000';
 const outPath = path.join(__dirname, '../../docs/qa/role-matrix-results.json');
 
-async function login(username, password = 'admin') {
+async function login(username, password = qaAdminPassword()) {
   const r = await fetch(`${BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -37,7 +40,7 @@ function add(id, title, expected, actual, pass, detail = {}) {
   cases.push({ id, title, expected, actual, pass, ...detail });
 }
 
-const admin = await login('ADMIN', 'admin');
+const admin = await login('ADMIN', qaAdminPassword());
 add('R1', 'ADMIN login', 200, admin.status, admin.status === 200 && !!admin.token);
 
 const noTok = await get('/items', null, null);

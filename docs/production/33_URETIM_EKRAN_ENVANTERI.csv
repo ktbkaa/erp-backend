@@ -1,0 +1,25 @@
+ekran_id,baslik_hedef,canias_tx,menü_bolumu,dalga,endpoint,sekmeler,ana_aksiyonlar,bagli_ekranlar
+urun-agaci,Ürün Ağacı,BOMT01,Ürün Ağacı,P0,/urun-agaclari,Genel|Elemanlar,CRUD|Ön maliyet,bom-patlatma;routings;uretim-emirleri
+bom-patlatma,Ürün Ağacı Patlatma,BOMT01,Ürün Ağacı,P0,/bom/patlatma,—,Patlat,urun-agaci
+bom-level-listesi,Ürün Ağacı Seviye Listesi,BOMT05,Ürün Ağacı,P0,/bom/level-listesi,—,Listele,urun-agaci
+bom-malzeme-degisikligi,Malzeme Değişikliği,BOMT03,Ürün Ağacı,P0,/bom/malzeme-degisikligi,—,Değiştir,urun-agaci
+uretim-planlari,Üretim Planları,PRDT06 kaynak,Planlama,P0,/uretim-planlari,Bilgiler,CRUD|Başlat|Çevir,uretim-emirleri;mrp-sonuclar
+uretim-emirleri,Üretim Emirleri,PRDT01,İş Emirleri,P0,/uretim-emirleri,Bilgiler|Malzemeler|Rota|Belge Takip,CRUD|Onayla|Başlat|Malzemeleri Getir|BOM/Rota Uygula,siparis-is-emri;uretim-planlari;kolay-is-emri-onayi;uretim-girisleri
+siparis-is-emri,Siparişten İş Emri,PRDT13,İş Emirleri,P0,/uretim-emirleri/siparis-adaylari,Bilgiler,Oluştur,satis-siparisleri;uretim-emirleri
+toplu-is-emri,Toplu İş Emri,PRDT13/06,İş Emirleri,P0,/uretim-emirleri/toplu,Bilgiler,Toplu oluştur,siparis-is-emri;uretim-emirleri
+is-emri-agi,İş Emri Ağı,PRDT10,İş Emirleri,P2,/uretim-emirleri/ag,Ag,Görüntüle|Patlat,uretim-emirleri
+kolay-is-emri-onayi,İş Emri Onayı (yönetim),Yönetim onayı,Atölye,P0,/uretim-emirleri/onay-adaylari,Bilgiler|Operasyonlar,Onayla|Toplu Onayla,uretim-emirleri
+uretim-girisleri,Operasyonel Üretim Girişi,PRDT02/03,Atölye,P0-P1,/uretim-girisleri,Genel|Malzemeler|Duruş|Onay Listesi,Detayları Getir|Kaydet|Düzelt|Başlat|Bitir,uretim-emirleri;kk-emirleri-ckk
+hizli-uretim-girisi,Hızlı Üretim Girişi,PRDT05,Atölye,P0-P1,/uretim-girisleri,Genel,Detayları Getir|Kaydet,uretim-girisleri;uretim-emirleri
+birlesik-op-onay,Birleşik Operasyon Onayı,PRDT42/43,Atölye,P2,/uretim-girisleri/birlesik,—,Grupla|Onayla,uretim-girisleri
+fason-operasyon,Fason Operasyon,PRDT40,Fason,P2,/fason-operasyonlar,Genel|Malzeme,SA İstek|SA Sipariş|Transfer,satin-alma-siparisleri;stok-hareketleri
+fason-transfer,Tedarikçi Parça/Ürün Transfer,INVT13,Fason,P2,/stok-hareketleri,—,Parça gönder|Ürün al,fason-operasyon
+analiz-plan-gercek,Planlanan–Gerçekleşen,PRDT5x,Analiz,P3,/uretim-raporlari/plan-gercek,—,Raporla,uretim-emirleri
+analiz-wip,WIP / Fire / Rework,Analiz,Analiz,P3,/uretim-raporlari/wip,—,Raporla,uretim-emirleri
+analiz-maliyet,İş Emri Maliyet,PRDT51/52/60,Analiz,P3,/uretim-raporlari/maliyet,—,Raporla|Muhasebeleştir,uretim-emirleri
+uretim-emri-tipleri,Üretim Emri Tipleri,—,Tanımlar,P0,/uretim-emri-tipleri,Bilgiler,CRUD,uretim-emirleri
+is-merkezleri,İş Merkezleri,ROUT02,Tanımlar,P0,/is-merkezleri,Bilgiler,CRUD,routings
+is-istasyonlari,İş İstasyonları,ROUT02,Tanımlar,P0,/is-istasyonlari,Bilgiler,CRUD,is-merkezleri
+routings,Rotalar,ROUT01,Tanımlar,P0,/routings,Genel|Operasyonlar,CRUD|Şablon Uygula,urun-agaci;uretim-emirleri
+sinif-tanimi,Sınıf Tanımı,BAST05,Tanımlar,P0,/stok-siniflari,Bilgiler,CRUD,stok-kartlari
+stok-depo,Depo Stok Bağ,—,Depo,P0,/stok-depo,Bilgiler,CRUD,uretim-emirleri
