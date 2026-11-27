@@ -53,7 +53,7 @@ async function faturaEslestir(client, faturaId) {
 
   const row = await client.query(
     `INSERT INTO invoice_matches
-      (invoice_id, sales_order_id, goods_receipt_id, fiyat_fark, quantity_fark, result, description)
+      (invoice_id, purchase_order_id, goods_receipt_id, fiyat_fark, quantity_fark, result, description)
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
     [
       faturaId, siparisId, malKabulId, fiyatFark, miktarFark, result,

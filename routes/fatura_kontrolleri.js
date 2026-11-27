@@ -22,7 +22,7 @@ router.get('/', async (req, res, next) => {
       JOIN invoices f ON f.id = e.invoice_id
       LEFT JOIN partners c ON c.id = f.partner_id
       LEFT JOIN goods_receipts mk ON mk.id = e.goods_receipt_id
-      LEFT JOIN purchase_orders sas ON sas.id = e.sales_order_id
+      LEFT JOIN purchase_orders sas ON sas.id = e.purchase_order_id
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
       ORDER BY e.id DESC
       `,

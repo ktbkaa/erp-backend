@@ -26,13 +26,14 @@ WHERE u.kisi_id IS NOT NULL
 
 DROP TABLE IF EXISTS onay_rol_uyeleri CASCADE;
 
--- Seed rollerine örnek kişi bağla (yönetici)
+-- Seed rollerine örnek kişi bağla (yönetici) — firma_id=2 yoksa atla
 UPDATE onay_rolleri r SET
     kisi_id = COALESCE(r.kisi_id, (SELECT id FROM kisiler WHERE kullanici_adi = 'kagantalha.b' LIMIT 1)),
-    firma_id = COALESCE(r.firma_id, 2),
+    firma_id = COALESCE(r.firma_id, (SELECT id FROM firmalar WHERE id = 2)),
     is_yeri_id = COALESCE(r.is_yeri_id, (SELECT id FROM is_yerleri WHERE firma_id = 2 ORDER BY id LIMIT 1))
 WHERE r.kisi_id IS NULL
-  AND r.rol_kodu IN ('SA_MUDUR', 'FINANS', 'GM', 'URETIM_PLAN');
+  AND r.rol_kodu IN ('SA_MUDUR', 'FINANS', 'GM', 'URETIM_PLAN')
+  AND EXISTS (SELECT 1 FROM firmalar WHERE id = 2);
 
 CREATE INDEX IF NOT EXISTS idx_onay_rolleri_kisi ON onay_rolleri(kisi_id);
 CREATE INDEX IF NOT EXISTS idx_onay_rolleri_adi ON onay_rolleri(rol_adi);
