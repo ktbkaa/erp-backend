@@ -56,8 +56,8 @@ const ACTIVE_STATUSES = Object.freeze(['Hazir', 'Kuyrukta', 'Hata', ...SENT_STAT
 const SOURCE_STATUS = Object.freeze({
   Taslak: null,
   Hazir: 'Hazir',
-  Kuyrukta: 'Bekliyor',
-  ManuelBekliyor: 'Bekliyor',
+  Kuyrukta: 'Kuyrukta',
+  ManuelBekliyor: 'Kuyrukta',
   Gonderildi: 'Gonderildi',
   Tamamlandi: 'Gonderildi',
   Kabul: 'Gonderildi',
@@ -306,8 +306,9 @@ async function prepare(client, { documentType, documentId, providerCode = null, 
     throw httpError(409, 'EBELGE_ZATEN_GONDERILDI', `Kuyruk #${active.id} sağlayıcıya iletilmiş; durum sorgulayın veya iptal akışını kullanın.`);
   }
 
+  const preparedAt = now ? new Date(now) : new Date();
   const lookupNotes = await lookupReceiver(client, type, src, rec);
-  const draft = buildModel(type, src, { now });
+  const draft = buildModel(type, src, { now: preparedAt });
   draft.issues.push(...lookupNotes);
   const errors = blockingIssues(draft.issues);
   if (errors.length) {
@@ -329,7 +330,7 @@ async function prepare(client, { documentType, documentId, providerCode = null, 
   }
   if (!uuid) uuid = !sentBefore && rec.uuid_ettn ? String(rec.uuid_ettn) : crypto.randomUUID();
 
-  const built = buildModel(type, src, { gibNumber, uuid, now });
+  const built = buildModel(type, src, { gibNumber, uuid, now: preparedAt });
   const out = await renderXml(type, built, { envelopeId: active && active.envelope_uuid });
   if (!out.valid) {
     throw httpError(422, 'EBELGE_XML_GECERSIZ', `Üretilen UBL-TR XML şema/kural doğrulamasından geçmedi (${out.errors.length} hata).`, { detay: out.errors });
@@ -342,7 +343,8 @@ async function prepare(client, { documentType, documentId, providerCode = null, 
     envelope_xml: out.envelope ? out.envelope.xml : null,
     source_payable: built.meta.sourcePayable,
     prepared_by: kullaniciKodu || null,
-    prepared_at: new Date().toISOString(),
+    prepared_at: preparedAt.toISOString(),
+    reproducible: true,
   };
   const fields = {
     company_id: rec.company_id || null,
@@ -442,6 +444,24 @@ async function archiveSent(client, row, cfg, response, by) {
 }
 
 /**
+ * Hazırlanan XML, kaynak belgenin bugünkü hâlinden (aynı numara/ETTN/hazırlama anıyla) yeniden üretilen XML ile aynı mı?
+ * Farklıysa belge hazırlandıktan sonra değişmiştir; eski XML gönderilmemelidir.
+ */
+async function sourceDrift(client, row) {
+  const p = row.payload_json || {};
+  if (!p.reproducible || !p.prepared_at) return null;
+  let src;
+  try {
+    src = await loadSource(client, row.document_type, row.document_id);
+  } catch (e) {
+    return e.code === 'EBELGE_KAYNAK_YOK' ? 'Kaynak belge silinmiş.' : null;
+  }
+  const built = buildModel(row.document_type, src, { gibNumber: row.gib_number, uuid: row.uuid_ettn, now: new Date(p.prepared_at) });
+  const xml = row.document_type === 'Fatura' ? buildInvoiceXml(built.model) : buildDespatchXml(built.model);
+  return xml === p.xml ? null : 'Kaynak belge hazırlandıktan sonra değişmiş.';
+}
+
+/**
  * Kuyruk kaydını sağlayıcıya gönderir. Hata durumunda kayıt Hata'da kalır ve (geçiciyse) next_attempt_at ayarlanır;
  * fonksiyon fırlatmaz, sonucu döndürür (çağıran işlem COMMIT etmeli ki hata kaydı kalıcı olsun).
  */
@@ -460,6 +480,16 @@ async function send(client, queueId, { kullaniciKodu = null, providerOverride = 
     throw httpError(409, 'EBELGE_HAZIRLANMAMIS', 'Kayıtta UBL XML yok; önce /e-belge/hazirla ile yeniden hazırlayın.');
   }
   const from = row.status;
+  const drift = await sourceDrift(client, row);
+  if (drift) {
+    const message = `${drift} Gönderilmedi; belgeyi /e-belge/hazirla ile yeniden hazırlayın.`;
+    const upd = await updateRow(client, row.id, {
+      status: 'Hata', last_error: message, last_error_code: 'EBELGE_KAYNAK_DEGISTI', retryable: false, next_attempt_at: null,
+    });
+    await setSourceStatus(client, upd, 'Hata');
+    await logEvent(client, { queueId: row.id, companyId: row.company_id, type: 'HATA', from, to: 'Hata', success: false, errorCode: 'EBELGE_KAYNAK_DEGISTI', message, by: kullaniciKodu });
+    return { row: upd, ok: false, kaynak_degisti: true, simulated: false };
+  }
   const cfg = await resolveConfig(client, { companyId: row.company_id, providerOverride: providerOverride || row.provider_code, env });
   const attempt = Number(row.attempt_count || 0) + 1;
   const base = { attempt_count: attempt, last_attempt_at: new Date(), send_mode: cfg.mode, provider_code: cfg.provider };

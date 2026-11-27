@@ -12,7 +12,7 @@ function userCode(req) {
 }
 
 function sendError(res, err) {
-  const status = err.status || (err.code === 'P0001' ? 409 : 500);
+  const status = err.status || (['P0001', 'BK001'].includes(err.code) ? 409 : 500);
   res.status(status).json({ hata: err.message, kod: err.code || null, detay: err.detay || undefined });
 }
 

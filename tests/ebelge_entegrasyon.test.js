@@ -186,6 +186,25 @@ describe('e-Belge entegrasyon (DB + HTTP, mock sağlayıcı)', () => {
     assert.equal(c2.gib_number, a.gib_number);
   });
 
+  it('hazırlandıktan sonra kaynak değişirse eski XML gönderilmez; yeniden hazırlanınca aynı numarayla gider', async () => {
+    const inv = await db.createInvoice(pool, ctx, { mailboxAlias: ALIAS });
+    const a = await withTransaction(pool, (c) => svc.prepare(c, { documentType: 'Fatura', documentId: inv }));
+    await pool.query(`UPDATE invoice_lines SET quantity = quantity + 1 WHERE invoice_id=$1`, [inv]);
+    const s1 = await request(app, 'POST', `/e-belge/${a.id}/gonder`, { body: {}, headers: H });
+    assert.equal(s1.status, 200);
+    assert.equal(s1.json.ok, false);
+    assert.equal(s1.json.kaynak_degisti, true);
+    assert.equal(s1.json.row.status, 'Hata');
+    assert.equal(s1.json.row.last_error_code, 'EBELGE_KAYNAK_DEGISTI');
+    assert.equal(s1.json.row.sent_at, null);
+    const b = await withTransaction(pool, (c) => svc.prepare(c, { documentType: 'Fatura', documentId: inv }));
+    assert.equal(b.id, a.id);
+    assert.equal(b.gib_number, a.gib_number);
+    const s2 = await request(app, 'POST', `/e-belge/${b.id}/gonder`, { body: {}, headers: H });
+    assert.equal(s2.json.ok, true);
+    assert.equal((await pool.query(`SELECT e_document_status FROM invoices WHERE id=$1`, [inv])).rows[0].e_document_status, 'Gonderildi');
+  });
+
   it('geçici hata → geri çekilmeli yeniden deneme kuyruğu; kalıcı hata → manuel yeniden dene', async () => {
     const inv = await db.createInvoice(pool, ctx, { mailboxAlias: ALIAS });
     const row = await withTransaction(pool, (c) => svc.prepare(c, { documentType: 'Fatura', documentId: inv }));

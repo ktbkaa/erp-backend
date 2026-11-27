@@ -12,6 +12,8 @@ Fatura / İrsaliye ─► POST /e-belge/hazirla
    UBL-TR XML + GİB zarfı (e-Arşiv hariç) ─► XSD (GİB paketi) + şematron kural portu ─► 422 EBELGE_XML_GECERSIZ
    kuyruk: Hazir
 ─► POST /e-belge/:id/kuyruga-al ─► Kuyrukta ─► POST /e-belge/kuyruk/isle (veya zamanlayıcı) / POST /:id/gonder
+   kaynak değişti mi? (XML kaynağın bugünkü hâlinden aynı no/ETTN/zamanla yeniden üretilip karşılaştırılır)
+                 └ farklı → Hata EBELGE_KAYNAK_DEGISTI (gönderilmez) → yeniden hazırla (aynı no/ETTN)
    adaptör.send ─► Gonderildi │ Tamamlandi │ ManuelBekliyor
                  └ hata: geçici → Hata + next_attempt_at (1, 5, 15, 60, 360 dk; EBELGE_MAX_DENEME)
                          kalıcı → Hata (retryable=false) → POST /:id/yeniden-dene (düzeltme sonrası)
@@ -20,7 +22,7 @@ Fatura / İrsaliye ─► POST /e-belge/hazirla
 ─► POST /e-belge/:id/iptal (aşağıdaki kurallar)
 ```
 
-Kaynak belgedeki `e_document_status`: Hazir → Bekliyor → Gonderildi / Red / Hata / Iptal. İrsaliye→fatura dönüşümü `Gonderildi` şartını korur.
+Kaynak belgedeki `e_document_status`: Hazir → Kuyrukta (kuyrukta / portal yüklemesi bekleniyor) → Gonderildi / Red / Hata / Iptal. `Kuyrukta` ve `Gonderildi`, belge kilidinin (PR #168) e-belge kilit durumlarıyla aynıdır; eski kayıtlardaki `Bekliyor` değeri listede kalır. İrsaliye→fatura dönüşümü `Gonderildi` şartını korur.
 
 ## Mod kararı (`src/services/ebelge/config.js`)
 

@@ -98,9 +98,21 @@ async function createDeliveryNote(pool, ctx, over = {}) {
 /** Arşiv satırları sandbox'ta retain_until=bugün olduğundan silinebilir; olay kayıtları kalıcıdır (tasarım gereği). */
 async function cleanup(pool, ctx) {
   if (!ctx) return;
-  const q = (sql, p) => pool.query(sql, p).catch(() => {});
-  const inv = (await pool.query(`SELECT id FROM invoices WHERE company_id=$1`, [ctx.companyId]).catch(() => ({ rows: [] }))).rows.map((r) => r.id);
-  const dn = (await pool.query(`SELECT id FROM delivery_notes WHERE company_id=$1`, [ctx.companyId]).catch(() => ({ rows: [] }))).rows.map((r) => r.id);
+  const client = await pool.connect();
+  try {
+    // Gönderilmiş test belgelerini silebilmek için belge kilidi tetikleyicilerinin oturum kaçışı (yoksa etkisiz).
+    await client.query(`SELECT set_config('erp.belge_kilit_bypass', 'on', false)`);
+    await cleanupWith(client, ctx);
+  } finally {
+    await client.query(`SELECT set_config('erp.belge_kilit_bypass', '', false)`).catch(() => {});
+    client.release();
+  }
+}
+
+async function cleanupWith(db, ctx) {
+  const q = (sql, p) => db.query(sql, p).catch(() => {});
+  const inv = (await db.query(`SELECT id FROM invoices WHERE company_id=$1`, [ctx.companyId]).catch(() => ({ rows: [] }))).rows.map((r) => r.id);
+  const dn = (await db.query(`SELECT id FROM delivery_notes WHERE company_id=$1`, [ctx.companyId]).catch(() => ({ rows: [] }))).rows.map((r) => r.id);
   await q(`DELETE FROM e_document_archive WHERE company_id=$1`, [ctx.companyId]);
   await q(`DELETE FROM e_document_queue WHERE company_id=$1`, [ctx.companyId]);
   await q(`DELETE FROM invoice_lines WHERE invoice_id = ANY($1::int[])`, [inv]);
