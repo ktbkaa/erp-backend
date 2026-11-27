@@ -223,24 +223,14 @@ async function faturadanMuhasebe(client, faturaId, { kullaniciKodu = null, ulkeK
     dueDate: fatura.due_date || null,
   });
 
-  await client.query(
-    `UPDATE invoices SET is_posted=TRUE, gl_document_id=$2, status=COALESCE(status,'Onayli')
-     WHERE id=$1`,
-    [faturaId, fis.id]
-  ).catch(async () => {
-    await client.query(
-      `UPDATE invoices SET is_posted=TRUE WHERE id=$1`,
-      [faturaId]
-    ).catch(() => {});
-  });
-
   const isaret = iade ? -1 : 1;
   await client.query(
     `UPDATE invoices SET
-       exchange_rate=$2, exchange_rate_date=$3::date,
-       net_amount_try=$4, tax_amount_try=$5, payable_amount_try=$6
+       is_posted=TRUE, gl_document_id=$2, status=COALESCE(status,'Onayli'),
+       exchange_rate=$3, exchange_rate_date=$4::date,
+       net_amount_try=$5, tax_amount_try=$6, payable_amount_try=$7
      WHERE id=$1`,
-    [faturaId, kur.rate, kur.rate_date, isaret * malTry, isaret * kdvTry, isaret * odenecekTry]
+    [faturaId, fis.id, kur.rate, kur.rate_date, isaret * malTry, isaret * kdvTry, isaret * odenecekTry]
   );
 
   return {
@@ -270,7 +260,7 @@ const FATURA_KAYNAK_TIPLERI = ['SATIS_FATURA', 'ALIS_FATURA', 'SATIS_IADE_FATURA
  */
 async function faturaTersKayitCari(client, { kaynakTip, faturaId, kullaniciKodu = null }) {
   if (!FATURA_KAYNAK_TIPLERI.includes(kaynakTip) || faturaId == null) return { reversed: 0 };
-  const tersTip = `${kaynakTip}_TERS`;
+  const tersTip = `${kaynakTip}_IPTAL`;
   const zaten = await client.query(
     `SELECT 1 FROM partner_ledger_entries WHERE document_type=$1 AND document_id=$2 LIMIT 1`,
     [tersTip, faturaId]
@@ -294,10 +284,20 @@ async function faturaTersKayitCari(client, { kaynakTip, faturaId, kullaniciKodu 
       createdBy: kullaniciKodu,
     });
   }
-  await client.query(
-    `UPDATE invoices SET is_posted=FALSE, gl_document_id=NULL WHERE id=$1`,
-    [faturaId]
-  );
+  // Belge kilidi (BK001) muhasebeleşmiş faturanın kilidini açmayı engeller; bu servis
+  // akışı (fiş ters kaydı) kilidi bilinçli kaldırır, bypass yalnız bu UPDATE için açılır.
+  const oncekiBypass = (await client.query(
+    `SELECT COALESCE(current_setting('erp.belge_kilit_bypass', true), '') AS v`
+  )).rows[0].v;
+  await client.query(`SELECT set_config('erp.belge_kilit_bypass', 'on', true)`);
+  try {
+    await client.query(
+      `UPDATE invoices SET is_posted=FALSE, gl_document_id=NULL WHERE id=$1`,
+      [faturaId]
+    );
+  } finally {
+    await client.query(`SELECT set_config('erp.belge_kilit_bypass', $1, true)`, [oncekiBypass]);
+  }
   return { reversed: org.rows.length };
 }
 

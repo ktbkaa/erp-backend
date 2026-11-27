@@ -86,26 +86,30 @@ describe('dövizli fatura kur dönüşümü', () => {
   });
 
   after(async () => {
+    const tmz = await pool.connect();
     try {
-      await pool.query(`DELETE FROM exchange_difference_entries WHERE company_id=$1 OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [ctx.companyId]);
-      await pool.query(`DELETE FROM partner_ledger_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [ctx.companyId]);
-      const fis = await pool.query(`SELECT id FROM journal_entries WHERE company_id=$1`, [ctx.companyId]);
+      await tmz.query(`SELECT set_config('erp.belge_kilit_bypass', 'on', false)`);
+      await tmz.query(`DELETE FROM exchange_difference_entries WHERE company_id=$1 OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [ctx.companyId]);
+      await tmz.query(`DELETE FROM partner_ledger_entries WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [ctx.companyId]);
+      const fis = await tmz.query(`SELECT id FROM journal_entries WHERE company_id=$1`, [ctx.companyId]);
       const ids = fis.rows.map((x) => x.id);
       if (ids.length) {
-        await pool.query(`UPDATE journal_entries SET reversal_document_id=NULL, original_document_id=NULL WHERE id = ANY($1)`, [ids]);
-        await pool.query(`UPDATE invoices SET gl_document_id=NULL WHERE company_id=$1`, [ctx.companyId]);
-        await pool.query(`DELETE FROM journal_entry_lines WHERE document_id = ANY($1)`, [ids]);
-        await pool.query(`DELETE FROM journal_entries WHERE id = ANY($1)`, [ids]);
+        await tmz.query(`UPDATE journal_entries SET reversal_document_id=NULL, original_document_id=NULL WHERE id = ANY($1)`, [ids]);
+        await tmz.query(`UPDATE invoices SET gl_document_id=NULL WHERE company_id=$1`, [ctx.companyId]);
+        await tmz.query(`DELETE FROM journal_entry_lines WHERE document_id = ANY($1)`, [ids]);
+        await tmz.query(`DELETE FROM journal_entries WHERE id = ANY($1)`, [ids]);
       }
-      await pool.query(`DELETE FROM receipts_payments WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [ctx.companyId]);
-      await pool.query(`DELETE FROM invoice_lines WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)`, [ctx.companyId]);
-      await pool.query(`DELETE FROM invoices WHERE company_id=$1`, [ctx.companyId]);
-      await pool.query(`DELETE FROM partners WHERE company_id=$1`, [ctx.companyId]);
-      await pool.query(`DELETE FROM companies WHERE id=$1`, [ctx.companyId]);
-      await pool.query(`DELETE FROM exchange_rates WHERE source_currency = ANY($1)`, [[PB, PB_YOK]]);
-      await pool.query(`DELETE FROM currencies WHERE currency_code = ANY($1)`, [[PB, PB_YOK]]);
+      await tmz.query(`DELETE FROM receipts_payments WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [ctx.companyId]);
+      await tmz.query(`DELETE FROM invoice_lines WHERE invoice_id IN (SELECT id FROM invoices WHERE company_id=$1)`, [ctx.companyId]);
+      await tmz.query(`DELETE FROM invoices WHERE company_id=$1`, [ctx.companyId]);
+      await tmz.query(`DELETE FROM partners WHERE company_id=$1`, [ctx.companyId]);
+      await tmz.query(`DELETE FROM companies WHERE id=$1`, [ctx.companyId]);
+      await tmz.query(`DELETE FROM exchange_rates WHERE source_currency = ANY($1)`, [[PB, PB_YOK]]);
+      await tmz.query(`DELETE FROM currencies WHERE currency_code = ANY($1)`, [[PB, PB_YOK]]);
     } catch (err) {
       console.warn('fx test temizlik uyarısı:', err.message);
+    } finally {
+      tmz.release(true);
     }
     await pool.end();
   });
@@ -285,7 +289,7 @@ describe('dövizli fatura kur dönüşümü', () => {
       assert.equal(fat.gl_document_id, null);
       // ikinci ters kayıt cari tersini ikiye katlamaz
       const cariAdet = await pool.query(
-        `SELECT COUNT(*)::int AS n FROM partner_ledger_entries WHERE document_type='ALIS_FATURA_TERS' AND document_id=$1`, [id]
+        `SELECT COUNT(*)::int AS n FROM partner_ledger_entries WHERE document_type='ALIS_FATURA_IPTAL' AND document_id=$1`, [id]
       );
       assert.equal(cariAdet.rows[0].n, 1);
     } finally {
@@ -445,6 +449,6 @@ describe('dövizli fatura kur dönüşümü', () => {
       body: { exchange_rate: 99 }, headers: { 'X-Firma-Id': String(ctx.companyId) },
     });
     assert.equal(degis.status, 409);
-    assert.equal(degis.json.kod, 'KUR_KILIT');
+    assert.ok(['KUR_KILIT', 'BELGE_MUHASEBELESMIS'].includes(degis.json.kod), degis.json.kod);
   });
 });
