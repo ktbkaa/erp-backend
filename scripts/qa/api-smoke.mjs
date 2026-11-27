@@ -12,6 +12,10 @@ const inv = JSON.parse(fs.readFileSync(path.join(root, 'docs/qa/screen-inventory
 
 async function login() {
   const candidates = [
+    ...(process.env.QA_USER
+      ? [{ username: process.env.QA_USER, password: process.env.QA_PASS || '' }]
+      : []),
+    { username: 'kagantalha.b', password: 'Demo123!' },
     { username: 'ADMIN', password: 'admin' },
     { username: 'admin', password: 'admin' },
     { user_code: 'ADMIN', password: 'admin' },

@@ -120,7 +120,7 @@ function analyzeSql(sql) {
   return { sql: raw.replace(/;\s*$/, ''), verb, writeKind, isSelect: Boolean(isSelect && !writeKind) };
 }
 
-router.get('/meta', async (req, res) => {
+const metaHandler = async (req, res) => {
   try {
     const { pool, meta, override } = getActivePool(req);
     const perms = await loadSqlPerms(defaultPool._primary || defaultPool, req.user?.id);
@@ -168,7 +168,10 @@ router.get('/meta', async (req, res) => {
             }
     res.status(500).json({ hata: err.message });
   }
-});
+};
+
+router.get('/', metaHandler);
+router.get('/meta', metaHandler);
 
 router.post('/connection/test', async (req, res) => {
   try {
