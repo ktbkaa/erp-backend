@@ -295,6 +295,7 @@ async function createOrder(client, opts) {
         planned_quantity,
         sales_order_id,
         order_type_id,
+        order_no: orderNoOpt,
         status,
         is_started,
         issue_type,
@@ -340,7 +341,10 @@ async function createOrder(client, opts) {
         if (c.item_id) await assertItemWarehouseAllowed(client, c.item_id, component_warehouse_id);
       }
     }
-    const no = await nextDocumentNo(client, 'URETIM_EMRI');
+    const providedNo = orderNoOpt != null && String(orderNoOpt).trim() !== ''
+        ? String(orderNoOpt).trim()
+        : null;
+    const no = providedNo || await nextDocumentNo(client, 'URETIM_EMRI');
     const durumVal = status || (sales_order_id ? 'OnayBekliyor' : 'Acik');
     const emir = await client.query(
         `
@@ -649,6 +653,8 @@ router.get('/siparis-adaylari', async (req, res) => {
                 sd.quantity AS siparis_miktar,
                 COALESCE(ue_sum.uretim_plan, 0) AS uretim_planlanan,
                 GREATEST(sd.quantity - COALESCE(ue_sum.uretim_plan, 0), 0) AS remaining_quantity,
+                ue_last.order_no AS wo_order_no,
+                ue_last.id AS wo_order_id,
                 ua.id AS onerilen_agac_id,
                 ua.bom_code AS onerilen_agac_kodu,
                 r.id AS onerilen_rota_id,
@@ -663,6 +669,14 @@ router.get('/siparis-adaylari', async (req, res) => {
                 WHERE ue.sales_order_id = s.id AND ue.item_id = sd.item_id
                   AND ue.status NOT IN ('Iptal')
             ) ue_sum ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT ue3.id, ue3.order_no
+                FROM production_orders ue3
+                WHERE ue3.sales_order_id = s.id AND ue3.item_id = sd.item_id
+                  AND ue3.status NOT IN ('Iptal')
+                ORDER BY ue3.id DESC
+                LIMIT 1
+            ) ue_last ON TRUE
             LEFT JOIN LATERAL (
                 SELECT ua2.id, ua2.bom_code
                 FROM boms ua2
@@ -811,6 +825,10 @@ router.post('/satis-siparisinden', async (req, res) => {
             fg_warehouse_id,
             planned_quantity,
             order_type_id,
+            order_no,
+            plan_start,
+            plan_end,
+            uom_code,
         } = req.body;
         if (!sales_order_id || !item_id || !product_bom_id || !route_id || !component_warehouse_id || !fg_warehouse_id) {
             return res.status(400).json({
@@ -845,6 +863,10 @@ router.post('/satis-siparisinden', async (req, res) => {
                 planned_quantity: quantity,
                 sales_order_id,
                 order_type_id,
+                order_no,
+                plan_start: plan_start || null,
+                plan_end: plan_end || null,
+                uom_code,
                 status: 'OnayBekliyor',
             })
         );
