@@ -165,11 +165,12 @@ router.post('/', async (req, res) => {
     if (!rule_name || !screen_id) {
       return res.status(400).json({ hata: 'Kural adı ve ekran (veya belge türü) seçimi zorunlu.' });
     }
-    if (!rule_code) {
-      try { rule_code = await nextSequenceCode(pool, 'ONAY_KURAL'); }
-      catch (_) { rule_code = `NKR${Date.now().toString().slice(-5)}`; }
-    }
     const id = await withTransaction(pool, async (client) => {
+      if (!rule_code) {
+        // Seri satırı kilidi ancak transaction içinde eşzamanlı POST'ları sıraya sokar.
+        try { rule_code = await nextSequenceCode(client, 'ONAY_KURAL'); }
+        catch (_) { rule_code = `NKR${Date.now().toString().slice(-5)}`; }
+      }
       const ins = await client.query(
         `
         INSERT INTO approval_rules (
