@@ -157,6 +157,8 @@ app.use('/sql-console', require('./routes/sql_console'));
 app.use('/stok-rezervasyonlari', require('./routes/item_reservations'));
 app.use('/stok-serileri', require('./routes/item_serials'));
 app.use('/kk-capa', require('./routes/qc_capa'));
+app.use('/kk-kalite', require('./routes/qc_calibration'));
+app.use('/lisanslar', require('./routes/licenses'));
 app.use('/stok-ikame', require('./routes/item_substitutes'));
 app.use('/crm-ajanda', require('./routes/crm_calendar_entries'));
 app.use('/hesap-belirleme-kurallari', require('./routes/account_determination_rules'));

@@ -1,0 +1,150 @@
+{
+  "firmaId": 12,
+  "item": {
+    "id": 136,
+    "item_code": "MM-MAM-IRONMAN",
+    "item_name": "Döküm Iron Man Figürü 1/6"
+  },
+  "itemCnc": {
+    "id": 139,
+    "item_code": "MM-MAM-SPIDER",
+    "item_name": "CNC Spider-Man Figürü 1/6"
+  },
+  "bom": {
+    "id": 31,
+    "bom_code": "A00025",
+    "bom_name": "Spider-Man CNC BOM"
+  },
+  "route": {
+    "id": 22,
+    "route_code": "O00017",
+    "route_name": "Spider-Man CNC Rotası"
+  },
+  "partnerMus": {
+    "id": 65,
+    "partner_code": "M00017",
+    "partner_name": "Kaplan Koleksiyon Dünyası"
+  },
+  "partnerTed": {
+    "id": 62,
+    "partner_code": "T00019",
+    "partner_name": "Anadolu Alaşım Tedarik A.Ş."
+  },
+  "lead": {
+    "id": 17,
+    "lead_name": "Kaplan Koleksiyon — Iron Man ön sipariş"
+  },
+  "opp": {
+    "id": 17,
+    "opportunity_name": "Iron Man Limited Run"
+  },
+  "sq": {
+    "id": 20,
+    "quotation_no": "ST00024"
+  },
+  "so": {
+    "id": 24,
+    "order_no": "B00028"
+  },
+  "req": {
+    "id": 20,
+    "requisition_no": "L00018"
+  },
+  "pq": {
+    "id": 16,
+    "quotation_no": "QF00016"
+  },
+  "poDirect": {
+    "id": 31,
+    "order_no": "P00029",
+    "description": "[MMARVEL-W1] Direkt PO — paketleme"
+  },
+  "poAlloy": {
+    "id": 32,
+    "order_no": "P00030",
+    "description": "[MMARVEL-W1] Alaşım PO"
+  },
+  "gr": {
+    "id": 23,
+    "receipt_no": "R00023"
+  },
+  "woDok": {
+    "id": 13,
+    "order_no": "E00016"
+  },
+  "woCnc": {
+    "id": 14,
+    "order_no": "E00017"
+  },
+  "project": {
+    "id": 7,
+    "project_code": "MM-KALIP-MMARVEL-W2",
+    "project_name": "Yeni Iron Man Kalıp Tooling"
+  },
+  "cihaz": {
+    "id": 16,
+    "instrument_code": "CIH00016",
+    "instrument_name": "Mitutoyo Kumpas 0-300mm"
+  },
+  "kal": {
+    "id": 22,
+    "calibration_no": "KAL00022"
+  },
+  "emp": {
+    "id": 2608,
+    "employee_no": "HE00167",
+    "first_name": "Ahmet",
+    "last_name": "Yılmaz"
+  },
+  "job": {
+    "id": 4,
+    "requisition_no": "JP00004",
+    "title": "Döküm Operatörü"
+  },
+  "license": {
+    "id": 2,
+    "license_code": "MARVEL-ENT-2026",
+    "license_name": "Metal Marvel Enterprise Suite"
+  },
+  "cand": {
+    "id": 4,
+    "first_name": "Serhat",
+    "last_name": "Güler"
+  },
+  "wi": {
+    "id": 7,
+    "title": "Kalıp iş paketi 4 [MMARVEL-W2]"
+  },
+  "ckk": {
+    "id": 39,
+    "order_no": "QE00039"
+  },
+  "payroll": {
+    "id": 4,
+    "run_no": "BR00004"
+  },
+  "rfq": {
+    "id": 9
+  },
+  "clic": {
+    "id": 6
+  },
+  "dept": {
+    "id": 83,
+    "department_code": "HD00083",
+    "department_name": "Yönetim"
+  },
+  "wc": {
+    "id": 26,
+    "center_code": "MM-DOKUM-01"
+  },
+  "ship": {
+    "id": 15,
+    "shipment_no": "SE00018"
+  },
+  "ncr": {
+    "id": 12,
+    "description": "[MMARVEL-W3] Boya ton farkı — NCR",
+    "status": "Acik"
+  }
+}
