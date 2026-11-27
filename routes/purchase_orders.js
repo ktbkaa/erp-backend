@@ -116,7 +116,8 @@ async function replaceOrderLines(client, siparisId, satirlar, baslikKur, baslikM
       currency_code: hdrPb || s.currency_code || null,
       rate_type: hdrTip || s.rate_type || null,
       exchange_rate: baslikKur ?? s.exchange_rate ?? 1,
-      warehouse_id: null, // depo yalnız mal kabulde
+      // Tek depo = master (mal kabulde de master/sipariş deposu kullanılır)
+      warehouse_id: baslikMeta.warehouse_id || s.warehouse_id || null,
     }, s.line_no || sira, baslikKur);
     hesapli.push(h);
     sira += 1;
@@ -212,6 +213,7 @@ router.post('/', async (req, res) => {
       await replaceOrderLines(client, siparisId, satirlar, b.exchange_rate ?? 1, {
         currency_code: b.currency_code || 'TRY',
         rate_type: b.rate_type || null,
+        warehouse_id: b.warehouse_id || null,
       });
       return siparisId;
     });
@@ -268,7 +270,7 @@ router.post('/talep-donustur', async (req, res) => {
         currency_code: t.currency_code || 'TRY',
         exchange_rate: t.exchange_rate ?? 1,
         rate_type: t.rate_type || null,
-        warehouse_id: null,
+        warehouse_id: t.warehouse_id || null,
         project_code: sat.project_code || t.project_code,
         region: sat.region || t.region,
         delivery_date: sat.delivery_date || t.target_delivery_date,
@@ -276,6 +278,7 @@ router.post('/talep-donustur', async (req, res) => {
       await replaceOrderLines(client, siparisId, mapped, t.exchange_rate ?? 1, {
         currency_code: t.currency_code || 'TRY',
         rate_type: t.rate_type || null,
+        warehouse_id: t.warehouse_id || null,
       });
       await client.query(`UPDATE purchase_requisitions SET status = 'SipariseDonustu' WHERE id = $1`, [requisition_id]);
       return siparisId;
@@ -351,6 +354,7 @@ router.put('/:id', async (req, res) => {
         await replaceOrderLines(client, Number(req.params.id), b.satirlar, exchange_rate, {
           currency_code: b.currency_code || mevcut.rows[0].currency_code || 'TRY',
           rate_type: b.rate_type || mevcut.rows[0].rate_type || null,
+          warehouse_id: b.warehouse_id || mevcut.rows[0].warehouse_id || null,
         });
       }
       return Number(req.params.id);

@@ -1,5 +1,6 @@
 /**
- * Satınalmada depo yok; satış+satınalmada satır PB yok (master’da).
+ * Satış + satınalma siparişi: depo master’da (tek depo/sipariş); satırda yok.
+ * Belge PB yalnız master’da.
  */
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
@@ -28,15 +29,23 @@ function masterBlock(slice) {
   return slice.slice(j, k > 0 ? k : j + 3000);
 }
 
-describe('satınalma depo + belge PB tek master', () => {
-  it('satınalma talep/sipariş: depo yok; PB yalnız master', () => {
-    for (const id of ['satin-alma-talepleri', 'satin-alma-siparisleri']) {
+describe('sipariş master depo + belge PB tek master', () => {
+  it('satış + satınalma sipariş: depo master’da, satırda yok', () => {
+    for (const id of ['satis-siparisleri', 'satin-alma-siparisleri']) {
       const s = screenSlice(id);
       assert.doesNotMatch(detailBlock(s), /key: 'warehouse_id'/);
-      assert.doesNotMatch(masterBlock(s), /key: 'warehouse_id'/);
+      assert.match(masterBlock(s), /key: 'warehouse_id'/);
       assert.doesNotMatch(detailBlock(s), /key: 'currency_code'/);
       assert.match(masterBlock(s), /key: 'currency_code'/);
     }
+  });
+
+  it('satınalma talep: depo yok; PB yalnız master', () => {
+    const s = screenSlice('satin-alma-talepleri');
+    assert.doesNotMatch(detailBlock(s), /key: 'warehouse_id'/);
+    assert.doesNotMatch(masterBlock(s), /key: 'warehouse_id'/);
+    assert.doesNotMatch(detailBlock(s), /key: 'currency_code'/);
+    assert.match(masterBlock(s), /key: 'currency_code'/);
   });
 
   it('satış + satınalma teklif/fatura/irsaliye: satırda PB yok', () => {
@@ -53,11 +62,11 @@ describe('satınalma depo + belge PB tek master', () => {
     }
   });
 
-  it('mal kabulde giriş depo zorunlu; compact PB master’da kalır', () => {
+  it('mal kabulde giriş depo zorunlu; header depo satıra yayılır', () => {
     const mk = screenSlice('mal-kabuller');
     assert.match(masterBlock(mk), /Giriş depo/);
     assert.match(masterBlock(mk), /required: true/);
-    assert.match(js, /COMPACT_TO_LINE_RE = \/\^\(discount_rate/);
+    assert.match(js, /applyHeaderWarehouseToLines/);
     assert.match(js, /applyHeaderCurrencyToLines/);
   });
 });

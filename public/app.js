@@ -2699,6 +2699,7 @@ const MODULES = [
           { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', group: 'planlama' },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, lead: true, group: 'organizasyon' },
           { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'organizasyon' },
           { key: 'region', label: 'Bölge', group: 'organizasyon' },
           { key: 'description', label: 'Açıklama', group: 'status' },
@@ -3139,6 +3140,7 @@ const MODULES = [
           { key: 'order_type', label: 'Tür', type: 'select', options: ['SatisSiparis', 'AlinanSiparis'], required: true, lead: true },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', lead: true },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', lead: true },
+          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, lead: true },
           { key: 'quotation_id', label: 'Teklif', type: 'lookup', lookup: 'satis-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'teklif-satirlar' },
           { key: 'customer_order_no', label: 'Müş. sip. no' },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
@@ -3152,13 +3154,12 @@ const MODULES = [
           { key: 'internal_note', label: 'Dahili not' },
         ],
         // Finans + geçerlilik/fiyat listesi kalem formunda
-        // Kalem sırası: stok → birim → miktar → depo (bağlantı / önem)
+        // Kalem sırası: stok → birim → miktar (depo master’da — tek depo/sipariş)
         detailFields: [
           { key: 'line_type', label: 'Tip', type: 'select', options: ['S', 'H'], size: 'short' },
           { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
           { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
           { key: 'quantity', label: 'Miktar', type: 'number', size: 'short' },
-          { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'line_description', label: 'Açıklama' },
           { key: 'unit_price', label: 'Birim fiyat', type: 'number', size: 'short' },
           { key: 'discount_rate', label: 'İsk1 %', type: 'number', size: 'short' },
@@ -24816,6 +24817,30 @@ function applyHeaderCurrencyToLines(out, screen) {
   });
 }
 
+/** Satış / satınalma siparişi: tek depo master’da — satırlara yay. */
+function applyHeaderWarehouseToLines(out, screen) {
+  const sid = screen?.id;
+  if (sid !== 'satis-siparisleri' && sid !== 'satin-alma-siparisleri') return;
+  const wh = out.warehouse_id != null && out.warehouse_id !== ''
+    ? Number(out.warehouse_id)
+    : null;
+  if (!wh) return;
+  const keys = [];
+  if (screen?.detailKey) keys.push(screen.detailKey);
+  keys.push('satirlar', 'kalemler', '_detail');
+  (screen?.formTabs || []).forEach((tab) => {
+    if (tab.kind === 'grid' && tab.key) keys.push(tab.key);
+    if (tab.kind === 'master-grid') keys.push(tab.grid?.key || tab.key);
+  });
+  [...new Set(keys.filter(Boolean))].forEach((k) => {
+    if (!Array.isArray(out[k])) return;
+    out[k] = out[k].map((row) => {
+      if (!row || typeof row !== 'object') return row;
+      return { ...row, warehouse_id: wh };
+    });
+  });
+}
+
 function readTabbedPayload(screen) {
   const out = readMasterFromForm(screen);
   (screen.formTabs || []).forEach((tab) => {
@@ -24847,6 +24872,7 @@ function readTabbedPayload(screen) {
   });
   backfillHeaderFromLines(out, screen);
   applyHeaderCurrencyToLines(out, screen);
+  applyHeaderWarehouseToLines(out, screen);
   return out;
 }
 

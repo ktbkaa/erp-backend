@@ -255,6 +255,7 @@ router.post('/', async (req, res) => {
             const siparisId = siparisSonuc.rows[0].id;
 
             const bodySatirlar = req.body.kalemler || req.body.satirlar || [];
+            const hdrWh = extras.warehouse_id != null ? Number(extras.warehouse_id) : null;
             for (let i = 0; i < islenmis.length; i++) {
                 const ik = islenmis[i];
                 const raw = bodySatirlar[i] || {};
@@ -262,6 +263,8 @@ router.post('/', async (req, res) => {
                 if (satirEx.amount_ex_tax == null) satirEx.amount_ex_tax = ik.total_amount;
                 if (satirEx.net_unit_price == null) satirEx.net_unit_price = ik.unit_price;
                 if (satirEx.line_no == null) satirEx.line_no = i + 1;
+                // Tek depo = master: satıra master deposunu yaz
+                if (hdrWh) satirEx.warehouse_id = hdrWh;
                 const sat = appendInsert(
                     ['sales_order_id', 'item_id', 'item_code', 'item_name', 'stock_uom', 'quantity', 'unit_price', 'total_amount'],
                     [siparisId, ik.item_id, ik.item_code, ik.item_name, ik.stock_uom, ik.quantity, ik.unit_price, ik.total_amount],
@@ -314,6 +317,11 @@ router.put('/:id', async (req, res) => {
 
             let toplam = mevcut.rows[0].total_amount;
             const bodySatirlar = Array.isArray(kalemler) ? kalemler : [];
+            // Tüm başlık alanlarını yaz (teslim, müş. sip. no, ödeme, address…)
+            const extras = pickFields(req.body, SIPARIS_BASLIK);
+            const hdrWh = extras.warehouse_id != null
+              ? Number(extras.warehouse_id)
+              : (mevcut.rows[0].warehouse_id != null ? Number(mevcut.rows[0].warehouse_id) : null);
             if (Array.isArray(kalemler)) {
                 const resolved = await resolveKalemler(client, kalemler);
                 toplam = resolved.toplam;
@@ -325,6 +333,7 @@ router.put('/:id', async (req, res) => {
                     if (satirEx.amount_ex_tax == null) satirEx.amount_ex_tax = ik.total_amount;
                     if (satirEx.net_unit_price == null) satirEx.net_unit_price = ik.unit_price;
                     if (satirEx.line_no == null) satirEx.line_no = i + 1;
+                    if (hdrWh) satirEx.warehouse_id = hdrWh;
                     const sat = appendInsert(
                         ['sales_order_id', 'item_id', 'item_code', 'item_name', 'stock_uom', 'quantity', 'unit_price', 'total_amount'],
                         [req.params.id, ik.item_id, ik.item_code, ik.item_name, ik.stock_uom, ik.quantity, ik.unit_price, ik.total_amount],
@@ -336,9 +345,6 @@ router.put('/:id', async (req, res) => {
                     );
                 }
             }
-
-            // Tüm başlık alanlarını yaz (teslim, müş. sip. no, ödeme, address…)
-            const extras = pickFields(req.body, SIPARIS_BASLIK);
             extras.partner_id = cari.id;
             extras.partner_code = cari.partner_code;
             extras.partner_name = cari.partner_name;
