@@ -16,6 +16,7 @@ const {
 } = require('../src/utils/belgeOmurga');
 const { rezervasyonTuket } = require('../src/services/rezervasyonService');
 const { documentHtml } = require('../src/services/belgePdfService');
+const eBelge = require('../src/services/eBelgeAdapterService');
 const {
     pickFields,
     appendInsert,
@@ -1244,7 +1245,12 @@ router.get('/:id/yazdir', async (req, res) => {
             tarih: ir.delivery_date || ir.created_at,
             cari: ir,
             satirlar: ir.satirlar || ir.kalemler || [],
-            ekstra: { uuid_ettn: ir.uuid_ettn, description: ir.description },
+            ekstra: {
+                uuid_ettn: ir.uuid_ettn,
+                description: ir.description,
+                qr_text: await eBelge.qrTextFor(pool, 'Irsaliye', ir.id),
+                pdf_url: `/delivery_notes/${ir.id}/pdf`,
+            },
         });
         res.type('html').send(html);
     } catch (err) {
@@ -1257,7 +1263,22 @@ router.get('/:id/yazdir', async (req, res) => {
         res.status(500).json({ hata: err.message });
     }
 });
-router.get('/:id/pdf', (req, res) => res.redirect(302, `/delivery_notes/${req.params.id}/yazdir`));
+/** GET /delivery_notes/:id/pdf?sablon=standart|matbu — UTF-8 fontlu, GİB QR kodlu PDF (e-belge kaydı yoksa TASLAK). */
+router.get('/:id/pdf', async (req, res) => {
+    try {
+        const firmaId = companyIdFromReq(req);
+        if (firmaId) {
+            const r = await pool.query(`SELECT 1 FROM delivery_notes WHERE id=$1 AND company_id=$2`, [Number(req.params.id), firmaId]);
+            if (!r.rows[0]) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
+        }
+        const out = await eBelge.documentPdf(pool, { documentType: 'Irsaliye', documentId: Number(req.params.id), template: req.query.sablon || null });
+        res.type('application/pdf');
+        res.set('Content-Disposition', `${req.query.indir ? 'attachment' : 'inline'}; filename="${encodeURIComponent(out.fileName)}"`);
+        res.send(out.buffer);
+    } catch (err) {
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
 
 /** POST /delivery_notes/:id/iade — satış iade irsaliyesi (ters stok girişi) */
 router.post('/:id/iade', async (req, res) => {

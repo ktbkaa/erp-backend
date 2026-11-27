@@ -71,6 +71,7 @@ node scripts/marvel-stok-10000.js
 | `npm run qa:smoke` | API duman (sunucu ayakta olmalı) |
 | `npm run qa:db` | DB bütünlük denetimi |
 | `npm run qa:all` | QA paketi (seed + inventory + smoke + …) |
+| `npm run test:ebelge` | e-Belge: UBL-TR XSD/kural doğrulama, adaptör sözleşmesi, PDF, DB akışı (`docs/go-live/GIB_STRATEGY.md`) |
 
 **Bilinen (eski) 2 başarısız test:** `go-live invariants` / BUG-008 (`STOK_DEPO_YOK` — lot senaryosunda stok-depo bağı eksik kalabiliyor) ve `sim partial fix` içindeki UI `bom-level hideSave` assertion. Yeni regresyon eklemeyin; düzeltirken bu ikisini hedefleyin.
 
