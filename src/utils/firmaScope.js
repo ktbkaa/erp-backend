@@ -52,7 +52,7 @@ function andItemCompany(stokAlias, firmaId, params) {
   )`;
 }
 
-/** Cari: company_id veya is_yeri bağından */
+/** Cari: company_id VEYA plant→plants VEYA partner_company_params (stok ile aynı model) */
 function andPartnerCompany(cariAlias, firmaId, params) {
   if (!firmaId) return '';
   params.push(firmaId);
@@ -60,6 +60,12 @@ function andPartnerCompany(cariAlias, firmaId, params) {
   return ` AND (
     ${cariAlias}.company_id = ${p}
     OR ${cariAlias}.plant_id IN (SELECT id FROM plants WHERE company_id = ${p})
+    OR EXISTS (
+      SELECT 1 FROM partner_company_params fp
+      WHERE fp.partner_id = ${cariAlias}.id
+        AND fp.company_id = ${p}
+        AND fp.is_active IS DISTINCT FROM FALSE
+    )
   )`;
 }
 
@@ -107,7 +113,7 @@ async function assertItemCompanyRecord(clientOrPool, itemId, firmaId) {
   return r.rows.length > 0;
 }
 
-/** Cari: company_id veya plant üzerinden firma (liste ile uyumlu). */
+/** Cari GET/PUT: liste filtresi (andPartnerCompany) ile aynı kapsam. */
 async function assertPartnerCompanyRecord(clientOrPool, partnerId, firmaId) {
   if (!firmaId || !partnerId) return true;
   const r = await clientOrPool.query(
@@ -116,6 +122,12 @@ async function assertPartnerCompanyRecord(clientOrPool, partnerId, firmaId) {
        AND (
          c.company_id = $2
          OR c.plant_id IN (SELECT id FROM plants WHERE company_id = $2)
+         OR EXISTS (
+           SELECT 1 FROM partner_company_params fp
+           WHERE fp.partner_id = c.id
+             AND fp.company_id = $2
+             AND fp.is_active IS DISTINCT FROM FALSE
+         )
        )
      LIMIT 1`,
     [partnerId, firmaId]

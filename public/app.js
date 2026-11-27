@@ -14099,10 +14099,13 @@ function syncFormBrowserUrl(screen) {
  * Ödeme / PB alanları da boşsa cari kartından alınır.
  */
 async function fillAddressFromPartner(cariId, { force = false } = {}) {
-  if (!cariId || !state.formRecord) return;
+  if (!cariId || !state.formRecord) return false;
   try {
     const cari = await api(`/partners/${cariId}`);
-    if (!cari) return;
+    if (!cari) {
+      toast('Cari kartı okunamadı (firma kapsamı veya kayıt yok).');
+      return false;
+    }
     const rec = state.formRecord;
     const sevkList = Array.isArray(cari.sevk_adresleri) ? cari.sevk_adresleri : [];
     const varsayilan = sevkList.find((a) => a.is_default && !a.is_inactive)
@@ -14138,8 +14141,11 @@ async function fillAddressFromPartner(cariId, { force = false } = {}) {
         if (!row.currency_code) row.currency_code = cari.currency_code;
       });
     }
+    return true;
   } catch (err) {
     console.warn('Cari adres doldurulamadı', err);
+    toast(err?.hata || err?.message || 'Cari bilgileri forma aktarılamadı.');
+    return false;
   }
 }
 
@@ -24126,9 +24132,9 @@ function bindCascadeLookups(_screen) {
       // fillCariAdres: müşteri → Adres sekmesi (sevk_*) otomatik
       if (f?.fillCariAdres && el.value) {
         state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
-        await fillAddressFromPartner(el.value, { force: true });
+        const ok = await fillAddressFromPartner(el.value, { force: true });
         renderForm(scr);
-        toast('Cari adres / ödeme bilgileri forma aktarıldı');
+        if (ok) toast('Cari adres / ödeme bilgileri forma aktarıldı');
         return;
       }
     }
