@@ -381,7 +381,24 @@
     </div>
   </div>
 
-  <script src="/app.js?v=20261023faturaYonetim"></script>
+  <div id="lookupBrowserDialog" class="cvt-overlay" hidden>
+    <div class="cvt-dialog lookup-browser-dialog" role="dialog" aria-modal="true" aria-labelledby="lookupBrowserTitle">
+      <header class="cvt-head">
+        <h2 id="lookupBrowserTitle">Kayıt seç</h2>
+        <button type="button" class="icon-btn" id="lookupBrowserClose" aria-label="Kapat">×</button>
+      </header>
+      <div class="lookup-browser-toolbar">
+        <input type="search" id="lookupBrowserSearch" class="lookup-browser-search" placeholder="Ara (kod / ad)…" autocomplete="off" />
+        <span class="lookup-browser-count" id="lookupBrowserCount"></span>
+      </div>
+      <div class="cvt-body lookup-browser-body" id="lookupBrowserBody"></div>
+      <footer class="cvt-foot">
+        <button type="button" class="btn ghost" id="lookupBrowserCancel">Vazgeç</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="/app.js?v=20261025lookupBrowse"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {
