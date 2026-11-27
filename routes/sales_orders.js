@@ -415,9 +415,9 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                 INSERT INTO shipment_orders
                     (shipment_no, sales_order_id, partner_id, warehouse_id, ship_date, ship_to_address,
                      ship_city, ship_district, ship_country, ship_postal_code, status, movement_code_id, description,
-                     source_document_type, source_document_id)
+                     source_document_type, source_document_id, company_id)
                 VALUES ($1,$2,$3,$4,CURRENT_DATE,$5,$6,$7,COALESCE($8,'TR'),$9,
-                        COALESCE($10,'Onayli'),$11,$12,$13,$14)
+                        COALESCE($10,'Onayli'),$11,$12,$13,$14,$15)
                 RETURNING id
                 `,
                 [
@@ -428,6 +428,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                     req.body.status || 'Onayli', hk?.id || null,
                     req.body.description || `Sipariş ${siparis.order_no}`,
                     BELGE_TIPI.SATIS_SIPARIS, siparis.id,
+                    siparis.company_id || req.body.company_id || null,
                 ]
             );
             const sid = baslik.rows[0].id;

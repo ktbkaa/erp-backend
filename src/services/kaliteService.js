@@ -61,7 +61,7 @@ async function kkEmriOlustur(client, {
         `
         INSERT INTO qc_orders
             (order_no, direction, item_id, lot_id, warehouse_id, target_warehouse_id, plan_id,
-             quantity, status, source_type, source_id, stock_movement_id, description)
+             quantity, status, source_type, source_id, item_movement_id, description)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Acik',$9,$10,$11,$12)
         RETURNING *
         `,
@@ -287,7 +287,7 @@ async function emirOnayla(client, emirId, {
             target_warehouse_id=COALESCE($4, target_warehouse_id),
             status=$5,
             transfer_movement_id=COALESCE($6, transfer_movement_id),
-            approved_by_id=$7,
+            approved_by_user_id=$7,
             onay_date=CURRENT_TIMESTAMP,
             description=COALESCE($8, description)
         WHERE id=$1

@@ -244,7 +244,7 @@ router.post('/', async (req, res) => {
             const firmaId = company_id || siparis.rows[0].company_id || firmaIdFromReq(req) || null;
             const kabul = await client.query(
                 `INSERT INTO goods_receipts (
-                    receipt_no, purchase_order_id, warehouse_id, stock_movement_id, company_id, plant_id,
+                    receipt_no, purchase_order_id, warehouse_id, item_movement_id, company_id, plant_id,
                     vendor_delivery_note_no, delivery_date, vendor_invoice_no,
                     receipt_date, description, internal_note, gkk_gerekli, received_by, status,
                     vendor_delivery_note_id
@@ -426,13 +426,16 @@ router.post('/:id/fatura-olustur', async (req, res, next) => {
                 `INSERT INTO invoices (
                     invoice_no, partner_id, invoice_type, total_amount,
                     net_amount, tax_amount, payable_amount,
-                    goods_receipt_id, purchase_order_id, source_document_type, source_document_id,
-                    status, payment_term_code, currency_code, exchange_rate
-                 ) VALUES ($1,$2,'Alis',$3,$3,$4,$5,$6,$7,'MAL_KABUL',$6,'Taslak',$8,'TRY',1)
+                    goods_receipt_id, source_document_type, source_document_id,
+                    status, payment_term_code, currency_code, exchange_rate, company_id,
+                    description
+                 ) VALUES ($1,$2,'Alis',$3,$3,$4,$5,$6,'MAL_KABUL',$6,'Taslak',$7,'TRY',1,$8,$9)
                  RETURNING id`,
                 [
                     no, k.rows[0].partner_id, toplam, toplamKdv, toplam + toplamKdv,
-                    kabulId, k.rows[0].purchase_order_id, req.body.payment_term_code || null,
+                    kabulId, req.body.payment_term_code || null,
+                    k.rows[0].company_id || null,
+                    req.body.description || `Mal kabul ${k.rows[0].receipt_no || kabulId}`,
                 ]
             );
             const id = f.rows[0].id;
