@@ -1,0 +1,3264 @@
+[
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "numarator-tanimi",
+    "techId": "SYS-NUM-SCR-001",
+    "title": "Numaratör Tanımı",
+    "endpoint": "/kod-serileri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Seri kodu",
+      "Ekran adı",
+      "Önek"
+    ],
+    "columns": [
+      "Seri",
+      "Önek",
+      "Açıklama",
+      "Ekran",
+      "Son no",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "olcu-birimleri",
+    "techId": "MDM-UOM-SCR-001",
+    "title": "Ölçü Birimleri",
+    "endpoint": "/olcu-birimleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Birim kodu",
+      "Birim adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "kategori-tanimi",
+    "techId": "MDM-CAT-SCR-001",
+    "title": "Kategori Tanımı",
+    "endpoint": "/kategoriler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "KATEGORI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kategori kodu",
+      "Kategori adı",
+      "Tip"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Tip",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "ulke-tanimi",
+    "techId": "MDM-CTRY-SCR-001",
+    "title": "Ülke Tanımı",
+    "endpoint": "/ulkeler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ULKE",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Ülke kodu",
+      "Ülke adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "para-birimi-tanimi",
+    "techId": "MDM-CUR-SCR-001",
+    "title": "Para Birimi Tanımı",
+    "endpoint": "/para-birimleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "PARA_BIRIM",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "PB kodu",
+      "PB adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Sembol",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "sehir-tanimi",
+    "techId": "MDM-CITY-SCR-001",
+    "title": "Şehir / İl Tanımı",
+    "endpoint": "/sehirler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SEHIR",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Şehir kodu",
+      "Şehir adı",
+      "Ülke"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Ülke",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "ilce-tanimi",
+    "techId": "MDM-DIST-SCR-001",
+    "title": "İlçe Tanımı",
+    "endpoint": "/ilceler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ILCE",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "İlçe kodu",
+      "İlçe adı",
+      "Şehir"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Şehir",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "odeme-kosulu-tanimi",
+    "techId": "MDM-PAYT-SCR-001",
+    "title": "Ödeme Koşulu",
+    "endpoint": "/odeme-kosullari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ODEME_KOSUL",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Vade (gün)",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "teslimat-kosulu-tanimi",
+    "techId": "MDM-DLVT-SCR-001",
+    "title": "Teslimat Koşulu",
+    "endpoint": "/teslimat-kosullari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "TESLIMAT_KOSUL",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "dil-tanimi",
+    "techId": "MDM-LANG-SCR-001",
+    "title": "Dil Tanımı",
+    "endpoint": "/diller",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "DIL",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "banka-tanimi",
+    "techId": "MDM-BANK-SCR-001",
+    "title": "Banka Tanımı",
+    "endpoint": "/bankalar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "BANKA",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "SWIFT",
+      "Ülke",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "doviz-kur-tanimi",
+    "techId": "FIN-FX-SCR-001",
+    "title": "Döviz Kurları",
+    "endpoint": "/doviz-kurlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kaynak PB",
+      "Hedef PB"
+    ],
+    "columns": [
+      "Tarih",
+      "Kaynak",
+      "Hedef",
+      "Alış",
+      "Satış",
+      "Kaynak"
+    ]
+  },
+  {
+    "moduleId": "sabit-tanimlar",
+    "moduleTitle": "Sabit Tanımlar",
+    "sectionTitles": [],
+    "id": "hareket-kodlari",
+    "techId": "INV-MVTC-SCR-001",
+    "title": "Hareket Kodları",
+    "endpoint": "/hareket-kodlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "HAREKET_KOD",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Hareket kodu",
+      "Hareket adı",
+      "Belge tipi"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Belge tipi",
+      "Yön",
+      "Stok",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "sectionTitles": [
+      "Kullanıcılar"
+    ],
+    "id": "kullanicilar",
+    "techId": "SYS-USR-SCR-001",
+    "title": "Kullanıcılar",
+    "endpoint": "/kullanicilar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kullanıcı adı",
+      "Ad",
+      "Rol",
+      "Grup"
+    ],
+    "columns": [
+      "Kullanıcı adı",
+      "Ad",
+      "Soyad",
+      "Rol",
+      "Grup",
+      "Şifre",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "sectionTitles": [
+      "Kullanıcılar"
+    ],
+    "id": "kullanici-gruplari",
+    "techId": "SYS-GRP-SCR-001",
+    "title": "Kullanıcı Grupları",
+    "endpoint": "/kullanici-gruplari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "KULLANICI_GRUP",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Grup kodu",
+      "Grup adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "SA onay",
+      "Kalite",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "sistem-parametreleri",
+    "techId": "SYS-PRM-SCR-001",
+    "title": "Sistem Parametreleri",
+    "endpoint": "/sistem-parametreleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Parametre",
+      "Modül"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Değer",
+      "Modül"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "sectionTitles": [
+      "Gözlem"
+    ],
+    "id": "audit-log",
+    "techId": "SYS-AUD-SCR-001",
+    "title": "Audit Log",
+    "endpoint": "/audit-log",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Tablo",
+      "Ekran / yol",
+      "Kullanıcı",
+      "İşlem"
+    ],
+    "columns": [
+      "Zaman",
+      "Kullanıcı",
+      "Tablo",
+      "Kayıt",
+      "İşlem",
+      "Yol"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "sectionTitles": [
+      "Gözlem"
+    ],
+    "id": "tablo-bilgileri",
+    "techId": "SYS-META-SCR-001",
+    "title": "Tablo Bilgileri",
+    "endpoint": "/meta/ekranlar",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [],
+    "columns": [
+      "Ekran",
+      "Teknik kimlik",
+      "Ana tablo"
+    ]
+  },
+  {
+    "moduleId": "sistem",
+    "moduleTitle": "Sistem",
+    "sectionTitles": [
+      "İletişim"
+    ],
+    "id": "eposta-gonderimleri",
+    "techId": "SYS-MAIL-SCR-001",
+    "title": "E-posta Gönderimleri",
+    "endpoint": "/eposta-gonderimleri",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Durum",
+      "Alıcı",
+      "Kaynak"
+    ],
+    "columns": [
+      "ID",
+      "Kaynak",
+      "Alıcı",
+      "Konu",
+      "Durum",
+      "Deneme",
+      "Gönderim",
+      "Hata"
+    ]
+  },
+  {
+    "moduleId": "ana-veri",
+    "moduleTitle": "Ana Veri",
+    "sectionTitles": [
+      "Organizasyon"
+    ],
+    "id": "firmalar",
+    "techId": "MDM-CO-SCR-001",
+    "title": "Firmalar",
+    "endpoint": "/firmalar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "FIRMA",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Firma kodu",
+      "Firma adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad"
+    ]
+  },
+  {
+    "moduleId": "ana-veri",
+    "moduleTitle": "Ana Veri",
+    "sectionTitles": [
+      "Organizasyon"
+    ],
+    "id": "is-yerleri",
+    "techId": "MDM-PLANT-SCR-001",
+    "title": "İş Yerleri",
+    "endpoint": "/is-yerleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ISYERI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Firma",
+      "İş yeri kodu",
+      "İş yeri adı"
+    ],
+    "columns": [
+      "Firma",
+      "Kod",
+      "Ad",
+      "Adres"
+    ]
+  },
+  {
+    "moduleId": "ana-veri",
+    "moduleTitle": "Ana Veri",
+    "sectionTitles": [
+      "Organizasyon"
+    ],
+    "id": "depolar",
+    "techId": "MDM-WH-SCR-001",
+    "title": "Depolar",
+    "endpoint": "/depolar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "DEPO",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Firma",
+      "İş yeri",
+      "Depo kodu",
+      "Depo adı"
+    ],
+    "columns": [
+      "Firma",
+      "İş yeri",
+      "Kod",
+      "Ad",
+      "Varsayılan"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Kartlar"
+    ],
+    "id": "stok-karti",
+    "techId": "INV-ITM-SCR-001",
+    "title": "Stok Kartı",
+    "endpoint": "/stoklar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "HAMMADDE",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Firma",
+      "İş yeri",
+      "Stok kodu",
+      "Stok adı"
+    ],
+    "columns": [
+      "Firma",
+      "İş yeri",
+      "Stok kodu",
+      "Stok adı",
+      "Tip",
+      "Tedarik",
+      "Birim",
+      "Fiyat"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "depo-bakiye",
+    "techId": "INV-BAL-SCR-001",
+    "title": "Depo Bakiye",
+    "endpoint": "/stok-bakiyeleri",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Depo kodu",
+      "Stok kodu",
+      "Stok adı",
+      "Stok tipi",
+      "Stok statü",
+      "Parti no",
+      "Yalnızca stokta olanları göster"
+    ],
+    "columns": [
+      "Depo",
+      "Stok",
+      "Ad",
+      "Tip",
+      "Statü",
+      "Parti",
+      "Bakiye",
+      "Rezerve",
+      "Bloke",
+      "Tahsis"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "stok-hareketleri",
+    "techId": "INV-MVT-SCR-001",
+    "title": "Stok Hareketleri",
+    "endpoint": "/stok-hareketleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "STOK_HAREKET",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Hareket no",
+      "Tip",
+      "Depo",
+      "Hareket kodu"
+    ],
+    "columns": [
+      "Hareket",
+      "Kod",
+      "Tip",
+      "Depo",
+      "Referans",
+      "Fiziksel",
+      "Mali",
+      "Maliyet",
+      "Kullanıcı",
+      "Onay"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "transfer-emirleri",
+    "techId": "WMS-XFER-SCR-001",
+    "title": "Transfer Emirleri",
+    "endpoint": "/transfer-emirleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "TRANSFER_EMRI",
+    "approveAction": "Onayla (Transfer)",
+    "convertAction": null,
+    "filters": [
+      "Emir no",
+      "Durum"
+    ],
+    "columns": [
+      "Emir",
+      "Kaynak",
+      "Hedef",
+      "Talep",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "sayim-belgeleri",
+    "techId": "WMS-CNT-SCR-001",
+    "title": "Sayım Belgeleri",
+    "endpoint": "/sayim-belgeleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SAYIM_BELGE",
+    "approveAction": "Onayla (Düzelt)",
+    "convertAction": null,
+    "filters": [
+      "Belge no",
+      "Durum"
+    ],
+    "columns": [
+      "Belge",
+      "Depo",
+      "Tarih",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "stok-partileri",
+    "techId": "INV-LOT-SCR-001",
+    "title": "Stok Partileri",
+    "endpoint": "/stok-partileri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "PARTI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Parti no",
+      "Stok kodu"
+    ],
+    "columns": [
+      "Parti",
+      "Stok",
+      "Ad",
+      "Politika",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Planlama"
+    ],
+    "id": "mrp-bagimsiz-ihtiyac",
+    "techId": "MFG-IR-SCR-001",
+    "title": "MRP Bağımsız İhtiyaç",
+    "endpoint": "/mrp/bagimsiz-ihtiyaclar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "MRP_BI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "No",
+      "Stok",
+      "Kaynak"
+    ],
+    "columns": [
+      "No",
+      "Stok",
+      "Ad",
+      "Miktar",
+      "İhtiyaç tar.",
+      "Kaynak",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Planlama"
+    ],
+    "id": "mrp-calisma",
+    "techId": "MFG-MRP-SCR-001",
+    "title": "MRP Çalıştır",
+    "endpoint": "/mrp/calismalar",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Çalışma no",
+      "Durum"
+    ],
+    "columns": [
+      "No",
+      "Durum",
+      "Başlangıç",
+      "Bitiş",
+      "Satır",
+      "Net>0",
+      "Açıklama"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Planlama"
+    ],
+    "id": "mrp-hesap",
+    "techId": "MFG-MRP-SCR-002",
+    "title": "MRP Anlık Hesap",
+    "endpoint": "/mrp",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Stok kodu",
+      "Öneri"
+    ],
+    "columns": [
+      "Stok",
+      "Ad",
+      "Bağımsız",
+      "Bağımlı",
+      "Emniyet",
+      "Eldeki",
+      "Açık SA",
+      "Açık UE",
+      "Net",
+      "Öneri miktar"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Planlama"
+    ],
+    "id": "mrp-sonuclar",
+    "techId": "MFG-MRP-RES-001",
+    "title": "MRP Sonuçları",
+    "endpoint": "/mrp/calismalar",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Stok",
+      "Öneri"
+    ],
+    "columns": [
+      "Stok",
+      "Ad",
+      "Bağımsız",
+      "Bağımlı",
+      "Eldeki",
+      "Net",
+      "Öneri miktar",
+      "Öneri",
+      "Dönüştü",
+      "Belge"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "stok-rezervasyonlari",
+    "techId": "INV-RSV-SCR-001",
+    "title": "Stok Rezervasyonları",
+    "endpoint": "/stok-rezervasyonlari",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Rezervasyon",
+      "Stok",
+      "Durum"
+    ],
+    "columns": [
+      "No",
+      "Sipariş",
+      "Stok",
+      "Ad",
+      "Miktar",
+      "Kalan",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "stok-serileri",
+    "techId": "INV-SER-SCR-001",
+    "title": "Stok Serileri",
+    "endpoint": "/stok-serileri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SERI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Seri no",
+      "Stok",
+      "Durum"
+    ],
+    "columns": [
+      "Seri",
+      "Stok",
+      "Ad",
+      "Depo",
+      "Parti",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "stok",
+    "moduleTitle": "Stok",
+    "sectionTitles": [
+      "Bakiye & Hareket"
+    ],
+    "id": "stok-ikame",
+    "techId": "INV-SUB-SCR-001",
+    "title": "Stok İkame",
+    "endpoint": "/stok-ikame",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Stok",
+      "İkame"
+    ],
+    "columns": [
+      "Stok",
+      "Ad",
+      "İkame",
+      "İkame ad",
+      "Öncelik"
+    ]
+  },
+  {
+    "moduleId": "cari",
+    "moduleTitle": "Cari",
+    "sectionTitles": [
+      "Kartlar"
+    ],
+    "id": "cari-kartlari",
+    "techId": "MDM-BP-SCR-001",
+    "title": "Cari Kartları",
+    "endpoint": "/cariler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "MUSTERI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "İş yeri",
+      "Cari kodu",
+      "Cari adı",
+      "Tür"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Tür",
+      "İş yeri",
+      "Telefon",
+      "İl"
+    ]
+  },
+  {
+    "moduleId": "cari",
+    "moduleTitle": "Cari",
+    "sectionTitles": [
+      "Finans"
+    ],
+    "id": "cari-ekstre",
+    "techId": "FIN-BPST-SCR-001",
+    "title": "Cari Ekstre",
+    "endpoint": "/cari-hareketleri",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Hareket no",
+      "Yön",
+      "Belge tipi"
+    ],
+    "columns": [
+      "No",
+      "Tarih",
+      "Yön",
+      "Tutar",
+      "Belge",
+      "Açıklama"
+    ]
+  },
+  {
+    "moduleId": "cari",
+    "moduleTitle": "Cari",
+    "sectionTitles": [
+      "Finans"
+    ],
+    "id": "tahsilat-odemeler",
+    "techId": "FIN-APAR-SCR-001",
+    "title": "Tahsilat / Ödeme",
+    "endpoint": "/tahsilat-odemeler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "TAHSILAT",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Belge no",
+      "Tip",
+      "Cari"
+    ],
+    "columns": [
+      "Belge",
+      "Tip",
+      "Cari",
+      "Tutar",
+      "PB",
+      "Kur",
+      "Ödeme",
+      "Kasa",
+      "Banka",
+      "Çek no"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Ürün Ağacı"
+    ],
+    "id": "urun-agaci",
+    "techId": "MFG-BOM-SCR-001",
+    "title": "Ürün Ağacı",
+    "endpoint": "/urun-agaclari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "URUN_AGACI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Ağaç kodu",
+      "Ağaç adı",
+      "Stok kodu",
+      "Stok adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Kök stok",
+      "Kök adı",
+      "Tip",
+      "Geç. bitiş"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Ürün Ağacı"
+    ],
+    "id": "bom-patlatma",
+    "techId": "MFG-BOM-SCR-002",
+    "title": "Ürün Ağacı Patlatma",
+    "endpoint": "/bom/patlatma",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Ağaç kodu",
+      "Mamul stok",
+      "Ağaç",
+      "Mamul miktar",
+      "Bileşen stok"
+    ],
+    "columns": [
+      "Sev.",
+      "Ağaç",
+      "Stok",
+      "Ad",
+      "Tip",
+      "Birim miktar",
+      "Toplam ihtiyaç",
+      "Birim",
+      "Yol"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Ürün Ağacı"
+    ],
+    "id": "bom-seviye-listesi",
+    "techId": "MFG-BOM-SCR-003",
+    "title": "Ürün Ağacı Seviye Listesi",
+    "endpoint": "/bom/seviye-listesi",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Ağaç kodu",
+      "Stok kodu",
+      "Mamul"
+    ],
+    "columns": [
+      "Ağaç",
+      "Seviye",
+      "Stok",
+      "Ad",
+      "Miktar",
+      "Yol"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Ürün Ağacı"
+    ],
+    "id": "bom-malzeme-degisikligi",
+    "techId": "MFG-BOM-SCR-004",
+    "title": "Malzeme Değişikliği",
+    "endpoint": "/bom/malzeme-degisikligi",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "İşlem",
+      "Eski stok"
+    ],
+    "columns": [
+      "İşlem",
+      "Eski",
+      "Yeni",
+      "Satır",
+      "Açıklama"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "sinif-tanimi",
+    "techId": "MFG-CLS-SCR-001",
+    "title": "Sınıf Tanımı",
+    "endpoint": "/stok-siniflari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "STOK_SINIF",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Sınıf kodu",
+      "Sınıf adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Üst",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "is-merkezleri",
+    "techId": "MFG-WC-SCR-001",
+    "title": "İş Merkezleri",
+    "endpoint": "/is-merkezleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "IS_MERKEZI",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Merkez kodu",
+      "Merkez adı",
+      "İş yeri"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "İş yeri"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "rotalar",
+    "techId": "MFG-ROUT-SCR-001",
+    "title": "Rotalar",
+    "endpoint": "/rotalar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ROTA",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Rota kodu",
+      "Rota adı",
+      "Stok kodu"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Stok",
+      "Ürün ağacı",
+      "Varsayılan",
+      "Şablon"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "uretim-emri-tipleri",
+    "techId": "MFG-WOT-SCR-001",
+    "title": "Üretim Emri Tipleri",
+    "endpoint": "/uretim-emri-tipleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "URETIM_EMRI_TIP",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Tip kodu",
+      "Tip adı",
+      "Planlı/Kesin"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Planlı/Kesin",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "İş Emri"
+    ],
+    "id": "uretim-planlari",
+    "techId": "MFG-PLN-SCR-001",
+    "title": "Üretim Planları",
+    "endpoint": "/uretim-planlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "URETIM_PLAN",
+    "approveAction": null,
+    "convertAction": "İş Emrine Çevir",
+    "filters": [
+      "Plan no",
+      "Stok kodu",
+      "Durum"
+    ],
+    "columns": [
+      "Plan",
+      "Stok",
+      "Ad",
+      "Miktar",
+      "Teslim",
+      "Başlatıldı",
+      "Durum",
+      "Emir"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "İş Emri"
+    ],
+    "id": "uretim-emirleri",
+    "techId": "MFG-WO-SCR-001",
+    "title": "Üretim Emirleri",
+    "endpoint": "/uretim-emirleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "URETIM_EMRI",
+    "approveAction": "Onayla",
+    "convertAction": null,
+    "filters": [
+      "Emir no",
+      "Stok kodu",
+      "Tip",
+      "Durum",
+      "Açık/Kapalı"
+    ],
+    "columns": [
+      "Emir",
+      "Tip",
+      "Stok",
+      "Sipariş",
+      "Plan",
+      "Üretilen",
+      "P/K",
+      "A/K",
+      "Onay",
+      "Başlatıldı"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "İş Emri"
+    ],
+    "id": "siparis-is-emri",
+    "techId": "MFG-WO-SCR-002",
+    "title": "Siparişten İş Emri",
+    "endpoint": "/uretim-emirleri/siparis-adaylari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Sipariş",
+      "Stok",
+      "Cari"
+    ],
+    "columns": [
+      "Sipariş",
+      "Cari",
+      "Stok",
+      "Ad",
+      "Sip. miktar",
+      "Kalan",
+      "Ağaç",
+      "Rota"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "İş Emri"
+    ],
+    "id": "toplu-is-emri",
+    "techId": "MFG-WO-SCR-003",
+    "title": "Toplu İş Emri",
+    "endpoint": "/uretim-emirleri/siparis-adaylari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Sipariş",
+      "Stok"
+    ],
+    "columns": [
+      "Sipariş",
+      "Stok",
+      "Kalan",
+      "Ağaç",
+      "Rota"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "Depo"
+    ],
+    "id": "stok-depo",
+    "techId": "INV-WHL-SCR-001",
+    "title": "Depo Stok Bağ",
+    "endpoint": "/stok-depo",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Stok",
+      "Depo",
+      "İş yeri"
+    ],
+    "columns": [
+      "Stok",
+      "Stok adı",
+      "Depo",
+      "Depo adı",
+      "İş yeri",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "uretim",
+    "moduleTitle": "Üretim",
+    "sectionTitles": [
+      "İş Emri"
+    ],
+    "id": "uretim-girisleri",
+    "techId": "MFG-RCPT-SCR-001",
+    "title": "Üretim Girişleri",
+    "endpoint": "/uretim-girisleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Giriş no",
+      "Emir no",
+      "Stok"
+    ],
+    "columns": [
+      "Giriş",
+      "Emir",
+      "Stok",
+      "Miktar",
+      "Tarih"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "sectionTitles": [],
+    "id": "satin-alma-teklif-istekleri",
+    "techId": "PUR-RFQ-SCR-001",
+    "title": "Satınalma Teklif İstekleri",
+    "endpoint": "/satin-alma-teklif-istekleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": true,
+    "deprecated": true,
+    "helpText": null,
+    "numeratorSeri": "SATINALMA_TEKLIF_ISTEK",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "İstek no",
+      "Durum"
+    ],
+    "columns": [
+      "İstek",
+      "Durum",
+      "Açıklama"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "sectionTitles": [
+      "Teklif"
+    ],
+    "id": "satin-alma-teklifleri",
+    "techId": "PUR-QUO-SCR-001",
+    "title": "Satınalma Teklifleri",
+    "endpoint": "/satin-alma-teklifleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SATINALMA_TEKLIF",
+    "approveAction": "Teklifi Onayla",
+    "convertAction": "Siparişe Dönüştür",
+    "filters": [
+      "Teklif no",
+      "Cari",
+      "Durum"
+    ],
+    "columns": [
+      "Teklif",
+      "Cari",
+      "Talep",
+      "PB",
+      "Geçerlilik",
+      "Durum",
+      "Proje"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "sectionTitles": [
+      "Teklif"
+    ],
+    "id": "satin-alma-anlasmalari",
+    "techId": "PUR-AGR-SCR-001",
+    "title": "Satınalma Anlaşmaları",
+    "endpoint": "/satin-alma-anlasmalari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SATINALMA_ANLASMA",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Anlaşma no",
+      "Cari",
+      "Durum"
+    ],
+    "columns": [
+      "Anlaşma",
+      "Cari",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "sectionTitles": [
+      "Sipariş"
+    ],
+    "id": "satin-alma-talepleri",
+    "techId": "PUR-REQ-SCR-001",
+    "title": "Satınalma Talepleri",
+    "endpoint": "/satin-alma-talepleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SATINALMA_TALEP",
+    "approveAction": "Onayla + E-posta",
+    "convertAction": null,
+    "filters": [
+      "Talep no",
+      "Durum"
+    ],
+    "columns": [
+      "Talep",
+      "Durum",
+      "Açıklama"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "sectionTitles": [
+      "Sipariş"
+    ],
+    "id": "satin-alma-siparisleri",
+    "techId": "PUR-ORD-SCR-001",
+    "title": "Satınalma Siparişleri",
+    "endpoint": "/satin-alma-siparisleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SATINALMA_SIPARIS",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Sipariş no",
+      "Cari",
+      "Durum"
+    ],
+    "columns": [
+      "Sipariş",
+      "Ted. sip. no",
+      "Cari",
+      "Tarih",
+      "Teslim",
+      "PB",
+      "Ara top.",
+      "KDV",
+      "Genel",
+      "Ödeme koş."
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "sectionTitles": [
+      "Mal Kabul"
+    ],
+    "id": "mal-kabuller",
+    "techId": "PUR-GR-SCR-001",
+    "title": "Mal Kabuller",
+    "endpoint": "/mal-kabuller",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "MAL_KABUL",
+    "approveAction": null,
+    "convertAction": "Alış Faturası Oluştur",
+    "filters": [
+      "Kabul no",
+      "Sipariş no",
+      "Depo"
+    ],
+    "columns": [
+      "Kabul",
+      "Sipariş",
+      "Ted. irsaliye",
+      "Depo",
+      "Tarih",
+      "Durum",
+      "Kabul eden",
+      "GKK"
+    ]
+  },
+  {
+    "moduleId": "satinalma",
+    "moduleTitle": "Satınalma",
+    "sectionTitles": [
+      "Mal Kabul"
+    ],
+    "id": "tedarikci-irsaliyeleri",
+    "techId": "PUR-DLV-SCR-001",
+    "title": "Tedarikçi İrsaliyeleri",
+    "endpoint": "/tedarikci-irsaliyeleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "TEDARIKCI_IRSALIYE",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "İrsaliye no",
+      "Tedarikçi",
+      "Durum"
+    ],
+    "columns": [
+      "İrsaliye",
+      "Tedarikçi",
+      "Sipariş",
+      "Tarih",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "crm-firsat-asamalari",
+    "techId": "CRM-STG-SCR-001",
+    "title": "Fırsat Aşamaları",
+    "endpoint": "/crm-firsat-asamalari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Sıra",
+      "Kazanan",
+      "Kaybeden",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "crm-faaliyet-tipleri",
+    "techId": "CRM-ACTT-SCR-001",
+    "title": "Faaliyet Tipleri",
+    "endpoint": "/crm-faaliyet-tipleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Pipeline"
+    ],
+    "id": "crm-adaylar",
+    "techId": "CRM-LEAD-SCR-001",
+    "title": "Müşteri Adayları",
+    "endpoint": "/crm-adaylar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "CRM_ADAY",
+    "approveAction": null,
+    "convertAction": "Cariye Dönüştür",
+    "filters": [
+      "Kod",
+      "Ad",
+      "Durum"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Durum",
+      "Öncelik",
+      "Sorumlu",
+      "Telefon",
+      "E-posta"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Pipeline"
+    ],
+    "id": "crm-kontaklar",
+    "techId": "CRM-CNT-SCR-001",
+    "title": "Kontaklar",
+    "endpoint": "/crm-kontaklar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "CRM_KONTAK",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad",
+      "Cari",
+      "Aday"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Soyad",
+      "Ünvan",
+      "Cari",
+      "Aday",
+      "Telefon",
+      "E-posta"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Pipeline"
+    ],
+    "id": "crm-firsatlar",
+    "techId": "CRM-OPP-SCR-001",
+    "title": "Fırsatlar",
+    "endpoint": "/crm-firsatlar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "CRM_FIRSAT",
+    "approveAction": "Fırsatı Kapat",
+    "convertAction": "Teklife Dönüştür",
+    "filters": [
+      "Kod",
+      "Ad",
+      "Aşama",
+      "Durum"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Tip",
+      "Cari",
+      "Aday",
+      "Aşama",
+      "Beklenen",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Faaliyet"
+    ],
+    "id": "crm-faaliyet-planlari",
+    "techId": "CRM-APLN-SCR-001",
+    "title": "Faaliyet Planları",
+    "endpoint": "/crm-faaliyet-planlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "CRM_PLAN",
+    "approveAction": null,
+    "convertAction": "Faaliyet Oluştur",
+    "filters": [
+      "Kod",
+      "Konu",
+      "Durum"
+    ],
+    "columns": [
+      "Kod",
+      "Konu",
+      "Tip",
+      "Cari",
+      "Aday",
+      "Fırsat",
+      "Başlangıç",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Faaliyet"
+    ],
+    "id": "crm-faaliyetler",
+    "techId": "CRM-ACT-SCR-001",
+    "title": "Faaliyetler",
+    "endpoint": "/crm-faaliyetler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "CRM_FAALIYET",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Konu",
+      "Durum"
+    ],
+    "columns": [
+      "Kod",
+      "Konu",
+      "Tip",
+      "Cari",
+      "Aday",
+      "Fırsat",
+      "Tarih",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Faaliyet"
+    ],
+    "id": "crm-gorevler",
+    "techId": "CRM-TASK-SCR-001",
+    "title": "Görevler",
+    "endpoint": "/crm-gorevler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "CRM_GOREV",
+    "approveAction": "Tamamla",
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Başlık",
+      "Durum"
+    ],
+    "columns": [
+      "Kod",
+      "Başlık",
+      "Sorumlu",
+      "Öncelik",
+      "Son tarih",
+      "Fırsat",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "crm",
+    "moduleTitle": "CRM",
+    "sectionTitles": [
+      "Faaliyet"
+    ],
+    "id": "crm-ajanda",
+    "techId": "CRM-CAL-SCR-001",
+    "title": "Ajanda",
+    "endpoint": "/crm-ajanda",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Başlık",
+      "Tip"
+    ],
+    "columns": [
+      "Başlık",
+      "Başlangıç",
+      "Bitiş",
+      "Tip",
+      "Cari",
+      "Kullanıcı"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "sectionTitles": [
+      "Sipariş"
+    ],
+    "id": "satis-teklifleri",
+    "techId": "SAL-QUO-SCR-001",
+    "title": "Satış Teklifleri",
+    "endpoint": "/satis-teklifleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SATIS_TEKLIF",
+    "approveAction": null,
+    "convertAction": "Siparişe Dönüştür",
+    "filters": [
+      "Teklif no",
+      "Cari",
+      "Durum"
+    ],
+    "columns": [
+      "Teklif",
+      "Müş. ref",
+      "Cari",
+      "Tarih",
+      "Geçerlilik",
+      "Teslim",
+      "PB",
+      "Ara",
+      "KDV",
+      "Genel"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "sectionTitles": [
+      "Sipariş"
+    ],
+    "id": "satis-siparisleri",
+    "techId": "SAL-ORD-SCR-001",
+    "title": "Satış Siparişleri",
+    "endpoint": "/siparisler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SATIS_SIPARIS",
+    "approveAction": "Stok Rezerve Et",
+    "convertAction": "Sevk Emri Oluştur",
+    "filters": [
+      "Sipariş no",
+      "Cari",
+      "Durum"
+    ],
+    "columns": [
+      "Sipariş",
+      "Müş. sip. no",
+      "Cari",
+      "Tür",
+      "Tarih",
+      "Teslim",
+      "PB",
+      "Ara top.",
+      "KDV",
+      "Genel top."
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "sectionTitles": [
+      "Sevk"
+    ],
+    "id": "sevk-emirleri",
+    "techId": "SAL-SHP-SCR-001",
+    "title": "Sevk Emirleri",
+    "endpoint": "/sevk-emirleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "SEVK_EMRI",
+    "approveAction": null,
+    "convertAction": "İrsaliye Oluştur",
+    "filters": [
+      "Sevk no",
+      "Sipariş",
+      "Durum"
+    ],
+    "columns": [
+      "Sevk",
+      "Sipariş",
+      "Cari",
+      "Depo",
+      "Sevk tar.",
+      "Plan",
+      "Öncelik",
+      "Taşıyıcı",
+      "Plaka",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "sectionTitles": [
+      "Belge Yönetimi"
+    ],
+    "id": "irsaliye-yonetimi",
+    "techId": "SAL-DLV-SCR-001",
+    "title": "İrsaliye Yönetimi",
+    "endpoint": "/irsaliyeler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": "Satış irsaliyelerinin oluşturulması, onayı, e-İrsaliye durumu ve faturalandırması bu ekrandan yönetilir.",
+    "numeratorSeri": "IRSALIYE",
+    "approveAction": "Onayla (Stok Çıkış)",
+    "convertAction": "Fatura Oluştur",
+    "filters": [
+      "İrsaliye no",
+      "Cari",
+      "Durum",
+      "e-Belge"
+    ],
+    "columns": [
+      "İrsaliye",
+      "Cari",
+      "Depo",
+      "İrs. tar.",
+      "Fiili sevk",
+      "Plaka",
+      "e-Belge",
+      "Mal",
+      "Genel",
+      "Fatura"
+    ]
+  },
+  {
+    "moduleId": "satis",
+    "moduleTitle": "Satış",
+    "sectionTitles": [
+      "Belge Yönetimi"
+    ],
+    "id": "fatura-yonetimi",
+    "techId": "SAL-INV-SCR-001",
+    "title": "Fatura Yönetimi",
+    "endpoint": "/faturalar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": "Alış ve satış faturaları tek ekranda yönetilir. Tür filtresiyle yön seçin; alışta mal kabul / 3-way eşleştirme, satışta e-Fatura alanları kullanılır.",
+    "numeratorSeri": "FATURA",
+    "approveAction": "3-way Eşleştir",
+    "convertAction": "Muhasebeleştir",
+    "filters": [
+      "Fatura no",
+      "Cari",
+      "Tür",
+      "e-Belge",
+      "Durum"
+    ],
+    "columns": [
+      "Fatura",
+      "Tür",
+      "Müş./Ted. ref",
+      "Cari",
+      "Tarih",
+      "Vade",
+      "Senaryo",
+      "e-Belge",
+      "Ara top.",
+      "KDV"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "sectionTitles": [
+      "Emirler"
+    ],
+    "id": "kk-emirleri-gkk",
+    "techId": "QLT-IQC-SCR-001",
+    "title": "GKK Emirleri",
+    "endpoint": "/kk-emirleri?yon=GKK",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": "Onayla",
+    "convertAction": null,
+    "filters": [
+      "Emir no",
+      "Stok",
+      "Durum"
+    ],
+    "columns": [
+      "Emir",
+      "Stok",
+      "Ad",
+      "Parti",
+      "Miktar",
+      "Uygun",
+      "Uygunsuz",
+      "Durum",
+      "Depo"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "sectionTitles": [
+      "Emirler"
+    ],
+    "id": "kk-emirleri-ckk",
+    "techId": "QLT-OQC-SCR-001",
+    "title": "ÇKK Emirleri",
+    "endpoint": "/kk-emirleri?yon=CKK",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": "Onayla",
+    "convertAction": null,
+    "filters": [
+      "Emir no",
+      "Stok",
+      "Durum"
+    ],
+    "columns": [
+      "Emir",
+      "Stok",
+      "Ad",
+      "Parti",
+      "Miktar",
+      "Uygun",
+      "Uygunsuz",
+      "Durum",
+      "Depo"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "sectionTitles": [
+      "Emirler"
+    ],
+    "id": "kk-uygunsuzluklar",
+    "techId": "QLT-NCR-SCR-001",
+    "title": "KK Uygunsuzluklar",
+    "endpoint": "/kk-uygunsuzluklar",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Emir no",
+      "Stok",
+      "Durum"
+    ],
+    "columns": [
+      "ID",
+      "Emir",
+      "Yön",
+      "Stok",
+      "Ret kodu",
+      "Miktar",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "sectionTitles": [
+      "Emirler"
+    ],
+    "id": "kk-capa",
+    "techId": "QLT-CAPA-SCR-001",
+    "title": "CAPA",
+    "endpoint": "/kk-capa",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "CAPA",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "CAPA no",
+      "Durum",
+      "Başlık"
+    ],
+    "columns": [
+      "No",
+      "Başlık",
+      "Uygunsuzluk",
+      "Hedef",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "kk-kontrol-planlari",
+    "techId": "QLT-PLAN-SCR-001",
+    "title": "KK Kontrol Planları",
+    "endpoint": "/kk-kontrol-planlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "KK_PLAN",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Plan kodu",
+      "Plan adı",
+      "Yön"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Yön",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "kk-stok-planlari",
+    "techId": "QLT-ITMP-SCR-001",
+    "title": "KK Stok Plan Bağları",
+    "endpoint": "/kk-stok-planlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Stok",
+      "Yön"
+    ],
+    "columns": [
+      "Stok",
+      "Ad",
+      "Yön",
+      "Plan",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "kalite",
+    "moduleTitle": "Kalite",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "kk-ret-nedenleri",
+    "techId": "QLT-REJ-SCR-001",
+    "title": "KK Ret Nedenleri",
+    "endpoint": "/kk-ret-nedenleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Onay"
+    ],
+    "id": "onaylarim",
+    "techId": "SYS-APR-SCR-001",
+    "title": "Onaylarım",
+    "endpoint": "/onay-kayitlari?benim=true",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": "Onayla",
+    "convertAction": null,
+    "filters": [
+      "Onay no",
+      "Belge no",
+      "Modül"
+    ],
+    "columns": [
+      "Onay",
+      "Modül",
+      "Belge",
+      "Özet",
+      "Tutar",
+      "Durum",
+      "Adım",
+      "Başlama"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Onay"
+    ],
+    "id": "onay-izleme",
+    "techId": "SYS-APR-SCR-002",
+    "title": "Onay İzleme",
+    "endpoint": "/onay-kayitlari",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Onay no",
+      "Belge no",
+      "Modül",
+      "Durum",
+      "Ekran"
+    ],
+    "columns": [
+      "Onay",
+      "Modül",
+      "Ekran",
+      "Belge",
+      "Tutar",
+      "Durum",
+      "Rota",
+      "Başlatan",
+      "Başlama",
+      "Kapanış"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Onay"
+    ],
+    "id": "onay-yetki-devri",
+    "techId": "SYS-APR-SCR-003",
+    "title": "Onay Yetki Devri",
+    "endpoint": "/onay-yetki-devirleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ONAY_DEVIR",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Devir kodu",
+      "Veren",
+      "Alan"
+    ],
+    "columns": [
+      "Kod",
+      "Veren",
+      "Alan",
+      "Rol",
+      "Başlangıç",
+      "Bitiş",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Sabit Tanımlar"
+    ],
+    "id": "onay-rol-tanim",
+    "techId": "SYS-APR-SCR-004",
+    "title": "Onay Rolü",
+    "endpoint": "/onay-rolleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ONAY_ROL",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Rol adı",
+      "Kişi",
+      "Firma"
+    ],
+    "columns": [
+      "Rol adı",
+      "Kişi",
+      "Kullanıcı",
+      "Firma",
+      "İş yeri",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Sabit Tanımlar"
+    ],
+    "id": "onay-kural-tanim",
+    "techId": "SYS-APR-SCR-005",
+    "title": "Onay Kuralı",
+    "endpoint": "/onay-kurallari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ONAY_KURAL",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kural adı",
+      "Ekran",
+      "Firma"
+    ],
+    "columns": [
+      "Sıra",
+      "Kod",
+      "Ad",
+      "Ekran",
+      "Firma",
+      "İş yeri",
+      "Mesaj",
+      "Oto. onay",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Sabit Tanımlar"
+    ],
+    "id": "onay-rota-tanim",
+    "techId": "SYS-APR-SCR-006",
+    "title": "Onay Rotası",
+    "endpoint": "/onay-rotalari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ONAY_ROTA",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Rota adı",
+      "Ekran",
+      "Kural"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Sürüm",
+      "Ekran",
+      "Kural",
+      "Firma",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Sabit Tanımlar"
+    ],
+    "id": "onay-mesaj-sablon",
+    "techId": "SYS-APR-SCR-007",
+    "title": "Onay Mesaj Şablonu",
+    "endpoint": "/onay-mesaj-sablonlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "ONAY_SABLON",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Olay"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Olay",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "onay",
+    "moduleTitle": "Onay Yönetimi",
+    "sectionTitles": [
+      "Sabit Tanımlar"
+    ],
+    "id": "onay-durum-tanim",
+    "techId": "SYS-APR-SCR-008",
+    "title": "Onay Durum Tanımı",
+    "endpoint": "/onay-durumlari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Sıra",
+      "Nihai",
+      "Olumlu",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "hesap-plani",
+    "techId": "FIN-COA-SCR-001",
+    "title": "Hesap Planı",
+    "endpoint": "/muhasebe-hesaplari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": "Ana/Üst hesaplar sınıflandırma içindir; fiş yalnızca Doğrudan (yaprak) hesaplara yazılır. Ülke paketi şirketin muhasebe ülkesine göre filtrelenir.",
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Hesap kodu",
+      "Hesap adı",
+      "Tip",
+      "Ülke"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "Tip",
+      "Ülke",
+      "Sınıf",
+      "Üst",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Belgeler"
+    ],
+    "id": "muhasebe-belgeleri",
+    "techId": "FIN-JE-SCR-001",
+    "title": "Muhasebe Belgeleri",
+    "endpoint": "/muhasebe-belgeleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": "Toplam borç = toplam alacak olmalıdır. Kesinleşmiş fiş değiştirilemez; hata için ters kayıt kullanın.",
+    "numeratorSeri": "MUHASEBE_BELGE",
+    "approveAction": "Kesinleştir",
+    "convertAction": "Ters Kayıt",
+    "filters": [
+      "Belge no",
+      "Durum",
+      "Ülke",
+      "Fiş tipi"
+    ],
+    "columns": [
+      "Belge",
+      "Yevmiye",
+      "Tarih",
+      "Tip",
+      "Ülke",
+      "Durum",
+      "Borç",
+      "Alacak"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "muhasebe-donemleri",
+    "techId": "FIN-PER-SCR-001",
+    "title": "Muhasebe Dönemleri",
+    "endpoint": "/muhasebe-donemleri",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": "Kapalı döneme kesin fiş yazılamaz. Yeniden açma yetki ve audit ile izlenir.",
+    "numeratorSeri": null,
+    "approveAction": "Dönemi Kapat",
+    "convertAction": "Yeniden Aç",
+    "filters": [
+      "Mali yıl",
+      "Durum"
+    ],
+    "columns": [
+      "Yıl",
+      "Dönem",
+      "Başlangıç",
+      "Bitiş",
+      "Durum",
+      "Kapatan"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "finans-vergi-kodlari",
+    "techId": "FIN-TAX-SCR-001",
+    "title": "Vergi Kodları",
+    "endpoint": "/finans-vergi-kodlari",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Ülke",
+      "Kod"
+    ],
+    "columns": [
+      "Ülke",
+      "Kod",
+      "Ad",
+      "Tür",
+      "Oran %",
+      "Hesaplanan",
+      "İndirilecek"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Banka / Kasa"
+    ],
+    "id": "finans-banka-hesaplari",
+    "techId": "FIN-BNK-SCR-001",
+    "title": "Banka Hesapları",
+    "endpoint": "/finans-nakit/banka-hesaplari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "FIN_BANKA_HESAP",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "IBAN",
+      "PB",
+      "Banka",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Banka / Kasa"
+    ],
+    "id": "finans-kasa-hesaplari",
+    "techId": "FIN-CSH-SCR-001",
+    "title": "Kasa Hesapları",
+    "endpoint": "/finans-nakit/kasa-hesaplari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "FIN_KASA",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kod",
+      "Ad"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "PB",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Belgeler"
+    ],
+    "id": "finans-nakit-hareketleri",
+    "techId": "FIN-CSHMV-SCR-001",
+    "title": "Nakit Hareketleri",
+    "endpoint": "/finans-nakit/hareketler",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "FIN_NAKIT_HAREKET",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "No",
+      "Yön",
+      "Durum"
+    ],
+    "columns": [
+      "No",
+      "Tarih",
+      "Yön",
+      "Tutar",
+      "PB",
+      "Cari",
+      "Durum"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Raporlar"
+    ],
+    "id": "mizan",
+    "techId": "FIN-TB-RPT-001",
+    "title": "Mizan",
+    "endpoint": "/mizan",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Hesap kodu",
+      "Hesap adı",
+      "Başlangıç",
+      "Bitiş"
+    ],
+    "columns": [
+      "Hesap",
+      "Ad",
+      "Borç",
+      "Alacak",
+      "Bakiye"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Raporlar"
+    ],
+    "id": "finans-yevmiye",
+    "techId": "FIN-JL-RPT-001",
+    "title": "Yevmiye Defteri",
+    "endpoint": "/finans-raporlar/yevmiye",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Başlangıç",
+      "Bitiş"
+    ],
+    "columns": [
+      "Tarih",
+      "Yevmiye",
+      "Belge",
+      "Hesap",
+      "Ad",
+      "Borç",
+      "Alacak"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Raporlar"
+    ],
+    "id": "finans-bilanco",
+    "techId": "FIN-BS-RPT-001",
+    "title": "Bilanço (Özet)",
+    "endpoint": "/finans-raporlar/bilanco",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Tarih",
+      "Ülke"
+    ],
+    "columns": [
+      "Sınıf",
+      "Kalem",
+      "Tutar"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Raporlar"
+    ],
+    "id": "finans-gelir-tablosu",
+    "techId": "FIN-PL-RPT-001",
+    "title": "Gelir Tablosu",
+    "endpoint": "/finans-raporlar/gelir-tablosu",
+    "crud": false,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Başlangıç",
+      "Bitiş",
+      "Ülke"
+    ],
+    "columns": [
+      "Hesap",
+      "Ad",
+      "Borç",
+      "Alacak",
+      "Net"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "hesap-belirleme-kurallari",
+    "techId": "FIN-ACR-SCR-001",
+    "title": "Hesap Belirleme Kuralları",
+    "endpoint": "/hesap-belirleme-kurallari",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Kural",
+      "Belge tipi"
+    ],
+    "columns": [
+      "Kod",
+      "Belge",
+      "Borç",
+      "Alacak",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Tanımlar"
+    ],
+    "id": "fiyat-listeleri",
+    "techId": "FIN-PRC-SCR-001",
+    "title": "Fiyat Listeleri",
+    "endpoint": "/fiyat-listeleri",
+    "crud": true,
+    "readOnly": false,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": "FIYAT_LISTE",
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Liste kodu",
+      "Liste adı"
+    ],
+    "columns": [
+      "Kod",
+      "Ad",
+      "PB",
+      "Aktif"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Belgeler"
+    ],
+    "id": "fatura-kontrolleri",
+    "techId": "FIN-3WAY-SCR-001",
+    "title": "Fatura Kontrolleri (3-way)",
+    "endpoint": "/fatura-kontrolleri",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Fatura",
+      "Sonuç"
+    ],
+    "columns": [
+      "Fatura",
+      "Cari",
+      "Mal kabul",
+      "SA sipariş",
+      "Fiyat fark",
+      "Miktar fark",
+      "Sonuç",
+      "Açıklama"
+    ]
+  },
+  {
+    "moduleId": "finans",
+    "moduleTitle": "Finans",
+    "sectionTitles": [
+      "Raporlar"
+    ],
+    "id": "kokpit",
+    "techId": "RPT-CPIT-SCR-001",
+    "title": "Kokpit",
+    "endpoint": "/kokpit",
+    "crud": false,
+    "readOnly": true,
+    "hidden": false,
+    "deprecated": false,
+    "helpText": null,
+    "numeratorSeri": null,
+    "approveAction": null,
+    "convertAction": null,
+    "filters": [
+      "Metrik"
+    ],
+    "columns": [
+      "Metrik",
+      "Değer"
+    ]
+  }
+]

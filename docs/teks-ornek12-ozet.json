@@ -1,0 +1,67 @@
+{
+  "firma": "TEKS",
+  "ornek1": {
+    "tag": "ORNEK1",
+    "teklif": "ST00003",
+    "siparis": "B00019",
+    "sa": "P00016",
+    "ue": "E00008",
+    "sevk": "SE00006",
+    "irsaliye": "IR00006",
+    "fatura": "FA00006",
+    "qty": 100
+  },
+  "ornek2": {
+    "tag": "ORNEK2",
+    "bi": "BI00005",
+    "mrp": "MR00004",
+    "netPozitif": 6,
+    "talep": "L00020",
+    "sa": "P00017",
+    "ue": [
+      "E00009"
+    ],
+    "sevk": "SE00007",
+    "irsaliye": "IR00007",
+    "fatura": "FA00007",
+    "siparis": "B00020",
+    "qty": 250
+  },
+  "mrp": {
+    "calisma": "MR00004",
+    "satir": 22,
+    "net": 6,
+    "oneriler": [
+      {
+        "stok": "Y00004",
+        "net": 660,
+        "oneri": "Satınalma"
+      },
+      {
+        "stok": "U00006",
+        "net": 420,
+        "oneri": "Üretim emri"
+      },
+      {
+        "stok": "H00046",
+        "net": 400,
+        "oneri": "Satınalma"
+      },
+      {
+        "stok": "H00047",
+        "net": 400,
+        "oneri": "Satınalma"
+      },
+      {
+        "stok": "H00045",
+        "net": 26.400000000000006,
+        "oneri": "Satınalma"
+      },
+      {
+        "stok": "H00019",
+        "net": 10,
+        "oneri": "Satınalma"
+      }
+    ]
+  }
+}

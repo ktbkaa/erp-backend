@@ -3,116 +3,395 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ERP Çekirdek — Operasyon Konsolu</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <title>KTB ERP</title>
+  <script>
+    /* Form solo: JS yüklenmeden önce kabuğu gizle — flash yok */
+    (function () {
+      try {
+        var q = new URLSearchParams(location.search || '');
+        if (q.get('view') === 'form') {
+          document.documentElement.classList.add('form-solo-boot');
+        }
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+  <style>
+    html.form-solo-boot, html.form-solo-boot body { background: #eef2f5 !important; }
+    html.form-solo-boot #viewLogin,
+    html.form-solo-boot #appShell { opacity: 0 !important; pointer-events: none !important; }
+    html.form-solo-boot #formSoloLoader { display: flex !important; }
+    #formSoloLoader {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      align-items: center; justify-content: center; flex-direction: column; gap: 0.85rem;
+      background: #eef2f5; font-family: "Instrument Sans", system-ui, sans-serif; color: #1a2b36;
+    }
+    #formSoloLoader .fsl-spin {
+      width: 2.2rem; height: 2.2rem; border: 3px solid #c5d0d8; border-top-color: #1f7a6b;
+      border-radius: 50%; animation: fsl-rot 0.7s linear infinite;
+    }
+    #formSoloLoader .fsl-text { font-size: 0.92rem; font-weight: 600; }
+    @keyframes fsl-rot { to { transform: rotate(360deg); } }
+  </style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css?v=20261020d" />
 </head>
 <body>
-  <div class="bg-grid"></div>
-  <header class="top">
-    <div>
-      <p class="brand">ATÖLYE ERP</p>
-      <h1>Operasyon Konsolu</h1>
-      <p class="sub">Ürün ağacı → Satınalma → Mal kabul → Üretim → Depo bakiyesi</p>
+  <div id="formSoloLoader" class="form-solo-loader" hidden aria-live="polite" aria-busy="true">
+    <div class="fsl-spin" aria-hidden="true"></div>
+    <div class="fsl-text">Ekran yükleniyor…</div>
+  </div>
+  <script>
+    (function () {
+      if (document.documentElement.classList.contains('form-solo-boot')) {
+        var el = document.getElementById('formSoloLoader');
+        if (el) el.hidden = false;
+        document.body.classList.add('form-solo', 'form-solo-booting');
+      }
+    })();
+  </script>
+  <section id="viewLogin" class="login-view" aria-label="Sistem girişi" hidden>
+    <div class="login-atmosphere" aria-hidden="true"></div>
+    <div class="login-stage">
+      <div class="login-brand">
+        <span class="login-brand-mark">KTB</span>
+        <h1 class="login-brand-name">KTB ERP</h1>
+        <p class="login-brand-lead">Üretim, stok ve satış süreçlerinizi tek omurgada yönetin.</p>
+      </div>
+      <form class="login-card" id="loginForm" autocomplete="on">
+        <h2 class="login-card-title">Sisteme giriş</h2>
+        <p class="login-card-sub">Kullanıcı adı ve şifrenizle oturum açın.</p>
+        <label class="login-field">
+          <span>Kullanıcı adı</span>
+          <input id="loginUser" name="username" type="text" autocomplete="username" required placeholder="ornek.kullanici" />
+        </label>
+        <label class="login-field">
+          <span>Şifre</span>
+          <input id="loginPass" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+        </label>
+        <p class="login-error" id="loginError" hidden role="alert"></p>
+        <button type="submit" class="btn login-submit" id="loginSubmit">Giriş yap</button>
+        <p class="login-foot">KTB ERP · UI build <span id="loginBuildTag">20261020d</span></p>
+      </form>
     </div>
-    <div class="top-actions">
-      <button id="btnRefresh" class="btn ghost">Yenile</button>
-      <a class="btn" href="/health" target="_blank">Health</a>
-    </div>
-  </header>
+  </section>
 
-  <div id="statusBox" class="status" hidden></div>
+  <div class="app-shell" id="appShell">
 
-  <nav class="tabs" id="tabs">
-    <button data-tab="ozet" class="active">Özet</button>
-    <button data-tab="cariler">Cariler</button>
-    <button data-tab="stoklar">Stoklar</button>
-    <button data-tab="bom">Ürün Ağacı</button>
-    <button data-tab="rota">Rota / İş Merkezi</button>
-    <button data-tab="satinalma">Satınalma</button>
-    <button data-tab="uretim">Üretim</button>
-    <button data-tab="bakiye">Depo Bakiye</button>
-  </nav>
-
-  <main>
-    <section id="ozet" class="panel active">
-      <h2>Döngü durumu</h2>
-      <p class="hint">Tam senaryoyu terminalde bir kez çalıştır: <code>npm run demo:cycle</code></p>
-      <div class="cards" id="ozetCards"></div>
-      <ol class="flow">
-        <li>Tek mamul ürün ağacı: MM ← YM1/YM2 ← 4 hammadde</li>
-        <li>Tek rota: OP10 → OP20 → OP30 (sırayla)</li>
-        <li>Satınalma talebi → sipariş → Ana Depo mal kabul</li>
-        <li>Tek iş emri: operasyonlar sırayla açılır/tamamlanır</li>
-        <li>YM depo → Mamul depo bakiyeleri</li>
-      </ol>
-    </section>
-
-    <section id="cariler" class="panel">
-      <h2>Cari Kartları</h2>
-      <p class="hint">Müşteri = satış · Tedarikçi = satınalma · Kod: M00001 / T00001</p>
-      <div class="table-wrap"><table id="tblCariler"></table></div>
-    </section>
-
-    <section id="stoklar" class="panel">
-      <h2>Stok Kartları</h2>
-      <p class="hint">Kod: H00001 hammadde · Y00001 yarı mamul · U00001 mamul</p>
-      <div class="table-wrap"><table id="tblStoklar"></table></div>
-    </section>
-
-    <section id="bom" class="panel">
-      <h2>Ürün Ağaçları</h2>
-      <div id="bomList" class="stack"></div>
-    </section>
-
-    <section id="rota" class="panel">
-      <h2>İş Merkezleri & Rotalar</h2>
-      <div class="split">
-        <div>
-          <h3>İş Merkezleri</h3>
-          <div class="table-wrap"><table id="tblMerkez"></table></div>
-        </div>
-        <div>
-          <h3>Rotalar</h3>
-          <div id="rotaList" class="stack"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand" id="btnHome" title="KTB ERP · UI build 20261020d" aria-label="Ana sayfa">
+        <span class="brand-mark">KTB</span>
+        <span class="brand-name">KTB ERP</span>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
+      <div class="sidebar-foot" aria-label="Menü araçları">
+        <div class="sidebar-tools" role="toolbar" aria-label="Menü araçları">
+          <button type="button" class="sidebar-tool-btn" id="btnSidebarLocate" title="Açık ekranı menüde göster" aria-label="Açık ekranı menüde göster">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+            </svg>
+          </button>
+          <button type="button" class="sidebar-tool-btn" id="btnSidebarExpand" title="Tüm başlıkları aç" aria-label="Tüm başlıkları aç">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h16M4 12h16M4 17h16"/><path d="M8 4l4 3 4-3M8 20l4-3 4 3"/>
+            </svg>
+          </button>
+          <button type="button" class="sidebar-tool-btn" id="btnSidebarCollapse" title="Tüm başlıkları kapat" aria-label="Tüm başlıkları kapat">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h16M4 12h10M4 17h16"/><path d="M16 9l4 3-4 3"/>
+            </svg>
+          </button>
         </div>
       </div>
-    </section>
+    </aside>
 
-    <section id="satinalma" class="panel">
-      <h2>Satınalma</h2>
-      <div class="split">
-        <div>
-          <h3>Talepler</h3>
-          <div id="talepList" class="stack"></div>
+    <div class="workspace">
+      <header class="workspace-bar" id="workspaceBar">
+        <div class="bar-left">
+          <button type="button" class="icon-btn" id="btnMenu" aria-label="Menüyü aç/kapat" title="Menüyü kapat/aç">☰</button>
+          <div class="firma-picker" id="firmaPicker" title="Firma profil alanı">
+            <div class="firma-profile">
+              <span class="firma-profile-label" id="firmaProfileLabel">Firma profil alanı</span>
+              <button type="button" class="firma-picker-btn" id="firmaPickerBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Firma profil alanı">
+                <span class="firma-picker-name" id="firmaPickerName">Firma seçin</span>
+                <span class="firma-picker-caret" aria-hidden="true">▾</span>
+              </button>
+            </div>
+            <ul class="firma-picker-menu" id="firmaPickerMenu" role="listbox" hidden></ul>
+          </div>
+          <h1 class="screen-title" id="screenTitle" hidden>Ekran</h1>
         </div>
-        <div>
-          <h3>Siparişler</h3>
-          <div id="sasList" class="stack"></div>
+        <div class="bar-center" id="userProfileArea">
+          <div class="user-chip" id="userChip" title="Sağ tık: çıkış">
+            <div class="user-chip-avatar" id="userChipAvatar" aria-hidden="true"></div>
+            <div class="user-chip-text">
+              <span class="user-chip-name" id="userChipName">Oturum yok</span>
+              <span class="user-chip-title" id="userChipTitle">Giriş yapın</span>
+            </div>
+          </div>
+          <ul class="user-chip-menu" id="userChipMenu" role="menu" hidden>
+            <li role="none"><button type="button" role="menuitem" data-user-action="login">Giriş yap</button></li>
+            <li role="none"><button type="button" role="menuitem" data-user-action="logout" class="danger">Çıkış yap</button></li>
+          </ul>
         </div>
+        <div class="bar-right" id="homeSearchWrap">
+          <label class="search-label" for="screenSearch">Ekran ara</label>
+          <input
+            id="screenSearch"
+            class="screen-search"
+            type="search"
+            placeholder="Ekran adı yazın (en az 3 harf)…"
+            autocomplete="off"
+          />
+          <div id="searchResults" class="search-results" hidden></div>
+        </div>
+      </header>
+
+      <nav class="doc-tabs" id="tabBar" aria-label="Açık sekmeler"></nav>
+      <div class="tab-ctx-menu" id="tabCtxMenu" role="menu" hidden>
+        <button type="button" role="menuitem" data-tab-ctx="close">Kapat</button>
+        <button type="button" role="menuitem" data-tab-ctx="refresh">Yenile</button>
+        <button type="button" role="menuitem" data-tab-ctx="close-all" class="danger">Tümünü kapat</button>
       </div>
-      <h3>Mal Kabuller</h3>
-      <div id="mkList" class="stack"></div>
-    </section>
+      <div class="tab-ctx-menu" id="listCtxMenu" role="menu" hidden></div>
 
-    <section id="uretim" class="panel">
-      <h2>Üretim Emirleri</h2>
-      <div id="ueList" class="stack"></div>
-    </section>
+      <main class="workspace-main">
+        <section id="viewHome" class="view home-view">
+          <div class="ktb-emboss" aria-hidden="true">KTB</div>
+        </section>
 
-    <section id="bakiye" class="panel">
-      <h2>Depo Bakiyeleri</h2>
-      <div class="table-wrap"><table id="tblBakiye"></table></div>
-      <h3>Depolar</h3>
-      <div class="table-wrap"><table id="tblDepo"></table></div>
-    </section>
-  </main>
+        <section id="viewScreen" class="view screen-view" hidden>
+          <div class="screen-banner" id="screenBanner">Ekran</div>
+          <div class="action-bar" id="actionBar">
+            <button type="button" class="btn action" data-action="yeni">Yeni</button>
+            <button type="button" class="btn action ghost" data-action="incele">İncele</button>
+            <button type="button" class="btn action ghost" data-action="duzelt">Düzelt</button>
+            <button type="button" class="btn action ghost" data-action="kopyala">Kopyala</button>
+            <button type="button" class="btn action danger" data-action="sil">Sil</button>
+            <button type="button" class="btn action ghost" data-action="export-csv" title="Filtrelenmiş listeyi CSV indir">CSV</button>
+            <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
+            <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
+            <button type="button" class="btn action" data-action="mrp-calistir" id="btnMrpCalistir" hidden title="MRP çalıştır ve sonuçları kaydet">MRP Çalıştır</button>
+          </div>
 
-  <footer>
-    <span>Belgeler birbirine bağlıdır · Stok yalnızca hareketle değişir</span>
-  </footer>
-  <script src="/app.js"></script>
+          <div class="filter-pane" id="filterPane">
+            <div class="filter-pane-head">
+              <h2>Filtre</h2>
+              <div class="filter-actions">
+                <button type="button" class="btn ghost" id="btnClearFilter">Temizle</button>
+                <button type="button" class="btn" id="btnApplyFilter">Uygula</button>
+              </div>
+            </div>
+            <div class="filter-grid" id="filterGrid"></div>
+          </div>
+
+          <div class="list-work" id="listWork">
+            <nav class="list-side-nav" id="listSideNav" hidden aria-label="Hareket türleri"></nav>
+            <div class="list-pane" id="listPane">
+              <div class="list-pane-head">
+                <h2>Liste</h2>
+                <span class="list-meta" id="listMeta"></span>
+              </div>
+              <div class="table-scroll">
+                <table id="dataTable">
+                  <thead id="dataHead"></thead>
+                  <tbody id="dataBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="viewMeta" class="view meta-view" hidden>
+          <div class="screen-banner" id="metaBanner">Tablo Bilgileri</div>
+          <div class="meta-layout">
+            <aside class="meta-nav" id="metaNav" aria-label="Ekran listesi">
+              <div class="meta-nav-head">
+                <input type="search" id="metaNavSearch" placeholder="Ekran ara…" autocomplete="off" />
+              </div>
+              <div class="meta-nav-body" id="metaNavBody"></div>
+            </aside>
+            <div class="meta-detail" id="metaDetail">
+              <div class="meta-empty">Soldan bir ekran seçin. Tablolar ve alan adları burada listelenir.</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="viewSql" class="view sql-view" hidden>
+          <div class="sql-layout">
+            <div class="sql-main">
+              <div class="sql-toolbar">
+                <strong id="sqlBanner">SQL Sorgu</strong>
+                <button type="button" class="btn ghost sql-db-btn" id="sqlBtnDb" title="Veritabanı bağlantısı">
+                  <span class="sql-db-btn-label">DB</span>
+                  <span class="sql-db-btn-status" id="sqlConnChip">—</span>
+                </button>
+                <div class="sql-tx-wrap" id="sqlTxWrap" hidden>
+                  <span class="sql-tx-label">Yazma işlemi:</span>
+                  <label class="sql-tx-opt"><input type="radio" name="sqlTx" value="commit" /> COMMIT</label>
+                  <label class="sql-tx-opt"><input type="radio" name="sqlTx" value="rollback" /> ROLLBACK</label>
+                </div>
+                <div class="sql-toolbar-spacer"></div>
+                <button type="button" class="btn action" id="sqlBtnRun">Çalıştır (Ctrl+Enter)</button>
+              </div>
+              <div class="sql-sheet-bar" id="sqlSheetBar" aria-label="Sorgu sayfaları"></div>
+              <div class="sql-split" id="sqlSplit">
+                <div class="sql-editor-wrap" id="sqlEditorPane">
+                  <pre class="sql-highlight" id="sqlHighlight" aria-hidden="true"></pre>
+                  <textarea id="sqlEditor" class="sql-editor" spellcheck="false" placeholder="SELECT * FROM items LIMIT 50;"></textarea>
+                </div>
+                <div class="sql-splitter" id="sqlSplitter" role="separator" aria-orientation="horizontal" title="Sürükleyerek boyutlandır"></div>
+                <div class="sql-result-pane" id="sqlResultPane">
+                  <div class="sql-result-meta" id="sqlResultMeta"></div>
+                  <div class="sql-result-scroll">
+                    <table class="sql-result-table" id="sqlResultTable">
+                      <thead id="sqlResultHead"></thead>
+                      <tbody id="sqlResultBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sql-db-modal" id="sqlDbModal" hidden>
+            <div class="sql-db-modal-backdrop" data-sql-db-close></div>
+            <div class="sql-db-modal-card" role="dialog" aria-labelledby="sqlDbModalTitle">
+              <div class="sql-db-modal-head">
+                <strong id="sqlDbModalTitle">DB bağlantısı</strong>
+                <button type="button" class="btn tiny ghost" data-sql-db-close aria-label="Kapat">✕</button>
+              </div>
+              <label class="sql-field"><span>Profil</span>
+                <select id="sqlProfile"></select>
+              </label>
+              <label class="sql-field"><span>Host</span>
+                <input id="sqlHost" type="text" autocomplete="off" />
+              </label>
+              <label class="sql-field"><span>Port</span>
+                <input id="sqlPort" type="number" value="5432" />
+              </label>
+              <label class="sql-field"><span>Veritabanı</span>
+                <input id="sqlDatabase" type="text" autocomplete="off" />
+              </label>
+              <label class="sql-field"><span>Kullanıcı</span>
+                <input id="sqlUser" type="text" autocomplete="off" />
+              </label>
+              <label class="sql-field"><span>Şifre</span>
+                <input id="sqlPassword" type="password" autocomplete="new-password" />
+              </label>
+              <div class="sql-conn-actions">
+                <button type="button" class="btn tiny" id="sqlBtnTest">Test</button>
+                <button type="button" class="btn tiny action" id="sqlBtnUse">Bağlan</button>
+                <button type="button" class="btn tiny ghost" id="sqlBtnReset">Varsayılan</button>
+              </div>
+              <p class="sql-conn-status" id="sqlConnStatus">—</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="viewForm" class="view form-view" hidden>
+          <div class="form-topbar">
+            <div>
+              <span class="mode-badge" id="formModeBadge">Yeni</span>
+              <strong id="formScreenLabel"></strong>
+            </div>
+            <div class="form-actions">
+              <div class="info-menu-wrap" id="formInfoWrap">
+                <button type="button" class="btn ghost" id="btnFormCancel" title="Kayıt / ekran / log bilgisi" aria-haspopup="menu" aria-expanded="false">Bilgi &#9662;</button>
+                <div class="info-menu" id="formInfoMenu" role="menu" hidden>
+                  <button type="button" role="menuitem" data-info-act="kayit">Kayıt bilgisi</button>
+                  <button type="button" role="menuitem" data-info-act="ekran">Ekran bilgisi</button>
+                  <button type="button" role="menuitem" data-info-act="log">Log bilgisi</button>
+                </div>
+              </div>
+              <button type="button" class="btn action ghost" id="btnFormConvert" hidden>Dönüştür</button>
+              <button type="button" class="btn action ghost" id="btnFormSecondary" hidden>İkinci işlem</button>
+              <button type="button" class="btn action ghost" id="btnFormDetailFill" hidden>Detayları Doldur</button>
+              <button type="button" class="btn action ghost" id="btnFormBomRota" hidden>BOM/Rota Uygula</button>
+              <button type="button" class="btn" id="btnFormSave">Kaydet</button>
+            </div>
+          </div>
+          <div class="form-tabs-layout" id="formTabsLayout" hidden>
+            <div class="form-compact-master" id="formCompactMaster" hidden></div>
+            <nav class="form-tab-nav" id="formTabNav" aria-label="Kart sekmeleri"></nav>
+            <div class="form-tab-body" id="formTabBody"></div>
+          </div>
+          <div class="form-split" id="formSplitClassic">
+            <div class="master-pane">
+              <h2>Master</h2>
+              <div class="master-grid" id="masterGrid"></div>
+            </div>
+            <div class="detail-pane">
+              <h2>Detay alanları</h2>
+              <div class="detail-grid" id="detailGrid"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="fieldHelpDialog" class="cvt-overlay" hidden>
+    <div class="cvt-dialog meta-help-dialog" role="dialog" aria-modal="true" aria-labelledby="fieldHelpTitle">
+      <header class="cvt-head">
+        <h2 id="fieldHelpTitle">Alan bilgisi (F1)</h2>
+        <button type="button" class="icon-btn" id="fieldHelpClose" aria-label="Kapat">×</button>
+      </header>
+      <div class="cvt-body" id="fieldHelpBody"></div>
+      <footer class="cvt-foot">
+        <button type="button" class="btn" id="fieldHelpOk">Tamam</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="recordInfoDialog" class="cvt-overlay" hidden>
+    <div class="cvt-dialog meta-help-dialog" role="dialog" aria-modal="true" aria-labelledby="recordInfoTitle">
+      <header class="cvt-head">
+        <h2 id="recordInfoTitle">Kayıt bilgisi</h2>
+        <button type="button" class="icon-btn" id="recordInfoClose" aria-label="Kapat">×</button>
+      </header>
+      <div class="cvt-body" id="recordInfoBody"></div>
+      <footer class="cvt-foot">
+        <button type="button" class="btn" id="recordInfoOk">Tamam</button>
+      </footer>
+    </div>
+  </div>
+
+  <div id="convertDialog" class="cvt-overlay" hidden>
+    <div class="cvt-dialog" role="dialog" aria-modal="true" aria-labelledby="cvtTitle">
+      <header class="cvt-head">
+        <h2 id="cvtTitle">Dönüşüm</h2>
+        <button type="button" class="icon-btn" id="cvtClose" aria-label="Kapat">×</button>
+      </header>
+      <div class="cvt-body" id="cvtBody"></div>
+      <div class="cvt-warn" id="cvtWarn" hidden></div>
+      <footer class="cvt-foot">
+        <button type="button" class="btn ghost" id="cvtCancel">Vazgeç</button>
+        <button type="button" class="btn" id="cvtOk">Devam</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="/app.js?v=20261023faturaYonetim"></script>
+  <script>
+    // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
+    (async function () {
+      const brand = document.getElementById('btnHome');
+      const setTip = (msg) => { if (brand) brand.title = msg; };
+      try {
+        const r = await fetch('/health', { cache: 'no-store' });
+        const j = await r.json();
+        setTip(r.ok && j.durum === 'ok'
+          ? 'KTB ERP · UI build 20261020d · API bağlı'
+          : 'KTB ERP · UI build 20261020d · API hata');
+      } catch (e) {
+        setTip('KTB ERP · UI build 20261020d · API YOK');
+        console.error('Health başarısız — sayfayı http://localhost:3000 ile açın', e);
+      }
+    })();
+  </script>
 </body>
 </html>
+

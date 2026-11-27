@@ -1,0 +1,20 @@
+sira;oneri;puan;dalga;ktb_ekranlar;is_faydasi
+1;Master süreç default'ları (BAST03/02);96;P1;stok-karti,cari-kartlari;Belge alan tekrarı ve hata azalır
+2;Belge referans omurgası + açık miktar izi;95;P0;satis-*,satin-alma-*,irsaliyeler,faturalar;Kısmi sevk/fatura ve izlenebilirlik
+3;SALT01 süreç dili (dönüştür/soft-sil/Göster);94;P1;satis-teklifleri,satis-siparisleri,irsaliyeler,satis-faturalari;Ticari UX profesyonelleşir
+4;INVT01 yön+bağlaç+hareket kodu;93;P0;mal-kabuller,stok-hareketleri,uretim-girisleri;Stok tutarlılığı
+5;PUR Başlat + talep→sipariş simetrisi;91;P1;satin-alma-talepleri,satin-alma-siparisleri;İhtiyaç vs taahhüt ayrımı
+6;PRD Başlatıldı + G/Ç tipi + onayda emiş;90;P2;uretim-emirleri,uretim-girisleri;WIP ve stok zamanlaması
+7;UI shell standart buton seti;88;P0;tüm CRUD;Aynı ERP dili
+8;MRP parametre→çalıştır→plan/istek→kesin belge;87;P2;mrp-*,satin-alma-talepleri,uretim-emirleri;Satıştan tedarik köprüsü
+9;ROUT↔BOM bileşen-op + süre senkron;85;P2;rotalar,urun-agaci,stok-karti;Lead time ve IE doğruluğu
+10;SALT02 fiyat listesi besleme;84;P1;fiyat-listeleri,satis-*;Fiyat disiplini
+11;BOM alternatif + geçerlilik;82;P2;urun-agaci;Üretim esnekliği
+12;INVT04 bakiye boyutları;80;P1;depo-bakiye;ATP/rezervasyon zemini
+13;VERT 3-way + FIN entegrasyon bayrağı;78;P1/P3;fatura-kontrolleri,muhasebe-belgeleri;Mali kapanış
+14;Soft-delete + Silindi filtresi;77;P0;master+belge;Veri güvenliği
+15;Trace / olay günlüğü;72;P1;audit-log;Hata teşhisi
+16;PURT02 satınalma info;70;P3;—;Tekrarlayan fiyat
+17;CALT01 / maliyet merkezi derinliği;55;P3;—;İleri maliyet
+18;Tam varyant/konfigüratör;48;sonra;urun-agaci;Sektörel
+19;Tam CAP çizelgeleme;45;sonra;is-merkezleri;İleri üretim

@@ -1,0 +1,66 @@
+01	yx7WRbI9NEc	PRD 10021 : PRDT01 - İş Emrinin Güncellenmesi	195
+02	eARPRKvWpXU	PRD 10030 : PRDT01 - Normal İş Emri Oluşturma ve Çizelgeleme	83
+03	KWnMauy57rE	PRD 10031 : PRDT01 - Normal İş Emrinde Operasyonlar ve Komponentler	151
+04	XxY7XYHi4Mk	PRD 10040 : PRDT01 - Kollektif İş Emri Oluşturma ve Çizelgeleme	84
+05	0flRy8HYKq0	PRD 10041 : PRDT01 - Kollektif İş Emrinde Operasyonlar ve Komponentler	160
+06	9GSUhkER8pI	PRD 10050 : PRDT01 - Bileşik İş Emri Oluşturma ve Çizelgeleme	123
+07	YjeDPxMY0JU	PRD 10051 : PRDT01 - Bileşik İş Emrin Operasyonlar ve Komponentler	122
+08	lSdAI2UcYI4	PRD 10055 : PRDT01 - Basit Demontaj İş Emri Oluşturma	115
+09	oAJ0epsHnqw	PRD 10056 : PRDT01 - Kompleks Demontaj İş Emri Oluşturma	113
+10	MNEKOlYsGdc	PRD 10060 : PRDT01 - Normal İş Emrine Malzeme Çıkışı	204
+11	2EDHZkW87A8	PRD 10070 : PRDT01 - Kollektif İş Emrine Malzeme Çıkışı	213
+12	b-2vbkVytVc	PRD 10080 : PRDT01 - Bileşik İş Emrine Malzeme Çıkışı	215
+13	EGldXOj2MvE	PRD 10090 : PRDT01 - Normal İş Emrinde Ürün Girişi	219
+14	vsEBcHmdO-A	PRD 10100 : PRDT01 - Kollektif İş Emrinde Ürün Girişi	219
+15	PJMPwxDXthI	PRD 10110 : PRDT01 - Bileşik İş Emrinde Ürün Girişi	191
+16	nKXVv_rf86k	PRD 10120 : PRDT01 - Normal, Kollektif ve Bileşik İş Emirlerinde Yan Ürün	174
+17	2E4D1dqwYn4	PRD 10130 : PRDT01 - Normal, Kollektif ve Bileşik İş Emirlerinde Kaynaklar	137
+18	O3RBTCIS2xY	PRD 10140 : PRDT01 - Standart Maliyet	63
+19	w4QlLZQDJXA	PRD 10160 : PRDT01 - Op. Ara Katsayısı Olan Norm. İş Emrinde Çizelgeleme, Komponentler&Operasyonlar	103
+20	AF9YLldj9OQ	PRD 10170 : PRDT01 - Op. Ara Katsayısı Olan Kol. İş Emrinde Çizelgeleme, Komponentler & Operasyonlar	100
+21	ZGH8crG0MiU	PRD 10200 : PRDT02 - Normal İş Emrinde Onay ve Düzeltme	86
+22	YwzCrfPiDgk	PRD 10210 : PRDT02 - Kollektif İş Emrinde Onay ve Düzeltme	80
+23	0X2t_rRMXvc	PRD 10220 : PRDT02 - Bileşik İş Emrinde Onay ve Düzeltme	82
+24	cgT2vv53s7g	PRD 10230 : PRDT02 - Demontaj İş Emrinde Onay ve Düzeltme	91
+25	QdnYXhd5-ko	PRD 10235 : PRDT01 - İş Emrinde Seri Numarası Planlama	136
+26	fkAOSGulL-8	PRD 10270 : PRDT02 - Operasyon Ara Katsayısı Olan Demontaj İş Emrinde Onay ve Düzeltme	148
+27	dDCt8o5NaEA	PRD 10280 : PRDT02 - Oto Emiş Malzemeli Normal İş Emrinde Onay ve Düzeltme	186
+28	TBkoqyc1m18	PRD 10290 : PRDT02 - Oto Emiş Malzemeli Kollektif İş Emrinde Onay ve Düzeltme	192
+29	yQhXvmspfc0	PRD 10300 : PRDT02 - Oto Emiş Malzemeli Bileşik İş Emrinde Onay ve Düzeltme	172
+30	rxU6Bf3fwmc	PRD 10310 : PRDT02 - Oto Emiş Malzemeli Demontaj İş Emrinde Onay ve Düzeltme	170
+31	lH51R0C1BNU	PRD 10315 : PRDT02 - Operasyon Onaylarında Otomatik Emiş Yan Ürün Miktarlarının Hesaplanması	123
+32	QeqXU2F7Km4	PRD 10320 : PRDT02 - Otomatik ya da Operasyonel Çıkışlı İş Emirlerinde Onay ve Düzeltme	175
+33	h1DHjbGYFa8	PRD 10330 : PRDT02 - Otomatik Giriş İş Emirlerinde Onay ve Düzeltme	155
+34	i8Kit8JuYMk	PRD 10340 : PRDT02 - Onayda Yarımamül Stoğu Kontrolü	117
+35	vyHsd0Ae5XA	PRD 10350 : PRDT02 - Parti Numarasıyla Onay ve Düzeltme	133
+36	lXC84FEX6YU	PRD 10360 : PRDT02 - Seri Numarasıyla Onay ve Düzeltme	184
+37	TQDmft6tEwQ	PRD 10361 : PRDT02 - Onay Metrikleri	108
+38	k8OJHtVBb3k	PRD 10365 : PRDT02 - Operasyon Onaylarında Yeniden İşleme Miktarı	85
+39	hguM2VVtOrE	PRD 10370 : PRDT03 - Kolay İş Emri Onayı	167
+40	ZGTEj5EKkWg	PRD 10380 : PRDT03 - İlk Parça Üretimi Başlatma-Bitirme	86
+41	Ssu5uA6LSoc	PRD 10400 : PRDT03 - İş Başlatma ve Bitişte İş Merkezi Tipi Etkisi	116
+42	yIVA-j6oZQM	PRD 10410 : PRDT03 - Çizelgelemiş İşlerden Seçim	87
+43	9o5hLZQY8gQ	PRD 10420 : PRDT03 - İş Merkezleri Yerleşimi	74
+44	wXNpJ5v6b6s	PRD 10430 : PRDT03 - İş Başlatırken Operasyonel Çıkış	173
+45	tG3HMUv3ANU	PRD 10440 : PRDT03 - Operasyon Bitirirken Otomatik Giriş	138
+46	Bm8qKiKwn1s	PRD 10450 : PRDT03 - Seri Numarasıyla Operasyon Bitirme	146
+47	nlkoTKjqYno	PRD 10460 : PRDT03 - Parti Numarasıyla Operasyon Bitirme	130
+48	OLg8s-nIeN8	PRD 10461 : PRDT03 - Boş Duruş Yönetimi	107
+49	6GICOrkhBFY	PRD 10462 : PRDT03 - Operasyonlar için Tekrarlı Hazırlık	113
+50	nWOwaslrMEM	PRD 10470 : PRDT05 - Onay Numarasıyla Hızlı Onay ve Düzeltme	96
+51	ucQowLegVTc	PRD 10480 : PRDT05 - Onay Numarasıyla Detaylı Onay ve Düzeltme	110
+52	eMGSyp3ceck	PRD 10490 : PRDT06 - Üretim Planlarını İş Emrine Dönüştürme	72
+53	vqoo8xK9710	PRD 10550 : PRDT10 - İş Emri Ağı	89
+54	imu8jxwwY2M	PRD 10580 : PRDT13 - Satış Siparişinden İş Emri Oluşturma	85
+55	2lYTr7ySL_8	PRD 10680 : PRDT40 - Fason Operasyon Yönetimi	131
+56	Yui29cdwaqo	PRD 10690 : PRDT40 - Fason Operasyon İçin Satınalma Siparişi Oluşturma	104
+57	f9kD9pg-K4k	PRD 10700 : PRDT40 - Fason Operasyon İçin Satınalma İsteği Oluşturma	96
+58	RCL_sq8G5tM	PRD 10710 : INVT13 - Tedarikçiden Gelen Fason Ürünün Girişi	109
+59	yu3Qz1U1lUE	PRD 10720 : INVT13 - Tedarikçiye Parça Göndermek	101
+60	StM0LyWU0_c	PRD 10730 : PRDT42 - Birleşik Operasyonlar	101
+61	7yMrcv6MXP4	PRD 10740 : PRDT42 - Birleşik Operasyonlarda Onay ve Düzeltme	163
+62	-krgt4stB-A	PRD 10741 : PRDT42 - Birleşik Operasyonlarda Oto Emiş Malzemeler	93
+63	gt2U-Y_nLNM	PRD 10742 : PRDT42 - Birleşik Operasyonlarda Duruş Yönetimi	99
+64	V8sYux8Q-jw	PRD 10743 : PRDT42 - Birleşik Operasyonlarda Aktivite Yönetimi	167
+65	UnVQe3ahTcs	PRD 10744 : PRDT43 - Birleşik Operasyonlarda Kolay Onay	162
+66	aOyGvOSaQNU	PRD 10745 : PRDT42 - Birleşik Operasyonlarda Yan Ürün Yönetimi	83
