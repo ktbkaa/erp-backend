@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const productionOrders = require('./production_orders');
+const { allocateConsumptionLots } = require('../src/services/partiService');
 const { getProductionParams } = require('../src/services/productionParamsService');
 const { assertWarehousePermission, assertModulePermission } = require('../src/middleware/authJwt');
 const { auditYaz } = require('../src/services/auditService');
@@ -99,10 +100,23 @@ router.get('/onizleme', async (req, res) => {
             comps = r.rows;
         }
 
-        const malzemeler = comps.map((b, i) => {
+        const reservedLots = new Map();
+        const malzemeler = [];
+        for (const [i, b] of comps.entries()) {
             const unit = Number(b.planned_quantity) || 0;
             const miktar = unit * rate;
-            return {
+            const depoId = b.warehouse_id || emir.component_warehouse_id || null;
+            let lotSource = null;
+            if (depoId && miktar > 0) {
+                try {
+                    const alloc = await allocateConsumptionLots(pool, {
+                        depoId, itemId: b.item_id, quantity: miktar, reserved: reservedLots,
+                    });
+                    lotSource = alloc.source;
+                } catch (_) { /* önizleme: parti çözülemezse boş bırak */ }
+            }
+            malzemeler.push({
+                lot_source: lotSource,
                 line_no: b.line_no != null ? b.line_no : i + 1,
                 line_type: b.item_type || 'Hammadde',
                 item_id: b.item_id,
@@ -117,10 +131,10 @@ router.get('/onizleme', async (req, res) => {
                 gross_quantity: miktar,
                 net_quantity: miktar,
                 uom_code: b.uom_code || b.stock_uom,
-                warehouse_id: b.warehouse_id || emir.component_warehouse_id || null,
+                warehouse_id: depoId,
                 is_byproduct: false,
-            };
-        });
+            });
+        }
 
         // Yan ürünler: ürün ağacındaki is_byproduct / YanUrun satırları (üretim miktarına oranlı)
         let yan_urunler = [];

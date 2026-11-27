@@ -5,6 +5,7 @@ const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement } = require('../src/services/stokHareketService');
+const { allocateConsumptionLots } = require('../src/services/partiService');
 const { createQcOrder, resolveOutgoingQcWarehouse, resolveOutgoingQcTargetWarehouse } = require('../src/services/kaliteService');
 const {
     getProductionParams,
@@ -40,27 +41,62 @@ function dateDay(v) {
 }
 
 /** İş emri + (varsa) operasyon malzeme satırında tüketilen miktarı artır */
-async function bumpComponentConsumed(client, { orderId, operationId = null, itemId, qty }) {
+const LOT_SOURCE_MERGE_SQL = `
+    lot_source = CASE
+      WHEN $4::text IS NULL OR $4::text = '' THEN lot_source
+      WHEN lot_source IS NULL OR lot_source = '' THEN $4::text
+      WHEN position($4::text in lot_source) > 0 THEN lot_source
+      ELSE left(lot_source || ' | ' || $4::text, 500)
+    END`;
+
+async function bumpComponentConsumed(client, { orderId, operationId = null, itemId, qty, lotSource = null }) {
     const n = Number(qty) || 0;
     if (!(n > 0) || !itemId || !orderId) return;
+    const src = lotSource || null;
     if (operationId) {
         await client.query(
             `
             UPDATE production_order_operation_components
-            SET consumed_quantity = COALESCE(consumed_quantity, 0) + $1
+            SET consumed_quantity = COALESCE(consumed_quantity, 0) + $1,
+                ${LOT_SOURCE_MERGE_SQL}
             WHERE operation_id = $2 AND item_id = $3
             `,
-            [n, operationId, itemId],
+            [n, operationId, itemId, src],
         );
     }
     await client.query(
         `
         UPDATE production_order_components
-        SET consumed_quantity = COALESCE(consumed_quantity, 0) + $1
+        SET consumed_quantity = COALESCE(consumed_quantity, 0) + $1,
+            ${LOT_SOURCE_MERGE_SQL}
         WHERE order_id = $2 AND item_id = $3
         `,
-        [n, orderId, itemId],
+        [n, orderId, itemId, src],
     );
+}
+
+/**
+ * Tüketim satırını depo grubuna ekler. Parti elle girildiyse yalnız o parti,
+ * girilmediyse depodaki partilerden FIFO miktar kadar otomatik düşülür.
+ * Dönüş: parti kaynak metni (Manuel giriş | LT0001 | LT0001 (6) + LT0002 (4)).
+ */
+async function pushConsumptionLine(client, depoGrup, reserved, {
+    depoId, itemId, qty, uomCode = null, lotId = null, lotNo = null,
+}) {
+    const alloc = await allocateConsumptionLots(client, {
+        depoId, itemId, quantity: qty, lotId, lotNo, reserved,
+    });
+    if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
+    for (const l of alloc.lines) {
+        depoGrup.get(depoId).push({
+            item_id: Number(itemId),
+            quantity: l.quantity,
+            direction: -1,
+            uom_code: uomCode || null,
+            lot_id: l.lot_id || null,
+        });
+    }
+    return alloc.source;
 }
 
 /** Plan / bitiş: tarih+saat — datetime-local veya ISO kabul eder */
@@ -439,6 +475,19 @@ async function getQcOrder(id) {
         });
     }
 
+    const receiptLots = await pool.query(
+        `
+        SELECT r.operation_id, string_agg(DISTINCT m.lot_source, ' | ') AS lot_source
+        FROM production_receipts r
+        JOIN production_receipt_materials m ON m.receipt_id = r.id
+        WHERE r.order_id = $1 AND r.operation_id IS NOT NULL
+          AND COALESCE(m.is_byproduct, FALSE) = FALSE AND m.lot_source IS NOT NULL
+        GROUP BY r.operation_id
+        `,
+        [id],
+    ).catch(() => ({ rows: [] }));
+    const lotSourceByOp = new Map(receiptLots.rows.map((r) => [Number(r.operation_id), r.lot_source]));
+
     const is_active = operasyonlar.find((o) => o.status === 'Hazir') || null;
     const minSira = operasyonlar.length ? Math.min(...operasyonlar.map((o) => Number(o.line_no) || 0)) : null;
     const maxSira = operasyonlar.length ? Math.max(...operasyonlar.map((o) => Number(o.line_no) || 0)) : null;
@@ -449,6 +498,9 @@ async function getQcOrder(id) {
         return {
             ...o,
             transferred_quantity: transferred,
+            lot_source: lotSourceByOp.get(Number(o.id))
+                || [...new Set((o.bilesenler || []).map((b) => b.lot_source).filter(Boolean))].join(' | ')
+                || null,
             remaining_quantity: Math.max(0, planned - produced),
             ilk_operasyon: minSira != null && Number(o.line_no) === minSira,
             son_operasyon: maxSira != null && Number(o.line_no) === maxSira,
@@ -985,20 +1037,22 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
 
             // Bileşenleri tipine göre depodan grupla ve tüket
             const depoGrup = new Map();
+            const reservedLots = new Map();
             for (const b of bilesenler.rows) {
                 const depoId = pickConsumptionWarehouse(emir, b.item_type);
-                if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
-                depoGrup.get(depoId).push({
-                    item_id: b.item_id,
-                    quantity: Number(b.planned_quantity) * rate,
-                    direction: -1,
-                    uom_code: b.uom_code || b.stock_uom,
+                const qty = Number(b.planned_quantity) * rate;
+                const lotSource = await pushConsumptionLine(client, depoGrup, reservedLots, {
+                    depoId,
+                    itemId: b.item_id,
+                    qty,
+                    uomCode: b.uom_code || b.stock_uom,
                 });
                 await bumpComponentConsumed(client, {
                     orderId: emirId,
                     operationId: op.id,
                     itemId: b.item_id,
-                    qty: Number(b.planned_quantity) * rate,
+                    qty,
+                    lotSource,
                 });
             }
 
@@ -1251,6 +1305,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
         );
 
         const depoGrup = new Map();
+        const reservedLots = new Map();
         const materialSnapshot = [];
         if (consume) {
             const manual = Array.isArray(opts.materials)
@@ -1263,20 +1318,28 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                         || Number(opts.material_warehouse_id)
                         || pickConsumptionWarehouse(emir, m.line_type || m.item_type);
                     if (!depoId) throw new Error('Malzeme çıkış deposu gerekli.');
-                    if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
-                    depoGrup.get(depoId).push({
-                        item_id: Number(m.item_id),
-                        quantity: qty,
-                        direction: -1,
-                        uom_code: m.uom_code || null,
+                    const lotSource = await pushConsumptionLine(client, depoGrup, reservedLots, {
+                        depoId,
+                        itemId: m.item_id,
+                        qty,
+                        uomCode: m.uom_code || null,
+                        lotId: Number(m.lot_id) || null,
+                        lotNo: m.lot_no,
                     });
                     await bumpComponentConsumed(client, {
                         orderId: emirId,
                         operationId: op.id,
                         itemId: Number(m.item_id),
                         qty,
+                        lotSource,
                     });
-                    materialSnapshot.push({ ...m, line_no: m.line_no || i + 1, is_byproduct: false });
+                    materialSnapshot.push({
+                        ...m,
+                        line_no: m.line_no || i + 1,
+                        warehouse_id: depoId,
+                        lot_source: lotSource,
+                        is_byproduct: false,
+                    });
                 }
             } else {
                 let rows = bilesenler.rows;
@@ -1301,20 +1364,21 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                         || Number(opts.material_warehouse_id)
                         || pickConsumptionWarehouse(emir, b.item_type);
                     if (!depoId) throw new Error('Malzeme çıkış deposu gerekli.');
-                    if (!depoGrup.has(depoId)) depoGrup.set(depoId, []);
-                    depoGrup.get(depoId).push({
-                        item_id: b.item_id,
-                        quantity: qty,
-                        direction: -1,
-                        uom_code: b.uom_code || b.stock_uom,
+                    const lotSource = await pushConsumptionLine(client, depoGrup, reservedLots, {
+                        depoId,
+                        itemId: b.item_id,
+                        qty,
+                        uomCode: b.uom_code || b.stock_uom,
                     });
                     await bumpComponentConsumed(client, {
                         orderId: emirId,
                         operationId: op.id,
                         itemId: b.item_id,
                         qty,
+                        lotSource,
                     });
                     materialSnapshot.push({
+                        lot_source: lotSource,
                         line_no: b.line_no || i + 1,
                         line_type: b.item_type || 'Hammadde',
                         item_id: b.item_id,
@@ -1531,9 +1595,9 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                   quantity_type, unit_quantity, quantity, scrap_quantity, rework_quantity,
                   gross_quantity, net_quantity, uom_code, warehouse_id, warehouse_code, warehouse_name,
                   warehouse_balance, lot_no, note, revision, brand, feature_3, general_feature_1,
-                  entry_mode, source_ref, source_material_id, is_byproduct
+                  entry_mode, source_ref, source_material_id, is_byproduct, lot_source
                 ) VALUES (
-                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29
+                  $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
                 )
                 `,
                 [
@@ -1547,6 +1611,7 @@ async function tamamlaOperasyonInternal(emirId, miktarOrOpts = null) {
                     m.brand || null, m.feature_3 || null, m.general_feature_1 || null,
                     m.entry_mode || null, m.source_ref || null, m.source_material_id || null,
                     Boolean(m.is_byproduct),
+                    m.is_byproduct ? null : (m.lot_source || null),
                 ]
             );
         }
