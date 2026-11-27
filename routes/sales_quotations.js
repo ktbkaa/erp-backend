@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+const { companyIdFromReq, assertCompanyRecord, resolveDocumentCompanyId } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
@@ -108,14 +108,17 @@ router.post('/', async (req, res) => {
                 );
                 hk = d.rows[0]?.id || null;
             }
+            const firmaId = resolveDocumentCompanyId(req, req.body);
+            const plantId = req.body.plant_id || null;
             const baslik = await client.query(
                 `
                 INSERT INTO sales_quotations
                     (quotation_no, partner_id, quotation_date, valid_date, currency_code,
                      status, movement_code_id, description, total_amount,
-                     opportunity_id, lead_id, source_document_type, source_document_id)
+                     opportunity_id, lead_id, source_document_type, source_document_id,
+                     company_id, plant_id)
                 VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,COALESCE($5,'TRY'),
-                        COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13)
+                        COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13,$14,$15)
                 RETURNING id
                 `,
                 [
@@ -124,6 +127,7 @@ router.post('/', async (req, res) => {
                     opportunity_id || null, lead_id || null,
                     source_document_type || (opportunity_id ? 'CRM_FIRSAT' : null),
                     source_document_id || opportunity_id || null,
+                    firmaId, plantId,
                 ]
             );
             const tid = baslik.rows[0].id;
@@ -178,6 +182,8 @@ router.put('/:id', async (req, res) => {
                 satirlar = hazirSatirlar(raw);
                 toplam = belgelerToplam(satirlar).total_amount;
             }
+            const firmaId = resolveDocumentCompanyId(req, req.body);
+            const plantId = req.body.plant_id != null ? req.body.plant_id : undefined;
             await client.query(
                 `
                 UPDATE sales_quotations SET
@@ -190,13 +196,16 @@ router.put('/:id', async (req, res) => {
                     description = COALESCE($8, description),
                     total_amount = COALESCE($9, total_amount),
                     opportunity_id = COALESCE($10, opportunity_id),
-                    lead_id = COALESCE($11, lead_id)
+                    lead_id = COALESCE($11, lead_id),
+                    company_id = COALESCE($12, company_id),
+                    plant_id = COALESCE($13, plant_id)
                 WHERE id=$1
                 `,
                 [
                     req.params.id, partner_id || null, quotation_date || null, valid_date || null,
                     currency_code || null, status || null, movement_code_id || null, description ?? null, toplam,
                     opportunity_id || null, lead_id || null,
+                    firmaId, plantId !== undefined ? plantId : null,
                 ]
             );
             if (satirlar) {
@@ -237,8 +246,10 @@ router.post('/:id/siparise-donustur', async (req, res) => {
         const teklif = await getQuotation(req.params.id);
         if (!teklif) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         const firmaId = companyIdFromReq(req);
-        if (firmaId && !(await assertCompanyRecord(pool, 'sales_quotations', teklif.id, firmaId))) {
-            return res.status(403).json({ hata: 'Bu firma için teklif erişimi yok.' });
+        if (firmaId && teklif.company_id && Number(teklif.company_id) !== Number(firmaId)) {
+            if (!(await assertCompanyRecord(pool, 'sales_quotations', teklif.id, firmaId))) {
+                return res.status(403).json({ hata: 'Bu firma için teklif erişimi yok.' });
+            }
         }
         if (!['Onayli', 'Taslak'].includes(teklif.status)) {
             return res.status(400).json({ hata: `Durum dönüşüme uygun değil: ${teklif.status}` });
@@ -247,6 +258,14 @@ router.post('/:id/siparise-donustur', async (req, res) => {
         const siparisId = await withTransaction(pool, async (client) => {
             const no = await nextDocumentNo(client, 'SATIS_SIPARIS');
             const hk = await findMovementCode(client, BELGE_TIPI.SATIS_SIPARIS);
+            const docFirmaId = teklif.company_id || firmaId || null;
+            const docPlantId = teklif.plant_id || null;
+            if (!teklif.company_id && docFirmaId) {
+                await client.query(
+                    `UPDATE sales_quotations SET company_id = COALESCE(company_id, $2) WHERE id = $1`,
+                    [teklif.id, docFirmaId]
+                );
+            }
 
             const sip = await client.query(
                 `
@@ -266,7 +285,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                     teklif.id, hk?.id || null, teklif.currency_code || 'TRY',
                     `Teklif ${teklif.quotation_no} dönüşümü`,
                     BELGE_TIPI.SATIS_TEKLIF, teklif.id,
-                    teklif.company_id || null, teklif.plant_id || null,
+                    docFirmaId, docPlantId,
                     teklif.delivery_date || teklif.valid_date || null,
                     teklif.payment_term_code || null, teklif.payment_method || null,
                     teklif.delivery_term_code || null,

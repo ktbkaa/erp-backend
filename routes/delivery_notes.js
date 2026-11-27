@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq, resolveDocumentCompanyId } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
@@ -406,7 +406,7 @@ async function upsertDeliveryNoteHeader(client, { id, body, hkId, no, kaynakTip,
         shipment_order_id: body.shipment_order_id || null,
         warehouse_id: body.warehouse_id,
         movement_code_id: hkId,
-        company_id: body.company_id || null,
+        company_id: body.company_id || body._firmaId || null,
         plant_id: body.plant_id || null,
         project_code: body.project_code || null,
         region: body.region || null,
@@ -685,8 +685,13 @@ router.post('/', async (req, res) => {
             const hk = await findMovementCode(client, BELGE_TIPI.IRSALIYE, body.movement_code_id || null);
             if (!hk) throw new Error('Satış irsaliye hareket kodu tanımlı değil (SIR-01).');
             const { kaynakTip, kaynakId } = headerSource(body);
+            const stamped = {
+                ...body,
+                company_id: resolveDocumentCompanyId(req, body),
+                _firmaId: resolveDocumentCompanyId(req, body),
+            };
             const iid = await upsertDeliveryNoteHeader(client, {
-                id: null, body, hkId: hk.id, no, kaynakTip, kaynakId,
+                id: null, body: stamped, hkId: hk.id, no, kaynakTip, kaynakId,
             });
             const kurBelge = body.exchange_rate != null ? Number(body.exchange_rate) : 1;
             const hesaplar = [];
@@ -733,9 +738,14 @@ router.put('/:id', async (req, res) => {
                 warehouse_id: body.warehouse_id != null ? body.warehouse_id : m.warehouse_id,
             };
             const { kaynakTip, kaynakId } = headerSource(merged);
+            const stamped = {
+                ...merged,
+                company_id: merged.company_id || resolveDocumentCompanyId(req, body) || m.company_id,
+                _firmaId: merged.company_id || resolveDocumentCompanyId(req, body) || m.company_id,
+            };
             await upsertDeliveryNoteHeader(client, {
                 id: Number(req.params.id),
-                body: merged,
+                body: stamped,
                 hkId: body.movement_code_id || m.movement_code_id,
                 no: m.delivery_note_no,
                 kaynakTip: kaynakTip || m.source_document_type,
@@ -1256,25 +1266,28 @@ router.post('/:id/iade', async (req, res) => {
         const depoId = Number(req.body.warehouse_id || source.warehouse_id);
         const id = await withTransaction(pool, async (client) => {
             const no = await nextDocumentNo(client, 'IRSALIYE').catch(() => `SIA-${Date.now()}`);
+            const firmaId = source.company_id || companyIdFromReq(req) || null;
+            const plantId = source.plant_id || null;
             const baslik = await client.query(
                 `
                 INSERT INTO delivery_notes
                   (delivery_note_no, partner_id, warehouse_id, sales_order_id, status, description,
-                   source_document_type, source_document_id, delivery_date)
-                VALUES ($1,$2,$3,$4,'Taslak',$5,'SATIS_IADE',$6,CURRENT_DATE)
+                   source_document_type, source_document_id, delivery_date, company_id, plant_id)
+                VALUES ($1,$2,$3,$4,'Taslak',$5,'SATIS_IADE',$6,CURRENT_DATE,$7,$8)
                 RETURNING id
                 `,
                 [
                     no, source.partner_id, depoId, source.sales_order_id,
                     `İade ← ${source.delivery_note_no}`, source.id,
+                    firmaId, plantId,
                 ]
             ).catch(async (err) => {
                 // minimal kolon seti
                 if (String(err.message).includes('column')) {
                     return client.query(
-                        `INSERT INTO delivery_notes (delivery_note_no, partner_id, warehouse_id, status, description)
-                         VALUES ($1,$2,$3,'Taslak',$4) RETURNING id`,
-                        [no, source.partner_id, depoId, `İade ← ${source.delivery_note_no}`]
+                        `INSERT INTO delivery_notes (delivery_note_no, partner_id, warehouse_id, status, description, company_id)
+                         VALUES ($1,$2,$3,'Taslak',$4,$5) RETURNING id`,
+                        [no, source.partner_id, depoId, `İade ← ${source.delivery_note_no}`, firmaId]
                     );
                 }
                 throw err;

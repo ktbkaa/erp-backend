@@ -118,13 +118,15 @@ router.post('/', async (req, res) => {
                 hk = d.rows[0]?.id || null;
             }
 
+            const firmaId = req.body.company_id || siparis.company_id || companyIdFromReq(req) || null;
             const baslik = await client.query(
                 `
                 INSERT INTO shipment_orders
                     (shipment_no, sales_order_id, partner_id, warehouse_id, ship_date, ship_to_address,
-                     ship_city, ship_district, ship_country, ship_postal_code, status, movement_code_id, description)
+                     ship_city, ship_district, ship_country, ship_postal_code, status, movement_code_id, description,
+                     company_id)
                 VALUES ($1,$2,$3,$4,COALESCE($5::date,CURRENT_DATE),$6,$7,$8,$9,$10,
-                        COALESCE($11,'Taslak'),$12,$13)
+                        COALESCE($11,'Taslak'),$12,$13,$14)
                 RETURNING id
                 `,
                 [
@@ -133,6 +135,7 @@ router.post('/', async (req, res) => {
                     ship_city || siparis.province, ship_district || siparis.district,
                     ship_country || siparis.country || 'TR', ship_postal_code || siparis.postal_code,
                     status || 'Taslak', hk, description || `Sipariş ${siparis.order_no}`,
+                    firmaId,
                 ]
             );
             const sid = baslik.rows[0].id;

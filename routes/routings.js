@@ -256,7 +256,11 @@ router.get('/', async (req, res) => {
     if (onlyMamul) where.push(`s.item_type IN ('Mamul','YariMamul')`);
     if (firmaId) {
       params.push(firmaId);
-      where.push(`(r.company_id = $${params.length} OR s.company_id = $${params.length})`);
+      const p = `$${params.length}`;
+      where.push(`(r.company_id = ${p} OR s.company_id = ${p} OR EXISTS (
+        SELECT 1 FROM item_company_params fp
+        WHERE fp.item_id = s.id AND fp.company_id = ${p} AND fp.is_active IS DISTINCT FROM FALSE
+      ))`);
     }
     if (req.query.template != null && req.query.template !== '') {
       where.push(`r.template = ${boolOr(req.query.template, false) ? 'TRUE' : 'FALSE'}`);
@@ -301,9 +305,11 @@ router.get('/:id', async (req, res) => {
   try {
     const rota = await getRouting(req.params.id);
     if (!rota) return res.status(404).json({ hata: 'Rota bulunamadı.' });
-    const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+    const { companyIdFromReq, assertDocOrItemCompany } = require('../src/utils/firmaScope');
     const firmaId = companyIdFromReq(req);
-    if (firmaId && !(await assertCompanyRecord(require('../db'), 'routings', rota.id, firmaId))) {
+    if (firmaId && !(await assertDocOrItemCompany(require('../db'), {
+      table: 'routings', id: rota.id, firmaId, itemFk: 'item_id',
+    }))) {
       return res.status(404).json({ hata: 'Rota bulunamadı (firma kapsamı).' });
     }
     res.json(rota);
