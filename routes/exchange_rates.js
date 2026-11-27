@@ -10,6 +10,7 @@ const {
   DEFAULT_TODAY_URL,
   readParam,
 } = require('../src/services/tcmbRateService');
+const { resolveDocumentRate } = require('../src/services/kurService');
 
 function num(v) {
   const n = Number(v);
@@ -134,6 +135,22 @@ router.get('/', async (req, res, next) => {
     );
     res.json(r.rows);
   } catch (err) {
+    next(err);
+  }
+});
+
+/** GET /doviz-kurlari/belge-kuru?currency_code=USD&tarih=&rate_type=TCMB-SATIS — belge için çözülen kur (yazmaz) */
+router.get('/belge-kuru', async (req, res, next) => {
+  try {
+    const kur = await resolveDocumentRate(pool, {
+      currency: req.query.currency_code,
+      entered: req.query.exchange_rate,
+      date: req.query.tarih || new Date(),
+      rateType: req.query.rate_type || 'TCMB-SATIS',
+    });
+    res.json(kur);
+  } catch (err) {
+    if (err.kod === 'KUR_YOK') return res.status(404).json({ hata: err.message, kod: err.kod });
     next(err);
   }
 });

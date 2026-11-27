@@ -166,6 +166,7 @@ app.use('/kk-uygunsuzluklar', require('./routes/qc_nonconformances'));
 app.use('/tahsilat-odemeler', require('./routes/receipts_payments'));
 app.use('/cari-hareketleri', require('./routes/partner_ledger_entries'));
 app.use('/cari-mutabakat', require('./routes/cari_mutabakat'));
+app.use('/kur-farki', require('./routes/kur_farki'));
 app.use('/e-belge', require('./routes/e_belge'));
 app.use('/fiyat-listeleri', require('./routes/price_lists'));
 app.use('/kokpit', require('./routes/kokpit'));

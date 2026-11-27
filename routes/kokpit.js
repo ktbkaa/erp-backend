@@ -59,7 +59,7 @@ async function calculateSummary(firmaId = null) {
     q(`SELECT COUNT(*)::int AS n FROM purchase_requisitions WHERE status IN ('Taslak','Bekliyor','OnayBekliyor')${fSa.sql}`, fSa.params),
     q(`SELECT COUNT(*)::int AS n FROM qc_orders WHERE status IN ('Acik','Bekliyor','Taslak')${fKk.sql}`, fKk.params),
     q(`
-      SELECT COALESCE(SUM(CASE WHEN direction='Borc' THEN amount ELSE -amount END),0)::numeric AS risk
+      SELECT COALESCE(SUM(CASE WHEN direction='Borc' THEN COALESCE(amount_try, amount) ELSE -COALESCE(amount_try, amount) END),0)::numeric AS risk
       FROM partner_ledger_entries
     `),
     q(`SELECT COUNT(*)::int AS n FROM invoice_matches WHERE result IN ('Bekliyor','FiyatFark','MiktarFark','Askida')`),

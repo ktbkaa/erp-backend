@@ -4,6 +4,9 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { addPartnerLedgerEntry } = require('../src/services/cariHareketService');
+const { resolveDocumentRate } = require('../src/services/kurService');
+const { gerceklesenKurFarkiIsle } = require('../src/services/kurFarkiService');
+const { reqUserCode } = require('../src/utils/yetki');
 const { companyIdFromReq, andPartnerCompany } = require('../src/utils/firmaScope');
 
 async function fetchById(id) {
@@ -61,6 +64,7 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { type, partner_id, amount, currency_code, payment_method, invoice_id, description, document_date, status } = req.body || {};
+    const girilenKur = req.body?.exchange_rate;
     if (!type || !['Tahsilat', 'Odeme'].includes(type)) {
       return res.status(400).json({ hata: 'type Tahsilat veya Odeme olmalı.' });
     }
@@ -70,14 +74,18 @@ router.post('/', async (req, res, next) => {
     const id = await withTransaction(pool, async (client) => {
       const seri = type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME';
       const no = await nextDocumentNo(client, seri);
+      const kur = await resolveDocumentRate(client, {
+        currency: currency_code, entered: girilenKur, date: document_date || new Date(),
+        rateType: type === 'Tahsilat' ? 'TCMB-ALIS' : 'TCMB-SATIS',
+      });
       const r = await client.query(
         `
         INSERT INTO receipts_payments
-          (document_no, type, partner_id, amount, currency_code, payment_method, invoice_id, status, description, document_date)
-        VALUES ($1,$2,$3,$4,COALESCE($5,'TRY'),COALESCE($6,'Nakit'),$7,COALESCE($8,'Onayli'),$9,COALESCE($10,CURRENT_DATE))
+          (document_no, type, partner_id, amount, currency_code, payment_method, invoice_id, status, description, document_date, exchange_rate)
+        VALUES ($1,$2,$3,$4,COALESCE($5,'TRY'),COALESCE($6,'Nakit'),$7,COALESCE($8,'Onayli'),$9,COALESCE($10,CURRENT_DATE),$11)
         RETURNING id
         `,
-        [no, type, partner_id, Number(amount), currency_code, payment_method, invoice_id || null, status, description || null, document_date || null]
+        [no, type, partner_id, Number(amount), currency_code, payment_method, invoice_id || null, status, description || null, document_date || null, kur.rate]
       );
       const newId = r.rows[0].id;
       const onayDurum = (status || 'Onayli') === 'Onayli';
@@ -87,10 +95,21 @@ router.post('/', async (req, res, next) => {
           direction: type === 'Tahsilat' ? 'Alacak' : 'Borc',
           amount: Number(amount),
           paraBirimi: currency_code || 'TRY',
+          exchange_rate: kur.rate,
           belgeTipi: type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME',
           belgeId: newId,
           description: description || `${type} ${no}`,
           hareketTarihi: document_date || null,
+        });
+        await gerceklesenKurFarkiIsle(client, {
+          faturaId: invoice_id || null,
+          belgeTipi: type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME',
+          belgeId: newId,
+          fcTutar: Number(amount),
+          odemeKuru: kur.rate,
+          tarih: document_date || new Date(),
+          paraBirimi: currency_code || 'TRY',
+          kullaniciKodu: reqUserCode(req),
         });
       }
       return newId;
@@ -107,16 +126,34 @@ router.post('/:id/onayla', async (req, res, next) => {
     if (!row) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
     if (row.status === 'Onayli') return res.json(row);
     await withTransaction(pool, async (client) => {
-      await client.query(`UPDATE receipts_payments SET status='Onayli' WHERE id=$1`, [row.id]);
+      const kur = await resolveDocumentRate(client, {
+        currency: row.currency_code, entered: row.exchange_rate, date: row.document_date || new Date(),
+        rateType: row.type === 'Tahsilat' ? 'TCMB-ALIS' : 'TCMB-SATIS',
+      });
+      await client.query(
+        `UPDATE receipts_payments SET status='Onayli', exchange_rate=$2 WHERE id=$1`,
+        [row.id, kur.rate]
+      );
       await addPartnerLedgerEntry(client, {
         cariId: row.partner_id,
         direction: row.type === 'Tahsilat' ? 'Alacak' : 'Borc',
         amount: Number(row.amount),
         paraBirimi: row.currency_code || 'TRY',
+        exchange_rate: kur.rate,
         belgeTipi: row.type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME',
         belgeId: row.id,
         description: row.description || `${row.type} ${row.document_no}`,
         hareketTarihi: row.document_date,
+      });
+      await gerceklesenKurFarkiIsle(client, {
+        faturaId: row.invoice_id || null,
+        belgeTipi: row.type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME',
+        belgeId: row.id,
+        fcTutar: Number(row.amount),
+        odemeKuru: kur.rate,
+        tarih: row.document_date || new Date(),
+        paraBirimi: row.currency_code || 'TRY',
+        kullaniciKodu: reqUserCode(req),
       });
     });
     res.json(await fetchById(row.id));
