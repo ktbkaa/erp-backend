@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { submitForApproval, assertManualStatusChange } = require('../src/services/onayKapisiService');
 const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { isPartnerSupplier } = require('../src/utils/kodUretici');
@@ -309,6 +310,7 @@ router.put('/:id', async (req, res) => {
         throw err;
       }
       if (b.partner_id) await assertTedarikci(client, b.partner_id);
+      await assertManualStatusChange(client, 'SATINALMA_SIPARIS', mevcut.rows[0], b.status);
 
       await client.query(
         `UPDATE purchase_orders SET
@@ -379,6 +381,21 @@ router.post('/:id/onayla', async (req, res) => {
     const kullanici = await getUser(pool, reqUserCode(req) || 'owner');
 
     const result = await withTransaction(pool, async (client) => {
+      const kapi = await submitForApproval(client, {
+        documentTypeCode: 'SATINALMA_SIPARIS',
+        documentId: Number(req.params.id),
+        user: kullanici,
+        notes: req.body?.notes || null,
+        fromStatuses: ['Taslak'],
+      }).catch((err) => {
+        if (err.status === 404) {
+          err.status = 400;
+          err.message = 'Sipariş onaylanamadı (bulunamadı veya durumu Taslak değil).';
+        }
+        throw err;
+      });
+      if (kapi.gated) return { id: Number(req.params.id), onayKayit: kapi.record, onayBekliyor: true };
+
       const upd = await client.query(
         `UPDATE purchase_orders SET status='Onayli', approved_at=CURRENT_TIMESTAMP
          WHERE id=$1 AND status='Taslak' RETURNING *`,
@@ -415,7 +432,7 @@ router.post('/:id/onayla', async (req, res) => {
     });
 
     const siparis = await getOrder(result.id);
-    res.json({ ...siparis, onay_kayit: result.onayKayit || null });
+    res.json({ ...siparis, onay_kayit: result.onayKayit || null, onay_bekliyor: Boolean(result.onayBekliyor) });
   } catch (err) {
     if (err.code === '23503') {
                 return res.status(409).json({

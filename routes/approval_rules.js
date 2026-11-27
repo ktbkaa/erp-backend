@@ -4,6 +4,37 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { getDocumentType } = require('../src/services/onayKapisiService');
+
+/** Belge türü bağı (onay kapısı) ve ret/iptal sonucunu doğrular; ekranı belge türünden doldurur. */
+async function resolveGateFields(client, body, mevcut = null) {
+  const has = (k) => Object.prototype.hasOwnProperty.call(body, k);
+  const code = has('document_type_code') ? (body.document_type_code || null) : (mevcut?.document_type_code || null);
+  const reject = has('reject_outcome') ? (body.reject_outcome || null) : (mevcut?.reject_outcome || null);
+  const cancel = has('cancel_outcome') ? (body.cancel_outcome || null) : (mevcut?.cancel_outcome || null);
+  let screenId = body.screen_id || mevcut?.screen_id || null;
+  if (code) {
+    const dt = await getDocumentType(client, code, { activeOnly: false });
+    if (!dt) {
+      const err = new Error(`Belge türü bulunamadı: ${code}`);
+      err.status = 400;
+      throw err;
+    }
+    for (const [label, v] of [['Ret sonucu', reject], ['İptal sonucu', cancel]]) {
+      if (v && !dt.outcomes[v]) {
+        const err = new Error(`${label} "${v}" bu belge türünde tanımlı değil (${Object.keys(dt.outcomes).join(', ')}).`);
+        err.status = 400;
+        throw err;
+      }
+    }
+    screenId = dt.screen_id;
+  } else if (reject || cancel) {
+    const err = new Error('Ret/iptal sonucu yalnız belge türüne bağlı kuralda seçilebilir.');
+    err.status = 400;
+    throw err;
+  }
+  return { document_type_code: code, reject_outcome: reject, cancel_outcome: cancel, screen_id: screenId };
+}
 
 async function getRule(id) {
   const r = await pool.query(
@@ -11,8 +42,10 @@ async function getRule(id) {
     SELECT k.*,
            f.company_code, f.company_name,
            iy.plant_code, iy.plant_name,
-           s.template_code, s.template_name
+           s.template_code, s.template_name,
+           dt.document_type_name
     FROM approval_rules k
+    LEFT JOIN approval_document_types dt ON dt.document_type_code = k.document_type_code
     LEFT JOIN companies f ON f.id = k.company_id
     LEFT JOIN plants iy ON iy.id = k.plant_id
     LEFT JOIN approval_message_templates s ON s.id = k.template_id
@@ -80,6 +113,10 @@ router.get('/', async (req, res) => {
       params.push(req.query.screen_id);
       where.push(`screen_id = $${params.length}`);
     }
+    if (req.query.document_type_code) {
+      params.push(req.query.document_type_code);
+      where.push(`document_type_code = $${params.length}`);
+    }
     const sql = `
       SELECT id FROM approval_rules
       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
@@ -123,8 +160,10 @@ router.post('/', async (req, res) => {
       term_direction, term_min_amount, term_max_amount, condition_statuses,
       auto_approve, activate_on_approval, is_active, description, hareketler,
     } = req.body;
+    const gate = await resolveGateFields(pool, req.body);
+    screen_id = gate.screen_id;
     if (!rule_name || !screen_id) {
-      return res.status(400).json({ hata: 'Kural adı ve ekran seçimi zorunlu.' });
+      return res.status(400).json({ hata: 'Kural adı ve ekran (veya belge türü) seçimi zorunlu.' });
     }
     if (!rule_code) {
       try { rule_code = await nextSequenceCode(pool, 'ONAY_KURAL'); }
@@ -136,17 +175,20 @@ router.post('/', async (req, res) => {
         INSERT INTO approval_rules (
           rule_code, rule_name, line_no, company_id, plant_id, screen_id, template_id,
           term_direction, term_min_amount, term_max_amount, condition_statuses,
-          auto_approve, activate_on_approval, is_active, description
+          auto_approve, activate_on_approval, is_active, description,
+          document_type_code, reject_outcome, cancel_outcome
         ) VALUES (
           $1,$2,COALESCE($3::numeric,10),$4,$5,$6,$7,
           COALESCE($8,'Hepsi'),$9,$10,$11,
-          COALESCE($12,FALSE),COALESCE($13,TRUE),COALESCE($14,TRUE),$15
+          COALESCE($12,FALSE),COALESCE($13,TRUE),COALESCE($14,TRUE),$15,
+          $16,$17,$18
         ) RETURNING id
         `,
         [
           rule_code, rule_name, line_no, company_id || null, plant_id || null, screen_id, template_id || null,
           term_direction, term_min_amount ?? null, term_max_amount ?? null, condition_statuses || null,
           auto_approve, activate_on_approval, is_active, description || null,
+          gate.document_type_code, gate.reject_outcome, gate.cancel_outcome,
         ],
       );
       await saveMovements(client, ins.rows[0].id, hareketler);
@@ -160,7 +202,7 @@ router.post('/', async (req, res) => {
                     kod: 'ERR-FK-23503',
                 });
             }
-    res.status(500).json({ hata: err.message });
+    res.status(err.status || 500).json({ hata: err.message });
   }
 });
 
@@ -172,6 +214,13 @@ router.put('/:id', async (req, res) => {
       auto_approve, activate_on_approval, is_active, description, hareketler,
     } = req.body;
     await withTransaction(pool, async (client) => {
+      const mevcut = await client.query('SELECT * FROM approval_rules WHERE id=$1', [req.params.id]);
+      if (!mevcut.rows[0]) {
+        const err = new Error('Kural bulunamadı.');
+        err.status = 404;
+        throw err;
+      }
+      const gate = await resolveGateFields(client, req.body, mevcut.rows[0]);
       const r = await client.query(
         `
         UPDATE approval_rules SET
@@ -188,13 +237,18 @@ router.put('/:id', async (req, res) => {
           auto_approve = COALESCE($12, auto_approve),
           activate_on_approval = COALESCE($13, activate_on_approval),
           is_active = COALESCE($14, is_active),
-          description = COALESCE($15, description)
+          description = COALESCE($15, description),
+          document_type_code = $16,
+          reject_outcome = $17,
+          cancel_outcome = $18
         WHERE id=$1 RETURNING id
         `,
         [
-          req.params.id, rule_name || null, line_no ?? null, company_id, plant_id, screen_id || null, template_id,
+          req.params.id, rule_name || null, line_no ?? null, company_id, plant_id,
+          gate.document_type_code ? gate.screen_id : (screen_id || null), template_id,
           term_direction || null, term_min_amount, term_max_amount, condition_statuses,
           auto_approve, activate_on_approval, is_active, description,
+          gate.document_type_code, gate.reject_outcome, gate.cancel_outcome,
         ],
       );
       if (!r.rows[0]) {

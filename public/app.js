@@ -2685,7 +2685,7 @@ const MODULES = [
           { key: 'partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', required: true, lead: true, critical: true, group: 'kimlik' },
           { key: 'order_no', label: 'Sipariş no', code: true, lead: true, group: 'kimlik' },
           { key: 'order_date', label: 'Sipariş tarihi', type: 'date', lead: true, group: 'kimlik' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Onayli', 'KismiTeslim', 'Kapali', 'Iptal'], lead: true, group: 'status' },
           { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
           { key: 'requisition_id', label: 'Satınalma talebi', type: 'lookup', lookup: 'satin-alma-talepleri', valueKey: 'id', labelKey: 'requisition_no', fillFrom: 'talep-satirlar', group: 'kimlik' },
           { key: 'quotation_id', label: 'Satınalma teklifi', type: 'lookup', lookup: 'satin-alma-teklifleri', valueKey: 'id', labelKey: 'quotation_no', fillFrom: 'sa-teklif-satirlar', group: 'kimlik' },
@@ -8795,15 +8795,107 @@ const MODULES = [
       {
         id: 'operasyon',
         title: 'Onay İşlemleri',
-        screenIds: ['onaylarim', 'onay-izleme', 'onay-yetki-devri'],
+        screenIds: ['onay-bekleyenler', 'onaylarim', 'onay-izleme', 'onay-izi', 'onay-yetki-devri'],
       },
       {
         id: 'tanimlamalar',
         title: 'Tanımlamalar',
-        screenIds: ['onay-role-tanim', 'onay-kural-tanim', 'onay-rota-tanim', 'onay-message-template', 'onay-status-tanim', 'onay-modul-kullanimlari'],
+        screenIds: ['onay-belge-turleri', 'onay-role-tanim', 'onay-kural-tanim', 'onay-rota-tanim', 'onay-message-template', 'onay-status-tanim', 'onay-modul-kullanimlari'],
       },
     ],
     screens: [
+      {
+        id: 'onay-bekleyenler',
+        techId: 'SYS-APR-SCR-010',
+        businessNameEn: 'ApprovalInboxScreen',
+        title: 'Onay Bekleyenler',
+        endpoint: '/onay-bekleyenler',
+        crud: false,
+        readOnly: false,
+        approvalInbox: true,
+        listActions: ['incele'],
+        codeField: 'approval_no',
+        nameField: 'document_summary',
+        approveAction: { label: 'Onayla', path: '/onay-kayitlari/{id}/onayla' },
+        bulkActions: [
+          { label: 'Listelenenleri Onayla', path: '/onay-bekleyenler/toplu-onayla' },
+          { label: 'Listelenenleri Reddet', path: '/onay-bekleyenler/toplu-reddet', notesPrompt: 'Red gerekçesi (opsiyonel):' },
+        ],
+        banner: 'Tüm belge türlerinde size düşen onaylar. Kolon filtresiyle daraltıp toplu onaylayabilir / reddedebilirsiniz.',
+        filters: [
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'active_role_name', label: 'Rol' },
+        ],
+        columns: [
+          { key: 'approval_no', label: 'Onay', mono: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'document_summary', label: 'Özet' },
+          { key: 'amount', label: 'Tutar' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'active_step_name', label: 'Adım' },
+          { key: 'active_role_name', label: 'Rol' },
+          { key: 'baslatan_adi', label: 'Gönderen' },
+          { key: 'start_date', label: 'Gönderim' },
+        ],
+        masterFields: [
+          { key: 'approval_no', label: 'Onay no', code: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'document_summary', label: 'Özet', name: true },
+          { key: 'amount', label: 'Tutar', type: 'number' },
+          { key: 'currency_code', label: 'PB' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'rule_name', label: 'Kural' },
+          { key: 'route_name', label: 'Rota' },
+          { key: 'reject_outcome', label: 'Ret sonucu' },
+          { key: 'baslatan_adi', label: 'Gönderen' },
+          { key: 'description', label: 'Açıklama / not' },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+          { key: 'step_name', label: 'Adım' },
+          { key: 'role_name', label: 'Rol' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'onaylayan_adi', label: 'Onaylayan' },
+          { key: 'notes', label: 'Not' },
+        ],
+        detailKey: 'adimlar',
+      },
+      {
+        id: 'onay-izi',
+        techId: 'SYS-APR-SCR-011',
+        businessNameEn: 'ApprovalAuditTrailScreen',
+        title: 'Onay İzi',
+        endpoint: '/onay-izi',
+        crud: false,
+        readOnly: true,
+        listActions: [],
+        codeField: 'document_no',
+        nameField: 'action',
+        banner: 'Tüm belge türleri için onaya gönderme, adım onayı, onay, ret ve iptal izi.',
+        filters: [
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge no' },
+          { key: 'action', label: 'İşlem' },
+        ],
+        columns: [
+          { key: 'created_at', label: 'Zaman' },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'document_no', label: 'Belge', mono: true },
+          { key: 'approval_no', label: 'Onay', mono: true },
+          { key: 'step_line_no', label: 'Adım' },
+          { key: 'action', label: 'İşlem' },
+          { key: 'from_status', label: 'Önceki' },
+          { key: 'to_status', label: 'Sonraki' },
+          { key: 'user_code', label: 'Kullanıcı', mono: true },
+          { key: 'notes', label: 'Not' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+      },
       {
         id: 'onaylarim',
         techId: 'SYS-APR-SCR-001',
@@ -8812,6 +8904,7 @@ const MODULES = [
         endpoint: '/onay-kayitlari?benim=true',
         crud: false,
         readOnly: false,
+        approvalInbox: true,
         codeField: 'approval_no',
         nameField: 'document_summary',
         approveAction: { label: 'Onayla', path: '/onay-kayitlari/{id}/onayla' },
@@ -8948,6 +9041,37 @@ const MODULES = [
         detailAsFields: true,
       },
       {
+        id: 'onay-belge-turleri',
+        techId: 'SYS-APR-SCR-012',
+        businessNameEn: 'ApprovableDocumentTypeScreen',
+        title: 'Onaylanabilir Belge Türleri',
+        endpoint: '/onay-belge-turleri',
+        crud: false,
+        readOnly: true,
+        listActions: [],
+        codeField: 'document_type_code',
+        nameField: 'document_type_name',
+        banner: 'Onay kuralına bağlanabilen belge türleri. Kural yoksa belge onaysız akar; Onay Kuralları ekranında "Belge türü" seçerek onay açılır.',
+        filters: [
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'module_code', label: 'Modül' },
+        ],
+        columns: [
+          { key: 'document_type_code', label: 'Kod', mono: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'module_code', label: 'Modül' },
+          { key: 'screen_id', label: 'Ekran', mono: true },
+          { key: 'pending_status', label: 'Onay bekleyen durum' },
+          { key: 'approved_status', label: 'Onaylı durum' },
+          { key: 'outcome_codes', label: 'Ret/iptal sonuçları' },
+          { key: 'default_reject_outcome', label: 'Vars. ret' },
+          { key: 'active_rule_count', label: 'Aktif kural' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+      },
+      {
         id: 'onay-role-tanim',
         techId: 'SYS-APR-SCR-004',
         businessNameEn: 'ApprovalRoleScreen',
@@ -8996,7 +9120,7 @@ const MODULES = [
         numeratorSeri: 'ONAY_KURAL',
         codeField: 'rule_code',
         nameField: 'rule_name',
-        banner: 'Hangi ekranda onay devreye girer? Koşullar VE mantığıyla çalışır — işaretlediklerinizin / doldurduklarınızın tümü sağlanmalı.',
+        banner: 'Hangi belgede onay devreye girer? "Belge türü" seçilirse belge onaya takılır (onay bekleyen durum); boşsa yalnız ekran bazlı bilgi kaydı açılır. Koşullar VE mantığıyla çalışır.',
         filters: [
           { key: 'rule_name', label: 'Kural adı' },
           { key: 'screen_id', label: 'Ekran' },
@@ -9007,6 +9131,8 @@ const MODULES = [
           { key: 'rule_code', label: 'Kod', mono: true },
           { key: 'rule_name', label: 'Ad' },
           { key: 'screen_id', label: 'Ekran', mono: true },
+          { key: 'document_type_name', label: 'Belge türü' },
+          { key: 'reject_outcome', label: 'Ret sonucu' },
           { key: 'company_name', label: 'Firma' },
           { key: 'plant_name', label: 'İş yeri' },
           { key: 'template_name', label: 'Mesaj' },
@@ -9020,14 +9146,24 @@ const MODULES = [
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
           {
+            key: 'document_type_code',
+            label: 'Belge türü (onay kapısı)',
+            type: 'lookup',
+            lookup: 'onay-belge-turleri',
+            valueKey: 'document_type_code',
+            labelKey: 'document_type_name',
+            codeKey: 'document_type_code',
+          },
+          { key: 'reject_outcome', label: 'Ret sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['', 'TASLAK', 'IPTAL'] },
+          { key: 'cancel_outcome', label: 'İptal sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['', 'TASLAK', 'IPTAL'] },
+          {
             key: 'screen_id',
-            label: 'Ekran (onaylanacak belge)',
+            label: 'Ekran (belge türü seçiliyse otomatik)',
             type: 'lookup',
             lookup: 'onay-ekranlari',
             valueKey: 'screen_id',
             labelKey: 'screen_name',
             codeKey: 'screen_id',
-            required: true,
           },
           {
             key: 'template_id',
@@ -16329,6 +16465,7 @@ function updateActionButtons(screen) {
       btn.disabled = !showEx || !screenPermission(screen.id, act);
     }
   });
+  syncBulkActionButtons(screen);
   const mrpBtn = $('#btnMrpTalep');
   if (mrpBtn) mrpBtn.hidden = !screen.mrpTalepAction;
   const mrpUe = $('#btnMrpUretim');
@@ -16344,6 +16481,58 @@ function updateActionButtons(screen) {
     pdfBtn.hidden = !showPdf;
     pdfBtn.disabled = !showPdf || !screenPermission(screen.id, 'report-pdf');
   }
+}
+
+/** screen.bulkActions: listelenen (kolon filtresinden geçen) kayıtlara toplu POST { ids, notes }. */
+function syncBulkActionButtons(screen) {
+  const bar = $('#actionBar');
+  if (!bar) return;
+  bar.querySelectorAll('[data-action="bulk"]').forEach((b) => b.remove());
+  (screen.bulkActions || []).forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn action';
+    btn.dataset.action = 'bulk';
+    btn.dataset.bulkIndex = String(i);
+    btn.textContent = a.label;
+    bar.appendChild(btn);
+  });
+}
+
+async function runBulkAction(index) {
+  const screen = findScreen(state.screenId);
+  const action = screen?.bulkActions?.[index];
+  if (!action) return;
+  const rows = (state.filtered || state.rows || [])
+    .filter((r) => r?.id && (!action.readyKey || r[action.readyKey]));
+  if (!rows.length) {
+    toast(action.emptyMessage || 'Toplu işleme uygun kayıt yok.');
+    return;
+  }
+  if (!window.confirm(`${rows.length} kayıt için "${action.label}" yapılacak. Devam?`)) return;
+  let notes = null;
+  if (action.notesPrompt) {
+    notes = window.prompt(action.notesPrompt, '');
+    if (notes === null) return;
+  }
+  const result = await api(action.path, {
+    method: 'POST',
+    body: JSON.stringify({ ids: rows.map((r) => r.id), notes: notes || null }),
+  });
+  const ok = result?.basarili_sayisi || 0;
+  const fail = result?.hata_sayisi || 0;
+  const failMsg = (result?.hatali || []).slice(0, 3).map((h) => `#${h.id}: ${h.hata}`).join(' · ');
+  toast(fail
+    ? `${action.label}: ${ok} başarılı, ${fail} hatalı${failMsg ? ` — ${failMsg}` : ''}`
+    : `${action.label}: ${ok} kayıt tamam.`);
+  invalidateLookups();
+  await refreshOpenListSilently();
+}
+
+function approvalResultMessage(result, fallback) {
+  if (!result?.onay_bekliyor) return fallback;
+  const no = result.onay_kayit?.approval_no;
+  return `Onaya gönderildi${no ? ` (${no})` : ''} — Onay Bekleyenler ekranında onaylanınca devam eder.`;
 }
 
 async function openScreen(id, opts = {}) {
@@ -16855,6 +17044,7 @@ const LOOKUP_ENDPOINTS = {
   'onay-modul-kullanimlari': '/onay-module-kullanimlari?is_active=true',
   'onay-kurallari': '/onay-kurallari?is_active=true',
   'onay-ekranlari': '/onay-ekranlari',
+  'onay-belge-turleri': '/onay-belge-turleri?is_active=true',
   'onay-rota-tanim': '/onay-rotalari',
   'onay-message-template': '/onay-message-sablonlari?is_active=true',
   // İK / HR tanımları
@@ -22033,7 +22223,7 @@ function renderForm(screen) {
         secShow = true;
         secLabel = 'Reddet';
         secBtn.dataset.secKind = 'kk-red';
-      } else if (screen.id === 'onaylarim' && rec.id && rec.status_code === 'BEKLIYOR') {
+      } else if (screen.approvalInbox && rec.id && rec.status_code === 'BEKLIYOR') {
         secShow = true;
         secLabel = 'Reddet';
         secBtn.dataset.secKind = 'onay-red';
@@ -22080,7 +22270,7 @@ function renderForm(screen) {
         && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status)
       );
     }
-    if (screen.id === 'onaylarim') {
+    if (screen.approvalInbox) {
       show = Boolean(screen.approveAction && rec.status_code === 'BEKLIYOR');
     }
     if (screen.id === 'hr-izin-talepleri') {
@@ -22127,7 +22317,7 @@ function renderForm(screen) {
           || (screen.id === 'satin-alma-teklifleri' && rec.status === 'Taslak')
           || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
               && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status))
-          || (screen.id === 'onaylarim' && rec.status_code === 'BEKLIYOR')
+          || (screen.approvalInbox && rec.status_code === 'BEKLIYOR')
           || (screen.id === 'hr-izin-talepleri' && ['Gonderildi', 'YoneticiOnay', 'IkOnay'].includes(rec.status))
           || (screen.id === 'hr-avanslar' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
           || (screen.id === 'hr-bordro-calismalari' && rec.status === 'Hesaplandi')
@@ -27354,7 +27544,9 @@ function bindEvents() {
       else if (act === 'mrp-uretim') createMrpProductionOrders().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') runAndSaveMrp().catch((err) => toast(err.message));
       else if (act === 'tcmb-cek') fetchTcmbRates().catch((err) => toast(err.message));
-      else if (act === 'incele' && state.screenId === 'mrp-calisma') {
+      else if (act === 'bulk') {
+        runBulkAction(Number(actionBtn.dataset.bulkIndex)).catch((err) => toast(err.message || 'Toplu işlem başarısız'));
+      } else if (act === 'incele' && state.screenId === 'mrp-calisma') {
         const sel = selectedRow();
         if (sel?.id) {
           openMrpRunInWorkspace(sel.id).catch((err) => toast(err.message));
@@ -27714,7 +27906,7 @@ function bindEvents() {
           if (bodyExtra === null) return;
           const path = screen.approveAction.path.replace('{id}', rec.id);
           const result = await api(path, { method: 'POST', body: JSON.stringify(bodyExtra || {}) });
-          toast(screen.approveAction.label + ' tamam.');
+          toast(approvalResultMessage(result, screen.approveAction.label + ' tamam.'));
           state.formRecord = result;
           renderForm(screen);
         } else if (kind === 'kk-red') {
@@ -27857,7 +28049,7 @@ function bindEvents() {
           toast('Uyarı: bazı kalemlerde depo bakiyesi yetersiz olabilir.');
         }
         if (kind === 'approve') {
-          toast(act.label + ' tamam.');
+          toast(approvalResultMessage(result, act.label + ' tamam.'));
           state.formRecord = result;
           renderForm(screen);
         } else if (act.openTarget?.screenId && result?.fatura?.id) {
