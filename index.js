@@ -8,6 +8,8 @@ const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
 const { companyContext } = require('./src/middleware/firmaContext');
 const { authorizeRequest } = require('./src/middleware/authorize');
+const { firmaKayitKapsami } = require('./src/middleware/firmaKayitKapsami');
+const { isDemoSeedEnabled } = require('./src/bootstrap/demoSeedPolicy');
 
 // Profil resmi (base64) + yetki JSON için varsayılan 100kb yetmez
 app.use(express.json({ limit: '5mb' }));
@@ -36,6 +38,7 @@ app.use(authOptional);
 app.use(authRequired);
 app.use(companyContext);
 app.use(authorizeRequest);
+app.use(firmaKayitKapsami());
 app.use(auditMiddleware(pool));
 
 app.get('/health', async (req, res) => {
@@ -235,8 +238,8 @@ server.listen(listenOpts, () => {
         console.error('[tcmb] zamanlayıcı başlatılamadı:', err.message);
       }
     }
-    // Demo firma + örnek veri (veri silmez). Haftalık senkron / yeniden açılışta yeter.
-    if (process.env.NODE_ENV !== 'test') {
+    // Demo firma + örnek veri (veri silmez) — yalnız SEED_DEMO_DATA=1; canlıda kapalı.
+    if (process.env.NODE_ENV !== 'test' && isDemoSeedEnabled()) {
       setImmediate(async () => {
         try {
           const { ensureDemoFirms } = require('./src/bootstrap/ensureDemoFirms');

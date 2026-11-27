@@ -14,6 +14,10 @@ const {
   FATURA_BASLIK,
   FATURA_SATIR,
 } = require('../src/utils/belgeAlanlari');
+const { SPECS: FIRMA_KAPSAM, kayitKapsamParam } = require('../src/middleware/firmaKayitKapsami');
+
+// PUT/DELETE, /eslestir, /eslestirme-onay, /muhasebelestir, /yazdir, /pdf, /iade
+router.param('id', kayitKapsamParam(FIRMA_KAPSAM['/invoices']));
 
 /** 3-way kontrolünü aşma (force=1) yalnız yönetici; manuel eşleştirme onayı ayrıca satınalma onaycısı. */
 function canOverride3Way(req, { allowPurchaseApprover = false } = {}) {

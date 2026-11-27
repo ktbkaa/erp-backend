@@ -6,6 +6,7 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { directSql, kayitKapsamParam } = require('../src/middleware/firmaKayitKapsami');
 
 function createDocumentRouter(cfg) {
     const router = express.Router();
@@ -22,6 +23,15 @@ function createDocumentRouter(cfg) {
         linePrice = false,
         extraFields = [],
     } = cfg;
+
+    // GET/PUT/DELETE /:id ve bu router’a eklenen /:id/* alt aksiyonları
+    router.param('id', kayitKapsamParam(cfg.firmaKapsam || {
+        sql: directSql({
+            table,
+            company: 'company_id',
+            plant: extraFields.includes('plant_id') ? 'plant_id' : null,
+        }),
+    }));
 
     async function fetchById(id) {
         const baslikSql = requireCari

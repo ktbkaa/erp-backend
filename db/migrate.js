@@ -6,12 +6,15 @@
  * - db/migrations klasöründeki .sql dosyalarını isim sırasıyla okur
  * - Daha önce uygulanmamış olanları veritabanına işler
  * - Hangilerinin uygulandığını schema_migrations tablosunda tutar
+ * - Demo seed migration’larını (082/083) yalnız SEED_DEMO_DATA=1 iken uygular;
+ *   aksi halde atlar ve kaydetmez (sonradan bayrakla çalıştırılabilir)
  */
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 // DATABASE_URL (Neon/Render) veya yerel DB_* — db.js ile aynı bağlantı
 const pool = require('../db');
+const { isDemoSeedEnabled, isDemoSeedMigration } = require('../src/bootstrap/demoSeedPolicy');
 
 async function main() {
     const client = await pool.connect();
@@ -37,6 +40,10 @@ async function main() {
             );
             if (already.rowCount > 0) {
                 console.log(`Atlandı (zaten uygulanmış): ${file}`);
+                continue;
+            }
+            if (isDemoSeedMigration(file) && !isDemoSeedEnabled()) {
+                console.log(`Atlandı (demo seed — SEED_DEMO_DATA=1 değil): ${file}`);
                 continue;
             }
 
