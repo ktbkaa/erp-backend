@@ -4,6 +4,7 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { reqUserCode } = require('../src/utils/yetki');
+const { belgeGuncellemeKontrol, belgeSil, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 const {
   createJournalEntry,
   fisKesinlestir,
@@ -127,15 +128,8 @@ router.put('/:id', async (req, res) => {
       if (!mevcut.rows[0]) {
         throw Object.assign(new Error('Belge bulunamadı.'), { status: 404 });
       }
-      if (mevcut.rows[0].status === 'Onayli' || mevcut.rows[0].is_locked) {
-        throw Object.assign(
-          new Error(
-            'Kesinleşmiş fiş satırları değiştirilemez. Düzeltmek için «Ters kayıt» kullanın; '
-            + 'orijinal fiş denetim izinde kalır.'
-          ),
-          { status: 400, kod: 'KESIN_FIS_KILIT' }
-        );
-      }
+      const kilit = await belgeGuncellemeKontrol(client, 'journal_entries', Number(req.params.id), req.body, { req });
+      if (kilit.uygulandi) return Number(req.params.id);
       await client.query(
         `
         UPDATE journal_entries SET
@@ -165,6 +159,7 @@ router.put('/:id', async (req, res) => {
     });
     res.json(await getDocument(id));
   } catch (err) {
+    if (kilitHatasiYanit(res, err, req)) return;
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
 });
@@ -220,17 +215,11 @@ router.post('/:id/ters-kayit', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const mevcut = await pool.query('SELECT status, is_locked FROM journal_entries WHERE id=$1', [req.params.id]);
-    if (!mevcut.rows[0]) return res.status(404).json({ hata: 'Belge bulunamadı.' });
-    if (mevcut.rows[0].status === 'Onayli' || mevcut.rows[0].is_locked) {
-      return res.status(400).json({
-        hata: 'Onaylı/kilitli belge silinemez. Ters kayıt kullanın.',
-        kod: 'KESIN_FIS_KILIT',
-      });
-    }
-    await pool.query('DELETE FROM journal_entries WHERE id=$1', [req.params.id]);
+    const r = await withTransaction(pool, (client) => belgeSil(client, 'journal_entries', Number(req.params.id), { req }));
+    if (!r) return res.status(404).json({ hata: 'Belge bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (kilitHatasiYanit(res, err, req)) return;
     if (err.code === '23503') {
                 return res.status(409).json({
                     hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',

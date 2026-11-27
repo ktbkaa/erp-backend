@@ -64,6 +64,8 @@ function errorHandler(err, req, res, next) {
   if (err && err.type === 'entity.parse.failed') {
     return res.status(400).json({ hata: 'Geçersiz JSON gövdesi.', kod: 'ERR-API-400' });
   }
+  const { kilitHatasiYanit } = require('../services/belgeKilitService');
+  if (kilitHatasiYanit(res, err, req)) return undefined;
   const status = err.status || err.statusCode || 500;
   const body = {
     hata: err.message || 'Sunucu hatası',

@@ -4,6 +4,7 @@ const pool = require('../db');
 const { companyIdFromReq, resolveDocumentCompanyId } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { canRewriteLines } = require('../src/utils/lineGuard');
+const { belgeGuncellemeKontrol, belgeSil, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement, warehouseItemBalance } = require('../src/services/stokHareketService');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
@@ -730,6 +731,8 @@ router.put('/:id', async (req, res) => {
                 e.status = 404;
                 throw e;
             }
+            const kilit = await belgeGuncellemeKontrol(client, 'delivery_notes', Number(req.params.id), body, { req });
+            if (kilit.uygulandi) return Number(req.params.id);
             const m = mevcut.rows[0];
             const merged = {
                 ...m,
@@ -777,6 +780,7 @@ router.put('/:id', async (req, res) => {
         });
         res.json(await getDeliveryNote(id));
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
@@ -1351,14 +1355,11 @@ router.post('/:id/iade', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
-        const mevcut = await pool.query('SELECT status FROM delivery_notes WHERE id=$1', [req.params.id]);
-        if (!mevcut.rows[0]) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
-        if (mevcut.rows[0].status === 'Onayli' || mevcut.rows[0].status === 'FaturayaDonustu') {
-            return res.status(400).json({ hata: 'Onaylı/faturalanmış irsaliye silinemez.' });
-        }
-        await pool.query('DELETE FROM delivery_notes WHERE id=$1', [req.params.id]);
+        const r = await withTransaction(pool, (client) => belgeSil(client, 'delivery_notes', Number(req.params.id), { req }));
+        if (!r) return res.status(404).json({ hata: 'İrsaliye bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',

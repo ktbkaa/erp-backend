@@ -8,6 +8,7 @@ const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement, assertItemWarehouseAllowed } = require('../src/services/stokHareketService');
 const { resolveReceivingWarehouse, resolveIncomingQcWarehouse } = require('../src/services/kaliteService');
 const { parametreAl } = require('../src/utils/yetki');
+const { belgeSil, kilitHatasiYanit, BelgeKilitHatasi } = require('../src/services/belgeKilitService');
 
 async function getGoodsReceipt(id) {
     const k = await pool.query(`
@@ -374,15 +375,19 @@ router.get('/:id', async (req, res) => {
 });
 
 router.put('/:id', (req, res) => {
-    res.status(409).json({ hata: 'Mal kabul stok hareketi üretir; düzeltilemez. Kaydı silip yeniden oluşturun.' });
+    kilitHatasiYanit(res, new BelgeKilitHatasi(
+        'Mal kabul stok hareketi üretir; düzenlenemez. Düzeltme için iade (POST /mal-kabuller/:id/iade) yapıp yeni mal kabul girin.',
+        { kod: 'BELGE_STOK_ISLENMIS', tablo: 'goods_receipts', id: Number(req.params.id), alternatif: `İade: POST /mal-kabuller/${req.params.id}/iade` }
+    ), req);
 });
 
 router.delete('/:id', async (req, res) => {
     try {
-        const result = await pool.query(`DELETE FROM goods_receipts WHERE id=$1 RETURNING id`, [req.params.id]);
-        if (!result.rows[0]) return res.status(404).json({ hata: 'Mal kabul bulunamadı.' });
+        const result = await withTransaction(pool, (client) => belgeSil(client, 'goods_receipts', Number(req.params.id), { req }));
+        if (!result) return res.status(404).json({ hata: 'Mal kabul bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
