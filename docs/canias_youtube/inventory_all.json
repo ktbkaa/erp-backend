@@ -1,0 +1,3054 @@
+{
+  "modules": {
+    "BAS": [
+      {
+        "idx": "1",
+        "id": "hoTqGYLsupo",
+        "title": "BAS 11000 : HOMEPAGE - CaniasERP Sisteminde Kullanıcı Şifresi Değiştirme",
+        "tx": "HOMEPAGE",
+        "desc": "CaniasERP Sisteminde Kullanıcı Şifresi Değiştirme",
+        "duration": "50"
+      },
+      {
+        "idx": "2",
+        "id": "9E9X7HOrom8",
+        "title": "BAS 11005 : HOMEPAGE - CaniasERP Sisteminde Kullanıcı Teması Değiştirme",
+        "tx": "HOMEPAGE",
+        "desc": "CaniasERP Sisteminde Kullanıcı Teması Değiştirme",
+        "duration": "81"
+      },
+      {
+        "idx": "3",
+        "id": "bKTaQTQQTrI",
+        "title": "BAS 11010 : HOMEPAGE - CaniasERP Anasayfa Fonksiyonlarının TanıtılmasI",
+        "tx": "HOMEPAGE",
+        "desc": "CaniasERP Anasayfa Fonksiyonlarının TanıtılmasI",
+        "duration": "359"
+      },
+      {
+        "idx": "4",
+        "id": "xEQJ5WjYRGg",
+        "title": "BAS 11020 : HOMEPAGE - Bir CaniasERP Uygulamasının Özellikleri",
+        "tx": "HOMEPAGE",
+        "desc": "Bir CaniasERP Uygulamasının Özellikleri",
+        "duration": "709"
+      },
+      {
+        "idx": "5",
+        "id": "9TCuD32xSBg",
+        "title": "BAS 11025 : HOMEPAGE - CaniasERP Bir Trace Dosyası Oluşturmak",
+        "tx": "HOMEPAGE",
+        "desc": "CaniasERP Bir Trace Dosyası Oluşturmak",
+        "duration": "136"
+      },
+      {
+        "idx": "6",
+        "id": "wJBHZnFi-SE",
+        "title": "BAS 11030 : HOMEPAGE - CaniasERP Login Ekranının Tanıtılması",
+        "tx": "HOMEPAGE",
+        "desc": "CaniasERP Login Ekranının Tanıtılması",
+        "duration": "149"
+      }
+    ],
+    "BOM": [
+      {
+        "idx": "01",
+        "id": "sbnnI4i_vws",
+        "title": "BOM 10022 : BOMT01 - Ürün Ağacı Güncelleme",
+        "tx": "BOMT01",
+        "desc": "Ürün Ağacı Güncelleme",
+        "duration": "83"
+      },
+      {
+        "idx": "02",
+        "id": "6XMIOu5Xut8",
+        "title": "BOM 10023 : BOMT01 - Ürün Ağacı Oluşturma",
+        "tx": "BOMT01",
+        "desc": "Ürün Ağacı Oluşturma",
+        "duration": "97"
+      },
+      {
+        "idx": "03",
+        "id": "WqtpDYcyU4s",
+        "title": "BOM 10030 : BAST03 - Ürünlerden Komponentlere Varyant Transferi",
+        "tx": "BAST03",
+        "desc": "Ürünlerden Komponentlere Varyant Transferi",
+        "duration": "150"
+      },
+      {
+        "idx": "04",
+        "id": "OxuUB5ZxKUc",
+        "title": "BOM 10040 : BOMT01 - Seçenek Eşleme Yöntemi ile Varyant Transferi",
+        "tx": "BOMT01",
+        "desc": "Seçenek Eşleme Yöntemi ile Varyant Transferi",
+        "duration": "163"
+      },
+      {
+        "idx": "05",
+        "id": "E4j77aevupQ",
+        "title": "BOM 10050 : BOMT01 - Varyant Sabitleme",
+        "tx": "BOMT01",
+        "desc": "Varyant Sabitleme",
+        "duration": "108"
+      },
+      {
+        "idx": "06",
+        "id": "4S6KRID_awY",
+        "title": "BOM 10071 : BOMT01 - Çoklu Malzeme Ekleme",
+        "tx": "BOMT01",
+        "desc": "Çoklu Malzeme Ekleme",
+        "duration": "69"
+      },
+      {
+        "idx": "07",
+        "id": "UvoFMp5Lvt4",
+        "title": "BOM 10095 : BOMT03 - Malzeme Değişikliği",
+        "tx": "BOMT03",
+        "desc": "Malzeme Değişikliği",
+        "duration": "84"
+      },
+      {
+        "idx": "08",
+        "id": "M75bCT64qmQ",
+        "title": "BOM 10100 : BOMT05 - Ürün Ağacı Seviye Listesi",
+        "tx": "BOMT05",
+        "desc": "Ürün Ağacı Seviye Listesi",
+        "duration": "71"
+      },
+      {
+        "idx": "09",
+        "id": "V8fq4L1zsp4",
+        "title": "BOM 10120 : BOMT08 - Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Arama",
+        "tx": "BOMT08",
+        "desc": "Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Arama",
+        "duration": "58"
+      },
+      {
+        "idx": "10",
+        "id": "Jvj5V7HIeBg",
+        "title": "BOM 10130 : BOMT08 - Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Komponent Ekleme",
+        "tx": "BOMT08",
+        "desc": "Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Komponent Ekleme",
+        "duration": "117"
+      },
+      {
+        "idx": "11",
+        "id": "yAb84YNu5Mw",
+        "title": "BOM 10140 : BOMT08 - Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Komponent Çıkarma",
+        "tx": "BOMT08",
+        "desc": "Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Komponent Çıkarma",
+        "duration": "89"
+      },
+      {
+        "idx": "12",
+        "id": "iLSex-J1XlM",
+        "title": "BOM 10160 : BOMT11 - Üretim Şablonu",
+        "tx": "BOMT11",
+        "desc": "Üretim Şablonu",
+        "duration": "191"
+      }
+    ],
+    "FIN": [
+      {
+        "idx": "001",
+        "id": "HhIBl6CO5d4",
+        "title": "FIN 10011 : FINT01 - Muhasebe hesap planına yeni bir Ana Hesap (Kebir Hesabı) eklemek",
+        "tx": "FINT01",
+        "desc": "Muhasebe hesap planına yeni bir Ana Hesap (Kebir Hesabı) eklemek",
+        "duration": "69"
+      },
+      {
+        "idx": "002",
+        "id": "d8KyJ5EbeZY",
+        "title": "FIN 10012 : FINT01 - Muhasebe hesap planına yeni bir Üst Hesap (Kontrol Hesabı) eklemek",
+        "tx": "FINT01",
+        "desc": "Muhasebe hesap planına yeni bir Üst Hesap (Kontrol Hesabı) eklemek",
+        "duration": "83"
+      },
+      {
+        "idx": "003",
+        "id": "-N5atoVopLY",
+        "title": "FIN 10013 : FINT01 - Muhasebe hesap planına yeni bir Doğrudan Güncellenebilir hesap eklemek",
+        "tx": "FINT01",
+        "desc": "Muhasebe hesap planına yeni bir Doğrudan Güncellenebilir hesap eklemek",
+        "duration": "87"
+      },
+      {
+        "idx": "004",
+        "id": "joWFbb0dwYo",
+        "title": "FIN 10015 : FINT01 - Bir hesabı Silinecek statüsüne getirmek",
+        "tx": "FINT01",
+        "desc": "Bir hesabı Silinecek statüsüne getirmek",
+        "duration": "81"
+      },
+      {
+        "idx": "005",
+        "id": "i6KwsCbm3nQ",
+        "title": "FIN 10016 : FINT01 - Hesap planından bir hesabı kalıcı olarak silmek",
+        "tx": "FINT01",
+        "desc": "Hesap planından bir hesabı kalıcı olarak silmek",
+        "duration": "85"
+      },
+      {
+        "idx": "006",
+        "id": "_fqsuf1gFoM",
+        "title": "FIN 10020 : FINT02 - Portföye yeni Çek, Senet veya Akreditif Mektubu girişi",
+        "tx": "FINT02",
+        "desc": "Portföye yeni Çek, Senet veya Akreditif Mektubu girişi",
+        "duration": "101"
+      },
+      {
+        "idx": "007",
+        "id": "9IG_ioR1SXI",
+        "title": "FIN 10030 : FINT02 - Çek, Senet veya Akreditif Mektubu yürütme işlemleri",
+        "tx": "FINT02",
+        "desc": "Çek, Senet veya Akreditif Mektubu yürütme işlemleri",
+        "duration": "101"
+      },
+      {
+        "idx": "008",
+        "id": "Pf8XSYTXZ9M",
+        "title": "FIN 10050 : FINT02 - Kayıt anahtarı kullanmadan muhasebe belgesi oluşturmak",
+        "tx": "FINT02",
+        "desc": "Kayıt anahtarı kullanmadan muhasebe belgesi oluşturmak",
+        "duration": "85"
+      },
+      {
+        "idx": "009",
+        "id": "JP7onjQZhIU",
+        "title": "FIN 10051 : FINT02 - Referans alarak muhasebe belgesi oluşturmak",
+        "tx": "FINT02",
+        "desc": "Referans alarak muhasebe belgesi oluşturmak",
+        "duration": "64"
+      },
+      {
+        "idx": "010",
+        "id": "v-6Lp9BUxNM",
+        "title": "FIN 10052 : FINT02 - Belgeden ters yönde referans alarak belge oluşturmak",
+        "tx": "FINT02",
+        "desc": "Belgeden ters yönde referans alarak belge oluşturmak",
+        "duration": "89"
+      },
+      {
+        "idx": "011",
+        "id": "YtrRHsbXnNo",
+        "title": "FIN 10053 : FINT02 - Muhasebe standartları konsepti ve bir standarda özel belge oluşturmak",
+        "tx": "FINT02",
+        "desc": "Muhasebe standartları konsepti ve bir standarda özel belge oluşturmak",
+        "duration": "58"
+      },
+      {
+        "idx": "012",
+        "id": "3-fC1yHAaT4",
+        "title": "FIN 10060 : FINT02 - Kayıt anahtarları kullanarak muhasebe belgeleri oluşturmak",
+        "tx": "FINT02",
+        "desc": "Kayıt anahtarları kullanarak muhasebe belgeleri oluşturmak",
+        "duration": "104"
+      },
+      {
+        "idx": "013",
+        "id": "R3BJBXWR8VM",
+        "title": "FIN 10070 : FINT02 - Muhasebe belgesini iptal etmek",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesini iptal etmek",
+        "duration": "80"
+      },
+      {
+        "idx": "014",
+        "id": "ulXd_ARwdyc",
+        "title": "FIN 10070 : FINT02 - Muhasebe belgesini silmek",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesini silmek",
+        "duration": "48"
+      },
+      {
+        "idx": "015",
+        "id": "daga1kPyuj0",
+        "title": "FIN 10090 : FINT02 - Kur değerleme muhasebe belgesini iptal etmek",
+        "tx": "FINT02",
+        "desc": "Kur değerleme muhasebe belgesini iptal etmek",
+        "duration": "89"
+      },
+      {
+        "idx": "016",
+        "id": "FskIAX35nxg",
+        "title": "FIN 10090 : FINT02 - Kur değerleme muhasebe belgesini silmek",
+        "tx": "FINT02",
+        "desc": "Kur değerleme muhasebe belgesini silmek",
+        "duration": "97"
+      },
+      {
+        "idx": "017",
+        "id": "1pfCn6UTH7M",
+        "title": "FIN 10092 : FINT02 - Bir muhasebe belgesinin detayları",
+        "tx": "FINT02",
+        "desc": "Bir muhasebe belgesinin detayları",
+        "duration": "113"
+      },
+      {
+        "idx": "018",
+        "id": "hfFBT353vrw",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesine doküman ekleme",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesine doküman ekleme",
+        "duration": "90"
+      },
+      {
+        "idx": "019",
+        "id": "mJ1hvXgq-Ow",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinden kaynak belgelere ulaşım",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinden kaynak belgelere ulaşım",
+        "duration": "99"
+      },
+      {
+        "idx": "020",
+        "id": "6U7X6Ei8Q6o",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde e-defter bilgilerini değiştirmek",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde e-defter bilgilerini değiştirmek",
+        "duration": "96"
+      },
+      {
+        "idx": "021",
+        "id": "3vhZKCcm53w",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde eşleştirme bilgileri",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde eşleştirme bilgileri",
+        "duration": "85"
+      },
+      {
+        "idx": "022",
+        "id": "hOEzUoF1WzY",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde KDV bilgileri",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde KDV bilgileri",
+        "duration": "63"
+      },
+      {
+        "idx": "023",
+        "id": "w2SAY0Y6y-w",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde hesap bakiyesini hesaplamak",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde hesap bakiyesini hesaplamak",
+        "duration": "64"
+      },
+      {
+        "idx": "024",
+        "id": "VvdNA8xTEKQ",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde kalem kopyalama işlemi",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde kalem kopyalama işlemi",
+        "duration": "85"
+      },
+      {
+        "idx": "025",
+        "id": "ygVs4YC8Ftc",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde entegrasyon belge detaylarının görüntülenmesi",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde entegrasyon belge detaylarının görüntülenmesi",
+        "duration": "115"
+      },
+      {
+        "idx": "026",
+        "id": "WCPuhO8YtGk",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde müşteri/tedarikçi bilgilerinin toplu halde güncellenmesi",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde müşteri/tedarikçi bilgilerinin toplu halde güncellenmesi",
+        "duration": "91"
+      },
+      {
+        "idx": "027",
+        "id": "eWH_WTkrCgg",
+        "title": "FIN 10092 : FINT02-Müşteri tedarikçi bilg. ile hesap num. bilgisi kontrol edilsin/edilmesin kontrolü",
+        "tx": "FINT02",
+        "desc": "Müşteri tedarikçi bilg. ile hesap num. bilgisi kontrol edilsin/edilmesin kontrolü",
+        "duration": "116"
+      },
+      {
+        "idx": "028",
+        "id": "8ZzI5w2cBug",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde açık tutar kapama",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde açık tutar kapama",
+        "duration": "108"
+      },
+      {
+        "idx": "029",
+        "id": "p21TcHmB5Zw",
+        "title": "FIN 10092 : FINT02 - Muhasebe belgesinde ödeme bilgileri görüntülemek",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgesinde ödeme bilgileri görüntülemek",
+        "duration": "76"
+      },
+      {
+        "idx": "030",
+        "id": "FTpA6fg1hfg",
+        "title": "FIN 10092 : Muhasebe belgesindeki tüm çek/senet bilgilerinin toplu halde gösterilmesi",
+        "tx": "",
+        "desc": "FIN 10092 : Muhasebe belgesindeki tüm çek/senet bilgilerinin toplu halde gösterilmesi",
+        "duration": "74"
+      },
+      {
+        "idx": "031",
+        "id": "Ns_HExCmPsM",
+        "title": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Firma para birimine göre",
+        "tx": "",
+        "desc": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Firma para birimine göre",
+        "duration": "117"
+      },
+      {
+        "idx": "032",
+        "id": "1P1HWCMXBC0",
+        "title": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Belge para birimine göre",
+        "tx": "",
+        "desc": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Belge para birimine göre",
+        "duration": "135"
+      },
+      {
+        "idx": "033",
+        "id": "gT2aKFaaQmw",
+        "title": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Kısmi eşleştirme",
+        "tx": "",
+        "desc": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Kısmi eşleştirme",
+        "duration": "91"
+      },
+      {
+        "idx": "034",
+        "id": "_RUh39TirZw",
+        "title": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Eşleştirmeyi kaldırma",
+        "tx": "",
+        "desc": "FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Eşleştirmeyi kaldırma",
+        "duration": "61"
+      },
+      {
+        "idx": "035",
+        "id": "0RT_C0tosFw",
+        "title": "FIN 11450 : FINTZ1 - Finans Kokpit (Detaylı)",
+        "tx": "FINTZ1",
+        "desc": "Finans Kokpit (Detaylı)",
+        "duration": "408"
+      },
+      {
+        "idx": "036",
+        "id": "nzyH6g7sxaY",
+        "title": "FIN 10200 : FINT27 - Tekrarlanan ödemelerin listelenmesi ( Belge)",
+        "tx": "FINT27",
+        "desc": "Tekrarlanan ödemelerin listelenmesi ( Belge)",
+        "duration": "88"
+      },
+      {
+        "idx": "037",
+        "id": "OD9l6X3AicM",
+        "title": "FIN 10201 : FINT27 - Tekrarlanan ödemelerin muhasebeleştirilmesi",
+        "tx": "FINT27",
+        "desc": "Tekrarlanan ödemelerin muhasebeleştirilmesi",
+        "duration": "88"
+      },
+      {
+        "idx": "038",
+        "id": "DpjS1kmJYWI",
+        "title": "FIN 10220 : FINT20 - Mali dönem sonu Kapama Kaydı belgesi oluşturmak",
+        "tx": "FINT20",
+        "desc": "Mali dönem sonu Kapama Kaydı belgesi oluşturmak",
+        "duration": "220"
+      },
+      {
+        "idx": "039",
+        "id": "Nk4IAgsFhu4",
+        "title": "FIN 10221 : FINT20 - Mali dönem sonu Kapama Kaydı belgesini Transfer Şablonu kullanarak oluşturmak",
+        "tx": "FINT20",
+        "desc": "Mali dönem sonu Kapama Kaydı belgesini Transfer Şablonu kullanarak oluşturmak",
+        "duration": "136"
+      },
+      {
+        "idx": "040",
+        "id": "Uv8lKjFd1hE",
+        "title": "FIN 10240 : FINT13-Yevmiye kalemlerinin numaralandırılması ve yevmiye-kebir defterleri oluşturulması",
+        "tx": "FINT13",
+        "desc": "Yevmiye kalemlerinin numaralandırılması ve yevmiye-kebir defterleri oluşturulması",
+        "duration": "164"
+      },
+      {
+        "idx": "041",
+        "id": "nYFNzMIBJ_8",
+        "title": "FIN 10290 : FINT42 - Uyarı mektuplarının oluşturulması",
+        "tx": "FINT42",
+        "desc": "Uyarı mektuplarının oluşturulması",
+        "duration": "87"
+      },
+      {
+        "idx": "042",
+        "id": "JEj7r1RS7UQ",
+        "title": "FIN 10290 : FINT42 - Müşteri kartına göre uyarı mektubu",
+        "tx": "FINT42",
+        "desc": "Müşteri kartına göre uyarı mektubu",
+        "duration": "89"
+      },
+      {
+        "idx": "043",
+        "id": "-ZDesnwuaH8",
+        "title": "FIN 10300 : FINT23 - B-Formlar raporu",
+        "tx": "FINT23",
+        "desc": "B-Formlar raporu",
+        "duration": "194"
+      },
+      {
+        "idx": "044",
+        "id": "IM2Mq5sUdyY",
+        "title": "FIN 10340 : FINT48 - Alternatif ödeme planının oluşturulması",
+        "tx": "FINT48",
+        "desc": "Alternatif ödeme planının oluşturulması",
+        "duration": "85"
+      },
+      {
+        "idx": "045",
+        "id": "6f1TzJMpKLs",
+        "title": "FIN 10340 : FINT48 - Alternatif ödeme planının silinmesi",
+        "tx": "FINT48",
+        "desc": "Alternatif ödeme planının silinmesi",
+        "duration": "74"
+      },
+      {
+        "idx": "046",
+        "id": "z5xfovFOFVA",
+        "title": "FIN 10360 : FINT50 - Nakit Akış",
+        "tx": "FINT50",
+        "desc": "Nakit Akış",
+        "duration": "135"
+      },
+      {
+        "idx": "047",
+        "id": "E_Rp9U3MrRU",
+        "title": "FIN 10370 : FINT51 - Nakit Akış FINT51-FINT01",
+        "tx": "FINT51",
+        "desc": "Nakit Akış FINT51-FINT01",
+        "duration": "100"
+      },
+      {
+        "idx": "048",
+        "id": "8h0iIe8FJcc",
+        "title": "FIN 10410 : FINT16 - Vade farkı ve adat ekstreleri raporu",
+        "tx": "FINT16",
+        "desc": "Vade farkı ve adat ekstreleri raporu",
+        "duration": "162"
+      },
+      {
+        "idx": "049",
+        "id": "I61kaAUQfwY",
+        "title": "FIN 10481 : FINT62 - Mizan raporu almak",
+        "tx": "FINT62",
+        "desc": "Mizan raporu almak",
+        "duration": "93"
+      },
+      {
+        "idx": "050",
+        "id": "EsCL85_2HTM",
+        "title": "FIN 10481 : FINT62 - Belirli bir tarihteki kura göre mizan raporu",
+        "tx": "FINT62",
+        "desc": "Belirli bir tarihteki kura göre mizan raporu",
+        "duration": "87"
+      },
+      {
+        "idx": "051",
+        "id": "jXRNk9TCNMs",
+        "title": "FIN 10481 : FINT62 - İş alanına göre gruplanmış mizan raporu",
+        "tx": "FINT62",
+        "desc": "İş alanına göre gruplanmış mizan raporu",
+        "duration": "73"
+      },
+      {
+        "idx": "052",
+        "id": "7BC1z7LbMVw",
+        "title": "FIN 10481 : FINT62 - Maliyet merkezine göre gruplanmış mizan raporu",
+        "tx": "FINT62",
+        "desc": "Maliyet merkezine göre gruplanmış mizan raporu",
+        "duration": "74"
+      },
+      {
+        "idx": "053",
+        "id": "jHBOTCoauJw",
+        "title": "FIN 10481 : FINT62 - Projeye göre gruplanmış mizan raporu",
+        "tx": "FINT62",
+        "desc": "Projeye göre gruplanmış mizan raporu",
+        "duration": "66"
+      },
+      {
+        "idx": "054",
+        "id": "GhP4i10Elog",
+        "title": "FIN 11440 : BAST01 - Tekdüzen hesap ve hesap no eşitliği kontrolü",
+        "tx": "BAST01",
+        "desc": "Tekdüzen hesap ve hesap no eşitliği kontrolü",
+        "duration": "174"
+      },
+      {
+        "idx": "055",
+        "id": "k1IYdMiipYU",
+        "title": "FIN 10530 : FINT34 - Swift MT940 ile Banka hesap hareketlerinin muhasebeye entegrasyonu",
+        "tx": "FINT34",
+        "desc": "Swift MT940 ile Banka hesap hareketlerinin muhasebeye entegrasyonu",
+        "duration": "98"
+      },
+      {
+        "idx": "056",
+        "id": "5jl3gpA6EWY",
+        "title": "FIN 10531 : FINT34 - Çeklerin portföye topluca girilmesi",
+        "tx": "FINT34",
+        "desc": "Çeklerin portföye topluca girilmesi",
+        "duration": "113"
+      },
+      {
+        "idx": "057",
+        "id": "tb7UkeYg9nY",
+        "title": "FIN 10532 : FINT34 - Portföydeki çeklerin bankaya tahsile gönderilmesi ve entegrasyonu",
+        "tx": "FINT34",
+        "desc": "Portföydeki çeklerin bankaya tahsile gönderilmesi ve entegrasyonu",
+        "duration": "101"
+      },
+      {
+        "idx": "058",
+        "id": "qoZnf7B22SY",
+        "title": "FIN 10533 : FINT34 - Bankada tahsildeki çeklerin tahsili sonrası muhasebeye entegrasyonu",
+        "tx": "FINT34",
+        "desc": "Bankada tahsildeki çeklerin tahsili sonrası muhasebeye entegrasyonu",
+        "duration": "100"
+      },
+      {
+        "idx": "059",
+        "id": "hIWwEyyWcOI",
+        "title": "FIN 10660 : BAST01 - Muhasebe belge satırlarının birleştirilmesi",
+        "tx": "BAST01",
+        "desc": "Muhasebe belge satırlarının birleştirilmesi",
+        "duration": "135"
+      },
+      {
+        "idx": "060",
+        "id": "jwX2L5r-CCg",
+        "title": "FIN 10534 : FINT34 - Toplu ödeme listesi hazırlamak",
+        "tx": "FINT34",
+        "desc": "Toplu ödeme listesi hazırlamak",
+        "duration": "110"
+      },
+      {
+        "idx": "061",
+        "id": "M5ZcIo-3RqU",
+        "title": "FIN 10536 : FINT34 - Toplu ödemenin gerçekleşmesi sonucu ödemelerin muhasebeye entegrasyonu",
+        "tx": "FINT34",
+        "desc": "Toplu ödemenin gerçekleşmesi sonucu ödemelerin muhasebeye entegrasyonu",
+        "duration": "100"
+      },
+      {
+        "idx": "062",
+        "id": "hjsdV0uz_Xc",
+        "title": "FIN 10921 : FINT93 - Damga vergisi beyannamesinin oluşturulması",
+        "tx": "FINT93",
+        "desc": "Damga vergisi beyannamesinin oluşturulması",
+        "duration": "160"
+      },
+      {
+        "idx": "063",
+        "id": "eX1BAnWvY2E",
+        "title": "FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre proje kontrolü",
+        "tx": "",
+        "desc": "FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre proje kontrolü",
+        "duration": "125"
+      },
+      {
+        "idx": "064",
+        "id": "n9gZt1BQMFk",
+        "title": "FIN 10931 : FINT93 - Katma Değer Vergisi beyannamesinin oluşturulması",
+        "tx": "FINT93",
+        "desc": "Katma Değer Vergisi beyannamesinin oluşturulması",
+        "duration": "137"
+      },
+      {
+        "idx": "065",
+        "id": "JPDl4zGzUlQ",
+        "title": "FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre maliyet merkezi kontrolü",
+        "tx": "",
+        "desc": "FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre maliyet merkezi kontrolü",
+        "duration": "108"
+      },
+      {
+        "idx": "066",
+        "id": "i42-rCQVz1M",
+        "title": "FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre maliyet objesi kontrolü",
+        "tx": "",
+        "desc": "FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre maliyet objesi kontrolü",
+        "duration": "112"
+      },
+      {
+        "idx": "067",
+        "id": "ujCVxtb-nnw",
+        "title": "FIN 10941 : FINT93 - Katma Değer Vergisi-2 beyannamesinin oluşturulması",
+        "tx": "FINT93",
+        "desc": "Katma Değer Vergisi-2 beyannamesinin oluşturulması",
+        "duration": "118"
+      },
+      {
+        "idx": "068",
+        "id": "GN2CCVqyhTY",
+        "title": "FIN 10951 : FINT93 - Katma Değer Vergisi-9015 beyannamesinin oluşturulması",
+        "tx": "FINT93",
+        "desc": "Katma Değer Vergisi-9015 beyannamesinin oluşturulması",
+        "duration": "115"
+      },
+      {
+        "idx": "069",
+        "id": "x5j1ZHbP4eg",
+        "title": "FIN 10981 : FINT93 - Muhtasar beyannamenin oluşturulması",
+        "tx": "FINT93",
+        "desc": "Muhtasar beyannamenin oluşturulması",
+        "duration": "131"
+      },
+      {
+        "idx": "070",
+        "id": "N2fvuIy-VpQ",
+        "title": "FIN 10991 : FINT93 - Geçici kurumlar vergisi beyannamesinin oluşturulması",
+        "tx": "FINT93",
+        "desc": "Geçici kurumlar vergisi beyannamesinin oluşturulması",
+        "duration": "141"
+      },
+      {
+        "idx": "071",
+        "id": "bN_tjohVCR8",
+        "title": "FIN 11093 : FINT40 - Yatırım Yönetimi - Vadeli Banka Mevduatı Muhasebeleştirme ve Ayarlar",
+        "tx": "FINT40",
+        "desc": "Yatırım Yönetimi - Vadeli Banka Mevduatı Muhasebeleştirme ve Ayarlar",
+        "duration": "90"
+      },
+      {
+        "idx": "072",
+        "id": "rGiDuqn3LOA",
+        "title": "FIN 11102 : FINT80 - Masraf Yönetimi - Masraf Onaylama Yetkisi Verme ve Onaylama",
+        "tx": "FINT80",
+        "desc": "Masraf Yönetimi - Masraf Onaylama Yetkisi Verme ve Onaylama",
+        "duration": "76"
+      },
+      {
+        "idx": "073",
+        "id": "lqRxNEjRFbc",
+        "title": "FIN 11230 : FINT39 - Eşit taksit tutarlı bir kredi kaydı oluşturmak",
+        "tx": "FINT39",
+        "desc": "Eşit taksit tutarlı bir kredi kaydı oluşturmak",
+        "duration": "170"
+      },
+      {
+        "idx": "074",
+        "id": "3oI37iUyNYE",
+        "title": "FIN 11280 : FINT39 - Finansal Kiralama (Leasing) kaydı oluşturmak",
+        "tx": "FINT39",
+        "desc": "Finansal Kiralama (Leasing) kaydı oluşturmak",
+        "duration": "150"
+      },
+      {
+        "idx": "075",
+        "id": "jpuQj4LLQt8",
+        "title": "FIN 11240 :FINT39-Anaparası vade sonu tek ödemeli, Aylık faiz tahakkuklu Spot kredi kaydı oluşturmak",
+        "tx": "FINT39",
+        "desc": "Anaparası vade sonu tek ödemeli, Aylık faiz tahakkuklu Spot kredi kaydı oluşturmak",
+        "duration": "142"
+      },
+      {
+        "idx": "076",
+        "id": "TXRi1lmNfl0",
+        "title": "FIN 11250 : FINT39 - Sevk Öncesi İhracat Kredisi (SÖİK) kaydı oluşturmak",
+        "tx": "FINT39",
+        "desc": "Sevk Öncesi İhracat Kredisi (SÖİK) kaydı oluşturmak",
+        "duration": "139"
+      },
+      {
+        "idx": "077",
+        "id": "67ZRndzFTX4",
+        "title": "FIN 11290 : FINT39 - Sigorta Poliçesi kaydı oluşturmak",
+        "tx": "FINT39",
+        "desc": "Sigorta Poliçesi kaydı oluşturmak",
+        "duration": "135"
+      },
+      {
+        "idx": "078",
+        "id": "v5Gj3g4wHYY",
+        "title": "FIN 11300 : FINT39 - Eşit taksitli kredide Ödeme planını banka ödeme planına eşlemek",
+        "tx": "FINT39",
+        "desc": "Eşit taksitli kredide Ödeme planını banka ödeme planına eşlemek",
+        "duration": "115"
+      },
+      {
+        "idx": "079",
+        "id": "KP2-uZrbGDE",
+        "title": "FIN 11260 : FINT39 - Faiz Reeskontlu kredi kaydı oluşturmak",
+        "tx": "FINT39",
+        "desc": "Faiz Reeskontlu kredi kaydı oluşturmak",
+        "duration": "152"
+      },
+      {
+        "idx": "080",
+        "id": "yH5i3Qc_h4o",
+        "title": "FIN 11270 : FINT39 - Rotatif (DİNAMİK) kredi kaydı oluşturmak ve yürütmek",
+        "tx": "FINT39",
+        "desc": "Rotatif (DİNAMİK) kredi kaydı oluşturmak ve yürütmek",
+        "duration": "265"
+      },
+      {
+        "idx": "081",
+        "id": "FyvKqPBpSzE",
+        "title": "FIN 11310 : FINT39 - Aylık faiz tahakkuklu Spot kredi planını düzeltme",
+        "tx": "FINT39",
+        "desc": "Aylık faiz tahakkuklu Spot kredi planını düzeltme",
+        "duration": "144"
+      },
+      {
+        "idx": "082",
+        "id": "uvDJjVuuw2Y",
+        "title": "FIN 11320 : FINT39 - Kredi ile ilgili ödeme yapmak",
+        "tx": "FINT39",
+        "desc": "Kredi ile ilgili ödeme yapmak",
+        "duration": "140"
+      },
+      {
+        "idx": "083",
+        "id": "QgOu46M40Cw",
+        "title": "FIN 11360: FINT39-Banka kredilerinin işlemlerini muhasebeleştirmek ve muhasebe belgelerini incelemek",
+        "tx": "FINT39",
+        "desc": "Banka kredilerinin işlemlerini muhasebeleştirmek ve muhasebe belgelerini incelemek",
+        "duration": "276"
+      },
+      {
+        "idx": "084",
+        "id": "3tIBNaUht_A",
+        "title": "FIN 11330 : FINT39 - Bir krediyi kapamak (kalan borcu kapamak)",
+        "tx": "FINT39",
+        "desc": "Bir krediyi kapamak (kalan borcu kapamak)",
+        "duration": "123"
+      },
+      {
+        "idx": "085",
+        "id": "tZp5oagzn40",
+        "title": "FIN 11370 : FINT39 - Topluca Aylık Finans Giderlerini Muhasebeleştirmek",
+        "tx": "FINT39",
+        "desc": "Topluca Aylık Finans Giderlerini Muhasebeleştirmek",
+        "duration": "350"
+      },
+      {
+        "idx": "086",
+        "id": "rIjhoHiyRgA",
+        "title": "FIN 11340 : FINT39 - Kayıt Koruma Konsepti",
+        "tx": "FINT39",
+        "desc": "Kayıt Koruma Konsepti",
+        "duration": "183"
+      },
+      {
+        "idx": "087",
+        "id": "TCQ-irGlB4M",
+        "title": "FIN 11380 : FINT39 - Borç ve Ödeme İzleme raporu",
+        "tx": "FINT39",
+        "desc": "Borç ve Ödeme İzleme raporu",
+        "duration": "360"
+      },
+      {
+        "idx": "088",
+        "id": "4h-ste-YTlQ",
+        "title": "FIN 11350 : FINT39 - Kredi kaydını silmek",
+        "tx": "FINT39",
+        "desc": "Kredi kaydını silmek",
+        "duration": "135"
+      },
+      {
+        "idx": "089",
+        "id": "qkh5hVzTu0Q",
+        "title": "FIN 11390 : FINT39 - Yıl Sonu Tüm Uzun Vadelerin Kısa Vadeye Çekilmesi ve Muhasebeleştirme",
+        "tx": "FINT39",
+        "desc": "Yıl Sonu Tüm Uzun Vadelerin Kısa Vadeye Çekilmesi ve Muhasebeleştirme",
+        "duration": "205"
+      },
+      {
+        "idx": "090",
+        "id": "EMiFryttm28",
+        "title": "FIN 10570 : FINT02 - Muhasebe belgelerinde onay statüsü kontrolü",
+        "tx": "FINT02",
+        "desc": "Muhasebe belgelerinde onay statüsü kontrolü",
+        "duration": "102"
+      },
+      {
+        "idx": "091",
+        "id": "hSFaSGzop14",
+        "title": "FIN 10095 : FINT02 - Bir muhasebe belgesindeki B-Formları Raporu ile ilişkili alanları güncellemek",
+        "tx": "FINT02",
+        "desc": "Bir muhasebe belgesindeki B-Formları Raporu ile ilişkili alanları güncellemek",
+        "duration": "171"
+      },
+      {
+        "idx": "092",
+        "id": "JT1RS6vFxMg",
+        "title": "FIN 11410 : BAST01 - Muhasebe dönemlerinin otomatik oluşturulması",
+        "tx": "BAST01",
+        "desc": "Muhasebe dönemlerinin otomatik oluşturulması",
+        "duration": "116"
+      },
+      {
+        "idx": "093",
+        "id": "mX6dCp6QT-c",
+        "title": "FIN 11420 : BAST01 - Muhasebe döneminin kapatılması",
+        "tx": "BAST01",
+        "desc": "Muhasebe döneminin kapatılması",
+        "duration": "144"
+      },
+      {
+        "idx": "094",
+        "id": "xVWdMVAP6sI",
+        "title": "FIN 11430 : BAST01 - Açılış, Kapanış ve Yansıtma belge tiplerinin tanımlanması",
+        "tx": "BAST01",
+        "desc": "Açılış, Kapanış ve Yansıtma belge tiplerinin tanımlanması",
+        "duration": "86"
+      },
+      {
+        "idx": "095",
+        "id": "HC6-PoaiLwc",
+        "title": "FIN 11880 : FINT41 - DBS - Satış Faturalarının DBS ye Yüklenmesi ve Dosya Oluşturma",
+        "tx": "FINT41",
+        "desc": "DBS - Satış Faturalarının DBS ye Yüklenmesi ve Dosya Oluşturma",
+        "duration": "242"
+      },
+      {
+        "idx": "096",
+        "id": "al17Ug8dVsA",
+        "title": "FIN 11875 : FINT41 - DBS - Bankadan gelen güncel Müşteri DBS Limit dosyalarının yüklenmesi",
+        "tx": "FINT41",
+        "desc": "DBS - Bankadan gelen güncel Müşteri DBS Limit dosyalarının yüklenmesi",
+        "duration": "120"
+      },
+      {
+        "idx": "097",
+        "id": "QAAHfzfI6jg",
+        "title": "FIN 11870 : FINT41 - DBS - Doğrudan Borçlandırma Sistemi Konsepti",
+        "tx": "FINT41",
+        "desc": "DBS - Doğrudan Borçlandırma Sistemi Konsepti",
+        "duration": "733"
+      },
+      {
+        "idx": "098",
+        "id": "DUSGdy9joko",
+        "title": "FIN 10180 : FINT06 - Muhasebe belgesini sırasız onay kaldırma süreci",
+        "tx": "FINT06",
+        "desc": "Muhasebe belgesini sırasız onay kaldırma süreci",
+        "duration": "91"
+      },
+      {
+        "idx": "099",
+        "id": "wpykp-n2naA",
+        "title": "FIN 10180 : FINT06 - Muhasebe belgesini sıralı onay kaldırma süreci",
+        "tx": "FINT06",
+        "desc": "Muhasebe belgesini sıralı onay kaldırma süreci",
+        "duration": "90"
+      },
+      {
+        "idx": "100",
+        "id": "WGXJ2DaZejo",
+        "title": "FIN 10180 : FINT06 - Muhasebe belgesini sırasız onay süreci",
+        "tx": "FINT06",
+        "desc": "Muhasebe belgesini sırasız onay süreci",
+        "duration": "86"
+      },
+      {
+        "idx": "101",
+        "id": "OGjMPlyk6AY",
+        "title": "FIN 10180 : FINT06 - Muhasebe belgesini sıralı onay süreci",
+        "tx": "FINT06",
+        "desc": "Muhasebe belgesini sıralı onay süreci",
+        "duration": "74"
+      }
+    ],
+    "PRD_BAS": [
+      {
+        "idx": "01",
+        "id": "GdVf3Vmg0xQ",
+        "title": "PRD,BAS 10010 : BAST05 - Sınıf Oluşturma",
+        "tx": "BAST05",
+        "desc": "Sınıf Oluşturma",
+        "duration": "132"
+      },
+      {
+        "idx": "02",
+        "id": "uIjUewe4iRw",
+        "title": "PRD,BAS 10011 : BAST05 - Sınıf Detayları",
+        "tx": "BAST05",
+        "desc": "Sınıf Detayları",
+        "duration": "133"
+      },
+      {
+        "idx": "03",
+        "id": "uDRXMPXAKN4",
+        "title": "PRD,BAS 10050 : BAST05 - Sınıflarda Koşullar",
+        "tx": "BAST05",
+        "desc": "Sınıflarda Koşullar",
+        "duration": "155"
+      },
+      {
+        "idx": "04",
+        "id": "GygIUE-Cxbo",
+        "title": "PRD,BAS 10120 : BAST18 - Varyant Anahtarı Oluşturma",
+        "tx": "BAST18",
+        "desc": "Varyant Anahtarı Oluşturma",
+        "duration": "165"
+      },
+      {
+        "idx": "05",
+        "id": "BN0SESmjQTU",
+        "title": "PRD,BAS 10121 : BAST18 - Varyant Anahtarı Güncelleme",
+        "tx": "BAST18",
+        "desc": "Varyant Anahtarı Güncelleme",
+        "duration": "123"
+      },
+      {
+        "idx": "06",
+        "id": "qtPBhJDCWQw",
+        "title": "PRD,BAS 10122 : BAST18 - Varyant Anahtarı Silme",
+        "tx": "BAST18",
+        "desc": "Varyant Anahtarı Silme",
+        "duration": "57"
+      },
+      {
+        "idx": "07",
+        "id": "kzVtSyFEUck",
+        "title": "PRD,BAS 10140 : BAST18 - Koşullar",
+        "tx": "BAST18",
+        "desc": "Koşullar",
+        "duration": "135"
+      },
+      {
+        "idx": "08",
+        "id": "lL98y-BU3Uc",
+        "title": "PRD,BAS 10160 : BAST20 - Konfigüratör Şablonu",
+        "tx": "BAST20",
+        "desc": "Konfigüratör Şablonu",
+        "duration": "172"
+      },
+      {
+        "idx": "09",
+        "id": "jDKfGxLUrvE",
+        "title": "PRD,BAS 10181 : BAST20 - Teklif Oluşturma",
+        "tx": "BAST20",
+        "desc": "Teklif Oluşturma",
+        "duration": "97"
+      },
+      {
+        "idx": "10",
+        "id": "-uCnJti8wqk",
+        "title": "PRD,BAS 10190 : BAST20 - Malzeme Oluşturma",
+        "tx": "BAST20",
+        "desc": "Malzeme Oluşturma",
+        "duration": "98"
+      },
+      {
+        "idx": "11",
+        "id": "ZQCd13FW87s",
+        "title": "PRD,BAS 10200 : BAST20 - Ürün Ağacı Oluşturma",
+        "tx": "BAST20",
+        "desc": "Ürün Ağacı Oluşturma",
+        "duration": "69"
+      },
+      {
+        "idx": "12",
+        "id": "krXBIMJ2P6M",
+        "title": "PRD,BAS 10210 : BAST20 - Rota Oluşturma",
+        "tx": "BAST20",
+        "desc": "Rota Oluşturma",
+        "duration": "78"
+      },
+      {
+        "idx": "13",
+        "id": "Y-L8hdAImQM",
+        "title": "PRD,BAS 10211 : BAST20 - Proje Oluşturma",
+        "tx": "BAST20",
+        "desc": "Proje Oluşturma",
+        "duration": "89"
+      },
+      {
+        "idx": "14",
+        "id": "8CVU1tg2Alc",
+        "title": "PRD,BAS 10230 : BAST20 - Fiyatlama",
+        "tx": "BAST20",
+        "desc": "Fiyatlama",
+        "duration": "103"
+      },
+      {
+        "idx": "15",
+        "id": "hsnoz7OZ-u8",
+        "title": "PRD,BAS 10240 : BAST20 - Hesaplama",
+        "tx": "BAST20",
+        "desc": "Hesaplama",
+        "duration": "62"
+      },
+      {
+        "idx": "16",
+        "id": "PUb6A2rjWbw",
+        "title": "PRD,BAS 10241 : BAST20 - Çok Seviyeli Malzeme Yönetimi",
+        "tx": "BAST20",
+        "desc": "Çok Seviyeli Malzeme Yönetimi",
+        "duration": "117"
+      }
+    ],
+    "PRD": [
+      {
+        "idx": "01",
+        "id": "yx7WRbI9NEc",
+        "title": "PRD 10021 : PRDT01 - İş Emrinin Güncellenmesi",
+        "tx": "PRDT01",
+        "desc": "İş Emrinin Güncellenmesi",
+        "duration": "195"
+      },
+      {
+        "idx": "02",
+        "id": "eARPRKvWpXU",
+        "title": "PRD 10030 : PRDT01 - Normal İş Emri Oluşturma ve Çizelgeleme",
+        "tx": "PRDT01",
+        "desc": "Normal İş Emri Oluşturma ve Çizelgeleme",
+        "duration": "83"
+      },
+      {
+        "idx": "03",
+        "id": "KWnMauy57rE",
+        "title": "PRD 10031 : PRDT01 - Normal İş Emrinde Operasyonlar ve Komponentler",
+        "tx": "PRDT01",
+        "desc": "Normal İş Emrinde Operasyonlar ve Komponentler",
+        "duration": "151"
+      },
+      {
+        "idx": "04",
+        "id": "XxY7XYHi4Mk",
+        "title": "PRD 10040 : PRDT01 - Kollektif İş Emri Oluşturma ve Çizelgeleme",
+        "tx": "PRDT01",
+        "desc": "Kollektif İş Emri Oluşturma ve Çizelgeleme",
+        "duration": "84"
+      },
+      {
+        "idx": "05",
+        "id": "0flRy8HYKq0",
+        "title": "PRD 10041 : PRDT01 - Kollektif İş Emrinde Operasyonlar ve Komponentler",
+        "tx": "PRDT01",
+        "desc": "Kollektif İş Emrinde Operasyonlar ve Komponentler",
+        "duration": "160"
+      },
+      {
+        "idx": "06",
+        "id": "9GSUhkER8pI",
+        "title": "PRD 10050 : PRDT01 - Bileşik İş Emri Oluşturma ve Çizelgeleme",
+        "tx": "PRDT01",
+        "desc": "Bileşik İş Emri Oluşturma ve Çizelgeleme",
+        "duration": "123"
+      },
+      {
+        "idx": "07",
+        "id": "YjeDPxMY0JU",
+        "title": "PRD 10051 : PRDT01 - Bileşik İş Emrin Operasyonlar ve Komponentler",
+        "tx": "PRDT01",
+        "desc": "Bileşik İş Emrin Operasyonlar ve Komponentler",
+        "duration": "122"
+      },
+      {
+        "idx": "08",
+        "id": "lSdAI2UcYI4",
+        "title": "PRD 10055 : PRDT01 - Basit Demontaj İş Emri Oluşturma",
+        "tx": "PRDT01",
+        "desc": "Basit Demontaj İş Emri Oluşturma",
+        "duration": "115"
+      },
+      {
+        "idx": "09",
+        "id": "oAJ0epsHnqw",
+        "title": "PRD 10056 : PRDT01 - Kompleks Demontaj İş Emri Oluşturma",
+        "tx": "PRDT01",
+        "desc": "Kompleks Demontaj İş Emri Oluşturma",
+        "duration": "113"
+      },
+      {
+        "idx": "10",
+        "id": "MNEKOlYsGdc",
+        "title": "PRD 10060 : PRDT01 - Normal İş Emrine Malzeme Çıkışı",
+        "tx": "PRDT01",
+        "desc": "Normal İş Emrine Malzeme Çıkışı",
+        "duration": "204"
+      },
+      {
+        "idx": "11",
+        "id": "2EDHZkW87A8",
+        "title": "PRD 10070 : PRDT01 - Kollektif İş Emrine Malzeme Çıkışı",
+        "tx": "PRDT01",
+        "desc": "Kollektif İş Emrine Malzeme Çıkışı",
+        "duration": "213"
+      },
+      {
+        "idx": "12",
+        "id": "b-2vbkVytVc",
+        "title": "PRD 10080 : PRDT01 - Bileşik İş Emrine Malzeme Çıkışı",
+        "tx": "PRDT01",
+        "desc": "Bileşik İş Emrine Malzeme Çıkışı",
+        "duration": "215"
+      },
+      {
+        "idx": "13",
+        "id": "EGldXOj2MvE",
+        "title": "PRD 10090 : PRDT01 - Normal İş Emrinde Ürün Girişi",
+        "tx": "PRDT01",
+        "desc": "Normal İş Emrinde Ürün Girişi",
+        "duration": "219"
+      },
+      {
+        "idx": "14",
+        "id": "vsEBcHmdO-A",
+        "title": "PRD 10100 : PRDT01 - Kollektif İş Emrinde Ürün Girişi",
+        "tx": "PRDT01",
+        "desc": "Kollektif İş Emrinde Ürün Girişi",
+        "duration": "219"
+      },
+      {
+        "idx": "15",
+        "id": "PJMPwxDXthI",
+        "title": "PRD 10110 : PRDT01 - Bileşik İş Emrinde Ürün Girişi",
+        "tx": "PRDT01",
+        "desc": "Bileşik İş Emrinde Ürün Girişi",
+        "duration": "191"
+      },
+      {
+        "idx": "16",
+        "id": "nKXVv_rf86k",
+        "title": "PRD 10120 : PRDT01 - Normal, Kollektif ve Bileşik İş Emirlerinde Yan Ürün",
+        "tx": "PRDT01",
+        "desc": "Normal, Kollektif ve Bileşik İş Emirlerinde Yan Ürün",
+        "duration": "174"
+      },
+      {
+        "idx": "17",
+        "id": "2E4D1dqwYn4",
+        "title": "PRD 10130 : PRDT01 - Normal, Kollektif ve Bileşik İş Emirlerinde Kaynaklar",
+        "tx": "PRDT01",
+        "desc": "Normal, Kollektif ve Bileşik İş Emirlerinde Kaynaklar",
+        "duration": "137"
+      },
+      {
+        "idx": "18",
+        "id": "O3RBTCIS2xY",
+        "title": "PRD 10140 : PRDT01 - Standart Maliyet",
+        "tx": "PRDT01",
+        "desc": "Standart Maliyet",
+        "duration": "63"
+      },
+      {
+        "idx": "19",
+        "id": "w4QlLZQDJXA",
+        "title": "PRD 10160 : PRDT01 - Op. Ara Katsayısı Olan Norm. İş Emrinde Çizelgeleme, Komponentler&Operasyonlar",
+        "tx": "PRDT01",
+        "desc": "Op. Ara Katsayısı Olan Norm. İş Emrinde Çizelgeleme, Komponentler&Operasyonlar",
+        "duration": "103"
+      },
+      {
+        "idx": "20",
+        "id": "AF9YLldj9OQ",
+        "title": "PRD 10170 : PRDT01 - Op. Ara Katsayısı Olan Kol. İş Emrinde Çizelgeleme, Komponentler & Operasyonlar",
+        "tx": "PRDT01",
+        "desc": "Op. Ara Katsayısı Olan Kol. İş Emrinde Çizelgeleme, Komponentler & Operasyonlar",
+        "duration": "100"
+      },
+      {
+        "idx": "21",
+        "id": "ZGH8crG0MiU",
+        "title": "PRD 10200 : PRDT02 - Normal İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Normal İş Emrinde Onay ve Düzeltme",
+        "duration": "86"
+      },
+      {
+        "idx": "22",
+        "id": "YwzCrfPiDgk",
+        "title": "PRD 10210 : PRDT02 - Kollektif İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Kollektif İş Emrinde Onay ve Düzeltme",
+        "duration": "80"
+      },
+      {
+        "idx": "23",
+        "id": "0X2t_rRMXvc",
+        "title": "PRD 10220 : PRDT02 - Bileşik İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Bileşik İş Emrinde Onay ve Düzeltme",
+        "duration": "82"
+      },
+      {
+        "idx": "24",
+        "id": "cgT2vv53s7g",
+        "title": "PRD 10230 : PRDT02 - Demontaj İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Demontaj İş Emrinde Onay ve Düzeltme",
+        "duration": "91"
+      },
+      {
+        "idx": "25",
+        "id": "QdnYXhd5-ko",
+        "title": "PRD 10235 : PRDT01 - İş Emrinde Seri Numarası Planlama",
+        "tx": "PRDT01",
+        "desc": "İş Emrinde Seri Numarası Planlama",
+        "duration": "136"
+      },
+      {
+        "idx": "26",
+        "id": "fkAOSGulL-8",
+        "title": "PRD 10270 : PRDT02 - Operasyon Ara Katsayısı Olan Demontaj İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Operasyon Ara Katsayısı Olan Demontaj İş Emrinde Onay ve Düzeltme",
+        "duration": "148"
+      },
+      {
+        "idx": "27",
+        "id": "dDCt8o5NaEA",
+        "title": "PRD 10280 : PRDT02 - Oto Emiş Malzemeli Normal İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Oto Emiş Malzemeli Normal İş Emrinde Onay ve Düzeltme",
+        "duration": "186"
+      },
+      {
+        "idx": "28",
+        "id": "TBkoqyc1m18",
+        "title": "PRD 10290 : PRDT02 - Oto Emiş Malzemeli Kollektif İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Oto Emiş Malzemeli Kollektif İş Emrinde Onay ve Düzeltme",
+        "duration": "192"
+      },
+      {
+        "idx": "29",
+        "id": "yQhXvmspfc0",
+        "title": "PRD 10300 : PRDT02 - Oto Emiş Malzemeli Bileşik İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Oto Emiş Malzemeli Bileşik İş Emrinde Onay ve Düzeltme",
+        "duration": "172"
+      },
+      {
+        "idx": "30",
+        "id": "rxU6Bf3fwmc",
+        "title": "PRD 10310 : PRDT02 - Oto Emiş Malzemeli Demontaj İş Emrinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Oto Emiş Malzemeli Demontaj İş Emrinde Onay ve Düzeltme",
+        "duration": "170"
+      },
+      {
+        "idx": "31",
+        "id": "lH51R0C1BNU",
+        "title": "PRD 10315 : PRDT02 - Operasyon Onaylarında Otomatik Emiş Yan Ürün Miktarlarının Hesaplanması",
+        "tx": "PRDT02",
+        "desc": "Operasyon Onaylarında Otomatik Emiş Yan Ürün Miktarlarının Hesaplanması",
+        "duration": "123"
+      },
+      {
+        "idx": "32",
+        "id": "QeqXU2F7Km4",
+        "title": "PRD 10320 : PRDT02 - Otomatik ya da Operasyonel Çıkışlı İş Emirlerinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Otomatik ya da Operasyonel Çıkışlı İş Emirlerinde Onay ve Düzeltme",
+        "duration": "175"
+      },
+      {
+        "idx": "33",
+        "id": "h1DHjbGYFa8",
+        "title": "PRD 10330 : PRDT02 - Otomatik Giriş İş Emirlerinde Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Otomatik Giriş İş Emirlerinde Onay ve Düzeltme",
+        "duration": "155"
+      },
+      {
+        "idx": "34",
+        "id": "i8Kit8JuYMk",
+        "title": "PRD 10340 : PRDT02 - Onayda Yarımamül Stoğu Kontrolü",
+        "tx": "PRDT02",
+        "desc": "Onayda Yarımamül Stoğu Kontrolü",
+        "duration": "117"
+      },
+      {
+        "idx": "35",
+        "id": "vyHsd0Ae5XA",
+        "title": "PRD 10350 : PRDT02 - Parti Numarasıyla Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Parti Numarasıyla Onay ve Düzeltme",
+        "duration": "133"
+      },
+      {
+        "idx": "36",
+        "id": "lXC84FEX6YU",
+        "title": "PRD 10360 : PRDT02 - Seri Numarasıyla Onay ve Düzeltme",
+        "tx": "PRDT02",
+        "desc": "Seri Numarasıyla Onay ve Düzeltme",
+        "duration": "184"
+      },
+      {
+        "idx": "37",
+        "id": "TQDmft6tEwQ",
+        "title": "PRD 10361 : PRDT02 - Onay Metrikleri",
+        "tx": "PRDT02",
+        "desc": "Onay Metrikleri",
+        "duration": "108"
+      },
+      {
+        "idx": "38",
+        "id": "k8OJHtVBb3k",
+        "title": "PRD 10365 : PRDT02 - Operasyon Onaylarında Yeniden İşleme Miktarı",
+        "tx": "PRDT02",
+        "desc": "Operasyon Onaylarında Yeniden İşleme Miktarı",
+        "duration": "85"
+      },
+      {
+        "idx": "39",
+        "id": "hguM2VVtOrE",
+        "title": "PRD 10370 : PRDT03 - Kolay İş Emri Onayı",
+        "tx": "PRDT03",
+        "desc": "Kolay İş Emri Onayı",
+        "duration": "167"
+      },
+      {
+        "idx": "40",
+        "id": "ZGTEj5EKkWg",
+        "title": "PRD 10380 : PRDT03 - İlk Parça Üretimi Başlatma-Bitirme",
+        "tx": "PRDT03",
+        "desc": "İlk Parça Üretimi Başlatma-Bitirme",
+        "duration": "86"
+      },
+      {
+        "idx": "41",
+        "id": "Ssu5uA6LSoc",
+        "title": "PRD 10400 : PRDT03 - İş Başlatma ve Bitişte İş Merkezi Tipi Etkisi",
+        "tx": "PRDT03",
+        "desc": "İş Başlatma ve Bitişte İş Merkezi Tipi Etkisi",
+        "duration": "116"
+      },
+      {
+        "idx": "42",
+        "id": "yIVA-j6oZQM",
+        "title": "PRD 10410 : PRDT03 - Çizelgelemiş İşlerden Seçim",
+        "tx": "PRDT03",
+        "desc": "Çizelgelemiş İşlerden Seçim",
+        "duration": "87"
+      },
+      {
+        "idx": "43",
+        "id": "9o5hLZQY8gQ",
+        "title": "PRD 10420 : PRDT03 - İş Merkezleri Yerleşimi",
+        "tx": "PRDT03",
+        "desc": "İş Merkezleri Yerleşimi",
+        "duration": "74"
+      },
+      {
+        "idx": "44",
+        "id": "wXNpJ5v6b6s",
+        "title": "PRD 10430 : PRDT03 - İş Başlatırken Operasyonel Çıkış",
+        "tx": "PRDT03",
+        "desc": "İş Başlatırken Operasyonel Çıkış",
+        "duration": "173"
+      },
+      {
+        "idx": "45",
+        "id": "tG3HMUv3ANU",
+        "title": "PRD 10440 : PRDT03 - Operasyon Bitirirken Otomatik Giriş",
+        "tx": "PRDT03",
+        "desc": "Operasyon Bitirirken Otomatik Giriş",
+        "duration": "138"
+      },
+      {
+        "idx": "46",
+        "id": "Bm8qKiKwn1s",
+        "title": "PRD 10450 : PRDT03 - Seri Numarasıyla Operasyon Bitirme",
+        "tx": "PRDT03",
+        "desc": "Seri Numarasıyla Operasyon Bitirme",
+        "duration": "146"
+      },
+      {
+        "idx": "47",
+        "id": "nlkoTKjqYno",
+        "title": "PRD 10460 : PRDT03 - Parti Numarasıyla Operasyon Bitirme",
+        "tx": "PRDT03",
+        "desc": "Parti Numarasıyla Operasyon Bitirme",
+        "duration": "130"
+      },
+      {
+        "idx": "48",
+        "id": "OLg8s-nIeN8",
+        "title": "PRD 10461 : PRDT03 - Boş Duruş Yönetimi",
+        "tx": "PRDT03",
+        "desc": "Boş Duruş Yönetimi",
+        "duration": "107"
+      },
+      {
+        "idx": "49",
+        "id": "6GICOrkhBFY",
+        "title": "PRD 10462 : PRDT03 - Operasyonlar için Tekrarlı Hazırlık",
+        "tx": "PRDT03",
+        "desc": "Operasyonlar için Tekrarlı Hazırlık",
+        "duration": "113"
+      },
+      {
+        "idx": "50",
+        "id": "nWOwaslrMEM",
+        "title": "PRD 10470 : PRDT05 - Onay Numarasıyla Hızlı Onay ve Düzeltme",
+        "tx": "PRDT05",
+        "desc": "Onay Numarasıyla Hızlı Onay ve Düzeltme",
+        "duration": "96"
+      },
+      {
+        "idx": "51",
+        "id": "ucQowLegVTc",
+        "title": "PRD 10480 : PRDT05 - Onay Numarasıyla Detaylı Onay ve Düzeltme",
+        "tx": "PRDT05",
+        "desc": "Onay Numarasıyla Detaylı Onay ve Düzeltme",
+        "duration": "110"
+      },
+      {
+        "idx": "52",
+        "id": "eMGSyp3ceck",
+        "title": "PRD 10490 : PRDT06 - Üretim Planlarını İş Emrine Dönüştürme",
+        "tx": "PRDT06",
+        "desc": "Üretim Planlarını İş Emrine Dönüştürme",
+        "duration": "72"
+      },
+      {
+        "idx": "53",
+        "id": "vqoo8xK9710",
+        "title": "PRD 10550 : PRDT10 - İş Emri Ağı",
+        "tx": "PRDT10",
+        "desc": "İş Emri Ağı",
+        "duration": "89"
+      },
+      {
+        "idx": "54",
+        "id": "imu8jxwwY2M",
+        "title": "PRD 10580 : PRDT13 - Satış Siparişinden İş Emri Oluşturma",
+        "tx": "PRDT13",
+        "desc": "Satış Siparişinden İş Emri Oluşturma",
+        "duration": "85"
+      },
+      {
+        "idx": "55",
+        "id": "2lYTr7ySL_8",
+        "title": "PRD 10680 : PRDT40 - Fason Operasyon Yönetimi",
+        "tx": "PRDT40",
+        "desc": "Fason Operasyon Yönetimi",
+        "duration": "131"
+      },
+      {
+        "idx": "56",
+        "id": "Yui29cdwaqo",
+        "title": "PRD 10690 : PRDT40 - Fason Operasyon İçin Satınalma Siparişi Oluşturma",
+        "tx": "PRDT40",
+        "desc": "Fason Operasyon İçin Satınalma Siparişi Oluşturma",
+        "duration": "104"
+      },
+      {
+        "idx": "57",
+        "id": "f9kD9pg-K4k",
+        "title": "PRD 10700 : PRDT40 - Fason Operasyon İçin Satınalma İsteği Oluşturma",
+        "tx": "PRDT40",
+        "desc": "Fason Operasyon İçin Satınalma İsteği Oluşturma",
+        "duration": "96"
+      },
+      {
+        "idx": "58",
+        "id": "RCL_sq8G5tM",
+        "title": "PRD 10710 : INVT13 - Tedarikçiden Gelen Fason Ürünün Girişi",
+        "tx": "INVT13",
+        "desc": "Tedarikçiden Gelen Fason Ürünün Girişi",
+        "duration": "109"
+      },
+      {
+        "idx": "59",
+        "id": "yu3Qz1U1lUE",
+        "title": "PRD 10720 : INVT13 - Tedarikçiye Parça Göndermek",
+        "tx": "INVT13",
+        "desc": "Tedarikçiye Parça Göndermek",
+        "duration": "101"
+      },
+      {
+        "idx": "60",
+        "id": "StM0LyWU0_c",
+        "title": "PRD 10730 : PRDT42 - Birleşik Operasyonlar",
+        "tx": "PRDT42",
+        "desc": "Birleşik Operasyonlar",
+        "duration": "101"
+      },
+      {
+        "idx": "61",
+        "id": "7yMrcv6MXP4",
+        "title": "PRD 10740 : PRDT42 - Birleşik Operasyonlarda Onay ve Düzeltme",
+        "tx": "PRDT42",
+        "desc": "Birleşik Operasyonlarda Onay ve Düzeltme",
+        "duration": "163"
+      },
+      {
+        "idx": "62",
+        "id": "-krgt4stB-A",
+        "title": "PRD 10741 : PRDT42 - Birleşik Operasyonlarda Oto Emiş Malzemeler",
+        "tx": "PRDT42",
+        "desc": "Birleşik Operasyonlarda Oto Emiş Malzemeler",
+        "duration": "93"
+      },
+      {
+        "idx": "63",
+        "id": "gt2U-Y_nLNM",
+        "title": "PRD 10742 : PRDT42 - Birleşik Operasyonlarda Duruş Yönetimi",
+        "tx": "PRDT42",
+        "desc": "Birleşik Operasyonlarda Duruş Yönetimi",
+        "duration": "99"
+      },
+      {
+        "idx": "64",
+        "id": "V8sYux8Q-jw",
+        "title": "PRD 10743 : PRDT42 - Birleşik Operasyonlarda Aktivite Yönetimi",
+        "tx": "PRDT42",
+        "desc": "Birleşik Operasyonlarda Aktivite Yönetimi",
+        "duration": "167"
+      },
+      {
+        "idx": "65",
+        "id": "UnVQe3ahTcs",
+        "title": "PRD 10744 : PRDT43 - Birleşik Operasyonlarda Kolay Onay",
+        "tx": "PRDT43",
+        "desc": "Birleşik Operasyonlarda Kolay Onay",
+        "duration": "162"
+      },
+      {
+        "idx": "66",
+        "id": "aOyGvOSaQNU",
+        "title": "PRD 10745 : PRDT42 - Birleşik Operasyonlarda Yan Ürün Yönetimi",
+        "tx": "PRDT42",
+        "desc": "Birleşik Operasyonlarda Yan Ürün Yönetimi",
+        "duration": "83"
+      }
+    ],
+    "PUR": [
+      {
+        "idx": "01",
+        "id": "NBwrkBhp24M",
+        "title": "PUR 10011 : PURT04 - Manuel Satınalma İsteği Oluşturma",
+        "tx": "PURT04",
+        "desc": "Manuel Satınalma İsteği Oluşturma",
+        "duration": "110"
+      },
+      {
+        "idx": "02",
+        "id": "GcDmPxhKr8g",
+        "title": "PUR 10012 : PURT04 - Satınalma İsteği Silme",
+        "tx": "PURT04",
+        "desc": "Satınalma İsteği Silme",
+        "duration": "111"
+      },
+      {
+        "idx": "03",
+        "id": "8T6MFC1E1Ho",
+        "title": "PUR 10013 : PURT04 - Satınalma İsteği Düzenleme",
+        "tx": "PURT04",
+        "desc": "Satınalma İsteği Düzenleme",
+        "duration": "132"
+      },
+      {
+        "idx": "04",
+        "id": "eigX7zKjcpA",
+        "title": "PUR 10014 : PURT04 - Satınalma İsteği Listeleme",
+        "tx": "PURT04",
+        "desc": "Satınalma İsteği Listeleme",
+        "duration": "132"
+      },
+      {
+        "idx": "05",
+        "id": "v4cDqL7HRHE",
+        "title": "PUR 10015 : PURT04 - Satınalma İsteğinden Satınalma İsteği Oluşturma",
+        "tx": "PURT04",
+        "desc": "Satınalma İsteğinden Satınalma İsteği Oluşturma",
+        "duration": "147"
+      },
+      {
+        "idx": "06",
+        "id": "i3OpghffHDI",
+        "title": "PUR 10022 : PURT04 - Satınalma İsteklerinde Toplu Değişiklik",
+        "tx": "PURT04",
+        "desc": "Satınalma İsteklerinde Toplu Değişiklik",
+        "duration": "163"
+      },
+      {
+        "idx": "07",
+        "id": "g46H4RQGSCE",
+        "title": "PUR 10028 : PURT01 - Satınalma Teklif İsteği Oluştulması (Manuel)",
+        "tx": "PURT01",
+        "desc": "Satınalma Teklif İsteği Oluştulması (Manuel)",
+        "duration": "103"
+      },
+      {
+        "idx": "08",
+        "id": "HCbaWpvytLY",
+        "title": "PUR 10029 : PURT01 - Satınalma Teklif İsteği Oluştulması (Toplu)",
+        "tx": "PURT01",
+        "desc": "Satınalma Teklif İsteği Oluştulması (Toplu)",
+        "duration": "118"
+      },
+      {
+        "idx": "09",
+        "id": "EkncwGyfru0",
+        "title": "PUR 10030 : PURT01 - Satınalma Teklif İsteği Oluşturulması (Çoklu)",
+        "tx": "PURT01",
+        "desc": "Satınalma Teklif İsteği Oluşturulması (Çoklu)",
+        "duration": "97"
+      },
+      {
+        "idx": "10",
+        "id": "jaA2WlWUHHY",
+        "title": "PUR 10031 : PURT01 - Satınalma Teklif İsteği Silme",
+        "tx": "PURT01",
+        "desc": "Satınalma Teklif İsteği Silme",
+        "duration": "68"
+      },
+      {
+        "idx": "11",
+        "id": "1FvNS02kdVs",
+        "title": "PUR 10032 : PURT01 - Satınalma Teklif İsteği Düzenleme",
+        "tx": "PURT01",
+        "desc": "Satınalma Teklif İsteği Düzenleme",
+        "duration": "68"
+      },
+      {
+        "idx": "12",
+        "id": "jkNwZjFnck4",
+        "title": "PUR 10033 : PURT01 - Satınalma Teklif İsteği Listeleme",
+        "tx": "PURT01",
+        "desc": "Satınalma Teklif İsteği Listeleme",
+        "duration": "56"
+      },
+      {
+        "idx": "13",
+        "id": "uAw8f7DY2rI",
+        "title": "PUR 10059 : PURT02 - Satınalma Teklifi Oluşturulması (Manuel)",
+        "tx": "PURT02",
+        "desc": "Satınalma Teklifi Oluşturulması (Manuel)",
+        "duration": "83"
+      },
+      {
+        "idx": "14",
+        "id": "aY1Q0uSpTMA",
+        "title": "PUR 10060 : PURT02 - Satınalma Teklifi Oluşturulması (Teklif İsteğinden)",
+        "tx": "PURT02",
+        "desc": "Satınalma Teklifi Oluşturulması (Teklif İsteğinden)",
+        "duration": "87"
+      },
+      {
+        "idx": "15",
+        "id": "sW5EqAmoPEc",
+        "title": "PUR 10061 : PURT02 - Satınalma Teklifi Silme",
+        "tx": "PURT02",
+        "desc": "Satınalma Teklifi Silme",
+        "duration": "61"
+      },
+      {
+        "idx": "16",
+        "id": "N3lcUSQ8yco",
+        "title": "PUR 10062 : PURT02 - Satınalma Teklifi Düzenleme",
+        "tx": "PURT02",
+        "desc": "Satınalma Teklifi Düzenleme",
+        "duration": "83"
+      },
+      {
+        "idx": "17",
+        "id": "k_CwCWoCxrY",
+        "title": "PUR 10063 : PURT02 - Satınalma Teklifi Listeleme",
+        "tx": "PURT02",
+        "desc": "Satınalma Teklifi Listeleme",
+        "duration": "57"
+      },
+      {
+        "idx": "18",
+        "id": "0YcrJm_XbXY",
+        "title": "PUR 10064 : PURT02 - Satınalma Teklifinden Satınalma Teklifi Oluşturma",
+        "tx": "PURT02",
+        "desc": "Satınalma Teklifinden Satınalma Teklifi Oluşturma",
+        "duration": "83"
+      },
+      {
+        "idx": "19",
+        "id": "rgqGSR9lXnQ",
+        "title": "PUR 10070 : PURT02 - Toplu Satınalma Teklifi Oluşturma",
+        "tx": "PURT02",
+        "desc": "Toplu Satınalma Teklifi Oluşturma",
+        "duration": "113"
+      },
+      {
+        "idx": "20",
+        "id": "GLpJ8SbFp1s",
+        "title": "PUR 10099 : PURT03 - Satınalma Anlaşması Oluşturulması (Manuel)",
+        "tx": "PURT03",
+        "desc": "Satınalma Anlaşması Oluşturulması (Manuel)",
+        "duration": "156"
+      },
+      {
+        "idx": "21",
+        "id": "h_zxbP73XJ4",
+        "title": "PUR 10100 : PURT03 - Satınalma Anlaşması Oluşturulması (Satınalma İsteklerinden)",
+        "tx": "PURT03",
+        "desc": "Satınalma Anlaşması Oluşturulması (Satınalma İsteklerinden)",
+        "duration": "142"
+      },
+      {
+        "idx": "22",
+        "id": "4GuheK0KLzk",
+        "title": "PUR 10101 : PURT03 - Satınalma Anlaşması Silme",
+        "tx": "PURT03",
+        "desc": "Satınalma Anlaşması Silme",
+        "duration": "121"
+      },
+      {
+        "idx": "23",
+        "id": "WxvjXIdC18k",
+        "title": "PUR 10102 : PURT03 - Satınalma Anlaşması Düzenleme",
+        "tx": "PURT03",
+        "desc": "Satınalma Anlaşması Düzenleme",
+        "duration": "112"
+      },
+      {
+        "idx": "24",
+        "id": "xOdZVxqs-oY",
+        "title": "PUR 10103 : PURT03 - Satınalma Anlaşması Listeleme",
+        "tx": "PURT03",
+        "desc": "Satınalma Anlaşması Listeleme",
+        "duration": "139"
+      },
+      {
+        "idx": "25",
+        "id": "j3yPBe-rw3o",
+        "title": "PUR 10104 : PURT03 - Satınalma Anlaşmasından Satınalma Anlaşması Oluşturma",
+        "tx": "PURT03",
+        "desc": "Satınalma Anlaşmasından Satınalma Anlaşması Oluşturma",
+        "duration": "119"
+      },
+      {
+        "idx": "26",
+        "id": "JUpUv1zwlIQ",
+        "title": "PUR 10110 : PURT03 - Değer Anlaşması Süreci",
+        "tx": "PURT03",
+        "desc": "Değer Anlaşması Süreci",
+        "duration": "136"
+      },
+      {
+        "idx": "27",
+        "id": "1_u7HTbDGdA",
+        "title": "PUR 10120 : PURT03 - Miktar Anlaşması Süreci",
+        "tx": "PURT03",
+        "desc": "Miktar Anlaşması Süreci",
+        "duration": "129"
+      },
+      {
+        "idx": "28",
+        "id": "N-iyizGfGHo",
+        "title": "PUR 10183 : PURT03 - Merkezi Satınalma Anlaşması Oluşturma",
+        "tx": "PURT03",
+        "desc": "Merkezi Satınalma Anlaşması Oluşturma",
+        "duration": "173"
+      },
+      {
+        "idx": "29",
+        "id": "f6xgUNi5T_E",
+        "title": "PUR 10184 : PURT03 - Merkezi Satınalma Anlaşması Üzerinden Satınalma Siparişi Oluşturma",
+        "tx": "PURT03",
+        "desc": "Merkezi Satınalma Anlaşması Üzerinden Satınalma Siparişi Oluşturma",
+        "duration": "112"
+      },
+      {
+        "idx": "30",
+        "id": "GcCj4aauh90",
+        "title": "PUR 10210 : PURT05 - Paylaştırmalı Satınalma Siparişi Oluşturma",
+        "tx": "PURT05",
+        "desc": "Paylaştırmalı Satınalma Siparişi Oluşturma",
+        "duration": "149"
+      },
+      {
+        "idx": "31",
+        "id": "am3LTqVMKlM",
+        "title": "PUR 10219 : PURT05 - Satınalma Siparişi Oluşturma (Manuel)",
+        "tx": "PURT05",
+        "desc": "Satınalma Siparişi Oluşturma (Manuel)",
+        "duration": "112"
+      },
+      {
+        "idx": "32",
+        "id": "NOOfJoKLYEQ",
+        "title": "PUR 10220 : PURT05 - Satınalma Siparişi Oluşturma (İsteklerden)",
+        "tx": "PURT05",
+        "desc": "Satınalma Siparişi Oluşturma (İsteklerden)",
+        "duration": "91"
+      },
+      {
+        "idx": "33",
+        "id": "K_QmTF5cZcc",
+        "title": "PUR 10221 : PURT05 - Satınalma Siparişi Silme",
+        "tx": "PURT05",
+        "desc": "Satınalma Siparişi Silme",
+        "duration": "58"
+      },
+      {
+        "idx": "34",
+        "id": "SusDs1gQscU",
+        "title": "PUR 10222 : PURT05 - Satınalma Siparişi Düzenleme",
+        "tx": "PURT05",
+        "desc": "Satınalma Siparişi Düzenleme",
+        "duration": "69"
+      },
+      {
+        "idx": "35",
+        "id": "A8C830MkK8o",
+        "title": "PUR 10223 : PURT05 - Satınalma Siparişi Listeleme",
+        "tx": "PURT05",
+        "desc": "Satınalma Siparişi Listeleme",
+        "duration": "46"
+      },
+      {
+        "idx": "36",
+        "id": "uqzjj4GF1xs",
+        "title": "PUR 10224 : PURT05 - Satınalma Siparişinden Satınalma Siparişi Oluşturma",
+        "tx": "PURT05",
+        "desc": "Satınalma Siparişinden Satınalma Siparişi Oluşturma",
+        "duration": "103"
+      },
+      {
+        "idx": "37",
+        "id": "Na-pi0OMbLI",
+        "title": "PUR 10350 : VERT01 - Faturaların Toplu Muhasebeleştirilmesi",
+        "tx": "VERT01",
+        "desc": "Faturaların Toplu Muhasebeleştirilmesi",
+        "duration": "89"
+      },
+      {
+        "idx": "38",
+        "id": "OBfuMCtVUV0",
+        "title": "PUR 10360 : VERT01 - Fatura Muhasebeleştirme Prosesi",
+        "tx": "VERT01",
+        "desc": "Fatura Muhasebeleştirme Prosesi",
+        "duration": "77"
+      },
+      {
+        "idx": "39",
+        "id": "QkXGUVjp2hk",
+        "title": "PUR 10410 : VERT01 - Satınalma Faturası Oluşturma",
+        "tx": "VERT01",
+        "desc": "Satınalma Faturası Oluşturma",
+        "duration": "166"
+      },
+      {
+        "idx": "40",
+        "id": "U0unjhyz0CE",
+        "title": "PUR 10411 : VERT01 - Satınalma Faturası Silme",
+        "tx": "VERT01",
+        "desc": "Satınalma Faturası Silme",
+        "duration": "59"
+      },
+      {
+        "idx": "41",
+        "id": "SFXuJVLvXPI",
+        "title": "PUR 10412 : VERT01 - Satınalma Faturası Düzenleme",
+        "tx": "VERT01",
+        "desc": "Satınalma Faturası Düzenleme",
+        "duration": "68"
+      },
+      {
+        "idx": "42",
+        "id": "DG0S8wobrRs",
+        "title": "PUR 10413 : VERT01 - Satınalma Faturası Listeleme",
+        "tx": "VERT01",
+        "desc": "Satınalma Faturası Listeleme",
+        "duration": "55"
+      },
+      {
+        "idx": "43",
+        "id": "Kh0ZGI7gKj8",
+        "title": "PUR 10420 : VERT01 - Fark Faturası Prosesi",
+        "tx": "VERT01",
+        "desc": "Fark Faturası Prosesi",
+        "duration": "118"
+      },
+      {
+        "idx": "44",
+        "id": "zoG8uio2zIQ",
+        "title": "PUR 10430 : VERT01 - Miktar İade Faturası Prosesi",
+        "tx": "VERT01",
+        "desc": "Miktar İade Faturası Prosesi",
+        "duration": "96"
+      },
+      {
+        "idx": "45",
+        "id": "LiOYI5IzgmY",
+        "title": "PUR 10440 : VERT01 - Tutar İade Faturası Prosesi",
+        "tx": "VERT01",
+        "desc": "Tutar İade Faturası Prosesi",
+        "duration": "82"
+      },
+      {
+        "idx": "46",
+        "id": "nKfTuXpCodE",
+        "title": "PUR 10450 : VERT01 - Masraf Faturaları Prosesi",
+        "tx": "VERT01",
+        "desc": "Masraf Faturaları Prosesi",
+        "duration": "168"
+      },
+      {
+        "idx": "47",
+        "id": "RcE7_ulAu-M",
+        "title": "PUR 10455 : VERT01 - Manuel Fatura Süreci",
+        "tx": "VERT01",
+        "desc": "Manuel Fatura Süreci",
+        "duration": "94"
+      },
+      {
+        "idx": "48",
+        "id": "p6I4VRkGF_w",
+        "title": "PUR 10460 : VERT01 - Satınalma Faturalarında Kur Farkı Konsepti",
+        "tx": "VERT01",
+        "desc": "Satınalma Faturalarında Kur Farkı Konsepti",
+        "duration": "98"
+      },
+      {
+        "idx": "49",
+        "id": "Tf7uQu8Gx_E",
+        "title": "PUR 10520 : PURT09 - Anlaşma & Teklif Bilgilerini Güncelleme",
+        "tx": "PURT09",
+        "desc": "Anlaşma & Teklif Bilgilerini Güncelleme",
+        "duration": "211"
+      },
+      {
+        "idx": "50",
+        "id": "JSYkAuEwl2k",
+        "title": "PUR 10530 : PURT12 - Satınalma İsteği Başlatma",
+        "tx": "PURT12",
+        "desc": "Satınalma İsteği Başlatma",
+        "duration": "132"
+      },
+      {
+        "idx": "51",
+        "id": "K_Nmh4yL-8I",
+        "title": "PUR 10550 : PURT33 - Malzemelere Göre Sipariş Durum Raporu (Rapor)",
+        "tx": "PURT33",
+        "desc": "Malzemelere Göre Sipariş Durum Raporu (Rapor)",
+        "duration": "87"
+      },
+      {
+        "idx": "52",
+        "id": "LMYwMmVeQic",
+        "title": "PUR 10560 : PURT40 - Malzemenin Alındığı Tedarikçiler (Rapor)",
+        "tx": "PURT40",
+        "desc": "Malzemenin Alındığı Tedarikçiler (Rapor)",
+        "duration": "103"
+      },
+      {
+        "idx": "53",
+        "id": "Mu8bJVpR-wY",
+        "title": "PUR 10570 : PURT41 - Tedarikçi Raporları (Rapor)",
+        "tx": "PURT41",
+        "desc": "Tedarikçi Raporları (Rapor)",
+        "duration": "85"
+      },
+      {
+        "idx": "54",
+        "id": "acZCScK3_wo",
+        "title": "PUR 10580 : PURT42 - Teslim Tarihine Göre Malzemeler Raporu (Rapor)",
+        "tx": "PURT42",
+        "desc": "Teslim Tarihine Göre Malzemeler Raporu (Rapor)",
+        "duration": "83"
+      },
+      {
+        "idx": "55",
+        "id": "SFj6WY1__S0",
+        "title": "PUR 10590 : PURT43 - Belli Bir Gün İçinde Teslim Edilecek Malzemeler Raporu (Rapor)",
+        "tx": "PURT43",
+        "desc": "Belli Bir Gün İçinde Teslim Edilecek Malzemeler Raporu (Rapor)",
+        "duration": "114"
+      },
+      {
+        "idx": "56",
+        "id": "uKzOeeSbqt8",
+        "title": "PUR 10600 : PURT44 - Envanter Girişi Olmayan Satınalma Siparişlerinin Onay Süreci",
+        "tx": "PURT44",
+        "desc": "Envanter Girişi Olmayan Satınalma Siparişlerinin Onay Süreci",
+        "duration": "62"
+      },
+      {
+        "idx": "57",
+        "id": "D0Xu3oLThp4",
+        "title": "PUR 10630 : PURT61 - Satınalma Bilgileri",
+        "tx": "PURT61",
+        "desc": "Satınalma Bilgileri",
+        "duration": "86"
+      },
+      {
+        "idx": "58",
+        "id": "Yl5GeQZiV8w",
+        "title": "PUR 10650 : VERT02 - İthalat Masraf Raporu (Satınalma Belgelerinden)",
+        "tx": "VERT02",
+        "desc": "İthalat Masraf Raporu (Satınalma Belgelerinden)",
+        "duration": "73"
+      },
+      {
+        "idx": "59",
+        "id": "2F_FQvvym8s",
+        "title": "PUR 10660 : VERT04 - Fiyat Karşılaştırma Raporu (Rapor)",
+        "tx": "VERT04",
+        "desc": "Fiyat Karşılaştırma Raporu (Rapor)",
+        "duration": "106"
+      },
+      {
+        "idx": "60",
+        "id": "cuiiuhKa07c",
+        "title": "PUR 10670 : VERT06 - Faturaların Fiyat Farkları Denetimi ve Farklar İçin Fatura Oluşturma",
+        "tx": "VERT06",
+        "desc": "Faturaların Fiyat Farkları Denetimi ve Farklar İçin Fatura Oluşturma",
+        "duration": "233"
+      },
+      {
+        "idx": "61",
+        "id": "L9QVUMP-Trg",
+        "title": "PUR 10690 : VERT11 - Satınalma İstatistiği (Rapor)",
+        "tx": "VERT11",
+        "desc": "Satınalma İstatistiği (Rapor)",
+        "duration": "157"
+      },
+      {
+        "idx": "62",
+        "id": "oWWkoTz25Io",
+        "title": "PUR 10710 : PURT10 - Fiyat Karşılaştırma Konsepti",
+        "tx": "PURT10",
+        "desc": "Fiyat Karşılaştırma Konsepti",
+        "duration": "104"
+      },
+      {
+        "idx": "63",
+        "id": "E20amo0mFus",
+        "title": "PUR 10730 : PURT30 - Satınalma İsteği ve Satınalma Siparişine Göre Satınalma Gelişim Raporu",
+        "tx": "PURT30",
+        "desc": "Satınalma İsteği ve Satınalma Siparişine Göre Satınalma Gelişim Raporu",
+        "duration": "206"
+      },
+      {
+        "idx": "64",
+        "id": "Z4drQ-nhfWo",
+        "title": "PUR 10760 : PURT05 - Termin Anlaşması",
+        "tx": "PURT05",
+        "desc": "Termin Anlaşması",
+        "duration": "125"
+      },
+      {
+        "idx": "65",
+        "id": "-0iA9YGtCYk",
+        "title": "PUR 10772 : PURT02 - İhale Yanıtı Oluşturma",
+        "tx": "PURT02",
+        "desc": "İhale Yanıtı Oluşturma",
+        "duration": "159"
+      },
+      {
+        "idx": "66",
+        "id": "zUpfKdXO7LI",
+        "title": "PUR 10780 : PURT03 - Malzeme Bağımsız Tutar Anlaşması Süreci",
+        "tx": "PURT03",
+        "desc": "Malzeme Bağımsız Tutar Anlaşması Süreci",
+        "duration": "104"
+      },
+      {
+        "idx": "67",
+        "id": "o4p5HGBGmNQ",
+        "title": "PUR 10781 : PURT31 - Malzeme Bağımsız Anlaşmalar Raporu",
+        "tx": "PURT31",
+        "desc": "Malzeme Bağımsız Anlaşmalar Raporu",
+        "duration": "148"
+      },
+      {
+        "idx": "68",
+        "id": "gFYrtxTDENI",
+        "title": "PUR 10790 : VERT01 - Genel Masraf Faturaları Süreci",
+        "tx": "VERT01",
+        "desc": "Genel Masraf Faturaları Süreci",
+        "duration": "200"
+      },
+      {
+        "idx": "69",
+        "id": "CCI6QHML6ik",
+        "title": "PUR 10310 : PURT11 - Nakliye Konsepti",
+        "tx": "PURT11",
+        "desc": "Nakliye Konsepti",
+        "duration": "76"
+      },
+      {
+        "idx": "70",
+        "id": "f0QbC2bflKg",
+        "title": "PUR 10773 : PURT34 - İhale Mukayese Raporu",
+        "tx": "PURT34",
+        "desc": "İhale Mukayese Raporu",
+        "duration": "182"
+      },
+      {
+        "idx": "71",
+        "id": "_ggBdUAit5w",
+        "title": "PUR - 10771 : PURT01 - Satınalma İhalesi Oluşturma",
+        "tx": "PURT01",
+        "desc": "Satınalma İhalesi Oluşturma",
+        "duration": "285"
+      },
+      {
+        "idx": "72",
+        "id": "eSux0rOSyLw",
+        "title": "PUR 10540 : PURT32 - Faturası Kapanmamış Sipariş Kalemleri",
+        "tx": "PURT32",
+        "desc": "Faturası Kapanmamış Sipariş Kalemleri",
+        "duration": "70"
+      }
+    ],
+    "SYS": [
+      {
+        "idx": "01",
+        "id": "Vvv8o9ZAKYo",
+        "title": "SYS 10010 : SYST00 - Yeni bir uygulama oluşturmak",
+        "tx": "SYST00",
+        "desc": "Yeni bir uygulama oluşturmak",
+        "duration": "157"
+      },
+      {
+        "idx": "02",
+        "id": "9UFDXWG13Ag",
+        "title": "SYS 10020 : SYST00 - Varolan bir uygulamanın güncellenmesi",
+        "tx": "SYST00",
+        "desc": "Varolan bir uygulamanın güncellenmesi",
+        "duration": "74"
+      },
+      {
+        "idx": "03",
+        "id": "J6bxQBzgiHI",
+        "title": "SYS 10030 : SYST00 - Varolan bir uygulamanın silinmesi",
+        "tx": "SYST00",
+        "desc": "Varolan bir uygulamanın silinmesi",
+        "duration": "49"
+      },
+      {
+        "idx": "04",
+        "id": "xC1AfqcWoiA",
+        "title": "SYS 10050 : SYST01 - Sistem blokelerini listeleme ve silme",
+        "tx": "SYST01",
+        "desc": "Sistem blokelerini listeleme ve silme",
+        "duration": "49"
+      },
+      {
+        "idx": "05",
+        "id": "YNJwRf65jUA",
+        "title": "SYS 10070 : SYST01 - BPM blokeleri fonksiyonalitesi",
+        "tx": "SYST01",
+        "desc": "BPM blokeleri fonksiyonalitesi",
+        "duration": "56"
+      },
+      {
+        "idx": "06",
+        "id": "Egxl3ZNMsDg",
+        "title": "SYS 10080 : SYST01 - BPM blokelerinin silinmesi",
+        "tx": "SYST01",
+        "desc": "BPM blokelerinin silinmesi",
+        "duration": "42"
+      },
+      {
+        "idx": "07",
+        "id": "vqER2mFo4Uc",
+        "title": "SYS 10090 : SYST02 - Sistem Mesajları Uygulamasının Kullanımı",
+        "tx": "SYST02",
+        "desc": "Sistem Mesajları Uygulamasının Kullanımı",
+        "duration": "69"
+      },
+      {
+        "idx": "08",
+        "id": "bwtDaLf0evo",
+        "title": "SYS 10130 : SYST03 - Yeni bir sistem kullanıcısı oluşturma",
+        "tx": "SYST03",
+        "desc": "Yeni bir sistem kullanıcısı oluşturma",
+        "duration": "170"
+      },
+      {
+        "idx": "09",
+        "id": "VuIXbx1WDPI",
+        "title": "SYS 10140 : SYST03 - Varolan bir sistem kullanıcısını güncelleme",
+        "tx": "SYST03",
+        "desc": "Varolan bir sistem kullanıcısını güncelleme",
+        "duration": "83"
+      },
+      {
+        "idx": "10",
+        "id": "OG3J9F0K4CA",
+        "title": "SYS 10160 : SYST03 - Sistem Kullanıcısını BAST88'deki Bir Kişiyle Bağlama",
+        "tx": "SYST03",
+        "desc": "Sistem Kullanıcısını BAST88'deki Bir Kişiyle Bağlama",
+        "duration": "77"
+      },
+      {
+        "idx": "11",
+        "id": "UuMmq6sTUNY",
+        "title": "SYS 10170 : SYST03 - Sistem Kullanıcı Gruplarını Ayarlama",
+        "tx": "SYST03",
+        "desc": "Sistem Kullanıcı Gruplarını Ayarlama",
+        "duration": "61"
+      },
+      {
+        "idx": "12",
+        "id": "MPLSXkJVsb4",
+        "title": "SYS 10180 : SYST03 - Kullanıcıya Uygulama Haklarının Tanımlanması",
+        "tx": "SYST03",
+        "desc": "Kullanıcıya Uygulama Haklarının Tanımlanması",
+        "duration": "86"
+      },
+      {
+        "idx": "13",
+        "id": "gM55FCQ7lqU",
+        "title": "SYS 10190 : SYST03 - SELECT, DELETE, UPDATE ve INSERT Haklarının Tanımlanması",
+        "tx": "SYST03",
+        "desc": "SELECT, DELETE, UPDATE ve INSERT Haklarının Tanımlanması",
+        "duration": "251"
+      },
+      {
+        "idx": "14",
+        "id": "viIil6qHVbY",
+        "title": "SYS 10191 : SYST03 - Domain ve Fonksiyon Kısıtları",
+        "tx": "SYST03",
+        "desc": "Domain ve Fonksiyon Kısıtları",
+        "duration": "124"
+      },
+      {
+        "idx": "15",
+        "id": "XjVqoEHTsXY",
+        "title": "SYS 10200 : SYST04 - Tarih Formatlı Bir Numara Aralığı Oluşturma",
+        "tx": "SYST04",
+        "desc": "Tarih Formatlı Bir Numara Aralığı Oluşturma",
+        "duration": "138"
+      },
+      {
+        "idx": "16",
+        "id": "Wl-P593edWs",
+        "title": "SYS 10210 : SYST04 - Otomatik Bir Numara Aralığı Oluşturma",
+        "tx": "SYST04",
+        "desc": "Otomatik Bir Numara Aralığı Oluşturma",
+        "duration": "98"
+      },
+      {
+        "idx": "17",
+        "id": "aPsaGYtrZ1A",
+        "title": "SYS 10220 : SYST04 - Varolan Numara Aralığının Güncellenmesi",
+        "tx": "SYST04",
+        "desc": "Varolan Numara Aralığının Güncellenmesi",
+        "duration": "79"
+      },
+      {
+        "idx": "18",
+        "id": "r7HmvbGcsJ0",
+        "title": "SYS 10230 : SYST04 - Numara Aralığı Silme",
+        "tx": "SYST04",
+        "desc": "Numara Aralığı Silme",
+        "duration": "44"
+      },
+      {
+        "idx": "19",
+        "id": "hwaDZYgWQxg",
+        "title": "SYS 10310 : SYST06 - Canias Sistem Parametrelerinin Tanımlanması",
+        "tx": "SYST06",
+        "desc": "Canias Sistem Parametrelerinin Tanımlanması",
+        "duration": "143"
+      },
+      {
+        "idx": "20",
+        "id": "RUiS8KaCHgs",
+        "title": "SYS 10311 : SYST07 - Kullanıcı Hak Setlerinde Domain ve Fonksiyon Kısıtlarının Tanımlanması",
+        "tx": "SYST07",
+        "desc": "Kullanıcı Hak Setlerinde Domain ve Fonksiyon Kısıtlarının Tanımlanması",
+        "duration": "202"
+      },
+      {
+        "idx": "21",
+        "id": "hCXFIxVz1GU",
+        "title": "SYS 10312 : SYST07 - Kullanıcı Hak Setlerine SELECT, DELETE, UPDATE, INSERT Haklarının Tanımlanması",
+        "tx": "SYST07",
+        "desc": "Kullanıcı Hak Setlerine SELECT, DELETE, UPDATE, INSERT Haklarının Tanımlanması",
+        "duration": "342"
+      },
+      {
+        "idx": "22",
+        "id": "nLUu5w9uXpo",
+        "title": "SYS 10313 : SYST07 - Kullanıcı Hak Setleri Uygulama, Diyalog, Destek Tablosu Haklarının Tanımlanması",
+        "tx": "SYST07",
+        "desc": "Kullanıcı Hak Setleri Uygulama, Diyalog, Destek Tablosu Haklarının Tanımlanması",
+        "duration": "232"
+      },
+      {
+        "idx": "23",
+        "id": "7SCveHnWrKI",
+        "title": "SYS 10320 : SYST08 - Yeni Menü Oluşturma",
+        "tx": "SYST08",
+        "desc": "Yeni Menü Oluşturma",
+        "duration": "103"
+      },
+      {
+        "idx": "24",
+        "id": "E6MK0K6IJJM",
+        "title": "SYS 10330 : SYST08 - Varolan Menüyü Güncelleme",
+        "tx": "SYST08",
+        "desc": "Varolan Menüyü Güncelleme",
+        "duration": "95"
+      },
+      {
+        "idx": "25",
+        "id": "vJOI6md5lPk",
+        "title": "SYS 10340 : SYST08 - Menü Silme",
+        "tx": "SYST08",
+        "desc": "Menü Silme",
+        "duration": "63"
+      },
+      {
+        "idx": "26",
+        "id": "9JvsKVTjipc",
+        "title": "SYS 10350 : SYST09 - Şirket Takviminin Kullanılması",
+        "tx": "SYST09",
+        "desc": "Şirket Takviminin Kullanılması",
+        "duration": "153"
+      },
+      {
+        "idx": "27",
+        "id": "3ck6uFka268",
+        "title": "SYS 10400 : SYST10 - Hatırlatıcı Bildirimlerinin Tetiklenmesi",
+        "tx": "SYST10",
+        "desc": "Hatırlatıcı Bildirimlerinin Tetiklenmesi",
+        "duration": "44"
+      },
+      {
+        "idx": "28",
+        "id": "hSFIoeKqtrA",
+        "title": "SYS 10420 : SYST11 - Sistem Kullanıcı Loglarının Listelenmesi",
+        "tx": "SYST11",
+        "desc": "Sistem Kullanıcı Loglarının Listelenmesi",
+        "duration": "84"
+      },
+      {
+        "idx": "29",
+        "id": "Ot5wVByuIZY",
+        "title": "SYS 10440 : SYST12 - Destek Tablosu Tanımlama Ve Kullanımı",
+        "tx": "SYST12",
+        "desc": "Destek Tablosu Tanımlama Ve Kullanımı",
+        "duration": "124"
+      },
+      {
+        "idx": "30",
+        "id": "QHvHgOwA67I",
+        "title": "SYS 10470 : SYST12 - Destek Tablosu Yetkilendirmesi",
+        "tx": "SYST12",
+        "desc": "Destek Tablosu Yetkilendirmesi",
+        "duration": "92"
+      },
+      {
+        "idx": "31",
+        "id": "_9aik3VLKEc",
+        "title": "SYS 10490 : SYST14 - Veritabanı Logu İçin Konfigürasyon Tanımlama",
+        "tx": "SYST14",
+        "desc": "Veritabanı Logu İçin Konfigürasyon Tanımlama",
+        "duration": "55"
+      },
+      {
+        "idx": "32",
+        "id": "G9pmgtTUOmI",
+        "title": "SYS 10500 : SYST15 - Veritabanı Loglarının Listelenmesi",
+        "tx": "SYST15",
+        "desc": "Veritabanı Loglarının Listelenmesi",
+        "duration": "61"
+      },
+      {
+        "idx": "33",
+        "id": "tSdzY2FYRYc",
+        "title": "SYS 10510 : SYST20 - Nokta Vuruşlu Yazıcı Ayarı Tanımlama",
+        "tx": "SYST20",
+        "desc": "Nokta Vuruşlu Yazıcı Ayarı Tanımlama",
+        "duration": "192"
+      },
+      {
+        "idx": "34",
+        "id": "cbYTmPC2p54",
+        "title": "SYS 10520 : SYST21 - Yazıcı Ayarı Tanımlama",
+        "tx": "SYST21",
+        "desc": "Yazıcı Ayarı Tanımlama",
+        "duration": "96"
+      },
+      {
+        "idx": "35",
+        "id": "b2vSKGT2kMU",
+        "title": "SYS 10540 : SYST24 - Alan Tarihçe Konfigürasyonu",
+        "tx": "SYST24",
+        "desc": "Alan Tarihçe Konfigürasyonu",
+        "duration": "78"
+      },
+      {
+        "idx": "36",
+        "id": "B-XvK-36jfQ",
+        "title": "SYS 10550 : SYST25 - Alan Tarihçe (Günlükleri) Takibi",
+        "tx": "SYST25",
+        "desc": "Alan Tarihçe (Günlükleri) Takibi",
+        "duration": "84"
+      },
+      {
+        "idx": "37",
+        "id": "Wn6Y0-R6-SU",
+        "title": "SYS 10560 : SYST40 - Sistem Kullanıcı Grubu Tanımlama",
+        "tx": "SYST40",
+        "desc": "Sistem Kullanıcı Grubu Tanımlama",
+        "duration": "79"
+      },
+      {
+        "idx": "38",
+        "id": "PB1Du9N7Tic",
+        "title": "SYS 10570 : SYST50 - Canias Eklentileri Tanımlama",
+        "tx": "SYST50",
+        "desc": "Canias Eklentileri Tanımlama",
+        "duration": "119"
+      },
+      {
+        "idx": "39",
+        "id": "EVrQLcqWyiw",
+        "title": "SYS 10600 : SYST00 - Gadget Tanımlama",
+        "tx": "SYST00",
+        "desc": "Gadget Tanımlama",
+        "duration": "124"
+      },
+      {
+        "idx": "40",
+        "id": "OzJpjSsU3wc",
+        "title": "SYS 10610 : SYST35 - Yeni Bir SYST35 Kaydı Oluşturmak",
+        "tx": "SYST35",
+        "desc": "Yeni Bir SYST35 Kaydı Oluşturmak",
+        "duration": "92"
+      },
+      {
+        "idx": "41",
+        "id": "Yi0PlPnPmsQ",
+        "title": "SYS 10620 : SYST35 - SYST35 Kaydının Güncellenmesi",
+        "tx": "SYST35",
+        "desc": "SYST35 Kaydının Güncellenmesi",
+        "duration": "72"
+      },
+      {
+        "idx": "42",
+        "id": "w9OQxFSw1TE",
+        "title": "SYS 10630 : SYST35 - SYST35 Kaydının Silinmesi",
+        "tx": "SYST35",
+        "desc": "SYST35 Kaydının Silinmesi",
+        "duration": "42"
+      },
+      {
+        "idx": "43",
+        "id": "6PYswAuhJLE",
+        "title": "SYS 10650 : SYST35 - SYST35 Kaydındaki Belgelerin Düzenlenmesi",
+        "tx": "SYST35",
+        "desc": "SYST35 Kaydındaki Belgelerin Düzenlenmesi",
+        "duration": "150"
+      },
+      {
+        "idx": "44",
+        "id": "vkPbwc7rJe4",
+        "title": "SYS 10700 : SYST36 - Süreç Dokümanlarının Sistem İçerisine Eklenmesi",
+        "tx": "SYST36",
+        "desc": "Süreç Dokümanlarının Sistem İçerisine Eklenmesi",
+        "duration": "96"
+      },
+      {
+        "idx": "45",
+        "id": "RF3st3Ra2tU",
+        "title": "SYS 10750 : SYST30 - Toplu İşlem Yönetimi",
+        "tx": "SYST30",
+        "desc": "Toplu İşlem Yönetimi",
+        "duration": "127"
+      }
+    ]
+  },
+  "tx_codes": {
+    "BAST01": [
+      "FIN 11440 : BAST01 - Tekdüzen hesap ve hesap no eşitliği kontrolü",
+      "FIN 10660 : BAST01 - Muhasebe belge satırlarının birleştirilmesi",
+      "FIN 11410 : BAST01 - Muhasebe dönemlerinin otomatik oluşturulması",
+      "FIN 11420 : BAST01 - Muhasebe döneminin kapatılması",
+      "FIN 11430 : BAST01 - Açılış, Kapanış ve Yansıtma belge tiplerinin tanımlanması"
+    ],
+    "BAST03": [
+      "BOM 10030 : BAST03 - Ürünlerden Komponentlere Varyant Transferi"
+    ],
+    "BAST05": [
+      "PRD,BAS 10010 : BAST05 - Sınıf Oluşturma",
+      "PRD,BAS 10011 : BAST05 - Sınıf Detayları",
+      "PRD,BAS 10050 : BAST05 - Sınıflarda Koşullar"
+    ],
+    "BAST18": [
+      "PRD,BAS 10120 : BAST18 - Varyant Anahtarı Oluşturma",
+      "PRD,BAS 10121 : BAST18 - Varyant Anahtarı Güncelleme",
+      "PRD,BAS 10122 : BAST18 - Varyant Anahtarı Silme",
+      "PRD,BAS 10140 : BAST18 - Koşullar"
+    ],
+    "BAST20": [
+      "PRD,BAS 10160 : BAST20 - Konfigüratör Şablonu",
+      "PRD,BAS 10181 : BAST20 - Teklif Oluşturma",
+      "PRD,BAS 10190 : BAST20 - Malzeme Oluşturma",
+      "PRD,BAS 10200 : BAST20 - Ürün Ağacı Oluşturma",
+      "PRD,BAS 10210 : BAST20 - Rota Oluşturma",
+      "PRD,BAS 10211 : BAST20 - Proje Oluşturma",
+      "PRD,BAS 10230 : BAST20 - Fiyatlama",
+      "PRD,BAS 10240 : BAST20 - Hesaplama",
+      "PRD,BAS 10241 : BAST20 - Çok Seviyeli Malzeme Yönetimi"
+    ],
+    "BOMT01": [
+      "BOM 10022 : BOMT01 - Ürün Ağacı Güncelleme",
+      "BOM 10023 : BOMT01 - Ürün Ağacı Oluşturma",
+      "BOM 10040 : BOMT01 - Seçenek Eşleme Yöntemi ile Varyant Transferi",
+      "BOM 10050 : BOMT01 - Varyant Sabitleme",
+      "BOM 10071 : BOMT01 - Çoklu Malzeme Ekleme"
+    ],
+    "BOMT03": [
+      "BOM 10095 : BOMT03 - Malzeme Değişikliği"
+    ],
+    "BOMT05": [
+      "BOM 10100 : BOMT05 - Ürün Ağacı Seviye Listesi"
+    ],
+    "BOMT08": [
+      "BOM 10120 : BOMT08 - Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Arama",
+      "BOM 10130 : BOMT08 - Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Komponent Ekleme",
+      "BOM 10140 : BOMT08 - Ürün Ağaçlarından Komponent Ekleme/Çıkarma - Komponent Çıkarma"
+    ],
+    "BOMT11": [
+      "BOM 10160 : BOMT11 - Üretim Şablonu"
+    ],
+    "FINT01": [
+      "FIN 10011 : FINT01 - Muhasebe hesap planına yeni bir Ana Hesap (Kebir Hesabı) eklemek",
+      "FIN 10012 : FINT01 - Muhasebe hesap planına yeni bir Üst Hesap (Kontrol Hesabı) eklemek",
+      "FIN 10013 : FINT01 - Muhasebe hesap planına yeni bir Doğrudan Güncellenebilir hesap eklemek",
+      "FIN 10015 : FINT01 - Bir hesabı Silinecek statüsüne getirmek",
+      "FIN 10016 : FINT01 - Hesap planından bir hesabı kalıcı olarak silmek"
+    ],
+    "FINT02": [
+      "FIN 10020 : FINT02 - Portföye yeni Çek, Senet veya Akreditif Mektubu girişi",
+      "FIN 10030 : FINT02 - Çek, Senet veya Akreditif Mektubu yürütme işlemleri",
+      "FIN 10050 : FINT02 - Kayıt anahtarı kullanmadan muhasebe belgesi oluşturmak",
+      "FIN 10051 : FINT02 - Referans alarak muhasebe belgesi oluşturmak",
+      "FIN 10052 : FINT02 - Belgeden ters yönde referans alarak belge oluşturmak",
+      "FIN 10053 : FINT02 - Muhasebe standartları konsepti ve bir standarda özel belge oluşturmak",
+      "FIN 10060 : FINT02 - Kayıt anahtarları kullanarak muhasebe belgeleri oluşturmak",
+      "FIN 10070 : FINT02 - Muhasebe belgesini iptal etmek",
+      "FIN 10070 : FINT02 - Muhasebe belgesini silmek",
+      "FIN 10090 : FINT02 - Kur değerleme muhasebe belgesini iptal etmek",
+      "FIN 10090 : FINT02 - Kur değerleme muhasebe belgesini silmek",
+      "FIN 10092 : FINT02 - Bir muhasebe belgesinin detayları",
+      "FIN 10092 : FINT02 - Muhasebe belgesine doküman ekleme",
+      "FIN 10092 : FINT02 - Muhasebe belgesinden kaynak belgelere ulaşım",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde e-defter bilgilerini değiştirmek",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde eşleştirme bilgileri",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde KDV bilgileri",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde hesap bakiyesini hesaplamak",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde kalem kopyalama işlemi",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde entegrasyon belge detaylarının görüntülenmesi",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde müşteri/tedarikçi bilgilerinin toplu halde güncellenmesi",
+      "FIN 10092 : FINT02-Müşteri tedarikçi bilg. ile hesap num. bilgisi kontrol edilsin/edilmesin kontrolü",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde açık tutar kapama",
+      "FIN 10092 : FINT02 - Muhasebe belgesinde ödeme bilgileri görüntülemek",
+      "FIN 10570 : FINT02 - Muhasebe belgelerinde onay statüsü kontrolü",
+      "FIN 10095 : FINT02 - Bir muhasebe belgesindeki B-Formları Raporu ile ilişkili alanları güncellemek"
+    ],
+    "FINT06": [
+      "FIN 10180 : FINT06 - Muhasebe belgesini sırasız onay kaldırma süreci",
+      "FIN 10180 : FINT06 - Muhasebe belgesini sıralı onay kaldırma süreci",
+      "FIN 10180 : FINT06 - Muhasebe belgesini sırasız onay süreci",
+      "FIN 10180 : FINT06 - Muhasebe belgesini sıralı onay süreci"
+    ],
+    "FINT13": [
+      "FIN 10240 : FINT13-Yevmiye kalemlerinin numaralandırılması ve yevmiye-kebir defterleri oluşturulması"
+    ],
+    "FINT16": [
+      "FIN 10410 : FINT16 - Vade farkı ve adat ekstreleri raporu"
+    ],
+    "FINT20": [
+      "FIN 10220 : FINT20 - Mali dönem sonu Kapama Kaydı belgesi oluşturmak",
+      "FIN 10221 : FINT20 - Mali dönem sonu Kapama Kaydı belgesini Transfer Şablonu kullanarak oluşturmak"
+    ],
+    "FINT23": [
+      "FIN 10300 : FINT23 - B-Formlar raporu"
+    ],
+    "FINT27": [
+      "FIN 10200 : FINT27 - Tekrarlanan ödemelerin listelenmesi ( Belge)",
+      "FIN 10201 : FINT27 - Tekrarlanan ödemelerin muhasebeleştirilmesi"
+    ],
+    "FINT34": [
+      "FIN 10530 : FINT34 - Swift MT940 ile Banka hesap hareketlerinin muhasebeye entegrasyonu",
+      "FIN 10531 : FINT34 - Çeklerin portföye topluca girilmesi",
+      "FIN 10532 : FINT34 - Portföydeki çeklerin bankaya tahsile gönderilmesi ve entegrasyonu",
+      "FIN 10533 : FINT34 - Bankada tahsildeki çeklerin tahsili sonrası muhasebeye entegrasyonu",
+      "FIN 10534 : FINT34 - Toplu ödeme listesi hazırlamak",
+      "FIN 10536 : FINT34 - Toplu ödemenin gerçekleşmesi sonucu ödemelerin muhasebeye entegrasyonu"
+    ],
+    "FINT39": [
+      "FIN 11230 : FINT39 - Eşit taksit tutarlı bir kredi kaydı oluşturmak",
+      "FIN 11280 : FINT39 - Finansal Kiralama (Leasing) kaydı oluşturmak",
+      "FIN 11240 :FINT39-Anaparası vade sonu tek ödemeli, Aylık faiz tahakkuklu Spot kredi kaydı oluşturmak",
+      "FIN 11250 : FINT39 - Sevk Öncesi İhracat Kredisi (SÖİK) kaydı oluşturmak",
+      "FIN 11290 : FINT39 - Sigorta Poliçesi kaydı oluşturmak",
+      "FIN 11300 : FINT39 - Eşit taksitli kredide Ödeme planını banka ödeme planına eşlemek",
+      "FIN 11260 : FINT39 - Faiz Reeskontlu kredi kaydı oluşturmak",
+      "FIN 11270 : FINT39 - Rotatif (DİNAMİK) kredi kaydı oluşturmak ve yürütmek",
+      "FIN 11310 : FINT39 - Aylık faiz tahakkuklu Spot kredi planını düzeltme",
+      "FIN 11320 : FINT39 - Kredi ile ilgili ödeme yapmak",
+      "FIN 11360: FINT39-Banka kredilerinin işlemlerini muhasebeleştirmek ve muhasebe belgelerini incelemek",
+      "FIN 11330 : FINT39 - Bir krediyi kapamak (kalan borcu kapamak)",
+      "FIN 11370 : FINT39 - Topluca Aylık Finans Giderlerini Muhasebeleştirmek",
+      "FIN 11340 : FINT39 - Kayıt Koruma Konsepti",
+      "FIN 11380 : FINT39 - Borç ve Ödeme İzleme raporu",
+      "FIN 11350 : FINT39 - Kredi kaydını silmek",
+      "FIN 11390 : FINT39 - Yıl Sonu Tüm Uzun Vadelerin Kısa Vadeye Çekilmesi ve Muhasebeleştirme"
+    ],
+    "FINT40": [
+      "FIN 11093 : FINT40 - Yatırım Yönetimi - Vadeli Banka Mevduatı Muhasebeleştirme ve Ayarlar"
+    ],
+    "FINT41": [
+      "FIN 11880 : FINT41 - DBS - Satış Faturalarının DBS ye Yüklenmesi ve Dosya Oluşturma",
+      "FIN 11875 : FINT41 - DBS - Bankadan gelen güncel Müşteri DBS Limit dosyalarının yüklenmesi",
+      "FIN 11870 : FINT41 - DBS - Doğrudan Borçlandırma Sistemi Konsepti"
+    ],
+    "FINT42": [
+      "FIN 10290 : FINT42 - Uyarı mektuplarının oluşturulması",
+      "FIN 10290 : FINT42 - Müşteri kartına göre uyarı mektubu"
+    ],
+    "FINT48": [
+      "FIN 10340 : FINT48 - Alternatif ödeme planının oluşturulması",
+      "FIN 10340 : FINT48 - Alternatif ödeme planının silinmesi"
+    ],
+    "FINT50": [
+      "FIN 10360 : FINT50 - Nakit Akış"
+    ],
+    "FINT51": [
+      "FIN 10370 : FINT51 - Nakit Akış FINT51-FINT01"
+    ],
+    "FINT62": [
+      "FIN 10481 : FINT62 - Mizan raporu almak",
+      "FIN 10481 : FINT62 - Belirli bir tarihteki kura göre mizan raporu",
+      "FIN 10481 : FINT62 - İş alanına göre gruplanmış mizan raporu",
+      "FIN 10481 : FINT62 - Maliyet merkezine göre gruplanmış mizan raporu",
+      "FIN 10481 : FINT62 - Projeye göre gruplanmış mizan raporu"
+    ],
+    "FINT80": [
+      "FIN 11102 : FINT80 - Masraf Yönetimi - Masraf Onaylama Yetkisi Verme ve Onaylama"
+    ],
+    "FINT93": [
+      "FIN 10921 : FINT93 - Damga vergisi beyannamesinin oluşturulması",
+      "FIN 10931 : FINT93 - Katma Değer Vergisi beyannamesinin oluşturulması",
+      "FIN 10941 : FINT93 - Katma Değer Vergisi-2 beyannamesinin oluşturulması",
+      "FIN 10951 : FINT93 - Katma Değer Vergisi-9015 beyannamesinin oluşturulması",
+      "FIN 10981 : FINT93 - Muhtasar beyannamenin oluşturulması",
+      "FIN 10991 : FINT93 - Geçici kurumlar vergisi beyannamesinin oluşturulması"
+    ],
+    "FINTZ1": [
+      "FIN 11450 : FINTZ1 - Finans Kokpit (Detaylı)"
+    ],
+    "HOMEPAGE": [
+      "BAS 11000 : HOMEPAGE - CaniasERP Sisteminde Kullanıcı Şifresi Değiştirme",
+      "BAS 11005 : HOMEPAGE - CaniasERP Sisteminde Kullanıcı Teması Değiştirme",
+      "BAS 11010 : HOMEPAGE - CaniasERP Anasayfa Fonksiyonlarının TanıtılmasI",
+      "BAS 11020 : HOMEPAGE - Bir CaniasERP Uygulamasının Özellikleri",
+      "BAS 11025 : HOMEPAGE - CaniasERP Bir Trace Dosyası Oluşturmak",
+      "BAS 11030 : HOMEPAGE - CaniasERP Login Ekranının Tanıtılması"
+    ],
+    "INVT13": [
+      "PRD 10710 : INVT13 - Tedarikçiden Gelen Fason Ürünün Girişi",
+      "PRD 10720 : INVT13 - Tedarikçiye Parça Göndermek"
+    ],
+    "PRDT01": [
+      "PRD 10021 : PRDT01 - İş Emrinin Güncellenmesi",
+      "PRD 10030 : PRDT01 - Normal İş Emri Oluşturma ve Çizelgeleme",
+      "PRD 10031 : PRDT01 - Normal İş Emrinde Operasyonlar ve Komponentler",
+      "PRD 10040 : PRDT01 - Kollektif İş Emri Oluşturma ve Çizelgeleme",
+      "PRD 10041 : PRDT01 - Kollektif İş Emrinde Operasyonlar ve Komponentler",
+      "PRD 10050 : PRDT01 - Bileşik İş Emri Oluşturma ve Çizelgeleme",
+      "PRD 10051 : PRDT01 - Bileşik İş Emrin Operasyonlar ve Komponentler",
+      "PRD 10055 : PRDT01 - Basit Demontaj İş Emri Oluşturma",
+      "PRD 10056 : PRDT01 - Kompleks Demontaj İş Emri Oluşturma",
+      "PRD 10060 : PRDT01 - Normal İş Emrine Malzeme Çıkışı",
+      "PRD 10070 : PRDT01 - Kollektif İş Emrine Malzeme Çıkışı",
+      "PRD 10080 : PRDT01 - Bileşik İş Emrine Malzeme Çıkışı",
+      "PRD 10090 : PRDT01 - Normal İş Emrinde Ürün Girişi",
+      "PRD 10100 : PRDT01 - Kollektif İş Emrinde Ürün Girişi",
+      "PRD 10110 : PRDT01 - Bileşik İş Emrinde Ürün Girişi",
+      "PRD 10120 : PRDT01 - Normal, Kollektif ve Bileşik İş Emirlerinde Yan Ürün",
+      "PRD 10130 : PRDT01 - Normal, Kollektif ve Bileşik İş Emirlerinde Kaynaklar",
+      "PRD 10140 : PRDT01 - Standart Maliyet",
+      "PRD 10160 : PRDT01 - Op. Ara Katsayısı Olan Norm. İş Emrinde Çizelgeleme, Komponentler&Operasyonlar",
+      "PRD 10170 : PRDT01 - Op. Ara Katsayısı Olan Kol. İş Emrinde Çizelgeleme, Komponentler & Operasyonlar",
+      "PRD 10235 : PRDT01 - İş Emrinde Seri Numarası Planlama"
+    ],
+    "PRDT02": [
+      "PRD 10200 : PRDT02 - Normal İş Emrinde Onay ve Düzeltme",
+      "PRD 10210 : PRDT02 - Kollektif İş Emrinde Onay ve Düzeltme",
+      "PRD 10220 : PRDT02 - Bileşik İş Emrinde Onay ve Düzeltme",
+      "PRD 10230 : PRDT02 - Demontaj İş Emrinde Onay ve Düzeltme",
+      "PRD 10270 : PRDT02 - Operasyon Ara Katsayısı Olan Demontaj İş Emrinde Onay ve Düzeltme",
+      "PRD 10280 : PRDT02 - Oto Emiş Malzemeli Normal İş Emrinde Onay ve Düzeltme",
+      "PRD 10290 : PRDT02 - Oto Emiş Malzemeli Kollektif İş Emrinde Onay ve Düzeltme",
+      "PRD 10300 : PRDT02 - Oto Emiş Malzemeli Bileşik İş Emrinde Onay ve Düzeltme",
+      "PRD 10310 : PRDT02 - Oto Emiş Malzemeli Demontaj İş Emrinde Onay ve Düzeltme",
+      "PRD 10315 : PRDT02 - Operasyon Onaylarında Otomatik Emiş Yan Ürün Miktarlarının Hesaplanması",
+      "PRD 10320 : PRDT02 - Otomatik ya da Operasyonel Çıkışlı İş Emirlerinde Onay ve Düzeltme",
+      "PRD 10330 : PRDT02 - Otomatik Giriş İş Emirlerinde Onay ve Düzeltme",
+      "PRD 10340 : PRDT02 - Onayda Yarımamül Stoğu Kontrolü",
+      "PRD 10350 : PRDT02 - Parti Numarasıyla Onay ve Düzeltme",
+      "PRD 10360 : PRDT02 - Seri Numarasıyla Onay ve Düzeltme",
+      "PRD 10361 : PRDT02 - Onay Metrikleri",
+      "PRD 10365 : PRDT02 - Operasyon Onaylarında Yeniden İşleme Miktarı"
+    ],
+    "PRDT03": [
+      "PRD 10370 : PRDT03 - Kolay İş Emri Onayı",
+      "PRD 10380 : PRDT03 - İlk Parça Üretimi Başlatma-Bitirme",
+      "PRD 10400 : PRDT03 - İş Başlatma ve Bitişte İş Merkezi Tipi Etkisi",
+      "PRD 10410 : PRDT03 - Çizelgelemiş İşlerden Seçim",
+      "PRD 10420 : PRDT03 - İş Merkezleri Yerleşimi",
+      "PRD 10430 : PRDT03 - İş Başlatırken Operasyonel Çıkış",
+      "PRD 10440 : PRDT03 - Operasyon Bitirirken Otomatik Giriş",
+      "PRD 10450 : PRDT03 - Seri Numarasıyla Operasyon Bitirme",
+      "PRD 10460 : PRDT03 - Parti Numarasıyla Operasyon Bitirme",
+      "PRD 10461 : PRDT03 - Boş Duruş Yönetimi",
+      "PRD 10462 : PRDT03 - Operasyonlar için Tekrarlı Hazırlık"
+    ],
+    "PRDT05": [
+      "PRD 10470 : PRDT05 - Onay Numarasıyla Hızlı Onay ve Düzeltme",
+      "PRD 10480 : PRDT05 - Onay Numarasıyla Detaylı Onay ve Düzeltme"
+    ],
+    "PRDT06": [
+      "PRD 10490 : PRDT06 - Üretim Planlarını İş Emrine Dönüştürme"
+    ],
+    "PRDT10": [
+      "PRD 10550 : PRDT10 - İş Emri Ağı"
+    ],
+    "PRDT13": [
+      "PRD 10580 : PRDT13 - Satış Siparişinden İş Emri Oluşturma"
+    ],
+    "PRDT40": [
+      "PRD 10680 : PRDT40 - Fason Operasyon Yönetimi",
+      "PRD 10690 : PRDT40 - Fason Operasyon İçin Satınalma Siparişi Oluşturma",
+      "PRD 10700 : PRDT40 - Fason Operasyon İçin Satınalma İsteği Oluşturma"
+    ],
+    "PRDT42": [
+      "PRD 10730 : PRDT42 - Birleşik Operasyonlar",
+      "PRD 10740 : PRDT42 - Birleşik Operasyonlarda Onay ve Düzeltme",
+      "PRD 10741 : PRDT42 - Birleşik Operasyonlarda Oto Emiş Malzemeler",
+      "PRD 10742 : PRDT42 - Birleşik Operasyonlarda Duruş Yönetimi",
+      "PRD 10743 : PRDT42 - Birleşik Operasyonlarda Aktivite Yönetimi",
+      "PRD 10745 : PRDT42 - Birleşik Operasyonlarda Yan Ürün Yönetimi"
+    ],
+    "PRDT43": [
+      "PRD 10744 : PRDT43 - Birleşik Operasyonlarda Kolay Onay"
+    ],
+    "PURT01": [
+      "PUR 10028 : PURT01 - Satınalma Teklif İsteği Oluştulması (Manuel)",
+      "PUR 10029 : PURT01 - Satınalma Teklif İsteği Oluştulması (Toplu)",
+      "PUR 10030 : PURT01 - Satınalma Teklif İsteği Oluşturulması (Çoklu)",
+      "PUR 10031 : PURT01 - Satınalma Teklif İsteği Silme",
+      "PUR 10032 : PURT01 - Satınalma Teklif İsteği Düzenleme",
+      "PUR 10033 : PURT01 - Satınalma Teklif İsteği Listeleme",
+      "PUR - 10771 : PURT01 - Satınalma İhalesi Oluşturma"
+    ],
+    "PURT02": [
+      "PUR 10059 : PURT02 - Satınalma Teklifi Oluşturulması (Manuel)",
+      "PUR 10060 : PURT02 - Satınalma Teklifi Oluşturulması (Teklif İsteğinden)",
+      "PUR 10061 : PURT02 - Satınalma Teklifi Silme",
+      "PUR 10062 : PURT02 - Satınalma Teklifi Düzenleme",
+      "PUR 10063 : PURT02 - Satınalma Teklifi Listeleme",
+      "PUR 10064 : PURT02 - Satınalma Teklifinden Satınalma Teklifi Oluşturma",
+      "PUR 10070 : PURT02 - Toplu Satınalma Teklifi Oluşturma",
+      "PUR 10772 : PURT02 - İhale Yanıtı Oluşturma"
+    ],
+    "PURT03": [
+      "PUR 10099 : PURT03 - Satınalma Anlaşması Oluşturulması (Manuel)",
+      "PUR 10100 : PURT03 - Satınalma Anlaşması Oluşturulması (Satınalma İsteklerinden)",
+      "PUR 10101 : PURT03 - Satınalma Anlaşması Silme",
+      "PUR 10102 : PURT03 - Satınalma Anlaşması Düzenleme",
+      "PUR 10103 : PURT03 - Satınalma Anlaşması Listeleme",
+      "PUR 10104 : PURT03 - Satınalma Anlaşmasından Satınalma Anlaşması Oluşturma",
+      "PUR 10110 : PURT03 - Değer Anlaşması Süreci",
+      "PUR 10120 : PURT03 - Miktar Anlaşması Süreci",
+      "PUR 10183 : PURT03 - Merkezi Satınalma Anlaşması Oluşturma",
+      "PUR 10184 : PURT03 - Merkezi Satınalma Anlaşması Üzerinden Satınalma Siparişi Oluşturma",
+      "PUR 10780 : PURT03 - Malzeme Bağımsız Tutar Anlaşması Süreci"
+    ],
+    "PURT04": [
+      "PUR 10011 : PURT04 - Manuel Satınalma İsteği Oluşturma",
+      "PUR 10012 : PURT04 - Satınalma İsteği Silme",
+      "PUR 10013 : PURT04 - Satınalma İsteği Düzenleme",
+      "PUR 10014 : PURT04 - Satınalma İsteği Listeleme",
+      "PUR 10015 : PURT04 - Satınalma İsteğinden Satınalma İsteği Oluşturma",
+      "PUR 10022 : PURT04 - Satınalma İsteklerinde Toplu Değişiklik"
+    ],
+    "PURT05": [
+      "PUR 10210 : PURT05 - Paylaştırmalı Satınalma Siparişi Oluşturma",
+      "PUR 10219 : PURT05 - Satınalma Siparişi Oluşturma (Manuel)",
+      "PUR 10220 : PURT05 - Satınalma Siparişi Oluşturma (İsteklerden)",
+      "PUR 10221 : PURT05 - Satınalma Siparişi Silme",
+      "PUR 10222 : PURT05 - Satınalma Siparişi Düzenleme",
+      "PUR 10223 : PURT05 - Satınalma Siparişi Listeleme",
+      "PUR 10224 : PURT05 - Satınalma Siparişinden Satınalma Siparişi Oluşturma",
+      "PUR 10760 : PURT05 - Termin Anlaşması"
+    ],
+    "PURT09": [
+      "PUR 10520 : PURT09 - Anlaşma & Teklif Bilgilerini Güncelleme"
+    ],
+    "PURT10": [
+      "PUR 10710 : PURT10 - Fiyat Karşılaştırma Konsepti"
+    ],
+    "PURT11": [
+      "PUR 10310 : PURT11 - Nakliye Konsepti"
+    ],
+    "PURT12": [
+      "PUR 10530 : PURT12 - Satınalma İsteği Başlatma"
+    ],
+    "PURT30": [
+      "PUR 10730 : PURT30 - Satınalma İsteği ve Satınalma Siparişine Göre Satınalma Gelişim Raporu"
+    ],
+    "PURT31": [
+      "PUR 10781 : PURT31 - Malzeme Bağımsız Anlaşmalar Raporu"
+    ],
+    "PURT32": [
+      "PUR 10540 : PURT32 - Faturası Kapanmamış Sipariş Kalemleri"
+    ],
+    "PURT33": [
+      "PUR 10550 : PURT33 - Malzemelere Göre Sipariş Durum Raporu (Rapor)"
+    ],
+    "PURT34": [
+      "PUR 10773 : PURT34 - İhale Mukayese Raporu"
+    ],
+    "PURT40": [
+      "PUR 10560 : PURT40 - Malzemenin Alındığı Tedarikçiler (Rapor)"
+    ],
+    "PURT41": [
+      "PUR 10570 : PURT41 - Tedarikçi Raporları (Rapor)"
+    ],
+    "PURT42": [
+      "PUR 10580 : PURT42 - Teslim Tarihine Göre Malzemeler Raporu (Rapor)"
+    ],
+    "PURT43": [
+      "PUR 10590 : PURT43 - Belli Bir Gün İçinde Teslim Edilecek Malzemeler Raporu (Rapor)"
+    ],
+    "PURT44": [
+      "PUR 10600 : PURT44 - Envanter Girişi Olmayan Satınalma Siparişlerinin Onay Süreci"
+    ],
+    "PURT61": [
+      "PUR 10630 : PURT61 - Satınalma Bilgileri"
+    ],
+    "SYST00": [
+      "SYS 10010 : SYST00 - Yeni bir uygulama oluşturmak",
+      "SYS 10020 : SYST00 - Varolan bir uygulamanın güncellenmesi",
+      "SYS 10030 : SYST00 - Varolan bir uygulamanın silinmesi",
+      "SYS 10600 : SYST00 - Gadget Tanımlama"
+    ],
+    "SYST01": [
+      "SYS 10050 : SYST01 - Sistem blokelerini listeleme ve silme",
+      "SYS 10070 : SYST01 - BPM blokeleri fonksiyonalitesi",
+      "SYS 10080 : SYST01 - BPM blokelerinin silinmesi"
+    ],
+    "SYST02": [
+      "SYS 10090 : SYST02 - Sistem Mesajları Uygulamasının Kullanımı"
+    ],
+    "SYST03": [
+      "SYS 10130 : SYST03 - Yeni bir sistem kullanıcısı oluşturma",
+      "SYS 10140 : SYST03 - Varolan bir sistem kullanıcısını güncelleme",
+      "SYS 10160 : SYST03 - Sistem Kullanıcısını BAST88'deki Bir Kişiyle Bağlama",
+      "SYS 10170 : SYST03 - Sistem Kullanıcı Gruplarını Ayarlama",
+      "SYS 10180 : SYST03 - Kullanıcıya Uygulama Haklarının Tanımlanması",
+      "SYS 10190 : SYST03 - SELECT, DELETE, UPDATE ve INSERT Haklarının Tanımlanması",
+      "SYS 10191 : SYST03 - Domain ve Fonksiyon Kısıtları"
+    ],
+    "SYST04": [
+      "SYS 10200 : SYST04 - Tarih Formatlı Bir Numara Aralığı Oluşturma",
+      "SYS 10210 : SYST04 - Otomatik Bir Numara Aralığı Oluşturma",
+      "SYS 10220 : SYST04 - Varolan Numara Aralığının Güncellenmesi",
+      "SYS 10230 : SYST04 - Numara Aralığı Silme"
+    ],
+    "SYST06": [
+      "SYS 10310 : SYST06 - Canias Sistem Parametrelerinin Tanımlanması"
+    ],
+    "SYST07": [
+      "SYS 10311 : SYST07 - Kullanıcı Hak Setlerinde Domain ve Fonksiyon Kısıtlarının Tanımlanması",
+      "SYS 10312 : SYST07 - Kullanıcı Hak Setlerine SELECT, DELETE, UPDATE, INSERT Haklarının Tanımlanması",
+      "SYS 10313 : SYST07 - Kullanıcı Hak Setleri Uygulama, Diyalog, Destek Tablosu Haklarının Tanımlanması"
+    ],
+    "SYST08": [
+      "SYS 10320 : SYST08 - Yeni Menü Oluşturma",
+      "SYS 10330 : SYST08 - Varolan Menüyü Güncelleme",
+      "SYS 10340 : SYST08 - Menü Silme"
+    ],
+    "SYST09": [
+      "SYS 10350 : SYST09 - Şirket Takviminin Kullanılması"
+    ],
+    "SYST10": [
+      "SYS 10400 : SYST10 - Hatırlatıcı Bildirimlerinin Tetiklenmesi"
+    ],
+    "SYST11": [
+      "SYS 10420 : SYST11 - Sistem Kullanıcı Loglarının Listelenmesi"
+    ],
+    "SYST12": [
+      "SYS 10440 : SYST12 - Destek Tablosu Tanımlama Ve Kullanımı",
+      "SYS 10470 : SYST12 - Destek Tablosu Yetkilendirmesi"
+    ],
+    "SYST14": [
+      "SYS 10490 : SYST14 - Veritabanı Logu İçin Konfigürasyon Tanımlama"
+    ],
+    "SYST15": [
+      "SYS 10500 : SYST15 - Veritabanı Loglarının Listelenmesi"
+    ],
+    "SYST20": [
+      "SYS 10510 : SYST20 - Nokta Vuruşlu Yazıcı Ayarı Tanımlama"
+    ],
+    "SYST21": [
+      "SYS 10520 : SYST21 - Yazıcı Ayarı Tanımlama"
+    ],
+    "SYST24": [
+      "SYS 10540 : SYST24 - Alan Tarihçe Konfigürasyonu"
+    ],
+    "SYST25": [
+      "SYS 10550 : SYST25 - Alan Tarihçe (Günlükleri) Takibi"
+    ],
+    "SYST30": [
+      "SYS 10750 : SYST30 - Toplu İşlem Yönetimi"
+    ],
+    "SYST35": [
+      "SYS 10610 : SYST35 - Yeni Bir SYST35 Kaydı Oluşturmak",
+      "SYS 10620 : SYST35 - SYST35 Kaydının Güncellenmesi",
+      "SYS 10630 : SYST35 - SYST35 Kaydının Silinmesi",
+      "SYS 10650 : SYST35 - SYST35 Kaydındaki Belgelerin Düzenlenmesi"
+    ],
+    "SYST36": [
+      "SYS 10700 : SYST36 - Süreç Dokümanlarının Sistem İçerisine Eklenmesi"
+    ],
+    "SYST40": [
+      "SYS 10560 : SYST40 - Sistem Kullanıcı Grubu Tanımlama"
+    ],
+    "SYST50": [
+      "SYS 10570 : SYST50 - Canias Eklentileri Tanımlama"
+    ],
+    "VERT01": [
+      "PUR 10350 : VERT01 - Faturaların Toplu Muhasebeleştirilmesi",
+      "PUR 10360 : VERT01 - Fatura Muhasebeleştirme Prosesi",
+      "PUR 10410 : VERT01 - Satınalma Faturası Oluşturma",
+      "PUR 10411 : VERT01 - Satınalma Faturası Silme",
+      "PUR 10412 : VERT01 - Satınalma Faturası Düzenleme",
+      "PUR 10413 : VERT01 - Satınalma Faturası Listeleme",
+      "PUR 10420 : VERT01 - Fark Faturası Prosesi",
+      "PUR 10430 : VERT01 - Miktar İade Faturası Prosesi",
+      "PUR 10440 : VERT01 - Tutar İade Faturası Prosesi",
+      "PUR 10450 : VERT01 - Masraf Faturaları Prosesi",
+      "PUR 10455 : VERT01 - Manuel Fatura Süreci",
+      "PUR 10460 : VERT01 - Satınalma Faturalarında Kur Farkı Konsepti",
+      "PUR 10790 : VERT01 - Genel Masraf Faturaları Süreci"
+    ],
+    "VERT02": [
+      "PUR 10650 : VERT02 - İthalat Masraf Raporu (Satınalma Belgelerinden)"
+    ],
+    "VERT04": [
+      "PUR 10660 : VERT04 - Fiyat Karşılaştırma Raporu (Rapor)"
+    ],
+    "VERT06": [
+      "PUR 10670 : VERT06 - Faturaların Fiyat Farkları Denetimi ve Farklar İçin Fatura Oluşturma"
+    ],
+    "VERT11": [
+      "PUR 10690 : VERT11 - Satınalma İstatistiği (Rapor)"
+    ]
+  }
+}

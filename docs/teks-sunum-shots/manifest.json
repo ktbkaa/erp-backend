@@ -1,0 +1,234 @@
+[
+  {
+    "file": "01-cari-musteri.png",
+    "screen": "cari-kartlari",
+    "mode": "incele",
+    "id": 37,
+    "label": "Cari kartı — müşteri",
+    "scroll": "top",
+    "ok": true,
+    "bytes": 106525
+  },
+  {
+    "file": "02-stok-mamul.png",
+    "screen": "stok-karti",
+    "mode": "incele",
+    "id": 58,
+    "label": "Stok kartı — mamul",
+    "scroll": "top",
+    "ok": true,
+    "bytes": 98358
+  },
+  {
+    "file": "03-urun-agaci.png",
+    "screen": "urun-agaci",
+    "mode": "incele",
+    "id": 11,
+    "label": "Ürün ağacı (BOM)",
+    "ok": true,
+    "bytes": 80320
+  },
+  {
+    "file": "04-rota.png",
+    "screen": "rotalar",
+    "mode": "incele",
+    "id": 9,
+    "label": "Rota — üretim adımları",
+    "ok": true,
+    "bytes": 72910
+  },
+  {
+    "file": "10-o1-teklif.png",
+    "screen": "satis-teklifleri",
+    "mode": "incele",
+    "id": 3,
+    "label": "Ö1 Satış teklifi",
+    "tabs": [
+      "Kalemler"
+    ],
+    "ok": true,
+    "bytes": 113284
+  },
+  {
+    "file": "11-o1-siparis-ust.png",
+    "screen": "satis-siparisleri",
+    "mode": "incele",
+    "id": 9,
+    "label": "Ö1 Satış siparişi — üst şerit",
+    "scroll": "top",
+    "ok": true,
+    "bytes": 107390
+  },
+  {
+    "file": "12-o1-siparis-kalem.png",
+    "screen": "satis-siparisleri",
+    "mode": "incele",
+    "id": 9,
+    "label": "Ö1 Satış siparişi — kalemler",
+    "tabs": [
+      "Kalemler"
+    ],
+    "scroll": "grid",
+    "ok": true,
+    "bytes": 107390
+  },
+  {
+    "file": "13-o1-siparis-adres.png",
+    "screen": "satis-siparisleri",
+    "mode": "incele",
+    "id": 9,
+    "label": "Ö1 Satış siparişi — adres",
+    "tabs": [
+      "Adres"
+    ],
+    "ok": true,
+    "bytes": 83955
+  },
+  {
+    "file": "14-o1-siparis-not.png",
+    "screen": "satis-siparisleri",
+    "mode": "incele",
+    "id": 9,
+    "label": "Ö1 Satış siparişi — notlar / toplam",
+    "scroll": "footer",
+    "ok": true,
+    "bytes": 107390
+  },
+  {
+    "file": "15-o1-sa-talep.png",
+    "screen": "satin-alma-talepleri",
+    "mode": "incele",
+    "id": 16,
+    "label": "Ö1 Satınalma talebi",
+    "ok": true,
+    "bytes": 85864
+  },
+  {
+    "file": "16-o1-sa-siparis.png",
+    "screen": "satin-alma-siparisleri",
+    "mode": "incele",
+    "id": 15,
+    "label": "Ö1 Satınalma siparişi",
+    "ok": true,
+    "bytes": 118746
+  },
+  {
+    "file": "17-o1-uretim.png",
+    "screen": "uretim-emirleri",
+    "mode": "incele",
+    "id": 7,
+    "label": "Ö1 Üretim emri",
+    "ok": true,
+    "bytes": 83080
+  },
+  {
+    "file": "18-o1-sevk.png",
+    "screen": "sevk-emirleri",
+    "mode": "incele",
+    "id": 5,
+    "label": "Ö1 Sevk emri",
+    "ok": true,
+    "bytes": 85288
+  },
+  {
+    "file": "19-o1-irsaliye.png",
+    "screen": "irsaliyeler",
+    "mode": "incele",
+    "id": 5,
+    "label": "Ö1 İrsaliye",
+    "ok": true,
+    "bytes": 120412
+  },
+  {
+    "file": "20-o1-fatura.png",
+    "screen": "satis-faturalari",
+    "mode": "incele",
+    "id": 12,
+    "label": "Ö1 Satış faturası",
+    "ok": true,
+    "bytes": 93987
+  },
+  {
+    "file": "30-o2-bi.png",
+    "screen": "mrp-bagimsiz-ihtiyac",
+    "mode": "incele",
+    "id": 5,
+    "label": "Ö2 Bağımsız ihtiyaç",
+    "ok": true,
+    "bytes": 61928
+  },
+  {
+    "file": "31-o2-siparis.png",
+    "screen": "satis-siparisleri",
+    "mode": "incele",
+    "id": 10,
+    "label": "Ö2 Satış siparişi",
+    "ok": true,
+    "bytes": 99338
+  },
+  {
+    "file": "32-o2-mrp-calisma.png",
+    "screen": "mrp-calisma",
+    "mode": "incele",
+    "id": 5,
+    "label": "Ö2 MRP çalışması",
+    "ok": true,
+    "bytes": 48286
+  },
+  {
+    "file": "33-o2-mrp-sonuc.png",
+    "screen": "mrp-sonuclar",
+    "mode": "incele",
+    "id": null,
+    "listFind": "MR00004",
+    "label": "Ö2 MRP sonuçları",
+    "listOnly": true,
+    "ok": true,
+    "bytes": 193453
+  },
+  {
+    "file": "34-o2-sa-talep.png",
+    "screen": "satin-alma-talepleri",
+    "mode": "incele",
+    "id": 17,
+    "label": "Ö2 MRP→Satınalma talebi",
+    "ok": true,
+    "bytes": 81281
+  },
+  {
+    "file": "35-o2-sa-siparis.png",
+    "screen": "satin-alma-siparisleri",
+    "mode": "incele",
+    "id": 16,
+    "label": "Ö2 Satınalma siparişi",
+    "ok": true,
+    "bytes": 110923
+  },
+  {
+    "file": "36-o2-uretim.png",
+    "screen": "uretim-emirleri",
+    "mode": "incele",
+    "id": 8,
+    "label": "Ö2 Üretim emri",
+    "ok": true,
+    "bytes": 83519
+  },
+  {
+    "file": "37-o2-sevk.png",
+    "screen": "sevk-emirleri",
+    "mode": "incele",
+    "id": 6,
+    "label": "Ö2 Sevk emri",
+    "ok": true,
+    "bytes": 81385
+  },
+  {
+    "file": "38-o2-fatura.png",
+    "screen": "satis-faturalari",
+    "mode": "incele",
+    "id": 13,
+    "label": "Ö2 Satış faturası",
+    "ok": true,
+    "bytes": 93247
+  }
+]

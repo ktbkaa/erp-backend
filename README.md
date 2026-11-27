@@ -8,6 +8,7 @@ Gerçek işletme süreçlerine uygun, adım adım büyüyen ERP çekirdeği.
 - Detaylı cari kart (müşteri / tedarikçi)
 - Ürün ağacı + rota operasyonları + satınalma/üretim döngüsü
 - Konsol: `http://localhost:3000/` · Demo: `npm run demo:cycle`
+- Ekran tanıtım / kullanım / fonksiyonlar: `docs/09_EKRANLAR_TANITIM_KULLANIM.md`
 
 ## Hızlı başlangıç (Windows / VS Code)
 
@@ -40,6 +41,9 @@ npm run migrate
 ```
 
 Bu komut tablolarını **silmez**; eksik tabloları/kolonları ekler.
+
+Haftalık yerel senkron (kod + migrate + yedek): `docs/ops/HAFTALIK_YEREL_SENKRON.md`  
+Yedek: `npm run db:backup` → `backups/`
 
 ### 4) Demo döngüsünü bir kez çalıştır
 

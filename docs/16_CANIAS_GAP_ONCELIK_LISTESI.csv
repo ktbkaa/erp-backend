@@ -1,0 +1,41 @@
+kod;kategori;madde;ozet;oncelik;yapilabilirlik;skor;not
+P01;Tablo mantığı;Belge referans omurgası (DOCTYPE + REFDOC);Tüm satış/satınalma belgelerinde kaynak_belge_tipi + kaynak_belge_id (+ kalem ref). Canias REFDOCTYPE/REFDOCNUM karşılığı. Dönüşüm ve izlenebilirlik için zorunlu.;5;5;25;"1–2 gün; mevcut zinciri bozmadan"
+P02;Tablo mantığı;Hareket kodu zorunlu bağ;"İrsaliye/mal kabul/üretim girişi/fatura kayıtlarında hareket_kodu_id zorunlu; stok_hareketleri’ne yaz. Numaratör↔hareket kodu eşlemesi.";5;5;25;Hareket kodları zaten var
+P04;Süreç;İrsaliye onayı depo doğrulama;"Sevk/irsaliye depo bakiyesi UI’da seçilir (prompt değil); yetersiz stokta net hata + önerilen depo.";5;5;25;UX düzeltme
+P39;Düzeltme;İrsaliye→fatura durum kilidi;"Taslak irsaliyeden fatura açılabiliyor; yalnızca Onayli’dan izin ver.";5;5;25;İş kuralı bug
+P03;Süreç;Satış rezervasyonu;"Sipariş onayında kullanılabilir stoktan rezerve; irsaliye onayı rezervi tüketir. INV’deki “rezerve stok” karşılığı.";5;4;20;Bakiye görünümüne rezerve sütunu
+P32;Geliştirme;Açık miktar takibi;"Sipariş kaleminde sevk/irsaliye/fatura kalan miktar; kısmi sevk.";5;4;20;Canias ORDSTAT/DELSTAT benzeri
+P09;Süreç;Sayım / stok düzeltme;Sayım belgesi + fark hareketi (hareket kodu SAY/DUZ).;4;5;20;Hızlı kazanım
+P12;Süreç;Üretim: satış siparişinden emir UI;"API var (PRDT13); form sihirbazı + depo seçimi eksik.";4;5;20;UI
+P31;Geliştirme;Dönüştür UX iyileştirme;"Depo/taşıyıcı için prompt yerine form diyaloğu; zincir timeline ekranı.";4;5;20;UX
+P37;Düzeltme;Fatura liste filtresi tutarlılığı;"Alış/satış endpoint query; PUT’ta e-belge alanları tam güncellenmiyor olabilir — audit.";4;5;20;Bugfix
+P38;Düzeltme;Negatif stok parametresi;"sistem_parametreleri STOK_NEGATIF var; hareket motoru her zaman reddediyor — parametreyi uygula.";4;5;20;Tutarlılık
+P40;Süreç;Satınalma: teklif→sipariş dönüşüm;PUR tarafında satıştaki gibi dönüştür butonları eksik.;4;5;20;Simetri
+P08;Süreç;Depolar arası transfer (TRO);Transfer talep → emir → stok çift hareket (çıkış+giriş). Yoldaki stok.;4;4;16;Yeni belge tipi
+P11;Süreç;ATP basit kontrol;Sipariş/teklifte miktar ≤ kullanılabilir (+üretim planı yoksa uyarı).;4;4;16;İş kuralı
+P13;Süreç;Mal kabul → alış fatura bağ;"Mal kabulden alış faturası oluştur; miktar kilidi.";4;4;16;Satış zincirinin aynası
+P14;Tablo mantığı;Firma/şirket çoklu yapı;CLIENT/COMPANY benzeri: tüm belgelerde firma_id zorunlu + filtre. Tek firma varsayılanı.;4;4;16;Multi-company hazırlık
+P18;e-Dönüşüm;PDF/QR irsaliye-fatura çıktısı;"Örnek e-İrsaliye/e-Fatura şablonuna yakın HTML/PDF; GİB gönderim sonra.";4;4;16;Çıktı katmanı
+P27;Süreç;İade süreçleri;"Satış iade irsaliye/fatura; alış iade. DOCTYPE IADE.";4;4;16;Zincir genişletme
+P05;Süreç;VER 3-yönlü fatura kontrol;"Alış faturası ↔ sipariş fiyatı ↔ mal kabul miktarı; fark faturası/askı. Canias VER.";5;3;15;Orta karmaşıklık
+P06;Süreç;MRP iskeleti (v1);Sipariş+BOM+bakiye+açık PO/WO → satınalma talebi / üretim emri önerisi listesi (otomatik oluşturma opsiyonel).;5;3;15;Canias MRP’nin sade hali
+P16;Finans;Belge→muhasebe entegrasyonu;Onaylı satış/alış faturadan muhasebe belgesi (otomatik veya öneri).;5;3;15;Hesap belirleme kuralları gerekir
+P15;Tablo mantığı;Destek tablosu genişletme;Belge tipi, stok durumu, sevk tipi, ödeme koşulu ayrı tanım ekranları (kategori_tanimlari modeli).;3;5;15;Sabit tanımlar
+P07;Tablo mantığı;Stok türleri / durumlar;kullanilabilir, rezerve, bloke, kalite alanları veya ayrı bakiye boyutu. Tek “bakiye” yetersiz.;4;3;12;Şema genişletme
+P17;Finans;Cari borç/alacak ekstre;"Fatura+ödeme hareketi; Canias FIN tahsilatın sade hali.";4;3;12;Yeni motor
+P20;SYS;JWT + menü/depo yetkisi;"SYST07/08; ekran ve depo bazlı hak.";4;3;12;Güvenlik
+P28;Süreç;Fiyat listesi / iskonto koşulu;"Cari+stok+miktar bazlı fiyat; Canias satış koşulları sade.";4;3;12;Teklif/sipariş besler
+P21;SYS;Audit / alan tarihçesi;Kim neyi değiştirdi (SYST24/25).;3;4;12;Log tablosu
+P29;Süreç;Ödeme koşulları / vade;"Cari kartta var; belgede zorunlu + tahsilat planı.";3;4;12;Finans köprüsü
+P33;Rapor;Operasyonel kokpit;Açık sipariş, geciken sevk, kritik stok, mizan özeti.;3;4;12;Dashboard
+P25;Stok;Parti / seri takibi;Mal kabul ve irsaliyede lot/seri. INV/WMS.;3;3;9;Regülasyon ihtiyaçlı sektörler
+P26;Stok;WMS raf/konum hareketi;"Depo kartında raf var; hareket satırında konum + toplama emri yok.";3;3;9;WMS light
+P22;Üretim;Fiili maliyet (PRC/CAL sade);"İş emri tüketim+işçilik → birim maliyet; stok maliyet katmanı.";4;2;8;Ağır model
+P34;Unutulan;E-posta / bildirim;Sipariş onayı, sevk, fatura olayları (SYST10).;2;4;8;İyileştirme
+P23;Üretim;Kapasite / çizelgeleme (CAP);İş merkezi takvim + yük. Canias CAP.;3;2;6;İleri
+P24;BOM;Varyant / konfigüratör;"BAST18/20, BOM varyant transferi. Canias’ın güçlü yanı; KTB’de bilinçli yok.";3;2;6;Faz 2+
+P30;Kalite;QLT kontrol noktası;Mal kabul/üretim girişi kalite statüsü (bloke stok).;3;2;6;INV stok türü ile birlikte
+P35;Unutulan;Çoklu dil etiketleri UI;"Stok/cari dil tabloları var; UI dil seçimi yok.";2;3;6;İleride
+P36;Unutulan;Alternatif stok / ikame;"Canias alternatif malzeme; bilinçli kaldırılmıştı.";2;3;6;İstenirse
+P10;Geliştirme;Tek belge kalem motoru (opsiyonel);"Uzun vadede satış kalemlerini ortak “belge_kalemleri” + DOCTYPE. Şimdilik ref omurgası yeterli; tam birleştirmeyi ertele.";2;2;4;Büyük refaktör — düşük öncelik
+P19;e-Dönüşüm;GİB entegrasyonu;UBL XML + imza + gönderim. Ayrı proje.;3;1;3;Dış bağımlılık

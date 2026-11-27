@@ -1,0 +1,45 @@
+01	Vvv8o9ZAKYo	SYS 10010 : SYST00 - Yeni bir uygulama oluşturmak	157
+02	9UFDXWG13Ag	SYS 10020 : SYST00 - Varolan bir uygulamanın güncellenmesi	74
+03	J6bxQBzgiHI	SYS 10030 : SYST00 - Varolan bir uygulamanın silinmesi	49
+04	xC1AfqcWoiA	SYS 10050 : SYST01 - Sistem blokelerini listeleme ve silme	49
+05	YNJwRf65jUA	SYS 10070 : SYST01 - BPM blokeleri fonksiyonalitesi	56
+06	Egxl3ZNMsDg	SYS 10080 : SYST01 - BPM blokelerinin silinmesi	42
+07	vqER2mFo4Uc	SYS 10090 : SYST02 - Sistem Mesajları Uygulamasının Kullanımı	69
+08	bwtDaLf0evo	SYS 10130 : SYST03 - Yeni bir sistem kullanıcısı oluşturma	170
+09	VuIXbx1WDPI	SYS 10140 : SYST03 - Varolan bir sistem kullanıcısını güncelleme	83
+10	OG3J9F0K4CA	SYS 10160 : SYST03 - Sistem Kullanıcısını BAST88'deki Bir Kişiyle Bağlama	77
+11	UuMmq6sTUNY	SYS 10170 : SYST03 - Sistem Kullanıcı Gruplarını Ayarlama	61
+12	MPLSXkJVsb4	SYS 10180 : SYST03 - Kullanıcıya Uygulama Haklarının Tanımlanması	86
+13	gM55FCQ7lqU	SYS 10190 : SYST03 - SELECT, DELETE, UPDATE ve INSERT Haklarının Tanımlanması	251
+14	viIil6qHVbY	SYS 10191 : SYST03 - Domain ve Fonksiyon Kısıtları	124
+15	XjVqoEHTsXY	SYS 10200 : SYST04 - Tarih Formatlı Bir Numara Aralığı Oluşturma	138
+16	Wl-P593edWs	SYS 10210 : SYST04 - Otomatik Bir Numara Aralığı Oluşturma	98
+17	aPsaGYtrZ1A	SYS 10220 : SYST04 - Varolan Numara Aralığının Güncellenmesi	79
+18	r7HmvbGcsJ0	SYS 10230 : SYST04 - Numara Aralığı Silme	44
+19	hwaDZYgWQxg	SYS 10310 : SYST06 - Canias Sistem Parametrelerinin Tanımlanması	143
+20	RUiS8KaCHgs	SYS 10311 : SYST07 - Kullanıcı Hak Setlerinde Domain ve Fonksiyon Kısıtlarının Tanımlanması	202
+21	hCXFIxVz1GU	SYS 10312 : SYST07 - Kullanıcı Hak Setlerine SELECT, DELETE, UPDATE, INSERT Haklarının Tanımlanması	342
+22	nLUu5w9uXpo	SYS 10313 : SYST07 - Kullanıcı Hak Setleri Uygulama, Diyalog, Destek Tablosu Haklarının Tanımlanması	232
+23	7SCveHnWrKI	SYS 10320 : SYST08 - Yeni Menü Oluşturma	103
+24	E6MK0K6IJJM	SYS 10330 : SYST08 - Varolan Menüyü Güncelleme	95
+25	vJOI6md5lPk	SYS 10340 : SYST08 - Menü Silme	63
+26	9JvsKVTjipc	SYS 10350 : SYST09 - Şirket Takviminin Kullanılması	153
+27	3ck6uFka268	SYS 10400 : SYST10 - Hatırlatıcı Bildirimlerinin Tetiklenmesi	44
+28	hSFIoeKqtrA	SYS 10420 : SYST11 - Sistem Kullanıcı Loglarının Listelenmesi	84
+29	Ot5wVByuIZY	SYS 10440 : SYST12 - Destek Tablosu Tanımlama Ve Kullanımı	124
+30	QHvHgOwA67I	SYS 10470 : SYST12 - Destek Tablosu Yetkilendirmesi	92
+31	_9aik3VLKEc	SYS 10490 : SYST14 - Veritabanı Logu İçin Konfigürasyon Tanımlama	55
+32	G9pmgtTUOmI	SYS 10500 : SYST15 - Veritabanı Loglarının Listelenmesi	61
+33	tSdzY2FYRYc	SYS 10510 : SYST20 - Nokta Vuruşlu Yazıcı Ayarı Tanımlama	192
+34	cbYTmPC2p54	SYS 10520 : SYST21 - Yazıcı Ayarı Tanımlama	96
+35	b2vSKGT2kMU	SYS 10540 : SYST24 - Alan Tarihçe Konfigürasyonu	78
+36	B-XvK-36jfQ	SYS 10550 : SYST25 - Alan Tarihçe (Günlükleri) Takibi	84
+37	Wn6Y0-R6-SU	SYS 10560 : SYST40 - Sistem Kullanıcı Grubu Tanımlama	79
+38	PB1Du9N7Tic	SYS 10570 : SYST50 - Canias Eklentileri Tanımlama	119
+39	EVrQLcqWyiw	SYS 10600 : SYST00 - Gadget Tanımlama	124
+40	OzJpjSsU3wc	SYS 10610 : SYST35 - Yeni Bir SYST35 Kaydı Oluşturmak	92
+41	Yi0PlPnPmsQ	SYS 10620 : SYST35 - SYST35 Kaydının Güncellenmesi	72
+42	w9OQxFSw1TE	SYS 10630 : SYST35 - SYST35 Kaydının Silinmesi	42
+43	6PYswAuhJLE	SYS 10650 : SYST35 - SYST35 Kaydındaki Belgelerin Düzenlenmesi	150
+44	vkPbwc7rJe4	SYS 10700 : SYST36 - Süreç Dokümanlarının Sistem İçerisine Eklenmesi	96
+45	RF3st3Ra2tU	SYS 10750 : SYST30 - Toplu İşlem Yönetimi	127

@@ -1,0 +1,11 @@
+Kod;Özellik;Kaynak fikir;Durum;Ekran;Tablo/API;Not
+U01;İş emri tipi tanımı;Uyumsoft tip zorunlu;Yapildi;uretim-emri-tipleri;uretim_emri_tipleri;STD/PLN/SIP seed
+U02;Emirde tip + Planlı/Kesin;Uyumsoft Planlı/Kesin;Yapildi;uretim-emirleri;emir_tipi_id,planli_kesin;Onayla butonu
+U03;Siparişten iş emri UI;Uyumsoft sipariş→WO;Yapildi;siparis-is-emri;/satis-siparisinden;Aday listesi + createEndpoint
+U04;Toplu iş emri;Uyumsoft toplu WO;Yapildi;toplu-is-emri;/uretim-emirleri/toplu;Ortak depo + kalemler
+U05;BOM geçerlilik/miktar;Uyumsoft ürün ağacı;Yapildi;urun-agaci;gecerlilik_*,min/max_miktar;Emir oluştururken doğrulanır
+U06;Rota şablon/varsayılan/geçerlilik;Uyumsoft rota;Yapildi;rotalar;sablon,varsayilan,gecerlilik_*;Şablon stok eşleşmesi esnek
+U07;Depo stok bağ;Uyumsoft işyeri-depo-stok;Yapildi;stok-depo;stok_depo;Zorunlu kısıt değil
+U08;CRM fırsat/aday;Uyumsoft CRM;Yapilmadi;—;—;Kapsam dışı bilinçli atlandı
+U09;Sipariş formunda 2. convert;UX iyileştirme;Kismi;—;—;Ayrı üretim ekranı kullanılıyor
+U10;MRP/kapasite;Uyumsoft planlama;Yapilmadi;—;—;Dalga dışı

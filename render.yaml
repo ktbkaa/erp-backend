@@ -1,0 +1,26 @@
+# Render Blueprint — ücretsiz web servis + harici Neon Postgres
+# Kullanım: https://dashboard.render.com/blueprints → New Blueprint Instance → bu repo
+#
+# Önkoşul: Neon’da ücretsiz DB oluşturup DATABASE_URL’i Render env’e yapıştırın.
+# https://console.neon.tech
+
+services:
+  - type: web
+    name: ktb-erp
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci --omit=dev
+    startCommand: node db/migrate.js && node index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: "3000"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

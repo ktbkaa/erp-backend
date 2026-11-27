@@ -1,0 +1,243 @@
+[
+  {
+    "file": "00-warehouses-gida.png",
+    "list": "warehouses",
+    "ok": true
+  },
+  {
+    "file": "01-items.png",
+    "list": "stok-karti",
+    "ok": true
+  },
+  {
+    "file": "01b-item-form.png",
+    "form": "stok-karti",
+    "id": 204,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "02-bom.png",
+    "list": "urun-agaci",
+    "ok": true
+  },
+  {
+    "file": "02b-bom-form.png",
+    "form": "urun-agaci",
+    "id": 34,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "04-work-centers.png",
+    "list": "is-merkezleri",
+    "ok": true
+  },
+  {
+    "file": "04b-work-center-form.png",
+    "form": "is-merkezleri",
+    "id": 4,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "05-routings.png",
+    "list": "routings",
+    "ok": true
+  },
+  {
+    "file": "05b-routing-form.png",
+    "form": "routings",
+    "id": 33,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "06-partners.png",
+    "list": "cari-kartlari",
+    "ok": true
+  },
+  {
+    "file": "06b-partner-form.png",
+    "form": "cari-kartlari",
+    "id": 128,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "07-price-lists.png",
+    "list": "fiyat-listeleri",
+    "ok": true
+  },
+  {
+    "file": "07b-price-list-form.png",
+    "form": "fiyat-listeleri",
+    "id": 26,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "08-sales-quotation.png",
+    "list": "satis-teklifleri",
+    "ok": true
+  },
+  {
+    "file": "08b-sales-quotation-form.png",
+    "form": "satis-teklifleri",
+    "id": 21,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "09-sales-order.png",
+    "list": "satis-siparisleri",
+    "ok": true
+  },
+  {
+    "file": "09b-sales-order-form.png",
+    "form": "satis-siparisleri",
+    "id": 60,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "10-mrp.png",
+    "list": "mrp-calisma",
+    "ok": true
+  },
+  {
+    "file": "12-purchase-req.png",
+    "list": "satin-alma-talepleri",
+    "ok": true
+  },
+  {
+    "file": "12b-purchase-req-form.png",
+    "form": "satin-alma-talepleri",
+    "id": 45,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "15-purchase-order.png",
+    "list": "satin-alma-siparisleri",
+    "ok": true
+  },
+  {
+    "file": "15b-purchase-order-form.png",
+    "form": "satin-alma-siparisleri",
+    "id": 47,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "15c-sa-approval-route.png",
+    "list": "onay-rota-tanim",
+    "ok": true
+  },
+  {
+    "file": "15d-sa-approval-route-form.png",
+    "form": "onay-rota-tanim",
+    "id": 2,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "15e-sa-approval-records.png",
+    "list": "onay-izleme",
+    "ok": true
+  },
+  {
+    "file": "16-goods-receipt.png",
+    "list": "mal-kabuller",
+    "ok": true
+  },
+  {
+    "file": "16b-goods-receipt-form.png",
+    "form": "mal-kabuller",
+    "id": 31,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "16c-incoming-insp.png",
+    "list": "giris-kontrolleri",
+    "ok": true
+  },
+  {
+    "file": "16d-incoming-insp-form.png",
+    "form": "giris-kontrolleri",
+    "id": 9,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "16e-gkk.png",
+    "list": "kk-emirleri-gkk",
+    "ok": true
+  },
+  {
+    "file": "16f-gkk-form.png",
+    "form": "kk-emirleri-gkk",
+    "id": 64,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "17-purchase-invoice.png",
+    "list": "fatura-yonetimi",
+    "ok": true
+  },
+  {
+    "file": "17b-purchase-invoice-form.png",
+    "form": "fatura-yonetimi",
+    "id": 87,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "19-production.png",
+    "list": "uretim-emirleri",
+    "ok": true
+  },
+  {
+    "file": "19b-production-form.png",
+    "form": "uretim-emirleri",
+    "id": 37,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "23c-ckk.png",
+    "list": "kk-emirleri-ckk",
+    "ok": true
+  },
+  {
+    "file": "24-delivery.png",
+    "list": "irsaliye-yonetimi",
+    "ok": true
+  },
+  {
+    "file": "24b-delivery-form.png",
+    "form": "irsaliye-yonetimi",
+    "id": 27,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "26-sales-invoice.png",
+    "list": "fatura-yonetimi",
+    "ok": true
+  },
+  {
+    "file": "26b-sales-invoice-form.png",
+    "form": "fatura-yonetimi",
+    "id": 88,
+    "mode": "incele",
+    "ok": true
+  },
+  {
+    "file": "27-stock-balance.png",
+    "list": "depo-bakiye",
+    "ok": true
+  }
+]

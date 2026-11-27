@@ -1,0 +1,101 @@
+001	HhIBl6CO5d4	FIN 10011 : FINT01 - Muhasebe hesap planına yeni bir Ana Hesap (Kebir Hesabı) eklemek	69
+002	d8KyJ5EbeZY	FIN 10012 : FINT01 - Muhasebe hesap planına yeni bir Üst Hesap (Kontrol Hesabı) eklemek	83
+003	-N5atoVopLY	FIN 10013 : FINT01 - Muhasebe hesap planına yeni bir Doğrudan Güncellenebilir hesap eklemek	87
+004	joWFbb0dwYo	FIN 10015 : FINT01 - Bir hesabı Silinecek statüsüne getirmek	81
+005	i6KwsCbm3nQ	FIN 10016 : FINT01 - Hesap planından bir hesabı kalıcı olarak silmek	85
+006	_fqsuf1gFoM	FIN 10020 : FINT02 - Portföye yeni Çek, Senet veya Akreditif Mektubu girişi	101
+007	9IG_ioR1SXI	FIN 10030 : FINT02 - Çek, Senet veya Akreditif Mektubu yürütme işlemleri	101
+008	Pf8XSYTXZ9M	FIN 10050 : FINT02 - Kayıt anahtarı kullanmadan muhasebe belgesi oluşturmak	85
+009	JP7onjQZhIU	FIN 10051 : FINT02 - Referans alarak muhasebe belgesi oluşturmak	64
+010	v-6Lp9BUxNM	FIN 10052 : FINT02 - Belgeden ters yönde referans alarak belge oluşturmak	89
+011	YtrRHsbXnNo	FIN 10053 : FINT02 - Muhasebe standartları konsepti ve bir standarda özel belge oluşturmak	58
+012	3-fC1yHAaT4	FIN 10060 : FINT02 - Kayıt anahtarları kullanarak muhasebe belgeleri oluşturmak	104
+013	R3BJBXWR8VM	FIN 10070 : FINT02 - Muhasebe belgesini iptal etmek	80
+014	ulXd_ARwdyc	FIN 10070 : FINT02 - Muhasebe belgesini silmek	48
+015	daga1kPyuj0	FIN 10090 : FINT02 - Kur değerleme muhasebe belgesini iptal etmek	89
+016	FskIAX35nxg	FIN 10090 : FINT02 - Kur değerleme muhasebe belgesini silmek	97
+017	1pfCn6UTH7M	FIN 10092 : FINT02 - Bir muhasebe belgesinin detayları	113
+018	hfFBT353vrw	FIN 10092 : FINT02 - Muhasebe belgesine doküman ekleme	90
+019	mJ1hvXgq-Ow	FIN 10092 : FINT02 - Muhasebe belgesinden kaynak belgelere ulaşım	99
+020	6U7X6Ei8Q6o	FIN 10092 : FINT02 - Muhasebe belgesinde e-defter bilgilerini değiştirmek	96
+021	3vhZKCcm53w	FIN 10092 : FINT02 - Muhasebe belgesinde eşleştirme bilgileri	85
+022	hOEzUoF1WzY	FIN 10092 : FINT02 - Muhasebe belgesinde KDV bilgileri	63
+023	w2SAY0Y6y-w	FIN 10092 : FINT02 - Muhasebe belgesinde hesap bakiyesini hesaplamak	64
+024	VvdNA8xTEKQ	FIN 10092 : FINT02 - Muhasebe belgesinde kalem kopyalama işlemi	85
+025	ygVs4YC8Ftc	FIN 10092 : FINT02 - Muhasebe belgesinde entegrasyon belge detaylarının görüntülenmesi	115
+026	WCPuhO8YtGk	FIN 10092 : FINT02 - Muhasebe belgesinde müşteri/tedarikçi bilgilerinin toplu halde güncellenmesi	91
+027	eWH_WTkrCgg	FIN 10092 : FINT02-Müşteri tedarikçi bilg. ile hesap num. bilgisi kontrol edilsin/edilmesin kontrolü	116
+028	8ZzI5w2cBug	FIN 10092 : FINT02 - Muhasebe belgesinde açık tutar kapama	108
+029	p21TcHmB5Zw	FIN 10092 : FINT02 - Muhasebe belgesinde ödeme bilgileri görüntülemek	76
+030	FTpA6fg1hfg	FIN 10092 : Muhasebe belgesindeki tüm çek/senet bilgilerinin toplu halde gösterilmesi	74
+031	Ns_HExCmPsM	FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Firma para birimine göre	117
+032	1P1HWCMXBC0	FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Belge para birimine göre	135
+033	gT2aKFaaQmw	FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Kısmi eşleştirme	91
+034	_RUh39TirZw	FIN 10140 : Finansal Eşleştirme (Borç/Alacak belgeleri ilişkilendirme) - Eşleştirmeyi kaldırma	61
+035	0RT_C0tosFw	FIN 11450 : FINTZ1 - Finans Kokpit (Detaylı)	408
+036	nzyH6g7sxaY	FIN 10200 : FINT27 - Tekrarlanan ödemelerin listelenmesi ( Belge)	88
+037	OD9l6X3AicM	FIN 10201 : FINT27 - Tekrarlanan ödemelerin muhasebeleştirilmesi	88
+038	DpjS1kmJYWI	FIN 10220 : FINT20 - Mali dönem sonu Kapama Kaydı belgesi oluşturmak	220
+039	Nk4IAgsFhu4	FIN 10221 : FINT20 - Mali dönem sonu Kapama Kaydı belgesini Transfer Şablonu kullanarak oluşturmak	136
+040	Uv8lKjFd1hE	FIN 10240 : FINT13-Yevmiye kalemlerinin numaralandırılması ve yevmiye-kebir defterleri oluşturulması	164
+041	nYFNzMIBJ_8	FIN 10290 : FINT42 - Uyarı mektuplarının oluşturulması	87
+042	JEj7r1RS7UQ	FIN 10290 : FINT42 - Müşteri kartına göre uyarı mektubu	89
+043	-ZDesnwuaH8	FIN 10300 : FINT23 - B-Formlar raporu	194
+044	IM2Mq5sUdyY	FIN 10340 : FINT48 - Alternatif ödeme planının oluşturulması	85
+045	6f1TzJMpKLs	FIN 10340 : FINT48 - Alternatif ödeme planının silinmesi	74
+046	z5xfovFOFVA	FIN 10360 : FINT50 - Nakit Akış	135
+047	E_Rp9U3MrRU	FIN 10370 : FINT51 - Nakit Akış FINT51-FINT01	100
+048	8h0iIe8FJcc	FIN 10410 : FINT16 - Vade farkı ve adat ekstreleri raporu	162
+049	I61kaAUQfwY	FIN 10481 : FINT62 - Mizan raporu almak	93
+050	EsCL85_2HTM	FIN 10481 : FINT62 - Belirli bir tarihteki kura göre mizan raporu	87
+051	jXRNk9TCNMs	FIN 10481 : FINT62 - İş alanına göre gruplanmış mizan raporu	73
+052	7BC1z7LbMVw	FIN 10481 : FINT62 - Maliyet merkezine göre gruplanmış mizan raporu	74
+053	jHBOTCoauJw	FIN 10481 : FINT62 - Projeye göre gruplanmış mizan raporu	66
+054	GhP4i10Elog	FIN 11440 : BAST01 - Tekdüzen hesap ve hesap no eşitliği kontrolü	174
+055	k1IYdMiipYU	FIN 10530 : FINT34 - Swift MT940 ile Banka hesap hareketlerinin muhasebeye entegrasyonu	98
+056	5jl3gpA6EWY	FIN 10531 : FINT34 - Çeklerin portföye topluca girilmesi	113
+057	tb7UkeYg9nY	FIN 10532 : FINT34 - Portföydeki çeklerin bankaya tahsile gönderilmesi ve entegrasyonu	101
+058	qoZnf7B22SY	FIN 10533 : FINT34 - Bankada tahsildeki çeklerin tahsili sonrası muhasebeye entegrasyonu	100
+059	hIWwEyyWcOI	FIN 10660 : BAST01 - Muhasebe belge satırlarının birleştirilmesi	135
+060	jwX2L5r-CCg	FIN 10534 : FINT34 - Toplu ödeme listesi hazırlamak	110
+061	M5ZcIo-3RqU	FIN 10536 : FINT34 - Toplu ödemenin gerçekleşmesi sonucu ödemelerin muhasebeye entegrasyonu	100
+062	hjsdV0uz_Xc	FIN 10921 : FINT93 - Damga vergisi beyannamesinin oluşturulması	160
+063	eX1BAnWvY2E	FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre proje kontrolü	125
+064	n9gZt1BQMFk	FIN 10931 : FINT93 - Katma Değer Vergisi beyannamesinin oluşturulması	137
+065	JPDl4zGzUlQ	FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre maliyet merkezi kontrolü	108
+066	i42-rCQVz1M	FIN 10580 : Muhasebe belgelerinde, hesap planı ayarlarına göre maliyet objesi kontrolü	112
+067	ujCVxtb-nnw	FIN 10941 : FINT93 - Katma Değer Vergisi-2 beyannamesinin oluşturulması	118
+068	GN2CCVqyhTY	FIN 10951 : FINT93 - Katma Değer Vergisi-9015 beyannamesinin oluşturulması	115
+069	x5j1ZHbP4eg	FIN 10981 : FINT93 - Muhtasar beyannamenin oluşturulması	131
+070	N2fvuIy-VpQ	FIN 10991 : FINT93 - Geçici kurumlar vergisi beyannamesinin oluşturulması	141
+071	bN_tjohVCR8	FIN 11093 : FINT40 - Yatırım Yönetimi - Vadeli Banka Mevduatı Muhasebeleştirme ve Ayarlar	90
+072	rGiDuqn3LOA	FIN 11102 : FINT80 - Masraf Yönetimi - Masraf Onaylama Yetkisi Verme ve Onaylama	76
+073	lqRxNEjRFbc	FIN 11230 : FINT39 - Eşit taksit tutarlı bir kredi kaydı oluşturmak	170
+074	3oI37iUyNYE	FIN 11280 : FINT39 - Finansal Kiralama (Leasing) kaydı oluşturmak	150
+075	jpuQj4LLQt8	FIN 11240 :FINT39-Anaparası vade sonu tek ödemeli, Aylık faiz tahakkuklu Spot kredi kaydı oluşturmak	142
+076	TXRi1lmNfl0	FIN 11250 : FINT39 - Sevk Öncesi İhracat Kredisi (SÖİK) kaydı oluşturmak	139
+077	67ZRndzFTX4	FIN 11290 : FINT39 - Sigorta Poliçesi kaydı oluşturmak	135
+078	v5Gj3g4wHYY	FIN 11300 : FINT39 - Eşit taksitli kredide Ödeme planını banka ödeme planına eşlemek	115
+079	KP2-uZrbGDE	FIN 11260 : FINT39 - Faiz Reeskontlu kredi kaydı oluşturmak	152
+080	yH5i3Qc_h4o	FIN 11270 : FINT39 - Rotatif (DİNAMİK) kredi kaydı oluşturmak ve yürütmek	265
+081	FyvKqPBpSzE	FIN 11310 : FINT39 - Aylık faiz tahakkuklu Spot kredi planını düzeltme	144
+082	uvDJjVuuw2Y	FIN 11320 : FINT39 - Kredi ile ilgili ödeme yapmak	140
+083	QgOu46M40Cw	FIN 11360: FINT39-Banka kredilerinin işlemlerini muhasebeleştirmek ve muhasebe belgelerini incelemek	276
+084	3tIBNaUht_A	FIN 11330 : FINT39 - Bir krediyi kapamak (kalan borcu kapamak)	123
+085	tZp5oagzn40	FIN 11370 : FINT39 - Topluca Aylık Finans Giderlerini Muhasebeleştirmek	350
+086	rIjhoHiyRgA	FIN 11340 : FINT39 - Kayıt Koruma Konsepti	183
+087	TCQ-irGlB4M	FIN 11380 : FINT39 - Borç ve Ödeme İzleme raporu	360
+088	4h-ste-YTlQ	FIN 11350 : FINT39 - Kredi kaydını silmek	135
+089	qkh5hVzTu0Q	FIN 11390 : FINT39 - Yıl Sonu Tüm Uzun Vadelerin Kısa Vadeye Çekilmesi ve Muhasebeleştirme	205
+090	EMiFryttm28	FIN 10570 : FINT02 - Muhasebe belgelerinde onay statüsü kontrolü	102
+091	hSFaSGzop14	FIN 10095 : FINT02 - Bir muhasebe belgesindeki B-Formları Raporu ile ilişkili alanları güncellemek	171
+092	JT1RS6vFxMg	FIN 11410 : BAST01 - Muhasebe dönemlerinin otomatik oluşturulması	116
+093	mX6dCp6QT-c	FIN 11420 : BAST01 - Muhasebe döneminin kapatılması	144
+094	xVWdMVAP6sI	FIN 11430 : BAST01 - Açılış, Kapanış ve Yansıtma belge tiplerinin tanımlanması	86
+095	HC6-PoaiLwc	FIN 11880 : FINT41 - DBS - Satış Faturalarının DBS ye Yüklenmesi ve Dosya Oluşturma	242
+096	al17Ug8dVsA	FIN 11875 : FINT41 - DBS - Bankadan gelen güncel Müşteri DBS Limit dosyalarının yüklenmesi	120
+097	QAAHfzfI6jg	FIN 11870 : FINT41 - DBS - Doğrudan Borçlandırma Sistemi Konsepti	733
+098	DUSGdy9joko	FIN 10180 : FINT06 - Muhasebe belgesini sırasız onay kaldırma süreci	91
+099	wpykp-n2naA	FIN 10180 : FINT06 - Muhasebe belgesini sıralı onay kaldırma süreci	90
+100	WGXJ2DaZejo	FIN 10180 : FINT06 - Muhasebe belgesini sırasız onay süreci	86
+101	OGjMPlyk6AY	FIN 10180 : FINT06 - Muhasebe belgesini sıralı onay süreci	74

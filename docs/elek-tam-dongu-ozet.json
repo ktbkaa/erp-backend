@@ -1,0 +1,65 @@
+{
+  "firma": {
+    "id": 1,
+    "code": "ELEK",
+    "name": "Kompanzasyon Röle Elektronik A.Ş."
+  },
+  "tags": {
+    "BASE": "ELEK-BASE",
+    "MAN": "ELEK-MAN",
+    "MRP": "ELEK-MRP"
+  },
+  "base": {
+    "tag": "ELEK-BASE",
+    "partners": {
+      "ted1": "T00042",
+      "ted2": "T00043",
+      "mus1": "M00066",
+      "mus2": "M00067"
+    },
+    "items": {
+      "hmPcb": "H00128",
+      "hmCap": "H00129",
+      "hmCoil": "H00130",
+      "hmCase": "H00131",
+      "fg": "U00021"
+    },
+    "bom": "A00040",
+    "route": "O00032",
+    "price_list": "EL-SAT-1-1793022165184"
+  },
+  "man": {
+    "tag": "ELEK-MAN",
+    "sales_quotation": "ST00015",
+    "sales_order": "B00042",
+    "purchase_requisition": "L00036",
+    "purchase_order": "P00034",
+    "goods_receipt": "R00023",
+    "production_order": "E00059",
+    "shipment": "SE00020",
+    "delivery_note": "IR00022",
+    "purchase_invoice": "AF00013",
+    "sales_invoice": "FA00015"
+  },
+  "mrp": {
+    "tag": "ELEK-MRP",
+    "sales_order": "B00043",
+    "independent_requirement": "BI00011",
+    "mrp_run": "MR00010",
+    "mrp_net_positive": 5,
+    "purchase_requisition": "L00037",
+    "purchase_order": "P00035",
+    "goods_receipt": "R00024",
+    "purchase_invoice": "AF00014",
+    "production_from_mrp": [
+      "E00061"
+    ],
+    "shipment": "SE00021",
+    "delivery_note": "IR00023",
+    "sales_invoice": "FA00016"
+  },
+  "how_to_filter": {
+    "ui": "Üst bardan firma = ELEK seçin. Listelerde project_code / açıklama alanına ELEK-MAN veya ELEK-MRP yazın.",
+    "sql": "WHERE company_id = <ELEK> AND (project_code IN ('ELEK-MAN','ELEK-MRP') OR description ILIKE '%ELEK-MAN%' OR description ILIKE '%ELEK-MRP%')"
+  }
+}
