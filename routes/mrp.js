@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { mrpHesapla, mrpCalistir, defaultMrpParametre } = require('../src/services/mrpService');
+const {
+    mrpHesapla,
+    mrpCalistir,
+    defaultMrpParametre,
+    buildMrpRapor,
+} = require('../src/services/mrpService');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { sonrakiKod } = require('../src/utils/kodUretici');
@@ -238,6 +243,109 @@ router.get('/calismalar/:id/mesajlar', async (req, res, next) => {
         next(err);
     }
 });
+
+/**
+ * İzlenebilir MRP raporu (tüm stoklar: ihtiyaç, SA, iş emri, giriş/çıkış).
+ * ?format=json | html (yazdır/PDF)
+ */
+router.get('/calismalar/:id/rapor', async (req, res, next) => {
+    try {
+        const rapor = await buildMrpRapor(pool, Number(req.params.id));
+        const format = String(req.query.format || 'json').toLowerCase();
+        if (format === 'html' || format === 'pdf') {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            return res.send(renderMrpRaporHtml(rapor));
+        }
+        res.json(rapor);
+    } catch (err) {
+        next(err);
+    }
+});
+
+function esc(s) {
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function n4(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return '0';
+    return n.toLocaleString('tr-TR', { maximumFractionDigits: 4 });
+}
+
+function renderMrpRaporHtml(rapor) {
+    const c = rapor.calisma || {};
+    const o = rapor.ozet || {};
+    const ufuk = rapor.ufuk || {};
+    const rows = (rapor.satirlar || []).map((r) => `<tr>
+      <td class="mono">${esc(r.item_code)}</td>
+      <td>${esc(r.item_name)}</td>
+      <td>${esc(r.tedarik_type || r.item_type || '')}</td>
+      <td class="num">${n4(r.bagimsiz_ihtiyac)}</td>
+      <td class="num">${n4(r.bagimli_ihtiyac)}</td>
+      <td class="num">${n4(r.available_stock)}</td>
+      <td class="num">${n4(r.min_stock)}</td>
+      <td class="num">${n4(r.max_stock)}</td>
+      <td class="num">${n4(r.hedef_ortalama)}</td>
+      <td class="num">${n4(r.acik_satinalma)}</td>
+      <td class="num">${n4(r.acik_isemri || r.planlanan_production)}</td>
+      <td class="num">${n4(r.giris_toplam)}</td>
+      <td class="num">${n4(r.cikis_toplam)}</td>
+      <td class="num">${n4(r.net_ihtiyac)}</td>
+      <td class="num">${n4(r.onerilen_quantity)}</td>
+      <td>${esc(r.oneri)}</td>
+    </tr>`).join('');
+    return `<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8" />
+<title>MRP Raporu ${esc(c.run_no || '')}</title>
+<style>
+  body{font-family:Segoe UI,system-ui,sans-serif;margin:24px;color:#1a1a1a}
+  h1{font-size:1.25rem;margin:0 0 .25rem}
+  .meta{color:#555;margin-bottom:1rem;font-size:.9rem}
+  .ozet{display:flex;flex-wrap:wrap;gap:.75rem;margin:0 0 1rem}
+  .ozet span{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:.35rem .65rem;font-size:.85rem}
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  th,td{border:1px solid #d1d5db;padding:.35rem .4rem;vertical-align:top}
+  th{background:#f9fafb;text-align:left;position:sticky;top:0}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .mono{font-family:ui-monospace,Consolas,monospace}
+  .actions{margin:0 0 1rem}
+  @media print{.actions{display:none} body{margin:8px} th{position:static}}
+</style></head><body>
+  <div class="actions">
+    <button onclick="window.print()">Yazdır / PDF</button>
+  </div>
+  <h1>MRP İhtiyaç Raporu — ${esc(c.run_no || '')}</h1>
+  <div class="meta">
+    Ufuk: ${esc(ufuk.start_date || '—')} → ${esc(ufuk.end_date || '—')}
+    · Durum: ${esc(c.status || '')}
+    · ${esc(c.description || '')}
+  </div>
+  <div class="ozet">
+    <span>Satır: <b>${o.satir_sayisi || 0}</b></span>
+    <span>Net&gt;0: <b>${o.net_pozitif || 0}</b></span>
+    <span>SA öneri: <b>${o.satinalma_oneri || 0}</b></span>
+    <span>Üretim öneri: <b>${o.uretim_oneri || 0}</b></span>
+    <span>Toplam giriş: <b>${n4(o.toplam_giris)}</b></span>
+    <span>Toplam çıkış: <b>${n4(o.toplam_cikis)}</b></span>
+    <span>Toplam önerilen: <b>${n4(o.toplam_onerilen)}</b></span>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Stok</th><th>Ad</th><th>Tedarik</th>
+      <th>Bağımsız</th><th>Bağımlı</th><th>Eldeki</th>
+      <th>Min</th><th>Max</th><th>Hedef ort.</th>
+      <th>Açık SA</th><th>Açık IE</th>
+      <th>Girişler</th><th>Çıkışlar</th>
+      <th>Net</th><th>Öneri qty</th><th>Öneri</th>
+    </tr></thead>
+    <tbody>${rows || '<tr><td colspan="16">Satır yok</td></tr>'}</tbody>
+  </table>
+</body></html>`;
+}
 
 /** Varsayılan parametre şablonu (UI bootstrap) */
 router.get('/parametre-varsayilan', async (_req, res) => {
