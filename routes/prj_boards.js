@@ -47,7 +47,28 @@ async function ensureBoard(client, projectId, companyId) {
 router.get('/', async (req, res, next) => {
   try {
     const projectId = req.query.project_id;
-    if (!projectId) return res.status(400).json({ hata: 'project_id zorunlu.' });
+    if (!projectId) {
+      const firmaId = companyIdFromReq(req);
+      const params = [];
+      let where = 'WHERE p.is_active=TRUE AND p.is_archived=FALSE';
+      if (firmaId) {
+        params.push(firmaId);
+        where += ` AND p.company_id=$${params.length}`;
+      }
+      const projects = await pool.query(
+        `SELECT p.id, p.project_code, p.project_name, p.percent_complete
+         FROM projects p ${where}
+         ORDER BY p.id DESC LIMIT 100`,
+        params
+      );
+      return res.json({
+        needs_project: true,
+        message: 'Kanban için proje seçiniz.',
+        projects: projects.rows,
+        board: null,
+        columns: [],
+      });
+    }
     const board = await withTransaction(pool, async (client) => {
       const p = await client.query(`SELECT id, company_id FROM projects WHERE id=$1`, [projectId]);
       if (!p.rows[0]) throw Object.assign(new Error('Proje bulunamadı.'), { status: 404 });

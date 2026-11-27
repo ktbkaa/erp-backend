@@ -1,6 +1,6 @@
 # ADGIDA + EGEPACK — 4 Örnek Süreç Raporu
 
-Oluşturma: 20.11.2026 15:28:54 (Europe/Istanbul)
+Oluşturma: 21.11.2026 16:06:57 (Europe/Istanbul)
 
 ## Nasıl izlenir?
 
@@ -13,26 +13,26 @@ Oluşturma: 20.11.2026 15:28:54 (Europe/Istanbul)
 
 | Etiket | Firma | MRP | Mamul | Sipariş | SA / PO | İş emri | Sevk / İrsaliye / Fatura |
 |--------|-------|-----|-------|---------|---------|---------|--------------------------|
-| **ADGIDA-MAN** | ADGIDA | Hayır | GIDA-MM-01 × 80 | B00166 | P00128 | E00261 | SE00108 / IR00119 / FA00074 |
-| **ADGIDA-MRP** | ADGIDA | Evet | GIDA-MM-02 × 60 | B00167 | P00129 | E00263, E00262 | SE00109 / IR00120 / FA00075 |
-| **EGEPACK-MAN** | EGEPACK | Hayır | AMB-MM-01 × 500 | B00168 | P00130 | E00264 | SE00110 / IR00121 / FA00076 |
-| **EGEPACK-MRP** | EGEPACK | Evet | AMB-MM-02 × 200 | B00169 | P00131 | E00266, E00265 | SE00111 / IR00122 / FA00077 |
+| **ADGIDA-MAN** | ADGIDA | Hayır | GIDA-MM-01 × 80 | B00175 | P00135 | E00277 | SE00116 / IR00126 / FA00080 |
+| **ADGIDA-MRP** | ADGIDA | Evet | GIDA-MM-02 × 60 | B00176 | P00136 | E00280, E00278, E00279 | SE00117 / IR00127 / FA00081 |
+| **EGEPACK-MAN** | EGEPACK | Hayır | AMB-MM-01 × 500 | B00177 | P00137 | E00281 | SE00118 / IR00128 / FA00082 |
+| **EGEPACK-MRP** | EGEPACK | Evet | AMB-MM-02 × 200 | B00178 | P00138 | E00283, E00282 | SE00119 / IR00129 / FA00083 |
 
 ## ADGIDA-MAN — Elma suyu — manuel planlama
 
 - Firma / iş yeri: **ADGIDA** / `IY-GIDA-FAB1`
 - MRP: **kullanılmadı**
 - Mamul: `GIDA-MM-01` × 80
-- Satış teklifi: `ST00050`
-- Satış siparişi: `B00166`
-- SA talep: `L00062`
-- SA sipariş: `P00128`
-- Mal kabul: `R00111`
-- Alış fatura: `AF00089`
-- İş emri: `E00261`
-- Sevk: `SE00108`
-- İrsaliye: `IR00119`
-- Satış fatura: `FA00074`
+- Satış teklifi: `ST00053`
+- Satış siparişi: `B00175`
+- SA talep: `L00067`
+- SA sipariş: `P00135`
+- Mal kabul: `R00117`
+- Alış fatura: `AF00093`
+- İş emri: `E00277`
+- Sevk: `SE00116`
+- İrsaliye: `IR00126`
+- Satış fatura: `FA00080`
 - Ekranlar: satis-teklifleri, satis-siparisleri, satin-alma-talepleri, satin-alma-siparisleri, mal-kabuller, giris-kontrolleri, kk-emirleri, uretim-emirleri, sevk-emirleri, irsaliyeler, faturalar, stok-hareketleri, depo-bakiye
 
 ## ADGIDA-MRP — Kuru kayısı — MRP planlama
@@ -40,17 +40,17 @@ Oluşturma: 20.11.2026 15:28:54 (Europe/Istanbul)
 - Firma / iş yeri: **ADGIDA** / `IY-GIDA-FAB2`
 - MRP: **kullanıldı**
 - Mamul: `GIDA-MM-02` × 60
-- Satış siparişi: `B00167`
-- Bağımsız ihtiyaç: `BI00039`
-- MRP çalışması: `MR00046` (net satır: 3)
-- SA talep: `L00063`
-- SA sipariş: `P00129`
-- Mal kabul: `R00112`
-- Alış fatura: `AF00090`
-- İş emirleri: `E00263`, `E00262`
-- Sevk: `SE00109`
-- İrsaliye: `IR00120`
-- Satış fatura: `FA00075`
+- Satış siparişi: `B00176`
+- Bağımsız ihtiyaç: `BI00043`
+- MRP çalışması: `MR00050` (net satır: 4)
+- SA talep: `L00068`
+- SA sipariş: `P00136`
+- Mal kabul: `R00118`
+- Alış fatura: `AF00094`
+- İş emirleri: `E00280`, `E00278`, `E00279`
+- Sevk: `SE00117`
+- İrsaliye: `IR00127`
+- Satış fatura: `FA00081`
 - Ekranlar: satis-siparisleri, mrp-bagimsiz-ihtiyac, mrp-sonuclari, mrp-calismalari, satin-alma-talepleri, satin-alma-siparisleri, mal-kabuller, kk-emirleri, uretim-emirleri, sevk-emirleri, irsaliyeler, faturalar, stok-hareketleri
 
 ## EGEPACK-MAN — Doy-Pack poşet — manuel planlama
@@ -58,16 +58,16 @@ Oluşturma: 20.11.2026 15:28:54 (Europe/Istanbul)
 - Firma / iş yeri: **EGEPACK** / `IY-AMB-FAB1`
 - MRP: **kullanılmadı**
 - Mamul: `AMB-MM-01` × 500
-- Satış teklifi: `ST00051`
-- Satış siparişi: `B00168`
-- SA talep: `L00064`
-- SA sipariş: `P00130`
-- Mal kabul: `R00113`
-- Alış fatura: `AF00091`
-- İş emri: `E00264`
-- Sevk: `SE00110`
-- İrsaliye: `IR00121`
-- Satış fatura: `FA00076`
+- Satış teklifi: `ST00054`
+- Satış siparişi: `B00177`
+- SA talep: `L00069`
+- SA sipariş: `P00137`
+- Mal kabul: `R00119`
+- Alış fatura: `AF00095`
+- İş emri: `E00281`
+- Sevk: `SE00118`
+- İrsaliye: `IR00128`
+- Satış fatura: `FA00082`
 - Ekranlar: satis-teklifleri, satis-siparisleri, satin-alma-talepleri, satin-alma-siparisleri, mal-kabuller, giris-kontrolleri, kk-emirleri, uretim-emirleri, sevk-emirleri, irsaliyeler, faturalar, stok-hareketleri, depo-bakiye
 
 ## EGEPACK-MRP — Shrink film — MRP planlama
@@ -75,28 +75,28 @@ Oluşturma: 20.11.2026 15:28:54 (Europe/Istanbul)
 - Firma / iş yeri: **EGEPACK** / `IY-AMB-FAB1`
 - MRP: **kullanıldı**
 - Mamul: `AMB-MM-02` × 200
-- Satış siparişi: `B00169`
-- Bağımsız ihtiyaç: `BI00040`
-- MRP çalışması: `MR00047` (net satır: 2)
-- SA talep: `L00065`
-- SA sipariş: `P00131`
-- Mal kabul: `R00114`
-- Alış fatura: `AF00092`
-- İş emirleri: `E00266`, `E00265`
-- Sevk: `SE00111`
-- İrsaliye: `IR00122`
-- Satış fatura: `FA00077`
+- Satış siparişi: `B00178`
+- Bağımsız ihtiyaç: `BI00044`
+- MRP çalışması: `MR00051` (net satır: 2)
+- SA talep: `L00070`
+- SA sipariş: `P00138`
+- Mal kabul: `R00120`
+- Alış fatura: `AF00096`
+- İş emirleri: `E00283`, `E00282`
+- Sevk: `SE00119`
+- İrsaliye: `IR00129`
+- Satış fatura: `FA00083`
 - Ekranlar: satis-siparisleri, mrp-bagimsiz-ihtiyac, mrp-sonuclari, mrp-calismalari, satin-alma-talepleri, satin-alma-siparisleri, mal-kabuller, kk-emirleri, uretim-emirleri, sevk-emirleri, irsaliyeler, faturalar, stok-hareketleri
 
 ## Zaman çizelgesi (özet)
 
-- 20.11.2026 15:28:54 —   SO: B00166
-- 20.11.2026 15:28:54 —   ✓ ADGIDA-MAN tamam
-- 20.11.2026 15:28:54 —   SO: B00167
-- 20.11.2026 15:28:54 —   MRP: MR00046 satır=14
-- 20.11.2026 15:28:54 —   ✓ ADGIDA-MRP tamam
-- 20.11.2026 15:28:54 —   SO: B00168
-- 20.11.2026 15:28:54 —   ✓ EGEPACK-MAN tamam
-- 20.11.2026 15:28:54 —   SO: B00169
-- 20.11.2026 15:28:54 —   MRP: MR00047 satır=5
-- 20.11.2026 15:28:55 —   ✓ EGEPACK-MRP tamam
+- 21.11.2026 16:06:58 —   SO: B00175
+- 21.11.2026 16:06:58 —   ✓ ADGIDA-MAN tamam
+- 21.11.2026 16:06:58 —   SO: B00176
+- 21.11.2026 16:06:58 —   MRP: MR00050 satır=14
+- 21.11.2026 16:06:58 —   ✓ ADGIDA-MRP tamam
+- 21.11.2026 16:06:58 —   SO: B00177
+- 21.11.2026 16:06:58 —   ✓ EGEPACK-MAN tamam
+- 21.11.2026 16:06:58 —   SO: B00178
+- 21.11.2026 16:06:58 —   MRP: MR00051 satır=5
+- 21.11.2026 16:06:58 —   ✓ EGEPACK-MRP tamam

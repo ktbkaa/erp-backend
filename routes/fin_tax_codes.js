@@ -72,8 +72,11 @@ router.get('/:id/oranlar', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const b = req.body || {};
-    if (!b.country_code || !b.tax_code || !b.tax_name) {
-      return res.status(400).json({ hata: 'country_code, tax_code, tax_name zorunlu.' });
+    const country = String(b.country_code || 'TR').trim().toUpperCase() || 'TR';
+    if (!b.tax_code || !b.tax_name) {
+      return res.status(400).json({
+        hata: 'Vergi kodu (tax_code) ve vergi adı (tax_name) zorunlu. Ülke kodu boşsa TR kullanılır.',
+      });
     }
     const id = await withTransaction(pool, async (client) => {
       const ins = await client.query(
@@ -83,7 +86,7 @@ router.post('/', async (req, res, next) => {
          ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,TRUE))
          RETURNING id`,
         [
-          String(b.country_code).toUpperCase(), b.tax_code, b.tax_name, b.tax_type || 'KDV',
+          country, b.tax_code, b.tax_name, b.tax_type || 'KDV',
           b.input_tax_account_code || null, b.output_tax_account_code || null, b.is_active,
         ],
       );

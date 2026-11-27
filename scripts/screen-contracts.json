@@ -5,7 +5,7 @@
   },
   "screens": {
     "stok-karti": {
-      "title": "Stok Kartı",
+      "title": "Stok Kartları",
       "requiredTabs": ["ana", "firmalar", "vergi", "ek-bilgiler", "depolar", "olcu", "mrp"],
       "requiredKinds": ["master-detail", "stok-firmalar", "stok-depolar", "fields", "grid"],
       "requiredFlags": { "crud": true },

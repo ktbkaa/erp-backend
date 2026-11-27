@@ -1,5 +1,5 @@
 {
-  "generated_at": "20.11.2026 15:28:54",
+  "generated_at": "21.11.2026 16:06:57",
   "base_url": "http://127.0.0.1:3000",
   "how_to_view": {
     "ui": [
@@ -19,17 +19,17 @@
       "plant": "IY-GIDA-FAB1",
       "finished_good": "GIDA-MM-01",
       "qty": 80,
-      "sales_quotation": "ST00050",
-      "sales_order": "B00166",
-      "purchase_requisition": "L00062",
-      "purchase_order": "P00128",
-      "sa_approval": "NK00158",
-      "goods_receipt": "R00111",
-      "purchase_invoice": "AF00089",
-      "production_order": "E00261",
-      "shipment": "SE00108",
-      "delivery_note": "IR00119",
-      "sales_invoice": "FA00074",
+      "sales_quotation": "ST00053",
+      "sales_order": "B00175",
+      "purchase_requisition": "L00067",
+      "purchase_order": "P00135",
+      "sa_approval": "NK00174",
+      "goods_receipt": "R00117",
+      "purchase_invoice": "AF00093",
+      "production_order": "E00277",
+      "shipment": "SE00116",
+      "delivery_note": "IR00126",
+      "sales_invoice": "FA00080",
       "screens": [
         "satis-teklifleri",
         "satis-siparisleri",
@@ -54,22 +54,23 @@
       "plant": "IY-GIDA-FAB2",
       "finished_good": "GIDA-MM-02",
       "qty": 60,
-      "sales_order": "B00167",
-      "independent_requirement": "BI00039",
-      "mrp_run": "MR00046",
-      "mrp_net_lines": 3,
-      "purchase_requisition": "L00063",
-      "purchase_order": "P00129",
-      "sa_approval": "NK00159",
-      "goods_receipt": "R00112",
-      "purchase_invoice": "AF00090",
+      "sales_order": "B00176",
+      "independent_requirement": "BI00043",
+      "mrp_run": "MR00050",
+      "mrp_net_lines": 4,
+      "purchase_requisition": "L00068",
+      "purchase_order": "P00136",
+      "sa_approval": "NK00175",
+      "goods_receipt": "R00118",
+      "purchase_invoice": "AF00094",
       "production_orders": [
-        "E00263",
-        "E00262"
+        "E00280",
+        "E00278",
+        "E00279"
       ],
-      "shipment": "SE00109",
-      "delivery_note": "IR00120",
-      "sales_invoice": "FA00075",
+      "shipment": "SE00117",
+      "delivery_note": "IR00127",
+      "sales_invoice": "FA00081",
       "screens": [
         "satis-siparisleri",
         "mrp-bagimsiz-ihtiyac",
@@ -94,17 +95,17 @@
       "plant": "IY-AMB-FAB1",
       "finished_good": "AMB-MM-01",
       "qty": 500,
-      "sales_quotation": "ST00051",
-      "sales_order": "B00168",
-      "purchase_requisition": "L00064",
-      "purchase_order": "P00130",
-      "sa_approval": "NK00160",
-      "goods_receipt": "R00113",
-      "purchase_invoice": "AF00091",
-      "production_order": "E00264",
-      "shipment": "SE00110",
-      "delivery_note": "IR00121",
-      "sales_invoice": "FA00076",
+      "sales_quotation": "ST00054",
+      "sales_order": "B00177",
+      "purchase_requisition": "L00069",
+      "purchase_order": "P00137",
+      "sa_approval": "NK00176",
+      "goods_receipt": "R00119",
+      "purchase_invoice": "AF00095",
+      "production_order": "E00281",
+      "shipment": "SE00118",
+      "delivery_note": "IR00128",
+      "sales_invoice": "FA00082",
       "screens": [
         "satis-teklifleri",
         "satis-siparisleri",
@@ -129,22 +130,22 @@
       "plant": "IY-AMB-FAB1",
       "finished_good": "AMB-MM-02",
       "qty": 200,
-      "sales_order": "B00169",
-      "independent_requirement": "BI00040",
-      "mrp_run": "MR00047",
+      "sales_order": "B00178",
+      "independent_requirement": "BI00044",
+      "mrp_run": "MR00051",
       "mrp_net_lines": 2,
-      "purchase_requisition": "L00065",
-      "purchase_order": "P00131",
-      "sa_approval": "NK00161",
-      "goods_receipt": "R00114",
-      "purchase_invoice": "AF00092",
+      "purchase_requisition": "L00070",
+      "purchase_order": "P00138",
+      "sa_approval": "NK00177",
+      "goods_receipt": "R00120",
+      "purchase_invoice": "AF00096",
       "production_orders": [
-        "E00266",
-        "E00265"
+        "E00283",
+        "E00282"
       ],
-      "shipment": "SE00111",
-      "delivery_note": "IR00122",
-      "sales_invoice": "FA00077",
+      "shipment": "SE00119",
+      "delivery_note": "IR00129",
+      "sales_invoice": "FA00083",
       "screens": [
         "satis-siparisleri",
         "mrp-bagimsiz-ihtiyac",
@@ -164,303 +165,307 @@
   },
   "timeline": [
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:57",
       "msg": "4 örnek süreç → http://127.0.0.1:3000"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:57",
       "msg": "AUTH: owner JWT alındı"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:58",
       "msg": "\n=== ADGIDA-MAN — Elma suyu — manuel planlama (MRP YOK) ==="
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SO: B00166"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SO: B00175"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SA onay: NK00158 (ONAYLANDI)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SA onay: NK00174 (ONAYLANDI)"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Giriş kontrol: GK00096"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Giriş kontrol: GK00102"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00241"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00270"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00242"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00271"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00243"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00272"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00244"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00273"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00245"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00274"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Alış fatura: AF00089"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Alış fatura: AF00093"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00261 #1"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00277 #1"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00261 #2"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00277 #2"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00261 #3"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00277 #3"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  CKK: QE00246"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  CKK: QE00275"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Sevk: SE00108"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Sevk: SE00116"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  İrsaliye: IR00119 (Onayli)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  İrsaliye: IR00126 (Onayli)"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Satış fatura: FA00074"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Satış fatura: FA00080"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:58",
       "msg": "  ✓ ADGIDA-MAN tamam"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:58",
       "msg": "\n=== ADGIDA-MRP — Kuru kayısı — MRP planlama (MRP VAR) ==="
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SO: B00167"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SO: B00176"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  BI: BI00039"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  BI: BI00043"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP: MR00046 satır=14"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP: MR00050 satır=14"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "    net GIDA-HM-03 = 910.45 → Satınalma"
+      "at": "21.11.2026 16:06:58",
+      "msg": "    net GIDA-HM-03 = 845.875 → Satınalma"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "    net GIDA-AMB-02 = 466 → Satınalma"
+      "at": "21.11.2026 16:06:58",
+      "msg": "    net GIDA-AMB-02 = 166 → Satınalma"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "    net GIDA-YM-02 = 75 → Üretim emri"
+      "at": "21.11.2026 16:06:58",
+      "msg": "    net GIDA-MM-02 = 120 → Üretim emri"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP→SA talep: L00063"
+      "at": "21.11.2026 16:06:58",
+      "msg": "    net GIDA-YM-02 = 46.5 → Üretim emri"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP→UE: E00262"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP→SA talep: L00068"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Giriş deposu hazır: GIDAFAB2-GIR"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP→UE: E00278"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SA onay: NK00159 (ONAYLANDI)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP→UE: E00279"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Giriş kontrol: GK00097"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SA onay: NK00175 (ONAYLANDI)"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00247"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Giriş kontrol: GK00103"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00248"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00276"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP PO: P00129 / MK: R00112"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00277"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00263 #1"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP PO: P00136 / MK: R00118"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00263 #2"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00280 #1"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00263 #3"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00280 #2"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  CKK: QE00249"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00280 #3"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Sevk: SE00109"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  CKK: QE00278"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  İrsaliye: IR00120 (Onayli)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Sevk: SE00117"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Satış fatura: FA00075"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  İrsaliye: IR00127 (Onayli)"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Satış fatura: FA00081"
+    },
+    {
+      "at": "21.11.2026 16:06:58",
       "msg": "  ✓ ADGIDA-MRP tamam"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:58",
       "msg": "\n=== EGEPACK-MAN — Doy-Pack poşet — manuel planlama (MRP YOK) ==="
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SO: B00168"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SO: B00177"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SA onay: NK00160 (ONAYLANDI)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SA onay: NK00176 (ONAYLANDI)"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Giriş kontrol: GK00098"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Giriş kontrol: GK00104"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00250"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00279"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00251"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00280"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00252"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00281"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Alış fatura: AF00091"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Alış fatura: AF00095"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00264 #1"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00281 #1"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  CKK: QE00253"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  CKK: QE00282"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Sevk: SE00110"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Sevk: SE00118"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  İrsaliye: IR00121 (Onayli)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  İrsaliye: IR00128 (Onayli)"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Satış fatura: FA00076"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Satış fatura: FA00082"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:58",
       "msg": "  ✓ EGEPACK-MAN tamam"
     },
     {
-      "at": "20.11.2026 15:28:54",
+      "at": "21.11.2026 16:06:58",
       "msg": "\n=== EGEPACK-MRP — Shrink film — MRP planlama (MRP VAR) ==="
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SO: B00169"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SO: B00178"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  BI: BI00040"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  BI: BI00044"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP: MR00047 satır=5"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP: MR00051 satır=5"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "    net AMB-HM-01 = 1538 → Satınalma"
+      "at": "21.11.2026 16:06:58",
+      "msg": "    net AMB-HM-01 = 908 → Satınalma"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "    net AMB-MM-02 = 200 → Üretim emri"
+      "at": "21.11.2026 16:06:58",
+      "msg": "    net AMB-MM-02 = 400 → Üretim emri"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP→SA talep: L00065"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP→SA talep: L00070"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP→UE: E00265"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP→UE: E00282"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  SA onay: NK00161 (ONAYLANDI)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  SA onay: NK00177 (ONAYLANDI)"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Giriş kontrol: GK00099"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Giriş kontrol: GK00105"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  GKK: QE00254"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  GKK: QE00283"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  MRP PO: P00131 / MK: R00114"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  MRP PO: P00138 / MK: R00120"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  op tamam E00266 #1"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  op tamam E00283 #1"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  CKK: QE00255"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  CKK: QE00284"
     },
     {
-      "at": "20.11.2026 15:28:54",
-      "msg": "  Sevk: SE00111"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Sevk: SE00119"
     },
     {
-      "at": "20.11.2026 15:28:55",
-      "msg": "  İrsaliye: IR00122 (Onayli)"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  İrsaliye: IR00129 (Onayli)"
     },
     {
-      "at": "20.11.2026 15:28:55",
-      "msg": "  Satış fatura: FA00077"
+      "at": "21.11.2026 16:06:58",
+      "msg": "  Satış fatura: FA00083"
     },
     {
-      "at": "20.11.2026 15:28:55",
+      "at": "21.11.2026 16:06:58",
       "msg": "  ✓ EGEPACK-MRP tamam"
     }
   ]

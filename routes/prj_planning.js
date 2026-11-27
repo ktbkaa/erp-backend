@@ -52,7 +52,17 @@ router.post('/gantt/reschedule', async (req, res, next) => {
 router.get('/gantt', async (req, res, next) => {
   try {
     const projectId = req.query.project_id;
-    if (!projectId) return res.status(400).json({ hata: 'project_id zorunlu.' });
+    if (!projectId) {
+      return res.json({
+        needs_project: true,
+        message: 'Gantt için proje seçiniz.',
+        project_id: null,
+        tasks: [],
+        dependencies: [],
+        milestones: [],
+        critical_links: [],
+      });
+    }
     const tasks = await pool.query(
       `
       SELECT w.id, w.work_item_no AS code, w.title AS name, w.parent_id,
@@ -149,7 +159,10 @@ router.get('/calendar', async (req, res, next) => {
 router.get('/backlog', async (req, res, next) => {
   try {
     const projectId = req.query.project_id;
-    if (!projectId) return res.status(400).json({ hata: 'project_id zorunlu.' });
+    if (!projectId) {
+      // Liste ekranı dizi bekler; proje seçici masterFields'ta
+      return res.json([]);
+    }
     const r = await pool.query(
       `
       SELECT w.*, s.status_code, s.status_name, pr.priority_code, pr.rank_no,

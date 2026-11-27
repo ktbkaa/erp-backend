@@ -159,18 +159,8 @@ router.post('/', async (req, res) => {
                 if (!stok.rows[0]) throw new Error(`Stok yok: ${satir.item_id}`);
 
                 if (depoZorunlu) {
-                    try {
-                        await assertItemWarehouseAllowed(client, satir.item_id, hedefDepoId);
-                    } catch (e) {
-                        await client.query(
-                            `
-                            INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active, is_default_receipt)
-                            VALUES ($1,$2,$3,TRUE,FALSE)
-                            ON CONFLICT (item_id, warehouse_id) DO UPDATE SET is_active=TRUE
-                            `,
-                            [satir.item_id, hedefDepoId, plantId]
-                        );
-                    }
+                    // Stok bu depoya tanımlı değilse işlem yapılmaz (otomatik oluşturma yok)
+                    await assertItemWarehouseAllowed(client, satir.item_id, hedefDepoId);
                 }
 
                 await client.query(

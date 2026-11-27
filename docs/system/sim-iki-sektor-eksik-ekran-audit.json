@@ -1,0 +1,2504 @@
+{
+  "generatedAt": "2026-11-21T13:08:30.676Z",
+  "timezone": "Europe/Istanbul",
+  "duration_ms": 1285,
+  "firms": {
+    "NORMAK": {
+      "id": 21,
+      "name": "NorMak Metal İşleme Sanayi ve Ticaret A.Ş."
+    },
+    "LAVANDE": {
+      "id": 22,
+      "name": "Lavande Kozmetik Üretim A.Ş."
+    }
+  },
+  "prior": {
+    "excel_total": 182,
+    "prior_hit_estimate": 143,
+    "prior_miss": [
+      "mrp-hesap",
+      "satin-alma-teklif-istekleri",
+      "bom-level-listesi",
+      "bom-malzeme-degisikligi",
+      "siparis-is-emri",
+      "toplu-is-emri",
+      "sinif-tanimi",
+      "uretim-parametre-dogrulama",
+      "fason-operasyon-takip",
+      "kk-stok-planlari",
+      "hesap-belirleme-kurallari",
+      "finans-vergi-kodlari",
+      "mali-yillar",
+      "gl-butceler",
+      "vergi-kodlari",
+      "crm-firsat-asamalari",
+      "crm-faaliyet-tipleri",
+      "prj-dashboard",
+      "prj-portfolio",
+      "prj-board",
+      "prj-backlog",
+      "prj-gantt",
+      "prj-workload",
+      "prj-butce",
+      "prj-sablonlar",
+      "prj-automations",
+      "prj-project-types",
+      "prj-project-categories",
+      "prj-project-statuses",
+      "prj-project-priorities",
+      "prj-work-item-types",
+      "prj-work-item-statuses",
+      "prj-work-item-priorities",
+      "prj-project-roles",
+      "prj-relation-types",
+      "hr-calisma-takvimleri",
+      "hr-vardiyalar",
+      "hr-vardiya-atamalari",
+      "hr-resmi-tatiller",
+      "hr-izin-turleri",
+      "hr-izin-bakiyeleri",
+      "hr-ucretler",
+      "hr-avanslar",
+      "hr-bordro-parametreleri",
+      "hr-bordro-donemleri",
+      "hr-is-ilanlari",
+      "hr-adaylar",
+      "hr-onboarding",
+      "hr-zimmetler",
+      "hr-isten-cikis",
+      "hr-cikis-nedenleri",
+      "onay-message-template",
+      "onay-status-tanim",
+      "onay-modul-kullanimlari",
+      "zorunlu-alan-tanimlari",
+      "eposta-gonderimleri",
+      "sistem-guncelleme",
+      "tablo-bilgileri",
+      "sql-sorgu",
+      "sayfa-sorgulari"
+    ],
+    "prior_miss_count": 60,
+    "prior_miss_by_module": {
+      "Stok": [
+        {
+          "module": "Stok",
+          "section": "MRP Planlama",
+          "id": "mrp-hesap",
+          "techId": "MFG-MRP-SCR-002",
+          "title": "MRP Anlık Hesap",
+          "endpoint": "/mrp"
+        }
+      ],
+      "Satınalma": [
+        {
+          "module": "Satınalma",
+          "section": "—",
+          "id": "satin-alma-teklif-istekleri",
+          "techId": "PUR-RFQ-SCR-001",
+          "title": "Satınalma Teklif İstekleri",
+          "endpoint": "/satin-alma-teklif-istekleri"
+        }
+      ],
+      "Üretim": [
+        {
+          "module": "Üretim",
+          "section": "Ürün Ağacı",
+          "id": "bom-level-listesi",
+          "techId": "MFG-BOM-SCR-003",
+          "title": "Ürün Ağacı Seviye Listesi",
+          "endpoint": "/bom/level-listesi"
+        },
+        {
+          "module": "Üretim",
+          "section": "Ürün Ağacı",
+          "id": "bom-malzeme-degisikligi",
+          "techId": "MFG-BOM-SCR-004",
+          "title": "Malzeme Değişikliği",
+          "endpoint": "/bom/malzeme-degisikligi"
+        },
+        {
+          "module": "Üretim",
+          "section": "İş Emirleri",
+          "id": "siparis-is-emri",
+          "techId": "MFG-WO-SCR-002",
+          "title": "Siparişten İş Emri",
+          "endpoint": "/uretim-emirleri/siparis-adaylari"
+        },
+        {
+          "module": "Üretim",
+          "section": "İş Emirleri",
+          "id": "toplu-is-emri",
+          "techId": "MFG-WO-SCR-003",
+          "title": "Toplu İş Emri",
+          "endpoint": "/uretim-emirleri/siparis-adaylari"
+        },
+        {
+          "module": "Üretim",
+          "section": "Tanımlamalar",
+          "id": "sinif-tanimi",
+          "techId": "MFG-CLS-SCR-001",
+          "title": "Sınıf Tanımı",
+          "endpoint": "/stok-siniflari"
+        },
+        {
+          "module": "Üretim",
+          "section": "Tanımlamalar",
+          "id": "uretim-parametre-dogrulama",
+          "techId": "MFG-PRM-RPT-001",
+          "title": "Üretim Parametre Doğrulama",
+          "endpoint": "/uretim-parametreleri/dogrula"
+        },
+        {
+          "module": "Üretim",
+          "section": "Fason Operasyon",
+          "id": "fason-operasyon-takip",
+          "techId": "SUB-TRK-SCR-001",
+          "title": "Fason Operasyon Takibi",
+          "endpoint": "/fason/siparisler"
+        }
+      ],
+      "Kalite": [
+        {
+          "module": "Kalite",
+          "section": "Tanımlamalar",
+          "id": "kk-stok-planlari",
+          "techId": "QLT-ITMP-SCR-001",
+          "title": "Stok Plan Bağları",
+          "endpoint": "/kk-stok-planlari"
+        }
+      ],
+      "Finans": [
+        {
+          "module": "Finans",
+          "section": "Muhasebe Tanımlamaları",
+          "id": "hesap-belirleme-kurallari",
+          "techId": "FIN-ACR-SCR-001",
+          "title": "Hesap Belirleme Kuralları",
+          "endpoint": "/hesap-belirleme-kurallari"
+        },
+        {
+          "module": "Finans",
+          "section": "Muhasebe Tanımlamaları",
+          "id": "finans-vergi-kodlari",
+          "techId": "FIN-TAX-SCR-001",
+          "title": "Vergi Kodları",
+          "endpoint": "/finans-vergi-kodlari"
+        },
+        {
+          "module": "Finans",
+          "section": "Muhasebe Tanımlamaları",
+          "id": "mali-yillar",
+          "techId": "FIN-FY-SCR-001",
+          "title": "Mali Yıllar",
+          "endpoint": "/muhasebe-donemleri/mali-yillar"
+        },
+        {
+          "module": "Finans",
+          "section": "Sabit Kıymet ve Bütçe",
+          "id": "gl-butceler",
+          "techId": "FIN-BUD-SCR-001",
+          "title": "GL Bütçeler",
+          "endpoint": "/gl-butceler"
+        },
+        {
+          "module": "Finans",
+          "section": "—",
+          "id": "vergi-kodlari",
+          "techId": "MDM-TAX-SCR-001",
+          "title": "Vergi Kodları",
+          "endpoint": "/finans-vergi-kodlari"
+        }
+      ],
+      "CRM": [
+        {
+          "module": "CRM",
+          "section": "Tanımlamalar",
+          "id": "crm-firsat-asamalari",
+          "techId": "CRM-STG-SCR-001",
+          "title": "Fırsat Aşamaları",
+          "endpoint": "/crm-firsat-asamalari"
+        },
+        {
+          "module": "CRM",
+          "section": "Tanımlamalar",
+          "id": "crm-faaliyet-tipleri",
+          "techId": "CRM-ACTT-SCR-001",
+          "title": "Faaliyet Tipleri",
+          "endpoint": "/crm-faaliyet-tipleri"
+        }
+      ],
+      "Proje Yönetimi": [
+        {
+          "module": "Proje Yönetimi",
+          "section": "Proje ve Portföy",
+          "id": "prj-dashboard",
+          "techId": "PRJ-RPT-SCR-001",
+          "title": "Proje Özeti",
+          "endpoint": "/prj-dashboard/overview"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Proje ve Portföy",
+          "id": "prj-portfolio",
+          "techId": "PRJ-RPT-SCR-002",
+          "title": "Portföy Özeti",
+          "endpoint": "/prj-dashboard/portfolio"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-board",
+          "techId": "PRJ-AGL-SCR-001",
+          "title": "Kanban",
+          "endpoint": "/prj-board"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-backlog",
+          "techId": "PRJ-AGL-SCR-002",
+          "title": "Backlog",
+          "endpoint": "/prj-planning/backlog"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-gantt",
+          "techId": "PRJ-PLN-SCR-001",
+          "title": "Gantt / Zaman Çizelgesi",
+          "endpoint": "/prj-planning/gantt"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Agile ve Planlama",
+          "id": "prj-workload",
+          "techId": "PRJ-RES-SCR-001",
+          "title": "Kaynak İş Yükü",
+          "endpoint": "/prj-planning/workload"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Bütçe ve Risk",
+          "id": "prj-butce",
+          "techId": "PRJ-FIN-SCR-001",
+          "title": "Proje Bütçesi",
+          "endpoint": "/prj-budget"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Şablon ve Otomasyon",
+          "id": "prj-sablonlar",
+          "techId": "PRJ-DEF-SCR-030",
+          "title": "Proje Şablonları",
+          "endpoint": "/prj-sablonlar"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Şablon ve Otomasyon",
+          "id": "prj-automations",
+          "techId": "PRJ-AUTO-SCR-001",
+          "title": "Otomasyon Kuralları",
+          "endpoint": "/prj-automations"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-types",
+          "techId": "PRJ-DEF-SCR-001",
+          "title": "Proje Türleri",
+          "endpoint": "/prj-project-types"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-categories",
+          "techId": "PRJ-DEF-SCR-002",
+          "title": "Proje Kategorileri",
+          "endpoint": "/prj-project-categories"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-statuses",
+          "techId": "PRJ-DEF-SCR-003",
+          "title": "Proje Durumları",
+          "endpoint": "/prj-project-statuses"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-priorities",
+          "techId": "PRJ-DEF-SCR-004",
+          "title": "Proje Öncelikleri",
+          "endpoint": "/prj-project-priorities"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-work-item-types",
+          "techId": "PRJ-DEF-SCR-010",
+          "title": "İş Türleri",
+          "endpoint": "/prj-work-item-types"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-work-item-statuses",
+          "techId": "PRJ-DEF-SCR-011",
+          "title": "İş Durumları",
+          "endpoint": "/prj-work-item-statuses"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-work-item-priorities",
+          "techId": "PRJ-DEF-SCR-012",
+          "title": "İş Öncelikleri",
+          "endpoint": "/prj-work-item-priorities"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-project-roles",
+          "techId": "PRJ-DEF-SCR-020",
+          "title": "Proje Rolleri",
+          "endpoint": "/prj-project-roles"
+        },
+        {
+          "module": "Proje Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "prj-relation-types",
+          "techId": "PRJ-DEF-SCR-021",
+          "title": "İş İlişki Türleri",
+          "endpoint": "/prj-relation-types"
+        }
+      ],
+      "İnsan Kaynakları": [
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-calisma-takvimleri",
+          "techId": "HR-CAL-SCR-001",
+          "title": "Çalışma Takvimleri",
+          "endpoint": "/hr-takvim/takvimler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-vardiyalar",
+          "techId": "HR-SHF-SCR-001",
+          "title": "Vardiyalar",
+          "endpoint": "/hr-takvim/vardiyalar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-vardiya-atamalari",
+          "techId": "HR-SHA-SCR-001",
+          "title": "Vardiya Atamaları",
+          "endpoint": "/hr-takvim/vardiya-atamalari"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Zaman ve Devam",
+          "id": "hr-resmi-tatiller",
+          "techId": "HR-HOL-SCR-001",
+          "title": "Resmî Tatiller",
+          "endpoint": "/hr-takvim/tatiller"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İzin Yönetimi",
+          "id": "hr-izin-turleri",
+          "techId": "HR-LVT-SCR-001",
+          "title": "İzin Türleri",
+          "endpoint": "/hr-izin/turler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İzin Yönetimi",
+          "id": "hr-izin-bakiyeleri",
+          "techId": "HR-LVB-SCR-001",
+          "title": "İzin Bakiyeleri",
+          "endpoint": "/hr-izin/bakiyeler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-ucretler",
+          "techId": "HR-SAL-SCR-001",
+          "title": "Ücret Tanımları",
+          "endpoint": "/hr-bordro/ucretler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-avanslar",
+          "techId": "HR-ADV-SCR-001",
+          "title": "Avanslar",
+          "endpoint": "/hr-bordro/avanslar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-bordro-parametreleri",
+          "techId": "HR-PRM-SCR-001",
+          "title": "Bordro Parametreleri",
+          "endpoint": "/hr-bordro/parametreler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "Ücret ve Bordro",
+          "id": "hr-bordro-donemleri",
+          "techId": "HR-PRP-SCR-001",
+          "title": "Bordro Dönemleri",
+          "endpoint": "/hr-bordro/donemler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-is-ilanlari",
+          "techId": "HR-JOB-SCR-001",
+          "title": "İş İlanları",
+          "endpoint": "/hr-ise-alim/ilanlar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-adaylar",
+          "techId": "HR-CAND-SCR-001",
+          "title": "Adaylar",
+          "endpoint": "/hr-ise-alim/adaylar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-onboarding",
+          "techId": "HR-ONB-SCR-001",
+          "title": "İşe Giriş Görevleri",
+          "endpoint": "/hr-ise-alim/onboarding"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-zimmetler",
+          "techId": "HR-AST-SCR-001",
+          "title": "Zimmetler",
+          "endpoint": "/hr-ise-alim/zimmetler"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-isten-cikis",
+          "techId": "HR-TRM-SCR-001",
+          "title": "İşten Çıkış",
+          "endpoint": "/hr-ise-alim/cikislar"
+        },
+        {
+          "module": "İnsan Kaynakları",
+          "section": "İşe Alım ve Çıkış",
+          "id": "hr-cikis-nedenleri",
+          "techId": "HR-TRR-SCR-001",
+          "title": "Çıkış Nedenleri",
+          "endpoint": "/hr-ise-alim/cikis-nedenleri"
+        }
+      ],
+      "Onay Yönetimi": [
+        {
+          "module": "Onay Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "onay-message-template",
+          "techId": "SYS-APR-SCR-007",
+          "title": "Onay Mesaj Şablonları",
+          "endpoint": "/onay-message-sablonlari"
+        },
+        {
+          "module": "Onay Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "onay-status-tanim",
+          "techId": "SYS-APR-SCR-008",
+          "title": "Onay Durumları",
+          "endpoint": "/onay-durumlari"
+        },
+        {
+          "module": "Onay Yönetimi",
+          "section": "Tanımlamalar",
+          "id": "onay-modul-kullanimlari",
+          "techId": "SYS-APR-SCR-USG",
+          "title": "Onay Modül Kullanımları",
+          "endpoint": "/onay-module-kullanimlari"
+        }
+      ],
+      "Sistem": [
+        {
+          "module": "Sistem",
+          "section": "Parametreler",
+          "id": "zorunlu-alan-tanimlari",
+          "techId": "SYS-REQ-SCR-001",
+          "title": "Zorunlu Alanlar",
+          "endpoint": "/zorunlu-alan-tanimlari"
+        },
+        {
+          "module": "Sistem",
+          "section": "İletişim",
+          "id": "eposta-gonderimleri",
+          "techId": "SYS-MAIL-SCR-001",
+          "title": "E-posta Gönderimleri",
+          "endpoint": "/eposta-gonderimleri"
+        },
+        {
+          "module": "Sistem",
+          "section": "Güncelleme",
+          "id": "sistem-guncelleme",
+          "techId": "SYS-UPD-SCR-001",
+          "title": "Sistem Güncelleme",
+          "endpoint": "/sistem-guncelleme"
+        },
+        {
+          "module": "Sistem",
+          "section": "Teknik Gözlem",
+          "id": "tablo-bilgileri",
+          "techId": "SYS-META-SCR-001",
+          "title": "Tablo Bilgileri",
+          "endpoint": "/meta/ekranlar"
+        },
+        {
+          "module": "Sistem",
+          "section": "Teknik Gözlem",
+          "id": "sql-sorgu",
+          "techId": "SYS-SQL-SCR-001",
+          "title": "SQL Sorgu",
+          "endpoint": "/sql-console"
+        },
+        {
+          "module": "Sistem",
+          "section": "Teknik Gözlem",
+          "id": "sayfa-sorgulari",
+          "techId": "SYS-QRY-SCR-001",
+          "title": "Sayfa Sorguları",
+          "endpoint": "/meta/sorgular"
+        }
+      ]
+    }
+  },
+  "this_run": {
+    "covered_screens": [
+      "auth/login",
+      "bom-level-listesi",
+      "bom-malzeme-degisikligi",
+      "companies",
+      "crm-adaylar",
+      "crm-faaliyet-tipleri",
+      "crm-firsat-asamalari",
+      "eposta-gonderimleri",
+      "fason-operasyon-takip",
+      "finans-vergi-kodlari",
+      "gl-butceler",
+      "hesap-belirleme-kurallari",
+      "hr-adaylar",
+      "hr-avanslar",
+      "hr-bordro-donemleri",
+      "hr-bordro-parametreleri",
+      "hr-calisma-takvimleri",
+      "hr-cikis-nedenleri",
+      "hr-is-ilanlari",
+      "hr-isten-cikis",
+      "hr-izin-bakiyeleri",
+      "hr-izin-turleri",
+      "hr-onboarding",
+      "hr-personel",
+      "hr-resmi-tatiller",
+      "hr-ucretler",
+      "hr-vardiya-atamalari",
+      "hr-vardiyalar",
+      "hr-zimmetler",
+      "kk-stok-planlari",
+      "mal-kabuller",
+      "mali-yillar",
+      "mrp-bagimsiz-ihtiyac",
+      "mrp-calismalari",
+      "mrp-hesap",
+      "onay-message-template",
+      "onay-modul-kullanimlari",
+      "onay-status-tanim",
+      "prj-automations",
+      "prj-backlog",
+      "prj-board",
+      "prj-butce",
+      "prj-dashboard",
+      "prj-gantt",
+      "prj-portfolio",
+      "prj-project-categories",
+      "prj-project-priorities",
+      "prj-project-roles",
+      "prj-project-statuses",
+      "prj-project-types",
+      "prj-relation-types",
+      "prj-sablonlar",
+      "prj-work-item-priorities",
+      "prj-work-item-statuses",
+      "prj-work-item-types",
+      "prj-workload",
+      "satin-alma-siparisleri",
+      "satin-alma-teklif-istekleri",
+      "satis-siparisleri",
+      "sayfa-sorgulari",
+      "sevk-emirleri",
+      "sinif-tanimi",
+      "siparis-is-emri",
+      "sistem",
+      "sistem-guncelleme",
+      "sql-sorgu",
+      "stok-hareketleri",
+      "tablo-bilgileri",
+      "toplu-is-emri",
+      "uretim-emirleri",
+      "uretim-parametre-dogrulama",
+      "uretim-parametreleri",
+      "vergi-kodlari",
+      "zorunlu-alan-tanimlari"
+    ],
+    "newly_hit_from_prior_miss": [
+      "mrp-hesap",
+      "satin-alma-teklif-istekleri",
+      "bom-level-listesi",
+      "bom-malzeme-degisikligi",
+      "siparis-is-emri",
+      "toplu-is-emri",
+      "sinif-tanimi",
+      "uretim-parametre-dogrulama",
+      "fason-operasyon-takip",
+      "kk-stok-planlari",
+      "hesap-belirleme-kurallari",
+      "finans-vergi-kodlari",
+      "mali-yillar",
+      "gl-butceler",
+      "vergi-kodlari",
+      "crm-firsat-asamalari",
+      "crm-faaliyet-tipleri",
+      "prj-dashboard",
+      "prj-portfolio",
+      "prj-board",
+      "prj-backlog",
+      "prj-gantt",
+      "prj-workload",
+      "prj-butce",
+      "prj-sablonlar",
+      "prj-automations",
+      "prj-project-types",
+      "prj-project-categories",
+      "prj-project-statuses",
+      "prj-project-priorities",
+      "prj-work-item-types",
+      "prj-work-item-statuses",
+      "prj-work-item-priorities",
+      "prj-project-roles",
+      "prj-relation-types",
+      "hr-calisma-takvimleri",
+      "hr-vardiyalar",
+      "hr-vardiya-atamalari",
+      "hr-resmi-tatiller",
+      "hr-izin-turleri",
+      "hr-izin-bakiyeleri",
+      "hr-ucretler",
+      "hr-avanslar",
+      "hr-bordro-parametreleri",
+      "hr-bordro-donemleri",
+      "hr-is-ilanlari",
+      "hr-adaylar",
+      "hr-onboarding",
+      "hr-zimmetler",
+      "hr-isten-cikis",
+      "hr-cikis-nedenleri",
+      "onay-message-template",
+      "onay-status-tanim",
+      "onay-modul-kullanimlari",
+      "zorunlu-alan-tanimlari",
+      "eposta-gonderimleri",
+      "sistem-guncelleme",
+      "tablo-bilgileri",
+      "sql-sorgu",
+      "sayfa-sorgulari"
+    ],
+    "still_miss_from_prior": [],
+    "still_miss_all_excel": [],
+    "errors": []
+  },
+  "remaining_reasons": [],
+  "audit": [
+    {
+      "seq": 1,
+      "elapsed_ms": 0,
+      "at": "21.11.2026 16:08:29",
+      "step": "START",
+      "screen": "sistem",
+      "detail": "İki sektör + eksik ekran simülasyonu"
+    },
+    {
+      "seq": 2,
+      "elapsed_ms": 84,
+      "at": "21.11.2026 16:08:29",
+      "step": "AUTH",
+      "screen": "auth/login",
+      "detail": "owner JWT"
+    },
+    {
+      "seq": 3,
+      "elapsed_ms": 168,
+      "at": "21.11.2026 16:08:29",
+      "step": "GAP",
+      "screen": "sistem",
+      "detail": "Önceki miss: 60 / Excel 182"
+    },
+    {
+      "seq": 4,
+      "elapsed_ms": 174,
+      "at": "21.11.2026 16:08:29",
+      "step": "ORG",
+      "screen": "companies",
+      "detail": "Firma güncellendi: NORMAK",
+      "id": 21
+    },
+    {
+      "seq": 5,
+      "elapsed_ms": 185,
+      "at": "21.11.2026 16:08:29",
+      "step": "ORG",
+      "screen": "companies",
+      "detail": "Firma güncellendi: LAVANDE",
+      "id": 22
+    },
+    {
+      "seq": 6,
+      "elapsed_ms": 191,
+      "at": "21.11.2026 16:08:29",
+      "step": "GAP",
+      "screen": "sistem",
+      "detail": "NORMAK: 60 hedef ekran"
+    },
+    {
+      "seq": 7,
+      "elapsed_ms": 205,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "mrp-hesap",
+      "detail": "MRP anlık hesap (stok)",
+      "id": 703
+    },
+    {
+      "seq": 8,
+      "elapsed_ms": 210,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ listesi"
+    },
+    {
+      "seq": 9,
+      "elapsed_ms": 216,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ oluştur",
+      "id": 10
+    },
+    {
+      "seq": 10,
+      "elapsed_ms": 220,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "bom-level-listesi",
+      "detail": "Seviye listesi (salt okunur)"
+    },
+    {
+      "seq": 11,
+      "elapsed_ms": 223,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği UI/GET"
+    },
+    {
+      "seq": 12,
+      "elapsed_ms": 226,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği POST",
+      "id": 1
+    },
+    {
+      "seq": 13,
+      "elapsed_ms": 231,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "Sipariş adayları"
+    },
+    {
+      "seq": 14,
+      "elapsed_ms": 234,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "Toplu iş emri adayları"
+    },
+    {
+      "seq": 15,
+      "elapsed_ms": 237,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf listesi"
+    },
+    {
+      "seq": 16,
+      "elapsed_ms": 240,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf oluştur",
+      "id": 12
+    },
+    {
+      "seq": 17,
+      "elapsed_ms": 243,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "uretim-parametreleri",
+      "detail": "Parametreler"
+    },
+    {
+      "seq": 18,
+      "elapsed_ms": 246,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Parametre eksikleri tamamla/doğrula"
+    },
+    {
+      "seq": 19,
+      "elapsed_ms": 252,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Doğrulama GET"
+    },
+    {
+      "seq": 20,
+      "elapsed_ms": 258,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "fason-operasyon-takip",
+      "detail": "Fason sipariş listesi"
+    },
+    {
+      "seq": 21,
+      "elapsed_ms": 265,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "fason-operasyon-takip",
+      "detail": "Fason sipariş oluştur",
+      "id": 17,
+      "belge": "FSO00007"
+    },
+    {
+      "seq": 22,
+      "elapsed_ms": 268,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok plan bağları"
+    },
+    {
+      "seq": 23,
+      "elapsed_ms": 274,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok-plan bağı",
+      "id": 5
+    },
+    {
+      "seq": 24,
+      "elapsed_ms": 277,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hesap-belirleme-kurallari",
+      "detail": "Hesap kuralları"
+    },
+    {
+      "seq": 25,
+      "elapsed_ms": 279,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodları"
+    },
+    {
+      "seq": 26,
+      "elapsed_ms": 281,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "vergi-kodlari",
+      "detail": "Vergi kodları (alias)"
+    },
+    {
+      "seq": 27,
+      "elapsed_ms": 285,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodu oluştur",
+      "id": 21
+    },
+    {
+      "seq": 28,
+      "elapsed_ms": 288,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıllar"
+    },
+    {
+      "seq": 29,
+      "elapsed_ms": 291,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıl oluştur",
+      "id": 9
+    },
+    {
+      "seq": 30,
+      "elapsed_ms": 293,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe listesi"
+    },
+    {
+      "seq": 31,
+      "elapsed_ms": 296,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe oluştur",
+      "id": 7
+    },
+    {
+      "seq": 32,
+      "elapsed_ms": 298,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Fırsat aşamaları"
+    },
+    {
+      "seq": 33,
+      "elapsed_ms": 301,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Aşama oluştur",
+      "id": 15
+    },
+    {
+      "seq": 34,
+      "elapsed_ms": 303,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipleri"
+    },
+    {
+      "seq": 35,
+      "elapsed_ms": 305,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipi",
+      "id": 14
+    },
+    {
+      "seq": 36,
+      "elapsed_ms": 309,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 37,
+      "elapsed_ms": 312,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Oluştur",
+      "id": 54
+    },
+    {
+      "seq": 38,
+      "elapsed_ms": 314,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Liste"
+    },
+    {
+      "seq": 39,
+      "elapsed_ms": 316,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Oluştur",
+      "id": 17
+    },
+    {
+      "seq": 40,
+      "elapsed_ms": 319,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 41,
+      "elapsed_ms": 322,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Oluştur",
+      "id": 16
+    },
+    {
+      "seq": 42,
+      "elapsed_ms": 324,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 43,
+      "elapsed_ms": 327,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Oluştur",
+      "id": 15
+    },
+    {
+      "seq": 44,
+      "elapsed_ms": 329,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 45,
+      "elapsed_ms": 331,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Oluştur",
+      "id": 31
+    },
+    {
+      "seq": 46,
+      "elapsed_ms": 333,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 47,
+      "elapsed_ms": 337,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Oluştur",
+      "id": 23
+    },
+    {
+      "seq": 48,
+      "elapsed_ms": 339,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 49,
+      "elapsed_ms": 342,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Oluştur",
+      "id": 15
+    },
+    {
+      "seq": 50,
+      "elapsed_ms": 344,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Liste"
+    },
+    {
+      "seq": 51,
+      "elapsed_ms": 346,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Oluştur",
+      "id": 18
+    },
+    {
+      "seq": 52,
+      "elapsed_ms": 348,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 53,
+      "elapsed_ms": 350,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Oluştur",
+      "id": 17
+    },
+    {
+      "seq": 54,
+      "elapsed_ms": 353,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-dashboard",
+      "detail": "Proje özeti"
+    },
+    {
+      "seq": 55,
+      "elapsed_ms": 356,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-portfolio",
+      "detail": "Portföy"
+    },
+    {
+      "seq": 56,
+      "elapsed_ms": 358,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-board",
+      "detail": "Kanban"
+    },
+    {
+      "seq": 57,
+      "elapsed_ms": 360,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-backlog",
+      "detail": "Backlog"
+    },
+    {
+      "seq": 58,
+      "elapsed_ms": 362,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-gantt",
+      "detail": "Gantt"
+    },
+    {
+      "seq": 59,
+      "elapsed_ms": 365,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-workload",
+      "detail": "İş yükü"
+    },
+    {
+      "seq": 60,
+      "elapsed_ms": 367,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-butce",
+      "detail": "Bütçe listesi"
+    },
+    {
+      "seq": 61,
+      "elapsed_ms": 369,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-sablonlar",
+      "detail": "Şablonlar"
+    },
+    {
+      "seq": 62,
+      "elapsed_ms": 372,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyonlar"
+    },
+    {
+      "seq": 63,
+      "elapsed_ms": 374,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyon kuralı",
+      "id": 19
+    },
+    {
+      "seq": 64,
+      "elapsed_ms": 377,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-calisma-takvimleri",
+      "detail": "Takvimler"
+    },
+    {
+      "seq": 65,
+      "elapsed_ms": 379,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiyalar"
+    },
+    {
+      "seq": 66,
+      "elapsed_ms": 382,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiya oluştur",
+      "id": 15
+    },
+    {
+      "seq": 67,
+      "elapsed_ms": 384,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-vardiya-atamalari",
+      "detail": "Vardiya atamaları"
+    },
+    {
+      "seq": 68,
+      "elapsed_ms": 386,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatiller"
+    },
+    {
+      "seq": 69,
+      "elapsed_ms": 389,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatil oluştur",
+      "id": 40
+    },
+    {
+      "seq": 70,
+      "elapsed_ms": 391,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türleri"
+    },
+    {
+      "seq": 71,
+      "elapsed_ms": 394,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türü",
+      "id": 22
+    },
+    {
+      "seq": 72,
+      "elapsed_ms": 396,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-izin-bakiyeleri",
+      "detail": "İzin bakiyeleri"
+    },
+    {
+      "seq": 73,
+      "elapsed_ms": 398,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-ucretler",
+      "detail": "Ücretler"
+    },
+    {
+      "seq": 74,
+      "elapsed_ms": 401,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-avanslar",
+      "detail": "Avanslar"
+    },
+    {
+      "seq": 75,
+      "elapsed_ms": 403,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Bordro parametreleri"
+    },
+    {
+      "seq": 76,
+      "elapsed_ms": 407,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Parametre",
+      "id": 14
+    },
+    {
+      "seq": 77,
+      "elapsed_ms": 409,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-bordro-donemleri",
+      "detail": "Bordro dönemleri"
+    },
+    {
+      "seq": 78,
+      "elapsed_ms": 412,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-is-ilanlari",
+      "detail": "İş ilanları"
+    },
+    {
+      "seq": 79,
+      "elapsed_ms": 414,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-adaylar",
+      "detail": "Adaylar"
+    },
+    {
+      "seq": 80,
+      "elapsed_ms": 416,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-onboarding",
+      "detail": "Onboarding"
+    },
+    {
+      "seq": 81,
+      "elapsed_ms": 418,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-zimmetler",
+      "detail": "Zimmetler"
+    },
+    {
+      "seq": 82,
+      "elapsed_ms": 421,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-isten-cikis",
+      "detail": "İşten çıkış"
+    },
+    {
+      "seq": 83,
+      "elapsed_ms": 423,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedenleri"
+    },
+    {
+      "seq": 84,
+      "elapsed_ms": 425,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedeni",
+      "id": 24
+    },
+    {
+      "seq": 85,
+      "elapsed_ms": 428,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "onay-message-template",
+      "detail": "Mesaj şablonları"
+    },
+    {
+      "seq": 86,
+      "elapsed_ms": 430,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "onay-status-tanim",
+      "detail": "Onay durumları"
+    },
+    {
+      "seq": 87,
+      "elapsed_ms": 433,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "onay-modul-kullanimlari",
+      "detail": "Modül kullanımları"
+    },
+    {
+      "seq": 88,
+      "elapsed_ms": 436,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "zorunlu-alan-tanimlari",
+      "detail": "Zorunlu alanlar"
+    },
+    {
+      "seq": 89,
+      "elapsed_ms": 439,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "eposta-gonderimleri",
+      "detail": "E-posta gönderimleri"
+    },
+    {
+      "seq": 90,
+      "elapsed_ms": 442,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sistem-guncelleme",
+      "detail": "Sistem güncelleme"
+    },
+    {
+      "seq": 91,
+      "elapsed_ms": 451,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "tablo-bilgileri",
+      "detail": "Tablo/meta ekranlar"
+    },
+    {
+      "seq": 92,
+      "elapsed_ms": 474,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL konsol meta"
+    },
+    {
+      "seq": 93,
+      "elapsed_ms": 478,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL SELECT 1"
+    },
+    {
+      "seq": 94,
+      "elapsed_ms": 481,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sayfa-sorgulari",
+      "detail": "Sayfa sorgusu (companies)"
+    },
+    {
+      "seq": 95,
+      "elapsed_ms": 481,
+      "at": "21.11.2026 16:08:29",
+      "step": "GAP",
+      "screen": "sistem",
+      "detail": "LAVANDE: 60 hedef ekran"
+    },
+    {
+      "seq": 96,
+      "elapsed_ms": 487,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "mrp-hesap",
+      "detail": "MRP anlık hesap (stok)",
+      "id": 706
+    },
+    {
+      "seq": 97,
+      "elapsed_ms": 490,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ listesi"
+    },
+    {
+      "seq": 98,
+      "elapsed_ms": 494,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "satin-alma-teklif-istekleri",
+      "detail": "RFQ oluştur",
+      "id": 11
+    },
+    {
+      "seq": 99,
+      "elapsed_ms": 497,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "bom-level-listesi",
+      "detail": "Seviye listesi (salt okunur)"
+    },
+    {
+      "seq": 100,
+      "elapsed_ms": 498,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği UI/GET"
+    },
+    {
+      "seq": 101,
+      "elapsed_ms": 501,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "bom-malzeme-degisikligi",
+      "detail": "Malzeme değişikliği POST",
+      "id": 2
+    },
+    {
+      "seq": 102,
+      "elapsed_ms": 503,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "Sipariş adayları"
+    },
+    {
+      "seq": 103,
+      "elapsed_ms": 505,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "Toplu iş emri adayları"
+    },
+    {
+      "seq": 104,
+      "elapsed_ms": 508,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf listesi"
+    },
+    {
+      "seq": 105,
+      "elapsed_ms": 510,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "sinif-tanimi",
+      "detail": "Sınıf oluştur",
+      "id": 13
+    },
+    {
+      "seq": 106,
+      "elapsed_ms": 513,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "uretim-parametreleri",
+      "detail": "Parametreler"
+    },
+    {
+      "seq": 107,
+      "elapsed_ms": 516,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Parametre eksikleri tamamla/doğrula"
+    },
+    {
+      "seq": 108,
+      "elapsed_ms": 520,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "uretim-parametre-dogrulama",
+      "detail": "Doğrulama GET"
+    },
+    {
+      "seq": 109,
+      "elapsed_ms": 524,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "fason-operasyon-takip",
+      "detail": "Fason sipariş listesi"
+    },
+    {
+      "seq": 110,
+      "elapsed_ms": 526,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok plan bağları"
+    },
+    {
+      "seq": 111,
+      "elapsed_ms": 530,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "kk-stok-planlari",
+      "detail": "Stok-plan bağı",
+      "id": 6
+    },
+    {
+      "seq": 112,
+      "elapsed_ms": 532,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "hesap-belirleme-kurallari",
+      "detail": "Hesap kuralları"
+    },
+    {
+      "seq": 113,
+      "elapsed_ms": 534,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodları"
+    },
+    {
+      "seq": 114,
+      "elapsed_ms": 536,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "vergi-kodlari",
+      "detail": "Vergi kodları (alias)"
+    },
+    {
+      "seq": 115,
+      "elapsed_ms": 540,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "finans-vergi-kodlari",
+      "detail": "Vergi kodu oluştur",
+      "id": 22
+    },
+    {
+      "seq": 116,
+      "elapsed_ms": 542,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıllar"
+    },
+    {
+      "seq": 117,
+      "elapsed_ms": 544,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "mali-yillar",
+      "detail": "Mali yıl oluştur",
+      "id": 10
+    },
+    {
+      "seq": 118,
+      "elapsed_ms": 547,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe listesi"
+    },
+    {
+      "seq": 119,
+      "elapsed_ms": 549,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "gl-butceler",
+      "detail": "GL bütçe oluştur",
+      "id": 8
+    },
+    {
+      "seq": 120,
+      "elapsed_ms": 551,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Fırsat aşamaları"
+    },
+    {
+      "seq": 121,
+      "elapsed_ms": 553,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-firsat-asamalari",
+      "detail": "Aşama oluştur",
+      "id": 16
+    },
+    {
+      "seq": 122,
+      "elapsed_ms": 555,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipleri"
+    },
+    {
+      "seq": 123,
+      "elapsed_ms": 557,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "crm-faaliyet-tipleri",
+      "detail": "Faaliyet tipi",
+      "id": 15
+    },
+    {
+      "seq": 124,
+      "elapsed_ms": 559,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 125,
+      "elapsed_ms": 562,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-types",
+      "detail": "Oluştur",
+      "id": 55
+    },
+    {
+      "seq": 126,
+      "elapsed_ms": 564,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Liste"
+    },
+    {
+      "seq": 127,
+      "elapsed_ms": 566,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-categories",
+      "detail": "Oluştur",
+      "id": 18
+    },
+    {
+      "seq": 128,
+      "elapsed_ms": 568,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 129,
+      "elapsed_ms": 570,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-statuses",
+      "detail": "Oluştur",
+      "id": 17
+    },
+    {
+      "seq": 130,
+      "elapsed_ms": 572,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 131,
+      "elapsed_ms": 575,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-priorities",
+      "detail": "Oluştur",
+      "id": 16
+    },
+    {
+      "seq": 132,
+      "elapsed_ms": 577,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 133,
+      "elapsed_ms": 579,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-types",
+      "detail": "Oluştur",
+      "id": 32
+    },
+    {
+      "seq": 134,
+      "elapsed_ms": 581,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Liste"
+    },
+    {
+      "seq": 135,
+      "elapsed_ms": 584,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-statuses",
+      "detail": "Oluştur",
+      "id": 24
+    },
+    {
+      "seq": 136,
+      "elapsed_ms": 586,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Liste"
+    },
+    {
+      "seq": 137,
+      "elapsed_ms": 589,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-work-item-priorities",
+      "detail": "Oluştur",
+      "id": 16
+    },
+    {
+      "seq": 138,
+      "elapsed_ms": 591,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Liste"
+    },
+    {
+      "seq": 139,
+      "elapsed_ms": 593,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-project-roles",
+      "detail": "Oluştur",
+      "id": 19
+    },
+    {
+      "seq": 140,
+      "elapsed_ms": 595,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Liste"
+    },
+    {
+      "seq": 141,
+      "elapsed_ms": 597,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-relation-types",
+      "detail": "Oluştur",
+      "id": 18
+    },
+    {
+      "seq": 142,
+      "elapsed_ms": 600,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-dashboard",
+      "detail": "Proje özeti"
+    },
+    {
+      "seq": 143,
+      "elapsed_ms": 602,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-portfolio",
+      "detail": "Portföy"
+    },
+    {
+      "seq": 144,
+      "elapsed_ms": 603,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-board",
+      "detail": "Kanban"
+    },
+    {
+      "seq": 145,
+      "elapsed_ms": 605,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-backlog",
+      "detail": "Backlog"
+    },
+    {
+      "seq": 146,
+      "elapsed_ms": 606,
+      "at": "21.11.2026 16:08:29",
+      "step": "COVER",
+      "screen": "prj-gantt",
+      "detail": "Gantt"
+    },
+    {
+      "seq": 147,
+      "elapsed_ms": 609,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-workload",
+      "detail": "İş yükü"
+    },
+    {
+      "seq": 148,
+      "elapsed_ms": 611,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-butce",
+      "detail": "Bütçe listesi"
+    },
+    {
+      "seq": 149,
+      "elapsed_ms": 612,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-sablonlar",
+      "detail": "Şablonlar"
+    },
+    {
+      "seq": 150,
+      "elapsed_ms": 614,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyonlar"
+    },
+    {
+      "seq": 151,
+      "elapsed_ms": 617,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-automations",
+      "detail": "Otomasyon kuralı",
+      "id": 20
+    },
+    {
+      "seq": 152,
+      "elapsed_ms": 619,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-calisma-takvimleri",
+      "detail": "Takvimler"
+    },
+    {
+      "seq": 153,
+      "elapsed_ms": 621,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiyalar"
+    },
+    {
+      "seq": 154,
+      "elapsed_ms": 623,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-vardiyalar",
+      "detail": "Vardiya oluştur",
+      "id": 16
+    },
+    {
+      "seq": 155,
+      "elapsed_ms": 625,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-vardiya-atamalari",
+      "detail": "Vardiya atamaları"
+    },
+    {
+      "seq": 156,
+      "elapsed_ms": 627,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatiller"
+    },
+    {
+      "seq": 157,
+      "elapsed_ms": 629,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-resmi-tatiller",
+      "detail": "Tatil oluştur",
+      "id": 41
+    },
+    {
+      "seq": 158,
+      "elapsed_ms": 631,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türleri"
+    },
+    {
+      "seq": 159,
+      "elapsed_ms": 633,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-izin-turleri",
+      "detail": "İzin türü",
+      "id": 23
+    },
+    {
+      "seq": 160,
+      "elapsed_ms": 636,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-izin-bakiyeleri",
+      "detail": "İzin bakiyeleri"
+    },
+    {
+      "seq": 161,
+      "elapsed_ms": 637,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-ucretler",
+      "detail": "Ücretler"
+    },
+    {
+      "seq": 162,
+      "elapsed_ms": 640,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-avanslar",
+      "detail": "Avanslar"
+    },
+    {
+      "seq": 163,
+      "elapsed_ms": 642,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Bordro parametreleri"
+    },
+    {
+      "seq": 164,
+      "elapsed_ms": 645,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-bordro-parametreleri",
+      "detail": "Parametre",
+      "id": 15
+    },
+    {
+      "seq": 165,
+      "elapsed_ms": 648,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-bordro-donemleri",
+      "detail": "Bordro dönemleri"
+    },
+    {
+      "seq": 166,
+      "elapsed_ms": 650,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-is-ilanlari",
+      "detail": "İş ilanları"
+    },
+    {
+      "seq": 167,
+      "elapsed_ms": 652,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-adaylar",
+      "detail": "Adaylar"
+    },
+    {
+      "seq": 168,
+      "elapsed_ms": 654,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-onboarding",
+      "detail": "Onboarding"
+    },
+    {
+      "seq": 169,
+      "elapsed_ms": 656,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-zimmetler",
+      "detail": "Zimmetler"
+    },
+    {
+      "seq": 170,
+      "elapsed_ms": 658,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-isten-cikis",
+      "detail": "İşten çıkış"
+    },
+    {
+      "seq": 171,
+      "elapsed_ms": 659,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedenleri"
+    },
+    {
+      "seq": 172,
+      "elapsed_ms": 662,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-cikis-nedenleri",
+      "detail": "Çıkış nedeni",
+      "id": 25
+    },
+    {
+      "seq": 173,
+      "elapsed_ms": 664,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "onay-message-template",
+      "detail": "Mesaj şablonları"
+    },
+    {
+      "seq": 174,
+      "elapsed_ms": 665,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "onay-status-tanim",
+      "detail": "Onay durumları"
+    },
+    {
+      "seq": 175,
+      "elapsed_ms": 668,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "onay-modul-kullanimlari",
+      "detail": "Modül kullanımları"
+    },
+    {
+      "seq": 176,
+      "elapsed_ms": 670,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "zorunlu-alan-tanimlari",
+      "detail": "Zorunlu alanlar"
+    },
+    {
+      "seq": 177,
+      "elapsed_ms": 673,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "eposta-gonderimleri",
+      "detail": "E-posta gönderimleri"
+    },
+    {
+      "seq": 178,
+      "elapsed_ms": 675,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "sistem-guncelleme",
+      "detail": "Sistem güncelleme"
+    },
+    {
+      "seq": 179,
+      "elapsed_ms": 678,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "tablo-bilgileri",
+      "detail": "Tablo/meta ekranlar"
+    },
+    {
+      "seq": 180,
+      "elapsed_ms": 697,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL konsol meta"
+    },
+    {
+      "seq": 181,
+      "elapsed_ms": 700,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "sql-sorgu",
+      "detail": "SQL SELECT 1"
+    },
+    {
+      "seq": 182,
+      "elapsed_ms": 702,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "sayfa-sorgulari",
+      "detail": "Sayfa sorgusu (companies)"
+    },
+    {
+      "seq": 183,
+      "elapsed_ms": 711,
+      "at": "21.11.2026 16:08:30",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "NORMAK-MAN açılış stok"
+    },
+    {
+      "seq": 184,
+      "elapsed_ms": 721,
+      "at": "21.11.2026 16:08:30",
+      "step": "SATIS",
+      "screen": "satis-siparisleri",
+      "detail": "SO B00183",
+      "id": 212
+    },
+    {
+      "seq": 185,
+      "elapsed_ms": 729,
+      "at": "21.11.2026 16:08:30",
+      "step": "SA",
+      "screen": "satin-alma-siparisleri",
+      "detail": "PO P00143",
+      "id": 140
+    },
+    {
+      "seq": 186,
+      "elapsed_ms": 744,
+      "at": "21.11.2026 16:08:30",
+      "step": "SA",
+      "screen": "mal-kabuller",
+      "detail": "MK R00125",
+      "id": 125
+    },
+    {
+      "seq": 187,
+      "elapsed_ms": 758,
+      "at": "21.11.2026 16:08:30",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "UE E00288",
+      "id": 275
+    },
+    {
+      "seq": 188,
+      "elapsed_ms": 794,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "SO sonrası adaylar"
+    },
+    {
+      "seq": 189,
+      "elapsed_ms": 796,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "SO sonrası toplu"
+    },
+    {
+      "seq": 190,
+      "elapsed_ms": 805,
+      "at": "21.11.2026 16:08:30",
+      "step": "SATIS",
+      "screen": "sevk-emirleri",
+      "detail": "SE SE00124"
+    },
+    {
+      "seq": 191,
+      "elapsed_ms": 810,
+      "at": "21.11.2026 16:08:30",
+      "step": "STOK",
+      "screen": "stok-hareketleri",
+      "detail": "LAVANDE-MRP açılış stok"
+    },
+    {
+      "seq": 192,
+      "elapsed_ms": 816,
+      "at": "21.11.2026 16:08:30",
+      "step": "SATIS",
+      "screen": "satis-siparisleri",
+      "detail": "SO B00184",
+      "id": 213
+    },
+    {
+      "seq": 193,
+      "elapsed_ms": 821,
+      "at": "21.11.2026 16:08:30",
+      "step": "SA",
+      "screen": "satin-alma-siparisleri",
+      "detail": "PO P00144",
+      "id": 141
+    },
+    {
+      "seq": 194,
+      "elapsed_ms": 831,
+      "at": "21.11.2026 16:08:30",
+      "step": "SA",
+      "screen": "mal-kabuller",
+      "detail": "MK R00126",
+      "id": 126
+    },
+    {
+      "seq": 195,
+      "elapsed_ms": 836,
+      "at": "21.11.2026 16:08:30",
+      "step": "MRP",
+      "screen": "mrp-bagimsiz-ihtiyac",
+      "detail": "BI00047"
+    },
+    {
+      "seq": 196,
+      "elapsed_ms": 853,
+      "at": "21.11.2026 16:08:30",
+      "step": "MRP",
+      "screen": "mrp-calismalari",
+      "detail": "MR00054"
+    },
+    {
+      "seq": 197,
+      "elapsed_ms": 863,
+      "at": "21.11.2026 16:08:30",
+      "step": "URETIM",
+      "screen": "uretim-emirleri",
+      "detail": "UE E00289",
+      "id": 276
+    },
+    {
+      "seq": 198,
+      "elapsed_ms": 893,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "siparis-is-emri",
+      "detail": "SO sonrası adaylar"
+    },
+    {
+      "seq": 199,
+      "elapsed_ms": 895,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "toplu-is-emri",
+      "detail": "SO sonrası toplu"
+    },
+    {
+      "seq": 200,
+      "elapsed_ms": 904,
+      "at": "21.11.2026 16:08:30",
+      "step": "SATIS",
+      "screen": "sevk-emirleri",
+      "detail": "SE SE00125"
+    },
+    {
+      "seq": 201,
+      "elapsed_ms": 1096,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-personel",
+      "detail": "NORMAK extended seed"
+    },
+    {
+      "seq": 202,
+      "elapsed_ms": 1251,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "crm-adaylar",
+      "detail": "LAVANDE extended seed"
+    },
+    {
+      "seq": 203,
+      "elapsed_ms": 1253,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-ucretler",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 204,
+      "elapsed_ms": 1254,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-avanslar",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 205,
+      "elapsed_ms": 1256,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-vardiya-atamalari",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 206,
+      "elapsed_ms": 1258,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-onboarding",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 207,
+      "elapsed_ms": 1261,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-zimmetler",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 208,
+      "elapsed_ms": 1262,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "hr-isten-cikis",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 209,
+      "elapsed_ms": 1264,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-butce",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 210,
+      "elapsed_ms": 1266,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-workload",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 211,
+      "elapsed_ms": 1274,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-dashboard",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 212,
+      "elapsed_ms": 1278,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-board",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 213,
+      "elapsed_ms": 1281,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-backlog",
+      "detail": "post-seed doğrulama"
+    },
+    {
+      "seq": 214,
+      "elapsed_ms": 1284,
+      "at": "21.11.2026 16:08:30",
+      "step": "COVER",
+      "screen": "prj-gantt",
+      "detail": "post-seed doğrulama"
+    }
+  ]
+}

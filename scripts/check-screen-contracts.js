@@ -18,11 +18,7 @@ const ROOT = path.join(__dirname, '..');
 const APP = path.join(ROOT, 'public', 'app.js');
 const CONTRACTS = path.join(__dirname, 'screen-contracts.json');
 
-function extractScreen(src, sid) {
-  const re = new RegExp(`\\n\\s+{\\s*\\n\\s+id:\\s*'${sid}',`);
-  const m = re.exec(src);
-  if (!m) return null;
-  const start = src.indexOf('{', m.index);
+function extractObjectAt(src, start) {
   let depth = 0;
   let inStr = null;
   let escape = false;
@@ -45,6 +41,21 @@ function extractScreen(src, sid) {
     }
   }
   return null;
+}
+
+function extractScreen(src, sid) {
+  const re = new RegExp(`\\n\\s+{\\s*\\n\\s+id:\\s*'${sid}',`, 'g');
+  let m;
+  const candidates = [];
+  while ((m = re.exec(src))) {
+    const start = src.indexOf('{', m.index);
+    const body = extractObjectAt(src, start);
+    if (body) candidates.push(body);
+  }
+  if (!candidates.length) return null;
+  // Menü section (screenIds) ile ekran çakışmasını ayır: endpoint/crud olanı tercih et
+  const screenish = candidates.find((b) => /\bendpoint\s*:/.test(b) || /\bcrud\s*:/.test(b));
+  return screenish || candidates[candidates.length - 1];
 }
 
 function tabIds(body) {
