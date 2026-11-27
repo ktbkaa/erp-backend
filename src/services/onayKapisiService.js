@@ -385,41 +385,44 @@ async function applyRecordOutcome(client, record, kind, { user = null, notes = n
   return { applied: true, status: toStatus };
 }
 
-/** Belge onay bekliyorsa işlemi engeller (sevk, başlatma vb. aşağı akış işlemleri için). */
+/**
+ * Belge açık onay sürecindeyse işlemi engeller (sevk, mal kabul, başlatma vb. aşağı akış).
+ * Onay kaydı olmadan onay bekleyen durumda duran belgeler (kapı dışı eski akışlar) etkilenmez.
+ */
 async function assertNotPending(client, documentTypeCode, documentRow, actionLabel = 'Bu işlem') {
   const dt = await getDocumentType(client, documentTypeCode, { activeOnly: false });
-  if (!dt || !documentRow) return;
+  if (!dt || !documentRow?.id) return;
   const pending = pendingStatus(dt);
-  if (pending != null && documentRow[dt.status_column] === pending) {
-    throw httpError(
-      409,
-      `${dt.document_type_name} onay bekliyor; ${actionLabel} onay tamamlanmadan yapılamaz.`,
-      'ONAY_BEKLIYOR',
-    );
-  }
+  if (pending == null || documentRow[dt.status_column] !== pending) return;
+  if (!(await findOpenRecord(client, dt.document_type_code, documentRow.id))) return;
+  throw httpError(
+    409,
+    `${dt.document_type_name} onay bekliyor; ${actionLabel} onay tamamlanmadan yapılamaz.`,
+    'ONAY_BEKLIYOR',
+  );
 }
 
 /**
  * Elle durum değişikliğinin onay kapısını delmesini engeller:
- * onay bekleyen belgenin durumu, onay bekleyen durumu ve (kural varsa) onaylı durumu
- * elle verilemez.
+ * açık onay sürecindeki belgenin durumu değiştirilemez; aktif kural varsa onay bekleyen
+ * ve onaylı durumlar elle verilemez. Kural ve açık kayıt yoksa hiçbir şey engellenmez.
  */
 async function assertManualStatusChange(client, documentTypeCode, documentRow, requestedStatus) {
   const dt = await getDocumentType(client, documentTypeCode, { activeOnly: false });
   if (!dt || !documentRow || requestedStatus == null || requestedStatus === '') return;
   const current = documentRow[dt.status_column];
   if (requestedStatus === current) return;
-  const pending = pendingStatus(dt);
-  if (pending != null && current === pending) {
+  if (documentRow.id && await findOpenRecord(client, dt.document_type_code, documentRow.id)) {
     throw httpError(409, `${dt.document_type_name} onay bekliyor; durum yalnız onay süreciyle değişir.`, 'ONAY_BEKLIYOR');
   }
-  if (pending != null && requestedStatus === pending) {
+  const pending = pendingStatus(dt);
+  const approved = approvedStatus(dt);
+  if (requestedStatus !== pending && requestedStatus !== approved) return;
+  if (!dt.is_active || !(await findGateRule(client, dt, documentContext(dt, documentRow)))) return;
+  if (requestedStatus === pending) {
     throw httpError(409, `"${pending}" durumu elle verilemez; belge onaya gönderilmeli.`, 'ONAY_DURUM_ELLE');
   }
-  if (requestedStatus === approvedStatus(dt) && dt.is_active
-    && await findGateRule(client, dt, documentContext(dt, documentRow))) {
-    throw httpError(409, `${dt.document_type_name} için onay kuralı aktif; "${requestedStatus}" durumuna onayla geçilir.`, 'ONAY_GEREKLI');
-  }
+  throw httpError(409, `${dt.document_type_name} için onay kuralı aktif; "${requestedStatus}" durumuna onayla geçilir.`, 'ONAY_GEREKLI');
 }
 
 module.exports = {
