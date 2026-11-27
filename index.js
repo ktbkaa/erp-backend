@@ -230,6 +230,10 @@ server.listen(listenOpts, () => {
         console.error('[tcmb] zamanlayıcı başlatılamadı:', err.message);
       }
     }
+    if (process.env.NODE_ENV !== 'test') {
+      require('./src/services/eBelgeAdapterService').startQueueScheduler(pool, console)
+        .catch((err) => console.error('[e-belge] zamanlayıcı başlatılamadı:', err.message));
+    }
     // Demo firma + örnek veri (veri silmez). Haftalık senkron / yeniden açılışta yeter.
     if (process.env.NODE_ENV !== 'test') {
       setImmediate(async () => {

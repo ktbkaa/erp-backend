@@ -7,6 +7,7 @@ const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 const { documentHtml } = require('../src/services/belgePdfService');
+const eBelge = require('../src/services/eBelgeAdapterService');
 const { reqUserCode, parametreAl } = require('../src/utils/yetki');
 const {
   pickFields,
@@ -374,14 +375,35 @@ router.get('/:id/yazdir', async (req, res, next) => {
         payable_amount: f.payable_amount,
         total_amount: f.total_amount,
       },
-      ekstra: { uuid_ettn: f.uuid_ettn, description: f.description },
+      ekstra: {
+        uuid_ettn: f.uuid_ettn,
+        description: f.description,
+        qr_text: await eBelge.qrTextFor(pool, 'Fatura', f.id),
+        pdf_url: `/invoices/${f.id}/pdf`,
+      },
     });
     res.type('html').send(html);
   } catch (err) {
     next(err);
   }
 });
-router.get('/:id/pdf', (req, res) => res.redirect(302, `/invoices/${req.params.id}/yazdir`));
+
+/** GET /invoices/:id/pdf?sablon=standart|matbu — UTF-8 fontlu, GİB QR kodlu PDF (e-belge kaydı yoksa TASLAK). */
+router.get('/:id/pdf', async (req, res, next) => {
+  try {
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(pool, 'invoices', Number(req.params.id), firmaId))) {
+      return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    }
+    const out = await eBelge.documentPdf(pool, { documentType: 'Fatura', documentId: Number(req.params.id), template: req.query.sablon || null });
+    res.type('application/pdf');
+    res.set('Content-Disposition', `${req.query.indir ? 'attachment' : 'inline'}; filename="${encodeURIComponent(out.fileName)}"`);
+    res.send(out.buffer);
+  } catch (err) {
+    if (err.status === 404) return res.status(404).json({ hata: err.message });
+    next(err);
+  }
+});
 
 /** POST /invoices/:id/iade — iade faturası (ters amount) */
 router.post('/:id/iade', async (req, res, next) => {
