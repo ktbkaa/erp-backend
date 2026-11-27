@@ -97,21 +97,38 @@ html[data-view="steel"] .mod-title {
   font-size: 0.7rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--nav-title);
   font-weight: 700;
+}
+html[data-view="steel"] .mod-group.open > .mod-title {
+  color: var(--nav-title-open);
+  background: var(--nav-open-bg);
+}
+html[data-view="steel"] .mod-section-title {
+  color: var(--nav-section);
 }
 html[data-view="steel"] .mod-item {
   border-radius: 0.15rem;
   font-size: 0.82rem;
+  color: var(--nav-item);
 }
-html[data-view="steel"] .mod-item.active,
 html[data-view="steel"] .mod-item:hover {
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--nav-item-hover);
   box-shadow: var(--steel-inset);
 }
-html[data-view="steel"][data-appearance="dark"] .mod-item.active,
+html[data-view="steel"] .mod-item.active {
+  background: var(--nav-active-bg);
+  color: var(--nav-item-active);
+  box-shadow: var(--steel-inset);
+}
 html[data-view="steel"][data-appearance="dark"] .mod-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--nav-hover-bg);
+  color: var(--nav-item-hover);
+}
+html[data-view="steel"][data-appearance="dark"] .mod-item.active {
+  background: var(--nav-active-bg);
+  color: var(--nav-item-active);
 }
 
 html[data-view="steel"] .workspace-bar {
