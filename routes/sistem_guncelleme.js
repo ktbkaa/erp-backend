@@ -3,11 +3,13 @@
 const express = require('express');
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { requireAdmin } = require('../src/middleware/authorize');
 
 const router = express.Router();
+router.use(requireAdmin);
 
 function userCode(req) {
-  return req.userCode || req.headers['x-kullanici-kodu'] || 'owner';
+  return req.user?.user_code || req.headers['x-kullanici-kodu'] || 'owner';
 }
 
 function mapRow(r) {

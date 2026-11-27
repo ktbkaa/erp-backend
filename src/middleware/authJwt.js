@@ -1,21 +1,18 @@
 const pool = require('../../db');
 const { verifyToken } = require('../utils/jwt');
-const { parametreAl, getUser, reqUserCode } = require('../utils/yetki');
+const { parametreAl, getUser } = require('../utils/yetki');
 
 /**
  * AUTH zorunluluğu:
- * - ERP_AUTH_SOFT=1 → her zaman soft (lokal/CI)
- * - NODE_ENV=production veya ERP_AUTH_REQUIRED=true → zorunlu (parametreye bakmadan)
+ * - NODE_ENV=production → her zaman zorunlu (ERP_AUTH_SOFT yok sayılır)
+ * - ERP_AUTH_SOFT=1 → soft (lokal/CI)
+ * - ERP_AUTH_REQUIRED=true → zorunlu (parametreye bakmadan)
  * - Aksi halde system_parameters.AUTH_ZORUNLU (varsayılan Evet)
  */
 async function isAuthRequired() {
+  if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') return true;
   if (String(process.env.ERP_AUTH_SOFT || '').trim() === '1') return false;
-  if (
-    String(process.env.ERP_AUTH_REQUIRED || '').toLowerCase() === 'true'
-    || String(process.env.NODE_ENV || '').toLowerCase() === 'production'
-  ) {
-    return true;
-  }
+  if (String(process.env.ERP_AUTH_REQUIRED || '').toLowerCase() === 'true') return true;
   const v = String(await parametreAl(pool, 'AUTH_ZORUNLU', 'Evet')).toLowerCase();
   return v === 'evet';
 }
@@ -31,20 +28,26 @@ async function authOptional(req, res, next) {
       try {
         const payload = verifyToken(bearer);
         if (payload?.user_code && payload.typ !== 'refresh') {
-          req.user = await getUser(pool, payload.user_code);
-          req.auth = { type: 'jwt', payload };
+          const u = await getUser(pool, payload.user_code);
+          if (u && u.is_active !== false) {
+            req.user = u;
+            req.auth = { type: 'jwt', payload };
+          }
         }
       } catch (_) {
         /* geçersiz token — zorunluluk aşağıda */
       }
     }
     const zorunlu = await isAuthRequired();
-    // Soft modda header kimlik; zorunlu iken yalnız JWT
+    // Soft modda yalnız X-Kullanici-Kodu başlığı kimliktir (gövde/sorgu user_code veri alanıdır)
     if (!req.user && !zorunlu) {
-      const kod = reqUserCode(req);
+      const kod = req.get('x-kullanici-kodu') || null;
       if (kod) {
-        req.user = await getUser(pool, kod);
-        req.auth = { type: 'header', user_code: kod };
+        const u = await getUser(pool, kod);
+        if (u && u.is_active !== false) {
+          req.user = u;
+          req.auth = { type: 'header', user_code: kod };
+        }
       }
     }
     next();
