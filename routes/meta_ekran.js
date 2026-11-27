@@ -10,6 +10,7 @@ const {
   recordInfo,
   getScreen,
 } = require('../src/meta/screenTables');
+const { screenQueries } = require('../src/meta/pageQueries');
 
 /** Modül gruplu ekran listesi (sol menü için) */
 router.get('/ekranlar', async (req, res, next) => {
@@ -95,6 +96,12 @@ router.get('/audit-anahtar/:screenId', (req, res) => {
     primaryTable: s.primaryTable,
     endpoint: s.endpoint,
   });
+});
+
+router.get('/sorgular/:screenId', (req, res) => {
+  const detail = screenQueries(req.params.screenId);
+  if (!detail) return res.status(404).json({ hata: 'Ekran bulunamadı', kod: 'ERR-API-404' });
+  res.json(detail);
 });
 
 module.exports = router;

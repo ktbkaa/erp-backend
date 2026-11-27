@@ -1,0 +1,80 @@
+{
+  "firma": {
+    "id": 11,
+    "code": "DOKUM",
+    "name": "Anadolu Döküm Sanayi A.Ş."
+  },
+  "tags": {
+    "BASE": "TEST-DKM-BASE",
+    "MAN": "TEST-DKM-MAN",
+    "MRP": "TEST-DKM-MRP",
+    "LABEL": "DOKUM-TAM-DONGU-TEST"
+  },
+  "base": {
+    "tag": "TEST-DKM-BASE",
+    "label": "DOKUM-TAM-DONGU-TEST",
+    "partners": {
+      "ted1": "T00040",
+      "ted2": "T00041",
+      "mus1": "M00039",
+      "mus2": "M00040"
+    },
+    "items": {
+      "cigSut": "TEST-DKM-H01",
+      "kultur": "TEST-DKM-H02",
+      "sise": "TEST-DKM-A01",
+      "kapak": "TEST-DKM-A02",
+      "pastorizasyon": "TEST-DKM-Y01",
+      "sut1L": "TEST-DKM-M01",
+      "yogurt": "TEST-DKM-M02",
+      "hmPcb": "TEST-DKM-H01",
+      "hmCap": "TEST-DKM-H02",
+      "hmCoil": "TEST-DKM-A01",
+      "hmCase": "TEST-DKM-A02",
+      "fg": "TEST-DKM-M01"
+    },
+    "bom": "A00019",
+    "route": "O00019",
+    "price_list": "DOKUM-SAT-11-1793894261605",
+    "gap_notes": [
+      "Maliyet merkezi (BAST06) ayrı tablo/ekran yok — iş merkezi adına MC-DKM-01 işlendi"
+    ],
+    "sa_approval_route": "OR-SA-SIPARIS"
+  },
+  "man": {
+    "tag": "TEST-DKM-MAN",
+    "sales_quotation": "ST00012",
+    "sales_order": "B00028",
+    "purchase_requisition": "L00017",
+    "purchase_order": "P00035",
+    "sa_approval": "NK00016",
+    "goods_receipt": "R00034",
+    "production_order": "E00033",
+    "shipment": "SE00026",
+    "delivery_note": "IR00027",
+    "purchase_invoice": "AF00016",
+    "sales_invoice": "FA00018"
+  },
+  "mrp": {
+    "tag": "TEST-DKM-MRP",
+    "sales_order": "B00029",
+    "independent_requirement": "BI00012",
+    "mrp_run": "MR00015",
+    "mrp_net_positive": 4,
+    "purchase_requisition": "L00018",
+    "purchase_order": "P00036",
+    "sa_approval": "NK00017",
+    "goods_receipt": "R00035",
+    "purchase_invoice": "AF00017",
+    "production_from_mrp": [
+      "E00035"
+    ],
+    "shipment": "SE00027",
+    "delivery_note": "IR00028",
+    "sales_invoice": "FA00019"
+  },
+  "how_to_filter": {
+    "ui": "Üst bardan firma = DOKUM seçin. Listelerde project_code / açıklama alanına TEST-DKM-MAN veya TEST-DKM-MRP yazın.",
+    "sql": "WHERE company_id = <DOKUM> AND (project_code IN ('TEST-DKM-MAN','TEST-DKM-MRP') OR description ILIKE '%TEST-DKM%' OR description ILIKE '%DOKUM-TAM-DONGU-TEST%')"
+  }
+}

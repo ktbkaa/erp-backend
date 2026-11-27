@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERP Yerel Panel</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <p class="eyebrow">KTB · Yerel</p>
+        <h1>ERP Senkron Paneli</h1>
+        <p class="sub">Git · npm · migrate · yedek — bu bilgisayarda</p>
+      </div>
+      <div class="pill" id="busyPill" hidden>Çalışıyor…</div>
+    </header>
+
+    <section class="card" aria-label="Durum">
+      <h2>Durum</h2>
+      <dl class="status" id="statusList"></dl>
+    </section>
+
+    <section class="card" aria-label="İşlemler">
+      <h2>İşlemler</h2>
+      <div class="actions">
+        <button type="button" class="btn primary" id="btnSync">Tam senkron</button>
+        <button type="button" class="btn" id="btnMigrate">Sadece migrate</button>
+        <button type="button" class="btn" id="btnBackup">Sadece yedek</button>
+        <button type="button" class="btn ghost" id="btnRefresh">Yenile</button>
+      </div>
+      <p class="hint">Tam senkron: git pull → npm install → migrate → yedek (pg_dump veya Node SQL)</p>
+    </section>
+
+    <section class="card" aria-label="Ayarlar">
+      <h2>Ayarlar</h2>
+      <label class="field">
+        <span>ERP klasörü</span>
+        <input type="text" id="erpRoot" placeholder="C:\Users\...\erp-backend" />
+      </label>
+      <label class="field">
+        <span>pg_dump yolu (opsiyonel)</span>
+        <input type="text" id="pgDumpPath" placeholder="Boş = otomatik ara; yoksa Node yedek" />
+      </label>
+      <div class="actions" style="margin-top:0.5rem">
+        <button type="button" class="btn" id="btnFindPg">pg_dump bul</button>
+        <button type="button" class="btn" id="btnSave">Kaydet</button>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="scheduleEnabled" />
+        <span>Panel açıkken Pazar 17:00 otomatik senkron (Europe/Istanbul)</span>
+      </label>
+    </section>
+
+    <section class="card" aria-label="Log">
+      <h2>Son loglar</h2>
+      <pre class="log" id="logBox"></pre>
+    </section>
+  </main>
+  <div class="toast" id="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

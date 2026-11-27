@@ -780,6 +780,43 @@ const MODULES = [
         defaults: { is_active: true },
       },
 
+      {
+        id: 'mesaj-tanimlari',
+        techId: 'SYS-MSG-SCR-001',
+        businessNameEn: 'MessageDefinitionScreen',
+        title: 'Mesaj Tanımları',
+        endpoint: '/mesaj-tanimlari',
+        crud: true,
+        codeField: 'message_code',
+        nameField: 'title',
+        numeratorSeri: null,
+        filters: [
+          { key: 'message_code', label: 'Mesaj kodu' },
+          { key: 'message_type', label: 'Tip', type: 'select', options: ['Hata', 'Bilgi', 'Uyari'] },
+          { key: 'title', label: 'Başlık' },
+        ],
+        columns: [
+          { key: 'message_code', label: 'Kod', mono: true },
+          { key: 'message_type', label: 'Tip' },
+          { key: 'title', label: 'Başlık' },
+          { key: 'body', label: 'Metin' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'message_code', label: 'Mesaj kodu', code: true, editableOnNew: true, required: true },
+          { key: 'title', label: 'Başlık', name: true, required: true },
+          { key: 'message_type', label: 'Tip', type: 'select', options: ['Hata', 'Bilgi', 'Uyari'], required: true },
+        ],
+        detailFields: [
+          { key: 'body', label: 'Mesaj metni' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { message_type: 'Bilgi', is_active: true },
+      },
+
+
     ],
   },
 
@@ -788,9 +825,9 @@ const MODULES = [
     title: 'Sistem',
     sections: [
       { id: 'kullanicilar', title: 'Kullanıcılar', screenIds: ['kullanicilar', 'kullanici-gruplari'] },
-      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri'] },
+      { id: 'tanimlar', title: 'Tanımlar', screenIds: ['sistem-parametreleri', 'zorunlu-alan-tanimlari'] },
       { id: 'iletisim', title: 'İletişim', screenIds: ['eposta-gonderimleri'] },
-      { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log', 'tablo-bilgileri', 'sql-sorgu'] },
+      { id: 'gozlem', title: 'Gözlem', screenIds: ['audit-log', 'tablo-bilgileri', 'sql-sorgu', 'sayfa-sorgulari'] },
     ],
     screens: [
       {
@@ -996,6 +1033,80 @@ const MODULES = [
           { key: 'deneme_sayisi', label: 'Deneme' },
           { key: 'gonderim_date', label: 'Gönderim' },
           { key: 'son_hata', label: 'Hata' },
+        ],
+      },
+
+
+      {
+        id: 'zorunlu-alan-tanimlari',
+        techId: 'SYS-REQ-SCR-001',
+        businessNameEn: 'RequiredFieldDefinitionScreen',
+        title: 'Zorunlu Alan Tanımı',
+        endpoint: '/zorunlu-alan-tanimlari',
+        crud: true,
+        codeField: 'field_key',
+        nameField: 'field_label',
+        numeratorSeri: null,
+        filters: [
+          { key: 'screen_title', label: 'Ekran' },
+          { key: 'field_key', label: 'Alan' },
+          { key: 'is_required', label: 'Zorunlu', type: 'bool' },
+        ],
+        columns: [
+          { key: 'screen_title', label: 'Ekran' },
+          { key: 'screen_id', label: 'Ekran kodu', mono: true },
+          { key: 'field_label', label: 'Alan adı' },
+          { key: 'field_key', label: 'Alan kodu', mono: true },
+          { key: 'is_required', label: 'Zorunlu' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          {
+            key: 'screen_id',
+            label: 'Ekran',
+            type: 'lookup',
+            lookup: 'ekranlar',
+            valueKey: 'screen_code',
+            labelKey: 'screen_name',
+            codeKey: 'screen_code',
+            autoFillName: 'screen_title',
+            required: true,
+            lead: true,
+          },
+          { key: 'screen_title', label: 'Ekran adı', readOnly: true },
+          {
+            key: 'field_key',
+            label: 'Alan',
+            type: 'select',
+            options: [],
+            required: true,
+            editableOnNew: true,
+            hint: 'Bağlı ekranın alanları',
+          },
+          { key: 'field_label', label: 'Alan adı', name: true, required: true },
+        ],
+        detailFields: [
+          { key: 'is_required', label: 'Zorunlu yap', type: 'checkbox' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+        defaults: { is_required: true, is_active: true },
+      },
+      {
+        id: 'sayfa-sorgulari',
+        techId: 'SYS-QRY-SCR-001',
+        businessNameEn: 'PageQueryScreen',
+        title: 'Sayfa Sorgu',
+        endpoint: '/meta/sorgular',
+        crud: false,
+        readOnly: true,
+        pageQueryExplorer: true,
+        filters: [],
+        columns: [
+          { key: 'title', label: 'Ekran' },
+          { key: 'endpoint', label: 'Endpoint', mono: true },
+          { key: 'routeFile', label: 'Route', mono: true },
         ],
       },
 
@@ -1715,23 +1826,100 @@ const MODULES = [
         businessNameEn: 'StockReservationScreen',
         title: 'Stok Rezervasyonları',
         endpoint: '/stok-rezervasyonlari',
-        crud: false,
-        readOnly: true,
+        crud: true,
+        // Liste kaydı tek rezervasyon; Yeni formu siparişten çoklu satır oluşturur
+        codeField: 'rezervasyon_no',
+        nameField: 'item_name',
+        // Rezervasyon no sunucuda satır başına üretilir
+        numeratorSeri: null,
+        approveAction: {
+          label: 'İptal Et',
+          path: '/stok-rezervasyonlari/{id}/iptal',
+        },
         filters: [
           { key: 'rezervasyon_no', label: 'Rezervasyon' },
           { key: 'item_code', label: 'Stok' },
-          { key: 'status', label: 'Durum' },
+          { key: 'order_no', label: 'Sipariş' },
+          { key: 'warehouse_code', label: 'Depo' },
+          { key: 'status', label: 'Durum', type: 'select', options: ['Aktif', 'Tuketildi', 'Iptal', 'SuresiDoldu'] },
         ],
         columns: [
           { key: 'rezervasyon_no', label: 'No', mono: true },
           { key: 'order_no', label: 'Sipariş', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
           { key: 'item_name', label: 'Ad' },
+          { key: 'warehouse_code', label: 'Depo', mono: true },
           { key: 'quantity', label: 'Miktar' },
           { key: 'remaining_quantity', label: 'Kalan' },
           { key: 'status', label: 'Durum' },
+          { key: 'created_at', label: 'Kayıt' },
         ],
-      },
+        masterFields: [
+          {
+            key: 'sales_order_id',
+            label: 'Satış siparişi',
+            type: 'lookup',
+            lookup: 'sales_orders',
+            valueKey: 'id',
+            labelKey: 'order_no',
+            codeKey: 'order_no',
+            required: true,
+            lead: true,
+            fillFrom: 'rezervasyon-siparis-kalemler',
+          },
+          {
+            key: 'warehouse_id',
+            label: 'Varsayılan depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            required: true,
+            lead: true,
+          },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          {
+            key: 'item_id',
+            label: 'Stok',
+            type: 'lookup',
+            lookup: 'items',
+            valueKey: 'id',
+            labelKey: 'item_name',
+            codeKey: 'item_code',
+            required: true,
+          },
+          { key: 'sales_order_line_id', label: 'Sip. satır', type: 'number', readOnly: true, size: 'short' },
+          { key: 'siparis_miktar', label: 'Sipariş miktar', type: 'number', readOnly: true, size: 'short' },
+          { key: 'mevcut_rezerve', label: 'Mevcut rezerve', type: 'number', readOnly: true, size: 'short' },
+          { key: 'kalan_rezerve', label: 'Kalan (max)', type: 'number', readOnly: true, size: 'short' },
+          { key: 'quantity', label: 'Rezerve miktar', type: 'number', required: true, size: 'short' },
+          {
+            key: 'warehouse_id',
+            label: 'Depo',
+            type: 'lookup',
+            lookup: 'warehouses',
+            valueKey: 'id',
+            labelKey: 'warehouse_name',
+            codeKey: 'warehouse_code',
+            required: true,
+          },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
+        ],
+        formLinks: {
+          item_id: [
+            { field: 'uom_code', fromItem: 'uom_code' },
+          ],
+          warehouse_id: [
+            // master varsayılan depo → boş satır depoları (applyFormLinkages master→detail özel değil; save’de doldurulur)
+          ],
+        },
+        detailKey: 'satirlar',
+        detailSlots: 5,
+        defaults: { satirlar: [] },
+      },,
       {
         id: 'stok-serileri',
         techId: 'INV-SER-SCR-001',
@@ -8322,6 +8510,13 @@ const ALL_SCREENS = MODULES.flatMap((m) =>
   m.screens.map((s) => normalizeScreen(s, m.id, m.title))
 );
 
+const LIST_PAGE_SIZE = 15;
+const SIDEBAR_W_KEY = 'ktb_sidebar_w';
+const SIDEBAR_W_DEFAULT = 280;
+const SIDEBAR_W_MIN = 200;
+const SIDEBAR_W_MAX = 480;
+
+
 const MODE_LABELS_TR = {
   yeni: 'Yeni',
   incele: 'İncele',
@@ -8773,7 +8968,103 @@ const state = {
   activeFirmaId: null,
   activeIsYeriId: null,
   isYerleri: [],
+  requiredFieldDefs: [],
+  listPage: 1,
+  excelCtx: null,
+  pageQueryOpenMods: {},
+  pageQueryFocusScreenId: null,
+  pageQueryNavCache: null,
 };
+
+
+/** Zorunlu alan tanımlarını yükle (Sistem → Zorunlu Alan Tanımı) */
+async function loadRequiredFieldDefs() {
+  try {
+    const rows = await api('/zorunlu-alan-tanimlari?is_active=true');
+    state.requiredFieldDefs = Array.isArray(rows)
+      ? rows.filter((r) => r && r.is_required !== false)
+      : [];
+  } catch (_) {
+    state.requiredFieldDefs = [];
+  }
+}
+
+function requiredKeysForScreen(screenId) {
+  return new Set(
+    (state.requiredFieldDefs || [])
+      .filter((r) => r && String(r.screen_id) === String(screenId) && r.is_required !== false)
+      .map((r) => String(r.field_key))
+  );
+}
+
+/** Zorunlu alan formu — seçilen ekranın alan listesi */
+function collectScreenFieldOptions(screenId) {
+  const scr = findScreen(screenId);
+  if (!scr) return [];
+  const seen = new Map();
+  const add = (arr) => {
+    (arr || []).forEach((f) => {
+      if (!f?.key || seen.has(f.key)) return;
+      seen.set(f.key, { value: f.key, label: `${f.label || f.key} (${f.key})` });
+    });
+  };
+  add(scr.masterFields);
+  add(scr.detailFields);
+  add(scr.filters);
+  add(scr.columns);
+  (scr.formTabs || []).forEach((tab) => {
+    add(tab.fields);
+    add(tab.headerFields);
+    add(tab.masterFields);
+    add(tab.detailFields);
+    add(tab.grid?.fields);
+    add(tab.componentFields);
+    add(tab.equipmentFields);
+  });
+  return [...seen.values()].sort((a, b) => String(a.label).localeCompare(String(b.label), 'tr'));
+}
+
+function refreshRequiredFieldKeySelect(screenId, keepValue) {
+  const sel = document.querySelector('[data-master="field_key"]');
+  if (!sel || !(sel instanceof HTMLSelectElement)) return;
+  const opts = collectScreenFieldOptions(screenId);
+  const cur = keepValue != null ? String(keepValue) : String(sel.value || '');
+  sel.innerHTML = `<option value=""></option>${opts.map((o) =>
+    `<option value="${escAttr(o.value)}"${o.value === cur ? ' selected' : ''}>${escapeHtml(o.label)}</option>`
+  ).join('')}`;
+  if (cur && !opts.some((o) => o.value === cur)) {
+    const opt = document.createElement('option');
+    opt.value = cur;
+    opt.textContent = cur;
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+/** Tanımdan gelen zorunlulukları alanlara uygula (üçgen + required) */
+function applyRequiredFieldOverrides(screen) {
+  if (!screen) return;
+  const keys = requiredKeysForScreen(screen.id);
+  const mark = (arr) => {
+    (arr || []).forEach((f) => {
+      if (!f?.key) return;
+      if (f._baseRequired === undefined) f._baseRequired = Boolean(f.required);
+      f.required = Boolean(f._baseRequired) || keys.has(String(f.key));
+    });
+  };
+  mark(screen.masterFields);
+  mark(screen.detailFields);
+  mark(screen.filters);
+  (screen.formTabs || []).forEach((tab) => {
+    mark(tab.fields);
+    mark(tab.headerFields);
+    mark(tab.masterFields);
+    mark(tab.detailFields);
+    mark(tab.grid?.fields);
+    mark(tab.componentFields);
+    mark(tab.equipmentFields);
+  });
+}
 
 /** Bağlı ekran ön doldurma haritası */
 function buildLinkedPrefill(link, sourceRec, extra = {}) {
@@ -9070,18 +9361,114 @@ async function openLinkedForm({ targetScreenId, link, sourceRec, convertAct, ext
 
 const $ = (sel) => document.querySelector(sel);
 
-function toast(msg) {
-  let el = $('#toast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'toast';
-    el.className = 'toast';
-    document.body.appendChild(el);
+/** Uygulama mesaj pop-up: Hata (kırmızı), Bilgi (mavi), Uyari (sarı) */
+function normalizeMessageType(type) {
+  const t = String(type || 'Bilgi').toLocaleLowerCase('tr-TR');
+  if (t === 'error' || t === 'hata' || t === 'err' || t === 'danger') return 'Hata';
+  if (t === 'warn' || t === 'warning' || t === 'uyari' || t === 'uyarı') return 'Uyari';
+  return 'Bilgi';
+}
+
+function ensureAppMessageDialog() {
+  let overlay = $('#appMessageOverlay');
+  if (overlay) return overlay;
+  overlay = document.createElement('div');
+  overlay.id = 'appMessageOverlay';
+  overlay.className = 'app-msg-overlay';
+  overlay.hidden = true;
+  overlay.innerHTML = `
+    <div class="app-msg-backdrop" data-app-msg-close></div>
+    <div class="app-msg-card" role="alertdialog" aria-modal="true" aria-labelledby="appMsgTitle" aria-describedby="appMsgBody">
+      <div class="app-msg-code" id="appMsgCode" hidden></div>
+      <div class="app-msg-head">
+        <strong id="appMsgTitle">Bilgi</strong>
+        <button type="button" class="btn tiny ghost app-msg-close" data-app-msg-close aria-label="Kapat">✕</button>
+      </div>
+      <div class="app-msg-body" id="appMsgBody"></div>
+      <div class="app-msg-actions">
+        <button type="button" class="btn action" id="appMsgOk" data-app-msg-close>Tamam</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => {
+    if (e.target.closest('[data-app-msg-close]')) closeAppMessage();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay && !overlay.hidden) closeAppMessage();
+  });
+  return overlay;
+}
+
+function closeAppMessage() {
+  const overlay = $('#appMessageOverlay');
+  if (!overlay) return;
+  overlay.hidden = true;
+  overlay.classList.remove('app-msg--Hata', 'app-msg--Bilgi', 'app-msg--Uyari');
+  clearTimeout(closeAppMessage._t);
+}
+
+function showAppMessage(opts = {}) {
+  const type = normalizeMessageType(opts.type || opts.message_type || 'Bilgi');
+  const message = String(opts.message || opts.body || opts.hata || '').trim() || '—';
+  const code = opts.code || opts.kod || null;
+  const title = opts.title
+    || (type === 'Hata' ? 'Hata' : type === 'Uyari' ? 'Uyarı' : 'Bilgi');
+  const overlay = ensureAppMessageDialog();
+  const card = overlay.querySelector('.app-msg-card');
+  overlay.classList.remove('app-msg--Hata', 'app-msg--Bilgi', 'app-msg--Uyari');
+  overlay.classList.add(`app-msg--${type}`);
+  if (card) {
+    card.classList.remove('app-msg-card--Hata', 'app-msg-card--Bilgi', 'app-msg-card--Uyari');
+    card.classList.add(`app-msg-card--${type}`);
   }
-  el.textContent = msg;
-  el.hidden = false;
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => { el.hidden = true; }, 2800);
+  const codeEl = $('#appMsgCode');
+  if (codeEl) {
+    if (type === 'Hata' && code) {
+      codeEl.hidden = false;
+      codeEl.textContent = String(code);
+    } else {
+      codeEl.hidden = true;
+      codeEl.textContent = '';
+    }
+  }
+  const titleEl = $('#appMsgTitle');
+  if (titleEl) titleEl.textContent = title;
+  const bodyEl = $('#appMsgBody');
+  if (bodyEl) bodyEl.textContent = message;
+  overlay.hidden = false;
+  clearTimeout(closeAppMessage._t);
+  if (type === 'Bilgi') {
+    closeAppMessage._t = setTimeout(() => closeAppMessage(), opts.duration || 3200);
+  }
+  requestAnimationFrame(() => $('#appMsgOk')?.focus());
+}
+
+/** Geriye uyumlu toast → ortalı pop-up (varsayılan Bilgi) */
+function toast(msg, opts = {}) {
+  if (msg && typeof msg === 'object' && !Array.isArray(msg)) {
+    showAppMessage(msg);
+    return;
+  }
+  const type = opts.type || opts.message_type || 'Bilgi';
+  showAppMessage({
+    type,
+    message: String(msg || ''),
+    code: opts.code || opts.kod || null,
+    title: opts.title || null,
+    duration: opts.duration,
+  });
+}
+
+function toastError(msg, code) {
+  showAppMessage({ type: 'Hata', message: msg, code: code || 'ERR-VAL-001' });
+}
+
+function toastWarn(msg, code) {
+  showAppMessage({ type: 'Uyari', message: msg, code: code || null });
+}
+
+function toastInfo(msg, code) {
+  showAppMessage({ type: 'Bilgi', message: msg, code: code || null });
 }
 
 function screenApiBase(endpoint) {
@@ -9124,6 +9511,7 @@ async function api(path, options = {}) {
     );
     err.cause = netErr;
     err.status = 0;
+    err.kod = 'ERR-NET-001';
     err.origin = origin;
     throw err;
   }
@@ -9135,6 +9523,14 @@ async function api(path, options = {}) {
     const err = new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
     err.payload = data;
     err.status = res.status;
+    err.kod = (data && data.kod) || (
+      res.status === 401 ? 'ERR-API-401'
+        : res.status === 403 ? 'ERR-API-403'
+          : res.status === 404 ? 'ERR-API-404'
+            : res.status === 409 ? 'ERR-API-409'
+              : res.status >= 500 ? 'ERR-API-500'
+                : 'ERR-API-400'
+    );
     throw err;
   }
   return data;
@@ -9512,12 +9908,120 @@ function bindNumeratorFieldListener(screen) {
   else tipEl.addEventListener('change', onChange);
 }
 
+function clampSidebarWidth(px) {
+  const n = Number(px);
+  if (!Number.isFinite(n)) return SIDEBAR_W_DEFAULT;
+  return Math.min(SIDEBAR_W_MAX, Math.max(SIDEBAR_W_MIN, Math.round(n)));
+}
+
+function applySidebarWidth(px, { persist = false } = {}) {
+  const w = clampSidebarWidth(px);
+  document.documentElement.style.setProperty('--sidebar-w', `${w}px`);
+  const handle = document.getElementById('sidebarResizer');
+  if (handle) {
+    handle.setAttribute('aria-valuenow', String(w));
+    handle.setAttribute('aria-valuemin', String(SIDEBAR_W_MIN));
+    handle.setAttribute('aria-valuemax', String(SIDEBAR_W_MAX));
+  }
+  if (persist) {
+    try { localStorage.setItem(SIDEBAR_W_KEY, String(w)); } catch (_) { /* ignore */ }
+  }
+  return w;
+}
+
+function restoreSidebarWidth() {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_W_KEY);
+    if (saved != null && saved !== '') applySidebarWidth(saved);
+  } catch (_) { /* ignore */ }
+}
+
+/** Sol menü sağ kenarından sürükleyerek genişlik ayarı */
+function initSidebarResize() {
+  restoreSidebarWidth();
+  const handle = document.getElementById('sidebarResizer');
+  if (!handle || handle.dataset.bound === '1') return;
+  handle.dataset.bound = '1';
+  handle.setAttribute('aria-valuemin', String(SIDEBAR_W_MIN));
+  handle.setAttribute('aria-valuemax', String(SIDEBAR_W_MAX));
+  const current = clampSidebarWidth(
+    parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+  );
+  handle.setAttribute('aria-valuenow', String(current));
+
+  let dragging = false;
+
+  const onMove = (clientX) => {
+    if (!dragging) return;
+    applySidebarWidth(clientX);
+  };
+
+  const stopDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove('sidebar-resizing');
+    const w = clampSidebarWidth(
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+    );
+    applySidebarWidth(w, { persist: true });
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+  };
+
+  const onPointerMove = (e) => onMove(e.clientX);
+  const onPointerUp = () => stopDrag();
+
+  handle.addEventListener('pointerdown', (e) => {
+    if (e.button != null && e.button !== 0) return;
+    const shell = document.getElementById('appShell');
+    if (shell?.classList.contains('sidebar-collapsed') || shell?.classList.contains('form-solo')) return;
+    e.preventDefault();
+    dragging = true;
+    document.body.classList.add('sidebar-resizing');
+    try { handle.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+    onMove(e.clientX);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+  });
+
+  handle.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    applySidebarWidth(SIDEBAR_W_DEFAULT, { persist: true });
+  });
+
+  handle.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 24 : 12;
+    const cur = clampSidebarWidth(
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-w')) || SIDEBAR_W_DEFAULT
+    );
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      applySidebarWidth(cur - step, { persist: true });
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      applySidebarWidth(cur + step, { persist: true });
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_MIN, { persist: true });
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_MAX, { persist: true });
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      applySidebarWidth(SIDEBAR_W_DEFAULT, { persist: true });
+    }
+  });
+}
+
 function showView(name) {
   const home = $('#viewHome');
   const screen = $('#viewScreen');
   const form = $('#viewForm');
   const meta = $('#viewMeta');
   const sql = $('#viewSql');
+  const pq = $('#viewPageQuery');
   if (!home || !screen || !form) {
     console.error('KTB ERP: view element missing', { home: !!home, screen: !!screen, form: !!form });
     return;
@@ -9528,12 +10032,14 @@ function showView(name) {
   form.hidden = name !== 'form';
   if (meta) meta.hidden = name !== 'meta';
   if (sql) sql.hidden = name !== 'sql';
+  if (pq) pq.hidden = name !== 'pageQuery';
 
   home.style.display = name === 'home' ? 'grid' : 'none';
   screen.style.display = name === 'screen' ? 'grid' : 'none';
   form.style.display = name === 'form' ? 'flex' : 'none';
   if (meta) meta.style.display = name === 'meta' ? 'grid' : 'none';
   if (sql) sql.style.display = name === 'sql' ? 'grid' : 'none';
+  if (pq) pq.style.display = name === 'pageQuery' ? 'grid' : 'none';
 }
 
 
@@ -9959,6 +10465,343 @@ async function formCrudAction(act) {
   }
 }
 
+async function persistGridRowImmediately(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint) return null;
+  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const body = { ...row };
+  delete body._satir_kayitli;
+  delete body._satir_duzenleniyor;
+  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
+    const v = master[masterKey];
+    if (v != null && v !== '') body[bodyKey] = v;
+  });
+  // Şehir kartı: city_code zorunlu (FK)
+  const missingParent = Object.entries(cfg.parentFields || {})
+    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
+    .map(([, masterKey]) => masterKey);
+  if (missingParent.length) {
+    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
+  }
+  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
+  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
+    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
+  }
+  if (gridKey === 'districts' && !body.district_code && body.district_name) {
+    body.district_code = districtCodeFromName(body.city_code, body.district_name);
+  }
+  const base = screenApiBase(cfg.endpoint);
+  if (row.id != null && row.id !== '') {
+    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
+  }
+  try {
+    return await api(base, { method: 'POST', body: JSON.stringify(body) });
+  } catch (err) {
+    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
+    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
+      const list = await api(
+        `${base}?city_code=${encodeURIComponent(body.city_code)}`
+      );
+      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
+      const hit = (Array.isArray(list) ? list : []).find(
+        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
+      );
+      if (hit?.id != null) {
+        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
+      }
+    }
+    throw err;
+  }
+}
+
+function districtCodeFromName(cityCode, districtName) {
+  const vowels = new Set('aeıioöuüâêîôûAEIİOÖUÜÂÊÎÔÛ'.split(''));
+  const cons = String(districtName || '')
+    .split('')
+    .filter((ch) => /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(ch) && !vowels.has(ch))
+    .map((ch) => ch.toLocaleUpperCase('tr-TR'))
+    .join('');
+  return `${String(cityCode || '').trim()}${cons}`;
+}
+
+function excelColumnsForCtx(ctx) {
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  if (!screen) return [];
+  if (ctx?.kind === 'grid') {
+    const tab = resolveGridTab(screen, ctx.gridKey);
+    return (tab?.fields || []).filter((f) => f && f.type !== 'static').map((f) => ({
+      key: f.key,
+      label: f.label || f.key,
+      type: f.type,
+    }));
+  }
+  const cols = (typeof listColumns === 'function' ? listColumns(screen) : screen.columns) || [];
+  return cols.map((c) => ({ key: c.key, label: c.label || c.key }));
+}
+
+function ensureXlsxLib() {
+  if (typeof XLSX !== 'undefined') return XLSX;
+  throw new Error('Excel kütüphanesi yüklenemedi (xlsx). Sayfayı yenileyin.');
+}
+
+async function downloadExcelTemplate(ctx) {
+  const XLSXlib = ensureXlsxLib();
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  const cols = excelColumnsForCtx(ctx);
+  if (!cols.length) {
+    toast('Şablon için kolon tanımı yok.');
+    return;
+  }
+  const header = cols.map((c) => c.label);
+  const sample = cols.map((c) => {
+    if (c.key === 'is_active') return 'Evet';
+    if (c.type === 'checkbox') return 'Hayır';
+    if (c.key === 'district_name') return 'Örnek İlçe';
+    if (c.key === 'district_code') return '';
+    return '';
+  });
+  const ws = XLSXlib.utils.aoa_to_sheet([header, sample]);
+  const wb = XLSXlib.utils.book_new();
+  const sheetName = ctx?.kind === 'grid' ? (ctx.gridKey || 'Liste') : (screen?.id || 'Liste');
+  XLSXlib.utils.book_append_sheet(wb, ws, String(sheetName).slice(0, 31));
+  const fileBase = ctx?.kind === 'grid'
+    ? `${screen?.id || 'form'}-${ctx.gridKey || 'grid'}-sablon`
+    : `${screen?.id || 'liste'}-sablon`;
+  XLSXlib.writeFile(wb, `${fileBase}.xlsx`);
+  toast('Excel şablon indirildi.');
+}
+
+function parseExcelActive(val) {
+  if (typeof val === 'boolean') return val;
+  const s = String(val ?? '').trim().toLocaleLowerCase('tr-TR');
+  if (!s) return true;
+  if (['hayır', 'hayir', 'false', '0', 'pasif', 'no'].includes(s)) return false;
+  if (['evet', 'true', '1', 'aktif', 'yes'].includes(s)) return true;
+  return Boolean(val);
+}
+
+function mapExcelRowsToObjects(cols, aoa) {
+  if (!aoa?.length) return [];
+  const header = (aoa[0] || []).map((h) => String(h ?? '').trim());
+  const idx = {};
+  cols.forEach((c) => {
+    const hi = header.findIndex((h) => h.toLocaleLowerCase('tr-TR') === String(c.label).toLocaleLowerCase('tr-TR')
+      || h.toLocaleLowerCase('tr-TR') === String(c.key).toLocaleLowerCase('tr-TR'));
+    if (hi >= 0) idx[c.key] = hi;
+  });
+  const out = [];
+  for (let r = 1; r < aoa.length; r += 1) {
+    const line = aoa[r] || [];
+    if (!line.some((cell) => cell != null && String(cell).trim() !== '')) continue;
+    const obj = {};
+    cols.forEach((c) => {
+      const i = idx[c.key];
+      if (i == null) return;
+      let v = line[i];
+      if (c.key === 'is_active' || c.type === 'checkbox') v = parseExcelActive(v);
+      else if (v == null) v = '';
+      else v = String(v).trim();
+      obj[c.key] = v;
+    });
+    out.push(obj);
+  }
+  return out;
+}
+
+function pickExcelFile() {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      document.body.removeChild(input);
+      if (!file) reject(new Error('Dosya seçilmedi.'));
+      else resolve(file);
+    }, { once: true });
+    input.click();
+  });
+}
+
+async function readExcelFileToObjects(cols, file) {
+  const XLSXlib = ensureXlsxLib();
+  const buf = await file.arrayBuffer();
+  const wb = XLSXlib.read(buf, { type: 'array' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const aoa = XLSXlib.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+  return mapExcelRowsToObjects(cols, aoa);
+}
+
+/**
+ * Detay satırını hemen API’ye yazar (detailPersist tanımlıysa).
+ * @returns {Promise<object|null>} kaydedilen satır (id’li) veya null (persist yok)
+ */
+async function persistGridRowImmediately(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint) return null;
+  const master = { ...(state.formRecord || {}), ...readMasterFromForm(screen) };
+  const body = { ...row };
+  delete body._satir_kayitli;
+  delete body._satir_duzenleniyor;
+  Object.entries(cfg.parentFields || {}).forEach(([bodyKey, masterKey]) => {
+    const v = master[masterKey];
+    if (v != null && v !== '') body[bodyKey] = v;
+  });
+  // Şehir kartı: city_code zorunlu (FK)
+  const missingParent = Object.entries(cfg.parentFields || {})
+    .filter(([bodyKey]) => body[bodyKey] == null || body[bodyKey] === '')
+    .map(([, masterKey]) => masterKey);
+  if (missingParent.length) {
+    throw new Error(`Önce üst kaydı doldurun/kaydedin: ${missingParent.join(', ')}`);
+  }
+  // Yeni şehir formu henüz DB’de yoksa city_code FK patlar — şehir id’si şart
+  if (screen.id === 'sehir-tanimi' && (master.id == null || master.id === '')) {
+    throw new Error('Önce şehiri üstteki Kaydet ile kaydedin; sonra ilçe satırını kaydedin.');
+  }
+  if (gridKey === 'districts' && !body.district_code && body.district_name) {
+    body.district_code = districtCodeFromName(body.city_code, body.district_name);
+  }
+  const base = screenApiBase(cfg.endpoint);
+  if (row.id != null && row.id !== '') {
+    return api(`${base}/${row.id}`, { method: 'PUT', body: JSON.stringify(body) });
+  }
+  try {
+    return await api(base, { method: 'POST', body: JSON.stringify(body) });
+  } catch (err) {
+    // 409: kod DB’de var ama form satırında id yok → mevcut kaydı bulup PUT ile bağla
+    if (err.status === 409 && gridKey === 'districts' && body.district_code && body.city_code) {
+      const list = await api(
+        `${base}?city_code=${encodeURIComponent(body.city_code)}`
+      );
+      const want = String(body.district_code).toLocaleUpperCase('tr-TR');
+      const hit = (Array.isArray(list) ? list : []).find(
+        (d) => String(d.district_code || '').toLocaleUpperCase('tr-TR') === want
+      );
+      if (hit?.id != null) {
+        return api(`${base}/${hit.id}`, { method: 'PUT', body: JSON.stringify(body) });
+      }
+    }
+    throw err;
+  }
+}
+
+async function deletePersistedGridRow(screen, gridKey, row) {
+  const cfg = screen?.detailPersist?.[gridKey];
+  if (!cfg?.endpoint || row?.id == null || row.id === '') return false;
+  await api(`${screenApiBase(cfg.endpoint)}/${row.id}`, { method: 'DELETE' });
+  return true;
+}
+
+async function importExcelIntoList(ctx) {
+  const screen = findScreen(ctx?.screenId || state.screenId);
+  if (!screen) return;
+  if (state.formMode === 'incele' && ctx?.kind === 'grid') {
+    toast('İnceleme modunda Excel içe aktarılamaz.');
+    return;
+  }
+  const cols = excelColumnsForCtx(ctx);
+  if (!cols.length) {
+    toast('İçe aktarım için kolon tanımı yok.');
+    return;
+  }
+  let file;
+  try {
+    file = await pickExcelFile();
+  } catch (err) {
+    toast(err.message);
+    return;
+  }
+  const rows = await readExcelFileToObjects(cols, file);
+  if (!rows.length) {
+    toast('Excel’de aktarılacak satır bulunamadı.');
+    return;
+  }
+
+  if (ctx?.kind === 'grid') {
+    const key = ctx.gridKey;
+    const tab = resolveGridTab(screen, key);
+    if (!tab) {
+      toast('Liste alanı bulunamadı.');
+      return;
+    }
+    const masterSnap = readMasterFromForm(screen);
+    state.formRecord = { ...(state.formRecord || {}), ...masterSnap };
+    const cityCode = state.formRecord.city_code || masterSnap.city_code || '';
+    const existing = Array.isArray(state.formRecord[key]) ? state.formRecord[key].map((r) => ({ ...r })) : [];
+    const canPersist = Boolean(screen.detailPersist?.[key] && state.formRecord?.id);
+    let ok = 0;
+    let fail = 0;
+    for (const raw of rows) {
+      const blank = emptyRowFromFields(tab.fields);
+      Object.assign(blank, raw);
+      if (key === 'districts') {
+        if (!blank.district_code && blank.district_name) {
+          blank.district_code = districtCodeFromName(cityCode, blank.district_name);
+        }
+        if (typeof blank.is_active !== 'boolean') blank.is_active = true;
+      }
+      if (canPersist) {
+        try {
+          const saved = await persistGridRowImmediately(screen, key, blank);
+          const merged = { ...blank, ...(saved || {}), _satir_kayitli: true, _satir_duzenleniyor: false };
+          existing.push(merged);
+          ok += 1;
+        } catch (_) {
+          blank._satir_kayitli = false;
+          blank._satir_duzenleniyor = true;
+          existing.push(blank);
+          fail += 1;
+        }
+      } else {
+        blank._satir_kayitli = false;
+        blank._satir_duzenleniyor = true;
+        existing.push(blank);
+      }
+    }
+    state.formRecord[key] = existing;
+    state.gridSel = { key, idx: existing.length - 1 };
+    if (key === 'districts') delete state.lookupCache.districts;
+    renderForm(screen);
+    if (canPersist) {
+      toast(fail
+        ? `${ok} satır kaydedildi, ${fail} hatalı.`
+        : `${ok} satır Excel’den kaydedildi.`);
+    } else {
+      toast(`${rows.length} satır Excel’den eklendi — satırda ✓ veya üst Kaydet ile yazın.`);
+    }
+    return;
+  }
+
+  if (!screen.crud || screen.readOnly) {
+    toast('Bu listeye Excel ile kayıt eklenemez.');
+    return;
+  }
+  let ok = 0;
+  let fail = 0;
+  for (const raw of rows) {
+    try {
+      const body = { ...raw };
+      delete body.id;
+      if (screen.defaults) {
+        Object.keys(screen.defaults).forEach((k) => {
+          if (k === 'districts') return;
+          if (body[k] === undefined || body[k] === '') body[k] = screen.defaults[k];
+        });
+      }
+      await api(screenApiBase(screen.endpoint), { method: 'POST', body: JSON.stringify(body) });
+      ok += 1;
+    } catch (_) {
+      fail += 1;
+    }
+  }
+  invalidateLookups();
+  await openScreen(screen.id, { skipTab: true });
+  toast(fail ? `${ok} kayıt eklendi, ${fail} hatalı.` : `${ok} kayıt Excel’den eklendi.`);
+}
+
+
 async function showListContextMenu(screen, clientX, clientY) {
   const menu = $('#listCtxMenu');
   if (!menu || !screen) return;
@@ -9992,10 +10835,15 @@ async function showListContextMenu(screen, clientX, clientY) {
       });
     }
   }
+  // Excel — her listede sağ tık
+  if (parts.length) parts.push('<div class="ctx-sep"></div>');
+  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-sablon">Excel şablon indir</button>');
+  parts.push('<button type="button" role="menuitem" data-list-ctx="excel-al">Excel’den veri al</button>');
   if (!parts.length) return;
   menu.innerHTML = parts.join('');
   menu.hidden = false;
   positionCtxMenu(menu, clientX, clientY);
+  state.excelCtx = { kind: 'list', screenId: screen.id };
   if (!menu.dataset.bound) {
     menu.dataset.bound = '1';
     menu.addEventListener('click', (e) => {
@@ -10003,6 +10851,15 @@ async function showListContextMenu(screen, clientX, clientY) {
       if (!btn || btn.disabled) return;
       e.preventDefault();
       menu.hidden = true;
+      const act = btn.getAttribute('data-list-ctx');
+      if (act === 'excel-sablon') {
+        downloadExcelTemplate(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
+        return;
+      }
+      if (act === 'excel-al') {
+        importExcelIntoList(state.excelCtx || { kind: 'list' }).catch((err) => toast(err.message));
+        return;
+      }
       const openId = btn.getAttribute('data-open-screen');
       const recordId = btn.getAttribute('data-open-id');
       if (openId && recordId) {
@@ -10023,6 +10880,7 @@ async function showListContextMenu(screen, clientX, clientY) {
             state.filterState[k] = { op: 'esit', a: String(sel[k]), b: '' };
           });
           state.filtered = applyFilters(state.rows, target);
+          state.listPage = 1;
           renderList(target);
           renderFilterPane(target);
         });
@@ -10449,12 +11307,91 @@ async function logoutUser() {
   toast('Oturum kapatıldı.');
 }
 
+function isLoginRememberOn() {
+  return Boolean($('#loginRemember')?.checked);
+}
+
+function isLoginLdapOn() {
+  return $('#loginLdapToggle')?.getAttribute('aria-checked') === 'true';
+}
+
+function applyLoginRememberUi() {
+  const remember = $('#loginRemember');
+  const user = $('#loginUser');
+  if (!remember || !user) return;
+  const on = localStorage.getItem('ktb_remember_me') === '1';
+  remember.checked = on;
+  if (on) {
+    const saved = localStorage.getItem('ktb_remember_user') || '';
+    if (saved && !user.value) user.value = saved;
+  }
+}
+
+function persistLoginRemember(username) {
+  if (isLoginRememberOn()) {
+    localStorage.setItem('ktb_remember_me', '1');
+    if (username) localStorage.setItem('ktb_remember_user', username);
+  } else {
+    localStorage.removeItem('ktb_remember_me');
+    localStorage.removeItem('ktb_remember_user');
+  }
+}
+
+function setLoginLdapMode(on) {
+  const btn = $('#loginLdapToggle');
+  const wrap = btn?.closest('.login-ldap-switch');
+  const view = $('#viewLogin');
+  const sub = $('#loginCardSub');
+  const available = btn?.dataset.ldapAvailable === '1';
+  // Hazır değilse anahtar açık kalamaz — çelişkili «LDAP açık» metni olmasın
+  const checked = Boolean(on) && available;
+  if (btn) {
+    btn.setAttribute('aria-checked', checked ? 'true' : 'false');
+  }
+  wrap?.classList.toggle('is-on', checked);
+  wrap?.classList.toggle('is-unavailable', !available);
+  view?.classList.toggle('is-ldap', checked);
+  localStorage.setItem('ktb_ldap_login', checked ? '1' : '0');
+  if (sub) {
+    if (checked) {
+      sub.textContent = 'LDAP açık — domain / bilgisayar şifrenizle oturum açın.';
+    } else if (!available && btn?.dataset.ldapMessage) {
+      sub.textContent = btn.dataset.ldapMessage;
+    } else {
+      sub.textContent = 'Kullanıcı adı ve şifrenizle oturum açın.';
+    }
+  }
+}
+
+async function refreshLoginLdapStatus() {
+  const btn = $('#loginLdapToggle');
+  if (!btn) return;
+  let status = { available: false, enabled: false, configured: false, message: '' };
+  try {
+    status = await api('/auth/ldap-status', { skipFirma: true });
+  } catch (_) { /* sunucu yoksa yerel tercih */ }
+  btn.dataset.ldapAvailable = status.available ? '1' : '0';
+  btn.dataset.ldapMessage = status.message || '';
+  btn.title = status.message || 'LDAP girişi';
+  const pref = localStorage.getItem('ktb_ldap_login') === '1';
+  setLoginLdapMode(pref && status.available);
+}
+
+
 async function submitLoginForm(e) {
   if (e) e.preventDefault();
   closeUserChipMenu();
   const username = ($('#loginUser')?.value || '').trim();
   const sifre = ($('#loginPass')?.value || '').trim();
   const btn = $('#loginSubmit');
+  let ldap = typeof isLoginLdapOn === 'function' ? isLoginLdapOn() : false;
+  if (ldap && $('#loginLdapToggle')?.dataset.ldapAvailable !== '1') {
+    setLoginLdapMode(false);
+    ldap = false;
+    setLoginError($('#loginLdapToggle')?.dataset.ldapMessage
+      || 'LDAP hazır değil. Anahtar kapatıldı — yerel şifre ile deneyin.');
+    return;
+  }
   if (!username) {
     setLoginError('Kullanıcı adı gerekli.');
     $('#loginUser')?.focus();
@@ -10470,7 +11407,7 @@ async function submitLoginForm(e) {
   try {
     const ses = await api('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, sifre }),
+      body: JSON.stringify({ username, sifre, ldap }),
     });
     applySession(ses, username);
     enterApp();
@@ -10939,6 +11876,47 @@ async function fillLinesFromSource(kind, sourceId) {
         });
       toast(`Sipariş ${sip.order_no || sourceId} kalan kalemleri yüklendi`);
       renderForm(screen);
+
+    } else if (kind === 'rezervasyon-siparis-kalemler') {
+      const sip = await api(`/sales_orders/${sourceId}`);
+      if (!sip) return;
+      state.formRecord.sales_order_id = Number(sourceId);
+      if (sip.warehouse_id && !state.formRecord.warehouse_id) {
+        state.formRecord.warehouse_id = sip.warehouse_id;
+      }
+      if (sip.company_id && !state.formRecord.company_id) state.formRecord.company_id = sip.company_id;
+      if (sip.plant_id && !state.formRecord.plant_id) state.formRecord.plant_id = sip.plant_id;
+      const defWh = state.formRecord.warehouse_id || sip.warehouse_id || null;
+      const lines = sip.kalemler || sip.satirlar || [];
+      state.formRecord[detailKey] = lines
+        .map((s) => {
+          const sipQty = Number(s.quantity) || 0;
+          const rez = Number(s.rezerve_quantity || 0);
+          const sevk = Number(s.shipped_quantity || 0);
+          const kalan = Math.max(0, sipQty - rez - sevk);
+          return {
+            sales_order_line_id: s.id,
+            item_id: s.item_id,
+            item_code: s.item_code,
+            item_name: s.item_name,
+            uom_code: s.uom_code || s.stock_uom || '',
+            siparis_miktar: sipQty,
+            mevcut_rezerve: rez,
+            kalan_rezerve: kalan,
+            quantity: kalan > 0 ? kalan : '',
+            warehouse_id: s.warehouse_id || defWh || null,
+            _satir_kayitli: false,
+            _satir_duzenleniyor: true,
+          };
+        })
+        .filter((s) => s.item_id && Number(s.kalan_rezerve) > 0);
+      if (!state.formRecord[detailKey].length) {
+        toast('Bu siparişte rezerve edilecek kalan stok yok.');
+      } else {
+        toast(`Sipariş ${sip.order_no || sourceId}: ${state.formRecord[detailKey].length} kalem yüklendi — depo/miktar seçin.`);
+      }
+      renderForm(screen);
+
     } else if (kind === 'sevk-satirlar') {
       const sevk = await api(`/sevk-emirleri/${sourceId}`);
       if (!sevk) return;
@@ -11393,17 +12371,105 @@ function ensureRowIds(rows) {
   });
 }
 
+function listPageCount(total, pageSize = LIST_PAGE_SIZE) {
+  return Math.max(1, Math.ceil(Math.max(0, total) / pageSize));
+}
+
+function clampListPage(total) {
+  const pages = listPageCount(total);
+  let p = Number(state.listPage) || 1;
+  if (p < 1) p = 1;
+  if (p > pages) p = pages;
+  state.listPage = p;
+  return { page: p, pages, pageSize: LIST_PAGE_SIZE };
+}
+
+/** Sayfa sekmeleri (1 2 3 …) — çok sayfada pencere */
+function renderListPager(total) {
+  const nav = $('#listPager');
+  if (!nav) return;
+  const { page, pages, pageSize } = clampListPage(total);
+  if (!total) {
+    nav.hidden = true;
+    nav.innerHTML = '';
+    return;
+  }
+  nav.hidden = false;
+  const startIdx = (page - 1) * pageSize + 1;
+  const endIdx = Math.min(total, page * pageSize);
+  const windowSize = 7;
+  let from = Math.max(1, page - Math.floor(windowSize / 2));
+  let to = Math.min(pages, from + windowSize - 1);
+  from = Math.max(1, to - windowSize + 1);
+  const tabs = [];
+  for (let i = from; i <= to; i += 1) {
+    tabs.push(`<button type="button" class="list-page-btn${i === page ? ' active' : ''}" data-list-page="${i}" aria-current="${i === page ? 'page' : 'false'}">${i}</button>`);
+  }
+  nav.innerHTML = `
+    <div class="list-pager-info">${startIdx}–${endIdx} / ${total}</div>
+    <div class="list-pager-tabs" role="navigation" aria-label="Liste sayfaları">
+      <button type="button" class="list-page-btn" data-list-page="prev" ${page <= 1 ? 'disabled' : ''} title="Önceki">‹</button>
+      ${from > 1 ? `<button type="button" class="list-page-btn" data-list-page="1">1</button><span class="list-page-ellipsis">…</span>` : ''}
+      ${tabs.join('')}
+      ${to < pages ? `<span class="list-page-ellipsis">…</span><button type="button" class="list-page-btn" data-list-page="${pages}">${pages}</button>` : ''}
+      <button type="button" class="list-page-btn" data-list-page="next" ${page >= pages ? 'disabled' : ''} title="Sonraki">›</button>
+    </div>`;
+}
+
+/**
+ * Liste (#listTableScroll) ile ekran (#viewScreen) bağımsız kayar.
+ * Fare listede → liste; uçta (üst/alt) kaydırmaya devam → ekran.
+ * Fare diğer alanlardayken tekerlek doğrudan ekranı kaydırır.
+ */
+function bindNestedListScroll() {
+  const listEl = $('#listTableScroll');
+  const screenEl = $('#viewScreen');
+  if (!listEl || !screenEl || listEl.dataset.nestedScrollBound === '1') return;
+  listEl.dataset.nestedScrollBound = '1';
+  listEl.addEventListener(
+    'wheel',
+    (e) => {
+      const dy = e.deltaY;
+      if (!dy) return;
+      const maxScroll = Math.max(0, listEl.scrollHeight - listEl.clientHeight);
+      const atTop = listEl.scrollTop <= 0.5;
+      const atBottom = listEl.scrollTop >= maxScroll - 0.5;
+      const wantDown = dy > 0;
+      const wantUp = dy < 0;
+      const listCantScroll = maxScroll <= 0;
+      const atEdge = (wantDown && atBottom) || (wantUp && atTop) || listCantScroll;
+      if (atEdge) {
+        e.preventDefault();
+        e.stopPropagation();
+        screenEl.scrollTop += dy;
+        return;
+      }
+      /* Ortada: listeyi elle kaydır (bazı ortamlarda native wheel yetersiz) */
+      e.preventDefault();
+      e.stopPropagation();
+      listEl.scrollTop += dy;
+    },
+    { passive: false },
+  );
+}
+
+
 function renderList(screen) {
   const head = $('#dataHead');
   const body = $('#dataBody');
   const cols = listColumns(screen);
   renderListSideNav(screen);
   state.filtered = rowsForList(screen);
+  const total = state.filtered.length;
+  const { page, pageSize } = clampListPage(total);
+  const start = (page - 1) * pageSize;
+  const pageRows = state.filtered.slice(start, start + pageSize);
   head.innerHTML = `<tr>${cols.map((c) => `<th>${c.label}</th>`).join('')}</tr>`;
-  if (!state.filtered.length) {
+  if (!total) {
     body.innerHTML = `<tr class="empty-row"><td colspan="${cols.length}">Kayıt yok.</td></tr>`;
   } else {
-    body.innerHTML = state.filtered.map((row, index) => {
+    body.innerHTML = pageRows.map((row, i) => {
+      const index = start + i;
       const key = rowKey(row, index);
       const selected = state.selectedId != null && String(key) === String(state.selectedId);
       return `
@@ -11415,7 +12481,8 @@ function renderList(screen) {
   const baseCount = (screen.listCategories?.length && screen.categoryKey && state.listCategory)
     ? (state.rows || []).filter((r) => String(r[screen.categoryKey]) === String(state.listCategory)).length
     : (state.rows || []).length;
-  $('#listMeta').textContent = `${state.filtered.length} / ${baseCount} kayıt`;
+  $('#listMeta').textContent = `${total} / ${baseCount} kayıt · sayfa ${page}/${listPageCount(total)} · ${pageSize}/sayfa`;
+  renderListPager(total);
   updateActionButtons(screen);
 }
 
@@ -11568,6 +12635,30 @@ async function openScreen(id, opts = {}) {
           : screen.title;
       }
       await openSqlConsole();
+      return;
+    }
+
+    if (screen.pageQueryExplorer) {
+      state.screenId = id;
+      state.formMode = null;
+      state.selectedId = null;
+      if (location.hash !== `#${id}`) {
+        history.pushState({ screenId: id }, '', `#${id}`);
+      }
+      if (!opts.skipTab) addListTab(screen);
+      else {
+        state.activeTabKey = `list:${screen.id}`;
+        renderTabBar();
+      }
+      ensureSidebarPath(screen);
+      showView('pageQuery');
+      const banner = $('#pageQueryBanner');
+      if (banner) {
+        banner.textContent = screen.techId
+          ? `${screen.title} · ${screen.techId}`
+          : screen.title;
+      }
+      await openPageQueryExplorer(opts.focusScreenId || state.pageQueryFocusScreenId || null);
       return;
     }
 
@@ -11981,6 +13072,7 @@ const SCREEN_LOOKUP_EXTRAS = {
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari', 'companies'],
   'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
+  'stok-rezervasyonlari': ['sales_orders', 'warehouses', 'items', 'items-mamul', 'olcu-birimleri'],
   'cari-kartlari': [
     'partners', 'partners-musteri', 'partners-tedarikci',
     'companies', 'is-yerleri', 'para-birimleri',
@@ -12073,7 +13165,36 @@ function resolveLookupEndpoint(key) {
   return null;
 }
 
+function buildEkranLookupRows() {
+  return (ALL_SCREENS || []).map((s) => ({
+    id: s.id,
+    screen_code: s.id,
+    screen_id: s.id,
+    screen_name: s.title,
+    tech_id: s.techId || '',
+    module_title: s.moduleTitle || '',
+  })).sort((a, b) => String(a.screen_name).localeCompare(String(b.screen_name), 'tr'));
+}
+
 async function fetchLookupKey(key) {
+  // UI ekran kataloğu — API’ye gitmeden MODULES’ten
+  if (key === 'ekranlar' || key === 'screens' || key === 'onay-ekranlari') {
+    if (key === 'onay-ekranlari') {
+      try {
+        const rows = await api('/onay-ekranlari');
+        if (Array.isArray(rows) && rows.length) {
+          state.lookupCache[key] = rows.map((r) => ({
+            ...r,
+            screen_code: r.screen_code || r.screen_id,
+            screen_name: r.screen_name || r.title,
+          }));
+          return state.lookupCache[key];
+        }
+      } catch (_) { /* fallback */ }
+    }
+    state.lookupCache[key] = buildEkranLookupRows();
+    return state.lookupCache[key];
+  }
   const ep = resolveLookupEndpoint(key);
   if (!ep) {
     state.lookupCache[key] = state.lookupCache[key] || [];
@@ -14827,11 +15948,15 @@ function fieldShell(f, controlHtml, value) {
   if (f.code) cls.push('field--code');
   if (f.name) cls.push('field--name');
   const empty = value !== undefined ? fieldIsEmptyValue(value) : true;
-  // Eksik zorunlu alan: kırmızı *
-  const star = (isReq && empty && state.formMode !== 'incele')
-    ? '<span class="req-star" title="Doldurulması zorunlu">*</span>'
-    : (isReq ? '<span class="req-mark" title="Zorunlu alan">*</span>' : '');
-  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi"><label>${star}${f.label}</label>${controlHtml}</div>`;
+  if (isReq && empty && state.formMode !== 'incele') cls.push('is-required-empty');
+  // Etiket yanında * + sağ üst kırmızı üçgen (tüm zorunlu alanlar)
+  const star = isReq
+    ? `<span class="req-star" title="Doldurulması zorunlu" aria-hidden="true">*</span>`
+    : '';
+  const reqBadge = isReq
+    ? '<span class="req-triangle" title="Zorunlu alan" aria-label="Zorunlu alan"></span>'
+    : '';
+  return `<div class="${cls.join(' ')}" data-field-key="${escAttr(f.key)}" title="F1: tablo / alan bilgisi">${reqBadge}<label>${star}${f.label}</label>${controlHtml}</div>`;
 }
 
 const YETKI_ACTIONS = [
@@ -15025,29 +16150,56 @@ function renderYetkiGrid(rec) {
   const readonly = state.formMode === 'incele';
   const dis = readonly ? 'disabled' : '';
   const rows = allScreensCatalog();
-  let lastMod = null;
-  const body = rows.map((s) => {
-    const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
-    const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
-    let modRow = '';
-    if (s.moduleTitle !== lastMod) {
-      lastMod = s.moduleTitle;
-      modRow = `<tr class="yetki-mod-row"><td colspan="8">${escapeHtml(s.moduleTitle)}</td></tr>`;
+  const byMod = [];
+  rows.forEach((s) => {
+    const last = byMod[byMod.length - 1];
+    if (!last || last.title !== s.moduleTitle) {
+      byMod.push({ id: s.moduleId || s.moduleTitle, title: s.moduleTitle, screens: [s] });
+    } else {
+      last.screens.push(s);
     }
-    return `${modRow}
-      <tr data-yetki-ekran="${escAttr(s.id)}">
+  });
+
+  const body = byMod.map((mod) => {
+    // Default kapalı — yalnızca bu oturumda açılanlar açık kalsın
+    const open = Boolean(state.yetkiModOpen?.[mod.id]);
+    const modRow = `
+      <tr class="yetki-mod-row${open ? ' is-open' : ''}" data-yetki-mod="${escAttr(mod.id)}">
+        <td colspan="8">
+          <button type="button" class="yetki-mod-toggle" data-yetki-mod-toggle="${escAttr(mod.id)}"
+            aria-expanded="${open ? 'true' : 'false'}">
+            <span class="yetki-mod-caret" aria-hidden="true">▸</span>
+            <span>${escapeHtml(mod.title)}</span>
+            <span class="yetki-mod-count">${mod.screens.length} ekran</span>
+          </button>
+        </td>
+      </tr>`;
+    const screenRows = mod.screens.map((s) => {
+      const y = map[s.id] || { erisim: false, yeni: false, incele: false, duzelt: false, kopyala: false, sil: false };
+      const hepsi = YETKI_ACTIONS.every((a) => y[a.id]);
+      return `
+      <tr class="yetki-screen-row${open ? '' : ' is-collapsed'}${y.erisim ? ' has-erisim' : ''}"
+          data-yetki-ekran="${escAttr(s.id)}" data-yetki-mod-of="${escAttr(mod.id)}">
         <td class="yetki-erisim">
           <input type="checkbox" data-yetki="erisim" ${y.erisim ? 'checked' : ''} ${dis} title="Ekran erişimi" />
         </td>
         <td class="yetki-ekran">${escapeHtml(s.title)}</td>
         ${YETKI_ACTIONS.map((a) => `
           <td class="yetki-act">
-            <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="${a.label}" />
+            <label class="yetki-act-cell" title="${a.label}">
+              <span class="yetki-act-letter">${escapeHtml(a.label.slice(0, 1))}</span>
+              <input type="checkbox" data-yetki="${a.id}" ${y[a.id] ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} aria-label="${a.label}" />
+            </label>
           </td>`).join('')}
         <td class="yetki-act">
-          <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} title="Hepsi" />
+          <label class="yetki-act-cell" title="Hepsi">
+            <span class="yetki-act-letter">H</span>
+            <input type="checkbox" data-yetki="hepsi" ${hepsi && y.erisim ? 'checked' : ''} ${dis} ${y.erisim ? '' : 'disabled'} aria-label="Hepsi" />
+          </label>
         </td>
       </tr>`;
+    }).join('');
+    return `${modRow}${screenRows}`;
   }).join('');
 
   return `
@@ -15055,11 +16207,13 @@ function renderYetkiGrid(rec) {
       <div class="yetki-pane-head">
         <div class="section-label">Yetkiler</div>
         <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+          <button type="button" class="btn ghost" id="yetkiExpandAllMods">Başlıkları aç</button>
+          <button type="button" class="btn ghost" id="yetkiCollapseAllMods">Başlıkları kapat</button>
           <button type="button" class="btn ghost" id="yetkiSelectAll">Tüm ekranlar</button>
           <button type="button" class="btn ghost" id="yetkiClearAll">Temizle</button>
         </div>
       </div>
-      <p class="hint yetki-hint">Sol kutu ekran erişimi; sağda aksiyonlar. ADMIN / Yönetici için tümü işaretli kaydedilirse yetki listesi boş tutulur — yeni eklenen ekranlar da otomatik açılır. Yalnızca İncele işaretliyse o ekranda sadece incele kullanılabilir.</p>
+      <p class="hint yetki-hint">Modül başlığına tıklayarak ekran listesini açın/kapatın (varsayılan kapalı). Sol yuvarlak kutu erişim; açılınca Yeni / İncele / Düzelt / Kopyala / Sil kutuları etkinleşir. ADMIN’de tümü işaretli kaydedilirse yetki listesi boş tutulur.</p>
       <div class="yetki-scroll">
         <table class="yetki-table" id="yetkiTable">
           <thead>
@@ -15120,15 +16274,53 @@ function readFirmaYetkiFromDom() {
   return out;
 }
 
+function setYetkiModOpen(modId, open) {
+  if (!state.yetkiModOpen) state.yetkiModOpen = {};
+  state.yetkiModOpen[modId] = Boolean(open);
+  const table = $('#yetkiTable');
+  if (!table) return;
+  const modRow = table.querySelector(`tr.yetki-mod-row[data-yetki-mod="${CSS.escape(modId)}"]`);
+  const btn = modRow?.querySelector('[data-yetki-mod-toggle]');
+  modRow?.classList.toggle('is-open', open);
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  table.querySelectorAll(`tr.yetki-screen-row[data-yetki-mod-of="${CSS.escape(modId)}"]`).forEach((tr) => {
+    tr.classList.toggle('is-collapsed', !open);
+  });
+}
+
 function bindYetkiGridEvents() {
   const table = $('#yetkiTable');
-  if (!table || state.formMode === 'incele') return;
+  if (!table) return;
+
+  table.addEventListener('click', (e) => {
+    const toggle = e.target.closest('[data-yetki-mod-toggle]');
+    if (!toggle) return;
+    e.preventDefault();
+    const modId = toggle.getAttribute('data-yetki-mod-toggle');
+    if (!modId) return;
+    const open = toggle.getAttribute('aria-expanded') !== 'true';
+    setYetkiModOpen(modId, open);
+  });
+
+  $('#yetkiExpandAllMods')?.addEventListener('click', () => {
+    table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
+      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), true);
+    });
+  });
+  $('#yetkiCollapseAllMods')?.addEventListener('click', () => {
+    table.querySelectorAll('tr.yetki-mod-row[data-yetki-mod]').forEach((tr) => {
+      setYetkiModOpen(tr.getAttribute('data-yetki-mod'), false);
+    });
+  });
+
+  if (state.formMode === 'incele') return;
 
   const syncRow = (tr) => {
     const erisim = tr.querySelector('[data-yetki="erisim"]');
     const acts = YETKI_ACTIONS.map((a) => tr.querySelector(`[data-yetki="${a.id}"]`));
     const hepsi = tr.querySelector('[data-yetki="hepsi"]');
     const on = Boolean(erisim?.checked);
+    tr.classList.toggle('has-erisim', on);
     acts.forEach((el) => { if (el) el.disabled = !on; });
     if (hepsi) hepsi.disabled = !on;
     if (!on) {
@@ -15137,6 +16329,9 @@ function bindYetkiGridEvents() {
       return;
     }
     if (hepsi) hepsi.checked = acts.every((el) => el?.checked);
+    // Erişim açılınca satırın modülü kapalıysa aç — Yeni/Düzelt görünsün
+    const modId = tr.getAttribute('data-yetki-mod-of');
+    if (modId && tr.classList.contains('is-collapsed')) setYetkiModOpen(modId, true);
   };
 
   const syncHeadChecks = () => {
@@ -16335,6 +17530,9 @@ function renderForm(screen) {
     if (screen.id === 'crm-faaliyet-planlari') {
       show = Boolean(screen.convertAction && ['Planlandi', 'Devam'].includes(rec.status));
     }
+    if (screen.id === 'stok-rezervasyonlari') {
+      show = Boolean(screen.approveAction && rec.id && rec.status === 'Aktif' && state.formMode !== 'yeni');
+    }
     if (screen.id === 'satin-alma-talepleri') {
       show = Boolean(screen.approveAction && rec.status === 'Acik');
     }
@@ -16392,6 +17590,7 @@ function renderForm(screen) {
           || (screen.id === 'muhasebe-donemleri' && ['Acik', 'YenidenAcik'].includes(rec.status))
           || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
           || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.status))
+          || (screen.id === 'stok-rezervasyonlari' && rec.status === 'Aktif')
           || (screen.id === 'satin-alma-talepleri' && rec.status === 'Acik')
           || (screen.id === 'satin-alma-teklifleri' && rec.status === 'Taslak')
           || ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
@@ -16982,6 +18181,18 @@ const LOOKUP_BROWSER_COLUMNS = {
   'uretim-emri-tipleri': [
     { key: 'type_code', label: 'Tip kodu', mono: true },
     { key: 'type_name', label: 'Tip adı' },
+  ],
+  ekranlar: [
+    { key: 'screen_code', label: 'Ekran kodu', mono: true },
+    { key: 'screen_name', label: 'Ekran adı' },
+    { key: 'module_title', label: 'Modül' },
+    { key: 'tech_id', label: 'Tech ID', mono: true },
+  ],
+  screens: [
+    { key: 'screen_code', label: 'Ekran kodu', mono: true },
+    { key: 'screen_name', label: 'Ekran adı' },
+    { key: 'module_title', label: 'Modül' },
+    { key: 'tech_id', label: 'Tech ID', mono: true },
   ],
 };
 
@@ -18434,6 +19645,51 @@ function bindCascadeLookups(_screen) {
       }
     }
 
+
+    // autoFillName: lookup seçilince bağlı ad alanını doldur (ekran kodu → ekran adı vb.)
+    if (el instanceof HTMLSelectElement && fieldKey) {
+      const fDef = collectTabFields(scr).find((x) => x.key === fieldKey)
+        || (scr.masterFields || []).find((x) => x.key === fieldKey)
+        || (scr.detailFields || []).find((x) => x.key === fieldKey);
+      const targetKey = fDef?.autoFillName;
+      if (targetKey) {
+        const rows = state.lookupCache[fDef.lookup] || [];
+        const vk = fDef.valueKey || 'id';
+        const lk = fDef.labelKey || 'adi';
+        const hit = rows.find((r) => String(r[vk]) === String(el.value));
+        const adi = hit ? (hit[lk] || hit.screen_name || hit.dil_name || '') : '';
+        const fillTarget = (sel) => {
+          if (!sel) return;
+          sel.value = adi;
+          if (state.formRecord && (masterKey || !detailKey)) state.formRecord[targetKey] = adi;
+        };
+        if (masterKey || (detailKey && !el.getAttribute('data-didx'))) {
+          fillTarget(document.querySelector(`[data-master="${targetKey}"]`)
+            || document.querySelector(`[data-detail="${targetKey}"]`));
+        } else if (detailKey) {
+          const didx = el.getAttribute('data-didx');
+          const grid = el.getAttribute('data-grid');
+          fillTarget(document.querySelector(
+            `[data-detail="${targetKey}"][data-didx="${didx}"][data-grid="${grid}"]`
+          ));
+        }
+      }
+      // Zorunlu alan tanımı: ekran seçilince alan listesini doldur
+      if (scr.id === 'zorunlu-alan-tanimlari' && fieldKey === 'screen_id') {
+        refreshRequiredFieldKeySelect(el.value, '');
+      }
+      if (scr.id === 'zorunlu-alan-tanimlari' && fieldKey === 'field_key' && el.value) {
+        const opts = collectScreenFieldOptions(state.formRecord?.screen_id || document.querySelector('[data-master="screen_id"]')?.value);
+        const hitFk = opts.find((o) => o.value === el.value);
+        const labelOnly = hitFk ? String(hitFk.label).replace(/\s*\([^)]*\)\s*$/, '') : el.value;
+        const nameEl = document.querySelector('[data-master="field_label"]');
+        if (nameEl && (!nameEl.value || state.formMode === 'yeni')) {
+          nameEl.value = labelOnly;
+          if (state.formRecord) state.formRecord.field_label = labelOnly;
+        }
+      }
+    }
+
     // Para birimi → exchange_rate
     if (fieldKey === 'currency_code') {
       const pb = el.value;
@@ -19032,6 +20288,9 @@ function readTabbedPayload(screen) {
 }
 
 function validateRequired(screen, payload) {
+  document.querySelectorAll('.field.is-required-miss, .td-required.is-required-miss').forEach((el) => {
+    el.classList.remove('is-required-miss');
+  });
   for (const f of collectTabFields(screen)) {
     const need = f.required || (f.requiredOnNew && state.formMode === 'yeni');
     if (!need) continue;
@@ -19040,7 +20299,54 @@ function validateRequired(screen, payload) {
     if (f.type === 'password' && state.formMode === 'duzelt') continue;
     const v = payload[f.key];
     if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
+      const shell = document.querySelector(`.field[data-field-key="${CSS.escape(f.key)}"]`);
+      if (shell) {
+        shell.classList.add('is-required-empty', 'is-required-miss');
+        try { shell.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) { /* ignore */ }
+      }
       return `${f.label} zorunlu.`;
+    }
+  }
+
+  // Detay grid zorunlu alanları (kalem satırları)
+  const gridTabs = [];
+  (screen.formTabs || []).forEach((t) => {
+    if (t.kind === 'master-grid' && t.grid?.fields?.length) {
+      gridTabs.push({ key: t.grid.key || screen.detailKey || '_detail', fields: t.grid.fields });
+    } else if (t.kind === 'grid' && (t.fields || []).length) {
+      gridTabs.push({ key: t.key, fields: t.fields });
+    }
+  });
+  if (!gridTabs.length && (screen.detailFields || []).length) {
+    gridTabs.push({ key: screen.detailKey || 'satirlar', fields: screen.detailFields });
+  }
+  for (const gt of gridTabs) {
+    const reqFields = (gt.fields || []).filter((f) => f.required || (f.requiredOnNew && state.formMode === 'yeni'));
+    if (!reqFields.length) continue;
+    const rows = Array.isArray(payload?.[gt.key]) ? payload[gt.key] : [];
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i] || {};
+      const hasAny = (gt.fields || []).some((f) => {
+        if (f.type === 'static' || f.type === 'checkbox') return false;
+        const v = row[f.key];
+        return v !== undefined && v !== null && String(v).trim() !== '';
+      });
+      if (!hasAny) continue;
+      for (const f of reqFields) {
+        const v = row[f.key];
+        if (v === undefined || v === null || (typeof v === 'string' && !String(v).trim())) {
+          const tr = document.querySelector(
+            `tr[data-grid-row="${CSS.escape(gt.key)}"][data-grid-idx="${i}"]`
+          );
+          const ctrl = tr?.querySelector(`[data-detail="${CSS.escape(f.key)}"]`);
+          const td = ctrl?.closest('td') || tr?.querySelector('td.td-required');
+          if (td) {
+            td.classList.add('is-required-empty', 'is-required-miss');
+            try { td.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) { /* ignore */ }
+          }
+          return `Satır ${i + 1}: ${f.label} zorunlu.`;
+        }
+      }
     }
   }
   return null;
@@ -19277,6 +20583,7 @@ function parseScreenOpenQuery() {
 async function openForm(mode, opts = {}) {
   const screen = findScreen(state.screenId);
   if (!screen) return;
+  applyRequiredFieldOverrides(screen);
   if (screen.readOnly && mode !== 'incele') {
     toast('Bu ekran yalnızca incelenebilir.');
     return;
@@ -19468,12 +20775,30 @@ async function openForm(mode, opts = {}) {
     hydrateStokFirmaIsYeri(record);
   }
 
+  // Mevcut tek rezervasyon kaydı → satır grid’ine yansıt (incele/iptal)
+  if (screen.id === 'stok-rezervasyonlari' && record.id && !Array.isArray(record.satirlar)) {
+    record.satirlar = [{
+      item_id: record.item_id,
+      sales_order_line_id: record.sales_order_line_id || null,
+      siparis_miktar: record.quantity,
+      mevcut_rezerve: record.quantity,
+      kalan_rezerve: record.remaining_quantity,
+      quantity: record.quantity,
+      warehouse_id: record.warehouse_id,
+      uom_code: record.stok_birim || record.uom_code || '',
+      _satir_kayitli: true,
+    }];
+  }
+
   state.formRecord = record;
   addFormTab(screen, mode, record);
   showView('form');
   ensureSearchBarVisible();
   $('#screenTitle').textContent = `${screen.title} · ${MODE_LABELS[mode]}`;
   renderForm(screen);
+  if (screen.id === 'zorunlu-alan-tanimlari') {
+    refreshRequiredFieldKeySelect(record.screen_id || '', record.field_key || '');
+  }
   renderTabBar();
 }
 
@@ -19680,6 +21005,58 @@ async function saveForm({ after = 'stay' } = {}) {
     }
   }
 
+
+  // Stok rezervasyon: sipariş + seçili stoklar → depolara rezerve
+  if (screen.id === 'stok-rezervasyonlari') {
+    if (state.formMode === 'duzelt') {
+      toast('Rezervasyon düzeltilemez. İptal edip yeniden oluşturun.');
+      return;
+    }
+    if (!Number(master.sales_order_id)) {
+      toast('Satış siparişi seçin.');
+      return;
+    }
+    const defWh = Number(master.warehouse_id) || null;
+    const raw = Array.isArray(master.satirlar) ? master.satirlar : [];
+    const clean = [];
+    for (let i = 0; i < raw.length; i += 1) {
+      const s = { ...(raw[i] || {}) };
+      const itemId = Number(s.item_id);
+      const qty = Number(s.quantity);
+      const wh = Number(s.warehouse_id) || defWh;
+      if (!itemId && !(qty > 0)) continue;
+      if (!itemId) {
+        toast(`Satır ${i + 1}: stok seçin.`);
+        return;
+      }
+      if (!Number.isFinite(qty) || qty <= 0) {
+        toast(`Satır ${i + 1}: rezerve miktar girin.`);
+        return;
+      }
+      if (!wh) {
+        toast(`Satır ${i + 1}: depo seçin (veya varsayılan depo).`);
+        return;
+      }
+      const maxKalan = s.kalan_rezerve != null && s.kalan_rezerve !== '' ? Number(s.kalan_rezerve) : null;
+      if (maxKalan != null && Number.isFinite(maxKalan) && qty > maxKalan + 1e-9) {
+        toast(`Satır ${i + 1}: miktar kalanı aşıyor (max ${maxKalan}).`);
+        return;
+      }
+      clean.push({
+        sales_order_line_id: s.sales_order_line_id ? Number(s.sales_order_line_id) : null,
+        item_id: itemId,
+        warehouse_id: wh,
+        quantity: qty,
+      });
+    }
+    if (!clean.length) {
+      toast('En az bir stok satırı rezerve edilmeli.');
+      return;
+    }
+    master.satirlar = clean;
+    master.warehouse_id = defWh;
+  }
+
   // Kullanıcı kartı: giriş adı + şifre + yetki + profil
   if (screen.id === 'kullanicilar') {
     const adi = String(master.username || '').trim();
@@ -19787,8 +21164,11 @@ async function saveForm({ after = 'stay' } = {}) {
         body: JSON.stringify(master),
       });
       saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
-      toast('Kaydedildi.');
+      toastInfo('Kaydedildi.', 'INF-SAVE-OK');
       invalidateLookupsForScreen(screen);
+      if (screen.id === 'zorunlu-alan-tanimlari') {
+        await loadRequiredFieldDefs().catch(() => {});
+      }
       await syncActiveFirmaAfterOrgSave(screen, saved);
       await finishSaveForm(screen, saved, after);
       return;
@@ -19819,7 +21199,10 @@ async function saveForm({ after = 'stay' } = {}) {
     } else if (screen.id === 'siparis-is-emri' && result?.order_no) {
       toast(`İş emri ${result.order_no} oluşturuldu.`);
     } else {
-      toast('Kaydedildi.');
+      toastInfo('Kaydedildi.', 'INF-SAVE-OK');
+    }
+    if (screen.id === 'zorunlu-alan-tanimlari') {
+      await loadRequiredFieldDefs().catch(() => {});
     }
     saved = (result && typeof result === 'object') ? { ...master, ...result } : { ...master };
     await syncActiveFirmaAfterOrgSave(screen, saved);
@@ -19829,7 +21212,7 @@ async function saveForm({ after = 'stay' } = {}) {
       : after;
     await finishSaveForm(screen, saved, effectiveAfter);
   } catch (err) {
-    toast(err.message);
+    toastError(err.message || 'Kayıt başarısız', err.kod || 'ERR-API-500');
   }
 }
 
@@ -19851,7 +21234,10 @@ async function deleteSelected() {
   if (!confirm(`${row[screen.codeField] || row.id} silinsin mi?`)) return;
   try {
     await api(`${screenApiBase(screen.endpoint)}/${row.id}`, { method: 'DELETE' });
-    toast('Silindi.');
+    toastInfo('Silindi.', 'INF-DELETE-OK');
+    if (screen.id === 'zorunlu-alan-tanimlari') {
+      await loadRequiredFieldDefs().catch(() => {});
+    }
     invalidateLookupsForScreen(screen);
     state.selectedId = null;
     await openScreen(screen.id);
@@ -19904,6 +21290,171 @@ function fmtMetaTs(v) {
     return d.toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' });
   } catch (_) {
     return String(v);
+  }
+}
+
+/** Sayfa Sorgu — ekran seç → arka plan SQL listesi */
+async function openPageQueryExplorer(focusScreenId) {
+  const navBody = $('#pageQueryNavBody');
+  const detail = $('#pageQueryDetail');
+  if (!navBody || !detail) return;
+  navBody.innerHTML = '<div class="meta-empty">Yükleniyor…</div>';
+  detail.innerHTML = '<div class="meta-empty">Üstten / soldan bir ekran seçin — çalışan sorgular burada listelenir.</div>';
+  if (!state.pageQueryOpenMods) state.pageQueryOpenMods = {};
+  try {
+    const data = await api('/meta/ekranlar');
+    state.pageQueryNavCache = data;
+    populatePageQueryScreenFilter(data, focusScreenId);
+    renderPageQueryNav(data, focusScreenId);
+    if (focusScreenId) {
+      state.pageQueryFocusScreenId = focusScreenId;
+      await loadPageQueryDetail(focusScreenId);
+    }
+  } catch (err) {
+    toastError(err.message || 'Ekran listesi yüklenemedi', err.kod);
+    navBody.innerHTML = `<div class="meta-empty">${escapeHtml(err.message || 'Yüklenemedi')}</div>`;
+  }
+}
+
+function flattenPageQueryScreens(data) {
+  const out = [];
+  (data?.modules || []).forEach((mod) => {
+    (mod.screens || []).forEach((s) => {
+      out.push({
+        ...s,
+        moduleTitle: mod.title || '',
+      });
+    });
+  });
+  return out.sort((a, b) => String(a.title).localeCompare(String(b.title), 'tr'));
+}
+
+function populatePageQueryScreenFilter(data, focusScreenId) {
+  const sel = $('#pageQueryScreenFilter');
+  if (!sel) return;
+  const rows = flattenPageQueryScreens(data);
+  const cur = focusScreenId || state.pageQueryFocusScreenId || '';
+  sel.innerHTML = `<option value="">— Ekran seçin —</option>${rows.map((s) => `
+    <option value="${escAttr(s.screenId)}"${s.screenId === cur ? ' selected' : ''}>
+      ${escapeHtml(s.title)}${s.moduleTitle ? ' · ' + escapeHtml(s.moduleTitle) : ''}
+    </option>`).join('')}`;
+}
+
+function renderPageQueryNav(data, focusScreenId) {
+  const navBody = $('#pageQueryNavBody');
+  if (!navBody) return;
+  const q = String($('#pageQueryNavSearch')?.value || '').trim().toLocaleLowerCase('tr');
+  const modules = data?.modules || [];
+  if (!state.pageQueryOpenMods) state.pageQueryOpenMods = {};
+  const html = modules.map((mod) => {
+    let screens = mod.screens || [];
+    if (q) {
+      screens = screens.filter((s) =>
+        s.title.toLocaleLowerCase('tr').includes(q)
+        || s.screenId.includes(q)
+        || (s.techId || '').toLocaleLowerCase('tr').includes(q)
+        || (s.endpoint || '').includes(q)
+      );
+    }
+    if (!screens.length) return '';
+    const open = state.pageQueryOpenMods[mod.id] !== false
+      || screens.some((s) => s.screenId === focusScreenId);
+    state.pageQueryOpenMods[mod.id] = open;
+    return `
+      <div class="meta-mod ${open ? 'open' : ''}" data-pq-mod="${escAttr(mod.id)}">
+        <button type="button" class="meta-mod-toggle" data-pq-mod-toggle="${escAttr(mod.id)}">
+          <span>${escapeHtml(mod.title)}</span>
+          <span class="meta-mod-count">${screens.length}</span>
+        </button>
+        <div class="meta-mod-screens" ${open ? '' : 'hidden'}>
+          ${screens.map((s) => `
+            <button type="button" class="meta-screen-item${s.screenId === focusScreenId ? ' active' : ''}"
+              data-pq-screen="${escAttr(s.screenId)}">
+              <strong>${escapeHtml(s.title)}</strong>
+              <span>${escapeHtml(s.endpoint || s.screenId)}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>`;
+  }).join('');
+  navBody.innerHTML = html || '<div class="meta-empty">Eşleşen ekran yok.</div>';
+}
+
+async function loadPageQueryDetail(screenId) {
+  const detail = $('#pageQueryDetail');
+  if (!detail) return;
+  detail.innerHTML = '<div class="meta-empty">Yükleniyor…</div>';
+  document.querySelectorAll('[data-pq-screen]').forEach((el) => {
+    el.classList.toggle('active', el.getAttribute('data-pq-screen') === screenId);
+  });
+  const filterSel = $('#pageQueryScreenFilter');
+  if (filterSel && filterSel.value !== screenId) filterSel.value = screenId || '';
+  try {
+    const d = await api(`/meta/sorgular/${encodeURIComponent(screenId)}`);
+    state.pageQueryFocusScreenId = screenId;
+    const queries = d.queries || [];
+    detail.innerHTML = `
+      <header class="meta-detail-head">
+        <div>
+          <h2>${escapeHtml(d.title)}</h2>
+          <p class="meta-sub">
+            <code>${escapeHtml(d.techId || d.screenId)}</code>
+            ${d.endpoint ? '· API <code>' + escapeHtml(d.endpoint) + '</code>' : ''}
+            ${d.routeFile ? '· route <code>' + escapeHtml(d.routeFile) + '</code>' : ''}
+          </p>
+        </div>
+        <button type="button" class="btn ghost sm" data-open-screen="${escAttr(d.screenId)}">Ekranı aç</button>
+      </header>
+      <p class="meta-hint">Bu ekranın arka planında çalışan SQL sorguları (route kaynağından çıkarılır) ve ilgili tablo örnekleri.</p>
+      ${queries.length ? queries.map((q, i) => `
+        <section class="page-query-card" data-query-kind="${escAttr(q.kind)}">
+          <div class="page-query-card-head">
+            <span class="page-query-kind">${escapeHtml(q.kind)}</span>
+            <span class="muted">${escapeHtml(q.source || '')}</span>
+            <span class="muted">#${i + 1}</span>
+          </div>
+          <pre class="page-query-sql"><code>${escapeHtml(q.sql)}</code></pre>
+        </section>
+      `).join('') : '<div class="meta-empty">Bu ekran için çıkarılan sorgu yok.</div>'}
+    `;
+  } catch (err) {
+    toastError(err.message || 'Sorgu detayı yüklenemedi', err.kod);
+    detail.innerHTML = `<div class="meta-empty">${escapeHtml(err.message || 'Detay yüklenemedi')}</div>`;
+  }
+}
+
+function bindPageQueryExplorerEvents() {
+  const nav = $('#pageQueryNav');
+  if (nav && !nav.dataset.bound) {
+    nav.dataset.bound = '1';
+    nav.addEventListener('click', (e) => {
+      const tog = e.target.closest('[data-pq-mod-toggle]');
+      if (tog) {
+        const id = tog.getAttribute('data-pq-mod-toggle');
+        state.pageQueryOpenMods[id] = !state.pageQueryOpenMods[id];
+        renderPageQueryNav(state.pageQueryNavCache, state.pageQueryFocusScreenId);
+        return;
+      }
+      const item = e.target.closest('[data-pq-screen]');
+      if (item) {
+        loadPageQueryDetail(item.getAttribute('data-pq-screen'));
+      }
+    });
+  }
+  const search = $('#pageQueryNavSearch');
+  if (search && !search.dataset.bound) {
+    search.dataset.bound = '1';
+    search.addEventListener('input', () => {
+      renderPageQueryNav(state.pageQueryNavCache, state.pageQueryFocusScreenId);
+    });
+  }
+  const filterSel = $('#pageQueryScreenFilter');
+  if (filterSel && !filterSel.dataset.bound) {
+    filterSel.dataset.bound = '1';
+    filterSel.addEventListener('change', () => {
+      const id = filterSel.value;
+      if (id) loadPageQueryDetail(id);
+    });
   }
 }
 
@@ -20291,7 +21842,59 @@ function bindUiPrefsEvents() {
 
 function bindEvents() {
   bindUiPrefsEvents();
+  // LDAP anahtar
+  $('#loginPassToggle')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const input = $('#loginPass');
+    const btn = $('#loginPassToggle');
+    if (!input || !btn) return;
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    btn.setAttribute('aria-label', show ? 'Şifreyi gizle' : 'Şifreyi göster');
+    btn.title = show ? 'Şifreyi gizle' : 'Şifreyi göster';
+  });
+  $('#loginLdapToggle')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    const btn = $('#loginLdapToggle');
+    if (!btn || btn.disabled) return;
+    const next = btn.getAttribute('aria-checked') !== 'true';
+    if (next && btn.dataset.ldapAvailable !== '1') {
+      setLoginError(btn.dataset.ldapMessage
+        || 'LDAP kullanılamıyor. Sistem Parametreleri’nde LDAP_ENABLED=Evet ve LDAP_URL / UPN ayarlayın.');
+      setLoginLdapMode(false);
+      return;
+    }
+    setLoginError('');
+    setLoginLdapMode(next);
+  });
+  refreshLoginLdapStatus().catch(() => {});
+  initSidebarResize();
+  bindNestedListScroll();
+
+  $('#listPager')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-list-page]');
+    if (!btn || btn.disabled) return;
+    const screen = findScreen(state.screenId);
+    if (!screen) return;
+    const total = (state.filtered || []).length;
+    const pages = listPageCount(total);
+    const raw = btn.getAttribute('data-list-page');
+    let next = state.listPage || 1;
+    if (raw === 'prev') next -= 1;
+    else if (raw === 'next') next += 1;
+    else next = Number(raw) || 1;
+    if (next < 1) next = 1;
+    if (next > pages) next = pages;
+    if (next === state.listPage) return;
+    state.listPage = next;
+    renderList(screen);
+    const scroller = $('#listTableScroll');
+    if (scroller) scroller.scrollTop = 0;
+  });
+
   bindMetaExplorerEvents();
+  bindPageQueryExplorerEvents();
   bindMetaHelpGlobal();
   bindLookupBrowseUi();
   const nav = $('#sidebarNav');
@@ -22022,6 +23625,7 @@ async function bootIntoApp() {
   enterApp();
   await loadFirmalar().catch(() => {});
   renderFirmaPicker();
+  await loadRequiredFieldDefs().catch(() => {});
 
   const solo = parseFormSoloQuery();
   if (solo && findScreen(solo.screenId)) {

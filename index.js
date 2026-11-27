@@ -73,6 +73,8 @@ app.use('/sevk-emirleri', require('./routes/shipment_orders'));
 app.use('/delivery_notes', require('./routes/delivery_notes'));
 app.use('/hareket-kodlari', require('./routes/movement_codes'));
 app.use('/belge-tipleri', require('./routes/document_types'));
+app.use('/mesaj-tanimlari', require('./routes/message_definitions'));
+app.use('/zorunlu-alan-tanimlari', require('./routes/required_field_defs'));
 app.use('/urun-agaclari', require('./routes/boms'));
 app.use('/bom', require('./routes/bom_araclari'));
 app.use('/stok-siniflari', require('./routes/item_classes'));

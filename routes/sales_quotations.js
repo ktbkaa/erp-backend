@@ -220,8 +220,12 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                 INSERT INTO sales_orders
                     (order_no, partner_id, partner_code, partner_name, order_date, order_type,
                      total_amount, status, quotation_id, movement_code_id, currency_code, description,
-                     source_document_type, source_document_id)
-                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9,$10,$11)
+                     source_document_type, source_document_id, company_id, plant_id,
+                     delivery_date, payment_term_code, payment_method, delivery_term_code,
+                     exchange_rate, discount_rate, subtotal, tax_amount, grand_total,
+                     public_note, internal_note, project_code)
+                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9,$10,$11,
+                        $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
                 RETURNING id
                 `,
                 [
@@ -229,6 +233,17 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                     teklif.id, hk?.id || null, teklif.currency_code || 'TRY',
                     `Teklif ${teklif.quotation_no} dönüşümü`,
                     BELGE_TIPI.SATIS_TEKLIF, teklif.id,
+                    teklif.company_id || null, teklif.plant_id || null,
+                    teklif.delivery_date || teklif.valid_date || null,
+                    teklif.payment_term_code || null, teklif.payment_method || null,
+                    teklif.delivery_term_code || null,
+                    teklif.exchange_rate != null ? Number(teklif.exchange_rate) : null,
+                    teklif.discount_rate != null ? Number(teklif.discount_rate) : null,
+                    teklif.subtotal != null ? Number(teklif.subtotal) : teklif.total_amount,
+                    teklif.tax_amount != null ? Number(teklif.tax_amount) : null,
+                    teklif.grand_total != null ? Number(teklif.grand_total) : teklif.total_amount,
+                    teklif.public_note || null, teklif.internal_note || null,
+                    teklif.project_code || null,
                 ]
             );
             const sid = sip.rows[0].id;

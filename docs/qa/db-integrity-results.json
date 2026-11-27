@@ -1,0 +1,127 @@
+{
+  "generatedAt": "2026-11-05T15:58:21.387Z",
+  "summary": {
+    "tables": 181,
+    "fkCount": 483,
+    "ok": 15,
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "info": 1
+  },
+  "findings": [
+    {
+      "severity": "ok",
+      "code": "ORPHAN_SO_LINES",
+      "title": "Satış sipariş satırı yetim",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "ORPHAN_PO_LINES",
+      "title": "SA sipariş satırı yetim",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "ORPHAN_INV_LINES",
+      "title": "Fatura satırı yetim",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "ORPHAN_SM_LINES",
+      "title": "Stok hareket satırı yetim",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "ORPHAN_WO_COMP",
+      "title": "ÜE bileşen yetim",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "BAD_ITEM_FK_SO",
+      "title": "SO satırında geçersiz stok",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "BAD_ITEM_FK_PO",
+      "title": "PO satırında geçersiz stok",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "BAD_PARTNER_SO",
+      "title": "SO geçersiz cari",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "BAD_WH_SM",
+      "title": "Stok hareket geçersiz depo",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "NEG_STOCK",
+      "title": "Negatif kullanılabilir stok bakiyesi",
+      "detail": "0 depo-stok çifti",
+      "count": 0
+    },
+    {
+      "severity": "info",
+      "code": "JE_SKIP",
+      "title": "Muhasebe denge sorgu",
+      "detail": "column \"journal_entry_id\" does not exist",
+      "count": null
+    },
+    {
+      "severity": "ok",
+      "code": "DUP_COMPANY",
+      "title": "Mükerrer firma kodu",
+      "detail": "0 kod",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "DUP_ITEM",
+      "title": "Mükerrer stok kodu",
+      "detail": "0 grup",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "SOFTDEL_ACTIVE_SO",
+      "title": "Soft-delete ama aktif status SO",
+      "detail": "0",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "CROSS_COMPANY_STOCK",
+      "title": "Hareket-stok firma uyumsuzluğu",
+      "detail": "0 satır",
+      "count": 0
+    },
+    {
+      "severity": "ok",
+      "code": "MRP_MSG_TABLE",
+      "title": "mrp_run_messages tablosu",
+      "detail": "25 mesaj",
+      "count": null
+    }
+  ],
+  "sampleOrphans": {}
+}

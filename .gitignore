@@ -13,3 +13,8 @@ erp.db
 
 # Local DB backups from demo cleanup
 backups/
+
+# Yerel panel artefaktları
+tools/erp-local-panel/erp-local-panel.zip
+tools/erp-local-panel/logs/*
+!tools/erp-local-panel/logs/.gitignore

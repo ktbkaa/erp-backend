@@ -1,0 +1,18 @@
+{
+  "port": 3920,
+  "erpRoot": "",
+  "schedule": {
+    "enabled": true,
+    "cron": "0 17 * * 0",
+    "timezone": "Europe/Istanbul",
+    "comment": "Her Pazar 17:00 (Europe/Istanbul)"
+  },
+  "steps": {
+    "gitPull": true,
+    "npmInstall": true,
+    "migrate": true,
+    "backup": true
+  },
+  "pgDumpPath": "",
+  "backupDir": ""
+}

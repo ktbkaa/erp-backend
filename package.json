@@ -20,7 +20,22 @@
     "demo:teks": "node scripts/demo-teks-tam-dongu.js",
     "demo:teks-dongu": "node scripts/demo-teks-tam-dongu.js",
     "purge:firma": "node scripts/purge-firma-veri.js",
-    "ensure:firma-yetki": "node scripts/ensure-firma-yetkileri.js"
+    "ensure:firma-yetki": "node scripts/ensure-firma-yetkileri.js",
+    "demo:dokum-dongu": "node scripts/demo-dokum-tam-dongu.js",
+    "qa:inventory": "node scripts/qa/extract-screen-inventory.mjs",
+    "qa:smoke": "node scripts/qa/api-smoke.mjs",
+    "qa:db": "node scripts/qa/db-integrity-audit.mjs",
+    "qa:finance-seed": "node scripts/qa/ensure-finance-seed.js",
+    "qa:gida-org": "node scripts/qa/ensure-gida-org.js",
+    "qa:dokum-org": "node scripts/qa/ensure-dokum-org.js",
+    "qa:ornek-gida": "node scripts/qa/rich-ornek-veri.js --firma=GIDA",
+    "qa:ornek-dokum": "node scripts/qa/rich-ornek-veri.js --firma=DOKUM",
+    "qa:ornek-all": "node scripts/qa/rich-ornek-veri.js",
+    "qa:roles": "node scripts/qa/role-matrix.mjs",
+    "qa:capture": "node scripts/qa/capture-ui-evidence.mjs",
+    "qa:dashboard": "node scripts/qa/build-qa-dashboard.mjs",
+    "qa:pdf": "node scripts/qa/build-qa-pdf.mjs",
+    "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf"
   },
   "keywords": [
     "erp",
@@ -34,6 +49,7 @@
     "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "ldapts": "^9.2.0",
     "nodemailer": "^6.10.1",
     "pg": "^8.23.0"
   }

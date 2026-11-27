@@ -1,0 +1,213 @@
+{
+  "at": "2026-11-08T18:13:38.712Z",
+  "results": [
+    {
+      "file": "00-shell-anasayfa.png",
+      "ok": true
+    },
+    {
+      "file": "00-shell-menu.png",
+      "ok": true
+    },
+    {
+      "file": "01-firmalar.png",
+      "ok": true
+    },
+    {
+      "file": "01-is-yerleri.png",
+      "ok": true
+    },
+    {
+      "file": "01-depolar.png",
+      "ok": true
+    },
+    {
+      "file": "02-stok-karti-liste.png",
+      "ok": true
+    },
+    {
+      "file": "02-stok-karti-form.png",
+      "ok": true
+    },
+    {
+      "file": "02-depo-bakiye.png",
+      "ok": true
+    },
+    {
+      "file": "02-stok-hareketleri.png",
+      "ok": true
+    },
+    {
+      "file": "02-mrp-calistir.png",
+      "ok": true
+    },
+    {
+      "file": "03-cari-kartlari-liste.png",
+      "ok": true
+    },
+    {
+      "file": "03-cari-kartlari-form.png",
+      "ok": true
+    },
+    {
+      "file": "03-tahsilat-odemeler.png",
+      "ok": true
+    },
+    {
+      "file": "04-urun-agaci.png",
+      "ok": true
+    },
+    {
+      "file": "04-rotalar.png",
+      "ok": true
+    },
+    {
+      "file": "04-uretim-emirleri-liste.png",
+      "ok": true
+    },
+    {
+      "file": "04-uretim-emirleri-form.png",
+      "ok": true
+    },
+    {
+      "file": "05-sa-talepleri.png",
+      "ok": true
+    },
+    {
+      "file": "05-sa-siparisleri.png",
+      "ok": true
+    },
+    {
+      "file": "05-mal-kabuller.png",
+      "ok": true
+    },
+    {
+      "file": "05-giris-kontrolleri.png",
+      "ok": true
+    },
+    {
+      "file": "06-crm-adaylar.png",
+      "ok": true
+    },
+    {
+      "file": "06-crm-firsatlar.png",
+      "ok": true
+    },
+    {
+      "file": "06-crm-faaliyetler.png",
+      "ok": true
+    },
+    {
+      "file": "06-crm-ajanda.png",
+      "ok": true
+    },
+    {
+      "file": "07-prj-projeler.png",
+      "ok": true
+    },
+    {
+      "file": "07-prj-proje-form.png",
+      "ok": true
+    },
+    {
+      "file": "07-prj-isler.png",
+      "ok": true
+    },
+    {
+      "file": "07-prj-board.png",
+      "ok": true
+    },
+    {
+      "file": "08-satis-teklifleri.png",
+      "ok": true
+    },
+    {
+      "file": "08-satis-siparisleri.png",
+      "ok": true
+    },
+    {
+      "file": "08-sevk-emirleri.png",
+      "ok": true
+    },
+    {
+      "file": "08-irsaliye.png",
+      "ok": true
+    },
+    {
+      "file": "08-fatura.png",
+      "ok": true
+    },
+    {
+      "file": "09-gkk.png",
+      "ok": true
+    },
+    {
+      "file": "09-ckk.png",
+      "ok": true
+    },
+    {
+      "file": "09-kk-planlari.png",
+      "ok": true
+    },
+    {
+      "file": "10-onaylarim.png",
+      "ok": true
+    },
+    {
+      "file": "10-onay-rota.png",
+      "ok": true
+    },
+    {
+      "file": "11-hesap-plani.png",
+      "ok": true
+    },
+    {
+      "file": "11-kasa.png",
+      "ok": true
+    },
+    {
+      "file": "11-banka.png",
+      "ok": true
+    },
+    {
+      "file": "11-mizan.png",
+      "ok": true
+    },
+    {
+      "file": "11-kokpit.png",
+      "ok": true
+    },
+    {
+      "file": "12-hr-personel-liste.png",
+      "ok": true
+    },
+    {
+      "file": "12-hr-personel-form.png",
+      "ok": true
+    },
+    {
+      "file": "12-hr-izin.png",
+      "ok": true
+    },
+    {
+      "file": "12-hr-bordro.png",
+      "ok": true
+    },
+    {
+      "file": "12-hr-ilanlar.png",
+      "ok": true
+    },
+    {
+      "file": "13-numarator.png",
+      "ok": true
+    },
+    {
+      "file": "13-kullanicilar.png",
+      "ok": true
+    },
+    {
+      "file": "13-sistem-parametreleri.png",
+      "ok": true
+    }
+  ]
+}
