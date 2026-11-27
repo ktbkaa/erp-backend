@@ -109,6 +109,7 @@ app.use('/crm-faaliyet-planlari', require('./routes/crm_activity_plans'));
 app.use('/crm-gorevler', require('./routes/crm_tasks'));
 app.use('/kod-serileri', require('./routes/number_series'));
 app.use('/kategoriler', require('./routes/kategoriler'));
+app.use('/kategori-tipleri', require('./routes/category_types'));
 app.use('/countries', require('./routes/countries'));
 app.use('/para-birimleri', require('./routes/currencies'));
 app.use('/cities', require('./routes/cities'));

@@ -87,16 +87,54 @@ async function cariGetir(id) {
             [id]
         ),
     ]);
+    const row = c.rows[0];
+    const flat = flattenPartnerSlots(row);
     return {
-        ...c.rows[0],
-        tedarikci_mi: cariTedarikciMi(c.rows[0].partner_type),
-        musteri_mi: cariMusteriMi(c.rows[0].partner_type),
+        ...row,
+        ...flat,
+        tedarikci_mi: cariTedarikciMi(row.partner_type),
+        musteri_mi: cariMusteriMi(row.partner_type),
         partner_details: detaylar.rows,
         banka_bilgileri: banks.rows,
         sevk_adresleri: sevkler.rows,
         dil_tanimlari: languages.rows,
         firma_parametreleri: firmaParams.rows,
     };
+}
+
+/** category_slots / extra_fields JSON → form alanları */
+function flattenPartnerSlots(row) {
+    const cats = row.category_slots && typeof row.category_slots === 'object' ? row.category_slots : {};
+    const extras = row.extra_fields && typeof row.extra_fields === 'object' ? row.extra_fields : {};
+    const out = {};
+    for (let i = 1; i <= 30; i += 1) {
+        const ck = `category_${String(i).padStart(2, '0')}`;
+        const ek = `ek_alan_${String(i).padStart(2, '0')}`;
+        out[ck] = cats[ck] || null;
+        out[ek] = extras[ek] || null;
+    }
+    return out;
+}
+
+function collectPartnerSlots(body) {
+    const cats = {};
+    const extras = {};
+    for (let i = 1; i <= 30; i += 1) {
+        const ck = `category_${String(i).padStart(2, '0')}`;
+        const ek = `ek_alan_${String(i).padStart(2, '0')}`;
+        const cv = trimOrNull(body[ck]);
+        const ev = trimOrNull(body[ek]);
+        if (cv) cats[ck] = cv;
+        if (ev) extras[ek] = ev;
+    }
+    // Doğrudan JSON gelirse birleştir
+    if (body.category_slots && typeof body.category_slots === 'object') {
+        Object.assign(cats, body.category_slots);
+    }
+    if (body.extra_fields && typeof body.extra_fields === 'object') {
+        Object.assign(extras, body.extra_fields);
+    }
+    return { category_slots: cats, extra_fields: extras };
 }
 
 function validateCreate(body) {
@@ -206,30 +244,44 @@ async function saveChildren(client, cariId, body) {
 
     if (Array.isArray(body.firma_parametreleri)) {
         await client.query('DELETE FROM partner_company_params WHERE partner_id = $1', [cariId]);
+        const seen = new Set();
         for (const d of body.firma_parametreleri) {
+            if (d && d.is_active === false) continue;
             const firmaId = await assertLookup(client, 'companies', d.company_id, 'company_id');
-            if (!firmaId) continue;
+            if (!firmaId || seen.has(firmaId)) continue;
+            seen.add(firmaId);
+            const plantId = d.plant_id ? await assertLookup(client, 'plants', d.plant_id, 'plant_id') : null;
             await client.query(
                 `INSERT INTO partner_company_params (
-                    partner_id, company_id, gl_account_code, currency_code, partner_type,
-                    risk_group_code, nakit_akisa_dahil, rate_degerlemeye_dahil
-                 ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,TRUE),COALESCE($8,FALSE))
+                    partner_id, company_id, plant_id, is_active,
+                    gl_account_code, currency_code, partner_type,
+                    risk_group_code, nakit_akisa_dahil, rate_degerlemeye_dahil,
+                    payment_due_days, credit_limit
+                 ) VALUES ($1,$2,$3,COALESCE($4,TRUE),$5,$6,$7,$8,COALESCE($9,TRUE),COALESCE($10,FALSE),$11,$12)
                  ON CONFLICT (partner_id, company_id) DO UPDATE SET
+                    plant_id = EXCLUDED.plant_id,
+                    is_active = EXCLUDED.is_active,
                     gl_account_code = EXCLUDED.gl_account_code,
                     currency_code = EXCLUDED.currency_code,
                     partner_type = EXCLUDED.partner_type,
                     risk_group_code = EXCLUDED.risk_group_code,
                     nakit_akisa_dahil = EXCLUDED.nakit_akisa_dahil,
-                    rate_degerlemeye_dahil = EXCLUDED.rate_degerlemeye_dahil`,
+                    rate_degerlemeye_dahil = EXCLUDED.rate_degerlemeye_dahil,
+                    payment_due_days = EXCLUDED.payment_due_days,
+                    credit_limit = EXCLUDED.credit_limit`,
                 [
                     cariId,
                     firmaId,
+                    plantId,
+                    d.is_active === false ? false : true,
                     trimOrNull(d.gl_account_code),
                     trimOrNull(d.currency_code) || 'TRY',
                     trimOrNull(d.partner_type),
                     trimOrNull(d.risk_group_code),
                     typeof d.nakit_akisa_dahil === 'boolean' ? d.nakit_akisa_dahil : true,
                     Boolean(d.rate_degerlemeye_dahil),
+                    d.payment_due_days != null && d.payment_due_days !== '' ? Number(d.payment_due_days) : null,
+                    d.credit_limit != null && d.credit_limit !== '' ? Number(d.credit_limit) : null,
                 ]
             );
         }
@@ -303,11 +355,69 @@ router.get('/:id/ekstre', async (req, res) => {
             baslangic: req.query.baslangic || null,
             bitis: req.query.bitis || null,
         });
-        res.json({ cari: { id: cari.id, partner_code: cari.partner_code, partner_name: cari.partner_name }, ...ekstre });
+        const payload = {
+            cari: { id: cari.id, partner_code: cari.partner_code, partner_name: cari.partner_name },
+            baslangic: req.query.baslangic || null,
+            bitis: req.query.bitis || null,
+            ...ekstre,
+        };
+        const format = String(req.query.format || 'json').toLowerCase();
+        if (format === 'html' || format === 'pdf') {
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            return res.send(renderCariEkstreHtml(payload));
+        }
+        res.json(payload);
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
 });
+
+function escHtml(s) {
+    return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function renderCariEkstreHtml(payload) {
+    const c = payload.cari || {};
+    const rows = (payload.hareketler || []).map((h) => `<tr>
+      <td class="mono">${escHtml(h.movement_no)}</td>
+      <td>${escHtml(h.movement_date)}</td>
+      <td>${escHtml(h.direction)}</td>
+      <td class="num">${escHtml(h.amount)}</td>
+      <td>${escHtml(h.currency_code || '')}</td>
+      <td>${escHtml(h.document_type || '')}</td>
+      <td>${escHtml(h.description || '')}</td>
+    </tr>`).join('');
+    return `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"/>
+<title>Cari Ekstre ${escHtml(c.partner_code || '')}</title>
+<style>
+body{font-family:Segoe UI,system-ui,sans-serif;margin:24px;color:#111}
+h1{font-size:1.2rem;margin:0 0 .35rem}
+.meta{color:#555;margin-bottom:1rem;font-size:.9rem}
+.ozet span{display:inline-block;margin-right:.75rem;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:.3rem .55rem;font-size:.85rem}
+table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:1rem}
+th,td{border:1px solid #d1d5db;padding:.35rem .4rem}
+th{background:#f9fafb;text-align:left}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,Consolas,monospace}
+@media print{.noprint{display:none}}
+</style></head><body>
+<div class="noprint"><button onclick="window.print()">Yazdır / PDF</button></div>
+<h1>Cari Ekstre — ${escHtml(c.partner_code || '')} ${escHtml(c.partner_name || '')}</h1>
+<div class="meta">Tarih: ${escHtml(payload.baslangic || '…')} → ${escHtml(payload.bitis || '…')}</div>
+<div class="ozet">
+  <span>Borç: <b>${escHtml(payload.debit)}</b></span>
+  <span>Alacak: <b>${escHtml(payload.credit)}</b></span>
+  <span>Bakiye: <b>${escHtml(payload.bakiye)}</b></span>
+</div>
+<table><thead><tr>
+  <th>No</th><th>Tarih</th><th>Yön</th><th>Tutar</th><th>PB</th><th>Belge</th><th>Açıklama</th>
+</tr></thead><tbody>${rows || '<tr><td colspan="7">Hareket yok</td></tr>'}</tbody></table>
+</body></html>`;
+}
 
 /** GET /partners/:id/skor — tedarikçi değerlendirme (PUR-008) */
 router.get('/:id/skor', async (req, res) => {
@@ -382,6 +492,11 @@ router.post('/', async (req, res) => {
             );
             const cariId = cariSonuc.rows[0].id;
             await saveChildren(client, cariId, req.body);
+            const slots = collectPartnerSlots(req.body);
+            await client.query(
+                `UPDATE partners SET category_slots = $2::jsonb, extra_fields = $3::jsonb WHERE id = $1`,
+                [cariId, JSON.stringify(slots.category_slots), JSON.stringify(slots.extra_fields)]
+            );
             return cariId;
         });
 
@@ -521,6 +636,11 @@ router.put('/:id', async (req, res) => {
 
             if (!upd.rows[0]) throw Object.assign(new Error('Cari bulunamadı.'), { status: 404 });
             await saveChildren(client, Number(req.params.id), req.body);
+            const slots = collectPartnerSlots(req.body);
+            await client.query(
+                `UPDATE partners SET category_slots = $2::jsonb, extra_fields = $3::jsonb WHERE id = $1`,
+                [req.params.id, JSON.stringify(slots.category_slots), JSON.stringify(slots.extra_fields)]
+            );
         });
 
         res.json(await cariGetir(req.params.id));

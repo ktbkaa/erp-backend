@@ -4,7 +4,7 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
 
-const TIPLER = ['ABC', 'Marka', 'TeminSekli'];
+const TIPLER = ['ABC', 'Marka', 'TeminSekli', 'Sektor', 'Bolge', 'Cari'];
 
 function trimOrNull(v) {
     if (v === undefined || v === null) return null;
@@ -59,10 +59,17 @@ router.post('/', async (req, res) => {
             });
         }
         if (!TIPLER.includes(category_type)) {
-            return res.status(400).json({
-                hata: "category_type 'ABC', 'Marka' veya 'TeminSekli' olmalı.",
-                hatalar: [{ alan: 'category_type', hata: 'Geçersiz kategori tipi.' }],
-            });
+            // Dinamik tip: category_types tablosunda varsa kabul
+            const tipOk = await pool.query(
+                `SELECT 1 FROM category_types WHERE type_code = $1 AND is_active IS DISTINCT FROM FALSE`,
+                [category_type]
+            ).catch(() => ({ rows: [] }));
+            if (!tipOk.rows[0]) {
+                return res.status(400).json({
+                    hata: `category_type geçersiz. İzinli: ${TIPLER.join(', ')} veya kategori tip tanımı.`,
+                    hatalar: [{ alan: 'category_type', hata: 'Geçersiz kategori tipi.' }],
+                });
+            }
         }
 
         const row = await withTransaction(pool, async (client) => {
@@ -105,7 +112,13 @@ router.put('/:id', async (req, res) => {
         }
         const category_type = trimOrNull(req.body.category_type);
         if (category_type && !TIPLER.includes(category_type)) {
-            return res.status(400).json({ hata: 'Geçersiz kategori tipi.', alan: 'category_type' });
+            const tipOk = await pool.query(
+                `SELECT 1 FROM category_types WHERE type_code = $1 AND is_active IS DISTINCT FROM FALSE`,
+                [category_type]
+            ).catch(() => ({ rows: [] }));
+            if (!tipOk.rows[0]) {
+                return res.status(400).json({ hata: 'Geçersiz kategori tipi.', alan: 'category_type' });
+            }
         }
         const upd = await pool.query(
             `

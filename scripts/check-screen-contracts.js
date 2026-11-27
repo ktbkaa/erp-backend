@@ -107,6 +107,7 @@ function main() {
   const helpers = [
     'function renderStokFirmalarPane',
     'function renderStokDepolarPane',
+    'function renderCariFirmalarPane',
     'function renderMrpParametrePane',
     'function isFirmaProfil',
     'function syncStokHareketTransferFields',

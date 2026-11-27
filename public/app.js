@@ -163,6 +163,84 @@ const STOK_FIRMA_PARAM_SECTIONS = [
 
 const STOK_FIRMA_PARAM_FIELD_KEYS = STOK_FIRMA_PARAM_SECTIONS.flatMap((s) => s.fields.map((f) => f.key));
 
+const CARI_KATEGORI_FIELDS = [
+  { key: 'category_01', label: 'Kategori 1', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_02', label: 'Kategori 2', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_03', label: 'Kategori 3', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_04', label: 'Kategori 4', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_05', label: 'Kategori 5', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_06', label: 'Kategori 6', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_07', label: 'Kategori 7', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_08', label: 'Kategori 8', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_09', label: 'Kategori 9', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_10', label: 'Kategori 10', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_11', label: 'Kategori 11', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_12', label: 'Kategori 12', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_13', label: 'Kategori 13', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_14', label: 'Kategori 14', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_15', label: 'Kategori 15', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-left', groupLabel: 'Kategoriler (sol)' },
+  { key: 'category_16', label: 'Kategori 16', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_17', label: 'Kategori 17', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_18', label: 'Kategori 18', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_19', label: 'Kategori 19', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_20', label: 'Kategori 20', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_21', label: 'Kategori 21', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_22', label: 'Kategori 22', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_23', label: 'Kategori 23', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_24', label: 'Kategori 24', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_25', label: 'Kategori 25', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_26', label: 'Kategori 26', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_27', label: 'Kategori 27', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_28', label: 'Kategori 28', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_29', label: 'Kategori 29', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+  { key: 'category_30', label: 'Kategori 30', type: 'lookup', lookup: 'kategoriler-cari', valueKey: 'category_code', labelKey: 'category_name', codeKey: 'category_code', group: 'kategori-right', groupLabel: 'Kategoriler (sağ)' },
+];
+
+const CARI_EK_ALAN_FIELDS = [
+  { key: 'ek_alan_01', label: 'Ek alan 1', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_02', label: 'Ek alan 2', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_03', label: 'Ek alan 3', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_04', label: 'Ek alan 4', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_05', label: 'Ek alan 5', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_06', label: 'Ek alan 6', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_07', label: 'Ek alan 7', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_08', label: 'Ek alan 8', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_09', label: 'Ek alan 9', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_10', label: 'Ek alan 10', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_11', label: 'Ek alan 11', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_12', label: 'Ek alan 12', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_13', label: 'Ek alan 13', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_14', label: 'Ek alan 14', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_15', label: 'Ek alan 15', group: 'ek-left', groupLabel: 'Ek alanlar (sol)' },
+  { key: 'ek_alan_16', label: 'Ek alan 16', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_17', label: 'Ek alan 17', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_18', label: 'Ek alan 18', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_19', label: 'Ek alan 19', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_20', label: 'Ek alan 20', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_21', label: 'Ek alan 21', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_22', label: 'Ek alan 22', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_23', label: 'Ek alan 23', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_24', label: 'Ek alan 24', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_25', label: 'Ek alan 25', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_26', label: 'Ek alan 26', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_27', label: 'Ek alan 27', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_28', label: 'Ek alan 28', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_29', label: 'Ek alan 29', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+  { key: 'ek_alan_30', label: 'Ek alan 30', group: 'ek-right', groupLabel: 'Ek alanlar (sağ)' },
+];
+
+const CARI_FIRMA_PARAM_FIELDS = [
+  { key: 'gl_account_code', label: 'Muhasebe hesap', group: 'firma-param', groupLabel: 'Firma parametreleri' },
+  { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'firma-param', groupLabel: 'Firma parametreleri' },
+  { key: 'partner_type', label: 'Cari tipi (firma)', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], group: 'firma-param', groupLabel: 'Firma parametreleri' },
+  { key: 'risk_group_code', label: 'Risk grubu', group: 'firma-param', groupLabel: 'Firma parametreleri' },
+  { key: 'payment_due_days', label: 'Vade (gün)', type: 'number', group: 'firma-param', groupLabel: 'Firma parametreleri' },
+  { key: 'credit_limit', label: 'Kredi limiti', type: 'number', group: 'firma-param', groupLabel: 'Firma parametreleri' },
+  { key: 'nakit_akisa_dahil', label: 'Nakit akışa dahil', type: 'checkbox', group: 'firma-param', groupLabel: 'Firma parametreleri' },
+  { key: 'rate_degerlemeye_dahil', label: 'Kur değerleme', type: 'checkbox', group: 'firma-param', groupLabel: 'Firma parametreleri' },
+];
+
+
 /** Ekran sözleşmesi: scripts/screen-contracts.json + npm run test:screens
  *  Kritik sekmeler/kind/flag kaybını CI ile yakalar (paralel dal sürüklenmesini önler). */
 const MODULES = [
@@ -237,6 +315,39 @@ const MODULES = [
         detailAsFields: true,
       },
       {
+        id: 'kategori-tip-tanimi',
+        techId: 'MDM-CATTYPE-SCR-001',
+        businessNameEn: 'CategoryTypeDefinitionScreen',
+        title: 'Kategori Tip Tanımı',
+        endpoint: '/kategori-tipleri',
+        crud: true,
+        codeField: 'type_code',
+        nameField: 'type_name',
+        numeratorSeri: 'KATEGORI_TIPI',
+        filters: [
+          { key: 'type_code', label: 'Tip kodu' },
+          { key: 'type_name', label: 'Tip adı' },
+          { key: 'applies_to', label: 'Kapsam' },
+        ],
+        columns: [
+          { key: 'type_code', label: 'Kod', mono: true },
+          { key: 'type_name', label: 'Ad' },
+          { key: 'applies_to', label: 'Kapsam' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'type_code', label: 'Tip kodu', code: true, required: true, editableOnNew: true },
+          { key: 'type_name', label: 'Tip adı', name: true, required: true },
+          { key: 'applies_to', label: 'Kapsam', type: 'select', options: ['Genel', 'Stok', 'Cari', 'Hepsi'], required: true },
+        ],
+        detailFields: [
+          { key: 'description', label: 'Açıklama' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
         id: 'kategori-tanimi',
         techId: 'MDM-CAT-SCR-001',
         businessNameEn: 'CategoryDefinitionScreen',
@@ -260,7 +371,16 @@ const MODULES = [
         masterFields: [
           { key: 'category_code', label: 'Kategori kodu', code: true, required: true },
           { key: 'category_name', label: 'Kategori adı', name: true, required: true },
-          { key: 'category_type', label: 'Kategori tipi', type: 'select', options: ['ABC', 'Marka', 'TeminSekli', 'Sektor', 'Bolge'], required: true },
+          {
+            key: 'category_type',
+            label: 'Kategori tipi',
+            type: 'lookup',
+            lookup: 'kategori-tipleri',
+            valueKey: 'type_code',
+            labelKey: 'type_name',
+            codeKey: 'type_code',
+            required: true,
+          },
         ],
         detailFields: [
           { key: 'description', label: 'Açıklama' },
@@ -1715,12 +1835,11 @@ const MODULES = [
           { key: 'il', label: 'İl' },
         ],
         masterFields: [
-          { key: 'partner_type', label: 'Müşteri tipi', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, lead: true },
+          { key: 'partner_type', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, lead: true },
           { key: 'partner_code', label: 'Cari kodu', code: true, required: true },
           { key: 'partner_name', label: 'Cari adı', name: true, required: true },
-          { key: 'description', label: 'Açıklama' },
           { key: 'tax_id', label: 'VKN / TCKN' },
-          { key: 'bill_address_1', label: 'Adres 1' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
         ],
         detailFields: [
           { key: 'address', label: 'Adres' },
@@ -1729,57 +1848,52 @@ const MODULES = [
           { key: 'yetkili_telefon', label: 'Yetkili tel' },
         ],
         detailKey: 'partner_details',
+        defaults: { is_active: true, firma_parametreleri: [] },
         formTabs: [
           {
             id: 'ana', label: 'Cari Kart', kind: 'master-detail',
             masterFields: [
-              { key: 'partner_type', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, lead: true, group: 'kimlik' },
-              { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', critical: true, group: 'organizasyon' },
-              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
-              { key: 'partner_code', label: 'Cari kodu', code: true, required: true, group: 'kimlik' },
-              { key: 'partner_name', label: 'Cari adı', name: true, required: true, group: 'kimlik' },
-              { key: 'partner_name_2', label: 'Cari adı 2', group: 'kimlik' },
-              { key: 'is_active', label: 'Aktif', type: 'checkbox', group: 'status' },
-              { key: 'silindi', label: 'Silindi', type: 'checkbox', group: 'status' },
+              // Üst: olmazsa olmaz / master (görsel: firma + iş yeri, kod/ad, VKN, pasif)
+              { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', groupLabel: 'Organizasyon', lead: true },
+              { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'partner_type', label: 'Hesap türü', type: 'select', options: ['Musteri', 'Tedarikci', 'HerIkisi'], required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'partner_code', label: 'Cari kod', code: true, required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'partner_name', label: 'Cari adı', name: true, required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'tax_id', label: 'VKN / TCKN', required: true, group: 'organizasyon', groupLabel: 'Organizasyon' },
+              { key: 'is_active', label: 'Pasif', type: 'checkbox', group: 'organizasyon', groupLabel: 'Organizasyon' },
             ],
             detailFields: [
-              { key: 'tax_id', label: 'VKN / TCKN', group: 'finans' },
-              { key: 'tax_office', label: 'Vergi dairesi', group: 'finans' },
-              { key: 'pasaport_no', label: 'Pasaport no', group: 'kimlik' },
-              { key: 'first_name', label: 'Ad', group: 'kimlik' },
-              { key: 'last_name', label: 'Soyad', group: 'kimlik' },
-              { key: 'country', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name', group: 'address' },
-              { key: 'il', label: 'İl', group: 'address' },
-              { key: 'district', label: 'İlçe', group: 'address' },
-              { key: 'postal_code', label: 'Posta kodu', group: 'address' },
-              { key: 'bill_address_1', label: 'Adres 1', group: 'address' },
-              { key: 'bill_address_2', label: 'Adres 2', group: 'address' },
-              { key: 'bill_address_3', label: 'Adres 3', group: 'address' },
-              { key: 'telefon', label: 'Telefon 1', group: 'iletisim' },
-              { key: 'telefon2', label: 'Telefon 2', group: 'iletisim' },
-              { key: 'mobile_phone', label: 'Cep tel', group: 'iletisim' },
-              { key: 'email', label: 'E-posta', group: 'iletisim' },
-              { key: 'website', label: 'Website', group: 'iletisim' },
-              { key: 'fax', label: 'Fax', group: 'iletisim' },
-              { key: 'yetkili_name', label: 'Yetkili', group: 'iletisim' },
-              { key: 'yetkili_telefon', label: 'Yetkili tel', group: 'iletisim' },
-              { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'finans' },
-              { key: 'payment_due_days', label: 'Vade (gün)', type: 'number', group: 'finans' },
-              { key: 'description', label: 'Açıklama', group: 'status' },
-              { key: 'notlar', label: 'Notlar', group: 'status' },
+              { key: 'partner_name_2', label: 'Cari adı 2', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'first_name', label: 'Ad', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'last_name', label: 'Soyad', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'pasaport_no', label: 'Pasaport no', group: 'kimlik', groupLabel: 'Genel bilgiler' },
+              { key: 'tax_office', label: 'Vergi dairesi', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'payment_due_days', label: 'Vade (gün)', type: 'number', group: 'finans', groupLabel: 'Genel bilgiler' },
+              { key: 'country', label: 'Ülke', type: 'lookup', lookup: 'countries', valueKey: 'country_code', labelKey: 'country_name', group: 'address', groupLabel: 'Adres' },
+              { key: 'il', label: 'İl', group: 'address', groupLabel: 'Adres' },
+              { key: 'district', label: 'İlçe', group: 'address', groupLabel: 'Adres' },
+              { key: 'postal_code', label: 'Posta kodu', group: 'address', groupLabel: 'Adres' },
+              { key: 'bill_address_1', label: 'Adres 1', group: 'address', groupLabel: 'Adres' },
+              { key: 'bill_address_2', label: 'Adres 2', group: 'address', groupLabel: 'Adres' },
+              { key: 'bill_address_3', label: 'Adres 3', group: 'address', groupLabel: 'Adres' },
+              { key: 'telefon', label: 'Telefon 1', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'telefon2', label: 'Telefon 2', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'mobile_phone', label: 'Cep tel', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'email', label: 'E-posta', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'website', label: 'Website', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'fax', label: 'Fax', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'yetkili_name', label: 'Yetkili', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'yetkili_telefon', label: 'Yetkili tel', group: 'iletisim', groupLabel: 'İletişim' },
+              { key: 'description', label: 'Açıklama', group: 'status', groupLabel: 'Notlar' },
+              { key: 'notlar', label: 'Notlar', group: 'status', groupLabel: 'Notlar' },
+              { key: 'silindi', label: 'Silindi', type: 'checkbox', group: 'status', groupLabel: 'Notlar' },
             ],
           },
           {
-            id: 'firma-param', label: 'Firma Parametreleri', kind: 'grid', key: 'firma_parametreleri', slots: 2,
-            fields: [
-              { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
-              { key: 'gl_account_code', label: 'Muhasebe hesap' },
-              { key: 'currency_code', label: 'Para birimi' },
-              { key: 'partner_type', label: 'Cari tipi' },
-              { key: 'risk_group_code', label: 'Risk grubu' },
-              { key: 'nakit_akisa_dahil', label: 'Nakit akışa dahil', type: 'checkbox' },
-              { key: 'rate_degerlemeye_dahil', label: 'Kur değerleme', type: 'checkbox' },
-            ],
+            id: 'firma-param',
+            label: 'Firma Parametreleri',
+            kind: 'cari-firmalar',
           },
           {
             id: 'banka', label: 'Banka Bilgisi', kind: 'grid', key: 'banka_bilgileri', slots: 3,
@@ -1833,8 +1947,20 @@ const MODULES = [
               { key: 'varsayilan', label: 'Varsayılan', type: 'checkbox' },
             ],
           },
-          { id: 'kategori', label: 'Kategoriler', kind: 'stub', note: 'Cari kategori modeli henüz yok.' },
-          { id: 'ekalan', label: 'Ek Alanlar', kind: 'stub', note: 'Esnek ek alan altyapısı henüz yok.' },
+          {
+            id: 'kategori',
+            label: 'Kategoriler',
+            kind: 'fields',
+            layout: 'pairs',
+            fields: [...CARI_KATEGORI_FIELDS],
+          },
+          {
+            id: 'ekalan',
+            label: 'Ek Alanlar',
+            kind: 'fields',
+            layout: 'pairs',
+            fields: [...CARI_EK_ALAN_FIELDS],
+          },
         ],
       },
       {
@@ -1845,12 +1971,19 @@ const MODULES = [
         endpoint: '/cari-hareketleri',
         crud: false,
         readOnly: true,
+        reportPdfAction: true,
+        reportPdfUrl: '/cari-hareketleri',
         filters: [
-          { key: 'movement_no', label: 'Hareket no' },
+          { key: 'baslangic', label: 'Başlangıç', type: 'date', queryParam: true },
+          { key: 'bitis', label: 'Bitiş', type: 'date', queryParam: true },
+          { key: 'partner_id', label: 'Cari', type: 'lookup', lookup: 'partners', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', queryParam: true },
+          { key: 'partner_code', label: 'Cari kod', queryParam: true },
           { key: 'direction', label: 'Yön' },
           { key: 'document_type', label: 'Belge tipi' },
         ],
         columns: [
+          { key: 'partner_code', label: 'Cari', mono: true },
+          { key: 'partner_name', label: 'Cari adı' },
           { key: 'movement_no', label: 'No', mono: true },
           { key: 'movement_date', label: 'Tarih' },
           { key: 'direction', label: 'Yön' },
@@ -11273,6 +11406,9 @@ function updateActionButtons(screen) {
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
+    } else if (act === 'report-pdf') {
+      btn.hidden = !screen.reportPdfAction;
+      btn.disabled = !screen.reportPdfAction;
     }
   });
   const mrpBtn = $('#btnMrpTalep');
@@ -11281,6 +11417,8 @@ function updateActionButtons(screen) {
   if (mrpUe) mrpUe.hidden = !screen.mrpUretimAction;
   const mrpRun = $('#btnMrpCalistir');
   if (mrpRun) mrpRun.hidden = !screen.mrpCalistirAction;
+  const pdfBtn = $('#btnReportPdf');
+  if (pdfBtn) pdfBtn.hidden = !screen.reportPdfAction;
 }
 
 async function openScreen(id, opts = {}) {
@@ -11696,6 +11834,8 @@ const LOOKUP_ENDPOINTS = {
   'kategoriler-temin': '/kategoriler?type=TeminSekli&is_active=true',
   'kategoriler-sektor': '/kategoriler?type=Sektor&is_active=true',
   'kategoriler-region': '/kategoriler?type=Bolge&is_active=true',
+  'kategoriler-cari': '/kategoriler?type=Cari&is_active=true',
+  'kategori-tipleri': '/kategori-tipleri?is_active=true',
   'muhasebe-hesaplari': '/muhasebe-hesaplari',
   sales_orders: '/sales_orders',
   'sevk-emirleri': '/sevk-emirleri',
@@ -11751,10 +11891,16 @@ const SCREEN_LOOKUP_EXTRAS = {
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari', 'companies'],
   'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
-  'cari-kartlari': ['partners', 'partners-musteri', 'partners-tedarikci'],
+  'cari-kartlari': [
+    'partners', 'partners-musteri', 'partners-tedarikci',
+    'companies', 'is-yerleri', 'para-birimleri',
+    'kategoriler-cari', 'kategoriler-sektor', 'kategoriler-region',
+  ],
+  'kategori-tip-tanimi': ['kategori-tipleri'],
   'kategori-tanimi': [
+    'kategori-tipleri',
     'kategoriler-abc', 'kategoriler-marka', 'kategoriler-temin',
-    'kategoriler-sektor', 'kategoriler-region',
+    'kategoriler-sektor', 'kategoriler-region', 'kategoriler-cari',
   ],
   'hareket-kodlari': [
     'hareket-kodlari', 'hareket-kodlari-teklif', 'hareket-kodlari-siparis',
@@ -13087,6 +13233,256 @@ function applyPrimaryStokFirmaToMaster(master) {
   master.varsayilan_cikis_warehouse_id = primary.varsayilan_cikis_warehouse_id ?? master.varsayilan_cikis_warehouse_id;
   master.lot_politika = primary.lot_politika || master.lot_politika;
   master.series_politika = primary.series_politika || master.series_politika;
+}
+
+function emptyCariFirmaParam(companyId) {
+  return {
+    company_id: Number(companyId),
+    plant_id: null,
+    is_active: true,
+    gl_account_code: null,
+    currency_code: 'TRY',
+    partner_type: null,
+    risk_group_code: null,
+    payment_due_days: null,
+    credit_limit: null,
+    nakit_akisa_dahil: true,
+    rate_degerlemeye_dahil: false,
+  };
+}
+
+function ensureCariFirmaParamsSeed(rec) {
+  if (!rec) return;
+  let list = Array.isArray(rec.firma_parametreleri) ? [...rec.firma_parametreleri] : [];
+  if (!list.length) {
+    const cid = Number(rec.company_id) || getActiveFirmaId() || null;
+    if (!cid) {
+      rec.firma_parametreleri = [];
+      return;
+    }
+    list = [{
+      ...emptyCariFirmaParam(cid),
+      currency_code: rec.currency_code || 'TRY',
+      partner_type: rec.partner_type || null,
+      payment_due_days: rec.payment_due_days ?? null,
+      gl_account_code: rec.gl_account_code || null,
+      risk_group_code: rec.risk_group_code || null,
+      credit_limit: rec.credit_limit ?? null,
+      nakit_akisa_dahil: rec.nakit_akisa_dahil !== false,
+      rate_degerlemeye_dahil: Boolean(rec.rate_degerlemeye_dahil),
+    }];
+  }
+  const selected = [...new Set(list.filter((p) => p && p.is_active !== false && Number(p.company_id)).map((p) => Number(p.company_id)))];
+  if (!selected.length) {
+    const aid = Number(rec.company_id) || getActiveFirmaId();
+    if (aid) {
+      list.push(emptyCariFirmaParam(aid));
+    }
+  }
+  rec.firma_parametreleri = list;
+}
+
+function renderCariFirmaParamField(field, param, companyId) {
+  const readonly = state.formMode === 'incele' || field.readOnly;
+  const f = readonly && !field.readOnly ? { ...field, readOnly: true } : field;
+  const extra = `data-cari-firma-id="${escAttr(companyId)}" data-cari-firma-field="${escAttr(field.key)}"`;
+  const control = fieldControl(f, param?.[field.key], 'data-cari-firma', extra, { ...(param || {}), company_id: companyId });
+  return fieldShell(f, control, param?.[field.key]);
+}
+
+function renderCariFirmaParamCard(company, param, open) {
+  const readonly = state.formMode === 'incele';
+  const cid = Number(company.id);
+  const title = `${company.company_code || ''} · ${company.company_name || ''}`.trim();
+  const row = param || emptyCariFirmaParam(cid);
+  return `
+    <details class="stok-firma-card cari-firma-card" data-cari-firma-card="${escAttr(cid)}" ${open ? 'open' : ''} ${readonly ? 'data-readonly="1"' : ''}>
+      <summary class="stok-firma-card-sum">
+        <span class="mono">${escapeHtml(company.company_code || '')}</span>
+        <span>${escapeHtml(company.company_name || '')}</span>
+        <span class="stok-firma-card-count">firma parametreleri</span>
+      </summary>
+      <div class="stok-firma-card-body" aria-label="${escAttr(title)} parametreleri">
+        <fieldset class="stok-firma-fieldset" ${readonly ? 'disabled' : ''}>
+          <div class="erp-section-grid erp-section-grid--pairs">
+            ${CARI_FIRMA_PARAM_FIELDS.map((f) => renderCariFirmaParamField(f, row, cid)).join('')}
+          </div>
+        </fieldset>
+      </div>
+    </details>`;
+}
+
+function renderCariFirmalarPane(rec) {
+  ensureCariFirmaParamsSeed(rec);
+  const readonly = state.formMode === 'incele';
+  const dis = readonly ? 'disabled' : '';
+  const companies = Array.isArray(state.companies) && state.companies.length
+    ? state.companies
+    : (state.lookupCache?.companies || []);
+  const selected = new Set(
+    (Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [])
+      .filter((p) => p && p.is_active !== false && Number(p.company_id))
+      .map((p) => Number(p.company_id))
+  );
+  if (!selected.size) {
+    const aid = Number(rec?.company_id) || getActiveFirmaId();
+    if (aid) selected.add(Number(aid));
+    else if (companies[0]) selected.add(Number(companies[0].id));
+  }
+  const prefer = Number(getActiveFirmaId());
+  const rows = companies.length
+    ? companies.map((f) => `
+      <tr data-cari-firma-yetki="${escAttr(f.id)}">
+        <td class="yetki-erisim">
+          <input type="checkbox" data-cari-firma-check="1" ${selected.has(Number(f.id)) ? 'checked' : ''} ${dis} />
+        </td>
+        <td class="yetki-ekran mono">${escapeHtml(f.company_code || '')}</td>
+        <td>${escapeHtml(f.company_name || '')}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" class="detail-empty">Firma listesi yok.</td></tr>';
+  const cards = companies
+    .filter((f) => selected.has(Number(f.id)))
+    .map((f) => {
+      const param = (rec.firma_parametreleri || []).find((p) => Number(p.company_id) === Number(f.id) && p.is_active !== false)
+        || emptyCariFirmaParam(f.id);
+      const open = Number(f.id) === prefer || selected.size === 1;
+      return renderCariFirmaParamCard(f, param, open);
+    })
+    .join('');
+  return `
+    <div class="stok-firmalar-pane cari-firmalar-pane erp-master-panel">
+      <section class="firma-yetki-pane cari-firma-yetki-pane" aria-label="Cari firma tanımları">
+        <div class="yetki-pane-head">
+          <div class="section-label">Firma seçimi</div>
+          <div class="yetki-pane-actions"${readonly ? ' hidden' : ''}>
+            <button type="button" class="btn ghost" id="cariFirmaSelectAll">Hepsi</button>
+            <button type="button" class="btn ghost" id="cariFirmaClearAll">Temizle</button>
+          </div>
+        </div>
+        <p class="hint yetki-hint">Cari kartın geçerli olacağı firmaları işaretleyin. Parametreler seçili firmaya özel kaydedilir (stok kartı firma tanımları ile aynı mantık).</p>
+        <div class="firma-yetki-scroll">
+          <table class="yetki-table" id="cariFirmaYetkiTable">
+            <thead>
+              <tr>
+                <th class="yetki-erisim">
+                  <label class="yetki-th-hepsi" title="Tüm firmalar">
+                    <input type="checkbox" data-cari-firma-head="hepsi" ${dis} />
+                    <span>Hepsi</span>
+                  </label>
+                </th>
+                <th class="yetki-ekran">Kod</th>
+                <th>Firma adı</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </section>
+      <div class="cari-firma-cards">${cards || '<p class="hint">Parametre için en az bir firma işaretleyin.</p>'}</div>
+    </div>`;
+}
+
+function bindCariFirmaYetkiEvents() {
+  const box = document.querySelector('.cari-firma-yetki-pane');
+  if (!box || box.dataset.bound === '1') return;
+  box.dataset.bound = '1';
+  const syncHead = () => {
+    const checks = [...box.querySelectorAll('[data-cari-firma-check]')];
+    const head = box.querySelector('[data-cari-firma-head="hepsi"]');
+    if (!head || !checks.length) return;
+    head.checked = checks.every((c) => c.checked);
+    head.indeterminate = !head.checked && checks.some((c) => c.checked);
+  };
+  const refreshCards = () => {
+    const pane = document.querySelector('.cari-firmalar-pane');
+    if (!pane || !state.formRecord) return;
+    // Mevcut DOM değerlerini kaydet, sonra kartları yenile
+    state.formRecord.firma_parametreleri = readCariFirmaParamsFromDom(state.formRecord);
+    const panel = document.querySelector('[data-tab-panel="firma-param"]');
+    if (panel) {
+      panel.innerHTML = renderCariFirmalarPane(state.formRecord);
+      const fresh = panel.querySelector('.cari-firma-yetki-pane');
+      if (fresh) delete fresh.dataset.bound;
+      bindCariFirmaYetkiEvents();
+    }
+  };
+  box.addEventListener('change', (e) => {
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return;
+    if (t.matches('[data-cari-firma-head="hepsi"]')) {
+      box.querySelectorAll('[data-cari-firma-check]').forEach((c) => { c.checked = t.checked; });
+      syncHead();
+      refreshCards();
+      return;
+    }
+    if (t.matches('[data-cari-firma-check]')) {
+      syncHead();
+      refreshCards();
+    }
+  });
+  const allBtn = document.getElementById('cariFirmaSelectAll');
+  const clearBtn = document.getElementById('cariFirmaClearAll');
+  if (allBtn) {
+    allBtn.addEventListener('click', () => {
+      box.querySelectorAll('[data-cari-firma-check]').forEach((c) => { c.checked = true; });
+      syncHead();
+      refreshCards();
+    });
+  }
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      box.querySelectorAll('[data-cari-firma-check]').forEach((c) => { c.checked = false; });
+      syncHead();
+      refreshCards();
+    });
+  }
+  syncHead();
+}
+
+function readCariFirmaParamsFromDom(rec) {
+  const box = document.querySelector('.cari-firma-yetki-pane');
+  const prev = Array.isArray(rec?.firma_parametreleri) ? rec.firma_parametreleri : [];
+  const selectedIds = [];
+  if (box) {
+    box.querySelectorAll('tr[data-cari-firma-yetki]').forEach((tr) => {
+      const chk = tr.querySelector('[data-cari-firma-check]');
+      if (!chk?.checked) return;
+      const id = Number(tr.getAttribute('data-cari-firma-yetki'));
+      if (Number.isFinite(id) && id) selectedIds.push(id);
+    });
+  } else {
+    return prev;
+  }
+  const out = [];
+  selectedIds.forEach((cid) => {
+    const prevRow = prev.find((p) => Number(p.company_id) === cid) || emptyCariFirmaParam(cid);
+    const row = { ...prevRow, company_id: cid, is_active: true };
+    CARI_FIRMA_PARAM_FIELDS.forEach((f) => {
+      const el = document.querySelector(`[data-cari-firma="${f.key}"][data-cari-firma-id="${cid}"]`)
+        || document.querySelector(`[data-cari-firma-field="${f.key}"][data-cari-firma-id="${cid}"]`);
+      if (!el) return;
+      row[f.key] = readFieldValue(el, f);
+    });
+    out.push(row);
+  });
+  prev.forEach((p) => {
+    const cid = Number(p.company_id);
+    if (!cid || selectedIds.includes(cid)) return;
+    out.push({ ...p, company_id: cid, is_active: false });
+  });
+  return out;
+}
+
+function applyPrimaryCariFirmaToMaster(master) {
+  const list = Array.isArray(master.firma_parametreleri) ? master.firma_parametreleri : [];
+  const active = list.filter((p) => p && p.is_active !== false && Number(p.company_id));
+  if (!active.length) return;
+  const prefer = Number(getActiveFirmaId());
+  const primary = active.find((p) => Number(p.company_id) === prefer) || active[0];
+  if (!Number(master.company_id)) master.company_id = Number(primary.company_id);
+  if (primary.currency_code) master.currency_code = primary.currency_code;
+  if (primary.payment_due_days != null) master.payment_due_days = primary.payment_due_days;
+  if (primary.partner_type) master.partner_type = master.partner_type || primary.partner_type;
 }
 
 function renderStokDepolarPane(tab, rec) {
@@ -16006,6 +16402,11 @@ function renderForm(screen) {
         ${renderStokFirmalarPane(rec)}
       </div>`;
     }
+    if (tab.kind === 'cari-firmalar') {
+      return `<div class="form-tab-panel form-tab-panel--md${active ? ' form-tab-panel--scrollable' : ''}" data-tab-panel="${tab.id}" ${hide}>
+        ${renderCariFirmalarPane(rec)}
+      </div>`;
+    }
     if (tab.kind === 'stok-depolar') {
       return `<div class="form-tab-panel form-tab-panel--md${active ? ' form-tab-panel--scrollable' : ''}" data-tab-panel="${tab.id}" ${hide}>
         ${renderStokDepolarPane(tab, rec)}
@@ -16061,6 +16462,9 @@ function renderForm(screen) {
   }
   if ((screen.formTabs || []).some((t) => t.kind === 'stok-firmalar')) {
     bindStokFirmaYetkiEvents();
+  }
+  if ((screen.formTabs || []).some((t) => t.kind === 'cari-firmalar')) {
+    bindCariFirmaYetkiEvents();
   }
   if ((screen.formTabs || []).some((t) => t.kind === 'stok-depolar')) {
     bindStokDepoYetkiEvents();
@@ -16512,6 +16916,8 @@ const LOOKUP_TO_SCREEN = {
   'kategoriler-temin': 'kategori-tanimi',
   'kategoriler-sektor': 'kategori-tanimi',
   'kategoriler-region': 'kategori-tanimi',
+  'kategoriler-cari': 'kategori-tanimi',
+  'kategori-tipleri': 'kategori-tip-tanimi',
   'urun-agaclari': 'urun-agaci',
   routings: 'routings',
   'rota-sablonlari': 'routings',
@@ -18859,6 +19265,17 @@ async function saveForm({ after = 'stay' } = {}) {
 
   const master = readTabbedPayload(screen);
 
+  // Cari kart: firma parametreleri (stok firmalar mantığı)
+  if (screen.id === 'cari-kartlari') {
+    master.firma_parametreleri = readCariFirmaParamsFromDom(master)
+      .filter((p) => p && p.is_active !== false);
+    if (!master.firma_parametreleri.length) {
+      toast('En az bir firma işaretleyin (Firma Parametreleri).');
+      return;
+    }
+    applyPrimaryCariFirmaToMaster(master);
+  }
+
   // Stok kartı: firma tikleri + parametreler + depo tanımları
   if (screen.id === 'stok-karti') {
     master.firma_parametreleri = readStokFirmaParamsFromDom(master)
@@ -19645,6 +20062,7 @@ function bindEvents() {
       const act = actionBtn.dataset.action;
       if (act === 'sil') deleteSelected();
       else if (act === 'export-csv') exportListCsv();
+      else if (act === 'report-pdf') openListReportPdf().catch((err) => toast(err.message || 'PDF açılamadı'));
       else if (act === 'mrp-talep') mrpTalepOlustur().catch((err) => toast(err.message));
       else if (act === 'mrp-uretim') mrpUretimOlustur().catch((err) => toast(err.message));
       else if (act === 'mrp-calistir') mrpCalistirKaydet().catch((err) => toast(err.message));
@@ -19937,6 +20355,35 @@ function bindEvents() {
     a.click();
     URL.revokeObjectURL(a.href);
     toast('CSV indirildi.');
+  }
+
+  async function openListReportPdf() {
+    const screen = findScreen(state.screenId);
+    if (!screen?.reportPdfAction) throw new Error('Bu ekranda PDF yok.');
+    const base = screen.reportPdfUrl || screen.endpoint;
+    if (!base) throw new Error('Rapor URL tanımsız.');
+    const listUrl = buildListEndpoint(screen);
+    const qsStart = listUrl.includes('?') ? listUrl.slice(listUrl.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(qsStart);
+    params.set('format', 'html');
+    const url = `${base}?${params.toString()}`;
+    const token = state.auth?.access_token || state.accessToken || localStorage.getItem('erp_access_token');
+    const res = await fetch(url, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'X-Kullanici-Kodu': state.user?.user_code || state.auth?.user_code || 'owner',
+        ...(getActiveFirmaId() ? { 'X-Firma-Id': String(getActiveFirmaId()) } : {}),
+      },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.hata || `Rapor ${res.status}`);
+    }
+    const body = await res.text();
+    const w = window.open('', '_blank');
+    if (!w) throw new Error('Açılır pencere engellendi — tarayıcı izin verin.');
+    w.document.write(body);
+    w.document.close();
   }
 
   async function mrpTalepOlustur() {

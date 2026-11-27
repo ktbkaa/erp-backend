@@ -77,10 +77,41 @@
     },
     "cari-kartlari": {
       "title": "Cari Kartları",
-      "requiredTabs": [],
-      "requiredKinds": ["master-detail", "grid"],
+      "requiredTabs": ["ana", "firma-param", "kategori", "ekalan"],
+      "requiredKinds": ["master-detail", "cari-firmalar", "grid", "fields"],
       "requiredFlags": { "crud": true },
-      "requiredFieldKeys": []
+      "requiredFieldKeys": ["partner_code", "partner_name", "tax_id", "is_active"],
+      "requiredText": [
+        "CARI_KATEGORI_FIELDS",
+        "CARI_EK_ALAN_FIELDS",
+        "CARI_FIRMA_PARAM_FIELDS",
+        "renderCariFirmalarPane",
+        "readCariFirmaParamsFromDom",
+        "category_01",
+        "ek_alan_30"
+      ]
+    },
+    "cari-ekstre": {
+      "title": "Cari Ekstre",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "reportPdfAction": true },
+      "requiredFieldKeys": [],
+      "requiredText": ["reportPdfUrl", "openListReportPdf", "baslangic"]
+    },
+    "kategori-tip-tanimi": {
+      "title": "Kategori Tip Tanımı",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": ["type_code", "type_name", "applies_to"]
+    },
+    "kategori-tanimi": {
+      "title": "Kategori Tanımı",
+      "requiredTabs": [],
+      "requiredKinds": [],
+      "requiredFlags": { "crud": true },
+      "requiredFieldKeys": ["category_code", "category_name", "category_type"]
     },
     "finans-vergi-kodlari": {
       "title": "Vergi Kodları",
