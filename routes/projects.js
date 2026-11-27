@@ -14,6 +14,275 @@ function trimOrNull(v) {
   return v;
 }
 
+function toBool(v, fallback = false) {
+  if (v === undefined || v === null || v === '') return fallback;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+  const s = String(v).trim().toLowerCase();
+  if (['1', 'true', 'evet', 'yes', 'on'].includes(s)) return true;
+  if (['0', 'false', 'hayir', 'no', 'off'].includes(s)) return false;
+  return fallback;
+}
+
+async function syncMembers(client, projectId, rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  const keepIds = [];
+  const seenUsers = new Set();
+
+  for (const raw of list) {
+    const userId = Number(raw.user_id);
+    if (!userId) continue;
+    if (seenUsers.has(userId)) continue;
+    seenUsers.add(userId);
+
+    const roleId = raw.role_id ? Number(raw.role_id) : null;
+    const canViewBudget = toBool(raw.can_view_budget, false);
+    const canEditBudget = toBool(raw.can_edit_budget, false);
+    const canViewCosts = toBool(raw.can_view_costs, false);
+    const memberId = raw.id ? Number(raw.id) : null;
+
+    if (memberId) {
+      const upd = await client.query(
+        `
+        UPDATE project_members SET
+          user_id=$3, role_id=$4,
+          can_view_budget=$5, can_edit_budget=$6, can_view_costs=$7,
+          is_active=TRUE
+        WHERE id=$1 AND project_id=$2
+        RETURNING id
+        `,
+        [memberId, projectId, userId, roleId, canViewBudget, canEditBudget, canViewCosts]
+      );
+      if (upd.rows[0]) {
+        keepIds.push(upd.rows[0].id);
+        continue;
+      }
+    }
+
+    const ins = await client.query(
+      `
+      INSERT INTO project_members (
+        project_id, user_id, role_id, can_view_budget, can_edit_budget, can_view_costs, is_active
+      ) VALUES ($1,$2,$3,$4,$5,$6,TRUE)
+      ON CONFLICT (project_id, user_id) DO UPDATE SET
+        role_id=EXCLUDED.role_id,
+        can_view_budget=EXCLUDED.can_view_budget,
+        can_edit_budget=EXCLUDED.can_edit_budget,
+        can_view_costs=EXCLUDED.can_view_costs,
+        is_active=TRUE
+      RETURNING id
+      `,
+      [projectId, userId, roleId, canViewBudget, canEditBudget, canViewCosts]
+    );
+    keepIds.push(ins.rows[0].id);
+  }
+
+  if (keepIds.length) {
+    await client.query(
+      `UPDATE project_members SET is_active=FALSE
+       WHERE project_id=$1 AND NOT (id = ANY($2::int[]))`,
+      [projectId, keepIds]
+    );
+  } else {
+    await client.query(
+      `UPDATE project_members SET is_active=FALSE WHERE project_id=$1`,
+      [projectId]
+    );
+  }
+}
+
+async function syncWorkItems(client, projectId, companyId, rows, userId) {
+  const list = Array.isArray(rows) ? rows : [];
+  const keepIds = [];
+
+  let defaultTypeId = null;
+  let defaultStatusId = null;
+  let defaultPriorityId = null;
+
+  const ensureDefaults = async () => {
+    if (!defaultTypeId) {
+      const t = await client.query(`SELECT id FROM prj_work_item_types WHERE type_code='TASK' LIMIT 1`);
+      defaultTypeId = t.rows[0]?.id || null;
+    }
+    if (!defaultStatusId) {
+      const s = await client.query(`SELECT id FROM prj_work_item_statuses WHERE status_code='OPEN' LIMIT 1`);
+      defaultStatusId = s.rows[0]?.id || null;
+    }
+    if (!defaultPriorityId) {
+      const p = await client.query(
+        `SELECT id FROM prj_work_item_priorities WHERE priority_code='MEDIUM' LIMIT 1`
+      );
+      defaultPriorityId = p.rows[0]?.id || null;
+    }
+  };
+
+  for (const raw of list) {
+    const title = trimOrNull(raw.title);
+    if (!title) continue;
+
+    const planStart = raw.plan_start_date || null;
+    const planEnd = raw.plan_end_date || null;
+    if (planStart && planEnd && String(planEnd) < String(planStart)) {
+      throw Object.assign(new Error(`İş "${title}": bitiş tarihi başlangıçtan önce olamaz.`), {
+        status: 400,
+      });
+    }
+
+    await ensureDefaults();
+    const typeId = raw.type_id || defaultTypeId;
+    const statusId = raw.status_id || defaultStatusId;
+    const priorityId = raw.priority_id || defaultPriorityId;
+    const assignee = raw.assignee_user_id || null;
+    const estimated = raw.estimated_hours != null && raw.estimated_hours !== ''
+      ? Number(raw.estimated_hours)
+      : 0;
+    const percent = raw.percent_complete != null && raw.percent_complete !== ''
+      ? Number(raw.percent_complete)
+      : 0;
+    const description = trimOrNull(raw.description);
+    const itemId = raw.id ? Number(raw.id) : null;
+
+    if (itemId) {
+      const upd = await client.query(
+        `
+        UPDATE work_items SET
+          title=$3, description=$4, type_id=$5, status_id=$6, priority_id=$7,
+          assignee_user_id=$8, plan_start_date=$9, plan_end_date=$10,
+          estimated_hours=COALESCE($11::numeric,0), percent_complete=COALESCE($12::numeric,0),
+          is_active=TRUE, updated_by=$13, updated_at=CURRENT_TIMESTAMP
+        WHERE id=$1 AND project_id=$2
+        RETURNING id
+        `,
+        [
+          itemId,
+          projectId,
+          title,
+          description,
+          typeId,
+          statusId,
+          priorityId,
+          assignee,
+          planStart,
+          planEnd,
+          estimated,
+          percent,
+          userId || null,
+        ]
+      );
+      if (upd.rows[0]) {
+        keepIds.push(upd.rows[0].id);
+        continue;
+      }
+    }
+
+    const no =
+      trimOrNull(raw.work_item_no) || (await nextSequenceCode(client, 'PRJ_WORK_ITEM'));
+    const ins = await client.query(
+      `
+      INSERT INTO work_items (
+        company_id, project_id, work_item_no, type_id, status_id, priority_id,
+        title, description, assignee_user_id, reporter_user_id,
+        plan_start_date, plan_end_date, estimated_hours, percent_complete, created_by
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,
+        $7,$8,$9,$10,
+        $11,$12,COALESCE($13::numeric,0),COALESCE($14::numeric,0),$15
+      ) RETURNING id
+      `,
+      [
+        companyId,
+        projectId,
+        no,
+        typeId,
+        statusId,
+        priorityId,
+        title,
+        description,
+        assignee,
+        userId || null,
+        planStart,
+        planEnd,
+        estimated,
+        percent,
+        userId || null,
+      ]
+    );
+    keepIds.push(ins.rows[0].id);
+  }
+
+  if (keepIds.length) {
+    await client.query(
+      `UPDATE work_items SET is_active=FALSE, updated_at=CURRENT_TIMESTAMP
+       WHERE project_id=$1 AND NOT (id = ANY($2::int[]))`,
+      [projectId, keepIds]
+    );
+  } else if (rows !== undefined) {
+    await client.query(
+      `UPDATE work_items SET is_active=FALSE, updated_at=CURRENT_TIMESTAMP WHERE project_id=$1`,
+      [projectId]
+    );
+  }
+}
+
+async function syncPhases(client, projectId, companyId, rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  const keepIds = [];
+
+  for (const raw of list) {
+    const phaseName = trimOrNull(raw.phase_name);
+    if (!phaseName) continue;
+    const lineNo = raw.line_no != null && raw.line_no !== '' ? Number(raw.line_no) : 10;
+    const planStart = raw.plan_start_date || null;
+    const planEnd = raw.plan_end_date || null;
+    const description = trimOrNull(raw.description);
+    const phaseId = raw.id ? Number(raw.id) : null;
+
+    if (phaseId) {
+      const upd = await client.query(
+        `
+        UPDATE project_phases SET
+          phase_name=$3, line_no=COALESCE($4::numeric,10),
+          plan_start_date=$5, plan_end_date=$6, description=$7, is_active=TRUE
+        WHERE id=$1 AND project_id=$2
+        RETURNING id
+        `,
+        [phaseId, projectId, phaseName, lineNo, planStart, planEnd, description]
+      );
+      if (upd.rows[0]) {
+        keepIds.push(upd.rows[0].id);
+        continue;
+      }
+    }
+
+    const code =
+      trimOrNull(raw.phase_code) || (await nextSequenceCode(client, 'PRJ_PHASE'));
+    const ins = await client.query(
+      `
+      INSERT INTO project_phases (
+        project_id, company_id, phase_code, phase_name, line_no,
+        plan_start_date, plan_end_date, description, is_active
+      ) VALUES ($1,$2,$3,$4,COALESCE($5::numeric,10),$6,$7,$8,TRUE)
+      RETURNING id
+      `,
+      [projectId, companyId, code, phaseName, lineNo, planStart, planEnd, description]
+    );
+    keepIds.push(ins.rows[0].id);
+  }
+
+  if (keepIds.length) {
+    await client.query(
+      `UPDATE project_phases SET is_active=FALSE
+       WHERE project_id=$1 AND NOT (id = ANY($2::int[]))`,
+      [projectId, keepIds]
+    );
+  } else if (rows !== undefined) {
+    await client.query(
+      `UPDATE project_phases SET is_active=FALSE WHERE project_id=$1`,
+      [projectId]
+    );
+  }
+}
+
 async function projectDetail(id) {
   const r = await pool.query(
     `
@@ -38,12 +307,12 @@ async function projectDetail(id) {
     [id]
   );
   if (!r.rows[0]) return null;
-  const [members, phases, milestones, workCount] = await Promise.all([
+  const [members, phases, milestones, workItems] = await Promise.all([
     pool.query(
       `
       SELECT m.*, r.role_code, r.role_name,
              TRIM(CONCAT(COALESCE(u.first_name,''),' ',COALESCE(u.last_name,''))) AS user_name,
-             u.user_code
+             u.user_code, u.first_name, u.last_name
       FROM project_members m
       LEFT JOIN prj_project_roles r ON r.id = m.role_id
       LEFT JOIN users u ON u.id = m.user_id
@@ -61,7 +330,22 @@ async function projectDetail(id) {
       [id]
     ),
     pool.query(
-      `SELECT COUNT(*)::int AS cnt FROM work_items WHERE project_id=$1 AND is_active=TRUE`,
+      `
+      SELECT w.*,
+             t.type_code, t.type_name,
+             s.status_code, s.status_name,
+             pr.priority_code, pr.priority_name,
+             TRIM(CONCAT(COALESCE(a.first_name,''),' ',COALESCE(a.last_name,''))) AS assignee_name,
+             a.user_code AS assignee_user_code, a.first_name AS assignee_first_name
+      FROM work_items w
+      LEFT JOIN prj_work_item_types t ON t.id = w.type_id
+      LEFT JOIN prj_work_item_statuses s ON s.id = w.status_id
+      LEFT JOIN prj_work_item_priorities pr ON pr.id = w.priority_id
+      LEFT JOIN users a ON a.id = w.assignee_user_id
+      WHERE w.project_id=$1 AND w.is_active=TRUE
+      ORDER BY w.backlog_rank NULLS LAST, w.id DESC
+      LIMIT 200
+      `,
       [id]
     ),
   ]);
@@ -70,7 +354,9 @@ async function projectDetail(id) {
     members: members.rows,
     phases: phases.rows,
     milestones: milestones.rows,
-    work_item_count: workCount.rows[0]?.cnt || 0,
+    work_items: workItems.rows,
+    work_item_count: workItems.rows.length,
+    member_count: members.rows.length,
   };
 }
 
@@ -104,7 +390,11 @@ router.get('/', async (req, res, next) => {
       SELECT p.*,
              t.type_name, s.status_name, s.status_code, pr.priority_name,
              pt.partner_name,
-             TRIM(CONCAT(COALESCE(mu.first_name,''),' ',COALESCE(mu.last_name,''))) AS manager_name
+             TRIM(CONCAT(COALESCE(mu.first_name,''),' ',COALESCE(mu.last_name,''))) AS manager_name,
+             (SELECT COUNT(*)::int FROM project_members m
+               WHERE m.project_id=p.id AND m.is_active=TRUE) AS member_count,
+             (SELECT COUNT(*)::int FROM work_items w
+               WHERE w.project_id=p.id AND w.is_active=TRUE) AS work_item_count
       FROM projects p
       LEFT JOIN prj_project_types t ON t.id = p.type_id
       LEFT JOIN prj_project_statuses s ON s.id = p.status_id
@@ -175,7 +465,7 @@ router.post('/', async (req, res, next) => {
           currency_code, planned_budget, expected_revenue,
           approach, portfolio_code, crm_opportunity_id,
           sales_order_id, sales_order_line_id, cost_center_code,
-          created_by
+          percent_complete, created_by
         ) VALUES (
           $1,$2,$3,$4,
           $5,$6,$7,$8,
@@ -185,7 +475,7 @@ router.post('/', async (req, res, next) => {
           COALESCE($17,'TRY'), COALESCE($18::numeric,0), COALESCE($19::numeric,0),
           COALESCE($20,'classic'), $21, $22,
           $23, $24, $25,
-          $26
+          COALESCE($26::numeric,0), $27
         ) RETURNING id
         `,
         [
@@ -214,11 +504,16 @@ router.post('/', async (req, res, next) => {
           req.body.sales_order_id || null,
           req.body.sales_order_line_id || null,
           trimOrNull(req.body.cost_center_code),
+          req.body.percent_complete,
           req.user?.id || null,
         ]
       );
       const projectId = ins.rows[0].id;
-      if (req.body.manager_user_id || req.user?.id) {
+
+      const hasMembersBody = Object.prototype.hasOwnProperty.call(req.body, 'members');
+      if (hasMembersBody) {
+        await syncMembers(client, projectId, req.body.members);
+      } else if (req.body.manager_user_id || req.user?.id) {
         const role = await client.query(`SELECT id FROM prj_project_roles WHERE role_code='PM' LIMIT 1`);
         await client.query(
           `
@@ -229,11 +524,20 @@ router.post('/', async (req, res, next) => {
           [projectId, req.body.manager_user_id || req.user.id, role.rows[0]?.id || null]
         );
       }
+
+      if (Object.prototype.hasOwnProperty.call(req.body, 'work_items')) {
+        await syncWorkItems(client, projectId, firmaId, req.body.work_items, req.user?.id);
+      }
+      if (Object.prototype.hasOwnProperty.call(req.body, 'phases')) {
+        await syncPhases(client, projectId, firmaId, req.body.phases);
+      }
+
       return projectId;
     });
 
     res.status(201).json(await projectDetail(row));
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
   }
 });
@@ -260,50 +564,70 @@ router.put('/:id', async (req, res, next) => {
       return res.status(400).json({ hata: 'Bitiş tarihi başlangıçtan önce olamaz.' });
     }
 
-    await pool.query(
-      `
-      UPDATE projects SET
-        project_name=$2, description=$3, type_id=$4, category_id=$5, status_id=$6, priority_id=$7,
-        partner_id=$8, manager_user_id=$9, sponsor_user_id=$10, department_code=$11,
-        plant_id=$12, warehouse_id=$13, plan_start_date=$14, plan_end_date=$15,
-        actual_start_date=$16, actual_end_date=$17, currency_code=$18,
-        planned_budget=$19, expected_revenue=$20, percent_complete=$21, approach=$22,
-        portfolio_code=$23, cost_center_code=$24, is_archived=$25, is_active=$26,
-        updated_by=$27, updated_at=CURRENT_TIMESTAMP
-      WHERE id=$1
-      `,
-      [
-        req.params.id,
-        pick('project_name', trimOrNull) || cur.project_name,
-        pick('description', trimOrNull),
-        pick('type_id'),
-        pick('category_id'),
-        pick('status_id'),
-        pick('priority_id'),
-        pick('partner_id'),
-        pick('manager_user_id'),
-        pick('sponsor_user_id'),
-        pick('department_code', trimOrNull),
-        pick('plant_id'),
-        pick('warehouse_id'),
-        plan_start,
-        plan_end,
-        pick('actual_start_date'),
-        pick('actual_end_date'),
-        pick('currency_code', trimOrNull) || cur.currency_code,
-        pick('planned_budget'),
-        pick('expected_revenue'),
-        pick('percent_complete'),
-        pick('approach') || cur.approach,
-        pick('portfolio_code', trimOrNull),
-        pick('cost_center_code', trimOrNull),
-        pick('is_archived'),
-        pick('is_active'),
-        req.user?.id || null,
-      ]
-    );
+    await withTransaction(pool, async (client) => {
+      await client.query(
+        `
+        UPDATE projects SET
+          project_name=$2, description=$3, type_id=$4, category_id=$5, status_id=$6, priority_id=$7,
+          partner_id=$8, manager_user_id=$9, sponsor_user_id=$10, department_code=$11,
+          plant_id=$12, warehouse_id=$13, plan_start_date=$14, plan_end_date=$15,
+          actual_start_date=$16, actual_end_date=$17, currency_code=$18,
+          planned_budget=$19, expected_revenue=$20, percent_complete=$21, approach=$22,
+          portfolio_code=$23, cost_center_code=$24, is_archived=$25, is_active=$26,
+          updated_by=$27, updated_at=CURRENT_TIMESTAMP
+        WHERE id=$1
+        `,
+        [
+          req.params.id,
+          pick('project_name', trimOrNull) || cur.project_name,
+          pick('description', trimOrNull),
+          pick('type_id'),
+          pick('category_id'),
+          pick('status_id'),
+          pick('priority_id'),
+          pick('partner_id'),
+          pick('manager_user_id'),
+          pick('sponsor_user_id'),
+          pick('department_code', trimOrNull),
+          pick('plant_id'),
+          pick('warehouse_id'),
+          plan_start,
+          plan_end,
+          pick('actual_start_date'),
+          pick('actual_end_date'),
+          pick('currency_code', trimOrNull) || cur.currency_code,
+          pick('planned_budget'),
+          pick('expected_revenue'),
+          pick('percent_complete'),
+          pick('approach') || cur.approach,
+          pick('portfolio_code', trimOrNull),
+          pick('cost_center_code', trimOrNull),
+          pick('is_archived'),
+          pick('is_active'),
+          req.user?.id || null,
+        ]
+      );
+
+      if (Object.prototype.hasOwnProperty.call(req.body, 'members')) {
+        await syncMembers(client, Number(req.params.id), req.body.members);
+      }
+      if (Object.prototype.hasOwnProperty.call(req.body, 'work_items')) {
+        await syncWorkItems(
+          client,
+          Number(req.params.id),
+          cur.company_id,
+          req.body.work_items,
+          req.user?.id
+        );
+      }
+      if (Object.prototype.hasOwnProperty.call(req.body, 'phases')) {
+        await syncPhases(client, Number(req.params.id), cur.company_id, req.body.phases);
+      }
+    });
+
     res.json(await projectDetail(req.params.id));
   } catch (err) {
+    if (err.status) return res.status(err.status).json({ hata: err.message });
     next(err);
   }
 });
@@ -340,6 +664,23 @@ router.post('/:id/members', async (req, res, next) => {
       [req.params.id, user_id, role_id || null, can_view_budget, can_edit_budget, can_view_costs]
     );
     res.status(201).json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/:id/members/:memberId', async (req, res, next) => {
+  try {
+    const r = await pool.query(
+      `
+      UPDATE project_members SET is_active=FALSE
+      WHERE project_id=$1 AND id=$2
+      RETURNING id
+      `,
+      [req.params.id, req.params.memberId]
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Üye bulunamadı.' });
+    res.json({ is_deleted: true, id: Number(req.params.memberId) });
   } catch (err) {
     next(err);
   }
