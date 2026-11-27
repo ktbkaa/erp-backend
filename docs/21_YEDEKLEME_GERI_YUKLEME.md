@@ -1,5 +1,9 @@
 # Yedekleme ve Geri Yükleme Runbook
 
+> **Güncel runbook:** [`go-live/YEDEKLEME_GERI_DONUS_RUNBOOK.md`](go-live/YEDEKLEME_GERI_DONUS_RUNBOOK.md)
+> (otomatik offsite yedek, şifreleme, `npm run db:restore`, `npm run db:drill`). Aşağıdaki manuel
+> komutlar yalnız acil durum / araçsız ortam içindir.
+
 ## Yedek alma (PostgreSQL)
 
 ```bash
