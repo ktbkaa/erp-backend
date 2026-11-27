@@ -1,0 +1,64 @@
+01	iHKKWy_ulnI	PRD 10021 : PRDT01 - Update existing production order	248
+02	BYsxpG_KbAA	PRD 10030 : PRDT01 - Create and schedule a normal production order	98
+03	IgHQjKMpgiE	PRD 10031 : PRDT01 - Check components and operations of normal production order	169
+04	yivVzeGT_bQ	PRD 10040 : PRDT01 - Create and schedule a collective production order	101
+05	NpxQLzAGBlg	PRD 10041 : PRDT01 - Check components and operations of the collective production order	136
+06	R1e__YjZN8M	PRD 10050 : PRDT01 - Create and schedule a combined production order	133
+07	kZUa9KsIhLI	PRD 10051 : PRDT01 - Check components and operations of the combine production order	82
+08	z_Mdyxs1vEw	PRD 10055 : PRDT01 - Create a simple demontage production order	109
+09	tsgt_AKTkWE	PRD 10056 : PRDT01 - Create a complex demontage production order	113
+10	7wolds7hjyI	PRD 10060 : PRDT01 - Good issues for normal order	248
+11	_z3QvbC8ifw	PRD 10070 : PRDT01 - Good issues for collective order	193
+12	WPmDXbwimV0	PRD 10080 : PRDT01 - Good issues for combine order	181
+13	s0qT3Gjz1XA	PRD 10090 : PRDT01 - Receipt for normal order	209
+14	4POlKwrDO2c	PRD 10100 : PRDT01 - Receipt for collective order	206
+15	Qe6LRl9sbWs	PRD 10110 : PRDT01 - Receipt for combine order	196
+16	XjlzOIO6FD4	PRD 10120 : PRDT01 - Byproduct for normal, collective  and combine order	178
+17	RgofCdMAG2g	PRD 10130 : PRDT01 - Resource for normal, collective  and combine order	98
+18	xgxSASXwL5c	PRD 10140 : PRDT01 - Standart calculation	60
+19	HpI9p4FZKsE	PRD 10160 : PRDT01 - Scheduling, Components, and Opr. in Normal Prod. Orders with delivery factor	114
+20	-1S-cc_Wmq0	PRD 10170 : PRDT01 - Collective order, schedule, components and operations with delivery factor	103
+21	rKbW9LH32OM	PRD 10200 : PRDT02 - Confirmation and correction for normal order	88
+22	N5-bj5e0obU	PRD 10210 : PRDT02 - Confirmation and correction for collective order	79
+23	Z64qOmz0rUc	PRD 10230 : PRDT02 - Confirmation and correction for demontage order	95
+24	iRIlh5a8Jg4	PRD 10220 : PRDT02 - Confirmation and correction for combine order	99
+25	S_Ll_LdVqz8	PRD 10235 : PRDT01 - Planning Serial Number while Creating Production Order	135
+26	Er0dvZ60ZXE	PRD 10270 : PRDT02 - Confirmation and correction for demontage order with delivery factor	172
+27	OKxhDRwtla8	PRD 10280 : PRDT02 - Confirmation and correction for normal order with retroactive components	210
+28	hbgIzW6j-s4	PRD 10290 : PRDT02 - Confirmation and correction for collective order with retroactive components	208
+29	hHOtmDe4Gkw	PRD 10300 : PRDT02 - Confirmation and correction for combine order with retroactive components	204
+30	gh9VxyeG1lQ	PRD 10310 : PRDT02 - Confirmation and correction for demontage order with retroactive components	183
+31	KMxCLBuv4QQ	PRD 10315 : PRDT02 - Calculating of Retroactive by-Product Quantity while Confirming Operation	132
+32	faen2m8m6Zo	PRD 10360 : PRDT02 - Confirmation and correction with Serial Numbers	187
+33	ryUUCWWReGg	PRD 10320 : PRDT02 - Confirmation and correction Automatic Issue and Operational Issue	163
+34	tJJOJqmJliQ	PRD 10361 : PRDT02 - Confirmation Metrics	117
+35	PvprGg3f2QQ	PRD 10365 : PRDT02 - Rework Quantity while Confirming Operation	121
+36	O4IV0T3Ped0	PRD 10330 : PRDT02 - Confirmation and correction Automatic Receipt	190
+37	4MTlm8Hvl0w	PRD 10340 : PRDT02 - Check semi prod quantity while giving confirmation	145
+38	V1jY9D8Kntc	PRD 10350 : PRDT02 - Confirmation and correction with Batch Numbers	127
+39	RpFW6jhPDf0	PRD 10370 : PRDT03 - Easy Production Order Confirmation	191
+40	G1LLzJQc9Es	PRD 10380 : PRDT03 - Start - End First Article	97
+41	9HljMJm1vgw	PRD 10400 : PRDT03 - Check behavior of Workcenter Type while Starting or Ending a job	119
+42	H-wSZsxx0no	PRD 10410 : PRDT03 - Selecting Scheduled Jobs	75
+43	FXzECx2kHew	PRD 10420 : PRDT03 - Check Location of Workcenters	71
+44	CnC6E-GthFg	PRD 10430 : PRDT03 - Operational Issue while Starting an operation.	184
+45	EAB7kALQFyw	PRD 10440 : PRDT03 - Automatic Receipt while ending an operation.	123
+46	9VzXFe5wTac	PRD 10450 : PRDT03 - Ending an operation with Serial Numbers	178
+47	DDTHXM6BmVI	PRD 10460 : PRDT03 - Ending an operation with Batch Numbers.	135
+48	a-MubQwFhXU	PRD 10462 : PRDT03 - Repeated Setup for Operations	124
+49	gUXp00SudDE	PRD 10470 : PRDT05 - Confirmation and correction with Confirmation Number	84
+50	5-J26CtPReg	PRD 10480 : PRDT05 - Detail Confirmation and correction with Confirmation Number	84
+51	NIt9wsKwSns	PRD 10490 : PRDT06 - Converting Production Plan to Production Order	49
+52	uA2MoozutVk	PRD 10580 : PRDT13 - Create Production Order from Sales Order	87
+53	Er52L2zz0Iw	PRD 10680 : PRDT40 - External Operation Management Process	147
+54	Beq5J0Ktj1Q	PRD 10690 : PRDT40 - Create Purchase Order for External Operation	83
+55	JSTNwlgUjaA	PRD 10700 : PRDT40 - Creating Purchase Requisition for External Operation	68
+56	ek6n2PMD6uA	PRD 10710 : INVT13 - Check external operation products will be come from Vendor	78
+57	FqOg-Z-t5tk	PRD 10720 : INVT13 - Check provided parts will be sent to Vendor	90
+58	zmMzQ34jao0	PRD 10730 : PRDT42 - Combined Operations Process	98
+59	zuvC9q6tJXI	PRD 10740 : PRDT42 - Confirmation and correction Combined Operations	150
+60	14A3bFHPZsI	PRD 10741 : PRDT42 - Retroactive Material Management for Combined Operations	87
+61	w8uLEA_Y-Rc	PRD 10742 : PRDT42 - Failure Management for Combined Operations	96
+62	aznPvTc4_Ks	PRD 10743 : PRDT42 - Activity Management for Combined Operations	112
+63	jMzVSrf1ccM	PRD 10744 : PRDT43 - Easy Confirmation Combined Operations	95
+64	MYZxH4u9Gv0	PRD 10745 : PRDT42 - By-Product Management in Combined Operations	78

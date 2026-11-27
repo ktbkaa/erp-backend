@@ -1,0 +1,31 @@
+id,yetenek,canias_tx,skor_0_4,ktb_ekran,dalga,not
+A1,Normal IE olustur+cizelgele,PRDT01,3,uretim-emirleri,P0,datetime plan eklendi; CAP yok
+A2,Komponent+operasyon sekmeleri,PRDT01,3,uretim-emirleri,P0,Malzemeleri Getir + rota otodoldur
+A3,Kolektif IE,PRDT01,0,—,P2,
+A4,Bilesik/cok seviyeli IE,PRDT01,1,—,P2,ag yok
+A5,Demontaj IE,PRDT01,0,—,P2,
+A6,Malzeme cikis manuel,PRDT01/INV,2,stok-hareketleri|uretim-girisleri,P0,
+A7,Oto emis (onaya bagli),PRDT02,1,uretim-emirleri,P0,cikis tipi alani; onay ani emis zayif
+A8,Operasyonel cikis (baslatirken),PRDT03,1,uretim-girisleri,P1,
+A9,Urun giris manuel/oto,PRDT01/02,2,uretim-girisleri,P0,
+A10,Yan urun,PRDT01/02,0,—,P2,
+A11,Kaynak/ekipman IE,PRDT01,1,routings,P2,
+A12,Seri/parti plan+onay,PRDT01/02/03,1,stok-partileri,P1,
+A13,Standart maliyet IE,PRDT01,0,—,P3,
+B1,Normal onay+duzeltme,PRDT02,2,uretim-girisleri,P1,duzeltme listesi yok
+B2,Kolay saha onay BDE,PRDT03,1,kolay-is-emri-onayi|uretim-girisleri,P1,isim karisikligi: yonetim onayi vs saha
+B3,Onay no ile hizli,PRDT05,2,hizli-uretim-girisi,P1,
+B4,Onay metrikleri/rework,PRDT02,0,—,P1,
+B5,Yarimamul stok kontrolu,PRDT02,0,—,P1,
+C1,Plan->IE,PRDT06,3,uretim-planlari,P0,/cevir
+C2,Satis->IE,PRDT13,3,siparis-is-emri|toplu-is-emri,P0,form/liste iyilesti
+C3,Is emri agi,PRDT10,0,—,P2,
+D1,Fason op+SA/INV,PRDT40/INV13,0,—,P2,is_subcontract bayrak
+D2,Birlestik operasyon,PRDT42/43,0,—,P2,
+E1,Eksik malzeme analizi,PRDT01,1,stok-rezervasyonlari,P0,
+E2,Ileri/geri cizelgeleme,CAP,0,—,P3,
+E3,Planlanan-gerceklesen rapor,PRDT5x,1,—,P3,
+E4,WIP/hurda/rework analiz,Analiz,0,—,P3,
+E5,IE maliyet/muhasebe,PRDT51/60,0,—,P3,
+F1,QLT onay oncesi/sonrasi,QLT,2,kk-emirleri-*,P1,
+F2,Belge takip/Zoom zinciri,Kabuk,2,form zincir seridi,P0,

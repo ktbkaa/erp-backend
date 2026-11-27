@@ -1,0 +1,27 @@
+﻿sira,surec_asamasi,surec_kodu,eski_surec,yeni_surec,fark_ozeti,eski_ekran,yeni_ekran,canias_tx,dalga,durum
+1,Master veri,BOM,Ürün ağacı CRUD; alternatif/varyant yok,Ürün ağacı + patlatma/seviye/malzeme değişikliği; alternatif/varyant P2,Master güçlenir; varyant sonraya bırakılır,urun-agaci,urun-agaci|bom-patlatma|bom-level-listesi|bom-malzeme-degisikligi,BOMT01,P0-P2,derinlestirme
+2,Master veri,ROU,Rota + iş merkezi basit CRUD,Rota otodoldur IE'ye; şablon; fason bayrağı P2,IE ile bağ sıkılaşır,routings|is-merkezleri,routings|is-merkezleri|is-istasyonlari,ROUT01/02,P0-P2,derinlestirme
+3,Planlama girdisi,SAL,Satış siparişinden IE kısmi; stok filtresi yok/zayıf,Sipariş satırı stok filtresi; BOM/rota/tip/miktar otodoldur; IE no + datetime,Sipariş→IE zinciri Canias PRDT13 seviyesine yaklaşır,siparis-is-emri,siparis-is-emri|toplu-is-emri,PRDT13,P0,iyilestirme
+4,Planlama girdisi,MRP,MRP sonuçtan plan/IE; plan belgesi zayıf,Üretim planı Başlatıldı → Çevir; MRP önerisi yönlendirir,Plan ≠ IE ayrımı netleşir,uretim-planlari|mrp-sonuclar,uretim-planlari|mrp-calisma|mrp-sonuclar,PRDT06/MRPT,P0,iyilestirme
+5,İş emri oluşturma,IE_OLUSTUR,Manuel IE; malzeme/op elle veya kısmi,Malzemeleri Getir + rota seçince op otodoldur; formLinks stok→BOM→rota→depo,Tek tıkla bileşen/op yükleme,uretim-emirleri,uretim-emirleri,PRDT01,P0,iyilestirme
+6,İş emri tipi,IE_TIP,Fiilen yalnız normal (+SIP),NORMAL/SIP P0; kolektif/bileşik/demontaj P2,Emir tipi matrisi genişler,uretim-emri-tipleri,uretim-emri-tipleri|uretim-emirleri,PRDT01,P0-P2,yeni_yetenek
+7,Termin,PLAN_ZAMAN,Plan başlangıç/bitiş çoğu yerde yalnız tarih,datetime (tarih+saat) tüm IE/plan formlarında,Termin hassasiyeti artar,uretim-emirleri|siparis-is-emri,uretim-emirleri|siparis-is-emri|kolay-is-emri-onayi,—,P0,iyilestirme
+8,Eksik malzeme,EKSIK_MALZ,Rezervasyon ayrı; IE'de otomatik analiz yok/zayıf,IE kaydet/onay öncesi eksik malzeme uyarısı; rezervasyon P1,Malzeme akışı görünür hale gelir,—,uretim-emirleri|stok-rezervasyonlari,PRDT01,P0-P1,yeni_yetenek
+9,Çizelgeleme,CAP,Elle tarih; ileri/geri çizelgeleme yok,Elle datetime P0; CAP ileri/geri P3,Kapasite motoru ertelenir ama termin alanı hazır,—,—,CAP,P3,yeni_yetenek
+10,Yönetim onayı,IE_ONAY,Kolay İş Emri Onayı adı karışık; onay≈üretim algısı,İş Emri Onayı (yeniden adlandır); stok üretmez; üretime açar,Onay ≠ üretim ≠ stok ayrımı,kolay-is-emri-onayi,kolay-is-emri-onayi (başlık: İş Emri Onayı),Yönetim,P0,isim_ve_kural
+11,Başlatma,IE_BASLAT,Başlat var; onay atlanabiliyordu riski,Yalnız onaylı + Açık emir başlatılır,Onay atlama kapanır,uretim-emirleri,uretim-emirleri,—,P0,sikilastirma
+12,Malzeme çıkış tipi,CIKIS_TIP,Başlıkta çıkış tipi; satır disiplini zayıf; oto emiş onay anında garanti değil,Satır çıkış tipi Manuel|OtoEmis|Operasyonel; OtoEmis onayda stok çıkar,Canias emiş zamanlaması,uretim-emirleri,uretim-emirleri|uretim-girisleri,PRDT02,P0,kritik_fark
+13,Operasyon onayı,OP_ONAY,Operasyonel/hızlı giriş var; düzeltme listesi yok,Normal onay + düzeltme listesi (P1); başlat/bitir saha (P1),PRDT02/03 derinliği,uretim-girisleri|hizli-uretim-girisi,uretim-girisleri|hizli-uretim-girisi,PRDT02/03/05,P0-P1,derinlestirme
+14,Hızlı onay,HIZLI,Hızlı üretim girişi kısmi,Onay numarasıyla hızlı/detaylı (P1),PRDT05,hizli-uretim-girisi,hizli-uretim-girisi,PRDT05,P1,iyilestirme
+15,Mamul giriş,GIRIS,Manuel/kısmi otomatik giriş,Giriş tipi Manuel|Otomatik; zorunlu op'lar bitince oto giriş,Stok girişi kurala bağlanır,uretim-girisleri,uretim-girisleri,PRDT01/02,P0-P1,iyilestirme
+16,Kalite,QLT,GKK/CKK emirleri var; PRD bağ zayıf,Onay öncesi/sırası/sonrası KK kancası; belge takipten açılır,PRD↔QLT sıkı bağ,kk-emirleri-*,kk-emirleri-* + IE belge takip,QLT,P1,entegrasyon
+17,Belge zinciri,BELGE_TAKIP,Üst zincir şeridi kısmi; IE'de takip sekmesi yok,IE Belge Takip sekmesi: sipariş/plan/rezervasyon/hareket/KK,Canias Zoom benzeri izlenebilirlik,form zincir seridi,uretim-emirleri (Belge Takip),Kabuk,P0,kritik_fark
+18,Lookup UX,LOOKUP,Çoğu yerde yalnız alan değeri,○ tarayıcıda kod+ad (+miktar/belge),Tüm PRD lookup'ları zengin,tum ekranlar,tum ekranlar,—,P0,ux
+19,Liste/form UX,SCROLL,Scroll birleşik veya bozuk; satır aksiyonu uyarı toast,Bağımsız liste/form scroll; satır Kaydet/Düzelt/Kopyala/Sil sessiz,Kabuk disiplini,tum ekranlar,tum ekranlar,—,P0,ux
+20,İş emri ağı,AG,Yok (çok seviyeli IE manuel ayrı kayıtlar),İş Emri Ağı ekranı (bileşik/çok seviyeli),PRDT10,yok,is-emri-agi,PRDT10,P2,yeni_ekran
+21,Fason,FASON,Rota is_subcontract bayrak; süreç ekranı yok,Fason op + SA istek/sipariş + tedarikçi parça/ürün transfer,PRDT40/INVT13,yok,fason-operasyon|fason-transfer,PRDT40/INV13,P2,yeni_ekran
+22,Birleşik operasyon,BIRLESIK,Yok,Benzer op grupla → ortak onay,PRDT42/43,yok,birlesik-op-onay,PRDT42/43,P2,yeni_ekran
+23,Yan ürün,YAN_URUN,Yok,IE/onayda yan ürün yönetimi,PRDT01/02,yok,uretim-emirleri|uretim-girisleri,PRDT01/02,P2,yeni_yetenek
+24,Analiz,ANALIZ,Yok/stub,Planlanan–gerçekleşen; WIP/fire/rework; IE maliyet,PRDT5x/51/60,yok,analiz-plan-gercek|analiz-wip|analiz-maliyet,PRDT5x/51/60,P3,yeni_ekran
+25,Menü organizasyonu,MENU,Üretim altında düz/karışık bölümler,Ürün Ağacı|Planlama|İş Emirleri|Atölye|Fason|Analiz|Tanımlar,Süreç sırasına göre menü,uretim menü,uretim menü (yeniden),—,P0-P2,organizasyon
+26,Uçtan uca zincir,E2E,Sipariş→IE→onay→giriş kısmen kopuk,SAL/MRP→IE→yönetim onayı→başlat→op onay→INV/QLT→analiz; bağlantı sözleşmesi sabit,Zincir kırılmaz ilkesi,parcali,tum zincir,PRD omurga,P0-P3,mimari
