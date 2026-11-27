@@ -72,6 +72,12 @@ router.get('/', async (req, res) => {
     const r = await pool.query(sql, params);
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -96,6 +102,12 @@ router.get('/:id', async (req, res) => {
     // Hassas alanları (national_id) yalnızca yanıtta bırak — UI yetkisi ayrıca kısıtlanmalı
     res.json({ ...row, history: hist.rows, salaries: salaries.rows });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -161,6 +173,12 @@ router.post('/', async (req, res) => {
     });
     res.status(201).json(await getEmployee(id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -261,6 +279,12 @@ router.put('/:id', async (req, res) => {
     });
     res.json(await getEmployee(mevcut.id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -295,6 +319,12 @@ router.get('/:id/izin-hakedis', async (req, res) => {
       source: 'https://www.mevzuat.gov.tr/MevzuatMetin/1.5.4857.pdf',
     });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -310,6 +340,12 @@ router.delete('/:id', async (req, res) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'Personel bulunamadı.' });
     res.json({ is_deleted: false, pasife_alindi: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

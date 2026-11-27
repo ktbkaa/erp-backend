@@ -125,6 +125,12 @@ router.get('/:id', async (req, res) => {
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         res.json(siparis);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -168,7 +174,7 @@ async function resolveKalemler(client, kalemler) {
             stok = r.rows[0];
         }
         if (!stok) throw new Error(`Stok bulunamadı (${k.item_id || k.item_code}).`);
-        if (k.quantity == null) throw new Error('Her kalemde quantity zorunludur.');
+        if (k.quantity == null) throw new Error('Her kalemde miktar zorunludur.');
         const unit_price =
             k.unit_price !== undefined && k.unit_price !== null
                 ? Number(k.unit_price)
@@ -356,6 +362,12 @@ router.put('/:id', async (req, res) => {
 
         res.json(await getOrder(id));
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -383,6 +395,12 @@ router.post('/:id/rezervasyon-iptal', async (req, res) => {
     });
     res.json(await getOrder(req.params.id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -395,7 +413,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
         const siparis = await getOrder(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.status)) {
-            return res.status(400).json({ hata: `Sipariş durumu accepted değil: ${siparis.status}` });
+            return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.status}` });
         }
         const warehouse_id = Number(req.body.warehouse_id);
         if (!warehouse_id) return res.status(400).json({ hata: 'warehouse_id zorunlu.' });
@@ -484,7 +502,7 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
                 );
                 sevkEdilenVar = true;
             }
-            if (!sevkEdilenVar) throw new Error('Sevk edilecek açık quantity yok.');
+            if (!sevkEdilenVar) throw new Error('Sevk edilecek açık miktar yok.');
 
             // Sipariş durumu: kısmi / kapalı (sevk bazlı)
             const guncel = await client.query(
@@ -506,6 +524,12 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
             stok_uyari: uyariSatirlar.length ? uyariSatirlar : undefined,
         });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -516,6 +540,12 @@ router.delete('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

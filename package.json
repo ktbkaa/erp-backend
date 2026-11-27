@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "migrate": "node db/migrate.js",
+    "local:heal": "node scripts/local-heal.js",
     "db:backup": "node scripts/db-backup.js",
     "demo:cycle": "node scripts/demo-cycle.js",
     "demo:cleanup": "node scripts/demo-cleanup.js",
@@ -16,6 +17,7 @@
     "demo:mrp": "node scripts/demo-mrp-ornek.js",
     "demo:elek-dongu": "node scripts/demo-elek-tam-dongu.js",
     "demo:gida-dongu": "node scripts/demo-gida-tam-dongu.js",
+    "demo:kilif-dongu": "node scripts/demo-kilif-tam-dongu.js",
     "demo:dokum-prj": "node scripts/demo-dokum-prj.js",
     "demo:teks": "node scripts/demo-teks-tam-dongu.js",
     "demo:teks-dongu": "node scripts/demo-teks-tam-dongu.js",
@@ -30,12 +32,15 @@
     "qa:dokum-org": "node scripts/qa/ensure-dokum-org.js",
     "qa:ornek-gida": "node scripts/qa/rich-ornek-veri.js --firma=GIDA",
     "qa:ornek-dokum": "node scripts/qa/rich-ornek-veri.js --firma=DOKUM",
+    "qa:ornek-elek": "node scripts/qa/rich-ornek-veri.js --firma=ELEK",
+    "qa:ornek-kilif": "node scripts/qa/rich-ornek-veri.js --firma=KILIF",
     "qa:ornek-all": "node scripts/qa/rich-ornek-veri.js",
     "qa:roles": "node scripts/qa/role-matrix.mjs",
     "qa:capture": "node scripts/qa/capture-ui-evidence.mjs",
     "qa:dashboard": "node scripts/qa/build-qa-dashboard.mjs",
     "qa:pdf": "node scripts/qa/build-qa-pdf.mjs",
-    "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf"
+    "qa:all": "npm run qa:finance-seed && npm run qa:inventory && npm run qa:smoke && npm run qa:db && npm run qa:roles && npm run qa:dashboard && npm run qa:pdf",
+    "db:restore-demo": "node scripts/db-restore-demo.js"
   },
   "keywords": [
     "erp",

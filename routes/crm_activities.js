@@ -72,6 +72,12 @@ router.get('/', async (req, res) => {
         );
         res.json(liste.rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -82,6 +88,12 @@ router.get('/:id', async (req, res) => {
         if (!row) return res.status(404).json({ hata: 'Faaliyet bulunamadı.' });
         res.json(row);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -90,7 +102,7 @@ router.post('/', async (req, res) => {
     try {
         const b = req.body;
         if (!b.description && !b.subject) {
-            return res.status(400).json({ hata: 'konu veya description zorunlu.' });
+            return res.status(400).json({ hata: 'konu veya açıklama zorunlu.' });
         }
         const musteriTipi = resolveCustomerType(b);
         if (musteriTipi === 'Musteri' && !b.partner_id && !b.opportunity_id) {
@@ -131,7 +143,7 @@ router.post('/', async (req, res) => {
                      spent_minutes, subject, description, rating, status, company_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
                         COALESCE($11::timestamp,CURRENT_TIMESTAMP),$12,
-                        COALESCE($13,0),$14,$15,$16,COALESCE($17,'Tamamlandi'),$18)
+                        COALESCE($13::numeric,0),$14,$15,$16,COALESCE($17,'Tamamlandi'),$18)
                 RETURNING id
                 `,
                 [
@@ -185,6 +197,12 @@ router.put('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Faaliyet bulunamadı.' });
         res.json(await getActivity(r.rows[0].id));
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -195,6 +213,12 @@ router.delete('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Faaliyet bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

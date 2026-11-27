@@ -205,7 +205,7 @@ async function startApproval(client, {
   if (!rotaId && kural?.modul_proxy?.route_id) rotaId = kural.modul_proxy.route_id;
 
   if (!rotaId) {
-    const err = new Error('Bu ekran için is_active onay rotası bulunamadı.');
+    const err = new Error('Bu ekran için aktif onay rotası bulunamadı.');
     err.status = 400;
     throw err;
   }

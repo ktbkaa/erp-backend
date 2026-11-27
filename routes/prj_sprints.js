@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextSequenceCode } = require('../src/utils/kodUretici');
@@ -90,7 +91,7 @@ router.post('/', async (req, res, next) => {
       const ins = await client.query(
         `
         INSERT INTO prj_sprints (company_id, project_id, sprint_code, sprint_name, goal, start_date, end_date, capacity_hours)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,0)) RETURNING *
+        VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8::numeric,0)) RETURNING *
         `,
         [p.rows[0].company_id, project_id, code, sprint_name, goal || null, start_date || null, end_date || null, capacity_hours]
       );
@@ -215,6 +216,16 @@ router.post('/:id/cancel', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'prj_sprints',
+  notFound: 'Sprint bulunamadı.',
+  skipGet: true,
+  softDelete: true,
+  softCol: 'is_active',
+  updatable: ['sprint_name', 'goal', 'start_date', 'end_date', 'capacity_hours', 'is_active'],
 });
 
 module.exports = router;

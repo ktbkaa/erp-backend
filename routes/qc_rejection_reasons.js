@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/', async (_req, res) => {
     try {
         const r = await pool.query('SELECT * FROM qc_rejection_reasons ORDER BY reason_code');
         res.json(r.rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -21,6 +28,12 @@ router.post('/', async (req, res) => {
         );
         res.status(201).json(r.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -35,8 +48,22 @@ router.put('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt yok.' });
         res.json(r.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
+});
+
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'qc_rejection_reasons',
+  notFound: 'Ret nedeni bulunamadı.',
+  skipPut: true,
+  softDelete: true,
 });
 
 module.exports = router;

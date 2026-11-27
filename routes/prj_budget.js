@@ -83,7 +83,7 @@ router.post('/:projectId/lines', async (req, res, next) => {
         project_id, company_id, line_no, category_code, category_name,
         planned_qty, uom_code, unit_price, currency_code, exchange_rate,
         planned_amount, description
-      ) VALUES ($1,$2,COALESCE($3,10),$4,$5,$6,$7,$8,COALESCE($9,'TRY'),COALESCE($10,1),$11,$12)
+      ) VALUES ($1,$2,COALESCE($3::numeric,10),$4,$5,$6,$7,$8,COALESCE($9,'TRY'),COALESCE($10::numeric,1),$11,$12)
       RETURNING *
       `,
       [

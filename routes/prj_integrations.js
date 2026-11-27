@@ -28,7 +28,7 @@ router.post('/from-opportunity/:id', async (req, res, next) => {
           company_id, project_code, project_name, description, type_id, status_id,
           partner_id, manager_user_id, currency_code, expected_revenue,
           crm_opportunity_id, approach, created_by
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,'TRY'),COALESCE($10,0),$11,'classic',$12)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,'TRY'),COALESCE($10::numeric,0),$11,'classic',$12)
         RETURNING *
         `,
         [
@@ -73,7 +73,7 @@ router.post('/from-sales-order/:id', async (req, res, next) => {
           company_id, project_code, project_name, description, type_id, status_id,
           partner_id, plant_id, warehouse_id, currency_code, expected_revenue,
           sales_order_id, sales_order_line_id, approach, created_by
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,'TRY'),COALESCE($11,0),$12,$13,'classic',$14)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,'TRY'),COALESCE($11::numeric,0),$12,$13,'classic',$14)
         RETURNING *
         `,
         [

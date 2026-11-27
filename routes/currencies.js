@@ -22,6 +22,12 @@ router.get('/', async (req, res) => {
         const sql = `SELECT * FROM currencies ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY currency_code`;
         res.json((await pool.query(sql)).rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -32,6 +38,12 @@ router.get('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Para birimi bulunamadı.' });
         res.json(r.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -41,14 +53,15 @@ router.post('/', async (req, res) => {
         const currency_name = trimOrNull(req.body.currency_name);
         if (!currency_name) return res.status(400).json({ hata: 'currency_name zorunludur.' });
         const row = await withTransaction(pool, async (client) => {
-            const kod = trimOrNull(req.body.currency_code) || (await nextSequenceCode(client, 'PARA_BIRIM'));
+            const raw = trimOrNull(req.body.currency_code);
+            const kod = raw ? raw.toUpperCase() : await nextSequenceCode(client, 'PARA_BIRIM');
             const ins = await client.query(
                 `INSERT INTO currencies (currency_code, currency_name, symbol, is_active)
                  VALUES ($1,$2,$3,COALESCE($4,TRUE)) RETURNING *`,
                 [
                     kod,
                     currency_name,
-                    trimOrNull(req.body.symbol),
+                    trimOrNull(req.body.symbol) || kod,
                     typeof req.body.is_active === 'boolean' ? req.body.is_active : true,
                 ]
             );
@@ -81,6 +94,12 @@ router.put('/:id', async (req, res) => {
         if (!upd.rows[0]) return res.status(404).json({ hata: 'Para birimi bulunamadı.' });
         res.json(upd.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -91,6 +110,12 @@ router.delete('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Para birimi bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

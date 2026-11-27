@@ -11,6 +11,7 @@
     "gitPull": true,
     "npmInstall": true,
     "migrate": true,
+    "heal": true,
     "backup": true
   },
   "pgDumpPath": "",

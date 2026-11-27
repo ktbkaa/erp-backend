@@ -1,0 +1,120 @@
+{
+  "firma": {
+    "id": 7,
+    "code": "KILIF",
+    "name": "CaseForm Silikon & Plastik Kılıf A.Ş."
+  },
+  "tags": {
+    "BASE": "KILIF-BASE",
+    "MAN": "KILIF-MAN",
+    "MRP": "KILIF-MRP"
+  },
+  "base": {
+    "tag": "KILIF-BASE",
+    "partners": {
+      "ted1": "T00080",
+      "ted2": "T00081",
+      "mus1": "M00081",
+      "mus2": "M00082"
+    },
+    "items": {
+      "hmPcb": "H00138",
+      "hmCap": "H00139",
+      "hmCoil": "H00140",
+      "hmCase": "H00141",
+      "fg": "U00029"
+    },
+    "bom": "A00039",
+    "route": "O00039",
+    "price_list": "KL-SAT-7-1794412304324"
+  },
+  "man": {
+    "tag": "KILIF-MAN",
+    "sales_quotation": "ST00044",
+    "sales_order": "B00127",
+    "purchase_requisition": "L00053",
+    "purchase_order": "P00102",
+    "goods_receipt": "R00100",
+    "production_order": "E00126",
+    "shipment": "SE00080",
+    "delivery_note": "IR00081",
+    "purchase_invoice": "AF00078",
+    "sales_invoice": "FA00057"
+  },
+  "mrp": {
+    "tag": "KILIF-MRP",
+    "sales_order": "B00128",
+    "independent_requirement": "BI00032",
+    "mrp_run": "MR00038",
+    "mrp_net_positive": 5,
+    "purchase_requisition": "L00054",
+    "purchase_order": "P00103",
+    "goods_receipt": "R00101",
+    "purchase_invoice": "AF00079",
+    "production_from_mrp": [
+      "E00128"
+    ],
+    "shipment": "SE00081",
+    "delivery_note": "IR00082",
+    "sales_invoice": "FA00058"
+  },
+  "how_to_filter": {
+    "ui": "Üst bardan firma = KILIF seçin. Listelerde project_code / açıklama alanına KILIF-MAN veya KILIF-MRP yazın.",
+    "sql": "WHERE company_id = <KILIF> AND (project_code IN ('KILIF-MAN','KILIF-MRP') OR description ILIKE '%KILIF-MAN%' OR description ILIKE '%KILIF-MRP%')"
+  },
+  "extended": {
+    "crm": {
+      "lead": {
+        "id": 62,
+        "code": "AD00023"
+      },
+      "firsat_aday": {
+        "id": 68,
+        "code": "FS00039"
+      },
+      "firsat_musteri": {
+        "id": 69,
+        "code": "FS00040"
+      },
+      "plan": "FP00018",
+      "faaliyet": "FY00019",
+      "gorev": "GR00019",
+      "ajanda": 18
+    },
+    "hr": {
+      "departments": [
+        "KILIF Üretim",
+        "KILIF İnsan Kaynakları"
+      ],
+      "employees": [
+        "HE00042",
+        "HE00043"
+      ],
+      "bordro": "BR00015",
+      "ilan": "JP00015",
+      "ise_alinan": null
+    },
+    "prj": {
+      "project_code": "KILIF-PRJ-04955",
+      "project_id": 163,
+      "work_items": 10,
+      "sprint": "PJSP00043",
+      "risk": "Tedarik süresi sapması"
+    },
+    "finans": {
+      "kasa": "KS00018",
+      "banka": "BH00018",
+      "tahsilat": "TH00017"
+    },
+    "baglantilar": {
+      "teklif_firsat": {
+        "quotation_id": 51,
+        "opportunity_id": 69
+      },
+      "so_prj": {
+        "sales_order_id": 150,
+        "project_code": "KILIF-PRJ"
+      }
+    }
+  }
+}

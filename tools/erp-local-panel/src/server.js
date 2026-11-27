@@ -104,6 +104,7 @@ async function handleApi(req, res) {
     return sendJson(res, 200, { ok: true, config: { erpRoot: saved.erpRoot, schedule: saved.schedule } });
   }
   if (req.method === 'POST' && p === '/api/sync') {
+    logger.append({ level: 'info', message: 'Tam senkron isteği alındı' });
     const result = await withBusy('sync', () => runSync());
     return sendJson(res, 200, result);
   }

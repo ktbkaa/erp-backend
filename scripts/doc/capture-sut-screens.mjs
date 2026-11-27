@@ -15,7 +15,7 @@ import { createRequire } from 'module';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(__dirname, '../..');
-const OUT = path.join(ROOT, 'docs/sut-tam-dongu');
+const OUT = path.resolve(ROOT, process.env.ERP_DOC_OUT || 'docs/sut-tam-dongu');
 const SHOTS = path.join(OUT, 'shots');
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
 const USER = process.env.ERP_USER || 'ADMIN';

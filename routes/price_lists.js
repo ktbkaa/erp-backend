@@ -82,7 +82,7 @@ router.post('/', async (req, res, next) => {
           `
           INSERT INTO price_list_lines
             (list_id, item_id, partner_id, min_quantity, unit_price, discount_rate)
-          VALUES ($1,$2,$3,COALESCE($4,0),$5,COALESCE($6,0))
+          VALUES ($1,$2,$3,COALESCE($4::numeric,0),$5,COALESCE($6::numeric,0))
           `,
           [listeId, s.item_id, s.partner_id || null, s.min_quantity, s.unit_price, s.discount_rate]
         );
@@ -120,7 +120,7 @@ router.put('/:id', async (req, res, next) => {
             `
             INSERT INTO price_list_lines
               (list_id, item_id, partner_id, min_quantity, unit_price, discount_rate)
-            VALUES ($1,$2,$3,COALESCE($4,0),$5,COALESCE($6,0))
+            VALUES ($1,$2,$3,COALESCE($4::numeric,0),$5,COALESCE($6::numeric,0))
             `,
             [req.params.id, s.item_id, s.partner_id || null, s.min_quantity, s.unit_price, s.discount_rate]
           );

@@ -35,6 +35,12 @@ router.get('/', async (req, res) => {
         );
         res.json(r.rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -49,6 +55,12 @@ router.get('/:kod', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Kategori tipi bulunamadı.' });
         res.json(r.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -75,6 +87,12 @@ router.post('/', async (req, res) => {
         });
         res.status(201).json(row);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -106,8 +124,49 @@ router.put('/:kod', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Kategori tipi bulunamadı.' });
         res.json(r.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
+
+router.delete('/:kod', async (req, res) => {
+    try {
+        // Soft-delete when categories still reference the type; hard-delete otherwise.
+        const used = await pool.query(
+            `SELECT 1 FROM categories WHERE category_type = $1 LIMIT 1`,
+            [req.params.kod]
+        );
+        if (used.rows[0]) {
+            const r = await pool.query(
+                `UPDATE category_types SET is_active = FALSE
+                 WHERE type_code = $1
+                 RETURNING type_code AS id, type_code, is_active`,
+                [req.params.kod]
+            );
+            if (!r.rows[0]) return res.status(404).json({ hata: 'Kategori tipi bulunamadı.' });
+            return res.json({ is_deleted: true, soft: true, id: r.rows[0].id });
+        }
+        const r = await pool.query(
+            `DELETE FROM category_types WHERE type_code = $1 RETURNING type_code AS id`,
+            [req.params.kod]
+        );
+        if (!r.rows[0]) return res.status(404).json({ hata: 'Kategori tipi bulunamadı.' });
+        res.json({ is_deleted: true, soft: false, id: r.rows[0].id });
+    } catch (err) {
+        if (err.code === '23503') {
+            return res.status(409).json({
+                hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                kod: 'ERR-FK-23503',
+            });
+        }
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
 
 module.exports = router;

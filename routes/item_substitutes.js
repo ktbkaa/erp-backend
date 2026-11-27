@@ -41,12 +41,56 @@ router.post('/', async (req, res, next) => {
     const r = await pool.query(
       `
       INSERT INTO item_substitutes (item_id, substitute_item_id, priority, description)
-      VALUES ($1,$2,COALESCE($3,1),$4)
+      VALUES ($1,$2,COALESCE($3::numeric,1),$4)
       RETURNING *
       `,
       [item_id, substitute_item_id, priority, description || null]
     );
     res.status(201).json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/:id', async (req, res, next) => {
+  try {
+    const r = await pool.query(
+      `SELECT i.*, s.item_code, s.item_name,
+              ik.item_code AS ikame_stok_kodu, ik.item_name AS ikame_stok_adi
+       FROM item_substitutes i
+       JOIN items s ON s.id = i.item_id
+       JOIN items ik ON ik.id = i.substitute_item_id
+       WHERE i.id = $1`,
+      [req.params.id]
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    res.json(r.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    const { item_id, substitute_item_id, priority, description } = req.body || {};
+    if (!item_id || !substitute_item_id) {
+      return res.status(400).json({ hata: 'item_id ve substitute_item_id zorunlu.' });
+    }
+    if (Number(item_id) === Number(substitute_item_id)) {
+      return res.status(400).json({ hata: 'Stok kendi ikamesi olamaz.' });
+    }
+    const r = await pool.query(
+      `UPDATE item_substitutes SET
+         item_id = $2,
+         substitute_item_id = $3,
+         priority = COALESCE($4::numeric, priority),
+         description = $5
+       WHERE id = $1
+       RETURNING *`,
+      [req.params.id, item_id, substitute_item_id, priority === '' ? null : priority, description || null]
+    );
+    if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    res.json(r.rows[0]);
   } catch (err) {
     next(err);
   }

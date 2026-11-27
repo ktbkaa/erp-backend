@@ -59,7 +59,7 @@ describe('ticari asama1', () => {
     assert.equal(iptal.json.status, 'Iptal');
   });
 
-  it('sayım belgesi taslak + sistem quantity', async () => {
+  it('sayım belgesi taslak + sistem miktar', async () => {
     const warehouses = await request(app, 'GET', '/warehouses');
     const items = await request(app, 'GET', '/items');
     const stok = (items.json || []).find((s) => s.item_code === 'H00001') || items.json[0];

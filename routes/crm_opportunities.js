@@ -145,6 +145,12 @@ router.get('/', async (req, res) => {
         for (const r of liste.rows) result.push(await getOpportunity(r.id));
         res.json(result);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -155,6 +161,12 @@ router.get('/:id', async (req, res) => {
         if (!row) return res.status(404).json({ hata: 'Fırsat bulunamadı.' });
         res.json(row);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -192,7 +204,7 @@ router.post('/', async (req, res) => {
                     (opportunity_code, opportunity_name, subject, customer_type, partner_id, lead_id, stage_id,
                      created_by_user_id, followed_by_id, expected_revenue, currency_code, rating,
                      target_close_date, country, plant_id, description, status, company_id)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),COALESCE($11,'TRY'),$12,
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10::numeric,0),COALESCE($11,'TRY'),$12,
                         $13,COALESCE($14,'TR'),$15,$16,'Acik',$17)
                 RETURNING id
                 `,
@@ -285,6 +297,12 @@ router.put('/:id', async (req, res) => {
         });
         res.json(await getOpportunity(id));
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -438,6 +456,12 @@ router.delete('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Fırsat bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

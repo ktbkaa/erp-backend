@@ -57,6 +57,12 @@ function createDocumentRouter(cfg) {
             for (const r of liste.rows) result.push(await fetchById(r.id));
             res.json(result);
         } catch (err) {
+            if (err.code === '23503') {
+                        return res.status(409).json({
+                            hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                            kod: 'ERR-FK-23503',
+                        });
+                    }
             res.status(500).json({ hata: err.message });
         }
     });
@@ -67,6 +73,12 @@ function createDocumentRouter(cfg) {
             if (!row) return res.status(404).json({ hata: notFound });
             res.json(row);
         } catch (err) {
+            if (err.code === '23503') {
+                        return res.status(409).json({
+                            hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                            kod: 'ERR-FK-23503',
+                        });
+                    }
             res.status(500).json({ hata: err.message });
         }
     });
@@ -110,7 +122,7 @@ function createDocumentRouter(cfg) {
                 );
                 const docId = baslik.rows[0].id;
                 for (const s of satirlar) {
-                    if (!s.item_id || s.quantity == null) throw new Error('Her satırda item_id ve quantity zorunlu.');
+                    if (!s.item_id || s.quantity == null) throw new Error('Her satırda item_id ve miktar zorunlu.');
                     const stok = await client.query('SELECT id, uom_code FROM items WHERE id=$1', [s.item_id]);
                     if (!stok.rows[0]) throw new Error(`Stok bulunamadı: ${s.item_id}`);
                     if (linePrice) {
@@ -131,6 +143,12 @@ function createDocumentRouter(cfg) {
             });
             res.status(201).json(await fetchById(id));
         } catch (err) {
+            if (err.code === '23503') {
+                        return res.status(409).json({
+                            hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                            kod: 'ERR-FK-23503',
+                        });
+                    }
             res.status(500).json({ hata: err.message });
         }
     });
@@ -139,7 +157,7 @@ function createDocumentRouter(cfg) {
         try {
             const { description, status, partner_id, satirlar } = req.body;
             if (status && allowedDurum && !allowedDurum.includes(status)) {
-                return res.status(400).json({ hata: `Geçersiz status: ${status}` });
+                return res.status(400).json({ hata: `Geçersiz durum: ${status}` });
             }
             const id = await withTransaction(pool, async (client) => {
                 const mevcut = await client.query(
@@ -160,7 +178,9 @@ function createDocumentRouter(cfg) {
                 if (description !== undefined) add('description', description);
                 if (status) add('status', status);
                 if (requireCari && partner_id) add('partner_id', partner_id);
+                const handled = new Set(['description', 'status', 'partner_id']);
                 for (const f of extraFields) {
+                    if (handled.has(f)) continue;
                     if (req.body[f] !== undefined) add(f, req.body[f]);
                 }
                 if (sets.length) {
@@ -191,6 +211,12 @@ function createDocumentRouter(cfg) {
             });
             res.json(await fetchById(id));
         } catch (err) {
+            if (err.code === '23503') {
+                        return res.status(409).json({
+                            hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                            kod: 'ERR-FK-23503',
+                        });
+                    }
             res.status(err.status || 500).json({ hata: err.message });
         }
     });
@@ -201,6 +227,12 @@ function createDocumentRouter(cfg) {
             if (!result.rows[0]) return res.status(404).json({ hata: notFound });
             res.json({ is_deleted: true, id: Number(req.params.id) });
         } catch (err) {
+            if (err.code === '23503') {
+                        return res.status(409).json({
+                            hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                            kod: 'ERR-FK-23503',
+                        });
+                    }
             res.status(500).json({ hata: err.message });
         }
     });

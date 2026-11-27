@@ -215,7 +215,7 @@ router.post('/', async (req, res, next) => {
           $1,$2,$3,$4,$5,$6,
           $7,$8,$9,$10,
           $11,$12,
-          $13,$14,COALESCE($15,0),$16,$17,
+          $13,$14,COALESCE($15::numeric,0),$16,$17,
           $18,$19
         ) RETURNING id
         `,

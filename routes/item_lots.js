@@ -4,6 +4,7 @@ const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 router.get('/', async (req, res) => {
     try {
@@ -29,6 +30,12 @@ router.get('/', async (req, res) => {
         const r = await pool.query(sql, params);
         res.json(r.rows);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -64,6 +71,12 @@ router.get('/:id', async (req, res) => {
         );
         res.json({ ...r.rows[0], hareketler: hareketler.rows });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -86,6 +99,12 @@ router.post('/', async (req, res) => {
         const row = await pool.query(`SELECT * FROM item_lots WHERE id=$1`, [id]);
         res.status(201).json(row.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -107,8 +126,23 @@ router.put('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Parti bulunamadı.' });
         res.json(r.rows[0]);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
+});
+
+registerIdCrud(router, pool, {
+  path: '',
+  table: 'item_lots',
+  notFound: 'Parti bulunamadı.',
+  skipGet: true,
+  skipPut: true,
+  softDelete: true,
 });
 
 module.exports = router;

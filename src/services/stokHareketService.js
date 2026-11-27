@@ -208,7 +208,7 @@ async function assertItemWarehouseAllowed(client, stokId, depoId) {
     if (!r.rows[0]) {
         // Tanım hiç yoksa: malzeme için hiç item_warehouses yoksa da engelle
         const err = new Error(
-            `Malzeme-depo tanımı yok veya is_inactive. item_id=${stokId}, warehouse_id=${depoId}`
+            `Malzeme-depo tanımı yok veya pasif. item_id=${stokId}, warehouse_id=${depoId}`
         );
         err.code = 'STOK_DEPO_YOK';
         err.status = 400;

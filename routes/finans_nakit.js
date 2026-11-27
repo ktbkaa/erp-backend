@@ -6,6 +6,7 @@ const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { reqUserCode } = require('../src/utils/yetki');
 const { createJournalEntry, resolveAccountId } = require('../src/services/muhasebeMotorService');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 async function listBanks(firmaId) {
   const r = await pool.query(
@@ -121,7 +122,7 @@ router.post('/hareketler', async (req, res, next) => {
     if (!['Giris', 'Cikis', 'Virman'].includes(direction)) {
       return res.status(400).json({ hata: 'direction Giris|Cikis|Virman olmalı.' });
     }
-    if (!(Number(amount) > 0)) return res.status(400).json({ hata: 'amount > 0 olmalı.' });
+    if (!(Number(amount) > 0)) return res.status(400).json({ hata: 'tutar > 0 olmalı.' });
     if (!bank_account_id && !cash_account_id) {
       return res.status(400).json({ hata: 'bank_account_id veya cash_account_id gerekli.' });
     }
@@ -133,7 +134,7 @@ router.post('/hareketler', async (req, res, next) => {
         INSERT INTO fin_cash_movements
           (company_id, movement_no, movement_date, direction, amount, currency_code, exchange_rate,
            bank_account_id, cash_account_id, partner_id, description, status)
-        VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,$5,COALESCE($6,'TRY'),COALESCE($7,1),
+        VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,$5,COALESCE($6,'TRY'),COALESCE($7::numeric,1),
                 $8,$9,$10,$11,'Onayli')
         RETURNING *
         `,
@@ -196,6 +197,32 @@ router.post('/hareketler', async (req, res, next) => {
   } catch (err) {
     res.status(err.status || 500).json({ hata: err.message, kod: err.kod });
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '/banka-hesaplari',
+  table: 'fin_bank_accounts',
+  notFound: 'Banka hesabı bulunamadı.',
+  updatable: ['account_name', 'bank_id', 'iban', 'currency_code', 'gl_account_id'],
+});
+registerIdCrud(router, pool, {
+  path: '/kasa-hesaplari',
+  table: 'fin_cash_accounts',
+  notFound: 'Kasa hesabı bulunamadı.',
+  updatable: ['cash_name', 'currency_code', 'gl_account_id'],
+});
+registerIdCrud(router, pool, {
+  path: '/hareketler',
+  table: 'fin_cash_movements',
+  notFound: 'Nakit hareket bulunamadı.',
+  canDelete: async (row) => {
+    if (row.gl_document_id) return 'Muhasebeleşmiş nakit hareket silinemez.';
+    return true;
+  },
+});
+
+router.put('/hareketler/:id', (req, res) => {
+  res.status(409).json({ hata: 'Nakit hareketi düzeltilemez. Hatalı kayıt için ters hareket girin.' });
 });
 
 module.exports = router;

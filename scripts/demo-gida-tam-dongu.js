@@ -467,7 +467,14 @@ async function purgeGida(client, companyId) {
         OR sales_order_id IN (SELECT id FROM sales_orders WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1))`, [id], 'sales_order_lines'],
     [`DELETE FROM sales_orders WHERE company_id=$1
         OR partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'sales_orders'],
-    [`DELETE FROM sales_quotation_lines WHERE quotation_id IN (SELECT id FROM sales_quotations WHERE company_id=$1)`, [id], 'sales_quotation_lines'],
+    [`DELETE FROM sales_quotation_lines WHERE quotation_id IN (SELECT id FROM sales_quotations WHERE company_id=$1)
+        OR item_id IN (SELECT id FROM items WHERE company_id=$1)`, [id], 'sales_quotation_lines'],
+    [`UPDATE sales_quotations SET opportunity_id=NULL
+        WHERE opportunity_id IN (SELECT id FROM crm_opportunities WHERE company_id=$1)`, [id], 'null quot.opp'],
+    [`UPDATE sales_quotations SET lead_id=NULL
+        WHERE lead_id IN (SELECT id FROM crm_leads WHERE company_id=$1)`, [id], 'null quot.lead'],
+    [`UPDATE projects SET partner_id=NULL
+        WHERE partner_id IN (SELECT id FROM partners WHERE company_id=$1)`, [id], 'null prj.partner'],
     [`DELETE FROM sales_quotations WHERE company_id=$1`, [id], 'sales_quotations'],
     [`DELETE FROM vendor_delivery_note_lines WHERE delivery_note_id IN (SELECT id FROM vendor_delivery_notes WHERE company_id=$1)`, [id], 'vdn_lines'],
     [`DELETE FROM goods_receipt_lines WHERE receipt_id IN (SELECT id FROM goods_receipts WHERE company_id=$1)`, [id], 'gr_lines'],

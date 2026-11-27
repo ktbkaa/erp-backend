@@ -90,6 +90,12 @@ router.get('/', async (req, res) => {
     for (const row of liste.rows) out.push(await getRule(row.id));
     res.json(out);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -100,6 +106,12 @@ router.get('/:id', async (req, res) => {
     if (!row) return res.status(404).json({ hata: 'Kural bulunamadı.' });
     res.json(row);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -126,7 +138,7 @@ router.post('/', async (req, res) => {
           term_direction, term_min_amount, term_max_amount, condition_statuses,
           auto_approve, activate_on_approval, is_active, description
         ) VALUES (
-          $1,$2,COALESCE($3,10),$4,$5,$6,$7,
+          $1,$2,COALESCE($3::numeric,10),$4,$5,$6,$7,
           COALESCE($8,'Hepsi'),$9,$10,$11,
           COALESCE($12,FALSE),COALESCE($13,TRUE),COALESCE($14,TRUE),$15
         ) RETURNING id
@@ -142,6 +154,12 @@ router.post('/', async (req, res) => {
     });
     res.status(201).json(await getRule(id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -188,6 +206,12 @@ router.put('/:id', async (req, res) => {
     });
     res.json(await getRule(req.params.id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -198,6 +222,12 @@ router.delete('/:id', async (req, res) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kural bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });

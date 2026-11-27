@@ -56,6 +56,12 @@ router.get('/', async (req, res) => {
         for (const r of liste.rows) result.push(await getQuotation(r.id));
         res.json(result);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -66,6 +72,12 @@ router.get('/:id', async (req, res) => {
         if (!row) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         res.json(row);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -128,6 +140,12 @@ router.post('/', async (req, res) => {
         });
         res.status(201).json(await getQuotation(id));
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -140,7 +158,7 @@ router.put('/:id', async (req, res) => {
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'];
-        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz status.' });
+        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz durum.' });
 
         const id = await withTransaction(pool, async (client) => {
             const mevcut = await client.query('SELECT id, status FROM sales_quotations WHERE id=$1 FOR UPDATE', [req.params.id]);
@@ -197,6 +215,12 @@ router.put('/:id', async (req, res) => {
         });
         res.json(await getQuotation(id));
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -208,7 +232,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
         const teklif = await getQuotation(req.params.id);
         if (!teklif) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         if (!['Onayli', 'Taslak'].includes(teklif.status)) {
-            return res.status(400).json({ hata: `Durum dönüşüme accepted değil: ${teklif.status}` });
+            return res.status(400).json({ hata: `Durum dönüşüme uygun değil: ${teklif.status}` });
         }
 
         const siparisId = await withTransaction(pool, async (client) => {
@@ -278,6 +302,12 @@ router.post('/:id/siparise-donustur', async (req, res) => {
             teklif: await getQuotation(teklif.id),
         });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -288,6 +318,12 @@ router.delete('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

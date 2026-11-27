@@ -182,7 +182,7 @@ router.post('/', async (req, res, next) => {
           $9,$10,$11,$12,
           $13,$14,
           $15,$16,
-          COALESCE($17,'TRY'), COALESCE($18,0), COALESCE($19,0),
+          COALESCE($17,'TRY'), COALESCE($18::numeric,0), COALESCE($19::numeric,0),
           COALESCE($20,'classic'), $21, $22,
           $23, $24, $25,
           $26
@@ -359,7 +359,7 @@ router.post('/:id/phases', async (req, res, next) => {
       INSERT INTO project_phases (
         project_id, company_id, phase_code, phase_name, parent_phase_id, line_no,
         plan_start_date, plan_end_date, description
-      ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,10),$7,$8,$9)
+      ) VALUES ($1,$2,$3,$4,$5,COALESCE($6::numeric,10),$7,$8,$9)
       RETURNING *
       `,
       [

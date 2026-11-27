@@ -145,4 +145,8 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
+router.put('/:id', (req, res) => {
+  res.status(409).json({ hata: 'Rezervasyon düzeltilemez. İptal edip yeniden oluşturun.' });
+});
+
 module.exports = router;

@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css?v=20261108tema" />
+  <link rel="stylesheet" href="/styles.css?v=20261111filtreyan3" />
   <script>
     (function () {
       try {
@@ -106,6 +106,7 @@
           <img class="ktb-logo-img" src="/assets/ktb-logo.png?v=20261102clear" alt="KTB ERP" width="650" height="150" decoding="async" />
         </span>
       </div>
+      <div class="sidebar-filter-host" id="sidebarFilterHost" hidden aria-label="Yan filtre paneli"></div>
       <nav class="sidebar-nav" id="sidebarNav" aria-label="Modül menüsü"></nav>
       <div class="sidebar-foot" aria-label="Menü araçları">
         <div class="sidebar-tools" role="toolbar" aria-label="Menü araçları">
@@ -253,17 +254,20 @@
             <button type="button" class="btn action ghost" data-action="mrp-talep" id="btnMrpTalep" hidden title="MRP net ihtiyaçtan SA talep">SA Talep</button>
             <button type="button" class="btn action ghost" data-action="mrp-uretim" id="btnMrpUretim" hidden title="MRP net ihtiyaçtan üretim emri">Üretim Emri</button>
             <button type="button" class="btn action" data-action="mrp-calistir" id="btnMrpCalistir" hidden title="MRP çalıştır ve sonuçları kaydet">MRP Çalıştır</button>
+            <button type="button" class="btn action ghost" data-action="tcmb-cek" id="btnTcmbCek" hidden title="TCMB günlük kurlarını tanımlı para birimleri için çek">TCMB'den Çek</button>
           </div>
 
-          <div class="filter-pane" id="filterPane">
-            <div class="filter-pane-head">
-              <h2>Filtre</h2>
-              <div class="filter-actions">
-                <button type="button" class="btn ghost" id="btnClearFilter">Temizle</button>
-                <button type="button" class="btn" id="btnApplyFilter">Uygula</button>
+          <div class="filter-pane-home" id="filterPaneHome">
+            <div class="filter-pane" id="filterPane">
+              <div class="filter-pane-head">
+                <h2>Filtre</h2>
+                <div class="filter-actions">
+                  <button type="button" class="btn ghost" id="btnClearFilter">Temizle</button>
+                  <button type="button" class="btn" id="btnApplyFilter">Uygula</button>
+                </div>
               </div>
+              <div class="filter-grid" id="filterGrid"></div>
             </div>
-            <div class="filter-grid" id="filterGrid"></div>
           </div>
 
           <div class="list-work" id="listWork">
@@ -553,7 +557,7 @@
   </div>
 
   <script src="/vendor/xlsx.full.min.js"></script>
-  <script src="/app.js?v=20261111isimTarih"></script>
+  <script src="/app.js?v=20261111filtreyan3"></script>
   <script>
     // Bağlantı durumu — KTB ERP başlığı üzerine gelince title olarak görünür
     (async function () {

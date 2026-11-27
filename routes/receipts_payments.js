@@ -67,7 +67,7 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ hata: 'type Tahsilat veya Odeme olmalı.' });
     }
     if (!partner_id || amount == null) {
-      return res.status(400).json({ hata: 'partner_id ve amount zorunlu.' });
+      return res.status(400).json({ hata: 'partner_id ve tutar zorunlu.' });
     }
     const id = await withTransaction(pool, async (client) => {
       const seri = type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME';
@@ -122,6 +122,53 @@ router.post('/:id/onayla', async (req, res, next) => {
       });
     });
     res.json(await fetchById(row.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    const mevcut = await fetchById(req.params.id);
+    if (!mevcut) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
+    if (mevcut.status === 'Onayli') {
+      return res.status(409).json({ hata: 'Onaylı tahsilat/ödeme düzeltilemez. İptal edip yeniden oluşturun.' });
+    }
+    const b = req.body || {};
+    if (b.type && !['Tahsilat', 'Odeme'].includes(b.type)) {
+      return res.status(400).json({ hata: 'type Tahsilat veya Odeme olmalı.' });
+    }
+    await pool.query(
+      `UPDATE receipts_payments SET
+         type = COALESCE($2, type),
+         partner_id = COALESCE($3, partner_id),
+         amount = COALESCE($4::numeric, amount),
+         currency_code = COALESCE($5, currency_code),
+         payment_method = COALESCE($6, payment_method),
+         invoice_id = $7,
+         status = COALESCE($8, status),
+         description = $9,
+         document_date = COALESCE($10::date, document_date),
+         project_code = $11,
+         plant_id = COALESCE($12, plant_id),
+         cash_account_code = $13,
+         bank_account_code = $14,
+         cheque_no = $15,
+         due_date = $16::date,
+         exchange_rate = COALESCE($17::numeric, exchange_rate),
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [
+        req.params.id, b.type || null, b.partner_id || null,
+        b.amount != null && b.amount !== '' ? Number(b.amount) : null,
+        b.currency_code || null, b.payment_method || null, b.invoice_id || null,
+        b.status || null, b.description || null, b.document_date || null,
+        b.project_code || null, b.plant_id || null, b.cash_account_code || null,
+        b.bank_account_code || null, b.cheque_no || null, b.due_date || null,
+        b.exchange_rate != null && b.exchange_rate !== '' ? b.exchange_rate : null,
+      ]
+    );
+    res.json(await fetchById(req.params.id));
   } catch (err) {
     next(err);
   }

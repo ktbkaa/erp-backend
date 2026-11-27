@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { canRewriteLines } = require('../src/utils/lineGuard');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 
 async function getShipment(id) {
@@ -40,6 +41,12 @@ router.get('/', async (req, res) => {
         for (const r of liste.rows) result.push(await getShipment(r.id));
         res.json(result);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -50,6 +57,12 @@ router.get('/:id', async (req, res) => {
         if (!row) return res.status(404).json({ hata: 'Sevk emri bulunamadı.' });
         res.json(row);
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -119,7 +132,7 @@ router.post('/', async (req, res) => {
             );
             const sid = baslik.rows[0].id;
             for (const s of satirlar) {
-                if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve quantity zorunlu.');
+                if (!s.item_id || !s.quantity) throw new Error('Satırda item_id ve miktar zorunlu.');
                 await client.query(
                     `
                     INSERT INTO shipment_order_lines
@@ -133,6 +146,12 @@ router.post('/', async (req, res) => {
         });
         res.status(201).json(await getShipment(id));
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });
@@ -145,7 +164,7 @@ router.put('/:id', async (req, res) => {
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'IrsaliyeDonustu', 'Iptal', 'Kapali'];
-        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz status.' });
+        if (status && !allowed.includes(status)) return res.status(400).json({ hata: 'Geçersiz durum.' });
 
         const id = await withTransaction(pool, async (client) => {
             const mevcut = await client.query('SELECT id FROM shipment_orders WHERE id=$1 FOR UPDATE', [req.params.id]);
@@ -175,7 +194,10 @@ router.put('/:id', async (req, res) => {
                     status || null, movement_code_id || null, description ?? null,
                 ]
             );
-            if (Array.isArray(raw)) {
+            if (Array.isArray(raw) && await canRewriteLines(client, {
+                lineTable: 'shipment_order_lines', fkCol: 'ship_id', docId: Number(req.params.id),
+                submitted: raw, orderBy: 'line_no, id', label: 'Sevk emrinin',
+            })) {
                 await client.query('DELETE FROM shipment_order_lines WHERE ship_id=$1', [req.params.id]);
                 for (const s of raw) {
                     if (!s.item_id || !s.quantity) continue;
@@ -193,6 +215,12 @@ router.put('/:id', async (req, res) => {
         });
         res.json(await getShipment(id));
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(err.status || 500).json({ hata: err.message });
     }
 });
@@ -203,6 +231,12 @@ router.delete('/:id', async (req, res) => {
         if (!r.rows[0]) return res.status(404).json({ hata: 'Sevk emri bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (err.code === '23503') {
+                    return res.status(409).json({
+                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                        kod: 'ERR-FK-23503',
+                    });
+                }
         res.status(500).json({ hata: err.message });
     }
 });

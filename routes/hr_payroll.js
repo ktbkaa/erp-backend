@@ -7,6 +7,7 @@ const { nextSequenceCode } = require('../src/utils/kodUretici');
 const {
   getParamSet, loadParams, calculateEmployeePayroll, calculateForEmployee, round2,
 } = require('../src/services/hrPayrollService');
+const { registerIdCrud } = require('../src/utils/registerIdCrud');
 
 async function getParameterSet(id) {
   const set = await pool.query(`SELECT * FROM hr_payroll_param_sets WHERE id=$1`, [id]);
@@ -49,7 +50,7 @@ async function syncParamChildren(client, setId, paramValues, taxBrackets) {
       if (b.rate == null) continue;
       await client.query(
         `INSERT INTO hr_payroll_tax_brackets (param_set_id, line_no, up_to_amount, rate, fixed_amount)
-         VALUES ($1,$2,$3,$4,COALESCE($5,0))`,
+         VALUES ($1,$2,$3,$4,COALESCE($5::numeric,0))`,
         [setId, b.line_no || line, b.up_to_amount ?? null, b.rate, b.fixed_amount],
       );
       line += 10;
@@ -69,6 +70,12 @@ router.get('/parametreler', async (req, res) => {
     );
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -79,6 +86,12 @@ router.get('/parametreler/:id', async (req, res) => {
     if (!row) return res.status(404).json({ hata: 'Parametre seti bulunamadı.' });
     res.json(row);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -112,6 +125,12 @@ router.post('/parametreler', async (req, res) => {
     });
     res.status(201).json(await getParameterSet(id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -149,6 +168,12 @@ router.put('/parametreler/:id', async (req, res) => {
     });
     res.json(await getParameterSet(id));
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -167,6 +192,12 @@ router.delete('/parametreler/:id', async (req, res) => {
     if (!r.rows[0]) return res.status(404).json({ hata: 'Parametre seti bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -189,6 +220,12 @@ router.post('/hesapla-sim', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -217,6 +254,12 @@ router.get('/ucretler', async (req, res) => {
     );
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -254,6 +297,12 @@ router.post('/ucretler', async (req, res) => {
     });
     res.status(201).json(out);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -283,6 +332,12 @@ router.get('/avanslar', async (req, res) => {
     );
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -308,6 +363,12 @@ router.post('/avanslar', async (req, res) => {
     const row = await pool.query(`SELECT * FROM hr_advances WHERE id=$1`, [id]);
     res.status(201).json(row.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -322,6 +383,12 @@ router.post('/avanslar/:id/onayla', async (req, res) => {
     if (!r.rows[0]) return res.status(400).json({ hata: 'Avans onaylanamadı.' });
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -339,6 +406,12 @@ router.post('/avanslar/:id/ode', async (req, res) => {
     if (!r.rows[0]) return res.status(400).json({ hata: 'Yalnızca onaylı avans ödenebilir.' });
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -355,6 +428,12 @@ router.get('/donemler', async (req, res) => {
     );
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -381,6 +460,12 @@ router.post('/donemler', async (req, res) => {
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -399,6 +484,12 @@ router.get('/calismalar', async (req, res) => {
     );
     res.json(r.rows);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -423,6 +514,12 @@ router.get('/calismalar/:id', async (req, res) => {
     );
     res.json({ ...run.rows[0], lines: lines.rows });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -453,6 +550,12 @@ router.post('/calismalar', async (req, res) => {
     const row = await pool.query(`SELECT * FROM hr_payroll_runs WHERE id=$1`, [id]);
     res.status(201).json(row.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -606,6 +709,12 @@ router.post('/calismalar/:id/hesapla', async (req, res) => {
     const lines = await pool.query(`SELECT COUNT(*)::int AS c FROM hr_payroll_lines WHERE run_id=$1`, [out.id]);
     res.json({ ...out, line_count: lines.rows[0].c });
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
 });
@@ -624,6 +733,12 @@ router.post('/calismalar/:id/onayla', async (req, res) => {
     );
     res.json(r.rows[0]);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(500).json({ hata: err.message });
   }
 });
@@ -658,8 +773,71 @@ router.post('/calismalar/:id/kesinlestir', async (req, res) => {
     });
     res.json(out);
   } catch (err) {
+    if (err.code === '23503') {
+                return res.status(409).json({
+                    hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
+                    kod: 'ERR-FK-23503',
+                });
+            }
     res.status(err.status || 500).json({ hata: err.message });
   }
+});
+
+registerIdCrud(router, pool, {
+  path: '/ucretler',
+  table: 'hr_employee_salaries',
+  notFound: 'Ücret kaydı bulunamadı.',
+  getSql: `SELECT s.*, e.employee_no, e.first_name, e.last_name
+           FROM hr_employee_salaries s
+           JOIN hr_employees e ON e.id = s.employee_id
+           WHERE s.id=$1`,
+  updatable: ['gross_amount', 'wage_type', 'currency_code', 'effective_from', 'effective_to', 'description'],
+});
+
+registerIdCrud(router, pool, {
+  path: '/avanslar',
+  table: 'hr_advances',
+  notFound: 'Avans bulunamadı.',
+  getSql: `SELECT a.*, e.employee_no, e.first_name, e.last_name,
+              (a.paid_amount - a.deducted_amount) AS remaining_balance
+           FROM hr_advances a
+           JOIN hr_employees e ON e.id = a.employee_id
+           WHERE a.id=$1`,
+  updatable: ['request_date', 'amount', 'currency_code', 'description'],
+  canDelete: async (row) => {
+    if (!['Taslak', 'OnayBekliyor'].includes(row.status)) {
+      return `Bu durumda avans silinemez (${row.status}).`;
+    }
+    return true;
+  },
+});
+
+registerIdCrud(router, pool, {
+  path: '/donemler',
+  table: 'hr_payroll_periods',
+  notFound: 'Bordro dönemi bulunamadı.',
+  updatable: ['status', 'start_date', 'end_date', 'country_code'],
+  canDelete: async (row) => {
+    const used = await pool.query(
+      `SELECT 1 FROM hr_payroll_runs WHERE period_id=$1 LIMIT 1`,
+      [row.id],
+    );
+    if (used.rows[0]) return 'Döneme bağlı bordro çalışması var; silinemez.';
+    return true;
+  },
+});
+
+registerIdCrud(router, pool, {
+  path: '/calismalar',
+  table: 'hr_payroll_runs',
+  notFound: 'Bordro çalışması bulunamadı.',
+  updatable: ['description', 'status'],
+  canDelete: async (row) => {
+    if (['Kesin', 'Onaylandi'].includes(row.status) || row.journal_entry_id) {
+      return `Kesinleşmiş/onaylı bordro silinemez (${row.status}).`;
+    }
+    return true;
+  },
 });
 
 module.exports = router;
