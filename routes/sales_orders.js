@@ -238,9 +238,6 @@ router.post('/', async (req, res) => {
             }
 
             // Formda numaratörden ayrılan no varsa ona sadık kal — yeniden ayırma
-            if (status && status !== 'Onayli') {
-                await assertManualStatusChange(client, 'SATIS_SIPARIS', { status: 'Taslak' }, status);
-            }
             const reserved = order_no != null && String(order_no).trim() !== ''
               ? String(order_no).trim()
               : null;
@@ -254,6 +251,14 @@ router.post('/', async (req, res) => {
             if (extras.company_id == null) {
               const fid = companyIdFromReq(req);
               if (fid) extras.company_id = Number(fid);
+            }
+            if (status && status !== 'Onayli') {
+                await assertManualStatusChange(client, 'SATIS_SIPARIS', {
+                    status: 'Taslak',
+                    company_id: extras.company_id ?? null,
+                    plant_id: extras.plant_id ?? null,
+                    grand_total: extras.grand_total,
+                }, status);
             }
             const baslik = appendInsert(
                 ['order_no', 'partner_id', 'partner_code', 'partner_name', 'order_date', 'order_type', 'total_amount', 'status'],
