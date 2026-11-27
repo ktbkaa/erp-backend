@@ -5,6 +5,7 @@ const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement } = require('../src/services/stokHareketService');
+const { belgeGuncellemeKontrol, belgeSil, belgeIptal, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 const { allocateConsumptionLots } = require('../src/services/partiService');
 const { createQcOrder, resolveOutgoingQcWarehouse, resolveOutgoingQcTargetWarehouse } = require('../src/services/kaliteService');
 const {
@@ -1659,6 +1660,8 @@ router.put('/:id', async (req, res) => {
                 err.status = 404;
                 throw err;
             }
+            const kilit = await belgeGuncellemeKontrol(client, 'production_orders', Number(req.params.id), b, { req });
+            if (kilit.uygulandi) return Number(req.params.id);
             const m = mevcut.rows[0];
             const yeniAgac = b.product_bom_id != null ? Number(b.product_bom_id) : Number(m.product_bom_id);
             const yeniRota = b.route_id != null ? Number(b.route_id) : Number(m.route_id);
@@ -1808,6 +1811,7 @@ router.put('/:id', async (req, res) => {
 
         res.json(await getQcOrder(id));
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
@@ -1962,12 +1966,27 @@ router.post('/:id/baslat', async (req, res) => {
     }
 });
 
+/** POST /uretim-emirleri/:id/iptal — üretim/tüketim kaydı yoksa iptal; varsa Kapali önerilir */
+router.post('/:id/iptal', async (req, res) => {
+    try {
+        const r = await withTransaction(pool, (client) => belgeIptal(client, 'production_orders', Number(req.params.id), {
+            req, aciklama: req.body?.aciklama || req.body?.description || null,
+        }));
+        if (!r) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        res.json(await getQcOrder(req.params.id));
+    } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
 router.delete('/:id', async (req, res) => {
     try {
-        const result = await pool.query(`DELETE FROM production_orders WHERE id=$1 RETURNING id`, [req.params.id]);
-        if (!result.rows[0]) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
+        const result = await withTransaction(pool, (client) => belgeSil(client, 'production_orders', Number(req.params.id), { req }));
+        if (!result) return res.status(404).json({ hata: 'Üretim emri bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',

@@ -55,6 +55,8 @@ function errorHandler(err, req, res, next) {
       constraint: err.constraint || undefined,
     });
   }
+  const { kilitHatasiYanit } = require('../services/belgeKilitService');
+  if (kilitHatasiYanit(res, err, req)) return undefined;
   const status = err.status || err.statusCode || 500;
   const body = {
     hata: err.message || 'Sunucu hatası',

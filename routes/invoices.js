@@ -8,6 +8,7 @@ const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 const { documentHtml } = require('../src/services/belgePdfService');
 const { reqUserCode, parametreAl } = require('../src/utils/yetki');
+const { belgeGuncellemeKontrol, belgeSil, belgeIptal } = require('../src/services/belgeKilitService');
 const {
   pickFields,
   appendInsert,
@@ -212,6 +213,8 @@ router.put('/:id', async (req, res, next) => {
       if (!mevcut.rows[0]) {
         throw Object.assign(new Error('Fatura bulunamadı.'), { status: 404 });
       }
+      const kilit = await belgeGuncellemeKontrol(client, 'invoices', Number(req.params.id), req.body, { req });
+      if (kilit.uygulandi) return Number(req.params.id);
 
       const sets = [];
       const params = [req.params.id];
@@ -322,6 +325,9 @@ router.post('/:id/muhasebelestir', async (req, res, next) => {
     const faturaId = Number(req.params.id);
     const fatura = await getInvoice(faturaId);
     if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    if (fatura.status === 'Iptal') {
+      return res.status(409).json({ hata: `Fatura ${fatura.invoice_no} iptal edilmiş; muhasebeleştirilemez.`, kod: 'BELGE_IPTAL_EDILMIS' });
+    }
     const isAlis = String(fatura.invoice_type || '').toLowerCase().includes('alis');
     const force = String(req.query.force || req.body?.force || '') === '1'
       || String(req.body?.force || '').toLowerCase() === 'true';
@@ -388,6 +394,9 @@ router.post('/:id/iade', async (req, res, next) => {
   try {
     const source = await getInvoice(req.params.id);
     if (!source) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    if (source.status === 'Iptal') {
+      return res.status(409).json({ hata: `Fatura ${source.invoice_no} iptal edilmiş; iade faturası düzenlenemez.`, kod: 'BELGE_IPTAL_EDILMIS' });
+    }
     const id = await withTransaction(pool, async (client) => {
       const alis = String(source.invoice_type || '').toLowerCase().includes('alis');
       const tur = alis ? 'AlisIade' : 'SatisIade';
@@ -440,10 +449,26 @@ router.post('/:id/iade', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /invoices/:id/iptal — silme yerine iptal.
+ * Muhasebeleşmişse ters fiş + ters cari hareket; e-belge gönderilmişse iade faturası gerekir.
+ */
+router.post('/:id/iptal', async (req, res, next) => {
+  try {
+    const r = await withTransaction(pool, (client) => belgeIptal(client, 'invoices', Number(req.params.id), {
+      req, aciklama: req.body?.aciklama || req.body?.description || null,
+    }));
+    if (!r) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    res.json({ ...(r.sonuc || {}), fatura: await getInvoice(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:id', async (req, res, next) => {
   try {
-    const r = await pool.query('DELETE FROM invoices WHERE id=$1 RETURNING id', [req.params.id]);
-    if (!r.rows[0]) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    const r = await withTransaction(pool, (client) => belgeSil(client, 'invoices', Number(req.params.id), { req }));
+    if (!r) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);

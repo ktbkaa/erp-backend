@@ -18,6 +18,7 @@ const {
 } = require('../src/utils/belgeAlanlari');
 
 const { companyIdFromReq, assertCompanyRecord, andCompany, andCompanyViaPlant, andItemCompany, andPartnerCompany } = require('../src/utils/firmaScope');
+const { belgeGuncellemeKontrol, belgeSil, belgeIptal, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 /** ATP: kullanılabilir stok (fiziksel − rezerv) vs sipariş kalemleri (REQ-SAL-008 / INV-004) */
 async function checkAtp(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
   let zorunlu = sert;
@@ -305,6 +306,8 @@ router.put('/:id', async (req, res) => {
                 err.status = 404;
                 throw err;
             }
+            const kilit = await belgeGuncellemeKontrol(client, 'sales_orders', Number(req.params.id), req.body, { req });
+            if (kilit.uygulandi) return Number(req.params.id);
 
             let cari = {
                 id: mevcut.rows[0].partner_id,
@@ -373,6 +376,7 @@ router.put('/:id', async (req, res) => {
 
         res.json(await getOrder(id));
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
@@ -557,12 +561,31 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
     }
 });
 
+/** POST /sales_orders/:id/iptal — silme yerine iptal (rezervasyonlar çözülür) */
+router.post('/:id/iptal', async (req, res) => {
+    try {
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(pool, 'sales_orders', Number(req.params.id), firmaId))) {
+            return res.status(403).json({ hata: 'Bu firma için sipariş erişimi yok.' });
+        }
+        const r = await withTransaction(pool, (client) => belgeIptal(client, 'sales_orders', Number(req.params.id), {
+            req, aciklama: req.body?.aciklama || req.body?.description || null,
+        }));
+        if (!r) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+        res.json(await getOrder(req.params.id));
+    } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
+        res.status(err.status || 500).json({ hata: err.message });
+    }
+});
+
 router.delete('/:id', async (req, res) => {
     try {
-        const r = await pool.query('DELETE FROM sales_orders WHERE id=$1 RETURNING id', [req.params.id]);
-        if (!r.rows[0]) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+        const r = await withTransaction(pool, (client) => belgeSil(client, 'sales_orders', Number(req.params.id), { req }));
+        if (!r) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
         if (err.code === '23503') {
                     return res.status(409).json({
                         hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',

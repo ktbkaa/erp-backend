@@ -6,6 +6,7 @@ const { withTransaction } = require('../src/utils/withTransaction');
 const { createStockMovement } = require('../src/services/stokHareketService');
 const { findMovementCode, BELGE_TIPI } = require('../src/utils/belgeOmurga');
 const { createQcOrdersFromMovementCode } = require('../src/services/kaliteService');
+const { belgeGuncellemeKontrol, belgeSil, belgeIptal, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 
 async function getStockMovement(id) {
     const h = await pool.query(
@@ -441,49 +442,6 @@ async function createManualMovement(client, body, req, { hareketNoOpt = null } =
     return hareket.hareket.id;
 }
 
-function isDocumentLinked(row) {
-    return Boolean(
-        row.document_type
-        && ['IRSALIYE', 'MAL_KABUL', 'URETIM_GIRIS'].includes(row.document_type)
-        && row.document_id
-    );
-}
-
-/** Silmeden önce FK engellerini temizle (maliyet / seri / kalite) */
-async function clearMovementLinks(client, hareketId) {
-    const id = Number(hareketId);
-    if (!id) return;
-    await client.query(`DELETE FROM item_cost_movements WHERE movement_id=$1`, [id]).catch(() => {});
-    await client.query(
-        `UPDATE item_serials SET last_movement_id=NULL WHERE last_movement_id=$1`,
-        [id]
-    ).catch(() => {});
-    await client.query(
-        `UPDATE qc_orders SET item_movement_id=NULL WHERE item_movement_id=$1`,
-        [id]
-    ).catch(() => {});
-    await client.query(
-        `UPDATE qc_orders SET transfer_movement_id=NULL WHERE transfer_movement_id=$1`,
-        [id]
-    ).catch(() => {});
-}
-
-async function deleteManualMovement(client, row) {
-    const ids = [row.id];
-    if (row.linked_movement_id) ids.push(row.linked_movement_id);
-    // Çift yön bağını çöz
-    await client.query(
-        `UPDATE stock_movements SET linked_movement_id=NULL WHERE id=ANY($1::int[])`,
-        [ids]
-    );
-    for (const id of ids) {
-        await clearMovementLinks(client, id);
-    }
-    for (const id of ids) {
-        await client.query(`DELETE FROM stock_movements WHERE id=$1`, [id]);
-    }
-}
-
 /**
  * Manuel stok hareketi oluştur.
  * Body: movement_code_id, warehouse_id, target_warehouse_id? (transfer), description?, satirlar[...]
@@ -507,61 +465,48 @@ router.post('/', async (req, res) => {
 });
 
 /**
- * Düzelt: belgeye bağlı değilse sil + aynı hareket no ile yeniden oluştur.
+ * Stok hareketi bakiyeye işlenmiştir; satır/miktar/depo değişikliği yapılmaz.
+ * Yalnız açıklama / referans alanları güncellenir; düzeltme için ters hareket (iptal).
  */
 router.put('/:id', async (req, res) => {
     try {
-        const mevcut = await pool.query(
-            `SELECT id, movement_no, document_type, document_id, linked_movement_id, movement_type, warehouse_id
-             FROM stock_movements WHERE id=$1`,
-            [req.params.id]
-        );
-        if (!mevcut.rows[0]) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
-        const row = mevcut.rows[0];
-        if (isDocumentLinked(row)) {
-            return res.status(400).json({ hata: 'Belgeye bağlı stok hareketi buradan düzeltilmez.' });
-        }
-        const body = req.body || {};
-        const preservedNo = String(row.movement_no || '').trim() || null;
-        const id = await withTransaction(pool, async (client) => {
-            await deleteManualMovement(client, row);
-            return createManualMovement(client, body, req, { hareketNoOpt: preservedNo });
-        });
-        res.json(await getStockMovement(id));
+        const sonuc = await withTransaction(pool, (client) => belgeGuncellemeKontrol(
+            client, 'stock_movements', Number(req.params.id), req.body || {}, { req }
+        ));
+        if (!sonuc.row) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
+        res.json(await getStockMovement(req.params.id));
     } catch (err) {
-        const status = err.status || (err.code === 'YETERSIZ_STOK' ? 400 : 400);
-        res.status(status).json({
-            hata: err.message,
-            kod: err.code || undefined,
-            detay: err.detay || undefined,
-        });
+        if (kilitHatasiYanit(res, err, req)) return;
+        res.status(err.status || 400).json({ hata: err.message, kod: err.code || undefined });
+    }
+});
+
+/**
+ * POST /stok-hareketleri/:id/iptal — manuel hareketin ters hareketini üretir (transfer çifti dahil).
+ */
+router.post('/:id/iptal', async (req, res) => {
+    try {
+        const r = await withTransaction(pool, (client) => belgeIptal(client, 'stock_movements', Number(req.params.id), {
+            req, aciklama: req.body?.aciklama || req.body?.description || null,
+        }));
+        if (!r) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
+        const tersIdler = r.sonuc?.ters_hareket_idleri || [];
+        const tersler = [];
+        for (const tid of tersIdler) tersler.push(await getStockMovement(tid));
+        res.status(201).json({ orijinal: await getStockMovement(req.params.id), ters_hareketler: tersler });
+    } catch (err) {
+        if (kilitHatasiYanit(res, err, req)) return;
+        res.status(err.status || 400).json({ hata: err.message, kod: err.code || undefined, detay: err.detay || undefined });
     }
 });
 
 router.delete('/:id', async (req, res) => {
     try {
-        // Manuel hareketler silinebilir; belgeye bağlı (irsaliye/mal kabul) olanlar değil
-        const h = await pool.query(
-            `SELECT id, document_type, document_id, linked_movement_id, movement_type
-             FROM stock_movements WHERE id=$1`,
-            [req.params.id]
-        );
-        if (!h.rows[0]) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
-        const row = h.rows[0];
-        if (isDocumentLinked(row)) {
-            return res.status(400).json({ hata: 'Belgeye bağlı stok hareketi buradan silinemez.' });
-        }
-        await withTransaction(pool, async (client) => {
-            await deleteManualMovement(client, row);
-        });
+        const r = await withTransaction(pool, (client) => belgeSil(client, 'stock_movements', Number(req.params.id), { req }));
+        if (!r) return res.status(404).json({ hata: 'Stok hareketi bulunamadı.' });
         res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
-        if (err.code === '23503') {
-                    return res.status(409).json({
-                        hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
-                        kod: 'ERR-FK-23503',
-                    });
-                }
+        if (kilitHatasiYanit(res, err, req)) return;
         res.status(500).json({ hata: err.message });
     }
 });

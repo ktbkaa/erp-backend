@@ -6,6 +6,7 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { KURALLAR, belgeGuncellemeKontrol, belgeSil, kilitHatasiYanit } = require('../src/services/belgeKilitService');
 
 function createDocumentRouter(cfg) {
     const router = express.Router();
@@ -22,6 +23,7 @@ function createDocumentRouter(cfg) {
         linePrice = false,
         extraFields = [],
     } = cfg;
+    const kilitli = Boolean(KURALLAR[table]);
 
     async function fetchById(id) {
         const baslikSql = requireCari
@@ -169,6 +171,10 @@ function createDocumentRouter(cfg) {
                     e.status = 404;
                     throw e;
                 }
+                if (kilitli) {
+                    const kilit = await belgeGuncellemeKontrol(client, table, Number(req.params.id), req.body, { req });
+                    if (kilit.uygulandi) return Number(req.params.id);
+                }
                 const sets = [];
                 const params = [req.params.id];
                 const add = (col, val) => {
@@ -211,6 +217,7 @@ function createDocumentRouter(cfg) {
             });
             res.json(await fetchById(id));
         } catch (err) {
+            if (kilitHatasiYanit(res, err, req)) return;
             if (err.code === '23503') {
                         return res.status(409).json({
                             hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
@@ -223,10 +230,13 @@ function createDocumentRouter(cfg) {
 
     router.delete('/:id', async (req, res) => {
         try {
-            const result = await pool.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [req.params.id]);
-            if (!result.rows[0]) return res.status(404).json({ hata: notFound });
+            const silinen = kilitli
+                ? await withTransaction(pool, (client) => belgeSil(client, table, Number(req.params.id), { req }))
+                : (await pool.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [req.params.id])).rows[0];
+            if (!silinen) return res.status(404).json({ hata: notFound });
             res.json({ is_deleted: true, id: Number(req.params.id) });
         } catch (err) {
+            if (kilitHatasiYanit(res, err, req)) return;
             if (err.code === '23503') {
                         return res.status(409).json({
                             hata: 'Kayıt bağlı veriler nedeniyle silinemedi veya güncellenemedi. Önce ilişkili kayıtları kaldırın.',
