@@ -365,6 +365,36 @@
       }
     ]
   },
+  "stok-hareket-raporu": {
+    "screenId": "stok-hareket-raporu",
+    "title": "Stok Hareket Raporu",
+    "techId": "INV-MVT-RPT-001",
+    "endpoint": "/stok-hareket-raporu",
+    "auditTablo": "stok-hareket-raporu",
+    "primaryTable": "stock_movement_lines",
+    "tables": [
+      {
+        "name": "stock_movement_lines",
+        "role": "master"
+      },
+      {
+        "name": "stock_movements",
+        "role": "related"
+      },
+      {
+        "name": "items",
+        "role": "related"
+      },
+      {
+        "name": "warehouses",
+        "role": "related"
+      },
+      {
+        "name": "companies",
+        "role": "related"
+      }
+    ]
+  },
   "transfer-emirleri": {
     "screenId": "transfer-emirleri",
     "title": "Transfer Emirleri",
@@ -430,6 +460,46 @@
       {
         "name": "mrp_independent_requirements",
         "role": "master"
+      }
+    ]
+  },
+  "mrp-parametre": {
+    "screenId": "mrp-parametre",
+    "title": "MRP Parametreleri",
+    "techId": "MFG-MRP-PAR-001",
+    "endpoint": "/mrp/parametreler",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_parameter_sets",
+    "tables": [
+      {
+        "name": "mrp_parameter_sets",
+        "role": "master"
+      }
+    ]
+  },
+  "mrp-hareket-raporu": {
+    "screenId": "mrp-hareket-raporu",
+    "title": "MRP Hareket Raporu",
+    "techId": "MFG-MRP-RPT-001",
+    "endpoint": "/mrp-hareket-raporu",
+    "auditTablo": "mrp",
+    "primaryTable": "mrp_results",
+    "tables": [
+      {
+        "name": "mrp_runs",
+        "role": "related"
+      },
+      {
+        "name": "mrp_results",
+        "role": "master"
+      },
+      {
+        "name": "mrp_independent_requirements",
+        "role": "related"
+      },
+      {
+        "name": "stock_movement_lines",
+        "role": "related"
       }
     ]
   },
@@ -723,6 +793,84 @@
     "tables": [
       {
         "name": "production_order_types",
+        "role": "master"
+      }
+    ]
+  },
+  "uretim-parametreleri": {
+    "screenId": "uretim-parametreleri",
+    "title": "Üretim Parametreleri",
+    "techId": "MFG-PRM-SCR-001",
+    "endpoint": "/uretim-parametreleri",
+    "auditTablo": "uretim-parametreleri",
+    "primaryTable": "production_parameters",
+    "tables": [
+      {
+        "name": "production_parameters",
+        "role": "master"
+      }
+    ]
+  },
+  "uretim-parametre-dogrulama": {
+    "screenId": "uretim-parametre-dogrulama",
+    "title": "Üretim Parametre Doğrulama",
+    "techId": "MFG-PRM-RPT-001",
+    "endpoint": "/uretim-parametreleri/dogrula",
+    "auditTablo": "uretim-parametreleri",
+    "primaryTable": "production_parameters",
+    "tables": [
+      {
+        "name": "production_parameters",
+        "role": "master"
+      }
+    ]
+  },
+  "is-merkezi-yuku": {
+    "screenId": "is-merkezi-yuku",
+    "title": "İş Merkezi Yükü",
+    "techId": "MFG-WCL-RPT-001",
+    "endpoint": "/is-merkezi-yuku",
+    "auditTablo": "is-merkezi-yuku",
+    "primaryTable": "work_centers",
+    "tables": [
+      {
+        "name": "work_centers",
+        "role": "master"
+      },
+      {
+        "name": "production_order_operations",
+        "role": "related"
+      }
+    ]
+  },
+  "cari-mutabakat": {
+    "screenId": "cari-mutabakat",
+    "title": "Cari Mutabakat",
+    "techId": "FIN-BP-REC-001",
+    "endpoint": "/cari-mutabakat",
+    "auditTablo": "cari-mutabakat",
+    "primaryTable": "partner_ledger_entries",
+    "tables": [
+      {
+        "name": "partner_ledger_entries",
+        "role": "master"
+      },
+      {
+        "name": "invoices",
+        "role": "related"
+      }
+    ]
+  },
+  "e-belge-kuyruk": {
+    "screenId": "e-belge-kuyruk",
+    "title": "e-Belge Kuyruk",
+    "techId": "FIN-EDOC-QUE-001",
+    "endpoint": "/e-belge",
+    "auditTablo": "e-belge",
+    "primaryTable": "e_document_queue",
+    "tables": [
+      {
+        "name": "e_document_queue",
         "role": "master"
       }
     ]

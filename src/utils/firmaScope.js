@@ -123,6 +123,33 @@ async function assertPartnerCompanyRecord(clientOrPool, partnerId, firmaId) {
   return r.rows.length > 0;
 }
 
+/**
+ * Express middleware: GET/PUT/DELETE /:id için firma kapsamı.
+ * Kullanım: router.get('/:id', requireCompanyRecord('sales_orders'), handler)
+ * veya requireCompanyRecord('warehouses', { isYeriCol: 'plant_id', firmaCol: null })
+ *
+ * Handler'dan önce çalışır; kayıt yoksa / yanlış firmadaysa 404.
+ * Not: handler hâlâ kendi getById'sini çağırır — bu yalnızca IDOR engeli.
+ */
+function requireCompanyRecord(table, opts = {}) {
+  const pool = require('../../db');
+  return async function companyRecordGuard(req, res, next) {
+    try {
+      const firmaId = companyIdFromReq(req);
+      if (!firmaId) return next();
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id) || id <= 0) return next();
+      const ok = await assertCompanyRecord(pool, table, id, firmaId, opts);
+      if (!ok) {
+        return res.status(404).json({ hata: 'Kayıt bulunamadı (firma kapsamı).', kod: 'FIRMA_KAPSAM' });
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
 module.exports = {
   companyIdFromReq,
   andCompany,
@@ -132,4 +159,5 @@ module.exports = {
   assertCompanyRecord,
   assertItemCompanyRecord,
   assertPartnerCompanyRecord,
+  requireCompanyRecord,
 };

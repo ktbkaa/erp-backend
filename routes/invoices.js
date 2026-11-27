@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 const { documentHtml } = require('../src/services/belgePdfService');
-const { reqUserCode } = require('../src/utils/yetki');
+const { reqUserCode, parametreAl } = require('../src/utils/yetki');
 const {
   pickFields,
   appendInsert,
@@ -114,6 +114,10 @@ router.get('/:id', async (req, res, next) => {
   try {
     const fatura = await getInvoice(req.params.id);
     if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(pool, 'invoices', fatura.id, firmaId))) {
+      return res.status(404).json({ hata: 'Fatura bulunamadı (firma kapsamı).' });
+    }
     res.json(fatura);
   } catch (err) {
     next(err);
@@ -312,8 +316,30 @@ router.post('/:id/eslestirme-onay', async (req, res, next) => {
 /** POST /invoices/:id/muhasebelestir — belge→fiş + cari (FIN-004/005) */
 router.post('/:id/muhasebelestir', async (req, res, next) => {
   try {
+    const faturaId = Number(req.params.id);
+    const fatura = await getInvoice(faturaId);
+    if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
+    const isAlis = String(fatura.invoice_type || '').toLowerCase().includes('alis');
+    const force = String(req.query.force || req.body?.force || '') === '1'
+      || String(req.body?.force || '').toLowerCase() === 'true';
+    const threeWay = String(await parametreAl(pool, 'ALIS_3WAY_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
+    if (isAlis && threeWay && !force) {
+      const m = await pool.query(
+        `SELECT result FROM invoice_matches WHERE invoice_id=$1 ORDER BY id DESC LIMIT 1`,
+        [faturaId]
+      );
+      const sonuc = m.rows[0]?.result;
+      if (sonuc !== 'Uyumlu') {
+        return res.status(409).json({
+          hata: 'Alış faturası muhasebeleştirme için 3-way match sonucu Uyumlu olmalı '
+            + `(mevcut: ${sonuc || 'yok'}). Önce /eslestir veya /eslestirme-onay; aşmak için force=1.`,
+          kod: '3WAY_ZORUNLU',
+          match_result: sonuc || null,
+        });
+      }
+    }
     const result = await withTransaction(pool, (client) =>
-      faturadanMuhasebe(client, Number(req.params.id), {
+      faturadanMuhasebe(client, faturaId, {
         kullaniciKodu: reqUserCode(req),
       })
     );

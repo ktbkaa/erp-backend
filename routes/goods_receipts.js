@@ -364,6 +364,11 @@ router.get('/:id', async (req, res) => {
     try {
         const row = await getGoodsReceipt(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Mal kabul bulunamadı.' });
+        const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(require('../db'), 'goods_receipts', row.id, firmaId))) {
+            return res.status(404).json({ hata: 'Mal kabul bulunamadı (firma kapsamı).' });
+        }
         res.json(row);
     } catch (err) {
         if (err.code === '23503') {
