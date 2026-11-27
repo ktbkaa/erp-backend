@@ -43,11 +43,18 @@ async function rotaGetir(id) {
            m.center_code, m.center_name,
            ws.station_code, ws.station_name,
            cs.item_code AS cikti_stok_kodu,
-           cs.item_name AS cikti_stok_adi
+           cs.item_name AS cikti_stok_adi,
+           os.item_code AS op_item_code,
+           os.item_name AS op_item_name,
+           os.item_type AS op_item_type,
+           ua.bom_code AS op_bom_code,
+           ua.bom_name AS op_bom_name
     FROM routing_operations o
     LEFT JOIN work_centers m ON m.id = o.work_center_id
     LEFT JOIN work_stations ws ON ws.id = o.work_station_id
     LEFT JOIN items cs ON cs.id = o.output_item_id
+    LEFT JOIN items os ON os.id = o.item_id
+    LEFT JOIN boms ua ON ua.id = o.product_bom_id
     WHERE o.route_id = $1
     ORDER BY o.line_no
     `,
@@ -160,6 +167,8 @@ function opInsertValues(rotaId, op) {
     boolOr(op.require_spc, false),
     op.note1 || null,
     op.note2 || null,
+    op.item_id || null,
+    op.product_bom_id || null,
   ];
 }
 
@@ -173,7 +182,7 @@ const OP_INSERT_SQL = `
     include_precost, include_std_cost, include_actual_cost,
     cost_factor_1, cost_factor_2,
     is_disassemble, is_subcontract, is_shared_op, require_qc, require_spc,
-    note1, note2
+    note1, note2, item_id, product_bom_id
   ) VALUES (
     $1,$2,$3,$4,$5,
     $6,$7,$8,
@@ -183,7 +192,7 @@ const OP_INSERT_SQL = `
     $19,$20,$21,
     $22,$23,
     $24,$25,$26,$27,$28,
-    $29,$30
+    $29,$30,$31,$32
   ) RETURNING id
 `;
 
@@ -326,6 +335,13 @@ router.post('/:id/sablon-uygula', async (req, res) => {
   }
 });
 
+/** Başlık product_bom_id: yoksa ilk operasyon ağacından (geriye uyum). */
+function headerBomFromOps(headerBomId, operasyonlar) {
+  if (headerBomId) return headerBomId;
+  const hit = (operasyonlar || []).find((o) => o && o.product_bom_id);
+  return hit?.product_bom_id || null;
+}
+
 router.post('/', async (req, res) => {
   try {
     const body = req.body || {};
@@ -337,6 +353,7 @@ router.post('/', async (req, res) => {
     if (!operasyonlar.length) {
       return res.status(400).json({ hata: 'En az bir operasyon gerekli.' });
     }
+    const headerBomId = headerBomFromOps(h.product_bom_id, operasyonlar);
 
     const id = await withTransaction(pool, async (client) => {
       let firmaId = firmaIdFromReq(req) || Number(h.company_id) || null;
@@ -360,7 +377,7 @@ router.post('/', async (req, res) => {
         `,
         [
           h.item_id,
-          h.product_bom_id || null,
+          headerBomId,
           h.route_code,
           h.route_name,
           h.template,
@@ -413,6 +430,13 @@ router.put('/:id', async (req, res) => {
         err.status = 400;
         throw err;
       }
+      const opsArr = Array.isArray(operasyonlar) ? operasyonlar : null;
+      let nextHeaderBom = Object.prototype.hasOwnProperty.call(body, 'product_bom_id')
+        ? (h.product_bom_id || null)
+        : mevcut.rows[0].product_bom_id;
+      if (opsArr) {
+        nextHeaderBom = headerBomFromOps(h.product_bom_id || null, opsArr) || nextHeaderBom;
+      }
 
       await client.query(
         `
@@ -445,7 +469,7 @@ router.put('/:id', async (req, res) => {
           req.params.id,
           h.route_name,
           h.item_id || null,
-          Object.prototype.hasOwnProperty.call(body, 'product_bom_id') ? (h.product_bom_id || null) : mevcut.rows[0].product_bom_id,
+          nextHeaderBom,
           h.template,
           h.varsayilan,
           h.valid_from,
