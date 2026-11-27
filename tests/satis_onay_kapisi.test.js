@@ -93,7 +93,7 @@ describe('satış onay kapısı', () => {
       await q('DELETE FROM sales_quotation_lines WHERE quotation_id = $1', [id]);
       await q('DELETE FROM sales_quotations WHERE id = $1', [id]);
     }
-    await q('DELETE FROM partners WHERE id = $1', [partnerId]);
+    await q('UPDATE partners SET is_active = FALSE WHERE id = $1', [partnerId]);
     await q('DELETE FROM users WHERE id = $1', [userId]);
   });
 
