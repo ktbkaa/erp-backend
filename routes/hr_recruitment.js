@@ -361,7 +361,7 @@ router.post('/cikislar', async (req, res) => {
            severance_amount, notice_amount, unused_leave_amount, other_amount, deduction_amount,
            net_settlement, calc_detail, description
          ) VALUES (
-           $1,$2,$3,$4,COALESCE($5,$6),$6,$7,$8,'Taslak',
+           $1,$2,$3,$4,COALESCE($5::date,$6::date),$6::date,$7,$8,'Taslak',
            $9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19
          ) RETURNING id`,
         [

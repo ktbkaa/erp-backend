@@ -61,6 +61,9 @@ async function ownerUserId() {
  * @param {object} [ctx.items] — {fg, ...}
  * @param {string} [ctx.tagPrefix] — ELEK | TEKS
  * @param {object} [ctx.links] — { manSalesOrder, manQuotation, manInvoice, mrpSalesOrder }
+ * @param {string} [ctx.projectName] — sektöre uygun demo proje adı
+ * @param {string} [ctx.industryCode] — CRM aday sektör kodu
+ * @param {string} [ctx.leadName] — CRM aday adı
  */
 async function seedExtendedModules(ctx) {
   const firma = ctx.firma;
@@ -79,7 +82,7 @@ async function seedExtendedModules(ctx) {
   // + mevcut satış teklifine opportunity_id bağla
   try {
     const lead = await api('POST', '/crm-adaylar', {
-      lead_name: `${firma.company_code} Demo Aday — Enerji / Perakende`,
+      lead_name: ctx.leadName || `${firma.company_code} Demo Aday — Enerji / Perakende`,
       status: 'Nitelikli',
       owner_id: userId,
       priority: 'Yuksek',
@@ -87,7 +90,7 @@ async function seedExtendedModules(ctx) {
       email: `aday.${firma.company_code.toLowerCase()}@demo.local`,
       province: 'İstanbul',
       country: 'TR',
-      industry_code: firma.company_code === 'TEKS' ? 'TEKSTIL' : 'ELEKTRONIK',
+      industry_code: ctx.industryCode || (firma.company_code === 'TEKS' ? 'TEKSTIL' : 'ELEKTRONIK'),
       lead_source: 'Fuar',
       notes: `[${tag}] Demo aday`,
       company_id: firma.id,
@@ -414,9 +417,9 @@ async function seedExtendedModules(ctx) {
   try {
     const managerId = userId;
     const code = `${tagPrj}-${Date.now().toString().slice(-5)}`;
-    const projectName = firma.company_code === 'TEKS'
+    const projectName = ctx.projectName || (firma.company_code === 'TEKS'
       ? 'Denim Hat Modernizasyon Projesi'
-      : 'Kompanzasyon Üretim Hattı Kurulum';
+      : 'Kompanzasyon Üretim Hattı Kurulum');
     let project;
     try {
       project = await api('POST', '/prj-integrations/from-template/TPL_MAKINE', {

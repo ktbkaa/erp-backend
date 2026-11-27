@@ -1086,6 +1086,10 @@ async function seedManuel(client, org, base) {
      ) VALUES ($1,10,$2,$3,'AD',28,$4,28)`,
     [teklif.id, base.fg.id, qty, qty * 28]
   );
+  const soMovementCodeId = await hkId(client, 'SatisSiparis');
+  // API ayrı bağlantı kullanır; quotation_id FK'si teklifi görebilmeli
+  await client.query('COMMIT');
+  await client.query('BEGIN');
 
   // 9) Satış siparişi (tekliften)
   const so = await api('POST', '/sales_orders', {
@@ -1099,7 +1103,7 @@ async function seedManuel(client, org, base) {
     project_code: tag,
     description: `[${tag}] ${TAG.LABEL} Satış siparişi — MRP yok`,
     price_list_id: base.pl.id,
-    movement_code_id: await hkId(client, 'SatisSiparis'),
+    movement_code_id: soMovementCodeId,
     quotation_id: teklif.id,
     kalemler: [{
       item_id: base.fg.id,

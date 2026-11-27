@@ -1,0 +1,192 @@
+{
+  "tag": "SUT-EKRAN-2026",
+  "steps": {
+    "genisletilmis_moduller": {
+      "crm": {
+        "lead": {
+          "id": 58,
+          "code": "AD00019"
+        },
+        "firsat_aday": {
+          "id": 60,
+          "code": "FS00031"
+        },
+        "firsat_musteri": {
+          "id": 61,
+          "code": "FS00032"
+        },
+        "plan": "FP00014",
+        "faaliyet": "FY00015",
+        "gorev": "GR00015",
+        "ajanda": 14
+      },
+      "hr": {
+        "izin": "IZ00006",
+        "departments": [
+          "GIDA Üretim",
+          "GIDA İnsan Kaynakları"
+        ],
+        "employees": [
+          "HE00034",
+          "HE00035"
+        ],
+        "bordro": "BR00013",
+        "ilan": "JP00013",
+        "ise_alinan": null
+      },
+      "prj": {
+        "project_code": "GIDA-PRJ-86865",
+        "project_id": 109,
+        "work_items": 10,
+        "sprint": "PJSP00031",
+        "risk": "Tedarik süresi sapması"
+      },
+      "finans": {
+        "kasa": "KS00014",
+        "banka": "BH00014",
+        "tahsilat": "TH00013"
+      },
+      "baglantilar": {
+        "teklif_firsat": {
+          "quotation_id": 42,
+          "opportunity_id": 61
+        },
+        "so_prj": {
+          "sales_order_id": 128,
+          "project_code": "GIDA-PRJ"
+        }
+      }
+    },
+    "stok_serileri": [
+      "SUT-PAL-286929-1",
+      "SUT-PAL-286932-2",
+      "SUT-PAL-286935-3"
+    ],
+    "stok_ikame": {
+      "id": 1,
+      "item": "TEST-SUT-A02",
+      "ikame": "OG-A02"
+    },
+    "bom_malzeme_degisikligi": {
+      "bom": "A00034",
+      "ileri": "MD00001",
+      "geri": "MD00002"
+    },
+    "mrp": {
+      "bagimsiz_ihtiyac": "BI00028",
+      "mrp_run": "MR00034",
+      "oneriler": [
+        {
+          "item_code": "OG-H01",
+          "item_name": "Çiğ İnek Sütü",
+          "suggestion": "Satınalma",
+          "net_requirement": 726.48
+        },
+        {
+          "item_code": "OG-M02",
+          "item_name": "Yarım Yağlı Süt 1L",
+          "suggestion": "Üretim emri",
+          "net_requirement": 20
+        },
+        {
+          "item_code": "OG-M03",
+          "item_name": "Sade Yoğurt 1KG",
+          "suggestion": "Üretim emri",
+          "net_requirement": 11
+        },
+        {
+          "item_code": "TEST-SUT-A01",
+          "item_name": "TEST-SUT-AMBALAJ-01 — 1 L Süt Şişesi",
+          "suggestion": "Satınalma",
+          "net_requirement": 5590
+        },
+        {
+          "item_code": "TEST-SUT-A02",
+          "item_name": "TEST-SUT-AMBALAJ-02 — Süt Kapağı",
+          "suggestion": "Satınalma",
+          "net_requirement": 5595
+        },
+        {
+          "item_code": "TEST-SUT-H01",
+          "item_name": "TEST-SUT-HAMMADDE-01 — Çiğ Süt",
+          "suggestion": "Satınalma",
+          "net_requirement": 5567
+        },
+        {
+          "item_code": "TEST-SUT-M01",
+          "item_name": "TEST-SUT-MAMUL-01 — Tam Yağlı Süt 1 L",
+          "suggestion": "Üretim emri",
+          "net_requirement": 5900
+        }
+      ],
+      "talep": "L00046",
+      "is_emri": "E00115"
+    },
+    "satinalma_zinciri": {
+      "teklif_istegi": "QI00001",
+      "teklifler": [
+        "QF00001",
+        "QF00002"
+      ],
+      "anlasma": "QA00001",
+      "siparis": "P00095",
+      "tedarikci_irsaliyesi": "TI-287015"
+    },
+    "onay": {
+      "bekleyen_onay": "NK00097",
+      "devir": "NV00001"
+    },
+    "kalite": {
+      "uygunsuzluk": 1,
+      "kk_emri": "QE00136",
+      "capa": "CA00001",
+      "plan_baglari": [
+        "TEST-SUT-H01/GKK",
+        "TEST-SUT-H02/GKK",
+        "TEST-SUT-M01/CKK",
+        "TEST-SUT-M02/CKK"
+      ]
+    },
+    "uretim_planlari": {
+      "plan_cevrilen": "UPL00001",
+      "is_emri": "E00116",
+      "plan_acik": "UPL00002"
+    },
+    "ik_tamamlayici": {
+      "vardiyalar": [
+        "VR00004",
+        "VR00005",
+        "VR00006"
+      ],
+      "tatil": 10,
+      "atama": 6,
+      "cikis_nedenleri": [
+        "Istifa",
+        "IsverenFeshi",
+        "Anlasmali",
+        "Emeklilik",
+        "DenemeSuresi"
+      ],
+      "avanslar": [
+        "AV00003",
+        "AV00004"
+      ],
+      "zimmetler": [
+        "ZM-TBLT-01-7765",
+        "ZM-KYF-02-7767",
+        "ZM-LAB-03-7770"
+      ],
+      "isten_cikis": "CI00001"
+    },
+    "proje_plani": {
+      "proje": "GIDA-PRJ-86865",
+      "planlanan_is": 10
+    }
+  },
+  "errors": [],
+  "firma": {
+    "id": 9,
+    "code": "GIDA",
+    "name": "Anadolu Süt ve Süt Ürünleri A.Ş."
+  }
+}

@@ -2882,7 +2882,7 @@ const MODULES = [
           { key: 'planned_start', label: 'Planlanan başlangıç', type: 'date', group: 'planlama' },
           { key: 'delivery_date', label: 'Teslim tarihi', type: 'date', group: 'planlama' },
           { key: 'is_started', label: 'Başlatıldı', type: 'checkbox', group: 'status' },
-          { key: 'fixed', label: 'Sabit', type: 'checkbox', group: 'status' },
+          { key: 'is_fixed', label: 'Sabit', type: 'checkbox', group: 'status' },
           { key: 'material', label: 'Malzeme (MRP)', type: 'checkbox', group: 'status' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Acik', 'Baslatildi', 'Kapali', 'Iptal'], group: 'status' },
           { key: 'description', label: 'Açıklama', group: 'status' },
@@ -2894,7 +2894,7 @@ const MODULES = [
         },
         detailFields: [],
         detailKey: null,
-        defaults: { status: 'Acik', is_started: false, fixed: false, material: false },
+        defaults: { status: 'Acik', is_started: false, is_fixed: false, material: false },
       },
       {
         id: 'uretim-emirleri',
@@ -4523,10 +4523,36 @@ const MODULES = [
         crud: false,
         codeField: 'project_code',
         nameField: 'project_name',
-        filters: [{ key: 'project_id', label: 'Proje id' }],
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        listFromResponse: (d) => (d?.project ? [{
+          ...d.project,
+          project_id: d.project.id,
+          percent_complete: d.progress?.percent_complete,
+          total: d.progress?.total,
+          open_count: d.progress?.open_count,
+          in_progress: d.progress?.in_progress,
+          done_count: d.progress?.done_count,
+          overdue_count: (d.overdue || []).length,
+          risk_count: (d.risks || []).length,
+          milestone_count: (d.upcoming_milestones || []).length,
+          budget_planned: d.budget?.planned,
+          budget_actual: d.budget?.actual,
+          budget_variance: d.budget?.variance,
+        }] : []),
         columns: [
           { key: 'project_code', label: 'Proje', mono: true },
           { key: 'project_name', label: 'Ad' },
+          { key: 'percent_complete', label: '%' },
+          { key: 'total', label: 'İş' },
+          { key: 'open_count', label: 'Açık' },
+          { key: 'in_progress', label: 'Devam' },
+          { key: 'done_count', label: 'Biten' },
+          { key: 'overdue_count', label: 'Geciken' },
+          { key: 'risk_count', label: 'Risk' },
+          { key: 'milestone_count', label: 'Kilometre taşı' },
+          { key: 'budget_planned', label: 'Bütçe' },
+          { key: 'budget_actual', label: 'Gerçek' },
+          { key: 'budget_variance', label: 'Sapma' },
         ],
         masterFields: [{ key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code' }],
         detailFields: [],
@@ -4570,11 +4596,32 @@ const MODULES = [
         crud: false,
         codeField: 'board_code',
         nameField: 'board_name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
+        listFromResponse: (d) => (d?.board ? (d.columns || []).map((c) => ({
+          id: c.id,
+          board_code: d.board.board_code,
+          board_name: d.board.board_name,
+          board_type: d.board.board_type,
+          project_id: d.board.project_id,
+          line_no: c.line_no,
+          column_name: c.column_name,
+          status_name: c.status_name,
+          card_count: c.card_count,
+          wip_limit: c.wip_limit,
+          wip_exceeded: c.wip_exceeded,
+          cards: (c.cards || []).map((k) => k.work_item_no || k.title).filter(Boolean).join(', '),
+        })) : []),
         columns: [
           { key: 'board_code', label: 'Board', mono: true },
           { key: 'board_name', label: 'Ad' },
           { key: 'board_type', label: 'Tip' },
+          { key: 'line_no', label: 'Sıra' },
+          { key: 'column_name', label: 'Kolon' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'card_count', label: 'Kart' },
+          { key: 'wip_limit', label: 'WIP limiti' },
+          { key: 'wip_exceeded', label: 'WIP aşımı' },
+          { key: 'cards', label: 'Kartlar' },
         ],
         masterFields: [
           { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
@@ -4593,7 +4640,7 @@ const MODULES = [
         crud: false,
         codeField: 'work_item_no',
         nameField: 'title',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
         columns: [
           { key: 'work_item_no', label: 'No', mono: true },
           { key: 'title', label: 'Başlık' },
@@ -4658,7 +4705,7 @@ const MODULES = [
         crud: false,
         codeField: 'code',
         nameField: 'name',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
         columns: [
           { key: 'code', label: 'Kod', mono: true },
           { key: 'name', label: 'İş' },
@@ -4708,7 +4755,7 @@ const MODULES = [
         crud: false,
         codeField: 'project_code',
         nameField: 'project_code',
-        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        filters: [{ key: 'project_id', label: 'Proje id', required: true, queryParam: true }],
         columns: [
           { key: 'project_code', label: 'Proje', mono: true },
           { key: 'planned_budget', label: 'Plan' },
@@ -11521,6 +11568,18 @@ function buildDefaultFilterState(screen) {
 }
 
 /** Liste endpoint’ine queryParam filtrelerini ekle (depo bakiye / belge yönetimi) */
+/** Liste yanıtı dizi değilse: listFromResponse (nesne → satırlar) veya listResponseKey */
+function listRowsFromResponse(screen, data) {
+  if (typeof screen.listFromResponse === 'function' && data && typeof data === 'object') {
+    return screen.listFromResponse(data) || [];
+  }
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && screen.listResponseKey) {
+    return Array.isArray(data[screen.listResponseKey]) ? data[screen.listResponseKey] : [];
+  }
+  return [];
+}
+
 function buildListEndpoint(screen) {
   let url = screen.endpoint || '';
   const extras = [];
@@ -12315,6 +12374,22 @@ function listColumns(screen) {
   return [{ key: 'id', label: 'ID', mono: true }, ...cols];
 }
 
+const ISO_DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z$/;
+
+/** DATE kolonları JSON'da UTC gece yarısı gelir; formla aynı şekilde ilk 10 karakter tarih kabul edilir. */
+function formatListDateTime(val) {
+  const m = ISO_DATETIME_RE.exec(val);
+  if (!m) return val;
+  if (m[4] === '00' && m[5] === '00' && m[6] === '00' && !/[1-9]/.test(m[7] || '')) {
+    return `${m[3]}.${m[2]}.${m[1]}`;
+  }
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return val;
+  return d.toLocaleString('tr-TR', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
 function cellHtml(col, row, index = 0) {
   let val = col.key === 'id' ? rowKey(row, index) : row[col.key];
   // Aktif kolonu Pasif olarak gösterilir: tik/Evet = is_inactive (is_active=false)
@@ -12324,6 +12399,8 @@ function cellHtml(col, row, index = 0) {
     val = val ? 'Var' : 'Yok';
   } else if (typeof val === 'boolean') {
     val = val ? 'Evet' : 'Hayır';
+  } else if (typeof val === 'string' && ISO_DATETIME_RE.test(val)) {
+    val = formatListDateTime(val);
   }
   if (val === null || val === undefined || val === '') val = '—';
   return col.mono ? `<span class="mono">${val}</span>` : String(val);
@@ -12742,10 +12819,7 @@ async function openScreen(id, opts = {}) {
       );
     }
     if (state.screenId !== screen.id) return;
-    let rows = Array.isArray(data) ? data : [];
-    if (!Array.isArray(data) && data && typeof data === 'object' && screen.listResponseKey) {
-      rows = Array.isArray(data[screen.listResponseKey]) ? data[screen.listResponseKey] : [];
-    }
+    let rows = listRowsFromResponse(screen, data);
     if (screen.id === 'numarator-tanimi') {
       rows = rows.map((r) => ({ ...r, id: r.series_code }));
     }
@@ -22173,10 +22247,14 @@ function bindEvents() {
       try {
         $('#listMeta').textContent = 'Yükleniyor…';
         const data = await api(buildListEndpoint(screen));
-        state.rows = ensureRowIds(Array.isArray(data) ? data : []);
+        state.rows = ensureRowIds(listRowsFromResponse(screen, data));
         state.filtered = applyFilters(state.rows, screen);
         state.selectedId = null;
         renderList(screen);
+        if (screen.visualGantt) {
+          state.ganttMeta = data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+          renderVisualGantt(screen, state.rows, state.ganttMeta || data);
+        }
       } catch (err) {
         toast(err.message || 'Filtre uygulanamadı');
       }
