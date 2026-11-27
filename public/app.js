@@ -3799,7 +3799,8 @@ const MODULES = [
       {
         id: 'urun-agaci',
         title: 'Ürün Ağacı',
-        screenIds: ['urun-agaci', 'bom-patlatma', 'bom-level-listesi', 'bom-malzeme-degisikligi'],
+        // Seviye listesi patlatmanın zayıf kopyasıydı — tek ekran: bom-patlatma
+        screenIds: ['urun-agaci', 'bom-patlatma', 'bom-malzeme-degisikligi'],
       },
       {
         id: 'planlama',
@@ -3811,12 +3812,12 @@ const MODULES = [
         title: 'İş Emirleri',
         screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'],
       },
-      
       {
         id: 'fason',
         title: 'Fason Operasyon',
         screenIds: ['fason-operasyon-takip', 'fason-siparisleri', 'fason-operasyonlari', 'fason-fiyatlari', 'fason-parametreleri', 'fason-sevkiyatlar', 'fason-tuketimler', 'fason-teslimatlar', 'fason-emanet-stok'],
-      },{
+      },
+      {
         id: 'gerceklesme',
         title: 'Üretim Gerçekleşme',
         screenIds: ['uretim-girisleri', 'hizli-uretim-girisi'],
@@ -3826,11 +3827,7 @@ const MODULES = [
         title: 'Kapasite',
         screenIds: ['is-merkezi-yuku'],
       },
-      {
-        id: 'bakim',
-        title: 'Bakım (CMMS)',
-        screenIds: ['bakim-emirleri'],
-      },
+      // Bakım (CMMS) ayrı modül olarak sonra eklenecek — üretim menüsünden çıkarıldı
       {
         id: 'tanimlamalar',
         title: 'Tanımlamalar',
@@ -4083,7 +4080,7 @@ const MODULES = [
         readOnly: true,
         codeField: 'list_code',
         nameField: 'description',
-        banner: 'Mamul/ağaç + miktar ile çok seviyeli patlatma (yarı mamul ağaçları dahil). Fire % satırdan uygulanır.',
+        banner: 'Mamul/ağaç + miktar ile çok seviyeli patlatma (yarı mamul ağaçları dahil, seviye yolu + toplam ihtiyaç). Fire % satırdan uygulanır.',
         filters: [
           { key: 'bom_code', label: 'Ağaç kodu' },
           { key: 'finished_good_item_id', label: 'Mamul stok', type: 'lookup', lookup: 'items-mamul', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code' },
@@ -4107,34 +4104,7 @@ const MODULES = [
           { key: 'request_path', label: 'Yol' },
         ],
       },
-      {
-        id: 'bom-level-listesi',
-        techId: 'MFG-BOM-SCR-003',
-        businessNameEn: 'BomLevelListScreen',
-        title: 'Ürün Ağacı Seviye Listesi',
-        endpoint: '/bom/level-listesi',
-        crud: false,
-        readOnly: true,
-        hideSave: true,
-        hideNew: true,
-        hideDelete: true,
-        codeField: 'list_code',
-        nameField: 'description',
-        banner: 'Salt okunur seviye raporu (kayıt oluşturulmaz). Miktarlı patlatma için «Ürün Ağacı Patlatma» ekranını kullanın.',
-        filters: [
-          { key: 'bom_code', label: 'Ağaç kodu' },
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'mamul_kodu', label: 'Mamul' },
-        ],
-        columns: [
-          { key: 'bom_code', label: 'Ağaç', mono: true },
-          { key: 'level', label: 'Seviye' },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'quantity', label: 'Miktar' },
-          { key: 'request_path', label: 'Yol' },
-        ],
-      },
+      // bom-level-listesi kaldırıldı — işlev bom-patlatma ile karşılanıyor
       {
         id: 'bom-malzeme-degisikligi',
         techId: 'MFG-BOM-SCR-004',
@@ -4239,72 +4209,78 @@ const MODULES = [
           { key: 'order_no', label: 'Emir', mono: true },
           { key: 'emir_tipi_kodu', label: 'Tip', mono: true },
           { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'order_no', label: 'Sipariş', mono: true },
+          { key: 'sales_order_no', label: 'Sipariş', mono: true },
           { key: 'planned_quantity', label: 'Plan' },
           { key: 'produced_quantity', label: 'Üretilen' },
           { key: 'planned_firm', label: 'P/K' },
-          { key: 'is_open', label: 'A/K' },
-          { key: 'is_approved', label: 'Onay' },
-          { key: 'is_started', label: 'Başlatıldı' },
           { key: 'status', label: 'Durum' },
+          { key: 'is_started', label: 'Başlatıldı' },
         ],
         masterFields: [
           // 1) Organizasyon
-          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', lead: true },
-          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', lead: true },
-          { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon' },
-          // 2) Üretim kimliği — stok → ağaç → rota (önem / bağımlılık sırası)
-          { key: 'order_no', label: 'Emir no', code: true, group: 'kimlik' },
-          { key: 'order_date', label: 'Emir tarihi', type: 'date', required: true, group: 'kimlik' },
+          { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon', groupLabel: 'Organizasyon', lead: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon', groupLabel: 'Organizasyon', lead: true },
+          { key: 'order_type_id', label: 'Emir tipi', type: 'lookup', lookup: 'uretim-emri-tipleri', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code', group: 'organizasyon', groupLabel: 'Organizasyon' },
+          // 2) Kimlik — stok → ağaç → rota
+          { key: 'order_no', label: 'Emir no', code: true, group: 'kimlik', groupLabel: 'Emir kimliği' },
+          { key: 'order_date', label: 'Emir tarihi', type: 'date', required: true, group: 'kimlik', groupLabel: 'Emir kimliği' },
           {
             key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items-mamul',
-            valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true, group: 'kimlik',
+            valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true, lead: true,
+            group: 'kimlik', groupLabel: 'Emir kimliği',
           },
           {
             key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari',
-            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true, group: 'kimlik',
+            valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', required: true,
+            group: 'kimlik', groupLabel: 'Emir kimliği',
             dependsOn: 'item_id', filterKey: 'finished_good_item_id',
           },
           {
             key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings',
-            valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true, group: 'kimlik',
+            valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', required: true,
+            group: 'kimlik', groupLabel: 'Emir kimliği',
             dependsOn: 'item_id', filterKey: 'item_id',
           },
-          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik' },
-          { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik' },
-          { key: 'is_subcontract', label: 'Fason emri', type: 'checkbox', group: 'kimlik' },
-          { key: 'subcontractor_partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code', group: 'kimlik' },
-          { key: 'produced_quantity', label: 'Üretilen miktar', type: 'number', readOnly: true, group: 'kimlik' },
-          { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', group: 'kimlik' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'kimlik' },
-          // 3) Depolar — stok kartı varsayılan giriş/çıkış
-          { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
-          { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
-          { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
-          // 4) Planlama — tarih + saat
-          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama' },
-          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama' },
-          { key: 'end_date', label: 'Bitiş tarihi', type: 'datetime', group: 'planlama' },
-          { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama' },
-          { key: 'issue_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
-          { key: 'receipt_type', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama' },
-          // 5) Durum / notlar
-          { key: 'is_open', label: 'Açık/Kapalı', type: 'select', options: ['Acik', 'Kapali'], group: 'status' },
-          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'], group: 'status' },
-          { key: 'is_approved', label: 'Onaylı', type: 'checkbox', group: 'status' },
-          { key: 'is_released', label: 'Yayınlandı', type: 'checkbox', group: 'status' },
-          { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox', group: 'status' },
-          { key: 'product_receipt_completed', label: 'Ürün girişi tamam', type: 'checkbox', group: 'status' },
-          { key: 'is_started', label: 'Başlatıldı', type: 'checkbox', readOnly: true, group: 'status' },
-          { key: 'description', label: 'Açıklama', size: 'wide', group: 'status' },
+          { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', group: 'kimlik', groupLabel: 'Emir kimliği' },
+          { key: 'planned_quantity', label: 'Planlanan miktar', type: 'number', required: true, group: 'kimlik', groupLabel: 'Emir kimliği' },
+          { key: 'produced_quantity', label: 'Üretilen miktar', type: 'number', readOnly: true, group: 'kimlik', groupLabel: 'Emir kimliği' },
+          { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', group: 'kimlik', groupLabel: 'Emir kimliği' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'kimlik', groupLabel: 'Emir kimliği' },
+          // 3) Fason — tik yoksa diğer alanlar disabled
+          { key: 'is_subcontract', label: 'Fason emri', type: 'checkbox', group: 'fason', groupLabel: 'Fason' },
+          {
+            key: 'subcontractor_partner_id', label: 'Fasoncu', type: 'lookup', lookup: 'partners-fasoncu',
+            valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code',
+            group: 'fason', groupLabel: 'Fason',
+            enableWhen: { field: 'is_subcontract', truthy: true },
+          },
+          // 4) Depolar
+          { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo', groupLabel: 'Depolar' },
+          { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo', groupLabel: 'Depolar' },
+          { key: 'fg_warehouse_id', label: 'Mamul / giriş depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo', groupLabel: 'Depolar' },
+          // 5) Planlama
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'datetime', group: 'planlama', groupLabel: 'Planlama' },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'datetime', group: 'planlama', groupLabel: 'Planlama' },
+          { key: 'end_date', label: 'Bitiş tarihi', type: 'datetime', group: 'planlama', groupLabel: 'Planlama' },
+          { key: 'planned_firm', label: 'Planlı/Kesin', type: 'select', options: ['Kesin', 'Planli'], group: 'planlama', groupLabel: 'Planlama' },
+          { key: 'issue_type', label: 'Çıkış tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama', groupLabel: 'Planlama' },
+          { key: 'receipt_type', label: 'Giriş tipi', type: 'select', options: ['Manuel', 'OtomatikEmis', 'PartiDagitim'], group: 'planlama', groupLabel: 'Planlama' },
+          // 6) Durum
+          { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'OnayBekliyor', 'Acik', 'Uretimde', 'Kapali', 'Iptal'], group: 'status', groupLabel: 'Durum' },
+          { key: 'is_open', label: 'Açık/Kapalı', type: 'select', options: ['Acik', 'Kapali'], group: 'status', groupLabel: 'Durum' },
+          { key: 'is_approved', label: 'Onaylı', type: 'checkbox', group: 'status', groupLabel: 'Durum' },
+          { key: 'is_released', label: 'Yayınlandı', type: 'checkbox', group: 'status', groupLabel: 'Durum' },
+          { key: 'is_started', label: 'Başlatıldı', type: 'checkbox', readOnly: true, group: 'status', groupLabel: 'Durum' },
+          { key: 'description', label: 'Açıklama', size: 'wide', group: 'status', groupLabel: 'Durum' },
         ],
         detailFields: [
           { key: 'line_no', label: 'Op. no', type: 'number', size: 'short' },
           { key: 'operation_code', label: 'Operasyon kodu', size: 'short' },
           { key: 'operation_name', label: 'Operasyon adı' },
           { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
-          { key: 'planned_quantity', label: 'Plan miktar', type: 'number', size: 'short' },
+          { key: 'planned_quantity', label: 'Planlanan', type: 'number', size: 'short' },
           { key: 'produced_quantity', label: 'Üretilen', type: 'number', size: 'short', readOnly: true },
+          { key: 'transferred_quantity', label: 'Aktarılan', type: 'number', size: 'short', readOnly: true },
           { key: 'status', label: 'Durum', type: 'select', options: ['Bekliyor', 'Hazir', 'Tamamlandi', 'Kapali'] },
           { key: 'ilk_operasyon', label: 'İlk op?', type: 'checkbox', readOnly: true },
           { key: 'son_operasyon', label: 'Son op?', type: 'checkbox', readOnly: true },
@@ -4316,7 +4292,7 @@ const MODULES = [
             id: 'bilgiler',
             label: 'İş Emri Bilgileri',
             kind: 'fields',
-            fields: null, // masterFields (normalize)
+            fields: null,
           },
           {
             id: 'malzemeler',
@@ -4328,8 +4304,9 @@ const MODULES = [
               { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
               { key: 'item_id', label: 'Stok', type: 'lookup', lookup: 'items', valueKey: 'id', labelKey: 'item_name', codeKey: 'item_code', required: true },
               { key: 'uom_code', label: 'Birim', type: 'lookup', lookup: 'olcu-birimleri', valueKey: 'uom_code', labelKey: 'uom_name', size: 'short' },
-              { key: 'planned_quantity', label: 'Plan miktar', type: 'number', size: 'short', required: true },
+              { key: 'planned_quantity', label: 'Plan', type: 'number', size: 'short', required: true },
               { key: 'consumed_quantity', label: 'Tüketilen', type: 'number', size: 'short', readOnly: true },
+              { key: 'remaining_quantity', label: 'Kalan', type: 'number', size: 'short', readOnly: true },
               { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
             ],
           },
@@ -4339,7 +4316,7 @@ const MODULES = [
             kind: 'grid',
             key: 'operasyonlar',
             slots: 6,
-            fields: null, // detailFields
+            fields: null,
           },
         ],
         // Stok seçilince ağaç / rota / birim / depolar otomatik
@@ -4496,7 +4473,7 @@ const MODULES = [
         codeField: 'receipt_no',
         nameField: 'order_no',
         numeratorSeri: 'URETIM_GIRIS',
-        banner: 'İş emri + operasyon seçip «Detayları Getir» deyin. Operasyon kalanı ve maks. izin (toleranslı) alanları üretim parametrelerine göre dolar; aşım kayıttan önce engellenir.',
+        banner: '1) İş emri seçin 2) Operasyon seçin (veya boş bırakıp «Detayları Getir») 3) Miktar / malzeme kontrol 4) Kaydet. Aşım, üretim parametrelerine göre engellenir.',
         filters: [
           { key: 'receipt_no', label: 'Giriş no' },
           { key: 'order_no', label: 'Emir no' },
@@ -4524,7 +4501,7 @@ const MODULES = [
             lead: true,
             fillFrom: 'uretim-giris-onizleme',
             group: 'kaynak-belge',
-            groupLabel: 'İş emri',
+            groupLabel: 'Kaynak',
           },
           {
             key: 'operation_id',
@@ -4539,7 +4516,7 @@ const MODULES = [
             lead: true,
             fillFrom: 'uretim-giris-onizleme',
             group: 'kaynak-belge',
-            groupLabel: 'İş emri',
+            groupLabel: 'Kaynak',
           },
           {
             key: 'plant_id',
@@ -4549,11 +4526,11 @@ const MODULES = [
             valueKey: 'id',
             labelKey: 'plant_name',
             codeKey: 'plant_code',
-            group: 'genel',
-            groupLabel: 'Genel bilgiler',
+            group: 'kaynak-belge',
+            groupLabel: 'Kaynak',
           },
-          { key: 'item_code', label: 'Ürün kodu', readOnly: true, group: 'genel', groupLabel: 'Genel bilgiler' },
-          { key: 'item_name', label: 'Ürün', readOnly: true, group: 'genel', groupLabel: 'Genel bilgiler' },
+          { key: 'item_code', label: 'Ürün kodu', readOnly: true, group: 'urun', groupLabel: 'Ürün' },
+          { key: 'item_name', label: 'Ürün', readOnly: true, group: 'urun', groupLabel: 'Ürün' },
           {
             key: 'work_center_id',
             label: 'Planlanan iş ist.',
@@ -4562,8 +4539,8 @@ const MODULES = [
             valueKey: 'id',
             labelKey: 'center_name',
             codeKey: 'center_code',
-            group: 'genel',
-            groupLabel: 'Genel bilgiler',
+            group: 'urun',
+            groupLabel: 'Ürün',
           },
           {
             key: 'actual_work_center_id',
@@ -4573,28 +4550,21 @@ const MODULES = [
             valueKey: 'id',
             labelKey: 'center_name',
             codeKey: 'center_code',
-            group: 'genel',
-            groupLabel: 'Genel bilgiler',
-          },
-          { key: 'started_at', label: 'Op. baş. tarihi', type: 'date', group: 'genel', groupLabel: 'Genel bilgiler' },
-          { key: 'ended_at', label: 'Op. bit. tarihi', type: 'date', group: 'genel', groupLabel: 'Genel bilgiler' },
-          {
-            key: 'source_type',
-            label: 'Kaynak',
-            type: 'select',
-            options: ['Operasyonel', 'Hizli', 'Barkod', 'Manuel'],
-            group: 'genel',
-            groupLabel: 'Genel bilgiler',
+            group: 'urun',
+            groupLabel: 'Ürün',
           },
           {
             key: 'consume_materials',
-            label: 'Hammadde/yarı mamul tüket',
+            label: 'Malzeme tüket',
             type: 'checkbox',
-            group: 'genel',
-            groupLabel: 'Genel bilgiler',
+            group: 'urun',
+            groupLabel: 'Ürün',
           },
-          { key: 'net_quantity', label: 'Net miktar', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'gross_quantity', label: 'Brüt miktar', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'net_quantity', label: 'Net', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'gross_quantity', label: 'Brüt', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'scrap_quantity', label: 'Hurda', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'rework_quantity', label: 'Yeniden işlem', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
           {
             key: 'uom_code',
             label: 'Birim',
@@ -4605,22 +4575,29 @@ const MODULES = [
             group: 'miktar',
             groupLabel: 'Miktarlar',
           },
-          { key: 'scrap_quantity', label: 'Toplam hurda', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'rework_quantity', label: 'Yeniden işlem', type: 'number', group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'quantity', label: 'Üretilen miktar', type: 'number', required: true, group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'planned_quantity', label: 'İş emri miktarı', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'planned_quantity', label: 'İş emri plan', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
           { key: 'produced_quantity', label: 'Önceki üretilen', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'op_remaining_quantity', label: 'Operasyon kalan', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'max_allowed_quantity', label: 'Maks. izin (toleranslı)', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
-          { key: 'serial_no', label: 'Seri no', group: 'diger', groupLabel: 'Diğer bilgiler' },
-          { key: 'shift_code', label: 'Vardiya kodu', group: 'diger', groupLabel: 'Diğer bilgiler' },
-          { key: 'receipt_no', label: 'Giriş no', code: true, editableOnNew: true, group: 'diger', groupLabel: 'Diğer bilgiler' },
-          { key: 'description', label: 'Açıklama', group: 'diger', groupLabel: 'Diğer bilgiler' },
+          { key: 'op_remaining_quantity', label: 'Op. kalan', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'max_allowed_quantity', label: 'Maks. izin', type: 'number', readOnly: true, group: 'miktar', groupLabel: 'Miktarlar' },
+          { key: 'started_at', label: 'Başlangıç', type: 'date', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'ended_at', label: 'Bitiş', type: 'date', group: 'diger', groupLabel: 'Diğer' },
+          {
+            key: 'source_type',
+            label: 'Kaynak tipi',
+            type: 'select',
+            options: ['Operasyonel', 'Hizli', 'Barkod', 'Manuel'],
+            group: 'diger',
+            groupLabel: 'Diğer',
+          },
+          { key: 'serial_no', label: 'Seri no', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'shift_code', label: 'Vardiya', group: 'diger', groupLabel: 'Diğer' },
+          { key: 'receipt_no', label: 'Giriş no', code: true, editableOnNew: true, group: 'diger', groupLabel: 'Diğer' },
+          { key: 'description', label: 'Açıklama', size: 'wide', group: 'diger', groupLabel: 'Diğer' },
         ],
         detailFields: [],
         detailKey: null,
         formTabs: [
-          { id: 'urun', label: 'Ürün Giriş Bilgileri', kind: 'fields', fields: null },
+          { id: 'urun', label: 'Giriş Bilgileri', kind: 'fields', fields: null },
           {
             id: 'depolar',
             label: 'Depolar',
@@ -4646,7 +4623,7 @@ const MODULES = [
               },
               {
                 key: 'wip_warehouse_id',
-                label: 'Yarı mamul çıkış depo',
+                label: 'Yarı mamul depo',
                 type: 'lookup',
                 lookup: 'warehouses',
                 valueKey: 'id',
@@ -4655,7 +4632,7 @@ const MODULES = [
               },
               {
                 key: 'scrap_warehouse_id',
-                label: 'Malzeme hurda giriş depo',
+                label: 'Hurda depo',
                 type: 'lookup',
                 lookup: 'warehouses',
                 valueKey: 'id',
@@ -4664,7 +4641,7 @@ const MODULES = [
               },
               {
                 key: 'byproduct_warehouse_id',
-                label: 'Yan ürün giriş depo',
+                label: 'Yan ürün depo',
                 type: 'lookup',
                 lookup: 'warehouses',
                 valueKey: 'id',
@@ -4680,7 +4657,7 @@ const MODULES = [
             key: 'malzemeler',
             slots: 8,
             fields: [
-              { key: 'line_no', label: 'Sıra No', type: 'number', size: 'short' },
+              { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
               { key: 'line_type', label: 'Tip', type: 'select', options: ['Hammadde', 'YariMamul', 'Mamul', 'Ticari', 'Sarf'], size: 'short' },
               {
                 key: 'item_id',
@@ -4692,14 +4669,9 @@ const MODULES = [
                 codeKey: 'item_code',
                 required: true,
               },
-              { key: 'alternative_no', label: 'Alternatif No', size: 'short' },
-              { key: 'quantity_type', label: 'Miktar Tipi', type: 'select', options: ['Net', 'Brüt', 'Sabit'], size: 'short' },
-              { key: 'unit_quantity', label: 'Birim Miktar', type: 'number', size: 'short' },
+              { key: 'unit_quantity', label: 'Birim mik.', type: 'number', size: 'short' },
               { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
-              { key: 'scrap_quantity', label: 'Hurda Miktarı', type: 'number', size: 'short' },
-              { key: 'rework_quantity', label: 'Yeniden İşlem Miktarı', type: 'number', size: 'short' },
-              { key: 'gross_quantity', label: 'Brüt Miktar', type: 'number', size: 'short' },
-              { key: 'net_quantity', label: 'Net Miktar', type: 'number', size: 'short' },
+              { key: 'scrap_quantity', label: 'Hurda', type: 'number', size: 'short' },
               {
                 key: 'uom_code',
                 label: 'Birim',
@@ -4718,28 +4690,48 @@ const MODULES = [
                 labelKey: 'warehouse_name',
                 codeKey: 'warehouse_code',
               },
-              { key: 'warehouse_balance', label: 'Depo Mik.', type: 'number', size: 'short', readOnly: true },
-              { key: 'lot_no', label: 'Parti Kod', size: 'short' },
+              { key: 'lot_no', label: 'Parti', size: 'short' },
               { key: 'note', label: 'Not' },
-              { key: 'revision', label: 'Revizyon', size: 'short' },
-              { key: 'brand', label: 'Marka', size: 'short' },
-              { key: 'feature_3', label: 'Özellik3', size: 'short' },
-              { key: 'general_feature_1', label: 'Gnl.Özellik1', size: 'short' },
-              { key: 'entry_mode', label: 'Giriş Şekli', size: 'short' },
-              { key: 'source_ref', label: 'Kaynak', size: 'short' },
             ],
           },
           {
-            id: 'duruslar',
-            label: 'İş Emri Duruşları',
+            id: 'yan-urunler',
+            label: 'Yan Ürünler',
             kind: 'grid',
-            key: 'duruslar',
-            slots: 2,
+            key: 'yan_urunler',
+            slots: 4,
             fields: [
               { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
-              { key: 'downtime_code', label: 'Duruş kodu', size: 'short' },
-              { key: 'downtime_name', label: 'Duruş adı' },
-              { key: 'duration_min', label: 'Süre (dk)', type: 'number', size: 'short' },
+              {
+                key: 'item_id',
+                label: 'Stok',
+                type: 'lookup',
+                lookup: 'items',
+                valueKey: 'id',
+                labelKey: 'item_name',
+                codeKey: 'item_code',
+                required: true,
+              },
+              { key: 'unit_quantity', label: 'Birim mik.', type: 'number', size: 'short' },
+              { key: 'quantity', label: 'Miktar', type: 'number', size: 'short', required: true },
+              {
+                key: 'uom_code',
+                label: 'Birim',
+                type: 'lookup',
+                lookup: 'olcu-birimleri',
+                valueKey: 'uom_code',
+                labelKey: 'uom_name',
+                size: 'short',
+              },
+              {
+                key: 'warehouse_id',
+                label: 'Depo',
+                type: 'lookup',
+                lookup: 'warehouses',
+                valueKey: 'id',
+                labelKey: 'warehouse_name',
+                codeKey: 'warehouse_code',
+              },
               { key: 'note', label: 'Not' },
             ],
           },
@@ -4754,7 +4746,7 @@ const MODULES = [
           net_quantity: 1,
           gross_quantity: 1,
           malzemeler: [],
-          duruslar: [],
+          yan_urunler: [],
         },
       },
       {
@@ -9816,7 +9808,7 @@ function isCompactDocumentScreen(s) {
   const skip = new Set([
     'stok-karti', 'cari-kartlari', 'urun-agaci', 'routings',
     'kullanicilar', 'kullanici-gruplari', 'companies', 'is-yerleri', 'warehouses',
-    'bom-malzeme-degisikligi', 'bom-patlatma', 'bom-level-listesi',
+    'bom-malzeme-degisikligi', 'bom-patlatma',
     'siparis-is-emri', 'toplu-is-emri',
     // Kart / tanım — belge kabuğu değil
     'crm-firsatlar', 'fiyat-listeleri', 'kk-kontrol-planlari',
@@ -14322,7 +14314,12 @@ async function fillAddressFromPartner(cariId, { force = false } = {}) {
 
 /** İş emri / operasyon seçilince üretim girişi formunu önizleme ile doldur */
 async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = null, quantity = null } = {}) {
-  if (!state.formRecord) return;
+  if (!state.formRecord) state.formRecord = {};
+  // Formdaki güncel değerleri de oku (kayıt edilmemiş seçimler)
+  try {
+    const live = readTabbedPayload(screen);
+    state.formRecord = { ...state.formRecord, ...live };
+  } catch (_) { /* form henüz yok */ }
   const oid = Number(orderId || state.formRecord.order_id || document.querySelector('[data-master="order_id"]')?.value);
   if (!oid) {
     toast('Önce iş emri seçin.');
@@ -14341,6 +14338,10 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
   if (qty !== '' && qty != null && Number(qty) > 0) q.set('quantity', String(qty));
   const prev = { ...(state.formRecord || {}) };
   const data = await api(`/uretim-girisleri/onizleme?${q}`);
+  if (!data?.order_id && !data?.order_no) {
+    toast('Önizleme boş döndü — iş emrini kontrol edin.');
+    return;
+  }
   const keepSource = screen.id === 'hizli-uretim-girisi' ? 'Hizli' : (prev.source_type || 'Operasyonel');
   state.formRecord = {
     ...prev,
@@ -14353,31 +14354,43 @@ async function fillUretimGirisOnizleme(screen, { orderId = null, operationId = n
     serial_no: prev.serial_no || data.serial_no || '',
     shift_code: prev.shift_code || '',
     description: prev.description || data.description || '',
-    malzemeler: data.malzemeler || [],
-    duruslar: prev.duruslar || [],
+    // Önizleme operasyon/depo/miktar + malzemeleri her zaman yazar
+    operation_id: data.operation_id || prev.operation_id || null,
+    quantity: data.quantity != null ? data.quantity : (prev.quantity || 1),
+    net_quantity: data.net_quantity != null ? data.net_quantity : data.quantity,
+    gross_quantity: data.gross_quantity != null ? data.gross_quantity : data.quantity,
+    malzemeler: Array.isArray(data.malzemeler) ? data.malzemeler : [],
+    yan_urunler: Array.isArray(data.yan_urunler) ? data.yan_urunler : [],
   };
   invalidateLookups('uretim-emir-operasyonlari');
   await fetchLookupKey('uretim-emir-operasyonlari', { order_id: oid }).catch(() => {});
   const nMal = (data.malzemeler || []).length;
+  const nYan = (data.yan_urunler || []).length;
   const kalan = data.op_remaining_quantity != null ? Number(data.op_remaining_quantity) : null;
   const maxA = data.max_allowed_quantity != null ? Number(data.max_allowed_quantity) : null;
   const allowOver = data.production_params?.allow_over_production === true;
   const overPct = data.production_params?.over_production_pct != null
     ? Number(data.production_params.over_production_pct)
     : 0;
-  // Eğitim / operatör: form üst bandında kalan ve max izin her zaman görünsün
   screen._runtimeBanner = [
     `Emir ${data.order_no || oid}`,
     data.operation_code ? `Op ${data.operation_code}` : null,
     kalan != null ? `Kalan: ${kalan}` : null,
     maxA != null ? `Max izin: ${maxA}` : null,
     allowOver ? `Fazla üretim açık (%${overPct})` : 'Fazla üretim kapalı',
+    nMal ? `${nMal} malzeme` : 'malzeme yok',
+    nYan ? `${nYan} yan ürün` : null,
   ].filter(Boolean).join(' · ');
   renderForm(screen);
   const qtyHint = (kalan != null && maxA != null)
     ? ` · kalan ${kalan}, max ${maxA}`
     : '';
-  toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme${qtyHint}`);
+  const yanHint = nYan ? ` · ${nYan} yan ürün` : '';
+  if (!nMal) {
+    toast(`Önizleme: ${data.order_no || oid} — malzeme satırı yok. Emirde «Detayları Doldur» ile BOM uygulayın.${yanHint}`);
+  } else {
+    toast(`Üretim önizleme: ${data.order_no || oid} · ${nMal} malzeme${yanHint}${qtyHint}`);
+  }
 }
 
 async function fillLinesFromSource(kind, sourceId) {
@@ -16852,10 +16865,49 @@ function emptyLookupLabel() {
   return '—';
 }
 
+/** enableWhen: { field, truthy?: true, eq?: any } — üst alan koşulu sağlanmazsa disable */
+function evalEnableWhen(field, ctx) {
+  const ew = field?.enableWhen;
+  if (!ew || !ew.field) return true;
+  const raw = ctx?.[ew.field];
+  if (ew.truthy) {
+    return raw === true || raw === 1 || raw === '1' || raw === 'true' || raw === 'on';
+  }
+  if (Object.prototype.hasOwnProperty.call(ew, 'eq')) {
+    return String(raw) === String(ew.eq);
+  }
+  return raw != null && raw !== '' && raw !== false;
+}
+
+function syncEnableWhenFields(screen) {
+  if (!screen?.masterFields?.length) return;
+  const ctx = { ...(state.formRecord || {}) };
+  for (const f of screen.masterFields) {
+    const el = findAttrControl('data-master', f.key);
+    if (!el) continue;
+    if (el.type === 'checkbox') ctx[f.key] = el.checked;
+    else if (el.value != null) ctx[f.key] = el.value;
+  }
+  for (const f of screen.masterFields) {
+    if (!f.enableWhen) continue;
+    const el = findAttrControl('data-master', f.key);
+    if (!el) continue;
+    const met = evalEnableWhen(f, ctx);
+    const baseRo = state.formMode === 'incele' || Boolean(f.readOnly);
+    setControlDisabled(el, baseRo || !met, met ? '' : 'Üst koşul sağlanmadı');
+    if (!met) {
+      if (el.type === 'checkbox') el.checked = false;
+      else if ('value' in el) el.value = '';
+      if (state.formRecord) state.formRecord[f.key] = el.type === 'checkbox' ? false : null;
+    }
+  }
+}
+
 function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', ctx = null) {
   if (field.type === 'static') {
     return `<span class="field-static" aria-hidden="true">${escAttr(field.label || '=')}</span>`;
   }
+  const scopeCtx = ctx || state.formRecord || {};
   const codeLocked = field.code && !(field.editableOnNew && (state.formMode === 'yeni' || (state.formMode === 'kopyala' && !state.formNumeratorSeri)));
   let transferLocked = false;
   if (field.transferOnly) {
@@ -16865,7 +16917,8 @@ function fieldControl(field, value, attrName = 'data-master', extraAttrs = '', c
       ? !isTransferMovementCode(movementCodeRowById(hkId))
       : false;
   }
-  const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly || transferLocked;
+  const enableMet = evalEnableWhen(field, scopeCtx);
+  const forceDisabled = state.formMode === 'incele' || codeLocked || field.readOnly || transferLocked || !enableMet;
   const dis = forceDisabled ? 'disabled' : '';
   const req = (field.required || (field.transferOnly && !transferLocked)) ? 'aria-required="true"' : '';
   const v = value ?? '';
@@ -21803,12 +21856,15 @@ function renderForm(screen) {
   const uretimGirisFill = (screen.id === 'uretim-girisleri' || screen.id === 'hizli-uretim-girisi')
     && screen.detailFillAction?.client === 'uretim-giris-onizleme'
     && state.formMode !== 'incele'
-    && !readonly
-    && Boolean(rec.order_id || document.querySelector('[data-master="order_id"]')?.value);
+    && !readonly;
+  // Yeni kayıtta da buton görünsün; iş emri yoksa tıklanınca uyarı verir
   if (fillBtn) {
     const showFill = (woCanRefill && screen.detailFillAction) || uretimGirisFill;
     fillBtn.hidden = !showFill;
     if (showFill) fillBtn.textContent = screen.detailFillAction.label;
+  }
+  if (screen.id === 'uretim-emirleri' || (screen.masterFields || []).some((f) => f.enableWhen)) {
+    syncEnableWhenFields(screen);
   }
   if (bomBtn) {
     const showBom = woCanRefill && screen.bomRotaChangeAction;
@@ -24236,6 +24292,17 @@ function bindCascadeLookups(_screen) {
         }
       } catch (err) {
         toast(err.message || 'Barkod çözülemedi');
+      }
+      return;
+    }
+
+    // Checkbox / enableWhen: fason emri vb. — select zincirine girmeden önce uygula
+    if (el instanceof HTMLInputElement && el.type === 'checkbox' && masterKey && state.formRecord) {
+      const f = collectTabFields(scr).find((x) => x.key === masterKey)
+        || (scr.masterFields || []).find((x) => x.key === masterKey);
+      state.formRecord[masterKey] = f ? readFieldValue(el, f) : el.checked;
+      if ((scr.masterFields || []).some((x) => x.enableWhen)) {
+        syncEnableWhenFields(scr);
       }
       return;
     }
