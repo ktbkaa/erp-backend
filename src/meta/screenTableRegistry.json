@@ -1239,9 +1239,27 @@
       }
     ]
   },
+  "giris-kontrolleri": {
+    "screenId": "giris-kontrolleri",
+    "title": "Giriş Kontrolleri",
+    "techId": "QLT-INC-SCR-001",
+    "endpoint": "/giris-kontrolleri",
+    "auditTablo": "giris-kontrolleri",
+    "primaryTable": "incoming_inspections",
+    "tables": [
+      {
+        "name": "incoming_inspections",
+        "role": "master"
+      },
+      {
+        "name": "incoming_inspection_lines",
+        "role": "related"
+      }
+    ]
+  },
   "kk-emirleri-gkk": {
     "screenId": "kk-emirleri-gkk",
-    "title": "GKK Emirleri",
+    "title": "Giriş Kalite Emirleri",
     "techId": "QLT-IQC-SCR-001",
     "endpoint": "/kk-emirleri",
     "auditTablo": "kk-emirleri",
@@ -1255,7 +1273,7 @@
   },
   "kk-emirleri-ckk": {
     "screenId": "kk-emirleri-ckk",
-    "title": "ÇKK Emirleri",
+    "title": "Çıkış Kalite Emirleri",
     "techId": "QLT-OQC-SCR-001",
     "endpoint": "/kk-emirleri",
     "auditTablo": "kk-emirleri",

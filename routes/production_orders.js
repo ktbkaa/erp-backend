@@ -5,7 +5,7 @@ const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { stokHareketOlustur } = require('../src/services/stokHareketService');
-const { kkEmriOlustur, ckkDepoCozumle, depoBulKodVeyaRol } = require('../src/services/kaliteService');
+const { kkEmriOlustur, ckkDepoCozumle, ckkHedefDepoCozumle } = require('../src/services/kaliteService');
 
 async function tipCozumle(client, emirTipiId, siparisId) {
     if (emirTipiId) {
@@ -777,53 +777,45 @@ router.post('/:id/operasyon-tamamla', async (req, res) => {
                 tuketimHareketId = h.hareket.id;
             }
 
-            // Çıktı stoğu ilgili depoya (KK gerekliyse ÇKK + Kalitede)
+            // Üretim çıktısı her zaman Çıkış Kalite (CKK) deposuna; onay sonrası Mamul/YarıMamul
             let mamulHareketId = null;
             if (op.output_item_id) {
                 const cikti = await client.query(
                     'SELECT id, uom_code, item_type, kalite_control_gerekli FROM items WHERE id=$1',
                     [op.output_item_id]
                 );
-                const kkGerekli = Boolean(cikti.rows[0].kalite_control_gerekli);
-                let ciktiDepo = ciktiDepoSec(emir, cikti.rows[0].item_type);
-                let hedefMamul = null;
-                if (kkGerekli) {
-                    const ckk = await ckkDepoCozumle(client);
-                    if (!ckk) throw new Error('ÇKK deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
-                    ciktiDepo = ckk.id;
-                    const mam = await depoBulKodVeyaRol(client, { kodParam: 'MAMUL_DEPO_KODU', role: 'Mamul' });
-                    hedefMamul = mam?.id || null;
-                }
+                const ckk = await ckkDepoCozumle(client, emir.plant_id);
+                if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
+                const ciktiDepo = ckk.id;
+                const hedefDepo = await ckkHedefDepoCozumle(client, op.output_item_id, emir.plant_id);
                 const h = await stokHareketOlustur(client, {
                     hareketTipi: 'URETIM_GIRIS',
                     isYeriId: emir.plant_id,
                     depoId: ciktiDepo,
                     belgeTipi: 'URETIM_EMRI_OP',
                     belgeId: op.id,
-                    description: `${emir.order_no} / ${op.operation_code} çıktı`,
+                    description: `${emir.order_no} / ${op.operation_code} çıktı → Çıkış Kalite`,
                     satirlar: [{
                         item_id: op.output_item_id,
                         quantity,
                         direction: 1,
                         uom_code: cikti.rows[0].uom_code,
-                        stock_status: kkGerekli ? 'Kalitede' : 'Kullanilabilir',
+                        stock_status: 'Kalitede',
                     }],
                 });
                 mamulHareketId = h.hareket.id;
-                if (kkGerekli) {
-                    await kkEmriOlustur(client, {
-                        direction: 'CKK',
-                        stokId: op.output_item_id,
-                        partiId: h.satirlar[0]?.lot_id || null,
-                        depoId: ciktiDepo,
-                        hedefDepoId: hedefMamul,
-                        quantity,
-                        kaynakTipi: 'URETIM_EMRI',
-                        kaynakId: emirId,
-                        stokHareketId: mamulHareketId,
-                        description: `${emir.order_no} ÇKK`,
-                    });
-                }
+                await kkEmriOlustur(client, {
+                    direction: 'CKK',
+                    stokId: op.output_item_id,
+                    partiId: h.satirlar[0]?.lot_id || null,
+                    depoId: ciktiDepo,
+                    hedefDepoId: hedefDepo?.id || null,
+                    quantity,
+                    kaynakTipi: 'URETIM_EMRI',
+                    kaynakId: emirId,
+                    stokHareketId: mamulHareketId,
+                    description: `${emir.order_no} çıkış kalite (${cikti.rows[0].item_type || 'Mamul'})`,
+                });
             }
 
             const yeniUretilen = Number(op.produced_quantity) + quantity;
@@ -980,22 +972,37 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
                 'SELECT id, uom_code, item_type FROM items WHERE id=$1',
                 [op.output_item_id]
             );
-            const ciktiDepo = ciktiDepoSec(emir, cikti.rows[0].item_type);
+            const ckk = await ckkDepoCozumle(client, emir.plant_id);
+            if (!ckk) throw new Error('Çıkış kalite deposu tanımlı değil (CKK_DEPO_KODU / warehouse_rolu=CKK).');
+            const hedefDepo = await ckkHedefDepoCozumle(client, op.output_item_id, emir.plant_id);
             const h = await stokHareketOlustur(client, {
                 hareketTipi: 'URETIM_GIRIS',
                 isYeriId: emir.plant_id,
-                depoId: ciktiDepo,
+                depoId: ckk.id,
                 belgeTipi: 'URETIM_EMRI_OP',
                 belgeId: op.id,
-                description: `${emir.order_no} / ${op.operation_code} çıktı`,
+                description: `${emir.order_no} / ${op.operation_code} çıktı → Çıkış Kalite`,
                 satirlar: [{
                     item_id: op.output_item_id,
                     quantity,
                     direction: 1,
                     uom_code: cikti.rows[0].uom_code,
+                    stock_status: 'Kalitede',
                 }],
             });
             mamulHareketId = h.hareket.id;
+            await kkEmriOlustur(client, {
+                direction: 'CKK',
+                stokId: op.output_item_id,
+                partiId: h.satirlar[0]?.lot_id || null,
+                depoId: ckk.id,
+                hedefDepoId: hedefDepo?.id || null,
+                quantity,
+                kaynakTipi: 'URETIM_EMRI',
+                kaynakId: emirId,
+                stokHareketId: mamulHareketId,
+                description: `${emir.order_no} çıkış kalite (${cikti.rows[0].item_type || 'Mamul'})`,
+            });
         }
 
         await client.query(

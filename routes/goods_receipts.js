@@ -5,7 +5,7 @@ const { firmaIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { stokHareketOlustur, assertStokDepoIzin } = require('../src/services/stokHareketService');
-const { kkEmriOlustur, gkkDepoCozumle, depoBulKodVeyaRol } = require('../src/services/kaliteService');
+const { girisDepoCozumle, gkkDepoCozumle } = require('../src/services/kaliteService');
 const { parametreAl } = require('../src/utils/yetki');
 
 async function kabulGetir(id) {
@@ -50,10 +50,11 @@ router.post('/', async (req, res) => {
             receipt_date, description, internal_note, gkk_gerekli, received_by,
             status: kabulDurum, vendor_delivery_note_id,
         } = req.body;
-        if (!purchase_order_id || !warehouse_id) {
-            return res.status(400).json({ hata: 'purchase_order_id ve warehouse_id zorunlu.' });
+        if (!purchase_order_id) {
+            return res.status(400).json({ hata: 'purchase_order_id zorunlu.' });
         }
         // vendor_invoice_no zorunlu değil — yalnızca irsaliye/sipariş ile kabul yapılabilir
+        // warehouse_id artık opsiyonel: stok her zaman Giriş Depo'ya alınır
 
         const id = await withTransaction(pool, async (client) => {
             const siparis = await client.query(
@@ -64,9 +65,6 @@ router.post('/', async (req, res) => {
             if (['Iptal', 'Kapali'].includes(siparis.rows[0].status)) {
                 throw new Error(`Sipariş kapalı/iptal: ${siparis.rows[0].status}`);
             }
-
-            const depo = await client.query('SELECT * FROM warehouses WHERE id = $1', [warehouse_id]);
-            if (!depo.rows[0]) throw new Error('Depo bulunamadı.');
 
             const siparisSatirlari = await client.query(
                 'SELECT * FROM purchase_order_lines WHERE purchase_order_id = $1 FOR UPDATE',
@@ -127,12 +125,13 @@ router.post('/', async (req, res) => {
 
             const hareketSatirlari = [];
             const islenen = [];
-            const kkSatirlari = [];
-            const gkkDepo = await gkkDepoCozumle(client);
-            const hammaddeDepo = await depoBulKodVeyaRol(client, {
-                kodParam: 'HAMMADDE_DEPO_KODU',
-                role: 'Hammadde',
-            });
+            const plantId = siparis.rows[0].plant_id || null;
+            const girisDepo = await girisDepoCozumle(client, plantId);
+            if (!girisDepo) {
+                throw new Error('Giriş deposu tanımlı değil (GIRIS_DEPO_KODU / warehouse_rolu=Giris).');
+            }
+            // Mal kabul her zaman Giriş Depo'ya düşer; miktar kontrolü → GKK → Hammadde
+            const hedefDepoId = girisDepo.id;
             const depoZorunlu = String(await parametreAl(client, 'STOK_DEPO_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
 
             for (const ks of kabulSatirlari) {
@@ -146,32 +145,24 @@ router.post('/', async (req, res) => {
                 }
 
                 const stok = await client.query(
-                    `SELECT id, uom_code, kalite_control_gerekli, varsayilan_giris_warehouse_id, lot_politika
+                    `SELECT id, uom_code, kalite_control_gerekli, varsayilan_giris_warehouse_id, lot_politika,
+                            item_code, item_name
                      FROM items WHERE id=$1`,
                     [satir.item_id]
                 );
                 if (!stok.rows[0]) throw new Error(`Stok yok: ${satir.item_id}`);
-                const kkGerekli = Boolean(stok.rows[0].kalite_control_gerekli);
-                let hedefDepoId = warehouse_id;
-                if (kkGerekli) {
-                    if (!gkkDepo) throw new Error('GKK deposu tanımlı değil (GKK_DEPO_KODU / warehouse_rolu=GKK).');
-                    hedefDepoId = gkkDepo.id;
-                } else if (stok.rows[0].varsayilan_giris_warehouse_id) {
-                    hedefDepoId = stok.rows[0].varsayilan_giris_warehouse_id;
-                }
 
                 if (depoZorunlu) {
                     try {
                         await assertStokDepoIzin(client, satir.item_id, hedefDepoId);
                     } catch (e) {
-                        // Mal kabulde tanımsızsa item_warehouses otomatik oluştur (ilk kabul)
                         await client.query(
                             `
                             INSERT INTO item_warehouses (item_id, warehouse_id, plant_id, is_active, varsayilan_giris)
-                            VALUES ($1,$2,$3,TRUE,$4)
+                            VALUES ($1,$2,$3,TRUE,FALSE)
                             ON CONFLICT (item_id, warehouse_id) DO UPDATE SET is_active=TRUE
                             `,
-                            [satir.item_id, hedefDepoId, siparis.rows[0].plant_id || null, !kkGerekli]
+                            [satir.item_id, hedefDepoId, plantId]
                         );
                     }
                 }
@@ -187,61 +178,45 @@ router.post('/', async (req, res) => {
                     quantity,
                     direction: 1,
                     uom_code: satir.uom_code || stok.rows[0].uom_code,
-                    stock_status: kkGerekli ? 'Kalitede' : 'Kullanilabilir',
+                    stock_status: 'Kullanilabilir',
                     warehouse_id: hedefDepoId,
-                    kk: kkGerekli,
+                    order_line_id: satir.id,
+                    ordered_quantity: Number(satir.quantity),
+                    item_code: satir.item_code || stok.rows[0].item_code,
+                    item_name: satir.item_name || stok.rows[0].item_name,
                 });
                 islenen.push({
                     order_line_id: satir.id,
                     item_id: satir.item_id,
                     quantity,
                     warehouse_id: hedefDepoId,
-                    kk: kkGerekli,
+                    ordered_quantity: Number(satir.quantity),
+                    item_code: satir.item_code || stok.rows[0].item_code,
+                    item_name: satir.item_name || stok.rows[0].item_name,
+                    uom_code: satir.uom_code || stok.rows[0].uom_code,
                 });
-            }
-
-            // Depo bazında grupla (GKK vs normal)
-            const depoGrup = new Map();
-            for (const s of hareketSatirlari) {
-                const key = `${s.warehouse_id}|${s.stock_status}`;
-                if (!depoGrup.has(key)) depoGrup.set(key, { depoId: s.warehouse_id, satirlar: [] });
-                depoGrup.get(key).satirlar.push(s);
             }
 
             const { hareketKoduBul, BELGE_TIPI } = require('../src/utils/belgeOmurga');
             const hk = await hareketKoduBul(client, BELGE_TIPI.MAL_KABUL);
-            let anaHareketId = null;
-
-            for (const grup of depoGrup.values()) {
-                const hareket = await stokHareketOlustur(client, {
-                    hareketTipi: 'SATINALMA_GIRIS',
-                    isYeriId: siparis.rows[0].plant_id,
-                    depoId: grup.depoId,
-                    belgeTipi: 'MAL_KABUL',
-                    description: `SAS ${siparis.rows[0].order_no} mal kabul`,
-                    hareketKoduId: hk?.id || null,
-                    satirlar: grup.satirlar,
-                });
-                if (!anaHareketId) anaHareketId = hareket.hareket.id;
-
-                for (const sat of hareket.satirlar) {
-                    const source = hareketSatirlari.find(
-                        (x) => x.item_id === sat.item_id && x.kk && x.warehouse_id === grup.depoId
-                    );
-                    if (source?.kk) {
-                        kkSatirlari.push({
-                            item_id: sat.item_id,
-                            lot_id: sat.lot_id,
-                            quantity: sat.quantity,
-                            warehouse_id: grup.depoId,
-                            movement_id: hareket.hareket.id,
-                        });
-                    }
-                }
-            }
+            const hareket = await stokHareketOlustur(client, {
+                hareketTipi: 'SATINALMA_GIRIS',
+                isYeriId: plantId,
+                depoId: hedefDepoId,
+                belgeTipi: 'MAL_KABUL',
+                description: `SAS ${siparis.rows[0].order_no} mal kabul → Giriş Depo`,
+                hareketKoduId: hk?.id || null,
+                satirlar: hareketSatirlari,
+            });
+            const anaHareketId = hareket.hareket.id;
 
             const kabulNo = await sonrakiBelgeNo(client, 'MAL_KABUL');
-            const firmaId = company_id || siparis.rows[0].company_id || firmaIdFromReq(req) || null;
+            let firmaId = company_id || siparis.rows[0].company_id || firmaIdFromReq(req) || null;
+            if (!firmaId && plantId) {
+                const pf = await client.query(`SELECT company_id FROM plants WHERE id=$1`, [plantId]);
+                firmaId = pf.rows[0]?.company_id || null;
+            }
+            const gkkDepo = await gkkDepoCozumle(client, plantId);
             const kabul = await client.query(
                 `INSERT INTO goods_receipts (
                     receipt_no, purchase_order_id, warehouse_id, item_movement_id, company_id, plant_id,
@@ -251,37 +226,44 @@ router.post('/', async (req, res) => {
                  ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,CURRENT_DATE),$11,$12,$13,$14,COALESCE($15,'Onayli'),$16)
                  RETURNING id`,
                 [
-                    kabulNo, purchase_order_id, warehouse_id, anaHareketId, firmaId, siparis.rows[0].plant_id || null,
+                    kabulNo, purchase_order_id, hedefDepoId, anaHareketId, firmaId, plantId,
                     vendor_delivery_note_no || null, delivery_date || null, vendor_invoice_no || null,
                     receipt_date || null, description || null, internal_note || null,
-                    gkk_gerekli === true || gkk_gerekli === 'true' || gkk_gerekli === 'Evet',
+                    true,
                     received_by || null, kabulDurum || 'Onayli',
                     vendor_delivery_note_id || null,
                 ]
             );
             const kabulId = kabul.rows[0].id;
+            const receiptLineIds = [];
 
             for (const s of islenen) {
                 const uiSat = Array.isArray(kabulSatirlari)
                     ? kabulSatirlari.find((x) => Number(x.order_line_id) === Number(s.order_line_id)
                         || Number(x.item_id) === Number(s.item_id))
                     : null;
-                await client.query(
+                const lineIns = await client.query(
                     `INSERT INTO goods_receipt_lines (
                         receipt_id, order_line_id, item_id, quantity,
                         accepted_flag, reddedilen, uom_code, unit_price, lot_no, serial_no,
                         stock_status, raf_code, son_kullanma_date, line_description
-                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+                     RETURNING id`,
                     [
                         kabulId, s.order_line_id, s.item_id, s.quantity,
                         uiSat?.accepted_flag ?? s.quantity, uiSat?.reddedilen ?? 0,
-                        uiSat?.uom_code || null, uiSat?.unit_price ?? null,
+                        uiSat?.uom_code || s.uom_code || null, uiSat?.unit_price ?? null,
                         uiSat?.lot_no || null, uiSat?.serial_no || null,
-                        uiSat?.stock_status || (s.kk ? 'Kalitede' : 'Kullanilabilir'),
+                        'Kullanilabilir',
                         uiSat?.raf_code || null, uiSat?.son_kullanma_date || null,
                         uiSat?.line_description || null,
                     ]
                 );
+                receiptLineIds.push({
+                    ...s,
+                    receipt_line_id: lineIns.rows[0].id,
+                    uiSat,
+                });
                 if (vendor_delivery_note_id) {
                     const irsSatId = uiSat?._irsaliye_satir_id;
                     if (irsSatId) {
@@ -316,19 +298,34 @@ router.post('/', async (req, res) => {
                 );
             }
 
-            for (const kk of kkSatirlari) {
-                await kkEmriOlustur(client, {
-                    direction: 'GKK',
-                    stokId: kk.item_id,
-                    partiId: kk.lot_id,
-                    depoId: kk.warehouse_id,
-                    hedefDepoId: hammaddeDepo?.id || null,
-                    quantity: kk.quantity,
-                    kaynakTipi: 'MAL_KABUL',
-                    kaynakId: kabulId,
-                    stokHareketId: kk.movement_id,
-                    description: `Mal kabul ${kabulNo}`,
-                });
+            // Giriş kontrol belgesi: miktar/ürün doğrulaması sonrası GKK'ya aktarım
+            const inspNo = await sonrakiBelgeNo(client, 'GIRIS_KONTROL');
+            const insp = await client.query(
+                `INSERT INTO incoming_inspections (
+                    inspection_no, company_id, plant_id, purchase_order_id, goods_receipt_id,
+                    source_warehouse_id, target_warehouse_id, status, description
+                 ) VALUES ($1,$2,$3,$4,$5,$6,$7,'Acik',$8) RETURNING id`,
+                [
+                    inspNo, firmaId, plantId, purchase_order_id, kabulId,
+                    hedefDepoId, gkkDepo?.id || null,
+                    `Mal kabul ${kabulNo} giriş kontrolü`,
+                ]
+            );
+            let lineNo = 1;
+            for (const s of receiptLineIds) {
+                const matchOk = Math.abs(Number(s.ordered_quantity) - Number(s.quantity)) < 1e-9;
+                await client.query(
+                    `INSERT INTO incoming_inspection_lines (
+                        inspection_id, line_no, order_line_id, receipt_line_id, item_id,
+                        ordered_quantity, received_quantity, accepted_quantity, rejected_quantity,
+                        uom_code, match_ok, item_code, item_name
+                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10,$11,$12)`,
+                    [
+                        insp.rows[0].id, lineNo++, s.order_line_id, s.receipt_line_id, s.item_id,
+                        s.ordered_quantity, s.quantity, s.quantity,
+                        s.uom_code || null, matchOk, s.item_code || null, s.item_name || null,
+                    ]
+                );
             }
 
             // Sipariş durumu

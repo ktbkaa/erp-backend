@@ -99,9 +99,9 @@ router.post('/:id/siparise-donustur', async (req, res, next) => {
         toplam += Number(s.quantity) * fiyat;
         await client.query(
           `INSERT INTO purchase_order_lines
-            (sales_order_id, item_id, quantity, unit_price, uom_code)
-           VALUES ($1,$2,$3,$4,$5)`,
-          [id, s.item_id, s.quantity, fiyat, s.uom_code || null]
+            (purchase_order_id, item_id, quantity, unit_price, uom_code, item_code, item_name)
+           VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+          [id, s.item_id, s.quantity, fiyat, s.uom_code || null, s.item_code || null, s.item_name || null]
         );
       }
       await client.query(
@@ -121,8 +121,10 @@ router.post('/:id/siparise-donustur', async (req, res, next) => {
       [siparisId]
     );
     const satirlar = await pool.query(
-      `SELECT ss.*, st.item_code, st.item_name FROM purchase_order_lines ss
-       JOIN items st ON st.id = ss.item_id WHERE ss.sales_order_id = $1 ORDER BY ss.id`,
+      `SELECT ss.*, COALESCE(ss.item_code, st.item_code) AS item_code,
+              COALESCE(ss.item_name, st.item_name) AS item_name
+       FROM purchase_order_lines ss
+       JOIN items st ON st.id = ss.item_id WHERE ss.purchase_order_id = $1 ORDER BY ss.id`,
       [siparisId]
     );
     res.status(201).json({ ...row.rows[0], satirlar: satirlar.rows });

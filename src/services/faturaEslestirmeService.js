@@ -21,7 +21,7 @@ async function faturaEslestir(client, faturaId) {
 
   if (malKabulId) {
     const mk = await client.query(`SELECT * FROM goods_receipts WHERE id=$1`, [malKabulId]);
-    if (mk.rows[0]) siparisId = siparisId || mk.rows[0].sales_order_id;
+    if (mk.rows[0]) siparisId = siparisId || mk.rows[0].purchase_order_id;
     const mkSat = await client.query(
       `SELECT item_id, SUM(quantity)::numeric AS quantity FROM goods_receipt_lines WHERE receipt_id=$1 GROUP BY item_id`,
       [malKabulId]
@@ -35,7 +35,7 @@ async function faturaEslestir(client, faturaId) {
 
   if (siparisId) {
     const ss = await client.query(
-      `SELECT item_id, unit_price FROM purchase_order_lines WHERE sales_order_id=$1`,
+      `SELECT item_id, unit_price FROM purchase_order_lines WHERE purchase_order_id=$1`,
       [siparisId]
     );
     const fiyatMap = new Map(ss.rows.map((r) => [String(r.item_id), Number(r.unit_price)]));
