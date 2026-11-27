@@ -7,6 +7,7 @@ const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 const { documentHtml } = require('../src/services/belgePdfService');
+const { normalizeInvoiceCurrencyFields } = require('../src/services/kurService');
 const { reqUserCode, parametreAl } = require('../src/utils/yetki');
 const {
   pickFields,
@@ -135,6 +136,7 @@ router.post('/', async (req, res, next) => {
     const ekstra = headerUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
+      Object.assign(ekstra, await normalizeInvoiceCurrencyFields(client, ekstra));
       const tur = invoice_type || ekstra.invoice_category || 'Satis';
       const seri = String(tur).toLowerCase().includes('alis') ? 'ALIS_FATURA' : 'FATURA';
       const no = invoice_no || (await nextDocumentNo(client, seri));
@@ -208,9 +210,25 @@ router.put('/:id', async (req, res, next) => {
     const ekstra = headerUpdateParams(req.body);
 
     const id = await withTransaction(pool, async (client) => {
-      const mevcut = await client.query('SELECT id FROM invoices WHERE id=$1 FOR UPDATE', [req.params.id]);
+      const mevcut = await client.query(
+        'SELECT id, is_posted, currency_code, exchange_rate FROM invoices WHERE id=$1 FOR UPDATE',
+        [req.params.id]
+      );
       if (!mevcut.rows[0]) {
         throw Object.assign(new Error('Fatura bulunamadı.'), { status: 404 });
+      }
+      Object.assign(ekstra, await normalizeInvoiceCurrencyFields(client, ekstra));
+      if (mevcut.rows[0].is_posted) {
+        const pbDegisti = ekstra.currency_code !== undefined
+          && String(ekstra.currency_code) !== String(mevcut.rows[0].currency_code || 'TRY');
+        const kurDegisti = ekstra.exchange_rate !== undefined
+          && Number(ekstra.exchange_rate) !== Number(mevcut.rows[0].exchange_rate);
+        if (pbDegisti || kurDegisti) {
+          throw Object.assign(
+            new Error('Muhasebeleşmiş faturanın para birimi/kuru değiştirilemez. Önce fişe ters kayıt atın.'),
+            { status: 409, kod: 'KUR_KILIT' }
+          );
+        }
       }
 
       const sets = [];
@@ -399,8 +417,9 @@ router.post('/:id/iade', async (req, res, next) => {
         `
         INSERT INTO invoices
           (invoice_no, partner_id, invoice_type, total_amount, net_amount, tax_amount, payable_amount,
-           status, source_document_type, source_document_id, description, company_id, plant_id)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8,$9,$10,$11,$12)
+           status, source_document_type, source_document_id, description, company_id, plant_id,
+           currency_code, exchange_rate, rate_type, rate_option, is_return, vat_rate_default)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,'Taslak',$8,$9,$10,$11,$12,$13,$14,$15,$16,TRUE,$17)
         RETURNING id
         `,
         [
@@ -413,6 +432,9 @@ router.post('/:id/iade', async (req, res, next) => {
           source.id,
           `İade ← ${source.invoice_no}`,
           firmaId, plantId,
+          source.currency_code || 'TRY', source.exchange_rate || 1,
+          source.rate_type || 'TCMB-SATIS', source.rate_option || 'BelgeTarihi',
+          source.vat_rate_default ?? 20,
         ]
       );
       const iadeId = r.rows[0].id;

@@ -53,7 +53,7 @@ router.get('/', async (req, res, next) => {
       return res.send(renderListeEkstreHtml({
         baslangic, bitis,
         cari,
-        ozet: { debit: data.debit, credit: data.credit, bakiye: data.bakiye },
+        ozet: { debit: data.debit, credit: data.credit, bakiye: data.bakiye, doviz: data.doviz },
         hareketler: data.hareketler || [],
         title: `Cari Ekstre — ${cari?.partner_code || cariId}`,
       }));
@@ -80,6 +80,9 @@ function renderListeEkstreHtml({ title, baslangic, bitis, cari, ozet, hareketler
     <td>${esc(h.movement_date)}</td>
     <td>${esc(h.direction)}</td>
     <td class="num">${esc(h.amount)}</td>
+    <td>${esc(h.currency_code || 'TRY')}</td>
+    <td class="num">${esc(h.exchange_rate)}</td>
+    <td class="num">${esc(h.amount_try != null ? h.amount_try : h.amount)}</td>
     <td>${esc(h.document_type || '')}</td>
     <td>${esc(h.description || '')}</td>
   </tr>`).join('');
@@ -99,11 +102,12 @@ th{background:#f9fafb;text-align:left}
 <div class="noprint"><button onclick="window.print()">Yazdır / PDF</button></div>
 <h1>${esc(title || 'Cari Ekstre')}</h1>
 <div class="meta">Tarih: ${esc(baslangic || '…')} → ${esc(bitis || '…')}
-${ozet ? ` · Borç ${esc(ozet.debit)} / Alacak ${esc(ozet.credit)} / Bakiye ${esc(ozet.bakiye)}` : ''}
+${ozet ? ` · TRY Borç ${esc(ozet.debit)} / Alacak ${esc(ozet.credit)} / Bakiye ${esc(ozet.bakiye)}` : ''}
+${ozet && ozet.doviz && ozet.doviz.length ? ozet.doviz.map((d) => ` · ${esc(d.currency_code)} bakiye ${esc(d.bakiye)} (TRY ${esc(d.bakiye_try)})`).join('') : ''}
 </div>
 <table><thead><tr>
-<th>Cari kod</th><th>Cari ad</th><th>No</th><th>Tarih</th><th>Yön</th><th>Tutar</th><th>Belge</th><th>Açıklama</th>
-</tr></thead><tbody>${rows || '<tr><td colspan="8">Kayıt yok</td></tr>'}</tbody></table>
+<th>Cari kod</th><th>Cari ad</th><th>No</th><th>Tarih</th><th>Yön</th><th>Tutar</th><th>PB</th><th>Kur</th><th>TRY</th><th>Belge</th><th>Açıklama</th>
+</tr></thead><tbody>${rows || '<tr><td colspan="11">Kayıt yok</td></tr>'}</tbody></table>
 </body></html>`;
 }
 
@@ -125,6 +129,7 @@ router.post('/', async (req, res, next) => {
         amount: body.amount,
         paraBirimi: body.currency_code,
         exchange_rate: body.exchange_rate,
+        amountTry: body.amount_try,
         belgeTipi: body.document_type,
         belgeId: body.document_id,
         description: body.description,
