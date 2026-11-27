@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq, assertCompanyRecord, resolveDocumentCompanyId } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { submitForApproval } = require('../src/services/onayKapisiService');
+const { getUser, reqUserCode } = require('../src/utils/yetki');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
 
@@ -255,6 +257,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
             return res.status(400).json({ hata: `Durum dönüşüme uygun değil: ${teklif.status}` });
         }
 
+        let onayKayit = null;
         const siparisId = await withTransaction(pool, async (client) => {
             const no = await nextDocumentNo(client, 'SATIS_SIPARIS');
             const hk = await findMovementCode(client, BELGE_TIPI.SATIS_SIPARIS);
@@ -319,6 +322,16 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                 `UPDATE sales_quotations SET status='SipariseDonustu' WHERE id=$1`,
                 [teklif.id]
             );
+
+            const kullanici = req.user || (reqUserCode(req) ? await getUser(client, reqUserCode(req)) : null);
+            const kapi = await submitForApproval(client, {
+                documentTypeCode: 'SATIS_SIPARIS',
+                documentId: sid,
+                user: kullanici,
+                notes: `Teklif ${teklif.quotation_no} dönüşümü`,
+                fromStatuses: ['Onayli'],
+            });
+            if (kapi.gated) onayKayit = kapi.record;
             return sid;
         });
 
@@ -327,6 +340,9 @@ router.post('/:id/siparise-donustur', async (req, res) => {
             ok: true,
             sales_order_id: siparisId,
             order_no: siparis.rows[0].order_no,
+            status: siparis.rows[0].status,
+            onay_kayit: onayKayit,
+            onay_bekliyor: Boolean(onayKayit),
             teklif: await getQuotation(teklif.id),
         });
     } catch (err) {
@@ -336,7 +352,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                         kod: 'ERR-FK-23503',
                     });
                 }
-        res.status(500).json({ hata: err.message });
+        res.status(err.status || 500).json({ hata: err.message });
     }
 });
 

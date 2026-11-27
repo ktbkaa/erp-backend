@@ -147,6 +147,7 @@ Onay hiçbir belgeye sabit kodlanmaz. Varsayılan **kapalıdır**: belge türün
 | Kod | Belge | Kural açıkken |
 |-----|-------|---------------|
 | `SATINALMA_SIPARIS` | Satınalma siparişi | Taslak → Onayla → `OnayBekliyor` → onay → `Onayli`. Onay beklerken mal kabul ve elle durum değişikliği engelli. |
+| `SATIS_SIPARIS` | Satış siparişi | Onaylı'ya geçiş (tekliften dönüşüm, `POST` ile Onaylı kayıt, `PUT` ile Taslak → Onaylı) → `OnayBekliyor` → onay → `Onayli`. Onay beklerken sevk emri ve elle durum değişikliği engelli (`ONAY_BEKLIYOR`). Migration `102`. |
 | `DEPO_TRANSFER` | Depo transfer emri | Taslak → Onayla → `OnayBekliyor` (stok hareketi yok) → onay → `Onayli` → tekrar Onayla → stok hareketi + `Tamamlandi`. |
 | `URETIM_EMRI` | Üretim (iş) emri | Onayla / Kolay İş Emri Onayı (hazırlık kontrolü sonrası) → `OnayBekliyor` → onay → `Acik` (`is_approved`). Kural yokken doğrudan açılır, iz `DOGRUDAN_ONAY`. Migration `101`. |
 
