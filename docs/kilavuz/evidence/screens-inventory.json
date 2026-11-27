@@ -1,0 +1,1898 @@
+{
+  "modules": [
+    {
+      "id": "ana-veri",
+      "title": "Ana Veri"
+    },
+    {
+      "id": "cari",
+      "title": "Cari"
+    },
+    {
+      "id": "stok",
+      "title": "Stok"
+    },
+    {
+      "id": "satinalma",
+      "title": "Satınalma"
+    },
+    {
+      "id": "satis",
+      "title": "Satış"
+    },
+    {
+      "id": "uretim",
+      "title": "Üretim"
+    },
+    {
+      "id": "kalite",
+      "title": "Kalite"
+    },
+    {
+      "id": "finans",
+      "title": "Finans"
+    },
+    {
+      "id": "crm",
+      "title": "CRM"
+    },
+    {
+      "id": "proje",
+      "title": "Proje Yönetimi"
+    },
+    {
+      "id": "insan-kaynaklari",
+      "title": "İnsan Kaynakları"
+    },
+    {
+      "id": "onay",
+      "title": "Onay Yönetimi"
+    },
+    {
+      "id": "sistem",
+      "title": "Sistem"
+    }
+  ],
+  "screens": [
+    {
+      "id": "companies",
+      "techId": "MDM-CO-SCR-001",
+      "en": "CompanyScreen",
+      "title": "Firmalar",
+      "endpoint": "/companies",
+      "i": 24402,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "is-yerleri",
+      "techId": "MDM-PLANT-SCR-001",
+      "en": "PlantSiteScreen",
+      "title": "İş Yerleri",
+      "endpoint": "/is-yerleri",
+      "i": 25748,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "warehouses",
+      "techId": "MDM-WH-SCR-001",
+      "en": "WarehouseMasterScreen",
+      "title": "Depolar",
+      "endpoint": "/warehouses",
+      "i": 27039,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "country-tanimi",
+      "techId": "MDM-CTRY-SCR-001",
+      "en": "CountryDefinitionScreen",
+      "title": "Ülkeler",
+      "endpoint": "/countries",
+      "i": 28680,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "sehir-tanimi",
+      "techId": "MDM-CITY-SCR-001",
+      "en": "CityProvinceScreen",
+      "title": "Şehir / İl",
+      "endpoint": "/cities",
+      "i": 29694,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "olcu-birimleri",
+      "techId": "MDM-UOM-SCR-001",
+      "en": "UnitOfMeasureScreen",
+      "title": "Ölçü Birimleri",
+      "endpoint": "/olcu-birimleri",
+      "i": 31545,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "dil-tanimi",
+      "techId": "MDM-LANG-SCR-001",
+      "en": "LanguageDefinitionScreen",
+      "title": "Diller",
+      "endpoint": "/languages",
+      "i": 32490,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "para-birimi-tanimi",
+      "techId": "MDM-CUR-SCR-001",
+      "en": "CurrencyDefinitionScreen",
+      "title": "Para Birimleri",
+      "endpoint": "/para-birimleri",
+      "i": 33548,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "banka-tanimi",
+      "techId": "MDM-BANK-SCR-001",
+      "en": "BankDefinitionScreen",
+      "title": "Bankalar",
+      "endpoint": "/banks",
+      "i": 37994,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "odeme-kosulu-tanimi",
+      "techId": "MDM-PAYT-SCR-001",
+      "en": "PaymentTermsScreen",
+      "title": "Ödeme Koşulları",
+      "endpoint": "/odeme-kosullari",
+      "i": 39253,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "teslimat-kosulu-tanimi",
+      "techId": "MDM-DLVT-SCR-001",
+      "en": "DeliveryTermsScreen",
+      "title": "Teslimat Koşulları",
+      "endpoint": "/teslimat-kosullari",
+      "i": 40418,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "belge-tipleri",
+      "techId": "MDM-DOCTYPE-SCR-001",
+      "en": "DocumentTypeScreen",
+      "title": "Belge Tipleri",
+      "endpoint": "/belge-tipleri",
+      "i": 41475,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "hareket-kodlari",
+      "techId": "INV-MVTC-SCR-001",
+      "en": "MovementCodeScreen",
+      "title": "Hareket Kodları",
+      "endpoint": "/hareket-kodlari",
+      "i": 42679,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "kategori-tip-tanimi",
+      "techId": "MDM-CATTYPE-SCR-001",
+      "en": "CategoryTypeDefinitionScreen",
+      "title": "Kategori Tip Tanımı",
+      "endpoint": "/kategori-tipleri",
+      "i": 45943,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "kategori-tanimi",
+      "techId": "MDM-CAT-SCR-001",
+      "en": "CategoryDefinitionScreen",
+      "title": "Kategori Tanımı",
+      "endpoint": "/kategoriler",
+      "i": 47252,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "numarator-tanimi",
+      "techId": "SYS-NUM-SCR-001",
+      "en": "NumberSeriesScreen",
+      "title": "Numaratörler",
+      "endpoint": "/kod-serileri",
+      "i": 48749,
+      "module": "Ana Veri",
+      "moduleId": "ana-veri"
+    },
+    {
+      "id": "cari-kartlari",
+      "techId": "MDM-BP-SCR-001",
+      "en": "BusinessPartnerScreen",
+      "title": "Cari Kartları",
+      "endpoint": "/partners",
+      "i": 50905,
+      "module": "Cari",
+      "moduleId": "cari"
+    },
+    {
+      "id": "tahsilat-odemeler",
+      "techId": "FIN-APAR-SCR-001",
+      "en": "CollectionPaymentScreen",
+      "title": "Tahsilat ve Ödemeler",
+      "endpoint": "/tahsilat-odemeler",
+      "i": 61179,
+      "module": "Cari",
+      "moduleId": "cari"
+    },
+    {
+      "id": "cari-ekstre",
+      "techId": "FIN-BPST-SCR-001",
+      "en": "BusinessPartnerStatementScreen",
+      "title": "Cari Ekstre",
+      "endpoint": "/cari-hareketleri",
+      "i": 63391,
+      "module": "Cari",
+      "moduleId": "cari"
+    },
+    {
+      "id": "cari-mutabakat",
+      "techId": "FIN-BP-REC-001",
+      "en": "PartnerReconciliationScreen",
+      "title": "Cari Mutabakat",
+      "endpoint": "/cari-mutabakat",
+      "i": 64704,
+      "module": "Cari",
+      "moduleId": "cari"
+    },
+    {
+      "id": "e-belge-kuyruk",
+      "techId": "FIN-EDOC-QUE-001",
+      "en": "EDocumentQueueScreen",
+      "title": "e-Belge Kuyruğu",
+      "endpoint": "/e-belge",
+      "i": 65876,
+      "module": "Cari",
+      "moduleId": "cari"
+    },
+    {
+      "id": "stok-karti",
+      "techId": "INV-ITM-SCR-001",
+      "en": "ItemMasterScreen",
+      "title": "Stok Kartları",
+      "endpoint": "/items",
+      "i": 67776,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "stok-hareketleri",
+      "techId": "INV-MVT-SCR-001",
+      "en": "StockMovementScreen",
+      "title": "Stok Hareketleri",
+      "endpoint": "/stok-hareketleri",
+      "i": 77259,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "stok-hareket-raporu",
+      "techId": "INV-MVT-RPT-001",
+      "en": "StockMovementReportScreen",
+      "title": "Stok Hareket Raporu",
+      "endpoint": "/stok-hareket-raporu",
+      "i": 82878,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "depo-bakiye",
+      "techId": "INV-BAL-SCR-001",
+      "en": "WarehouseBalanceScreen",
+      "title": "Depo Bakiyeleri",
+      "endpoint": "/stok-bakiyeleri",
+      "i": 85544,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "transfer-emirleri",
+      "techId": "WMS-XFER-SCR-001",
+      "en": "TransferOrderScreen",
+      "title": "Transfer Emirleri",
+      "endpoint": "/transfer-emirleri",
+      "i": 87265,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "sayim-belgeleri",
+      "techId": "WMS-CNT-SCR-001",
+      "en": "PhysicalCountScreen",
+      "title": "Sayım Belgeleri",
+      "endpoint": "/sayim-belgeleri",
+      "i": 89351,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "stok-depo",
+      "techId": "INV-WHL-SCR-001",
+      "en": "ItemWarehouseLinkScreen",
+      "title": "Depo Stok Bağları",
+      "endpoint": "/stok-depo",
+      "i": 91164,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "stok-partileri",
+      "techId": "INV-LOT-SCR-001",
+      "en": "LotBatchScreen",
+      "title": "Stok Partileri",
+      "endpoint": "/stok-partileri",
+      "i": 92841,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "stok-serileri",
+      "techId": "INV-SER-SCR-001",
+      "en": "SerialNumberScreen",
+      "title": "Stok Serileri",
+      "endpoint": "/stok-serileri",
+      "i": 94166,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "stok-rezervasyonlari",
+      "techId": "INV-RSV-SCR-001",
+      "en": "StockReservationScreen",
+      "title": "Stok Rezervasyonları",
+      "endpoint": "/stok-rezervasyonlari",
+      "i": 95616,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "stok-ikame",
+      "techId": "INV-SUB-SCR-001",
+      "en": "ItemSubstitutionScreen",
+      "title": "Stok İkame",
+      "endpoint": "/stok-ikame",
+      "i": 99494,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "mrp-parametre",
+      "techId": "MFG-MRP-PAR-001",
+      "en": "MrpParameterScreen",
+      "title": "MRP Parametreleri",
+      "endpoint": "/mrp/parametreler",
+      "i": 100771,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "mrp-bagimsiz-ihtiyac",
+      "techId": "MFG-IR-SCR-001",
+      "en": "IndependentRequirementsScreen",
+      "title": "MRP Bağımsız İhtiyaç",
+      "endpoint": "/mrp/bagimsiz-ihtiyaclar",
+      "i": 102547,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "mrp-calisma",
+      "techId": "MFG-MRP-SCR-001",
+      "en": "MrpRunScreen",
+      "title": "MRP Konsol",
+      "endpoint": "/mrp/calismalar",
+      "i": 104593,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "mrp-hesap",
+      "techId": "MFG-MRP-SCR-002",
+      "en": "MrpInstantCalcScreen",
+      "title": "MRP Anlık Hesap",
+      "endpoint": "/mrp",
+      "i": 106252,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "mrp-sonuclar",
+      "techId": "MFG-MRP-RES-001",
+      "en": "MrpResultsScreen",
+      "title": "MRP Sonuçları",
+      "endpoint": "/mrp/calismalar",
+      "i": 107404,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "mrp-hareket-raporu",
+      "techId": "MFG-MRP-RPT-001",
+      "en": "MrpMovementReportScreen",
+      "title": "MRP Hareket Raporu",
+      "endpoint": "/mrp-hareket-raporu",
+      "i": 108439,
+      "module": "Stok",
+      "moduleId": "stok"
+    },
+    {
+      "id": "satin-alma-talepleri",
+      "techId": "PUR-REQ-SCR-001",
+      "en": "PurchaseRequisitionScreen",
+      "title": "Satınalma Talepleri",
+      "endpoint": "/satin-alma-talepleri",
+      "i": 112614,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "satin-alma-teklifleri",
+      "techId": "PUR-QUO-SCR-001",
+      "en": "PurchaseQuotationScreen",
+      "title": "Satınalma Teklifleri",
+      "endpoint": "/satin-alma-teklifleri",
+      "i": 116760,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "satin-alma-anlasmalari",
+      "techId": "PUR-AGR-SCR-001",
+      "en": "PurchaseAgreementScreen",
+      "title": "Satınalma Anlaşmaları",
+      "endpoint": "/satin-alma-anlasmalari",
+      "i": 121545,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "satin-alma-siparisleri",
+      "techId": "PUR-ORD-SCR-001",
+      "en": "PurchaseOrderScreen",
+      "title": "Satınalma Siparişleri",
+      "endpoint": "/satin-alma-siparisleri",
+      "i": 123958,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "mal-kabuller",
+      "techId": "PUR-GR-SCR-001",
+      "en": "GoodsReceiptScreen",
+      "title": "Mal Kabuller",
+      "endpoint": "/mal-kabuller",
+      "i": 131376,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "tedarikci-irsaliyeleri",
+      "techId": "PUR-DLV-SCR-001",
+      "en": "SupplierDeliveryNoteScreen",
+      "title": "Alış İrsaliyeleri",
+      "endpoint": "/tedarikci-irsaliyeleri",
+      "i": 135089,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "giris-kontrolleri",
+      "techId": "QLT-INC-SCR-001",
+      "en": "IncomingInspectionScreen",
+      "title": "Giriş Kontrolleri",
+      "endpoint": "/giris-kontrolleri",
+      "i": 137339,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "satin-alma-teklif-istekleri",
+      "techId": "PUR-RFQ-SCR-001",
+      "en": "RequestForQuotationScreen",
+      "title": "Satınalma Teklif İstekleri",
+      "endpoint": "/satin-alma-teklif-istekleri",
+      "i": 139529,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "alis-iade-faturalari",
+      "techId": "PUR-RET-SCR-001",
+      "en": "PurchaseReturnInvoiceScreen",
+      "title": "Alış İade Faturaları",
+      "endpoint": "/invoices?invoice_type=AlisIade",
+      "i": 141123,
+      "module": "Satınalma",
+      "moduleId": "satinalma"
+    },
+    {
+      "id": "satis-teklifleri",
+      "techId": "SAL-QUO-SCR-001",
+      "en": "SalesQuotationScreen",
+      "title": "Satış Teklifleri",
+      "endpoint": "/satis-teklifleri",
+      "i": 143994,
+      "module": "Satış",
+      "moduleId": "satis"
+    },
+    {
+      "id": "satis-siparisleri",
+      "techId": "SAL-ORD-SCR-001",
+      "en": "SalesOrderScreen",
+      "title": "Satış Siparişleri",
+      "endpoint": "/sales_orders",
+      "i": 150251,
+      "module": "Satış",
+      "moduleId": "satis"
+    },
+    {
+      "id": "sevk-emirleri",
+      "techId": "SAL-SHP-SCR-001",
+      "en": "ShipmentScreen",
+      "title": "Sevk Emirleri",
+      "endpoint": "/sevk-emirleri",
+      "i": 158033,
+      "module": "Satış",
+      "moduleId": "satis"
+    },
+    {
+      "id": "irsaliye-yonetimi",
+      "techId": "SAL-DLV-SCR-001",
+      "en": "DeliveryNoteManagementScreen",
+      "title": "Satış İrsaliyeleri",
+      "endpoint": "/delivery_notes",
+      "i": 162819,
+      "module": "Satış",
+      "moduleId": "satis"
+    },
+    {
+      "id": "fatura-yonetimi",
+      "techId": "SAL-INV-SCR-001",
+      "en": "InvoiceManagementScreen",
+      "title": "Satış Faturaları",
+      "endpoint": "/invoices",
+      "i": 177859,
+      "module": "Satış",
+      "moduleId": "satis"
+    },
+    {
+      "id": "satis-iade-faturalari",
+      "techId": "SAL-RET-SCR-001",
+      "en": "SalesReturnInvoiceScreen",
+      "title": "Satış İade Faturaları",
+      "endpoint": "/invoices?invoice_type=Iade",
+      "i": 193263,
+      "module": "Satış",
+      "moduleId": "satis"
+    },
+    {
+      "id": "urun-agaci",
+      "techId": "MFG-BOM-SCR-001",
+      "en": "BillOfMaterialsScreen",
+      "title": "Ürün Ağacı",
+      "endpoint": "/urun-agaclari",
+      "i": 197046,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "bom-patlatma",
+      "techId": "MFG-BOM-SCR-002",
+      "en": "BomExplosionScreen",
+      "title": "Ürün Ağacı Patlatma",
+      "endpoint": "/bom/patlatma",
+      "i": 215467,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "bom-malzeme-degisikligi",
+      "techId": "MFG-BOM-SCR-004",
+      "en": "BomMaterialChangeScreen",
+      "title": "Malzeme Değişikliği",
+      "endpoint": "/bom/malzeme-degisikligi",
+      "i": 217226,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "uretim-planlari",
+      "techId": "MFG-PLN-SCR-001",
+      "en": "ProductionPlanScreen",
+      "title": "Üretim Planları",
+      "endpoint": "/uretim-planlari",
+      "i": 218668,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "uretim-emirleri",
+      "techId": "MFG-WO-SCR-001",
+      "en": "WorkOrderScreen",
+      "title": "Üretim Emirleri",
+      "endpoint": "/uretim-emirleri",
+      "i": 221342,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "siparis-is-emri",
+      "techId": "MFG-WO-SCR-002",
+      "en": "OrderToWorkOrderScreen",
+      "title": "Siparişten İş Emri",
+      "endpoint": "/uretim-emirleri/siparis-adaylari",
+      "i": 231912,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "toplu-is-emri",
+      "techId": "MFG-WO-SCR-003",
+      "en": "BulkWorkOrderScreen",
+      "title": "Toplu İş Emri",
+      "endpoint": "/uretim-emirleri/siparis-adaylari",
+      "i": 235710,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "uretim-girisleri",
+      "techId": "MFG-RCPT-SCR-001",
+      "en": "OperationalProductionEntryScreen",
+      "title": "Operasyonel Üretim Girişi",
+      "endpoint": "/uretim-girisleri",
+      "i": 238772,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "hizli-uretim-girisi",
+      "techId": "MFG-RCPT-SCR-002",
+      "en": "QuickProductionEntryScreen",
+      "title": "Hızlı Üretim Girişi",
+      "endpoint": "/uretim-girisleri",
+      "i": 249860,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "is-merkezi-yuku",
+      "techId": "MFG-WCL-RPT-001",
+      "en": "WorkCenterLoadReport",
+      "title": "İş Merkezi Yükü",
+      "endpoint": "/is-merkezi-yuku",
+      "i": 254060,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "bakim-emirleri",
+      "techId": "MNT-WO-SCR-001",
+      "en": "MaintenanceOrderScreen",
+      "title": "Bakım Emirleri",
+      "endpoint": "/bakim-emirleri",
+      "i": 255381,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "sinif-tanimi",
+      "techId": "MFG-CLS-SCR-001",
+      "en": "ClassDefinitionScreen",
+      "title": "Sınıf Tanımı",
+      "endpoint": "/stok-siniflari",
+      "i": 257851,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "is-merkezleri",
+      "techId": "MFG-WC-SCR-001",
+      "en": "WorkCenterScreen",
+      "title": "İş Merkezleri",
+      "endpoint": "/is-merkezleri",
+      "i": 259042,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "is-istasyonlari",
+      "techId": "MFG-WS-SCR-001",
+      "en": "WorkStationScreen",
+      "title": "İş İstasyonları",
+      "endpoint": "/is-istasyonlari",
+      "i": 260611,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "routings",
+      "techId": "MFG-ROUT-SCR-001",
+      "en": "RoutingScreen",
+      "title": "Rotalar",
+      "endpoint": "/routings",
+      "i": 261945,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "uretim-emri-tipleri",
+      "techId": "MFG-WOT-SCR-001",
+      "en": "WorkOrderTypeScreen",
+      "title": "Üretim Emri Tipleri",
+      "endpoint": "/uretim-emri-tipleri",
+      "i": 274292,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "uretim-parametreleri",
+      "techId": "MFG-PRM-SCR-001",
+      "en": "ProductionParametersScreen",
+      "title": "Üretim Parametreleri",
+      "endpoint": "/uretim-parametreleri",
+      "i": 275589,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "uretim-parametre-dogrulama",
+      "techId": "MFG-PRM-RPT-001",
+      "en": "ProductionParametersValidation",
+      "title": "Üretim Parametre Doğrulama",
+      "endpoint": "/uretim-parametreleri/dogrula",
+      "i": 278756,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-parametreleri",
+      "techId": "SUB-PAR-SCR-001",
+      "en": "SubcontractParametersScreen",
+      "title": "Fason Parametreleri",
+      "endpoint": "/fason/parametreler",
+      "i": 279656,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-operasyonlari",
+      "techId": "SUB-OPD-SCR-001",
+      "en": "SubcontractOperationDefScreen",
+      "title": "Fason Operasyon Tanımları",
+      "endpoint": "/fason/operasyonlar",
+      "i": 282193,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-fiyatlari",
+      "techId": "SUB-PRC-SCR-001",
+      "en": "SubcontractPriceScreen",
+      "title": "Fason Fiyat Tarifeleri",
+      "endpoint": "/fason/fiyatlar",
+      "i": 283848,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-siparisleri",
+      "techId": "SUB-ORD-SCR-001",
+      "en": "SubcontractOrderScreen",
+      "title": "Fason Siparişleri",
+      "endpoint": "/fason/siparisler",
+      "i": 286115,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-operasyon-takip",
+      "techId": "SUB-TRK-SCR-001",
+      "en": "SubcontractOperationTrackScreen",
+      "title": "Fason Operasyon Takibi",
+      "endpoint": "/fason/siparisler",
+      "i": 290397,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-sevkiyatlar",
+      "techId": "SUB-SHP-SCR-001",
+      "en": "SubcontractShipmentScreen",
+      "title": "Fasona Malzeme Sevki",
+      "endpoint": "/fason/sevkiyatlar",
+      "i": 292287,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-tuketimler",
+      "techId": "SUB-CNS-SCR-001",
+      "en": "SubcontractConsumptionScreen",
+      "title": "Fason Malzeme Tüketimi",
+      "endpoint": "/fason/tuketimler",
+      "i": 293614,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-teslimatlar",
+      "techId": "SUB-RCV-SCR-001",
+      "en": "SubcontractReceiptScreen",
+      "title": "Fason Ürün Teslim Alma",
+      "endpoint": "/fason/teslimatlar",
+      "i": 294745,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "fason-emanet-stok",
+      "techId": "SUB-STK-SCR-001",
+      "en": "SubcontractConsignmentStockScreen",
+      "title": "Fasoncu Emanet Stokları",
+      "endpoint": "/fason/emanet-stok",
+      "i": 296324,
+      "module": "Üretim",
+      "moduleId": "uretim"
+    },
+    {
+      "id": "kk-cihazlar",
+      "techId": "QLT-INS-SCR-001",
+      "en": "QcInstrumentScreen",
+      "title": "Ölçüm Cihazları",
+      "endpoint": "/kk-kalite/cihazlar",
+      "i": 298472,
+      "module": "Kalite",
+      "moduleId": "kalite"
+    },
+    {
+      "id": "kk-kalibrasyonlar",
+      "techId": "QLT-CAL-SCR-001",
+      "en": "CalibrationRecordScreen",
+      "title": "Kalibrasyon Kayıtları",
+      "endpoint": "/kk-kalite/kalibrasyonlar",
+      "i": 300593,
+      "module": "Kalite",
+      "moduleId": "kalite"
+    },
+    {
+      "id": "kk-uygunsuzluklar",
+      "techId": "QLT-NCR-SCR-001",
+      "en": "NonconformanceScreen",
+      "title": "Uygunsuzluklar",
+      "endpoint": "/kk-uygunsuzluklar",
+      "i": 302741,
+      "module": "Kalite",
+      "moduleId": "kalite"
+    },
+    {
+      "id": "kk-capa",
+      "techId": "QLT-CAPA-SCR-001",
+      "en": "CapaScreen",
+      "title": "CAPA",
+      "endpoint": "/kk-capa",
+      "i": 304261,
+      "module": "Kalite",
+      "moduleId": "kalite"
+    },
+    {
+      "id": "kk-kontrol-planlari",
+      "techId": "QLT-PLAN-SCR-001",
+      "en": "ControlPlanScreen",
+      "title": "Kontrol Planları",
+      "endpoint": "/kk-kontrol-planlari",
+      "i": 305562,
+      "module": "Kalite",
+      "moduleId": "kalite"
+    },
+    {
+      "id": "kk-stok-planlari",
+      "techId": "QLT-ITMP-SCR-001",
+      "en": "ItemControlPlanLinkScreen",
+      "title": "Stok Plan Bağları",
+      "endpoint": "/kk-stok-planlari",
+      "i": 307174,
+      "module": "Kalite",
+      "moduleId": "kalite"
+    },
+    {
+      "id": "kk-ret-nedenleri",
+      "techId": "QLT-REJ-SCR-001",
+      "en": "RejectionReasonScreen",
+      "title": "Ret Nedenleri",
+      "endpoint": "/kk-ret-nedenleri",
+      "i": 308540,
+      "module": "Kalite",
+      "moduleId": "kalite"
+    },
+    {
+      "id": "hesap-plani",
+      "techId": "FIN-COA-SCR-001",
+      "en": "ChartOfAccountsScreen",
+      "title": "Hesap Planı",
+      "endpoint": "/muhasebe-hesaplari",
+      "i": 310518,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "hesap-belirleme-kurallari",
+      "techId": "FIN-ACR-SCR-001",
+      "en": "AccountDeterminationRuleScreen",
+      "title": "Hesap Belirleme Kuralları",
+      "endpoint": "/hesap-belirleme-kurallari",
+      "i": 313187,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-vergi-kodlari",
+      "techId": "FIN-TAX-SCR-001",
+      "en": "TaxCodeScreen",
+      "title": "Vergi Kodları",
+      "endpoint": "/finans-vergi-kodlari",
+      "i": 314550,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-ulke-paketleri",
+      "techId": "FIN-CPK-SCR-001",
+      "en": "CountryPackScreen",
+      "title": "Finans Ülke Paketleri",
+      "endpoint": "/finans-country/paketler",
+      "i": 316817,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "mali-yillar",
+      "techId": "FIN-FY-SCR-001",
+      "en": "FiscalYearScreen",
+      "title": "Mali Yıllar",
+      "endpoint": "/muhasebe-donemleri/mali-yillar",
+      "i": 318258,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "muhasebe-donemleri",
+      "techId": "FIN-PER-SCR-001",
+      "en": "AccountingPeriodScreen",
+      "title": "Muhasebe Dönemleri",
+      "endpoint": "/muhasebe-donemleri",
+      "i": 319117,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "fiyat-listeleri",
+      "techId": "FIN-PRC-SCR-001",
+      "en": "PriceListScreen",
+      "title": "Fiyat Listeleri",
+      "endpoint": "/fiyat-listeleri",
+      "i": 320606,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "muhasebe-belgeleri",
+      "techId": "FIN-JE-SCR-001",
+      "en": "AccountingDocumentScreen",
+      "title": "Muhasebe Belgeleri",
+      "endpoint": "/muhasebe-belgeleri",
+      "i": 322318,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "fatura-kontrolleri",
+      "techId": "FIN-3WAY-SCR-001",
+      "en": "ThreeWayMatchScreen",
+      "title": "Fatura Kontrolleri",
+      "endpoint": "/fatura-kontrolleri",
+      "i": 325739,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-banka-hesaplari",
+      "techId": "FIN-BNK-SCR-001",
+      "en": "BankAccountScreen",
+      "title": "Banka Hesapları",
+      "endpoint": "/finans-nakit/banka-hesaplari",
+      "i": 327654,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-kasa-hesaplari",
+      "techId": "FIN-CSH-SCR-001",
+      "en": "CashAccountScreen",
+      "title": "Kasa Hesapları",
+      "endpoint": "/finans-nakit/kasa-hesaplari",
+      "i": 329391,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-nakit-hareketleri",
+      "techId": "FIN-CSHMV-SCR-001",
+      "en": "CashMovementScreen",
+      "title": "Nakit Hareketleri",
+      "endpoint": "/finans-nakit/hareketler",
+      "i": 330815,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "banka-mutabakat",
+      "techId": "FIN-BRECON-SCR-001",
+      "en": "BankReconciliationScreen",
+      "title": "Banka Mutabakatı",
+      "endpoint": "/banka-mutabakat",
+      "i": 332911,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-yaslandirma",
+      "techId": "FIN-AGING-RPT-001",
+      "en": "ReceivablesPayablesAgingReport",
+      "title": "Cari Yaşlandırma",
+      "endpoint": "/finans-yaslandirma",
+      "i": 335648,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "sabit-kiymetler",
+      "techId": "FIN-FA-SCR-001",
+      "en": "FixedAssetScreen",
+      "title": "Sabit Kıymetler",
+      "endpoint": "/sabit-kiymetler",
+      "i": 336807,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "gl-butceler",
+      "techId": "FIN-BUD-SCR-001",
+      "en": "GlBudgetScreen",
+      "title": "GL Bütçeler",
+      "endpoint": "/gl-butceler",
+      "i": 338797,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "mizan",
+      "techId": "FIN-TB-RPT-001",
+      "en": "TrialBalanceReport",
+      "title": "Mizan",
+      "endpoint": "/mizan",
+      "i": 340796,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-yevmiye",
+      "techId": "FIN-JL-RPT-001",
+      "en": "JournalReport",
+      "title": "Yevmiye Defteri",
+      "endpoint": "/finans-raporlar/yevmiye",
+      "i": 341606,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-bilanco",
+      "techId": "FIN-BS-RPT-001",
+      "en": "BalanceSheetReport",
+      "title": "Bilanço",
+      "endpoint": "/finans-raporlar/bilanco",
+      "i": 342459,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "finans-gelir-tablosu",
+      "techId": "FIN-PL-RPT-001",
+      "en": "IncomeStatementReport",
+      "title": "Gelir Tablosu",
+      "endpoint": "/finans-raporlar/gelir-tablosu",
+      "i": 343105,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "kokpit",
+      "techId": "RPT-CPIT-SCR-001",
+      "en": "CockpitDashboardScreen",
+      "title": "Kokpit",
+      "endpoint": "/kokpit",
+      "i": 343953,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "vergi-kodlari",
+      "techId": "MDM-TAX-SCR-001",
+      "en": "TaxTypeDefinitionScreen",
+      "title": "Vergi Kodları",
+      "endpoint": "/finans-vergi-kodlari",
+      "i": 344385,
+      "module": "Finans",
+      "moduleId": "finans"
+    },
+    {
+      "id": "crm-adaylar",
+      "techId": "CRM-LEAD-SCR-001",
+      "en": "LeadScreen",
+      "title": "Müşteri Adayları",
+      "endpoint": "/crm-adaylar",
+      "i": 347256,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-kontaklar",
+      "techId": "CRM-CNT-SCR-001",
+      "en": "ContactScreen",
+      "title": "Kontaklar",
+      "endpoint": "/crm-kontaklar",
+      "i": 349674,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-firsatlar",
+      "techId": "CRM-OPP-SCR-001",
+      "en": "OpportunityScreen",
+      "title": "Fırsatlar",
+      "endpoint": "/crm-firsatlar",
+      "i": 351588,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-faaliyet-planlari",
+      "techId": "CRM-APLN-SCR-001",
+      "en": "ActivityPlanScreen",
+      "title": "Faaliyet Planları",
+      "endpoint": "/crm-faaliyet-planlari",
+      "i": 355684,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-faaliyetler",
+      "techId": "CRM-ACT-SCR-001",
+      "en": "ActivityScreen",
+      "title": "Faaliyetler",
+      "endpoint": "/crm-faaliyetler",
+      "i": 358417,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-gorevler",
+      "techId": "CRM-TASK-SCR-001",
+      "en": "TaskScreen",
+      "title": "Görevler",
+      "endpoint": "/crm-gorevler",
+      "i": 361090,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-ajanda",
+      "techId": "CRM-CAL-SCR-001",
+      "en": "AgendaCalendarScreen",
+      "title": "Ajanda",
+      "endpoint": "/crm-ajanda",
+      "i": 363306,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-firsat-asamalari",
+      "techId": "CRM-STG-SCR-001",
+      "en": "OpportunityStageScreen",
+      "title": "Fırsat Aşamaları",
+      "endpoint": "/crm-firsat-asamalari",
+      "i": 364687,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "crm-faaliyet-tipleri",
+      "techId": "CRM-ACTT-SCR-001",
+      "en": "ActivityTypeScreen",
+      "title": "Faaliyet Tipleri",
+      "endpoint": "/crm-faaliyet-tipleri",
+      "i": 365995,
+      "module": "CRM",
+      "moduleId": "crm"
+    },
+    {
+      "id": "prj-projeler",
+      "techId": "PRJ-PRJ-SCR-001",
+      "en": "ProjectListScreen",
+      "title": "Projeler",
+      "endpoint": "/prj-projeler",
+      "i": 367967,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-isler",
+      "techId": "PRJ-WI-SCR-001",
+      "en": "WorkItemListScreen",
+      "title": "İşler",
+      "endpoint": "/prj-isler",
+      "i": 375717,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-dashboard",
+      "techId": "PRJ-RPT-SCR-001",
+      "en": "ProjectDashboardScreen",
+      "title": "Proje Özeti",
+      "endpoint": "/prj-dashboard/overview",
+      "i": 378530,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-portfolio",
+      "techId": "PRJ-RPT-SCR-002",
+      "en": "ProjectPortfolioScreen",
+      "title": "Portföy Özeti",
+      "endpoint": "/prj-dashboard/portfolio",
+      "i": 381032,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-board",
+      "techId": "PRJ-AGL-SCR-001",
+      "en": "ProjectBoardScreen",
+      "title": "Kanban",
+      "endpoint": "/prj-board",
+      "i": 381975,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-backlog",
+      "techId": "PRJ-AGL-SCR-002",
+      "en": "ProjectBacklogScreen",
+      "title": "Backlog",
+      "endpoint": "/prj-planning/backlog",
+      "i": 384227,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-sprintler",
+      "techId": "PRJ-AGL-SCR-003",
+      "en": "SprintScreen",
+      "title": "Sprintler",
+      "endpoint": "/prj-sprintler",
+      "i": 385339,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-gantt",
+      "techId": "PRJ-PLN-SCR-001",
+      "en": "ProjectGanttScreen",
+      "title": "Gantt / Zaman Çizelgesi",
+      "endpoint": "/prj-planning/gantt",
+      "i": 386870,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-workload",
+      "techId": "PRJ-RES-SCR-001",
+      "en": "ProjectWorkloadScreen",
+      "title": "Kaynak İş Yükü",
+      "endpoint": "/prj-planning/workload",
+      "i": 388179,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-butce",
+      "techId": "PRJ-FIN-SCR-001",
+      "en": "ProjectBudgetScreen",
+      "title": "Proje Bütçesi",
+      "endpoint": "/prj-budget",
+      "i": 389020,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-riskler",
+      "techId": "PRJ-RSK-SCR-001",
+      "en": "ProjectRiskScreen",
+      "title": "Riskler",
+      "endpoint": "/prj-riskler",
+      "i": 390006,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-sablonlar",
+      "techId": "PRJ-DEF-SCR-030",
+      "en": "ProjectTemplateScreen",
+      "title": "Proje Şablonları",
+      "endpoint": "/prj-sablonlar",
+      "i": 391558,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-automations",
+      "techId": "PRJ-AUTO-SCR-001",
+      "en": "ProjectAutomationScreen",
+      "title": "Otomasyon Kuralları",
+      "endpoint": "/prj-automations",
+      "i": 392248,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-project-types",
+      "techId": "PRJ-DEF-SCR-001",
+      "en": "ProjectTypeScreen",
+      "title": "Proje Türleri",
+      "endpoint": "/prj-project-types",
+      "i": 393636,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-project-categories",
+      "techId": "PRJ-DEF-SCR-002",
+      "en": "ProjectCategoryScreen",
+      "title": "Proje Kategorileri",
+      "endpoint": "/prj-project-categories",
+      "i": 394657,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-project-statuses",
+      "techId": "PRJ-DEF-SCR-003",
+      "en": "ProjectStatusScreen",
+      "title": "Proje Durumları",
+      "endpoint": "/prj-project-statuses",
+      "i": 395715,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-project-priorities",
+      "techId": "PRJ-DEF-SCR-004",
+      "en": "ProjectPriorityScreen",
+      "title": "Proje Öncelikleri",
+      "endpoint": "/prj-project-priorities",
+      "i": 396955,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-work-item-types",
+      "techId": "PRJ-DEF-SCR-010",
+      "en": "WorkItemTypeScreen",
+      "title": "İş Türleri",
+      "endpoint": "/prj-work-item-types",
+      "i": 398034,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-work-item-statuses",
+      "techId": "PRJ-DEF-SCR-011",
+      "en": "WorkItemStatusScreen",
+      "title": "İş Durumları",
+      "endpoint": "/prj-work-item-statuses",
+      "i": 399241,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-work-item-priorities",
+      "techId": "PRJ-DEF-SCR-012",
+      "en": "WorkItemPriorityScreen",
+      "title": "İş Öncelikleri",
+      "endpoint": "/prj-work-item-priorities",
+      "i": 400695,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-project-roles",
+      "techId": "PRJ-DEF-SCR-020",
+      "en": "ProjectRoleScreen",
+      "title": "Proje Rolleri",
+      "endpoint": "/prj-project-roles",
+      "i": 401776,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "prj-relation-types",
+      "techId": "PRJ-DEF-SCR-021",
+      "en": "WorkRelationTypeScreen",
+      "title": "İş İlişki Türleri",
+      "endpoint": "/prj-relation-types",
+      "i": 403209,
+      "module": "Proje Yönetimi",
+      "moduleId": "proje"
+    },
+    {
+      "id": "hr-personel",
+      "techId": "HR-EMP-SCR-001",
+      "en": "EmployeeMasterScreen",
+      "title": "Personel Kartları",
+      "endpoint": "/hr-personel",
+      "i": 405506,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-departmanlar",
+      "techId": "HR-DEPT-SCR-001",
+      "en": "DepartmentScreen",
+      "title": "Departmanlar",
+      "endpoint": "/hr-org/departmanlar",
+      "i": 411808,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-pozisyonlar",
+      "techId": "HR-POS-SCR-001",
+      "en": "PositionScreen",
+      "title": "Pozisyonlar",
+      "endpoint": "/hr-org/pozisyonlar",
+      "i": 413170,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-calisma-takvimleri",
+      "techId": "HR-CAL-SCR-001",
+      "en": "WorkCalendarScreen",
+      "title": "Çalışma Takvimleri",
+      "endpoint": "/hr-takvim/takvimler",
+      "i": 414222,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-vardiyalar",
+      "techId": "HR-SHF-SCR-001",
+      "en": "ShiftScreen",
+      "title": "Vardiyalar",
+      "endpoint": "/hr-takvim/vardiyalar",
+      "i": 415888,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-vardiya-atamalari",
+      "techId": "HR-SHA-SCR-001",
+      "en": "ShiftAssignmentScreen",
+      "title": "Vardiya Atamaları",
+      "endpoint": "/hr-takvim/vardiya-atamalari",
+      "i": 417257,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-puantaj",
+      "techId": "HR-ATT-SCR-001",
+      "en": "AttendanceDayScreen",
+      "title": "Günlük Puantaj",
+      "endpoint": "/hr-puantaj/gunluk",
+      "i": 418423,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-resmi-tatiller",
+      "techId": "HR-HOL-SCR-001",
+      "en": "PublicHolidayScreen",
+      "title": "Resmî Tatiller",
+      "endpoint": "/hr-takvim/tatiller",
+      "i": 419467,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-izin-turleri",
+      "techId": "HR-LVT-SCR-001",
+      "en": "LeaveTypeScreen",
+      "title": "İzin Türleri",
+      "endpoint": "/hr-izin/turler",
+      "i": 420343,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-izin-talepleri",
+      "techId": "HR-LV-SCR-001",
+      "en": "LeaveRequestScreen",
+      "title": "İzin Talepleri",
+      "endpoint": "/hr-izin/talepler",
+      "i": 422329,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-izin-bakiyeleri",
+      "techId": "HR-LVB-SCR-001",
+      "en": "LeaveBalanceScreen",
+      "title": "İzin Bakiyeleri",
+      "endpoint": "/hr-izin/bakiyeler",
+      "i": 424144,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-ucretler",
+      "techId": "HR-SAL-SCR-001",
+      "en": "EmployeeSalaryScreen",
+      "title": "Ücret Tanımları",
+      "endpoint": "/hr-bordro/ucretler",
+      "i": 425064,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-avanslar",
+      "techId": "HR-ADV-SCR-001",
+      "en": "AdvanceScreen",
+      "title": "Avanslar",
+      "endpoint": "/hr-bordro/avanslar",
+      "i": 426358,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-bordro-parametreleri",
+      "techId": "HR-PRM-SCR-001",
+      "en": "PayrollParamScreen",
+      "title": "Bordro Parametreleri",
+      "endpoint": "/hr-bordro/parametreler",
+      "i": 427814,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-bordro-donemleri",
+      "techId": "HR-PRP-SCR-001",
+      "en": "PayrollPeriodScreen",
+      "title": "Bordro Dönemleri",
+      "endpoint": "/hr-bordro/donemler",
+      "i": 430432,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-bordro-calismalari",
+      "techId": "HR-PRR-SCR-001",
+      "en": "PayrollRunScreen",
+      "title": "Bordro Çalışmaları",
+      "endpoint": "/hr-bordro/calismalar",
+      "i": 431547,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-is-ilanlari",
+      "techId": "HR-JOB-SCR-001",
+      "en": "JobRequisitionScreen",
+      "title": "İş İlanları",
+      "endpoint": "/hr-ise-alim/ilanlar",
+      "i": 433185,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-adaylar",
+      "techId": "HR-CAND-SCR-001",
+      "en": "CandidateScreen",
+      "title": "Adaylar",
+      "endpoint": "/hr-ise-alim/adaylar",
+      "i": 434553,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-onboarding",
+      "techId": "HR-ONB-SCR-001",
+      "en": "OnboardingTaskScreen",
+      "title": "İşe Giriş Görevleri",
+      "endpoint": "/hr-ise-alim/onboarding",
+      "i": 435904,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-zimmetler",
+      "techId": "HR-AST-SCR-001",
+      "en": "AssetAssignmentScreen",
+      "title": "Zimmetler",
+      "endpoint": "/hr-ise-alim/zimmetler",
+      "i": 436815,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-isten-cikis",
+      "techId": "HR-TRM-SCR-001",
+      "en": "TerminationScreen",
+      "title": "İşten Çıkış",
+      "endpoint": "/hr-ise-alim/cikislar",
+      "i": 438052,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "hr-cikis-nedenleri",
+      "techId": "HR-TRR-SCR-001",
+      "en": "TerminationReasonScreen",
+      "title": "Çıkış Nedenleri",
+      "endpoint": "/hr-ise-alim/cikis-nedenleri",
+      "i": 440483,
+      "module": "İnsan Kaynakları",
+      "moduleId": "insan-kaynaklari"
+    },
+    {
+      "id": "onaylarim",
+      "techId": "SYS-APR-SCR-001",
+      "en": "MyApprovalsScreen",
+      "title": "Onaylarım",
+      "endpoint": "/onay-kayitlari?benim=true",
+      "i": 442379,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-izleme",
+      "techId": "SYS-APR-SCR-002",
+      "en": "ApprovalMonitoringScreen",
+      "title": "Onay İzleme",
+      "endpoint": "/onay-kayitlari",
+      "i": 444524,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-yetki-devri",
+      "techId": "SYS-APR-SCR-003",
+      "en": "ApprovalDelegationScreen",
+      "title": "Onay Yetki Devri",
+      "endpoint": "/onay-yetki-devirleri",
+      "i": 446801,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-role-tanim",
+      "techId": "SYS-APR-SCR-004",
+      "en": "ApprovalRoleScreen",
+      "title": "Onay Rolleri",
+      "endpoint": "/onay-rolleri",
+      "i": 448682,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-kural-tanim",
+      "techId": "SYS-APR-SCR-005",
+      "en": "ApprovalRuleScreen",
+      "title": "Onay Kuralları",
+      "endpoint": "/onay-kurallari",
+      "i": 450545,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-rota-tanim",
+      "techId": "SYS-APR-SCR-006",
+      "en": "ApprovalRouteScreen",
+      "title": "Onay Rotaları",
+      "endpoint": "/onay-rotalari",
+      "i": 454081,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-message-template",
+      "techId": "SYS-APR-SCR-007",
+      "en": "ApprovalMessageTemplateScreen",
+      "title": "Onay Mesaj Şablonları",
+      "endpoint": "/onay-message-sablonlari",
+      "i": 458165,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-status-tanim",
+      "techId": "SYS-APR-SCR-008",
+      "en": "ApprovalStatusScreen",
+      "title": "Onay Durumları",
+      "endpoint": "/onay-durumlari",
+      "i": 459543,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "onay-modul-kullanimlari",
+      "techId": "SYS-APR-SCR-USG",
+      "en": "ApprovalModuleUsageScreen",
+      "title": "Onay Modül Kullanımları",
+      "endpoint": "/onay-module-kullanimlari",
+      "i": 460851,
+      "module": "Onay Yönetimi",
+      "moduleId": "onay"
+    },
+    {
+      "id": "sistem-lisanslar",
+      "techId": "SYS-LIC-SCR-001",
+      "en": "SystemLicenseScreen",
+      "title": "Sistem Lisansları",
+      "endpoint": "/lisanslar",
+      "i": 463705,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "firma-lisanslar",
+      "techId": "SYS-CLIC-SCR-001",
+      "en": "CompanyLicenseScreen",
+      "title": "Firma Lisans Atamaları",
+      "endpoint": "/lisanslar/firma/liste",
+      "i": 465302,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "kullanicilar",
+      "techId": "SYS-USR-SCR-001",
+      "en": "UsersScreen",
+      "title": "Kullanıcılar",
+      "endpoint": "/kullanicilar",
+      "i": 466601,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "kullanici-gruplari",
+      "techId": "SYS-GRP-SCR-001",
+      "en": "UserGroupsScreen",
+      "title": "Kullanıcı Grupları",
+      "endpoint": "/kullanici-gruplari",
+      "i": 468900,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "sistem-parametreleri",
+      "techId": "SYS-PRM-SCR-001",
+      "en": "SystemParametersScreen",
+      "title": "Sistem Parametreleri",
+      "endpoint": "/sistem-parametreleri",
+      "i": 470567,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "zorunlu-alan-tanimlari",
+      "techId": "SYS-REQ-SCR-001",
+      "en": "RequiredFieldDefinitionScreen",
+      "title": "Zorunlu Alanlar",
+      "endpoint": "/zorunlu-alan-tanimlari",
+      "i": 471807,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "mesaj-tanimlari",
+      "techId": "SYS-MSG-SCR-001",
+      "en": "MessageDefinitionScreen",
+      "title": "Mesaj Tanımları",
+      "endpoint": "/mesaj-tanimlari",
+      "i": 473767,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "eposta-gonderimleri",
+      "techId": "SYS-MAIL-SCR-001",
+      "en": "EmailDispatchScreen",
+      "title": "E-posta Gönderimleri",
+      "endpoint": "/eposta-gonderimleri",
+      "i": 475192,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "sistem-guncelleme",
+      "techId": "SYS-UPD-SCR-001",
+      "en": "SystemUpdateScreen",
+      "title": "Sistem Güncelleme",
+      "endpoint": "/sistem-guncelleme",
+      "i": 476048,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "audit-log",
+      "techId": "SYS-AUD-SCR-001",
+      "en": "AuditLogScreen",
+      "title": "Audit Log",
+      "endpoint": "/audit-log",
+      "i": 476795,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "tablo-bilgileri",
+      "techId": "SYS-META-SCR-001",
+      "en": "ScreenTableCatalogScreen",
+      "title": "Tablo Bilgileri",
+      "endpoint": "/meta/ekranlar",
+      "i": 477663,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "sql-sorgu",
+      "techId": "SYS-SQL-SCR-001",
+      "en": "SqlQueryScreen",
+      "title": "SQL Sorgu",
+      "endpoint": "/sql-console",
+      "i": 478169,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    },
+    {
+      "id": "sayfa-sorgulari",
+      "techId": "SYS-QRY-SCR-001",
+      "en": "PageQueryScreen",
+      "title": "Sayfa Sorguları",
+      "endpoint": "/meta/sorgular",
+      "i": 478439,
+      "module": "Sistem",
+      "moduleId": "sistem"
+    }
+  ]
+}

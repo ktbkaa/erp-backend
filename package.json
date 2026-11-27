@@ -47,7 +47,11 @@
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
     "demo:marvel-shots": "node scripts/capture-metal-marvel-shots.js",
-    "demo:marvel-pdf": "node scripts/build-metal-marvel-pdf.js"
+    "demo:marvel-pdf": "node scripts/build-metal-marvel-pdf.js",
+    "kilavuz:audit": "node scripts/sinama-full-audit.js",
+    "kilavuz:shots": "node scripts/capture-kilavuz-shots.js",
+    "kilavuz:pdf": "node scripts/build-sistem-kilavuz-pdf.js",
+    "kilavuz:all": "npm run kilavuz:audit && npm run kilavuz:shots && npm run kilavuz:pdf"
   },
   "keywords": [
     "erp",
