@@ -114,14 +114,48 @@ Olay (Bekleme / Onay / Red…), konu, gövde. Yer tutucular: `{{belge_no}}`, `{{
 | `GET/POST/PUT /onay-mesaj-sablonlari` | Şablonlar |
 | `GET /onay-kayitlari?benim=true` | Onaylarım |
 | `POST /onay-kayitlari/baslat` | Süreç başlat |
-| `POST /onay-kayitlari/:id/onayla\|reddet\|iptal` | İşlem |
+| `POST /onay-kayitlari/:id/onayla\|reddet\|iptal` | İşlem (kapı kaydında belgeye sonuç uygulanır) |
+| `GET /onay-belge-turleri` | Onaylanabilir belge türleri |
+| `GET /onay-bekleyenler` · `POST /onay-bekleyenler/toplu-onayla\|toplu-reddet` | Genel gelen kutusu + toplu işlem |
+| `GET /onay-izi` | Onay izi |
 
 Motor: `src/services/onayService.js`  
-Migration: `036_onay_modulu.sql`, `037_onay_tanim_sadelestirme.sql`
+Migration: `036_onay_modulu.sql`, `037_onay_tanim_sadelestirme.sql`, `100_approval_gate_infra.sql` (genel onay kapısı)
 
 ---
 
-## 6. Dokümanı yeniden üretmek
+## 6. Genel onay kapısı (belgeyi onaya bağlama)
+
+Onay hiçbir belgeye sabit kodlanmaz. Varsayılan **kapalıdır**: belge türüne bağlı aktif kural yoksa belge eskisi gibi akar. Seed/migration hiçbir kuralı belge türüne bağlamaz.
+
+**Parçalar**
+
+| Parça | Yer | Açıklama |
+|-------|-----|----------|
+| Belge türü kaydı | `approval_document_types` · ekran **Onaylanabilir Belge Türleri** · `GET /onay-belge-turleri` | "Bu belge türü onaya bağlanabilir" kaydı: tablo/kolon eşlemesi, onay bekleyen değerler (`pending_values`), onaylanınca değerler (`approved_values`), ret/iptal sonuçları (`outcomes`, ör. `TASLAK`, `IPTAL`) ve varsayılanlar. Değerlerde `$now`, `$user_id`, `$user_code` belirteçleri kullanılabilir. |
+| Kural | `approval_rules.document_type_code`, `reject_outcome`, `cancel_outcome` · **Onay Kuralları** ekranı | "Belge türü (onay kapısı)" seçilen kural belgeyi onaya takar. Ret/iptal sonucu kural bazında seçilir (boş = belge türü varsayılanı). Mevcut koşullar (firma, iş yeri, tutar, yön, belge durumları, otomatik onay) aynen geçerli. |
+| Rota | **Onay Rotaları** | Kurala bağlı rota + adımlar (rol adı). Kapı kuralı için rota yoksa gönderim `ONAY_ROTA_YOK` ile reddedilir. |
+| Gelen kutusu | **Onay Bekleyenler** · `GET /onay-bekleyenler` | Tüm belge türlerinde kullanıcının rolüne (yönetici: tümü) düşen bekleyenler. |
+| Toplu işlem | `POST /onay-bekleyenler/toplu-onayla` · `toplu-reddet` `{ ids, notes }` | Kayıt bazında bağımsız transaction; `basarili` / `hatali` döner. Ekranda kolon filtresiyle listelenenler toplu onaylanır/reddedilir. |
+| Onay izi | `approval_audit_log` · **Onay İzi** · `GET /onay-izi?document_type_code=&document_id=` | `GONDERILDI`, `ADIM_ONAYLANDI`, `ONAYLANDI`, `REDDEDILDI`, `IPTAL`, `OTOMATIK_ONAY` (+ belge türlerinin yazdığı `DOGRUDAN_ONAY`). |
+| Servis | `src/services/onayKapisiService.js` | `submitForApproval`, `assertNotPending`, `assertManualStatusChange`, `applyRecordOutcome`, `logAudit`. |
+
+**Akış:** belge "Onayla"/aktifleştirme anında `submitForApproval` çağırır → kural yoksa `{ gated: false }`, belge eski akışına devam eder → kural varsa belge `pending_values` ile onay bekleyen duruma alınır ve onay kaydı açılır → son adım onaylanınca `approved_values`, ret/iptalde kuralın sonucu (`TASLAK` / `IPTAL`) belgeye yazılır. Onay beklerken aşağı akış işlemleri (`assertNotPending`) ve elle durum değişikliği (`assertManualStatusChange`) engellenir.
+
+**Bağlı belge türleri**
+
+| Kod | Belge | Kural açıkken |
+|-----|-------|---------------|
+| `SATINALMA_SIPARIS` | Satınalma siparişi | Taslak → Onayla → `OnayBekliyor` → onay → `Onayli`. Onay beklerken mal kabul ve elle durum değişikliği engelli. |
+| `DEPO_TRANSFER` | Depo transfer emri | Taslak → Onayla → `OnayBekliyor` (stok hareketi yok) → onay → `Onayli` → tekrar Onayla → stok hareketi + `Tamamlandi`. |
+
+**Yeni belge türü eklemek:** `approval_document_types`'a satır (migration) + belgenin aktifleştirme ucunda `submitForApproval` çağrısı + gerekiyorsa aşağı akış ucunda `assertNotPending`. Belge tablosunun durum kısıtı onay bekleyen değeri kabul etmelidir.
+
+**Örnek kurulum (depo transferi):** Onay Rolleri'nde rolü kişiye ver → Onay Kuralları'nda "Belge türü = Depo transfer emri", ret sonucu seç → Onay Rotaları'nda kuralı bağla, adımları yaz → Transfer emrinde "Onayla" → Onay Bekleyenler.
+
+---
+
+## 7. Dokümanı yeniden üretmek
 
 ```bash
 npm run migrate
@@ -133,9 +167,9 @@ node scripts/build-onay-dokuman-pdf.js
 
 ---
 
-## 7. Sonraki tur
+## 8. Sonraki tur
 
-1. Belge «Onayla» butonlarını `baslatOnay` ile bağlamak  
+1. Diğer belge türlerini (satınalma talebi, fatura, muhasebe belgesi…) kayda + `submitForApproval` bağlantısına almak  
 2. Mail/SMS gerçek gönderimi  
 3. Hareket kodu için chip / çoklu seçim UI  
 4. Rota adımında rol adını lookup ile seçtirmek  
