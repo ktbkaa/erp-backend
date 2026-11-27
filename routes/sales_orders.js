@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
+const {
+    submitForApproval, assertNotPending, assertManualStatusChange,
+} = require('../src/services/onayKapisiService');
+const { getUser, reqUserCode } = require('../src/utils/yetki');
+
+async function requestUser(client, req) {
+    if (req.user) return req.user;
+    const kod = reqUserCode(req);
+    return kod ? getUser(client, kod) : null;
+}
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { parametreAl } = require('../src/utils/yetki');
 const {
@@ -228,6 +238,9 @@ router.post('/', async (req, res) => {
             }
 
             // Formda numaratörden ayrılan no varsa ona sadık kal — yeniden ayırma
+            if (status && status !== 'Onayli') {
+                await assertManualStatusChange(client, 'SATIS_SIPARIS', { status: 'Taslak' }, status);
+            }
             const reserved = order_no != null && String(order_no).trim() !== ''
               ? String(order_no).trim()
               : null;
@@ -275,11 +288,25 @@ router.post('/', async (req, res) => {
                     sat.vals
                 );
             }
-            return { siparisId, atpUyari };
+            let onayKayit = null;
+            if (belgeTipi === 'SATIS_SIPARIS' && (status || 'Taslak') === 'Onayli') {
+                const kapi = await submitForApproval(client, {
+                    documentTypeCode: 'SATIS_SIPARIS',
+                    documentId: siparisId,
+                    user: await requestUser(client, req),
+                    fromStatuses: ['Onayli'],
+                });
+                if (kapi.gated) onayKayit = kapi.record;
+            }
+            return { siparisId, atpUyari, onayKayit };
         });
 
         const row = await getOrder(id.siparisId);
-        res.status(201).json({ ...row, atp_uyari: id.atpUyari || [] });
+        res.status(201).json({
+            ...row,
+            atp_uyari: id.atpUyari || [],
+            ...(id.onayKayit ? { onay_bekliyor: true, onay_kayit: id.onayKayit } : {}),
+        });
     } catch (err) {
         console.error('Sipariş kayıt hatası:', err);
         const status = err.status || (String(err.message || '').includes('bulunamadı') ? 400 : 500);
@@ -294,6 +321,7 @@ router.put('/:id', async (req, res) => {
     try {
         const { order_date, order_type, status } = req.body;
         const kalemler = req.body.kalemler || req.body.satirlar;
+        let onayKayit = null;
 
         const id = await withTransaction(pool, async (client) => {
             const mevcut = await client.query(
@@ -351,16 +379,15 @@ router.put('/:id', async (req, res) => {
             extras.total_amount = toplam;
             if (order_date != null && order_date !== '') extras.order_date = order_date;
             if (order_type != null && order_type !== '') extras.order_type = order_type;
+            const oncekiDurum = mevcut.rows[0].status;
+            let onayaGonder = false;
             if (status != null && status !== '') {
-                if (
-                    mevcut.rows[0].status === 'OnayBekliyor'
-                    && !['OnayBekliyor', 'Iptal'].includes(status)
-                ) {
-                    const err = new Error('Onay bekleyen sipariş durumu elle değiştirilemez; onay kaydı tamamlanmalı.');
-                    err.status = 409;
-                    throw err;
+                if (status === 'Onayli' && !['Onayli', 'OnayBekliyor'].includes(oncekiDurum)) {
+                    onayaGonder = true;
+                } else {
+                    await assertManualStatusChange(client, 'SATIS_SIPARIS', mevcut.rows[0], status);
+                    extras.status = status;
                 }
-                extras.status = status;
             }
             if (extras.subtotal == null && Array.isArray(kalemler)) extras.subtotal = toplam;
             if (extras.grand_total == null && Array.isArray(kalemler)) extras.grand_total = toplam;
@@ -378,10 +405,27 @@ router.put('/:id', async (req, res) => {
                     [req.params.id, ...params]
                 );
             }
+            if (onayaGonder) {
+                const kapi = await submitForApproval(client, {
+                    documentTypeCode: 'SATIS_SIPARIS',
+                    documentId: Number(req.params.id),
+                    user: await requestUser(client, req),
+                    fromStatuses: [oncekiDurum],
+                });
+                if (kapi.gated) {
+                    onayKayit = kapi.record;
+                } else {
+                    await client.query(
+                        `UPDATE sales_orders SET status = 'Onayli', updated_at = NOW() WHERE id = $1`,
+                        [req.params.id]
+                    );
+                }
+            }
             return Number(req.params.id);
         });
 
-        res.json(await getOrder(id));
+        const row = await getOrder(id);
+        res.json(onayKayit ? { ...row, onay_bekliyor: true, onay_kayit: onayKayit } : row);
     } catch (err) {
         if (err.code === '23503') {
                     return res.status(409).json({
@@ -445,11 +489,10 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
         if (firmaId && !(await assertCompanyRecord(pool, 'sales_orders', siparis.id, firmaId))) {
             return res.status(403).json({ hata: 'Bu firma için sipariş erişimi yok.' });
         }
-        if (siparis.status === 'OnayBekliyor') {
-            return res.status(400).json({
-                hata: 'Sipariş onay bekliyor; satış onayı tamamlanmadan sevk emri oluşturulamaz.',
-                kod: 'SIPARIS_ONAY_BEKLIYOR',
-            });
+        try {
+            await assertNotPending(pool, 'SATIS_SIPARIS', siparis, 'sevk emri');
+        } catch (gateErr) {
+            return res.status(gateErr.status || 409).json({ hata: gateErr.message, kod: gateErr.code });
         }
         if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.status)) {
             return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.status}` });

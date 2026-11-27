@@ -28066,7 +28066,7 @@ function bindEvents() {
             openScreen(act.openTarget.screenId);
           }
         } else if (result?.sales_order_id) {
-          toast(act.label + ' tamam.');
+          toast(approvalResultMessage(result, act.label + ' tamam.'));
           openScreen('satis-siparisleri');
         } else if (result?.shipment_no) {
           toast(act.label + ' tamam.');

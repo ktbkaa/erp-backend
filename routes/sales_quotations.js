@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq, assertCompanyRecord, resolveDocumentCompanyId } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const { submitForApproval } = require('../src/services/onayKapisiService');
+const { getUser, reqUserCode } = require('../src/utils/yetki');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
 
@@ -268,18 +270,6 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                 );
             }
 
-            // Satış siparişi için aktif onay modülü kullanımı varsa sipariş OnayBekliyor açılır.
-            const onayKullanim = await client.query(
-                `SELECT id FROM approval_module_usages
-                 WHERE is_active = TRUE
-                   AND screen_id = 'satis-siparisleri'
-                   AND (company_id IS NULL OR company_id = $1)
-                 ORDER BY company_id NULLS LAST, id
-                 LIMIT 1`,
-                [docFirmaId]
-            );
-            const onayUsageId = onayKullanim.rows[0]?.id || null;
-
             const sip = await client.query(
                 `
                 INSERT INTO sales_orders
@@ -289,13 +279,12 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                      delivery_date, payment_term_code, payment_method, delivery_term_code,
                      exchange_rate, discount_rate, subtotal, tax_amount, grand_total,
                      public_note, internal_note, project_code)
-                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,$6,$7,$8,$9,$10,$11,$12,
-                        $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
+                VALUES ($1,$2,$3,$4,CURRENT_DATE,'SatisSiparis',$5,'Onayli',$6,$7,$8,$9,$10,$11,
+                        $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
                 RETURNING id
                 `,
                 [
                     no, teklif.partner_id, teklif.partner_code, teklif.partner_name, teklif.total_amount,
-                    onayUsageId ? 'OnayBekliyor' : 'Onayli',
                     teklif.id, hk?.id || null, teklif.currency_code || 'TRY',
                     `Teklif ${teklif.quotation_no} dönüşümü`,
                     BELGE_TIPI.SATIS_TEKLIF, teklif.id,
@@ -334,34 +323,15 @@ router.post('/:id/siparise-donustur', async (req, res) => {
                 [teklif.id]
             );
 
-            if (onayUsageId) {
-                const { startApproval } = require('../src/services/onayService');
-                const { getUser, reqUserCode } = require('../src/utils/yetki');
-                const kullanici = await getUser(client, reqUserCode(req) || 'owner');
-                const toplamTutar = Number(teklif.grand_total ?? teklif.total_amount) || 0;
-                onayKayit = await startApproval(client, {
-                    company_id: docFirmaId,
-                    plant_id: docPlantId,
-                    screen_id: 'satis-siparisleri',
-                    module_code: 'SATIS',
-                    document_id: sid,
-                    document_no: no,
-                    document_summary: `Satış siparişi ${no}`,
-                    amount: toplamTutar,
-                    currency_code: teklif.currency_code || 'TRY',
-                    initiator_user_id: kullanici?.id || null,
-                    description: `Teklif ${teklif.quotation_no} dönüşümü — satış onayı bekleniyor`,
-                    usage_id: onayUsageId,
-                    direction: 'Satis',
-                });
-                if (onayKayit?.atlandi) {
-                    await client.query(
-                        `UPDATE sales_orders SET status='Onayli' WHERE id=$1 AND status='OnayBekliyor'`,
-                        [sid]
-                    );
-                    onayKayit = null;
-                }
-            }
+            const kullanici = req.user || (reqUserCode(req) ? await getUser(client, reqUserCode(req)) : null);
+            const kapi = await submitForApproval(client, {
+                documentTypeCode: 'SATIS_SIPARIS',
+                documentId: sid,
+                user: kullanici,
+                notes: `Teklif ${teklif.quotation_no} dönüşümü`,
+                fromStatuses: ['Onayli'],
+            });
+            if (kapi.gated) onayKayit = kapi.record;
             return sid;
         });
 
@@ -372,6 +342,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
             order_no: siparis.rows[0].order_no,
             status: siparis.rows[0].status,
             onay_kayit: onayKayit,
+            onay_bekliyor: Boolean(onayKayit),
             teklif: await getQuotation(teklif.id),
         });
     } catch (err) {
