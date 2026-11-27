@@ -57,6 +57,32 @@ describe('ops altyapısı', () => {
     }
   });
 
+  it('/ready: SEED_DEMO_DATA yokken atlanan demo seed migration’ları bekleyen sayılmaz', async () => {
+    const { createHealthRouter } = require('../src/infra/health');
+    const { isDemoSeedMigration } = require('../src/bootstrap/demoSeedPolicy');
+    const files = fs.readdirSync(path.join(__dirname, '..', 'db', 'migrations')).filter((f) => f.endsWith('.sql'));
+    const pool = {
+      totalCount: 1, idleCount: 1, waitingCount: 0,
+      async query(sql) {
+        if (/schema_migrations/.test(sql)) {
+          return { rows: files.filter((f) => !isDemoSeedMigration(f)).map((filename) => ({ filename })) };
+        }
+        return { rows: [{ '?column?': 1 }] };
+      },
+    };
+    const prev = process.env.SEED_DEMO_DATA;
+    delete process.env.SEED_DEMO_DATA;
+    try {
+      const app = express();
+      app.use(createHealthRouter({ pool, logger: silentLogger }));
+      const r = await get(app, '/ready');
+      assert.equal(r.status, 200);
+      assert.equal(r.json.checks.migration.bekleyen, 0);
+    } finally {
+      if (prev !== undefined) process.env.SEED_DEMO_DATA = prev;
+    }
+  });
+
   it('/ready DB hatasında 503 döner', async () => {
     const { createHealthRouter } = require('../src/infra/health');
     const pool = { totalCount: 0, idleCount: 0, waitingCount: 0, query: async () => { throw new Error('ECONNREFUSED'); } };

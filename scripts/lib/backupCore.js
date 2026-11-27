@@ -7,6 +7,7 @@ const path = require('path');
 const { Client } = require('pg');
 const { pgClientConfig, libpqEnv } = require('./dbConn');
 const s3 = require('./s3Lite');
+const { isDemoSeedEnabled, isDemoSeedMigration } = require('../../src/bootstrap/demoSeedPolicy');
 
 const ROOT = path.join(__dirname, '..', '..');
 const MIGRATIONS_DIR = path.join(ROOT, 'db', 'migrations');
@@ -80,7 +81,11 @@ function runTool(bin, args, { env, input, quiet = false } = {}) {
 
 function migrationFiles() {
   try {
-    return fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort();
+    // db/migrate.js bayraksız ortamda demo seed migration'larını bilinçli atlar; bekleyen sayılmaz
+    return fs.readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.endsWith('.sql'))
+      .filter((f) => !(isDemoSeedMigration(f) && !isDemoSeedEnabled()))
+      .sort();
   } catch (_) {
     return [];
   }

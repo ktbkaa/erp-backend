@@ -11,6 +11,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { isDemoSeedEnabled, isDemoSeedMigration } = require('../bootstrap/demoSeedPolicy');
 
 const MIGRATIONS_DIR = path.join(__dirname, '..', '..', 'db', 'migrations');
 const startedAt = Date.now();
@@ -23,7 +24,11 @@ const state = { shuttingDown: false };
 
 function migrationFiles() {
   try {
-    return fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql')).sort();
+    // db/migrate.js bayraksız ortamda demo seed migration'larını bilinçli atlar; bekleyen sayılmaz
+    return fs.readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.endsWith('.sql'))
+      .filter((f) => !(isDemoSeedMigration(f) && !isDemoSeedEnabled()))
+      .sort();
   } catch (_) {
     return [];
   }
