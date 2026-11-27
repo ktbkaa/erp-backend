@@ -9225,8 +9225,8 @@ const MODULES = [
             labelKey: 'document_type_name',
             codeKey: 'document_type_code',
           },
-          { key: 'reject_outcome', label: 'Ret sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['', 'TASLAK', 'IPTAL'] },
-          { key: 'cancel_outcome', label: 'İptal sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['', 'TASLAK', 'IPTAL'] },
+          { key: 'reject_outcome', label: 'Ret sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['TASLAK', 'IPTAL'] },
+          { key: 'cancel_outcome', label: 'İptal sonucu (boş = belge türü varsayılanı)', type: 'select', options: ['TASLAK', 'IPTAL'] },
           {
             key: 'screen_id',
             label: 'Ekran (belge türü seçiliyse otomatik)',
