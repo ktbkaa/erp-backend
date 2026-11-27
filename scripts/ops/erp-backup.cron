@@ -1,0 +1,23 @@
+# KTB ERP — örnek crontab (self-hosted sunucu / VM). Kurulum:
+#   sudo cp scripts/ops/erp-backup.cron /etc/cron.d/ktb-erp && sudo chmod 644 /etc/cron.d/ktb-erp
+# Saatler sunucu saat dilimine göredir; aşağısı TZ=Europe/Istanbul varsayar.
+# ERP_DIR'i ve kullanıcıyı (erp) kendi kurulumunuza göre düzeltin.
+# Docker compose kurulumunda ERP_USE_DOCKER=1 bırakın; çıplak Node kurulumunda 0 yapın.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+CRON_TZ=Europe/Istanbul
+ERP_DIR=/opt/ktb-erp
+ERP_USE_DOCKER=1
+
+# Her gün 03:30 — tam yedek + offsite (BACKUP_OFFSITE=s3|rsync|command)
+30 3 * * *   erp  $ERP_DIR/scripts/ops/backup-cron.sh backup
+
+# Gün içi ek yedek (RPO ~6 saat; isteğe bağlı) — 09:30, 15:30, 21:30
+# 30 9,15,21 * * *  erp  $ERP_DIR/scripts/ops/backup-cron.sh backup
+
+# Her pazartesi 05:00 — offsite'taki en yeni yedekle geri yükleme tatbikatı
+0 5 * * 1    erp  $ERP_DIR/scripts/ops/backup-cron.sh drill-offsite
+
+# Eski logları temizle (90 gün)
+0 6 * * *    erp  find /var/log/ktb-erp -name '*.log' -mtime +90 -delete
