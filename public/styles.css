@@ -7651,3 +7651,21 @@ html:not([data-view="cards"]) .sidebar-brand .ktb-logo-img,
 html:not([data-view="cards"]) .sidebar-brand img {
   max-height: 1.6rem !important;
 }
+/* Filtre yan menüdeyken: banner(0) | aksiyon | liste. Kısa ekranda (≤560px) eski kural banner'ı gizleyip
+   satır sayısını azaltıyordu; banner artık yerinde kaldığı için satırlar burada sabitlenir. */
+html #viewScreen.screen-view.filter-docked {
+  grid-template-rows: auto auto minmax(8rem, 1fr) !important;
+}
+html .screen-view > .action-bar { align-self: start; }
+/* Kısa ekran: filtre kutusu en çok ekranın ~1/3'ü kadar, kendi içinde kayar; liste üstüne binmez */
+@media (max-height: 560px) {
+  html .screen-view > .filter-pane-home { min-height: 0 !important; }
+  html .screen-view .filter-pane {
+    min-height: 0 !important;
+    max-height: max(7rem, 32vh) !important;
+    overflow: auto !important;
+  }
+  html #viewScreen.screen-view:not(.filter-docked) {
+    grid-template-rows: auto auto max-content minmax(8rem, 1fr) !important;
+  }
+}
