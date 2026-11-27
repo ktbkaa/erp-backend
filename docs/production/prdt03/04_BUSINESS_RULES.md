@@ -39,10 +39,9 @@ Mevcut KTB kurallarında onay anında yok; **eklenmez**:
 
 ## Onay başarısı
 
-- `status='Acik'`, `is_open='Acik'`, `is_approved=true`
-- `approved_at=now()`, `approved_by_user_code` (istek kullanıcısı)
-- Transaction içinde tek UPDATE
-- Audit: kolonlar yeterli; ayrı history tablosu bu dalda zorunlu değil
+- `URETIM_EMRI` için aktif onay kuralı yoksa: `status='Acik'`, `is_open='Acik'`, `is_approved=true`; onay izi `approval_audit_log` (`DOGRUDAN_ONAY`, istek kullanıcısı)
+- Aktif kural varsa: emir `OnayBekliyor` + onay kaydı; son adım onaylanınca aynı değerler genel onay kapısınca yazılır
+- Transaction içinde
 
 ## Toplu onay politikası
 

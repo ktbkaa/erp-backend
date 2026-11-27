@@ -6,7 +6,7 @@
 |---|---------|----------|
 | N1 | Onay adayı listeleme | Taslak/OnayBekliyor görünür |
 | N2 | İncele detay | BOM/rota/ops/malzeme gerçek emirden |
-| N3 | Geçerli emri onayla | Acik + is_approved + approved_at/by |
+| N3 | Geçerli emri onayla | Acik + is_approved + `DOGRUDAN_ONAY` onay izi |
 | N4 | Onay sonrası liste | Aday listesinden düşer; uretim-emirleri’de Onaylı |
 | N5 | Onay sonrası başlat | is_started; OnayBekliyor ile başlatılamaz |
 | N6 | Toplu onay (hepsi uygun) | hepsi başarılı |

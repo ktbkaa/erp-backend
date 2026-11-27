@@ -154,8 +154,7 @@ async function runCycle({
     order_no: onay.order_no,
     status: onay.status,
     is_approved: onay.is_approved,
-    approved_at: onay.approved_at,
-    approved_by: onay.approved_by_user_code,
+    onay_bekliyor: Boolean(onay.onay_bekliyor),
   });
 
   // 4) Başlat

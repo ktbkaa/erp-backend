@@ -3,6 +3,10 @@ const router = express.Router();
 const pool = require('../db');
 const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
+const {
+    submitForApproval, findOpenRecord, assertManualStatusChange, logAudit,
+} = require('../src/services/onayKapisiService');
+const { getUser } = require('../src/utils/yetki');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { createStockMovement } = require('../src/services/stokHareketService');
 const { allocateConsumptionLots } = require('../src/services/partiService');
@@ -773,6 +777,10 @@ function userCodeFromReq(req) {
         || null;
 }
 
+/**
+ * Hazırlık kontrolünden geçen emri onaylar. URETIM_EMRI için aktif onay kuralı varsa emir
+ * onaya gönderilir (OnayBekliyor + onay kaydı); yoksa eskisi gibi doğrudan açılır.
+ */
 async function approveProductionOrder(emirId, { companyId = null, userCode = null } = {}) {
     const emir = await getQcOrder(emirId);
     if (!emir) {
@@ -793,29 +801,61 @@ async function approveProductionOrder(emirId, { companyId = null, userCode = nul
         err.warnings = check.warnings;
         throw err;
     }
-    const upd = await pool.query(
-        `
-        UPDATE production_orders
-        SET status = 'Acik',
-            is_approved = TRUE,
-            is_open = 'Acik',
-            approved_at = CURRENT_TIMESTAMP,
-            approved_by_user_code = COALESCE($2, approved_by_user_code)
-        WHERE id = $1
-          AND status IN ('Taslak', 'OnayBekliyor')
-          AND COALESCE(is_approved, FALSE) = FALSE
-          AND COALESCE(is_deleted, FALSE) = FALSE
-        RETURNING id
-        `,
-        [emirId, userCode || null]
-    );
-    if (!upd.rows[0]) {
-        const err = new Error('Emir onaylanamadı (eşzamanlı güncelleme veya durum değişti).');
-        err.status = 409;
-        throw err;
-    }
-    const refreshed = await getQcOrder(upd.rows[0].id);
-    return { emir: refreshed, warnings: check.warnings };
+    const user = userCode ? await getUser(pool, userCode) : null;
+    const sonuc = await withTransaction(pool, async (client) => {
+        const kapi = await submitForApproval(client, {
+            documentTypeCode: 'URETIM_EMRI',
+            documentId: emirId,
+            user,
+            fromStatuses: ['Taslak', 'OnayBekliyor'],
+        });
+        if (kapi.existing) {
+            const err = new Error(`Emir onay sürecinde (${kapi.record?.approval_no || 'açık kayıt'}); Onay Bekleyenler ekranından onaylanır.`);
+            err.status = 409;
+            err.code = 'ONAY_BEKLIYOR';
+            throw err;
+        }
+        if (kapi.gated) return { onayKayit: kapi.record };
+        const upd = await client.query(
+            `
+            UPDATE production_orders
+            SET status = 'Acik',
+                is_approved = TRUE,
+                is_open = 'Acik'
+            WHERE id = $1
+              AND status IN ('Taslak', 'OnayBekliyor')
+              AND COALESCE(is_approved, FALSE) = FALSE
+              AND COALESCE(is_deleted, FALSE) = FALSE
+            RETURNING id
+            `,
+            [emirId]
+        );
+        if (!upd.rows[0]) {
+            const err = new Error('Emir onaylanamadı (eşzamanlı güncelleme veya durum değişti).');
+            err.status = 409;
+            throw err;
+        }
+        await logAudit(client, {
+            company_id: emir.company_id,
+            document_type_code: 'URETIM_EMRI',
+            screen_id: 'uretim-emirleri',
+            document_id: emirId,
+            document_no: emir.order_no,
+            action: 'DOGRUDAN_ONAY',
+            from_status: emir.status,
+            to_status: 'Acik',
+            user,
+            user_code: userCode,
+        });
+        return { onayKayit: null };
+    });
+    const refreshed = await getQcOrder(emirId);
+    return {
+        emir: refreshed,
+        warnings: check.warnings,
+        onayKayit: sonuc.onayKayit,
+        onayBekliyor: Boolean(sonuc.onayKayit),
+    };
 }
 
 /** PRDT03 — onay adayı listesi */
@@ -867,8 +907,16 @@ router.get('/onay-adaylari', async (req, res) => {
             const emir = await getQcOrder(r.id);
             if (!emir) continue;
             const check = evaluateApprovalReadiness(emir);
+            const acikKayitId = await findOpenRecord(pool, 'URETIM_EMRI', emir.id);
+            let onayNo = null;
+            if (acikKayitId) {
+                onayNo = (await pool.query('SELECT approval_no FROM approval_records WHERE id=$1', [acikKayitId])).rows[0]?.approval_no || null;
+                check.blockers.push(`Onay sürecinde (${onayNo || acikKayitId}) — Onay Bekleyenler.`);
+                check.ready = false;
+            }
             result.push({
                 ...emir,
+                onay_no: onayNo,
                 ready: check.ready,
                 blockers: check.blockers,
                 warnings: check.warnings,
@@ -897,13 +945,15 @@ router.post('/toplu-onay', async (req, res) => {
                 basarili.push({
                     id,
                     order_no: r.emir.order_no,
+                    status: r.emir.status,
+                    onay_bekliyor: r.onayBekliyor,
                     warnings: r.warnings,
                 });
             } catch (err) {
                 hatali.push({ id, hata: err.message, blockers: err.blockers || null });
             }
         }
-        res.status(basarili.length ? 200 : 400).json({
+        res.json({
             basarili,
             hatali,
             basarili_sayisi: basarili.length,
@@ -1840,6 +1890,7 @@ router.put('/:id', async (req, res) => {
                 throw err;
             }
             const m = mevcut.rows[0];
+            await assertManualStatusChange(client, 'URETIM_EMRI', m, b.status);
             const yeniAgac = b.product_bom_id != null ? Number(b.product_bom_id) : Number(m.product_bom_id);
             const yeniRota = b.route_id != null ? Number(b.route_id) : Number(m.route_id);
             const yeniStok = b.item_id != null ? Number(b.item_id) : Number(m.item_id);
@@ -2088,7 +2139,11 @@ router.post('/:id/onayla', async (req, res) => {
             companyId: companyIdFromReq(req),
             userCode: userCodeFromReq(req),
         });
-        res.json({ ...r.emir, _warnings: r.warnings });
+        res.json({
+            ...r.emir,
+            _warnings: r.warnings,
+            ...(r.onayBekliyor ? { onay_bekliyor: true, onay_kayit: r.onayKayit } : {}),
+        });
     } catch (err) {
         if (err.code === '23503') {
             return res.status(409).json({
@@ -2098,6 +2153,7 @@ router.post('/:id/onayla', async (req, res) => {
         }
         res.status(err.status || 400).json({
             hata: err.message,
+            kod: typeof err.code === 'string' && err.code.startsWith('ONAY_') ? err.code : undefined,
             blockers: err.blockers || undefined,
             warnings: err.warnings || undefined,
         });

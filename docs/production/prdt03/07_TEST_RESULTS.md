@@ -11,7 +11,7 @@ Test kayıtları `description LIKE 'PRDT03%'` ile oluşturuldu; mevcut demo üre
 |---|---------|-------|-----|
 | N1 | `GET /onay-adaylari` | PASS | Taslak/OnayBekliyor + `ready`/`blockers` |
 | N2 | Detay `GET /:id` | PASS | ops/malzeme gerçek emirden |
-| N3 | `POST /:id/onayla` (hazır) | PASS | `status=Acik`, `is_approved=true`, `approved_at`, `approved_by_user_code=owner` (JWT) |
+| N3 | `POST /:id/onayla` (hazır) — *migration 100 dönemindeki çıktı; kolonlar artık genel onay izinde* | PASS | `status=Acik`, `is_approved=true`, `approved_at`, `approved_by_user_code=owner` (JWT) |
 | N4 | Onay sonrası aday listesi | PASS | onaylanan düşer |
 | N5 | `POST /:id/baslat` OnayBekliyor | PASS | 400 |
 | N5b | `baslat` onaylı Acik | PASS | `Uretimde` + `is_started` |

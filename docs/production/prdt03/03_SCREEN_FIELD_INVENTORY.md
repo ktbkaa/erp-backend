@@ -36,7 +36,7 @@ Kaynak önceliği: (1) KTB mevcut `production_orders` modeli, (2) video metadata
 | Onayla (tek) | Durum güncelle | POST `/onayla` | Yetki+kurallar | mevcut + sıkılaştırma |
 | Toplu onay | Çoklu | POST `/toplu-onay` | Yetki | yeni |
 | Detay: BOM / rota / ops / malzemeler | İnceleme | emir ilişkileri | — | mevcut getProductionOrder |
-| Onaylayan / onay zamanı | Audit | `approved_by_user_code`,`approved_at` | Onayda yazılır | **yeni kolonlar** |
+| Onaylayan / onay zamanı | Audit | `approval_audit_log` (`/onay-izi`) | Onayda yazılır | genel onay izi |
 
 ## Videoda doğrulanamadığı için eklenmeyenler
 

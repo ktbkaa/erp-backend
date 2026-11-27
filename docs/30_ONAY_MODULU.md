@@ -148,6 +148,7 @@ Onay hiçbir belgeye sabit kodlanmaz. Varsayılan **kapalıdır**: belge türün
 |-----|-------|---------------|
 | `SATINALMA_SIPARIS` | Satınalma siparişi | Taslak → Onayla → `OnayBekliyor` → onay → `Onayli`. Onay beklerken mal kabul ve elle durum değişikliği engelli. |
 | `DEPO_TRANSFER` | Depo transfer emri | Taslak → Onayla → `OnayBekliyor` (stok hareketi yok) → onay → `Onayli` → tekrar Onayla → stok hareketi + `Tamamlandi`. |
+| `URETIM_EMRI` | Üretim (iş) emri | Onayla / Kolay İş Emri Onayı (hazırlık kontrolü sonrası) → `OnayBekliyor` → onay → `Acik` (`is_approved`). Kural yokken doğrudan açılır, iz `DOGRUDAN_ONAY`. Migration `101`. |
 
 **Yeni belge türü eklemek:** `approval_document_types`'a satır (migration) + belgenin aktifleştirme ucunda `submitForApproval` çağrısı + gerekiyorsa aşağı akış ucunda `assertNotPending`. Belge tablosunun durum kısıtı onay bekleyen değeri kabul etmelidir.
 

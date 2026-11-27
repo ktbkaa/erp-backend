@@ -18,7 +18,7 @@
 - Form varsayılan olarak yeni tarayıcı sekmesinde açılır (`openFormInNewBrowserTab`); liste sekmesinde in-place açılmaz (mevcut kabuk davranışı).
 - Toplu onay onay diyaloğu `window.confirm` kullanır; sonuç bildirimi `toast` / Bilgi modal’ı.
 - Detayda malzeme grid’i ayrı sekme olarak eklenmedi; operasyon satırları `detailKey=operasyonlar` ile gelir. Malzeme için `GET /uretim-emirleri/:id` tam kaydı kullanılır (Üretim Emirleri ekranı).
-- `approved_by_user_code` JWT veya `X-Kullanici-Kodu` olmadan boş kalır.
+- Onay izindeki kullanıcı JWT veya `X-Kullanici-Kodu` olmadan boş kalır.
 
 ## Yetki
 
