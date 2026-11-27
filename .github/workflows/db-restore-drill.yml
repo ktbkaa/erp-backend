@@ -1,0 +1,93 @@
+# Haftalık geri yükleme tatbikatı: offsite'taki EN YENİ yedeği indirir, şifresini çözer,
+# runner içindeki boş Postgres'e yükler ve manifest ile birebir karşılaştırır
+# (tablo/satır sayıları, schema_migrations, geçersiz index). Canlı DB'ye dokunmaz.
+#
+# Gerekli secret'lar (Environment: production): BACKUP_S3_BUCKET, BACKUP_S3_ACCESS_KEY_ID,
+#   BACKUP_S3_SECRET_ACCESS_KEY, BACKUP_ENCRYPTION_PASSPHRASE
+# Opsiyonel: BACKUP_S3_ENDPOINT, BACKUP_S3_REGION, BACKUP_NOTIFY_WEBHOOK_URL
+# Postgres servis sürümü canlıyla aynı major olmalı (aşağıda 16).
+name: DB geri yükleme tatbikatı
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # her pazartesi 03:00 UTC = 06:00 Europe/Istanbul
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Kaynak (s3:latest veya s3:<anahtar>)"
+        default: s3:latest
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: production
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: drill_host
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/drill_host
+      RESTORE_DRILL_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      RESTORE_DRILL_MAX_BACKUP_AGE_HOURS: "30"
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      BACKUP_S3_PREFIX: prod/
+      BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+      BACKUP_S3_REGION: ${{ secrets.BACKUP_S3_REGION }}
+      BACKUP_S3_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+      BACKUP_NOTIFY_WEBHOOK_URL: ${{ secrets.BACKUP_NOTIFY_WEBHOOK_URL }}
+      BACKUP_DIR: /tmp/ktb-erp-backups
+    steps:
+      - name: Yapılandırma kontrolü
+        id: cfg
+        run: |
+          missing=""
+          for v in BACKUP_S3_BUCKET BACKUP_S3_ACCESS_KEY_ID BACKUP_S3_SECRET_ACCESS_KEY BACKUP_ENCRYPTION_PASSPHRASE; do
+            [ -z "${!v}" ] && missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning::Tatbikat yapılandırılmamış, atlandı. Eksik secret:$missing"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.skip != 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.skip != 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm ci
+        if: steps.cfg.outputs.skip != 'true'
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Tatbikat
+        if: steps.cfg.outputs.skip != 'true'
+        run: node scripts/db-restore-drill.js --source "${{ github.event.inputs.source || 's3:latest' }}" --with-migrate
+
+      - name: Rapor
+        if: always() && steps.cfg.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: restore-drill-report
+          path: /tmp/ktb-erp-backups/drill-reports/
+          if-no-files-found: ignore
+          retention-days: 90
