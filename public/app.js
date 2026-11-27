@@ -12172,12 +12172,12 @@ async function openConvertDialog(act, rec, kind) {
       <label>Depo
         <select id="cvtDepo">${depoOpts || '<option value="">Depo yok</option>'}</select>
       </label>
-      <label>Araç plaka <input id="cvtPlaka" value="${rec.vehicle_plate || ''}" /></label>
-      <label>Şoför adı <input id="cvtSoforAdi" value="${rec.driver_name || ''}" /></label>
-      <label>Şoför soyadı <input id="cvtSoforSoyadi" value="${rec.driver_last_name || ''}" /></label>
-      <label>Şoför TCKN <input id="cvtSoforTckn" value="${rec.driver_national_id || ''}" /></label>
-      <label>Taşıyıcı ünvan <input id="cvtTasiyici" value="${rec.carrier_title || ''}" /></label>
-      <label>Taşıyıcı VKN <input id="cvtTasiyiciVkn" value="${rec.carrier_tax_id || ''}" /></label>`;
+      <label>Araç plaka <input id="cvtPlaka" value="${escAttr(rec.vehicle_plate || '')}" /></label>
+      <label>Şoför adı <input id="cvtSoforAdi" value="${escAttr(rec.driver_name || '')}" /></label>
+      <label>Şoför soyadı <input id="cvtSoforSoyadi" value="${escAttr(rec.driver_last_name || '')}" /></label>
+      <label>Şoför TCKN <input id="cvtSoforTckn" value="${escAttr(rec.driver_national_id || '')}" /></label>
+      <label>Taşıyıcı ünvan <input id="cvtTasiyici" value="${escAttr(rec.carrier_title || '')}" /></label>
+      <label>Taşıyıcı VKN <input id="cvtTasiyiciVkn" value="${escAttr(rec.carrier_tax_id || '')}" /></label>`;
   } else if (dialog === 'onay-depo') {
     body.innerHTML = `
       <p>İrsaliye onayı stok çıkışı yapar. Depo bakiyesini doğrulayın.</p>
@@ -14252,9 +14252,9 @@ function renderCompanyPicker() {
   menu.innerHTML = list.map((f) => `
     <li role="option">
       <button type="button" class="firma-picker-item ${Number(f.id) === Number(state.activeFirmaId) ? 'active' : ''}"
-        data-firma-id="${f.id}">
-        <span class="firma-kod">${f.company_code || ''}</span>
-        <span class="firma-adi">${f.company_name || ''}</span>
+        data-firma-id="${escAttr(f.id)}">
+        <span class="firma-kod">${escapeHtml(f.company_code || '')}</span>
+        <span class="firma-adi">${escapeHtml(f.company_name || '')}</span>
       </button>
     </li>`).join('');
 }
@@ -17373,7 +17373,14 @@ async function ensureLookups(screen) {
 }
 
 function escAttr(v) {
-  return String(v ?? '').replace(/"/g, '&quot;');
+  return escapeAttr(v);
+}
+
+/** Rapor pencereleri: soft modda kimlik başlığı; varsayılan kullanıcıya düşülmez. */
+function reportUserHeader() {
+  const kod = state.user?.user_code || state.auth?.user_code
+    || (typeof localStorage !== 'undefined' && localStorage.getItem('ktb_kullanici_kodu')) || '';
+  return kod ? { 'X-Kullanici-Kodu': kod } : {};
 }
 
 /** Noktalı halka — tıklanınca ekran benzeri liste/CRUD popup; ↓ tuşu native listeyi açar */
@@ -20269,11 +20276,11 @@ async function bindMrpKonsolEvents() {
 async function openMrpRaporWindow() {
   const runId = state.mrpCalismaId || state.formRecord?.id;
   if (!runId) throw new Error('Önce MRP çalıştırın.');
-  const token = state.auth?.access_token || state.accessToken || localStorage.getItem('erp_access_token');
+  const token = state.auth?.access_token || state.accessToken || localStorage.getItem('ktb_access_token');
   const res = await fetch(`/mrp/calismalar/${runId}/rapor?format=html`, {
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'X-Kullanici-Kodu': state.user?.user_code || state.auth?.user_code || 'owner',
+      ...reportUserHeader(),
       ...(getActiveCompanyId() ? { 'X-Firma-Id': String(getActiveCompanyId()) } : {}),
     },
   });
@@ -27948,11 +27955,11 @@ function bindEvents() {
     const params = new URLSearchParams(qsStart);
     params.set('format', 'html');
     const url = `${base}?${params.toString()}`;
-    const token = state.auth?.access_token || state.accessToken || localStorage.getItem('erp_access_token');
+    const token = state.auth?.access_token || state.accessToken || localStorage.getItem('ktb_access_token');
     const res = await fetch(url, {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        'X-Kullanici-Kodu': state.user?.user_code || state.auth?.user_code || 'owner',
+        ...reportUserHeader(),
         ...(getActiveCompanyId() ? { 'X-Firma-Id': String(getActiveCompanyId()) } : {}),
       },
     });
@@ -29503,8 +29510,27 @@ async function openSqlConsole() {
     const meta = await api('/sql-console/meta');
     sqlConsoleState.meta = meta;
     sqlFillConnectionForm(meta.connection, meta.profiles);
+    sqlApplyServerFlags(meta);
   } catch (err) {
     toast(err.message || 'SQL konsol yüklenemedi');
+  }
+}
+
+/** Sunucu bayrakları: harici bağlantı kapalıysa Test/Bağlan gizlenir; salt-okunur mod başlıkta belirtilir. */
+function sqlApplyServerFlags(meta) {
+  const external = meta?.external_connections !== false;
+  ['#sqlBtnTest', '#sqlBtnUse'].forEach((sel) => {
+    const el = $(sel);
+    if (el) {
+      el.hidden = !external;
+      el.disabled = !external;
+    }
+  });
+  const dbBtn = $('#sqlBtnDb');
+  if (dbBtn) {
+    dbBtn.title = meta?.read_only
+      ? 'Veritabanı bağlantısı · salt-okunur mod (yalnız SELECT)'
+      : 'Veritabanı bağlantısı';
   }
 }
 

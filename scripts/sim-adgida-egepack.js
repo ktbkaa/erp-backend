@@ -8,6 +8,7 @@
  */
 require('dotenv').config();
 const fs = require('fs');
+const { demoPassword } = require('./lib/demoCredentials');
 const path = require('path');
 const { execSync } = require('child_process');
 const pool = require('../db');
@@ -87,7 +88,7 @@ async function ensureLogin() {
     const r = await fetch(`${BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'owner', password: 'Demo123!' }),
+      body: JSON.stringify({ username: 'owner', password: demoPassword() }),
     });
     const j = await r.json();
     if (j.access_token) {
@@ -186,7 +187,7 @@ async function upsertWc(client, plantId, code, name) {
 
 async function upsertUser(client, { userCode, first, last, role, title, companyIds }) {
   let u = (await client.query(`SELECT * FROM users WHERE user_code=$1`, [userCode])).rows[0];
-  const hash = hashParola('Demo123!');
+  const hash = hashParola(demoPassword());
   if (!u) {
     u = (await client.query(
       `INSERT INTO users (

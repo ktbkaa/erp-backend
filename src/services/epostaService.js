@@ -1,4 +1,4 @@
-const { parametreAl } = require('../utils/yetki');
+const { getSecretSetting, getSetting } = require('../utils/secretSettings');
 
 /**
  * E-posta kuyruğu. SMTP yapılandırılmadıysa kayıt Bekliyor kalır veya
@@ -24,12 +24,14 @@ async function epostaKuyrugaAl(client, {
 }
 
 async function smtpAyarlari(clientOrPool) {
-    const host = await parametreAl(clientOrPool, 'SMTP_HOST', '');
-    const port = Number(await parametreAl(clientOrPool, 'SMTP_PORT', '587')) || 587;
-    const user = await parametreAl(clientOrPool, 'SMTP_USER', '');
-    const pass = await parametreAl(clientOrPool, 'SMTP_PASS', '');
-    const from = await parametreAl(clientOrPool, 'SMTP_FROM', user || 'noreply@localhost');
-    const secure = String(await parametreAl(clientOrPool, 'SMTP_SECURE', 'Hayir')).toLowerCase() === 'evet';
+    const host = await getSetting(clientOrPool, 'SMTP_HOST', '');
+    const port = Number(await getSetting(clientOrPool, 'SMTP_PORT', '587')) || 587;
+    const user = await getSetting(clientOrPool, 'SMTP_USER', '');
+    const pass = await getSecretSetting(clientOrPool, 'SMTP_PASS', '');
+    const from = await getSetting(clientOrPool, 'SMTP_FROM', user || 'noreply@localhost');
+    const secure = ['evet', 'true', '1'].includes(
+        String(await getSetting(clientOrPool, 'SMTP_SECURE', 'Hayir')).toLowerCase()
+    );
     return { host, port, user, pass, from, secure };
 }
 

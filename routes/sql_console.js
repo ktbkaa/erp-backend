@@ -1,30 +1,55 @@
 /**
  * SQL Sorgu ekranı API.
- * - Bağlantı: varsayılan uygulama pool’u veya kullanıcı oturum override’ı
- * - Yetki: user_sql_permissions (select/insert/update/delete)
+ * - Bayrak: ENABLE_SQL_CONSOLE (canlıda varsayılan kapalı → 404)
+ * - Erişim: süper admin (securityConfig.isSuperAdmin); geliştirmede ayrıca user_sql_permissions
+ * - Canlıda salt-okunur; okuma sorguları her ortamda READ ONLY transaction içinde
+ * - Harici DB bağlantısı (/connection/test|use) canlıda kapalı (SSRF)
  * - DML: txMode=commit|rollback zorunlu (BEGIN…COMMIT/ROLLBACK sarmalayıcı)
  */
 const express = require('express');
 const { Pool } = require('pg');
 const router = express.Router();
 const defaultPool = require('../db');
+const { validateBody, schemas } = require('../src/utils/validate');
+const {
+  isProduction,
+  isSqlConsoleEnabled,
+  isSqlConsoleReadOnly,
+  isSqlConsoleExternalDbAllowed,
+  isSuperAdmin,
+} = require('../src/utils/securityConfig');
 
 /** userKey → { pool, meta, createdAt } */
 const sessionPools = new Map();
 const SESSION_TTL_MS = 60 * 60 * 1000;
+const STATEMENT_TIMEOUT_MS = Number(process.env.SQL_CONSOLE_STATEMENT_TIMEOUT_MS || 15000);
 
 function userKey(req) {
-  return String(req.user?.id || req.user?.user_code || req.get('x-kullanici-kodu') || 'anon');
+  return String(req.user?.id || req.user?.user_code || 'anon');
 }
 
-function isAdmin(req) {
-  const role = String(req.user?.role || '').toUpperCase();
-  const code = String(req.user?.user_code || '').toUpperCase();
-  const mods = req.user?.module_permissions;
-  if (code === 'ADMIN' || role === 'YONETICI' || role === 'ADMIN' || role === 'YÖNETİCİ') return true;
-  if (Array.isArray(mods) && mods.includes('*')) return true;
-  return false;
+const isAdmin = (req) => isSuperAdmin(req);
+
+function primaryPool() {
+  return defaultPool._primary || defaultPool;
 }
+
+router.use((req, res, next) => {
+  if (!isSqlConsoleEnabled()) {
+    return res.status(404).json({
+      hata: 'SQL konsolu bu ortamda kapalı (ENABLE_SQL_CONSOLE).',
+      kod: 'ERR-SQL-DISABLED',
+    });
+  }
+  if (!req.user) {
+    return res.status(401).json({ hata: 'SQL konsolu için giriş gerekli.', kod: 'ERR-SQL-AUTH' });
+  }
+  // Canlıda yalnız süper admin; geliştirmede user_sql_permissions ile sınırlı erişim sürer
+  if (isProduction() && !isAdmin(req)) {
+    return res.status(403).json({ hata: 'SQL konsolu yalnız süper admin içindir.', kod: 'ERR-SQL-FORBIDDEN' });
+  }
+  next();
+});
 
 function defaultMeta() {
   if (process.env.DATABASE_URL) {
@@ -50,18 +75,22 @@ function defaultMeta() {
   };
 }
 
-function getActivePool(req) {
-  const key = userKey(req);
+function dropSession(key) {
   const entry = sessionPools.get(key);
-  if (entry && Date.now() - entry.createdAt < SESSION_TTL_MS) {
-    return { pool: entry.pool, meta: entry.meta, override: true };
-  }
   if (entry) {
     entry.pool.end().catch(() => {});
     sessionPools.delete(key);
   }
-  const primary = defaultPool._primary || defaultPool;
-  return { pool: primary, meta: defaultMeta(), override: false };
+}
+
+function getActivePool(req) {
+  const key = userKey(req);
+  const entry = sessionPools.get(key);
+  if (entry && isSqlConsoleExternalDbAllowed() && Date.now() - entry.createdAt < SESSION_TTL_MS) {
+    return { pool: entry.pool, meta: entry.meta, override: true };
+  }
+  if (entry) dropSession(key);
+  return { pool: primaryPool(), meta: defaultMeta(), override: false };
 }
 
 async function loadSqlPerms(pool, kisiId) {
@@ -85,6 +114,20 @@ async function loadSqlPerms(pool, kisiId) {
   return { can_select: true, can_insert: false, can_update: false, can_delete: false };
 }
 
+async function effectivePerms(req) {
+  const perms = await loadSqlPerms(primaryPool(), req.user?.id);
+  if (isAdmin(req)) {
+    perms.can_select = perms.can_insert = perms.can_update = perms.can_delete = true;
+  }
+  if (isSqlConsoleReadOnly()) {
+    perms.can_insert = perms.can_update = perms.can_delete = false;
+  }
+  return perms;
+}
+
+/** Sunucu dosyası / süreç / oturum ayarına dokunan fonksiyonlar her modda yasak. */
+const BLOCKED_FUNCTIONS = /\b(pg_read_file|pg_read_binary_file|pg_ls_\w+|pg_stat_file|pg_file_write|lo_import|lo_export|lo_get|lo_put|lo_from_bytea|pg_terminate_backend|pg_cancel_backend|pg_reload_conf|pg_rotate_logfile|pg_promote|dblink\w*|pg_sleep\w*|set_config|pg_advisory\w*|query_to_xml\w*|pg_logical_emit_message)\s*\(/i;
+
 /** Tek statement; tehlikeli DDL engeli */
 function analyzeSql(sql) {
   const raw = String(sql || '').trim();
@@ -105,6 +148,9 @@ function analyzeSql(sql) {
   if (blocked.test(head)) {
     return { error: `Bu ekranda «${verb || 'DDL'}» ifadelerine izin yok.` };
   }
+  if (BLOCKED_FUNCTIONS.test(raw)) {
+    return { error: 'Bu ekranda sunucu/oturum fonksiyonlarına izin yok.' };
+  }
 
   const writes = {
     INSERT: 'insert',
@@ -123,13 +169,7 @@ function analyzeSql(sql) {
 const metaHandler = async (req, res) => {
   try {
     const { pool, meta, override } = getActivePool(req);
-    const perms = await loadSqlPerms(defaultPool._primary || defaultPool, req.user?.id);
-    if (isAdmin(req)) {
-      perms.can_select = true;
-      perms.can_insert = true;
-      perms.can_update = true;
-      perms.can_delete = true;
-    }
+    const perms = await effectivePerms(req);
     const tables = await pool.query(`
       SELECT c.relname AS table_name,
              COALESCE(obj_description(c.oid), '') AS comment
@@ -146,15 +186,20 @@ const metaHandler = async (req, res) => {
       ORDER BY table_name, ordinal_position
     `).catch(() => ({ rows: [] }));
 
-    const profiles = await (defaultPool._primary || defaultPool).query(
-      `SELECT id, profile_name, host, port, database_name, username, is_default
-       FROM sql_connection_profiles ORDER BY is_default DESC, profile_name`
-    ).catch(() => ({ rows: [] }));
+    const externalAllowed = isSqlConsoleExternalDbAllowed() && isAdmin(req);
+    const profiles = externalAllowed
+      ? await primaryPool().query(
+        `SELECT id, profile_name, host, port, database_name, username, is_default
+         FROM sql_connection_profiles ORDER BY is_default DESC, profile_name`
+      ).catch(() => ({ rows: [] }))
+      : { rows: [] };
 
     res.json({
       connection: { ...meta, override, password_set: false },
       permissions: perms,
       is_admin: isAdmin(req),
+      read_only: isSqlConsoleReadOnly(),
+      external_connections: externalAllowed,
       tables: tables.rows,
       columns: cols.rows,
       profiles: profiles.rows,
@@ -173,20 +218,30 @@ const metaHandler = async (req, res) => {
 router.get('/', metaHandler);
 router.get('/meta', metaHandler);
 
-router.post('/connection/test', async (req, res) => {
+function guardExternalDb(req, res) {
+  if (!isSqlConsoleExternalDbAllowed()) {
+    res.status(403).json({
+      hata: 'Harici veritabanı bağlantısı bu ortamda kapalı.',
+      kod: 'ERR-SQL-EXTERNAL-DISABLED',
+    });
+    return false;
+  }
+  if (!isAdmin(req)) {
+    res.status(403).json({ hata: 'Bağlantı işlemleri için süper admin yetkisi gerekir.', kod: 'ERR-SQL-FORBIDDEN' });
+    return false;
+  }
+  return true;
+}
+
+router.post('/connection/test', validateBody(schemas.sqlConnection), async (req, res) => {
+  if (!guardExternalDb(req, res)) return;
   try {
-    if (!isAdmin(req) && !req.user) {
-      return res.status(403).json({ hata: 'Bağlantı testi için giriş gerekli.' });
-    }
-    const { host, port, database, user, password } = req.body || {};
-    if (!host || !database || !user) {
-      return res.status(400).json({ hata: 'host, database, user zorunlu.' });
-    }
+    const { host, port, database, user, password } = req.body;
     const probe = new Pool({
-      host: String(host),
+      host,
       port: Number(port || 5432),
-      database: String(database),
-      user: String(user),
+      database,
+      user,
       password: password == null ? '' : String(password),
       max: 1,
       connectionTimeoutMillis: 8000,
@@ -203,34 +258,28 @@ router.post('/connection/test', async (req, res) => {
   }
 });
 
-router.post('/connection/use', async (req, res) => {
+router.post('/connection/use', validateBody(schemas.sqlConnection), async (req, res) => {
+  if (!guardExternalDb(req, res)) return;
   try {
-    if (!isAdmin(req)) {
-      return res.status(403).json({ hata: 'Bağlantı değiştirmek için yönetici yetkisi gerekir.' });
-    }
-    const { host, port, database, user, password, label } = req.body || {};
-    if (!host || !database || !user) {
-      return res.status(400).json({ hata: 'host, database, user zorunlu.' });
-    }
+    const { host, port, database, user, password, label } = req.body;
     const pool = new Pool({
-      host: String(host),
+      host,
       port: Number(port || 5432),
-      database: String(database),
-      user: String(user),
+      database,
+      user,
       password: password == null ? '' : String(password),
       max: 5,
       idleTimeoutMillis: 30_000,
     });
     await pool.query('SELECT 1');
     const key = userKey(req);
-    const prev = sessionPools.get(key);
-    if (prev) prev.pool.end().catch(() => {});
+    dropSession(key);
     const meta = {
       source: 'session',
-      host: String(host),
+      host,
       port: Number(port || 5432),
-      database: String(database),
-      user: String(user),
+      database,
+      user,
       label: label || `${host}/${database}`,
     };
     sessionPools.set(key, { pool, meta, createdAt: Date.now() });
@@ -241,26 +290,25 @@ router.post('/connection/use', async (req, res) => {
 });
 
 router.post('/connection/reset', async (req, res) => {
-  const key = userKey(req);
-  const prev = sessionPools.get(key);
-  if (prev) {
-    prev.pool.end().catch(() => {});
-    sessionPools.delete(key);
-  }
+  dropSession(userKey(req));
   res.json({ ok: true, connection: defaultMeta() });
 });
 
-router.post('/execute', async (req, res) => {
+router.post('/execute', validateBody(schemas.sqlExecute), async (req, res) => {
   const started = Date.now();
   try {
-    const { sql, txMode } = req.body || {};
+    const { sql, txMode } = req.body;
     const analyzed = analyzeSql(sql);
     if (analyzed.error) return res.status(400).json({ hata: analyzed.error });
 
-    const perms = await loadSqlPerms(defaultPool._primary || defaultPool, req.user?.id);
-    if (isAdmin(req)) {
-      perms.can_select = perms.can_insert = perms.can_update = perms.can_delete = true;
+    if (analyzed.writeKind && isSqlConsoleReadOnly()) {
+      return res.status(403).json({
+        hata: 'SQL konsolu salt-okunur modda; yazma sorgularına izin yok.',
+        kod: 'ERR-SQL-READONLY',
+      });
     }
+
+    const perms = await effectivePerms(req);
 
     if (analyzed.isSelect && !perms.can_select) {
       return res.status(403).json({ hata: 'SELECT yetkiniz yok.' });
@@ -275,14 +323,12 @@ router.post('/execute', async (req, res) => {
       return res.status(403).json({ hata: 'DELETE yetkiniz yok.' });
     }
 
-    if (analyzed.writeKind) {
-      const mode = String(txMode || '').toLowerCase();
-      if (mode !== 'commit' && mode !== 'rollback') {
-        return res.status(400).json({
-          hata: 'Yazma sorguları için txMode zorunlu: "commit" veya "rollback".',
-          requires_transaction: true,
-        });
-      }
+    const mode = String(txMode || '').toLowerCase();
+    if (analyzed.writeKind && mode !== 'commit' && mode !== 'rollback') {
+      return res.status(400).json({
+        hata: 'Yazma sorguları için txMode zorunlu: "commit" veya "rollback".',
+        requires_transaction: true,
+      });
     }
 
     const { pool, meta } = getActivePool(req);
@@ -290,24 +336,23 @@ router.post('/execute', async (req, res) => {
     try {
       let result;
       let appliedTx = null;
-      if (analyzed.writeKind) {
-        const mode = String(txMode).toLowerCase();
-        await client.query('BEGIN');
-        try {
-          result = await client.query(analyzed.sql);
-          if (mode === 'commit') {
-            await client.query('COMMIT');
-            appliedTx = 'COMMIT';
-          } else {
-            await client.query('ROLLBACK');
-            appliedTx = 'ROLLBACK';
-          }
-        } catch (e) {
-          await client.query('ROLLBACK').catch(() => {});
-          throw e;
+      // Extended protocol: sunucu tek komuttan fazlasını reddeder (";" ile ikinci ifade enjeksiyonu kapanır)
+      const stmt = { text: analyzed.sql, queryMode: 'extended' };
+      // Okuma sınıfı (writable CTE, EXPLAIN ANALYZE, SELECT INTO) READ ONLY transaction ile korunur
+      await client.query(analyzed.writeKind ? 'BEGIN' : 'BEGIN READ ONLY');
+      try {
+        await client.query(`SET LOCAL statement_timeout = ${Math.max(1000, Math.floor(STATEMENT_TIMEOUT_MS))}`);
+        result = await client.query(stmt);
+        if (analyzed.writeKind && mode === 'commit') {
+          await client.query('COMMIT');
+          appliedTx = 'COMMIT';
+        } else {
+          await client.query('ROLLBACK');
+          appliedTx = analyzed.writeKind ? 'ROLLBACK' : null;
         }
-      } else {
-        result = await client.query(analyzed.sql);
+      } catch (e) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw e;
       }
 
       const rows = result.rows || [];
@@ -334,8 +379,7 @@ router.post('/execute', async (req, res) => {
 router.get('/permissions', async (req, res) => {
   try {
     if (!isAdmin(req)) return res.status(403).json({ hata: 'Yetkisiz.' });
-    const pool = defaultPool._primary || defaultPool;
-    const r = await pool.query(`
+    const r = await primaryPool().query(`
       SELECT u.id AS user_id, u.user_code, u.username, u.first_name, u.last_name, u.role,
              COALESCE(p.can_select, FALSE) AS can_select,
              COALESCE(p.can_insert, FALSE) AS can_insert,
@@ -364,8 +408,7 @@ router.put('/permissions/:kisiId', async (req, res) => {
     const kisiId = Number(req.params.kisiId);
     if (!kisiId) return res.status(400).json({ hata: 'kisiId gerekli.' });
     const b = req.body || {};
-    const pool = defaultPool._primary || defaultPool;
-    await pool.query(
+    await primaryPool().query(
       `INSERT INTO user_sql_permissions (user_id, can_select, can_insert, can_update, can_delete)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (user_id) DO UPDATE SET
@@ -394,3 +437,4 @@ router.put('/permissions/:kisiId', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.analyzeSql = analyzeSql;

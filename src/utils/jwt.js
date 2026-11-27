@@ -1,15 +1,20 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { isProduction, DEV_JWT_SECRET, WEAK_JWT_SECRETS } = require('./securityConfig');
 
 function jwtSecret() {
   const secret = process.env.JWT_SECRET || process.env.JWT_SECRET_FALLBACK;
-  if (secret) return secret;
-  const env = String(process.env.NODE_ENV || '').toLowerCase();
-  if (env === 'production' || env === 'prod') {
-    throw new Error('JWT_SECRET (veya JWT_SECRET_FALLBACK) production ortamında zorunlu.');
+  if (isProduction()) {
+    if (!secret) {
+      throw new Error('JWT_SECRET (veya JWT_SECRET_FALLBACK) production ortamında zorunlu.');
+    }
+    if (WEAK_JWT_SECRETS.has(secret)) {
+      throw new Error('JWT_SECRET production ortamında varsayılan/örnek değer olamaz.');
+    }
+    return secret;
   }
-  // Dev-only fallback — never used when NODE_ENV=production
-  return 'ktb-erp-dev-secret-change-me';
+  // NODE_ENV boş + PaaS algılanırsa isProduction() true döner; bu fallback yalnız yerel/test içindir
+  return secret || DEV_JWT_SECRET;
 }
 
 function signAccess(payload, ttlDk = 480) {
