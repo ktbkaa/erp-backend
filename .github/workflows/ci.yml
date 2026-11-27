@@ -64,7 +64,7 @@ jobs:
       - name: Uygulama açılışı + /health + /ready
         run: |
           mkdir -p test-results
-          PORT=3333 HOST=127.0.0.1 LOG_FORMAT=json node index.js > test-results/app.log 2>&1 &
+          PORT=3333 HOST=127.0.0.1 LOG_FORMAT=json LOG_LEVEL=info node index.js > test-results/app.log 2>&1 &
           APP_PID=$!
           for i in $(seq 1 30); do
             curl -fsS http://127.0.0.1:3333/ready > /dev/null && break
