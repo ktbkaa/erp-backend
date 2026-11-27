@@ -3145,6 +3145,7 @@ const MODULES = [
           { key: 'customer_order_no', label: 'Müş. sip. no' },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-siparis', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code', lead: true },
           { key: 'payment_term_code', label: 'Ödeme koşulu', lead: true },
+          { key: 'payment_method', label: 'Ödeme şekli', type: 'select', options: ['Nakit', 'Havale', 'Cek', 'KrediKarti', 'AcikHesap'], lead: true },
           { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', lead: true },
           { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name', lead: true },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'], lead: true },
@@ -21100,13 +21101,14 @@ function renderCompactMasterBar(screen, rec) {
     ? Number(screen.masterPrimaryMax)
     : MASTER_PRIMARY_MAX;
   const fields = screen.masterFields || [];
-  const { primary } = partitionMasterFields(fields, maxPrimary);
+  const { primary, extras } = partitionMasterFields(fields, maxPrimary);
+  const headFields = [...primary, ...extras];
   el.hidden = false;
   el.innerHTML = `
     <div class="erp-doc-header" aria-label="Belge üst bilgileri">
       <div class="erp-doc-header-label">Belge üst bilgileri</div>
       <div class="form-tab-fields form-tab-fields--master form-tab-fields--compact">
-        ${renderFieldGrid(primary, rec || {})}
+        ${renderFieldGrid(headFields, rec || {})}
       </div>
     </div>`;
 }
@@ -21894,6 +21896,15 @@ function renderZincirStrip(screen, rec) {
 }
 
 function renderForm(screen) {
+  try {
+    renderFormUnsafe(screen);
+  } catch (err) {
+    console.error('renderForm', err);
+    toast(err?.message ? `Form çizilemedi: ${err.message}` : 'Form çizilemedi.');
+  }
+}
+
+function renderFormUnsafe(screen) {
   // Segment radio name sayacı — her render’da sıfırla
   if (typeof fieldControl === 'function') fieldControl._segSeq = 0;
   const readonly = state.formMode === 'incele';
@@ -24627,8 +24638,13 @@ function bindCascadeLookups(_screen) {
       return;
     }
 
-    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && fieldKey === 'language_code')) {
-      if (!(el instanceof HTMLSelectElement)) return;
+    const isSegmentRadio = el instanceof HTMLInputElement
+      && el.type === 'radio'
+      && (el.hasAttribute('data-master') || el.hasAttribute('data-detail'));
+    if (isSegmentRadio && !el.checked) return;
+    if (!(el instanceof HTMLSelectElement) && !(el instanceof HTMLInputElement && fieldKey === 'language_code')
+      && !isSegmentRadio) {
+      return;
     }
     if (!el.hasAttribute('data-master') && !el.hasAttribute('data-detail')
         && !el.hasAttribute('data-flow-comp-field')) return;
@@ -24775,6 +24791,7 @@ function bindCascadeLookups(_screen) {
       const f = collectTabFields(scr).find((x) => x.key === masterKey)
         || (scr.masterFields || []).find((x) => x.key === masterKey);
       if (f?.fillFrom && el.value) {
+        state.formRecord = { ...state.formRecord, ...readTabbedPayload(scr) };
         await fillLinesFromSource(f.fillFrom, el.value);
         return;
       }
