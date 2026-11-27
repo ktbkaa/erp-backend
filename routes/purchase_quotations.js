@@ -1,10 +1,10 @@
 const express = require('express');
 const pool = require('../db');
-const { createBelgeRouter } = require('./_belgeCrud');
+const { createDocumentRouter } = require('./_belgeCrud');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
 
-const router = createBelgeRouter({
+const router = createDocumentRouter({
   table: 'purchase_quotations',
   lineTable: 'purchase_quotation_lines',
   fk: 'quotation_id',
@@ -14,7 +14,7 @@ const router = createBelgeRouter({
   allowedDurum: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'],
   requireCari: true,
   linePrice: true,
-  extraFields: ['istek_id', 'requisition_id', 'valid_date', 'status', 'company_id', 'plant_id', 'currency_code', 'exchange_rate'],
+  extraFields: ['rfq_id', 'requisition_id', 'valid_date', 'status', 'company_id', 'plant_id', 'currency_code', 'exchange_rate'],
 });
 
 /**
@@ -77,7 +77,7 @@ router.post('/:id/siparise-donustur', async (req, res, next) => {
       );
       if (!satirlar.rows.length) throw Object.assign(new Error('Teklif satırı yok.'), { status: 400 });
 
-      const no = await sonrakiBelgeNo(client, 'SATINALMA_SIPARIS');
+      const no = await nextDocumentNo(client, 'SATINALMA_SIPARIS');
       let toplam = 0;
       const sip = await client.query(
         `INSERT INTO purchase_orders

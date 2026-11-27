@@ -1,8 +1,8 @@
 'use strict';
 
-const { createTanimRouter } = require('../src/utils/tanimCrud');
+const { createDefinitionRouter } = require('../src/utils/tanimCrud');
 
-module.exports = createTanimRouter({
+module.exports = createDefinitionRouter({
   table: 'message_definitions',
   codeCol: 'message_code',
   nameCol: 'title',

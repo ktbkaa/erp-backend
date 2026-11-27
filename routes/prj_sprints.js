@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { runAutomation } = require('../src/services/prjAutomationService');
 
 router.get('/', async (req, res, next) => {
   try {
     const params = [];
     let where = 'WHERE s.is_active=TRUE';
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where += ` AND s.company_id=$${params.length}`;
@@ -86,7 +86,7 @@ router.post('/', async (req, res, next) => {
     const row = await withTransaction(pool, async (client) => {
       const p = await client.query(`SELECT company_id FROM projects WHERE id=$1`, [project_id]);
       if (!p.rows[0]) throw Object.assign(new Error('Proje bulunamadı.'), { status: 404 });
-      const code = req.body.sprint_code || (await sonrakiKod(client, 'PRJ_SPRINT'));
+      const code = req.body.sprint_code || (await nextSequenceCode(client, 'PRJ_SPRINT'));
       const ins = await client.query(
         `
         INSERT INTO prj_sprints (company_id, project_id, sprint_code, sprint_name, goal, start_date, end_date, capacity_hours)

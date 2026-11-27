@@ -1,6 +1,6 @@
-const { createTanimRouter } = require('../src/utils/tanimCrud');
+const { createDefinitionRouter } = require('../src/utils/tanimCrud');
 
-module.exports = createTanimRouter({
+module.exports = createDefinitionRouter({
   table: 'delivery_terms',
   codeCol: 'term_code',
   nameCol: 'term_name',

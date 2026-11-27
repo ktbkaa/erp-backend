@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
 
 router.get('/', async (req, res, next) => {
   try {
@@ -38,7 +38,7 @@ router.post('/', async (req, res, next) => {
   try {
     const { item_id, serial_no, lot_id, warehouse_id, status } = req.body || {};
     if (!item_id) return res.status(400).json({ hata: 'item_id zorunlu.' });
-    const no = serial_no || (await sonrakiBelgeNo(pool, 'SERI'));
+    const no = serial_no || (await nextDocumentNo(pool, 'SERI'));
     const r = await pool.query(
       `
       INSERT INTO item_serials (serial_no, item_id, lot_id, warehouse_id, status)
@@ -81,7 +81,7 @@ router.post('/toplu', async (req, res, next) => {
     const olusan = await withTransaction(pool, async (client) => {
       const rows = [];
       for (let i = 0; i < n; i++) {
-        const no = await sonrakiBelgeNo(client, 'SERI');
+        const no = await nextDocumentNo(client, 'SERI');
         const r = await client.query(
           `INSERT INTO item_serials (serial_no, item_id, lot_id, warehouse_id, status)
            VALUES ($1,$2,$3,$4,'Depoda') RETURNING *`,

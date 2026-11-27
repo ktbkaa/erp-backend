@@ -118,7 +118,7 @@ function patchPermissionColumnSql() {
     );
     // INSERT column list
     s = s.replace(
-      /(\(kisi_id,\s*screen_id,\s*erisim,\s*)yeni(\s*,\s*incele)/g,
+      /(\(user_id,\s*screen_id,\s*erisim,\s*)yeni(\s*,\s*incele)/g,
       '$1can_create$2'
     );
     // ON CONFLICT / UPDATE SET yeni=EXCLUDED.yeni

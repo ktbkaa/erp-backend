@@ -5,11 +5,11 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
 
-async function getir(id) {
+async function fetchById(id) {
   const t = await pool.query(
     `
     SELECT ti.*, c.partner_code, c.partner_name, sas.order_no
@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
   try {
     const params = [];
     const where = [];
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`ti.company_id = $${params.length}`);
@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
       ORDER BY ti.id DESC`;
     const liste = await pool.query(sql, params);
     const result = [];
-    for (const r of liste.rows) result.push(await getir(r.id));
+    for (const r of liste.rows) result.push(await fetchById(r.id));
     res.json(result);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -71,7 +71,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Tedarikçi irsaliyesi bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -88,10 +88,10 @@ router.post('/', async (req, res) => {
     if (!Array.isArray(satirlar) || !satirlar.length) {
       return res.status(400).json({ hata: 'satirlar zorunlu.' });
     }
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const id = await withTransaction(pool, async (client) => {
       let no = delivery_note_no;
-      if (!no) no = await sonrakiBelgeNo(client, 'TEDARIKCI_IRSALIYE');
+      if (!no) no = await nextDocumentNo(client, 'TEDARIKCI_IRSALIYE');
       const baslik = await client.query(
         `INSERT INTO vendor_delivery_notes
           (delivery_note_no, company_id, plant_id, partner_id, purchase_order_id, delivery_date, description, status)
@@ -113,7 +113,7 @@ router.post('/', async (req, res) => {
       }
       return docId;
     });
-    res.status(201).json(await getir(id));
+    res.status(201).json(await fetchById(id));
   } catch (err) {
     res.status(400).json({ hata: err.message });
   }

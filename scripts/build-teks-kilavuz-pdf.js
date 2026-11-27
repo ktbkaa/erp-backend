@@ -402,7 +402,7 @@ ${slide({
   lead: 'Net ihtiyaç > 0 satırlarda öneri: Satınalma veya Üretim emri. Yeterli stokta “Yeterli”.',
   shot: '33-o2-mrp-sonuc.png',
   bullets: [
-    ...ozet.mrp.oneriler.slice(0, 6).map((o) => `<strong>${o.stok}</strong> net ${Number(o.net).toFixed(1)} → öneri: <strong>${o.oneri}</strong>`),
+    ...ozet.mrp.oneriler.slice(0, 6).map((o) => `<strong>${o.stok}</strong> net ${Number(o.net).toFixed(1)} → öneri: <strong>${o.suggestion}</strong>`),
     'Seçilen satırlardan doğrudan «SA Talep» veya «Üretim Emri» üretilir — Örnek 1’deki elle açmanın otomatiği.',
   ],
   tip: 'Satış cümlesi: “Planlamacı Excel’e inmeden, ekrandan öneriyi belgeye çevirir.”',

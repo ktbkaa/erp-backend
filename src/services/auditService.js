@@ -1,10 +1,10 @@
 async function auditYaz(poolOrClient, {
   tablo, kayitId, action, kullaniciKodu = null,
-  eski = null, yeni = null, yol = null,
+  eski = null, yeni = null, request_path: yol = null,
 }) {
   try {
     await poolOrClient.query(
-      `INSERT INTO audit_logs (table_name, record_id, action, user_code, old_value, new_value, yol)
+      `INSERT INTO audit_logs (table_name, record_id, action, user_code, old_value, new_value, request_path)
        VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)`,
       [
         tablo,
@@ -37,7 +37,7 @@ function auditMiddleware(pool) {
             action: method,
             kullaniciKodu: kod,
             yeni: typeof body === 'object' ? { ok: true, ms: Date.now() - start } : null,
-            yol: `${method} ${req.originalUrl}`,
+            request_path: `${method} ${req.originalUrl}`,
           });
         });
       }

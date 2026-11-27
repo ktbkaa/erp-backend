@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { cariEkstre, cariBakiye, cariHareketEkle } = require('../src/services/cariHareketService');
+const { partnerStatement, partnerBalance, addPartnerLedgerEntry } = require('../src/services/cariHareketService');
 const { withTransaction } = require('../src/utils/withTransaction');
 
 router.get('/', async (req, res, next) => {
@@ -43,7 +43,7 @@ router.get('/', async (req, res, next) => {
       }
       return res.json(r.rows);
     }
-    const data = await cariEkstre(pool, cariId, { baslangic, bitis });
+    const data = await partnerStatement(pool, cariId, { baslangic, bitis });
     if (format === 'html' || format === 'pdf') {
       const cari = (await pool.query(
         `SELECT id, partner_code, partner_name FROM partners WHERE id=$1`,
@@ -109,7 +109,7 @@ ${ozet ? ` · Borç ${esc(ozet.debit)} / Alacak ${esc(ozet.credit)} / Bakiye ${e
 
 router.get('/bakiye/:cariId', async (req, res, next) => {
   try {
-    res.json(await cariBakiye(pool, Number(req.params.cariId)));
+    res.json(await partnerBalance(pool, Number(req.params.cariId)));
   } catch (err) {
     next(err);
   }
@@ -119,7 +119,7 @@ router.post('/', async (req, res, next) => {
   try {
     const body = req.body || {};
     const row = await withTransaction(pool, (client) =>
-      cariHareketEkle(client, {
+      addPartnerLedgerEntry(client, {
         cariId: body.partner_id,
         direction: body.direction,
         amount: body.amount,

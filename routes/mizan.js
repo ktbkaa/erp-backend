@@ -7,14 +7,14 @@ router.get('/', async (req, res) => {
     try {
         const { baslangic, bitis } = req.query;
         const params = [];
-        let tarihFiltre = '';
+        let dateFilter = '';
         if (baslangic) {
             params.push(baslangic);
-            tarihFiltre += ` AND b.document_date >= $${params.length}`;
+            dateFilter += ` AND b.document_date >= $${params.length}`;
         }
         if (bitis) {
             params.push(bitis);
-            tarihFiltre += ` AND b.document_date <= $${params.length}`;
+            dateFilter += ` AND b.document_date <= $${params.length}`;
         }
         const result = await pool.query(
             `
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
                    COALESCE(SUM(k.debit),0) - COALESCE(SUM(k.credit),0) AS bakiye
             FROM gl_accounts h
             LEFT JOIN journal_entry_lines k ON k.account_id = h.id
-            LEFT JOIN journal_entries b ON b.id = k.document_id AND b.status = 'Onayli' ${tarihFiltre}
+            LEFT JOIN journal_entries b ON b.id = k.document_id AND b.status = 'Onayli' ${dateFilter}
             WHERE h.is_active = TRUE AND h.account_type = 'Dogrudan'
             GROUP BY h.id, h.account_code, h.account_name, h.account_type
             ORDER BY h.account_code

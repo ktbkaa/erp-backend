@@ -157,7 +157,7 @@ function createPrjDefRouter(resourceKey) {
         [req.params.id]
       );
       if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
-      res.json({ silindi: true, id: Number(req.params.id) });
+      res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
       next(err);
     }

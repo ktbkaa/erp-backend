@@ -85,7 +85,7 @@ async function main() {
     await client.query('BEGIN');
     // kod serisi sayaçlarını sıfırla (onek korunur)
     if (await tableExists(client, 'kod_serileri')) {
-      await client.query(`UPDATE kod_serileri SET son_numara = 0`);
+      await client.query(`UPDATE kod_serileri SET last_number = 0`);
       log.kodSerileriReset = true;
     }
     for (const t of PURGE_TABLES) {

@@ -3,10 +3,10 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const {
-    sonrakiKod,
-    sonrakiPrefixedKod,
-    sonrakiStokHareketNo,
-    peekStokHareketNo,
+    nextSequenceCode,
+    nextPrefixedCode,
+    nextStockMovementNo,
+    peekStockMovementNo,
 } = require('../src/utils/kodUretici');
 
 router.get('/', async (req, res) => {
@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
         }
         const result = await pool.query(
             `
-            SELECT series_code AS id, series_code, onek, description, son_numara,
+            SELECT series_code AS id, series_code, prefix, description, last_number,
                    screen_code, screen_name, is_active, created_at
             FROM number_series
             ${where}
@@ -43,7 +43,7 @@ router.get('/stok-hareket/peek', async (req, res) => {
     try {
         const movementCode = String(req.query?.movement_code || '').trim().toUpperCase();
         if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
-        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        const kod = await withTransaction(pool, async (client) => peekStockMovementNo(client, movementCode));
         res.json({
             series_code: `STOK_HAREKET__${movementCode}`,
             movement_code: movementCode,
@@ -59,7 +59,7 @@ router.post('/stok-hareket/peek', async (req, res) => {
     try {
         const movementCode = String(req.body?.movement_code || req.query?.movement_code || '').trim().toUpperCase();
         if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
-        const kod = await withTransaction(pool, async (client) => peekStokHareketNo(client, movementCode));
+        const kod = await withTransaction(pool, async (client) => peekStockMovementNo(client, movementCode));
         res.json({
             series_code: `STOK_HAREKET__${movementCode}`,
             movement_code: movementCode,
@@ -79,7 +79,7 @@ router.post('/stok-hareket/ayir', async (req, res) => {
     try {
         const movementCode = String(req.body?.movement_code || '').trim().toUpperCase();
         if (!movementCode) return res.status(400).json({ hata: 'movement_code zorunlu.' });
-        const kod = await withTransaction(pool, async (client) => sonrakiStokHareketNo(client, movementCode));
+        const kod = await withTransaction(pool, async (client) => nextStockMovementNo(client, movementCode));
         res.status(201).json({
             series_code: `STOK_HAREKET__${movementCode}`,
             movement_code: movementCode,
@@ -98,7 +98,7 @@ router.post('/ayir-prefixed', async (req, res) => {
         if (!seriesCode || !prefix) {
             return res.status(400).json({ hata: 'series_code ve prefix zorunlu.' });
         }
-        const kod = await withTransaction(pool, async (client) => sonrakiPrefixedKod(client, {
+        const kod = await withTransaction(pool, async (client) => nextPrefixedCode(client, {
             seriesCode,
             prefix,
             pad: Number(req.body?.pad) > 0 ? Number(req.body.pad) : 5,
@@ -116,7 +116,7 @@ router.post('/ayir-prefixed', async (req, res) => {
 router.get('/:seriKodu', async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT series_code AS id, series_code, onek, description, son_numara,
+            `SELECT series_code AS id, series_code, prefix, description, last_number,
                     screen_code, screen_name, is_active, created_at
              FROM number_series WHERE series_code = $1`,
             [req.params.seriKodu]
@@ -140,7 +140,7 @@ router.post('/:seriKodu/ayir', async (req, res) => {
             if (seri.rows[0].is_active === false) {
                 throw Object.assign(new Error('Numaratör is_inactive.'), { status: 400 });
             }
-            return sonrakiKod(client, req.params.seriKodu);
+            return nextSequenceCode(client, req.params.seriKodu);
         });
         res.status(201).json({ series_code: req.params.seriKodu, kod });
     } catch (err) {
@@ -150,7 +150,7 @@ router.post('/:seriKodu/ayir', async (req, res) => {
 
 router.put('/:seriKodu', async (req, res) => {
     try {
-        const { description, screen_code, screen_name, is_active, son_numara, onek } = req.body;
+        const { description, screen_code, screen_name, is_active, last_number, prefix: onek } = req.body;
         const result = await pool.query(
             `
             UPDATE number_series SET
@@ -158,10 +158,10 @@ router.put('/:seriKodu', async (req, res) => {
                 screen_code = COALESCE($3, screen_code),
                 screen_name = COALESCE($4, screen_name),
                 is_active = COALESCE($5, is_active),
-                son_numara = COALESCE($6, son_numara),
-                onek = COALESCE($7, onek)
+                last_number = COALESCE($6, last_number),
+                prefix = COALESCE($7, prefix)
             WHERE series_code = $1
-            RETURNING series_code AS id, series_code, onek, description, son_numara,
+            RETURNING series_code AS id, series_code, prefix, description, last_number,
                       screen_code, screen_name, is_active, created_at
             `,
             [
@@ -170,7 +170,7 @@ router.put('/:seriKodu', async (req, res) => {
                 screen_code ?? null,
                 screen_name ?? null,
                 typeof is_active === 'boolean' ? is_active : null,
-                Number.isFinite(Number(son_numara)) ? Number(son_numara) : null,
+                Number.isFinite(Number(last_number)) ? Number(last_number) : null,
                 onek ?? null,
             ]
         );
@@ -183,7 +183,7 @@ router.put('/:seriKodu', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { series_code, onek, description, screen_code, screen_name, son_numara } = req.body;
+        const { series_code, prefix: onek, description, screen_code, screen_name, last_number } = req.body;
         if (!series_code || !onek || !description) {
             return res.status(400).json({ hata: 'series_code, onek ve description zorunludur.' });
         }
@@ -192,12 +192,12 @@ router.post('/', async (req, res) => {
         }
         const result = await pool.query(
             `
-            INSERT INTO number_series (series_code, onek, description, son_numara, screen_code, screen_name, is_active)
+            INSERT INTO number_series (series_code, prefix, description, last_number, screen_code, screen_name, is_active)
             VALUES ($1, $2, $3, COALESCE($4, 0), $5, $6, TRUE)
-            RETURNING series_code AS id, series_code, onek, description, son_numara,
+            RETURNING series_code AS id, series_code, prefix, description, last_number,
                       screen_code, screen_name, is_active, created_at
             `,
-            [series_code, String(onek).toUpperCase(), description, son_numara ?? 0, screen_code || null, screen_name || null]
+            [series_code, String(onek).toUpperCase(), description, last_number ?? 0, screen_code || null, screen_name || null]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {

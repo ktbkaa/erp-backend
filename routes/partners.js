@@ -3,10 +3,10 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const {
-    sonrakiKod,
-    cariSeriKodundanTur,
-    cariTedarikciMi,
-    cariMusteriMi,
+    nextSequenceCode,
+    partnerTypeFromSeriesCode,
+    isPartnerSupplier,
+    isPartnerCustomer,
 } = require('../src/utils/kodUretici');
 
 function trimOrNull(v) {
@@ -60,7 +60,7 @@ async function replaceChildRows(client, cariId, table, rows, insertSql, mapRow) 
     }
 }
 
-async function cariGetir(id) {
+async function getPartner(id) {
     const c = await pool.query(
         `
         SELECT c.*,
@@ -92,8 +92,8 @@ async function cariGetir(id) {
     return {
         ...row,
         ...flat,
-        tedarikci_mi: cariTedarikciMi(row.partner_type),
-        musteri_mi: cariMusteriMi(row.partner_type),
+        tedarikci_mi: isPartnerSupplier(row.partner_type),
+        musteri_mi: isPartnerCustomer(row.partner_type),
         partner_details: detaylar.rows,
         banka_bilgileri: banks.rows,
         sevk_adresleri: sevkler.rows,
@@ -156,16 +156,16 @@ async function saveChildren(client, cariId, body) {
             cariId,
             'partner_details',
             body.partner_details,
-            `INSERT INTO partner_details (partner_id, address, billing_address, yetkili_name, yetkili_telefon)
+            `INSERT INTO partner_details (partner_id, address, billing_address, authorized_person, authorized_phone)
              VALUES ($1,$2,$3,$4,$5)`,
             (d) => {
-                if (!rowHasContent(d, ['address', 'billing_address', 'yetkili_name', 'yetkili_telefon'])) return null;
+                if (!rowHasContent(d, ['address', 'billing_address', 'authorized_person', 'authorized_phone'])) return null;
                 return [
                     cariId,
                     trimOrNull(d.address),
                     trimOrNull(d.billing_address),
-                    trimOrNull(d.yetkili_name),
-                    trimOrNull(d.yetkili_telefon),
+                    trimOrNull(d.authorized_person),
+                    trimOrNull(d.authorized_phone),
                 ];
             }
         );
@@ -179,7 +179,7 @@ async function saveChildren(client, cariId, body) {
             body.banka_bilgileri,
             `INSERT INTO partner_bank_accounts (
                 partner_id, line_no, iban, bank_code, bank_name, swift_no, currency_code, is_inactive,
-                branch_code, branch_name, account_no, muhabir_account_no, description
+                branch_code, branch_name, account_no, correspondent_account_no, description
              ) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,FALSE),$9,$10,$11,$12,$13)`,
             (d, sira) => {
                 if (!rowHasContent(d, ['iban', 'bank_code', 'bank_name', 'account_no', 'swift_no'])) return null;
@@ -189,7 +189,7 @@ async function saveChildren(client, cariId, body) {
                     trimOrNull(d.swift_no), trimOrNull(d.currency_code) || 'TRY',
                     Boolean(d.is_inactive),
                     trimOrNull(d.branch_code), trimOrNull(d.branch_name),
-                    trimOrNull(d.account_no), trimOrNull(d.muhabir_account_no),
+                    trimOrNull(d.account_no), trimOrNull(d.correspondent_account_no),
                     trimOrNull(d.description),
                 ];
             }
@@ -203,17 +203,17 @@ async function saveChildren(client, cariId, body) {
             'partner_ship_to_addresses',
             body.sevk_adresleri,
             `INSERT INTO partner_ship_to_addresses (
-                partner_id, line_no, address_name, adres1, adres2, adres3,
-                country, il, district, postal_code, telefon, yetkili_name, varsayilan, is_inactive
+                partner_id, line_no, address_name, address_line_1, address_line_2, address_line_3,
+                country, province, district, postal_code, phone, authorized_person, is_default, is_inactive
              ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,COALESCE($13,FALSE),COALESCE($14,FALSE))`,
             (d, sira) => {
-                if (!rowHasContent(d, ['address_name', 'adres1', 'adres2', 'il', 'district', 'yetkili_name'])) return null;
+                if (!rowHasContent(d, ['address_name', 'address_line_1', 'address_line_2', 'province', 'district', 'authorized_person'])) return null;
                 return [
                     cariId, sira,
-                    trimOrNull(d.address_name), trimOrNull(d.adres1), trimOrNull(d.adres2), trimOrNull(d.adres3),
-                    trimOrNull(d.country), trimOrNull(d.il), trimOrNull(d.district), trimOrNull(d.postal_code),
-                    trimOrNull(d.telefon), trimOrNull(d.yetkili_name),
-                    Boolean(d.varsayilan), Boolean(d.is_inactive),
+                    trimOrNull(d.address_name), trimOrNull(d.address_line_1), trimOrNull(d.address_line_2), trimOrNull(d.address_line_3),
+                    trimOrNull(d.country), trimOrNull(d.province), trimOrNull(d.district), trimOrNull(d.postal_code),
+                    trimOrNull(d.phone), trimOrNull(d.authorized_person),
+                    Boolean(d.is_default), Boolean(d.is_inactive),
                 ];
             }
         );
@@ -226,17 +226,17 @@ async function saveChildren(client, cariId, body) {
             'partner_languages',
             body.dil_tanimlari,
             `INSERT INTO partner_languages (
-                partner_id, dil_code, dil_name, partner_name, description, varsayilan
+                partner_id, language_code, language_name, partner_name, description, is_default
              ) VALUES ($1,$2,$3,$4,$5,COALESCE($6,FALSE))`,
             (d) => {
-                if (!nonempty(d.dil_code)) return null;
+                if (!nonempty(d.language_code)) return null;
                 return [
                     cariId,
-                    trimOrNull(d.dil_code),
-                    trimOrNull(d.dil_name),
+                    trimOrNull(d.language_code),
+                    trimOrNull(d.language_name),
                     trimOrNull(d.partner_name),
                     trimOrNull(d.description),
-                    Boolean(d.varsayilan),
+                    Boolean(d.is_default),
                 ];
             }
         );
@@ -255,7 +255,7 @@ async function saveChildren(client, cariId, body) {
                 `INSERT INTO partner_company_params (
                     partner_id, company_id, plant_id, is_active,
                     gl_account_code, currency_code, partner_type,
-                    risk_group_code, nakit_akisa_dahil, rate_degerlemeye_dahil,
+                    risk_group_code, include_in_cash_flow, include_in_revaluation,
                     payment_due_days, credit_limit
                  ) VALUES ($1,$2,$3,COALESCE($4,TRUE),$5,$6,$7,$8,COALESCE($9,TRUE),COALESCE($10,FALSE),$11,$12)
                  ON CONFLICT (partner_id, company_id) DO UPDATE SET
@@ -265,8 +265,8 @@ async function saveChildren(client, cariId, body) {
                     currency_code = EXCLUDED.currency_code,
                     partner_type = EXCLUDED.partner_type,
                     risk_group_code = EXCLUDED.risk_group_code,
-                    nakit_akisa_dahil = EXCLUDED.nakit_akisa_dahil,
-                    rate_degerlemeye_dahil = EXCLUDED.rate_degerlemeye_dahil,
+                    include_in_cash_flow = EXCLUDED.include_in_cash_flow,
+                    include_in_revaluation = EXCLUDED.include_in_revaluation,
                     payment_due_days = EXCLUDED.payment_due_days,
                     credit_limit = EXCLUDED.credit_limit`,
                 [
@@ -278,8 +278,8 @@ async function saveChildren(client, cariId, body) {
                     trimOrNull(d.currency_code) || 'TRY',
                     trimOrNull(d.partner_type),
                     trimOrNull(d.risk_group_code),
-                    typeof d.nakit_akisa_dahil === 'boolean' ? d.nakit_akisa_dahil : true,
-                    Boolean(d.rate_degerlemeye_dahil),
+                    typeof d.include_in_cash_flow === 'boolean' ? d.include_in_cash_flow : true,
+                    Boolean(d.include_in_revaluation),
                     d.payment_due_days != null && d.payment_due_days !== '' ? Number(d.payment_due_days) : null,
                     d.credit_limit != null && d.credit_limit !== '' ? Number(d.credit_limit) : null,
                 ]
@@ -288,7 +288,7 @@ async function saveChildren(client, cariId, body) {
     }
 }
 
-function syncFatura(m) {
+function syncInvoice(m) {
     if (!nonempty(m.bill_address_1) && nonempty(m.billing_address)) m.bill_address_1 = m.billing_address;
     if (!nonempty(m.billing_address) && nonempty(m.bill_address_1)) m.billing_address = m.bill_address_1;
     return m;
@@ -297,7 +297,7 @@ function syncFatura(m) {
 router.get('/', async (req, res) => {
     try {
         const { tur, is_active } = req.query;
-        const { firmaIdFromReq, andCariFirma } = require('../src/utils/firmaScope');
+        const { companyIdFromReq, andPartnerCompany } = require('../src/utils/firmaScope');
         const where = [];
         const params = [];
 
@@ -310,8 +310,8 @@ router.get('/', async (req, res) => {
         if (is_active === 'true') where.push('is_active = TRUE');
         if (is_active === 'false') where.push('is_active = FALSE');
 
-        const firmaClause = andCariFirma('partners', firmaIdFromReq(req), params);
-        if (firmaClause) where.push(firmaClause.replace(/^\s*AND\s+/i, ''));
+        const companyClause = andPartnerCompany('partners', companyIdFromReq(req), params);
+        if (companyClause) where.push(companyClause.replace(/^\s*AND\s+/i, ''));
 
         const liste = await pool.query(
             `
@@ -322,7 +322,7 @@ router.get('/', async (req, res) => {
             params
         );
         const result = [];
-        for (const r of liste.rows) result.push(await cariGetir(r.id));
+        for (const r of liste.rows) result.push(await getPartner(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -331,13 +331,13 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const { firmaIdFromReq, assertFirmaKayit } = require('../src/utils/firmaScope');
-        const firmaId = firmaIdFromReq(req);
+        const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
-            const ok = await assertFirmaKayit(pool, 'partners', req.params.id, firmaId);
+            const ok = await assertCompanyRecord(pool, 'partners', req.params.id, firmaId);
             if (!ok) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         }
-        const cari = await cariGetir(req.params.id);
+        const cari = await getPartner(req.params.id);
         if (!cari) return res.status(404).json({ hata: 'Cari bulunamadı.' });
         res.json(cari);
     } catch (err) {
@@ -348,10 +348,10 @@ router.get('/:id', async (req, res) => {
 /** GET /partners/:id/ekstre — cari borç/credit ekstresi (FIN-005) */
 router.get('/:id/ekstre', async (req, res) => {
     try {
-        const { cariEkstre } = require('../src/services/cariHareketService');
-        const cari = await cariGetir(req.params.id);
+        const { partnerStatement } = require('../src/services/cariHareketService');
+        const cari = await getPartner(req.params.id);
         if (!cari) return res.status(404).json({ hata: 'Cari bulunamadı.' });
-        const ekstre = await cariEkstre(pool, Number(req.params.id), {
+        const ekstre = await partnerStatement(pool, Number(req.params.id), {
             baslangic: req.query.baslangic || null,
             bitis: req.query.bitis || null,
         });
@@ -364,7 +364,7 @@ router.get('/:id/ekstre', async (req, res) => {
         const format = String(req.query.format || 'json').toLowerCase();
         if (format === 'html' || format === 'pdf') {
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
-            return res.send(renderCariEkstreHtml(payload));
+            return res.send(renderPartnerStatementHtml(payload));
         }
         res.json(payload);
     } catch (err) {
@@ -380,7 +380,7 @@ function escHtml(s) {
         .replace(/"/g, '&quot;');
 }
 
-function renderCariEkstreHtml(payload) {
+function renderPartnerStatementHtml(payload) {
     const c = payload.cari || {};
     const rows = (payload.hareketler || []).map((h) => `<tr>
       <td class="mono">${escHtml(h.movement_no)}</td>
@@ -439,25 +439,25 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ hata: hatalar[0].hata, hatalar });
         }
 
-        const m = syncFatura({ ...req.body, partner_name, partner_type });
+        const m = syncInvoice({ ...req.body, partner_name, partner_type });
 
         const id = await withTransaction(pool, async (client) => {
             const isYeriId = await assertLookup(client, 'plants', m.plant_id, 'İş yeri');
             const firmaId = await assertLookup(client, 'companies', m.company_id, 'Firma');
-            const kod = partner_code || (await sonrakiKod(client, cariSeriKodundanTur(partner_type)));
+            const kod = partner_code || (await nextSequenceCode(client, partnerTypeFromSeriesCode(partner_type)));
 
             const cariSonuc = await client.query(
                 `
                 INSERT INTO partners (
                     partner_code, partner_name, partner_name_2, description, partner_type,
-                    telefon, telefon2, mobile_phone, email, website, fax,
-                    tax_id, tax_office, pasaport_no, first_name, last_name,
-                    yetkili_name, yetkili_telefon,
+                    phone, phone_2, mobile_phone, email, website, fax,
+                    tax_id, tax_office, passport_no, first_name, last_name,
+                    authorized_person, authorized_phone,
                     address, billing_address, bill_address_1, bill_address_2, bill_address_3,
-                    il, district, country, postal_code, enlem, boylam,
-                    currency_code, payment_due_days, is_active, notlar,
+                    province, district, country, postal_code, latitude, longitude,
+                    currency_code, payment_due_days, is_active, notes,
                     plant_id, company_id,
-                    sektor_code, region_code, nace_code, kurulus_date, sermaye
+                    industry_code, region_code, nace_code, founded_date, capital
                 ) VALUES (
                     $1,$2,$3,$4,$5,
                     $6,$7,$8,$9,$10,$11,
@@ -473,21 +473,21 @@ router.post('/', async (req, res) => {
                 `,
                 [
                     kod, partner_name, trimOrNull(m.partner_name_2), trimOrNull(m.description), partner_type,
-                    trimOrNull(m.telefon), trimOrNull(m.telefon2), trimOrNull(m.mobile_phone),
+                    trimOrNull(m.phone), trimOrNull(m.phone_2), trimOrNull(m.mobile_phone),
                     trimOrNull(m.email), trimOrNull(m.website), trimOrNull(m.fax),
-                    trimOrNull(m.tax_id), trimOrNull(m.tax_office), trimOrNull(m.pasaport_no),
+                    trimOrNull(m.tax_id), trimOrNull(m.tax_office), trimOrNull(m.passport_no),
                     trimOrNull(m.first_name), trimOrNull(m.last_name),
-                    trimOrNull(m.yetkili_name), trimOrNull(m.yetkili_telefon),
+                    trimOrNull(m.authorized_person), trimOrNull(m.authorized_phone),
                     trimOrNull(m.address), trimOrNull(m.billing_address),
                     trimOrNull(m.bill_address_1), trimOrNull(m.bill_address_2), trimOrNull(m.bill_address_3),
-                    trimOrNull(m.il), trimOrNull(m.district), trimOrNull(m.country) || 'TR',
-                    trimOrNull(m.postal_code), m.enlem ?? null, m.boylam ?? null,
+                    trimOrNull(m.province), trimOrNull(m.district), trimOrNull(m.country) || 'TR',
+                    trimOrNull(m.postal_code), m.latitude ?? null, m.longitude ?? null,
                     trimOrNull(m.currency_code) || 'TRY', m.payment_due_days ?? 0,
                     typeof m.is_active === 'boolean' ? m.is_active : true,
-                    trimOrNull(m.notlar),
+                    trimOrNull(m.notes),
                     isYeriId, firmaId,
-                    trimOrNull(m.sektor_code), trimOrNull(m.region_code), trimOrNull(m.nace_code),
-                    trimOrNull(m.kurulus_date), m.sermaye ?? null,
+                    trimOrNull(m.industry_code), trimOrNull(m.region_code), trimOrNull(m.nace_code),
+                    trimOrNull(m.founded_date), m.capital ?? null,
                 ]
             );
             const cariId = cariSonuc.rows[0].id;
@@ -500,7 +500,7 @@ router.post('/', async (req, res) => {
             return cariId;
         });
 
-        res.status(201).json(await cariGetir(id));
+        res.status(201).json(await getPartner(id));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu cari kodu zaten kullanılıyor.', alan: 'partner_code' });
@@ -526,7 +526,7 @@ router.put('/:id', async (req, res) => {
             });
         }
 
-        const m = syncFatura({ ...req.body, partner_name });
+        const m = syncInvoice({ ...req.body, partner_name });
 
         await withTransaction(pool, async (client) => {
             const isYeriId = Object.prototype.hasOwnProperty.call(req.body, 'plant_id')
@@ -543,41 +543,41 @@ router.put('/:id', async (req, res) => {
                     partner_name_2 = $3,
                     description = $4,
                     partner_type = COALESCE($5, partner_type),
-                    telefon = $6,
-                    telefon2 = $7,
+                    phone = $6,
+                    phone_2 = $7,
                     mobile_phone = $8,
                     email = $9,
                     website = $10,
                     fax = $11,
                     tax_id = $12,
                     tax_office = $13,
-                    pasaport_no = $14,
+                    passport_no = $14,
                     first_name = $15,
                     last_name = $16,
-                    yetkili_name = $17,
-                    yetkili_telefon = $18,
+                    authorized_person = $17,
+                    authorized_phone = $18,
                     address = $19,
                     billing_address = $20,
                     bill_address_1 = $21,
                     bill_address_2 = $22,
                     bill_address_3 = $23,
-                    il = $24,
+                    province = $24,
                     district = $25,
                     country = COALESCE($26, country),
                     postal_code = $27,
-                    enlem = $28,
-                    boylam = $29,
+                    latitude = $28,
+                    longitude = $29,
                     currency_code = COALESCE($30, currency_code),
                     payment_due_days = COALESCE($31, payment_due_days),
                     is_active = COALESCE($32, is_active),
-                    notlar = $33,
+                    notes = $33,
                     plant_id = COALESCE($34, plant_id),
                     company_id = COALESCE($35, company_id),
-                    sektor_code = $36,
+                    industry_code = $36,
                     region_code = $37,
                     nace_code = $38,
-                    kurulus_date = $39,
-                    sermaye = $40
+                    founded_date = $39,
+                    capital = $40
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -587,41 +587,41 @@ router.put('/:id', async (req, res) => {
                     trimOrNull(m.partner_name_2),
                     trimOrNull(m.description),
                     partner_type,
-                    trimOrNull(m.telefon),
-                    trimOrNull(m.telefon2),
+                    trimOrNull(m.phone),
+                    trimOrNull(m.phone_2),
                     trimOrNull(m.mobile_phone),
                     trimOrNull(m.email),
                     trimOrNull(m.website),
                     trimOrNull(m.fax),
                     trimOrNull(m.tax_id),
                     trimOrNull(m.tax_office),
-                    trimOrNull(m.pasaport_no),
+                    trimOrNull(m.passport_no),
                     trimOrNull(m.first_name),
                     trimOrNull(m.last_name),
-                    trimOrNull(m.yetkili_name),
-                    trimOrNull(m.yetkili_telefon),
+                    trimOrNull(m.authorized_person),
+                    trimOrNull(m.authorized_phone),
                     trimOrNull(m.address),
                     trimOrNull(m.billing_address),
                     trimOrNull(m.bill_address_1),
                     trimOrNull(m.bill_address_2),
                     trimOrNull(m.bill_address_3),
-                    trimOrNull(m.il),
+                    trimOrNull(m.province),
                     trimOrNull(m.district),
                     trimOrNull(m.country),
                     trimOrNull(m.postal_code),
-                    m.enlem ?? null,
-                    m.boylam ?? null,
+                    m.latitude ?? null,
+                    m.longitude ?? null,
                     trimOrNull(m.currency_code),
                     m.payment_due_days ?? null,
                     typeof m.is_active === 'boolean' ? m.is_active : null,
-                    trimOrNull(m.notlar),
+                    trimOrNull(m.notes),
                     isYeriId === undefined ? null : isYeriId,
                     firmaId === undefined ? null : firmaId,
-                    trimOrNull(m.sektor_code),
+                    trimOrNull(m.industry_code),
                     trimOrNull(m.region_code),
                     trimOrNull(m.nace_code),
-                    trimOrNull(m.kurulus_date),
-                    m.sermaye ?? null,
+                    trimOrNull(m.founded_date),
+                    m.capital ?? null,
                 ]
             );
 
@@ -643,7 +643,7 @@ router.put('/:id', async (req, res) => {
             );
         });
 
-        res.json(await cariGetir(req.params.id));
+        res.json(await getPartner(req.params.id));
     } catch (err) {
         if (err.code === '23505') {
             return res.status(409).json({ hata: 'Bu cari kodu zaten kullanılıyor.', alan: 'partner_code' });
@@ -656,7 +656,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query(`DELETE FROM partners WHERE id = $1 RETURNING id`, [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Cari bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

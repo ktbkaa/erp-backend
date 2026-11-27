@@ -2,8 +2,8 @@ const { describe, it, before } = require('node:test');
 const assert = require('node:assert/strict');
 const { createApp, request } = require('./helpers/app');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { stokHareketOlustur } = require('../src/services/stokHareketService');
-const { siparisRezerveEt, kullanilabilirNet } = require('../src/services/rezervasyonService');
+const { createStockMovement } = require('../src/services/stokHareketService');
+const { reserveOrder, kullanilabilirNet } = require('../src/services/rezervasyonService');
 
 describe('stok rezervasyon', () => {
   let pool;
@@ -34,7 +34,7 @@ describe('stok rezervasyon', () => {
         [stok.rows[0].id, depo.rows[0].id]
       ).catch(() => {});
 
-      await stokHareketOlustur(client, {
+      await createStockMovement(client, {
         hareketTipi: 'STOK_GIRIS',
         depoId: depo.rows[0].id,
         depoZorunluAtla: true,
@@ -72,7 +72,7 @@ describe('stok rezervasyon', () => {
     const once = await kullanilabilirNet(pool, fx.stokId, fx.depoId);
     assert.ok(once.kullanilabilir >= 40, `beklenen >=40, gelen ${once.kullanilabilir}`);
 
-    await withTransaction(pool, (client) => siparisRezerveEt(client, fx.siparisId, { depoId: fx.depoId }));
+    await withTransaction(pool, (client) => reserveOrder(client, fx.siparisId, { depoId: fx.depoId }));
 
     const sonra = await kullanilabilirNet(pool, fx.stokId, fx.depoId);
     assert.ok(sonra.rezerve >= 40, `rezerve >=40, gelen ${sonra.rezerve}`);

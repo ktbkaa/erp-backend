@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-function tarihFiltre(query, alias = 'b') {
+function dateFilter(query, alias = 'b') {
   const params = [];
   let sql = '';
   if (query.baslangic) {
@@ -20,8 +20,8 @@ function tarihFiltre(query, alias = 'b') {
 /** Yevmiye defteri */
 router.get('/yevmiye', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
-    const { sql, params } = tarihFiltre(req.query);
+    const firmaId = companyIdFromReq(req);
+    const { sql, params } = dateFilter(req.query);
     if (firmaId) {
       params.push(firmaId);
     }
@@ -51,7 +51,7 @@ router.get('/buyuk-defter', async (req, res, next) => {
     if (!account_code && !account_id) {
       return res.status(400).json({ hata: 'account_code veya account_id gerekli.' });
     }
-    const { sql, params } = tarihFiltre(req.query);
+    const { sql, params } = dateFilter(req.query);
     let hid = account_id ? Number(account_id) : null;
     if (!hid) {
       const h = await pool.query(`SELECT id FROM gl_accounts WHERE account_code=$1`, [account_code]);

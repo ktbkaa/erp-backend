@@ -42,7 +42,7 @@ async function main() {
       )).rows[0];
       if (!w) {
         w = (await client.query(
-          `INSERT INTO warehouses (plant_id, warehouse_code, warehouse_name, is_active, warehouse_rolu)
+          `INSERT INTO warehouses (plant_id, warehouse_code, warehouse_name, is_active, warehouse_role)
            VALUES ($1,$2,$3,TRUE,$4) RETURNING *`,
           [plant.id, code, name, rol]
         )).rows[0];
@@ -64,9 +64,9 @@ async function main() {
       const u = (await client.query(`SELECT id FROM users WHERE user_code=$1`, [code])).rows[0];
       if (!u) continue;
       await client.query(
-        `INSERT INTO user_company_permissions (kisi_id, company_id)
+        `INSERT INTO user_company_permissions (user_id, company_id)
          SELECT $1,$2 WHERE NOT EXISTS (
-           SELECT 1 FROM user_company_permissions WHERE kisi_id=$1 AND company_id=$2
+           SELECT 1 FROM user_company_permissions WHERE user_id=$1 AND company_id=$2
          )`,
         [u.id, firma.id]
       );

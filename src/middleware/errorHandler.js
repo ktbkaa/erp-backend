@@ -14,7 +14,7 @@ function defaultErrorCode(status) {
 function notFoundHandler(req, res) {
   res.status(404).json({
     hata: 'Endpoint bulunamadı.',
-    yol: req.originalUrl,
+    request_path: req.originalUrl,
     kod: 'ERR-API-404',
   });
 }

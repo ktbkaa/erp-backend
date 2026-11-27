@@ -4,7 +4,7 @@
  */
 const { withTransaction } = require('./withTransaction');
 
-async function belgeOnayla(pool, {
+async function approveDocument(pool, {
   table,
   id,
   fromDurumlar = ['Taslak', 'Acik', 'OnayBekliyor'],
@@ -34,9 +34,9 @@ async function belgeOnayla(pool, {
     const params = [id, toDurum];
     if (kullaniciId != null) {
       params.push(kullaniciId);
-      sets.push(`approved_by_kisi_id = $${params.length}`);
+      sets.push(`approved_by_user_id = $${params.length}`);
       params.push(new Date());
-      sets.push(`onay_date = $${params.length}`);
+      sets.push(`approved_at = $${params.length}`);
     }
     if (ekstraSet) sets.push(ekstraSet);
     await client.query(
@@ -48,4 +48,4 @@ async function belgeOnayla(pool, {
   });
 }
 
-module.exports = { belgeOnayla };
+module.exports = { approveDocument };

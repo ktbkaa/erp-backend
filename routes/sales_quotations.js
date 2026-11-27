@@ -1,21 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { satirHesapla, belgelerToplam } = require('../src/utils/kalemHesap');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
 
-async function teklifGetir(id) {
+async function getQuotation(id) {
     const t = await pool.query(
         `
         SELECT t.*, c.partner_code, c.partner_name, hk.movement_code, hk.movement_name,
-               f.firsat_code, f.firsat_name,
+               f.opportunity_code, f.opportunity_name,
                a.lead_code, a.lead_name
         FROM sales_quotations t
         JOIN partners c ON c.id = t.partner_id
         LEFT JOIN movement_codes hk ON hk.id = t.movement_code_id
-        LEFT JOIN crm_opportunities f ON f.id = t.firsat_id
+        LEFT JOIN crm_opportunities f ON f.id = t.opportunity_id
         LEFT JOIN crm_leads a ON a.id = t.lead_id
         WHERE t.id = $1
         `,
@@ -37,7 +37,7 @@ async function teklifGetir(id) {
 
 function hazirSatirlar(raw) {
     return raw.map((k, i) => {
-        const h = satirHesapla(k);
+        const h = calculateLine(k);
         return {
             line_no: k.line_no || i + 1,
             item_id: k.item_id,
@@ -51,9 +51,9 @@ function hazirSatirlar(raw) {
 
 router.get('/', async (req, res) => {
     try {
-        const liste = await (() => { const firmaId = firmaIdFromReq(req); const params = []; let sql = 'SELECT id FROM sales_quotations'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
+        const liste = await (() => { const firmaId = companyIdFromReq(req); const params = []; let sql = 'SELECT id FROM sales_quotations'; if (firmaId) { params.push(firmaId); sql += ' WHERE company_id = $' + params.length; } sql += ' ORDER BY id DESC'; return pool.query(sql, params); })();
         const result = [];
-        for (const r of liste.rows) result.push(await teklifGetir(r.id));
+        for (const r of liste.rows) result.push(await getQuotation(r.id));
         res.json(result);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -62,7 +62,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await teklifGetir(req.params.id);
+        const row = await getQuotation(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
     try {
         const {
             partner_id, quotation_date, valid_date, currency_code, description,
-            movement_code_id, status, firsat_id, lead_id, source_document_type, source_document_id,
+            movement_code_id, status, opportunity_id, lead_id, source_document_type, source_document_id,
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         if (!partner_id) return res.status(400).json({ hata: 'partner_id zorunlu.' });
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
         const top = belgelerToplam(satirlar);
 
         const id = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'SATIS_TEKLIF');
+            const no = await nextDocumentNo(client, 'SATIS_TEKLIF');
             let hk = movement_code_id || null;
             if (!hk) {
                 const d = await client.query(
@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
                 INSERT INTO sales_quotations
                     (quotation_no, partner_id, quotation_date, valid_date, currency_code,
                      status, movement_code_id, description, total_amount,
-                     firsat_id, lead_id, source_document_type, source_document_id)
+                     opportunity_id, lead_id, source_document_type, source_document_id)
                 VALUES ($1,$2,COALESCE($3::date,CURRENT_DATE),$4,COALESCE($5,'TRY'),
                         COALESCE($6,'Taslak'),$7,$8,$9,$10,$11,$12,$13)
                 RETURNING id
@@ -104,9 +104,9 @@ router.post('/', async (req, res) => {
                 [
                     no, partner_id, quotation_date || null, valid_date || null, currency_code,
                     status || 'Taslak', hk, description || null, top.total_amount,
-                    firsat_id || null, lead_id || null,
-                    source_document_type || (firsat_id ? 'CRM_FIRSAT' : null),
-                    source_document_id || firsat_id || null,
+                    opportunity_id || null, lead_id || null,
+                    source_document_type || (opportunity_id ? 'CRM_FIRSAT' : null),
+                    source_document_id || opportunity_id || null,
                 ]
             );
             const tid = baslik.rows[0].id;
@@ -126,7 +126,7 @@ router.post('/', async (req, res) => {
             }
             return tid;
         });
-        res.status(201).json(await teklifGetir(id));
+        res.status(201).json(await getQuotation(id));
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -136,7 +136,7 @@ router.put('/:id', async (req, res) => {
     try {
         const {
             partner_id, quotation_date, valid_date, currency_code, description,
-            movement_code_id, status, firsat_id, lead_id,
+            movement_code_id, status, opportunity_id, lead_id,
         } = req.body;
         const raw = req.body.satirlar || req.body.kalemler;
         const allowed = ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'];
@@ -166,14 +166,14 @@ router.put('/:id', async (req, res) => {
                     movement_code_id = COALESCE($7, movement_code_id),
                     description = COALESCE($8, description),
                     total_amount = COALESCE($9, total_amount),
-                    firsat_id = COALESCE($10, firsat_id),
+                    opportunity_id = COALESCE($10, opportunity_id),
                     lead_id = COALESCE($11, lead_id)
                 WHERE id=$1
                 `,
                 [
                     req.params.id, partner_id || null, quotation_date || null, valid_date || null,
                     currency_code || null, status || null, movement_code_id || null, description ?? null, toplam,
-                    firsat_id || null, lead_id || null,
+                    opportunity_id || null, lead_id || null,
                 ]
             );
             if (satirlar) {
@@ -195,7 +195,7 @@ router.put('/:id', async (req, res) => {
             }
             return Number(req.params.id);
         });
-        res.json(await teklifGetir(id));
+        res.json(await getQuotation(id));
     } catch (err) {
         res.status(err.status || 500).json({ hata: err.message });
     }
@@ -204,16 +204,16 @@ router.put('/:id', async (req, res) => {
 /** Teklif → Satış Siparişi (P01 kaynak_belge + satır ref) */
 router.post('/:id/siparise-donustur', async (req, res) => {
     try {
-        const { BELGE_TIPI, hareketKoduBul } = require('../src/utils/belgeOmurga');
-        const teklif = await teklifGetir(req.params.id);
+        const { BELGE_TIPI, findMovementCode } = require('../src/utils/belgeOmurga');
+        const teklif = await getQuotation(req.params.id);
         if (!teklif) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
         if (!['Onayli', 'Taslak'].includes(teklif.status)) {
             return res.status(400).json({ hata: `Durum dönüşüme accepted değil: ${teklif.status}` });
         }
 
         const siparisId = await withTransaction(pool, async (client) => {
-            const no = await sonrakiBelgeNo(client, 'SATIS_SIPARIS');
-            const hk = await hareketKoduBul(client, BELGE_TIPI.SATIS_SIPARIS);
+            const no = await nextDocumentNo(client, 'SATIS_SIPARIS');
+            const hk = await findMovementCode(client, BELGE_TIPI.SATIS_SIPARIS);
 
             const sip = await client.query(
                 `
@@ -275,7 +275,7 @@ router.post('/:id/siparise-donustur', async (req, res) => {
             ok: true,
             sales_order_id: siparisId,
             order_no: siparis.rows[0].order_no,
-            teklif: await teklifGetir(teklif.id),
+            teklif: await getQuotation(teklif.id),
         });
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -286,7 +286,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const r = await pool.query('DELETE FROM sales_quotations WHERE id=$1 RETURNING id', [req.params.id]);
         if (!r.rows[0]) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

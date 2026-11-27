@@ -1,13 +1,13 @@
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
+const { nextDocumentNo } = require('../utils/belgeNo');
 
-async function cariHareketEkle(client, {
+async function addPartnerLedgerEntry(client, {
   cariId, direction, amount, paraBirimi = 'TRY', exchange_rate = 1,
   belgeTipi = null, belgeId = null, description = null, hareketTarihi = null,
 }) {
   if (!cariId || !direction || amount == null) {
     throw Object.assign(new Error('cariId, direction, amount zorunlu.'), { status: 400 });
   }
-  const no = await sonrakiBelgeNo(client, 'CARI_HAREKET');
+  const no = await nextDocumentNo(client, 'CARI_HAREKET');
   const r = await client.query(
     `INSERT INTO partner_ledger_entries
       (movement_no, partner_id, direction, amount, currency_code, exchange_rate, document_type, document_id, description, movement_date)
@@ -17,7 +17,7 @@ async function cariHareketEkle(client, {
   return r.rows[0];
 }
 
-async function cariBakiye(pool, cariId) {
+async function partnerBalance(pool, cariId) {
   const r = await pool.query(
     `
     SELECT
@@ -32,7 +32,7 @@ async function cariBakiye(pool, cariId) {
   return { debit, credit, bakiye: debit - credit };
 }
 
-async function cariEkstre(pool, cariId, { baslangic = null, bitis = null } = {}) {
+async function partnerStatement(pool, cariId, { baslangic = null, bitis = null } = {}) {
   const params = [cariId];
   const where = ['partner_id=$1'];
   if (baslangic) {
@@ -47,8 +47,8 @@ async function cariEkstre(pool, cariId, { baslangic = null, bitis = null } = {})
     `SELECT * FROM partner_ledger_entries WHERE ${where.join(' AND ')} ORDER BY movement_date, id`,
     params
   );
-  const ozet = await cariBakiye(pool, cariId);
+  const ozet = await partnerBalance(pool, cariId);
   return { ...ozet, hareketler: hareketler.rows };
 }
 
-module.exports = { cariHareketEkle, cariBakiye, cariEkstre };
+module.exports = { addPartnerLedgerEntry, partnerBalance, partnerStatement };

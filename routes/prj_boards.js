@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { transitionWorkItem } = require('../src/services/prjWorkflowService');
 
 const DEFAULT_COLS = ['OPEN', 'TODO', 'IN_PROGRESS', 'REVIEW', 'APPROVAL', 'DONE'];
@@ -14,7 +14,7 @@ async function ensureBoard(client, projectId, companyId) {
     [projectId]
   );
   if (b.rows[0]) return b.rows[0];
-  const code = await sonrakiKod(client, 'PRJ_BOARD');
+  const code = await nextSequenceCode(client, 'PRJ_BOARD');
   const wf = await client.query(`SELECT id FROM prj_workflows WHERE is_default=TRUE LIMIT 1`);
   const ins = await client.query(
     `
@@ -51,7 +51,7 @@ router.get('/', async (req, res, next) => {
     const board = await withTransaction(pool, async (client) => {
       const p = await client.query(`SELECT id, company_id FROM projects WHERE id=$1`, [projectId]);
       if (!p.rows[0]) throw Object.assign(new Error('Proje bulunamadı.'), { status: 404 });
-      const firmaId = firmaIdFromReq(req);
+      const firmaId = companyIdFromReq(req);
       if (firmaId && Number(p.rows[0].company_id) !== Number(firmaId)) {
         throw Object.assign(new Error('Firma erişimi yok.'), { status: 403 });
       }

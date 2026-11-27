@@ -4,7 +4,7 @@ const pool = require('../db');
 
 router.get('/', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM system_parameters ORDER BY parametre_code');
+        const result = await pool.query('SELECT * FROM system_parameters ORDER BY parameter_code');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ hata: err.message });
@@ -23,17 +23,17 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { parametre_code, parametre_name, value, module, description, is_active } = req.body;
-        if (!parametre_code || !parametre_name) {
-            return res.status(400).json({ hata: 'parametre_code ve parametre_name zorunlu.' });
+        const { parameter_code, parameter_name, value, module, description, is_active } = req.body;
+        if (!parameter_code || !parameter_name) {
+            return res.status(400).json({ hata: 'parameter_code ve parameter_name zorunlu.' });
         }
         const result = await pool.query(
             `
-            INSERT INTO system_parameters (parametre_code, parametre_name, value, module, description, is_active)
+            INSERT INTO system_parameters (parameter_code, parameter_name, value, module, description, is_active)
             VALUES ($1,$2,$3,$4,$5,COALESCE($6,TRUE))
             RETURNING *
             `,
-            [parametre_code, parametre_name, value || null, module || null, description || null, is_active]
+            [parameter_code, parameter_name, value || null, module || null, description || null, is_active]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -43,18 +43,18 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const { parametre_name, value, module, description, is_active } = req.body;
+        const { parameter_name, value, module, description, is_active } = req.body;
         const result = await pool.query(
             `
             UPDATE system_parameters SET
-                parametre_name = COALESCE($2, parametre_name),
+                parameter_name = COALESCE($2, parameter_name),
                 value = COALESCE($3, value),
                 module = COALESCE($4, module),
                 description = COALESCE($5, description),
                 is_active = COALESCE($6, is_active)
             WHERE id=$1 RETURNING *
             `,
-            [req.params.id, parametre_name, value, module, description, is_active]
+            [req.params.id, parameter_name, value, module, description, is_active]
         );
         if (!result.rows[0]) return res.status(404).json({ hata: 'Parametre bulunamadı.' });
         res.json(result.rows[0]);
@@ -67,7 +67,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const result = await pool.query('DELETE FROM system_parameters WHERE id=$1 RETURNING id', [req.params.id]);
         if (!result.rows[0]) return res.status(404).json({ hata: 'Parametre bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }

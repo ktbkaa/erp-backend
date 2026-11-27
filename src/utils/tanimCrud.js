@@ -5,7 +5,7 @@
 const express = require('express');
 const pool = require('../../db');
 const { withTransaction } = require('./withTransaction');
-const { sonrakiKod } = require('./kodUretici');
+const { nextSequenceCode } = require('./kodUretici');
 const { parametreAl } = require('./yetki');
 
 function trimOrNull(v) {
@@ -27,7 +27,7 @@ function trimOrNull(v) {
  * @param {string} [opts.orderBy]
  * @param {string} [opts.notFound]
  */
-function createTanimRouter(opts) {
+function createDefinitionRouter(opts) {
   const {
     table,
     codeCol,
@@ -47,7 +47,7 @@ function createTanimRouter(opts) {
       if (req.query.is_active === 'false') where.push('is_active = FALSE');
       // cascade filtreleri (country_code vb.)
       const params = [];
-      for (const col of ['country_code', 'source_pb', 'target_pb']) {
+      for (const col of ['country_code', 'source_currency', 'target_currency']) {
         if (req.query[col] && extraCols.includes(col)) {
           params.push(req.query[col]);
           where.push(`${col} = $${params.length}`);
@@ -75,7 +75,7 @@ function createTanimRouter(opts) {
       const name = trimOrNull(req.body[nameCol]);
       if (!name) return res.status(400).json({ hata: `${nameCol} zorunlu.` });
       const row = await withTransaction(pool, async (client) => {
-        const kod = trimOrNull(req.body[codeCol]) || (await sonrakiKod(client, seriKodu));
+        const kod = trimOrNull(req.body[codeCol]) || (await nextSequenceCode(client, seriKodu));
         const cols = [codeCol, nameCol, ...extraCols, 'is_active'];
         const vals = [
           kod,
@@ -138,11 +138,11 @@ function createTanimRouter(opts) {
           [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: notFound });
-        return res.json({ silindi: true, soft: true, id: Number(req.params.id) });
+        return res.json({ is_deleted: true, soft: true, id: Number(req.params.id) });
       }
       const r = await pool.query(`DELETE FROM ${table} WHERE id=$1 RETURNING id`, [req.params.id]);
       if (!r.rows[0]) return res.status(404).json({ hata: notFound });
-      res.json({ silindi: true, soft: false, id: Number(req.params.id) });
+      res.json({ is_deleted: true, soft: false, id: Number(req.params.id) });
     } catch (err) {
       next(err);
     }
@@ -151,4 +151,4 @@ function createTanimRouter(opts) {
   return router;
 }
 
-module.exports = { createTanimRouter, trimOrNull };
+module.exports = { createDefinitionRouter, trimOrNull };

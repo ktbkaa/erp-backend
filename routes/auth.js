@@ -7,23 +7,23 @@ const { parseJsonArr } = require('../src/middleware/authJwt');
 const { hashParola, dogrulaParola } = require('../src/utils/parola');
 const { authenticateLdap, ldapStatus } = require('../src/utils/ldapAuth');
 
-async function loadEkranYetkileri(kisiId) {
+async function loadScreenPermissions(kisiId) {
   if (!kisiId) return [];
   const r = await pool.query(
     `SELECT screen_id, erisim, can_create AS yeni, incele, duzelt, kopyala, sil
-     FROM user_screen_permissions WHERE kisi_id=$1`,
+     FROM user_screen_permissions WHERE user_id=$1`,
     [kisiId]
   );
   return r.rows;
 }
 
-async function loadFirmaYetkileri(kisiId) {
+async function loadCompanyPermissions(kisiId) {
   if (!kisiId) return [];
   const r = await pool.query(
     `SELECT f.id AS company_id, f.company_code, f.company_name
      FROM user_company_permissions k
      JOIN companies f ON f.id = k.company_id
-     WHERE k.kisi_id=$1
+     WHERE k.user_id=$1
      ORDER BY f.company_code`,
     [kisiId]
   );
@@ -31,7 +31,7 @@ async function loadFirmaYetkileri(kisiId) {
 }
 
 /** Admin/yönetici: tüm profil firmaları (picker’da ELEK/TEKS vb. kaybolmasın). */
-async function loadFirmaYetkileriForUser(u) {
+async function loadCompanyPermissionsForUser(u) {
   const role = String(u?.role || '').toLowerCase();
   const isAdmin = u?.group_code === 'ADMIN'
     || role === 'admin' || role === 'yonetici' || role === 'administrator'
@@ -45,13 +45,13 @@ async function loadFirmaYetkileriForUser(u) {
     );
     return r.rows;
   }
-  return loadFirmaYetkileri(u.id);
+  return loadCompanyPermissions(u.id);
 }
 
-async function kullaniciPayload(u) {
+async function userPayload(u) {
   const [yetkiler, firma_yetkileri] = await Promise.all([
-    loadEkranYetkileri(u.id),
-    loadFirmaYetkileriForUser(u),
+    loadScreenPermissions(u.id),
+    loadCompanyPermissionsForUser(u),
   ]);
   return {
     id: u.id,
@@ -64,21 +64,21 @@ async function kullaniciPayload(u) {
     group_code: u.group_code,
     group_name: u.group_name,
     profile_image: u.profile_image || null,
-    satinalma_onay: u.satinalma_onay,
+    can_approve_purchase: u.can_approve_purchase,
     purchase_requisition_ref: u.purchase_requisition_ref,
-    kalite_control: u.kalite_control,
+    can_quality_control: u.can_quality_control,
     module_permissions: parseJsonArr(u.module_permissions, ['*']),
-    warehouse_yetkileri: parseJsonArr(u.warehouse_yetkileri, ['*']),
+    warehouse_permissions: parseJsonArr(u.warehouse_permissions, ['*']),
     yetkiler,
     firma_yetkileri,
   };
 }
 
-async function kullaniciYukle(kod) {
+async function loadUser(kod) {
   if (!kod) return null;
   const r = await pool.query(
-    `SELECT k.*, g.satinalma_onay, g.purchase_requisition_ref, g.kalite_control,
-            g.module_permissions, g.warehouse_yetkileri, g.group_name
+    `SELECT k.*, g.can_approve_purchase, g.purchase_requisition_ref, g.can_quality_control,
+            g.module_permissions, g.warehouse_permissions, g.group_name
      FROM users k
      LEFT JOIN user_groups g ON g.group_code = k.group_code AND g.is_active = TRUE
      WHERE k.user_code = $1 OR k.username = $1`,
@@ -106,7 +106,7 @@ router.post('/login', async (req, res, next) => {
     if (!user_code) {
       return res.status(400).json({ hata: 'username (veya user_code) zorunlu.' });
     }
-    const u = await kullaniciYukle(user_code);
+    const u = await loadUser(user_code);
     if (!u || u.is_active === false) {
       return res.status(401).json({
         hata: useLdap
@@ -120,8 +120,8 @@ router.post('/login', async (req, res, next) => {
       if (!ldap.ok) {
         return res.status(401).json({ hata: ldap.hata || 'LDAP giriş başarısız.' });
       }
-    } else if (u.parola_hash) {
-      if (!parola || !dogrulaParola(parola, u.parola_hash)) {
+    } else if (u.password_hash) {
+      if (!parola || !dogrulaParola(parola, u.password_hash)) {
         return res.status(401).json({ hata: 'Parola hatalı.' });
       }
     } else {
@@ -135,12 +135,12 @@ router.post('/login', async (req, res, next) => {
     const access_token = signAccess({ user_code: u.user_code, id: u.id }, ttl);
     const refresh_token = signRefresh({ user_code: u.user_code, id: u.id });
     await pool.query(
-      `UPDATE users SET son_giris_at = NOW(), refresh_token_hash = $2 WHERE id = $1`,
+      `UPDATE users SET last_login_at = NOW(), refresh_token_hash = $2 WHERE id = $1`,
       [u.id, hashToken(refresh_token)]
     );
 
     res.json({
-      ...(await kullaniciPayload(u)),
+      ...(await userPayload(u)),
       access_token,
       refresh_token,
       token_tipi: 'Bearer',
@@ -165,7 +165,7 @@ router.post('/refresh', async (req, res, next) => {
       return res.status(401).json({ hata: 'Refresh token geçersiz.' });
     }
     if (payload.typ !== 'refresh') return res.status(401).json({ hata: 'Token tipi hatalı.' });
-    const u = await kullaniciYukle(payload.user_code);
+    const u = await loadUser(payload.user_code);
     if (!u || u.refresh_token_hash !== hashToken(refresh_token)) {
       return res.status(401).json({ hata: 'Refresh token eşleşmedi.' });
     }
@@ -211,9 +211,9 @@ router.get('/me', async (req, res, next) => {
       ? verifyToken(bearer).user_code
       : (req.get('x-kullanici-kodu') || null);
     if (!kod) return res.status(401).json({ hata: 'Kimlik yok.' });
-    const u = await kullaniciYukle(kod);
+    const u = await loadUser(kod);
     if (!u) return res.status(401).json({ hata: 'Kullanıcı yok.' });
-    res.json(await kullaniciPayload(u));
+    res.json(await userPayload(u));
   } catch (err) {
     next(err);
   }
@@ -227,10 +227,10 @@ router.post('/parola-ayarla', async (req, res, next) => {
     }
     const r = await pool.query(`SELECT * FROM users WHERE user_code=$1`, [user_code]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kullanıcı yok.' });
-    if (r.rows[0].parola_hash && !dogrulaParola(parola || '', r.rows[0].parola_hash)) {
+    if (r.rows[0].password_hash && !dogrulaParola(parola || '', r.rows[0].password_hash)) {
       return res.status(403).json({ hata: 'Mevcut parola hatalı.' });
     }
-    await pool.query(`UPDATE users SET parola_hash=$1 WHERE id=$2`, [hashParola(yeni_parola), r.rows[0].id]);
+    await pool.query(`UPDATE users SET password_hash=$1 WHERE id=$2`, [hashParola(yeni_parola), r.rows[0].id]);
     res.json({ ok: true, user_code });
   } catch (err) {
     next(err);

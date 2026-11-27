@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
 /** GET /finans-country/paketler — UI id = country_code */
 router.get('/paketler', async (req, res, next) => {
@@ -101,7 +101,7 @@ router.delete('/paketler/:kod', async (req, res, next) => {
       [String(req.params.kod).toUpperCase()],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Ülke paketi bulunamadı.' });
-    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
+    res.json({ is_deleted: false, pasife_alindi: true, ...r.rows[0] });
   } catch (err) {
     next(err);
   }
@@ -110,7 +110,7 @@ router.delete('/paketler/:kod', async (req, res, next) => {
 /** Aktif firmanın muhasebe ülkesi + geçici işlem bağlamı yardımcıları */
 router.get('/is_active', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     let firma = null;
     if (firmaId) {
       const f = await pool.query(

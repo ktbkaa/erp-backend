@@ -3,7 +3,7 @@
  * İstek başlığı: X-Firma-Id (veya ?company_id=)
  */
 
-function firmaIdFromReq(req) {
+function companyIdFromReq(req) {
   if (!req) return null;
   const raw = req.headers?.['x-firma-id'] ?? req.query?.company_id ?? req.firmaId;
   if (raw == null || raw === '' || raw === 'null' || raw === 'undefined') return null;
@@ -18,21 +18,21 @@ function firmaIdFromReq(req) {
  * @param {any[]} params mevcut parametre dizisi (mutate edilir)
  * @returns {string} " AND expr = $n" veya ""
  */
-function andFirma(expr, firmaId, params) {
+function andCompany(expr, firmaId, params) {
   if (!firmaId) return '';
   params.push(firmaId);
   return ` AND ${expr} = $${params.length}`;
 }
 
 /** plants üzerinden firma (warehouses, iş merkezleri vb.) */
-function andFirmaViaIsYeri(isYeriExpr, firmaId, params) {
+function andCompanyViaPlant(isYeriExpr, firmaId, params) {
   if (!firmaId) return '';
   params.push(firmaId);
   return ` AND ${isYeriExpr} IN (SELECT id FROM plants WHERE company_id = $${params.length})`;
 }
 
 /** Stok: company_id VEYA item_plants→plants VEYA item_company_params (assert ile aynı) */
-function andStokFirma(stokAlias, firmaId, params) {
+function andItemCompany(stokAlias, firmaId, params) {
   if (!firmaId) return '';
   params.push(firmaId);
   const p = `$${params.length}`;
@@ -53,7 +53,7 @@ function andStokFirma(stokAlias, firmaId, params) {
 }
 
 /** Cari: company_id veya is_yeri bağından */
-function andCariFirma(cariAlias, firmaId, params) {
+function andPartnerCompany(cariAlias, firmaId, params) {
   if (!firmaId) return '';
   params.push(firmaId);
   const p = `$${params.length}`;
@@ -63,7 +63,7 @@ function andCariFirma(cariAlias, firmaId, params) {
   )`;
 }
 
-async function assertFirmaKayit(clientOrPool, table, id, firmaId, { firmaCol = 'company_id', isYeriCol = null } = {}) {
+async function assertCompanyRecord(clientOrPool, table, id, firmaId, { firmaCol = 'company_id', isYeriCol = null } = {}) {
   if (!firmaId || !id) return true;
   let sql = `SELECT 1 FROM ${table} WHERE id = $1`;
   const params = [id];
@@ -82,7 +82,7 @@ async function assertFirmaKayit(clientOrPool, table, id, firmaId, { firmaCol = '
  * Stok GET/PUT: liste filtresi (andStokFirma) ile aynı kapsam.
  * items.company_id VEYA item_plants→plants VEYA item_company_params.
  */
-async function assertStokFirmaKayit(clientOrPool, itemId, firmaId) {
+async function assertItemCompanyRecord(clientOrPool, itemId, firmaId) {
   if (!firmaId || !itemId) return true;
   const r = await clientOrPool.query(
     `SELECT 1 FROM items s
@@ -108,7 +108,7 @@ async function assertStokFirmaKayit(clientOrPool, itemId, firmaId) {
 }
 
 /** Cari: company_id veya plant üzerinden firma (liste ile uyumlu). */
-async function assertCariFirmaKayit(clientOrPool, partnerId, firmaId) {
+async function assertPartnerCompanyRecord(clientOrPool, partnerId, firmaId) {
   if (!firmaId || !partnerId) return true;
   const r = await clientOrPool.query(
     `SELECT 1 FROM partners c
@@ -124,12 +124,12 @@ async function assertCariFirmaKayit(clientOrPool, partnerId, firmaId) {
 }
 
 module.exports = {
-  firmaIdFromReq,
-  andFirma,
-  andFirmaViaIsYeri,
-  andStokFirma,
-  andCariFirma,
-  assertFirmaKayit,
-  assertStokFirmaKayit,
-  assertCariFirmaKayit,
+  companyIdFromReq,
+  andCompany,
+  andCompanyViaPlant,
+  andItemCompany,
+  andPartnerCompany,
+  assertCompanyRecord,
+  assertItemCompanyRecord,
+  assertPartnerCompanyRecord,
 };

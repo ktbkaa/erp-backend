@@ -41,10 +41,10 @@ router.post('/', async (req, res) => {
     }
     const r = await pool.query(
       `INSERT INTO document_types (
-         document_type_code, document_type_name, module, stock_etkisi, is_active
+         document_type_code, document_type_name, module, affects_stock, is_active
        ) VALUES ($1,$2,$3,COALESCE($4,FALSE),COALESCE($5,TRUE))
        RETURNING *`,
-      [b.document_type_code, b.document_type_name, b.module || null, b.stock_etkisi, b.is_active],
+      [b.document_type_code, b.document_type_name, b.module || null, b.affects_stock, b.is_active],
     );
     res.status(201).json(r.rows[0]);
   } catch (err) {
@@ -59,10 +59,10 @@ router.put('/:id', async (req, res) => {
       `UPDATE document_types SET
          document_type_name = COALESCE($2, document_type_name),
          module = COALESCE($3, module),
-         stock_etkisi = COALESCE($4, stock_etkisi),
+         affects_stock = COALESCE($4, affects_stock),
          is_active = COALESCE($5, is_active)
        WHERE id=$1 RETURNING *`,
-      [req.params.id, b.document_type_name, b.module, b.stock_etkisi, b.is_active],
+      [req.params.id, b.document_type_name, b.module, b.affects_stock, b.is_active],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Belge tipi bulunamadı.' });
     res.json(r.rows[0]);
@@ -78,7 +78,7 @@ router.delete('/:id', async (req, res) => {
       [req.params.id],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Belge tipi bulunamadı.' });
-    res.json({ silindi: false, pasife_alindi: true, ...r.rows[0] });
+    res.json({ is_deleted: false, pasife_alindi: true, ...r.rows[0] });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

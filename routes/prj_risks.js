@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { runAutomation } = require('../src/services/prjAutomationService');
 
@@ -42,7 +42,7 @@ router.post('/', async (req, res, next) => {
     const row = await withTransaction(pool, async (client) => {
       const p = await client.query(`SELECT company_id FROM projects WHERE id=$1`, [project_id]);
       if (!p.rows[0]) throw Object.assign(new Error('Proje bulunamadı.'), { status: 404 });
-      const code = req.body.risk_code || (await sonrakiKod(client, 'PRJ_RISK'));
+      const code = req.body.risk_code || (await nextSequenceCode(client, 'PRJ_RISK'));
       const score = calcScore(probability || 'Medium', impact || 'Medium');
       const ins = await client.query(
         `

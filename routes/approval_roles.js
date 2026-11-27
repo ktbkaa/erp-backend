@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { sonrakiKod } = require('../src/utils/kodUretici');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function rolGetir(id) {
+async function getRole(id) {
   const r = await pool.query(
     `
     SELECT r.*,
@@ -13,7 +13,7 @@ async function rolGetir(id) {
            f.company_code, f.company_name,
            iy.plant_code, iy.plant_name
     FROM approval_roles r
-    LEFT JOIN users k ON k.id = r.kisi_id
+    LEFT JOIN users k ON k.id = r.user_id
     LEFT JOIN companies f ON f.id = r.company_id
     LEFT JOIN plants iy ON iy.id = r.plant_id
     WHERE r.id = $1
@@ -25,7 +25,7 @@ async function rolGetir(id) {
 
 router.get('/', async (req, res) => {
   try {
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     const params = [];
     const where = [];
     if (req.query.is_active === 'true') where.push('r.is_active = TRUE');
@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
     `;
     const liste = await pool.query(sql, params);
     const out = [];
-    for (const row of liste.rows) out.push(await rolGetir(row.id));
+    for (const row of liste.rows) out.push(await getRole(row.id));
     res.json(out);
   } catch (err) {
     res.status(500).json({ hata: err.message });
@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const row = await rolGetir(req.params.id);
+    const row = await getRole(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Rol kaydı bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -63,22 +63,22 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    let { role_code, role_name, kisi_id, company_id, plant_id, description, is_active } = req.body;
+    let { role_code, role_name, user_id, company_id, plant_id, description, is_active } = req.body;
     if (!role_name) return res.status(400).json({ hata: 'Onay role adı zorunlu.' });
-    if (!kisi_id) return res.status(400).json({ hata: 'Kişi seçimi zorunlu.' });
+    if (!user_id) return res.status(400).json({ hata: 'Kişi seçimi zorunlu.' });
     if (!role_code) {
-      try { role_code = await sonrakiKod(pool, 'ONAY_ROL'); }
+      try { role_code = await nextSequenceCode(pool, 'ONAY_ROL'); }
       catch (_) { role_code = `NL${Date.now().toString().slice(-5)}`; }
     }
     const ins = await pool.query(
       `
-      INSERT INTO approval_roles (role_code, role_name, kisi_id, company_id, plant_id, description, is_active)
+      INSERT INTO approval_roles (role_code, role_name, user_id, company_id, plant_id, description, is_active)
       VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,TRUE))
       RETURNING id
       `,
-      [role_code, role_name, kisi_id, company_id || null, plant_id || null, description || null, is_active],
+      [role_code, role_name, user_id, company_id || null, plant_id || null, description || null, is_active],
     );
-    res.status(201).json(await rolGetir(ins.rows[0].id));
+    res.status(201).json(await getRole(ins.rows[0].id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -86,22 +86,22 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { role_name, kisi_id, company_id, plant_id, description, is_active } = req.body;
+    const { role_name, user_id, company_id, plant_id, description, is_active } = req.body;
     const r = await pool.query(
       `
       UPDATE approval_roles SET
         role_name = COALESCE($2, role_name),
-        kisi_id = COALESCE($3, kisi_id),
+        user_id = COALESCE($3, user_id),
         company_id = COALESCE($4, company_id),
         plant_id = COALESCE($5, plant_id),
         description = COALESCE($6, description),
         is_active = COALESCE($7, is_active)
       WHERE id=$1 RETURNING id
       `,
-      [req.params.id, role_name || null, kisi_id || null, company_id, plant_id, description, is_active],
+      [req.params.id, role_name || null, user_id || null, company_id, plant_id, description, is_active],
     );
     if (!r.rows[0]) return res.status(404).json({ hata: 'Rol kaydı bulunamadı.' });
-    res.json(await rolGetir(req.params.id));
+    res.json(await getRole(req.params.id));
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }
@@ -111,7 +111,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const r = await pool.query('DELETE FROM approval_roles WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Rol kaydı bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
   }

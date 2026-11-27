@@ -24,7 +24,7 @@ function round6(n) {
  * @param {number} [p.excise_rate]
  * @param {number} [p.exchange_rate]  belge PB → yerel PB
  */
-function satirHesapla({
+function calculateLine({
   quantity,
   unit_price,
   discount_rate = 0,
@@ -55,10 +55,10 @@ function satirHesapla({
   const brut = m * birimNet;
   const discount_amount = round2(brut * (isk1 / 100));
   const after1 = brut - discount_amount;
-  const discount_tutari2 = round2(after1 * (isk2 / 100));
-  const after2 = after1 - discount_tutari2;
-  const discount_tutari3 = round2(after2 * (isk3 / 100));
-  const goods_service_amount = round2(after2 - discount_tutari3);
+  const discount_amount_2 = round2(after1 * (isk2 / 100));
+  const after2 = after1 - discount_amount_2;
+  const discount_amount_3 = round2(after2 * (isk3 / 100));
+  const goods_service_amount = round2(after2 - discount_amount_3);
 
   const excise_amount = round2(goods_service_amount * (otvOran / 100));
   const kdv_matrah = goods_service_amount + excise_amount;
@@ -71,8 +71,8 @@ function satirHesapla({
     discount_rate_2: isk2,
     discount_rate_3: isk3,
     discount_amount,
-    discount_tutari2,
-    discount_tutari3,
+    discount_amount_2,
+    discount_amount_3,
     vat_rate: kdvOran,
     vat_mode: dahil ? 'Dahil' : 'Haric',
     vat_amount,
@@ -100,8 +100,8 @@ function belgelerToplam(satirlar) {
   for (const s of satirlar) {
     mal += Number(s.goods_service_amount ?? s.amount_ex_tax) || 0;
     isk += (Number(s.discount_amount) || 0)
-      + (Number(s.discount_tutari2) || 0)
-      + (Number(s.discount_tutari3) || 0);
+      + (Number(s.discount_amount_2) || 0)
+      + (Number(s.discount_amount_3) || 0);
     kdv += Number(s.vat_amount) || 0;
     tev += Number(s.withholding_amount) || 0;
     otv += Number(s.excise_amount) || 0;
@@ -121,4 +121,4 @@ function belgelerToplam(satirlar) {
   };
 }
 
-module.exports = { satirHesapla, belgelerToplam, round2 };
+module.exports = { calculateLine, belgelerToplam, round2 };

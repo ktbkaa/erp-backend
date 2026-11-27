@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function planGetir(id) {
+async function getPlan(id) {
     const r = await pool.query(
         `
         SELECT up.*,
@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
     try {
         const params = [];
         const where = [];
-        const firmaId = firmaIdFromReq(req);
+        const firmaId = companyIdFromReq(req);
         if (firmaId) {
             params.push(firmaId);
             where.push(`up.company_id = $${params.length}`);
@@ -55,7 +55,7 @@ router.get('/', async (req, res) => {
         const liste = await pool.query(sql, params);
         const result = [];
         for (const row of liste.rows) {
-            result.push(await planGetir(row.id));
+            result.push(await getPlan(row.id));
         }
         res.json(result);
     } catch (err) {
@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        const row = await planGetir(req.params.id);
+        const row = await getPlan(req.params.id);
         if (!row) return res.status(404).json({ hata: 'Üretim planı bulunamadı.' });
         res.json(row);
     } catch (err) {
@@ -77,31 +77,31 @@ router.post('/', async (req, res) => {
     try {
         const {
             plan_no, company_id, item_id, quantity, uom_code,
-            planlanan_start, delivery_date, is_started, fixed,
-            status, malzeme, mrp_result_id, description,
+            planned_start, delivery_date, is_started, fixed,
+            status, material: malzeme, mrp_result_id, description,
         } = req.body || {};
         if (!item_id || quantity == null || Number(quantity) <= 0) {
             return res.status(400).json({ hata: 'item_id ve pozitif quantity zorunlu.' });
         }
         const id = await withTransaction(pool, async (client) => {
-            const no = plan_no || (await sonrakiBelgeNo(client, 'URETIM_PLAN'));
+            const no = plan_no || (await nextDocumentNo(client, 'URETIM_PLAN'));
             const r = await client.query(
                 `
                 INSERT INTO production_plans
                     (plan_no, company_id, item_id, quantity, uom_code,
-                     planlanan_start, delivery_date, is_started, fixed,
-                     status, malzeme, mrp_result_id, description)
+                     planned_start, delivery_date, is_started, fixed,
+                     status, material, mrp_result_id, description)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8,FALSE),COALESCE($9,FALSE),
                         COALESCE($10,'Acik'),COALESCE($11,FALSE),$12,$13)
                 RETURNING id
                 `,
                 [
                     no,
-                    company_id || firmaIdFromReq(req) || null,
+                    company_id || companyIdFromReq(req) || null,
                     item_id,
                     quantity,
                     uom_code || null,
-                    planlanan_start || null,
+                    planned_start || null,
                     delivery_date || null,
                     typeof is_started === 'boolean' ? is_started : null,
                     typeof fixed === 'boolean' ? fixed : null,
@@ -113,7 +113,7 @@ router.post('/', async (req, res) => {
             );
             return r.rows[0].id;
         });
-        res.status(201).json(await planGetir(id));
+        res.status(201).json(await getPlan(id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -123,8 +123,8 @@ router.put('/:id', async (req, res) => {
     try {
         const fields = [
             'company_id', 'item_id', 'quantity', 'uom_code',
-            'planlanan_start', 'delivery_date', 'is_started', 'fixed',
-            'status', 'malzeme', 'mrp_result_id', 'description',
+            'planned_start', 'delivery_date', 'is_started', 'fixed',
+            'status', 'material', 'mrp_result_id', 'description',
         ];
         const sets = [];
         const params = [req.params.id];
@@ -140,7 +140,7 @@ router.put('/:id', async (req, res) => {
             params
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Üretim planı bulunamadı.' });
-        res.json(await planGetir(req.params.id));
+        res.json(await getPlan(req.params.id));
     } catch (err) {
         res.status(400).json({ hata: err.message });
     }
@@ -153,7 +153,7 @@ router.delete('/:id', async (req, res) => {
             [req.params.id]
         );
         if (!r.rows[0]) return res.status(404).json({ hata: 'Üretim planı bulunamadı.' });
-        res.json({ silindi: true, id: Number(req.params.id) });
+        res.json({ is_deleted: true, id: Number(req.params.id) });
     } catch (err) {
         res.status(500).json({ hata: err.message });
     }
@@ -232,12 +232,12 @@ router.post('/:id/cevir', async (req, res) => {
                 throw new Error('Hammadde/mamul depo bulunamadı.');
             }
 
-            const no = await sonrakiBelgeNo(client, 'URETIM_EMRI');
+            const no = await nextDocumentNo(client, 'URETIM_EMRI');
             const emir = await client.query(
                 `
                 INSERT INTO production_orders
                     (order_no, item_id, product_bom_id, route_id, plant_id,
-                     component_warehouse_id, fg_warehouse_id, planlanan_quantity, status, planli_kesin,
+                     component_warehouse_id, fg_warehouse_id, planned_quantity, status, planned_firm,
                      source_document_type, source_document_id)
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Acik','Planli','UretimPlan',$9)
                 RETURNING id, order_no
@@ -258,7 +258,7 @@ router.post('/:id/cevir', async (req, res) => {
 
             return emir.rows[0];
         });
-        const plan = await planGetir(planId);
+        const plan = await getPlan(planId);
         res.status(201).json({ ...plan, olusan_emir: result });
     } catch (err) {
         res.status(400).json({ hata: err.message });

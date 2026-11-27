@@ -7,14 +7,14 @@ const { parametreAl } = require('../utils/yetki');
 async function epostaKuyrugaAl(client, {
     kaynakTipi,
     kaynakId,
-    alici,
-    konu,
-    govde,
+    recipient: alici,
+    subject: konu,
+    body_text: govde,
 }) {
     if (!alici) throw new Error('E-posta alıcısı zorunlu.');
     const r = await client.query(
         `
-        INSERT INTO email_dispatches (source_type, source_id, alici, konu, govde, status)
+        INSERT INTO email_dispatches (source_type, source_id, recipient, subject, body_text, status)
         VALUES ($1,$2,$3,$4,$5,'Bekliyor')
         RETURNING *
         `,
@@ -43,16 +43,16 @@ async function gonderBir(clientOrPool, kayitId) {
     if (kayit.status === 'Gonderildi') return kayit;
 
     const smtp = await smtpAyarlari(clientOrPool);
-    const deneme = Number(kayit.deneme_sayisi || 0) + 1;
+    const deneme = Number(kayit.attempt_count || 0) + 1;
 
     if (!smtp.host) {
         await clientOrPool.query(
             `
             UPDATE email_dispatches SET
                 status='Basarisiz',
-                deneme_sayisi=$2,
-                son_hata=$3,
-                gonderim_date=CURRENT_TIMESTAMP
+                attempt_count=$2,
+                last_error=$3,
+                sent_date=CURRENT_TIMESTAMP
             WHERE id=$1
             `,
             [
@@ -89,18 +89,18 @@ async function gonderBir(clientOrPool, kayitId) {
         });
         await transporter.sendMail({
             from: smtp.from,
-            to: kayit.alici,
-            subject: kayit.konu,
-            text: kayit.govde || '',
+            to: kayit.recipient,
+            subject: kayit.subject,
+            text: kayit.body_text || '',
         });
 
         await clientOrPool.query(
             `
             UPDATE email_dispatches SET
                 status='Gonderildi',
-                deneme_sayisi=$2,
-                son_hata=NULL,
-                gonderim_date=CURRENT_TIMESTAMP
+                attempt_count=$2,
+                last_error=NULL,
+                sent_date=CURRENT_TIMESTAMP
             WHERE id=$1
             `,
             [kayitId, deneme]
@@ -110,9 +110,9 @@ async function gonderBir(clientOrPool, kayitId) {
             `
             UPDATE email_dispatches SET
                 status='Basarisiz',
-                deneme_sayisi=$2,
-                son_hata=$3,
-                gonderim_date=CURRENT_TIMESTAMP
+                attempt_count=$2,
+                last_error=$3,
+                sent_date=CURRENT_TIMESTAMP
             WHERE id=$1
             `,
             [kayitId, deneme, String(err.message || err).slice(0, 2000)]
@@ -125,7 +125,7 @@ async function gonderBir(clientOrPool, kayitId) {
 
 async function yenidenDene(clientOrPool, kayitId) {
     await clientOrPool.query(
-        `UPDATE email_dispatches SET status='Bekliyor', son_hata=NULL WHERE id=$1 AND status='Basarisiz'`,
+        `UPDATE email_dispatches SET status='Bekliyor', last_error=NULL WHERE id=$1 AND status='Basarisiz'`,
         [kayitId]
     );
     return gonderBir(clientOrPool, kayitId);

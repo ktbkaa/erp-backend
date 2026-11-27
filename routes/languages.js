@@ -1,11 +1,11 @@
-const { createTanimRouter } = require('../src/utils/tanimCrud');
+const { createDefinitionRouter } = require('../src/utils/tanimCrud');
 
-module.exports = createTanimRouter({
+module.exports = createDefinitionRouter({
   table: 'languages',
-  codeCol: 'dil_code',
-  nameCol: 'dil_name',
+  codeCol: 'language_code',
+  nameCol: 'language_name',
   seriKodu: 'DIL',
   extraCols: [],
-  orderBy: 'dil_code',
+  orderBy: 'language_code',
   notFound: 'Dil bulunamadı.',
 });

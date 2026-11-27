@@ -16,26 +16,26 @@ router.get('/', async (req, res, next) => {
       params.push(req.query.tarih);
       where.push(`rate_date = $${params.length}`);
     }
-    if (req.query.source_pb) {
-      params.push(req.query.source_pb);
-      where.push(`source_pb = $${params.length}`);
+    if (req.query.source_currency) {
+      params.push(req.query.source_currency);
+      where.push(`source_currency = $${params.length}`);
     }
-    if (req.query.target_pb) {
-      params.push(req.query.target_pb);
-      where.push(`target_pb = $${params.length}`);
+    if (req.query.target_currency) {
+      params.push(req.query.target_currency);
+      where.push(`target_currency = $${params.length}`);
     }
     if (req.query.son === 'true') {
       // her çift için en son tarih
       const r = await pool.query(
-        `SELECT DISTINCT ON (source_pb, target_pb) *
+        `SELECT DISTINCT ON (source_currency, target_currency) *
          FROM exchange_rates
-         ORDER BY source_pb, target_pb, rate_date DESC`
+         ORDER BY source_currency, target_currency, rate_date DESC`
       );
       return res.json(r.rows);
     }
     const r = await pool.query(
       `SELECT * FROM exchange_rates WHERE ${where.join(' AND ')}
-       ORDER BY rate_date DESC, source_pb LIMIT 500`,
+       ORDER BY rate_date DESC, source_currency LIMIT 500`,
       params
     );
     res.json(r.rows);
@@ -44,21 +44,21 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/** GET /doviz-kurlari/cevir?quantity=&source_pb=&target_pb=&tarih=&type=satis|alis */
+/** GET /doviz-kurlari/cevir?quantity=&source_currency=&target_currency=&tarih=&type=satis|alis */
 router.get('/cevir', async (req, res, next) => {
   try {
     const quantity = num(req.query.quantity);
-    const source = trimOrNull(req.query.source_pb);
-    const hedef = trimOrNull(req.query.target_pb);
+    const source = trimOrNull(req.query.source_currency);
+    const hedef = trimOrNull(req.query.target_currency);
     if (!quantity || !source || !hedef) {
-      return res.status(400).json({ hata: 'quantity, source_pb, target_pb zorunlu.' });
+      return res.status(400).json({ hata: 'quantity, source_currency, target_currency zorunlu.' });
     }
     if (source === hedef) {
-      return res.json({ quantity, result: quantity, exchange_rate: 1, source_pb: source, target_pb: hedef });
+      return res.json({ quantity, result: quantity, exchange_rate: 1, source_currency: source, target_currency: hedef });
     }
     const type = String(req.query.type || 'satis').toLowerCase() === 'alis' ? 'buy_rate' : 'sell_rate';
     const params = [source, hedef];
-    let sql = `SELECT * FROM exchange_rates WHERE source_pb=$1 AND target_pb=$2`;
+    let sql = `SELECT * FROM exchange_rates WHERE source_currency=$1 AND target_currency=$2`;
     if (req.query.tarih) {
       params.push(req.query.tarih);
       sql += ` AND rate_date <= $${params.length}`;
@@ -68,7 +68,7 @@ router.get('/cevir', async (req, res, next) => {
     // ters exchange_rate dene
     if (!r.rows[0]) {
       const rev = await pool.query(
-        `SELECT * FROM exchange_rates WHERE source_pb=$1 AND target_pb=$2
+        `SELECT * FROM exchange_rates WHERE source_currency=$1 AND target_currency=$2
          ORDER BY rate_date DESC LIMIT 1`,
         [hedef, source]
       );
@@ -77,7 +77,7 @@ router.get('/cevir', async (req, res, next) => {
         const result = quantity / k;
         return res.json({
           quantity, result, exchange_rate: 1 / k, ters: true,
-          source_pb: source, target_pb: hedef, kur_kaydi: rev.rows[0],
+          source_currency: source, target_currency: hedef, kur_kaydi: rev.rows[0],
         });
       }
       return res.status(404).json({ hata: 'Kur bulunamadı.' });
@@ -85,7 +85,7 @@ router.get('/cevir', async (req, res, next) => {
     const exchange_rate = Number(r.rows[0][type]);
     res.json({
       quantity, result: quantity * exchange_rate, exchange_rate,
-      source_pb: source, target_pb: hedef, kur_kaydi: r.rows[0],
+      source_currency: source, target_currency: hedef, kur_kaydi: r.rows[0],
     });
   } catch (err) {
     next(err);
@@ -107,21 +107,21 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const source_pb = trimOrNull(req.body.source_pb);
-    const target_pb = trimOrNull(req.body.target_pb);
+    const source_currency = trimOrNull(req.body.source_currency);
+    const target_currency = trimOrNull(req.body.target_currency);
     const alis = num(req.body.buy_rate);
     const satis = num(req.body.sell_rate);
-    if (!source_pb || !target_pb || !alis || !satis) {
-      return res.status(400).json({ hata: 'source_pb, target_pb, buy_rate, sell_rate zorunlu.' });
+    if (!source_currency || !target_currency || !alis || !satis) {
+      return res.status(400).json({ hata: 'source_currency, target_currency, buy_rate, sell_rate zorunlu.' });
     }
-    if (source_pb === target_pb) {
+    if (source_currency === target_currency) {
       return res.status(400).json({ hata: 'Kaynak ve hedef para birimi farklı olmalı.' });
     }
     const ins = await pool.query(
       `INSERT INTO exchange_rates
-          (rate_date, source_pb, target_pb, buy_rate, sell_rate, effective_buy_rate, effective_sell_rate, source)
+          (rate_date, source_currency, target_currency, buy_rate, sell_rate, effective_buy_rate, effective_sell_rate, source)
        VALUES (COALESCE($1::date, CURRENT_DATE),$2,$3,$4,$5,$6,$7,COALESCE($8,'Manuel'))
-       ON CONFLICT (rate_date, source_pb, target_pb) DO UPDATE SET
+       ON CONFLICT (rate_date, source_currency, target_currency) DO UPDATE SET
          buy_rate = EXCLUDED.buy_rate,
          sell_rate = EXCLUDED.sell_rate,
          effective_buy_rate = EXCLUDED.effective_buy_rate,
@@ -130,7 +130,7 @@ router.post('/', async (req, res, next) => {
        RETURNING *`,
       [
         req.body.rate_date || null,
-        source_pb, target_pb, alis, satis,
+        source_currency, target_currency, alis, satis,
         num(req.body.effective_buy_rate), num(req.body.effective_sell_rate),
         trimOrNull(req.body.source),
       ]
@@ -171,7 +171,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query('DELETE FROM exchange_rates WHERE id=$1 RETURNING id', [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kur bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

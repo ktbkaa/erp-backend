@@ -1,8 +1,8 @@
-const { sonrakiBelgeNo } = require('../utils/belgeNo');
-const { depoBakiyeListesi } = require('./stokHareketService');
+const { nextDocumentNo } = require('../utils/belgeNo');
+const { listWarehouseBalances } = require('./stokHareketService');
 
 async function kullanilabilirNet(pool, stokId, depoId = null) {
-  const bakiyeler = await depoBakiyeListesi(pool, { stokId, stokStatu: 'Kullanilabilir', depoId });
+  const bakiyeler = await listWarehouseBalances(pool, { stokId, stokStatu: 'Kullanilabilir', depoId });
   const bakiye = bakiyeler.reduce((s, b) => s + Number(b.bakiye), 0);
   const params = [stokId];
   let extra = '';
@@ -19,7 +19,7 @@ async function kullanilabilirNet(pool, stokId, depoId = null) {
   return { bakiye, rezerve, kullanilabilir: bakiye - rezerve };
 }
 
-async function rezervasyonSatirOlustur(client, {
+async function createReservationLine(client, {
   siparisId,
   siparisDetayId,
   itemId,
@@ -43,16 +43,16 @@ async function rezervasyonSatirOlustur(client, {
       { status: 409, detay: net }
     );
   }
-  const no = await sonrakiBelgeNo(client, 'REZERVASYON');
+  const no = await nextDocumentNo(client, 'REZERVASYON');
   const r = await client.query(
     `INSERT INTO item_reservations
-      (rezervasyon_no, sales_order_id, sales_order_line_id, item_id, warehouse_id, quantity, remaining_quantity, status)
+      (reservation_no, sales_order_id, sales_order_line_id, item_id, warehouse_id, quantity, remaining_quantity, status)
      VALUES ($1,$2,$3,$4,$5,$6,$6,'Aktif') RETURNING *`,
     [no, siparisId || null, siparisDetayId || null, itemId, depoId, qty]
   );
   if (siparisDetayId) {
     await client.query(
-      `UPDATE sales_order_lines SET rezerve_quantity = COALESCE(rezerve_quantity,0) + $2 WHERE id=$1`,
+      `UPDATE sales_order_lines SET reserved_quantity = COALESCE(reserved_quantity,0) + $2 WHERE id=$1`,
       [siparisDetayId, qty]
     );
   }
@@ -81,7 +81,7 @@ async function satirlariRezerveEt(client, siparisId, {
       sales_order_line_id: s.id,
       item_id: s.item_id,
       warehouse_id: depoId,
-      quantity: Number(s.quantity) - Number(s.rezerve_quantity || 0) - Number(s.shipped_quantity || 0),
+      quantity: Number(s.quantity) - Number(s.reserved_quantity || 0) - Number(s.shipped_quantity || 0),
     }));
   }
 
@@ -100,7 +100,7 @@ async function satirlariRezerveEt(client, siparisId, {
         throw Object.assign(new Error(`Sipariş satırı bulunamadı: ${lineId}`), { status: 400 });
       }
       itemId = Number(line.item_id);
-      maxKalan = Number(line.quantity) - Number(line.rezerve_quantity || 0) - Number(line.shipped_quantity || 0);
+      maxKalan = Number(line.quantity) - Number(line.reserved_quantity || 0) - Number(line.shipped_quantity || 0);
     }
     let qty = raw.quantity != null && raw.quantity !== '' ? Number(raw.quantity) : maxKalan;
     if (!Number.isFinite(qty) || qty <= 0) continue;
@@ -113,7 +113,7 @@ async function satirlariRezerveEt(client, siparisId, {
     const wh = raw.warehouse_id != null && raw.warehouse_id !== ''
       ? Number(raw.warehouse_id)
       : (depoId ? Number(depoId) : null);
-    const row = await rezervasyonSatirOlustur(client, {
+    const row = await createReservationLine(client, {
       siparisId,
       siparisDetayId: lineId,
       itemId,
@@ -131,11 +131,11 @@ async function satirlariRezerveEt(client, siparisId, {
 /**
  * Sipariş onayında / açıkça: satırları rezerve et.
  */
-async function siparisRezerveEt(client, siparisId, { depoId = null, satirlar = null } = {}) {
+async function reserveOrder(client, siparisId, { depoId = null, satirlar = null } = {}) {
   return satirlariRezerveEt(client, siparisId, { depoId, satirlar });
 }
 
-async function rezervasyonIptalTek(client, rezervasyonId) {
+async function cancelReservation(client, rezervasyonId) {
   const r = await client.query(
     `SELECT * FROM item_reservations WHERE id=$1 FOR UPDATE`,
     [rezervasyonId]
@@ -146,12 +146,12 @@ async function rezervasyonIptalTek(client, rezervasyonId) {
     throw Object.assign(new Error(`Yalnız Aktif rezervasyon iptal edilir (durum=${row.status}).`), { status: 409 });
   }
   await client.query(
-    `UPDATE item_reservations SET status='Iptal', remaining_quantity=0, iptal_date=NOW() WHERE id=$1`,
+    `UPDATE item_reservations SET status='Iptal', remaining_quantity=0, cancelled_date=NOW() WHERE id=$1`,
     [row.id]
   );
   if (row.sales_order_line_id) {
     await client.query(
-      `UPDATE sales_order_lines SET rezerve_quantity = GREATEST(0, COALESCE(rezerve_quantity,0) - $2) WHERE id=$1`,
+      `UPDATE sales_order_lines SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity,0) - $2) WHERE id=$1`,
       [row.sales_order_line_id, row.remaining_quantity]
     );
   }
@@ -175,26 +175,26 @@ async function rezervasyonTuket(client, { siparisDetayId, quantity }) {
       [r.id, yeniKalan, yeniKalan <= 1e-9 ? 'Tuketildi' : 'Aktif']
     );
     await client.query(
-      `UPDATE sales_order_lines SET rezerve_quantity = GREATEST(0, COALESCE(rezerve_quantity,0) - $2) WHERE id=$1`,
+      `UPDATE sales_order_lines SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity,0) - $2) WHERE id=$1`,
       [siparisDetayId, tuket]
     );
     kalan -= tuket;
   }
 }
 
-async function rezervasyonIptalSiparis(client, siparisId) {
+async function cancelOrderReservations(client, siparisId) {
   const rezler = await client.query(
     `SELECT * FROM item_reservations WHERE sales_order_id=$1 AND status='Aktif' FOR UPDATE`,
     [siparisId]
   );
   for (const r of rezler.rows) {
     await client.query(
-      `UPDATE item_reservations SET status='Iptal', remaining_quantity=0, iptal_date=NOW() WHERE id=$1`,
+      `UPDATE item_reservations SET status='Iptal', remaining_quantity=0, cancelled_date=NOW() WHERE id=$1`,
       [r.id]
     );
     if (r.sales_order_line_id) {
       await client.query(
-        `UPDATE sales_order_lines SET rezerve_quantity = GREATEST(0, COALESCE(rezerve_quantity,0) - $2) WHERE id=$1`,
+        `UPDATE sales_order_lines SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity,0) - $2) WHERE id=$1`,
         [r.sales_order_line_id, r.remaining_quantity]
       );
     }
@@ -203,10 +203,10 @@ async function rezervasyonIptalSiparis(client, siparisId) {
 
 module.exports = {
   kullanilabilirNet,
-  siparisRezerveEt,
+  reserveOrder,
   satirlariRezerveEt,
-  rezervasyonSatirOlustur,
+  createReservationLine,
   rezervasyonTuket,
-  rezervasyonIptalSiparis,
-  rezervasyonIptalTek,
+  cancelOrderReservations,
+  cancelReservation,
 };

@@ -4,10 +4,10 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const {
   satirlariRezerveEt,
-  rezervasyonIptalTek,
+  cancelReservation,
 } = require('../src/services/rezervasyonService');
 
-async function rezervasyonGetir(id) {
+async function getReservation(id) {
   const r = await pool.query(
     `
     SELECT r.*,
@@ -45,9 +45,9 @@ router.get('/', async (req, res, next) => {
       params.push(`%${String(req.query.item_code).trim()}%`);
       where.push(`s.item_code ILIKE $${params.length}`);
     }
-    if (req.query.rezervasyon_no) {
-      params.push(`%${String(req.query.rezervasyon_no).trim()}%`);
-      where.push(`r.rezervasyon_no ILIKE $${params.length}`);
+    if (req.query.reservation_no) {
+      params.push(`%${String(req.query.reservation_no).trim()}%`);
+      where.push(`r.reservation_no ILIKE $${params.length}`);
     }
     if (req.query.status) {
       params.push(req.query.status);
@@ -79,7 +79,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const row = await rezervasyonGetir(req.params.id);
+    const row = await getReservation(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Rezervasyon bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -109,7 +109,7 @@ router.post('/', async (req, res, next) => {
       satirlar,
     }));
     const detay = [];
-    for (const o of olusan) detay.push(await rezervasyonGetir(o.id));
+    for (const o of olusan) detay.push(await getReservation(o.id));
     res.status(201).json({
       id: detay[0]?.id,
       rezervasyonlar: detay,
@@ -126,9 +126,9 @@ router.post('/', async (req, res, next) => {
 router.post('/:id/iptal', async (req, res, next) => {
   try {
     await withTransaction(pool, async (client) => {
-      await rezervasyonIptalTek(client, Number(req.params.id));
+      await cancelReservation(client, Number(req.params.id));
     });
-    res.json(await rezervasyonGetir(req.params.id));
+    res.json(await getReservation(req.params.id));
   } catch (err) {
     next(err);
   }
@@ -137,9 +137,9 @@ router.post('/:id/iptal', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     await withTransaction(pool, async (client) => {
-      await rezervasyonIptalTek(client, Number(req.params.id));
+      await cancelReservation(client, Number(req.params.id));
     });
-    res.json({ silindi: true, id: Number(req.params.id), iptal: true });
+    res.json({ is_deleted: true, id: Number(req.params.id), iptal: true });
   } catch (err) {
     next(err);
   }

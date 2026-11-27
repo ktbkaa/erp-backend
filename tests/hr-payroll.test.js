@@ -54,7 +54,7 @@ describe('hrPayrollService', () => {
       params: { map: TR_2025_MAP, brackets: TR_2025_BRACKETS },
     });
     assert.equal(r.gross_wage, 26005.5);
-    assert.equal(r.sgk_employee, round2(26005.5 * 0.14));
+    assert.equal(r.social_security_employee, round2(26005.5 * 0.14));
     assert.equal(r.unemployment_employee, round2(26005.5 * 0.01));
     assert.ok(r.net_wage > 0);
     assert.ok(r.employer_cost > r.gross_wage);

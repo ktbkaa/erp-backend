@@ -1,9 +1,9 @@
-const { firmaIdFromReq } = require('../utils/firmaScope');
+const { companyIdFromReq } = require('../utils/firmaScope');
 
 /** req.firmaId = X-Firma-Id | ?company_id= */
-function firmaContext(req, res, next) {
-  req.firmaId = firmaIdFromReq(req);
+function companyContext(req, res, next) {
+  req.firmaId = companyIdFromReq(req);
   next();
 }
 
-module.exports = { firmaContext };
+module.exports = { companyContext };

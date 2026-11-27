@@ -129,7 +129,7 @@ async function fromProductionOrder(client, { order, amount = null, unitCost = nu
   if (!code) return null;
   let amt = amount;
   if (amt == null) {
-    const qty = Number(order.produced_quantity || order.planlanan_quantity || 0);
+    const qty = Number(order.produced_quantity || order.planned_quantity || 0);
     let uc = Number(unitCost || 0);
     if (!uc && order.item_id) {
       const m = await client.query(

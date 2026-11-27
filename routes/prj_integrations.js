@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiKod } = require('../src/utils/kodUretici');
+const { nextSequenceCode } = require('../src/utils/kodUretici');
 
 async function defaultStatusId(client, code = '10') {
   const r = await client.query(`SELECT id FROM prj_project_statuses WHERE status_code=$1`, [code]);
@@ -17,9 +17,9 @@ router.post('/from-opportunity/:id', async (req, res, next) => {
       const f = await client.query(`SELECT * FROM crm_opportunities WHERE id=$1`, [req.params.id]);
       if (!f.rows[0]) throw Object.assign(new Error('Fırsat bulunamadı.'), { status: 404 });
       const opp = f.rows[0];
-      const firmaId = firmaIdFromReq(req) || opp.company_id;
+      const firmaId = companyIdFromReq(req) || opp.company_id;
       if (!firmaId) throw Object.assign(new Error('company_id zorunlu.'), { status: 400 });
-      const code = await sonrakiKod(client, 'PRJ_PROJECT');
+      const code = await nextSequenceCode(client, 'PRJ_PROJECT');
       const statusId = await defaultStatusId(client);
       const type = await client.query(`SELECT id FROM prj_project_types WHERE type_code='MUSTERI'`);
       const ins = await client.query(
@@ -34,14 +34,14 @@ router.post('/from-opportunity/:id', async (req, res, next) => {
         [
           firmaId,
           code,
-          req.body.project_name || opp.firsat_name || opp.opportunity_name || `Fırsat ${opp.id}`,
+          req.body.project_name || opp.opportunity_name || opp.opportunity_name || `Fırsat ${opp.id}`,
           opp.aciklama || opp.description || null,
           type.rows[0]?.id || null,
           statusId,
           opp.partner_id || null,
-          opp.takip_by_id || opp.created_by_user_id || req.user?.id || null,
+          opp.followed_by_id || opp.created_by_user_id || req.user?.id || null,
           opp.para_birimi || opp.currency_code,
-          opp.beklenen_gelir || opp.expected_revenue,
+          opp.expected_revenue || opp.expected_revenue,
           opp.id,
           req.user?.id || null,
         ]
@@ -62,8 +62,8 @@ router.post('/from-sales-order/:id', async (req, res, next) => {
       const so = await client.query(`SELECT * FROM sales_orders WHERE id=$1`, [req.params.id]);
       if (!so.rows[0]) throw Object.assign(new Error('Satış siparişi bulunamadı.'), { status: 404 });
       const o = so.rows[0];
-      const firmaId = firmaIdFromReq(req) || o.company_id;
-      const code = req.body.project_code || (await sonrakiKod(client, 'PRJ_PROJECT'));
+      const firmaId = companyIdFromReq(req) || o.company_id;
+      const code = req.body.project_code || (await nextSequenceCode(client, 'PRJ_PROJECT'));
       const statusId = await defaultStatusId(client);
       const type = await client.query(`SELECT id FROM prj_project_types WHERE type_code='MUSTERI'`);
       const lineId = req.body.sales_order_line_id || null;
@@ -150,7 +150,7 @@ router.post('/link-purchase', async (req, res, next) => {
 /** Şablondan proje oluştur */
 router.post('/from-template/:templateCode', async (req, res, next) => {
   try {
-    const firmaId = firmaIdFromReq(req) || req.body.company_id;
+    const firmaId = companyIdFromReq(req) || req.body.company_id;
     if (!firmaId) return res.status(400).json({ hata: 'company_id / X-Firma-Id zorunlu.' });
     const result = await withTransaction(pool, async (client) => {
       const tpl = await client.query(
@@ -159,7 +159,7 @@ router.post('/from-template/:templateCode', async (req, res, next) => {
       );
       if (!tpl.rows[0]) throw Object.assign(new Error('Şablon bulunamadı.'), { status: 404 });
       const t = tpl.rows[0];
-      const code = req.body.project_code || (await sonrakiKod(client, 'PRJ_PROJECT'));
+      const code = req.body.project_code || (await nextSequenceCode(client, 'PRJ_PROJECT'));
       const statusId = await defaultStatusId(client);
       const ins = await client.query(
         `
@@ -217,7 +217,7 @@ router.post('/from-template/:templateCode', async (req, res, next) => {
             );
             typeId = wt.rows[0]?.id || null;
           }
-          const no = await sonrakiKod(client, 'PRJ_WORK_ITEM');
+          const no = await nextSequenceCode(client, 'PRJ_WORK_ITEM');
           const est = Number(it.estimated_hours || 0);
           const phaseId = it.parent_line_no ? phaseMap[it.parent_line_no] || null : null;
           await client.query(

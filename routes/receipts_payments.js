@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
-const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
-const { cariHareketEkle } = require('../src/services/cariHareketService');
-const { firmaIdFromReq } = require('../src/utils/firmaScope');
+const { nextDocumentNo } = require('../src/utils/belgeNo');
+const { addPartnerLedgerEntry } = require('../src/services/cariHareketService');
+const { companyIdFromReq } = require('../src/utils/firmaScope');
 
-async function getir(id) {
+async function fetchById(id) {
   const r = await pool.query(
     `
     SELECT t.*, c.partner_code, c.partner_name
@@ -31,7 +31,7 @@ router.get('/', async (req, res, next) => {
       params.push(req.query.type);
       where.push(`t.type = $${params.length}`);
     }
-    const firmaId = firmaIdFromReq(req);
+    const firmaId = companyIdFromReq(req);
     if (firmaId) {
       params.push(firmaId);
       where.push(`c.company_id = $${params.length}`);
@@ -52,7 +52,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
     res.json(row);
   } catch (err) {
@@ -71,7 +71,7 @@ router.post('/', async (req, res, next) => {
     }
     const id = await withTransaction(pool, async (client) => {
       const seri = type === 'Tahsilat' ? 'TAHSILAT' : 'ODEME';
-      const no = await sonrakiBelgeNo(client, seri);
+      const no = await nextDocumentNo(client, seri);
       const r = await client.query(
         `
         INSERT INTO receipts_payments
@@ -84,7 +84,7 @@ router.post('/', async (req, res, next) => {
       const newId = r.rows[0].id;
       const onayDurum = (status || 'Onayli') === 'Onayli';
       if (onayDurum) {
-        await cariHareketEkle(client, {
+        await addPartnerLedgerEntry(client, {
           cariId: partner_id,
           direction: type === 'Tahsilat' ? 'Alacak' : 'Borc',
           amount: Number(amount),
@@ -97,7 +97,7 @@ router.post('/', async (req, res, next) => {
       }
       return newId;
     });
-    res.status(201).json(await getir(id));
+    res.status(201).json(await fetchById(id));
   } catch (err) {
     next(err);
   }
@@ -105,12 +105,12 @@ router.post('/', async (req, res, next) => {
 
 router.post('/:id/onayla', async (req, res, next) => {
   try {
-    const row = await getir(req.params.id);
+    const row = await fetchById(req.params.id);
     if (!row) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
     if (row.status === 'Onayli') return res.json(row);
     await withTransaction(pool, async (client) => {
       await client.query(`UPDATE receipts_payments SET status='Onayli' WHERE id=$1`, [row.id]);
-      await cariHareketEkle(client, {
+      await addPartnerLedgerEntry(client, {
         cariId: row.partner_id,
         direction: row.type === 'Tahsilat' ? 'Alacak' : 'Borc',
         amount: Number(row.amount),
@@ -121,7 +121,7 @@ router.post('/:id/onayla', async (req, res, next) => {
         hareketTarihi: row.document_date,
       });
     });
-    res.json(await getir(row.id));
+    res.json(await fetchById(row.id));
   } catch (err) {
     next(err);
   }
@@ -131,7 +131,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const r = await pool.query(`DELETE FROM receipts_payments WHERE id=$1 RETURNING id`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Kayıt bulunamadı.' });
-    res.json({ silindi: true, id: Number(req.params.id) });
+    res.json({ is_deleted: true, id: Number(req.params.id) });
   } catch (err) {
     next(err);
   }

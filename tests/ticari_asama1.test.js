@@ -31,7 +31,7 @@ describe('ticari asama1', () => {
   });
 
   it('döviz kuru çeviri', async () => {
-    const r = await request(app, 'GET', '/doviz-kurlari/cevir?quantity=10&source_pb=USD&target_pb=TRY&type=satis');
+    const r = await request(app, 'GET', '/doviz-kurlari/cevir?quantity=10&source_currency=USD&target_currency=TRY&type=satis');
     assert.equal(r.status, 200);
     assert.ok(Number(r.json.result) > 10);
   });
@@ -66,7 +66,7 @@ describe('ticari asama1', () => {
     const belge = await request(app, 'POST', '/sayim-belgeleri', {
       body: {
         warehouse_id: warehouses.json[0].id,
-        satirlar: [{ item_id: stok.id, sayilan_quantity: 0 }],
+        satirlar: [{ item_id: stok.id, counted_quantity: 0 }],
         description: 'test sayim',
       },
     });

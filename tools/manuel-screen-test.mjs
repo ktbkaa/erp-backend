@@ -122,7 +122,7 @@ const page = await browser.newPage();
 const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(String(e.message || e).slice(0, 200)));
 
-async function bootFirma(fid) {
+async function bootCompany(fid) {
   await page.goto(BASE + '/', { waitUntil: 'networkidle0', timeout: 90000 });
   await page.evaluate((id) => {
     localStorage.clear();
@@ -135,11 +135,11 @@ async function bootFirma(fid) {
   await page.evaluate(async (id) => {
     state.activeFirmaId = id;
     if (typeof loadFirmalar === 'function') await loadFirmalar().catch(() => {});
-    if (typeof renderFirmaPicker === 'function') renderFirmaPicker();
+    if (typeof renderCompanyPicker === 'function') renderCompanyPicker();
   }, fid);
 }
 
-await bootFirma(FIRMA_ID);
+await bootCompany(FIRMA_ID);
 
 async function openAndSnap(screenId) {
   await page.evaluate(async (id) => {
@@ -226,7 +226,7 @@ async function tryYeni() {
   });
 }
 
-async function createCari({ code, name, tip }) {
+async function createPartner({ code, name, tip }) {
   return page.evaluate(async ({ code, name, tip }) => {
     const headers = { 'Content-Type': 'application/json', 'X-Firma-Id': String(state.activeFirmaId || 2) };
     const body = {
@@ -303,7 +303,7 @@ for (const step of steps) {
           const arr = Array.isArray(j) ? j : (j.rows || j.data || []);
           return arr.length;
         });
-        await bootFirma(FIRMA_OTHER);
+        await bootCompany(FIRMA_OTHER);
         const otherView = await page.evaluate(async () => {
           const r = await fetch('/items?limit=100', { headers: { 'X-Firma-Id': String(state.activeFirmaId || 3) } });
           const j = await r.json();
@@ -311,7 +311,7 @@ for (const step of steps) {
           const teksCodes = arr.filter((x) => String(x.company_id) === '2' || /^H0000|^Y0000|^U0000/.test(x.item_code || ''));
           return { total: arr.length, teksLike: teksCodes.length, firma: state.activeFirmaId };
         });
-        await bootFirma(FIRMA_ID);
+        await bootCompany(FIRMA_ID);
         const firmaLabel = await page.evaluate(() => ({
           id: state.activeFirmaId,
           label: document.querySelector('#firmaPickerLabel, .firma-picker-label, #firmaPickerBtn')?.textContent?.trim() || '',
