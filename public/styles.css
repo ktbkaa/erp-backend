@@ -295,6 +295,53 @@ body.is-login {
   gap: 0.35rem;
   margin: 0;
 }
+/* Sol menü araçlarının hemen bitişiği (workspace sol-alt) — sağa + yukarı ok */
+.doc-tabs-dock {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  order: 99;
+  z-index: 5;
+}
+.sidebar-tabs-toggle {
+  --tabs-toggle-bg: #f3f6f8; /* workspace arkaplan */
+  --tabs-toggle-fg: var(--accent);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.55rem 0.55rem 0 0;
+  background: var(--tabs-toggle-bg);
+  color: var(--tabs-toggle-fg);
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+body.doc-tabs-open .sidebar-tabs-toggle {
+  --tabs-toggle-bg: #e4ecf1; /* sekme şeridi arkaplanı */
+}
+.sidebar-tabs-toggle:hover:not(:disabled) {
+  background: var(--tabs-toggle-fg); /* hover: buton renkli */
+  border-color: var(--tabs-toggle-fg);
+  color: var(--tabs-toggle-bg); /* oklar arkaplan renginde */
+}
+.sidebar-tabs-toggle:active:not(:disabled) { filter: brightness(0.96); }
+.sidebar-tabs-toggle:focus-visible {
+  outline: 2px solid var(--sidebar-ring);
+  outline-offset: 1px;
+}
+.sidebar-tabs-toggle:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 .sidebar-tool-btn {
   display: grid;
   place-items: center;
@@ -347,56 +394,79 @@ body.is-login {
   overflow: hidden;
 }
 
-/* Üst belge sekmeleri — sabit boyut, hizalı X, sağ tık menüsü */
+/* Alt belge sekmeleri — ince şerit, yuvarlak üst köşe; çalışma sırasında gizlenir */
 .doc-tabs {
   display: flex;
-  gap: 0.25rem;
-  align-items: flex-end;
-  min-height: 2.55rem;
-  padding: 0.35rem 0.55rem 0;
-  background: #e7eef3;
-  border-bottom: 1px solid var(--line);
+  gap: 0.22rem;
+  align-items: flex-start;
+  min-height: 0;
+  height: 1.85rem;
+  padding: 0 0.45rem 0 0.2rem;
+  background: #e4ecf1;
+  border-top: 1px solid var(--line);
+  border-bottom: 0;
   overflow-x: auto;
-  flex: 0 0 auto;
+  overflow-y: hidden;
+  flex: 1 1 auto;
+  min-width: 0;
+  transition: height 0.16s ease, min-height 0.16s ease, padding 0.16s ease, opacity 0.12s ease;
 }
-.doc-tabs:empty { display: none; }
+.doc-tabs:empty,
+.doc-tabs[hidden] {
+  display: none !important;
+}
+body:not(.doc-tabs-open) .doc-tabs:not(:empty) {
+  display: none !important;
+}
+body.doc-tabs-open .doc-tabs-dock {
+  background: #e4ecf1;
+  border-top: 1px solid var(--line);
+}
+body:not(.doc-tabs-open) .doc-tabs-dock {
+  background: transparent;
+  border-top: 0;
+  /* yalnızca toggle: sol menü araçlarının hemen bitişiğinde */
+  align-self: flex-start;
+  width: auto;
+}
+.doc-tabs.doc-tabs--bottom .tab-item,
 .doc-tabs .tab-item {
-  --tab-w: 13.5rem;
+  --tab-w: 12.25rem;
   position: relative;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 3.4rem minmax(0, 1fr) 1.15rem;
+  grid-template-columns: 3.1rem minmax(0, 1fr) 1.05rem;
   align-items: center;
-  column-gap: 0.35rem;
+  column-gap: 0.28rem;
   flex: 0 0 var(--tab-w);
   width: var(--tab-w);
   min-width: var(--tab-w);
   max-width: var(--tab-w);
-  height: 2.15rem;
+  height: 1.7rem;
   border: 1px solid var(--line);
   border-bottom: 0;
   background: #dfe7ee;
   color: var(--ink);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  padding: 0 0.45rem;
-  border-radius: 0.4rem 0.4rem 0 0;
+  padding: 0 0.38rem;
+  border-radius: 0.85rem 0.85rem 0 0;
   cursor: pointer;
   white-space: nowrap;
   text-align: left;
 }
 .doc-tabs .tab-item .tab-kind {
   justify-self: start;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  padding: 0.12rem 0.3rem;
-  border-radius: 0.25rem;
+  padding: 0.08rem 0.22rem;
+  border-radius: 0.22rem;
   background: rgba(12, 124, 105, 0.15);
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  line-height: 1.2;
+  line-height: 1.15;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -415,7 +485,7 @@ body.is-login {
 .doc-tabs .tab-item.active {
   background: #fff;
   color: var(--ink);
-  box-shadow: 0 -2px 0 var(--accent) inset;
+  box-shadow: 0 2px 0 var(--accent) inset;
   z-index: 1;
 }
 .doc-tabs .tab-item.tab-form .tab-kind {
@@ -425,13 +495,13 @@ body.is-login {
 .doc-tabs .tab-item .tab-close {
   display: inline-grid;
   place-items: center;
-  width: 1.1rem;
-  height: 1.1rem;
+  width: 1rem;
+  height: 1rem;
   border: none;
   border-radius: 999px;
   background: rgba(26, 35, 48, 0.1);
   color: #5a6572;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   line-height: 1;
   cursor: pointer;
   padding: 0;
@@ -1329,7 +1399,7 @@ tr.selected td { background: var(--accent-soft); }
   flex: 1;
   min-height: 0;
   display: grid !important;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 96px 1fr;
   grid-template-rows: auto minmax(0, 1fr);
   grid-template-areas:
     "nav body"
@@ -1405,11 +1475,11 @@ tr.selected td { background: var(--accent-soft); }
 .form-tab-nav {
   border-right: 1px solid var(--line);
   overflow: auto;
-  padding: 0.45rem 0.3rem;
+  padding: 0.35rem 0.2rem;
   background: #f5f8fa;
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.08rem;
   align-self: stretch;
   height: 100%;
   min-height: 0;
@@ -1418,10 +1488,10 @@ tr.selected td { background: var(--accent-soft); }
   text-align: left;
   border: 0;
   background: transparent;
-  padding: 0.42rem 0.55rem;
+  padding: 0.38rem 0.4rem;
   border-radius: 0.3rem;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: #3a4553;
   cursor: pointer;
@@ -2072,6 +2142,22 @@ tr.selected td { background: var(--accent-soft); }
 .bom-code { font-weight: 700; }
 .bom-name { color: var(--ink); }
 .bom-qty { color: var(--muted); font-size: 0.85rem; }
+.bom-scrap, .bom-op {
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 0.05rem 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 3px;
+}
+.bom-header-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.85rem;
+}
+.bom-header-fields .field-shell {
+  flex: 1 1 9.5rem;
+  min-width: 8.5rem;
+}
 .bom-child-count {
   font-size: 0.72rem;
   color: var(--muted);
@@ -2092,6 +2178,22 @@ tr.selected td { background: var(--accent-soft); }
   margin-bottom: 0.45rem;
 }
 .bom-inline-fields { margin-bottom: 0.35rem; }
+.bom-alt-materials {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed #c5d5cf;
+}
+.bom-alt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem;
+  align-items: start;
+  margin-bottom: 0.45rem;
+  padding: 0.4rem 0.45rem;
+  background: #f7faf9;
+  border: 1px solid #e2ebe7;
+  border-radius: 0.4rem;
+}
 .bom-editor-actions, .rota-editor-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2254,10 +2356,10 @@ tr.selected td { background: var(--accent-soft); }
 }
 
 
-/* Liste + sol kategori (hareket kodları) */
+/* Liste + sol kategori (hareket kodları) — dar yan şerit */
 .list-work {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 108px 1fr;
   gap: 0;
   min-height: 0;
   min-width: 0;
@@ -2274,7 +2376,7 @@ tr.selected td { background: var(--accent-soft); }
 .list-side-nav {
   border-right: 1px solid var(--border, #d8dde6);
   background: linear-gradient(180deg, #f7f9fc, #eef2f7);
-  padding: 0.6rem 0.4rem;
+  padding: 0.45rem 0.25rem;
   overflow: auto;
 }
 .list-side-nav button {
@@ -2283,9 +2385,10 @@ tr.selected td { background: var(--accent-soft); }
   text-align: left;
   border: 0;
   background: transparent;
-  padding: 0.45rem 0.7rem;
+  padding: 0.4rem 0.45rem;
   border-radius: 6px;
   font: inherit;
+  font-size: 0.8rem;
   cursor: pointer;
   color: #1f2a37;
 }
@@ -3100,6 +3203,8 @@ body.form-solo .app-shell,
   grid-template-columns: minmax(0, 1fr) !important;
 }
 body.form-solo #tabBar,
+body.form-solo #btnOpenTabs,
+body.form-solo .doc-tabs-dock,
 body.form-solo #btnMenu,
 body.form-solo #homeSearchWrap,
 body.form-solo #searchResults {

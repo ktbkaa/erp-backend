@@ -77,6 +77,7 @@ app.use('/urun-agaclari', require('./routes/boms'));
 app.use('/bom', require('./routes/bom_araclari'));
 app.use('/stok-siniflari', require('./routes/item_classes'));
 app.use('/is-merkezleri', require('./routes/work_centers'));
+app.use('/is-istasyonlari', require('./routes/work_stations'));
 app.use('/routings', require('./routes/routings'));
 app.use('/satin-alma-talepleri', require('./routes/purchase_requisitions'));
 app.use('/satin-alma-teklif-istekleri', require('./routes/rfqs'));
