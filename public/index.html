@@ -499,6 +499,11 @@
       <div class="lookup-browser-toolbar">
         <input type="search" id="lookupBrowserSearch" class="lookup-browser-search" placeholder="Ara — LIKE %metin% (kod / ad)…" autocomplete="off" />
         <span class="lookup-browser-count" id="lookupBrowserCount"></span>
+        <div class="lookup-browser-multi" id="lookupBrowserMultiBar" hidden>
+          <span class="lookup-browser-multi-count" data-lb-multi-count></span>
+          <button type="button" class="btn action ghost" data-lb-select-all="1">Tümünü seç</button>
+          <button type="button" class="btn action ghost" data-lb-select-all="0">Temizle</button>
+        </div>
       </div>
       <div class="cvt-body lookup-browser-body" id="lookupBrowserBody"></div>
       <footer class="cvt-foot lookup-browser-foot">

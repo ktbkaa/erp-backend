@@ -3488,6 +3488,43 @@ select.lookup-pick::-ms-expand { display: none; }
   color: var(--muted, #6a7a88);
   font-size: 0.88rem;
 }
+.lookup-browser-multi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.35rem;
+}
+.lookup-browser-multi[hidden] { display: none !important; }
+.lookup-browser-multi-count {
+  font-size: 0.78rem;
+  color: var(--muted, #6a7a88);
+  min-width: 4rem;
+  text-align: right;
+}
+.lookup-browser-check {
+  width: 2.2rem;
+  text-align: center;
+  vertical-align: middle;
+}
+.lookup-browser-check input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.detail-table tbody tr.detail-row--editing td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent, #1f6feb);
+}
 
 /* Kod–ad lookup: dar kod + geniş ad */
 .lookup-pair {
