@@ -11,12 +11,14 @@ async function getRecord(client, id) {
            d.status_name,
            r.route_code, r.route_name,
            ku.rule_code, ku.rule_name,
+           dt.document_type_name,
            CONCAT(COALESCE(b.first_name,''), ' ', COALESCE(b.last_name,'')) AS baslatan_adi,
            b.user_code AS baslatan_kodu
     FROM approval_records k
     LEFT JOIN approval_statuses d ON d.status_code = k.status_code
     LEFT JOIN approval_routes r ON r.id = k.route_id
     LEFT JOIN approval_rules ku ON ku.id = k.rule_id
+    LEFT JOIN approval_document_types dt ON dt.document_type_code = k.document_type_code
     LEFT JOIN users b ON b.id = k.initiator_user_id
     WHERE k.id = $1
     `,
@@ -40,7 +42,15 @@ async function getRecord(client, id) {
     `,
     [id],
   );
-  return { ...baslik.rows[0], adimlar: adimlar.rows };
+  const aktif = adimlar.rows.find(
+    (a) => a.line_no === baslik.rows[0].active_step_no && a.status_code === 'BEKLIYOR',
+  );
+  return {
+    ...baslik.rows[0],
+    active_step_name: aktif?.step_name || null,
+    active_role_name: aktif?.role_name || null,
+    adimlar: adimlar.rows,
+  };
 }
 
 /** Kullanıcının onay role adları (+ yetki devri) */
@@ -104,6 +114,35 @@ function isRuleAmountInRange(kural, amount) {
   return true;
 }
 
+/** Kural koşulları (VE): tutar aralığı, yön, belge durumu, hareket kodu. */
+async function ruleMatchesContext(client, kural, {
+  amount = 0, direction = null, status = null, movement_code = null,
+} = {}) {
+  if (!isRuleAmountInRange(kural, amount)) return false;
+  if (direction && kural.term_direction && kural.term_direction !== 'Hepsi') {
+    const y = String(direction).toLowerCase().startsWith('a') ? 'Alis' : 'Satis';
+    if (kural.term_direction !== y) return false;
+  }
+  if (status && kural.condition_statuses) {
+    const izinli = String(kural.condition_statuses).split(',').map((s) => s.trim()).filter(Boolean);
+    if (izinli.length && !izinli.includes(status)) return false;
+  }
+  if (movement_code) {
+    const hk = await client.query(
+      `SELECT 1 FROM approval_rule_movements WHERE rule_id=$1 LIMIT 1`,
+      [kural.id],
+    );
+    if (hk.rows[0]) {
+      const hit = await client.query(
+        `SELECT 1 FROM approval_rule_movements WHERE rule_id=$1 AND movement_code=$2`,
+        [kural.id, movement_code],
+      );
+      if (!hit.rows[0]) return false;
+    }
+  }
+  return true;
+}
+
 /**
  * Onay sürecini başlatır.
  */
@@ -137,7 +176,9 @@ async function startApproval(client, {
     kural = r.rows[0];
   } else if (screen_id) {
     const params = [screen_id];
-    let sql = `SELECT * FROM approval_rules WHERE screen_id=$1 AND is_active=TRUE`;
+    // Belge türüne bağlı (kapı) kurallar yalnız onayKapisiService üzerinden çalışır.
+    let sql = `SELECT * FROM approval_rules
+               WHERE screen_id=$1 AND is_active=TRUE AND document_type_code IS NULL`;
     if (company_id) {
       params.push(company_id);
       sql += ` AND (company_id IS NULL OR company_id=$${params.length})`;
@@ -148,28 +189,11 @@ async function startApproval(client, {
     }
     sql += ` ORDER BY line_no, company_id NULLS LAST LIMIT 5`;
     const r = await client.query(sql, params);
-    // İlk eşleşen kural (koşul süzgeci)
     for (const candidate of r.rows) {
-      if (!isRuleAmountInRange(candidate, amount)) continue;
-      if (direction && candidate.term_direction && candidate.term_direction !== 'Hepsi') {
-        const y = String(direction).toLowerCase().startsWith('a') ? 'Alis' : 'Satis';
-        if (candidate.term_direction !== y) continue;
+      if (await ruleMatchesContext(client, candidate, { amount, direction, movement_code })) {
+        kural = candidate;
+        break;
       }
-      if (movement_code) {
-        const hk = await client.query(
-          `SELECT 1 FROM approval_rule_movements WHERE rule_id=$1 LIMIT 1`,
-          [candidate.id],
-        );
-        if (hk.rows[0]) {
-          const hit = await client.query(
-            `SELECT 1 FROM approval_rule_movements WHERE rule_id=$1 AND movement_code=$2`,
-            [candidate.id, movement_code],
-          );
-          if (!hit.rows[0]) continue;
-        }
-      }
-      kural = candidate;
-      break;
     }
   }
 
@@ -181,25 +205,38 @@ async function startApproval(client, {
     }
   }
 
+  const kapiKurali = Boolean(kural?.document_type_code);
+  const kapiRotasiHaric = `AND (rule_id IS NULL OR rule_id NOT IN (
+      SELECT id FROM approval_rules WHERE document_type_code IS NOT NULL))`;
   let rotaId = route_id;
   if (!rotaId && kural?.id) {
     const rr = await client.query(
-      `
-      SELECT id FROM approval_routes
-      WHERE is_active=TRUE AND (rule_id=$1 OR screen_id=$2)
-      ORDER BY rule_id NULLS LAST, version_no DESC
-      LIMIT 1
-      `,
+      kapiKurali
+        ? `SELECT id FROM approval_routes
+           WHERE is_active=TRUE AND (rule_id=$1 OR (rule_id IS NULL AND screen_id=$2))
+           ORDER BY (rule_id IS NOT NULL) DESC, version_no DESC
+           LIMIT 1`
+        : `SELECT id FROM approval_routes
+           WHERE is_active=TRUE AND (rule_id=$1 OR screen_id=$2) ${kapiRotasiHaric}
+           ORDER BY (rule_id = $1) DESC NULLS LAST, version_no DESC
+           LIMIT 1`,
       [kural.id, kural.screen_id || screen_id],
     );
     rotaId = rr.rows[0]?.id;
   }
-  if (!rotaId && screen_id) {
+  if (!rotaId && screen_id && !kapiKurali) {
     const rr = await client.query(
-      `SELECT id FROM approval_routes WHERE is_active=TRUE AND screen_id=$1 ORDER BY version_no DESC LIMIT 1`,
+      `SELECT id FROM approval_routes WHERE is_active=TRUE AND screen_id=$1 ${kapiRotasiHaric}
+       ORDER BY version_no DESC LIMIT 1`,
       [screen_id],
     );
     rotaId = rr.rows[0]?.id;
+  }
+  if (!rotaId && kapiKurali) {
+    const err = new Error(`Onay kuralı ${kural.rule_code} için aktif onay rotası tanımlı değil.`);
+    err.status = 400;
+    err.code = 'ONAY_ROTA_YOK';
+    throw err;
   }
   // Eski bağ: module kullanımı → rota
   if (!rotaId && kural?.modul_proxy?.route_id) rotaId = kural.modul_proxy.route_id;
@@ -214,7 +251,7 @@ async function startApproval(client, {
     return { atlandi: true, neden: 'auto_approve', rule_id: kural.id };
   }
 
-  if (document_id && (screen_id || kural?.screen_id)) {
+  if (!kapiKurali && document_id && (screen_id || kural?.screen_id)) {
     const open = await client.query(
       `
       SELECT id FROM approval_records
@@ -321,8 +358,25 @@ async function assertAdimYetkisi(client, adim, kullanici, kayit) {
   return true;
 }
 
+async function lockRecord(client, kayitId) {
+  await client.query('SELECT id FROM approval_records WHERE id = $1 FOR UPDATE', [kayitId]);
+  return getRecord(client, kayitId);
+}
+
+function stepAudit(kayit, extra) {
+  return {
+    company_id: kayit.company_id,
+    document_type_code: kayit.document_type_code,
+    screen_id: kayit.screen_id,
+    document_id: kayit.document_id,
+    document_no: kayit.document_no,
+    record_id: kayit.id,
+    ...extra,
+  };
+}
+
 async function onaylaAdim(client, kayitId, kullanici, { notes: notlar = null } = {}) {
-  const kayit = await getRecord(client, kayitId);
+  const kayit = await lockRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
     err.status = 404;
@@ -356,6 +410,13 @@ async function onaylaAdim(client, kayitId, kullanici, { notes: notlar = null } =
     `,
     [is_active.id, kullanici.id, notlar],
   );
+  const { logAudit, applyRecordOutcome } = require('./onayKapisiService');
+  await logAudit(client, stepAudit(kayit, {
+    step_line_no: is_active.line_no,
+    action: 'ADIM_ONAYLANDI',
+    user: kullanici,
+    notes: notlar || is_active.step_name,
+  }));
 
   const sonraki = kayit.adimlar.find((a) => a.line_no > is_active.line_no);
   if (sonraki) {
@@ -378,13 +439,18 @@ async function onaylaAdim(client, kayitId, kullanici, { notes: notlar = null } =
       `,
       [kayitId],
     );
+    if (kayit.document_type_code) {
+      await applyRecordOutcome(client, kayit, 'APPROVED', { user: kullanici, notes: notlar });
+    } else {
+      await logAudit(client, stepAudit(kayit, { action: 'ONAYLANDI', user: kullanici }));
+    }
   }
 
   return getRecord(client, kayitId);
 }
 
 async function reddetAdim(client, kayitId, kullanici, { notes: notlar = null } = {}) {
-  const kayit = await getRecord(client, kayitId);
+  const kayit = await lockRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
     err.status = 404;
@@ -427,11 +493,19 @@ async function reddetAdim(client, kayitId, kullanici, { notes: notlar = null } =
     `,
     [kayitId, notlar],
   );
+  const { logAudit, applyRecordOutcome } = require('./onayKapisiService');
+  if (kayit.document_type_code) {
+    await applyRecordOutcome(client, kayit, 'REJECTED', { user: kullanici, notes: notlar });
+  } else {
+    await logAudit(client, stepAudit(kayit, {
+      step_line_no: is_active.line_no, action: 'REDDEDILDI', user: kullanici, notes: notlar,
+    }));
+  }
   return getRecord(client, kayitId);
 }
 
 async function cancelRecord(client, kayitId, kullanici, { notes: notlar = null } = {}) {
-  const kayit = await getRecord(client, kayitId);
+  const kayit = await lockRecord(client, kayitId);
   if (!kayit) {
     const err = new Error('Onay kaydı bulunamadı.');
     err.status = 404;
@@ -465,6 +539,12 @@ async function cancelRecord(client, kayitId, kullanici, { notes: notlar = null }
     `,
     [kayitId],
   );
+  const { logAudit, applyRecordOutcome } = require('./onayKapisiService');
+  if (kayit.document_type_code) {
+    await applyRecordOutcome(client, kayit, 'CANCELLED', { user: kullanici, notes: notlar });
+  } else {
+    await logAudit(client, stepAudit(kayit, { action: 'IPTAL', user: kullanici, notes: notlar }));
+  }
   return getRecord(client, kayitId);
 }
 
@@ -495,6 +575,7 @@ async function benimBekleyenler(client, kisiId, { firmaId = null } = {}) {
 
 module.exports = {
   getRecord,
+  ruleMatchesContext,
   userRoleIds,
   userRoleNames,
   startApproval,
