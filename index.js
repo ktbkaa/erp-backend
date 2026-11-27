@@ -173,6 +173,9 @@ app.use('/onay-kurallari', require('./routes/approval_rules'));
 app.use('/onay-ekranlari', require('./routes/onay_ekranlari'));
 app.use('/onay-yetki-devirleri', require('./routes/approval_delegations'));
 app.use('/onay-kayitlari', require('./routes/approval_records'));
+app.use('/onay-belge-turleri', require('./routes/approval_document_types'));
+app.use('/onay-bekleyenler', require('./routes/approval_inbox'));
+app.use('/onay-izi', require('./routes/approval_audit'));
 
 // İK / HR
 app.use('/hr-personel', require('./routes/hr_employees'));
