@@ -84,7 +84,7 @@ describe('üretim emri onay kapısı', () => {
     await q('DELETE FROM approval_rules WHERE id = ANY($1)', [ruleIds]);
     await q('DELETE FROM production_order_operations WHERE order_id = ANY($1)', [orderIds]);
     await q('DELETE FROM production_orders WHERE id = ANY($1)', [orderIds]);
-    await q('DELETE FROM items WHERE id = $1', [itemId]);
+    await q('UPDATE items SET is_active = FALSE WHERE id = $1', [itemId]);
     await q('DELETE FROM users WHERE id = $1', [adminId]);
   });
 
