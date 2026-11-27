@@ -1,0 +1,62 @@
+           can asERP EĞİTİM İÇERİK
+
+
+
+
+PRD.101.T - PRD - Üret m Planlama ve Kontrol Son Kullanıcı Eğ t m
+
+5 - Üret m Planından ve Satış S par ş nden İş Emr Oluşturma Süreçler
+
+ 5.1 - Üret m Planlarını İş Emr ne Dönüştürme
+ Başlatılmış üret m planlarından ş emr oluşturma.
+
+ 5.2 - Satış S par ş nden İş Emr Oluşturma
+ Sat ş s par şler nden ş emr oluşturma
+5 - Üret m Planından ve Satış S par ş nden İş Emr Oluşturma Süreçler
+
+
+
+
+5.1 - Üret m Planlarını İş Emr ne Dönüştürme
+
+
+Başlatılmış üret m planlarından ş emr oluşturma.
+
+
+
+
+1 - MRP tarafından veya manuel olarak oluşturulan üret m planlarından "Başlatıldı" parametres
+şaretl olanlar PRDT06 Planlanan İş Em rler n n Yaratılması uygulaması le ş emr ne çevr leb l r. Bu
+uygulama sayes nde üst barda bulunan alanlar bazında arama yapılab l r
+2 - Tek tek veya b rleşt r lerek üret m planları ş emr ne çevr leb l r. Üret m planlarını ş emr ne
+çev reb lmek ç n lg l üret m planı ve İş Emr T p seç lerek "Çev r" butonuna basılır.
+
+
+
+
+3 - İlg l üret m planı ş emr ne çevr lm şt r.
+5.2 - Satış S par ş nden İş Emr Oluşturma
+
+
+Sat ş s par şler nden ş emr oluşturma
+
+
+
+
+1- S par şlerden Toplu İş Emr Oluşturma ç n PRDT13 uygulaması kullanılmaktadır. İlg l satış
+numarası ve d ğer arama kr terler yazılarak "Ara" butonuna basılır. Tablodan satış s par ş seç l p
+"Yen " butonuna basılır.
+
+
+
+
+2- İlg l ş emr PRDT01 ekranından l stelen r.
+3- İlg l ş emr seç lerek detay ekranına g d ld ğ nde ve belge tak b sekmes ne tıklandığında lg l
+satış s par ş n n özell klerş görüntüleneb l r.
+
+
+
+
+4- Genel Sekmes nde "Başlatıldı" kontrolü akt f hale get r l p "ç zelgele" butonuna basılır.
+5 - "Kaydet" butonuna basılır.
+
