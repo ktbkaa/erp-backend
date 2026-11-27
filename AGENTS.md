@@ -80,6 +80,13 @@ node scripts/marvel-stok-10000.js
 4. Belge numaraları numaratörden; firma kapsamı kayıtlarda `company_id` ile damgalanır.
 5. Parti: çıkışta lot kaynağı (FIFO / manuel); lotsuz çıkış kuralları `partiService` / üretim girişinde uygulanır.
 
+## Yetkilendirme (backend)
+
+- Ekran ↔ modül ↔ route eşlemesinin tek kaynağı `src/auth/permissionMap.js`; global `authorizeRequest` (`src/middleware/authorize.js`) her API isteğini buna göre denetler. **Yeni route mount ederken haritaya ekleyin** — eklenmeyen prefix yalnız tam yetkili kullanıcıya açılır ve `tests/yetki_harita.test.js` kırılır. SPA’ya yeni ekran eklerken `MODULE_SCREENS` de güncellenmeli.
+- Semantik SPA `screenPermission` ile aynıdır: ADMIN grubu / Yönetici rolü / modül `*` → tam yetki; `user_screen_permissions` satırı varsa yalnız bayraklar (POST kök=yeni, PUT=duzelt, DELETE=sil, POST alt yol=yeni|duzelt); satır yoksa grup `module_permissions`.
+- Yönetici gerektiren işler (kullanıcı/grup/sistem parametresi yazma, numaratör yapısı, audit-log, sistem güncelleme, `force=1`) `requireAdmin` ile korunur; modül `*` yönetici sayılmaz. Route içi ek kontrol için `requireScreenPermission` / `requireModulePermission` kullanın.
+- `ERP_RBAC_MODE=audit` ekran/modül reddini yalnız loglar (geçiş dönemi); yönetici kontrolleri her modda zorunlu. Yönetici kalmazsa: `YETKI_ADMIN_PAROLA=... npm run yetki:admin-ata -- <user_code>`.
+
 ## Arayüz kuralları
 
 - Tek SPA kabuğu: sol menü, sekmeler, filtre + liste, form toolbar (Kaydet / İncele / Düzenle).

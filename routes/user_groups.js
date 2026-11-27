@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { requireAdmin } = require('../src/middleware/authorize');
 
 function normJson(v, fallback = '["*"]') {
   if (v == null || v === '') return fallback;
@@ -8,6 +9,19 @@ function normJson(v, fallback = '["*"]') {
     try { JSON.parse(v); return v; } catch { return JSON.stringify([v]); }
   }
   return JSON.stringify(v);
+}
+
+/** ADMIN grubu tam yetkili kalır: pasifleştirilemez, silinemez, modül/depo listesi '*' dışına çekilemez. */
+function adminGrubuKorumasi(row, body = {}) {
+  if (row?.group_code !== 'ADMIN') return null;
+  if (body.is_active === false) return 'ADMIN grubu pasifleştirilemez.';
+  for (const key of ['module_permissions', 'warehouse_permissions']) {
+    if (body[key] === undefined) continue;
+    let list;
+    try { list = JSON.parse(normJson(body[key])); } catch { list = []; }
+    if (!Array.isArray(list) || !list.includes('*')) return `ADMIN grubunun ${key} değeri ["*"] kalmalı.`;
+  }
+  return null;
 }
 
 router.get('/', async (req, res, next) => {
@@ -29,7 +43,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const {
       group_code, group_name, description, is_active,
@@ -59,13 +73,17 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', requireAdmin, async (req, res, next) => {
   try {
     const {
       group_name, description, is_active,
       can_approve_purchase, purchase_requisition_ref, can_quality_control,
       module_permissions, warehouse_permissions,
     } = req.body;
+    const mevcut = await pool.query('SELECT * FROM user_groups WHERE id=$1', [req.params.id]);
+    if (!mevcut.rows[0]) return res.status(404).json({ hata: 'Grup bulunamadı.' });
+    const koruma = adminGrubuKorumasi(mevcut.rows[0], req.body);
+    if (koruma) return res.status(409).json({ hata: koruma, kod: 'ADMIN_GRUP_KORUMA' });
     const result = await pool.query(
       `
       UPDATE user_groups SET
@@ -93,8 +111,12 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
+    const mevcut = await pool.query('SELECT group_code FROM user_groups WHERE id=$1', [req.params.id]);
+    if (mevcut.rows[0]?.group_code === 'ADMIN') {
+      return res.status(409).json({ hata: 'ADMIN grubu silinemez.', kod: 'ADMIN_GRUP_KORUMA' });
+    }
     const result = await pool.query('DELETE FROM user_groups WHERE id=$1 RETURNING id', [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ hata: 'Grup bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });

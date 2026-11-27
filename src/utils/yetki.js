@@ -33,11 +33,17 @@ async function parametreAl(clientOrPool, kod, varsayilan = null) {
     return v;
 }
 
-function isTamYetkili(kullanici) {
-    if (!kullanici) return false;
+const ADMIN_ROLES = new Set(['yonetici', 'admin', 'administrator']);
+
+/** Sistem yöneticisi: ADMIN grubu veya Yönetici/Admin rolü (pasif kullanıcı hariç). */
+function isAdminUser(kullanici) {
+    if (!kullanici || kullanici.is_active === false) return false;
     if (kullanici.group_code === 'ADMIN') return true;
-    if (String(kullanici.role || '').toLowerCase() === 'yonetici') return true;
-    return false;
+    return ADMIN_ROLES.has(String(kullanici.role || '').trim().toLowerCase());
+}
+
+function isTamYetkili(kullanici) {
+    return isAdminUser(kullanici);
 }
 
 async function getUser(clientOrPool, kullaniciKodu) {
@@ -108,4 +114,5 @@ module.exports = {
     reqUserCode,
     assertPermission,
     isTamYetkili,
+    isAdminUser,
 };

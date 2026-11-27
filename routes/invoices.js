@@ -7,13 +7,20 @@ const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { matchInvoice } = require('../src/services/faturaEslestirmeService');
 const { faturadanMuhasebe } = require('../src/services/muhasebeEntegrasyonService');
 const { documentHtml } = require('../src/services/belgePdfService');
-const { reqUserCode, parametreAl } = require('../src/utils/yetki');
+const { reqUserCode, parametreAl, isAdminUser } = require('../src/utils/yetki');
 const {
   pickFields,
   appendInsert,
   FATURA_BASLIK,
   FATURA_SATIR,
 } = require('../src/utils/belgeAlanlari');
+
+/** 3-way kontrolünü aşma (force=1) yalnız yönetici; manuel eşleştirme onayı ayrıca satınalma onaycısı. */
+function canOverride3Way(req, { allowPurchaseApprover = false } = {}) {
+  if (!req.user) return true;
+  if (isAdminUser(req.user)) return true;
+  return allowPurchaseApprover && Boolean(req.user.can_approve_purchase);
+}
 
 const EBELGE_ALANLAR = [
   'scenario', 'invoice_category', 'customization_no', 'uuid_ettn',
@@ -299,6 +306,12 @@ router.post('/:id/eslestir', async (req, res, next) => {
 /** POST /invoices/:id/eslestirme-onay */
 router.post('/:id/eslestirme-onay', async (req, res, next) => {
   try {
+    if (!canOverride3Way(req, { allowPurchaseApprover: true })) {
+      return res.status(403).json({
+        hata: 'Manuel 3-way eşleştirme onayı için yönetici veya satınalma onay yetkisi gerekli.',
+        kod: 'YETKI_YOK',
+      });
+    }
     const r = await pool.query(
       `UPDATE invoice_matches SET result='Uyumlu', description=COALESCE(description,'') || ' [Manuel onay]'
        WHERE invoice_id=$1
@@ -319,12 +332,18 @@ router.post('/:id/eslestirme-onay', async (req, res, next) => {
 /** POST /invoices/:id/muhasebelestir — belge→fiş + cari (FIN-004/005) */
 router.post('/:id/muhasebelestir', async (req, res, next) => {
   try {
+    const force = String(req.query.force || req.body?.force || '') === '1'
+      || String(req.body?.force || '').toLowerCase() === 'true';
+    if (force && !canOverride3Way(req)) {
+      return res.status(403).json({
+        hata: 'force=1 (3-way kontrolünü aşma) yalnız yönetici (ADMIN) yetkisiyle kullanılabilir.',
+        kod: 'YETKI_YOK',
+      });
+    }
     const faturaId = Number(req.params.id);
     const fatura = await getInvoice(faturaId);
     if (!fatura) return res.status(404).json({ hata: 'Fatura bulunamadı.' });
     const isAlis = String(fatura.invoice_type || '').toLowerCase().includes('alis');
-    const force = String(req.query.force || req.body?.force || '') === '1'
-      || String(req.body?.force || '').toLowerCase() === 'true';
     const threeWay = String(await parametreAl(pool, 'ALIS_3WAY_ZORUNLU', 'Evet')).toLowerCase() === 'evet';
     if (isAlis && threeWay && !force) {
       const m = await pool.query(

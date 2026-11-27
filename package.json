@@ -25,6 +25,7 @@
     "demo:teks-dongu": "node scripts/demo-teks-tam-dongu.js",
     "purge:firma": "node scripts/purge-firma-veri.js",
     "ensure:firma-yetki": "node scripts/ensure-firma-yetkileri.js",
+    "yetki:admin-ata": "node scripts/yetki-admin-ata.js",
     "demo:dokum-dongu": "node scripts/demo-dokum-tam-dongu.js",
     "demo:marvel": "node scripts/demo-metal-marvel-sim.js",
     "qa:inventory": "node scripts/qa/extract-screen-inventory.mjs",

@@ -2,6 +2,33 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { hashParola } = require('../src/utils/parola');
+const { requireAdmin, canScreen } = require('../src/middleware/authorize');
+
+const ADMIN_ROLE_SQL = `lower(COALESCE(role,'')) IN ('yonetici','admin','administrator')`;
+
+/** Kalan aktif yönetici sayısı (excludeId hariç). */
+async function otherActiveAdminCount(client, excludeId) {
+  const r = await client.query(
+    `SELECT COUNT(*)::int AS n FROM users
+     WHERE id <> $1 AND is_active IS DISTINCT FROM FALSE
+       AND (group_code = 'ADMIN' OR ${ADMIN_ROLE_SQL})`,
+    [excludeId]
+  );
+  return r.rows[0].n;
+}
+
+function isAdminRow(u) {
+  if (!u || u.is_active === false) return false;
+  return u.group_code === 'ADMIN'
+    || ['yonetici', 'admin', 'administrator'].includes(String(u.role || '').trim().toLowerCase());
+}
+
+function sonYoneticiHatasi() {
+  const err = new Error('Son aktif yönetici pasifleştirilemez, silinemez veya ADMIN grubundan çıkarılamaz.');
+  err.status = 409;
+  err.kod = 'SON_YONETICI';
+  return err;
+}
 
 const PUBLIC_COLS = `
   id, first_name, last_name, email_address, phone, role, title, created_at,
@@ -187,6 +214,10 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
+    const kendisi = req.user && String(req.user.id) === String(req.params.id);
+    if (req.user && !kendisi && !(await canScreen(req, ['kullanicilar']))) {
+      return res.status(403).json({ hata: 'Kullanıcı kartı için ekran yetkisi yok (kullanicilar).', kod: 'YETKI_YOK' });
+    }
     const result = await pool.query(
       `SELECT ${PUBLIC_COLS} FROM users WHERE id=$1`,
       [req.params.id]
@@ -204,7 +235,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   const client = await pool.connect();
   try {
     const {
@@ -265,7 +296,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAdmin, async (req, res) => {
   const client = await pool.connect();
   try {
     const {
@@ -286,6 +317,18 @@ router.put('/:id', async (req, res) => {
     const firmaList = firma_yetkileri !== undefined ? firma_yetkileri : companies;
 
     await client.query('BEGIN');
+    const onceki = await client.query(`SELECT * FROM users WHERE id=$1 FOR UPDATE`, [req.params.id]);
+    if (isAdminRow(onceki.rows[0])) {
+      const sonra = {
+        ...onceki.rows[0],
+        ...(group_code !== undefined && group_code !== null ? { group_code } : {}),
+        ...(role !== undefined && role !== null ? { role } : {}),
+        ...(is_active !== undefined && is_active !== null ? { is_active } : {}),
+      };
+      if (!isAdminRow(sonra) && (await otherActiveAdminCount(client, onceki.rows[0].id)) === 0) {
+        throw sonYoneticiHatasi();
+      }
+    }
     const result = await client.query(
       `
       UPDATE users SET
@@ -327,7 +370,7 @@ router.put('/:id', async (req, res) => {
     res.json(await hydrateUser(result.rows[0]));
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
-    if (err.status) return res.status(err.status).json({ hata: err.message });
+    if (err.status) return res.status(err.status).json({ hata: err.message, ...(err.kod ? { kod: err.kod } : {}) });
     if (err.code === '23505') {
       return res.status(409).json({ hata: 'Bu kullanıcı adı / kod zaten kayıtlı.', detay: err.detail });
     }
@@ -337,8 +380,13 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
+    const hedef = await pool.query('SELECT * FROM users WHERE id=$1', [req.params.id]);
+    if (isAdminRow(hedef.rows[0]) && (await otherActiveAdminCount(pool, hedef.rows[0].id)) === 0) {
+      const e = sonYoneticiHatasi();
+      return res.status(e.status).json({ hata: e.message, kod: e.kod });
+    }
     const result = await pool.query('DELETE FROM users WHERE id=$1 RETURNING id', [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ hata: 'Kullanıcı bulunamadı.' });
     res.json({ is_deleted: true, id: Number(req.params.id) });

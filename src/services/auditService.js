@@ -21,7 +21,7 @@ async function auditYaz(poolOrClient, {
   }
 }
 
-const SENSITIVE_KEYS = /^(password|parola|sifre|refresh_token|token|password_hash)/i;
+const SENSITIVE_KEYS = /(password|parola|sifre|token|secret)/i;
 
 function sanitizeBody(body) {
   if (!body || typeof body !== 'object') return null;

@@ -8,6 +8,7 @@ const {
     nextStockMovementNo,
     peekStockMovementNo,
 } = require('../src/utils/kodUretici');
+const { requireAdmin } = require('../src/middleware/authorize');
 
 router.get('/', async (req, res) => {
     try {
@@ -190,7 +191,7 @@ router.post('/:seriKodu/ayir', async (req, res) => {
     }
 });
 
-router.put('/:seriKodu', async (req, res) => {
+router.put('/:seriKodu', requireAdmin, async (req, res) => {
     try {
         const { description, screen_code, screen_name, is_active, last_number, prefix: onek } = req.body;
         const result = await pool.query(
@@ -229,7 +230,7 @@ router.put('/:seriKodu', async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
     try {
         const { series_code, prefix: onek, description, screen_code, screen_name, last_number } = req.body;
         if (!series_code || !onek || !description) {
@@ -259,7 +260,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.delete('/:seriKodu', async (req, res) => {
+router.delete('/:seriKodu', requireAdmin, async (req, res) => {
     try {
         const r = await pool.query(
             `UPDATE number_series SET is_active = FALSE
