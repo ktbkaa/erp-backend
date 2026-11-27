@@ -32,7 +32,9 @@ async function resolveType(client, emirTipiId, siparisId) {
 
 function dateDay(v) {
     if (!v) return null;
-    if (v instanceof Date) return v.toISOString().slice(0, 10);
+    if (v instanceof Date) {
+        return `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}`;
+    }
     const s = String(v);
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
     const d = new Date(s);
@@ -665,16 +667,16 @@ router.get('/siparis-adaylari', async (req, res) => {
                 SELECT ua2.id, ua2.bom_code
                 FROM boms ua2
                 WHERE ua2.finished_good_item_id = sd.item_id
-                  AND (ua2.valid_from IS NULL OR ua2.valid_from <= CURRENT_DATE)
-                  AND (ua2.valid_to IS NULL OR ua2.valid_to >= CURRENT_DATE)
+                  AND (ua2.valid_from IS NULL OR ua2.valid_from::date <= CURRENT_DATE)
+                  AND (ua2.valid_to IS NULL OR ua2.valid_to::date >= CURRENT_DATE)
                 ORDER BY ua2.id DESC LIMIT 1
             ) ua ON TRUE
             LEFT JOIN LATERAL (
                 SELECT r2.id, r2.route_code
                 FROM routings r2
                 WHERE r2.item_id = sd.item_id
-                  AND (r2.valid_from IS NULL OR r2.valid_from <= CURRENT_DATE)
-                  AND (r2.valid_to IS NULL OR r2.valid_to >= CURRENT_DATE)
+                  AND (r2.valid_from IS NULL OR r2.valid_from::date <= CURRENT_DATE)
+                  AND (r2.valid_to IS NULL OR r2.valid_to::date >= CURRENT_DATE)
                 ORDER BY r2.is_default DESC NULLS LAST, r2.id DESC LIMIT 1
             ) r ON TRUE
             WHERE s.order_type IN ('SatisSiparis', 'AlinanSiparis')

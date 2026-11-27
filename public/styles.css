@@ -7417,3 +7417,54 @@ body.sidebar-resizing iframe {
 }
 .sup-info-reason { line-height: 1.45; }
 .sup-info-meta { font-size: 0.8rem; color: var(--muted); }
+
+/* Tarih / saat girişi: gg/aa/yyyy (bkz. enhanceDmyInput) */
+.dmy-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+.dmy-field[hidden] { display: none !important; }
+.dmy-field .dmy-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding-right: 1.9rem !important;
+  font-variant-numeric: tabular-nums;
+}
+.dmy-field--time .dmy-text { min-width: 8.6rem; }
+.dmy-field .dmy-pick {
+  position: absolute;
+  right: 0.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.45rem;
+  height: 1.45rem;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.dmy-field .dmy-pick:hover:not(:disabled) { color: var(--accent); background: var(--accent-soft); }
+.dmy-field .dmy-pick:disabled { opacity: 0.4; cursor: default; }
+.dmy-field input.dmy-native {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+.dmy-field .dmy-text.dmy-invalid {
+  border-color: #e57373 !important;
+  background: var(--danger-soft) !important;
+}
