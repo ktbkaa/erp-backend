@@ -240,6 +240,196 @@ const CARI_FIRMA_PARAM_FIELDS = [
   { key: 'include_in_revaluation', label: 'Kur değerleme', type: 'checkbox', group: 'firma-param', groupLabel: 'Firma parametreleri' },
 ];
 
+/** Giriş/Çıkış KK — Canias benzeri emir + ölçüm + kaynak sekmesi */
+const KK_OLCUM_GRID_FIELDS = [
+  { key: 'line_no', label: 'Sıra', type: 'number', size: 'short', readOnly: true },
+  { key: 'sample_no', label: 'Örnek No', size: 'short' },
+  { key: 'criterion_code', label: 'Kontrol Noktası Kodu', size: 'short', readOnly: true },
+  { key: 'criterion_name', label: 'Kontrol Noktası Adı', readOnly: true },
+  { key: 'min_value', label: 'Min. Değer', type: 'number', size: 'short', readOnly: true },
+  { key: 'max_value', label: 'Max. Değer', type: 'number', size: 'short', readOnly: true },
+  { key: 'target_value', label: 'Nominal Değer', type: 'number', size: 'short', readOnly: true },
+  { key: 'tol_minus', label: '- Tolerans', type: 'number', size: 'short', readOnly: true },
+  { key: 'tol_plus', label: '+ Tolerans', type: 'number', size: 'short', readOnly: true },
+  { key: 'uom_code', label: 'Birim', size: 'short', readOnly: true },
+  { key: 'measured_value', label: 'Nicel Ölçüm Değer', size: 'short' },
+  { key: 'qual_target', label: 'Nitel Ölçülecek Değer', readOnly: true },
+  { key: 'qual_value', label: 'Nitel Ölçüm Değer' },
+  { key: 'accepted', label: 'Uygun', type: 'checkbox' },
+  { key: 'description', label: 'Açıklama' },
+];
+
+function buildKkOrderScreen({ id, techId, businessNameEn, title, direction }) {
+  const isGkk = direction === 'GKK';
+  return {
+    id,
+    techId,
+    businessNameEn,
+    title,
+    endpoint: `/kk-emirleri?direction=${direction}`,
+    crud: true,
+    listActions: ['yeni', 'incele', 'duzelt'],
+    numeratorSeri: 'KK_EMIR',
+    codeField: 'order_no',
+    nameField: 'item_name',
+    approveAction: { label: 'Onayla', path: '/kk-emirleri/{id}/onayla' },
+    filters: [
+      { key: 'order_no', label: 'Emir no' },
+      { key: 'item_code', label: 'Stok' },
+      { key: 'status', label: 'Durum' },
+    ],
+    columns: [
+      { key: 'order_no', label: 'Emir', mono: true },
+      { key: 'item_code', label: 'Stok', mono: true },
+      { key: 'item_name', label: 'Ad' },
+      { key: 'lot_no', label: 'Parti', mono: true },
+      { key: 'quantity', label: 'Miktar' },
+      { key: 'accepted_quantity', label: 'Uygun' },
+      { key: 'rejected_quantity', label: 'Uygunsuz' },
+      { key: 'status', label: 'Durum' },
+      { key: 'warehouse_code', label: 'Depo', mono: true },
+      { key: 'plan_code', label: 'Plan', mono: true },
+    ],
+    masterFields: [
+      { key: 'order_no', label: 'Emir no', code: true, editableOnNew: true },
+      {
+        key: 'company_id',
+        label: 'Firma',
+        type: 'lookup',
+        lookup: 'companies',
+        valueKey: 'id',
+        labelKey: 'company_name',
+        codeKey: 'company_code',
+        required: true,
+      },
+      {
+        key: 'direction',
+        label: 'Yön',
+        type: 'select',
+        options: ['GKK', 'CKK'],
+        required: true,
+        readOnly: true,
+      },
+      {
+        key: 'item_id',
+        label: 'Stok',
+        type: 'lookup',
+        lookup: 'items',
+        valueKey: 'id',
+        labelKey: 'item_name',
+        codeKey: 'item_code',
+        required: true,
+      },
+      {
+        key: 'plan_id',
+        label: 'Kontrol planı',
+        type: 'lookup',
+        lookup: 'kk-kontrol-planlari',
+        valueKey: 'id',
+        labelKey: 'plan_name',
+        codeKey: 'plan_code',
+      },
+      {
+        key: 'warehouse_id',
+        label: isGkk ? 'KK depo' : 'Çıkış KK depo',
+        type: 'lookup',
+        lookup: 'warehouses',
+        valueKey: 'id',
+        labelKey: 'warehouse_name',
+        codeKey: 'warehouse_code',
+        required: true,
+      },
+      {
+        key: 'target_warehouse_id',
+        label: isGkk ? 'Hedef depo' : 'Mamul / hedef depo',
+        type: 'lookup',
+        lookup: 'warehouses',
+        valueKey: 'id',
+        labelKey: 'warehouse_name',
+        codeKey: 'warehouse_code',
+      },
+      { key: 'lot_id', label: 'Parti', type: 'lookup', lookup: 'stok-partileri', valueKey: 'id', labelKey: 'lot_no', codeKey: 'lot_no' },
+      { key: 'quantity', label: 'Belge miktarı', type: 'number', required: true },
+      { key: 'sample_quantity', label: 'Numune / kontrol miktarı', type: 'number' },
+      { key: 'accepted_quantity', label: 'Kabul miktarı', type: 'number' },
+      { key: 'rejected_quantity', label: 'Red miktarı', type: 'number' },
+      {
+        key: 'status',
+        label: 'Durum',
+        type: 'select',
+        options: ['Acik', 'Kaydedildi', 'Onayli', 'Red', 'Kismi', 'Iptal'],
+        readOnly: true,
+      },
+      {
+        key: 'project_code',
+        label: 'Proje',
+        type: 'lookup',
+        lookup: 'prj-projeler',
+        valueKey: 'project_code',
+        labelKey: 'project_name',
+        codeKey: 'project_code',
+      },
+      { key: 'description', label: 'Hata / açıklama' },
+      { key: 'created_at', label: 'Emir tarihi', type: 'date', readOnly: true },
+    ],
+    detailFields: [...KK_OLCUM_GRID_FIELDS],
+    detailKey: 'olcumler',
+    detailSlots: 8,
+    formTabs: [
+      {
+        id: 'emir',
+        label: isGkk ? 'Giriş Kalite Kontrol Emri' : 'Çıkış Kalite Kontrol Emri',
+        kind: 'fields',
+        fields: null,
+      },
+      {
+        id: 'olcumler',
+        label: 'Ölçüm Değerleri',
+        kind: 'grid',
+        key: 'olcumler',
+        slots: 10,
+        fields: [...KK_OLCUM_GRID_FIELDS],
+      },
+      {
+        id: 'kaynak',
+        label: 'Kaynak Bilgisi',
+        kind: 'fields',
+        fields: [
+          {
+            key: 'source_type',
+            label: 'Kaynak',
+            type: 'select',
+            options: ['MANUEL', 'STOK_HAREKET', 'GIRIS_KONTROL', 'IRSALIYE', 'URETIM', 'DIGER'],
+          },
+          { key: 'source_id', label: 'Kaynak no / ID', type: 'number' },
+          { key: 'item_movement_id', label: 'Stok hareket ID', type: 'number', readOnly: true },
+          { key: 'transfer_movement_id', label: 'Transfer hareket ID', type: 'number', readOnly: true },
+          { key: 'plan_code', label: 'Plan kodu', readOnly: true },
+          { key: 'plan_name', label: 'Plan adı', readOnly: true },
+          { key: 'item_code', label: 'Stok kodu', readOnly: true },
+          { key: 'item_name', label: 'Stok adı', readOnly: true },
+          { key: 'lot_no', label: 'Parti no', readOnly: true },
+          { key: 'warehouse_code', label: 'Depo kodu', readOnly: true },
+          { key: 'hedef_depo_kodu', label: 'Hedef depo kodu', readOnly: true },
+        ],
+      },
+    ],
+    formLinks: {
+      item_id: [
+        { field: 'item_code', fromItem: 'item_code' },
+        { field: 'item_name', fromItem: 'item_name' },
+      ],
+    },
+    defaults: {
+      direction,
+      status: 'Acik',
+      source_type: 'MANUEL',
+      accepted_quantity: 0,
+      rejected_quantity: 0,
+      quantity: 1,
+    },
+  };
+}
 
 /** Ekran sözleşmesi: scripts/screen-contracts.json + npm run test:screens
  *  Kritik sekmeler/kind/flag kaybını CI ile yakalar (paralel dal sürüklenmesini önler). */
@@ -5651,88 +5841,20 @@ const MODULES = [
       { id: 'tanimlar', title: 'Tanımlar', screenIds: ['kk-kontrol-planlari', 'kk-stok-planlari', 'kk-ret-nedenleri'] },
     ],
     screens: [
-      {
+      buildKkOrderScreen({
         id: 'kk-emirleri-gkk',
         techId: 'QLT-IQC-SCR-001',
         businessNameEn: 'IncomingQcOrderScreen',
         title: 'Giriş Kalite Emirleri',
-        endpoint: '/kk-emirleri?direction=GKK',
-        crud: false,
-        codeField: 'order_no',
-        nameField: 'item_name',
-        approveAction: { label: 'Onayla', path: '/kk-emirleri/{id}/onayla' },
-        filters: [
-          { key: 'order_no', label: 'Emir no' },
-          { key: 'item_code', label: 'Stok' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'order_no', label: 'Emir', mono: true },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'lot_no', label: 'Parti', mono: true },
-          { key: 'quantity', label: 'Miktar' },
-          { key: 'accepted_quantity', label: 'Uygun' },
-          { key: 'rejected_quantity', label: 'Uygunsuz' },
-          { key: 'status', label: 'Durum' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-        ],
-        masterFields: [
-          { key: 'order_no', label: 'Emir no', code: true },
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'accepted_quantity', label: 'Uygun miktar', type: 'number' },
-          { key: 'rejected_quantity', label: 'Uygunsuz miktar', type: 'number' },
-          { key: 'status', label: 'Durum' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: false,
-      },
-      {
+        direction: 'GKK',
+      }),
+      buildKkOrderScreen({
         id: 'kk-emirleri-ckk',
         techId: 'QLT-OQC-SCR-001',
         businessNameEn: 'OutgoingQcOrderScreen',
         title: 'Çıkış Kalite Emirleri',
-        endpoint: '/kk-emirleri?direction=CKK',
-        crud: false,
-        codeField: 'order_no',
-        nameField: 'item_name',
-        approveAction: { label: 'Onayla', path: '/kk-emirleri/{id}/onayla' },
-        filters: [
-          { key: 'order_no', label: 'Emir no' },
-          { key: 'item_code', label: 'Stok' },
-          { key: 'status', label: 'Durum' },
-        ],
-        columns: [
-          { key: 'order_no', label: 'Emir', mono: true },
-          { key: 'item_code', label: 'Stok', mono: true },
-          { key: 'item_name', label: 'Ad' },
-          { key: 'lot_no', label: 'Parti', mono: true },
-          { key: 'quantity', label: 'Miktar' },
-          { key: 'accepted_quantity', label: 'Uygun' },
-          { key: 'rejected_quantity', label: 'Uygunsuz' },
-          { key: 'status', label: 'Durum' },
-          { key: 'warehouse_code', label: 'Depo', mono: true },
-        ],
-        masterFields: [
-          { key: 'order_no', label: 'Emir no', code: true },
-          { key: 'item_code', label: 'Stok kodu' },
-          { key: 'quantity', label: 'Miktar', type: 'number' },
-          { key: 'accepted_quantity', label: 'Uygun miktar', type: 'number' },
-          { key: 'rejected_quantity', label: 'Uygunsuz miktar', type: 'number' },
-          { key: 'status', label: 'Durum' },
-          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
-          { key: 'description', label: 'Açıklama' },
-        ],
-        detailFields: [],
-        detailKey: null,
-        detailAsFields: true,
-        readOnly: false,
-      },
+        direction: 'CKK',
+      }),
       {
         id: 'kk-uygunsuzluklar',
         techId: 'QLT-NCR-SCR-001',
@@ -13499,6 +13621,8 @@ const SCREEN_LOOKUP_EXTRAS = {
   'is-yerleri': ['is-yerleri', 'companies'],
   warehouses: ['warehouses', 'is-yerleri', 'companies'],
   'stok-karti': ['items', 'items-mamul', 'stok-depo', 'stok-partileri', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'vergi-kodlari', 'finans-vergi-kodlari', 'companies'],
+  'kk-emirleri-gkk': ['items', 'warehouses', 'companies', 'kk-kontrol-planlari', 'stok-partileri', 'prj-projeler'],
+  'kk-emirleri-ckk': ['items', 'warehouses', 'companies', 'kk-kontrol-planlari', 'stok-partileri', 'prj-projeler'],
   'stok-hareketleri': ['items', 'items-mamul', 'warehouses', 'is-yerleri', 'para-birimleri', 'olcu-birimleri', 'hareket-kodlari-stok', 'vergi-kodlari', 'finans-vergi-kodlari'],
   'stok-rezervasyonlari': ['sales_orders', 'warehouses', 'items', 'items-mamul', 'olcu-birimleri'],
   'cari-kartlari': [
@@ -14397,6 +14521,133 @@ function plantsForCompany(companyId) {
   if (!cid) return [];
   const plants = state.lookupCache?.['is-yerleri'] || state.isYerleri || [];
   return plants.filter((p) => Number(p.company_id) === cid);
+}
+
+function isKkOrderScreen(screenOrId) {
+  const id = typeof screenOrId === 'string' ? screenOrId : screenOrId?.id;
+  return id === 'kk-emirleri-gkk' || id === 'kk-emirleri-ckk';
+}
+
+/** Plan kriterleri + kayıtlı ölçümleri Canias benzeri satır grid’ine birleştir */
+function buildQcMeasurementRows(kriterler, olcumler) {
+  const existing = Array.isArray(olcumler) ? olcumler : [];
+  const byCrit = new Map(
+    existing
+      .filter((o) => o && o.criterion_id != null)
+      .map((o) => [Number(o.criterion_id), o])
+  );
+  const list = Array.isArray(kriterler) ? kriterler : [];
+  if (!list.length) {
+    // Kriter yoksa mevcut ölçümleri düzenlenebilir satır olarak göster
+    return existing.map((o, i) => {
+      const tip = String(o.measurement_type || '');
+      const isQual = /metin|evet/i.test(tip);
+      return {
+        ...o,
+        line_no: o.line_no || i + 1,
+        sample_no: o.sample_no || String(i + 1),
+        tol_minus: o.tol_minus ?? null,
+        tol_plus: o.tol_plus ?? null,
+        qual_target: o.qual_target || (isQual ? (o.criterion_name || '') : ''),
+        qual_value: o.qual_value || (isQual ? (o.measured_value || '') : ''),
+        measured_value: isQual ? '' : (o.measured_value || ''),
+        _satir_kayitli: o.id != null,
+      };
+    });
+  }
+  return list.map((k, i) => {
+    const prev = byCrit.get(Number(k.id));
+    const tip = String(k.measurement_type || prev?.measurement_type || '');
+    const isQual = /metin|evet/i.test(tip);
+    const target = k.target_value != null ? Number(k.target_value) : null;
+    const minV = k.min_value != null ? Number(k.min_value) : null;
+    const maxV = k.max_value != null ? Number(k.max_value) : null;
+    const measured = prev?.measured_value ?? '';
+    return {
+      id: prev?.id,
+      criterion_id: k.id,
+      line_no: k.line_no || i + 1,
+      sample_no: prev?.sample_no || String(i + 1),
+      criterion_code: k.criterion_code,
+      criterion_name: k.criterion_name,
+      measurement_type: tip || 'Sayisal',
+      min_value: k.min_value,
+      max_value: k.max_value,
+      target_value: k.target_value,
+      tol_minus: target != null && minV != null ? target - minV : null,
+      tol_plus: target != null && maxV != null ? maxV - target : null,
+      uom_code: k.uom_code || '',
+      measured_value: isQual ? '' : measured,
+      qual_target: isQual ? (k.criterion_name || '') : '',
+      qual_value: isQual ? measured : '',
+      accepted: prev?.accepted ?? null,
+      description: prev?.description ?? '',
+      is_required: k.is_required !== false,
+      _satir_kayitli: prev?.id != null,
+    };
+  });
+}
+
+async function ensureQcMeasurementRows(rec) {
+  if (!rec) return;
+  let kriterler = Array.isArray(rec.kriterler) ? rec.kriterler : [];
+  if (!kriterler.length && rec.plan_id) {
+    try {
+      const plan = await api(`/kk-kontrol-planlari/${Number(rec.plan_id)}`);
+      kriterler = Array.isArray(plan?.kriterler) ? plan.kriterler : [];
+      if (plan?.plan_code) rec.plan_code = plan.plan_code;
+      if (plan?.plan_name) rec.plan_name = plan.plan_name;
+      rec.kriterler = kriterler;
+    } catch (_) { /* plan yoksa mevcut ölçümlerle devam */ }
+  }
+  rec.olcumler = buildQcMeasurementRows(kriterler, rec.olcumler);
+}
+
+function normalizeQcMeasurementsForSave(rows) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter((r) => r && r.criterion_id)
+    .map((r) => {
+      const tip = String(r.measurement_type || '');
+      const isQual = /metin|evet/i.test(tip);
+      const measured = isQual
+        ? (r.qual_value != null && r.qual_value !== '' ? r.qual_value : r.measured_value)
+        : r.measured_value;
+      return {
+        criterion_id: Number(r.criterion_id),
+        measured_value: measured == null || measured === '' ? null : String(measured),
+        accepted: r.accepted === true || r.accepted === 'true' || r.accepted === 1 || r.accepted === '1'
+          ? true
+          : (r.accepted === false || r.accepted === 'false' || r.accepted === 0 || r.accepted === '0'
+            ? false
+            : null),
+        description: r.description || null,
+      };
+    });
+}
+
+async function refreshQcMeasurementsFromPlan(screen) {
+  if (!isKkOrderScreen(screen) || !state.formRecord) return;
+  const master = readMasterFromForm(screen);
+  state.formRecord = { ...state.formRecord, ...master };
+  const planId = Number(state.formRecord.plan_id);
+  if (!planId) {
+    state.formRecord.kriterler = [];
+    state.formRecord.olcumler = buildQcMeasurementRows([], state.formRecord.olcumler);
+    renderForm(screen);
+    return;
+  }
+  try {
+    const plan = await api(`/kk-kontrol-planlari/${planId}`);
+    state.formRecord.kriterler = Array.isArray(plan?.kriterler) ? plan.kriterler : [];
+    state.formRecord.plan_code = plan?.plan_code || state.formRecord.plan_code;
+    state.formRecord.plan_name = plan?.plan_name || state.formRecord.plan_name;
+  } catch (err) {
+    toast(err.message || 'Kontrol planı okunamadı');
+    return;
+  }
+  // Plan değişince ölçüm değerlerini sıfırla; satır iskeleti yeni kriterlerden gelir
+  state.formRecord.olcumler = buildQcMeasurementRows(state.formRecord.kriterler, []);
+  renderForm(screen);
 }
 
 function hydrateItemCompanyPlant(rec) {
@@ -18036,6 +18287,7 @@ function renderForm(screen) {
         secLabel = screen.secondaryAction.label;
         secBtn.dataset.secKind = 'baslat';
       } else if ((screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk')
+        && rec.id && state.formMode !== 'yeni'
         && screen.approveAction && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status)) {
         // Onay birincil convert'de; reddet ikincil
         secShow = true;
@@ -18081,7 +18333,12 @@ function renderForm(screen) {
       }
     }
     if (screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk') {
-      show = Boolean(screen.approveAction && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status));
+      show = Boolean(
+        rec.id
+        && screen.approveAction
+        && state.formMode !== 'yeni'
+        && ['Acik', 'Kaydedildi', 'Kismi'].includes(rec.status)
+      );
     }
     if (screen.id === 'onaylarim') {
       show = Boolean(screen.approveAction && rec.status_code === 'BEKLIYOR');
@@ -19871,10 +20128,15 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
     : [];
 
   const rules = [...(links || []), ...detailStokRules];
-  if (!rules.length) return;
+  const kkPlanRefresh = isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail;
+  if (!rules.length && !kkPlanRefresh) return;
 
   _formLinking = true;
   try {
+    if (kkPlanRefresh && !rules.length) {
+      await refreshQcMeasurementsFromPlan(screen);
+      return;
+    }
     // BOM/rota listeleri güncel olsun
     if (['item_id', 'finished_good_item_id', 'product_bom_id', 'component_item_id'].includes(changedKey)) {
       await Promise.all([
@@ -19973,6 +20235,11 @@ async function applyFormLinkages(screen, changedKey, changedEl) {
       });
       const uniq = [...new Set(labels)];
       toast(`Stok bağlantısı: ${uniq.join(', ')} dolduruldu`);
+    }
+
+    // KK emri: plan değişince ölçüm satırlarını kriterlerden yenile
+    if (isKkOrderScreen(screen) && changedKey === 'plan_id' && !isDetail) {
+      await refreshQcMeasurementsFromPlan(screen);
     }
   } finally {
     _formLinking = false;
@@ -21366,6 +21633,10 @@ async function openForm(mode, opts = {}) {
     hydrateItemCompanyPlant(record);
   }
 
+  if (screen.id === 'kk-emirleri-gkk' || screen.id === 'kk-emirleri-ckk') {
+    await ensureQcMeasurementRows(record);
+  }
+
   // Mevcut tek rezervasyon kaydı → satır grid’ine yansıt (incele/iptal)
   if (screen.id === 'stok-rezervasyonlari' && record.id && !Array.isArray(record.satirlar)) {
     record.satirlar = [{
@@ -21735,6 +22006,23 @@ async function saveForm({ after = 'stay' } = {}) {
   // make the server sync drop rows that only exist in the database.
   if (screen.detailPersist && state.formRecord?.id) {
     Object.keys(screen.detailPersist).forEach((k) => { delete master[k]; });
+  }
+
+  if (isKkOrderScreen(screen)) {
+    master.direction = master.direction
+      || (screen.id === 'kk-emirleri-ckk' ? 'CKK' : 'GKK');
+    master.olcumler = normalizeQcMeasurementsForSave(master.olcumler);
+    delete master.kriterler;
+    delete master.gecmis;
+    delete master.uygunsuzluklar;
+    delete master.item_code;
+    delete master.item_name;
+    delete master.warehouse_code;
+    delete master.warehouse_name;
+    delete master.hedef_depo_kodu;
+    delete master.lot_no;
+    delete master.plan_code;
+    delete master.plan_name;
   }
 
   try {

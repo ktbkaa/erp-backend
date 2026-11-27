@@ -82,9 +82,13 @@ async function createQcOrder(client, {
     description = null,
     projectCode = null,
     companyId = null,
+    orderNo = null,
+    planId = null,
 }) {
-    const plan = await findItemQcPlan(client, stokId, direction);
-    const emirNo = await nextDocumentNo(client, 'KK_EMIR');
+    const plan = planId
+        ? { plan_id: planId, id: planId }
+        : await findItemQcPlan(client, stokId, direction);
+    const emirNo = orderNo || await nextDocumentNo(client, 'KK_EMIR');
     let firmaId = companyId || null;
     if (!firmaId && stokId) {
         const fr = await client.query(`SELECT company_id FROM items WHERE id=$1`, [stokId]);
