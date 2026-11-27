@@ -10,6 +10,7 @@
 
 const { Client } = require('ldapts');
 const { parametreAl } = require('./yetki');
+const { getSecretSetting } = require('./secretSettings');
 
 function envOr(val, fallback = '') {
   if (val == null) return fallback;
@@ -36,7 +37,7 @@ async function ldapConfig(pool) {
   const url = await p('LDAP_URL', 'LDAP_URL', '');
   const baseDn = await p('LDAP_BASE_DN', 'LDAP_BASE_DN', '');
   const bindDn = await p('LDAP_BIND_DN', 'LDAP_BIND_DN', '');
-  const bindPassword = await p('LDAP_BIND_PASSWORD', 'LDAP_BIND_PASSWORD', '');
+  const bindPassword = await getSecretSetting(pool, 'LDAP_BIND_PASSWORD', '');
   const userFilter = await p(
     'LDAP_USER_FILTER',
     'LDAP_USER_FILTER',

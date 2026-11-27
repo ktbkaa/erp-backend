@@ -7,16 +7,29 @@ const pool = require('./db');
 const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
 const { companyContext } = require('./src/middleware/firmaContext');
+const {
+    corsMiddleware,
+    helmetMiddleware,
+    bodyParsers,
+    trustProxySetting,
+} = require('./src/middleware/security');
+const { checkProductionConfig } = require('./src/utils/securityConfig');
+const { warnDbStoredSecrets } = require('./src/utils/secretSettings');
 
-// Profil resmi (base64) + yetki JSON için varsayılan 100kb yetmez
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+const startupCheck = checkProductionConfig();
+startupCheck.warnings.forEach((w) => console.warn(`[güvenlik] ${w}`));
+if (startupCheck.errors.length) {
+    startupCheck.errors.forEach((e) => console.error(`[güvenlik] ${e}`));
+    console.error('[güvenlik] Canlı yapılandırma hatalı; sunucu başlatılmadı.');
+    process.exit(1);
+}
+
+app.set('trust proxy', trustProxySetting());
+app.use(helmetMiddleware());
+// ALLOWED_ORIGINS (canlı); boşken geliştirmede her origin (Cursor Ports / önizleme)
+app.use(corsMiddleware());
+bodyParsers(app);
 app.use((req, res, next) => {
-    // Önizleme / farklı origin (Cursor Ports) için CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Kullanici-Kodu, X-Firma-Id');
-    if (req.method === 'OPTIONS') return res.sendStatus(204);
     if (req.path === '/' || req.path.endsWith('.html') || req.path.endsWith('.js') || req.path.endsWith('.css')) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         res.setHeader('Pragma', 'no-cache');
@@ -30,11 +43,11 @@ app.use(express.static(path.join(__dirname, 'public'), {
     cacheControl: false,
 }));
 
-// JWT / header kimlik + firma bağlamı + audit (health ve static hariç API)
+// JWT / header kimlik + audit (başarısız kimlik denemeleri dahil) + firma bağlamı (health ve static hariç API)
 app.use(authOptional);
+app.use(auditMiddleware(pool));
 app.use(authRequired);
 app.use(companyContext);
-app.use(auditMiddleware(pool));
 
 app.get('/health', async (req, res) => {
     const pool = require('./db');
@@ -222,6 +235,9 @@ const listenOpts = host === '::'
 server.listen(listenOpts, () => {
     console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
+    if (startupCheck.production) {
+      warnDbStoredSecrets(pool).catch(() => {});
+    }
     if (process.env.NODE_ENV !== 'test' && process.env.TCMB_SCHEDULER !== 'off') {
       try {
         const { startTcmbScheduler } = require('./src/services/tcmbRateService');

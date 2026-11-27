@@ -6,6 +6,10 @@ const { parametreAl } = require('../src/utils/yetki');
 const { parseJsonArr } = require('../src/middleware/authJwt');
 const { hashParola, dogrulaParola } = require('../src/utils/parola');
 const { authenticateLdap, ldapStatus } = require('../src/utils/ldapAuth');
+const { authRateLimiters } = require('../src/middleware/security');
+const { validateBody, schemas } = require('../src/utils/validate');
+
+const limiters = authRateLimiters();
 
 async function loadScreenPermissions(kisiId) {
   if (!kisiId) return [];
@@ -97,7 +101,7 @@ router.get('/ldap-status', async (req, res, next) => {
 });
 
 /** POST /auth/login */
-router.post('/login', async (req, res, next) => {
+router.post('/login', limiters.login, validateBody(schemas.login), async (req, res, next) => {
   try {
     const body = req.body || {};
     const user_code = body.user_code || body.username || body.username;
@@ -156,7 +160,7 @@ router.post('/login', async (req, res, next) => {
 });
 
 /** POST /auth/refresh { refresh_token } */
-router.post('/refresh', async (req, res, next) => {
+router.post('/refresh', limiters.refresh, validateBody(schemas.refresh), async (req, res, next) => {
   try {
     const { refresh_token } = req.body || {};
     if (!refresh_token) return res.status(400).json({ hata: 'refresh_token zorunlu.' });

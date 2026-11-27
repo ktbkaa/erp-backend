@@ -9,7 +9,7 @@ const puppeteer = require('puppeteer-core');
 
 const BASE = process.env.APP_URL || 'http://127.0.0.1:3000';
 const USER = process.env.DEMO_USER || 'kagantalha.b';
-const PASS = process.env.DEMO_PASS || 'Demo123!';
+const PASS = require('./lib/demoCredentials').demoPassword();
 const OUT = path.join(__dirname, '..', 'docs', 'teks-sunum-shots');
 const ART = '/opt/cursor/artifacts/teks-sunum-shots';
 

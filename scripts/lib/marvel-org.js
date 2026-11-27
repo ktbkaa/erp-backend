@@ -2,6 +2,7 @@
  * Metal Marvel — firma, org, İK, lisans, kalibrasyon
  */
 const { hashParola } = require('../../src/utils/parola');
+const { demoPassword } = require('./demoCredentials');
 const { nextSequenceCode } = require('../../src/utils/kodUretici');
 const {
   FIRMA_KODU, FIRMA_ADI, TAG, DATES, FIRST_NAMES, LAST_NAMES, log, api,
@@ -133,7 +134,7 @@ async function ensureWorkCenters(client, plantId) {
 async function upsertErpUser(_client, { userCode, first, last, title, role, companyId }) {
   // API ile personel bağlarken görünür olsun diye pool üzerinden commit
   const db = require('../../db');
-  const hash = hashParola('Demo123!');
+  const hash = hashParola(demoPassword());
   let u = (await db.query(`SELECT * FROM users WHERE user_code=$1`, [userCode])).rows[0];
   if (!u) {
     u = (await db.query(

@@ -9,7 +9,7 @@ const puppeteer = require('puppeteer-core');
 
 const BASE = process.env.APP_URL || 'http://127.0.0.1:3000';
 const USER = process.env.DEMO_USER || 'kagantalha.b';
-const PASS = process.env.DEMO_PASS || 'Demo123!';
+const PASS = require('./lib/demoCredentials').demoPassword();
 const OUT = path.join(__dirname, '..', 'docs', 'metal-marvel', 'screenshots');
 const IDS = JSON.parse(
   fs.readFileSync(path.join(__dirname, '..', 'docs', 'metal-marvel', 'evidence', 'shot-ids.json'), 'utf8'),

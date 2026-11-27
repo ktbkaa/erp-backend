@@ -83,7 +83,7 @@ const html = `<!DOCTYPE html>
   <div><strong>İK:</strong> Beyaz yaka ${ozet.hr?.counts?.hr?.BeyazYaka ?? 120} · Mavi yaka ${ozet.hr?.counts?.hr?.MaviYaka ?? 400}</div>
   <div><strong>Departmanlar (${(ozet.hr?.departments || []).length}):</strong> ${(ozet.hr?.departments || []).join(', ')}</div>
   <div><strong>ERP kullanıcıları:</strong> ${Object.keys(users).join(', ') || '—'}</div>
-  <div><strong>Demo şifre:</strong> <code>Demo123!</code></div>
+  <div><strong>Demo şifre:</strong> <code>DEMO_PASS (env)</code></div>
   <div><strong>Simülasyon hataları:</strong> ${(ozet.errors || []).length}</div>
   <div><strong>Rapor üretimi:</strong> ${new Date().toISOString()}</div>
 </div>
