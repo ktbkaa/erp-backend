@@ -1732,8 +1732,9 @@ tr.selected td { background: var(--accent-soft); }
 .empty-row td { color: var(--muted); text-align: center; padding: 1.25rem 1rem !important; white-space: normal !important; }
 
 .action-bar {
-  padding: 0.6rem 1rem !important;
-  gap: 0.4rem !important;
+  padding: 0.25rem 0.4rem !important;
+  gap: 0.35rem !important;
+  margin-top: 0.4rem !important;
 }
 .action-bar .btn.action {
   min-width: 4.6rem;
@@ -7485,7 +7486,7 @@ html .screen-banner {
   overflow: visible !important;
   z-index: 40;
 }
-html .screen-banner:not([data-info]) { display: none !important; }
+html .screen-banner:not([data-info])::before { display: none; }
 html .screen-banner::before {
   content: "i";
   position: absolute;
@@ -7535,4 +7536,94 @@ html .screen-banner::after {
 }
 html .screen-banner:hover::after,
 html .screen-banner:focus-visible::after { display: block; }
-.screen-view > .action-bar { padding-right: 2.9rem; }
+/* Aksiyon çubuğu: düğmelere yakın, az boşluklu (tüm görünüm / ekran yüksekliklerinde) */
+html .screen-view > .action-bar {
+  margin-top: 0.2rem !important;
+  margin-bottom: 0.4rem !important;
+  padding: 0.25rem 2.5rem 0.25rem 0.4rem !important;
+  gap: 0.35rem !important;
+}
+
+/* Liste ekranı: bilgi simgesi aksiyon çubuğunun içinde (sağ uç, dikey ortalı) */
+/* Banner grid satırı (yerleşim için) sıfır yükseklikte kalır; simge/pop-up aksiyon çubuğunda */
+html .screen-view > .screen-banner::before,
+html .screen-view > .screen-banner::after { display: none !important; }
+.action-bar .info-tip {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.45rem;
+  height: 1.45rem;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 1.5px solid var(--nav-icon, #667282);
+  border-radius: 50%;
+  background: var(--surface, #fff);
+  color: var(--nav-title-open, #3a5574);
+  font: italic 700 0.85rem/1 Georgia, "Times New Roman", serif;
+  cursor: help;
+  user-select: none;
+  z-index: 5;
+}
+.action-bar .info-tip:hover,
+.action-bar .info-tip:focus-visible {
+  background: var(--nav-open-bg, rgba(58, 85, 116, 0.09));
+  border-color: var(--nav-title-open, #3a5574);
+  outline: none;
+}
+.action-bar .info-tip::after {
+  content: attr(data-info);
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: none;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(36rem, calc(100vw - 2rem));
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--surface, #fff);
+  color: var(--ink);
+  box-shadow: 0 10px 28px rgba(26, 35, 48, 0.18);
+  font: normal 500 0.82rem/1.45 var(--font, sans-serif);
+  letter-spacing: 0;
+  text-align: left;
+  white-space: normal;
+  cursor: default;
+  z-index: 60;
+}
+.action-bar .info-tip:hover::after,
+.action-bar .info-tip:focus-visible::after { display: block; }
+
+/* Liste ekranı dikey boşlukları: düğmeler, filtre ve liste birbirine yakın */
+html .screen-view {
+  padding-top: 0.2rem !important;
+}
+html .screen-view > .action-bar {
+  margin-top: 0.15rem !important;
+  margin-bottom: 0 !important;
+  padding-top: 0.15rem !important;
+  padding-bottom: 0.15rem !important;
+}
+html .screen-view > .filter-pane-home,
+html .screen-view > #filterPaneHome {
+  margin-top: 0 !important;
+}
+html .screen-view .filter-pane {
+  margin-top: 0.3rem !important;
+  padding-top: 0.4rem !important;
+}
+html .screen-view .filter-pane-head {
+  margin-bottom: 0.2rem !important;
+}
+html .screen-view .filter-pane-home { padding-top: 0 !important; }
+html .screen-view .filter-pane { margin-top: 0.15rem !important; }
+html .screen-view { row-gap: 0 !important; gap: 0 !important; }
+html .screen-view > .filter-pane-home { margin-bottom: 0.3rem !important; }
+/* Filtre satırı içeriği kadar yüksek (80px'e sıkışıp listeyi üstüne bindirmesin) */
+html #viewScreen.screen-view:not(.filter-docked) {
+  grid-template-rows: auto auto auto minmax(12rem, 1fr) !important;
+}

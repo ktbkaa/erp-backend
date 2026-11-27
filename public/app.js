@@ -15568,6 +15568,20 @@ function syncBannerInfo(el) {
   el.dataset.info = t;
   el.setAttribute('aria-label', t);
   el.textContent = '';
+  // Liste ekranı: simge aksiyon çubuğunun sağ ucunda (dikey ortalı) durur
+  const bar = el.id === 'screenBanner' ? document.getElementById('actionBar') : null;
+  if (bar) {
+    let tip = bar.querySelector(':scope > .info-tip');
+    if (!tip) {
+      tip = document.createElement('span');
+      tip.className = 'info-tip';
+      tip.tabIndex = 0;
+      tip.textContent = 'i';
+      bar.appendChild(tip);
+    }
+    tip.dataset.info = t;
+    tip.setAttribute('aria-label', t);
+  }
 }
 
 function initBannerInfo() {
