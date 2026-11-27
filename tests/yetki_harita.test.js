@@ -9,6 +9,7 @@ const path = require('path');
 const { extractSpaModules } = require('./helpers/spaModules');
 const {
   MODULE_SCREENS,
+  SCREEN_ALIASES,
   SCREEN_MODULE,
   ROUTE_POLICIES,
   findRoutePolicy,
@@ -83,7 +84,8 @@ describe('yetki haritası — kapsam', () => {
     assert.ok(backend.length >= 180, `beklenen ≥180 ekran, gelen ${backend.length}`);
     const uyumsuz = backend.filter(([s, mod]) => spaScreenModule[s] !== mod).map(([s]) => s);
     assert.deepEqual(uyumsuz, [], `SPA ile uyumsuz ekran/modül: ${uyumsuz.join(', ')}`);
-    const eksik = Object.keys(spaScreenModule).filter((s) => !SCREEN_MODULE[s]);
+    // Menü varyantları (ör. satis-faturalari) yetkiyi SCREEN_ALIASES üzerinden kanonik ekrandan alır
+    const eksik = Object.keys(spaScreenModule).filter((s) => !SCREEN_MODULE[SCREEN_ALIASES[s] || s]);
     assert.deepEqual(eksik, [], `Backend haritasında olmayan SPA ekranı: ${eksik.join(', ')}`);
   });
 

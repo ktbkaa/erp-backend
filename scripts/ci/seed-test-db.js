@@ -53,8 +53,9 @@ async function main() {
   try {
     const { ensureDemoFirms } = require('../../src/bootstrap/ensureDemoFirms');
     const { ensureDemoData } = require('../../src/bootstrap/ensureDemoData');
-    const firms = await ensureDemoFirms(pool);
-    const data = await ensureDemoData(pool);
+    // Test DB'si (assertTestDatabase): SEED_DEMO_DATA bayrağından bağımsız demo fixture yazılır.
+    const firms = await ensureDemoFirms(pool, { force: true });
+    const data = await ensureDemoData(pool, { force: true });
 
     const client = await pool.connect();
     try {

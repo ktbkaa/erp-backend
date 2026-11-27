@@ -34,8 +34,7 @@ const MODULE_SCREENS = {
   stok: [
     'stok-karti', 'stok-hareketleri', 'stok-hareket-raporu', 'depo-bakiye', 'transfer-emirleri',
     'sayim-belgeleri', 'stok-depo', 'stok-partileri', 'stok-serileri', 'stok-rezervasyonlari',
-    'stok-ikame', 'mrp-parametre', 'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap',
-    'mrp-sonuclar', 'mrp-hareket-raporu',
+    'stok-ikame',
   ],
   satinalma: [
     'satin-alma-talepleri', 'satin-alma-teklifleri', 'satin-alma-anlasmalari',
@@ -47,8 +46,9 @@ const MODULE_SCREENS = {
     'fatura-yonetimi', 'satis-iade-faturalari',
   ],
   uretim: [
-    'urun-agaci', 'bom-patlatma', 'bom-malzeme-degisikligi', 'uretim-planlari', 'uretim-emirleri',
-    'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri', 'hizli-uretim-girisi',
+    'urun-agaci', 'bom-patlatma', 'bom-malzeme-degisikligi', 'uretim-planlari', 'mrp-parametre',
+    'mrp-bagimsiz-ihtiyac', 'mrp-calisma', 'mrp-hesap', 'mrp-sonuclar', 'mrp-hareket-raporu',
+    'uretim-emirleri', 'kolay-is-emri-onayi', 'siparis-is-emri', 'toplu-is-emri', 'uretim-girisleri', 'hizli-uretim-girisi',
     'is-merkezi-yuku', 'bakim-emirleri', 'sinif-tanimi', 'is-merkezleri', 'is-istasyonlari',
     'routings', 'uretim-emri-tipleri', 'uretim-parametreleri', 'uretim-parametre-dogrulama',
     'fason-parametreleri', 'fason-operasyonlari', 'fason-fiyatlari', 'fason-siparisleri',
@@ -86,7 +86,8 @@ const MODULE_SCREENS = {
     'hr-adaylar', 'hr-onboarding', 'hr-zimmetler', 'hr-isten-cikis', 'hr-cikis-nedenleri',
   ],
   onay: [
-    'onaylarim', 'onay-izleme', 'onay-yetki-devri', 'onay-role-tanim', 'onay-kural-tanim',
+    'onay-bekleyenler', 'onaylarim', 'onay-izleme', 'onay-izi', 'onay-yetki-devri',
+    'onay-belge-turleri', 'onay-role-tanim', 'onay-kural-tanim',
     'onay-rota-tanim', 'onay-message-template', 'onay-status-tanim', 'onay-modul-kullanimlari',
   ],
   sistem: [
@@ -215,7 +216,18 @@ const ROUTE_POLICIES = [
   { prefix: '/bom/malzeme-degisikligi', screens: ['bom-malzeme-degisikligi'] },
   { prefix: '/bom/malzeme-degistir', screens: ['bom-malzeme-degisikligi'] },
   { prefix: '/uretim-planlari', screens: ['uretim-planlari'], read: 'auth' },
-  { prefix: '/uretim-emirleri', screens: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'], read: 'auth' },
+  {
+    prefix: '/uretim-emirleri',
+    screens: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'],
+    read: 'auth',
+    rules: [
+      {
+        methods: ['POST'],
+        path: /^\/(onay-adaylari|toplu-onay|[^/]+\/onayla)$/,
+        screens: ['uretim-emirleri', 'kolay-is-emri-onayi'],
+      },
+    ],
+  },
   { prefix: '/uretim-emri-tipleri', screens: ['uretim-emri-tipleri'], read: 'auth' },
   { prefix: '/uretim-girisleri', screens: ['uretim-girisleri', 'hizli-uretim-girisi'], read: 'auth' },
   { prefix: '/uretim-parametreleri', screens: ['uretim-parametreleri', 'uretim-parametre-dogrulama'], read: 'auth' },
@@ -256,6 +268,8 @@ const ROUTE_POLICIES = [
   { prefix: '/muhasebe-donemleri', screens: ['muhasebe-donemleri'], read: 'auth' },
   { prefix: '/muhasebe-donemleri/mali-yillar', screens: ['mali-yillar'], read: 'auth' },
   { prefix: '/muhasebe-belgeleri', screens: ['muhasebe-belgeleri'] },
+  // Kur farkı değerlemesi 646/656 fişi üretir — muhasebe belgesi yetkisi
+  { prefix: '/kur-farki', screens: ['muhasebe-belgeleri'] },
   { prefix: '/fatura-kontrolleri', screens: ['fatura-kontrolleri'] },
   { prefix: '/finans-nakit', screens: ['finans-banka-hesaplari', 'finans-kasa-hesaplari', 'finans-nakit-hareketleri'] },
   { prefix: '/finans-nakit/banka-hesaplari', screens: ['finans-banka-hesaplari'] },
@@ -351,9 +365,9 @@ const ROUTE_POLICIES = [
   { prefix: '/onay-durumlari', screens: ['onay-status-tanim'], read: 'auth' },
   { prefix: '/onay-module-kullanimlari', screens: ['onay-modul-kullanimlari'], read: 'auth' },
   { prefix: '/onay-ekranlari', screens: ['onay-kural-tanim', 'onay-rota-tanim'], read: 'auth' },
-  { prefix: '/onay-bekleyenler', screens: ['onaylarim'], read: 'auth', write: 'auth' },
-  { prefix: '/onay-izi', screens: ['onay-izleme'] },
-  { prefix: '/onay-belge-turleri', screens: ['onay-kural-tanim'], read: 'auth' },
+  { prefix: '/onay-bekleyenler', screens: ['onay-bekleyenler', 'onaylarim'], read: 'auth', write: 'auth' },
+  { prefix: '/onay-izi', screens: ['onay-izi', 'onay-izleme'] },
+  { prefix: '/onay-belge-turleri', screens: ['onay-belge-turleri', 'onay-kural-tanim'], read: 'auth' },
 
   // Sistem
   { prefix: '/lisanslar', screens: ['sistem-lisanslar'], read: 'auth', write: 'admin' },

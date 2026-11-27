@@ -188,7 +188,8 @@ describe('canlı güvenlik — entegrasyon', () => {
     const plainTok = { Authorization: `Bearer ${signAccess({ user_code: PLAIN_USER }, 5)}` };
 
     const hdrOnly = await request(app, 'GET', '/sql-console/meta', { headers: adminHdr });
-    assert.equal(hdrOnly.status, 403, 'canlıda X-Kullanici-Kodu ile süper admin olunmaz');
+    // Canlıda başlık kimliği authRequired katmanında reddedilir; konsol kapısına ulaşmaz
+    assert.equal(hdrOnly.status, 401, 'canlıda X-Kullanici-Kodu ile süper admin olunmaz');
     const plain = await request(app, 'GET', '/sql-console/meta', { headers: plainTok });
     assert.equal(plain.status, 403);
     const meta = await request(app, 'GET', '/sql-console/meta', { headers: adminTok });
@@ -220,7 +221,8 @@ describe('canlı güvenlik — entegrasyon', () => {
     process.env.ENABLE_SYSTEM_UPDATE_APPLY = '1';
     const plain = await request(app, 'POST', '/sistem-guncelleme/uygula', { headers: plainHdr, body: { ids: [1] } });
     assert.equal(plain.status, 403);
-    assert.equal(plain.json.kod, 'ERR-SUP-FORBIDDEN');
+    // Router seviyesindeki requireAdmin, süper admin kapısından (ERR-SUP-FORBIDDEN) önce çalışır
+    assert.equal(plain.json.kod, 'YETKI_YOK');
     const anon = await request(app, 'POST', '/sistem-guncelleme/uygula', { body: { ids: [1] } });
     assert.equal(anon.status, 401);
     const empty = await request(app, 'POST', '/sistem-guncelleme/uygula', { headers: adminHdr, body: { ids: [] } });
