@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { companyIdFromReq } = require('../src/utils/firmaScope');
+const { companyIdFromReq, assertCompanyRecord } = require('../src/utils/firmaScope');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { nextDocumentNo } = require('../src/utils/belgeNo');
 const { calculateLine, belgelerToplam } = require('../src/utils/kalemHesap');
@@ -236,6 +236,10 @@ router.post('/:id/siparise-donustur', async (req, res) => {
         const { BELGE_TIPI, findMovementCode } = require('../src/utils/belgeOmurga');
         const teklif = await getQuotation(req.params.id);
         if (!teklif) return res.status(404).json({ hata: 'Teklif bulunamadı.' });
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(pool, 'sales_quotations', teklif.id, firmaId))) {
+            return res.status(403).json({ hata: 'Bu firma için teklif erişimi yok.' });
+        }
         if (!['Onayli', 'Taslak'].includes(teklif.status)) {
             return res.status(400).json({ hata: `Durum dönüşüme uygun değil: ${teklif.status}` });
         }

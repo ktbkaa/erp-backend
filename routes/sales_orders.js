@@ -17,7 +17,7 @@ const {
   SIPARIS_SATIR,
 } = require('../src/utils/belgeAlanlari');
 
-const { companyIdFromReq, andCompany, andCompanyViaPlant, andItemCompany, andPartnerCompany } = require('../src/utils/firmaScope');
+const { companyIdFromReq, assertCompanyRecord, andCompany, andCompanyViaPlant, andItemCompany, andPartnerCompany } = require('../src/utils/firmaScope');
 /** ATP: kullanılabilir stok (fiziksel − rezerv) vs sipariş kalemleri (REQ-SAL-008 / INV-004) */
 async function checkAtp(clientOrPool, kalemler, { sert = null, depoId = null } = {}) {
   let zorunlu = sert;
@@ -93,7 +93,7 @@ router.get('/', async (req, res) => {
         }
         if (status) {
             params.push(status);
-            where.push(`status = ${params.length}`);
+            where.push(`status = $${params.length}`);
         }
         const firmaId = companyIdFromReq(req);
         if (firmaId) {
@@ -380,6 +380,10 @@ router.put('/:id', async (req, res) => {
 /** POST /sales_orders/:id/rezerve — stok rezervasyonu (INV-004) */
 router.post('/:id/rezerve', async (req, res) => {
   try {
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(pool, 'sales_orders', Number(req.params.id), firmaId))) {
+      return res.status(403).json({ hata: 'Bu firma için sipariş erişimi yok.' });
+    }
     const olusan = await withTransaction(pool, async (client) => {
       return reserveOrder(client, Number(req.params.id), {
         depoId: req.body.warehouse_id ? Number(req.body.warehouse_id) : null,
@@ -395,6 +399,10 @@ router.post('/:id/rezerve', async (req, res) => {
 /** POST /sales_orders/:id/rezervasyon-iptal */
 router.post('/:id/rezervasyon-iptal', async (req, res) => {
   try {
+    const firmaId = companyIdFromReq(req);
+    if (firmaId && !(await assertCompanyRecord(pool, 'sales_orders', Number(req.params.id), firmaId))) {
+      return res.status(403).json({ hata: 'Bu firma için sipariş erişimi yok.' });
+    }
     await withTransaction(pool, async (client) => {
       await cancelOrderReservations(client, Number(req.params.id));
     });
@@ -417,6 +425,10 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
         const { warehouseItemBalance } = require('../src/services/stokHareketService');
         const siparis = await getOrder(req.params.id);
         if (!siparis) return res.status(404).json({ hata: 'Sipariş bulunamadı.' });
+        const firmaId = companyIdFromReq(req);
+        if (firmaId && !(await assertCompanyRecord(pool, 'sales_orders', siparis.id, firmaId))) {
+            return res.status(403).json({ hata: 'Bu firma için sipariş erişimi yok.' });
+        }
         if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.status)) {
             return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.status}` });
         }

@@ -13,6 +13,13 @@ function trimOrNull(v) {
   return v;
 }
 
+/** Global (company_id NULL) herkese; aksi halde aktif firma ile eşleşmeli. */
+function assertAutomationFirma(row, firmaId) {
+  if (!firmaId || !row) return true;
+  if (row.company_id == null) return true;
+  return Number(row.company_id) === Number(firmaId);
+}
+
 router.get('/', async (req, res, next) => {
   try {
     const firmaId = companyIdFromReq(req);
@@ -34,13 +41,22 @@ router.get('/', async (req, res, next) => {
 
 router.get('/logs', async (req, res, next) => {
   try {
+    const firmaId = companyIdFromReq(req);
+    const params = [];
+    let where = '';
+    if (firmaId) {
+      params.push(firmaId);
+      where = `WHERE a.company_id IS NULL OR a.company_id=$${params.length}`;
+    }
     const r = await pool.query(
       `
       SELECT l.*, a.automation_code, a.automation_name
       FROM prj_automation_logs l
       LEFT JOIN prj_automations a ON a.id = l.automation_id
+      ${where}
       ORDER BY l.id DESC LIMIT 100
-      `
+      `,
+      params
     );
     res.json(r.rows);
   } catch (err) {
@@ -53,6 +69,9 @@ router.get('/:id', async (req, res, next) => {
     if (!/^\d+$/.test(String(req.params.id))) return next();
     const r = await pool.query(`SELECT * FROM prj_automations WHERE id=$1`, [req.params.id]);
     if (!r.rows[0]) return res.status(404).json({ hata: 'Otomasyon bulunamadı.' });
+    if (!assertAutomationFirma(r.rows[0], companyIdFromReq(req))) {
+      return res.status(403).json({ hata: 'Bu firma için otomasyon erişimi yok.' });
+    }
     res.json(r.rows[0]);
   } catch (err) {
     next(err);
@@ -96,6 +115,11 @@ router.post('/', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     if (!/^\d+$/.test(String(req.params.id))) return next();
+    const existing = await pool.query(`SELECT * FROM prj_automations WHERE id=$1`, [req.params.id]);
+    if (!existing.rows[0]) return res.status(404).json({ hata: 'Otomasyon bulunamadı.' });
+    if (!assertAutomationFirma(existing.rows[0], companyIdFromReq(req))) {
+      return res.status(403).json({ hata: 'Bu firma için otomasyon erişimi yok.' });
+    }
     const b = req.body || {};
     const sets = [];
     const params = [req.params.id];
@@ -129,6 +153,11 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     if (!/^\d+$/.test(String(req.params.id))) return next();
+    const existing = await pool.query(`SELECT * FROM prj_automations WHERE id=$1`, [req.params.id]);
+    if (!existing.rows[0]) return res.status(404).json({ hata: 'Otomasyon bulunamadı.' });
+    if (!assertAutomationFirma(existing.rows[0], companyIdFromReq(req))) {
+      return res.status(403).json({ hata: 'Bu firma için otomasyon erişimi yok.' });
+    }
     const r = await pool.query(
       `UPDATE prj_automations SET is_enabled=FALSE WHERE id=$1 RETURNING id`,
       [req.params.id]
@@ -144,6 +173,9 @@ router.post('/:code/run', async (req, res, next) => {
   try {
     const a = await pool.query(`SELECT * FROM prj_automations WHERE automation_code=$1`, [req.params.code]);
     if (!a.rows[0]) return res.status(404).json({ hata: 'Otomasyon bulunamadı.' });
+    if (!assertAutomationFirma(a.rows[0], companyIdFromReq(req))) {
+      return res.status(403).json({ hata: 'Bu firma için otomasyon erişimi yok.' });
+    }
     const results = await runAutomation(a.rows[0].trigger_code, req.body || {}, {
       eventKey: req.body.event_key || `manual:${req.params.code}:${Date.now()}`,
     });
@@ -155,6 +187,11 @@ router.post('/:code/run', async (req, res, next) => {
 
 router.put('/:id/toggle', async (req, res, next) => {
   try {
+    const existing = await pool.query(`SELECT * FROM prj_automations WHERE id=$1`, [req.params.id]);
+    if (!existing.rows[0]) return res.status(404).json({ hata: 'Otomasyon bulunamadı.' });
+    if (!assertAutomationFirma(existing.rows[0], companyIdFromReq(req))) {
+      return res.status(403).json({ hata: 'Bu firma için otomasyon erişimi yok.' });
+    }
     const r = await pool.query(
       `UPDATE prj_automations SET is_enabled = NOT is_enabled WHERE id=$1 RETURNING *`,
       [req.params.id]

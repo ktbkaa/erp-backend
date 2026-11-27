@@ -590,6 +590,13 @@ router.get('/tuketimler', async (req, res) => {
 
 router.get('/teslimatlar', async (req, res) => {
   try {
+    const cid = companyId(req);
+    const params = [];
+    let where = '';
+    if (cid) {
+      params.push(cid);
+      where = `WHERE t.company_id=$${params.length}`;
+    }
     const r = await pool.query(
       `
       SELECT t.*, c.partner_code, c.partner_name, o.order_no,
@@ -598,8 +605,10 @@ router.get('/teslimatlar', async (req, res) => {
       JOIN partners c ON c.id=t.partner_id
       JOIN subcontract_orders o ON o.id=t.order_id
       LEFT JOIN qc_orders q ON q.id=t.qc_order_id
+      ${where}
       ORDER BY t.id DESC LIMIT 300
       `,
+      params,
     );
     res.json(r.rows);
   } catch (err) {
@@ -621,12 +630,24 @@ router.get('/emanet-stok', async (req, res) => {
 
 router.get('/rapor/ozet', async (req, res) => {
   try {
-    const sip = await pool.query(`
+    const cid = companyId(req);
+    const params = [];
+    let where = '';
+    if (cid) {
+      params.push(cid);
+      where = `WHERE company_id=$${params.length}`;
+    }
+    const sip = await pool.query(
+      `
       SELECT status, COUNT(*)::int AS adet, COALESCE(SUM(estimated_amount),0)::numeric AS tahmini,
              COALESCE(SUM(actual_amount),0)::numeric AS gerceklesen,
              COALESCE(SUM(invoiced_amount),0)::numeric AS faturalanan
-      FROM subcontract_orders GROUP BY status ORDER BY status`);
-    const emanet = await fason.emanetBalances(pool, { companyId: companyId(req) });
+      FROM subcontract_orders ${where}
+      GROUP BY status ORDER BY status
+      `,
+      params,
+    );
+    const emanet = await fason.emanetBalances(pool, { companyId: cid });
     res.json({ siparis_durum: sip.rows, emanet_kalem: emanet.length, emanet_ornek: emanet.slice(0, 20) });
   } catch (err) {
     res.status(500).json({ hata: err.message });
