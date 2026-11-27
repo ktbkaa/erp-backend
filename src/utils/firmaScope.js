@@ -5,6 +5,7 @@
 
 function companyIdFromReq(req) {
   if (!req) return null;
+  if (req._firmaBaglami) return req.firmaId || null;
   const raw = req.headers?.['x-firma-id'] ?? req.query?.company_id ?? req.firmaId;
   if (raw == null || raw === '' || raw === 'null' || raw === 'undefined') return null;
   const id = Number(raw);

@@ -1,7 +1,9 @@
 /**
- * Sunucu açılışında demo firma profillerini görünür tutar (veri silmez).
- * GIDA vb. yoksa iskelet org ekler; aktif kullanıcılara yetki verir.
+ * Demo firma profillerini görünür tutar (veri silmez) — yalnız SEED_DEMO_DATA=1.
+ * GIDA vb. yoksa iskelet org ekler; aktif kullanıcılara yalnız demo firmaların yetkisini verir.
  */
+const { isDemoSeedEnabled } = require('./demoSeedPolicy');
+
 const DEMO = [
   { code: 'GIDA', name: 'Anadolu Süt ve Süt Ürünleri A.Ş.', city: 'Konya' },
   { code: 'DOKUM', name: 'Anadolu Döküm Sanayi A.Ş.', city: 'Kayseri' },
@@ -25,9 +27,12 @@ async function ensureWarehouse(client, plantId, code, name, rol) {
   );
 }
 
-async function ensureDemoFirms(pool) {
+async function ensureDemoFirms(pool, { force = false } = {}) {
   if (process.env.AUTO_HEAL === '0') {
     return { skipped: true, reason: 'AUTO_HEAL=0' };
+  }
+  if (!force && !isDemoSeedEnabled()) {
+    return { skipped: true, reason: 'SEED_DEMO_DATA!=1' };
   }
 
   const client = await pool.connect();
@@ -81,9 +86,10 @@ async function ensureDemoFirms(pool) {
       }
     }
 
-    // Tüm aktif kullanıcılara tüm profil firmaları (yerel kullanım — picker boş kalmasın)
+    // Aktif kullanıcılara yalnız demo firmalar (gerçek firmalara toplu yetki basılmaz)
     const firms = (await client.query(
-      `SELECT id, company_code FROM companies WHERE COALESCE(is_profile, FALSE) = TRUE`
+      `SELECT id, company_code FROM companies WHERE UPPER(company_code) = ANY($1::text[])`,
+      [DEMO.map((d) => d.code)]
     )).rows;
     const users = (await client.query(
       `SELECT id, user_code FROM users WHERE COALESCE(is_active, TRUE) = TRUE`
@@ -118,4 +124,4 @@ async function ensureDemoFirms(pool) {
   }
 }
 
-module.exports = { ensureDemoFirms };
+module.exports = { ensureDemoFirms, DEMO_FIRMA_KODLARI: DEMO.map((d) => d.code) };

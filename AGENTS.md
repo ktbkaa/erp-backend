@@ -47,6 +47,8 @@ Sağlık: `GET /health`. Konsol: `/`.
 ```bash
 # Temiz DB doğrulama (örnek): boş veritabanı oluştur → DB_NAME=... npm run migrate
 npm run migrate
+# Yerel demo DB: demo firmalar + GIDA örnek veri (canlıda kullanmayın)
+SEED_DEMO_DATA=1 npm run migrate
 
 # Metal Marvel orta-büyük simülasyon (çok firma / üretim / stok)
 npm run demo:marvel
@@ -79,6 +81,8 @@ node scripts/marvel-stok-10000.js
 3. Negatif stok varsayılan engelli; bakiye yalnız hareket belgelerinden değişir.
 4. Belge numaraları numaratörden; firma kapsamı kayıtlarda `company_id` ile damgalanır.
 5. Parti: çıkışta lot kaynağı (FIFO / manuel); lotsuz çıkış kuralları `partiService` / üretim girişinde uygulanır.
+6. **Firma izolasyonu:** `companyContext` X-Firma-Id / `?company_id` / gövde `company_id` için `user_company_permissions` yetkisini zorunlu kılar (403 `FIRMA_YETKI_YOK`; yönetici hariç). `/:id` ve alt aksiyon uçları `src/middleware/firmaKayitKapsami.js` SPEC kaydıyla korunur (404 `FIRMA_KAPSAM`) — yeni firma kapsamlı router eklerken SPEC’e de ekleyin.
+7. **Demo seed:** Demo firmalar / örnek veri / demo yetkileri yalnız `SEED_DEMO_DATA=1` iken yazılır (açılış heal’i + 082/083 migration’ları). Canlıda bayrak tanımlanmaz.
 
 ## Arayüz kuralları
 

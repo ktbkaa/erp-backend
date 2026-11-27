@@ -14,6 +14,10 @@ const {
   FATURA_BASLIK,
   FATURA_SATIR,
 } = require('../src/utils/belgeAlanlari');
+const { SPECS: FIRMA_KAPSAM, kayitKapsamParam } = require('../src/middleware/firmaKayitKapsami');
+
+// PUT/DELETE, /eslestir, /eslestirme-onay, /muhasebelestir, /yazdir, /pdf, /iade
+router.param('id', kayitKapsamParam(FIRMA_KAPSAM['/invoices']));
 
 const EBELGE_ALANLAR = [
   'scenario', 'invoice_category', 'customization_no', 'uuid_ettn',

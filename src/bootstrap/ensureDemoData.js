@@ -4,6 +4,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { isDemoSeedEnabled } = require('./demoSeedPolicy');
 
 const SEED = path.join(__dirname, '..', '..', 'db', 'seeds', 'gida_ornek_master.sql');
 
@@ -14,9 +15,12 @@ async function demoDataMissing(pool) {
   return Number(r.rows[0]?.n || 0) < 5;
 }
 
-async function ensureDemoData(pool) {
+async function ensureDemoData(pool, { force = false } = {}) {
   if (process.env.AUTO_HEAL === '0' || process.env.AUTO_SEED === '0') {
     return { skipped: true, reason: 'disabled' };
+  }
+  if (!force && !isDemoSeedEnabled()) {
+    return { skipped: true, reason: 'SEED_DEMO_DATA!=1' };
   }
   const missing = await demoDataMissing(pool);
   if (!missing) {

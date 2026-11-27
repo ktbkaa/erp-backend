@@ -116,7 +116,7 @@ async function main() {
     const needSeed = forceSeed || before.rowCount === 0 || Number(og.rows[0]?.n || 0) < 5;
     if (needSeed) {
       console.log('Örnek veri eksik — SQL seed (silmez)…');
-      const seeded = await ensureDemoData(pool);
+      const seeded = await ensureDemoData(pool, { force: true });
       console.log(JSON.stringify(seeded));
     } else {
       console.log(`Örnek veri mevcut (OG stok: ${og.rows[0].n})`);
