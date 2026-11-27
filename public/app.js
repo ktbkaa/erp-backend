@@ -3810,7 +3810,7 @@ const MODULES = [
       {
         id: 'is-emri',
         title: 'İş Emirleri',
-        screenIds: ['uretim-emirleri', 'siparis-is-emri', 'toplu-is-emri'],
+        screenIds: ['uretim-emirleri', 'kolay-is-emri-onayi', 'siparis-is-emri', 'toplu-is-emri'],
       },
       {
         id: 'fason',
@@ -4346,6 +4346,77 @@ const MODULES = [
           product_receipt_completed: false,
           status: 'Acik',
         },
+      },
+      {
+        id: 'kolay-is-emri-onayi',
+        techId: 'MFG-WO-APR-001',
+        businessNameEn: 'EasyWorkOrderApprovalScreen',
+        title: 'Kolay İş Emri Onayı',
+        endpoint: '/uretim-emirleri/onay-adaylari',
+        resourceEndpoint: '/uretim-emirleri',
+        crud: false,
+        listActions: ['incele'],
+        codeField: 'order_no',
+        nameField: 'item_name',
+        banner: 'Taslak / OnayBekliyor iş emirleri. Onay stok hareketi üretmez; üretime açar. İş emri için onay kuralı tanımlıysa onay, Onay Bekleyenler üzerinden ilerler.',
+        approveAction: { label: 'Onayla', path: '/uretim-emirleri/{id}/onayla' },
+        bulkActions: [
+          {
+            label: 'Uygunları Toplu Onayla',
+            path: '/uretim-emirleri/toplu-onay',
+            readyKey: 'ready',
+            emptyMessage: 'Onaya uygun kayıt yok (Hazır = Hayır).',
+          },
+        ],
+        filters: [
+          { key: 'order_no', label: 'Emir no' },
+          { key: 'item_code', label: 'Stok' },
+          { key: 'status', label: 'Durum' },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', queryParam: true },
+        ],
+        columns: [
+          { key: 'order_no', label: 'Emir', mono: true },
+          { key: 'order_date', label: 'Tarih' },
+          { key: 'item_code', label: 'Stok', mono: true },
+          { key: 'item_name', label: 'Ad' },
+          { key: 'planned_quantity', label: 'Miktar' },
+          { key: 'uom_code', label: 'Birim', mono: true },
+          { key: 'plan_start', label: 'Plan baş.' },
+          { key: 'plan_end', label: 'Plan bit.' },
+          { key: 'plant_name', label: 'İş yeri' },
+          { key: 'status', label: 'Durum' },
+          { key: 'is_approved', label: 'Onaylı' },
+          { key: 'ready', label: 'Hazır' },
+          { key: 'blockers', label: 'Engeller' },
+        ],
+        masterFields: [
+          { key: 'order_no', label: 'Emir no', code: true, readOnly: true },
+          { key: 'status', label: 'Durum', readOnly: true },
+          { key: 'is_approved', label: 'Onaylı', type: 'checkbox', readOnly: true },
+          { key: 'item_code', label: 'Stok kodu', readOnly: true },
+          { key: 'item_name', label: 'Stok adı', readOnly: true },
+          { key: 'planned_quantity', label: 'Miktar', type: 'number', readOnly: true },
+          { key: 'uom_code', label: 'Birim', readOnly: true },
+          { key: 'product_bom_id', label: 'Ürün ağacı', type: 'lookup', lookup: 'urun-agaclari', valueKey: 'id', labelKey: 'bom_name', codeKey: 'bom_code', readOnly: true },
+          { key: 'route_id', label: 'Rota', type: 'lookup', lookup: 'routings', valueKey: 'id', labelKey: 'route_name', codeKey: 'route_code', readOnly: true },
+          { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', readOnly: true },
+          { key: 'plan_start', label: 'Plan başlangıç', type: 'date', readOnly: true },
+          { key: 'plan_end', label: 'Plan bitiş', type: 'date', readOnly: true },
+          { key: 'onay_no', label: 'Açık onay kaydı', readOnly: true },
+          { key: 'description', label: 'Açıklama', readOnly: true },
+        ],
+        detailFields: [
+          { key: 'line_no', label: 'Sıra', type: 'number', size: 'short' },
+          { key: 'operation_code', label: 'Op', size: 'short' },
+          { key: 'operation_name', label: 'Operasyon' },
+          { key: 'work_center_id', label: 'İş merkezi', type: 'lookup', lookup: 'is-merkezleri', valueKey: 'id', labelKey: 'center_name', codeKey: 'center_code' },
+          { key: 'planned_quantity', label: 'Miktar', type: 'number', size: 'short' },
+          { key: 'status', label: 'Durum', size: 'short' },
+        ],
+        detailKey: 'operasyonlar',
+        detailSlots: 0,
+        detailAsFields: false,
+        defaults: {},
       },
       {
         id: 'siparis-is-emri',
@@ -16481,6 +16552,7 @@ function updateActionButtons(screen) {
     pdfBtn.hidden = !showPdf;
     pdfBtn.disabled = !showPdf || !screenPermission(screen.id, 'report-pdf');
   }
+
 }
 
 /** screen.bulkActions: listelenen (kolon filtresinden geçen) kayıtlara toplu POST { ids, notes }. */
@@ -22172,7 +22244,7 @@ function renderForm(screen) {
       else if (['Acik', 'YenidenAcik'].includes(rec.status)) show = Boolean(screen.approveAction);
       else show = false;
     }
-    if (screen.id === 'uretim-emirleri') {
+    if (screen.id === 'uretim-emirleri' || screen.id === 'kolay-is-emri-onayi') {
       show = Boolean(
         screen.approveAction
         && rec.id
@@ -22311,6 +22383,7 @@ function renderForm(screen) {
           || (screen.id === 'muhasebe-belgeleri' && rec.status === 'Taslak')
           || (screen.id === 'muhasebe-donemleri' && ['Acik', 'YenidenAcik'].includes(rec.status))
           || (screen.id === 'uretim-emirleri' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
+          || (screen.id === 'kolay-is-emri-onayi' && ['Taslak', 'OnayBekliyor'].includes(rec.status))
           || (screen.id === 'crm-gorevler' && ['Acik', 'Devam'].includes(rec.status))
           || (screen.id === 'stok-rezervasyonlari' && rec.status === 'Aktif')
           || (screen.id === 'satin-alma-talepleri' && rec.status === 'Acik')
@@ -25990,7 +26063,8 @@ async function openForm(mode, opts = {}) {
 
   async function loadRecord(id) {
     try {
-      return await api(`${screenApiBase(screen.endpoint)}/${id}`);
+      const base = screen.resourceEndpoint || screenApiBase(screen.endpoint);
+      return await api(`${base}/${id}`);
     } catch (_) {
       return { ...row };
     }
