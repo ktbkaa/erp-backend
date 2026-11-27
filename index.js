@@ -1,4 +1,15 @@
 require('dotenv').config();
+const logger = require('./src/infra/logger').init();
+const lifecycle = require('./src/infra/lifecycle');
+
+const envCheck = lifecycle.checkEnvironment();
+envCheck.warnings.forEach((w) => logger.warn(`[config] ${w}`));
+if (envCheck.errors.length) {
+    envCheck.errors.forEach((e) => logger.error(`[config] ${e}`));
+    process.exit(1);
+}
+lifecycle.registerProcessHandlers(logger);
+
 const path = require('path');
 const express = require('express');
 const app = express();
@@ -7,6 +18,18 @@ const pool = require('./db');
 const { authOptional, authRequired } = require('./src/middleware/authJwt');
 const { auditMiddleware } = require('./src/services/auditService');
 const { companyContext } = require('./src/middleware/firmaContext');
+const { httpLogger } = require('./src/infra/logger');
+const { createHealthRouter } = require('./src/infra/health');
+
+// Ters vekil (Render/Caddy/Nginx) arkasında gerçek istemci IP'si: TRUST_PROXY=1 (hop sayısı) veya true
+if (process.env.TRUST_PROXY) {
+    const tp = process.env.TRUST_PROXY;
+    app.set('trust proxy', /^\d+$/.test(tp) ? Number(tp) : tp === 'true' ? true : tp);
+}
+app.disable('x-powered-by');
+app.use(httpLogger(logger));
+// Liveness / readiness: kimlik, firma bağlamı ve audit'ten önce
+app.use(createHealthRouter({ pool, logger }));
 
 // Profil resmi (base64) + yetki JSON için varsayılan 100kb yetmez
 app.use(express.json({ limit: '5mb' }));
@@ -35,24 +58,6 @@ app.use(authOptional);
 app.use(authRequired);
 app.use(companyContext);
 app.use(auditMiddleware(pool));
-
-app.get('/health', async (req, res) => {
-    const pool = require('./db');
-    try {
-        await pool.query('SELECT 1');
-        res.json({
-            status: 'ok',
-            zaman: new Date().toISOString(),
-            veritabani: 'bagli',
-        });
-    } catch (err) {
-        res.status(500).json({
-            status: 'hata',
-            veritabani: 'baglantisiz',
-            detay: err.message,
-        });
-    }
-});
 
 app.use('/companies', require('./routes/companies'));
 app.use('/is-yerleri', require('./routes/plants'));
@@ -219,6 +224,7 @@ const host = process.env.HOST || (process.env.DATABASE_URL ? '0.0.0.0' : '::');
 const listenOpts = host === '::'
   ? { port, host: '::', ipv6Only: false }
   : { port, host };
+lifecycle.enableGracefulShutdown({ server, pool, logger });
 server.listen(listenOpts, () => {
     console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);
