@@ -376,6 +376,14 @@ html[data-view="modern"] #dataTable .list-col-filter {
   border-color: var(--border);
   background: var(--surface);
 }
+html[data-view="modern"] .lookup-browser-table thead tr.lookup-col-filters th {
+  background: var(--surface) !important;
+}
+html[data-view="modern"] .lookup-browser-table .lookup-col-filter {
+  border-radius: 0.3rem;
+  border-color: var(--border);
+  background: var(--surface);
+}
 html[data-view="modern"] .list-pager {
   border-top: 1px solid var(--border);
   padding-top: 0.45rem;
