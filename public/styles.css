@@ -7627,3 +7627,27 @@ html .screen-view > .filter-pane-home { margin-bottom: 0.3rem !important; }
 html #viewScreen.screen-view:not(.filter-docked) {
   grid-template-rows: auto auto auto minmax(12rem, 1fr) !important;
 }
+
+/* Açık sekme yokken alt sekme düğmesi görünmez (renderTabBar → body.has-doc-tabs) */
+body:not(.has-doc-tabs) #docTabsDock { display: none !important; }
+
+/* Sol logo alanı ile üst çubuk aynı yükseklikte: kesişen çizgiler tek hizada */
+html:not([data-view="cards"]) {
+  --topbar-h: 3.4rem;
+}
+html:not([data-view="cards"]) .sidebar-brand,
+html:not([data-view="cards"]) .workspace-bar {
+  box-sizing: border-box !important;
+  height: var(--topbar-h) !important;
+  min-height: var(--topbar-h) !important;
+  max-height: var(--topbar-h) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+html:not([data-view="cards"]) .workspace-bar {
+  flex-wrap: nowrap !important;
+}
+html:not([data-view="cards"]) .sidebar-brand .ktb-logo-img,
+html:not([data-view="cards"]) .sidebar-brand img {
+  max-height: 1.6rem !important;
+}

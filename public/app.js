@@ -12479,6 +12479,7 @@ const TAB_GLYPH_LIST = `<svg viewBox="0 0 16 16" width="12" height="12" fill="no
 const TAB_GLYPH_FORM = `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="4" width="8.5" height="8.5" rx="1.2"/><rect x="4.5" y="2" width="8.5" height="8.5" rx="1.2"/><path d="M7.2 7.8h4M9.2 5.8v4" stroke-linecap="round"/></svg>`;
 
 function renderTabBar() {
+  document.body.classList.toggle('has-doc-tabs', (state.openTabs?.length || 0) > 0);
   const bar = $('#tabBar');
   if (!bar) return;
   if (!state.openTabs.length) {
