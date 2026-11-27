@@ -326,17 +326,50 @@ router.put('/:id', async (req, res) => {
 
 router.post('/:id/onayla', async (req, res) => {
   try {
-    const upd = await pool.query(
-      `UPDATE purchase_orders SET status='Onayli', onay_date=CURRENT_TIMESTAMP
-       WHERE id=$1 AND status='Taslak' RETURNING id`,
-      [req.params.id]
-    );
-    if (!upd.rows[0]) {
-      return res.status(400).json({ hata: 'Sipariş onaylanamadı (bulunamadı veya status Taslak değil).' });
-    }
-    res.json(await siparisGetir(upd.rows[0].id));
+    const { baslatOnay } = require('../src/services/onayService');
+    const { kullaniciGetir, reqKullaniciKodu } = require('../src/utils/yetki');
+    const kullanici = await kullaniciGetir(pool, reqKullaniciKodu(req) || 'owner');
+
+    const result = await withTransaction(pool, async (client) => {
+      const upd = await client.query(
+        `UPDATE purchase_orders SET status='Onayli', onay_date=CURRENT_TIMESTAMP
+         WHERE id=$1 AND status='Taslak' RETURNING *`,
+        [req.params.id]
+      );
+      if (!upd.rows[0]) {
+        const err = new Error('Sipariş onaylanamadı (bulunamadı veya status Taslak değil).');
+        err.status = 400;
+        throw err;
+      }
+      const po = upd.rows[0];
+      let onayKayit = null;
+      try {
+        onayKayit = await baslatOnay(client, {
+          company_id: po.company_id,
+          plant_id: po.plant_id,
+          screen_id: 'satin-alma-siparisleri',
+          module_code: 'SATINALMA',
+          document_id: po.id,
+          document_no: po.order_no,
+          document_ozet: po.description || `SA sipariş ${po.order_no}`,
+          amount: Number(po.total_amount) || 0,
+          currency_code: po.currency_code || 'TRY',
+          baslatan_kisi_id: kullanici?.id || null,
+          description: po.description || null,
+        });
+      } catch (onayErr) {
+        // Rota yoksa belge yine Onayli kalır; rota varsa hata yukarı fırlar
+        if (onayErr.status !== 400 || !/onay rotası bulunamadı/i.test(onayErr.message || '')) {
+          throw onayErr;
+        }
+      }
+      return { id: po.id, onayKayit };
+    });
+
+    const siparis = await siparisGetir(result.id);
+    res.json({ ...siparis, onay_kayit: result.onayKayit || null });
   } catch (err) {
-    res.status(500).json({ hata: err.message });
+    res.status(err.status || 500).json({ hata: err.message });
   }
 });
 
