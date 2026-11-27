@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 async function kontakGetir(id) {
     const r = await pool.query(
@@ -34,6 +35,11 @@ router.get('/', async (req, res) => {
             where.push(`k.lead_id = $${params.length}`);
         }
         if (is_active === 'true') where.push('k.is_active = TRUE');
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`k.company_id = $${params.length}`);
+        }
         const liste = await pool.query(
             `
             SELECT k.*,
@@ -86,18 +92,19 @@ router.post('/', async (req, res) => {
                     );
                 }
             }
+            const firmaId = b.company_id || firmaIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_contacts
                     (kontak_code, first_name, last_name, title, email, telefon, mobile_phone,
-                     partner_id, lead_id, birincil, is_active, notlar)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,FALSE),COALESCE($11,TRUE),$12)
+                     partner_id, lead_id, birincil, is_active, notlar, company_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,FALSE),COALESCE($11,TRUE),$12,$13)
                 RETURNING id
                 `,
                 [
                     kod, b.first_name, b.last_name, b.title || null, b.email || null, b.telefon || null,
                     b.mobile_phone || null, b.partner_id || null, b.lead_id || null, b.birincil,
-                    b.is_active, b.notlar || null,
+                    b.is_active, b.notlar || null, firmaId,
                 ]
             );
             return r.rows[0].id;

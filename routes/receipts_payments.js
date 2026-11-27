@@ -4,6 +4,7 @@ const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiBelgeNo } = require('../src/utils/belgeNo');
 const { cariHareketEkle } = require('../src/services/cariHareketService');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 async function getir(id) {
   const r = await pool.query(
@@ -29,6 +30,11 @@ router.get('/', async (req, res, next) => {
     if (req.query.type) {
       params.push(req.query.type);
       where.push(`t.type = $${params.length}`);
+    }
+    const firmaId = firmaIdFromReq(req);
+    if (firmaId) {
+      params.push(firmaId);
+      where.push(`c.company_id = $${params.length}`);
     }
     const sql = `
       SELECT t.*, c.partner_code, c.partner_name

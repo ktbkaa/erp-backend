@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 async function gorevGetir(id) {
     const r = await pool.query(
@@ -35,6 +36,11 @@ router.get('/', async (req, res) => {
         if (sorumlu_id) { params.push(Number(sorumlu_id)); where.push(`g.sorumlu_id=$${params.length}`); }
         if (firsat_id) { params.push(Number(firsat_id)); where.push(`g.firsat_id=$${params.length}`); }
         if (partner_id) { params.push(Number(partner_id)); where.push(`g.partner_id=$${params.length}`); }
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`g.company_id = $${params.length}`);
+        }
         const liste = await pool.query(
             `
             SELECT g.*,
@@ -74,18 +80,19 @@ router.post('/', async (req, res) => {
         if (!b.baslik) return res.status(400).json({ hata: 'baslik zorunlu.' });
         const id = await withTransaction(pool, async (client) => {
             const kod = b.gorev_code || (await sonrakiKod(client, 'CRM_GOREV'));
+            const firmaId = b.company_id || firmaIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_tasks
                     (gorev_code, baslik, description, sorumlu_id, partner_id, lead_id, firsat_id,
-                     faaliyet_id, priority, status, son_date)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,'Normal'),COALESCE($10,'Acik'),$11)
+                     faaliyet_id, priority, status, son_date, company_id)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,COALESCE($9,'Normal'),COALESCE($10,'Acik'),$11,$12)
                 RETURNING id
                 `,
                 [
                     kod, b.baslik, b.description || null, b.sorumlu_id || null, b.partner_id || null,
                     b.lead_id || null, b.firsat_id || null, b.faaliyet_id || null,
-                    b.priority || null, b.status || null, b.son_date || null,
+                    b.priority || null, b.status || null, b.son_date || null, firmaId,
                 ]
             );
             return r.rows[0].id;

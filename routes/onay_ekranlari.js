@@ -25,6 +25,10 @@ const EKRANLAR = [
   { screen_id: 'kk-emirleri-ckk', screen_name: 'Çıkış Kalite Emirleri', module: 'Kalite', tech_id: 'QLT-OQC-SCR-001' },
   { screen_id: 'fatura-kontrolleri', screen_name: 'Fatura Kontrolleri', module: 'Finans', tech_id: 'FIN-3WAY-SCR-001' },
   { screen_id: 'muhasebe-belgeleri', screen_name: 'Muhasebe Belgeleri', module: 'Finans', tech_id: 'FIN-JE-SCR-001' },
+  { screen_id: 'prj-projeler', screen_name: 'Proje Listesi', module: 'Proje', tech_id: 'PRJ-PRJ-SCR-001' },
+  { screen_id: 'prj-isler', screen_name: 'İş Listesi', module: 'Proje', tech_id: 'PRJ-WI-SCR-001' },
+  { screen_id: 'prj-butce', screen_name: 'Proje Bütçe', module: 'Proje', tech_id: 'PRJ-FIN-SCR-001' },
+  { screen_id: 'prj-board', screen_name: 'Kanban Board', module: 'Proje', tech_id: 'PRJ-AGL-SCR-001' },
 ];
 
 router.get('/', (req, res) => {

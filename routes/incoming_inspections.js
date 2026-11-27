@@ -261,6 +261,7 @@ router.post('/:id/onayla', async (req, res) => {
                     kaynakId: Number(req.params.id),
                     stokHareketId: tr.giris.hareket.id,
                     description: `Giriş kontrol ${belge.inspection_no}`,
+                    companyId: belge.company_id || null,
                 });
 
                 await client.query(

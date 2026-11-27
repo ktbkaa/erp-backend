@@ -165,6 +165,32 @@ app.use('/hr-puantaj', require('./routes/hr_attendance'));
 app.use('/hr-bordro', require('./routes/hr_payroll'));
 app.use('/hr-ise-alim', require('./routes/hr_recruitment'));
 
+// PRJ — Proje Yönetimi
+const { createPrjDefRouter } = require('./routes/prj_defs');
+app.use('/prj-project-types', createPrjDefRouter('project-types'));
+app.use('/prj-project-categories', createPrjDefRouter('project-categories'));
+app.use('/prj-project-statuses', createPrjDefRouter('project-statuses'));
+app.use('/prj-project-priorities', createPrjDefRouter('project-priorities'));
+app.use('/prj-project-roles', createPrjDefRouter('project-roles'));
+app.use('/prj-work-item-types', createPrjDefRouter('work-item-types'));
+app.use('/prj-work-item-statuses', createPrjDefRouter('work-item-statuses'));
+app.use('/prj-work-item-priorities', createPrjDefRouter('work-item-priorities'));
+app.use('/prj-relation-types', createPrjDefRouter('relation-types'));
+app.use('/projects', require('./routes/projects'));
+app.use('/prj-projeler', require('./routes/projects'));
+app.use('/work-items', require('./routes/work_items'));
+app.use('/prj-isler', require('./routes/work_items'));
+app.use('/prj-workflows', require('./routes/prj_workflows'));
+app.use('/prj-board', require('./routes/prj_boards'));
+app.use('/prj-sprintler', require('./routes/prj_sprints'));
+app.use('/prj-budget', require('./routes/prj_budget'));
+app.use('/prj-planning', require('./routes/prj_planning'));
+app.use('/prj-dashboard', require('./routes/prj_dashboard'));
+app.use('/prj-integrations', require('./routes/prj_integrations'));
+app.use('/prj-sablonlar', require('./routes/prj_templates'));
+app.use('/prj-automations', require('./routes/prj_automations'));
+app.use('/prj-riskler', require('./routes/prj_risks'));
+
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 app.use(notFoundHandler);
 app.use(errorHandler);

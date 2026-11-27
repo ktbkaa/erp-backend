@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { withTransaction } = require('../src/utils/withTransaction');
 const { sonrakiKod } = require('../src/utils/kodUretici');
+const { firmaIdFromReq } = require('../src/utils/firmaScope');
 
 async function adayGetir(id) {
     const a = await pool.query(
@@ -64,6 +65,11 @@ router.get('/', async (req, res) => {
         }
         if (is_active === 'true') where.push('a.is_active = TRUE');
         if (is_active === 'false') where.push('a.is_active = FALSE');
+        const firmaId = firmaIdFromReq(req);
+        if (firmaId) {
+            params.push(firmaId);
+            where.push(`a.company_id = $${params.length}`);
+        }
         const liste = await pool.query(
             `
             SELECT a.*,
@@ -99,14 +105,16 @@ router.post('/', async (req, res) => {
         if (!b.lead_name) return res.status(400).json({ hata: 'lead_name zorunlu.' });
         const id = await withTransaction(pool, async (client) => {
             const kod = b.lead_code || (await sonrakiKod(client, 'CRM_ADAY'));
+            const firmaId = b.company_id || firmaIdFromReq(req) || null;
             const r = await client.query(
                 `
                 INSERT INTO crm_leads
                     (lead_code, lead_name, status, sorumlu_id, degerlendirme, tercih_sebebi,
                      bulma_yontemi, priority, telefon, mobile_phone, email, website, fax,
-                     address, il, district, country, postal_code, sektor_code, notlar, is_active)
+                     address, il, district, country, postal_code, sektor_code, notlar, is_active,
+                     company_id)
                 VALUES ($1,$2,COALESCE($3,'Yeni'),$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
-                        $14,$15,$16,COALESCE($17,'TR'),$18,$19,$20,COALESCE($21,TRUE))
+                        $14,$15,$16,COALESCE($17,'TR'),$18,$19,$20,COALESCE($21,TRUE),$22)
                 RETURNING id
                 `,
                 [
@@ -115,7 +123,7 @@ router.post('/', async (req, res) => {
                     b.priority || null, b.telefon || null, b.mobile_phone || null, b.email || null,
                     b.website || null, b.fax || null, b.address || null, b.il || null,
                     b.district || null, b.country || null, b.postal_code || null, b.sektor_code || null,
-                    b.notlar || null, b.is_active,
+                    b.notlar || null, b.is_active, firmaId,
                 ]
             );
             return r.rows[0].id;

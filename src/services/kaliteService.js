@@ -80,20 +80,36 @@ async function kkEmriOlustur(client, {
     kaynakId,
     stokHareketId = null,
     description = null,
+    projectCode = null,
+    companyId = null,
 }) {
     const plan = await stokPlanBul(client, stokId, direction);
     const emirNo = await sonrakiBelgeNo(client, 'KK_EMIR');
+    let firmaId = companyId || null;
+    if (!firmaId && stokId) {
+        const fr = await client.query(`SELECT company_id FROM items WHERE id=$1`, [stokId]);
+        firmaId = fr.rows[0]?.company_id || null;
+    }
+    if (!firmaId && depoId) {
+        const fr = await client.query(
+            `SELECT p.company_id FROM warehouses w JOIN plants p ON p.id=w.plant_id WHERE w.id=$1`,
+            [depoId]
+        );
+        firmaId = fr.rows[0]?.company_id || null;
+    }
     const r = await client.query(
         `
         INSERT INTO qc_orders
             (order_no, direction, item_id, lot_id, warehouse_id, target_warehouse_id, plan_id,
-             quantity, status, source_type, source_id, item_movement_id, description)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Acik',$9,$10,$11,$12)
+             quantity, status, source_type, source_id, item_movement_id, description, project_code,
+             company_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Acik',$9,$10,$11,$12,$13,$14)
         RETURNING *
         `,
         [
             emirNo, direction, stokId, partiId, depoId, hedefDepoId, plan?.plan_id || plan?.id || null,
-            quantity, kaynakTipi, kaynakId, stokHareketId, description,
+            quantity, kaynakTipi, kaynakId, stokHareketId, description, projectCode || null,
+            firmaId,
         ]
     );
     return r.rows[0];
@@ -332,6 +348,15 @@ async function emirOnayla(client, emirId, {
         `,
         [emirId, action, kullanici?.id || null, kullanici?.user_code || null, accepted, uygunsuz, description || null]
     );
+
+    // PRJ otomatik kalite fire maliyeti
+    if (uygunsuz > 0 && emir.project_code) {
+        try {
+            const { fromQcOrder } = require('./prjCostService');
+            const refreshed = await client.query(`SELECT * FROM qc_orders WHERE id=$1`, [emirId]);
+            await fromQcOrder(client, { order: refreshed.rows[0] });
+        } catch (_) { /* PRJ yoksa sessiz */ }
+    }
 
     return emirId;
 }

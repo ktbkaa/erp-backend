@@ -1,0 +1,509 @@
+{
+  "firma": {
+    "id": 11,
+    "company_code": "DOKUM",
+    "company_name": "Anadolu Döküm Sanayi A.Ş."
+  },
+  "tag": "DOKUM-PRJ",
+  "project": {
+    "id": 47,
+    "project_code": "DOKUM-PRJ-92537",
+    "project_name": "Döküm Hattı Kurulum Demo"
+  },
+  "work_items": [
+    {
+      "id": 150,
+      "no": "WI00150",
+      "title": "Proje kapanışı",
+      "status": "OPEN"
+    },
+    {
+      "id": 149,
+      "no": "WI00149",
+      "title": "Devreye alma",
+      "status": "OPEN"
+    },
+    {
+      "id": 148,
+      "no": "WI00148",
+      "title": "Test",
+      "status": "OPEN"
+    },
+    {
+      "id": 147,
+      "no": "WI00147",
+      "title": "Elektrik bağlantıları",
+      "status": "OPEN"
+    },
+    {
+      "id": 146,
+      "no": "WI00146",
+      "title": "Kurulum",
+      "status": "OPEN"
+    },
+    {
+      "id": 145,
+      "no": "WI00145",
+      "title": "Nakliye",
+      "status": "OPEN"
+    },
+    {
+      "id": 144,
+      "no": "WI00144",
+      "title": "Tedarik",
+      "status": "OPEN"
+    },
+    {
+      "id": 143,
+      "no": "WI00143",
+      "title": "Satın alma",
+      "status": "OPEN"
+    }
+  ],
+  "board": {
+    "columns": [
+      {
+        "name": "Açık",
+        "cards": 10
+      },
+      {
+        "name": "Yapılacak",
+        "cards": 0
+      },
+      {
+        "name": "Devam Ediyor",
+        "cards": 0
+      },
+      {
+        "name": "İncelemede",
+        "cards": 0
+      },
+      {
+        "name": "Onay Bekliyor",
+        "cards": 0
+      },
+      {
+        "name": "Tamamlandı",
+        "cards": 0
+      }
+    ]
+  },
+  "sprint": {
+    "id": 10,
+    "name": "DOKUM-PRJ Sprint 1",
+    "code": "PJSP00010"
+  },
+  "gantt": {
+    "id": 149,
+    "work_item_no": "WI00149",
+    "title": "Devreye alma",
+    "start": "2026-03-15T00:00:00.000Z",
+    "end": "2026-04-05T00:00:00.000Z",
+    "progress": "0.00"
+  },
+  "budget": {
+    "cost_id": 47,
+    "amount": "220000.00",
+    "approval_meta": {
+      "approval": {
+        "id": 46,
+        "onay_no": "NK00042",
+        "kullanim_id": null,
+        "route_id": 4,
+        "company_id": 11,
+        "module_code": "proje",
+        "screen_id": "prj-butce",
+        "document_id": 47,
+        "document_no": "DOKUM-PRJ-92537",
+        "document_ozet": "Bütçe aşımı: plan=180000.00, gerçekleşen=220000.00",
+        "amount": "40000.00",
+        "currency_code": "TRY",
+        "status_code": "BEKLIYOR",
+        "active_step_no": 10,
+        "baslatan_kisi_id": 10,
+        "baslama_date": "2026-11-08T15:21:32.633Z",
+        "closed_at": null,
+        "description": "PRJ otomatik bütçe aşımı",
+        "created_at": "2026-11-08T15:21:32.633Z",
+        "rule_id": 6,
+        "status_name": "Onay bekliyor",
+        "route_code": "PRJ_BUDGET",
+        "route_name": "Proje Bütçe Aşımı",
+        "rule_code": "PRJ_BUDGET_OVERRUN",
+        "rule_name": "Proje bütçe aşımı",
+        "baslatan_adi": "Owner User",
+        "baslatan_kodu": "owner",
+        "adimlar": [
+          {
+            "id": 49,
+            "record_id": 46,
+            "line_no": 10,
+            "step_name": "Proje Onayı",
+            "role_id": null,
+            "status_code": "BEKLIYOR",
+            "zorunlu": true,
+            "approved_by_kisi_id": null,
+            "action_date": null,
+            "notlar": null,
+            "role_name": "Proje Onayı",
+            "role_code": null,
+            "status_name": "Onay bekliyor",
+            "onaylayan_adi": " ",
+            "onaylayan_kodu": null
+          }
+        ]
+      },
+      "mail": {
+        "id": 30,
+        "source_type": "prj_budget_overrun",
+        "source_id": 47,
+        "alici": "prj-notify@localhost.test",
+        "konu": "[PRJ] Bütçe aşımı — DOKUM-PRJ-92537",
+        "govde": "Proje DOKUM-PRJ-92537 bütçe aşımına uğradı. Plan=180000.00, Gerçekleşen=220000.00.",
+        "status": "Bekliyor",
+        "deneme_sayisi": 0,
+        "son_hata": null,
+        "gonderim_date": null,
+        "olusturma_date": "2026-11-08T15:21:32.633Z"
+      }
+    },
+    "summary": {
+      "project_id": 47,
+      "project_code": "DOKUM-PRJ-92537",
+      "currency_code": "TRY",
+      "planned_budget": 180000,
+      "actual_cost": 220000,
+      "variance": -40000,
+      "overrun": true,
+      "expected_revenue": 0,
+      "actual_revenue": 0,
+      "gross_result": -220000,
+      "budget_lines": [
+        {
+          "category_code": "MALZEME",
+          "category_name": "Hammadde / refrakter",
+          "planned": "80000.00",
+          "actual": "0.00"
+        },
+        {
+          "category_code": "PERSONEL",
+          "category_name": "Montaj ekibi",
+          "planned": "100000.00",
+          "actual": "0.00"
+        }
+      ],
+      "cost_buckets": [
+        {
+          "is_commitment": false,
+          "total": "220000.00"
+        }
+      ]
+    }
+  },
+  "risk": {
+    "id": 10,
+    "score": 9,
+    "title": "Refrakter tedarik gecikmesi"
+  },
+  "close": {
+    "project": {
+      "id": 47,
+      "company_id": 11,
+      "project_code": "DOKUM-PRJ-92537",
+      "project_name": "Döküm Hattı Kurulum Demo",
+      "description": "Keşif→Kabul",
+      "type_id": null,
+      "category_id": null,
+      "status_id": 5,
+      "priority_id": null,
+      "partner_id": null,
+      "manager_user_id": 1,
+      "sponsor_user_id": null,
+      "department_code": null,
+      "plant_id": null,
+      "warehouse_id": null,
+      "plan_start_date": "2026-03-01T00:00:00.000Z",
+      "plan_end_date": "2026-09-30T00:00:00.000Z",
+      "actual_start_date": null,
+      "actual_end_date": "2026-11-08T00:00:00.000Z",
+      "currency_code": "TRY",
+      "planned_budget": "180000.00",
+      "actual_cost": "220000.00",
+      "expected_revenue": "0.00",
+      "actual_revenue": "0.00",
+      "percent_complete": "100.00",
+      "approach": "classic",
+      "portfolio_code": null,
+      "crm_opportunity_id": null,
+      "sales_order_id": null,
+      "sales_order_line_id": null,
+      "cost_center_code": null,
+      "is_archived": false,
+      "is_active": true,
+      "created_by": 10,
+      "updated_by": null,
+      "created_at": "2026-11-08T15:21:32.570Z",
+      "updated_at": "2026-11-08T15:21:32.663Z",
+      "workflow_id": null,
+      "closed_at": "2026-11-08T15:21:32.663Z",
+      "close_notes": "DOKUM-PRJ demo kapanış"
+    },
+    "checklist": [
+      {
+        "id": 66,
+        "project_id": 47,
+        "line_no": 10,
+        "item_text": "Açık işler kapatıldı veya taşındı",
+        "is_done": false,
+        "done_by": null,
+        "done_at": null,
+        "created_at": "2026-11-08T15:21:32.665Z"
+      },
+      {
+        "id": 67,
+        "project_id": 47,
+        "line_no": 20,
+        "item_text": "Maliyetler gözden geçirildi",
+        "is_done": false,
+        "done_by": null,
+        "done_at": null,
+        "created_at": "2026-11-08T15:21:32.665Z"
+      },
+      {
+        "id": 68,
+        "project_id": 47,
+        "line_no": 30,
+        "item_text": "Dokümanlar arşivlendi",
+        "is_done": false,
+        "done_by": null,
+        "done_at": null,
+        "created_at": "2026-11-08T15:21:32.665Z"
+      },
+      {
+        "id": 69,
+        "project_id": 47,
+        "line_no": 40,
+        "item_text": "Müşteri kabulü alındı",
+        "is_done": false,
+        "done_by": null,
+        "done_at": null,
+        "created_at": "2026-11-08T15:21:32.665Z"
+      },
+      {
+        "id": 70,
+        "project_id": 47,
+        "line_no": 50,
+        "item_text": "Finans mutabakatı yapıldı",
+        "is_done": false,
+        "done_by": null,
+        "done_at": null,
+        "created_at": "2026-11-08T15:21:32.665Z"
+      }
+    ],
+    "approval_meta": {
+      "approval": {
+        "id": 47,
+        "onay_no": "NK00043",
+        "kullanim_id": null,
+        "route_id": 5,
+        "company_id": 11,
+        "module_code": "proje",
+        "screen_id": "prj-projeler",
+        "document_id": 47,
+        "document_no": "DOKUM-PRJ-92537",
+        "document_ozet": "Proje kapanış talebi",
+        "amount": "220000.00",
+        "currency_code": "TRY",
+        "status_code": "BEKLIYOR",
+        "active_step_no": 10,
+        "baslatan_kisi_id": 10,
+        "baslama_date": "2026-11-08T15:21:32.666Z",
+        "closed_at": null,
+        "description": "PRJ proje kapanış",
+        "created_at": "2026-11-08T15:21:32.666Z",
+        "rule_id": 4,
+        "status_name": "Onay bekliyor",
+        "route_code": "PRJ_CLOSE",
+        "route_name": "Proje Kapanış",
+        "rule_code": "PRJ_PROJECT_CLOSE",
+        "rule_name": "Proje kapanış",
+        "baslatan_adi": "Owner User",
+        "baslatan_kodu": "owner",
+        "adimlar": [
+          {
+            "id": 50,
+            "record_id": 47,
+            "line_no": 10,
+            "step_name": "Proje Onayı",
+            "role_id": null,
+            "status_code": "BEKLIYOR",
+            "zorunlu": true,
+            "approved_by_kisi_id": null,
+            "action_date": null,
+            "notlar": null,
+            "role_name": "Proje Onayı",
+            "role_code": null,
+            "status_name": "Onay bekliyor",
+            "onaylayan_adi": " ",
+            "onaylayan_kodu": null
+          }
+        ]
+      },
+      "mail": {
+        "id": 31,
+        "source_type": "prj_project_close",
+        "source_id": 47,
+        "alici": "prj-notify@localhost.test",
+        "konu": "[PRJ] Kapanış — DOKUM-PRJ-92537",
+        "govde": "Proje DOKUM-PRJ-92537 kapanış sürecine alındı.",
+        "status": "Bekliyor",
+        "deneme_sayisi": 0,
+        "son_hata": null,
+        "gonderim_date": null,
+        "olusturma_date": "2026-11-08T15:21:32.666Z"
+      }
+    }
+  },
+  "how_to": {
+    "ui": "Üst bar → Firma Profil = Anadolu Döküm. Proje Yönetimi modülünde DOKUM-PRJ kodlu projeyi açın.",
+    "filter": "project_code / açıklama: DOKUM-PRJ"
+  },
+  "gantt_tasks": 10,
+  "dashboard": {
+    "project": {
+      "id": 47,
+      "company_id": 11,
+      "project_code": "DOKUM-PRJ-92537",
+      "project_name": "Döküm Hattı Kurulum Demo",
+      "description": "Keşif→Kabul",
+      "type_id": null,
+      "category_id": null,
+      "status_id": 1,
+      "priority_id": null,
+      "partner_id": null,
+      "manager_user_id": 1,
+      "sponsor_user_id": null,
+      "department_code": null,
+      "plant_id": null,
+      "warehouse_id": null,
+      "plan_start_date": "2026-03-01T00:00:00.000Z",
+      "plan_end_date": "2026-09-30T00:00:00.000Z",
+      "actual_start_date": null,
+      "actual_end_date": null,
+      "currency_code": "TRY",
+      "planned_budget": "180000.00",
+      "actual_cost": "220000.00",
+      "expected_revenue": "0.00",
+      "actual_revenue": "0.00",
+      "percent_complete": "0.00",
+      "approach": "classic",
+      "portfolio_code": null,
+      "crm_opportunity_id": null,
+      "sales_order_id": null,
+      "sales_order_line_id": null,
+      "cost_center_code": null,
+      "is_archived": false,
+      "is_active": true,
+      "created_by": 10,
+      "updated_by": null,
+      "created_at": "2026-11-08T15:21:32.570Z",
+      "updated_at": "2026-11-08T15:21:32.570Z",
+      "workflow_id": null,
+      "closed_at": null,
+      "close_notes": null,
+      "status_name": "Başlatıldı",
+      "status_code": "10",
+      "type_name": null,
+      "partner_name": null,
+      "manager_name": "Test User"
+    },
+    "progress": {
+      "percent_complete": 0,
+      "open_count": 10,
+      "done_count": 0,
+      "in_progress": 0,
+      "total": 10
+    },
+    "overdue": [
+      {
+        "id": 149,
+        "work_item_no": "WI00149",
+        "title": "Devreye alma",
+        "plan_end_date": "2026-04-05T00:00:00.000Z",
+        "assignee_user_id": null
+      }
+    ],
+    "critical": [],
+    "upcoming_milestones": [],
+    "risks": [
+      {
+        "id": 10,
+        "project_id": 47,
+        "company_id": 11,
+        "risk_code": "RSK00010",
+        "title": "Refrakter tedarik gecikmesi",
+        "description": "DOKUM-PRJ",
+        "probability": "High",
+        "impact": "High",
+        "score": 9,
+        "owner_user_id": null,
+        "status_code": "OPEN",
+        "mitigation": "Alternatif ithalatçı + stok emniyeti",
+        "contingency": null,
+        "is_active": true,
+        "created_at": "2026-11-08T15:21:32.641Z"
+      }
+    ],
+    "budget": {
+      "planned": 180000,
+      "actual": 220000,
+      "variance": -40000,
+      "overrun": true
+    },
+    "team": [
+      {
+        "id": 39,
+        "project_id": 47,
+        "user_id": 3,
+        "role_id": null,
+        "can_view_budget": true,
+        "can_edit_budget": false,
+        "can_view_costs": true,
+        "is_active": true,
+        "created_at": "2026-11-08T15:21:32.587Z",
+        "role_code": null,
+        "user_code": "kagantalhab",
+        "user_name": "KAĞAN  BAYRAKDAR"
+      }
+    ],
+    "recent_activity": [
+      {
+        "id": 9,
+        "work_item_id": 141,
+        "user_id": 10,
+        "field_name": "status_id",
+        "old_value": "2",
+        "new_value": "4",
+        "created_at": "2026-11-08T15:21:32.606Z",
+        "work_item_no": "WI00141"
+      }
+    ]
+  },
+  "portfolio": [
+    {
+      "id": 47,
+      "project_code": "DOKUM-PRJ-92537",
+      "project_name": "Döküm Hattı Kurulum Demo",
+      "percent_complete": "0.00",
+      "planned_budget": "180000.00",
+      "actual_cost": "220000.00",
+      "plan_start_date": "2026-03-01T00:00:00.000Z",
+      "plan_end_date": "2026-09-30T00:00:00.000Z",
+      "status_name": "Başlatıldı",
+      "status_code": "10",
+      "type_name": null,
+      "work_count": 10,
+      "overdue_count": 1
+    }
+  ]
+}

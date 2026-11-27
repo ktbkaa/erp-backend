@@ -1110,6 +1110,7 @@ const MODULES = [
           { key: 'target_warehouse_id', label: 'Hedef depo (transfer)', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'movement_date', label: 'Tarih', type: 'date' },
           { key: 'description', label: 'Açıklama' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
         ],
         detailFields: [
           { key: 'barkod', label: 'Barkod', hint: 'Okutunca stok eşleşir' },
@@ -2402,6 +2403,7 @@ const MODULES = [
           { key: 'planlanan_quantity', label: 'Planlanan quantity', type: 'number', required: true, group: 'kimlik' },
           { key: 'produced_quantity', label: 'Üretilen quantity', type: 'number', readOnly: true, group: 'kimlik' },
           { key: 'sales_order_id', label: 'Satış siparişi', type: 'lookup', lookup: 'sales_orders', valueKey: 'id', labelKey: 'order_no', codeKey: 'order_no', group: 'kimlik' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'kimlik' },
           // 3) Depolar — stok kartı varsayılan giriş/çıkış
           { key: 'component_warehouse_id', label: 'Hammadde depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', required: true, group: 'depo' },
           { key: 'wip_warehouse_id', label: 'Yarı mamul depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
@@ -2764,7 +2766,7 @@ const MODULES = [
           { key: 'exchange_rate', label: 'Kur', type: 'number' },
           { key: 'valid_date', label: 'Geçerlilik', type: 'date' },
           { key: 'payment_term_code', label: 'Ödeme koşulu' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'Red', 'AnlasmayaDonustu', 'SipariseDonustu', 'Iptal', 'Kapali'] },
           { key: 'description', label: 'Açıklama', name: true },
@@ -2786,7 +2788,7 @@ const MODULES = [
           { key: 'vat_rate', label: 'KDV %', type: 'number', size: 'short' },
           { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'line_description', label: 'Açıklama' },
         ],
@@ -2866,7 +2868,7 @@ const MODULES = [
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'supplier_partner_id', label: 'Tedarikçi', type: 'lookup', lookup: 'partners-tedarikci', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
           { key: 'target_delivery_date', label: 'Hedef teslim', type: 'date' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
           { key: 'rate_type', label: 'Kur tipi', type: 'select', options: ['TCMB-ALIS', 'TCMB-SATIS', 'EFKT-ALIS', 'EFKT-SATIS', 'Serbest'] },
@@ -2889,7 +2891,7 @@ const MODULES = [
           { key: 'discount_rate', label: 'İsk %', type: 'number', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'supplier_item_code', label: 'Ted. stok kodu' },
           { key: 'supplier_item_name', label: 'Ted. stok adı' },
@@ -2952,7 +2954,7 @@ const MODULES = [
           { key: 'delivery_term_code', label: 'Teslimat koşulu', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name', group: 'planlama' },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code', group: 'organizasyon' },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code', group: 'organizasyon' },
-          { key: 'project_code', label: 'Proje kodu', group: 'organizasyon' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', group: 'organizasyon' },
           { key: 'region', label: 'Bölge', group: 'organizasyon' },
           { key: 'description', label: 'Açıklama', group: 'status' },
           { key: 'public_note', label: 'Tedarikçi notu', group: 'status' },
@@ -2978,7 +2980,7 @@ const MODULES = [
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short', group: 'planlama' },
           { key: 'ship_date', label: 'Sevk', type: 'date', size: 'short', group: 'planlama' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code', group: 'depo' },
-          { key: 'project_code', label: 'Proje', size: 'short', group: 'organizasyon' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short', group: 'organizasyon' },
           { key: 'region', label: 'Bölge', size: 'short', group: 'organizasyon' },
           { key: 'supplier_item_code', label: 'Ted. stok kodu', group: 'kimlik' },
           { key: 'supplier_item_name', label: 'Ted. stok adı', group: 'kimlik' },
@@ -3550,6 +3552,701 @@ const MODULES = [
     ],
   },
   {
+    id: 'proje',
+    title: 'Proje Yönetimi',
+    sections: [
+      { id: 'projeler', title: 'Projeler', screenIds: ['prj-projeler', 'prj-isler', 'prj-dashboard', 'prj-portfolio'] },
+      { id: 'agile', title: 'Agile / Plan', screenIds: ['prj-board', 'prj-backlog', 'prj-sprintler', 'prj-gantt', 'prj-workload'] },
+      { id: 'finans', title: 'Bütçe / Risk', screenIds: ['prj-butce', 'prj-riskler'] },
+      { id: 'yapilandirma', title: 'Şablon / Otomasyon', screenIds: ['prj-sablonlar', 'prj-automations'] },
+      {
+        id: 'tanimlar',
+        title: 'Tanımlar',
+        screenIds: [
+          'prj-project-types',
+          'prj-project-categories',
+          'prj-project-statuses',
+          'prj-project-priorities',
+          'prj-work-item-types',
+          'prj-work-item-statuses',
+          'prj-work-item-priorities',
+          'prj-project-roles',
+          'prj-relation-types',
+        ],
+      },
+    ],
+    screens: [
+      {
+        id: 'prj-projeler',
+        techId: 'PRJ-PRJ-SCR-001',
+        businessNameEn: 'ProjectListScreen',
+        title: 'Proje Listesi',
+        endpoint: '/prj-projeler',
+        crud: true,
+        numeratorSeri: 'PRJ_PROJECT',
+        codeField: 'project_code',
+        nameField: 'project_name',
+        filters: [
+          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_name', label: 'Proje adı' },
+          { key: 'status_code', label: 'Durum kodu' },
+        ],
+        columns: [
+          { key: 'project_code', label: 'Kod', mono: true },
+          { key: 'project_name', label: 'Ad' },
+          { key: 'partner_name', label: 'Müşteri' },
+          { key: 'manager_name', label: 'Yönetici' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'priority_name', label: 'Öncelik' },
+          { key: 'plan_start_date', label: 'Başlangıç' },
+          { key: 'plan_end_date', label: 'Bitiş' },
+          { key: 'percent_complete', label: '%' },
+          { key: 'planned_budget', label: 'Bütçe' },
+          { key: 'actual_cost', label: 'Maliyet' },
+        ],
+        masterFields: [
+          { key: 'project_code', label: 'Proje kodu', code: true },
+          { key: 'project_name', label: 'Proje adı', name: true, required: true },
+          { key: 'type_id', label: 'Tür', type: 'lookup', lookup: 'prj-project-types', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code' },
+          { key: 'category_id', label: 'Kategori', type: 'lookup', lookup: 'prj-project-categories', valueKey: 'id', labelKey: 'category_name', codeKey: 'category_code' },
+          { key: 'status_id', label: 'Durum', type: 'lookup', lookup: 'prj-project-statuses', valueKey: 'id', labelKey: 'status_name', codeKey: 'status_code' },
+          { key: 'priority_id', label: 'Öncelik', type: 'lookup', lookup: 'prj-project-priorities', valueKey: 'id', labelKey: 'priority_name', codeKey: 'priority_code' },
+          { key: 'partner_id', label: 'Müşteri', type: 'lookup', lookup: 'partners-musteri', valueKey: 'id', labelKey: 'partner_name', codeKey: 'partner_code' },
+          { key: 'manager_user_id', label: 'Proje yöneticisi', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'user_code', codeKey: 'user_code' },
+          { key: 'sponsor_user_id', label: 'Sponsor', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'user_code', codeKey: 'user_code' },
+          { key: 'plan_start_date', label: 'Plan başlangıç', type: 'date' },
+          { key: 'plan_end_date', label: 'Plan bitiş', type: 'date' },
+          { key: 'currency_code', label: 'Para birimi', type: 'lookup', lookup: 'para-birimleri', valueKey: 'currency_code', labelKey: 'currency_name' },
+          { key: 'planned_budget', label: 'Planlanan bütçe', type: 'number' },
+          { key: 'expected_revenue', label: 'Beklenen gelir', type: 'number' },
+          { key: 'approach', label: 'Yaklaşım', type: 'select', options: ['classic', 'scrum', 'kanban'] },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'percent_complete', label: 'Tamamlanma %', type: 'number' },
+          { key: 'actual_cost', label: 'Gerçekleşen maliyet', type: 'number' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-isler',
+        techId: 'PRJ-WI-SCR-001',
+        businessNameEn: 'WorkItemListScreen',
+        title: 'İş Listesi',
+        endpoint: '/prj-isler',
+        crud: true,
+        numeratorSeri: 'PRJ_WORK_ITEM',
+        codeField: 'work_item_no',
+        nameField: 'title',
+        filters: [
+          { key: 'q', label: 'Ara' },
+          { key: 'project_id', label: 'Proje id' },
+          { key: 'status_code', label: 'Durum kodu' },
+        ],
+        columns: [
+          { key: 'work_item_no', label: 'No', mono: true },
+          { key: 'title', label: 'Başlık' },
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'type_name', label: 'Tür' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'priority_name', label: 'Öncelik' },
+          { key: 'assignee_name', label: 'Sorumlu' },
+          { key: 'plan_end_date', label: 'Hedef bitiş' },
+          { key: 'estimated_hours', label: 'Tahmini sa' },
+          { key: 'actual_hours', label: 'Gerçek sa' },
+          { key: 'percent_complete', label: '%' },
+        ],
+        masterFields: [
+          { key: 'work_item_no', label: 'İş no', code: true },
+          { key: 'title', label: 'Başlık', name: true, required: true },
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+          { key: 'type_id', label: 'İş türü', type: 'lookup', lookup: 'prj-work-item-types', valueKey: 'id', labelKey: 'type_name', codeKey: 'type_code' },
+          { key: 'status_id', label: 'Durum', type: 'lookup', lookup: 'prj-work-item-statuses', valueKey: 'id', labelKey: 'status_name', codeKey: 'status_code' },
+          { key: 'priority_id', label: 'Öncelik', type: 'lookup', lookup: 'prj-work-item-priorities', valueKey: 'id', labelKey: 'priority_name', codeKey: 'priority_code' },
+          { key: 'parent_id', label: 'Üst iş', type: 'lookup', lookup: 'prj-isler', valueKey: 'id', labelKey: 'title', codeKey: 'work_item_no' },
+          { key: 'assignee_user_id', label: 'Sorumlu', type: 'lookup', lookup: 'users', valueKey: 'id', labelKey: 'user_code', codeKey: 'user_code' },
+          { key: 'plan_start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'plan_end_date', label: 'Bitiş', type: 'date' },
+          { key: 'estimated_hours', label: 'Tahmini süre (sa)', type: 'number' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [
+          { key: 'percent_complete', label: 'Tamamlanma %', type: 'number' },
+          { key: 'story_points', label: 'Story point', type: 'number' },
+          { key: 'is_active', label: 'Aktif', type: 'checkbox' },
+        ],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-project-types',
+        techId: 'PRJ-DEF-SCR-001',
+        businessNameEn: 'ProjectTypeScreen',
+        title: 'Proje Türleri',
+        endpoint: '/prj-project-types',
+        crud: true,
+        codeField: 'type_code',
+        nameField: 'type_name',
+        filters: [
+          { key: 'type_code', label: 'Kod' },
+          { key: 'type_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'type_code', label: 'Kod', mono: true },
+          { key: 'type_name', label: 'Ad' },
+          { key: 'line_no', label: 'Sıra' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'type_code', label: 'Tür kodu', code: true, required: true },
+          { key: 'type_name', label: 'Tür adı', name: true, required: true },
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-project-categories',
+        techId: 'PRJ-DEF-SCR-002',
+        businessNameEn: 'ProjectCategoryScreen',
+        title: 'Proje Kategorileri',
+        endpoint: '/prj-project-categories',
+        crud: true,
+        codeField: 'category_code',
+        nameField: 'category_name',
+        filters: [
+          { key: 'category_code', label: 'Kod' },
+          { key: 'category_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'category_code', label: 'Kod', mono: true },
+          { key: 'category_name', label: 'Ad' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'category_code', label: 'Kategori kodu', code: true, required: true },
+          { key: 'category_name', label: 'Kategori adı', name: true, required: true },
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-project-statuses',
+        techId: 'PRJ-DEF-SCR-003',
+        businessNameEn: 'ProjectStatusScreen',
+        title: 'Proje Durumları',
+        endpoint: '/prj-project-statuses',
+        crud: true,
+        codeField: 'status_code',
+        nameField: 'status_name',
+        filters: [
+          { key: 'status_code', label: 'Kod' },
+          { key: 'status_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'status_code', label: 'Kod', mono: true },
+          { key: 'status_name', label: 'Ad' },
+          { key: 'line_no', label: 'Sıra' },
+          { key: 'is_terminal', label: 'Son' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'status_code', label: 'Durum kodu', code: true, required: true },
+          { key: 'status_name', label: 'Durum adı', name: true, required: true },
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+          { key: 'is_terminal', label: 'Son durum', type: 'checkbox' },
+          { key: 'is_cancelled', label: 'İptal', type: 'checkbox' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-project-priorities',
+        techId: 'PRJ-DEF-SCR-004',
+        businessNameEn: 'ProjectPriorityScreen',
+        title: 'Proje Öncelikleri',
+        endpoint: '/prj-project-priorities',
+        crud: true,
+        codeField: 'priority_code',
+        nameField: 'priority_name',
+        filters: [
+          { key: 'priority_code', label: 'Kod' },
+          { key: 'priority_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'priority_code', label: 'Kod', mono: true },
+          { key: 'priority_name', label: 'Ad' },
+          { key: 'rank_no', label: 'Sıra' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'priority_code', label: 'Öncelik kodu', code: true, required: true },
+          { key: 'priority_name', label: 'Öncelik adı', name: true, required: true },
+          { key: 'rank_no', label: 'Sıra', type: 'number' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-work-item-types',
+        techId: 'PRJ-DEF-SCR-010',
+        businessNameEn: 'WorkItemTypeScreen',
+        title: 'İş Türleri',
+        endpoint: '/prj-work-item-types',
+        crud: true,
+        codeField: 'type_code',
+        nameField: 'type_name',
+        filters: [
+          { key: 'type_code', label: 'Kod' },
+          { key: 'type_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'type_code', label: 'Kod', mono: true },
+          { key: 'type_name', label: 'Ad' },
+          { key: 'hierarchy_level', label: 'Seviye' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'type_code', label: 'Tür kodu', code: true, required: true },
+          { key: 'type_name', label: 'Tür adı', name: true, required: true },
+          {
+            key: 'hierarchy_level',
+            label: 'Hiyerarşi',
+            type: 'select',
+            options: ['portfolio', 'program', 'phase', 'epic', 'story', 'task', 'subtask', 'milestone', 'other'],
+          },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-work-item-statuses',
+        techId: 'PRJ-DEF-SCR-011',
+        businessNameEn: 'WorkItemStatusScreen',
+        title: 'İş Durumları',
+        endpoint: '/prj-work-item-statuses',
+        crud: true,
+        codeField: 'status_code',
+        nameField: 'status_name',
+        filters: [
+          { key: 'status_code', label: 'Kod' },
+          { key: 'status_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'status_code', label: 'Kod', mono: true },
+          { key: 'status_name', label: 'Ad' },
+          { key: 'category', label: 'Kategori' },
+          { key: 'is_done', label: 'Bitti' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'status_code', label: 'Durum kodu', code: true, required: true },
+          { key: 'status_name', label: 'Durum adı', name: true, required: true },
+          { key: 'line_no', label: 'Sıra', type: 'number' },
+          {
+            key: 'category',
+            label: 'Kategori',
+            type: 'select',
+            options: ['backlog', 'todo', 'in_progress', 'review', 'done', 'cancelled', 'blocked'],
+          },
+          { key: 'is_done', label: 'Tamamlandı', type: 'checkbox' },
+          { key: 'is_cancelled', label: 'İptal', type: 'checkbox' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-work-item-priorities',
+        techId: 'PRJ-DEF-SCR-012',
+        businessNameEn: 'WorkItemPriorityScreen',
+        title: 'İş Öncelikleri',
+        endpoint: '/prj-work-item-priorities',
+        crud: true,
+        codeField: 'priority_code',
+        nameField: 'priority_name',
+        filters: [
+          { key: 'priority_code', label: 'Kod' },
+          { key: 'priority_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'priority_code', label: 'Kod', mono: true },
+          { key: 'priority_name', label: 'Ad' },
+          { key: 'rank_no', label: 'Sıra' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'priority_code', label: 'Öncelik kodu', code: true, required: true },
+          { key: 'priority_name', label: 'Öncelik adı', name: true, required: true },
+          { key: 'rank_no', label: 'Sıra', type: 'number' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-project-roles',
+        techId: 'PRJ-DEF-SCR-020',
+        businessNameEn: 'ProjectRoleScreen',
+        title: 'Proje Rolleri',
+        endpoint: '/prj-project-roles',
+        crud: true,
+        codeField: 'role_code',
+        nameField: 'role_name',
+        filters: [
+          { key: 'role_code', label: 'Kod' },
+          { key: 'role_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'role_code', label: 'Kod', mono: true },
+          { key: 'role_name', label: 'Ad' },
+          { key: 'can_view_budget', label: 'Bütçe gör' },
+          { key: 'can_edit_budget', label: 'Bütçe yaz' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'role_code', label: 'Rol kodu', code: true, required: true },
+          { key: 'role_name', label: 'Rol adı', name: true, required: true },
+          { key: 'can_view_budget', label: 'Bütçe görüntüle', type: 'checkbox' },
+          { key: 'can_edit_budget', label: 'Bütçe düzenle', type: 'checkbox' },
+          { key: 'can_view_costs', label: 'Maliyet görüntüle', type: 'checkbox' },
+          { key: 'can_manage_team', label: 'Ekip yönet', type: 'checkbox' },
+          { key: 'can_close_project', label: 'Proje kapat', type: 'checkbox' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-relation-types',
+        techId: 'PRJ-DEF-SCR-021',
+        businessNameEn: 'WorkRelationTypeScreen',
+        title: 'İş İlişki Türleri',
+        endpoint: '/prj-relation-types',
+        crud: true,
+        codeField: 'relation_code',
+        nameField: 'relation_name',
+        filters: [
+          { key: 'relation_code', label: 'Kod' },
+          { key: 'relation_name', label: 'Ad' },
+        ],
+        columns: [
+          { key: 'relation_code', label: 'Kod', mono: true },
+          { key: 'relation_name', label: 'Ad' },
+          { key: 'inverse_code', label: 'Ters' },
+          { key: 'blocks_schedule', label: 'Takvim' },
+          { key: 'is_active', label: 'Aktif' },
+        ],
+        masterFields: [
+          { key: 'relation_code', label: 'İlişki kodu', code: true, required: true },
+          { key: 'relation_name', label: 'İlişki adı', name: true, required: true },
+          { key: 'inverse_code', label: 'Ters kod' },
+          { key: 'blocks_schedule', label: 'Takvimi etkiler', type: 'checkbox' },
+        ],
+        detailFields: [{ key: 'is_active', label: 'Aktif', type: 'checkbox' }],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-dashboard',
+        techId: 'PRJ-RPT-SCR-001',
+        businessNameEn: 'ProjectDashboardScreen',
+        title: 'Proje Özeti',
+        endpoint: '/prj-dashboard/overview',
+        crud: false,
+        codeField: 'project_code',
+        nameField: 'project_name',
+        filters: [{ key: 'project_id', label: 'Proje id' }],
+        columns: [
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'project_name', label: 'Ad' },
+        ],
+        masterFields: [{ key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code' }],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-portfolio',
+        techId: 'PRJ-RPT-SCR-002',
+        businessNameEn: 'ProjectPortfolioScreen',
+        title: 'Portföy Özeti',
+        endpoint: '/prj-dashboard/portfolio',
+        crud: false,
+        codeField: 'project_code',
+        nameField: 'project_name',
+        filters: [],
+        columns: [
+          { key: 'project_code', label: 'Kod', mono: true },
+          { key: 'project_name', label: 'Ad' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'type_name', label: 'Tür' },
+          { key: 'percent_complete', label: '%' },
+          { key: 'planned_budget', label: 'Bütçe' },
+          { key: 'actual_cost', label: 'Maliyet' },
+          { key: 'work_count', label: 'İş' },
+          { key: 'overdue_count', label: 'Geciken' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-board',
+        techId: 'PRJ-AGL-SCR-001',
+        businessNameEn: 'ProjectBoardScreen',
+        title: 'Kanban Board',
+        endpoint: '/prj-board',
+        crud: false,
+        codeField: 'board_code',
+        nameField: 'board_name',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        columns: [
+          { key: 'board_code', label: 'Board', mono: true },
+          { key: 'board_name', label: 'Ad' },
+          { key: 'board_type', label: 'Tip' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-backlog',
+        techId: 'PRJ-AGL-SCR-002',
+        businessNameEn: 'ProjectBacklogScreen',
+        title: 'Backlog',
+        endpoint: '/prj-planning/backlog',
+        crud: false,
+        codeField: 'work_item_no',
+        nameField: 'title',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        columns: [
+          { key: 'work_item_no', label: 'No', mono: true },
+          { key: 'title', label: 'Başlık' },
+          { key: 'type_name', label: 'Tür' },
+          { key: 'priority_code', label: 'Öncelik' },
+          { key: 'status_name', label: 'Durum' },
+          { key: 'backlog_rank', label: 'Sıra' },
+          { key: 'estimated_hours', label: 'Tahmini sa' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-sprintler',
+        techId: 'PRJ-AGL-SCR-003',
+        businessNameEn: 'SprintScreen',
+        title: 'Sprintler',
+        endpoint: '/prj-sprintler',
+        crud: true,
+        numeratorSeri: 'PRJ_SPRINT',
+        codeField: 'sprint_code',
+        nameField: 'sprint_name',
+        filters: [
+          { key: 'project_id', label: 'Proje id' },
+        ],
+        columns: [
+          { key: 'sprint_code', label: 'Kod', mono: true },
+          { key: 'sprint_name', label: 'Ad' },
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'start_date', label: 'Başlangıç' },
+          { key: 'end_date', label: 'Bitiş' },
+          { key: 'status_code', label: 'Durum' },
+          { key: 'item_count', label: 'İş' },
+          { key: 'capacity_hours', label: 'Kapasite' },
+        ],
+        masterFields: [
+          { key: 'sprint_code', label: 'Sprint kodu', code: true },
+          { key: 'sprint_name', label: 'Sprint adı', name: true, required: true },
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+          { key: 'goal', label: 'Hedef' },
+          { key: 'start_date', label: 'Başlangıç', type: 'date' },
+          { key: 'end_date', label: 'Bitiş', type: 'date' },
+          { key: 'capacity_hours', label: 'Kapasite (sa)', type: 'number' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-gantt',
+        techId: 'PRJ-PLN-SCR-001',
+        businessNameEn: 'ProjectGanttScreen',
+        title: 'Gantt / Zaman Çizelgesi',
+        endpoint: '/prj-planning/gantt',
+        listResponseKey: 'tasks',
+        visualGantt: true,
+        crud: false,
+        codeField: 'code',
+        nameField: 'name',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        columns: [
+          { key: 'code', label: 'Kod', mono: true },
+          { key: 'name', label: 'İş' },
+          { key: 'start', label: 'Başlangıç' },
+          { key: 'end', label: 'Bitiş' },
+          { key: 'progress', label: '%' },
+          { key: 'status_name', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-workload',
+        techId: 'PRJ-RES-SCR-001',
+        businessNameEn: 'ProjectWorkloadScreen',
+        title: 'Kaynak İş Yükü',
+        endpoint: '/prj-planning/workload',
+        crud: false,
+        codeField: 'user_code',
+        nameField: 'user_name',
+        filters: [{ key: 'project_id', label: 'Proje id' }],
+        columns: [
+          { key: 'user_code', label: 'Kullanıcı', mono: true },
+          { key: 'user_name', label: 'Ad' },
+          { key: 'open_tasks', label: 'Açık iş' },
+          { key: 'estimated_hours', label: 'Tahmini sa' },
+          { key: 'actual_hours', label: 'Gerçek sa' },
+          { key: 'overload_warning', label: 'Aşım' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-butce',
+        techId: 'PRJ-FIN-SCR-001',
+        businessNameEn: 'ProjectBudgetScreen',
+        title: 'Proje Bütçe Özeti',
+        endpoint: '/prj-budget',
+        crud: false,
+        codeField: 'project_code',
+        nameField: 'project_code',
+        filters: [{ key: 'project_id', label: 'Proje id', required: true }],
+        columns: [
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'planned_budget', label: 'Plan' },
+          { key: 'actual_cost', label: 'Gerçek' },
+          { key: 'variance', label: 'Sapma' },
+          { key: 'gross_result', label: 'Brüt sonuç' },
+        ],
+        masterFields: [
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-riskler',
+        techId: 'PRJ-RSK-SCR-001',
+        businessNameEn: 'ProjectRiskScreen',
+        title: 'Riskler',
+        endpoint: '/prj-riskler',
+        crud: true,
+        numeratorSeri: 'PRJ_RISK',
+        codeField: 'risk_code',
+        nameField: 'title',
+        filters: [{ key: 'project_id', label: 'Proje id' }],
+        columns: [
+          { key: 'risk_code', label: 'Kod', mono: true },
+          { key: 'title', label: 'Başlık' },
+          { key: 'project_code', label: 'Proje', mono: true },
+          { key: 'probability', label: 'Olasılık' },
+          { key: 'impact', label: 'Etki' },
+          { key: 'score', label: 'Skor' },
+          { key: 'status_code', label: 'Durum' },
+        ],
+        masterFields: [
+          { key: 'risk_code', label: 'Risk kodu', code: true },
+          { key: 'title', label: 'Başlık', name: true, required: true },
+          { key: 'project_id', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'id', labelKey: 'project_name', codeKey: 'project_code', required: true },
+          { key: 'probability', label: 'Olasılık', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
+          { key: 'impact', label: 'Etki', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] },
+          { key: 'mitigation', label: 'Önlem' },
+          { key: 'contingency', label: 'Acil plan' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+      },
+      {
+        id: 'prj-sablonlar',
+        techId: 'PRJ-DEF-SCR-030',
+        businessNameEn: 'ProjectTemplateScreen',
+        title: 'Proje Şablonları',
+        endpoint: '/prj-sablonlar',
+        crud: false,
+        codeField: 'template_code',
+        nameField: 'template_name',
+        filters: [],
+        columns: [
+          { key: 'template_code', label: 'Kod', mono: true },
+          { key: 'template_name', label: 'Ad' },
+          { key: 'approach', label: 'Yaklaşım' },
+          { key: 'description', label: 'Açıklama' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+      {
+        id: 'prj-automations',
+        techId: 'PRJ-AUTO-SCR-001',
+        businessNameEn: 'ProjectAutomationScreen',
+        title: 'Otomasyon Kuralları',
+        endpoint: '/prj-automations',
+        crud: false,
+        codeField: 'automation_code',
+        nameField: 'automation_name',
+        filters: [],
+        columns: [
+          { key: 'automation_code', label: 'Kod', mono: true },
+          { key: 'automation_name', label: 'Ad' },
+          { key: 'trigger_code', label: 'Tetik' },
+          { key: 'is_enabled', label: 'Aktif' },
+          { key: 'priority', label: 'Öncelik' },
+        ],
+        masterFields: [],
+        detailFields: [],
+        detailKey: null,
+        detailAsFields: true,
+        readOnly: true,
+      },
+    ],
+  },
+  {
     id: 'satis',
     title: 'Satış',
     sections: [
@@ -3613,7 +4310,7 @@ const MODULES = [
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'SipariseDonustu', 'Red', 'Iptal', 'Kapali'] },
           { key: 'movement_code_id', label: 'Hareket kodu', type: 'lookup', lookup: 'hareket-kodlari-teklif', valueKey: 'id', labelKey: 'movement_name', codeKey: 'movement_code' },
@@ -3638,7 +4335,7 @@ const MODULES = [
           { key: 'vat_mode', label: 'KDV status', type: 'select', options: ['Haric', 'Dahil'], size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
           { key: 'warehouse_id', label: 'Depo', type: 'lookup', lookup: 'warehouses', valueKey: 'id', labelKey: 'warehouse_name', codeKey: 'warehouse_code' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
         ],
         detailKey: 'satirlar',
@@ -3735,7 +4432,7 @@ const MODULES = [
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
           { key: 'valid_date', label: 'Geçerlilik', type: 'date', size: 'short' },
           { key: 'delivery_date', label: 'Teslim', type: 'date', size: 'short' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'region', label: 'Bölge', size: 'short' },
           { key: 'shipped_quantity', label: 'Sevk edilen', type: 'number', size: 'short' },
           { key: 'invoiced_quantity', label: 'Fatura edilen', type: 'number', size: 'short' },
@@ -3816,7 +4513,7 @@ const MODULES = [
           { key: 'status', label: 'Durum', type: 'select', options: ['Taslak', 'Onayli', 'IrsaliyeDonustu', 'Iptal', 'Kapali'] },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
           { key: 'plant_id', label: 'İş yeri', type: 'lookup', lookup: 'is-yerleri', valueKey: 'id', labelKey: 'plant_name', codeKey: 'plant_code' },
-          { key: 'project_code', label: 'Proje kodu' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'ship_to_address', label: 'Sevk adresi' },
           { key: 'ship_city', label: 'İl' },
@@ -3918,7 +4615,7 @@ const MODULES = [
           { key: 'carrier_company', label: 'Nakliye şirketi' },
           { key: 'carrier', label: 'Nakliyeci' },
           { key: 'sales_rep', label: 'Satış temsilcisi' },
-          { key: 'project_code', label: 'Proje' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'invoice_status', label: 'Fatura durumu', type: 'select', options: ['Irsaliye', 'Kismi', 'Faturalandi'] },
           { key: 'is_printed', label: 'Yazdırıldı', type: 'checkbox' },
@@ -4175,7 +4872,7 @@ const MODULES = [
           { key: 'payment_status', label: 'Ödeme durumu', type: 'select', options: ['Odenmedi', 'Kismi', 'Odendi', 'Iptal'] },
           { key: 'delivery_term_code', label: 'Teslim şekli', type: 'lookup', lookup: 'teslimat-kosullari', valueKey: 'term_code', labelKey: 'term_name' },
           { key: 'sales_rep', label: 'Satış temsilcisi' },
-          { key: 'project_code', label: 'Proje' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'region', label: 'Bölge' },
           { key: 'company_id', label: 'Firma', type: 'lookup', lookup: 'companies', valueKey: 'id', labelKey: 'company_name', codeKey: 'company_code' },
           { key: 'price_list_id', label: 'Fiyat listesi', type: 'lookup', lookup: 'fiyat-listeleri', valueKey: 'id', labelKey: 'list_name', codeKey: 'list_code' },
@@ -4221,7 +4918,7 @@ const MODULES = [
           { key: 'due_days', label: 'Vade gün', type: 'number', size: 'short' },
           { key: 'customer_ref_code', label: 'Müş. ref' },
           { key: 'unit_cost', label: 'Maliyet', type: 'number', size: 'short' },
-          { key: 'project_code', label: 'Proje', size: 'short' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code', size: 'short' },
           { key: 'serial_no', label: 'Seri no', size: 'short' },
           { key: 'order_no', label: 'Sipariş no', size: 'short' },
           { key: 'amount_ex_tax', label: 'Tutar', type: 'number', size: 'short', readOnly: true },
@@ -4361,6 +5058,7 @@ const MODULES = [
           { key: 'accepted_quantity', label: 'Uygun quantity', type: 'number' },
           { key: 'rejected_quantity', label: 'Uygunsuz quantity', type: 'number' },
           { key: 'status', label: 'Durum' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'description', label: 'Açıklama' },
         ],
         detailFields: [],
@@ -4401,6 +5099,7 @@ const MODULES = [
           { key: 'accepted_quantity', label: 'Uygun quantity', type: 'number' },
           { key: 'rejected_quantity', label: 'Uygunsuz quantity', type: 'number' },
           { key: 'status', label: 'Durum' },
+          { key: 'project_code', label: 'Proje', type: 'lookup', lookup: 'prj-projeler', valueKey: 'project_code', labelKey: 'project_name', codeKey: 'project_code' },
           { key: 'description', label: 'Açıklama' },
         ],
         detailFields: [],
@@ -6597,8 +7296,34 @@ function applyCompactBelgeShell(s) {
 
 function normalizeScreen(raw, moduleId, moduleTitle) {
   const s = { ...raw, moduleId, moduleTitle };
-  s.readOnly = s.id === 'depo-bakiye' || s.crud === false;
-  s.crud = s.readOnly ? false : (s.crud !== false);
+  s.hideActions = Boolean(raw.hideActions) || s.id === 'depo-bakiye';
+  const wantsCrud = raw.crud !== false && !s.hideActions;
+  s.crud = wantsCrud;
+  // crud:false + readOnly:false → iş akışı (KK/onay): İncele/Düzelt açık, Yeni/Sil kapalı
+  // crud:false + (readOnly true/undefined) → rapor/özet: yalnızca İncele (form varsa)
+  if (s.hideActions) {
+    s.readOnly = true;
+    s.listActions = [];
+  } else if (!wantsCrud) {
+    if (Array.isArray(raw.listActions)) {
+      s.listActions = raw.listActions;
+    } else {
+      const acts = [];
+      const hasMaster = Array.isArray(raw.masterFields) && raw.masterFields.length > 0;
+      const hasCols = Array.isArray(raw.columns) && raw.columns.length > 0;
+      const hasForm = hasMaster || hasCols;
+      if (hasForm || raw.approveAction || raw.readOnly === false) acts.push('incele');
+      if (raw.readOnly === false || raw.approveAction) acts.push('duzelt');
+      s.listActions = acts;
+    }
+    // Düzelt varsa form düzenlenebilir; yalnızca İncele ise salt okunur
+    s.readOnly = !s.listActions.includes('duzelt') && !s.listActions.includes('yeni');
+  } else {
+    s.readOnly = false;
+    s.listActions = Array.isArray(raw.listActions)
+      ? raw.listActions
+      : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'];
+  }
 
   if (!s.masterFields || !s.masterFields.length) {
     s.masterFields = (s.columns || []).map((c) => ({
@@ -7176,14 +7901,420 @@ const ALL_SCREENS = MODULES.flatMap((m) =>
   m.screens.map((s) => normalizeScreen(s, m.id, m.title))
 );
 
-const MODE_LABELS = {
+const MODE_LABELS_TR = {
   yeni: 'Yeni',
   incele: 'İncele',
   duzelt: 'Düzelt',
   kopyala: 'Kopyala',
 };
+const MODE_LABELS_EN = {
+  yeni: 'New',
+  incele: 'View',
+  duzelt: 'Edit',
+  kopyala: 'Copy',
+};
+const MODE_LABELS = { ...MODE_LABELS_TR };
+
+const UI_THEME_DEFS = [
+  { id: 'blue', nameTr: 'Sümbül', nameEn: 'Hyacinth', swatchA: '#3f87f5', swatchB: '#9bb7ef', hintTr: 'Varsayılan', hintEn: 'Default' },
+  { id: 'green', nameTr: 'Zamia', nameEn: 'Zamia', swatchA: '#1b8f78', swatchB: '#7ecfbc', hintTr: 'Yeşil', hintEn: 'Green' },
+  { id: 'red', nameTr: 'Gül', nameEn: 'Rose', swatchA: '#e04545', swatchB: '#ef9a9a', hintTr: 'Kırmızı', hintEn: 'Red' },
+  { id: 'orange', nameTr: 'Kalanşo', nameEn: 'Kalanchoe', swatchA: '#e67e22', swatchB: '#f5c18a', hintTr: 'Turuncu', hintEn: 'Orange' },
+  { id: 'purple', nameTr: 'Menekşe', nameEn: 'Violet', swatchA: '#7c5cfc', swatchB: '#b8a6ff', hintTr: 'Mor', hintEn: 'Purple' },
+  { id: 'yellow', nameTr: 'Ayçiçeği', nameEn: 'Sunflower', swatchA: '#c9a227', swatchB: '#e6d089', hintTr: 'Sarı', hintEn: 'Yellow' },
+];
+
+const MODULE_TITLE_EN = {
+  'fixed-tanimlar': 'Master Data (Fixed)',
+  sistem: 'System',
+  'ana-veri': 'Master Data',
+  stok: 'Inventory',
+  cari: 'Partners',
+  uretim: 'Production',
+  'satin-alma': 'Purchasing',
+  crm: 'CRM',
+  satis: 'Sales',
+  kalite: 'Quality',
+  finans: 'Finance',
+  muhasebe: 'Accounting',
+  onay: 'Approvals',
+  'insan-kaynaklari': 'Human Resources',
+  hr: 'HR',
+  ik: 'HR',
+};
+
+const SECTION_TITLE_EN = {
+  Emirler: 'Orders',
+  Tanımlar: 'Definitions',
+  Kullanıcılar: 'Users',
+  Gözlem: 'Observability',
+  İletişim: 'Communications',
+  'Mal Kabul': 'Goods Receipt',
+  Belgeler: 'Documents',
+  Planlama: 'Planning',
+  Operasyon: 'Operations',
+};
+
+/** UI chrome + sık alan etiketleri (TR → EN) */
+const UI_EN = {
+  Ayarlar: 'Settings',
+  'Sistem dili': 'System language',
+  'Temalar…': 'Themes…',
+  'Tema seçin': 'Choose a theme',
+  Görünüm: 'Appearance',
+  Açık: 'Light',
+  Koyu: 'Dark',
+  'Koyu tema': 'Dark theme',
+  Filtre: 'Filter',
+  Temizle: 'Clear',
+  Uygula: 'Apply',
+  Liste: 'List',
+  Yeni: 'New',
+  İncele: 'View',
+  Düzelt: 'Edit',
+  Kopyala: 'Copy',
+  Sil: 'Delete',
+  Kaydet: 'Save',
+  'Kaydet kapat': 'Save & close',
+  'Kaydet yeni': 'Save & new',
+  Vazgeç: 'Cancel',
+  'Ekran ara': 'Search screens',
+  'Ekran adı yazın (en az 3 harf)…': 'Type a screen name (min. 3 letters)…',
+  'Firma profil alanı': 'Company profile',
+  'Firma seçin': 'Select company',
+  'Oturum yok': 'No session',
+  'Giriş yapın': 'Please sign in',
+  'Giriş yap': 'Sign in',
+  'Çıkış yap': 'Sign out',
+  Ekran: 'Screen',
+  'Tablo Bilgileri': 'Table Info',
+  'SQL Sorgu': 'SQL Query',
+  'Durum / notlar': 'Status / notes',
+  Diğer: 'Other',
+  'Genel bilgiler': 'General',
+  Organizasyon: 'Organization',
+  'Ölçü / miktar': 'Measure / qty',
+  'Depo / stok yeri': 'Warehouse',
+  Planlama: 'Planning',
+  Adres: 'Address',
+  İletişim: 'Contact',
+  Finans: 'Finance',
+  Pasif: 'Inactive',
+  Aktif: 'Active',
+  'Stok etkisi': 'Stock effect',
+  'Depo zorunlu': 'Warehouse required',
+  'Cari zorunlu': 'Partner required',
+  'Eksi bakiye izin': 'Allow negative stock',
+  'Giriş kalite emri oluşsun': 'Create incoming QC order',
+  'Çıkış kalite emri oluşsun': 'Create outgoing QC order',
+  'Muhasebe hesap kodu': 'GL account code',
+  Açıklama: 'Description',
+  'Hareket kodu': 'Movement code',
+  'Hareket adı': 'Movement name',
+  'Belge tipi': 'Document type',
+  Yön: 'Direction',
+  Kod: 'Code',
+  Ad: 'Name',
+  İçerir: 'Contains',
+  Eşit: 'Equals',
+  'Eşit değil': 'Not equal',
+  Arasında: 'Between',
+  Kapat: 'Close',
+  Yenile: 'Refresh',
+  'Tümünü kapat': 'Close all',
+  Seç: 'Select',
+  Ara: 'Search',
+  'Menüyü aç/kapat': 'Toggle menu',
+  'Yükleniyor…': 'Loading…',
+  'Kayıt yok.': 'No records.',
+  'Eşleşen ekran yok.': 'No matching screens.',
+  'Numaratör Tanımı': 'Numerator Definition',
+  'Ölçü Birimleri': 'Units of Measure',
+  'Kategori Tanımı': 'Category Definition',
+  'Ülke Tanımı': 'Country Definition',
+  'Para Birimi Tanımı': 'Currency Definition',
+  'Şehir / İlçe': 'City / District',
+  'Ödeme Koşulları': 'Payment Terms',
+  'Teslimat Koşulları': 'Delivery Terms',
+  'Dil Tanımı': 'Language Definition',
+  'Banka Tanımı': 'Bank Definition',
+  'Kur Tanımı': 'Exchange Rate',
+  'Hareket Kodları': 'Movement Codes',
+  'Belge Tipleri': 'Document Types',
+  'Sabit Tanımlar': 'Fixed Definitions',
+  'Onay Yönetimi': 'Approvals',
+  'İnsan Kaynakları': 'Human Resources',
+  'Firma seçin': 'Select company',
+};
+
+function titleFromBusinessEn(name) {
+  return String(name || '')
+    .replace(/Screen$/i, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim();
+}
+
+function L(text) {
+  if (text == null || text === '') return text;
+  if (state.uiLang !== 'en') return text;
+  const s = String(text);
+  if (UI_EN[s]) return UI_EN[s];
+  if (SECTION_TITLE_EN[s]) return SECTION_TITLE_EN[s];
+  // Heuristic for definition screens / field labels
+  let out = s
+    .replace(/ Tanımı$/g, ' Definition')
+    .replace(/ Tanım$/g, ' Definition')
+    .replace(/ kodu$/gi, ' code')
+    .replace(/ adı$/gi, ' name')
+    .replace(/ tarihi$/gi, ' date')
+    .replace(/ durumu$/gi, ' status')
+    .replace(/^Şehir \/ İl/, 'City / Province')
+    .replace(/^Para Birimi/, 'Currency')
+    .replace(/^Ölçü Birimleri$/, 'Units of Measure')
+    .replace(/^Belge Tipleri$/, 'Document Types')
+    .replace(/^Hareket Kodları$/, 'Movement Codes')
+    .replace(/^Sabit Tanımlar$/, 'Fixed Definitions')
+    .replace(/^Satınalma$/, 'Purchasing')
+    .replace(/^Satış$/, 'Sales')
+    .replace(/^Üretim$/, 'Production')
+    .replace(/^Stok$/, 'Inventory')
+    .replace(/^Cari$/, 'Partners')
+    .replace(/^Kalite$/, 'Quality')
+    .replace(/^Sistem$/, 'System')
+    .replace(/^Ana Veri$/, 'Master Data');
+  return out !== s ? out : s;
+}
+
+function screenDisplayTitle(s) {
+  if (!s) return '';
+  if (state.uiLang === 'en') {
+    return s.titleEn || titleFromBusinessEn(s.businessNameEn) || L(s.title) || s.title;
+  }
+  return s.title;
+}
+
+function moduleDisplayTitle(mod) {
+  if (!mod) return '';
+  if (state.uiLang === 'en') return MODULE_TITLE_EN[mod.id] || L(mod.title) || mod.title;
+  return mod.title;
+}
+
+function syncModeLabels() {
+  const src = state.uiLang === 'en' ? MODE_LABELS_EN : MODE_LABELS_TR;
+  Object.keys(MODE_LABELS).forEach((k) => { delete MODE_LABELS[k]; });
+  Object.assign(MODE_LABELS, src);
+}
+
+function applyUiTheme(themeId, { persist = true } = {}) {
+  const id = UI_THEME_DEFS.some((t) => t.id === themeId) ? themeId : 'blue';
+  state.uiTheme = id;
+  document.documentElement.setAttribute('data-theme', id === 'blue' ? 'blue' : id);
+  // blue uses :root defaults; keep attribute for consistency
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_theme', id); } catch (_) { /* ignore */ }
+  }
+  renderThemeGrid();
+  syncSettingsMenu();
+}
+
+function applyUiAppearance(mode, { persist = true } = {}) {
+  const appearance = mode === 'dark' ? 'dark' : 'light';
+  state.uiAppearance = appearance;
+  document.documentElement.setAttribute('data-appearance', appearance);
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_appearance', appearance); } catch (_) { /* ignore */ }
+  }
+  syncSettingsMenu();
+}
+
+function syncStaticChromeLabels() {
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    const map = {
+      'settings.language': L('Sistem dili'),
+      'settings.appearance': L('Görünüm'),
+      'settings.themes': L('Temalar…'),
+      'settings.themesTitle': L('Tema seçin'),
+      'settings.light': L('Açık'),
+      'settings.dark': L('Koyu'),
+    };
+    if (map[key]) el.textContent = map[key];
+  });
+  const search = $('#screenSearch');
+  if (search) search.placeholder = L('Ekran adı yazın (en az 3 harf)…');
+  const searchLabel = document.querySelector('label.search-label');
+  if (searchLabel) searchLabel.textContent = L('Ekran ara');
+  const firmaLabel = $('#firmaProfileLabel');
+  if (firmaLabel) firmaLabel.textContent = L('Firma profil alanı');
+  const btnSet = $('#btnSettings');
+  if (btnSet) {
+    btnSet.title = L('Ayarlar');
+    btnSet.setAttribute('aria-label', L('Ayarlar'));
+  }
+  const actionMap = {
+    yeni: 'Yeni',
+    incele: 'İncele',
+    duzelt: 'Düzelt',
+    kopyala: 'Kopyala',
+    sil: 'Sil',
+  };
+  document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
+    const key = actionMap[btn.dataset.action];
+    if (key) btn.textContent = L(key);
+  });
+  document.querySelectorAll('#formCrudActions [data-form-act]').forEach((btn) => {
+    const key = actionMap[btn.getAttribute('data-form-act')];
+    if (key) btn.textContent = L(key);
+  });
+  const saveLabels = [
+    ['btnFormSave', 'Kaydet'],
+    ['btnFormSaveClose', 'Kaydet kapat'],
+    ['btnFormSaveNew', 'Kaydet yeni'],
+  ];
+  saveLabels.forEach(([id, tr]) => {
+    const el = document.getElementById(id);
+    const lab = el?.querySelector('.form-save-label');
+    if (lab) lab.textContent = L(tr);
+  });
+  const filterHead = document.querySelector('#filterPane .filter-pane-head h2');
+  if (filterHead) filterHead.textContent = L('Filtre');
+  const btnClear = $('#btnClearFilter');
+  if (btnClear) btnClear.textContent = L('Temizle');
+  const btnApply = $('#btnApplyFilter');
+  if (btnApply) btnApply.textContent = L('Uygula');
+  const listHead = document.querySelector('#listPane .list-pane-head h2');
+  if (listHead) listHead.textContent = L('Liste');
+  const tabCtx = $('#tabCtxMenu');
+  if (tabCtx) {
+    const mapCtx = { close: 'Kapat', refresh: 'Yenile', 'close-all': 'Tümünü kapat' };
+    tabCtx.querySelectorAll('[data-tab-ctx]').forEach((btn) => {
+      const k = mapCtx[btn.getAttribute('data-tab-ctx')];
+      if (k) btn.textContent = L(k);
+    });
+  }
+}
+
+function applyUiLanguage(lang, { persist = true, refresh = true } = {}) {
+  state.uiLang = lang === 'en' ? 'en' : 'tr';
+  document.documentElement.setAttribute('lang', state.uiLang);
+  syncModeLabels();
+  if (persist) {
+    try { localStorage.setItem('ktb_ui_lang', state.uiLang); } catch (_) { /* ignore */ }
+  }
+  syncStaticChromeLabels();
+  syncSettingsMenu();
+  if (refresh) refreshUiAfterLangChange();
+}
+
+function refreshOpenTabTitles() {
+  (state.openTabs || []).forEach((t) => {
+    const screen = findScreen(t.screenId || t.id);
+    if (!screen) return;
+    if (t.kind === 'form') {
+      const code = t.formRecord?.[screen.codeField] || '';
+      const base = screenDisplayTitle(screen);
+      t.title = code ? `${base} · ${code}` : base;
+    } else {
+      t.title = screenDisplayTitle(screen);
+    }
+  });
+}
+
+function refreshUiAfterLangChange() {
+  refreshOpenTabTitles();
+  try { renderSidebar(); } catch (_) { /* ignore */ }
+  try { renderTabBar(); } catch (_) { /* ignore */ }
+  try { renderUserChip(); } catch (_) { /* ignore */ }
+  try { renderFirmaPicker(); } catch (_) { /* ignore */ }
+  const screen = findScreen(state.screenId);
+  if (screen && state.formMode) {
+    const titleEl = $('#screenTitle');
+    if (titleEl && !titleEl.hidden) {
+      titleEl.textContent = `${screenDisplayTitle(screen)} · ${MODE_LABELS[state.formMode] || state.formMode}`;
+    }
+    try { renderForm(screen); } catch (_) { /* ignore */ }
+  } else if (screen) {
+    const titleEl = $('#screenTitle');
+    if (titleEl && !titleEl.hidden) titleEl.textContent = screenDisplayTitle(screen);
+    const banner = $('#screenBanner');
+    if (banner) {
+      banner.textContent = screen.banner
+        ? `${screenDisplayTitle(screen)} — ${L(screen.banner)}${screen.techId ? ' · ' + screen.techId : ''}`
+        : screenDisplayTitle(screen);
+    }
+    try {
+      renderFilterPane(screen);
+      renderList(screen);
+      updateActionButtons(screen);
+    } catch (_) { /* ignore */ }
+  }
+}
+
+function syncSettingsMenu() {
+  document.querySelectorAll('[data-set-lang]').forEach((btn) => {
+    const on = btn.getAttribute('data-set-lang') === state.uiLang;
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+  const appearance = state.uiAppearance === 'dark' ? 'dark' : 'light';
+  document.querySelectorAll('[data-set-appearance]').forEach((btn) => {
+    const on = btn.getAttribute('data-set-appearance') === appearance;
+    btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+}
+
+function renderThemeGrid() {
+  const grid = $('#themeGrid');
+  if (!grid) return;
+  const en = state.uiLang === 'en';
+  grid.innerHTML = UI_THEME_DEFS.map((t) => `
+    <button type="button" class="theme-card${state.uiTheme === t.id ? ' active' : ''}" data-theme-pick="${t.id}">
+      <div class="theme-swatch" style="--swatch-a:${t.swatchA};--swatch-b:${t.swatchB}"></div>
+      <span class="theme-card-name">${en ? t.nameEn : t.nameTr}</span>
+      <span class="theme-card-hint">${en ? t.hintEn : t.hintTr}</span>
+    </button>
+  `).join('');
+}
+
+function toggleSettingsMenu(force) {
+  const menu = $('#settingsMenu');
+  const btn = $('#btnSettings');
+  if (!menu || !btn) return;
+  const shouldOpen = force == null ? menu.hidden : Boolean(force);
+  menu.hidden = !shouldOpen;
+  btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+}
+
+function openThemeModal(show = true) {
+  const modal = $('#themeModal');
+  if (!modal) return;
+  if (show) {
+    renderThemeGrid();
+    modal.hidden = false;
+    toggleSettingsMenu(false);
+  } else {
+    modal.hidden = true;
+  }
+}
+
+function initUiPrefs() {
+  let theme = 'blue';
+  let lang = 'tr';
+  let appearance = 'light';
+  try {
+    theme = localStorage.getItem('ktb_ui_theme') || 'blue';
+    lang = localStorage.getItem('ktb_ui_lang') || 'tr';
+    appearance = localStorage.getItem('ktb_ui_appearance') || 'light';
+  } catch (_) { /* ignore */ }
+  applyUiTheme(theme, { persist: false });
+  applyUiAppearance(appearance, { persist: false });
+  applyUiLanguage(lang, { persist: false, refresh: false });
+}
 
 const state = {
+  uiLang: 'tr',
+  uiTheme: 'blue',
+  uiAppearance: 'light',
   screenId: null,
   rows: [],
   filtered: [],
@@ -8284,14 +9415,26 @@ function updateFormCrudButtons(screen) {
     sil: $('#btnFormSil'),
   };
   if (!wrap || !map.yeni) return;
-  if (!screen || screen.readOnly || screen.crud === false || screen.hideActions) {
+  if (!screen || screen.hideActions) {
     Object.values(map).forEach((b) => { if (b) { b.hidden = true; b.disabled = true; } });
+    wrap.hidden = true;
     return;
   }
-  const showYeni = mode === 'incele' || mode === 'duzelt';
-  const showDuzelt = mode === 'incele' && hasId;
-  const showKopyala = (mode === 'incele' || mode === 'duzelt') && hasId;
-  const showSil = (mode === 'incele' || mode === 'duzelt') && hasId;
+  const listActs = new Set(
+    Array.isArray(screen.listActions)
+      ? screen.listActions
+      : (screen.crud === false ? ['incele', 'duzelt'] : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'])
+  );
+  // İş akışı (crud:false): formda Yeni/Kopyala/Sil yok; İncele→Düzelt geçişi kalabilir
+  const canYeni = listActs.has('yeni') && screen.crud !== false;
+  const canDuzelt = listActs.has('duzelt') || listActs.has('incele');
+  const canKopyala = listActs.has('kopyala') && screen.crud !== false;
+  const canSil = listActs.has('sil') && screen.crud !== false;
+
+  const showYeni = canYeni && (mode === 'incele' || mode === 'duzelt');
+  const showDuzelt = canDuzelt && mode === 'incele' && hasId;
+  const showKopyala = canKopyala && (mode === 'incele' || mode === 'duzelt') && hasId;
+  const showSil = canSil && (mode === 'incele' || mode === 'duzelt') && hasId;
 
   map.yeni.hidden = !showYeni;
   map.duzelt.hidden = !showDuzelt;
@@ -8862,6 +10005,8 @@ function promptLogin() {
 
 function allowedFirmalar() {
   const all = Array.isArray(state.companies) ? state.companies : [];
+  // ADMIN / Yönetici: tüm firma profilleri görünür (yeni demo firmaları dahil)
+  if (isAdminLikeUser(state.session)) return all;
   const fy = state.session?.firma_yetkileri;
   if (!Array.isArray(fy) || !fy.length) return all;
   const ids = new Set(fy.map((f) => Number(f.company_id ?? f.id)).filter(Boolean));
@@ -9806,31 +10951,32 @@ function ekranYetkisi(screenId, action = null) {
 
 function updateActionButtons(screen) {
   const hasSel = Boolean(state.selectedId);
+  const listActs = Array.isArray(screen.listActions)
+    ? screen.listActions
+    : (screen.hideActions ? [] : ['yeni', 'incele', 'duzelt', 'kopyala', 'sil']);
+  const allowedSet = new Set(listActs);
+
   document.querySelectorAll('#actionBar [data-action]').forEach((btn) => {
     const act = btn.dataset.action;
-    if (screen.hideActions || (screen.readOnly && screen.crud === false)) {
-      // Salt okunur kontrol ekranı — Yeni/İncele/Düzelt gizle; CSV kalabilir
-      if (['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
-        btn.hidden = true;
+    if (['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
+      const show = allowedSet.has(act);
+      btn.hidden = !show;
+      if (!show) {
         btn.disabled = true;
         return;
       }
-      btn.hidden = false;
-    } else {
-      btn.hidden = false;
-    }
-    if (screen.readOnly && !screen.hideActions) {
-      btn.disabled = act !== 'incele' || !hasSel;
+      if (!ekranYetkisi(screen.id, act)) {
+        btn.disabled = true;
+        return;
+      }
+      if (act === 'yeni') btn.disabled = false;
+      else btn.disabled = !hasSel;
       return;
     }
-    const allowed = ekranYetkisi(screen.id, act === 'export-csv' || act === 'mrp-talep' ? act : act);
-    if (!allowed && ['yeni', 'incele', 'duzelt', 'kopyala', 'sil'].includes(act)) {
-      btn.disabled = true;
-      return;
-    }
-    if (act === 'yeni') btn.disabled = !ekranYetkisi(screen.id, 'yeni');
-    else if (act === 'export-csv') btn.disabled = !ekranYetkisi(screen.id, 'export-csv');
-    else if (act === 'mrp-talep') {
+    btn.hidden = false;
+    if (act === 'export-csv') {
+      btn.disabled = !ekranYetkisi(screen.id, 'export-csv');
+    } else if (act === 'mrp-talep') {
       btn.hidden = !screen.mrpTalepAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-talep');
     } else if (act === 'mrp-uretim') {
@@ -9839,7 +10985,7 @@ function updateActionButtons(screen) {
     } else if (act === 'mrp-calistir') {
       btn.hidden = !screen.mrpCalistirAction;
       btn.disabled = !ekranYetkisi(screen.id, 'mrp-calistir');
-    } else btn.disabled = !hasSel || !ekranYetkisi(screen.id, act);
+    }
   });
   const mrpBtn = $('#btnMrpTalep');
   if (mrpBtn) mrpBtn.hidden = !screen.mrpTalepAction;
@@ -9997,7 +11143,12 @@ async function openScreen(id, opts = {}) {
       rows = rows.map((r) => ({ ...r, id: r.series_code }));
     }
     state.rows = ensureRowIds(rows);
+    if (screen.visualGantt && data && typeof data === 'object' && !Array.isArray(data)) {
+      state.ganttMeta = data;
+    }
     renderList(screen);
+    if (screen.visualGantt) renderVisualGantt(screen, state.rows, state.ganttMeta || data);
+    else clearVisualGantt();
     renderTabBar();
   } catch (err) {
     console.error(err);
@@ -10014,7 +11165,179 @@ async function openScreen(id, opts = {}) {
     $('#dataBody').innerHTML = `<tr class="empty-row"><td colspan="${cols.length || 1}">${msg}</td></tr>`;
     $('#listMeta').textContent = 'Hata';
     updateActionButtons(screen);
+    clearVisualGantt();
   }
+}
+
+function clearVisualGantt() {
+  const el = document.getElementById('prjGanttVisual');
+  if (el) el.remove();
+}
+
+function dayMs() { return 86400000; }
+
+function parseYmd(v) {
+  if (!v) return null;
+  const d = new Date(String(v).slice(0, 10) + 'T00:00:00Z');
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function fmtYmd(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Görsel Gantt — sürükle-bırak ile tarih/süre güncelleme (vanilla DnD) */
+function renderVisualGantt(screen, rows, meta) {
+  clearVisualGantt();
+  const pane = document.getElementById('listPane');
+  if (!pane) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'prjGanttVisual';
+  wrap.className = 'prj-gantt-visual';
+  wrap.innerHTML = `<div class="prj-gantt-head">Gantt zaman çizelgesi — çubuğu sürükleyin (tarih) veya sağ kenardan genişletin (süre)</div><div class="prj-gantt-track" id="prjGanttTrack"></div>`;
+  pane.appendChild(wrap);
+
+  const tasks = (rows || []).filter((r) => r.start || r.end);
+  if (!tasks.length) {
+    wrap.querySelector('#prjGanttTrack').innerHTML = '<div class="prj-gantt-empty">Plan tarihi olan iş yok.</div>';
+    return;
+  }
+
+  let min = null;
+  let max = null;
+  tasks.forEach((t) => {
+    const s = parseYmd(t.start) || parseYmd(t.end);
+    const e = parseYmd(t.end) || parseYmd(t.start);
+    if (s && (!min || s < min)) min = s;
+    if (e && (!max || e > max)) max = e;
+  });
+  if (!min || !max) return;
+  // padding
+  min = new Date(min.getTime() - dayMs() * 2);
+  max = new Date(max.getTime() + dayMs() * 5);
+  const span = Math.max(1, (max - min) / dayMs());
+
+  const track = wrap.querySelector('#prjGanttTrack');
+  track.innerHTML = tasks.map((t) => {
+    const s = parseYmd(t.start) || parseYmd(t.end) || min;
+    const e = parseYmd(t.end) || parseYmd(t.start) || s;
+    const left = ((s - min) / dayMs()) / span * 100;
+    const width = Math.max(1.5, ((e - s) / dayMs() + 1) / span * 100);
+    const label = escapeHtml(String(t.code || t.work_item_no || t.id));
+    const title = escapeHtml(String(t.name || t.title || ''));
+    return `<div class="prj-gantt-row" data-id="${escapeAttr(t.id)}">
+      <div class="prj-gantt-label" title="${title}">${label}</div>
+      <div class="prj-gantt-bar-wrap">
+        <div class="prj-gantt-bar" draggable="true" data-id="${escapeAttr(t.id)}"
+             data-start="${escapeAttr(fmtYmd(s))}" data-end="${escapeAttr(fmtYmd(e))}"
+             style="left:${left}%;width:${width}%;" title="${label}: ${fmtYmd(s)} → ${fmtYmd(e)}">
+          <span class="prj-gantt-bar-text">${title}</span>
+          <span class="prj-gantt-resize" data-resize="1" title="Süreyi uzat/kısalt"></span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  let drag = null;
+  track.addEventListener('dragstart', (ev) => {
+    const bar = ev.target.closest('.prj-gantt-bar');
+    if (!bar || ev.target.closest('[data-resize]')) {
+      ev.preventDefault();
+      return;
+    }
+    drag = {
+      id: bar.dataset.id,
+      startX: ev.clientX,
+      mode: 'move',
+      start: bar.dataset.start,
+      end: bar.dataset.end,
+      bar,
+    };
+    ev.dataTransfer.setData('text/plain', String(bar.dataset.id));
+    ev.dataTransfer.effectAllowed = 'move';
+  });
+
+  track.addEventListener('mousedown', (ev) => {
+    const handle = ev.target.closest('[data-resize]');
+    if (!handle) return;
+    const bar = handle.closest('.prj-gantt-bar');
+    if (!bar) return;
+    ev.preventDefault();
+    drag = {
+      id: bar.dataset.id,
+      startX: ev.clientX,
+      mode: 'resize',
+      start: bar.dataset.start,
+      end: bar.dataset.end,
+      bar,
+    };
+    const onMove = (e2) => {
+      if (!drag || drag.mode !== 'resize') return;
+      const dx = e2.clientX - drag.startX;
+      const daysDelta = Math.round(dx / Math.max(8, track.querySelector('.prj-gantt-bar-wrap')?.clientWidth / span || 20));
+      const s = parseYmd(drag.start);
+      const e = parseYmd(drag.end);
+      if (!s || !e) return;
+      const ne = new Date(e.getTime() + daysDelta * dayMs());
+      if (ne < s) return;
+      const left = ((s - min) / dayMs()) / span * 100;
+      const width = Math.max(1.5, ((ne - s) / dayMs() + 1) / span * 100);
+      drag.bar.style.left = `${left}%`;
+      drag.bar.style.width = `${width}%`;
+      drag.bar.dataset.end = fmtYmd(ne);
+      drag.bar.title = `${drag.bar.dataset.start} → ${fmtYmd(ne)}`;
+    };
+    const onUp = async () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      if (!drag) return;
+      const payload = {
+        work_item_id: Number(drag.id),
+        plan_start_date: drag.bar.dataset.start,
+        plan_end_date: drag.bar.dataset.end,
+      };
+      drag = null;
+      try {
+        await api('/prj-planning/gantt/reschedule', { method: 'POST', body: payload });
+        toast('Gantt süresi güncellendi');
+        await openScreen(screen.id);
+      } catch (err) {
+        toast(err.message || 'Gantt güncellenemedi');
+      }
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  track.addEventListener('dragover', (ev) => {
+    if (!drag || drag.mode !== 'move') return;
+    ev.preventDefault();
+  });
+
+  track.addEventListener('drop', async (ev) => {
+    ev.preventDefault();
+    if (!drag || drag.mode !== 'move') return;
+    const id = Number(drag.id || ev.dataTransfer.getData('text/plain'));
+    const dx = ev.clientX - drag.startX;
+    const wrapEl = drag.bar.closest('.prj-gantt-bar-wrap');
+    const daysDelta = Math.round(dx / Math.max(8, (wrapEl?.clientWidth || 400) / span));
+    const s = parseYmd(drag.start);
+    const e = parseYmd(drag.end);
+    drag = null;
+    if (!id || !s || !e || !daysDelta) return;
+    const ns = new Date(s.getTime() + daysDelta * dayMs());
+    const ne = new Date(e.getTime() + daysDelta * dayMs());
+    try {
+      await api('/prj-planning/gantt/reschedule', {
+        method: 'POST',
+        body: { work_item_id: id, plan_start_date: fmtYmd(ns), plan_end_date: fmtYmd(ne) },
+      });
+      toast('Gantt tarihi güncellendi');
+      await openScreen(screen.id);
+    } catch (err) {
+      toast(err.message || 'Gantt güncellenemedi');
+    }
+  });
 }
 
 const LOOKUP_ENDPOINTS = {
@@ -10057,6 +11380,17 @@ const LOOKUP_ENDPOINTS = {
   'crm-firsat-asamalari': '/crm-firsat-asamalari?is_active=true',
   'crm-faaliyet-tipleri': '/crm-faaliyet-tipleri?is_active=true',
   'crm-kontaklar': '/crm-kontaklar?is_active=true',
+  'prj-projeler': '/prj-projeler?is_active=true',
+  'prj-isler': '/prj-isler',
+  'prj-project-types': '/prj-project-types?is_active=true',
+  'prj-project-categories': '/prj-project-categories?is_active=true',
+  'prj-project-statuses': '/prj-project-statuses?is_active=true',
+  'prj-project-priorities': '/prj-project-priorities?is_active=true',
+  'prj-work-item-types': '/prj-work-item-types?is_active=true',
+  'prj-work-item-statuses': '/prj-work-item-statuses?is_active=true',
+  'prj-work-item-priorities': '/prj-work-item-priorities?is_active=true',
+  'prj-project-roles': '/prj-project-roles?is_active=true',
+  'prj-relation-types': '/prj-relation-types?is_active=true',
   users: '/users',
   'kullanici-gruplari': '/kullanici-gruplari',
   'satin-alma-siparisleri': '/satin-alma-siparisleri',
@@ -11194,7 +12528,8 @@ function allScreensCatalog() {
 function isAdminLikeUser(rec) {
   if (!rec) return false;
   if (rec.group_code === 'ADMIN') return true;
-  return String(rec.role || '').toLowerCase() === 'yonetici';
+  const role = String(rec.role || '').toLowerCase();
+  return role === 'yonetici' || role === 'admin' || role === 'administrator';
 }
 
 /**
@@ -13313,6 +14648,17 @@ const LOOKUP_TO_SCREEN = {
   'crm-kontaklar': 'crm-kontaklar',
   'crm-firsat-asamalari': 'crm-firsat-asamalari',
   'crm-faaliyet-tipleri': 'crm-faaliyet-tipleri',
+  'prj-projeler': 'prj-projeler',
+  'prj-isler': 'prj-isler',
+  'prj-project-types': 'prj-project-types',
+  'prj-project-categories': 'prj-project-categories',
+  'prj-project-statuses': 'prj-project-statuses',
+  'prj-project-priorities': 'prj-project-priorities',
+  'prj-work-item-types': 'prj-work-item-types',
+  'prj-work-item-statuses': 'prj-work-item-statuses',
+  'prj-work-item-priorities': 'prj-work-item-priorities',
+  'prj-project-roles': 'prj-project-roles',
+  'prj-relation-types': 'prj-relation-types',
   'kk-kontrol-planlari': 'kk-kontrol-planlari',
   'kk-ret-nedenleri': 'kk-ret-nedenleri',
   'fiyat-listeleri': 'fiyat-listeleri',
@@ -16156,7 +17502,80 @@ function bindMetaHelpGlobal() {
   });
 }
 
+function bindUiPrefsEvents() {
+  const wrap = $('#settingsWrap');
+  const btn = $('#btnSettings');
+  const menu = $('#settingsMenu');
+  if (btn && !btn.dataset.bound) {
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSettingsMenu();
+    });
+  }
+  if (menu && !menu.dataset.bound) {
+    menu.dataset.bound = '1';
+    menu.addEventListener('click', (e) => {
+      const langBtn = e.target.closest('[data-set-lang]');
+      if (langBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyUiLanguage(langBtn.getAttribute('data-set-lang'));
+        toggleSettingsMenu(false);
+        return;
+      }
+      const appearanceBtn = e.target.closest('[data-set-appearance]');
+      if (appearanceBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        applyUiAppearance(appearanceBtn.getAttribute('data-set-appearance'));
+        toggleSettingsMenu(false);
+        return;
+      }
+      if (e.target.closest('#btnOpenThemes')) {
+        e.preventDefault();
+        e.stopPropagation();
+        openThemeModal(true);
+      }
+    });
+  }
+  const themeModal = $('#themeModal');
+  if (themeModal && !themeModal.dataset.bound) {
+    themeModal.dataset.bound = '1';
+    themeModal.addEventListener('click', (e) => {
+      if (e.target.closest('[data-theme-close]')) {
+        e.preventDefault();
+        openThemeModal(false);
+        return;
+      }
+      const pick = e.target.closest('[data-theme-pick]');
+      if (pick) {
+        e.preventDefault();
+        applyUiTheme(pick.getAttribute('data-theme-pick'));
+        openThemeModal(false);
+      }
+    });
+  }
+  if (!document.documentElement.dataset.uiPrefsDocBound) {
+    document.documentElement.dataset.uiPrefsDocBound = '1';
+    document.addEventListener('click', (e) => {
+      if (wrap && !wrap.contains(e.target)) toggleSettingsMenu(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = $('#themeModal');
+      if (modal && !modal.hidden) {
+        openThemeModal(false);
+        return;
+      }
+      toggleSettingsMenu(false);
+    });
+  }
+}
+
 function bindEvents() {
+  bindUiPrefsEvents();
   bindMetaExplorerEvents();
   bindMetaHelpGlobal();
   bindLookupBrowseUi();
@@ -17861,6 +19280,7 @@ async function bootIntoApp() {
 }
 
 function bootFromHash() {
+  initUiPrefs();
   bindEvents();
   restoreSession()
     .then(() => bootIntoApp())

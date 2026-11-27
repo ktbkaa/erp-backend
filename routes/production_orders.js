@@ -221,6 +221,7 @@ async function emirOlustur(client, opts) {
         product_girisi_tamamlandi,
         description,
         planli_kesin,
+        project_code,
     } = opts;
 
     const type = await tipCozumle(client, order_type_id, sales_order_id);
@@ -244,9 +245,10 @@ async function emirOlustur(client, opts) {
              is_started, cikis_type, giris_type, silindi,
              source_document_type, source_document_id,
              order_date, start_date, plan_start, plan_end, end_date,
-             uom_code, acik_kapali, onayli, yayinlandi, is_printed, product_girisi_tamamlandi, description)
+             uom_code, acik_kapali, onayli, yayinlandi, is_printed, product_girisi_tamamlandi, description,
+             project_code)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-                $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32)
+                $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)
         RETURNING id
         `,
         [
@@ -282,6 +284,7 @@ async function emirOlustur(client, opts) {
             !!is_printed,
             !!product_girisi_tamamlandi,
             description || null,
+            project_code || null,
         ],
     );
     const emirId = emir.rows[0].id;
@@ -1058,6 +1061,14 @@ async function tamamlaOperasyonInternal(emirId, miktarOpsiyonel) {
         );
         if (kalanOps.rows[0].c === 0) {
             await client.query(`UPDATE production_orders SET status='Kapali' WHERE id=$1`, [emirId]);
+            // PRJ otomatik üretim maliyeti
+            if (emir.project_code) {
+                try {
+                    const { fromProductionOrder } = require('../src/services/prjCostService');
+                    const refreshed = await client.query(`SELECT * FROM production_orders WHERE id=$1`, [emirId]);
+                    await fromProductionOrder(client, { order: refreshed.rows[0] });
+                } catch (_) { /* PRJ yoksa sessiz */ }
+            }
         }
 
         const girisNo = await sonrakiBelgeNo(client, 'URETIM_GIRIS');
@@ -1158,7 +1169,8 @@ router.put('/:id', async (req, res) => {
                     yayinlandi = COALESCE($27, yayinlandi),
                     is_printed = COALESCE($28, is_printed),
                     product_girisi_tamamlandi = COALESCE($29, product_girisi_tamamlandi),
-                    description = COALESCE($30, description)
+                    description = COALESCE($30, description),
+                    project_code = COALESCE($31, project_code)
                 WHERE id = $1
                 RETURNING id
                 `,
@@ -1193,6 +1205,7 @@ router.put('/:id', async (req, res) => {
                     typeof b.is_printed === 'boolean' ? b.is_printed : null,
                     typeof b.product_girisi_tamamlandi === 'boolean' ? b.product_girisi_tamamlandi : null,
                     b.description !== undefined ? b.description : null,
+                    b.project_code !== undefined ? b.project_code : null,
                 ],
             );
 
