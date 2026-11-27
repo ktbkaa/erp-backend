@@ -351,7 +351,17 @@ router.put('/:id', async (req, res) => {
             extras.total_amount = toplam;
             if (order_date != null && order_date !== '') extras.order_date = order_date;
             if (order_type != null && order_type !== '') extras.order_type = order_type;
-            if (status != null && status !== '') extras.status = status;
+            if (status != null && status !== '') {
+                if (
+                    mevcut.rows[0].status === 'OnayBekliyor'
+                    && !['OnayBekliyor', 'Iptal'].includes(status)
+                ) {
+                    const err = new Error('Onay bekleyen sipariş durumu elle değiştirilemez; onay kaydı tamamlanmalı.');
+                    err.status = 409;
+                    throw err;
+                }
+                extras.status = status;
+            }
             if (extras.subtotal == null && Array.isArray(kalemler)) extras.subtotal = toplam;
             if (extras.grand_total == null && Array.isArray(kalemler)) extras.grand_total = toplam;
             if (extras.company_id == null) {
@@ -434,6 +444,12 @@ router.post('/:id/sevk-emri-olustur', async (req, res) => {
         const firmaId = companyIdFromReq(req);
         if (firmaId && !(await assertCompanyRecord(pool, 'sales_orders', siparis.id, firmaId))) {
             return res.status(403).json({ hata: 'Bu firma için sipariş erişimi yok.' });
+        }
+        if (siparis.status === 'OnayBekliyor') {
+            return res.status(400).json({
+                hata: 'Sipariş onay bekliyor; satış onayı tamamlanmadan sevk emri oluşturulamaz.',
+                kod: 'SIPARIS_ONAY_BEKLIYOR',
+            });
         }
         if (!['Onayli', 'Taslak', 'Kismi'].includes(siparis.status)) {
             return res.status(400).json({ hata: `Sipariş durumu uygun değil: ${siparis.status}` });

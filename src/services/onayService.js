@@ -378,6 +378,13 @@ async function onaylaAdim(client, kayitId, kullanici, { notes: notlar = null } =
       `,
       [kayitId],
     );
+    if (kayit.document_id && kayit.screen_id === 'satis-siparisleri') {
+      await client.query(
+        `UPDATE sales_orders SET status = 'Onayli', updated_at = NOW()
+         WHERE id = $1 AND status = 'OnayBekliyor'`,
+        [kayit.document_id],
+      );
+    }
   }
 
   return getRecord(client, kayitId);
