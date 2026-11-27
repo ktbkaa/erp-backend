@@ -337,11 +337,16 @@ html[data-view="cards"] .tab-ctx-menu button {
 html[data-view="cards"] .list-settings-dlg .list-settings-card {
   width: min(36rem, calc(100vw - 1.25rem));
 }
+html[data-view="cards"] .doc-tabs-scroll {
+  --doc-tabs-row: 2.45rem;
+  --doc-tabs-scroll: 0.75rem;
+  background: transparent;
+}
 html[data-view="cards"] .doc-tabs {
   gap: 0.35rem;
-  height: auto;
-  min-height: 2.35rem;
-  padding: 0.35rem 0.55rem;
+  height: var(--doc-tabs-row, 2.45rem);
+  min-height: var(--doc-tabs-row, 2.45rem);
+  padding: 0.2rem 0.55rem 0;
   background: transparent;
   border: 0;
 }

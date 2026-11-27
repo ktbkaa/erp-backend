@@ -203,9 +203,15 @@ html[data-view="modern"] .doc-tabs-dock {
   background: var(--surface);
   border-top: 1px solid var(--border);
 }
+html[data-view="modern"] .doc-tabs-scroll {
+  --doc-tabs-row: 1.85rem;
+  --doc-tabs-scroll: 0.75rem;
+}
 html[data-view="modern"] .doc-tabs {
   gap: 0.15rem;
-  padding: 0.25rem 0.45rem;
+  padding: 0.1rem 0.45rem 0;
+  height: var(--doc-tabs-row, 1.85rem);
+  min-height: var(--doc-tabs-row, 1.85rem);
 }
 html[data-view="modern"] .doc-tab,
 html[data-view="modern"] .tab-item {
