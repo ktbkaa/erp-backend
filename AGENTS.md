@@ -34,7 +34,11 @@ npm run migrate        # eksik migration’ları uygular; tabloları silmez
 npm start              # varsayılan http://localhost:3000/
 ```
 
-Sağlık: `GET /health`. Konsol: `/`.
+Sağlık: `GET /health` (liveness, DB'siz) · `GET /ready` (DB + bekleyen migration). Konsol: `/`.
+
+### Canlı / operasyon
+
+Deploy, yedek ve geri dönüş runbook'ları: `docs/go-live/DEPLOY_RUNBOOK.md`, `docs/go-live/YEDEKLEME_GERI_DONUS_RUNBOOK.md`, `docs/go-live/ORTAMLAR_VE_IZLEME.md`. Migration uygulama açılışında çalışmaz; deploy ön adımı `npm run predeploy` (bekleyen migration varsa önce yedek). Docker: `docker compose up -d --build`. CI: `.github/workflows/ci.yml`.
 
 ### `.env` özeti
 
@@ -68,12 +72,15 @@ node scripts/marvel-stok-10000.js
 | Komut | Anlam |
 |-------|--------|
 | `npm test` | Ekran sözleşmeleri + `tests/**/*.test.js` |
+| `npm run test:isolated -- --docker --fresh` | `.env` DB'sine dokunmadan izole Postgres (docker-compose.test.yml) → migrate → seed → test |
+| `npm run test:ci` | CI test kapısı: yalnız `scripts/ci/known-test-failures.json` dışındaki hatalar kırar |
+| `npm run db:backup` / `db:restore` / `db:drill` | Yedek (+offsite) / geri yükleme / geri yükleme tatbikatı |
 | `npm run qa:smoke` | API duman (sunucu ayakta olmalı) |
 | `npm run qa:db` | DB bütünlük denetimi |
 | `npm run qa:all` | QA paketi (seed + inventory + smoke + …) |
 | `npm run test:ebelge` | e-Belge: UBL-TR XSD/kural doğrulama, adaptör sözleşmesi, PDF, DB akışı (`docs/go-live/GIB_STRATEGY.md`) |
 
-**Bilinen (eski) 2 başarısız test:** `go-live invariants` / BUG-008 (`STOK_DEPO_YOK` — lot senaryosunda stok-depo bağı eksik kalabiliyor) ve `sim partial fix` içindeki UI `bom-level hideSave` assertion. Yeni regresyon eklemeyin; düzeltirken bu ikisini hedefleyin.
+**Bilinen (eski) 2 başarısız test:** `go-live invariants` / BUG-008 (`STOK_DEPO_YOK` — lot senaryosunda stok-depo bağı eksik kalabiliyor) ve `sim partial fix` içindeki UI `bom-level hideSave` assertion. Yeni regresyon eklemeyin; düzeltirken bu ikisini hedefleyin. (Temiz + `scripts/ci/seed-test-db.js` fixture'lı DB'de BUG-008 geçiyor; yalnız bom-level kalıyor. Bu liste `scripts/ci/known-test-failures.json` içinde tutulur.)
 
 ## Alan kuralları (kritik)
 

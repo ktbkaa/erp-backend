@@ -1,4 +1,15 @@
 require('dotenv').config();
+const logger = require('./src/infra/logger').init();
+const lifecycle = require('./src/infra/lifecycle');
+
+const envCheck = lifecycle.checkEnvironment();
+envCheck.warnings.forEach((w) => logger.warn(`[config] ${w}`));
+if (envCheck.errors.length) {
+    envCheck.errors.forEach((e) => logger.error(`[config] ${e}`));
+    process.exit(1);
+}
+lifecycle.registerProcessHandlers(logger);
+
 const path = require('path');
 const express = require('express');
 const app = express();
@@ -18,6 +29,8 @@ const {
 } = require('./src/middleware/security');
 const { checkProductionConfig } = require('./src/utils/securityConfig');
 const { warnDbStoredSecrets } = require('./src/utils/secretSettings');
+const { httpLogger } = require('./src/infra/logger');
+const { createHealthRouter } = require('./src/infra/health');
 
 const startupCheck = checkProductionConfig();
 startupCheck.warnings.forEach((w) => console.warn(`[güvenlik] ${w}`));
@@ -27,7 +40,12 @@ if (startupCheck.errors.length) {
     process.exit(1);
 }
 
+// Ters vekil hop sayısı: TRUST_PROXY (canlıda varsayılan 1)
 app.set('trust proxy', trustProxySetting());
+app.disable('x-powered-by');
+app.use(httpLogger(logger));
+// Liveness / readiness: kimlik, firma bağlamı ve audit'ten önce
+app.use(createHealthRouter({ pool, logger }));
 app.use(helmetMiddleware());
 // ALLOWED_ORIGINS (canlı); boşken geliştirmede her origin (Cursor Ports / önizleme)
 app.use(corsMiddleware());
@@ -54,24 +72,6 @@ app.use(authRequired);
 app.use(companyContext);
 app.use(authorizeRequest);
 app.use(firmaKayitKapsami());
-
-app.get('/health', async (req, res) => {
-    const pool = require('./db');
-    try {
-        await pool.query('SELECT 1');
-        res.json({
-            status: 'ok',
-            zaman: new Date().toISOString(),
-            veritabani: 'bagli',
-        });
-    } catch (err) {
-        res.status(500).json({
-            status: 'hata',
-            veritabani: 'baglantisiz',
-            detay: err.message,
-        });
-    }
-});
 
 app.use('/companies', require('./routes/companies'));
 app.use('/is-yerleri', require('./routes/plants'));
@@ -242,6 +242,7 @@ const host = process.env.HOST || (process.env.DATABASE_URL ? '0.0.0.0' : '::');
 const listenOpts = host === '::'
   ? { port, host: '::', ipv6Only: false }
   : { port, host };
+lifecycle.enableGracefulShutdown({ server, pool, logger });
 server.listen(listenOpts, () => {
     console.log(`Sistem http://${host === '::' ? 'localhost' : host}:${port} adresinde çalışıyor.`);
     console.log(`Konsol UI: http://localhost:${port}/`);

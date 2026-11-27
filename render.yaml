@@ -1,18 +1,46 @@
-# Render Blueprint — ücretsiz web servis + harici Neon Postgres
-# Kullanım: https://dashboard.render.com/blueprints → New Blueprint Instance → bu repo
+# Render Blueprint — KTB ERP CANLI (production)
 #
-# Önkoşul: Neon’da ücretsiz DB oluşturup DATABASE_URL’i Render env’e yapıştırın.
-# https://console.neon.tech
+# Ücretli planlar: uyku yok, preDeployCommand (yedek → migration) ve sıfır kesintili deploy.
+# Demo/deneme için: render.demo.yaml (free plan).
+#
+# İlk kurulum: Render → New Blueprint Instance → bu repo (render.yaml).
+#   1) "ktb-erp-backup" ortam grubundaki S3/R2 bilgilerini ve şifreleme parolasını panelden doldurun
+#      (env grubunda sync:false desteklenmediği için değerler burada boş/yer tutucu bırakıldı).
+#   2) İlk deploy'dan sonra ktb-erp-db-backup cron job'unu bir kez elle tetikleyin ("Trigger Run")
+#      ve bucket'ta yedek + manifest oluştuğunu doğrulayın.
+#   3) Ayrıntılar: docs/go-live/DEPLOY_RUNBOOK.md ve docs/go-live/YEDEKLEME_GERI_DONUS_RUNBOOK.md
+#
+# Yedek katmanları:
+#   - Render Postgres (ücretli plan): yönetilen günlük yedek + point-in-time recovery (PITR).
+#     Saklama süresi workspace planına bağlıdır — Render panelinde (Database → Recovery) doğrulayın.
+#   - Bağımsız offsite: ktb-erp-db-backup cron → şifreli pg_dump → S3 uyumlu bucket (Render dışı hesap).
+#   - Tatbikat: .github/workflows/db-restore-drill.yml (haftalık) — bucket'taki en yeni yedeği doğrular.
+#   Web servisi diske yazmaz (dosya yükleme DB'de); kalıcı disk (disk:) gerekmez. Disk eklenirse
+#   Render disk snapshot'ları offsite yedek yerine GEÇMEZ.
+
+databases:
+  - name: ktb-erp-db
+    plan: 1c-4g # ücretli; ihtiyaca göre büyütün (en az 0.5c-1g)
+    region: frankfurt
+    postgresMajorVersion: "16" # Dockerfile PG_CLIENT_VERSION ile aynı veya daha düşük olmalı; sonradan değiştirilemez
+    databaseName: ktb_erp
+    user: ktb_erp
+    diskSizeGB: 20
+    storageAutoscalingEnabled: true
+    ipAllowList: [] # yalnız Render iç ağı; GitHub Actions yedeği için gerekiyorsa sabit IP'leri ekleyin
 
 services:
   - type: web
     name: ktb-erp
-    runtime: node
-    plan: free
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: 1c-2g # ücretli (uyku yok). 512 MB ERP için dar kalabilir.
     region: frankfurt
-    buildCommand: npm ci --omit=dev
-    startCommand: node db/migrate.js && node index.js
-    healthCheckPath: /health
+    numInstances: 1 # TCMB kur zamanlayıcısı süreç içinde; çoklu instance'ta TCMB_SCHEDULER=off + tek worker gerekir
+    healthCheckPath: /ready
+    preDeployCommand: node scripts/predeploy.js # bekleyen migration varsa önce yedek (offsite), sonra migrate
+    autoDeployTrigger: checksPass # yalnız GitHub Actions CI yeşilse deploy
+    maxShutdownDelaySeconds: 45
     envVars:
       - key: NODE_ENV
         value: production
@@ -20,7 +48,69 @@ services:
         value: 0.0.0.0
       - key: PORT
         value: "3000"
+      - key: LOG_FORMAT
+        value: json
+      - key: LOG_LEVEL
+        value: info
+      - key: TRUST_PROXY
+        value: "1"
+      - key: AUTO_HEAL
+        value: "0"
+      - key: ERP_AUTH_REQUIRED
+        value: "true"
+      - key: SHUTDOWN_DRAIN_MS
+        value: "5000"
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: ktb-erp-db
+          property: connectionString
+      - key: PREDEPLOY_BACKUP
+        value: pending
+      - fromGroup: ktb-erp-backup
+
+  - type: cron
+    name: ktb-erp-db-backup
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: 0.5c-512mb
+    region: frankfurt
+    schedule: "30 0 * * *" # UTC — 03:30 Europe/Istanbul
+    dockerCommand: node scripts/db-backup.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_FORMAT
+        value: json
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ktb-erp-db
+          property: connectionString
+      - fromGroup: ktb-erp-backup
+
+envVarGroups:
+  - name: ktb-erp-backup
+    envVars:
+      - key: BACKUP_OFFSITE
+        value: s3
+      - key: BACKUP_S3_PREFIX
+        value: prod/
+      - key: BACKUP_S3_BUCKET
+        value: DOLDURUN-bucket-adi
+      - key: BACKUP_S3_REGION
+        value: auto # AWS için ör. eu-central-1; R2 için auto
+      - key: BACKUP_S3_ENDPOINT
+        value: "" # R2: https://<hesap-id>.r2.cloudflarestorage.com · AWS: boş bırakın
+      - key: BACKUP_S3_ACCESS_KEY_ID
+        value: DOLDURUN
+      - key: BACKUP_S3_SECRET_ACCESS_KEY
+        value: DOLDURUN
+      - key: BACKUP_ENCRYPTION_PASSPHRASE
+        value: DOLDURUN-en-az-16-karakter # kaybı = yedek kaybı; ayrı kasada saklayın
+      - key: BACKUP_S3_RETENTION_DAYS
+        value: "35" # bucket lifecycle kuralı varsa 0 yapın
+      - key: BACKUP_RETENTION_DAYS
+        value: "1" # konteyner diski geçici
+      - key: BACKUP_NOTIFY_WEBHOOK_URL
+        value: "" # Slack/Teams incoming webhook (hata bildirimi)

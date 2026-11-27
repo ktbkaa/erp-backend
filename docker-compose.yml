@@ -1,0 +1,144 @@
+# KTB ERP — docker compose (app + postgres + migrate; opsiyonel: yedek, tatbikat, HTTPS vekil)
+# İzole test DB'si ayrı dosyada: docker-compose.test.yml
+#
+# Hazırlık: .env içine en az POSTGRES_PASSWORD ve JWT_SECRET (bkz. .env.example "Docker compose" bölümü)
+#
+#   docker compose up -d --build                        # postgres → migrate (predeploy) → app
+#   docker compose ps                                   # app "healthy" olmalı
+#   curl http://127.0.0.1:3000/ready
+#   docker compose run --rm backup                      # yedek (+ BACKUP_OFFSITE ayarına göre offsite)
+#   docker compose run --rm restore-drill               # en yeni yedekle geri yükleme tatbikatı
+#   docker compose --profile proxy up -d                # Caddy ile otomatik HTTPS (ERP_DOMAIN)
+#
+# Zamanlanmış yedek (sunucu crontab): bkz. scripts/ops/erp-backup.cron
+
+name: ktb-erp
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: postgresql://${POSTGRES_USER:-ktb_erp}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env içinde zorunlu}@postgres:5432/${POSTGRES_DB:-ktb_erp}?sslmode=disable
+  JWT_SECRET: ${JWT_SECRET:?JWT_SECRET .env içinde zorunlu}
+  HOST: 0.0.0.0
+  PORT: "3000"
+  LOG_FORMAT: ${LOG_FORMAT:-json}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  TRUST_PROXY: ${TRUST_PROXY:-1}
+  AUTO_HEAL: ${AUTO_HEAL:-0}
+  ERP_AUTH_REQUIRED: "true"
+  TCMB_SCHEDULER: ${TCMB_SCHEDULER:-on}
+  BACKUP_DIR: /app/backups
+  BACKUP_OFFSITE: ${BACKUP_OFFSITE:-none}
+  BACKUP_ENCRYPTION_PASSPHRASE: ${BACKUP_ENCRYPTION_PASSPHRASE:-}
+  BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+  BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+  BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-erp-backups/}
+  BACKUP_S3_REGION: ${BACKUP_S3_REGION:-}
+  BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+  BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+  BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+  BACKUP_S3_RETENTION_DAYS: ${BACKUP_S3_RETENTION_DAYS:-0}
+  BACKUP_RSYNC_TARGET: ${BACKUP_RSYNC_TARGET:-}
+  BACKUP_RSYNC_SSH_KEY: ${BACKUP_RSYNC_SSH_KEY:-}
+  BACKUP_NOTIFY_WEBHOOK_URL: ${BACKUP_NOTIFY_WEBHOOK_URL:-}
+  PREDEPLOY_BACKUP: ${PREDEPLOY_BACKUP:-pending}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ktb_erp}
+      POSTGRES_USER: ${POSTGRES_USER:-ktb_erp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env içinde zorunlu}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Yalnız sunucunun kendisinden erişim (pgAdmin/psql için). Dışarı açmayın.
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    stop_grace_period: 60s
+
+  migrate:
+    build:
+      context: .
+      args:
+        PG_CLIENT_VERSION: ${PG_CLIENT_VERSION:-16}
+    image: ktb-erp:${APP_VERSION:-local}
+    command: ["node", "scripts/predeploy.js"]
+    environment: *app-env
+    volumes:
+      - backups:/app/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    image: ktb-erp:${APP_VERSION:-local}
+    restart: unless-stopped
+    environment: *app-env
+    ports:
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "10"
+
+  backup:
+    image: ktb-erp:${APP_VERSION:-local}
+    profiles: ["ops"]
+    command: ["node", "scripts/db-backup.js"]
+    environment: *app-env
+    volumes:
+      - backups:/app/backups
+      # rsync/SSH anahtarı gerekiyorsa: - ./secrets/backup_ed25519:/run/secrets/backup_key:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  restore-drill:
+    image: ktb-erp:${APP_VERSION:-local}
+    profiles: ["ops"]
+    command: ["node", "scripts/db-restore-drill.js"]
+    environment:
+      <<: *app-env
+      RESTORE_DRILL_ADMIN_URL: postgresql://${POSTGRES_USER:-ktb_erp}:${POSTGRES_PASSWORD}@postgres:5432/postgres?sslmode=disable
+    volumes:
+      - backups:/app/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["proxy"]
+    restart: unless-stopped
+    environment:
+      ERP_DOMAIN: ${ERP_DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  backups:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,86 @@
+# Zamanlanmış canlı DB yedeği → offsite (S3 uyumlu). Örnek/alternatif yol:
+# birincil yol Render cron job'udur (render.yaml → ktb-erp-db-backup). GitHub runner'ından
+# canlı DB'ye erişim için DB'nin dış bağlantıya (IP allowlist) açık olması gerekir.
+#
+# Gerekli secret'lar (Settings → Environments → production):
+#   PROD_DATABASE_URL            salt-okunur yedek kullanıcısı önerilir (pg_read_all_data)
+#   BACKUP_S3_BUCKET, BACKUP_S3_ACCESS_KEY_ID, BACKUP_S3_SECRET_ACCESS_KEY
+#   BACKUP_ENCRYPTION_PASSPHRASE
+# Opsiyonel secret'lar: BACKUP_S3_ENDPOINT (R2/B2/MinIO), BACKUP_S3_REGION, BACKUP_NOTIFY_WEBHOOK_URL
+# Opsiyonel variable: PG_CLIENT_VERSION (varsayılan 16; sunucu sürümüyle aynı/yeni olmalı)
+#
+# Secret'lar tanımlı değilse iş başarısız olmaz, "yapılandırılmamış" uyarısıyla atlanır.
+name: DB yedek (zamanlanmış)
+
+on:
+  schedule:
+    - cron: "30 0 * * *" # her gün 00:30 UTC = 03:30 Europe/Istanbul
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: production
+    env:
+      NODE_ENV: production
+      BACKUP_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+      BACKUP_OFFSITE: s3
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      BACKUP_S3_PREFIX: prod/
+      BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+      BACKUP_S3_REGION: ${{ secrets.BACKUP_S3_REGION }}
+      BACKUP_S3_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+      BACKUP_NOTIFY_WEBHOOK_URL: ${{ secrets.BACKUP_NOTIFY_WEBHOOK_URL }}
+      BACKUP_DIR: /tmp/ktb-erp-backups
+      BACKUP_RETENTION_DAYS: "0"
+    steps:
+      - name: Yapılandırma kontrolü
+        id: cfg
+        run: |
+          missing=""
+          for v in BACKUP_DATABASE_URL BACKUP_S3_BUCKET BACKUP_S3_ACCESS_KEY_ID BACKUP_S3_SECRET_ACCESS_KEY BACKUP_ENCRYPTION_PASSPHRASE; do
+            [ -z "${!v}" ] && missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning::Yedek yapılandırılmamış, atlandı. Eksik secret:$missing"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.skip != 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.skip != 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: npm ci
+        if: steps.cfg.outputs.skip != 'true'
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: postgresql-client (PGDG)
+        if: steps.cfg.outputs.skip != 'true'
+        env:
+          PG_CLIENT_VERSION: ${{ vars.PG_CLIENT_VERSION || '16' }}
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq "postgresql-client-${PG_CLIENT_VERSION}"
+          echo "PG_BIN_DIR=/usr/lib/postgresql/${PG_CLIENT_VERSION}/bin" >> "$GITHUB_ENV"
+
+      - name: Yedek → offsite
+        if: steps.cfg.outputs.skip != 'true'
+        run: node scripts/db-backup.js
